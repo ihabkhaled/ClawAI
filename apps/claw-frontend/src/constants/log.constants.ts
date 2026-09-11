@@ -82,3 +82,18 @@ export const LOG_LEVEL_RANK: Record<LogLevel, number> = {
  */
 export const CLIENT_LOG_MIN_TRANSPORT_LEVEL: LogLevel =
   process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
+
+/**
+ * How many times a failed `/client-logs/batch` request retries before the
+ * batch is given up on.
+ *
+ * ADR-089 shipped the batch endpoint with `.catch(() => {})` and named this
+ * deliberately deferred: "nothing samples today, and a failed flush is
+ * dropped rather than retried." A dropped batch on a transient blip is a real
+ * loss regardless of overall volume, so this closes that half. Sampling stays
+ * deferred — its own trigger, telemetry volume rising, has not been observed.
+ */
+export const CLIENT_LOG_MAX_RETRY_ATTEMPTS = 3;
+
+/** Backoff base for a retried batch: doubles each attempt (2s, 4s, 8s). */
+export const CLIENT_LOG_RETRY_BASE_MS = 2_000;

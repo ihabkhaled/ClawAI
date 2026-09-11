@@ -104,6 +104,33 @@ data is stale. This rule governs the data layer between hooks and the API.
     anyway. That is what produced two identical responses milliseconds apart.
     The signal has to be threaded hook → repository → api-client.
 
+12. **`refetchInterval` on an infinite query refetches every loaded page, on
+    every tick — target one page directly instead when only one can change.**
+    TanStack Query does not expose a supported way to limit an infinite
+    query's automatic interval refetch to a subset of its loaded pages; on a
+    background tick it always refetches every page currently in the cache,
+    sequentially, from page 1 forward. `useVirtualizedMessages` polls while a
+    response is in flight, and a new message only ever lands on page 1
+    (`orderBy: createdAt desc`) — so once a thread's history had been scrolled
+    back through, each 5s tick was re-pulling every page loaded so far to
+    catch a change that could only ever appear on the first one.
+
+    The fix is a dedicated `setInterval` that fetches page 1 directly through
+    the repository and merges it into the cache with `setQueryData`
+    (`mergeLatestMessagesPageIntoCache` is the pattern), with
+    `refetchInterval: false` on the query itself. This is **not** the
+    prohibited pattern below — that one bans a `setInterval` that
+    **invalidates** a query, creating two drivers racing each other. This is a
+    single driver that writes directly, same as rule 4's authoritative-response
+    write, applied to a poll instead of a mutation response.
+
+    Guard it with an ordering check before writing: a page fetched earlier can
+    still resolve after one fetched later (retry, network jitter). Compare a
+    monotonically increasing field the response carries — `meta.total` for the
+    messages list, since it only grows — and drop a response reporting a lower
+    value than what is already cached instead of letting a stale response
+    overwrite fresher data.
+
 ## Prohibited patterns
 
 - `fetch()` or the raw http-client inside a hook or component.
@@ -119,7 +146,11 @@ data is stale. This rule governs the data layer between hooks and the API.
   another mechanism that tells it so.
 - A `setInterval` that invalidates a query. The query owns its own
   `refetchInterval`; a timer beside it is a second driver that beats against
-  the first.
+  the first. (A `setInterval` that fetches one page directly and merges it
+  with `setQueryData`, with the query's own `refetchInterval` turned off, is
+  rule 12's pattern, not this one — there is exactly one driver either way.)
+- Merging a polled response into the cache with no ordering guard, so a
+  response that resolves out of order can overwrite fresher data with stale.
 
 ## Correct pattern
 
@@ -142,6 +173,8 @@ export function useThreads() {
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Unit test** | `src/utilities/__tests__/insert-sent-message-into-cache.utility.test.ts` — prepends to page 1, recomputes `total`/`totalPages`, leaves other pages untouched, no-ops on an empty cache, and is idempotent. |
 | **Unit test** | `src/hooks/chat/__tests__/use-send-message.test.tsx` — a successful send writes to the cache and does NOT invalidate `messagesInfinite`, while still invalidating `messagesAnyPage` for the poll hooks.    |
+| **Unit test** | `src/utilities/__tests__/merge-latest-messages-page-into-cache.utility.test.ts` — replaces only page 1, drops a response reporting a lower `meta.total` than what is cached, no-ops on an empty cache.     |
+| **Unit test** | `src/hooks/chat/__tests__/use-virtualized-messages.test.tsx` — the awaiting-response poll fetches page 1 only (never every loaded page), does not run while idle, and folds into `isFetching`.             |
 
 - **ESLint** (frontend) — restricts `useQuery`/`useMutation` outside hooks and
   bans inline constants (query keys) in hook files.

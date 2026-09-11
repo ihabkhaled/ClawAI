@@ -377,7 +377,6 @@ http {
             set $backend https://$origin_ollama;
             proxy_pass $backend;
             proxy_set_header Connection "";
-            proxy_set_header X-Accel-Buffering "no";
             proxy_read_timeout 86400;
             proxy_buffering off;
             proxy_cache off;
@@ -443,7 +442,6 @@ http {
             set $backend https://$origin_agent;
             proxy_pass $backend;
             proxy_set_header Connection "";
-            proxy_set_header X-Accel-Buffering "no";
             proxy_buffering off;
             proxy_cache off;
             proxy_read_timeout 86400s;
@@ -520,7 +518,6 @@ http {
             rewrite ^/api/v1/llamacpp(/.*)$ /api/v1$1 break;
             proxy_pass $backend;
             proxy_set_header Connection "";
-            proxy_set_header X-Accel-Buffering "no";
             proxy_buffering off;
             proxy_cache off;
             proxy_read_timeout 86400s;

@@ -2,8 +2,10 @@ import {
   CLIENT_LOG_FLUSH_INTERVAL_MS,
   CLIENT_LOG_MAX_BATCH_EVENTS,
   CLIENT_LOG_MAX_BUFFER_EVENTS,
+  CLIENT_LOG_MAX_RETRY_ATTEMPTS,
   CLIENT_LOG_MIN_TRANSPORT_LEVEL,
   CLIENT_LOG_OCCURRENCES_KEY,
+  CLIENT_LOG_RETRY_BASE_MS,
   LOG_SENSITIVE_KEYS,
 } from '@/constants';
 import { API_BASE_URL } from '@/constants/api.constants';
@@ -56,11 +58,35 @@ function collapse(entries: CreateClientLogRequest[]): CreateClientLogRequest[] {
 }
 
 /**
+ * Posts one batch, retrying a failed send with backoff before giving up.
+ *
+ * ADR-089 shipped this endpoint with the send simply dropped on failure. A
+ * transient blip — one dropped request, a momentary 5xx — used to lose the
+ * whole batch permanently. `attempt` is 0-based and counts retries, not the
+ * first try, so `CLIENT_LOG_MAX_RETRY_ATTEMPTS` retries happen after the
+ * initial send.
+ */
+function postBatchWithRetry(payload: { events: CreateClientLogRequest[] }, attempt = 0): void {
+  httpClient.post('/client-logs/batch', payload).catch(() => {
+    if (attempt >= CLIENT_LOG_MAX_RETRY_ATTEMPTS) {
+      // Genuinely gone: retried as many times as this is worth waiting for.
+      return;
+    }
+    const delay = CLIENT_LOG_RETRY_BASE_MS * Math.pow(2, attempt);
+    setTimeout(() => {
+      postBatchWithRetry(payload, attempt + 1);
+    }, delay);
+  });
+}
+
+/**
  * Sends the buffer as batches.
  *
  * `useBeacon` is for the page going away: `sendBeacon` survives unload, where a
  * normal request is cancelled. Anything buffered at navigation used to be
- * dropped silently.
+ * dropped silently. A beacon send has no response to retry on — the page is
+ * already gone by the time one would fail — so retry applies only to the
+ * normal transport.
  */
 function flushLogs(useBeacon = false): void {
   if (logBuffer.length === 0) {
@@ -87,7 +113,7 @@ function flushLogs(useBeacon = false): void {
       }
     }
     // One request for the whole batch. This loop used to run per ENTRY.
-    httpClient.post('/client-logs/batch', payload).catch(() => {});
+    postBatchWithRetry(payload);
   }
 }
 

@@ -116,10 +116,23 @@ buffered events. A telemetry write can no longer end a session.
 
 ## Revisit when
 
-- Telemetry volume rises enough that sampling, not just collapsing, is needed.
-  Nothing samples today, and a failed flush is dropped rather than retried.
+- Telemetry volume rises enough that sampling is needed. Nothing samples
+  today; volume growth is this decision's own trigger and has not been
+  observed, so sampling stays deferred.
 - Losing a whole batch to one malformed event proves costly enough to justify
   per-event validation with partial acceptance, instead of the envelope-level
   rejection above.
 - A second client (mobile, extension) needs the same ingest contract.
 - The single-event route reaches zero callers and can be removed.
+
+**Retry landed 2026-09-11.** "A failed flush is dropped rather than retried"
+is no longer true: `postBatchWithRetry`
+(`apps/claw-frontend/src/utilities/logger.utility.ts`) retries a failed
+`/client-logs/batch` send up to `CLIENT_LOG_MAX_RETRY_ATTEMPTS` (3) times with
+doubling backoff (`CLIENT_LOG_RETRY_BASE_MS`, 2s/4s/8s) before giving up. This
+was split out from sampling deliberately: losing a batch to a transient
+network blip is a correctness gap regardless of volume, while sampling only
+earns its complexity once volume is actually a problem — the two "revisit
+when" conditions were independent and only one had already been met. The
+beacon-flush path (page unload) is unchanged: there is no response to retry on
+by the time it would fail.

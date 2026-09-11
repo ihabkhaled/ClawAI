@@ -222,20 +222,46 @@ would make the UI stop updating** — the two must land together.
 > prefix that matches every page variant. The prefix-matching rule itself is
 > asserted in a test, and is now rule 06 §8–§10.
 
-### B8 — Offset pagination over a head-growing list (**medium**)
+### B8 — Offset pagination over a head-growing list — **mitigated 2026-09-11**
 
 `skip = (page-1)*limit` over `orderBy createdAt desc`
 (`chat-messages.repository.ts:38-43`). Refetching pages 1 and 2 while a run
 appends rows shifts the window between the two requests, duplicating or dropping
 messages in the merged array.
 
-### B9 — Refetching an infinite query refetches every loaded page (**high**)
+> **Mitigated, not closed.** B9's fix removes the primary trigger: the poll no
+> longer refetches page 2+ while a run is in flight, so the two-page
+> simultaneous refetch that produced the window shift can no longer happen on
+> that path. The narrower residual — a manual `fetchPreviousPage` (scrolling
+> back) racing a concurrently-arriving message — is closed for its visible
+> symptom only: `useVirtualizedMessages` now dedupes the flattened list by
+> message id, so a message returned on two overlapping pages renders once, not
+> twice. A window shift that skips a row entirely (the "dropped" half) is not
+> recoverable without cursor pagination, which is the architectural rewrite
+> already named out of scope in B6 — it would touch every read site in
+> `hooks/chat/`, not one merge function. Left open by the same reasoning as
+> B6's normalized store: a real gap, correctly sized as a rewrite rather than
+> built speculatively as a patch.
+
+### B9 — Refetching an infinite query refetches every loaded page — **FIXED 2026-09-11**
 
 `maxPages` is explicitly `undefined` (`use-virtualized-messages.ts:45`). Once a
 user scrolls back through history, each refetch pulls _all_ loaded pages
 sequentially. The cost steps up per page loaded.
 
-### B10 — No ordering guard on the REST path (**high**)
+> **Fixed.** TanStack Query has no supported option to limit an infinite
+> query's automatic interval refetch to a subset of loaded pages — confirmed by
+> reading `infiniteQueryBehavior.ts`: a background refetch with no
+> `direction` always re-fetches `oldPages.length` pages, sequentially from page
+>
+> 1. The awaiting-response poll no longer uses `refetchInterval` at all
+>    (now `false`, unconditionally); a dedicated `setInterval` fetches page 1
+>    directly — the only page a new message can land on — and merges it into the
+>    cache with `mergeLatestMessagesPageIntoCache`. A thread with 10 pages loaded
+>    now costs exactly one request per poll tick instead of ten. Rule 12 in
+>    [rules/06](../../rules/06-frontend-queries-and-cache.md) records the pattern.
+
+### B10 — No ordering guard on the REST path — **FIXED 2026-09-11, for the messages query**
 
 The SSE path has both a `sequence` ordering guard and an event-id dedup
 (`use-chat-stream.ts:133-146`). The REST path has neither. Nothing compares
@@ -243,20 +269,34 @@ timestamps, counts or a version token before accepting a thread payload, so a
 late response can overwrite newer streamed content — and, via B4, re-arm the
 polling loop.
 
+> **Fixed for the query this audit measured.** `mergeLatestMessagesPageIntoCache`
+> compares the freshly-polled page's `meta.total` (which only grows) against
+> what is already cached and drops the write if it is lower — closing the
+> concrete case a poll response resolving out of order after a faster,
+> later one would otherwise clobber. This is scoped to the messages poll added
+> for B9; it is not a generic version-token contract across every REST
+> response, which would be a backend API change out of scope here. B4's
+> re-arm risk is separately closed already: arming is idempotent per
+> transcript signature regardless of which response triggers it.
+
 ---
 
 ## C. Client telemetry
 
-> **Status 2026-09-10 — FIXED, except C4 in part.** C1, C2, C3, C5, C6 and C8 are
+> **Status 2026-09-10 — FIXED, except C4's sampling half.** C1, C2, C3, C5, C6 and C8 are
 > closed by the telemetry batch (`POST /client-logs/batch`, collapse-with-count, severity
 > gate, `pagehide` beacon, buffer cap, refresh-flow exemption, and the removal
 > of the self-feeding log on the client-logs page). C7's amplification falls out
 > of C2: the ingest path now logs once per batch instead of ~4x per event.
-> **C4 is only partly closed** — dedup and the unload flush landed; sampling and
-> retry did not, and a failed batch is still dropped by `.catch(() => {})`. See
-> [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md). The findings
-> below are kept as written, because the measurement that motivated each one is
-> the evidence that the fix was needed.
+> **C4's retry half is now fixed too (2026-09-11)** — a failed
+> `/client-logs/batch` send retries up to 3 times with doubling backoff
+> (`postBatchWithRetry`) instead of being dropped by `.catch(() => {})`.
+> Sampling remains deliberately deferred: its own trigger in
+> [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md) — telemetry
+> volume rising enough to need it — has not been observed, and retry and
+> sampling were always two independent "revisit when" conditions, not one. The
+> findings below are kept as written, because the measurement that motivated
+> each one is the evidence that the fix was needed.
 
 ### C1 — The buffer delays but does not batch (**certain, measured**)
 
@@ -291,12 +331,20 @@ even possible today. All 46 `logger.debug` sites ship to production and cross
 the network. Because they sit inside `queryFn`s, they are the majority of the
 volume.
 
-### C4 — No sampling, dedup, throttling or retry (**certain**)
+### C4 — No sampling, dedup, throttling or retry (**certain**) — **dedup, unload-flush and retry fixed; sampling deferred**
 
 `.catch(() => {})` drops failures silently, and there is no `sendBeacon` or
 `pagehide` flush, so anything buffered when the user navigates is lost. The
 server _does_ throttle (2500/60 s), so a client burning one quota unit per log
 line can be throttled into silent loss.
+
+> Dedup and the `pagehide` beacon landed 2026-09-10. The `.catch(() => {})`
+> silent drop landed a fix 2026-09-11: `postBatchWithRetry` retries a failed
+> batch up to `CLIENT_LOG_MAX_RETRY_ATTEMPTS` (3) times with doubling backoff
+> before giving up, so a transient failure no longer loses the batch on the
+> first try. Sampling is the one piece still deferred — see ADR-089's
+> "Revisit when," unmet because telemetry volume has not been observed to rise
+> enough to need it.
 
 ### C5 — Telemetry can log the user out (**medium, latent**)
 
@@ -461,26 +509,73 @@ deterministically.
 the replay a reconnect triggers — which is what lets D1's stale `DONE` be
 re-processed each cycle.
 
-### D6 — StrictMode adds one spurious abort per mount (**high, dev only**)
+### D6 — StrictMode adds one spurious abort per mount (**high, dev only**) — **verified harmless, no code change**
 
 `reactStrictMode: true` double-mounts the effect: open, abort, open. One extra
 200-then-aborted stream request per page load in development. Not a production
 cause, but it inflates every dev observation of D1.
 
-### D7 — A latent teardown tripwire (**medium**)
+> **Closed by verification, not by code.** React's Strict Mode double-invokes
+> effects only in the development build of `react-dom`; the check that
+> produces the extra mount/cleanup/mount cycle is compiled out of the
+> production build entirely; it is not conditional on `reactStrictMode` at
+> runtime, and no production React build performs it regardless of that flag.
+> This is a framework-level guarantee, not specific to this deployment, and
+> disabling `reactStrictMode` to silence the symptom was rejected — it would
+> remove a real safety net (effects that are not idempotent under a
+> double-invoke are a bug StrictMode exists to surface) to hide one dev-only
+> extra request that D2 already made harmless (a clean close no longer
+> downgrades the thread; it reconnects). **What was not done**: reproducing
+> this specific deployment's frontend as a running production build to watch
+> the extra request disappear empirically. That remains a real gap between
+> "the framework guarantees this" and "this exact build was observed to
+> behave that way" — named rather than papered over. It is also still the
+> leading, unconfirmed explanation for the residual duplicate refetch recorded
+> at the end of this document under "one confirmed cause fixed, one live
+> symptom still unexplained."
+
+### D7 — A latent teardown tripwire (**medium**) — **FIXED 2026-09-11**
 
 `t` from `useTranslation` sits in the stream effect's dependency array, and its
 stability depends on the identity of an RSC-supplied dictionary object. Any
 layout re-render that hands down a fresh object closes and reopens the stream.
 Not triggered on the chat route today.
 
-### D8 — Minor (**high**)
+> **Fixed.** `useChatStream` now mirrors `t` into a ref (`tRef`, updated every
+> render) and reads `tRef.current` inside the message handler instead of
+> depending on `t`'s identity in the connect effect. The effect's dependency
+> array no longer lists `t` at all, so the stream's lifecycle is fully
+> decoupled from the translator's identity — not just less likely to churn,
+> incapable of being torn down by it. A new test proves it directly: `t`
+> returns a fresh function every render and `connectSse` is still called
+> exactly once.
+
+### D8 — Minor — **FIXED 2026-09-11**
 
 A backoff `sleep()` adds an `abort` listener per attempt and never removes it
 (bounded at 10). `use-chat-stream.ts:321-326` is dead code. The chat nginx block
 omits an `X-Accel-Buffering` `proxy_set_header` its sibling blocks carry — that
 directive is a misuse in the siblings anyway, since it is a response header, and
 Nest emits the real one.
+
+> **All three fixed.** `sleep()` in `sse.utility.ts` now removes its `abort`
+> listener explicitly when the timer wins (the abort path already self-cleans
+> via `{ once: true }`) — proven by a test asserting add/remove counts stay in
+> lockstep across several backoff cycles, where the old code never called
+> `removeEventListener` on the timer-wins path at all. The dead "clean up when
+> no longer waiting" effect in `use-chat-stream.ts` is deleted: it could never
+> run productively, because the main effect's own cleanup (triggered by the
+> same `isActive` dependency, declared first) always nulls `connectionRef`
+> before this effect's body could observe it non-null — confirmed by tracing
+> React's cleanup-then-effect ordering for a shared changed dependency, and
+> unchanged by the existing test asserting `close` fires exactly once. The
+> nginx `X-Accel-Buffering` `proxy_set_header` lines are deleted from all three
+> sibling blocks (ollama pull-progress, agent command stream, llamacpp
+> pull-progress) in both `locations.conf` and the distributed template — they
+> set a REQUEST header the upstream never reads; the actual buffering control,
+> `proxy_buffering off`, was already present in the same blocks, which is
+> exactly the mechanism chat-service's own SSE block already relied on.
+> `nginx -t` passes against the edited config.
 
 ---
 
@@ -693,33 +788,44 @@ callers.
 
 ## What has been fixed so far
 
-| Finding                  | Landed     | Effect measured on the same page                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B2, B3, B4, B7           | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| A1, A2                   | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| C1-C3, C5-C8             | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                                                                                                                                                                                                                                                     |
-| **Z (the reported bug)** | 2026-09-11 | **End-to-end proof.** "Summarize https://example.com/" with Search+Fetch on `gemini-2.5-flash-lite` now answers _"The provided text from example.com states that the domain is for use in documentation examples and should be avoided in operations [1]"_ — the real page, cited. The same prompt on the same model refused twice earlier the same day, with 11 evidence items already in its prompt: the pipeline was correct and the answer was still wrong, because the instruction was too far from the question. Fixed by repeating a short grounding note on the final user turn. |
-| a11y, L                  | 2026-09-11 | Chat page Lighthouse accessibility **90 → 100** and agentic-browsing **50 → 100**, 0 failed audits on desktop AND mobile: the research selects had no accessible name, the message timestamp was dimmed below the contrast floor, and the desktop search button's `aria-label` overrode its own visible text. Long-chat performance was **re-measured and found already solved** — see below.                                                                                                                                                                                            |
-| D4                       | 2026-09-11 | Reconnects resume from `Last-Event-ID` instead of replaying the whole buffer. The wire `id:` is now the frame's own `eventId`, not Nest's per-connection counter; verified live (`id: <threadId>:1` on the wire, matching `data.eventId`). 19 backend + 3 frontend unit tests, since forcing a live network drop mid-stream is not something browser automation can do deterministically.                                                                                                                                                                                                |
-| B6 (send half)           | 2026-09-11 | A send writes the server's own response straight into the message cache instead of discarding it and re-fetching. Verified live: zero `GET /chat-messages/thread/...` on send, message visible in ~350ms (the POST's own round trip).                                                                                                                                                                                                                                                                                                                                                    |
-| D3                       | 2026-09-11 | A dropped or silent stream now says so, between the transcript and the composer, and renders nothing when healthy. A connection that stays open and stops delivering is abandoned after 45s (three missed heartbeats) instead of being awaited forever — the failure a reconnect loop alone cannot see.                                                                                                                                                                                                                                                                                  |
-| E2, E5, E7               | 2026-09-11 | The provider dropdown drives the search on every path and the transcript records the provider that ANSWERED (verified: `selectionMode: explicit` for both configured providers). The compare path states the capability instead of naming the mode. A 1,176-character prompt now completes with a warning where it previously 400'd and silently disabled research.                                                                                                                                                                                                                      |
-| E4, E8, E9               | 2026-09-10 | "Used N sources" became "Read N pages", derived from each item's own `source` field, with links found as a separate number and the search/fetch counts read from `toolsUsed` instead of hardcoded zeros. `Button` now defaults to `type="button"` (no form in the app relied on the implicit submit). 106 lines of dead enricher wrapper deleted.                                                                                                                                                                                                                                        |
-| E0, E1, E3, E6           | 2026-09-10 | A pasted URL is opened instead of searched for. Verified live: `summarize https://example.com/ for me` traced `fetch.direct` BEFORE `search`, recorded `web_fetch:user_url`, and ranked the pasted page first at confidence 1 — where the same prompt previously returned an Adobe product page, a Facebook post and a Medium tutorial and never opened the link. `SEARCH_ONLY` warns by name instead of fetching.                                                                                                                                                                       |
-| D1, D2                   | 2026-09-10 | A fresh send no longer asks for replay, so it cannot be handed the previous run's `DONE`. A clean close now reconnects unless a terminal event was actually seen. Verified with a real send: **exactly one** stream connection, `replay=false`, held open 6.25 s for the whole generation, answer rendered. D5 withdrawn — the audit was wrong about it.                                                                                                                                                                                                                                 |
+| Finding                  | Landed     | Effect measured on the same page                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B2, B3, B4, B7           | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| A1, A2                   | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| C1-C3, C5-C8             | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                                                                                                                                                                                                                                                        |
+| **Z (the reported bug)** | 2026-09-11 | **End-to-end proof.** "Summarize https://example.com/" with Search+Fetch on `gemini-2.5-flash-lite` now answers _"The provided text from example.com states that the domain is for use in documentation examples and should be avoided in operations [1]"_ — the real page, cited. The same prompt on the same model refused twice earlier the same day, with 11 evidence items already in its prompt: the pipeline was correct and the answer was still wrong, because the instruction was too far from the question. Fixed by repeating a short grounding note on the final user turn.    |
+| a11y, L                  | 2026-09-11 | Chat page Lighthouse accessibility **90 → 100** and agentic-browsing **50 → 100**, 0 failed audits on desktop AND mobile: the research selects had no accessible name, the message timestamp was dimmed below the contrast floor, and the desktop search button's `aria-label` overrode its own visible text. Long-chat performance was **re-measured and found already solved** — see below.                                                                                                                                                                                               |
+| D4                       | 2026-09-11 | Reconnects resume from `Last-Event-ID` instead of replaying the whole buffer. The wire `id:` is now the frame's own `eventId`, not Nest's per-connection counter; verified live (`id: <threadId>:1` on the wire, matching `data.eventId`). 19 backend + 3 frontend unit tests, since forcing a live network drop mid-stream is not something browser automation can do deterministically.                                                                                                                                                                                                   |
+| B6 (send half)           | 2026-09-11 | A send writes the server's own response straight into the message cache instead of discarding it and re-fetching. Verified live: zero `GET /chat-messages/thread/...` on send, message visible in ~350ms (the POST's own round trip).                                                                                                                                                                                                                                                                                                                                                       |
+| D3                       | 2026-09-11 | A dropped or silent stream now says so, between the transcript and the composer, and renders nothing when healthy. A connection that stays open and stops delivering is abandoned after 45s (three missed heartbeats) instead of being awaited forever — the failure a reconnect loop alone cannot see.                                                                                                                                                                                                                                                                                     |
+| E2, E5, E7               | 2026-09-11 | The provider dropdown drives the search on every path and the transcript records the provider that ANSWERED (verified: `selectionMode: explicit` for both configured providers). The compare path states the capability instead of naming the mode. A 1,176-character prompt now completes with a warning where it previously 400'd and silently disabled research.                                                                                                                                                                                                                         |
+| E4, E8, E9               | 2026-09-10 | "Used N sources" became "Read N pages", derived from each item's own `source` field, with links found as a separate number and the search/fetch counts read from `toolsUsed` instead of hardcoded zeros. `Button` now defaults to `type="button"` (no form in the app relied on the implicit submit). 106 lines of dead enricher wrapper deleted.                                                                                                                                                                                                                                           |
+| E0, E1, E3, E6           | 2026-09-10 | A pasted URL is opened instead of searched for. Verified live: `summarize https://example.com/ for me` traced `fetch.direct` BEFORE `search`, recorded `web_fetch:user_url`, and ranked the pasted page first at confidence 1 — where the same prompt previously returned an Adobe product page, a Facebook post and a Medium tutorial and never opened the link. `SEARCH_ONLY` warns by name instead of fetching.                                                                                                                                                                          |
+| D1, D2                   | 2026-09-10 | A fresh send no longer asks for replay, so it cannot be handed the previous run's `DONE`. A clean close now reconnects unless a terminal event was actually seen. Verified with a real send: **exactly one** stream connection, `replay=false`, held open 6.25 s for the whole generation, answer rendered. D5 withdrawn — the audit was wrong about it.                                                                                                                                                                                                                                    |
+| B9, B10                  | 2026-09-11 | The awaiting-response poll now fetches page 1 only (a thread with 10 pages loaded went from 10 requests per tick to 1) instead of `refetchInterval` re-fetching every loaded page, confirmed by reading `infiniteQueryBehavior.ts`. The merge guards on `meta.total` so an out-of-order response cannot overwrite fresher data. Rule 12 in rules/06 records the pattern.                                                                                                                                                                                                                    |
+| B8                       | 2026-09-11 | Mitigated, not closed: fixing B9 removes the trigger that produced a two-page simultaneous refetch during generation, and the flattened message list now dedupes by id, so an overlap that still occurs renders once instead of twice. The "dropped row" half of a window shift needs cursor pagination, named out of scope alongside B6's normalized store.                                                                                                                                                                                                                                |
+| D7, D8                   | 2026-09-11 | `useChatStream`'s connect effect no longer depends on `t`'s identity (a ref mirrors it instead) — proven live-equivalent by a test where `t` is a fresh function every render and the connection is not reopened. A dead cleanup effect that could never run productively is deleted. The backoff `sleep()` now removes its `abort` listener instead of leaking one per reconnect. Three dead `X-Accel-Buffering` `proxy_set_header` lines removed from nginx (a request header the upstream never read); `proxy_buffering off`, already present in the same blocks, is the real mechanism. |
+| C4 (retry half)          | 2026-09-11 | A failed `/client-logs/batch` send now retries up to 3 times with doubling backoff instead of being dropped by `.catch(() => {})`. Sampling stays deferred — ADR-089's own trigger for it, telemetry volume rising, has not been observed.                                                                                                                                                                                                                                                                                                                                                  |
 
-**Targets T1, T3, T6 and T7 are met**; T4 is met for the idle case. Section E is
-open, plus D3 (a dead stream is still silent to the user) and D4 (no
-`Last-Event-ID`, so recovery still replays rather than resumes).
+**Targets T1, T3, T4, T6 and T7 are met.** Sections A, C, D and E are closed
+(D6 by verification, not code change — see D6 above); B8, B9 and B10 are fixed
+or mitigated as of 2026-09-11. What remains open, all by name rather than by
+omission: B6's full normalized message store and B8's "dropped row" half
+(both need cursor pagination, an architectural rewrite out of scope for this
+programme), and C4's sampling half (deferred to its own unmet trigger in
+ADR-089).
 
-**C4 is partly closed, and the remainder is named rather than quietly counted
-as done.** Dedup landed (identical events inside a flush window collapse to one
-event with an `occurrences` count) and so did the unload flush (`pagehide` +
-`sendBeacon`, so a pending buffer is no longer dropped on navigation). What did
-NOT land: there is no sampling, and there is no retry — `flushLogs` still ends
-in `.catch(() => {})`, so a failed batch is lost. Both are deferred
-deliberately in [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)
-under "Revisit when".
+**C4's dedup and unload-flush landed 2026-09-10; retry landed 2026-09-11; only
+sampling remains, and it is named rather than quietly counted as done.** Dedup
+collapses identical events inside a flush window to one event with an
+`occurrences` count, and the unload flush (`pagehide` + `sendBeacon`) means a
+pending buffer is no longer dropped on navigation. `postBatchWithRetry` retries
+a failed send up to 3 times with doubling backoff instead of the old
+`.catch(() => {})` silent drop. Sampling is deferred deliberately in
+[ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md) under "Revisit
+when" — telemetry volume rising enough to need it has not been observed, and
+that is genuinely a different condition than "a failed send should not lose
+data," which retry already closes regardless of volume.
 
 **Long-chat performance (L) was re-measured on 2026-09-11 and needs no work.**
 The audit assumed page one was the whole conversation. It is not: the messages
@@ -753,12 +859,18 @@ do. Recorded as a real, open, correctly-scoped question rather than claimed
 fixed on partial evidence. Cheap either way: each occurrence is the same 32
 KB/68 ms page-1 fetch measured above, not a new cost class.
 
-**Sections C, D and E are all closed.** D3 closed 2026-09-11: connection
-health is user-visible state now, and a connection that stays open but goes
-quiet is detected by a 45-second stall deadline rather than waited on forever.
-D4 (no `Last-Event-ID`, so recovery replays rather than resumes) is the last
-item in this document. Outside it: the normalized message
-store, long-chat performance, tracing, accessibility, the contract suite,
+**Sections A, C, D and E are all closed; B is closed except two named,
+out-of-scope architectural gaps.** D3 closed 2026-09-11: connection health is
+user-visible state now, and a connection that stays open but goes quiet is
+detected by a 45-second stall deadline rather than waited on forever. D4 (no
+`Last-Event-ID`) closed the same day. D6 closed by verification rather than
+code — Strict Mode's double-invoke is a development-only React behaviour by
+construction, not something this specific deployment's production build was
+watched to confirm. D7 and D8 closed 2026-09-11 (see above). B8, B9 and B10
+closed or mitigated the same day — the mitigated half of B8 and B6's
+normalized store are the two gaps left standing, both correctly sized as a
+cursor-pagination rewrite rather than built speculatively as a patch. Outside
+all of it: long-chat performance, tracing, accessibility, the contract suite,
 dependency cleanup and SLOs.
 
 A measurement caveat worth keeping: an idle reading of _zero_ is as likely to

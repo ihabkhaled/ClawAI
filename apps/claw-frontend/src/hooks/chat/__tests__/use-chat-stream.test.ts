@@ -10,7 +10,7 @@ type ConnectOptions = {
   onError: () => void;
 };
 
-const { mockConnectSse, mockLogger } = vi.hoisted(() => ({
+const { mockConnectSse, mockLogger, mockUseTranslation } = vi.hoisted(() => ({
   mockConnectSse: vi.fn(),
   mockLogger: {
     debug: vi.fn(),
@@ -18,23 +18,12 @@ const { mockConnectSse, mockLogger } = vi.hoisted(() => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
+  mockUseTranslation: vi.fn(),
 }));
 
-// `t` MUST be a stable reference: the real useTranslation memoizes it with
-// useCallback, and useChatStream lists `t` in a useEffect dependency array.
-// Returning a fresh `t` per render makes that effect re-run every render →
-// resetStream() → setState → re-render → infinite loop that OOMs the worker.
-// Define it inside the factory (which runs once) so every call reuses it.
-vi.mock('@/lib/i18n', () => {
-  const t = (key: string): string => key;
-  return {
-    useTranslation: () => ({
-      t,
-      locale: 'en',
-      dir: 'ltr',
-    }),
-  };
-});
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => mockUseTranslation() as { t: (key: string) => string },
+}));
 
 vi.mock('@/utilities', async (importOriginal) => {
   // Only connectSse/logger need mocking (SSE transport + log assertions).
@@ -69,6 +58,11 @@ describe('useChatStream', () => {
         close: closeSpy as () => void,
       };
     });
+    // A stable `t`, matching the real useTranslation's useCallback memoizing
+    // it in production. The "does not reconnect when t's identity changes"
+    // test below overrides this to prove the hook no longer depends on it.
+    const t = (key: string): string => key;
+    mockUseTranslation.mockReturnValue({ t });
   });
 
   it('tracks visible progress stages and completes the stream state on done', () => {
@@ -232,6 +226,25 @@ describe('useChatStream', () => {
     unmount();
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reconnect when t is a fresh function identity every render (D7)', () => {
+    // An RSC-supplied dictionary object can hand down a fresh `t` on a layout
+    // re-render unrelated to the stream. `t` used to sit in the connect
+    // effect's dependency array, so that alone tore down and reopened the
+    // connection for no reason connected to the stream itself.
+    mockUseTranslation.mockImplementation(() => ({ t: (key: string): string => key }));
+
+    const { rerender } = renderHook(({ isActive }) => useChatStream('thread-4', isActive), {
+      initialProps: { isActive: true },
+    });
+    expect(mockConnectSse).toHaveBeenCalledTimes(1);
+
+    // Same props, but useTranslation() returns a brand-new `t` this render.
+    rerender({ isActive: true });
+
+    expect(mockConnectSse).toHaveBeenCalledTimes(1);
+    expect(closeSpy).not.toHaveBeenCalled();
   });
 
   it('tracks typed tool and research progress events using stable stage ids and statuses', () => {

@@ -41,6 +41,13 @@ import { resolveChatStreamError } from '@/utilities/chat-stream-error.utility';
  */
 export function useChatStream(threadId: string, isActive: boolean, replayPastEvents = true) {
   const { t } = useTranslation();
+  // Mirrors `t` so the connect effect below can read the current translator
+  // without depending on its identity. `t`'s stability depends on an
+  // RSC-supplied dictionary object; any layout re-render that hands down a
+  // fresh one closed and reopened the stream for no reason connected to the
+  // stream itself.
+  const tRef = useRef(t);
+  tRef.current = t;
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [judgeEvaluating, setJudgeEvaluating] = useState(false);
@@ -321,7 +328,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
 
           if (parsed.type === StreamEventType.ERROR) {
             sawTerminalEventRef.current = true;
-            const localizedError = resolveChatStreamError(parsed, t);
+            const localizedError = resolveChatStreamError(parsed, tRef.current);
             logger.error({
               component: 'chat',
               action: 'stream-error',
@@ -369,16 +376,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     flushLive,
     settleActiveStages,
     rememberProcessedEventId,
-    t,
   ]);
-
-  // Clean up when no longer waiting
-  useEffect(() => {
-    if (!isActive && connectionRef.current) {
-      connectionRef.current.close();
-      connectionRef.current = null;
-    }
-  }, [isActive]);
 
   return {
     fallbackAttempts,

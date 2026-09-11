@@ -233,10 +233,18 @@ async function readSseStream(
 
 async function sleep(ms: number, signal: AbortSignal): Promise<void> {
   await new Promise<void>((resolve) => {
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener('abort', () => {
+    // Without `{ once: true }` and an explicit removal on the timer path, a
+    // listener accumulated on `signal` for every reconnect attempt — bounded
+    // by SSE_RECONNECT_MAX_ATTEMPTS, but never actually removed once its own
+    // sleep resolved normally rather than by abort.
+    const onAbort = (): void => {
       clearTimeout(timer);
       resolve();
-    });
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
   });
 }

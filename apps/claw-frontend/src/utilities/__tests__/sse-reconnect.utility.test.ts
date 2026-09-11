@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SSE_STALL_TIMEOUT_MS } from '@/constants/sse.constants';
+import { SSE_RECONNECT_BASE_MS, SSE_STALL_TIMEOUT_MS } from '@/constants/sse.constants';
 import { SseConnectionHealth } from '@/enums';
 import { connectSse } from '@/utilities/sse.utility';
 
@@ -246,5 +246,39 @@ describe('connectSse Last-Event-ID resume', () => {
 
     const secondCallHeaders = fetchMock.mock.calls[1]?.[1]?.headers as Record<string, string>;
     expect(secondCallHeaders['Last-Event-ID']).toBe('thread-1:2');
+  });
+
+  it('removes its abort listener after each backoff sleep instead of leaking one per reconnect (D8)', async () => {
+    // The backoff sleep between reconnect attempts used to add an `abort`
+    // listener to the shared signal and never remove it once the timer won
+    // (only the abort path cleaned up after itself). Bounded by
+    // SSE_RECONNECT_MAX_ATTEMPTS, but a real leak for the life of a long
+    // connection that reconnects a handful of times.
+    const addSpy = vi.spyOn(AbortSignal.prototype, 'addEventListener');
+    const removeSpy = vi.spyOn(AbortSignal.prototype, 'removeEventListener');
+    const fetchMock = vi.fn().mockRejectedValue(new Error('network down'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const connection = connectSse('https://claw.local/stream', {
+      onMessage: vi.fn(),
+      onError: vi.fn(),
+    });
+
+    // Two full backoff sleeps resolving normally via their timer (not via
+    // abort) — attempt 1's 1000ms delay plus attempt 2's 2000ms delay. A
+    // third sleep starts immediately after and is left legitimately pending
+    // (not yet resolved), which the assertion below accounts for: only a
+    // sleep that already resolved via its timer should have removed its
+    // listener explicitly.
+    await vi.advanceTimersByTimeAsync(SSE_RECONNECT_BASE_MS + SSE_RECONNECT_BASE_MS * 2);
+
+    const abortAddCount = addSpy.mock.calls.filter(([event]) => event === 'abort').length;
+    const abortRemoveCount = removeSpy.mock.calls.filter(([event]) => event === 'abort').length;
+    expect(abortAddCount).toBeGreaterThanOrEqual(2);
+    // The old code never called removeEventListener on the timer-wins path at
+    // all, so this held at 0 regardless of how many sleeps had completed.
+    expect(abortRemoveCount).toBeGreaterThanOrEqual(abortAddCount - 1);
+
+    connection.close();
   });
 });

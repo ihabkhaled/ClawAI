@@ -1,11 +1,11 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MESSAGE_POLL_INTERVAL_MS, MESSAGES_PAGE_SIZE, VIRTUOSO_START_INDEX } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ChatMessage, UseVirtualizedMessagesReturn } from '@/types';
-import { logger } from '@/utilities';
+import { logger, mergeLatestMessagesPageIntoCache } from '@/utilities';
 
 /**
  * The message list, paginated backwards from the newest page.
@@ -21,6 +21,7 @@ export function useVirtualizedMessages(
   threadId: string,
   isAwaitingResponse = false,
 ): UseVirtualizedMessagesReturn {
+  const queryClient = useQueryClient();
   const query = useInfiniteQuery({
     queryKey: queryKeys.threads.messagesInfinite(threadId),
     // `signal` is forwarded all the way to axios so a cancelled refetch is
@@ -41,12 +42,65 @@ export function useVirtualizedMessages(
       return page < totalPages ? page + 1 : undefined;
     },
     enabled: !!threadId,
-    // `false` disables the interval entirely rather than setting a long one:
-    // an idle thread should cost nothing, not less.
-    refetchInterval: isAwaitingResponse ? MESSAGE_POLL_INTERVAL_MS : false,
+    // The awaiting-response poll is NOT wired to `refetchInterval`. TanStack
+    // Query refetches every currently loaded page in sequence on each
+    // interval tick, so on a thread whose history had been scrolled back
+    // through, each 5s tick re-pulled every page loaded so far instead of
+    // just the one page a new message can land on. See the effect below.
+    refetchInterval: false,
     staleTime: 2000,
     maxPages: undefined,
   });
+
+  // While a response is in flight, page 1 is polled directly and merged into
+  // the cache instead of letting `refetchInterval` refetch every loaded page.
+  // A new message only ever lands on page 1 (`orderBy: createdAt desc`), so a
+  // reply landing while the user has scrolled back through history no longer
+  // costs one request per page loaded.
+  const [isPollingNewestPage, setIsPollingNewestPage] = useState(false);
+  useEffect(() => {
+    if (!isAwaitingResponse || !threadId) {
+      return;
+    }
+    const controller = new AbortController();
+    let cancelled = false;
+    let pollInFlight = false;
+    const pollNewestPage = async (): Promise<void> => {
+      if (pollInFlight) {
+        return;
+      }
+      pollInFlight = true;
+      setIsPollingNewestPage(true);
+      try {
+        const freshPage = await chatRepository.getMessagesPaginated(
+          threadId,
+          1,
+          MESSAGES_PAGE_SIZE,
+          controller.signal,
+        );
+        if (!cancelled) {
+          mergeLatestMessagesPageIntoCache(queryClient, threadId, freshPage);
+        }
+      } catch {
+        // A dropped poll tick is not an error the UI needs to know about —
+        // the deadline in useThreadDetail is what bounds how long waiting
+        // lasts, and the next tick tries again.
+      } finally {
+        pollInFlight = false;
+        if (!cancelled) {
+          setIsPollingNewestPage(false);
+        }
+      }
+    };
+    const intervalId = setInterval(() => {
+      void pollNewestPage();
+    }, MESSAGE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearInterval(intervalId);
+    };
+  }, [isAwaitingResponse, threadId, queryClient]);
 
   // Backend returns DESC (page 1 = newest).
   // Pages in query.data.pages: [page1(newest), page2(older), page3(oldest)...]
@@ -56,6 +110,13 @@ export function useVirtualizedMessages(
       return [];
     }
     const flat: ChatMessage[] = [];
+    // Offset pagination shifts its window when rows are appended between two
+    // page fetches, so the same message can legitimately arrive in both the
+    // page that used to end with it and the page that now starts with it.
+    // Deduping by id keeps the visible symptom (a message rendered twice) from
+    // reaching the screen; it does not recover a row a shifted window skipped
+    // entirely, which needs cursor pagination to close for good.
+    const seenIds = new Set<string>();
     // Iterate pages in reverse (oldest page last in array → first in output)
     for (let i = query.data.pages.length - 1; i >= 0; i--) {
       const page = query.data.pages[i];
@@ -63,7 +124,8 @@ export function useVirtualizedMessages(
         // Each page's items are DESC, reverse to ASC
         for (let j = page.data.length - 1; j >= 0; j--) {
           const msg = page.data[j];
-          if (msg) {
+          if (msg && !seenIds.has(msg.id)) {
+            seenIds.add(msg.id);
             flat.push(msg);
           }
         }
@@ -107,7 +169,7 @@ export function useVirtualizedMessages(
   return {
     messages,
     isLoading: query.isLoading,
-    isFetching: query.isFetching,
+    isFetching: query.isFetching || isPollingNewestPage,
     isFetchingPreviousPage: query.isFetchingNextPage,
     isFetchingNextPage: false,
     hasPreviousPage: query.hasNextPage ?? false,

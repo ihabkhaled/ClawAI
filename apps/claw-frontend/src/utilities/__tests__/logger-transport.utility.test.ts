@@ -4,7 +4,9 @@ import {
   CLIENT_LOG_FLUSH_INTERVAL_MS,
   CLIENT_LOG_MAX_BATCH_EVENTS,
   CLIENT_LOG_MAX_BUFFER_EVENTS,
+  CLIENT_LOG_MAX_RETRY_ATTEMPTS,
   CLIENT_LOG_OCCURRENCES_KEY,
+  CLIENT_LOG_RETRY_BASE_MS,
 } from '@/constants';
 import { logger } from '@/utilities/logger.utility';
 
@@ -125,5 +127,46 @@ describe('logger network transport', () => {
     expect(postMock).not.toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+
+  it('retries a failed batch with backoff instead of dropping it (ADR-089 revisit)', async () => {
+    // ADR-089 shipped `.catch(() => {})`: one dropped request lost the whole
+    // batch permanently, regardless of overall telemetry volume. Failing
+    // twice then succeeding must still land the events, not lose them.
+    postMock
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({});
+
+    logger.error({ component: 'Chat', action: 'send', message: 'worth keeping' });
+
+    await vi.advanceTimersByTimeAsync(CLIENT_LOG_FLUSH_INTERVAL_MS);
+    expect(postMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(CLIENT_LOG_RETRY_BASE_MS);
+    expect(postMock).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(CLIENT_LOG_RETRY_BASE_MS * 2);
+    expect(postMock).toHaveBeenCalledTimes(3);
+    expect(batchesSent()[2]?.events[0]?.message).toBe('worth keeping');
+  });
+
+  it('gives up after the retry ceiling rather than retrying forever', async () => {
+    postMock.mockRejectedValue(new Error('network down'));
+
+    logger.error({ component: 'Chat', action: 'send', message: 'unlucky' });
+
+    await vi.advanceTimersByTimeAsync(CLIENT_LOG_FLUSH_INTERVAL_MS);
+    for (let attempt = 0; attempt < CLIENT_LOG_MAX_RETRY_ATTEMPTS; attempt += 1) {
+      await vi.advanceTimersByTimeAsync(CLIENT_LOG_RETRY_BASE_MS * Math.pow(2, attempt));
+    }
+
+    expect(postMock).toHaveBeenCalledTimes(1 + CLIENT_LOG_MAX_RETRY_ATTEMPTS);
+
+    // One more full backoff window with no further call proves it gave up
+    // rather than continuing indefinitely.
+    postMock.mockClear();
+    await vi.advanceTimersByTimeAsync(CLIENT_LOG_RETRY_BASE_MS * 100);
+    expect(postMock).not.toHaveBeenCalled();
   });
 });

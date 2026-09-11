@@ -239,3 +239,4 @@ export {
 } from './billing.utility';
 export { invalidateThreadMessages } from './invalidate-thread-messages.utility';
 export { insertSentMessageIntoCache } from './insert-sent-message-into-cache.utility';
+export { mergeLatestMessagesPageIntoCache } from './merge-latest-messages-page-into-cache.utility';
