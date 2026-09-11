@@ -195,6 +195,24 @@ injects client-side is invisible here without a rendered-DOM fetch, which does
 not exist yet. Absence in this data means "not in this markup," not "the live
 page doesn't have it."
 
+## robots.txt and sitemap.xml parsing (not yet wired to a run)
+
+`common/utilities/robots-txt.utility.ts` (`parseRobotsTxt`, `isPathAllowed`)
+and `common/utilities/sitemap.utility.ts` (`parseSitemapXml`) are pure parsers
+with no dependency, following the same hand-rolled-regex approach as the
+Bing RSS fallback in `ollama-web.adapter.ts`. `parseSitemapXml` returns
+`{kind:'urlset'|'sitemapindex'|'unrecognized', ...}` — recursing into a
+sitemap index's nested sitemaps is left to whatever fetches them, since a
+pure parser has no way to make a second HTTP call.
+
+**Scaffolding, not a feature yet**: nothing in `ResearchManager` calls either
+parser. They exist for the multi-page crawl workflow (`ResearchWorkflowKind`
+has no `CRAWL` value yet) that will fetch `robots.txt`/`sitemap.xml` through
+the existing `FetchService` — reusing its SSRF guard and cache rather than a
+second fetch path, per rule 41 item 12 — and use these to decide what to
+fetch and in what order. Gzip-compressed sitemaps are not handled by either
+parser or by `FetchService`.
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.
