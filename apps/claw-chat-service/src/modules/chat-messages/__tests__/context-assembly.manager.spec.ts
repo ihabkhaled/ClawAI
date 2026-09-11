@@ -280,14 +280,19 @@ describe('ContextAssemblyManager', () => {
 
     const messages = manager.buildGeminiChatMessages(context);
     const userMessage = messages.find((message) => message.role === 'user');
+    const parts = userMessage?.content as Array<Record<string, unknown>>;
 
-    expect(userMessage?.content).toEqual([
-      { type: 'text', text: 'Find the latest Windows 11 24H2 issues.' },
-      {
-        type: 'image_url',
-        image_url: { url: `data:video/mp4;base64,${videoBase64}` },
-      },
-    ]);
+    // The shared fixture carries a research warning, so the grounding reminder
+    // is appended to this same turn — asserted on the START of the text rather
+    // than on equality, because the two features deliberately share the last
+    // user message.
+    expect(parts[0]?.['type']).toBe('text');
+    expect(String(parts[0]?.['text'])).toContain('Find the latest Windows 11 24H2 issues.');
+    expect(parts[1]).toEqual({
+      type: 'image_url',
+      image_url: { url: `data:video/mp4;base64,${videoBase64}` },
+    });
+    expect(parts).toHaveLength(2);
   });
 
   describe('telling the model the truth about the web', () => {
@@ -366,6 +371,71 @@ describe('ContextAssemblyManager', () => {
       const prompt = manager.buildPromptString(context);
 
       expect(prompt).toContain('No web tool reported completing on this run.');
+    });
+  });
+
+  describe('the grounding reminder on the last user turn', () => {
+    // Measured 2026-09-11: a run with ELEVEN evidence items in the prompt, the
+    // capability statement included and `web_fetch:user_url` among the tools,
+    // still produced "I am sorry, but I cannot access external websites" from
+    // gemini-2.5-flash-lite. The pipeline was correct end to end and the answer
+    // was still wrong, because the instruction sat in front of the memories and
+    // the whole conversation while the model attends to the end.
+    it('appends the reminder to the final user message when evidence exists', () => {
+      const context = buildContext();
+      context.researchEvidence = [];
+      context.researchWarnings = [];
+      context.researchRequested = true;
+
+      const messages = manager.buildGeminiChatMessages(context);
+      const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+
+      expect(String(lastUser?.content)).toContain('already fetched for you by this platform');
+    });
+
+    it('does not touch the conversation when there is no web evidence', () => {
+      const context = buildContext();
+      context.researchEvidence = [];
+      context.researchWarnings = [];
+      context.researchRequested = false;
+
+      const messages = manager.buildGeminiChatMessages(context);
+      const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+
+      expect(String(lastUser?.content)).not.toContain('already fetched for you');
+    });
+
+    it('marks the reminder as not written by the user', () => {
+      // The model is reading it inside a user turn, so it has to be able to
+      // tell the difference between an instruction and something the person
+      // actually said.
+      const context = buildContext();
+      context.researchRequested = true;
+
+      const messages = manager.buildGeminiChatMessages(context);
+      const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+
+      expect(String(lastUser?.content)).toContain('not written by the user');
+    });
+
+    it('never appends the reminder twice', () => {
+      // A message replayed into a later turn must not accumulate copies.
+      const context = buildContext();
+      context.researchRequested = true;
+      const messages = manager.buildGeminiChatMessages(context);
+      const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+      const content = String(lastUser?.content);
+
+      expect(content.split('already fetched for you by this platform')).toHaveLength(2);
+    });
+
+    it('reaches the single-string prompt too, not only provider messages', () => {
+      const context = buildContext();
+      context.researchRequested = true;
+
+      expect(manager.buildPromptString(context)).toContain(
+        'already fetched for you by this platform',
+      );
     });
   });
 });

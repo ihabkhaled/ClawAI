@@ -87,7 +87,27 @@ from the missing capability statement, and neither knew about the other.**
     detect URLs from all of it, and clamp only the derived query, with a
     warning.
 
-11. **Never weaken the fetch security boundary to make more sites work.**
+11. **Say it again where the model is looking.** A correct pipeline is not a
+    correct answer. Measured 2026-09-11: a run with **eleven evidence items in
+    the prompt**, the capability statement present and `web_fetch:user_url`
+    among the tools, still produced "I am sorry, but I cannot access external
+    websites" from `gemini-2.5-flash-lite`. Nothing was broken — the
+    instruction sat in front of the memories and the whole conversation, and a
+    small model attends to the end of the prompt, where a very strong training
+    prior about having no internet access was the loudest thing left.
+
+    `RESEARCH_GROUNDING_REMINDER` is therefore appended to the **final user
+    turn** whenever evidence or a warning exists, on both the provider-message
+    path and the single-string path. It is short, it is marked as not written
+    by the user, it is never persisted, and it is never appended twice. With
+    it, the same model on the same prompt answered from the page and cited it.
+
+    The general form: **when a model must be told something, distance from the
+    question is a bug.** Verify the behaviour, not the plumbing — `block=true`
+    in the assemble log meant the evidence was there and the answer was still
+    wrong.
+
+12. **Never weaken the fetch security boundary to make more sites work.**
     Direct fetching adds a CALLER to `FetchService`, not a second path. The SSRF
     guard, the domain policy and the cache stay where they are. A page that the
     policy refuses produces a warning; it does not produce an exception to the

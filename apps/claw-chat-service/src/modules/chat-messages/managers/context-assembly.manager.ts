@@ -10,6 +10,10 @@ import {
 import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
+  RESEARCH_GROUNDING_MARKER,
+  RESEARCH_GROUNDING_REMINDER,
+} from '../constants/research-grounding.constants';
+import {
   APPROX_CHARS_PER_TOKEN,
   PROMPT_TOPICAL_MEMORY_LIMIT,
   TOPICAL_MEMORY_OVERLAP_THRESHOLD,
@@ -147,6 +151,18 @@ export class ContextAssemblyManager {
       currentIntent: lastUserContent,
       retrievalMs,
     });
+
+    // The one line that answers "why did the model say it can't browse?".
+    // A research run can complete, persist a bundle and still contribute
+    // nothing to the prompt — the run and the prompt are assembled in
+    // different places, and until this existed the only way to tell them apart
+    // was to reason about it.
+    this.logger.log(
+      `assemble: research evidence=${String(researchEvidence.length)} ` +
+        `warnings=${String(researchWarnings.length)} requested=${String(researchRequested)} ` +
+        `tools=[${researchToolsUsed.join(',')}] ` +
+        `block=${String(researchRequested || researchEvidence.length > 0 || researchWarnings.length > 0)}`,
+    );
 
     return {
       userId,
@@ -432,7 +448,7 @@ ${evidence.snippet}`);
     }
     parts.push(
       ...this.formatFileBlocks(context.fileContents),
-      ...this.formatMessageLines(relevantMessages),
+      ...this.formatMessageLines(relevantMessages, this.hasResearchGrounding(context)),
     );
     const crossThreadBlock = this.formatCrossThreadBlock(context);
     if (crossThreadBlock) parts.push(crossThreadBlock);
@@ -456,8 +472,30 @@ ${evidence.snippet}`);
     );
   }
 
-  private formatMessageLines(messages: AssembledContext['threadMessages']): string[] {
-    return messages.map((message) => `${this.mapRole(message).toUpperCase()}: ${message.content}`);
+  /**
+   * The conversation as prompt lines.
+   *
+   * `grounded` appends the research reminder to the final USER line for the
+   * same reason the provider-message path does: a single-string prompt puts
+   * the system instructions furthest from the question, which is where a small
+   * model looks least.
+   */
+  private formatMessageLines(
+    messages: AssembledContext['threadMessages'],
+    grounded = false,
+  ): string[] {
+    const lastUserIndex = messages.reduce(
+      (found, message, index) => (this.mapRole(message) === 'user' ? index : found),
+      -1,
+    );
+    return messages.map((message, index) => {
+      const role = this.mapRole(message).toUpperCase();
+      const content =
+        grounded && index === lastUserIndex
+          ? this.withResearchGrounding(message.content)
+          : message.content;
+      return `${role}: ${content}`;
+    });
   }
 
   private formatWorkspaceCitations(
@@ -539,6 +577,36 @@ ${evidence.snippet}`);
     return this.buildProviderChatMessages(context, true);
   }
 
+  /**
+   * Whether this turn has web evidence the model is meant to answer from.
+   *
+   * Evidence OR a warning: a run that fetched nothing still produced a
+   * statement the model has to honour rather than talk over.
+   */
+  private hasResearchGrounding(context: AssembledContext): boolean {
+    return (
+      context.researchRequested ||
+      context.researchEvidence.length > 0 ||
+      context.researchWarnings.length > 0
+    );
+  }
+
+  /**
+   * The last user turn, with the grounding reminder appended.
+   *
+   * Repetition on purpose, and only where it pays: the same instruction is
+   * already in the system message, and a small model reading twenty turns of
+   * history does not carry it that far. See
+   * `research-grounding.constants.ts` for the measurement that forced this.
+   */
+  private withResearchGrounding(content: string): string {
+    if (content.includes(RESEARCH_GROUNDING_MARKER)) {
+      return content;
+    }
+    return `${content}
+${RESEARCH_GROUNDING_REMINDER}`;
+  }
+
   private buildProviderChatMessages(
     context: AssembledContext,
     includeVideo: boolean,
@@ -562,13 +630,19 @@ ${evidence.snippet}`);
     const mediaFiles = context.fileContents.filter(
       (file) => this.isImageFile(file) || (includeVideo && this.isVideoFile(file)),
     );
+    const grounded = this.hasResearchGrounding(context);
     for (const msg of relevantMessages) {
       const role = this.mapRole(msg);
       const isLastUser = role === 'user' && msg === relevantMessages.at(-1);
+      // The reminder rides on the final user turn, which is the part of the
+      // prompt a model attends to most. Never persisted — this is assembled
+      // per request, so the stored message stays exactly what the user typed.
+      const content =
+        isLastUser && grounded ? this.withResearchGrounding(msg.content) : msg.content;
       if (isLastUser && mediaFiles.length > 0) {
-        messages.push({ role, content: this.buildMultimodalUserParts(msg.content, mediaFiles) });
+        messages.push({ role, content: this.buildMultimodalUserParts(content, mediaFiles) });
       } else {
-        messages.push({ role, content: msg.content });
+        messages.push({ role, content });
       }
     }
     return messages;
