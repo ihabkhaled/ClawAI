@@ -5,6 +5,7 @@ import { ScrapeModule } from '../scrape/scrape.module';
 import { SearchModule } from '../search/search.module';
 import { ResearchController } from './controllers/research.controller';
 import { ResearchManager } from './managers/research.manager';
+import { SiteAuditManager } from './managers/site-audit.manager';
 import { SiteCrawlManager } from './managers/site-crawl.manager';
 import { ResearchRunRepository } from './repositories/research-run.repository';
 import { ResearchService } from './services/research.service';
@@ -12,7 +13,13 @@ import { ResearchService } from './services/research.service';
 @Module({
   imports: [SearchModule, FetchModule, ScrapeModule],
   controllers: [ResearchController],
-  providers: [ResearchRunRepository, ResearchManager, SiteCrawlManager, ResearchService],
+  providers: [
+    ResearchRunRepository,
+    ResearchManager,
+    SiteCrawlManager,
+    SiteAuditManager,
+    ResearchService,
+  ],
   exports: [ResearchManager, ResearchService],
 })
 export class ResearchModule {}

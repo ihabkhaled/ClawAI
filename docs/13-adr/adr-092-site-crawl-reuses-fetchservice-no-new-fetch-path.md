@@ -100,6 +100,28 @@ advertised is checked, matching the same "advertised, not guessed" posture
 sitemap discovery already has via `robots.txt`'s `Sitemap:` directive before
 falling back to a conventional path.
 
+## Amendment: confidence-scored audit findings (2026-09-11, same day)
+
+`SiteAuditManager` (`modules/research/managers/site-audit.manager.ts`) turns a
+completed crawl's evidence into `AuditFinding[]` — claims ABOUT the site,
+distinct from `EvidenceItem`s (pages handed to the model). Four checks for
+v1: missing meta description, missing canonical, a canonical pointing away
+from the fetched URL, and pages sharing an identical title. Each finding
+carries a `FindingConfidence` (CONFIRMED/HIGH/MEDIUM/LOW/UNVERIFIED — see the
+enum's own doc comment) and the exact `evidenceItemIds` it was computed from.
+
+Computed from `bundle.items` — the FINAL, deduped, truncated list — never
+from the pre-bundle array, specifically so a finding can never cite an id
+that got trimmed out of the bundle it lives in. Attached to
+`EvidenceBundle.auditFindings`, an optional field, and only set (not left as
+an empty array) when there is at least one finding.
+
+Deliberately a small, fixed set of checks, not a general SEO rule engine —
+see `SiteAuditManager`'s own doc comment. Every "missing X" finding carries
+`FindingConfidence.HIGH`, not `CONFIRMED`, plus a stated limitation: the
+check only proves the tag is absent from the fetched HTML, not from what a
+browser would render, per rule 41 item 13.
+
 ## Revisit when
 
 - An intent classifier is built that auto-selects `SITE_CRAWL` from message

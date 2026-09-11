@@ -235,6 +235,16 @@ fallback for a missing one. A site with no autodiscovery tag is not probed
 at conventional feed paths (`/feed`, `/rss.xml`, …) — only what the page
 itself advertised is checked.
 
+**Confidence-scored findings.** `SiteAuditManager` turns a completed crawl's
+pages into `AuditFinding[]` — claims about the site, not pages handed to the
+model. Four checks for v1: missing meta description, missing canonical, a
+self-canonical mismatch, and duplicate titles across crawled pages. Each
+finding carries a `FindingConfidence` (`common/enums/finding-confidence.enum.ts`)
+and the exact evidence item ids it was computed from. Attached to
+`EvidenceBundle.auditFindings`, computed from the bundle's own final,
+deduped/truncated `items` so a finding can never cite an id that was trimmed
+out. Full design: [ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

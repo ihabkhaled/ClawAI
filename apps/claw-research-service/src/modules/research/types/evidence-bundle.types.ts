@@ -1,5 +1,6 @@
 import type { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
+import type { AuditFinding } from './audit-finding.types';
 
 /** Single citation unit that gets passed to the final answering model. */
 export type EvidenceItem = {
@@ -56,6 +57,14 @@ export type EvidenceBundle = {
   generatedAt: string;
   /** "detailed" keeps full snippets, "compressed" trims to ~200 chars each. */
   mode: 'detailed' | 'compressed';
+  /**
+   * Confidence-scored observations computed from `items` — currently only
+   * populated for `SITE_CRAWL` by `SiteAuditManager`. Every id in a
+   * finding's `evidenceItemIds` refers to an id in this bundle's own
+   * `items`, computed AFTER truncation/dedup so a finding never cites an
+   * item that was trimmed out of the bundle it lives in.
+   */
+  auditFindings?: AuditFinding[];
 };
 
 export type BuildEvidenceInput = {

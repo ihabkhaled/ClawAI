@@ -2,6 +2,7 @@ import { ProviderSelectionMode } from '../../../../common/enums/provider-selecti
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { ResearchManager } from '../research.manager';
+import type { SiteAuditManager } from '../site-audit.manager';
 import type { SiteCrawlManager } from '../site-crawl.manager';
 import type { FetchService } from '../../../fetch/services/fetch.service';
 import type { SearchExecutionService } from '../../../search/services/search-execution.service';
@@ -28,6 +29,7 @@ describe('ResearchManager', () => {
   let manager: ResearchManager;
   let researchUsage: { record: jest.Mock };
   let siteCrawlManager: { crawl: jest.Mock };
+  let siteAuditManager: { analyze: jest.Mock };
 
   beforeEach(() => {
     runs = {
@@ -84,6 +86,7 @@ describe('ResearchManager', () => {
     };
     researchUsage = { record: jest.fn(async () => {}) };
     siteCrawlManager = { crawl: jest.fn(async () => []) };
+    siteAuditManager = { analyze: jest.fn(() => []) };
 
     manager = new ResearchManager(
       runs as unknown as ResearchRunRepository,
@@ -92,6 +95,7 @@ describe('ResearchManager', () => {
       scrapeService as unknown as ScrapeService,
       researchUsage as unknown as ResearchUsageService,
       siteCrawlManager as unknown as SiteCrawlManager,
+      siteAuditManager as unknown as SiteAuditManager,
     );
   });
 
@@ -315,7 +319,11 @@ describe('ResearchManager', () => {
   });
 
   describe('SITE_CRAWL workflow', () => {
-    function lastBundle(): { items?: Array<{ url?: string }>; warnings?: string[] } {
+    function lastBundle(): {
+      items?: Array<{ url?: string; id?: string }>;
+      warnings?: string[];
+      auditFindings?: unknown[];
+    } {
       const payload = runs.update.mock.calls.at(-1)?.[1] as { bundle?: never };
       return (payload.bundle ?? {}) as never;
     }
@@ -361,6 +369,53 @@ describe('ResearchManager', () => {
 
       expect(siteCrawlManager.crawl).not.toHaveBeenCalled();
       expect(lastBundle().warnings?.some((w) => w.includes('no URL to crawl'))).toBe(true);
+    });
+
+    it('attaches SiteAuditManager findings computed from the FINAL bundle items', async () => {
+      const crawledItem = {
+        id: 'c1',
+        title: 'Home',
+        url: 'https://example.com/',
+        snippet: 'content',
+        source: 'fetch' as const,
+        providerKind: null,
+        publishedAt: null,
+        fetchedAt: null,
+        confidence: 0.95,
+      };
+      siteCrawlManager.crawl.mockResolvedValue([crawledItem]);
+      siteAuditManager.analyze.mockReturnValue([
+        {
+          category: 'meta-description',
+          claim: '1 of 1 crawled page(s) have no description.',
+          confidence: 'HIGH',
+          evidenceItemIds: ['c1'],
+          limitations: [],
+        },
+      ]);
+
+      await manager.run('u1', {
+        intent: 'crawl https://example.com/',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+      });
+
+      // Called with the bundle's OWN items array (post-dedup/truncation),
+      // not the raw pre-bundle array, so a finding can never cite an id
+      // that was trimmed out of the bundle it lives in.
+      expect(siteAuditManager.analyze).toHaveBeenCalledWith(lastBundle().items);
+      expect(lastBundle().auditFindings).toHaveLength(1);
+    });
+
+    it('omits auditFindings entirely when SiteAuditManager finds nothing', async () => {
+      siteCrawlManager.crawl.mockResolvedValue([]);
+      siteAuditManager.analyze.mockReturnValue([]);
+
+      await manager.run('u1', {
+        intent: 'crawl https://example.com/',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+      });
+
+      expect(lastBundle().auditFindings).toBeUndefined();
     });
   });
 });

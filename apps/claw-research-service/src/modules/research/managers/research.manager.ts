@@ -15,6 +15,7 @@ import { SearchExecutionService } from '../../search/services/search-execution.s
 import { ResearchRunRepository } from '../repositories/research-run.repository';
 import { ResearchUsageService } from '../../../common/services/research-usage.service';
 import { buildEvidenceBundle, traceEntry } from '../utilities/evidence-builder.utility';
+import { SiteAuditManager } from './site-audit.manager';
 import { SiteCrawlManager } from './site-crawl.manager';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
 import type { Prisma, ResearchRun } from '../../../generated/prisma';
@@ -37,6 +38,7 @@ export class ResearchManager {
     private readonly scrapeService: ScrapeService,
     private readonly researchUsage: ResearchUsageService,
     private readonly siteCrawlManager: SiteCrawlManager,
+    private readonly siteAuditManager: SiteAuditManager,
   ) {}
 
   async run(userId: string, dto: ExecuteResearchDto): Promise<ResearchRun> {
@@ -173,7 +175,15 @@ export class ResearchManager {
       warnings,
       toolsUsed,
     );
-    return this.completeRun(runId, bundle, trace);
+    // Computed from `bundle.items`, AFTER truncation/dedup — never from the
+    // pre-bundle `items` array, so a finding can never cite an id that was
+    // trimmed out of the bundle it ends up living in.
+    const auditFindings = this.siteAuditManager.analyze(bundle.items);
+    return this.completeRun(
+      runId,
+      auditFindings.length > 0 ? { ...bundle, auditFindings } : bundle,
+      trace,
+    );
   }
 
   private needsFetch(workflow: ResearchWorkflowKind): boolean {
