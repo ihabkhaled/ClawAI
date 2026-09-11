@@ -20,6 +20,7 @@ import {
   SHORT_FOLLOW_UP_MAX_LENGTH,
 } from '../constants/follow-up-detection.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
+import { type CursorPaginatedResult } from '../types/chat-messages.types';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ContextReceiptService } from '../../context-receipts/services/context-receipt.service';
 import { receiptFromAssembledContext } from '../../../common/utilities/receipt-from-context.utility';
@@ -83,7 +84,6 @@ import { type VerifyMessageDto } from '../dto/verify-message.dto';
 import { type PipelineMessageDto } from '../dto/pipeline-message.dto';
 import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { type PaginatedResult } from '../../../common/types';
 import {
   type ChatMessage,
   type ChatThread,
@@ -652,9 +652,9 @@ export class ChatMessagesService implements OnModuleInit {
     threadId: string,
     userId: string,
     query: ListMessagesQueryDto,
-  ): Promise<PaginatedResult<ChatMessage>> {
+  ): Promise<CursorPaginatedResult<ChatMessage>> {
     this.logger.debug(
-      `getMessages: fetching thread ${threadId} page=${String(query.page)} limit=${String(query.limit)}`,
+      `getMessages: fetching thread ${threadId} before=${query.before ?? '(newest)'} limit=${String(query.limit)}`,
     );
     const thread = await this.chatThreadsRepository.findById(threadId);
     if (!thread) {
@@ -663,7 +663,7 @@ export class ChatMessagesService implements OnModuleInit {
     this.validateOwnership(thread, userId);
 
     const [messages, total] = await Promise.all([
-      this.chatMessagesRepository.findByThreadId(threadId, query.page, query.limit),
+      this.chatMessagesRepository.findByThreadId(threadId, query.before, query.limit),
       this.chatMessagesRepository.countByThreadId(threadId),
     ]);
 
@@ -671,14 +671,15 @@ export class ChatMessagesService implements OnModuleInit {
       `getMessages: returned ${String(messages.length)} of ${String(total)} messages for thread ${threadId}`,
     );
 
+    // A full page might still be the last one — the only way to know for
+    // certain is that the NEXT fetch with this cursor returns nothing. A
+    // short page (or none) is certain: there is nothing older left.
+    const oldest = messages.at(-1);
+    const nextBefore = messages.length === query.limit && oldest ? oldest.id : null;
+
     return {
       data: messages,
-      meta: {
-        total,
-        page: query.page,
-        limit: query.limit,
-        totalPages: Math.ceil(total / query.limit),
-      },
+      meta: { total, limit: query.limit, nextBefore },
     };
   }
 

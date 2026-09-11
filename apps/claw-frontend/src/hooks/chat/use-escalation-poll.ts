@@ -34,7 +34,11 @@ export function useEscalationPoll(threadId: string | null): UseEscalationPollRes
       if (pollCountRef.current >= MAX_ESCALATION_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, ESCALATION_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        ESCALATION_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? ESCALATION_POLL_INTERVAL_MS : false,

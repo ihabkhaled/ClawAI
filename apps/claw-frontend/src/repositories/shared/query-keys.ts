@@ -33,6 +33,11 @@ export const queryKeys = {
     lists: () => [...queryKeys.threads.all, 'list'] as const,
     list: (filters: Record<string, unknown>) => [...queryKeys.threads.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.threads.all, 'detail', id] as const,
+    // `page` is an opaque cache-slot tag, not a server page number — the
+    // messages endpoint takes a cursor (`before`), not a page. The nine
+    // orchestration poll hooks all pass `1` here purely to give each one its
+    // own isolated single-fetch cache entry, separate from the infinite list
+    // below; none of them forward this value to the request itself.
     messages: (threadId: string, page?: number) =>
       [...queryKeys.threads.all, 'messages', threadId, page] as const,
     messagesInfinite: (threadId: string) =>

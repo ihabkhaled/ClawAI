@@ -19,7 +19,9 @@ import type { ChatMessage, MessagesListResponse } from '@/types';
  * racing the very first load) is left alone — `old` stays `undefined` and the
  * eventual real fetch populates it normally; fabricating a one-page cache
  * shape here would risk it disagreeing with what the server actually returns
- * for `meta.limit`/`totalPages`.
+ * for `meta.limit`. `meta.nextBefore` (the cursor to the next OLDER page) is
+ * untouched by prepending a newer message — it still points at whatever the
+ * oldest message in this page already was.
  */
 export function insertSentMessageIntoCache(
   queryClient: QueryClient,
@@ -41,14 +43,9 @@ export function insertSentMessageIntoCache(
       if (newestPage.data.some((existing) => existing.id === message.id)) {
         return old;
       }
-      const total = newestPage.meta.total + 1;
       const updatedNewestPage: MessagesListResponse = {
         data: [message, ...newestPage.data],
-        meta: {
-          ...newestPage.meta,
-          total,
-          totalPages: Math.ceil(total / newestPage.meta.limit),
-        },
+        meta: { ...newestPage.meta, total: newestPage.meta.total + 1 },
       };
       return {
         ...old,

@@ -453,16 +453,19 @@ Send a message and trigger AI response generation.
 
 **Auth Required:** Yes
 
-List messages in a thread (paginated). Must own the thread.
+List messages in a thread (cursor-paginated, newest first). Must own the
+thread.
 
 **Query Parameters:**
 
-| Param | Type   | Default | Description    |
-| ----- | ------ | ------- | -------------- |
-| page  | number | 1       | Page number    |
-| limit | number | 20      | Items per page |
+| Param  | Type   | Default | Description                                                                                     |
+| ------ | ------ | ------- | ----------------------------------------------------------------------------------------------- |
+| before | string | —       | A message id already seen; fetches the page older than it. Omitted returns the newest messages. |
+| limit  | number | 50      | Items per page (max 100)                                                                        |
 
-**Response (200):** Paginated list of ChatMessage objects.
+**Response (200):** `{ data: ChatMessage[], meta: { total, limit, nextBefore } }`.
+`nextBefore` is the cursor for the next older page, or `null` when nothing
+older is left.
 
 ---
 

@@ -32,7 +32,11 @@ export function useBestOfNPoll(threadId: string | null): UseBestOfNPollResult {
       if (pollCountRef.current >= MAX_BEST_OF_N_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, BEST_OF_N_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        BEST_OF_N_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? BEST_OF_N_POLL_INTERVAL_MS : false,

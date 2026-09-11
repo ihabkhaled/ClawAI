@@ -23,6 +23,7 @@ import { type RolePackMessageDto, rolePackMessageSchema } from '../dto/role-pack
 import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
 import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
 import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
+import { type CursorPaginatedResult } from '../types/chat-messages.types';
 import {
   type SearchMessagesQueryDto,
   searchMessagesQuerySchema,
@@ -30,7 +31,7 @@ import {
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { SetFeedbackDto, setFeedbackSchema } from '../dto/set-feedback.dto';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
-import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
+import { type AuthenticatedUser } from '../../../common/types';
 import { type ConsensusResponse } from '../types/consensus.types';
 import { type EscalationChainResponse } from '../types/escalation-chain.types';
 import { type AnswerRepairResponse } from '../types/answer-repair.types';
@@ -154,7 +155,7 @@ export class ChatMessagesController {
     @Param('threadId') threadId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Query(new ZodValidationPipe(listMessagesQuerySchema)) query: ListMessagesQueryDto,
-  ): Promise<PaginatedResult<ChatMessage>> {
+  ): Promise<CursorPaginatedResult<ChatMessage>> {
     return this.chatMessagesService.getMessages(threadId, user.id, query);
   }
 

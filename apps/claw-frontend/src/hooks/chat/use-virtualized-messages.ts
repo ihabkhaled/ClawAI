@@ -31,16 +31,13 @@ export function useVirtualizedMessages(
       logger.debug({
         component: 'chat',
         action: 'fetch-messages-page',
-        message: `Fetching messages page ${String(pageParam)}`,
-        details: { threadId, page: pageParam },
+        message: `Fetching messages before ${pageParam ?? '(newest)'}`,
+        details: { threadId, before: pageParam },
       });
       return chatRepository.getMessagesPaginated(threadId, pageParam, MESSAGES_PAGE_SIZE, signal);
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      const { page, totalPages } = lastPage.meta;
-      return page < totalPages ? page + 1 : undefined;
-    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.meta.nextBefore ?? undefined,
     enabled: !!threadId,
     // The awaiting-response poll is NOT wired to `refetchInterval`. TanStack
     // Query refetches every currently loaded page in sequence on each
@@ -74,7 +71,7 @@ export function useVirtualizedMessages(
       try {
         const freshPage = await chatRepository.getMessagesPaginated(
           threadId,
-          1,
+          undefined,
           MESSAGES_PAGE_SIZE,
           controller.signal,
         );
@@ -110,12 +107,12 @@ export function useVirtualizedMessages(
       return [];
     }
     const flat: ChatMessage[] = [];
-    // Offset pagination shifts its window when rows are appended between two
-    // page fetches, so the same message can legitimately arrive in both the
-    // page that used to end with it and the page that now starts with it.
-    // Deduping by id keeps the visible symptom (a message rendered twice) from
-    // reaching the screen; it does not recover a row a shifted window skipped
-    // entirely, which needs cursor pagination to close for good.
+    // Cursor pagination means a fetched page's boundary is a specific
+    // message's id, not a numeric offset that shifts when a row is appended
+    // between two requests — so this should no longer be reachable. Kept as
+    // defense-in-depth: it is a few cycles per render against a class of bug
+    // (a duplicate id reaching the rendered list) that cost real debugging
+    // time before the cursor migration closed its root cause.
     const seenIds = new Set<string>();
     // Iterate pages in reverse (oldest page last in array → first in output)
     for (let i = query.data.pages.length - 1; i >= 0; i--) {

@@ -12,6 +12,7 @@ Create a new chat thread.
 
 **Auth**: Bearer token
 **Request Body**:
+
 ```json
 {
   "title": "My Chat",
@@ -24,9 +25,11 @@ Create a new chat thread.
   "contextPackIds": ["clxyz..."]
 }
 ```
+
 All fields are optional.
 
 **Response 201**:
+
 ```json
 {
   "id": "clxyz...",
@@ -49,6 +52,7 @@ All fields are optional.
 ```
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/chat-threads \
   -H "Authorization: Bearer $TOKEN" \
@@ -64,11 +68,13 @@ List the current user's threads with message counts.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `search` (string) — search by title
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -106,6 +112,7 @@ Update a thread.
 
 **Auth**: Bearer token (must own thread)
 **Request Body**: Any combination of:
+
 ```json
 {
   "title": "New Title",
@@ -142,6 +149,7 @@ Send a user message. Triggers routing and AI response.
 
 **Auth**: Bearer token
 **Request Body**:
+
 ```json
 {
   "threadId": "clxyz...",
@@ -151,6 +159,7 @@ Send a user message. Triggers routing and AI response.
 ```
 
 **Response 201**: The created USER message
+
 ```json
 {
   "id": "clmsg...",
@@ -164,6 +173,7 @@ Send a user message. Triggers routing and AI response.
 ```
 
 **Side effects**: Publishes `message.created` event which triggers:
+
 1. Routing decision
 2. AI provider call
 3. ASSISTANT message creation
@@ -173,14 +183,20 @@ Send a user message. Triggers routing and AI response.
 
 ### GET /chat-messages/thread/:threadId
 
-List messages in a thread (paginated, newest first).
+List messages in a thread (cursor-paginated, newest first). Cursor rather than
+offset: an offset window shifts whenever a message is appended between two
+requests, duplicating or dropping rows in a client that merges pages — a
+cursor anchored to a specific message's id has no such window.
 
 **Auth**: Bearer token (must own thread)
 **Query Parameters**:
-- `page` (int, default: 1)
-- `limit` (int, default: 20, max: 100)
+
+- `before` (string, optional) — a message id already seen; fetches the page
+  older than it. Omitted, returns the newest messages.
+- `limit` (int, default: 50, max: 100)
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -210,9 +226,14 @@ List messages in a thread (paginated, newest first).
       "createdAt": "2026-04-11T10:00:00.000Z"
     }
   ],
-  "meta": { "page": 1, "limit": 20, "total": 2, "totalPages": 1 }
+  "meta": { "limit": 20, "total": 2, "nextBefore": null }
 }
 ```
+
+`nextBefore` is the id to pass back as `before` for the next older page;
+`null` means nothing older is left. A full page (`data.length === limit`)
+still might be the last one — the only way to know for certain is that the
+next fetch with that cursor comes back empty.
 
 ---
 
@@ -240,9 +261,11 @@ Set feedback on a message (thumbs up/down).
 
 **Auth**: Bearer token (must own thread)
 **Request Body**:
+
 ```json
 { "feedback": "positive" }
 ```
+
 **Response 200**: Updated ChatMessage
 
 ---
@@ -257,6 +280,7 @@ Server-Sent Events stream for real-time message updates.
 **Response**: SSE event stream
 
 **Events emitted**:
+
 ```
 data: {"threadId":"clxyz...","type":"completion","message":{...}}
 
@@ -275,6 +299,7 @@ Send a single prompt to 2-5 models simultaneously. All models receive the same a
 
 **Auth**: Bearer token (must own thread)
 **Request Body**:
+
 ```json
 {
   "threadId": "clxyz...",
@@ -288,14 +313,15 @@ Send a single prompt to 2-5 models simultaneously. All models receive the same a
 }
 ```
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `threadId` | string | Yes | Thread to attach messages to |
-| `content` | string | Yes | User prompt (max 10,000 chars) |
-| `models` | array of {provider, model} | Yes | 2-5 provider/model pairs |
-| `fileIds` | string[] | No | Optional file attachments |
+| Field      | Type                       | Required | Description                    |
+| ---------- | -------------------------- | -------- | ------------------------------ |
+| `threadId` | string                     | Yes      | Thread to attach messages to   |
+| `content`  | string                     | Yes      | User prompt (max 10,000 chars) |
+| `models`   | array of {provider, model} | Yes      | 2-5 provider/model pairs       |
+| `fileIds`  | string[]                   | No       | Optional file attachments      |
 
 **Response 200**:
+
 ```json
 {
   "threadId": "clxyz...",
@@ -336,11 +362,13 @@ Send a single prompt to 2-5 models simultaneously. All models receive the same a
 ```
 
 **Errors**:
+
 - `400 VALIDATION_ERROR` -- fewer than 2 or more than 5 models, empty content
 - `403 FORBIDDEN` -- user does not own the thread
 - `404 ENTITY_NOT_FOUND` -- thread not found
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/chat-messages/parallel \
   -H "Authorization: Bearer $TOKEN" \
@@ -356,6 +384,7 @@ curl -X POST http://localhost:4000/api/v1/chat-messages/parallel \
 ```
 
 ---
+
 ```javascript
 const response = await fetch(url, {
   headers: { Authorization: `Bearer ${token}` },
@@ -364,6 +393,7 @@ const reader = response.body.getReader();
 ```
 
 **curl**:
+
 ```bash
 curl -N http://localhost:4000/api/v1/chat-messages/stream/clxyz... \
   -H "Authorization: Bearer $TOKEN"

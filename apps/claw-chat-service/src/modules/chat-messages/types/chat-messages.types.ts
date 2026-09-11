@@ -19,3 +19,18 @@ export type CreateMessageData = {
 export type MessageFilters = {
   threadId: string;
 };
+
+/**
+ * Keyset (cursor) pagination result for the messages list, distinct from the
+ * shared `PaginatedResult` (page/totalPages) that chat-threads and other
+ * modules still use. `nextBefore` is the id to pass back as `before` to fetch
+ * the next older page; `null` means there is nothing older left.
+ */
+export type CursorPaginatedResult<T> = {
+  data: T[];
+  meta: {
+    total: number;
+    limit: number;
+    nextBefore: string | null;
+  };
+};

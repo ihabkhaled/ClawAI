@@ -34,11 +34,20 @@ export class ChatMessagesRepository {
     return this.prisma.chatMessage.findUnique({ where: { id } });
   }
 
-  async findByThreadId(threadId: string, page: number, limit: number): Promise<ChatMessage[]> {
-    const skip = (page - 1) * limit;
+  /**
+   * `before`, when given, is the id of a message already seen — Prisma's
+   * native cursor pagination (`cursor: { id }, skip: 1`) locates that row
+   * within the `orderBy` order and returns what comes after it, rather than
+   * an offset that shifts when a row is inserted ahead of it.
+   */
+  async findByThreadId(
+    threadId: string,
+    before: string | undefined,
+    limit: number,
+  ): Promise<ChatMessage[]> {
     return this.prisma.chatMessage.findMany({
       where: { threadId },
-      skip,
+      ...(before === undefined ? {} : { cursor: { id: before }, skip: 1 }),
       take: limit,
       orderBy: { createdAt: 'desc' },
     });

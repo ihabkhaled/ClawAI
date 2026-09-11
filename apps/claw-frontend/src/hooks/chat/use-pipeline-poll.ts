@@ -32,7 +32,11 @@ export function usePipelinePoll(threadId: string | null): UsePipelinePollResult 
       if (pollCountRef.current >= MAX_PIPELINE_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, PIPELINE_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        PIPELINE_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? PIPELINE_POLL_INTERVAL_MS : false,

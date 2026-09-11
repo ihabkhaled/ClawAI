@@ -109,15 +109,18 @@ data is stale. This rule governs the data layer between hooks and the API.
     TanStack Query does not expose a supported way to limit an infinite
     query's automatic interval refetch to a subset of its loaded pages; on a
     background tick it always refetches every page currently in the cache,
-    sequentially, from page 1 forward. `useVirtualizedMessages` polls while a
-    response is in flight, and a new message only ever lands on page 1
-    (`orderBy: createdAt desc`) — so once a thread's history had been scrolled
-    back through, each 5s tick was re-pulling every page loaded so far to
-    catch a change that could only ever appear on the first one.
+    sequentially, from the newest forward. "Page 1" below means the first
+    element of the cached `pages` array (the newest page) — the messages
+    endpoint takes a cursor (`before`), not a `page` number; fetching "page 1"
+    means calling it with no cursor at all. `useVirtualizedMessages` polls
+    while a response is in flight, and a new message only ever lands on the
+    newest page (`orderBy: createdAt desc`) — so once a thread's history had
+    been scrolled back through, each 5s tick was re-pulling every page loaded
+    so far to catch a change that could only ever appear on the first one.
 
-    The fix is a dedicated `setInterval` that fetches page 1 directly through
-    the repository and merges it into the cache with `setQueryData`
-    (`mergeLatestMessagesPageIntoCache` is the pattern), with
+    The fix is a dedicated `setInterval` that fetches the newest page directly
+    through the repository (no cursor) and merges it into the cache with
+    `setQueryData` (`mergeLatestMessagesPageIntoCache` is the pattern), with
     `refetchInterval: false` on the query itself. This is **not** the
     prohibited pattern below — that one bans a `setInterval` that
     **invalidates** a query, creating two drivers racing each other. This is a
@@ -130,6 +133,24 @@ data is stale. This rule governs the data layer between hooks and the API.
     messages list, since it only grows — and drop a response reporting a lower
     value than what is already cached instead of letting a stale response
     overwrite fresher data.
+
+13. **Prefer a cursor over an offset for any list a client paginates while the
+    underlying rows can grow.** `chat-messages`'s list endpoint used
+    `skip = (page-1)*limit` over `orderBy createdAt desc`: inserting a row
+    between two page fetches shifts what "page 2" means, so the message that
+    used to end page 1 becomes the message that starts page 2 — a client
+    holding both duplicates it, or drops it if only page 2 is re-fetched. A
+    cursor keyed to a specific row's id (`before`, matched with Prisma's
+    native `cursor: { id }, skip: 1`) has no such window: "everything before
+    this exact row" means the same thing regardless of what gets inserted
+    above it. This is why the messages endpoint takes `before`, not `page` —
+    see [B8 in the chat-pipeline audit](../docs/14-risk-debt/chat-pipeline-audit-2026-09.md)
+    for the incident this closed. The same drift is theoretically possible on
+    any offset-paginated, growable list — `chat-threads` is left offset-
+    paginated for now because nothing drives a concurrent multi-page refetch
+    against it the way the awaiting-response poll did against messages, not
+    because the underlying mechanism can't occur there. Revisit it the same
+    way if that ever changes.
 
 ## Prohibited patterns
 
@@ -169,12 +190,13 @@ export function useThreads() {
 
 ## Enforcement
 
-| Mechanism     | What it checks                                                                                                                                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Unit test** | `src/utilities/__tests__/insert-sent-message-into-cache.utility.test.ts` — prepends to page 1, recomputes `total`/`totalPages`, leaves other pages untouched, no-ops on an empty cache, and is idempotent. |
-| **Unit test** | `src/hooks/chat/__tests__/use-send-message.test.tsx` — a successful send writes to the cache and does NOT invalidate `messagesInfinite`, while still invalidating `messagesAnyPage` for the poll hooks.    |
-| **Unit test** | `src/utilities/__tests__/merge-latest-messages-page-into-cache.utility.test.ts` — replaces only page 1, drops a response reporting a lower `meta.total` than what is cached, no-ops on an empty cache.     |
-| **Unit test** | `src/hooks/chat/__tests__/use-virtualized-messages.test.tsx` — the awaiting-response poll fetches page 1 only (never every loaded page), does not run while idle, and folds into `isFetching`.             |
+| Mechanism     | What it checks                                                                                                                                                                                                                                                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit test** | `src/utilities/__tests__/insert-sent-message-into-cache.utility.test.ts` — prepends to the newest page, increments `total` while leaving the pagination cursor (`nextBefore`) untouched, leaves other pages untouched, no-ops on an empty cache, and is idempotent.                                                                          |
+| **Unit test** | `src/hooks/chat/__tests__/use-send-message.test.tsx` — a successful send writes to the cache and does NOT invalidate `messagesInfinite`, while still invalidating `messagesAnyPage` for the poll hooks.                                                                                                                                      |
+| **Unit test** | `src/utilities/__tests__/merge-latest-messages-page-into-cache.utility.test.ts` — replaces only the newest page, drops a response reporting a lower `meta.total` than what is cached, no-ops on an empty cache.                                                                                                                              |
+| **Unit test** | `src/hooks/chat/__tests__/use-virtualized-messages.test.tsx` — the awaiting-response poll fetches the newest page only, with no cursor (never every loaded page), does not run while idle, folds into `isFetching`, dedupes a message id reaching two pages, and requests the next older page using the previous page's `nextBefore` cursor. |
+| **Unit test** | `apps/claw-chat-service/src/modules/chat-messages/__tests__/chat-messages.service.spec.ts` — `getMessages` forwards `before` unchanged, sets `nextBefore` to the oldest returned message's id only on a full page, and returns `null` on a short one.                                                                                        |
 
 - **ESLint** (frontend) — restricts `useQuery`/`useMutation` outside hooks and
   bans inline constants (query keys) in hook files.

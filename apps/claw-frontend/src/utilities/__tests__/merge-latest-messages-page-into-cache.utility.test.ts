@@ -33,12 +33,14 @@ function buildPage(
 ): MessagesListResponse {
   return {
     data: messages,
-    meta: { total: messages.length, page: 1, limit: 50, totalPages: 1, ...meta },
+    meta: { total: messages.length, limit: 50, nextBefore: null, ...meta },
   };
 }
 
 function buildCache(pages: MessagesListResponse[]): InfiniteData<MessagesListResponse> {
-  return { pages, pageParams: pages.map((_page, index) => index + 1) };
+  // Cursor pagination: pageParams are message ids (or undefined for the
+  // newest page), not page numbers.
+  return { pages, pageParams: pages.map(() => undefined) };
 }
 
 function withMockClient(initial: InfiniteData<MessagesListResponse> | undefined): {
@@ -66,17 +68,16 @@ function withMockClient(initial: InfiniteData<MessagesListResponse> | undefined)
  */
 describe('mergeLatestMessagesPageIntoCache', () => {
   it('replaces only page 1, leaving older pages untouched', () => {
-    const page1 = buildPage([buildMessage({ id: 'msg-old' })], { total: 51, totalPages: 2 });
-    const page2 = buildPage([buildMessage({ id: 'msg-ancient' })], {
+    const page1 = buildPage([buildMessage({ id: 'msg-old' })], {
       total: 51,
-      page: 2,
-      totalPages: 2,
+      nextBefore: 'msg-old',
     });
+    const page2 = buildPage([buildMessage({ id: 'msg-ancient' })], { total: 51 });
     const { client, getData } = withMockClient(buildCache([page1, page2]));
 
     const freshPage1 = buildPage(
       [buildMessage({ id: 'msg-new' }), buildMessage({ id: 'msg-old' })],
-      { total: 52, totalPages: 2 },
+      { total: 52, nextBefore: 'msg-old' },
     );
     mergeLatestMessagesPageIntoCache(client, 't-1', freshPage1);
 

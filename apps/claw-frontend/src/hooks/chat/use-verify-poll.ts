@@ -32,7 +32,11 @@ export function useVerifyPoll(threadId: string | null): UseVerifyPollResult {
       if (pollCountRef.current >= MAX_VERIFIER_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, VERIFIER_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        VERIFIER_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? VERIFIER_POLL_INTERVAL_MS : false,

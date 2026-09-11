@@ -19,7 +19,7 @@ export function useConsensusPoll(threadId: string | null): UseConsensusPollResul
   const { data } = useQuery({
     queryKey: queryKeys.threads.messages(threadId ?? '', 1),
     queryFn: () =>
-      chatRepository.getMessagesPaginated(threadId ?? '', 1, CONSENSUS_POLL_MESSAGES_LIMIT),
+      chatRepository.getMessagesPaginated(threadId ?? '', undefined, CONSENSUS_POLL_MESSAGES_LIMIT),
     enabled: pollingEnabled,
     refetchInterval: CONSENSUS_POLL_INTERVAL_MS,
   });

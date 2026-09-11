@@ -34,7 +34,7 @@ export function useCostEnsemblePoll(threadId: string | null): UseCostEnsemblePol
       }
       return chatRepository.getMessagesPaginated(
         threadId ?? '',
-        1,
+        undefined,
         COST_ENSEMBLE_POLL_MESSAGES_LIMIT,
       );
     },

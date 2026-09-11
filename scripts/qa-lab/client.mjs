@@ -195,27 +195,35 @@ export async function sendMessage(threadId, content, provider, model) {
 }
 
 /** One page of a thread, NEWEST FIRST (the API orders createdAt desc, max 100). */
-export async function listMessages(threadId, limit = 100, page = 1) {
-  const res = await api('GET', `/chat-messages/thread/${threadId}?limit=${limit}&page=${page}`);
+/**
+ * `before`, when given, is the id of a message already seen — the server's
+ * cursor, not a page number. Omitted, it means "the newest messages."
+ */
+export async function listMessages(threadId, limit = 100, before = undefined) {
+  const beforeParam = before === undefined ? '' : `&before=${encodeURIComponent(before)}`;
+  const res = await api('GET', `/chat-messages/thread/${threadId}?limit=${limit}${beforeParam}`);
   if (!res.ok) return { data: [], meta: null, error: res };
   return res.body;
 }
 
-/** Whole thread, OLDEST FIRST, walking every page. */
+/** Whole thread, OLDEST FIRST, walking backward by cursor. */
 export async function listAllMessages(threadId) {
   const out = [];
-  for (let page = 1; page <= 60; page += 1) {
-    const res = await listMessages(threadId, 100, page);
+  let before;
+  // 60 iterations at limit=100 is 6,000 messages — a generous safety cap
+  // against ever looping forever on a server bug, not a real ceiling.
+  for (let i = 0; i < 60; i += 1) {
+    const res = await listMessages(threadId, 100, before);
     const rows = res.data ?? [];
     out.push(...rows);
-    const total = res.meta?.total ?? out.length;
-    if (rows.length === 0 || out.length >= total) break;
+    if (rows.length === 0 || !res.meta?.nextBefore) break;
+    before = res.meta.nextBefore;
   }
   return out.reverse();
 }
 
 export async function messageCount(threadId) {
-  const res = await listMessages(threadId, 1, 1);
+  const res = await listMessages(threadId, 1);
   return res.meta?.total ?? (res.data ?? []).length;
 }
 
@@ -227,7 +235,7 @@ export async function awaitAssistant(threadId, beforeCount, { timeoutMs = 240_00
   while (Date.now() < deadline) {
     await sleep(delay);
     delay = Math.min(delay * 1.2, 5000);
-    const page = await listMessages(threadId, 5, 1);
+    const page = await listMessages(threadId, 5);
     const rows = page.data ?? [];
     const total = page.meta?.total ?? rows.length;
     if (total > beforeCount && rows.length > 0 && rows[0].role === 'ASSISTANT') {

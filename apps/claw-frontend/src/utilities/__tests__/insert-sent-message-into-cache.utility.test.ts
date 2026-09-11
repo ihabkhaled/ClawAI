@@ -28,7 +28,9 @@ function buildMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
 }
 
 function buildCache(pages: MessagesListResponse[]): InfiniteData<MessagesListResponse> {
-  return { pages, pageParams: pages.map((_page, index) => index + 1) };
+  // Cursor pagination: pageParams are message ids (or undefined for the
+  // newest page), not page numbers.
+  return { pages, pageParams: pages.map(() => undefined) };
 }
 
 /**
@@ -59,7 +61,7 @@ describe('insertSentMessageIntoCache', () => {
   it('prepends the new message to the newest page', () => {
     const existing = buildMessage({ id: 'msg-old', content: 'earlier' });
     const { client, getData } = withMockClient(
-      buildCache([{ data: [existing], meta: { total: 1, page: 1, limit: 50, totalPages: 1 } }]),
+      buildCache([{ data: [existing], meta: { total: 1, limit: 50, nextBefore: null } }]),
     );
 
     insertSentMessageIntoCache(client, 't-1', buildMessage());
@@ -68,26 +70,28 @@ describe('insertSentMessageIntoCache', () => {
     expect(page?.data.map((m) => m.id)).toEqual(['msg-new', 'msg-old']);
   });
 
-  it('increments total and recomputes totalPages', () => {
+  it('increments total, leaving the pagination cursor untouched', () => {
     const existing = buildMessage({ id: 'msg-old' });
     const { client, getData } = withMockClient(
-      buildCache([{ data: [existing], meta: { total: 50, page: 1, limit: 50, totalPages: 1 } }]),
+      buildCache([{ data: [existing], meta: { total: 50, limit: 50, nextBefore: 'msg-old' } }]),
     );
 
     insertSentMessageIntoCache(client, 't-1', buildMessage());
 
     expect(getData()?.pages[0]?.meta.total).toBe(51);
-    expect(getData()?.pages[0]?.meta.totalPages).toBe(2);
+    // Prepending a NEWER message doesn't change the cursor to the next OLDER
+    // page — that still points at whatever the oldest message already was.
+    expect(getData()?.pages[0]?.meta.nextBefore).toBe('msg-old');
   });
 
   it('leaves older pages untouched', () => {
     const page1 = {
       data: [buildMessage({ id: 'msg-old' })],
-      meta: { total: 51, page: 1, limit: 50, totalPages: 2 },
+      meta: { total: 51, limit: 50, nextBefore: 'msg-old' },
     };
     const page2 = {
       data: [buildMessage({ id: 'msg-ancient' })],
-      meta: { total: 51, page: 2, limit: 50, totalPages: 2 },
+      meta: { total: 51, limit: 50, nextBefore: null },
     };
     const { client, getData } = withMockClient(buildCache([page1, page2]));
 
@@ -98,7 +102,7 @@ describe('insertSentMessageIntoCache', () => {
 
   it('does nothing when nothing is cached yet', () => {
     // A send racing the very first load. Fabricating a one-page shape here
-    // would risk disagreeing with the real fetch's `limit`/`totalPages`.
+    // would risk disagreeing with the real fetch's `limit`.
     const { client, getData } = withMockClient(undefined);
 
     insertSentMessageIntoCache(client, 't-1', buildMessage());
@@ -111,7 +115,7 @@ describe('insertSentMessageIntoCache', () => {
     // would otherwise leave a visible duplicate row.
     const existing = buildMessage({ id: 'msg-new', content: 'already here' });
     const { client, getData } = withMockClient(
-      buildCache([{ data: [existing], meta: { total: 1, page: 1, limit: 50, totalPages: 1 } }]),
+      buildCache([{ data: [existing], meta: { total: 1, limit: 50, nextBefore: null } }]),
     );
 
     insertSentMessageIntoCache(client, 't-1', buildMessage({ content: 'incoming duplicate' }));

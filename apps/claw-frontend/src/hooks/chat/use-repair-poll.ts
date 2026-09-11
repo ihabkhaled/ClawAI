@@ -32,7 +32,11 @@ export function useRepairPoll(threadId: string | null): UseRepairPollResult {
       if (pollCountRef.current >= MAX_REPAIR_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, REPAIR_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        REPAIR_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? REPAIR_POLL_INTERVAL_MS : false,

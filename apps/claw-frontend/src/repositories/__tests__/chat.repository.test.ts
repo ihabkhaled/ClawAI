@@ -175,7 +175,7 @@ describe('chatRepository', () => {
     it('gets /chat-messages/thread/:threadId and returns messages', async () => {
       const messagesResponse: MessagesListResponse = {
         data: [mockMessage],
-        meta: { total: 1, page: 1, limit: 50, totalPages: 1 },
+        meta: { total: 1, limit: 50, nextBefore: null },
       };
       mockGet.mockResolvedValueOnce({ data: messagesResponse, status: 200 });
 
@@ -188,15 +188,53 @@ describe('chatRepository', () => {
     it('passes query params when provided', async () => {
       const messagesResponse: MessagesListResponse = {
         data: [],
-        meta: { total: 0, page: 1, limit: 20, totalPages: 0 },
+        meta: { total: 0, limit: 20, nextBefore: null },
       };
       mockGet.mockResolvedValueOnce({ data: messagesResponse, status: 200 });
 
-      await chatRepository.getMessages('thread-1', { page: '2' });
+      await chatRepository.getMessages('thread-1', { before: 'msg-cursor' });
 
       expect(mockGet).toHaveBeenCalledWith('/chat-messages/thread/thread-1', {
-        page: '2',
+        before: 'msg-cursor',
       });
+    });
+  });
+
+  // ---------- getMessagesPaginated ----------
+
+  describe('getMessagesPaginated', () => {
+    it('omits the before param entirely when undefined, rather than sending it as a literal string', async () => {
+      // The server's cursor DTO treats `before` as absent-or-a-real-id;
+      // sending the string "undefined" would fail its schema.
+      const messagesResponse: MessagesListResponse = {
+        data: [mockMessage],
+        meta: { total: 1, limit: 50, nextBefore: null },
+      };
+      mockGet.mockResolvedValueOnce({ data: messagesResponse, status: 200 });
+
+      await chatRepository.getMessagesPaginated('thread-1', undefined, 50);
+
+      expect(mockGet).toHaveBeenCalledWith(
+        '/chat-messages/thread/thread-1',
+        { limit: '50' },
+        { signal: undefined },
+      );
+    });
+
+    it('forwards a given cursor as the before param', async () => {
+      const messagesResponse: MessagesListResponse = {
+        data: [],
+        meta: { total: 1, limit: 50, nextBefore: null },
+      };
+      mockGet.mockResolvedValueOnce({ data: messagesResponse, status: 200 });
+
+      await chatRepository.getMessagesPaginated('thread-1', 'msg-cursor', 50);
+
+      expect(mockGet).toHaveBeenCalledWith(
+        '/chat-messages/thread/thread-1',
+        { before: 'msg-cursor', limit: '50' },
+        { signal: undefined },
+      );
     });
   });
 

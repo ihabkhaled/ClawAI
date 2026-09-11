@@ -32,7 +32,11 @@ export function useRolePackPoll(threadId: string | null): UseRolePackPollResult 
       if (pollCountRef.current >= MAX_ROLE_PACK_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, ROLE_PACK_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        ROLE_PACK_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? ROLE_PACK_POLL_INTERVAL_MS : false,

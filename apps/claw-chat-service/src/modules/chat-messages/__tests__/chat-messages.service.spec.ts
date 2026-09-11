@@ -279,28 +279,52 @@ describe('ChatMessagesService', () => {
   });
 
   describe('getMessages', () => {
-    it('should return paginated messages', async () => {
+    it('should return cursor-paginated messages', async () => {
       threadsRepo.findById!.mockResolvedValue(mockThread);
       messagesRepo.findByThreadId.mockResolvedValue([mockMessage]);
       messagesRepo.countByThreadId.mockResolvedValue(1);
 
       const result = await service.getMessages('thread-1', 'user-1', {
-        page: 1,
         limit: 50,
       });
 
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
-      expect(result.meta.page).toBe(1);
-      expect(result.meta.totalPages).toBe(1);
+      expect(result.meta.limit).toBe(50);
+      // A short page (fewer rows than the limit) is certain there is nothing
+      // older left, regardless of how large `total` is.
+      expect(result.meta.nextBefore).toBeNull();
+    });
+
+    it('forwards the before cursor to the repository unchanged', async () => {
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.findByThreadId.mockResolvedValue([mockMessage]);
+      messagesRepo.countByThreadId.mockResolvedValue(2);
+
+      await service.getMessages('thread-1', 'user-1', { before: 'msg-cursor', limit: 50 });
+
+      expect(messagesRepo.findByThreadId).toHaveBeenCalledWith('thread-1', 'msg-cursor', 50);
+    });
+
+    it('sets nextBefore to the oldest returned message id when a full page comes back', async () => {
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      const oldest = { ...mockMessage, id: 'msg-oldest-in-page' };
+      messagesRepo.findByThreadId.mockResolvedValue([mockMessage, oldest]);
+      messagesRepo.countByThreadId.mockResolvedValue(10);
+
+      const result = await service.getMessages('thread-1', 'user-1', { limit: 2 });
+
+      // A full page might still be the last one — the caller finds out for
+      // certain only when a fetch with this cursor comes back short.
+      expect(result.meta.nextBefore).toBe('msg-oldest-in-page');
     });
 
     it('should throw EntityNotFoundException when thread not found', async () => {
       threadsRepo.findById!.mockResolvedValue(null);
 
-      await expect(
-        service.getMessages('nonexistent', 'user-1', { page: 1, limit: 50 }),
-      ).rejects.toThrow(EntityNotFoundException);
+      await expect(service.getMessages('nonexistent', 'user-1', { limit: 50 })).rejects.toThrow(
+        EntityNotFoundException,
+      );
     });
   });
 
@@ -624,23 +648,21 @@ describe('ChatMessagesService', () => {
     it('should throw BusinessException when user does not own thread', async () => {
       threadsRepo.findById!.mockResolvedValue(mockThread);
 
-      await expect(
-        service.getMessages('thread-1', 'other-user', { page: 1, limit: 50 }),
-      ).rejects.toThrow(BusinessException);
+      await expect(service.getMessages('thread-1', 'other-user', { limit: 50 })).rejects.toThrow(
+        BusinessException,
+      );
     });
 
-    it('should calculate totalPages correctly for multiple pages', async () => {
+    it('reports total regardless of how many pages the cursor still has left', async () => {
       threadsRepo.findById!.mockResolvedValue(mockThread);
       messagesRepo.findByThreadId.mockResolvedValue([mockMessage]);
       messagesRepo.countByThreadId.mockResolvedValue(75);
 
-      const result = await service.getMessages('thread-1', 'user-1', {
-        page: 1,
-        limit: 20,
-      });
+      const result = await service.getMessages('thread-1', 'user-1', { limit: 20 });
 
-      expect(result.meta.totalPages).toBe(4);
       expect(result.meta.total).toBe(75);
+      // One row on a 20-row page is short, so this is certainly the last page.
+      expect(result.meta.nextBefore).toBeNull();
     });
   });
 

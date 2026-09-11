@@ -37,14 +37,16 @@ function buildMessage(id: string, overrides: Partial<ChatMessage> = {}): ChatMes
   };
 }
 
-// Backend order is DESC (newest first).
+// Backend order is DESC (newest first). Cursor pagination: `before` is the id
+// of a message already seen, not a page number — the newest page is fetched
+// with no cursor at all.
 const PAGE_1: MessagesListResponse = {
-  data: [buildMessage('msg-4'), buildMessage('msg-3')],
-  meta: { total: 4, page: 1, limit: 2, totalPages: 2 },
+  data: [buildMessage('msg-3'), buildMessage('msg-2')],
+  meta: { total: 3, limit: 2, nextBefore: 'msg-2' },
 };
 const PAGE_2: MessagesListResponse = {
-  data: [buildMessage('msg-2'), buildMessage('msg-1')],
-  meta: { total: 4, page: 2, limit: 2, totalPages: 2 },
+  data: [buildMessage('msg-1')],
+  meta: { total: 3, limit: 2, nextBefore: null },
 };
 
 describe('useVirtualizedMessages', () => {
@@ -59,16 +61,18 @@ describe('useVirtualizedMessages', () => {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
-  it('dedupes a message an offset-pagination window shift returned on two pages', async () => {
-    // B8: page 1 and page 2 both carrying `msg-3` is exactly what a window
-    // shift between the two requests produces. The duplicate must not reach
-    // the rendered list twice.
-    const overlappingPage2: MessagesListResponse = {
-      data: [buildMessage('msg-3'), buildMessage('msg-2')],
-      meta: { total: 4, page: 2, limit: 2, totalPages: 2 },
+  it('dedupes a message id that somehow reaches two fetched pages', async () => {
+    // Cursor pagination closes the routine cause of this (offset pagination's
+    // window shifting when a row is inserted mid-fetch) by construction: a
+    // page boundary is now a specific message's id, not a number that drifts.
+    // The dedupe stays as defense-in-depth against a duplicate id reaching the
+    // rendered list by any OTHER means, and this proves it still works.
+    const pageWithDuplicate: MessagesListResponse = {
+      data: [buildMessage('msg-2'), buildMessage('msg-1')],
+      meta: { total: 3, limit: 2, nextBefore: null },
     };
-    mockGetMessagesPaginated.mockImplementation((_threadId: string, page: number) =>
-      Promise.resolve(page === 1 ? PAGE_1 : overlappingPage2),
+    mockGetMessagesPaginated.mockImplementation((_threadId: string, before: string | undefined) =>
+      Promise.resolve(before === undefined ? PAGE_1 : pageWithDuplicate),
     );
 
     const { result } = renderHook(() => useVirtualizedMessages('thread-1'), { wrapper });
@@ -80,18 +84,46 @@ describe('useVirtualizedMessages', () => {
     await waitFor(() => expect(result.current.hasPreviousPage).toBe(false));
 
     const ids = result.current.messages.map((message) => message.id);
-    expect(ids).toEqual(['msg-2', 'msg-3', 'msg-4']);
+    expect(ids).toEqual(['msg-1', 'msg-2', 'msg-3']);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('polls only page 1 while awaiting a response, not every loaded page', async () => {
+  it('requests the next OLDER page with the oldest loaded message as the cursor', async () => {
+    mockGetMessagesPaginated.mockImplementation((_threadId: string, before: string | undefined) =>
+      Promise.resolve(before === undefined ? PAGE_1 : PAGE_2),
+    );
+
+    const { result } = renderHook(() => useVirtualizedMessages('thread-1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.fetchPreviousPage();
+    });
+    await waitFor(() => expect(result.current.hasPreviousPage).toBe(false));
+
+    expect(mockGetMessagesPaginated).toHaveBeenNthCalledWith(
+      2,
+      'thread-1',
+      'msg-2',
+      expect.any(Number),
+      expect.anything(),
+    );
+    expect(result.current.messages.map((message) => message.id)).toEqual([
+      'msg-1',
+      'msg-2',
+      'msg-3',
+    ]);
+  });
+
+  it('polls only the newest page while awaiting a response, not every loaded page', async () => {
     // B9: the built-in `refetchInterval` refetches every loaded page on each
-    // tick. Once page 2 is loaded, the awaiting-response poll must still cost
-    // exactly one request — for page 1, where a new message actually lands.
+    // tick. Once an older page is loaded, the awaiting-response poll must
+    // still cost exactly one request — for the newest page (no cursor),
+    // where a new message actually lands.
     vi.useFakeTimers();
     try {
-      mockGetMessagesPaginated.mockImplementation((_threadId: string, page: number) =>
-        Promise.resolve(page === 1 ? PAGE_1 : PAGE_2),
+      mockGetMessagesPaginated.mockImplementation((_threadId: string, before: string | undefined) =>
+        Promise.resolve(before === undefined ? PAGE_1 : PAGE_2),
       );
 
       const { result, rerender } = renderHook(
@@ -117,7 +149,7 @@ describe('useVirtualizedMessages', () => {
       expect(mockGetMessagesPaginated).toHaveBeenCalledTimes(1);
       expect(mockGetMessagesPaginated).toHaveBeenCalledWith(
         'thread-1',
-        1,
+        undefined,
         expect.any(Number),
         expect.anything(),
       );

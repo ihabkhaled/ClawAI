@@ -36,7 +36,11 @@ export function useDecomposePoll(threadId: string | null): UseDecomposePollResul
       if (pollCountRef.current >= MAX_DECOMPOSE_POLL_COUNT) {
         setPollingEnabled(false);
       }
-      return chatRepository.getMessagesPaginated(threadId ?? '', 1, DECOMPOSE_POLL_MESSAGES_LIMIT);
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        DECOMPOSE_POLL_MESSAGES_LIMIT,
+      );
     },
     enabled: pollingEnabled,
     refetchInterval: pollingEnabled ? DECOMPOSE_POLL_INTERVAL_MS : false,

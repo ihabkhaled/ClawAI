@@ -111,15 +111,19 @@ export const chatRepository = {
     return response.data;
   },
 
+  /**
+   * `before`, when given, is the id of a message already seen — the server's
+   * cursor, not a page number. Omitted, it means "the newest messages."
+   */
   async getMessagesPaginated(
     threadId: string,
-    page: number,
+    before: string | undefined,
     limit: number,
     signal?: AbortSignal,
   ): Promise<MessagesListResponse> {
     const response = await apiClient.get<MessagesListResponse>(
       `/chat-messages/thread/${threadId}`,
-      { page: String(page), limit: String(limit) },
+      { ...(before === undefined ? {} : { before }), limit: String(limit) },
       { signal },
     );
     return response.data;

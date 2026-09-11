@@ -28,7 +28,7 @@ export function useParallelPoll(
   const { data } = useQuery({
     queryKey: queryKeys.threads.messages(threadId ?? '', 1),
     queryFn: () =>
-      chatRepository.getMessagesPaginated(threadId ?? '', 1, PARALLEL_POLL_MESSAGES_LIMIT),
+      chatRepository.getMessagesPaginated(threadId ?? '', undefined, PARALLEL_POLL_MESSAGES_LIMIT),
     enabled: pollingEnabled,
     refetchInterval: PARALLEL_POLL_INTERVAL_MS,
   });

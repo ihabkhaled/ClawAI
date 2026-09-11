@@ -166,9 +166,17 @@ export type ThreadsListResponse = {
   data: ChatThread[];
   meta: { total: number; page: number; limit: number; totalPages: number };
 };
+/**
+ * Cursor (keyset) pagination, not offset. `nextBefore` is the id to pass back
+ * as `before` to fetch the next older page; `null` means nothing older is
+ * left. Offset pagination's page/limit shifted its window whenever a message
+ * was appended between two requests, duplicating or dropping rows in the
+ * merged list — a cursor anchored to a specific message's id has no such
+ * window.
+ */
 export type MessagesListResponse = {
   data: ChatMessage[];
-  meta: { total: number; page: number; limit: number; totalPages: number };
+  meta: { total: number; limit: number; nextBefore: string | null };
 };
 
 export type StreamEvent = {

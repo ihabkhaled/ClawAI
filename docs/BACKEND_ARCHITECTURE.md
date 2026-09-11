@@ -179,7 +179,7 @@ GET    /api/v1/chat-threads/:id     — get thread
 PATCH  /api/v1/chat-threads/:id     — update thread
 DELETE /api/v1/chat-threads/:id     — delete thread (cascades messages)
 POST   /api/v1/chat-messages        — send message (threadId, content, routingMode?, provider?, model?, fileIds?)
-GET    /api/v1/chat-messages/thread/:threadId — list messages
+GET    /api/v1/chat-messages/thread/:threadId — list messages (cursor-paginated: before, limit)
 GET    /api/v1/chat-messages/:id    — get message
 POST   /api/v1/chat-messages/:id/regenerate — regenerate response
 PATCH  /api/v1/chat-messages/:id/feedback — set feedback
