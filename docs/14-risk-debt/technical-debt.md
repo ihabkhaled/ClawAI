@@ -59,6 +59,7 @@ Last updated: 2026-09-10
   audit, and the numbers they are judged against are in the baseline:
   - [`chat-pipeline-audit-2026-09.md`](chat-pipeline-audit-2026-09.md)
   - [`chat-pipeline-baseline-2026-09.md`](chat-pipeline-baseline-2026-09.md)
+  - [`chat-pipeline-slos-2026-09.md`](chat-pipeline-slos-2026-09.md) — the objectives derived from the above, each with the guard that catches a regression
 - **Sequencing constraints** (from the audit): the message-list invalidation key
   must be fixed _before_ the polling is removed, or the UI silently stops
   updating; and the client-logs service must accept an array _before_ the client

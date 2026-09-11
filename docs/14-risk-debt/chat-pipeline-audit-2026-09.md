@@ -777,5 +777,6 @@ The dependencies that decide the order, derived from the findings above:
 ## See also
 
 - [`chat-pipeline-baseline-2026-09.md`](chat-pipeline-baseline-2026-09.md) — the measurements
+- [`chat-pipeline-slos-2026-09.md`](chat-pipeline-slos-2026-09.md) — the objectives derived from them, each with the guard that catches a regression
 - [`technical-debt-register.md`](technical-debt-register.md)
 - [`risk-register.md`](risk-register.md)
