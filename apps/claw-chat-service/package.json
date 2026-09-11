@@ -64,7 +64,7 @@
     "babel-jest": "^30.5.1",
     "babel-plugin-transform-import-meta": "^3.0.0",
     "concurrently": "^10.0.5",
-    "eslint": "^10.9.0",
+    "eslint": "^10.10.0",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-security": "^4.0.1",
     "eslint-plugin-unicorn": "74.0.0",
@@ -76,7 +76,7 @@
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.9.4",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.67.0"
+    "typescript-eslint": "^8.70.0"
   },
   "type": "module"
 }
