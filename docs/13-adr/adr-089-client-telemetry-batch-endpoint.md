@@ -116,9 +116,6 @@ buffered events. A telemetry write can no longer end a session.
 
 ## Revisit when
 
-- Telemetry volume rises enough that sampling is needed. Nothing samples
-  today; volume growth is this decision's own trigger and has not been
-  observed, so sampling stays deferred.
 - Losing a whole batch to one malformed event proves costly enough to justify
   per-event validation with partial acceptance, instead of the envelope-level
   rejection above.
@@ -129,10 +126,22 @@ buffered events. A telemetry write can no longer end a session.
 is no longer true: `postBatchWithRetry`
 (`apps/claw-frontend/src/utilities/logger.utility.ts`) retries a failed
 `/client-logs/batch` send up to `CLIENT_LOG_MAX_RETRY_ATTEMPTS` (3) times with
-doubling backoff (`CLIENT_LOG_RETRY_BASE_MS`, 2s/4s/8s) before giving up. This
-was split out from sampling deliberately: losing a batch to a transient
-network blip is a correctness gap regardless of volume, while sampling only
-earns its complexity once volume is actually a problem — the two "revisit
-when" conditions were independent and only one had already been met. The
+doubling backoff (`CLIENT_LOG_RETRY_BASE_MS`, 2s/4s/8s) before giving up. The
 beacon-flush path (page unload) is unchanged: there is no response to retry on
 by the time it would fail.
+
+**Sampling landed 2026-09-11, ahead of its trigger.** The original condition
+here was "telemetry volume rises enough that sampling is needed," and that
+volume rise was never observed — measured usage stayed low. It was built
+anyway on explicit request, once the tradeoff was stated plainly (this is
+speculative capacity, not a response to a measured problem). `sampleIfOverThreshold`
+(`apps/claw-frontend/src/utilities/logger.utility.ts`) drops a fraction
+(`CLIENT_LOG_SAMPLE_RATE`, 10%) of DEBUG/INFO events once one flush holds more
+than `CLIENT_LOG_SAMPLING_THRESHOLD` (200) DISTINCT events — collapsing
+already handles many copies of the SAME event, so this covers the other shape
+of a spike, many different low-severity lines. WARN and ERROR are never
+sampled, at any volume: dropping a real error to save a request is the wrong
+trade regardless of how busy the buffer is. Since the threshold has never been
+measured to trip in production, this is unverified against real traffic —
+tested only against a synthetic burst in
+`logger-transport.utility.test.ts`.

@@ -74,10 +74,12 @@ Last updated: 2026-09-10
   unless a terminal event was really seen. C landed 2026-09-10 as well —
   `POST /client-logs/batch`, duplicate collapsing, a production severity gate
   and an unload beacon took a send's telemetry from 12 requests to 1
-  ([ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)); C4 is only
-  partly closed, because sampling and retry were deferred. Still open:
-  D3 (a dead stream is silent to the user), D4 (`Last-Event-ID` resume) and
-  section E (URL fetch and source truthfulness), which is the largest block.
+  ([ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)); C4's
+  retry and sampling landed 2026-09-11, closing it in full. D3, D4 and section
+  E (URL fetch and source truthfulness) closed the same window. Sections
+  A-E are all closed as of 2026-09-11; the one thing left is B6's normalized
+  message store, a deliberate architecture decision, not a bug — see the
+  audit's closing summary.
 - **Full entry**: [`technical-debt-register.md`](technical-debt-register.md) TD-030.
 
 ---

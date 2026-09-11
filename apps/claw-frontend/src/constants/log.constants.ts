@@ -97,3 +97,17 @@ export const CLIENT_LOG_MAX_RETRY_ATTEMPTS = 3;
 
 /** Backoff base for a retried batch: doubles each attempt (2s, 4s, 8s). */
 export const CLIENT_LOG_RETRY_BASE_MS = 2_000;
+
+/**
+ * Sampling only kicks in above this many DISTINCT events in one flush.
+ * Collapsing already handles repeats of the SAME event; this is for a burst
+ * of many DIFFERENT events — a real spike, not a render loop.
+ */
+export const CLIENT_LOG_SAMPLING_THRESHOLD = 200;
+
+/**
+ * Fraction of low-severity events kept once a flush is over the threshold.
+ * WARN and ERROR are never sampled — dropping a real error to save a request
+ * is the wrong trade every time.
+ */
+export const CLIENT_LOG_SAMPLE_RATE = 0.1;

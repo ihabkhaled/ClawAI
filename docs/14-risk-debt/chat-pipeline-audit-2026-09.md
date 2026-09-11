@@ -299,20 +299,23 @@ polling loop.
 
 ## C. Client telemetry
 
-> **Status 2026-09-10 — FIXED, except C4's sampling half.** C1, C2, C3, C5, C6 and C8 are
-> closed by the telemetry batch (`POST /client-logs/batch`, collapse-with-count, severity
-> gate, `pagehide` beacon, buffer cap, refresh-flow exemption, and the removal
-> of the self-feeding log on the client-logs page). C7's amplification falls out
-> of C2: the ingest path now logs once per batch instead of ~4x per event.
-> **C4's retry half is now fixed too (2026-09-11)** — a failed
-> `/client-logs/batch` send retries up to 3 times with doubling backoff
-> (`postBatchWithRetry`) instead of being dropped by `.catch(() => {})`.
-> Sampling remains deliberately deferred: its own trigger in
-> [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md) — telemetry
-> volume rising enough to need it — has not been observed, and retry and
-> sampling were always two independent "revisit when" conditions, not one. The
-> findings below are kept as written, because the measurement that motivated
-> each one is the evidence that the fix was needed.
+> **Status 2026-09-10 — FIXED in full as of 2026-09-11.** C1, C2, C3, C5, C6 and
+> C8 are closed by the telemetry batch (`POST /client-logs/batch`,
+> collapse-with-count, severity gate, `pagehide` beacon, buffer cap,
+> refresh-flow exemption, and the removal of the self-feeding log on the
+> client-logs page). C7's amplification falls out of C2: the ingest path now
+> logs once per batch instead of ~4x per event. **C4's retry half fixed
+> 2026-09-11** — a failed `/client-logs/batch` send retries up to 3 times with
+> doubling backoff (`postBatchWithRetry`) instead of being dropped by
+> `.catch(() => {})`. **C4's sampling half fixed the same day, ahead of its own
+> trigger** — its "revisit when" condition in
+> [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md) (telemetry
+> volume rising enough to need it) was never observed; it was built on request
+> anyway, so it is unverified against real traffic, tested only against a
+> synthetic burst. `sampleIfOverThreshold` drops 90% of DEBUG/INFO events once
+> one flush holds more than 200 distinct events; WARN/ERROR are never sampled
+> at any volume. The findings below are kept as written, because the
+> measurement that motivated each one is the evidence that the fix was needed.
 
 ### C1 — The buffer delays but does not batch (**certain, measured**)
 
@@ -347,7 +350,7 @@ even possible today. All 46 `logger.debug` sites ship to production and cross
 the network. Because they sit inside `queryFn`s, they are the majority of the
 volume.
 
-### C4 — No sampling, dedup, throttling or retry (**certain**) — **dedup, unload-flush and retry fixed; sampling deferred**
+### C4 — No sampling, dedup, throttling or retry (**certain**) — **FIXED 2026-09-11, all four**
 
 `.catch(() => {})` drops failures silently, and there is no `sendBeacon` or
 `pagehide` flush, so anything buffered when the user navigates is lost. The
@@ -358,9 +361,12 @@ line can be throttled into silent loss.
 > silent drop landed a fix 2026-09-11: `postBatchWithRetry` retries a failed
 > batch up to `CLIENT_LOG_MAX_RETRY_ATTEMPTS` (3) times with doubling backoff
 > before giving up, so a transient failure no longer loses the batch on the
-> first try. Sampling is the one piece still deferred — see ADR-089's
-> "Revisit when," unmet because telemetry volume has not been observed to rise
-> enough to need it.
+> first try. Sampling landed the same day: `sampleIfOverThreshold` drops 90%
+> of DEBUG/INFO events once a flush holds more than 200 distinct events,
+> never touching WARN/ERROR. Built ahead of ADR-089's own trigger for it
+> (telemetry volume rising) — that rise was never measured, so this is
+> unverified against real traffic, tested only against a synthetic burst in
+> `logger-transport.utility.test.ts`.
 
 ### C5 — Telemetry can log the user out (**medium, latent**)
 
@@ -821,27 +827,28 @@ callers.
 | B9, B10                  | 2026-09-11 | The awaiting-response poll now fetches page 1 only (a thread with 10 pages loaded went from 10 requests per tick to 1) instead of `refetchInterval` re-fetching every loaded page, confirmed by reading `infiniteQueryBehavior.ts`. The merge guards on `meta.total` so an out-of-order response cannot overwrite fresher data. Rule 12 in rules/06 records the pattern.                                                                                                                                                                                                                                                                                  |
 | B8                       | 2026-09-11 | Root-caused, not just mitigated: the messages endpoint now takes a cursor (`before`, a message id via Prisma's native `cursor`/`skip:1`) instead of `page`/`limit` offset. A window that used to shift when a row was appended mid-fetch — duplicating or dropping messages — no longer exists, because a page boundary is now a specific row's id. Backend DTO/repository/service/controller, frontend type/repository/hook/cache utilities, all 9 orchestration poll hooks, and the qa-lab test client updated in lockstep. Did NOT require B6's normalized store — a cursor-paginated endpoint and a normalized client cache are independent concerns. |
 | D7, D8                   | 2026-09-11 | `useChatStream`'s connect effect no longer depends on `t`'s identity (a ref mirrors it instead) — proven live-equivalent by a test where `t` is a fresh function every render and the connection is not reopened. A dead cleanup effect that could never run productively is deleted. The backoff `sleep()` now removes its `abort` listener instead of leaking one per reconnect. Three dead `X-Accel-Buffering` `proxy_set_header` lines removed from nginx (a request header the upstream never read); `proxy_buffering off`, already present in the same blocks, is the real mechanism.                                                               |
-| C4 (retry half)          | 2026-09-11 | A failed `/client-logs/batch` send now retries up to 3 times with doubling backoff instead of being dropped by `.catch(() => {})`. Sampling stays deferred — ADR-089's own trigger for it, telemetry volume rising, has not been observed.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| C4 (retry + sampling)    | 2026-09-11 | A failed `/client-logs/batch` send now retries up to 3 times with doubling backoff instead of being dropped by `.catch(() => {})`. Sampling also landed the same day, ahead of its own trigger (telemetry volume rising, never observed) — 90% of DEBUG/INFO dropped once a flush holds 200+ distinct events, WARN/ERROR never sampled. Untested against real traffic, since the volume it targets has not occurred.                                                                                                                                                                                                                                      |
 
-**Targets T1, T3, T4, T6 and T7 are met.** Sections A, C, D and E are closed
-(D6 by verification, not code change — see D6 above); B8, B9 and B10 are fixed
-or mitigated as of 2026-09-11. What remains open, all by name rather than by
-omission: B6's full normalized message store and B8's "dropped row" half
-(both need cursor pagination, an architectural rewrite out of scope for this
-programme), and C4's sampling half (deferred to its own unmet trigger in
-ADR-089).
+**Targets T1, T3, T4, T6 and T7 are met.** Sections A, B, C, D and E are all
+closed (D6 by verification, not code change — see D6 above; B8 by a cursor
+pagination migration, not a mitigation — see B8 above). The one thing left
+standing in the whole document is B6's full normalized message store, a
+client-cache architecture decision independent of B8's fix, deliberately left
+for a future need (edit-while-streaming, resuming a render mid-reload) rather
+than built speculatively now.
 
-**C4's dedup and unload-flush landed 2026-09-10; retry landed 2026-09-11; only
-sampling remains, and it is named rather than quietly counted as done.** Dedup
-collapses identical events inside a flush window to one event with an
-`occurrences` count, and the unload flush (`pagehide` + `sendBeacon`) means a
-pending buffer is no longer dropped on navigation. `postBatchWithRetry` retries
-a failed send up to 3 times with doubling backoff instead of the old
-`.catch(() => {})` silent drop. Sampling is deferred deliberately in
-[ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md) under "Revisit
-when" — telemetry volume rising enough to need it has not been observed, and
-that is genuinely a different condition than "a failed send should not lose
-data," which retry already closes regardless of volume.
+**C4 is fixed in full.** Dedup and the unload flush landed 2026-09-10;
+retry and sampling both landed 2026-09-11. Dedup collapses identical events
+inside a flush window to one event with an `occurrences` count, and the
+unload flush (`pagehide` + `sendBeacon`) means a pending buffer is no longer
+dropped on navigation. `postBatchWithRetry` retries a failed send up to 3
+times with doubling backoff instead of the old `.catch(() => {})` silent
+drop. Sampling was built ahead of its own stated trigger in
+[ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md) — "telemetry
+volume rising enough to need it" was never observed, and this is recorded
+plainly rather than implied to be a response to a measured problem: it is
+speculative capacity, tested only against a synthetic burst, not real
+traffic.
 
 **Long-chat performance (L) was re-measured on 2026-09-11 and needs no work.**
 The audit assumed page one was the whole conversation. It is not: the messages

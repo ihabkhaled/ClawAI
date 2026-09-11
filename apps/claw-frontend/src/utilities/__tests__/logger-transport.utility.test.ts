@@ -7,6 +7,7 @@ import {
   CLIENT_LOG_MAX_RETRY_ATTEMPTS,
   CLIENT_LOG_OCCURRENCES_KEY,
   CLIENT_LOG_RETRY_BASE_MS,
+  CLIENT_LOG_SAMPLING_THRESHOLD,
 } from '@/constants';
 import { logger } from '@/utilities/logger.utility';
 
@@ -168,5 +169,59 @@ describe('logger network transport', () => {
     postMock.mockClear();
     await vi.advanceTimersByTimeAsync(CLIENT_LOG_RETRY_BASE_MS * 100);
     expect(postMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps every distinct event at or under the sampling threshold', () => {
+    // Collapsing already handles many copies of the SAME event; sampling is
+    // for the other shape of a spike — many DIFFERENT low-severity lines.
+    // Below the threshold, that spike hasn't happened, so nothing is dropped.
+    for (let index = 0; index < CLIENT_LOG_SAMPLING_THRESHOLD; index += 1) {
+      logger.debug({ component: 'Chat', action: 'render', message: `distinct ${index}` });
+    }
+
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+    const sent = batchesSent().flatMap((payload) => payload.events);
+    expect(sent).toHaveLength(CLIENT_LOG_SAMPLING_THRESHOLD);
+  });
+
+  it('samples down low-severity events once a flush holds more distinct events than the threshold', () => {
+    const randomSpy = vi.spyOn(Math, 'random');
+    try {
+      // Above CLIENT_LOG_SAMPLE_RATE, so every sampled event is dropped —
+      // proves sampling activated, rather than asserting an exact count.
+      randomSpy.mockReturnValue(0.5);
+
+      for (let index = 0; index < CLIENT_LOG_SAMPLING_THRESHOLD + 50; index += 1) {
+        logger.debug({ component: 'Chat', action: 'render', message: `distinct ${index}` });
+      }
+
+      vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+      const sent = batchesSent().flatMap((payload) => payload.events);
+      expect(sent).toHaveLength(0);
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
+  it('never samples WARN or ERROR, even over the threshold', () => {
+    const randomSpy = vi.spyOn(Math, 'random');
+    try {
+      // Guaranteed to fail any random-based keep check — proves WARN/ERROR
+      // bypass sampling entirely rather than happening to win the roll.
+      randomSpy.mockReturnValue(1);
+
+      for (let index = 0; index < CLIENT_LOG_SAMPLING_THRESHOLD + 50; index += 1) {
+        logger.error({ component: 'Chat', action: 'send', message: `failure ${index}` });
+      }
+
+      vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+      const sent = batchesSent().flatMap((payload) => payload.events);
+      expect(sent).toHaveLength(CLIENT_LOG_SAMPLING_THRESHOLD + 50);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 });

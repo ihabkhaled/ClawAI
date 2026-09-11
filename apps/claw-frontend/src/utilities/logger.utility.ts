@@ -6,6 +6,8 @@ import {
   CLIENT_LOG_MIN_TRANSPORT_LEVEL,
   CLIENT_LOG_OCCURRENCES_KEY,
   CLIENT_LOG_RETRY_BASE_MS,
+  CLIENT_LOG_SAMPLE_RATE,
+  CLIENT_LOG_SAMPLING_THRESHOLD,
   LOG_SENSITIVE_KEYS,
 } from '@/constants';
 import { API_BASE_URL } from '@/constants/api.constants';
@@ -58,6 +60,28 @@ function collapse(entries: CreateClientLogRequest[]): CreateClientLogRequest[] {
 }
 
 /**
+ * Drops a fraction of DEBUG/INFO events once one flush holds more distinct
+ * events than `CLIENT_LOG_SAMPLING_THRESHOLD`. Collapsing already handles
+ * many copies of the SAME event; this is for the other shape of a spike — a
+ * burst of many DIFFERENT low-severity lines, e.g. a chatty render loop that
+ * varies its message each time and so never collapses.
+ *
+ * WARN and ERROR are never sampled: dropping a real error to save a request
+ * defeats the entire point of telemetry, no matter how busy the buffer is.
+ */
+function sampleIfOverThreshold(entries: CreateClientLogRequest[]): CreateClientLogRequest[] {
+  if (entries.length <= CLIENT_LOG_SAMPLING_THRESHOLD) {
+    return entries;
+  }
+  return entries.filter(
+    (entry) =>
+      entry.level === LogLevel.WARN ||
+      entry.level === LogLevel.ERROR ||
+      Math.random() < CLIENT_LOG_SAMPLE_RATE,
+  );
+}
+
+/**
  * Posts one batch, retrying a failed send with backoff before giving up.
  *
  * ADR-089 shipped this endpoint with the send simply dropped on failure. A
@@ -92,7 +116,7 @@ function flushLogs(useBeacon = false): void {
   if (logBuffer.length === 0) {
     return;
   }
-  const events = collapse(logBuffer);
+  const events = sampleIfOverThreshold(collapse(logBuffer));
   logBuffer = [];
 
   for (let index = 0; index < events.length; index += CLIENT_LOG_MAX_BATCH_EVENTS) {
