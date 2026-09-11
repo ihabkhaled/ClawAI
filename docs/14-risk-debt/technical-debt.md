@@ -16,6 +16,36 @@ Last updated: 2026-09-10
 
 ## Open programme
 
+### TD-031: Outbound fetch has no DNS-level SSRF guard (2026-09-11)
+
+- **Severity**: High · **Effort**: Medium · **Priority**: Next
+- **Detail**: `assertSafeOutboundUrl` is a **syntactic** check. It now rejects
+  every literal spelling of a private address — dotted quad, decimal, hex,
+  octal, short form, IPv6 loopback, unique-local, link-local, IPv4-mapped —
+  plus internal name suffixes, bare LAN labels and every cloud metadata
+  endpoint. What it cannot do is resolve DNS: **a hostname an attacker controls
+  can resolve to 127.0.0.1 and pass every check.** The redirect target is
+  re-checked after the fact, which closes redirect-based escape, but a first
+  request to an attacker-owned name is still made before anything resolves it.
+- **Why it matters now**: until 2026-09-11 every URL the fetcher saw came from a
+  search provider, so syntax-only was a defensible depth. The platform then
+  learned to open a URL the user typed
+  ([ADR-091](../13-adr/adr-091-user-urls-are-opened-not-searched.md)), and the
+  address became attacker-chosen.
+- **The fix**: a socket-level guard — resolve the host, check every returned
+  address against the private ranges, and pin the connection to the address that
+  was checked so the name cannot be re-resolved to something else between the
+  check and the connect (DNS rebinding). In Node that is a custom
+  `lookup`/agent on the fetch client.
+- **Interim mitigation**: private addresses are refused unless the operator
+  named the host in `RESEARCH_DOMAIN_ALLOWLIST`, cloud metadata is refused
+  unconditionally, redirects are re-validated, and the response body is capped.
+  A successful rebind therefore reaches an internal HTTP service but still
+  cannot reach cloud credentials.
+- **Where**: `apps/claw-research-service/src/common/utilities/url-safety.utility.ts`,
+  `apps/claw-research-service/src/modules/fetch/adapters/http-fetch.adapter.ts`.
+- **Rule**: [`rules/41-web-evidence-truthfulness.md`](../../rules/41-web-evidence-truthfulness.md) §11.
+
 ### TD-030: Chat pipeline reliability and traffic programme (2026-09-10)
 
 - **Severity**: Critical · **Effort**: Very High · **Priority**: Immediate

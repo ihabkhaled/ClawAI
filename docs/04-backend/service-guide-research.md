@@ -143,6 +143,42 @@ back from the search response — falling back to the request only when the run
 reported none. A fallback becomes a warning: it is not a failure, but it is a
 different answer than the one asked for.
 
+## The SSRF boundary
+
+`assertSafeOutboundUrl` guards every outbound fetch. It rejects:
+
+- any protocol that is not `http:`/`https:`
+- embedded credentials (`https://user:pass@host/`), a redirect-laundering trick
+- **every cloud metadata endpoint**, unconditionally — AWS/OpenStack/Azure
+  (`169.254.169.254`), GCP (`metadata.google.internal`), Alibaba
+  (`100.100.100.200`), Oracle (`192.0.0.192`)
+- private and loopback addresses in **every spelling a URL parser accepts**:
+  `127.0.0.1`, `2130706433`, `0x7f.0.0.1`, `0177.0.0.1`, `127.1`, `[::1]`,
+  `fd00::/8`, `fe80::/10`, `::ffff:127.0.0.1`
+- internal-only name suffixes (`.internal`, `.local`, `.lan`, `.home.arpa`) and
+  bare LAN labels with no dot (`http://router/`, `http://claw-auth-service/`)
+- carrier-grade NAT (`100.64/10`), which reaches other tenants on shared hosting
+- multicast and reserved space (`224/4` and above)
+
+**Private addresses are reachable only when the operator named the host in
+`RESEARCH_DOMAIN_ALLOWLIST`.** Until 2026-09-11 `HttpFetchAdapter` passed
+`allowPrivateHosts: true` unconditionally, reasoned as "self-hosted deployments
+may legitimately fetch internal resources". That was defensible while every URL
+came from a search provider. It stopped being defensible the moment a user's own
+URL reached the same code path — it accepted `http://127.0.0.1:4001/…` and
+service names on the internal Docker network, fetched them, and put the body
+into a model's prompt. The allowlist is deny-by-default and grants one host
+rather than the whole private network.
+
+**Redirects are re-checked.** `fetch` follows them, so the pre-flight check
+proves nothing about where the body actually came from: a public page that 302s
+to a metadata endpoint passes the first check and fails the second.
+
+**What this does not do.** It does not resolve DNS, so a hostname an attacker
+controls can resolve to loopback and pass. That is written down as TD-031 rather
+than left implied; the fix is a socket-level guard that checks resolved
+addresses and pins the connection against rebinding.
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

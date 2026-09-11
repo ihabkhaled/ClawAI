@@ -93,6 +93,28 @@ from the missing capability statement, and neither knew about the other.**
     policy refuses produces a warning; it does not produce an exception to the
     policy.
 
+    **A private address is reachable only when the operator named the host.**
+    `HttpFetchAdapter` passed `allowPrivateHosts: true` unconditionally, reasoned
+    as "self-hosted deployments may legitimately fetch internal resources". That
+    was defensible while every URL came from a search provider and indefensible
+    the moment a user's own URL reached the same code — it accepted
+    `http://127.0.0.1:4001/…` and service names on the internal Docker network,
+    fetched them, and put the body in a model's prompt. The gate is
+    `RESEARCH_DOMAIN_ALLOWLIST`: deny-by-default, already exists, and grants one
+    host rather than the whole private network.
+
+    **Cloud metadata is refused even then.** It is checked before the
+    private-host branch, so no configuration can unlock it.
+
+    **Re-check the URL after redirects.** `fetch` follows them, so the
+    pre-flight check proves nothing about where the body came from: a public
+    page that 302s to `169.254.169.254` passes the first check and must fail the
+    second.
+
+    **Syntax is not the whole defence, and the gap is written down.** The guard
+    does not resolve DNS, so a hostname an attacker controls can point at
+    loopback. That is TD-031, not a secret.
+
 ## Prohibited patterns
 
 - Passing a prompt containing a URL to a search engine and calling the result

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { AppConfig } from '../../../app/config/app.config';
+
 import {
   FETCH_ALLOWED_MIME_TYPES,
   FETCH_DEFAULT_TIMEOUT_MS,
@@ -18,9 +20,23 @@ export class HttpFetchAdapter implements FetchAdapter {
 
   async fetchPage(request: FetchRequest): Promise<FetchResult> {
     const start = Date.now();
-    // Self-hosted deployments may legitimately fetch internal resources
-    // (self-hosted search, internal docs). Cloud metadata endpoints stay blocked.
-    const parsed = assertSafeOutboundUrl(request.url, { allowPrivateHosts: true });
+    // Private hosts are permitted ONLY when the operator named them.
+    //
+    // This used to be an unconditional `allowPrivateHosts: true`, reasoned as
+    // "self-hosted deployments may legitimately fetch internal resources". That
+    // was defensible while every URL reaching here came from a search provider.
+    // It stopped being defensible on 2026-09-11, when the platform learned to
+    // open a URL the USER typed: the same code path then accepted
+    // `http://127.0.0.1:4001/…` or a service name on the internal Docker
+    // network, fetched it, and put the body into a model's prompt.
+    //
+    // The allowlist is the right gate because it is deny-by-default and already
+    // exists: an operator who wants the internal wiki read adds that host, and
+    // gets exactly that host rather than the whole private network.
+    const allowedHosts = AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST;
+    const parsed = assertSafeOutboundUrl(request.url, {
+      allowPrivateHosts: this.isExplicitlyAllowed(request.url, allowedHosts),
+    });
     const response = await fetch(parsed.href, {
       redirect: 'follow',
       signal: AbortSignal.timeout(request.timeoutMs ?? FETCH_DEFAULT_TIMEOUT_MS),
@@ -58,15 +74,55 @@ export class HttpFetchAdapter implements FetchAdapter {
     if (!chain) {
       return;
     }
-    // fetch() follows redirects automatically; we verify the final hostname.
-    // Private hosts are allowed (self-hosted); cloud metadata endpoint and
-    // unsupported protocols stay blocked by assertSafeOutboundUrl.
+    // fetch() follows redirects automatically, so the pre-flight check on the
+    // ORIGINAL url proves nothing about where the body came from: a public page
+    // that 302s to 169.254.169.254 passes the first check and fails only here.
+    // The final hostname gets the same treatment as the first, allowlist
+    // included — otherwise a redirect is a way to reach what a direct request
+    // could not.
     try {
-      assertSafeOutboundUrl(response.url, { allowPrivateHosts: true });
+      assertSafeOutboundUrl(response.url, {
+        allowPrivateHosts: this.isExplicitlyAllowed(
+          response.url,
+          AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST,
+        ),
+      });
     } catch (error) {
       this.logger.warn(`Fetch redirected to unsafe target ${response.url}`);
       throw error;
     }
+  }
+
+  /**
+   * Whether the operator named this exact host in the domain allowlist.
+   *
+   * Deliberately narrow: it is the ONLY thing that unlocks a private address,
+   * and an empty allowlist unlocks nothing. Reusing the existing allowlist
+   * rather than adding a new "allow internal fetches" switch keeps the decision
+   * where an operator already makes it, and stops it being a single boolean
+   * that opens the whole private network at once.
+   */
+  private isExplicitlyAllowed(rawUrl: string, allowlist: readonly string[]): boolean {
+    if (allowlist.length === 0) {
+      return false;
+    }
+    let host: string;
+    try {
+      host = new URL(rawUrl).hostname.toLowerCase();
+    } catch {
+      return false;
+    }
+    return allowlist.some((pattern) => {
+      const normalized = pattern.trim().toLowerCase();
+      if (normalized.length === 0) {
+        return false;
+      }
+      if (normalized.startsWith('*.')) {
+        const suffix = normalized.slice(1);
+        return host.endsWith(suffix) && host.length > suffix.length;
+      }
+      return host === normalized;
+    });
   }
 
   private parseMime(header: string | null): string | null {
