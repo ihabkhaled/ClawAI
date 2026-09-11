@@ -22,3 +22,28 @@ export function parseStreamFrame(payload: string): StreamEvent | null {
 export function describeStreamError(error: unknown): string {
   return error instanceof Error ? error.message : 'unknown error';
 }
+
+/**
+ * The sequence number out of a wire eventId (`"<threadId>:<sequence>"`).
+ *
+ * Thread ids are cuids constrained to `CHAT_STREAM_THREAD_ID_PATTERN`, which
+ * excludes `:`, so the LAST colon is unambiguous even though it is a plain
+ * split rather than a full parse. Returns undefined for anything that does not
+ * look like one of ours — a stale id from before this format, a client sending
+ * garbage — so the caller falls back to "replay everything" rather than
+ * resuming from a number that means nothing.
+ */
+export function parseEventSequence(eventId: string | undefined): number | undefined {
+  if (eventId === undefined) {
+    return undefined;
+  }
+  const separatorIndex = eventId.lastIndexOf(':');
+  if (separatorIndex === -1) {
+    return undefined;
+  }
+  const sequencePart = eventId.slice(separatorIndex + 1);
+  if (!/^\d+$/u.test(sequencePart)) {
+    return undefined;
+  }
+  return Number.parseInt(sequencePart, 10);
+}

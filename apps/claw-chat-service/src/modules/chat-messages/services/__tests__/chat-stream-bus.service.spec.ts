@@ -123,6 +123,70 @@ describe('ChatStreamBusService', () => {
     await expect(service.replay('thread-1')).resolves.toHaveLength(2);
   });
 
+  describe('resuming after a known sequence (D4)', () => {
+    // Nest auto-assigned a wire id from a per-connection counter, unrelated to
+    // this application's own `eventId`, so a reconnect could never say "I
+    // already have up to N" — every reconnect replayed the whole buffer. This
+    // is the half that makes the wire id worth having: the ability to use it.
+    function frameAt(sequence: number): StreamEvent {
+      return { ...frame, sequence } as StreamEvent;
+    }
+
+    it('returns only frames after the given sequence', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([1, 2, 3, 4, 5].map((n) => JSON.stringify(frameAt(n))));
+
+      const result = await service.replay('thread-1', 3);
+
+      expect(result.map((f) => f.sequence)).toEqual([4, 5]);
+    });
+
+    it('returns the whole buffer when no sequence is given, unchanged', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([1, 2, 3].map((n) => JSON.stringify(frameAt(n))));
+
+      const result = await service.replay('thread-1');
+
+      expect(result.map((f) => f.sequence)).toEqual([1, 2, 3]);
+    });
+
+    it('returns nothing when the client is already caught up', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([1, 2, 3].map((n) => JSON.stringify(frameAt(n))));
+
+      const result = await service.replay('thread-1', 3);
+
+      expect(result).toEqual([]);
+    });
+
+    it('returns the whole buffer when the requested sequence has already rolled off it', async () => {
+      // The buffer is capped at CHAT_STREAM_REPLAY_LIMIT; a client that has
+      // been offline long enough to fall behind the whole window gets
+      // everything that is left, which is the correct degraded behaviour
+      // rather than an empty answer.
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([50, 51, 52].map((n) => JSON.stringify(frameAt(n))));
+
+      const result = await service.replay('thread-1', 10);
+
+      expect(result.map((f) => f.sequence)).toEqual([50, 51, 52]);
+    });
+
+    it('treats a frame with no sequence field as sequence 0', async () => {
+      // `frame` carries no `sequence`. Coercing the missing value to 0 (rather
+      // than, say, Infinity or throwing) is what makes "after 0" correctly
+      // exclude it and "no afterSequence at all" correctly include it.
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([JSON.stringify(frame)]);
+      const afterZero = await service.replay('thread-1', 0);
+      expect(afterZero).toEqual([]);
+
+      redis.lrange.mockResolvedValueOnce([JSON.stringify(frame)]);
+      const wholeBuffer = await service.replay('thread-1');
+      expect(wholeBuffer).toHaveLength(1);
+    });
+  });
+
   it('clears the replay buffer without touching the sequence counter', async () => {
     // Resetting the sequence would restart numbering at 1, and the browser
     // discards a progress stage whose sequence is below one already rendered.

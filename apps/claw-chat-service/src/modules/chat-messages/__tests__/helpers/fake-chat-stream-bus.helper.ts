@@ -33,8 +33,13 @@ export function createFakeChatStreamBus(): ChatStreamBusService {
       replayByThread.set(event.threadId, [...(replayByThread.get(event.threadId) ?? []), stamped]);
       handler?.(stamped);
     },
-    replay(threadId: string): Promise<StreamEvent[]> {
-      return Promise.resolve([...(replayByThread.get(threadId) ?? [])]);
+    replay(threadId: string, afterSequence?: number): Promise<StreamEvent[]> {
+      const frames = replayByThread.get(threadId) ?? [];
+      const filtered =
+        afterSequence === undefined
+          ? frames
+          : frames.filter((frame) => (frame.sequence ?? 0) > afterSequence);
+      return Promise.resolve([...filtered]);
     },
     resetReplay(threadId: string): Promise<void> {
       // Mirrors the real one: the buffer is cleared, the sequence is not.

@@ -500,6 +500,40 @@ holds its `AbortController`s in memory, so the Stop button would hit a random
 replica and silently do nothing. The single-replica rule stands until that is
 fixed too.
 
+## A reconnect resumes from `Last-Event-ID`, not from zero (2026-09-11)
+
+`eventId` (`"<threadId>:<sequence>"`) existed on every frame since the Redis
+migration above and reached exactly nowhere: Nest's `@Sse()` decorator
+auto-assigns the wire `id:` from a **per-connection counter starting at 1**
+whenever `MessageEvent.id` is left unset (see `SseStream.writeMessage` in
+`@nestjs/core`). Two real identifiers existed side by side and nothing
+connected them, so a reconnect's `Last-Event-ID` header — had anything sent
+one — would have named a number that meant nothing.
+
+Three small changes, no new state:
+
+- `ChatStreamController` now sets `MessageEvent.id` from the frame's own
+  `eventId`, overriding Nest's counter. `extractEventId` reads it defensively —
+  HEARTBEAT and the runtime-v2 protocol's own event shape carry no `eventId`,
+  and both must pass through with no `id:` line rather than throw.
+- `ChatStreamBusService.replay(threadId, afterSequence?)` filters the buffer to
+  frames after a known sequence. Omitting the argument is the historical
+  behaviour — the whole buffer — which is also the fallback for an id this
+  thread's buffer has already rolled past.
+- The frontend's `sse.utility.ts` — a `fetch`-based reconnect loop, not a real
+  `EventSource`, so nothing does this on the browser's behalf — tracks the last
+  `id:` line it parsed and sends it back as `Last-Event-ID` on the next attempt.
+
+**Only the legacy chat path resumes this way.** Runtime v2 (`?protocol=v2`,
+the coding-agent's channel) already has its own numeric cursor (`query.after`)
+from `RuntimeV2Store`; forwarding `Last-Event-ID` into that path would mean
+nothing, so `RuntimeV2StreamService.selectEvents` only threads it to
+`chatStream.streamEvents`.
+
+Verified live: a real send showed `id: <threadId>:1` on the wire, matching
+`data.eventId` — not a bare Nest counter — with no `Last-Event-ID` on the fresh
+connection. See `docs/14-risk-debt/chat-pipeline-audit-2026-09.md` finding D4.
+
 ## Stop works across replicas (2026-08-28)
 
 `StreamCancellationService` still keeps its `AbortController`s in process memory

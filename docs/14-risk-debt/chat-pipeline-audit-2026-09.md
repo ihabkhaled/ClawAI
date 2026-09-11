@@ -393,16 +393,37 @@ reaches nothing user-visible. The UI cannot distinguish a dead stream from a
 quiet one, which is why the failure was found by reading DevTools rather than by
 the product saying so.
 
-### D4 — Event IDs exist but in the wrong namespace (**high**)
+### D4 — Event IDs exist but in the wrong namespace — **FIXED 2026-09-11**
 
-Nest auto-assigns `id:` from a **per-connection counter starting at 1**. The
-application's real identifier is the Redis-stamped `"<threadId>:<sequence>"`.
-They are unrelated, so the wire IDs carry no resumable information.
+Nest auto-assigned `id:` from a **per-connection counter starting at 1** (see
+`SseStream.writeMessage` in `@nestjs/core`, which only defers to that counter
+when `message.id` is left unset). The application's real identifier was the
+Redis-stamped `"<threadId>:<sequence>"`, already present on every frame's
+`eventId` field — the two were simply never connected.
 
-`Last-Event-ID` is handled by neither side: the client sends only `Accept` and
-`Authorization` and discards every non-`data:` line; the controller reads no
-such header. Recovery is therefore always "replay the whole buffer", never
+`Last-Event-ID` was handled by neither side: the client sent only `Accept` and
+`Authorization` and discarded every non-`data:` line; the controller read no
+such header. Recovery was therefore always "replay the whole buffer", never
 "resume from N".
+
+Fixed by connecting the two things that already existed rather than inventing
+new state: the controller now sets `MessageEvent.id` from each frame's own
+`eventId` instead of letting Nest override it, and the browser's fetch-based
+client (not a real `EventSource`, so nothing does this on its own behalf) tracks
+the last `id:` line it saw and sends it back as `Last-Event-ID` on reconnect.
+`ChatStreamBusService.replay` accepts the parsed sequence and returns only what
+happened after it; an id it does not recognise — a stale format, a buffer that
+already rolled past it — falls back to the historical "replay everything",
+never an error.
+
+Verified live: a real send showed `id: <threadId>:1` on the wire (not a bare
+Nest counter) matching `data.eventId` exactly, no `Last-Event-ID` on the fresh
+connection, and the answer rendered normally — a pure regression check plus
+proof the real id reaches the browser. The resume path itself (a reconnect
+picking up from N instead of replaying the whole buffer) is covered by 19 new
+unit tests across the bus, the service and the controller, since forcing a
+live network drop mid-stream is not something browser automation can do
+deterministically.
 
 ### D5 — The dedup guard cannot survive a reconnect (**high**)
 
@@ -677,7 +698,7 @@ was **one request, 32 KB, 68 ms** — with a single `/client-logs/batch` and no
 duplicate thread fetches. Recorded rather than "fixed", because the measurement
 is the finding.
 
-**Sections C, D and E are closed except D4.** D3 closed 2026-09-11: connection
+**Sections C, D and E are all closed.** D3 closed 2026-09-11: connection
 health is user-visible state now, and a connection that stays open but goes
 quiet is detected by a 45-second stall deadline rather than waited on forever.
 D4 (no `Last-Event-ID`, so recovery replays rather than resumes) is the last

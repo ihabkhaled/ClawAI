@@ -155,3 +155,96 @@ describe('connectSse clean-close handling', () => {
     expect(seen).toContain(SseConnectionHealth.RECONNECTING);
   });
 });
+
+describe('connectSse Last-Event-ID resume', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('sends no Last-Event-ID on the first connection attempt', async () => {
+    // Nothing has been seen yet, so there is nothing to resume from — sending
+    // the header here would be a lie about what the client already has.
+    const fetchMock = vi.fn().mockResolvedValue(streamResponse(`data: {"type":"PING"}\n\n`));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const connection = connectSse('https://claw.local/stream', {
+      onMessage: vi.fn(),
+      onError: vi.fn(),
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    connection.close();
+
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    expect('Last-Event-ID' in headers).toBe(false);
+  });
+
+  it('sends the last seen id as Last-Event-ID on a reconnect', async () => {
+    // The frame the first attempt delivers before going quiet.
+    const firstAttempt = streamResponse(`id: thread-1:7\ndata: {"type":"PING"}\n\n`);
+    const neverResolves = {
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: () => new Promise<never>(() => {}),
+          cancel: () => Promise.resolve(),
+        }),
+      },
+    } as unknown as Response;
+    const fetchMock = vi.fn().mockResolvedValueOnce(firstAttempt).mockResolvedValue(neverResolves);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const connection = connectSse('https://claw.local/stream', {
+      onMessage: vi.fn(),
+      onError: vi.fn(),
+      shouldReconnectAfterClose: () => true,
+    });
+
+    // First attempt ends cleanly (its reader reports done after one chunk),
+    // triggering a reconnect. Advance past the stall window too, in case the
+    // scheduling lands the second attempt on that path instead.
+    await vi.advanceTimersByTimeAsync(SSE_STALL_TIMEOUT_MS + 5_000);
+    connection.close();
+
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+    const secondCallHeaders = fetchMock.mock.calls[1]?.[1]?.headers as Record<string, string>;
+    expect(secondCallHeaders['Last-Event-ID']).toBe('thread-1:7');
+  });
+
+  it('ignores lines that are not id: or data:, such as comments and event:', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        streamResponse(
+          `event: custom\n: this is a comment\nid: thread-1:2\ndata: {"type":"X"}\n\n`,
+        ),
+      )
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: {
+          getReader: () => ({
+            read: () => new Promise<never>(() => {}),
+            cancel: () => Promise.resolve(),
+          }),
+        },
+      } as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const connection = connectSse('https://claw.local/stream', {
+      onMessage: vi.fn(),
+      onError: vi.fn(),
+      shouldReconnectAfterClose: () => true,
+    });
+    await vi.advanceTimersByTimeAsync(SSE_STALL_TIMEOUT_MS + 5_000);
+    connection.close();
+
+    const secondCallHeaders = fetchMock.mock.calls[1]?.[1]?.headers as Record<string, string>;
+    expect(secondCallHeaders['Last-Event-ID']).toBe('thread-1:2');
+  });
+});

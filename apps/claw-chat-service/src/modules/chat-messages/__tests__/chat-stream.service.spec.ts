@@ -212,6 +212,59 @@ describe('ChatStreamService', () => {
     expect(received).toEqual([StreamEventType.REQUEST_ACCEPTED]);
   });
 
+  describe('resuming from a Last-Event-ID (D4)', () => {
+    // Wire ids used to come from a per-connection counter unrelated to this
+    // application's own eventId, so a reconnect could only ever ask for "the
+    // whole buffer again". This is the behaviour that makes carrying the real
+    // eventId onto the wire worth doing.
+    it('replays only what happened after the given event id', async () => {
+      service.emitRequestAccepted('thread-resume');
+      service.emitRouterStarted('thread-resume', 'AUTO');
+      service.emitCompletion('thread-resume', 'OLLAMA', 'gemma3:4b');
+
+      const received: StreamEventType[] = [];
+      const subscription = service
+        .streamEvents('thread-resume', true, 'thread-resume:1')
+        .subscribe((event) => received.push(event.type));
+      await Promise.resolve();
+      subscription.unsubscribe();
+
+      // Event 1 (REQUEST_ACCEPTED) is what the client already had; only 2 and 3
+      // are new to it.
+      expect(received).toEqual([StreamEventType.ROUTER_STARTED, StreamEventType.DONE]);
+    });
+
+    it('falls back to the whole buffer for an id it does not recognise', async () => {
+      service.emitRequestAccepted('thread-resume-unknown');
+      service.emitCompletion('thread-resume-unknown', 'OLLAMA', 'gemma3:4b');
+
+      const received: StreamEventType[] = [];
+      const subscription = service
+        .streamEvents('thread-resume-unknown', true, 'a-format-from-before-this-existed')
+        .subscribe((event) => received.push(event.type));
+      await Promise.resolve();
+      subscription.unsubscribe();
+
+      expect(received).toEqual([StreamEventType.REQUEST_ACCEPTED, StreamEventType.DONE]);
+    });
+
+    it('ignores the resume id entirely when replay is turned off', async () => {
+      // A fresh send (replay=false) has missed nothing and asks for no replay
+      // at all — passing a resume id there must not resurrect old frames.
+      service.emitRequestAccepted('thread-resume-fresh');
+      service.emitCompletion('thread-resume-fresh', 'OLLAMA', 'gemma3:4b');
+
+      const received: StreamEventType[] = [];
+      const subscription = service
+        .streamEvents('thread-resume-fresh', false, 'thread-resume-fresh:1')
+        .subscribe((event) => received.push(event.type));
+      await Promise.resolve();
+      subscription.unsubscribe();
+
+      expect(received).toEqual([]);
+    });
+  });
+
   it('emitResearchProgress(STARTED) puts a RESEARCH_PROGRESS frame on the bus with mode+query details', () => {
     const nextSpy = jest.spyOn(service.eventBus, 'next');
 

@@ -115,13 +115,31 @@ export class ChatStreamBusService implements OnModuleInit {
    * open the stream because the buffer could not be read would turn a degraded
    * reconnect into no reconnect at all.
    */
-  async replay(threadId: string): Promise<StreamEvent[]> {
+  /**
+   * Frames buffered for one thread, optionally starting after a known point.
+   *
+   * `afterSequence` is what makes a reconnect a RESUME rather than a replay of
+   * the whole buffer: a client that has already rendered sequence 40 of a
+   * 90-frame run has no use for frames 1-40 again. Omit it (or pass a value
+   * this thread never reached) to get the historical behaviour — the whole
+   * buffer, oldest first.
+   *
+   * Filtering happens after the read rather than in a second Redis structure:
+   * the buffer is capped at `CHAT_STREAM_REPLAY_LIMIT` (100), so reading it
+   * whole and filtering in the process is cheaper than the round trip a
+   * server-side range query would save.
+   */
+  async replay(threadId: string, afterSequence?: number): Promise<StreamEvent[]> {
     try {
       const raw = await this.redis.lrange(`${CHAT_STREAM_REPLAY_KEY_PREFIX}${threadId}`, 0, -1);
-      return raw.flatMap((entry) => {
+      const frames = raw.flatMap((entry) => {
         const parsed = parseStreamFrame(entry);
         return parsed === null ? [] : [parsed];
       });
+      if (afterSequence === undefined) {
+        return frames;
+      }
+      return frames.filter((frame) => (frame.sequence ?? 0) > afterSequence);
     } catch (error: unknown) {
       this.logger.error(
         `replay: could not read buffer for ${threadId} — ${describeStreamError(error)}`,

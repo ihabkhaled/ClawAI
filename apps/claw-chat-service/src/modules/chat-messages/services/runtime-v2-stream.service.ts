@@ -25,17 +25,24 @@ export class RuntimeV2StreamService {
     private readonly chatStream: ChatStreamService,
   ) {}
 
+  /**
+   * `lastEventId` is the browser's own `Last-Event-ID` header, forwarded only
+   * to the legacy chat path. Runtime v2 already resumes by its own numeric
+   * cursor (`query.after`), so a wire event id from that protocol would mean
+   * nothing to `streamEvents` and is deliberately not threaded through.
+   */
   selectEvents(
     ownerId: string,
     threadId: string,
     query: RuntimeV2RawStreamQuery,
     expiresAtEpochSeconds?: number,
+    lastEventId?: string,
   ): Observable<unknown> {
     if (query['protocol'] === 'v2') {
       const runtimeQuery = runtimeStreamQuerySchema.parse(query);
       return this.stream(ownerId, threadId, runtimeQuery, expiresAtEpochSeconds);
     }
-    return this.chatStream.streamEvents(threadId, this.legacyReplay(query['replay']));
+    return this.chatStream.streamEvents(threadId, this.legacyReplay(query['replay']), lastEventId);
   }
 
   private stream(

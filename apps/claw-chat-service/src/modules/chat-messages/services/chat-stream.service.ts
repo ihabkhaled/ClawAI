@@ -11,6 +11,7 @@ import {
 } from 'rxjs';
 import { ROUTER_TRACE_TERMINAL_STAGE_ID } from '@claw/shared-constants';
 import { CHAT_STREAM_REPLAY_LIMIT } from '../constants/chat-stream-bus.constants';
+import { parseEventSequence } from '../utilities/chat-stream-frame.utility';
 import { ChatStreamBusService } from './chat-stream-bus.service';
 import {
   type ContentDeltaEmitInput,
@@ -541,8 +542,8 @@ export class ChatStreamService implements OnModuleInit {
     });
   }
 
-  getRecentEvents(threadId: string): Promise<StreamEvent[]> {
-    return this.bus.replay(threadId);
+  getRecentEvents(threadId: string, afterEventId?: string): Promise<StreamEvent[]> {
+    return this.bus.replay(threadId, parseEventSequence(afterEventId));
   }
 
   /**
@@ -557,7 +558,19 @@ export class ChatStreamService implements OnModuleInit {
    * The buffer is then filtered against the ids the replay already delivered,
    * so a frame present in both is shown once.
    */
-  streamEvents(threadId: string, replayRecent = true): Observable<StreamEvent> {
+  /**
+   * `resumeAfterEventId` is the id the client last rendered, echoed back by
+   * the browser's `Last-Event-ID` header on a reconnect. When it is present
+   * and recognisable, `getRecentEvents` returns only what happened after it —
+   * a RESUME. When it is absent (a fresh open) or unrecognisable (an id from
+   * before this existed, or a thread whose buffer already rolled past it), the
+   * full buffer is replayed, which is the historical, always-correct fallback.
+   */
+  streamEvents(
+    threadId: string,
+    replayRecent = true,
+    resumeAfterEventId?: string,
+  ): Observable<StreamEvent> {
     const liveEvents = this.eventBus.pipe(filter((event) => event.threadId === threadId));
     if (!replayRecent) {
       return liveEvents;
@@ -566,7 +579,7 @@ export class ChatStreamService implements OnModuleInit {
     const buffered = new ReplaySubject<StreamEvent>(CHAT_STREAM_REPLAY_LIMIT);
     const subscription = liveEvents.subscribe(buffered);
 
-    return from(this.getRecentEvents(threadId)).pipe(
+    return from(this.getRecentEvents(threadId, resumeAfterEventId)).pipe(
       mergeMap((replayed) => {
         const alreadySent = new Set(replayed.map((event) => event.eventId));
         return concat(

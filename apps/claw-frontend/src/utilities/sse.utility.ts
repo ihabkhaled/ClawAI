@@ -70,8 +70,15 @@ async function runWithReconnect(
   reconnect: boolean,
 ): Promise<void> {
   let attempt = 0;
+  // Carries the last `id:` line across reconnect attempts, so the SECOND and
+  // later attempts can tell the server what they already have. Read fresh on
+  // every attempt via the mutable box (not a local variable captured once),
+  // because `readSseStream` updates it as frames arrive within an attempt too —
+  // a stall mid-run must resume from the last frame actually seen, not from
+  // wherever the previous attempt started.
+  const lastEventId: { current: string | undefined } = { current: undefined };
   while (!controller.signal.aborted) {
-    const completed = await readSseStream(url, controller.signal, callbacks);
+    const completed = await readSseStream(url, controller.signal, callbacks, lastEventId);
     if (!reconnect || controller.signal.aborted) {
       return;
     }
@@ -138,6 +145,7 @@ async function readSseStream(
   url: string,
   signal: AbortSignal,
   callbacks: SseCallbacks,
+  lastEventId: { current: string | undefined },
 ): Promise<boolean> {
   try {
     const token = getAccessToken();
@@ -146,6 +154,12 @@ async function readSseStream(
       headers: {
         Accept: 'text/event-stream',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // The standard reconnect header. `fetch` is not a real EventSource, so
+        // nothing sends this on our behalf — it has to be read back out of the
+        // `id:` lines this same function saw and forwarded here explicitly.
+        // Its absence on a first connection is exactly correct: there is
+        // nothing yet to resume from.
+        ...(lastEventId.current === undefined ? {} : { 'Last-Event-ID': lastEventId.current }),
       },
       signal,
     });
@@ -190,6 +204,15 @@ async function readSseStream(
 
       for (const line of lines) {
         const trimmed = line.trim();
+        if (trimmed.startsWith('id:')) {
+          // Tracked even though this function does not act on it itself — a
+          // later reconnect attempt reads it back out of this same box.
+          const id = trimmed.slice(3).trim();
+          if (id.length > 0) {
+            lastEventId.current = id;
+          }
+          continue;
+        }
         if (trimmed.startsWith('data:')) {
           const data = trimmed.slice(5).trim();
           if (data.length > 0) {
