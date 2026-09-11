@@ -238,3 +238,4 @@ export {
   isSubscriptionEntitling,
 } from './billing.utility';
 export { invalidateThreadMessages } from './invalidate-thread-messages.utility';
+export { insertSentMessageIntoCache } from './insert-sent-message-into-cache.utility';

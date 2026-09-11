@@ -156,24 +156,53 @@ thread abandoned ten days earlier.
 > effect and the recovery effect can no longer drive each other. This also
 > breaks D1's abort loop from the client side.
 
-### B5 — Streamed tokens are never written to the cache (**high**)
+### B5 — Streamed tokens are never written to the cache — **re-scoped 2026-09-11**
 
-There is no `setQueryData` anywhere in `hooks/chat/` — verified by grep, zero
-hits. Deltas accumulate in refs and a separate `streamLive` state rendered in
-the list _footer_. On `DONE`, that buffer stops being authoritative and the
-entire thread is re-downloaded to materialise the one message that just
-streamed. **Every completed answer costs one full-conversation download.**
+There is no `setQueryData` anywhere in `hooks/chat/` at the time this was
+written — verified by grep, zero hits. Deltas accumulate in refs and a
+separate `streamLive` state rendered in the list _footer_. On `DONE`, that
+buffer stops being authoritative and the thread's message list is re-fetched
+to materialise the one message that just streamed.
 
-### B6 — Three uncoordinated copies, no normalized store (**certain**)
+**The "full-conversation download" framing was accurate at write time and is
+stale now.** B1 (page 1 is the whole conversation) was fixed in the same
+2026-09-10 batch as the polling work: `MESSAGES_PAGE_SIZE = 50` and the
+repository projects a page, not the thread. Measured live on 2026-09-11: a
+480-message thread's page-1 refetch costs **32 KB in 68 ms**, not a
+full-conversation download. Writing the streamed content into the cache to
+avoid that specific cost is no longer the highest-value fix here — see B6
+below for the part that was.
+
+The streamed content itself is still never written to the cache mid-run —
+`streamLive` remains a parallel, non-authoritative render path — which is a
+real gap for a FUTURE feature (edit-while-streaming, resuming a render after a
+reload mid-answer) but is not, on current evidence, costing a measurable
+request or a visible delay today. Left open rather than built speculatively.
+
+### B6 — Three uncoordinated copies, no normalized store — **send half FIXED 2026-09-11**
 
 The conversation exists in the TanStack cache, in SSE component state, and in
 derived waiting state, plus a fourth query for thread metadata. `src/stores/`
 holds auth, log and sidebar only. There is no message store and no
-normalisation by id.
+normalisation by id. **The full normalized store remains an architectural
+decision, not a bug fix, and is out of scope for this programme** — it would
+touch every read site in `hooks/chat/`, not one mutation.
 
-There is also **no optimistic insert on send** — `use-send-message.ts` has no
-`onMutate`, so the user's own message is invisible until a poll fetches it.
-That absence is a direct cause of how aggressive the polling had to be.
+The concrete, fixable defect inside B6 was real and is now closed: **no
+optimistic insert on send** — `use-send-message.ts` had no `onMutate`, so the
+user's own message was invisible until a poll fetched it back. Fixed not with
+a true optimistic update (guess-then-reconcile) but with something simpler and
+risk-free: `POST /chat-messages` already returns the full persisted row — real
+id, real `createdAt` — and `onSuccess` now writes that authoritative response
+straight into `messagesInfinite`'s cache with `insertSentMessageIntoCache`,
+prepended to page 1, instead of discarding it and calling
+`invalidateThreadMessages` to ask the network for the exact object the
+mutation was already holding.
+
+Verified live: a send now produces zero `GET /chat-messages/thread/...`
+requests — only the `POST /chat-messages` itself, the SSE stream connection,
+and the unrelated thread-list refresh — with the sent message visible in
+~350 ms, which is the POST's own round trip and nothing more.
 
 ### B7 — Invalidations aimed at a key nothing queries — **FIXED 2026-09-10**
 
@@ -671,6 +700,8 @@ callers.
 | C1-C3, C5-C8             | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                                                                                                                                                                                                                                                     |
 | **Z (the reported bug)** | 2026-09-11 | **End-to-end proof.** "Summarize https://example.com/" with Search+Fetch on `gemini-2.5-flash-lite` now answers _"The provided text from example.com states that the domain is for use in documentation examples and should be avoided in operations [1]"_ — the real page, cited. The same prompt on the same model refused twice earlier the same day, with 11 evidence items already in its prompt: the pipeline was correct and the answer was still wrong, because the instruction was too far from the question. Fixed by repeating a short grounding note on the final user turn. |
 | a11y, L                  | 2026-09-11 | Chat page Lighthouse accessibility **90 → 100** and agentic-browsing **50 → 100**, 0 failed audits on desktop AND mobile: the research selects had no accessible name, the message timestamp was dimmed below the contrast floor, and the desktop search button's `aria-label` overrode its own visible text. Long-chat performance was **re-measured and found already solved** — see below.                                                                                                                                                                                            |
+| D4                       | 2026-09-11 | Reconnects resume from `Last-Event-ID` instead of replaying the whole buffer. The wire `id:` is now the frame's own `eventId`, not Nest's per-connection counter; verified live (`id: <threadId>:1` on the wire, matching `data.eventId`). 19 backend + 3 frontend unit tests, since forcing a live network drop mid-stream is not something browser automation can do deterministically.                                                                                                                                                                                                |
+| B6 (send half)           | 2026-09-11 | A send writes the server's own response straight into the message cache instead of discarding it and re-fetching. Verified live: zero `GET /chat-messages/thread/...` on send, message visible in ~350ms (the POST's own round trip).                                                                                                                                                                                                                                                                                                                                                    |
 | D3                       | 2026-09-11 | A dropped or silent stream now says so, between the transcript and the composer, and renders nothing when healthy. A connection that stays open and stops delivering is abandoned after 45s (three missed heartbeats) instead of being awaited forever — the failure a reconnect loop alone cannot see.                                                                                                                                                                                                                                                                                  |
 | E2, E5, E7               | 2026-09-11 | The provider dropdown drives the search on every path and the transcript records the provider that ANSWERED (verified: `selectionMode: explicit` for both configured providers). The compare path states the capability instead of naming the mode. A 1,176-character prompt now completes with a warning where it previously 400'd and silently disabled research.                                                                                                                                                                                                                      |
 | E4, E8, E9               | 2026-09-10 | "Used N sources" became "Read N pages", derived from each item's own `source` field, with links found as a separate number and the search/fetch counts read from `toolsUsed` instead of hardcoded zeros. `Button` now defaults to `type="button"` (no form in the app relied on the implicit submit). 106 lines of dead enricher wrapper deleted.                                                                                                                                                                                                                                        |
@@ -697,6 +728,17 @@ thread cost **14 API requests, 43 KB total**, of which the conversation itself
 was **one request, 32 KB, 68 ms** — with a single `/client-logs/batch` and no
 duplicate thread fetches. Recorded rather than "fixed", because the measurement
 is the finding.
+
+**One residual duplicate found while verifying B6, not fixed in this pass**:
+DONE's own `invalidateThreadMessages` and the in-flight `refetchInterval`
+(`MESSAGE_POLL_INTERVAL_MS`, active only while `isAwaitingResponse`) can land
+within the same tick, producing two near-identical `GET
+/chat-messages/thread/...` calls for one completed answer instead of one. Cheap
+(each is the same 32 KB/68 ms page-1 fetch measured above), pre-existing —
+not introduced by today's send-time fix — and not chased further here because
+resolving it means changing DONE's own invalidation timing relative to the
+poll, which is a different, smaller optimization than the one this batch set
+out to make.
 
 **Sections C, D and E are all closed.** D3 closed 2026-09-11: connection
 health is user-visible state now, and a connection that stays open but goes

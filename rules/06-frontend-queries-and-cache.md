@@ -19,8 +19,29 @@ data is stale. This rule governs the data layer between hooks and the API.
    not `fetch`/the http-client directly.
 3. **Query keys come from the factory** in `src/repositories/shared/query-keys.ts`
    — never an inline array literal in a hook.
-4. **Mutations invalidate on success.** `onSuccess` invalidates the affected
-   query keys; `onError` surfaces the failure (see [05](05-frontend-components-and-hooks.md)).
+4. **Mutations invalidate on success — unless the response IS the cache.**
+   `onSuccess` invalidates the affected query keys; `onError` surfaces the
+   failure (see [05](05-frontend-components-and-hooks.md)). But when a mutation's
+   response body is already the exact row the affected query would refetch —
+   `POST /chat-messages` returns the full persisted message, id and
+   `createdAt` included — invalidating it anyway means discarding that
+   response and paying a second round trip to ask the network for the same
+   object back. `useSendMessage` used to do exactly this: the sent message was
+   invisible until a poll re-fetched the thread. Write the response straight
+   into the cache with `setQueryData` instead (`insertSentMessageIntoCache` is
+   the pattern), and reserve invalidation for mutations whose response is NOT
+   the full picture — `regenerate` returns a message but changes what exists
+   downstream of it, which invalidation, not a hand-written cache patch, is
+   the safe way to express.
+
+   This is **not** an optimistic update and carries none of that pattern's
+   risk: there is nothing to guess and nothing to roll back, because the data
+   being written already came from the server. Guard it exactly like the
+   pattern above still requires — idempotent against a concurrent refetch
+   (check the id is not already present) and a no-op when nothing is cached
+   yet, so a send racing the very first page load does not fabricate a page
+   shape that disagrees with the real one when it arrives.
+
 5. **Zustand only for minimal client state** — auth, sidebar, log filters. Never
    mirror server data into a store.
 6. **Derive, don't duplicate.** If a value can be computed from query data, derive it.
@@ -116,6 +137,11 @@ export function useThreads() {
 ```
 
 ## Enforcement
+
+| Mechanism     | What it checks                                                                                                                                                                                             |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit test** | `src/utilities/__tests__/insert-sent-message-into-cache.utility.test.ts` — prepends to page 1, recomputes `total`/`totalPages`, leaves other pages untouched, no-ops on an empty cache, and is idempotent. |
+| **Unit test** | `src/hooks/chat/__tests__/use-send-message.test.tsx` — a successful send writes to the cache and does NOT invalidate `messagesInfinite`, while still invalidating `messagesAnyPage` for the poll hooks.    |
 
 - **ESLint** (frontend) — restricts `useQuery`/`useMutation` outside hooks and
   bans inline constants (query keys) in hook files.

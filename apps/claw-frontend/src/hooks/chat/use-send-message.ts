@@ -4,7 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateMessageRequest, UseSendMessageResult } from '@/types';
-import { invalidateThreadMessages, logger, showToast } from '@/utilities';
+import { insertSentMessageIntoCache, logger, showToast } from '@/utilities';
 import { resolveApiErrorMessage } from '@/utilities/api-error-message.utility';
 
 export function useSendMessage(
@@ -25,14 +25,26 @@ export function useSendMessage(
       });
       return chatRepository.createMessage(data);
     },
-    onSuccess: () => {
+    onSuccess: (message) => {
       logger.info({
         component: 'chat',
         action: 'send-message',
         message: 'Message sent',
         details: { threadId },
       });
-      invalidateThreadMessages(queryClient, threadId);
+      // The response IS the authoritative row — real id, real createdAt — so
+      // it is written straight into the cache the thread page reads from
+      // rather than discarded in favour of asking the network for it back.
+      // That used to cost a full extra request on every single send; the
+      // sent message renders now, in this same tick.
+      insertSentMessageIntoCache(queryClient, threadId, message);
+      // The orchestration poll hooks read a DIFFERENT cache shape
+      // (`messages(id, page)`, not the infinite query above), which this
+      // insert does not touch — they still refresh through their own
+      // invalidation.
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.threads.messagesAnyPage(threadId),
+      });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });
