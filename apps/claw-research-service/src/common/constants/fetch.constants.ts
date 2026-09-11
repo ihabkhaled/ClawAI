@@ -21,6 +21,10 @@ export const FETCH_ALLOWED_MIME_TYPES: ReadonlySet<string> = new Set([
   // depending on the server.
   'application/xml',
   'text/xml',
+  // The feed-specific content-types some servers use instead of the
+  // generic XML ones above.
+  'application/rss+xml',
+  'application/atom+xml',
 ]);
 
 /**
@@ -35,4 +39,6 @@ export const RAW_BODY_PRESERVED_MIME_TYPES: ReadonlySet<string> = new Set([
   'application/xhtml+xml',
   'application/xml',
   'text/xml',
+  'application/rss+xml',
+  'application/atom+xml',
 ]);

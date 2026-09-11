@@ -85,6 +85,21 @@ and reliability property `FetchService` already has.
   only prefix matching — correct for the common case, not a full
   specification-compliant implementation.
 
+## Amendment: RSS/Atom feed discovery (2026-09-11, same day)
+
+The homepage's own `<link rel="alternate" type="application/{rss,atom}+xml">`
+autodiscovery tag, when present, is fetched and parsed
+(`common/utilities/feed.utility.ts`) and its entries added as crawl
+candidates — same rule as everything else here: through `FetchService`, no
+new fetch path. Checked unconditionally rather than only as a sitemap
+fallback, because a feed is usually a site's most recent content and a
+sitemap can be complete but stale — a different signal, not a substitute for
+a missing one. A site with no autodiscovery tag is not probed at
+conventional feed paths (`/feed`, `/rss.xml`); only what the page itself
+advertised is checked, matching the same "advertised, not guessed" posture
+sitemap discovery already has via `robots.txt`'s `Sitemap:` directive before
+falling back to a conventional path.
+
 ## Revisit when
 
 - An intent classifier is built that auto-selects `SITE_CRAWL` from message

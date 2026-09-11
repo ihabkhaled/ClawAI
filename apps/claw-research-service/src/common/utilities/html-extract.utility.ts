@@ -4,6 +4,7 @@
  * (phase 5) will add a dedicated adapter.
  */
 import {
+  FEED_LINK_MIME_TYPES,
   HTML_ATTR_RE,
   HTML_BLOCKED_SCHEMES,
   HTML_ENTITY_MAP,
@@ -89,6 +90,7 @@ function extractMetadata(html: string, baseUrl: string | null): HtmlMetadata {
     openGraph: {},
     twitterCard: {},
     jsonLd: [],
+    feedUrls: [],
   };
 
   for (const tag of html.match(HTML_META_TAG_RE) ?? []) {
@@ -120,11 +122,14 @@ function extractMetadata(html: string, baseUrl: string | null): HtmlMetadata {
       metadata.canonicalUrl = resolveLink(href, baseUrl) ?? href;
     } else if (rel === 'alternate') {
       const hreflang = attr(tag, 'hreflang');
+      const type = attr(tag, 'type');
       if (hreflang !== null) {
         metadata.hreflangAlternates.push({
           lang: hreflang,
           url: resolveLink(href, baseUrl) ?? href,
         });
+      } else if (type !== null && FEED_LINK_MIME_TYPES.has(type.toLowerCase())) {
+        metadata.feedUrls.push(resolveLink(href, baseUrl) ?? href);
       }
     }
   }

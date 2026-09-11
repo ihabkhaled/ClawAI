@@ -302,6 +302,67 @@ describe('SiteCrawlManager', () => {
     expect(warnings.some((w) => w.includes('connection refused'))).toBe(true);
   });
 
+  it('discovers pages from a feed the homepage advertises via autodiscovery', async () => {
+    fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+      if (url === 'https://example.com/robots.txt') {
+        return Promise.reject(new Error('404'));
+      }
+      if (url === 'https://example.com/sitemap.xml') {
+        return Promise.reject(new Error('404'));
+      }
+      if (url === 'https://example.com/') {
+        return Promise.resolve(
+          buildFetchResult({
+            links: [],
+            metadata: {
+              description: null,
+              robotsDirective: null,
+              canonicalUrl: null,
+              hreflangAlternates: [],
+              openGraph: {},
+              twitterCard: {},
+              jsonLd: [],
+              feedUrls: ['https://example.com/feed.xml'],
+            },
+          }),
+        );
+      }
+      if (url === 'https://example.com/feed.xml') {
+        return Promise.resolve(
+          buildFetchResult({
+            mimeType: 'application/rss+xml',
+            content: `<rss version="2.0"><channel>
+              <item><title>Latest Post</title><link>https://example.com/latest-post</link></item>
+            </channel></rss>`,
+          }),
+        );
+      }
+      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+    });
+
+    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+
+    expect(items.map((item) => item.url)).toContain('https://example.com/latest-post');
+    expect(toolsUsed).toContain('web_crawl:feed');
+  });
+
+  it('does not crawl a feed when the homepage advertises none', async () => {
+    fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+      if (url === 'https://example.com/robots.txt' || url === 'https://example.com/sitemap.xml') {
+        return Promise.reject(new Error('404'));
+      }
+      if (url === 'https://example.com/') {
+        return Promise.resolve(buildFetchResult({ links: [] }));
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+
+    expect(fetchPage).not.toHaveBeenCalledWith('u1', { url: 'https://example.com/feed.xml' });
+    expect(toolsUsed).not.toContain('web_crawl:feed');
+  });
+
   it('caps total pages fetched at the crawl page budget', async () => {
     const sitemapUrls = Array.from(
       { length: 30 },

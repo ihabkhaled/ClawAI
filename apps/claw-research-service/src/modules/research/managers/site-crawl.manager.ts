@@ -10,12 +10,14 @@ import {
   CRAWL_USER_AGENT,
 } from '../../../common/constants/crawl.constants';
 import { runWithConcurrencyLimit } from '../../../common/utilities/concurrency-pool.utility';
+import { parseFeedXml } from '../../../common/utilities/feed.utility';
 import { sha1Short } from '../../../common/utilities/hash.utility';
 import { isPathAllowed, parseRobotsTxt } from '../../../common/utilities/robots-txt.utility';
 import { parseSitemapXml } from '../../../common/utilities/sitemap.utility';
 import { CrawlDiscoveryMethod } from '../../../common/enums/crawl-discovery-method.enum';
 import { FetchService } from '../../fetch/services/fetch.service';
 import { traceEntry } from '../utilities/evidence-builder.utility';
+import type { FeedEntry } from '../../../common/types/feed.types';
 import type { RobotsTxtResult } from '../../../common/types/robots-txt.types';
 import type { SitemapUrlEntry } from '../../../common/types/sitemap.types';
 import type { FetchResult } from '../../fetch/types/fetch.types';
@@ -84,6 +86,15 @@ export class SiteCrawlManager {
       }
     }
 
+    // A feed is checked unconditionally, not just when the sitemap is thin:
+    // a sitemap can be complete but stale, while a feed is usually exactly
+    // the site's most recent content — a genuinely different signal, not a
+    // fallback for a missing one.
+    const feedEntries = await this.discoverFeedEntries(userId, homepage, trace, toolsUsed);
+    for (const entry of feedEntries) {
+      this.addCandidate(candidates, visited, origin, entry.url, CrawlDiscoveryMethod.FEED);
+    }
+
     const remainingBudget = Math.max(0, CRAWL_DEFAULT_MAX_PAGES - 1);
     const toFetch = candidates.slice(0, remainingBudget);
 
@@ -116,7 +127,7 @@ export class SiteCrawlManager {
         'crawl.summary',
         'ok',
         null,
-        `${String(items.length)} page(s) crawled from ${origin}, ${String(sitemapEntries.length)} sitemap URL(s) discovered`,
+        `${String(items.length)} page(s) crawled from ${origin}, ${String(sitemapEntries.length)} sitemap URL(s) and ${String(feedEntries.length)} feed URL(s) discovered`,
       ),
     );
     return items;
@@ -150,6 +161,49 @@ export class SiteCrawlManager {
         ),
       );
       return { groups: [], sitemaps: [] };
+    }
+  }
+
+  private async discoverFeedEntries(
+    userId: string,
+    homepage: FetchResult,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+  ): Promise<FeedEntry[]> {
+    const feedUrl = homepage.metadata?.feedUrls[0];
+    if (feedUrl === undefined) {
+      return [];
+    }
+    const start = Date.now();
+    try {
+      const result = await this.fetchService.fetchPage(userId, { url: feedUrl });
+      const parsed = parseFeedXml(result.rawHtml ?? result.content);
+      if (parsed.kind === 'unrecognized') {
+        trace.push(
+          traceEntry('crawl.feed', 'warning', Date.now() - start, `${feedUrl}: not a feed`),
+        );
+        return [];
+      }
+      toolsUsed.push('web_crawl:feed');
+      trace.push(
+        traceEntry(
+          'crawl.feed',
+          'ok',
+          Date.now() - start,
+          `${feedUrl}: ${String(parsed.entries.length)} entr(y/ies)`,
+        ),
+      );
+      return parsed.entries;
+    } catch {
+      trace.push(
+        traceEntry(
+          'crawl.feed',
+          'skipped',
+          Date.now() - start,
+          `${feedUrl}: not found or unreachable`,
+        ),
+      );
+      return [];
     }
   }
 

@@ -5,4 +5,6 @@ export enum CrawlDiscoveryMethod {
   SITEMAP = 'sitemap',
   /** Found in the homepage's own links, only used when the sitemap is thin. */
   LINK = 'link',
+  /** Listed in an RSS/Atom feed the homepage advertised via autodiscovery. */
+  FEED = 'feed',
 }

@@ -223,6 +223,18 @@ scope (see ADR-092's "Revisit when"). Gzip-compressed sitemaps are not
 decompressed by `parseSitemapXml` or by `FetchService`, so a gzipped sitemap
 silently falls back to the homepage-link path.
 
+**Feed discovery.** `extractHtml`'s metadata now includes `feedUrls` — RSS/
+Atom links declared via `<link rel="alternate" type="application/{rss,atom}+xml">`
+autodiscovery on the homepage. When present, the crawl fetches the first one,
+parses it with `common/utilities/feed.utility.ts`'s `parseFeedXml` (RSS 2.0
+and Atom, same hand-rolled tag-matching as the sitemap parser), and adds its
+entries as crawl candidates. Checked unconditionally, not just when the
+sitemap is thin — a sitemap can be complete but stale, while a feed is
+usually a site's most recent content, a different signal rather than a
+fallback for a missing one. A site with no autodiscovery tag is not probed
+at conventional feed paths (`/feed`, `/rss.xml`, …) — only what the page
+itself advertised is checked.
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

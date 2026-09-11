@@ -31,7 +31,14 @@ export const HTML_ATTR_RE = {
   href: /\bhref\s*=\s*["']([^"']*)["']/i,
   rel: /\brel\s*=\s*["']([^"']*)["']/i,
   hreflang: /\bhreflang\s*=\s*["']([^"']*)["']/i,
+  type: /\btype\s*=\s*["']([^"']*)["']/i,
 } as const;
+
+/** The two feed content-types autodiscovery `<link>` tags declare. */
+export const FEED_LINK_MIME_TYPES: ReadonlySet<string> = new Set([
+  'application/rss+xml',
+  'application/atom+xml',
+]);
 
 /** `og:` and `twitter:` properties/names are lowercase by spec convention. */
 export const OG_PREFIX = 'og:';

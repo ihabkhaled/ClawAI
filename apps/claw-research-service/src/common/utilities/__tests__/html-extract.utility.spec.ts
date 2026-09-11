@@ -133,7 +133,35 @@ describe('extractHtml', () => {
       openGraph: {},
       twitterCard: {},
       jsonLd: [],
+      feedUrls: [],
     });
+  });
+
+  it('discovers RSS and Atom feed autodiscovery links', () => {
+    const html = `
+      <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+      <link rel="alternate" type="application/atom+xml" href="https://example.com/atom.xml">
+      <link rel="stylesheet" type="text/css" href="/styles.css">
+    `;
+    const result = extractHtml(html, 'https://example.com/blog/');
+
+    expect(result.metadata.feedUrls).toEqual([
+      'https://example.com/feed.xml',
+      'https://example.com/atom.xml',
+    ]);
+  });
+
+  it('does not confuse a feed link with an hreflang alternate', () => {
+    const html = `
+      <link rel="alternate" hreflang="fr" href="https://example.com/fr/">
+      <link rel="alternate" type="application/rss+xml" href="https://example.com/feed.xml">
+    `;
+    const result = extractHtml(html);
+
+    expect(result.metadata.hreflangAlternates).toEqual([
+      { lang: 'fr', url: 'https://example.com/fr/' },
+    ]);
+    expect(result.metadata.feedUrls).toEqual(['https://example.com/feed.xml']);
   });
 
   it('keeps the FIRST description and canonical when a page has duplicates', () => {

@@ -20,6 +20,13 @@ export type HtmlMetadata = {
   twitterCard: Record<string, string>;
   /** Parsed JSON-LD blocks. Entries that fail to parse as JSON are skipped. */
   jsonLd: unknown[];
+  /**
+   * RSS/Atom feed URLs from `<link rel="alternate" type="application/{rss,atom}+xml">`
+   * autodiscovery tags. A feed can exist on a site with no autodiscovery tag
+   * (checked separately, by trying conventional paths) — this only reports
+   * what the page itself advertised.
+   */
+  feedUrls: string[];
 };
 
 export type ExtractedHtml = {

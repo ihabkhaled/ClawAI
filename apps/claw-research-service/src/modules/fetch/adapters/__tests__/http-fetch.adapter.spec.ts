@@ -63,6 +63,7 @@ describe('HttpFetchAdapter.fetchPage', () => {
       openGraph: { title: 'ClawAI' },
       twitterCard: {},
       jsonLd: [],
+      feedUrls: [],
     });
   });
 
