@@ -55,11 +55,6 @@ export function useThreadDetail(threadId: string) {
     enabled: !!threadId,
   });
 
-  const virtualizedMessages = useVirtualizedMessages(threadId, isWaitingForResponse);
-
-  const messagesList = virtualizedMessages.messages;
-  const lastMessage = messagesList.length > 0 ? messagesList.at(-1) : undefined;
-
   const {
     fallbackAttempts,
     streamCompletedAt,
@@ -73,6 +68,25 @@ export function useThreadDetail(threadId: string) {
     connectionHealth,
     resetStream,
   } = useChatStream(threadId, isWaitingForResponse, shouldReplayStream);
+
+  /**
+   * Gates the messages poll one render earlier than `isWaitingForResponse`
+   * alone would.
+   *
+   * `isWaitingForResponse` is only flipped to `false` by the effect below,
+   * which runs AFTER this render commits — so on the very render where DONE
+   * arrives, `isWaitingForResponse` is still `true` and the poll's own
+   * interval is still armed. If a periodic tick happened to be scheduled for
+   * that same instant, it fires independently of the invalidation this effect
+   * is about to run, and the two together can produce two near-identical
+   * fetches for one completed answer. Folding `streamCompletedAt` in here
+   * disarms the interval in the SAME render DONE lands, closing that window.
+   */
+  const isAwaitingMessagesPoll = isWaitingForResponse && streamCompletedAt === null;
+  const virtualizedMessages = useVirtualizedMessages(threadId, isAwaitingMessagesPoll);
+
+  const messagesList = virtualizedMessages.messages;
+  const lastMessage = messagesList.length > 0 ? messagesList.at(-1) : undefined;
 
   // A completed stream refetches immediately instead of waiting for the next
   // poll tick. Without this the answer was already stored and streamed, but the

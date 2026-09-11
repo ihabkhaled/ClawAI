@@ -16,7 +16,11 @@ const { mockGetThread, mockResetStream, streamState, virtualizedState } = vi.hoi
     completionReads: 0,
     lastReplayArg: undefined as boolean | undefined,
   },
-  virtualizedState: { messages: [] as ChatMessage[], isFetching: false },
+  virtualizedState: {
+    messages: [] as ChatMessage[],
+    isFetching: false,
+    isAwaitingResponseArgs: [] as boolean[],
+  },
 }));
 
 vi.mock('@/repositories/chat/chat.repository', () => ({
@@ -43,19 +47,22 @@ vi.mock('@/hooks/chat/use-chat-stream', () => ({
 }));
 
 vi.mock('@/hooks/chat/use-virtualized-messages', () => ({
-  useVirtualizedMessages: () => ({
-    messages: virtualizedState.messages,
-    isLoading: false,
-    isFetching: virtualizedState.isFetching,
-    isFetchingPreviousPage: false,
-    isFetchingNextPage: false,
-    hasPreviousPage: false,
-    hasNextPage: false,
-    fetchPreviousPage: vi.fn(),
-    fetchNextPage: vi.fn(),
-    totalCount: virtualizedState.messages.length,
-    firstItemIndex: 0,
-  }),
+  useVirtualizedMessages: (_threadId: string, isAwaitingResponse: boolean) => {
+    virtualizedState.isAwaitingResponseArgs.push(isAwaitingResponse);
+    return {
+      messages: virtualizedState.messages,
+      isLoading: false,
+      isFetching: virtualizedState.isFetching,
+      isFetchingPreviousPage: false,
+      isFetchingNextPage: false,
+      hasPreviousPage: false,
+      hasNextPage: false,
+      fetchPreviousPage: vi.fn(),
+      fetchNextPage: vi.fn(),
+      totalCount: virtualizedState.messages.length,
+      firstItemIndex: 0,
+    };
+  },
 }));
 
 function buildUserMessage(): ChatMessage {
@@ -92,6 +99,7 @@ describe('useThreadDetail', () => {
     streamState.lastReplayArg = undefined;
     virtualizedState.messages = [buildUserMessage()];
     virtualizedState.isFetching = false;
+    virtualizedState.isAwaitingResponseArgs = [];
     mockGetThread.mockResolvedValue(null);
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -214,6 +222,37 @@ describe('useThreadDetail', () => {
       streamState.completionReads = 0;
       rerender();
     });
+
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(false));
+  });
+
+  it('disarms the messages poll in the SAME render DONE arrives, not one render later', async () => {
+    // `isWaitingForResponse` only flips to false in the effect that runs AFTER
+    // this render commits, so on its own it leaves the poll's interval armed
+    // for one extra render — a window where a periodic tick landing at the
+    // same moment as DONE's own invalidation can produce two near-identical
+    // refetches for one completed answer. Folding `streamCompletedAt` into the
+    // flag passed to useVirtualizedMessages closes that window a render early.
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result, rerender } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(true));
+    // Still waiting: the poll must still be armed.
+    expect(virtualizedState.isAwaitingResponseArgs.at(-1)).toBe(true);
+
+    act(() => {
+      streamState.completedAt = 1;
+      streamState.completionReads = 0;
+      rerender();
+    });
+
+    // This assertion is the point: at the very first render where
+    // streamCompletedAt is non-null, isWaitingForResponse (React state) has
+    // NOT yet flipped to false — the effect that does that runs after this
+    // render commits. The poll flag must be false anyway.
+    expect(virtualizedState.isAwaitingResponseArgs.at(-1)).toBe(false);
 
     await waitFor(() => expect(result.current.isWaitingForResponse).toBe(false));
   });

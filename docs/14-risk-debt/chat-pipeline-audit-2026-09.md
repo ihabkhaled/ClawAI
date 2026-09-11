@@ -729,16 +729,29 @@ was **one request, 32 KB, 68 ms** — with a single `/client-logs/batch` and no
 duplicate thread fetches. Recorded rather than "fixed", because the measurement
 is the finding.
 
-**One residual duplicate found while verifying B6, not fixed in this pass**:
-DONE's own `invalidateThreadMessages` and the in-flight `refetchInterval`
-(`MESSAGE_POLL_INTERVAL_MS`, active only while `isAwaitingResponse`) can land
-within the same tick, producing two near-identical `GET
-/chat-messages/thread/...` calls for one completed answer instead of one. Cheap
-(each is the same 32 KB/68 ms page-1 fetch measured above), pre-existing —
-not introduced by today's send-time fix — and not chased further here because
-resolving it means changing DONE's own invalidation timing relative to the
-poll, which is a different, smaller optimization than the one this batch set
-out to make.
+**The residual duplicate found while verifying B6 — one confirmed cause fixed,
+one live symptom still unexplained.** The specific race suspected —
+`isWaitingForResponse` (and therefore the poll's `refetchInterval`) staying
+armed for one extra render after `streamCompletedAt` goes non-null, because it
+is only cleared by an effect that runs AFTER that render commits — is real and
+is now closed: `useThreadDetail` folds `streamCompletedAt === null` into the
+flag passed to `useVirtualizedMessages`, so the poll disarms in the SAME render
+DONE arrives rather than one render later.
+[`use-thread-detail.test.tsx`](../../apps/claw-frontend/src/hooks/chat/__tests__/use-thread-detail.test.tsx)
+proves it directly: at the render where `streamCompletedAt` first becomes
+non-null, the poll flag is `false` even though `isWaitingForResponse` (React
+state) has not yet flipped.
+
+That fix landed, and a live re-test still shows two `GET
+/chat-messages/thread/...` calls for one completed answer — but **1.4 seconds
+apart**, not simultaneous, which is not the signature the fixed race would have
+produced. The leading unconfirmed hypothesis is `reactStrictMode: true`
+(`next.config.*:12`) double-invoking the effect in this dev server, which does
+not happen in a production build — untested, because verifying it means
+running an actual production build of the frontend, which this pass did not
+do. Recorded as a real, open, correctly-scoped question rather than claimed
+fixed on partial evidence. Cheap either way: each occurrence is the same 32
+KB/68 ms page-1 fetch measured above, not a new cost class.
 
 **Sections C, D and E are all closed.** D3 closed 2026-09-11: connection
 health is user-visible state now, and a connection that stays open but goes
