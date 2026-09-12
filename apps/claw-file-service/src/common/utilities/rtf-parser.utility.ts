@@ -10,52 +10,14 @@
 // accept for compatibility, and only its visible text matters here.
 
 import { Logger } from '@nestjs/common';
+import {
+  DISCARDED_DESTINATIONS,
+  LITERAL_CONTROL_WORDS,
+  MAX_CONTROL_PARAMETER_DIGITS,
+  MAX_CONTROL_WORD_LENGTH,
+} from '../../modules/files/constants/rtf.constants';
 
 const logger = new Logger('RtfParserUtility');
-
-// Groups whose entire contents are metadata, never body text. Keeping them
-// would put font names and colour tables into the model's prompt.
-const DISCARDED_DESTINATIONS = new Set([
-  'fonttbl',
-  'colortbl',
-  'stylesheet',
-  'info',
-  'pict',
-  'object',
-  'themedata',
-  'colorschememapping',
-  'latentstyles',
-  'datastore',
-  'generator',
-  'listtable',
-  'listoverridetable',
-  'rsidtbl',
-  'xmlnstbl',
-]);
-
-// The RTF spec caps a control word at 32 letters; anything longer is malformed.
-const MAX_CONTROL_WORD_LENGTH = 32;
-// Enough for any real parameter, and a bound on an attacker-supplied run.
-const MAX_CONTROL_PARAMETER_DIGITS = 10;
-
-// Control words that stand for a character rather than a formatting change.
-const LITERAL_CONTROL_WORDS = new Map<string, string>([
-  ['par', '\n'],
-  ['line', '\n'],
-  ['sect', '\n\n'],
-  ['page', '\n\n'],
-  ['tab', '\t'],
-  ['cell', '\t'],
-  ['row', '\n'],
-  ['emdash', '—'],
-  ['endash', '–'],
-  ['lquote', '‘'],
-  ['rquote', '’'],
-  ['ldblquote', '“'],
-  ['rdblquote', '”'],
-  ['bullet', '•'],
-  ['nbsp', ' '],
-]);
 
 export function extractTextFromRtf(buffer: Buffer): string {
   const rtf = buffer.toString('latin1');
