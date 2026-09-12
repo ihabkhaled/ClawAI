@@ -8,13 +8,3 @@ export const LEGAL_PUBLIC_LAUNCH_SLUGS: ReadonlySet<PublicLaunchPageSlug> = new 
   PublicLaunchPageSlug.COOKIES,
   PublicLaunchPageSlug.ACCEPTABLE_USE,
 ]);
-
-export const IMPLEMENTED_PROVIDER_FAMILIES = [
-  'OpenAI',
-  'Anthropic',
-  'Google Gemini',
-  'DeepSeek',
-  'xAI Grok',
-  'Ollama',
-  'llama.cpp',
-] as const;

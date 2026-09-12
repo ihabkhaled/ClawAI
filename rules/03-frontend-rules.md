@@ -193,6 +193,39 @@ ABSOLUTE RULE — NEVER LEAK ENGLISH INTO NON-EN LOCALES
    renders welded to the first letter.
 ```
 
+### A public page states product facts from the product, never from a constant
+
+**A fact about what the product IS — which models it serves, what a plan costs,
+what a plan includes — is read from the backend at render time. It is never
+hand-copied into a frontend constant.**
+
+This is not a style preference; it is the only mechanism that works. Three
+hand-maintained "sources of truth" shipped here and all three went wrong the
+same way:
+
+| Constant                        | What it claimed          | What was true                            |
+| ------------------------------- | ------------------------ | ---------------------------------------- |
+| `MODEL_FACTS`                   | 16 models, Claude Opus 4 | 170 models, Opus 5                       |
+| `MARKETING_MODEL_FAMILIES`      | Kimi, GLM, Qwen, Bedrock | none of them connected                   |
+| `PUBLIC_PRICING_FALLBACK_PLANS` | 7 plans with prices      | rendered on any outage, `isError: false` |
+
+Each was internally consistent, fully typed, and covered by tests — one test
+even asserted the invented model names, so the fiction was load-bearing. A
+manual "review date" is not a mechanism: nothing makes anyone look.
+
+**Read it server-side with the service token** (`lib/pricing/public-pricing-api.ts`,
+`lib/models/public-models-api.ts`), so the token never reaches a browser.
+
+**There is no hardcoded fallback.** On failure, say so and offer a retry.
+A wrong price or a stale model list shown calmly is worse than an error,
+because a customer can hold us to it. Keep "we have nothing to show" distinct
+from "we could not ask" — collapsing them hides an outage behind a shrug.
+
+**Copy that describes the data has to change with it.** When the model list
+became live, 78 translated strings saying it was "priced as of the review date,
+not a live feed" silently became lies. If a sentence asserts how fresh the data
+is, it belongs beside the fetch, not in per-item content.
+
 ### Spacing belongs to the shared component, not to each call site
 
 When a primitive is used with an icon anywhere, its **base variant** carries the

@@ -89,9 +89,16 @@ This is correct and stays. It does, however, mean there is no existing source
 for model-level content, and no public catalog API — the live registry sits in
 routing-service behind auth and varies per deployment.
 
-**Resolved:** a curated, dated `MODEL_FACTS` module (§3) becomes the single
-source for every model-level page, explicitly framed as a reviewed editorial
-snapshot rather than the live catalog.
+**Resolved (2026-09-09):** a curated, dated `MODEL_FACTS` module (§3) becomes
+the single source for every model-level page, explicitly framed as a reviewed
+editorial snapshot rather than the live catalog.
+
+**Superseded (2026-09-12).** The premise above — "no public catalog API" — was
+true when written and is not any more: connector-service publishes one, and the
+model-level pages read it. The editorial snapshot had drifted to naming 16
+models where the product served 170, and to Claude Opus 4 where the deployment
+ran Opus 5. See §3 for what replaced it and why the boundary objection is
+answered rather than ignored.
 
 **Batch 3 deviation, discovered at build time:** this document names the
 cluster `/models`. That path is already taken — `src/app/(portal)/models/**`

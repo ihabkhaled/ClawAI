@@ -12,20 +12,37 @@ import {
   PUBLIC_LAUNCH_LABELS_BY_LOCALE,
 } from '@/constants/public-launch-content.constants';
 import {
-  IMPLEMENTED_PROVIDER_FAMILIES,
   LEGAL_PUBLIC_LAUNCH_SLUGS,
   PUBLIC_LAUNCH_EFFECTIVE_DATE,
 } from '@/constants/public-launch-page.constants';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
+import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PublicLaunchPageProps } from '@/types/public-launch-content.types';
 import { getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale, localisePath } from '@/utilities/locale.utility';
+import { selectAvailableProviderNames } from '@/utilities/public-models.utility';
 import { buildPublicPageJsonLd, serializeJsonLd } from '@/utilities/structured-data.utility';
 
-function ProviderCatalog({ heading, note }: { heading: string; note: string }): React.ReactElement {
+/**
+ * The provider families this deployment can actually route to.
+ *
+ * It listed seven hardcoded names — including DeepSeek, xAI Grok and llama.cpp,
+ * which have no connected models here — so /supported-models promised three
+ * vendors a visitor could not reach. The names now come from the live catalog,
+ * which means the page shrinks or grows honestly as connectors are configured.
+ */
+function ProviderCatalog({
+  heading,
+  note,
+  providers,
+}: {
+  heading: string;
+  note: string;
+  providers: readonly string[];
+}): React.ReactElement {
   return (
     <section
       aria-labelledby="implemented-provider-families"
@@ -35,7 +52,7 @@ function ProviderCatalog({ heading, note }: { heading: string; note: string }): 
         {heading}
       </h2>
       <ul className="bg-border grid grid-cols-1 gap-px border sm:grid-cols-2 lg:grid-cols-3">
-        {IMPLEMENTED_PROVIDER_FAMILIES.map((provider) => (
+        {providers.map((provider) => (
           <li key={provider} className="bg-card text-foreground px-5 py-6 text-lg font-semibold">
             {provider}
           </li>
@@ -55,6 +72,13 @@ export async function PublicLaunchPage({
   const page = PUBLIC_LAUNCH_CONTENT_BY_LOCALE[locale][slug];
   const labels = PUBLIC_LAUNCH_LABELS_BY_LOCALE[locale];
   const registryEntry = getPageBySlugAndLocale(slug, locale);
+  // Only this one page names providers, so only this one page pays for the
+  // fetch. An unavailable catalog yields an empty list, and the section below
+  // renders nothing rather than a roster nobody verified.
+  const providerNames =
+    slug === PublicLaunchPageSlug.SUPPORTED_MODELS
+      ? selectAvailableProviderNames(await fetchPublicModelCatalog())
+      : [];
   const title =
     registryEntry === undefined || registryEntry.title === '' ? page.eyebrow : registryEntry.title;
   const summary =
@@ -117,10 +141,11 @@ export async function PublicLaunchPage({
             </section>
           ))}
 
-          {slug === PublicLaunchPageSlug.SUPPORTED_MODELS ? (
+          {slug === PublicLaunchPageSlug.SUPPORTED_MODELS && providerNames.length > 0 ? (
             <ProviderCatalog
               heading={page.sections[0]?.title ?? page.eyebrow}
               note={labels.providerAvailabilityNote}
+              providers={providerNames}
             />
           ) : null}
           {showRoutingRail ? (
