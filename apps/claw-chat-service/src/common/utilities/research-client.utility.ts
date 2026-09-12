@@ -37,6 +37,7 @@ export async function runResearch(
         requestedModel: request.requestedModel,
         requestedProvider: request.requestedProvider,
         maxResults: request.maxResults ?? inferDefaultMaxResults(request.workflow),
+        correlationId: request.correlationId,
       },
       timeoutMs: RESEARCH_REQUEST_TIMEOUT_MS,
     });

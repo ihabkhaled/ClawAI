@@ -292,6 +292,34 @@ the already-on state smarter about which workflow to request.
 Compare-mode is excluded on purpose: crawling once per parallel model lane
 would multiply the cost by the number of providers being compared.
 
+### Live SITE_CRAWL progress: a third dedicated Redis subscriber
+
+`runResearchForIntent` always sets `ResearchRequest.correlationId` to
+`threadId` (harmless to send for every workflow — research-service only acts
+on it during `SITE_CRAWL`). `ResearchProgressBridgeService`
+(`modules/chat-messages/services/research-progress-bridge.service.ts`)
+subscribes to `RESEARCH_CRAWL_PROGRESS_CHANNEL` (`@claw/shared-constants`) on
+its own `RESEARCH_PROGRESS_SUBSCRIBER_CLIENT` connection
+(`infrastructure/redis/constants/redis.constants.ts`) — a third dedicated
+subscriber alongside `CHAT_STREAM_SUBSCRIBER_CLIENT` and
+`STREAM_CANCEL_SUBSCRIBER_CLIENT`, not a share of either, because ioredis
+puts a subscribed connection into a mode that rejects ordinary commands and
+each existing subscriber already owns exactly one channel's handler slot.
+
+Every message it receives is parsed as a `ResearchCrawlProgressMessage`
+(`@claw/shared-types`) and mapped
+(`utilities/research-progress-bridge.utility.ts`'s
+`mapCrawlPhaseToResearchProgress`) onto the existing
+`ChatStreamService.emitResearchProgress(threadId, …)` lifecycle — the same
+method the search-then-fetch research enricher already uses, so the frontend
+needs no new event type to render a live crawl. A malformed payload (bad
+JSON, missing `correlationId`/`phase`) is logged and dropped, never thrown:
+one bad tick must not take down the subscriber loop every other thread's
+progress also flows through. Full design and why Redis pub/sub instead of a
+RabbitMQ `claw.events` topic:
+[ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md)'s
+live-crawl-progress amendment.
+
 ---
 
 ## Advanced Orchestration Modes

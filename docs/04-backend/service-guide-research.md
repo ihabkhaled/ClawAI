@@ -250,6 +250,20 @@ and the exact evidence item ids it was computed from. Attached to
 deduped/truncated `items` so a finding can never cite an id that was trimmed
 out. Full design: [ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
 
+**Live progress.** `ExecuteResearchDto.correlationId` (optional, opaque —
+research-service never interprets it) flows into `ResearchProgressPublisher`
+(`modules/research/managers/research-progress-publisher.service.ts`), which
+publishes a `ResearchCrawlProgressMessage` (`@claw/shared-types`) on
+`RESEARCH_CRAWL_PROGRESS_CHANNEL` (`@claw/shared-constants`, a plain Redis
+`PUBLISH`, not a RabbitMQ event — see ADR-092's amendment) at six
+`SiteCrawlManager.crawl()` checkpoints: `started`, `robots`, `sitemap`,
+`feed`, one `page` tick per fetched candidate, and `completed`. No caller (no
+`correlationId`) means no publish at all — a v1-style direct
+`POST /research/execute` call with no `correlationId` crawls exactly as
+before. Fire-and-forget: a publish failure is logged and never affects the
+crawl. chat-service is the only consumer today
+(`ResearchProgressBridgeService`, see its own service guide).
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

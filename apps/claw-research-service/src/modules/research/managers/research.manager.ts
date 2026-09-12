@@ -158,6 +158,7 @@ export class ResearchManager {
         trace,
         toolsUsed,
         warnings,
+        dto.correlationId,
       );
       items.push(...crawled);
     }

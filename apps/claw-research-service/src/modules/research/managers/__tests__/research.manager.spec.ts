@@ -354,11 +354,31 @@ describe('ResearchManager', () => {
         expect.any(Array),
         expect.any(Array),
         expect.any(Array),
+        undefined,
       );
       expect(search.execute).not.toHaveBeenCalled();
       expect(lastBundle().items).toEqual([
         expect.objectContaining({ url: 'https://example.com/' }),
       ]);
+    });
+
+    it('forwards the caller-supplied correlationId to SiteCrawlManager', async () => {
+      siteCrawlManager.crawl.mockResolvedValue([]);
+
+      await manager.run('u1', {
+        intent: 'crawl https://example.com/',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+        correlationId: 'thread-42',
+      });
+
+      expect(siteCrawlManager.crawl).toHaveBeenCalledWith(
+        'u1',
+        'https://example.com/',
+        expect.any(Array),
+        expect.any(Array),
+        expect.any(Array),
+        'thread-42',
+      );
     });
 
     it('warns instead of crawling when the intent has no URL at all', async () => {

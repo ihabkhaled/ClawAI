@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-constants",
-  "version": "1.71.0",
+  "version": "1.73.1",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/jest": "^30.0.0",
-    "eslint": "^10.9.0",
+    "eslint": "^10.10.0",
     "eslint-plugin-unicorn": "74.0.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",

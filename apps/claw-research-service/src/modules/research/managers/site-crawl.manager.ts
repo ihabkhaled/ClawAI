@@ -17,11 +17,12 @@ import { parseSitemapXml } from '../../../common/utilities/sitemap.utility';
 import { CrawlDiscoveryMethod } from '../../../common/enums/crawl-discovery-method.enum';
 import { FetchService } from '../../fetch/services/fetch.service';
 import { traceEntry } from '../utilities/evidence-builder.utility';
+import { ResearchProgressPublisher } from './research-progress-publisher.service';
 import type { FeedEntry } from '../../../common/types/feed.types';
 import type { RobotsTxtResult } from '../../../common/types/robots-txt.types';
 import type { SitemapUrlEntry } from '../../../common/types/sitemap.types';
 import type { FetchResult } from '../../fetch/types/fetch.types';
-import type { CrawlCandidate } from '../types/crawl.types';
+import type { CrawlCandidate, CrawlDiscoveryResult, CrawlFetchResult } from '../types/crawl.types';
 import type { EvidenceItem, ResearchTraceEntry } from '../types/evidence-bundle.types';
 
 /**
@@ -38,7 +39,10 @@ import type { EvidenceItem, ResearchTraceEntry } from '../types/evidence-bundle.
  */
 @Injectable()
 export class SiteCrawlManager {
-  constructor(private readonly fetchService: FetchService) {}
+  constructor(
+    private readonly fetchService: FetchService,
+    private readonly progressPublisher: ResearchProgressPublisher,
+  ) {}
 
   async crawl(
     userId: string,
@@ -46,6 +50,7 @@ export class SiteCrawlManager {
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
+    correlationId: string | undefined,
   ): Promise<EvidenceItem[]> {
     const origin = this.safeOrigin(startUrl);
     if (origin === null) {
@@ -53,7 +58,10 @@ export class SiteCrawlManager {
       return [];
     }
 
+    this.progressPublisher.publish(correlationId, 'started', `Starting crawl of ${origin}`, 0, 0);
+
     const robots = await this.fetchRobotsTxt(userId, origin, trace, toolsUsed);
+    this.progressPublisher.publish(correlationId, 'robots', `Checked ${origin}/robots.txt`, 0, 0);
 
     const homepage = await this.fetchOne(userId, startUrl, trace, warnings, 'homepage');
     if (homepage === null) {
@@ -63,6 +71,67 @@ export class SiteCrawlManager {
     }
     toolsUsed.push('web_fetch');
 
+    const discovery = await this.discoverCandidates(
+      userId,
+      origin,
+      homepage,
+      robots,
+      trace,
+      toolsUsed,
+      correlationId,
+    );
+
+    const remainingBudget = Math.max(0, CRAWL_DEFAULT_MAX_PAGES - 1);
+    const toFetch = discovery.candidates.slice(0, remainingBudget);
+    const { items, skippedByRobots } = await this.fetchCandidates(
+      userId,
+      homepage,
+      toFetch,
+      robots,
+      trace,
+      warnings,
+      correlationId,
+    );
+
+    if (skippedByRobots > 0) {
+      warnings.push(`${String(skippedByRobots)} page(s) skipped: disallowed by robots.txt.`);
+    }
+    if (items.length > 1) {
+      toolsUsed.push('web_fetch:site_crawl');
+    }
+    trace.push(
+      traceEntry(
+        'crawl.summary',
+        'ok',
+        null,
+        `${String(items.length)} page(s) crawled from ${origin}, ${String(discovery.sitemapEntries.length)} sitemap URL(s) and ${String(discovery.feedEntries.length)} feed URL(s) discovered`,
+      ),
+    );
+    this.progressPublisher.publish(
+      correlationId,
+      'completed',
+      `Crawl complete: ${String(items.length)} page(s) fetched`,
+      items.length,
+      toFetch.length + 1,
+    );
+    return items;
+  }
+
+  /**
+   * Resolves the sitemap and feed, and folds both plus the homepage's own
+   * links into one deduplicated candidate list — split out of `crawl()`
+   * purely to keep that method under the file's line-count budget; it owns
+   * no state `crawl()` doesn't hand it.
+   */
+  private async discoverCandidates(
+    userId: string,
+    origin: string,
+    homepage: FetchResult,
+    robots: RobotsTxtResult,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    correlationId: string | undefined,
+  ): Promise<CrawlDiscoveryResult> {
     const sitemapBudget = { remaining: CRAWL_MAX_SITEMAP_FETCHES };
     const sitemapEntries = await this.discoverSitemapEntries(
       userId,
@@ -74,6 +143,13 @@ export class SiteCrawlManager {
     if (sitemapEntries.length > 0) {
       toolsUsed.push('web_crawl:sitemap');
     }
+    this.progressPublisher.publish(
+      correlationId,
+      'sitemap',
+      `Discovered ${String(sitemapEntries.length)} sitemap URL(s)`,
+      1,
+      sitemapEntries.length,
+    );
 
     const visited = new Set<string>([this.normalize(homepage.finalUrl)]);
     const candidates: CrawlCandidate[] = [];
@@ -94,10 +170,31 @@ export class SiteCrawlManager {
     for (const entry of feedEntries) {
       this.addCandidate(candidates, visited, origin, entry.url, CrawlDiscoveryMethod.FEED);
     }
+    this.progressPublisher.publish(
+      correlationId,
+      'feed',
+      `Discovered ${String(feedEntries.length)} feed entr(y/ies)`,
+      1,
+      sitemapEntries.length + feedEntries.length,
+    );
 
-    const remainingBudget = Math.max(0, CRAWL_DEFAULT_MAX_PAGES - 1);
-    const toFetch = candidates.slice(0, remainingBudget);
+    return { candidates, sitemapEntries, feedEntries };
+  }
 
+  /**
+   * Fetches every candidate up to the page budget, respecting robots.txt,
+   * and reports one progress tick per page — split out of `crawl()` purely
+   * to keep that method under the file's line-count budget.
+   */
+  private async fetchCandidates(
+    userId: string,
+    homepage: FetchResult,
+    toFetch: CrawlCandidate[],
+    robots: RobotsTxtResult,
+    trace: ResearchTraceEntry[],
+    warnings: string[],
+    correlationId: string | undefined,
+  ): Promise<CrawlFetchResult> {
     const items: EvidenceItem[] = [this.toEvidence(homepage, CrawlDiscoveryMethod.USER)];
     let skippedByRobots = 0;
 
@@ -114,23 +211,16 @@ export class SiteCrawlManager {
       if (result !== null) {
         items.push(this.toEvidence(result, candidate.discoveryMethod));
       }
+      this.progressPublisher.publish(
+        correlationId,
+        'page',
+        `Fetched ${candidate.url}`,
+        items.length,
+        toFetch.length + 1,
+      );
     });
 
-    if (skippedByRobots > 0) {
-      warnings.push(`${String(skippedByRobots)} page(s) skipped: disallowed by robots.txt.`);
-    }
-    if (items.length > 1) {
-      toolsUsed.push('web_fetch:site_crawl');
-    }
-    trace.push(
-      traceEntry(
-        'crawl.summary',
-        'ok',
-        null,
-        `${String(items.length)} page(s) crawled from ${origin}, ${String(sitemapEntries.length)} sitemap URL(s) and ${String(feedEntries.length)} feed URL(s) discovered`,
-      ),
-    );
-    return items;
+    return { items, skippedByRobots };
   }
 
   private async fetchRobotsTxt(

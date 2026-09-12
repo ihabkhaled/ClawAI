@@ -4,6 +4,7 @@ import { AppConfig } from '../../app/config/app.config';
 import {
   CHAT_STREAM_SUBSCRIBER_CLIENT,
   REDIS_CLIENT,
+  RESEARCH_PROGRESS_SUBSCRIBER_CLIENT,
   RUNTIME_V2_REDIS_CLIENT,
   STREAM_CANCEL_SUBSCRIBER_CLIENT,
 } from './constants/redis.constants';
@@ -68,12 +69,25 @@ import type { RedisClientPort, RedisSubscriberPort } from './types/redis-client.
         );
       },
     },
+    {
+      provide: RESEARCH_PROGRESS_SUBSCRIBER_CLIENT,
+      useFactory: (): RedisSubscriberPort => {
+        const config = AppConfig.get();
+        return new RedisSubscriberAdapter(
+          new Redis(config.REDIS_URL, {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+          }),
+        );
+      },
+    },
     RedisService,
   ],
   exports: [
     RedisService,
     CHAT_STREAM_SUBSCRIBER_CLIENT,
     STREAM_CANCEL_SUBSCRIBER_CLIENT,
+    RESEARCH_PROGRESS_SUBSCRIBER_CLIENT,
     REDIS_CLIENT,
   ],
 })

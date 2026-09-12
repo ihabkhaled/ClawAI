@@ -5,6 +5,7 @@ import { ScrapeModule } from '../scrape/scrape.module';
 import { SearchModule } from '../search/search.module';
 import { ResearchController } from './controllers/research.controller';
 import { ResearchManager } from './managers/research.manager';
+import { ResearchProgressPublisher } from './managers/research-progress-publisher.service';
 import { SiteAuditManager } from './managers/site-audit.manager';
 import { SiteCrawlManager } from './managers/site-crawl.manager';
 import { ResearchRunRepository } from './repositories/research-run.repository';
@@ -16,6 +17,7 @@ import { ResearchService } from './services/research.service';
   providers: [
     ResearchRunRepository,
     ResearchManager,
+    ResearchProgressPublisher,
     SiteCrawlManager,
     SiteAuditManager,
     ResearchService,

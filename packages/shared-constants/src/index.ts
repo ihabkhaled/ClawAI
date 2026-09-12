@@ -64,6 +64,7 @@ export const USER_JWT_AUDIENCE = 'claw-user-api' as const;
 export const USER_TOKEN_KIND = 'user' as const;
 
 export * from './runtime-progress-events.constants';
+export * from './research-progress.constants';
 export * from './billing.constants';
 export * from './payg-credit.constants';
 export * from './router-trace-events.constants';

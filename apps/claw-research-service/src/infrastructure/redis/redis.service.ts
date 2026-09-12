@@ -25,6 +25,17 @@ export class RedisService implements OnModuleDestroy {
     await this.client.del(key);
   }
 
+  /**
+   * Fire-and-forget by design: a progress tick that never arrives costs
+   * nothing — the next tick or the final result supersedes it. Publishing
+   * does not put this connection into subscribe-only mode (unlike
+   * `SUBSCRIBE`), so it is safe to share with every other command this
+   * service already issues on it.
+   */
+  async publish(channel: string, message: string): Promise<void> {
+    await this.client.publish(channel, message);
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }
