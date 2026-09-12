@@ -23,7 +23,7 @@ export function LoginForm(): React.ReactElement {
     onSubmit,
     isPending,
     isError,
-    errorMessage,
+    failureCopy,
     t,
   } = useLoginForm();
 
@@ -86,11 +86,17 @@ export function LoginForm(): React.ReactElement {
                   type="button"
                   onClick={togglePasswordVisibility}
                   disabled={isPending}
-                  aria-label={showPassword ? t('auth.hidePasswordAria') : t('auth.showPasswordAria')}
+                  aria-label={
+                    showPassword ? t('auth.hidePasswordAria') : t('auth.showPasswordAria')
+                  }
                   aria-pressed={showPassword}
                   className="text-muted-foreground hover:text-foreground focus-visible:text-foreground absolute inset-y-0 end-0 flex min-h-11 min-w-11 items-center justify-center transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                  )}
                 </Button>
               </div>
               {form.formState.errors.password ? (
@@ -123,8 +129,26 @@ export function LoginForm(): React.ReactElement {
               </Button>
             </div>
 
-            {isError ? (
-              <Alert variant={AlertVariant.Error} title={t('auth.loginFailedTitle')} description={errorMessage ?? t('auth.loginFailed')} />
+            {/* One alert, but the copy is chosen from the server's error CODE
+                rather than its message. An unconfirmed address is the only
+                failure the user can fix from here, so it is the only one that
+                gets a way out — see resolveLoginFailureCopy. */}
+            {isError && failureCopy !== null ? (
+              <Alert
+                variant={AlertVariant.Error}
+                title={t(failureCopy.titleKey)}
+                description={t(failureCopy.descriptionKey)}
+                action={
+                  failureCopy.actionKey === null ? undefined : (
+                    <Link
+                      href={ROUTES.CHECK_EMAIL}
+                      className="text-primary inline-flex min-h-11 items-center text-sm font-medium hover:underline"
+                    >
+                      {t(failureCopy.actionKey)}
+                    </Link>
+                  )
+                }
+              />
             ) : null}
 
             <Button type="submit" className="w-full" isLoading={isPending}>
@@ -136,12 +160,17 @@ export function LoginForm(): React.ReactElement {
 
       <p className="text-muted-foreground mt-4 text-center text-sm">
         {t('auth.noAccount')}{' '}
-        <Link href={ROUTES.REGISTER} className="text-primary inline-flex min-h-11 items-center px-1 font-medium hover:underline">
+        <Link
+          href={ROUTES.REGISTER}
+          className="text-primary inline-flex min-h-11 items-center px-1 font-medium hover:underline"
+        >
           {t('auth.signUpLink')}
         </Link>
       </p>
 
-      <p className="text-muted-foreground mt-6 text-center text-xs lg:hidden">{t('auth.tagline')}</p>
+      <p className="text-muted-foreground mt-6 text-center text-xs lg:hidden">
+        {t('auth.tagline')}
+      </p>
     </div>
   );
 }

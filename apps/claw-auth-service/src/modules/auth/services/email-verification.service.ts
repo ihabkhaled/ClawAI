@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { hashBearerToken } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { AuthEmailAdapter } from '../adapters/auth-email.adapter';
+import { AuthEmailRecipientService } from './auth-email-recipient.service';
 import { AuthRepository } from '../repositories/auth.repository';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
 import {
@@ -16,6 +17,7 @@ export class EmailVerificationService {
     private readonly repository: EmailVerificationRepository,
     private readonly authRepository: AuthRepository,
     private readonly emailAdapter: AuthEmailAdapter,
+    private readonly recipients: AuthEmailRecipientService,
   ) {}
 
   async sendForUser(userId: string, email: string): Promise<void> {
@@ -24,7 +26,10 @@ export class EmailVerificationService {
       tokenHash: this.hash(rawToken),
       expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_MS),
     });
-    await this.emailAdapter.sendVerification(email, rawToken);
+    await this.emailAdapter.sendVerification(
+      await this.recipients.forUserId(userId, email),
+      rawToken,
+    );
   }
 
   async resend(email: string): Promise<{ accepted: true }> {

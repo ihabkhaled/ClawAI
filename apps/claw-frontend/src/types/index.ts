@@ -12,6 +12,8 @@ export type {
   DeleteOwnAccountRequest,
   AdminCreateUserRequest,
   EmailVerificationCopyKeys,
+  EmailVerificationPanelCopy,
+  LoginFailureCopy,
   AdminUserUpdateRequest,
   AdminUserUpdateMutationVariables,
   RequestPasswordResetRequest,
@@ -472,6 +474,7 @@ export type {
   RolePackMemberCardProps,
   EmailChangeCardProps,
   EmailChangeOtpStepProps,
+  AuthOnboardingStep,
 } from './component.types';
 export type {
   StreamProgressBarProps,
@@ -587,6 +590,7 @@ export type {
   UseToasterViewportReturn,
   UsePasswordRotationGuardReturn,
   UseVerifyEmailPageReturn,
+  UseCheckEmailPageReturn,
 } from './hook.types';
 export type {
   CandidateResult,

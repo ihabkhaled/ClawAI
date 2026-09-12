@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { User } from '../../../generated/prisma';
-import { hashPassword, verifyPassword } from '@common/utilities';
+import { burnPasswordVerification, hashPassword, verifyPassword } from '@common/utilities';
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../../users/service.utilities/password-policy.utility';
 import {
   AccountSuspendedException,
   BusinessException,
   DuplicateEntityException,
+  EmailNotVerifiedException,
   InvalidCredentialsException,
 } from '../../../common/errors';
 import { RolesService } from '../../roles/services/roles.service';
@@ -65,6 +66,7 @@ export class AuthManager {
       ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
       status: UserStatus.PENDING,
       mustChangePassword: false,
+      ...(dto.languagePreference ? { languagePreference: dto.languagePreference } : {}),
     });
 
     // Assign the default (Free) plan if one is configured. Non-fatal: a user
@@ -90,7 +92,20 @@ export class AuthManager {
   ): Promise<LoginResult> {
     this.logger.log(`login: looking up user by email=${email}`);
     const user = await this.authRepository.findUserByEmail(email);
-    if (!user) {
+    // The password is ALWAYS checked first, before any account-state branch,
+    // and an unknown email still pays for a full argon2 verification. That
+    // ordering is the whole anti-enumeration design (ADR-096):
+    //   - unknown email  → INVALID_CREDENTIALS, same cost, same body
+    //   - wrong password → INVALID_CREDENTIALS, same cost, same body
+    // so a stranger learns nothing about which addresses have accounts, from
+    // the response OR from a stopwatch. Only once the password has verified
+    // has the caller proved the account is theirs — and only then is it safe
+    // to say why they are still being refused.
+    const isValid =
+      user === null
+        ? await burnPasswordVerification(password)
+        : await verifyPassword(user.passwordHash, password);
+    if (user === null || !isValid) {
       throw new InvalidCredentialsException();
     }
 
@@ -98,12 +113,13 @@ export class AuthManager {
       throw new AccountSuspendedException();
     }
 
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new InvalidCredentialsException();
+    if (user.status === UserStatus.PENDING) {
+      // Right password, unconfirmed address. Naming this is what turns a dead
+      // end ("login failed") into an action the user can take.
+      throw new EmailNotVerifiedException();
     }
 
-    const isValid = await verifyPassword(user.passwordHash, password);
-    if (!isValid) {
+    if (user.status !== UserStatus.ACTIVE) {
       throw new InvalidCredentialsException();
     }
 

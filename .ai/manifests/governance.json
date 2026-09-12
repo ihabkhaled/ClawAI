@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 27272,
+      "bytes": 29343,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 20851,
+      "bytes": 22023,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -266,13 +266,17 @@
       "file": "rules/42-attachment-understanding.md"
     },
     {
+      "bytes": 8417,
+      "file": "rules/43-account-state-disclosure-and-transactional-email.md"
+    },
+    {
       "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 22174,
+      "bytes": 22423,
       "file": "skills/00-index.md"
     },
     {
@@ -374,6 +378,10 @@
     {
       "bytes": 4884,
       "file": "skills/blocker-validation.md"
+    },
+    {
+      "bytes": 5488,
+      "file": "skills/change-a-transactional-email.md"
     },
     {
       "bytes": 4242,

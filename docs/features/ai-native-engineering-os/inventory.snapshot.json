@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (27272 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (29343 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (27272 vs 27454 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (29343 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -6508,6 +6508,11 @@
     ],
     "frontendRoutes": [
       {
+        "file": "apps/claw-frontend/src/app/(auth)/check-email/page.tsx",
+        "kind": "page",
+        "route": "/check-email"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(auth)/confirm-email-change/page.tsx",
         "kind": "page",
         "route": "/confirm-email-change"
@@ -7301,7 +7306,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 27272,
+          "bytes": 29343,
           "file": "CLAUDE.md"
         },
         {
@@ -7353,7 +7358,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 20851,
+          "bytes": 22023,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7565,13 +7570,17 @@
           "file": "rules/42-attachment-understanding.md"
         },
         {
+          "bytes": 8417,
+          "file": "rules/43-account-state-disclosure-and-transactional-email.md"
+        },
+        {
           "bytes": 5156,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 22174,
+          "bytes": 22423,
           "file": "skills/00-index.md"
         },
         {
@@ -7673,6 +7682,10 @@
         {
           "bytes": 4884,
           "file": "skills/blocker-validation.md"
+        },
+        {
+          "bytes": 5488,
+          "file": "skills/change-a-transactional-email.md"
         },
         {
           "bytes": 4242,
@@ -7861,7 +7874,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5132
+        "value": 5172
       },
       "localeCount": 13,
       "locales": [
@@ -9620,7 +9633,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 86
+        "testFiles": 89
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -9644,7 +9657,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 451
+        "testFiles": 457
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10396,7 +10409,7 @@
     "endpointCount": 652,
     "envVarCount": 352,
     "eventCount": 178,
-    "frontendRouteCount": 153,
+    "frontendRouteCount": 154,
     "localeCount": 13,
     "nginxRouteCount": 57,
     "permissionCount": 51,
@@ -10405,7 +10418,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1204,
+    "totalTestFiles": 1213,
     "workspaceCount": 25
   }
 }

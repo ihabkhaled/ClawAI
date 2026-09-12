@@ -6,7 +6,20 @@ import {
 } from '@claw/shared-types';
 
 import { AppConfig, type AppConfigType } from '../../../../app/config/app.config';
+import { UserLanguagePreference } from '../../../../generated/prisma';
+import type { AuthEmailRecipient } from '../../email/types/auth-email-recipient.type';
 import { AuthEmailAdapter } from '../auth-email.adapter';
+
+// Every send now takes a recipient rather than a bare address, because an
+// address alone carries no language. These helpers keep each test's intent
+// visible instead of repeating the object literal.
+function recipient(
+  email: string,
+  locale: UserLanguagePreference = UserLanguagePreference.EN,
+  firstName: string | null = 'Ada',
+): AuthEmailRecipient {
+  return { email, locale, firstName };
+}
 
 jest.mock('@claw/shared-utilities/email', () => ({ createSmtpEmailTransport: jest.fn() }));
 
@@ -83,16 +96,17 @@ describe('AuthEmailAdapter deployment notification', () => {
     [
       'OTP',
       (adapter: AuthEmailAdapter) =>
-        adapter.sendEmailChangeOtp('old@example.com', '123456', 'n***@example.com'),
+        adapter.sendEmailChangeOtp(recipient('old@example.com'), '123456', 'n***@example.com'),
     ],
     [
       'confirmation',
       (adapter: AuthEmailAdapter) =>
-        adapter.sendEmailChangeConfirmation('new@example.com', 'raw-token'),
+        adapter.sendEmailChangeConfirmation(recipient('new@example.com'), 'raw-token'),
     ],
     [
       'completed notice',
-      (adapter: AuthEmailAdapter) => adapter.sendEmailChangeCompletedNotice('old@example.com'),
+      (adapter: AuthEmailAdapter) =>
+        adapter.sendEmailChangeCompletedNotice(recipient('old@example.com')),
     ],
   ])('rejects the email-change %s sender when SMTP is unavailable', async (_label, sendEmail) => {
     jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
@@ -104,7 +118,7 @@ describe('AuthEmailAdapter deployment notification', () => {
 
   it('sends email change OTP to the old email with masked address and OTP', async () => {
     await new AuthEmailAdapter().sendEmailChangeOtp(
-      'old@example.com',
+      recipient('old@example.com'),
       '123456',
       'n**w@example.com',
     );
@@ -112,7 +126,7 @@ describe('AuthEmailAdapter deployment notification', () => {
     expect(send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'old@example.com',
-        subject: 'Confirm your ClawAI email change',
+        subject: 'Your verification code for changing your ClawAI email address',
         text: expect.stringContaining('n**w@example.com'),
         html: expect.stringContaining('123456'),
       }),
@@ -120,7 +134,10 @@ describe('AuthEmailAdapter deployment notification', () => {
   });
 
   it('sends the new email a confirmation URL containing the raw token', async () => {
-    await new AuthEmailAdapter().sendEmailChangeConfirmation('new@example.com', 'raw-token-xyz');
+    await new AuthEmailAdapter().sendEmailChangeConfirmation(
+      recipient('new@example.com'),
+      'raw-token-xyz',
+    );
     const expectedUrl = new URL('/confirm-email-change', 'https://claw-ai.co');
     expectedUrl.searchParams.set('token', 'raw-token-xyz');
 
@@ -134,12 +151,12 @@ describe('AuthEmailAdapter deployment notification', () => {
   });
 
   it('sends the old email a completed-change security notice', async () => {
-    await new AuthEmailAdapter().sendEmailChangeCompletedNotice('old@example.com');
+    await new AuthEmailAdapter().sendEmailChangeCompletedNotice(recipient('old@example.com'));
 
     expect(send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'old@example.com',
-        subject: 'Your ClawAI account email address was changed',
+        subject: 'The email address on your ClawAI account was changed',
         text: expect.stringContaining('If you did not make this change'),
         html: expect.stringContaining('If you did not make this change'),
       }),

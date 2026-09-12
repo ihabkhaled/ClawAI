@@ -21,6 +21,7 @@ import type {
 import type { ProfileIdentityFormValues } from '@/lib/validation/profile.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
+import type { LoginFailureCopy } from '@/types/auth.types';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
 import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
@@ -84,7 +85,8 @@ export type UseLoginFormReturn = {
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
   isError: boolean;
-  errorMessage: string | null;
+  /** Null unless the last attempt failed. Never the raw backend message. */
+  failureCopy: LoginFailureCopy | null;
   t: TranslateFunction;
 };
 
@@ -119,6 +121,19 @@ export type UseCreateUserFormReturn = {
 
 export type UseVerifyEmailPageReturn = {
   outcome: EmailVerificationOutcome;
+  t: TranslateFunction;
+};
+
+export type UseCheckEmailPageReturn = {
+  /** The address registration was submitted with, echoed from the query. */
+  email: string | null;
+  hasAddress: boolean;
+  /** Sign-in link, carrying any returnTo the registration journey started with. */
+  loginHref: string;
+  resend: () => void;
+  isResending: boolean;
+  hasResent: boolean;
+  t: TranslateFunction;
 };
 
 export type UseThreadListDrawerReturn = {
@@ -538,6 +553,8 @@ export type UseMessageComposerReturn = {
   content: string;
   minRows: number;
   maxRows: number;
+  /** ArrowUp-recall text handed to RichPromptTextarea. */
+  recallValue?: string;
   onValueChange: (value: string) => void;
   /** Enter-key submit; the textarea owns the IME-safe key contract. */
   onSubmitValue: () => void;
@@ -576,6 +593,11 @@ export type UseRichPromptTextareaParams = {
   disabled?: boolean;
   minRows?: number;
   maxRows?: number;
+  // The text ArrowUp recalls into an EMPTY composer — the user's own previous
+  // message. Undefined (the default) disables recall entirely, which is why
+  // the compare panel, whose textarea has no history behind it, simply omits
+  // it and keeps plain caret movement.
+  recallValue?: string;
 };
 
 export type UseRichPromptTextareaReturn = {

@@ -162,6 +162,67 @@ export const es: TranslationDictionary = {
     resetPasswordInvalidTokenDescription:
       'Este enlace de restablecimiento de contraseña ya no es válido.',
     resetPasswordRequestNewLink: 'Solicitar un nuevo enlace de restablecimiento.',
+    loginInvalidCredentialsTitle: 'No se han aceptado estos datos de acceso',
+    loginInvalidCredentialsDescription:
+      'Compruebe el correo electrónico y la contraseña e inténtelo de nuevo. Por su seguridad, no indicamos cuál de los dos era incorrecto.',
+    loginEmailNotVerifiedTitle: 'Confirme primero su correo electrónico',
+    loginEmailNotVerifiedDescription:
+      'Su contraseña era correcta, pero esta cuenta aún no se ha activado. Abra el correo de confirmación que le enviamos, pulse el enlace que contiene y vuelva a iniciar sesión.',
+    loginEmailNotVerifiedAction: 'No he recibido el correo',
+    loginSuspendedTitle: 'Esta cuenta está suspendida',
+    loginSuspendedDescription:
+      'Su contraseña era correcta, pero un administrador ha desactivado esta cuenta. Póngase en contacto con el soporte si cree que se trata de un error.',
+    loginUnknownDescription:
+      'No hemos podido completar el inicio de sesión. Compruebe su conexión e inténtelo de nuevo en un momento.',
+    checkEmailTitle: 'Confirme su correo electrónico',
+    checkEmailSubtitle: 'Su cuenta se ha creado. Hemos enviado un enlace de confirmación a:',
+    checkEmailSubtitleNoAddress:
+      'Su cuenta se ha creado. Hemos enviado un enlace de confirmación a la dirección con la que se registró.',
+    checkEmailBlockedTitle: 'Todavía no puede iniciar sesión',
+    checkEmailBlockedBody:
+      'Su cuenta permanecerá inactiva hasta que se confirme esta dirección. Hasta entonces, se rechazará cualquier intento de inicio de sesión, incluso con la contraseña correcta.',
+    checkEmailStep1Title: 'Abra su bandeja de entrada',
+    checkEmailStep1Body:
+      'Busque un mensaje de ClawAI con el asunto “Confirme su correo electrónico para activar su cuenta de ClawAI”. Suele llegar en menos de un minuto.',
+    checkEmailStep2Title: 'Pulse el enlace de confirmación',
+    checkEmailStep2Body:
+      'El enlace activa su cuenta de inmediato. Por seguridad, deja de funcionar 24 horas después de su envío.',
+    checkEmailStep3Title: 'Inicie sesión',
+    checkEmailStep3Body:
+      'Una vez confirmada su dirección, podrá iniciar sesión con el correo electrónico y la contraseña que acaba de elegir.',
+    checkEmailNotArrivedTitle: '¿No ha llegado el correo?',
+    checkEmailNotArrivedSpam:
+      'Revise las carpetas de spam, correo no deseado o promociones — los mensajes automáticos suelen llegar primero ahí.',
+    checkEmailNotArrivedTypo:
+      'Compruebe que la dirección indicada arriba está bien escrita. Si no lo está, regístrese de nuevo con la correcta.',
+    checkEmailNotArrivedWait:
+      'En algunos proveedores de correo la entrega puede tardar unos minutos. Espere un momento antes de solicitar otro.',
+    checkEmailResend: 'Reenviar el correo de confirmación',
+    checkEmailResendAgain: 'Enviarlo una vez más',
+    checkEmailResendHint:
+      'Si hay una cuenta pendiente de confirmar en esa dirección, ya va en camino un nuevo enlace. El enlace anterior dejará de funcionar.',
+    checkEmailResendSuccess: 'Correo de confirmación enviado',
+    checkEmailResendError:
+      'No hemos podido enviar el correo en este momento. Inténtelo de nuevo en unos instantes.',
+    checkEmailGoToLogin: 'Ir al inicio de sesión',
+    checkEmailWrongAddress: 'Usar otra dirección',
+    checkEmailFooterNote:
+      'Puede cerrar esta página. El enlace de confirmación de su correo funciona desde cualquier dispositivo y cualquier navegador.',
+    verifyEmailPendingDetail:
+      'Estamos comprobando el enlace que ha abierto. Solo tardará un momento.',
+    verifyEmailVerifiedDetail:
+      'Su correo electrónico está confirmado y su cuenta ya está activa. Puede iniciar sesión con el correo y la contraseña que eligió al registrarse.',
+    verifyEmailVerifiedAction: 'Ir al inicio de sesión',
+    verifyEmailVerifiedFooter:
+      'No tendrá que volver a confirmar esta dirección en ningún otro dispositivo.',
+    verifyEmailAlreadyActiveDetail:
+      'Este enlace ya se ha utilizado, o un administrador ha activado su cuenta por usted. En cualquier caso, no queda nada por confirmar: pruebe a iniciar sesión y restablezca la contraseña si ya no la recuerda.',
+    verifyEmailAlreadyActiveSecondary: 'Restablecer mi contraseña',
+    verifyEmailFailedDetail:
+      'Este enlace de confirmación ya no es válido. Los enlaces caducan 24 horas después de enviarse y solo pueden usarse una vez. Inicie sesión para recibir un enlace nuevo, o regístrese si todavía no tiene una cuenta.',
+    verifyEmailFailedSecondary: 'Crear una cuenta',
+    verifyEmailFailedFooter:
+      'Si sigue viendo este mensaje, copie el enlace completo desde el correo en lugar de pulsarlo — algunas aplicaciones de correo acortan las direcciones largas.',
   },
   vscodeAuthorization: {
     title: 'Autorizar ClawAI para VS Code',

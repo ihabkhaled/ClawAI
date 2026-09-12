@@ -33,4 +33,12 @@ export enum ApiErrorCode {
   SUPER_ADMIN_IMMUTABLE = 'SUPER_ADMIN_IMMUTABLE',
   SUPER_ADMIN_SELF_LOCKED = 'SUPER_ADMIN_SELF_LOCKED',
   SUPER_ADMIN_REQUIRED = 'SUPER_ADMIN_REQUIRED',
+  // Sign-in refusals. INVALID_CREDENTIALS deliberately covers BOTH an unknown
+  // address and a wrong password — the backend refuses to distinguish them so
+  // nobody can use the login form to discover which addresses have accounts
+  // (ADR-096). The other two are only ever returned AFTER the password has
+  // verified, which is what makes naming them safe.
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
+  ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
 }

@@ -161,6 +161,66 @@ export const pt: TranslationDictionary = {
     resetPasswordInvalidTokenTitle: 'Link inválido',
     resetPasswordInvalidTokenDescription: 'Este link de redefinição de senha já não é válido.',
     resetPasswordRequestNewLink: 'Solicitar um novo link de redefinição de senha.',
+    loginInvalidCredentialsTitle: 'Os dados de acesso não foram aceites',
+    loginInvalidCredentialsDescription:
+      'Verifique o endereço de email e a palavra-passe e tente novamente. Por motivos de segurança, não indicamos qual dos dois estava incorreto.',
+    loginEmailNotVerifiedTitle: 'Confirme primeiro o seu endereço de email',
+    loginEmailNotVerifiedDescription:
+      'A palavra-passe estava correta, mas esta conta ainda não foi ativada. Abra o email de confirmação que lhe enviámos, selecione a ligação que se encontra nele e inicie sessão novamente.',
+    loginEmailNotVerifiedAction: 'Não recebi o email',
+    loginSuspendedTitle: 'Esta conta foi suspensa',
+    loginSuspendedDescription:
+      'A palavra-passe estava correta, mas um administrador desativou esta conta. Contacte o apoio ao cliente se considerar que se trata de um engano.',
+    loginUnknownDescription:
+      'Não foi possível concluir o início de sessão. Verifique a sua ligação e tente novamente dentro de momentos.',
+    checkEmailTitle: 'Confirme o seu endereço de email',
+    checkEmailSubtitle: 'A sua conta foi criada. Enviámos uma ligação de confirmação para:',
+    checkEmailSubtitleNoAddress:
+      'A sua conta foi criada. Enviámos uma ligação de confirmação para o endereço com que se registou.',
+    checkEmailBlockedTitle: 'Ainda não pode iniciar sessão',
+    checkEmailBlockedBody:
+      'A sua conta permanece inativa até este endereço ser confirmado. Até lá, todas as tentativas de início de sessão serão recusadas, mesmo com a palavra-passe correta.',
+    checkEmailStep1Title: 'Abra a sua caixa de entrada',
+    checkEmailStep1Body:
+      'Procure uma mensagem da ClawAI com o assunto “Confirme o seu endereço de email para ativar a sua conta ClawAI”. Costuma chegar no espaço de um minuto.',
+    checkEmailStep2Title: 'Selecione a ligação de confirmação',
+    checkEmailStep2Body:
+      'A ligação ativa a sua conta de imediato. Por segurança, deixa de funcionar 24 horas após o envio.',
+    checkEmailStep3Title: 'Inicie sessão',
+    checkEmailStep3Body:
+      'Assim que o seu endereço estiver confirmado, poderá iniciar sessão com o email e a palavra-passe que acabou de escolher.',
+    checkEmailNotArrivedTitle: 'O email não chegou?',
+    checkEmailNotArrivedSpam:
+      'Verifique as pastas de spam, lixo ou promoções — o correio automático costuma ir primeiro para lá.',
+    checkEmailNotArrivedTypo:
+      'Confirme que o endereço apresentado acima está escrito corretamente. Se estiver errado, registe-se novamente com o endereço correto.',
+    checkEmailNotArrivedWait:
+      'Em alguns fornecedores de email, a entrega pode demorar alguns minutos. Aguarde um pouco antes de pedir outro.',
+    checkEmailResend: 'Enviar novamente o email de confirmação',
+    checkEmailResendAgain: 'Enviar mais uma vez',
+    checkEmailResendHint:
+      'Se existir uma conta a aguardar confirmação nesse endereço, uma nova ligação está a caminho. A ligação anterior deixa de funcionar.',
+    checkEmailResendSuccess: 'Email de confirmação enviado',
+    checkEmailResendError:
+      'Não foi possível enviar o email neste momento. Tente novamente dentro de instantes.',
+    checkEmailGoToLogin: 'Ir para o início de sessão',
+    checkEmailWrongAddress: 'Utilizar outro endereço',
+    checkEmailFooterNote:
+      'Pode fechar esta página. A ligação de confirmação do seu email funciona em qualquer dispositivo e em qualquer navegador.',
+    verifyEmailPendingDetail: 'Estamos a verificar a ligação que abriu. Demora apenas um instante.',
+    verifyEmailVerifiedDetail:
+      'O seu endereço de email está confirmado e a sua conta está agora ativa. Pode iniciar sessão com o email e a palavra-passe que escolheu no registo.',
+    verifyEmailVerifiedAction: 'Ir para o início de sessão',
+    verifyEmailVerifiedFooter:
+      'Não precisará de confirmar novamente este endereço em nenhum outro dispositivo.',
+    verifyEmailAlreadyActiveDetail:
+      'Esta ligação já foi utilizada ou um administrador ativou a sua conta por si. De qualquer forma, não há nada por confirmar — experimente iniciar sessão e redefina a palavra-passe caso já não se lembre dela.',
+    verifyEmailAlreadyActiveSecondary: 'Redefinir a minha palavra-passe',
+    verifyEmailFailedDetail:
+      'Esta ligação de confirmação já não é válida. As ligações expiram 24 horas após o envio e cada uma só pode ser utilizada uma vez. Inicie sessão para receber uma nova ligação ou registe-se, caso ainda não tenha criado uma conta.',
+    verifyEmailFailedSecondary: 'Criar uma conta',
+    verifyEmailFailedFooter:
+      'Se continuar a ver esta mensagem, copie a ligação completa do email em vez de a selecionar — algumas aplicações de correio encurtam endereços longos.',
   },
   vscodeAuthorization: {
     title: 'Autorizar o ClawAI para VS Code',

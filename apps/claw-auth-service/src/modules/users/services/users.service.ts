@@ -424,7 +424,10 @@ export class UsersService {
     await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
     const temporaryPassword = `${randomBytes(12).toString('base64url')}!Aa1`;
     const passwordHash = await hashPassword(temporaryPassword);
-    await this.authEmailAdapter.sendTemporaryPassword(user.email, temporaryPassword);
+    await this.authEmailAdapter.sendTemporaryPassword(
+      { email: user.email, locale: user.languagePreference, firstName: user.firstName },
+      temporaryPassword,
+    );
     // Residual safe-direction failure: if updateById fails after the email is sent,
     // the emailed temporary password will not work, but the user's existing password
     // still works, so they are not locked out.

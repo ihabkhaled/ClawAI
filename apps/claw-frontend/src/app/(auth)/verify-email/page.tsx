@@ -1,32 +1,18 @@
-'use client';
+import { AuthTopControls } from '@/components/auth/auth-top-controls';
+import { LoginBrandingPanel } from '@/components/auth/login-branding-panel';
+import { VerifyEmailPanel } from '@/components/auth/verify-email-panel';
 
-import Link from 'next/link';
-
-import { LoadingSpinner } from '@/components/common/loading-spinner';
-import { Button } from '@/components/ui/button';
-import { ROUTES } from '@/constants';
-import { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
-import { useVerifyEmailPage } from '@/hooks/auth/use-verify-email-page';
-import { useTranslation } from '@/lib/i18n';
-import { resolveEmailVerificationCopyKeys } from '@/utilities/email-verification-copy.utility';
-
+// Given the same two-column shell as login and registration. It used to be a
+// bare centred <section> on an empty page, which made the one screen a user
+// reaches from their inbox look like an error page from a different product.
 export default function VerifyEmailPage(): React.ReactElement {
-  const { outcome } = useVerifyEmailPage();
-  const { t } = useTranslation();
-
-  if (outcome === EmailVerificationOutcome.Pending) {
-    return <LoadingSpinner label={t('common.loading')} />;
-  }
-
-  const copy = resolveEmailVerificationCopyKeys(outcome);
-
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-4 p-6 text-center">
-      <h1 className="text-xl font-semibold">{t(copy.titleKey)}</h1>
-      <p className="text-muted-foreground text-sm">{t(copy.bodyKey)}</p>
-      <Button asChild>
-        <Link href={ROUTES.LOGIN}>{t('auth.signInLink')}</Link>
-      </Button>
-    </section>
+    <div className="relative grid min-h-dvh w-full grid-cols-1 lg:grid-cols-2">
+      <AuthTopControls />
+      <LoginBrandingPanel />
+      <div className="bg-background flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+        <VerifyEmailPanel />
+      </div>
+    </div>
   );
 }

@@ -2,23 +2,41 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { PasswordResetService } from '../password-reset.service';
 import { PasswordResetManager } from '../../managers/password-reset.manager';
 import { AuthEmailAdapter } from '../../adapters/auth-email.adapter';
+import { AuthEmailRecipientService } from '../auth-email-recipient.service';
+import { UserLanguagePreference } from '../../../../generated/prisma';
 
 jest.mock('../../managers/password-reset.manager');
 jest.mock('../../adapters/auth-email.adapter');
+jest.mock('../auth-email-recipient.service');
+
+// The reset email is now addressed to a person in a language, not to a string.
+const RECIPIENT = {
+  email: 'user@example.com',
+  locale: UserLanguagePreference.EN,
+  firstName: 'Ada',
+};
 
 describe('PasswordResetService', () => {
   let service: PasswordResetService;
   let manager: jest.Mocked<PasswordResetManager>;
   let emailAdapter: jest.Mocked<AuthEmailAdapter>;
+  let recipients: jest.Mocked<AuthEmailRecipientService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PasswordResetService, PasswordResetManager, AuthEmailAdapter],
+      providers: [
+        PasswordResetService,
+        PasswordResetManager,
+        AuthEmailAdapter,
+        AuthEmailRecipientService,
+      ],
     }).compile();
 
     service = module.get<PasswordResetService>(PasswordResetService);
     manager = module.get(PasswordResetManager);
     emailAdapter = module.get(AuthEmailAdapter);
+    recipients = module.get(AuthEmailRecipientService);
+    recipients.forEmail.mockResolvedValue(RECIPIENT);
   });
 
   describe('requestReset', () => {
@@ -32,7 +50,7 @@ describe('PasswordResetService', () => {
       const result = await service.requestReset(email);
 
       expect(manager.request).toHaveBeenCalledWith(email);
-      expect(emailAdapter.sendPasswordReset).toHaveBeenCalledWith(email, token);
+      expect(emailAdapter.sendPasswordReset).toHaveBeenCalledWith(RECIPIENT, token);
       expect(result).toEqual({ accepted: true });
     });
 

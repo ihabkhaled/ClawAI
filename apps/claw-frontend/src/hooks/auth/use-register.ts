@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { RegisterRequest } from '@/types';
@@ -26,9 +27,20 @@ export function useRegister() {
         message: 'User registered successfully',
       });
       showToast.success({ title: t('toast.registerSuccess') });
+      // NOT to /login. The account exists but is PENDING, so a sign-in attempt
+      // is guaranteed to fail — sending the user there right after a green
+      // success toast is how "account created" turned into "login failed" with
+      // nothing in between explaining why. /check-email is that explanation.
+      // The address travels in the query string because there is no session to
+      // carry it, and the page treats it as display text plus an argument to
+      // the resend endpoint, which answers identically for every address.
+      const params = new URLSearchParams({ email: variables.email });
       const requestedReturnTo = searchParams.get('returnTo');
       const returnTo = requestedReturnTo ? safeReturnRoute(requestedReturnTo) : null;
-      router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
+      if (returnTo !== null) {
+        params.set('returnTo', returnTo);
+      }
+      router.push(`${ROUTES.CHECK_EMAIL}?${params.toString()}`);
     },
     onError: (error: Error) => {
       logger.error({ component: 'auth', action: 'register-error', message: 'Registration failed' });

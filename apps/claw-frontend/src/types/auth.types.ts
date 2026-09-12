@@ -1,4 +1,5 @@
 import type { EmailChangeStage } from '@/enums/email-change-stage.enum';
+import type { UserLanguagePreference } from '@/enums/user-language-preference.enum';
 
 import type { UserProfile } from './user.types';
 
@@ -13,6 +14,11 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   phone?: string;
+  // The language the user is signing up IN. Sent so the very first email they
+  // receive — the one that decides whether they can sign in at all — arrives
+  // in that language instead of English. There is no session yet for the
+  // backend to read a preference from, so the client has to say.
+  languagePreference?: UserLanguagePreference;
 }
 
 export type TokenPair = {
@@ -147,4 +153,34 @@ export interface AuthState {
 export type EmailVerificationCopyKeys = {
   titleKey: string;
   bodyKey: string;
+};
+
+/**
+ * The i18n keys for one login failure, plus whether the user can do anything
+ * about it. `actionKey` is non-null only for a recoverable failure — an
+ * unverified address — because offering a button that cannot help is worse
+ * than offering none.
+ */
+export type LoginFailureCopy = {
+  titleKey: string;
+  descriptionKey: string;
+  actionKey: string | null;
+  isRecoverable: boolean;
+};
+
+/**
+ * Copy for one email-verification outcome, expanded from the original
+ * title+body pair. The page it drives is the first thing a new user sees after
+ * clicking a link in their inbox, and a heading plus one sentence left them
+ * with nowhere to go — hence the explicit next step and the secondary route
+ * out for the failure case.
+ */
+export type EmailVerificationPanelCopy = {
+  titleKey: string;
+  bodyKey: string;
+  /** What happens now, in plain terms. */
+  detailKey: string;
+  primaryActionKey: string;
+  /** A second way out, for an outcome where the first one may not apply. */
+  secondaryActionKey: string | null;
 };

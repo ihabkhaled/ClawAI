@@ -49,7 +49,11 @@ describe('useRegister', () => {
     mocks.search = 'returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly';
   });
 
-  it('returns a newly registered user to the selected checkout route', async () => {
+  // Registration no longer lands on /login: the account is PENDING, so a
+  // sign-in there is guaranteed to fail. /check-email is the screen that
+  // explains that, and it forwards the checkout returnTo so the journey the
+  // user started is not lost at the new hop. See ADR-096.
+  it('carries the selected checkout route through to the check-email screen', async () => {
     const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
 
     await act(() =>
@@ -62,11 +66,11 @@ describe('useRegister', () => {
     );
 
     expect(mocks.push).toHaveBeenCalledWith(
-      '/login?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
+      '/check-email?email=buyer%40example.com&returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
     );
   });
 
-  it('falls back to chat when registration receives an external return route', async () => {
+  it('still refuses an external return route, sanitising it to chat', async () => {
     mocks.search = 'returnTo=https%3A%2F%2Fevil.example';
     const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
 
@@ -79,6 +83,25 @@ describe('useRegister', () => {
       }),
     );
 
-    expect(mocks.push).toHaveBeenCalledWith('/login?returnTo=%2Fchat');
+    expect(mocks.push).toHaveBeenCalledWith(
+      '/check-email?email=buyer%40example.com&returnTo=%2Fchat',
+    );
+  });
+
+  it('never sends a pending account to the sign-in form', async () => {
+    mocks.search = '';
+    const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
+
+    await act(() =>
+      result.current.registerAsync({
+        email: 'ada@example.com',
+        password: 'Secret123!',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      }),
+    );
+
+    expect(mocks.push).toHaveBeenCalledWith('/check-email?email=ada%40example.com');
+    expect(mocks.push).not.toHaveBeenCalledWith(expect.stringContaining('/login'));
   });
 });

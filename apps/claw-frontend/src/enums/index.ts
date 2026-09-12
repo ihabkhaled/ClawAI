@@ -169,3 +169,5 @@ export { ChatLimitKind } from './chat-limit-kind.enum';
 export { ThreadSearchState } from './thread-search-state.enum';
 export { ModelPricingSource, ModelPricingSourceFilter } from './model-pricing-source.enum';
 export { SseConnectionHealth } from './sse-connection-health.enum';
+export { LoginFailureReason } from './login-failure-reason.enum';
+export { EmailVerificationTone } from './email-verification-tone.enum';

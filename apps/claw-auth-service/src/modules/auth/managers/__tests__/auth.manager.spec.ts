@@ -4,7 +4,11 @@ import { type AuthRepository } from '../../repositories/auth.repository';
 import { type RolesService } from '../../../roles/services/roles.service';
 import { type PlansRepository } from '../../../plans/repositories/plans.repository';
 import { UserRole, UserStatus } from '../../../../common/enums';
-import { AccountSuspendedException, InvalidCredentialsException } from '../../../../common/errors';
+import {
+  AccountSuspendedException,
+  EmailNotVerifiedException,
+  InvalidCredentialsException,
+} from '../../../../common/errors';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import * as utilities from '@common/utilities';
 
@@ -12,6 +16,7 @@ import * as utilities from '@common/utilities';
 jest.mock('@common/utilities', () => ({
   verifyPassword: jest.fn(),
   hashPassword: jest.fn().mockResolvedValue('hashed-password'),
+  burnPasswordVerification: jest.fn().mockResolvedValue(false),
 }));
 
 const mockedUtilities = jest.mocked(utilities);
@@ -231,18 +236,77 @@ describe('AuthManager', () => {
     it('should throw AccountSuspendedException for a suspended account', async () => {
       const suspendedUser = { ...mockUser, status: UserStatus.SUSPENDED };
       repository.findUserByEmail.mockResolvedValue(suspendedUser);
+      mockedUtilities.verifyPassword.mockResolvedValue(true);
 
-      await expect(manager.login('test@example.com', 'any-password')).rejects.toThrow(
+      await expect(manager.login('test@example.com', 'correct-password')).rejects.toThrow(
         AccountSuspendedException,
       );
     });
 
-    it('should throw InvalidCredentialsException for a pending account', async () => {
+    // The heart of the login taxonomy (ADR-096): a PENDING account gets a
+    // NAMED reason, but only because the password already verified. Everything
+    // that has not proved ownership gets the same opaque answer.
+    it('names EMAIL_NOT_VERIFIED for a pending account with the correct password', async () => {
       const pendingUser = { ...mockUser, status: UserStatus.PENDING };
       repository.findUserByEmail.mockResolvedValue(pendingUser);
+      mockedUtilities.verifyPassword.mockResolvedValue(true);
 
-      await expect(manager.login('test@example.com', 'any-password')).rejects.toThrow(
+      await expect(manager.login('test@example.com', 'correct-password')).rejects.toThrow(
+        EmailNotVerifiedException,
+      );
+    });
+
+    it('hides the pending state behind INVALID_CREDENTIALS on a wrong password', async () => {
+      const pendingUser = { ...mockUser, status: UserStatus.PENDING };
+      repository.findUserByEmail.mockResolvedValue(pendingUser);
+      mockedUtilities.verifyPassword.mockResolvedValue(false);
+
+      await expect(manager.login('test@example.com', 'wrong-password')).rejects.toThrow(
         InvalidCredentialsException,
+      );
+    });
+
+    it('hides the suspended state behind INVALID_CREDENTIALS on a wrong password', async () => {
+      const suspendedUser = { ...mockUser, status: UserStatus.SUSPENDED };
+      repository.findUserByEmail.mockResolvedValue(suspendedUser);
+      mockedUtilities.verifyPassword.mockResolvedValue(false);
+
+      await expect(manager.login('test@example.com', 'wrong-password')).rejects.toThrow(
+        InvalidCredentialsException,
+      );
+    });
+
+    // Without this, an unknown address returns in milliseconds while a known
+    // one pays for argon2 — a stopwatch becomes an account-enumeration oracle
+    // even though both responses are byte-identical.
+    it('spends the same password-hashing work on an address that does not exist', async () => {
+      repository.findUserByEmail.mockResolvedValue(null);
+
+      await expect(manager.login('unknown@example.com', 'password')).rejects.toThrow(
+        InvalidCredentialsException,
+      );
+      expect(mockedUtilities.burnPasswordVerification).toHaveBeenCalledWith('password');
+      expect(mockedUtilities.verifyPassword).not.toHaveBeenCalled();
+    });
+
+    it('gives an unknown address and a wrong password the identical error body', async () => {
+      repository.findUserByEmail.mockResolvedValue(null);
+      const unknown = await manager
+        .login('nobody@example.com', 'password')
+        .catch((e: unknown) => e);
+
+      repository.findUserByEmail.mockResolvedValue(mockUser);
+      mockedUtilities.verifyPassword.mockResolvedValue(false);
+      const wrong = await manager.login('test@example.com', 'bad').catch((e: unknown) => e);
+
+      expect((unknown as InvalidCredentialsException).code).toBe(
+        (wrong as InvalidCredentialsException).code,
+      );
+      expect((unknown as InvalidCredentialsException).message).toBe(
+        (wrong as InvalidCredentialsException).message,
+      );
+      expect((unknown as InvalidCredentialsException).getStatus()).toBe(
+        (wrong as InvalidCredentialsException).getStatus(),
       );
     });
 

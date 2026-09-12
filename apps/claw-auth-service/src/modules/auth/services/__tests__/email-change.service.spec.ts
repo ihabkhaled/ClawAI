@@ -5,6 +5,8 @@ import { AuthEmailAdapter } from '../../adapters/auth-email.adapter';
 import { EMAIL_CHANGE_OTP_TTL_MS } from '../../constants/email-change.constants';
 import { EmailChangeManager } from '../../managers/email-change.manager';
 import { EmailChangeService } from '../email-change.service';
+import { AuthEmailRecipientService } from '../auth-email-recipient.service';
+import { UserLanguagePreference } from '../../../../generated/prisma';
 
 describe('EmailChangeService', () => {
   let service: EmailChangeService;
@@ -15,6 +17,18 @@ describe('EmailChangeService', () => {
     request: jest.fn(),
     resendOldEmailOtp: jest.fn(),
     verifyOldEmail: jest.fn(),
+  };
+  // Each send now names a person and a language. The resolver is stubbed to
+  // echo the address back so assertions stay about WHICH address was written to.
+  const recipientFor = (email: string) => ({
+    email,
+    locale: UserLanguagePreference.EN,
+    firstName: 'Ada',
+  });
+  const recipients = {
+    forEmail: jest.fn(),
+    forUserId: jest.fn(),
+    forUserIdAtOtherAddress: jest.fn(),
   };
   const emailAdapter = {
     assertEmailDeliveryAvailable: jest.fn(),
@@ -30,8 +44,16 @@ describe('EmailChangeService', () => {
         EmailChangeService,
         { provide: EmailChangeManager, useValue: manager },
         { provide: AuthEmailAdapter, useValue: emailAdapter },
+        { provide: AuthEmailRecipientService, useValue: recipients },
       ],
     }).compile();
+    recipients.forEmail.mockImplementation((email: string) => Promise.resolve(recipientFor(email)));
+    recipients.forUserId.mockImplementation((_id: string, email: string) =>
+      Promise.resolve(recipientFor(email)),
+    );
+    recipients.forUserIdAtOtherAddress.mockImplementation((_id: string, email: string) =>
+      Promise.resolve(recipientFor(email)),
+    );
     service = module.get(EmailChangeService);
   });
 
@@ -50,7 +72,7 @@ describe('EmailChangeService', () => {
       manager.request.mock.invocationCallOrder[0]!,
     );
     expect(emailAdapter.sendEmailChangeOtp).toHaveBeenCalledWith(
-      'old@example.com',
+      recipientFor('old@example.com'),
       '123456',
       'n***@example.com',
     );
@@ -108,7 +130,7 @@ describe('EmailChangeService', () => {
       pendingEmailSent: true,
     });
     expect(emailAdapter.sendEmailChangeConfirmation).toHaveBeenCalledWith(
-      'new@example.com',
+      recipientFor('new@example.com'),
       'raw-token',
     );
   });
@@ -136,7 +158,7 @@ describe('EmailChangeService', () => {
       accepted: true,
     });
     expect(emailAdapter.sendEmailChangeOtp).toHaveBeenCalledWith(
-      'old@example.com',
+      recipientFor('old@example.com'),
       '654321',
       'n***@example.com',
     );
@@ -167,7 +189,9 @@ describe('EmailChangeService', () => {
   it('sends the old-address notice after a completed change', async () => {
     manager.confirm.mockResolvedValue({ changed: true, oldEmail: 'old@example.com' });
     await expect(service.confirmEmailChange('raw-token')).resolves.toEqual({ changed: true });
-    expect(emailAdapter.sendEmailChangeCompletedNotice).toHaveBeenCalledWith('old@example.com');
+    expect(emailAdapter.sendEmailChangeCompletedNotice).toHaveBeenCalledWith(
+      recipientFor('old@example.com'),
+    );
   });
 
   it('swallows only completion-notice delivery failure', async () => {

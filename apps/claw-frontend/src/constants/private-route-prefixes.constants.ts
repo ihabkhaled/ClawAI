@@ -10,6 +10,7 @@ export const PRIVATE_ROUTE_PREFIXES: ReadonlyArray<string> = [
   '/forgot-password',
   '/reset-password',
   '/verify-email',
+  '/check-email',
   '/confirm-email-change',
   '/dashboard',
   '/chat',

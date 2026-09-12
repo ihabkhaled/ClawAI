@@ -161,6 +161,65 @@ export const en: TranslationDictionary = {
     resetPasswordInvalidTokenTitle: 'Invalid Link',
     resetPasswordInvalidTokenDescription: 'This password reset link is no longer valid.',
     resetPasswordRequestNewLink: 'Request a new reset link.',
+    loginInvalidCredentialsTitle: 'Those sign-in details were not accepted',
+    loginInvalidCredentialsDescription:
+      'Check the email address and password and try again. For your security we do not say which of the two was wrong.',
+    loginEmailNotVerifiedTitle: 'Confirm your email address first',
+    loginEmailNotVerifiedDescription:
+      'Your password was correct, but this account has not been activated yet. Open the confirmation email we sent you and select the link inside, then sign in again.',
+    loginEmailNotVerifiedAction: 'I did not get the email',
+    loginSuspendedTitle: 'This account has been suspended',
+    loginSuspendedDescription:
+      'Your password was correct, but an administrator has disabled this account. Please contact support if you believe this is a mistake.',
+    loginUnknownDescription:
+      'We could not complete the sign-in. Please check your connection and try again in a moment.',
+    checkEmailTitle: 'Confirm your email address',
+    checkEmailSubtitle: 'Your account has been created. We have sent a confirmation link to:',
+    checkEmailSubtitleNoAddress:
+      'Your account has been created. We have sent a confirmation link to the address you registered with.',
+    checkEmailBlockedTitle: 'You cannot sign in yet',
+    checkEmailBlockedBody:
+      'Your account stays inactive until this address is confirmed. Until then, every sign-in attempt will be refused, even with the correct password.',
+    checkEmailStep1Title: 'Open your inbox',
+    checkEmailStep1Body:
+      'Look for a message from ClawAI titled “Confirm your email address to activate your ClawAI account”. It usually arrives within a minute.',
+    checkEmailStep2Title: 'Select the confirmation link',
+    checkEmailStep2Body:
+      'The link activates your account immediately. For security it stops working 24 hours after it was sent.',
+    checkEmailStep3Title: 'Sign in',
+    checkEmailStep3Body:
+      'Once your address is confirmed you can sign in with the email and password you just chose.',
+    checkEmailNotArrivedTitle: 'The email has not arrived?',
+    checkEmailNotArrivedSpam:
+      'Check your spam, junk or promotions folder — automated mail often lands there first.',
+    checkEmailNotArrivedTypo:
+      'Make sure the address above is spelled correctly. If it is wrong, register again with the right one.',
+    checkEmailNotArrivedWait:
+      'Delivery can take a few minutes on some mail providers. Wait a moment before requesting another.',
+    checkEmailResend: 'Send the confirmation email again',
+    checkEmailResendAgain: 'Send it once more',
+    checkEmailResendHint:
+      'If an account is waiting to be confirmed at that address, a new link is on its way. The previous link stops working.',
+    checkEmailResendSuccess: 'Confirmation email sent',
+    checkEmailResendError: 'We could not send the email right now. Please try again shortly.',
+    checkEmailGoToLogin: 'Go to sign in',
+    checkEmailWrongAddress: 'Use a different address',
+    checkEmailFooterNote:
+      'You can close this page. The confirmation link in your email works from any device and any browser.',
+    verifyEmailPendingDetail: 'We are checking the link you opened. This only takes a moment.',
+    verifyEmailVerifiedDetail:
+      'Your email address is confirmed and your account is now active. You can sign in with the email and password you chose when you registered.',
+    verifyEmailVerifiedAction: 'Go to sign in',
+    verifyEmailVerifiedFooter:
+      'You will not need to confirm this address again on any other device.',
+    verifyEmailAlreadyActiveDetail:
+      'This link has already been used, or an administrator activated your account for you. Either way there is nothing left to confirm — try signing in, and reset your password if you no longer remember it.',
+    verifyEmailAlreadyActiveSecondary: 'Reset my password',
+    verifyEmailFailedDetail:
+      'This confirmation link is no longer valid. Links expire 24 hours after they are sent, and each one can be used only once. Sign in to have a new link sent, or register again if you have not created an account yet.',
+    verifyEmailFailedSecondary: 'Create an account',
+    verifyEmailFailedFooter:
+      'If you keep seeing this, copy the full link from the email rather than selecting it — some mail apps shorten long addresses.',
   },
   vscodeAuthorization: {
     title: 'Authorize ClawAI for VS Code',

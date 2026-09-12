@@ -22,6 +22,9 @@ import type { UseRichPromptTextareaParams, UseRichPromptTextareaReturn } from '@
  *   - Provide a stable onKeyDown handler that runs the submit contract:
  *     plain Enter → onSubmit (if value non-empty after trim and !disabled),
  *     Shift+Enter → default newline, anything during composition → default.
+ *   - ArrowUp on an EMPTY composer recalls `recallValue` (the user's previous
+ *     message). Only when empty: once there is text, ArrowUp has to keep
+ *     moving the caret, or a multi-line prompt becomes uneditable.
  *   - Provide a forwarder for compositionStart/End and onChange so the
  *     component just spreads what the hook returns.
  */
@@ -35,6 +38,7 @@ export function useRichPromptTextarea(
     disabled = false,
     minRows = RICH_PROMPT_DEFAULT_MIN_ROWS,
     maxRows = RICH_PROMPT_DEFAULT_MAX_ROWS,
+    recallValue,
   } = params;
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -129,7 +133,31 @@ export function useRichPromptTextarea(
       // browsers, but it isn't universal. We also keep our own ref toggled by
       // compositionStart/End for full coverage.
       const composing = isComposingRef.current || e.nativeEvent.isComposing;
-      if (e.key !== 'Enter' || e.shiftKey || composing) {
+      if (composing) {
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        // Shell-style history recall, and ONLY from a genuinely empty
+        // composer. With any text present ArrowUp must stay caret movement:
+        // silently replacing a half-typed prompt would destroy work the user
+        // cannot get back. A modifier means the user is selecting or jumping,
+        // never recalling.
+        if (
+          disabled ||
+          recallValue === undefined ||
+          value.length !== 0 ||
+          e.shiftKey ||
+          e.ctrlKey ||
+          e.metaKey ||
+          e.altKey
+        ) {
+          return;
+        }
+        e.preventDefault();
+        onChange(recallValue);
+        return;
+      }
+      if (e.key !== 'Enter' || e.shiftKey) {
         return;
       }
       if (disabled) {
@@ -151,7 +179,7 @@ export function useRichPromptTextarea(
       e.preventDefault();
       onSubmit();
     },
-    [disabled, onSubmit, value],
+    [disabled, onChange, onSubmit, recallValue, value],
   );
 
   const handleCompositionStart = useCallback((): void => {

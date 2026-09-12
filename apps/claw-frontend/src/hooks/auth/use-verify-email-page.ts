@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
+import { useTranslation } from '@/lib/i18n';
 import { authRepository } from '@/repositories/auth/auth.repository';
 import type { UseVerifyEmailPageReturn } from '@/types';
 
@@ -18,6 +19,7 @@ import type { UseVerifyEmailPageReturn } from '@/types';
  */
 export function useVerifyEmailPage(): UseVerifyEmailPageReturn {
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const [outcome, setOutcome] = useState<EmailVerificationOutcome>(
     EmailVerificationOutcome.Pending,
   );
@@ -33,7 +35,9 @@ export function useVerifyEmailPage(): UseVerifyEmailPageReturn {
     void authRepository
       .verifyEmail(token)
       .then((result) => {
-        if (cancelled) {return;}
+        if (cancelled) {
+          return;
+        }
         // `verified: false` means the token did not match a live, unconsumed
         // row — already used, expired, or burned by an admin activation. The
         // account may well be usable, so the copy invites a sign-in attempt
@@ -45,7 +49,9 @@ export function useVerifyEmailPage(): UseVerifyEmailPageReturn {
         );
       })
       .catch(() => {
-        if (!cancelled) {setOutcome(EmailVerificationOutcome.Failed);}
+        if (!cancelled) {
+          setOutcome(EmailVerificationOutcome.Failed);
+        }
       });
 
     return () => {
@@ -53,5 +59,5 @@ export function useVerifyEmailPage(): UseVerifyEmailPageReturn {
     };
   }, [searchParams]);
 
-  return { outcome };
+  return { outcome, t };
 }

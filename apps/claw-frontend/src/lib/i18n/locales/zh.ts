@@ -152,6 +152,58 @@ export const zh: TranslationDictionary = {
     resetPasswordInvalidTokenTitle: '链接无效',
     resetPasswordInvalidTokenDescription: '此重置链接已不再有效。',
     resetPasswordRequestNewLink: '申请新的重置链接',
+    loginInvalidCredentialsTitle: '无法验证该登录信息',
+    loginInvalidCredentialsDescription:
+      '请核对邮箱地址和密码后重试。出于安全考虑，我们不会提示是其中哪一项有误。',
+    loginEmailNotVerifiedTitle: '请先验证您的邮箱地址',
+    loginEmailNotVerifiedDescription:
+      '您的密码正确，但该账户尚未激活。请打开我们发送的确认邮件并点击其中的链接，然后重新登录。',
+    loginEmailNotVerifiedAction: '我没有收到邮件',
+    loginSuspendedTitle: '该账户已被停用',
+    loginSuspendedDescription:
+      '您的密码正确，但管理员已停用该账户。如果您认为这是误操作，请联系客服支持。',
+    loginUnknownDescription: '登录未能完成。请检查您的网络连接，稍后再试。',
+    checkEmailTitle: '验证您的邮箱地址',
+    checkEmailSubtitle: '您的账户已创建。我们已将确认链接发送至：',
+    checkEmailSubtitleNoAddress: '您的账户已创建。我们已将确认链接发送至您注册时使用的邮箱地址。',
+    checkEmailBlockedTitle: '您暂时还无法登录',
+    checkEmailBlockedBody:
+      '在该邮箱地址完成验证之前，您的账户将保持未激活状态。在此期间，即使密码正确，每次登录也都会被拒绝。',
+    checkEmailStep1Title: '打开您的收件箱',
+    checkEmailStep1Body:
+      '请查找一封来自 ClawAI、主题为“验证您的邮箱地址以激活 ClawAI 账户”的邮件。该邮件通常会在一分钟内送达。',
+    checkEmailStep2Title: '点击确认链接',
+    checkEmailStep2Body:
+      '点击链接后，您的账户将立即激活。出于安全考虑，链接将在发送后 24 小时失效。',
+    checkEmailStep3Title: '登录',
+    checkEmailStep3Body: '邮箱地址验证完成后，您即可使用刚才设置的邮箱和密码登录。',
+    checkEmailNotArrivedTitle: '没有收到邮件？',
+    checkEmailNotArrivedSpam:
+      '请检查垃圾邮件或促销邮件文件夹，系统自动发送的邮件常常会先被归入其中。',
+    checkEmailNotArrivedTypo: '请确认上方的邮箱地址拼写无误。如有错误，请使用正确的邮箱重新注册。',
+    checkEmailNotArrivedWait: '部分邮件服务商的投递可能需要几分钟。请稍候片刻，再申请重新发送。',
+    checkEmailResend: '重新发送确认邮件',
+    checkEmailResendAgain: '再发送一次',
+    checkEmailResendHint:
+      '如果该邮箱地址下确有待验证的账户，新的链接正在发送中。此前的链接将随之失效。',
+    checkEmailResendSuccess: '确认邮件已发送',
+    checkEmailResendError: '我们暂时无法发送该邮件。请稍后再试。',
+    checkEmailGoToLogin: '前往登录',
+    checkEmailWrongAddress: '换一个邮箱地址',
+    checkEmailFooterNote: '您可以关闭本页面。邮件中的确认链接可在任意设备和任意浏览器上使用。',
+    verifyEmailPendingDetail: '我们正在校验您打开的链接，请稍候片刻。',
+    verifyEmailVerifiedDetail:
+      '您的邮箱地址已验证通过，账户现已激活。您可以使用注册时设置的邮箱和密码登录。',
+    verifyEmailVerifiedAction: '前往登录',
+    verifyEmailVerifiedFooter: '在其他设备上，您无需再次验证该邮箱地址。',
+    verifyEmailAlreadyActiveDetail:
+      '该链接已被使用，或管理员已为您激活账户。无论哪种情况，都无需再进行验证——请直接尝试登录；若已不记得密码，请重置密码。',
+    verifyEmailAlreadyActiveSecondary: '重置我的密码',
+    verifyEmailFailedDetail:
+      '该确认链接已失效。链接在发送后 24 小时过期，且每个链接仅能使用一次。请登录以获取新的链接；如果您尚未创建账户，请重新注册。',
+    verifyEmailFailedSecondary: '创建账户',
+    verifyEmailFailedFooter:
+      '如果该提示反复出现，请从邮件中复制完整链接，而不要直接点击——部分邮件客户端会截短过长的地址。',
   },
   vscodeAuthorization: {
     title: '为VS Code授权ClawAI',

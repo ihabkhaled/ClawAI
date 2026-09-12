@@ -224,6 +224,62 @@ because repeated attempts are a security signal.
 Full rule: [`rules/35-super-administrator-and-privilege-boundaries.md`](../../rules/35-super-administrator-and-privilege-boundaries.md) ·
 Decision: [ADR-073](../13-adr/adr-073-super-administrator-authority.md)
 
+## Why a login refusal says what it says
+
+Sign-in has four outcomes and only two of them name a reason. The rule that
+decides which is: **has the caller proved the account is theirs?**
+
+| Case                        | Response                   | Reason                                           |
+| --------------------------- | -------------------------- | ------------------------------------------------ |
+| Unknown address             | `INVALID_CREDENTIALS`, 401 | Nothing proved                                   |
+| Wrong password              | `INVALID_CREDENTIALS`, 401 | Nothing proved — byte-identical to the row above |
+| Right password, `PENDING`   | `EMAIL_NOT_VERIFIED`, 403  | Ownership proved                                 |
+| Right password, `SUSPENDED` | `ACCOUNT_SUSPENDED`, 403   | Ownership proved                                 |
+
+That is why `AuthManager.login` verifies the password **before** any branch on
+`user.status`, and why the unknown-address branch still calls
+`burnPasswordVerification` — identical bodies are not enough when one branch
+returns in a millisecond and the other pays for argon2id. A stopwatch is an
+enumeration oracle too.
+
+`ACCOUNT_SUSPENDED` used to be thrown before the password was ever checked, which
+told any stranger that an address was registered here. If you are changing this
+ordering, read [ADR-096](../13-adr/adr-096-login-failure-taxonomy-without-account-enumeration.md)
+first — the ordering **is** the security property.
+
+The frontend never renders the backend's message for any of these; it maps the
+error **code** through `classifyLoginFailure` to translated copy. The backend
+message says "Invalid email or password", which is the exact phrasing the product
+rejected.
+
+## Transactional email
+
+Every email to a human account holder is sent in that account's
+`languagePreference`, in all 13 supported languages.
+
+- **Copy** — `modules/auth/email/copy/<locale>.copy.ts`, one file per language,
+  `en.copy.ts` is the source of truth. Text only, never markup.
+- **Layout** — `modules/auth/email/utilities/auth-email-render.utility.ts` owns
+  every tag and escapes every interpolated value. Tables and inline styles only,
+  because every serious client strips `<style>`. `ar` and `fa` render `dir="rtl"`.
+- **Locale resolution** — `AuthEmailRecipientService`. Adapter methods take an
+  `AuthEmailRecipient`, never a bare address, so a send site cannot compile
+  without a locale.
+- **Registration** — the client sends `languagePreference` in the register
+  payload. There is no session yet to read a preference from, so without it the
+  very first email (the one gating sign-in) would always be English.
+
+`AUTH_EMAIL_DICTIONARIES` is a total `Record<UserLanguagePreference, …>`: adding a
+language to the enum breaks the build until its copy file exists. There is no
+runtime fallback to English by locale, deliberately — a silent fallback is
+indistinguishable from a translation nobody noticed was missing.
+
+The deployment-status email is the one exception and stays English: it goes to the
+operator mailbox, which belongs to no account.
+
+Runbook: [skills/change-a-transactional-email.md](../../skills/change-a-transactional-email.md) ·
+Rule: [rules/43](../../rules/43-account-state-disclosure-and-transactional-email.md)
+
 ## Activating a pending account
 
 A self-registration lands in `UserStatus.PENDING` with `emailVerifiedAt = null`,

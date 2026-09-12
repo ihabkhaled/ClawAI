@@ -165,6 +165,67 @@ export const de: TranslationDictionary = {
     resetPasswordInvalidTokenDescription:
       'Dieser Link zum Zurücksetzen des Passworts ist nicht mehr gültig.',
     resetPasswordRequestNewLink: 'Einen neuen Link zum Zurücksetzen anfordern.',
+    loginInvalidCredentialsTitle: 'Diese Anmeldedaten wurden nicht akzeptiert',
+    loginInvalidCredentialsDescription:
+      'Bitte prüfen Sie E-Mail-Adresse und Passwort und versuchen Sie es erneut. Zu Ihrer Sicherheit nennen wir nicht, welche der beiden Angaben falsch war.',
+    loginEmailNotVerifiedTitle: 'Bestätigen Sie zuerst Ihre E-Mail-Adresse',
+    loginEmailNotVerifiedDescription:
+      'Ihr Passwort war richtig, dieses Konto ist jedoch noch nicht aktiviert. Öffnen Sie die Bestätigungs-E-Mail, die wir Ihnen gesendet haben, klicken Sie auf den enthaltenen Link und melden Sie sich danach erneut an.',
+    loginEmailNotVerifiedAction: 'Ich habe die E-Mail nicht erhalten',
+    loginSuspendedTitle: 'Dieses Konto wurde gesperrt',
+    loginSuspendedDescription:
+      'Ihr Passwort war richtig, ein Administrator hat dieses Konto jedoch deaktiviert. Bitte wenden Sie sich an den Support, wenn Sie glauben, dass es sich um einen Fehler handelt.',
+    loginUnknownDescription:
+      'Die Anmeldung konnte nicht abgeschlossen werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es gleich noch einmal.',
+    checkEmailTitle: 'Bestätigen Sie Ihre E-Mail-Adresse',
+    checkEmailSubtitle: 'Ihr Konto wurde erstellt. Wir haben einen Bestätigungslink gesendet an:',
+    checkEmailSubtitleNoAddress:
+      'Ihr Konto wurde erstellt. Wir haben einen Bestätigungslink an die Adresse gesendet, mit der Sie sich registriert haben.',
+    checkEmailBlockedTitle: 'Sie können sich noch nicht anmelden',
+    checkEmailBlockedBody:
+      'Ihr Konto bleibt inaktiv, bis diese Adresse bestätigt ist. Bis dahin wird jeder Anmeldeversuch abgelehnt, auch mit dem richtigen Passwort.',
+    checkEmailStep1Title: 'Öffnen Sie Ihren Posteingang',
+    checkEmailStep1Body:
+      'Suchen Sie nach einer Nachricht von ClawAI mit dem Betreff “Bestätigen Sie Ihre E-Mail-Adresse, um Ihr ClawAI-Konto zu aktivieren”. Sie trifft in der Regel innerhalb einer Minute ein.',
+    checkEmailStep2Title: 'Klicken Sie auf den Bestätigungslink',
+    checkEmailStep2Body:
+      'Der Link aktiviert Ihr Konto sofort. Aus Sicherheitsgründen verliert er 24 Stunden nach dem Versand seine Gültigkeit.',
+    checkEmailStep3Title: 'Melden Sie sich an',
+    checkEmailStep3Body:
+      'Sobald Ihre Adresse bestätigt ist, können Sie sich mit der E-Mail-Adresse und dem Passwort anmelden, die Sie soeben gewählt haben.',
+    checkEmailNotArrivedTitle: 'Die E-Mail ist nicht angekommen?',
+    checkEmailNotArrivedSpam:
+      'Sehen Sie in den Ordnern Spam, Junk oder Werbung nach — automatische Nachrichten landen dort häufig zuerst.',
+    checkEmailNotArrivedTypo:
+      'Prüfen Sie, ob die oben genannte Adresse richtig geschrieben ist. Falls nicht, registrieren Sie sich bitte erneut mit der korrekten Adresse.',
+    checkEmailNotArrivedWait:
+      'Bei manchen E-Mail-Anbietern dauert die Zustellung einige Minuten. Warten Sie einen Moment, bevor Sie eine neue anfordern.',
+    checkEmailResend: 'Bestätigungs-E-Mail erneut senden',
+    checkEmailResendAgain: 'Noch einmal senden',
+    checkEmailResendHint:
+      'Wenn unter dieser Adresse ein Konto auf seine Bestätigung wartet, ist ein neuer Link unterwegs. Der vorherige Link verliert dann seine Gültigkeit.',
+    checkEmailResendSuccess: 'Bestätigungs-E-Mail gesendet',
+    checkEmailResendError:
+      'Die E-Mail konnte gerade nicht gesendet werden. Bitte versuchen Sie es in Kürze erneut.',
+    checkEmailGoToLogin: 'Zur Anmeldung',
+    checkEmailWrongAddress: 'Andere Adresse verwenden',
+    checkEmailFooterNote:
+      'Sie können diese Seite schließen. Der Bestätigungslink in Ihrer E-Mail funktioniert auf jedem Gerät und in jedem Browser.',
+    verifyEmailPendingDetail:
+      'Wir prüfen den Link, den Sie geöffnet haben. Das dauert nur einen Moment.',
+    verifyEmailVerifiedDetail:
+      'Ihre E-Mail-Adresse ist bestätigt und Ihr Konto ist jetzt aktiv. Sie können sich mit der E-Mail-Adresse und dem Passwort anmelden, die Sie bei der Registrierung gewählt haben.',
+    verifyEmailVerifiedAction: 'Zur Anmeldung',
+    verifyEmailVerifiedFooter:
+      'Sie müssen diese Adresse auf keinem weiteren Gerät erneut bestätigen.',
+    verifyEmailAlreadyActiveDetail:
+      'Dieser Link wurde bereits verwendet, oder ein Administrator hat Ihr Konto für Sie aktiviert. In beiden Fällen ist nichts mehr zu bestätigen — melden Sie sich einfach an und setzen Sie Ihr Passwort zurück, falls Sie es nicht mehr wissen.',
+    verifyEmailAlreadyActiveSecondary: 'Passwort zurücksetzen',
+    verifyEmailFailedDetail:
+      'Dieser Bestätigungslink ist nicht mehr gültig. Links laufen 24 Stunden nach dem Versand ab und lassen sich jeweils nur einmal verwenden. Melden Sie sich an, um einen neuen Link zu erhalten, oder registrieren Sie sich, falls Sie noch kein Konto angelegt haben.',
+    verifyEmailFailedSecondary: 'Konto erstellen',
+    verifyEmailFailedFooter:
+      'Wenn das weiterhin auftritt, kopieren Sie den vollständigen Link aus der E-Mail, statt ihn anzuklicken — manche E-Mail-Programme kürzen lange Adressen.',
   },
   vscodeAuthorization: {
     title: 'ClawAI für VS Code autorisieren',

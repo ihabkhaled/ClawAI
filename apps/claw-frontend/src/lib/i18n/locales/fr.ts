@@ -161,6 +161,67 @@ export const fr: TranslationDictionary = {
     resetPasswordInvalidTokenTitle: 'Lien invalide',
     resetPasswordInvalidTokenDescription: 'Ce lien de réinitialisation de mot de passe a expiré.',
     resetPasswordRequestNewLink: 'Demander un nouveau lien de réinitialisation de mot de passe.',
+    loginInvalidCredentialsTitle: "Ces identifiants n'ont pas été acceptés",
+    loginInvalidCredentialsDescription:
+      "Vérifiez l'adresse e-mail et le mot de passe, puis réessayez. Pour votre sécurité, nous n'indiquons pas lequel des deux est incorrect.",
+    loginEmailNotVerifiedTitle: "Confirmez d'abord votre adresse e-mail",
+    loginEmailNotVerifiedDescription:
+      "Votre mot de passe est correct, mais ce compte n'a pas encore été activé. Ouvrez l'e-mail de confirmation que nous vous avons envoyé, cliquez sur le lien qu'il contient, puis reconnectez-vous.",
+    loginEmailNotVerifiedAction: "Je n'ai pas reçu l'e-mail",
+    loginSuspendedTitle: 'Ce compte a été suspendu',
+    loginSuspendedDescription:
+      "Votre mot de passe est correct, mais un administrateur a désactivé ce compte. Contactez l'assistance si vous pensez qu'il s'agit d'une erreur.",
+    loginUnknownDescription:
+      "Nous n'avons pas pu finaliser la connexion. Vérifiez votre connexion et réessayez dans un instant.",
+    checkEmailTitle: 'Confirmez votre adresse e-mail',
+    checkEmailSubtitle: 'Votre compte a été créé. Nous avons envoyé un lien de confirmation à :',
+    checkEmailSubtitleNoAddress:
+      "Votre compte a été créé. Nous avons envoyé un lien de confirmation à l'adresse utilisée lors de votre inscription.",
+    checkEmailBlockedTitle: 'Vous ne pouvez pas encore vous connecter',
+    checkEmailBlockedBody:
+      "Votre compte reste inactif tant que cette adresse n'est pas confirmée. D'ici là, toute tentative de connexion sera refusée, même avec le bon mot de passe.",
+    checkEmailStep1Title: 'Ouvrez votre boîte de réception',
+    checkEmailStep1Body:
+      "Recherchez un message de ClawAI intitulé “Confirmez votre adresse e-mail pour activer votre compte ClawAI”. Il arrive généralement en moins d'une minute.",
+    checkEmailStep2Title: 'Cliquez sur le lien de confirmation',
+    checkEmailStep2Body:
+      'Le lien active votre compte immédiatement. Pour des raisons de sécurité, il cesse de fonctionner 24 heures après son envoi.',
+    checkEmailStep3Title: 'Connectez-vous',
+    checkEmailStep3Body:
+      "Une fois votre adresse confirmée, vous pouvez vous connecter avec l'e-mail et le mot de passe que vous venez de choisir.",
+    checkEmailNotArrivedTitle: "L'e-mail n'est pas arrivé ?",
+    checkEmailNotArrivedSpam:
+      'Consultez vos dossiers spam, courrier indésirable ou promotions — les messages automatiques y atterrissent souvent en premier.',
+    checkEmailNotArrivedTypo:
+      "Vérifiez que l'adresse ci-dessus est correctement orthographiée. Si elle est erronée, inscrivez-vous à nouveau avec la bonne.",
+    checkEmailNotArrivedWait:
+      "La distribution peut prendre quelques minutes chez certains fournisseurs de messagerie. Patientez un instant avant d'en demander un autre.",
+    checkEmailResend: "Renvoyer l'e-mail de confirmation",
+    checkEmailResendAgain: 'Le renvoyer encore une fois',
+    checkEmailResendHint:
+      "Si un compte attend d'être confirmé à cette adresse, un nouveau lien est en route. Le lien précédent cesse alors de fonctionner.",
+    checkEmailResendSuccess: 'E-mail de confirmation envoyé',
+    checkEmailResendError:
+      "Nous n'avons pas pu envoyer l'e-mail pour le moment. Réessayez dans quelques instants.",
+    checkEmailGoToLogin: 'Aller à la connexion',
+    checkEmailWrongAddress: 'Utiliser une autre adresse',
+    checkEmailFooterNote:
+      "Vous pouvez fermer cette page. Le lien de confirmation contenu dans votre e-mail fonctionne depuis n'importe quel appareil et n'importe quel navigateur.",
+    verifyEmailPendingDetail:
+      "Nous vérifions le lien que vous avez ouvert. Cela ne prend qu'un instant.",
+    verifyEmailVerifiedDetail:
+      "Votre adresse e-mail est confirmée et votre compte est désormais actif. Vous pouvez vous connecter avec l'e-mail et le mot de passe choisis lors de votre inscription.",
+    verifyEmailVerifiedAction: 'Aller à la connexion',
+    verifyEmailVerifiedFooter:
+      "Vous n'aurez plus besoin de confirmer cette adresse sur un autre appareil.",
+    verifyEmailAlreadyActiveDetail:
+      "Ce lien a déjà été utilisé, ou un administrateur a activé votre compte pour vous. Dans les deux cas, il n'y a plus rien à confirmer : essayez de vous connecter, et réinitialisez votre mot de passe si vous ne vous en souvenez plus.",
+    verifyEmailAlreadyActiveSecondary: 'Réinitialiser mon mot de passe',
+    verifyEmailFailedDetail:
+      "Ce lien de confirmation n'est plus valide. Les liens expirent 24 heures après leur envoi et ne peuvent être utilisés qu'une seule fois. Connectez-vous pour recevoir un nouveau lien, ou inscrivez-vous si vous n'avez pas encore de compte.",
+    verifyEmailFailedSecondary: 'Créer un compte',
+    verifyEmailFailedFooter:
+      "Si le problème persiste, copiez le lien complet depuis l'e-mail au lieu de cliquer dessus — certaines applications de messagerie raccourcissent les adresses longues.",
   },
   vscodeAuthorization: {
     title: 'Autoriser ClawAI pour VS Code',

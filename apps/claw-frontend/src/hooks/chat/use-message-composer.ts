@@ -49,6 +49,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     content: state.content,
     minRows: COMPOSER_MIN_ROWS,
     maxRows: COMPOSER_MAX_ROWS,
+    recallValue: props.recallValue,
     onValueChange: state.handleValueChange,
     onSubmitValue: state.submit,
     onFormSubmit: state.handleSubmit,

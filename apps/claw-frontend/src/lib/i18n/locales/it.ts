@@ -163,6 +163,66 @@ export const it: TranslationDictionary = {
     resetPasswordInvalidTokenDescription:
       'Questo link per reimpostare la password non è valido o è scaduto.',
     resetPasswordRequestNewLink: 'Richiedi un nuovo link',
+    loginInvalidCredentialsTitle: 'Credenziali di accesso non accettate',
+    loginInvalidCredentialsDescription:
+      "Verifichi l'indirizzo email e la password e riprovi. Per la Sua sicurezza non indichiamo quale dei due dati sia errato.",
+    loginEmailNotVerifiedTitle: 'Confermi prima il Suo indirizzo email',
+    loginEmailNotVerifiedDescription:
+      "La password è corretta, ma questo account non è ancora stato attivato. Apra l'email di conferma che Le abbiamo inviato, selezioni il link al suo interno e acceda di nuovo.",
+    loginEmailNotVerifiedAction: "Non ho ricevuto l'email",
+    loginSuspendedTitle: 'Questo account è stato sospeso',
+    loginSuspendedDescription:
+      "La password è corretta, ma un amministratore ha disattivato questo account. Contatti l'assistenza se ritiene che si tratti di un errore.",
+    loginUnknownDescription:
+      "Non è stato possibile completare l'accesso. Verifichi la connessione e riprovi tra poco.",
+    checkEmailTitle: 'Confermi il Suo indirizzo email',
+    checkEmailSubtitle: 'Il Suo account è stato creato. Abbiamo inviato un link di conferma a:',
+    checkEmailSubtitleNoAddress:
+      "Il Suo account è stato creato. Abbiamo inviato un link di conferma all'indirizzo utilizzato in fase di registrazione.",
+    checkEmailBlockedTitle: 'Non può ancora accedere',
+    checkEmailBlockedBody:
+      'Il Suo account resta inattivo finché questo indirizzo non viene confermato. Fino ad allora ogni tentativo di accesso verrà rifiutato, anche con la password corretta.',
+    checkEmailStep1Title: 'Apra la Sua casella di posta',
+    checkEmailStep1Body:
+      'Cerchi un messaggio di ClawAI con oggetto “Confermi il Suo indirizzo email per attivare il Suo account ClawAI”. Di solito arriva entro un minuto.',
+    checkEmailStep2Title: 'Selezioni il link di conferma',
+    checkEmailStep2Body:
+      "Il link attiva subito il Suo account. Per motivi di sicurezza scade 24 ore dopo l'invio.",
+    checkEmailStep3Title: 'Acceda',
+    checkEmailStep3Body:
+      "Una volta confermato l'indirizzo, potrà accedere con l'email e la password appena scelte.",
+    checkEmailNotArrivedTitle: "L'email non è arrivata?",
+    checkEmailNotArrivedSpam:
+      'Controlli la cartella spam, posta indesiderata o promozioni: i messaggi automatici finiscono spesso lì.',
+    checkEmailNotArrivedTypo:
+      "Verifichi che l'indirizzo indicato sopra sia scritto correttamente. Se è errato, si registri di nuovo con quello giusto.",
+    checkEmailNotArrivedWait:
+      "Con alcuni provider di posta la consegna può richiedere qualche minuto. Attenda un momento prima di richiederne un'altra.",
+    checkEmailResend: "Invia di nuovo l'email di conferma",
+    checkEmailResendAgain: 'Invia ancora una volta',
+    checkEmailResendHint:
+      "Se a quell'indirizzo è associato un account in attesa di conferma, un nuovo link è in arrivo. Il link precedente non sarà più valido.",
+    checkEmailResendSuccess: 'Email di conferma inviata',
+    checkEmailResendError:
+      "Non è stato possibile inviare l'email in questo momento. Riprovi tra poco.",
+    checkEmailGoToLogin: "Vai all'accesso",
+    checkEmailWrongAddress: 'Usa un altro indirizzo',
+    checkEmailFooterNote:
+      'Può chiudere questa pagina. Il link di conferma nella Sua email funziona da qualsiasi dispositivo e browser.',
+    verifyEmailPendingDetail: 'Stiamo verificando il link che ha aperto. Ci vuole solo un istante.',
+    verifyEmailVerifiedDetail:
+      "Il Suo indirizzo email è confermato e il Suo account è ora attivo. Può accedere con l'email e la password scelte in fase di registrazione.",
+    verifyEmailVerifiedAction: "Vai all'accesso",
+    verifyEmailVerifiedFooter:
+      'Non dovrà confermare di nuovo questo indirizzo su altri dispositivi.',
+    verifyEmailAlreadyActiveDetail:
+      'Questo link è già stato utilizzato, oppure un amministratore ha attivato il Suo account. In ogni caso non resta nulla da confermare: provi ad accedere e reimposti la password se non la ricorda più.',
+    verifyEmailAlreadyActiveSecondary: 'Reimposta la mia password',
+    verifyEmailFailedDetail:
+      "Questo link di conferma non è più valido. I link scadono 24 ore dopo l'invio e ognuno può essere usato una sola volta. Acceda per ricevere un nuovo link, oppure si registri se non ha ancora creato un account.",
+    verifyEmailFailedSecondary: 'Crea un account',
+    verifyEmailFailedFooter:
+      "Se il problema si ripete, copi il link completo dall'email invece di selezionarlo: alcune app di posta accorciano gli indirizzi lunghi.",
   },
   vscodeAuthorization: {
     title: 'Autorizza ClawAI per VS Code',

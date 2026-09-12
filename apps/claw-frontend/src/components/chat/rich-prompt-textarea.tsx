@@ -12,6 +12,7 @@ import type { RichPromptTextareaProps } from '@/types';
  *   - Auto-resize from minRows to maxRows (then internal scroll)
  *   - Enter → onSubmit (when value non-empty after trim AND !disabled)
  *   - Shift+Enter → default newline behaviour
+ *   - ArrowUp on an empty field → recall `recallValue` (opt-in per consumer)
  *   - IME-safe composition: never submit while a CJK/IME composition is in
  *     flight (tracked via compositionStart/End + nativeEvent.isComposing)
  *   - ref forwarding so parents can imperatively focus the textarea
@@ -32,6 +33,7 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       maxRows,
       ariaLabel,
       className,
+      recallValue,
     } = props;
 
     const {
@@ -40,7 +42,15 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       handleKeyDown,
       handleCompositionStart,
       handleCompositionEnd,
-    } = useRichPromptTextarea({ value, onChange, onSubmit, disabled, minRows, maxRows });
+    } = useRichPromptTextarea({
+      value,
+      onChange,
+      onSubmit,
+      disabled,
+      minRows,
+      maxRows,
+      recallValue,
+    });
 
     // Bridge the internal textareaRef (used for autosize measurements) with
     // the consumer's forwarded ref so callers can still focus/blur the
@@ -48,11 +58,9 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
     // proxy ref without leaking the underlying node identity. The hook
     // returns a stable ref object so depending on it does NOT re-run on
     // every render — it satisfies the exhaustive-deps rule without cost.
-    useImperativeHandle(
-      forwardedRef,
-      () => textareaRef.current as HTMLTextAreaElement,
-      [textareaRef],
-    );
+    useImperativeHandle(forwardedRef, () => textareaRef.current as HTMLTextAreaElement, [
+      textareaRef,
+    ]);
 
     return (
       <Textarea

@@ -161,6 +161,67 @@ export const ja: TranslationDictionary = {
     resetPasswordInvalidTokenTitle: 'リンクが無効です',
     resetPasswordInvalidTokenDescription: 'このパスワード再設定リンクは無効または期限切れです。',
     resetPasswordRequestNewLink: '新しい再設定リンクを要求する',
+    loginInvalidCredentialsTitle: 'サインイン情報を確認できませんでした',
+    loginInvalidCredentialsDescription:
+      'メールアドレスとパスワードをご確認のうえ、もう一度お試しください。セキュリティ保護のため、どちらが誤っているかはお知らせしておりません。',
+    loginEmailNotVerifiedTitle: '先にメールアドレスのご確認をお願いいたします',
+    loginEmailNotVerifiedDescription:
+      'パスワードは正しく入力されていますが、このアカウントはまだ有効化されておりません。お送りした確認メールを開き、記載のリンクを選択したうえで、あらためてサインインしてください。',
+    loginEmailNotVerifiedAction: 'メールが届かない場合',
+    loginSuspendedTitle: 'このアカウントは停止されています',
+    loginSuspendedDescription:
+      'パスワードは正しく入力されていますが、管理者によってこのアカウントは無効化されております。お心当たりがない場合は、サポートまでご連絡ください。',
+    loginUnknownDescription:
+      'サインインを完了できませんでした。通信状況をご確認のうえ、しばらくしてからもう一度お試しください。',
+    checkEmailTitle: 'メールアドレスをご確認ください',
+    checkEmailSubtitle:
+      'アカウントを作成いたしました。次のアドレス宛に確認用リンクをお送りしております。',
+    checkEmailSubtitleNoAddress:
+      'アカウントを作成いたしました。ご登録いただいたメールアドレス宛に確認用リンクをお送りしております。',
+    checkEmailBlockedTitle: 'まだサインインはできません',
+    checkEmailBlockedBody:
+      'このアドレスが確認されるまで、アカウントは無効のままとなります。それまでは、正しいパスワードを入力された場合でもサインインはできません。',
+    checkEmailStep1Title: '受信トレイをご確認ください',
+    checkEmailStep1Body:
+      'ClawAI から届く「ClawAI アカウントを有効化するため、メールアドレスをご確認ください」という件名のメールをお探しください。通常は 1 分ほどで届きます。',
+    checkEmailStep2Title: '確認用リンクを選択してください',
+    checkEmailStep2Body:
+      'リンクを選択いただくと、アカウントはただちに有効になります。セキュリティ保護のため、リンクは送信から 24 時間で無効となります。',
+    checkEmailStep3Title: 'サインインしてください',
+    checkEmailStep3Body:
+      'アドレスの確認が完了しましたら、ご登録時に設定されたメールアドレスとパスワードでサインインいただけます。',
+    checkEmailNotArrivedTitle: 'メールが届かない場合',
+    checkEmailNotArrivedSpam:
+      '迷惑メール、ゴミ箱、プロモーションの各フォルダーをご確認ください。自動送信メールは、これらに振り分けられることがよくあります。',
+    checkEmailNotArrivedTypo:
+      '上記のアドレスに誤りがないかご確認ください。誤っている場合は、正しいアドレスであらためてご登録ください。',
+    checkEmailNotArrivedWait:
+      'メールサービスによっては、配信に数分かかる場合がございます。再送をご依頼になる前に、少しお待ちください。',
+    checkEmailResend: '確認メールを再送する',
+    checkEmailResendAgain: 'もう一度送信する',
+    checkEmailResendHint:
+      'そのアドレスで確認待ちのアカウントがある場合は、新しいリンクをお送りいたします。以前のリンクは無効になります。',
+    checkEmailResendSuccess: '確認メールを送信しました',
+    checkEmailResendError:
+      'ただ今メールを送信できませんでした。しばらくしてからもう一度お試しください。',
+    checkEmailGoToLogin: 'サインイン画面へ',
+    checkEmailWrongAddress: '別のアドレスを使用する',
+    checkEmailFooterNote:
+      'このページは閉じていただいて差し支えありません。メール内の確認用リンクは、どの端末・どのブラウザーからでもご利用いただけます。',
+    verifyEmailPendingDetail: '開かれたリンクを確認しております。しばらくお待ちください。',
+    verifyEmailVerifiedDetail:
+      'メールアドレスの確認が完了し、アカウントが有効になりました。ご登録時に設定されたメールアドレスとパスワードでサインインいただけます。',
+    verifyEmailVerifiedAction: 'サインイン画面へ',
+    verifyEmailVerifiedFooter:
+      '他の端末で、このアドレスをあらためて確認いただく必要はございません。',
+    verifyEmailAlreadyActiveDetail:
+      'このリンクは既にご利用済みであるか、管理者によってアカウントが有効化されております。いずれの場合も確認すべき手続きは残っておりませんので、そのままサインインをお試しください。パスワードをお忘れの場合は再設定をお願いいたします。',
+    verifyEmailAlreadyActiveSecondary: 'パスワードを再設定する',
+    verifyEmailFailedDetail:
+      'この確認用リンクは既に無効です。リンクは送信から 24 時間で期限切れとなり、ご利用は 1 回限りとなっております。サインインいただくと新しいリンクをお送りします。アカウントをまだお持ちでない場合は、あらためてご登録ください。',
+    verifyEmailFailedSecondary: 'アカウントを作成する',
+    verifyEmailFailedFooter:
+      'この表示が続く場合は、リンクを選択するのではなく、メール本文からリンク全体をコピーしてお試しください。メールアプリによっては、長いアドレスが途中で省略されることがございます。',
   },
   vscodeAuthorization: {
     title: 'VS コード用に ClawAI を承認する',

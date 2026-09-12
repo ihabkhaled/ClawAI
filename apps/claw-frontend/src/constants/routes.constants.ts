@@ -5,6 +5,10 @@ export const ROUTES = {
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
+  // Where registration lands. It is not a success screen — it is the screen
+  // that explains why the user cannot sign in yet.
+  CHECK_EMAIL: '/check-email',
+  VERIFY_EMAIL: '/verify-email',
   CONFIRM_EMAIL_CHANGE: '/confirm-email-change',
   // Public marketing route. Also the entry point for organisations asking
   // about a private on-premise deployment.
@@ -108,5 +112,9 @@ export const PUBLIC_ROUTES = [
   ROUTES.LOGIN,
   ROUTES.FORGOT_PASSWORD,
   ROUTES.RESET_PASSWORD,
+  // Both reachable ONLY by someone who cannot sign in yet, so neither can sit
+  // behind the session guard.
+  ROUTES.CHECK_EMAIL,
+  ROUTES.VERIFY_EMAIL,
   ROUTES.CONFIRM_EMAIL_CHANGE,
 ] as const;

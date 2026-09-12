@@ -55,6 +55,24 @@ export class InvalidCredentialsException extends BusinessException {
   }
 }
 
+/**
+ * Correct credentials, but the address behind them was never confirmed.
+ *
+ * Safe to disclose precisely BECAUSE it is only ever thrown after the password
+ * has already verified: the caller has proved they own the account, so telling
+ * them why they are stuck reveals nothing an attacker did not already have.
+ * The unknown-email and wrong-password branches stay INVALID_CREDENTIALS for
+ * exactly the same reason inverted — there, the caller has proved nothing.
+ *
+ * 403, not 401: the request WAS authenticated; it is the account state that
+ * refuses it, and a 401 would send the web client into its token-refresh path.
+ */
+export class EmailNotVerifiedException extends BusinessException {
+  constructor() {
+    super('Email address is not verified', 'EMAIL_NOT_VERIFIED', HttpStatus.FORBIDDEN);
+  }
+}
+
 export class AccountSuspendedException extends BusinessException {
   constructor() {
     super('Account is suspended', 'ACCOUNT_SUSPENDED', HttpStatus.FORBIDDEN);

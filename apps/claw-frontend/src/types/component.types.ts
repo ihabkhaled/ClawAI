@@ -944,6 +944,9 @@ export type MessageComposerProps = {
   selectedModel: ModelSelection | null;
   onModelChange: (model: ModelSelection | null) => void;
   threadId?: string | null;
+  // The user's previous message in this thread, for ArrowUp recall. Undefined
+  // on a brand-new thread, which correctly makes ArrowUp a no-op.
+  recallValue?: string;
 };
 
 // Shared rich prompt textarea used by both the main chat MessageComposer and
@@ -959,6 +962,8 @@ export type RichPromptTextareaProps = {
   maxRows?: number;
   ariaLabel?: string;
   className?: string;
+  // ArrowUp-recall text. See UseRichPromptTextareaParams.recallValue.
+  recallValue?: string;
 };
 
 // Reusable wrapper that adds clipboard-paste + drag-and-drop file ingestion to
@@ -2767,4 +2772,10 @@ export type UseModelPickerResult = {
  */
 export type StreamHealthNoticeProps = {
   health: SseConnectionHealth;
+};
+
+/** One numbered step on the post-registration screen. */
+export type AuthOnboardingStep = {
+  titleKey: string;
+  bodyKey: string;
 };

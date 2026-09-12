@@ -158,6 +158,63 @@ export const ar: TranslationDictionary = {
     resetPasswordInvalidTokenTitle: 'رابط غير صالح',
     resetPasswordInvalidTokenDescription: 'رابط إعادة تعيين كلمة المرور هذا لم يعد صالحًا.',
     resetPasswordRequestNewLink: 'طلب رابط إعادة تعيين جديد.',
+    loginInvalidCredentialsTitle: 'تعذّر قبول بيانات تسجيل الدخول',
+    loginInvalidCredentialsDescription:
+      'يرجى التحقق من البريد الإلكتروني وكلمة المرور والمحاولة مرة أخرى. وحفاظًا على أمان حسابك، لا نوضّح أيًّا منهما كان غير صحيح.',
+    loginEmailNotVerifiedTitle: 'يرجى تأكيد بريدك الإلكتروني أولًا',
+    loginEmailNotVerifiedDescription:
+      'كلمة المرور صحيحة، غير أنّ هذا الحساب لم يُفعَّل بعد. افتح رسالة التأكيد التي أرسلناها إليك واضغط على الرابط الوارد فيها، ثم سجّل الدخول من جديد.',
+    loginEmailNotVerifiedAction: 'لم تصلني الرسالة',
+    loginSuspendedTitle: 'تم تعليق هذا الحساب',
+    loginSuspendedDescription:
+      'كلمة المرور صحيحة، لكن أحد المسؤولين قام بتعطيل هذا الحساب. يرجى التواصل مع الدعم إذا كنت ترى أنّ ذلك حدث عن طريق الخطأ.',
+    loginUnknownDescription:
+      'تعذّر إتمام تسجيل الدخول. يرجى التحقق من اتصالك بالإنترنت والمحاولة مجددًا بعد قليل.',
+    checkEmailTitle: 'تأكيد بريدك الإلكتروني',
+    checkEmailSubtitle: 'تم إنشاء حسابك. أرسلنا رابط التأكيد إلى:',
+    checkEmailSubtitleNoAddress: 'تم إنشاء حسابك. أرسلنا رابط التأكيد إلى العنوان الذي سجّلت به.',
+    checkEmailBlockedTitle: 'لا يمكنك تسجيل الدخول بعد',
+    checkEmailBlockedBody:
+      'يبقى حسابك غير مُفعَّل إلى أن يتم تأكيد هذا العنوان. وحتى ذلك الحين سيُرفض كل محاولة لتسجيل الدخول، حتى مع كلمة المرور الصحيحة.',
+    checkEmailStep1Title: 'افتح صندوق بريدك',
+    checkEmailStep1Body:
+      'ابحث عن رسالة من ClawAI بعنوان “أكّد بريدك الإلكتروني لتفعيل حسابك في ClawAI”. تصل عادةً خلال دقيقة واحدة.',
+    checkEmailStep2Title: 'اضغط على رابط التأكيد',
+    checkEmailStep2Body:
+      'يفعّل الرابط حسابك على الفور. ولأسباب أمنية تنتهي صلاحيته بعد ٢٤ ساعة من إرساله.',
+    checkEmailStep3Title: 'سجّل الدخول',
+    checkEmailStep3Body:
+      'بمجرد تأكيد عنوانك يمكنك تسجيل الدخول بالبريد الإلكتروني وكلمة المرور اللذين اخترتهما للتو.',
+    checkEmailNotArrivedTitle: 'لم تصلك الرسالة؟',
+    checkEmailNotArrivedSpam:
+      'تحقّق من مجلد البريد العشوائي أو غير المرغوب فيه أو العروض الترويجية — فالرسائل الآلية كثيرًا ما تصل إليها أولًا.',
+    checkEmailNotArrivedTypo:
+      'تأكّد من صحة كتابة العنوان الظاهر أعلاه. وإن كان خاطئًا، أعد التسجيل بالعنوان الصحيح.',
+    checkEmailNotArrivedWait:
+      'قد يستغرق التسليم بضع دقائق لدى بعض مزوّدي البريد. انتظر قليلًا قبل طلب رسالة جديدة.',
+    checkEmailResend: 'إعادة إرسال رسالة التأكيد',
+    checkEmailResendAgain: 'أرسلها مرة أخرى',
+    checkEmailResendHint:
+      'إذا كان هناك حساب بانتظار التأكيد على ذلك العنوان، فإنّ رابطًا جديدًا في طريقه إليك. ويتوقف الرابط السابق عن العمل.',
+    checkEmailResendSuccess: 'تم إرسال رسالة التأكيد',
+    checkEmailResendError: 'تعذّر إرسال الرسالة في الوقت الحالي. يرجى المحاولة مجددًا بعد قليل.',
+    checkEmailGoToLogin: 'الانتقال إلى تسجيل الدخول',
+    checkEmailWrongAddress: 'استخدام عنوان آخر',
+    checkEmailFooterNote:
+      'يمكنك إغلاق هذه الصفحة. فرابط التأكيد الموجود في بريدك يعمل من أي جهاز ومن أي متصفح.',
+    verifyEmailPendingDetail: 'نتحقق الآن من الرابط الذي فتحته. لن يستغرق ذلك سوى لحظات.',
+    verifyEmailVerifiedDetail:
+      'تم تأكيد بريدك الإلكتروني وأصبح حسابك نشطًا. يمكنك تسجيل الدخول بالبريد الإلكتروني وكلمة المرور اللذين اخترتهما عند التسجيل.',
+    verifyEmailVerifiedAction: 'الانتقال إلى تسجيل الدخول',
+    verifyEmailVerifiedFooter: 'لن تحتاج إلى تأكيد هذا العنوان مرة أخرى على أي جهاز آخر.',
+    verifyEmailAlreadyActiveDetail:
+      'هذا الرابط تم استخدامه من قبل، أو قام أحد المسؤولين بتفعيل حسابك نيابةً عنك. في الحالتين لم يبقَ شيء لتأكيده — جرّب تسجيل الدخول، وأعد تعيين كلمة المرور إن لم تعد تذكرها.',
+    verifyEmailAlreadyActiveSecondary: 'إعادة تعيين كلمة المرور',
+    verifyEmailFailedDetail:
+      'لم يعد رابط التأكيد هذا صالحًا. تنتهي صلاحية الروابط بعد ٢٤ ساعة من إرسالها، ويمكن استخدام كل رابط مرة واحدة فقط. سجّل الدخول ليصلك رابط جديد، أو أنشئ حسابًا إن لم تكن قد سجّلت بعد.',
+    verifyEmailFailedSecondary: 'إنشاء حساب',
+    verifyEmailFailedFooter:
+      'إذا استمر ظهور هذه الرسالة، فانسخ الرابط كاملًا من البريد بدلًا من الضغط عليه — فبعض تطبيقات البريد تختصر العناوين الطويلة.',
   },
   vscodeAuthorization: {
     title: 'تفويض ClawAI لـ VS Code',

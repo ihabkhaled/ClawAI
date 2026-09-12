@@ -4,6 +4,7 @@ import { DuplicateEntityException } from '../../../common/errors';
 import { AuthEmailAdapter } from '../adapters/auth-email.adapter';
 import { EMAIL_CHANGE_OTP_TTL_MS } from '../constants/email-change.constants';
 import { EmailChangeManager } from '../managers/email-change.manager';
+import { AuthEmailRecipientService } from './auth-email-recipient.service';
 import type { PendingEmailChangeState } from '../types/email-change.types';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class EmailChangeService {
   constructor(
     private readonly manager: EmailChangeManager,
     private readonly emailAdapter: AuthEmailAdapter,
+    private readonly recipients: AuthEmailRecipientService,
   ) {}
 
   async requestEmailChange(
@@ -43,7 +45,11 @@ export class EmailChangeService {
     const maskedEmail = this.maskEmail(newEmail);
 
     try {
-      await this.emailAdapter.sendEmailChangeOtp(result.oldEmail, result.rawOtp, maskedEmail);
+      await this.emailAdapter.sendEmailChangeOtp(
+        await this.recipients.forUserId(userId, result.oldEmail),
+        result.rawOtp,
+        maskedEmail,
+      );
     } catch {
       this.logger.error('Email change OTP delivery failed');
       await this.manager.cancel(userId, result.request.id);
@@ -70,7 +76,10 @@ export class EmailChangeService {
     }
 
     try {
-      await this.emailAdapter.sendEmailChangeConfirmation(result.newEmail, result.newEmailToken);
+      await this.emailAdapter.sendEmailChangeConfirmation(
+        await this.recipients.forUserIdAtOtherAddress(userId, result.newEmail),
+        result.newEmailToken,
+      );
     } catch {
       this.logger.error('Email change confirmation delivery failed');
       await this.manager.cancel(userId, requestId);
@@ -87,7 +96,11 @@ export class EmailChangeService {
     const maskedEmail = this.maskEmail(result.request.newEmail);
 
     try {
-      await this.emailAdapter.sendEmailChangeOtp(result.oldEmail, result.rawOtp, maskedEmail);
+      await this.emailAdapter.sendEmailChangeOtp(
+        await this.recipients.forUserId(userId, result.oldEmail),
+        result.rawOtp,
+        maskedEmail,
+      );
     } catch {
       this.logger.error('Email change OTP delivery failed');
       await this.manager.cancel(userId, requestId);
@@ -112,7 +125,9 @@ export class EmailChangeService {
 
     if (result.changed && result.oldEmail) {
       try {
-        await this.emailAdapter.sendEmailChangeCompletedNotice(result.oldEmail);
+        await this.emailAdapter.sendEmailChangeCompletedNotice(
+          await this.recipients.forEmail(result.oldEmail),
+        );
       } catch {
         this.logger.warn('Email change completion notice delivery failed');
       }

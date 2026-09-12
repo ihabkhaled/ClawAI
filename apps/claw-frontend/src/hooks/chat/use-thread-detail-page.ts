@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ROUTES } from '@/constants';
 import { MEDIA_QUERY_SM_UP } from '@/constants/media-query.constants';
@@ -15,6 +15,7 @@ import { useToggle } from '@/hooks/common/use-toggle';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
+import { findLastUserMessageContent } from '@/utilities';
 
 import { useExportThread } from './use-export-thread';
 import { useInThreadSearch } from './use-in-thread-search';
@@ -74,6 +75,10 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const exportThread = useExportThread(threadId, title, data.messages);
   const search = useInThreadSearch(threadId);
   const { jumpToMessage } = useJumpToMessage(data.virtualizedMessagesProps.handleJumpToMessage);
+  // What ArrowUp pulls back into an empty composer. Derived from the messages
+  // already in cache — no extra query — and memoised so the composer's props
+  // bag does not churn on every unrelated render of this page.
+  const recallValue = useMemo(() => findLastUserMessageContent(data.messages), [data.messages]);
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -236,6 +241,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       selectedModel: data.threadSettings.selectedModel,
       onModelChange: data.threadSettings.handleModelChange,
       threadId,
+      recallValue,
     },
   };
 

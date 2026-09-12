@@ -23,6 +23,8 @@ export {
   writePersistedModelViewMode,
 } from './model-view-storage.utility';
 export { buildThreadPreviewSnippet } from './thread-preview-snippet.utility';
+export { findLastUserMessageContent } from './chat-history.utility';
+export { classifyLoginFailure, resolveLoginFailureCopy } from './login-failure.utility';
 export { getHealthStatusColor } from './health-status.utility';
 export {
   getDashboardGreetingKey,
@@ -213,7 +215,11 @@ export { resolveChatLimitNotice } from './chat-limit-notice.utility';
 export { getStoredReasoning } from './message-reasoning.utility';
 export { resolveThreadSearchState } from './thread-search-state.utility';
 export { buildThreadExportFilename, buildThreadMarkdown } from './thread-markdown.utility';
-export { resolveEmailVerificationCopyKeys } from './email-verification-copy.utility';
+export {
+  resolveEmailVerificationCopyKeys,
+  resolveEmailVerificationPanelCopy,
+  resolveEmailVerificationTone,
+} from './email-verification-copy.utility';
 export { generatePassword } from './password-generator.utility';
 export { evaluatePasswordStrength } from './password-strength.utility';
 export { resolvePasswordStrengthPresentation } from './password-strength-presentation.utility';
