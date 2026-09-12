@@ -1582,6 +1582,31 @@
   }
 }
 
+/* `.truncate-fixed`: clip-with-ellipsis for a fixed-width trigger, on every
+ * viewport — not just the touch layer below, where `.truncate`/
+ * `.text-ellipsis` are relaxed to wrap and this class opts back out of that.
+ * This rule previously existed ONLY inside that media query, so outside of
+ * it `.truncate-fixed` had no definition at all: a model name longer than
+ * its fixed-width trigger (e.g. the composer's model picker at `lg` and up,
+ * `model-picker.tsx`) rendered with the browser's default `overflow:
+ * visible`, spilling text past the pill instead of clipping it. Deliberately
+ * unlayered, so it holds even when the element also carries `truncate`. */
+.truncate-fixed {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.truncate-fixed > span:first-child {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
 /* Honor the user's reduced-motion preference globally */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1658,14 +1683,12 @@
    *
    * Nothing is lost by clipping here. A trigger opens a menu, a dialog or a
    * sheet that lists every option in full on tap, which is the reveal a phone
-   * lacks for prose. Unlayered like its neighbour, so it holds even when the
-   * element also carries `truncate`. */
-  .truncate-fixed {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow-wrap: normal;
-  }
+   * lacks for prose. `.truncate-fixed` is defined once, page-wide and
+   * unlayered, above the reduced-motion query, so it does not need to be
+   * redeclared in this media query too — only `.truncate`/`.text-ellipsis`
+   * needed relaxing here. (A duplicate copy of `.truncate-fixed` used to live
+   * in this block; it had no effect outside this query, which is exactly the
+   * desktop overflow this same rule now fixes globally.) */
 
   /* The third case: a heading, which is neither prose nor a control.
    *
@@ -1708,18 +1731,6 @@
       overflow: hidden;
       overflow-wrap: normal;
     }
-  }
-
-  /* A select renders its value into a child span that the primitive clamps with
-   * `line-clamp`, which is a -webkit-box and wraps before it clips. Put the
-   * class on the trigger and the value trims on one line. */
-  .truncate-fixed > span:first-child {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow-wrap: normal;
   }
 
   /* A JSON payload 4,400px wide inside a 220px card cannot be read by swiping
