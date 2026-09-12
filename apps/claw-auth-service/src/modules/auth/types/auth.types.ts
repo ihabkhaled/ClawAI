@@ -46,5 +46,10 @@ export interface UserProfile {
   isSuperAdmin: boolean;
   languagePreference: string;
   appearancePreference: string;
+  // Display currency. Presentation state only — it never affects an
+  // entitlement, a permission, a charge or an invoice.
+  currencyPreferenceMode: string;
+  preferredCountryCode: string | null;
+  preferredCurrencyCode: string | null;
   createdAt: Date;
 }

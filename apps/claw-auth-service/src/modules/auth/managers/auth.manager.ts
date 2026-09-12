@@ -162,6 +162,13 @@ export class AuthManager {
       isSuperAdmin: user.isSuperAdmin,
       languagePreference: user.languagePreference,
       appearancePreference: user.appearancePreference,
+      // Display currency travels with the profile, because the client resolves
+      // it on load: without these fields a MANUAL preference saved on another
+      // device would be stored, returned by the preferences endpoint, and
+      // invisible to the only screen that reads a profile.
+      currencyPreferenceMode: user.currencyPreferenceMode,
+      preferredCountryCode: user.preferredCountryCode,
+      preferredCurrencyCode: user.preferredCurrencyCode,
       createdAt: user.createdAt,
     };
   }
