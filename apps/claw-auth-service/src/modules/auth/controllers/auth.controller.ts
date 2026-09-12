@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, UsePipes } from '@ne
 import { AuthService } from '../services/auth.service';
 import { ConfirmEmailChangeDto, confirmEmailChangeSchema } from '../dto/email-change.dto';
 import { EmailChangeService } from '../services/email-change.service';
+import type { ResendVerificationResult } from '../types/email-verification.types';
 import { Public } from '../../../app/decorators/public.decorator';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -89,7 +90,7 @@ export class AuthController {
   @Post('email-verification/resend')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(resendVerificationSchema))
-  async resendVerification(@Body() dto: ResendVerificationDto): Promise<{ accepted: true }> {
+  async resendVerification(@Body() dto: ResendVerificationDto): Promise<ResendVerificationResult> {
     return this.emailVerificationService.resend(dto.email);
   }
 

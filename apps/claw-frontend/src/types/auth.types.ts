@@ -184,3 +184,17 @@ export type EmailVerificationPanelCopy = {
   /** A second way out, for an outcome where the first one may not apply. */
   secondaryActionKey: string | null;
 };
+
+/**
+ * The answer to a confirmation-email resend request.
+ *
+ * `accepted` is always true and carries no information — the endpoint answers
+ * identically for an address with a pending account, an already-verified one,
+ * and one that has never been seen (ADR-096). `retryAfterSeconds` is present on
+ * EVERY response, not only when rate-limited, for the same reason: a field that
+ * appears in one case only is itself a signal.
+ */
+export type ResendVerificationResponse = {
+  accepted: true;
+  retryAfterSeconds: number;
+};

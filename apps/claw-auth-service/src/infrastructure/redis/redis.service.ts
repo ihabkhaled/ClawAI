@@ -26,6 +26,29 @@ export class RedisService implements OnModuleDestroy {
   }
 
   /**
+   * Claim a key for `ttlSeconds`, or report how long the existing claim has
+   * left. Returns `null` when the claim was taken, and the remaining seconds
+   * when someone already holds it.
+   *
+   * `SET … NX` makes the claim atomic — a GET-then-SET would let two requests
+   * arriving together both believe the key was free, which for a resend
+   * cooldown means two emails. The TTL read is deliberately a SECOND round trip
+   * rather than part of the claim: it only runs on the losing branch, where the
+   * exact remaining time is the whole answer.
+   */
+  async claimCooldown(key: string, ttlSeconds: number): Promise<number | null> {
+    const claimed = await this.client.set(key, '1', 'EX', ttlSeconds, 'NX');
+    if (claimed === 'OK') {
+      return null;
+    }
+    const remaining = await this.client.ttl(key);
+    // -1 (no expiry) and -2 (vanished between the two calls) both mean we
+    // cannot state a real remaining time; report the full window rather than a
+    // negative number the UI would render as a broken countdown.
+    return remaining > 0 ? remaining : ttlSeconds;
+  }
+
+  /**
    * Single-flight lock for scheduled work, matching payment-service's semantics
    * exactly (`SET key token EX ttl NX`).
    *

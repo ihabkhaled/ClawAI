@@ -23,3 +23,10 @@ export const CHECK_EMAIL_TROUBLESHOOTING_KEYS: readonly string[] = [
   'auth.checkEmailNotArrivedTypo',
   'auth.checkEmailNotArrivedWait',
 ] as const;
+
+/**
+ * How often the resend countdown redraws. One second, because the number it
+ * shows is in seconds — a faster tick would repaint without changing anything,
+ * and a slower one would visibly skip.
+ */
+export const RESEND_COOLDOWN_TICK_MS = 1000;

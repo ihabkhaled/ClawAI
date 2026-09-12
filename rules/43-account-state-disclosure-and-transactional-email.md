@@ -53,6 +53,34 @@ miss branch — it spends the same work and returns `false`.
 returns the same accepted response for every address, always.** No status
 difference, no timing difference, no "we couldn't find that account".
 
+**A rate limit on such an endpoint is claimed for the SUBMITTED ADDRESS, before
+anything looks the account up.** This is the subtle one. A resend cooldown that
+only applied to real accounts would answer the exact question the endpoint
+refuses to answer: submit an address twice, and "no cooldown" means "not
+registered". Claim the window first, for whatever was typed, then decide whether
+there is anything to send.
+
+```ts
+// CORRECT — the cooldown is the first gate, and it knows nothing about accounts
+const remaining = await this.redis.claimCooldown(this.cooldownKey(email), COOLDOWN);
+if (remaining !== null) return { accepted: true, retryAfterSeconds: remaining };
+const user = await this.authRepository.findUserByEmail(email);
+
+// WRONG — an unknown address is never rate-limited, and that IS the answer
+const user = await this.authRepository.findUserByEmail(email);
+if (user === null) return { accepted: true };
+```
+
+**Return the retry window on EVERY response, not only when refusing.** A field
+that appears in one case only is itself a signal. Hash the address for the
+rate-limit key: a Redis keyspace dump must not be a readable list of who is
+signing up, and a rate-limit log line must never name the address.
+
+**The countdown a client shows is a mirror, never the limit.** Disable the
+button locally to stop the obvious double-click, but the refusal has to hold for
+a reloaded page, a second tab, and a direct API call — so it lives in the
+server.
+
 **The one recorded exception is `POST /auth/register`**, which returns
 `DUPLICATE_ENTITY` for a taken address. It is a deliberate product trade recorded
 in ADR-096, not a precedent. Do not cite it to justify a second one.
@@ -152,10 +180,11 @@ See `auth-email-copy-completeness.spec.ts`.
 
 ## Enforcement
 
-| What                                          | Where                                                                                                                                                           |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ordering, timing and response parity of login | `auth.manager.spec.ts` — asserts the unknown-address and wrong-password bodies, codes and statuses are identical, and that `burnPasswordVerification` is called |
-| A missing language                            | Compile error on `AUTH_EMAIL_DICTIONARIES` (backend) and on each `TranslationDictionary` (frontend)                                                             |
-| A shallow or broken translation               | `auth-email-copy-completeness.spec.ts` (backend), `src/lib/i18n/__tests__/*` (frontend)                                                                         |
-| Escaping and RTL                              | `auth-email-render.utility.spec.ts`                                                                                                                             |
-| A `t()` key that does not exist               | `src/lib/i18n/__tests__/i18n-key-references.test.ts`                                                                                                            |
+| What                                              | Where                                                                                                                                                                                             |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordering, timing and response parity of login     | `auth.manager.spec.ts` — asserts the unknown-address and wrong-password bodies, codes and statuses are identical, and that `burnPasswordVerification` is called                                   |
+| Resend cooldown claimed before the account lookup | `email-verification.service.spec.ts` — asserts the cooldown is claimed first, that an unknown and a real address get the identical response, and that the key is a hash of the normalised address |
+| A missing language                                | Compile error on `AUTH_EMAIL_DICTIONARIES` (backend) and on each `TranslationDictionary` (frontend)                                                                                               |
+| A shallow or broken translation                   | `auth-email-copy-completeness.spec.ts` (backend), `src/lib/i18n/__tests__/*` (frontend)                                                                                                           |
+| Escaping and RTL                                  | `auth-email-render.utility.spec.ts`                                                                                                                                                               |
+| A `t()` key that does not exist                   | `src/lib/i18n/__tests__/i18n-key-references.test.ts`                                                                                                                                              |

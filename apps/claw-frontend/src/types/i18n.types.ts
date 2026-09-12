@@ -172,6 +172,7 @@ export type TranslationDictionary = {
     checkEmailNotArrivedWait: string;
     checkEmailResend: string;
     checkEmailResendAgain: string;
+    checkEmailResendCooldown: string;
     checkEmailResendHint: string;
     checkEmailResendSuccess: string;
     checkEmailResendError: string;

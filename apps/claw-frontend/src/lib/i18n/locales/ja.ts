@@ -199,8 +199,9 @@ export const ja: TranslationDictionary = {
       'メールサービスによっては、配信に数分かかる場合がございます。再送をご依頼になる前に、少しお待ちください。',
     checkEmailResend: '確認メールを再送する',
     checkEmailResendAgain: 'もう一度送信する',
+    checkEmailResendCooldown: '{seconds} 秒後に再送信できます',
     checkEmailResendHint:
-      'そのアドレスで確認待ちのアカウントがある場合は、新しいリンクをお送りいたします。以前のリンクは無効になります。',
+      'そのアドレスで確認待ちのアカウントがある場合、新しいリンクを送信しています。届くまで 1 分ほどかかることがあり、迷惑メールフォルダーに振り分けられる場合もあります。以前のリンクは無効になります。',
     checkEmailResendSuccess: '確認メールを送信しました',
     checkEmailResendError:
       'ただ今メールを送信できませんでした。しばらくしてからもう一度お試しください。',

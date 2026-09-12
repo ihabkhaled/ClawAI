@@ -1,19 +1,22 @@
 import { AuthTopControls } from '@/components/auth/auth-top-controls';
+import { AuthenticatedRedirectBoundary } from '@/components/auth/authenticated-redirect-boundary';
 import { CheckEmailPanel } from '@/components/auth/check-email-panel';
 import { LoginBrandingPanel } from '@/components/auth/login-branding-panel';
 
-// Deliberately NOT wrapped in AuthenticatedRedirectBoundary. Everyone who sees
-// this page is by definition not signed in and cannot be — that is the whole
-// point of it — and an already-signed-in visitor who follows the link from an
-// old tab should read the explanation rather than be bounced somewhere else.
+// Guarded like every other page in this group. Someone who is already signed in
+// has, by definition, a confirmed address — so this screen has nothing to tell
+// them, and leaving it reachable meant a stale tab or a bookmarked link could
+// strand a working session on a page about an account that is already active.
 export default function CheckEmailPage(): React.ReactElement {
   return (
-    <div className="relative grid min-h-dvh w-full grid-cols-1 lg:grid-cols-2">
-      <AuthTopControls />
-      <LoginBrandingPanel />
-      <div className="bg-background flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <CheckEmailPanel />
+    <AuthenticatedRedirectBoundary>
+      <div className="relative grid min-h-dvh w-full grid-cols-1 lg:grid-cols-2">
+        <AuthTopControls />
+        <LoginBrandingPanel />
+        <div className="bg-background flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+          <CheckEmailPanel />
+        </div>
       </div>
-    </div>
+    </AuthenticatedRedirectBoundary>
   );
 }

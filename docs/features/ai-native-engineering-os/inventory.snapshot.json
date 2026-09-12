@@ -7570,7 +7570,7 @@
           "file": "rules/42-attachment-understanding.md"
         },
         {
-          "bytes": 8417,
+          "bytes": 10394,
           "file": "rules/43-account-state-disclosure-and-transactional-email.md"
         },
         {
@@ -7874,7 +7874,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5172
+        "value": 5173
       },
       "localeCount": 13,
       "locales": [
@@ -9633,7 +9633,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 89
+        "testFiles": 90
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -10418,7 +10418,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1213,
+    "totalTestFiles": 1214,
     "workspaceCount": 25
   }
 }

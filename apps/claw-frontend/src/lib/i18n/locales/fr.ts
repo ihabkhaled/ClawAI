@@ -198,8 +198,9 @@ export const fr: TranslationDictionary = {
       "La distribution peut prendre quelques minutes chez certains fournisseurs de messagerie. Patientez un instant avant d'en demander un autre.",
     checkEmailResend: "Renvoyer l'e-mail de confirmation",
     checkEmailResendAgain: 'Le renvoyer encore une fois',
+    checkEmailResendCooldown: 'Vous pourrez renvoyer dans {seconds} s',
     checkEmailResendHint:
-      "Si un compte attend d'être confirmé à cette adresse, un nouveau lien est en route. Le lien précédent cesse alors de fonctionner.",
+      "Si un compte attend d'être confirmé à cette adresse, un nouveau lien est en route. Sa réception peut prendre une minute et le message peut arriver dans votre dossier spam ou courrier indésirable. Le lien précédent cesse de fonctionner.",
     checkEmailResendSuccess: 'E-mail de confirmation envoyé',
     checkEmailResendError:
       "Nous n'avons pas pu envoyer l'e-mail pour le moment. Réessayez dans quelques instants.",

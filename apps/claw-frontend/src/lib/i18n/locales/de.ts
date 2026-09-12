@@ -202,8 +202,9 @@ export const de: TranslationDictionary = {
       'Bei manchen E-Mail-Anbietern dauert die Zustellung einige Minuten. Warten Sie einen Moment, bevor Sie eine neue anfordern.',
     checkEmailResend: 'Bestätigungs-E-Mail erneut senden',
     checkEmailResendAgain: 'Noch einmal senden',
+    checkEmailResendCooldown: 'Erneut senden in {seconds} s möglich',
     checkEmailResendHint:
-      'Wenn unter dieser Adresse ein Konto auf seine Bestätigung wartet, ist ein neuer Link unterwegs. Der vorherige Link verliert dann seine Gültigkeit.',
+      'Wenn an dieser Adresse ein Konto auf die Bestätigung wartet, ist ein neuer Link unterwegs. Die Zustellung kann eine Minute dauern, und die Nachricht kann im Spam- oder Junk-Ordner landen. Der vorherige Link wird ungültig.',
     checkEmailResendSuccess: 'Bestätigungs-E-Mail gesendet',
     checkEmailResendError:
       'Die E-Mail konnte gerade nicht gesendet werden. Bitte versuchen Sie es in Kürze erneut.',

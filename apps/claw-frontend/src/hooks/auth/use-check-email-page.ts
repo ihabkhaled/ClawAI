@@ -2,9 +2,10 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ROUTES } from '@/constants';
+import { RESEND_COOLDOWN_TICK_MS } from '@/constants/auth-onboarding.constants';
 import { useTranslation } from '@/lib/i18n';
 import { authRepository } from '@/repositories/auth/auth.repository';
 import type { UseCheckEmailPageReturn } from '@/types';
@@ -20,6 +21,13 @@ import { logger, showToast } from '@/utilities';
  * endpoint, never trusted for anything else. That endpoint answers
  * `{ accepted: true }` for every address, existing or not, so a stranger who
  * edits the query string learns nothing.
+ *
+ * **The countdown mirrors the server's decision; it is never the authority.**
+ * The seconds shown come from the response's `retryAfterSeconds`, and the
+ * button is disabled locally only to stop the obvious mistake of firing three
+ * requests in two seconds. A user who reloads, or opens a second tab, is
+ * refused by the server's own cooldown regardless of what any tab is showing —
+ * which is the only place a rate limit can actually live.
  */
 export function useCheckEmailPage(): UseCheckEmailPageReturn {
   const searchParams = useSearchParams();
@@ -36,11 +44,13 @@ export function useCheckEmailPage(): UseCheckEmailPageReturn {
       ? ROUTES.LOGIN
       : `${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`;
   const [hasResent, setHasResent] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const mutation = useMutation({
     mutationFn: (address: string) => authRepository.resendVerification(address),
-    onSuccess: () => {
+    onSuccess: (result) => {
       setHasResent(true);
+      setCooldownSeconds(Math.max(0, Math.ceil(result.retryAfterSeconds)));
       logger.info({
         component: 'auth',
         action: 'resend-verification',
@@ -60,12 +70,30 @@ export function useCheckEmailPage(): UseCheckEmailPageReturn {
     },
   });
 
+  useEffect(() => {
+    if (cooldownSeconds <= 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCooldownSeconds((remaining) => Math.max(0, remaining - 1));
+    }, RESEND_COOLDOWN_TICK_MS);
+    return () => clearTimeout(timer);
+  }, [cooldownSeconds]);
+
   const resend = useCallback((): void => {
-    if (email === null || email.length === 0) {
+    if (email === null || email.length === 0 || cooldownSeconds > 0) {
       return;
     }
     mutation.mutate(email);
-  }, [email, mutation]);
+  }, [cooldownSeconds, email, mutation]);
+
+  // Three states, one label. Resolved here rather than in the component so the
+  // TSX stays render-only and the precedence (cooldown wins over "again") is
+  // stated once, in a place a test can reach directly.
+  const resendLabel =
+    cooldownSeconds > 0
+      ? t('auth.checkEmailResendCooldown', { seconds: cooldownSeconds })
+      : t(hasResent ? 'auth.checkEmailResendAgain' : 'auth.checkEmailResend');
 
   return {
     email,
@@ -77,6 +105,8 @@ export function useCheckEmailPage(): UseCheckEmailPageReturn {
     resend,
     isResending: mutation.isPending,
     hasResent,
+    cooldownSeconds,
+    resendLabel,
     t,
   };
 }

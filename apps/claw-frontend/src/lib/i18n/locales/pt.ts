@@ -198,8 +198,9 @@ export const pt: TranslationDictionary = {
       'Em alguns fornecedores de email, a entrega pode demorar alguns minutos. Aguarde um pouco antes de pedir outro.',
     checkEmailResend: 'Enviar novamente o email de confirmação',
     checkEmailResendAgain: 'Enviar mais uma vez',
+    checkEmailResendCooldown: 'Poderá enviar novamente dentro de {seconds} s',
     checkEmailResendHint:
-      'Se existir uma conta a aguardar confirmação nesse endereço, uma nova ligação está a caminho. A ligação anterior deixa de funcionar.',
+      'Se existir uma conta a aguardar confirmação nesse endereço, um novo link está a caminho. Pode demorar um minuto a chegar e poderá cair na pasta de spam ou lixo eletrónico. O link anterior deixa de funcionar.',
     checkEmailResendSuccess: 'Email de confirmação enviado',
     checkEmailResendError:
       'Não foi possível enviar o email neste momento. Tente novamente dentro de instantes.',

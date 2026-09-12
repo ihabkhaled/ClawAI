@@ -184,8 +184,9 @@ export const zh: TranslationDictionary = {
     checkEmailNotArrivedWait: '部分邮件服务商的投递可能需要几分钟。请稍候片刻，再申请重新发送。',
     checkEmailResend: '重新发送确认邮件',
     checkEmailResendAgain: '再发送一次',
+    checkEmailResendCooldown: '{seconds} 秒后可再次发送',
     checkEmailResendHint:
-      '如果该邮箱地址下确有待验证的账户，新的链接正在发送中。此前的链接将随之失效。',
+      '如果该地址下有等待确认的账户，新的链接正在发送中。邮件可能需要一分钟才能送达，也可能被归入垃圾邮件文件夹。之前的链接将失效。',
     checkEmailResendSuccess: '确认邮件已发送',
     checkEmailResendError: '我们暂时无法发送该邮件。请稍后再试。',
     checkEmailGoToLogin: '前往登录',

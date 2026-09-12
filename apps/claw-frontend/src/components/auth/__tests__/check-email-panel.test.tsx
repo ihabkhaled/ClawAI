@@ -35,7 +35,7 @@ describe('CheckEmailPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     searchParams.value = new URLSearchParams({ email: 'ada@example.com' });
-    resendVerification.mockResolvedValue({ accepted: true });
+    resendVerification.mockResolvedValue({ accepted: true, retryAfterSeconds: 60 });
   });
 
   // The single reason this screen replaced a redirect to /login: a user who
@@ -94,5 +94,28 @@ describe('CheckEmailPanel', () => {
       'href',
       '/register',
     );
+  });
+
+  // The visible countdown is a courtesy; the real limit is the server's. What
+  // matters here is that a second click inside the window sends nothing.
+  it('blocks a second resend while the server cooldown is running', async () => {
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: en.auth.checkEmailResend }));
+    await waitFor(() => {
+      expect(resendVerification).toHaveBeenCalledTimes(1);
+    });
+
+    const cooling = await screen.findByRole('button', { name: /You can send again in/ });
+    expect(cooling).toBeDisabled();
+    fireEvent.click(cooling);
+    expect(resendVerification).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes the countdown length from the server, not a local constant', async () => {
+    resendVerification.mockResolvedValue({ accepted: true, retryAfterSeconds: 17 });
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: en.auth.checkEmailResend }));
+
+    expect(await screen.findByRole('button', { name: /17/ })).toBeInTheDocument();
   });
 });

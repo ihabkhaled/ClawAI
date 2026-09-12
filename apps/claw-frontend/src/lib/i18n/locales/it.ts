@@ -200,8 +200,9 @@ export const it: TranslationDictionary = {
       "Con alcuni provider di posta la consegna può richiedere qualche minuto. Attenda un momento prima di richiederne un'altra.",
     checkEmailResend: "Invia di nuovo l'email di conferma",
     checkEmailResendAgain: 'Invia ancora una volta',
+    checkEmailResendCooldown: 'Potrà inviarlo di nuovo tra {seconds} s',
     checkEmailResendHint:
-      "Se a quell'indirizzo è associato un account in attesa di conferma, un nuovo link è in arrivo. Il link precedente non sarà più valido.",
+      "Se a quell'indirizzo è in attesa di conferma un account, un nuovo link è in arrivo. Può richiedere un minuto e potrebbe finire nella cartella spam o posta indesiderata. Il link precedente smette di funzionare.",
     checkEmailResendSuccess: 'Email di conferma inviata',
     checkEmailResendError:
       "Non è stato possibile inviare l'email in questo momento. Riprovi tra poco.",

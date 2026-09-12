@@ -5,6 +5,7 @@ import type {
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
+  ResendVerificationResponse,
   UserEntitlements,
   UserProfile,
   UpdateOwnProfileRequest,
@@ -34,10 +35,11 @@ export const authRepository = {
     return response.data;
   },
 
-  async resendVerification(email: string): Promise<{ accepted: true }> {
-    const response = await apiClient.post<{ accepted: true }>('/auth/email-verification/resend', {
-      email,
-    });
+  async resendVerification(email: string): Promise<ResendVerificationResponse> {
+    const response = await apiClient.post<ResendVerificationResponse>(
+      '/auth/email-verification/resend',
+      { email },
+    );
     return response.data;
   },
 

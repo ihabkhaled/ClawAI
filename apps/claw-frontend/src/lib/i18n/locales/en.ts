@@ -198,8 +198,9 @@ export const en: TranslationDictionary = {
       'Delivery can take a few minutes on some mail providers. Wait a moment before requesting another.',
     checkEmailResend: 'Send the confirmation email again',
     checkEmailResendAgain: 'Send it once more',
+    checkEmailResendCooldown: 'You can send again in {seconds}s',
     checkEmailResendHint:
-      'If an account is waiting to be confirmed at that address, a new link is on its way. The previous link stops working.',
+      'If an account is waiting to be confirmed at that address, a new link is on its way. It can take a minute to arrive, and it may land in your spam or junk folder. The previous link stops working.',
     checkEmailResendSuccess: 'Confirmation email sent',
     checkEmailResendError: 'We could not send the email right now. Please try again shortly.',
     checkEmailGoToLogin: 'Go to sign in',

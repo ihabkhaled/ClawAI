@@ -277,6 +277,23 @@ indistinguishable from a translation nobody noticed was missing.
 The deployment-status email is the one exception and stays English: it goes to the
 operator mailbox, which belongs to no account.
 
+### Resend rate limiting
+
+`POST /auth/email-verification/resend` claims a 60-second cooldown in Redis for
+the **submitted address**, before it looks anything up. The ordering is the
+security property, not a performance choice: a cooldown that only applied to
+real accounts would let anyone discover which addresses are registered by
+observing which ones are rate-limited.
+
+The key is `auth:email-verification:resend:<sha256(normalised address)>` — the
+address is hashed so a keyspace dump is not a signup list, and normalised so
+`Ada@Example.com` and `ada@example.com` share one window. Every response carries
+`retryAfterSeconds`, including the one that actually sent an email; a field that
+only appears when refusing is itself a signal.
+
+The frontend countdown on `/check-email` mirrors that number. It is not the
+limit — reload the page or open a second tab and the server still refuses.
+
 Runbook: [skills/change-a-transactional-email.md](../../skills/change-a-transactional-email.md) ·
 Rule: [rules/43](../../rules/43-account-state-disclosure-and-transactional-email.md)
 

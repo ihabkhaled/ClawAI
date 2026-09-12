@@ -133,6 +133,10 @@ export type UseCheckEmailPageReturn = {
   resend: () => void;
   isResending: boolean;
   hasResent: boolean;
+  /** Seconds left before another resend is allowed. 0 means it is allowed. */
+  cooldownSeconds: number;
+  /** Resolved button label: countdown, "again", or the first-time wording. */
+  resendLabel: string;
   t: TranslateFunction;
 };
 

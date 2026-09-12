@@ -6,6 +6,7 @@ export type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResendVerificationResponse,
   RefreshResponse,
   AuthState,
   UpdateOwnProfileRequest,

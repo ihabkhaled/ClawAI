@@ -26,7 +26,17 @@ import { useCheckEmailPage } from '@/hooks/auth/use-check-email-page';
  * what to do if it did not arrive, and what happens after.
  */
 export function CheckEmailPanel(): React.ReactElement {
-  const { email, hasAddress, loginHref, resend, isResending, hasResent, t } = useCheckEmailPage();
+  const {
+    email,
+    hasAddress,
+    loginHref,
+    resend,
+    isResending,
+    hasResent,
+    cooldownSeconds,
+    resendLabel,
+    t,
+  } = useCheckEmailPage();
 
   return (
     <Card className="mx-auto w-full max-w-lg">
@@ -94,10 +104,19 @@ export function CheckEmailPanel(): React.ReactElement {
               variant="outline"
               onClick={resend}
               isLoading={isResending}
-              className="w-full"
+              // Disabled while the server's cooldown is still running. This is
+              // a courtesy, not the rate limit: the limit lives in the backend,
+              // which refuses a second send for the same address regardless of
+              // what this tab believes.
+              disabled={isResending || cooldownSeconds > 0}
+              // The button base has no gap of its own, so an icon+label button
+              // has to ask for one or the two run together.
+              className="w-full gap-2"
             >
-              <RefreshCw aria-hidden="true" className="h-4 w-4" />
-              {hasResent ? t('auth.checkEmailResendAgain') : t('auth.checkEmailResend')}
+              {/* The loading state renders its own spinner; a second spinning
+                  icon beside it reads as a glitch. */}
+              {isResending ? null : <RefreshCw aria-hidden="true" className="h-4 w-4" />}
+              {resendLabel}
             </Button>
           ) : null}
           {hasResent ? (
