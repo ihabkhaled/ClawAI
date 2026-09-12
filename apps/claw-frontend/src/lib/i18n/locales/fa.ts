@@ -4633,8 +4633,6 @@ export const fa: TranslationDictionary = {
       monthlyTokens: 'کمک هزینه ماهانه',
       ctaFree: 'رایگان شروع کنید',
       ctaPaid: 'این طرح را انتخاب کنید',
-      temporaryCatalogDisclaimer:
-        'قیمت‌گذاری زنده موقتاً در دسترس نیست. این قیمت‌های جایگزین ممکن است دقیق نباشند و پس از بازگشت سرویس تغییر کنند.',
       freeName: 'رایگان',
       freeTagline: 'ClawAI را با کمک هزینه روزانه کمی امتحان کنید.',
       freeHighlight1: 'دسترسی به مدل های سطح ورودی',

@@ -4689,8 +4689,6 @@ export const es: TranslationDictionary = {
       monthlyTokens: 'Cupo mensual',
       ctaFree: 'Empezar gratis',
       ctaPaid: 'Elegir este plan',
-      temporaryCatalogDisclaimer:
-        'Los precios en vivo no están disponibles temporalmente. Estos precios alternativos pueden ser inexactos y cambiar cuando se restablezca el servicio.',
       freeName: 'Free',
       freeTagline: 'Pruebe ClawAI con un pequeño cupo diario.',
       freeHighlight1: 'Acceso a modelos de nivel básico',

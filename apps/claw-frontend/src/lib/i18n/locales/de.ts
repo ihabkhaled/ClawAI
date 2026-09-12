@@ -4703,8 +4703,6 @@ export const de: TranslationDictionary = {
       monthlyTokens: 'Monatliches Kontingent',
       ctaFree: 'Kostenlos starten',
       ctaPaid: 'Diesen Tarif wählen',
-      temporaryCatalogDisclaimer:
-        'Die Live-Preise sind vorübergehend nicht verfügbar. Diese Ersatzpreise können ungenau sein und sich ändern, sobald der Dienst wieder verfügbar ist.',
       freeName: 'Free',
       freeTagline: 'Testen Sie ClawAI mit einem kleinen täglichen Kontingent.',
       freeHighlight1: 'Zugang zu Modellen der Einstiegsstufe',

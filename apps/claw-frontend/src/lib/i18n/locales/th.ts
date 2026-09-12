@@ -4594,8 +4594,6 @@ export const th: TranslationDictionary = {
       monthlyTokens: 'เบี้ยเลี้ยงรายเดือน',
       ctaFree: 'เริ่มฟรี',
       ctaPaid: 'เลือกแผนนี้',
-      temporaryCatalogDisclaimer:
-        'ราคาปัจจุบันไม่พร้อมใช้งานชั่วคราว ราคาสำรองเหล่านี้อาจไม่ถูกต้องและอาจเปลี่ยนแปลงเมื่อบริการกลับมาใช้งานได้',
       freeName: 'ฟรี',
       freeTagline: 'ลองใช้ ClawAI โดยมีค่าใช้จ่ายรายวันเล็กน้อย',
       freeHighlight1: 'เข้าถึงโมเดลระดับเริ่มต้น',

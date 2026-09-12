@@ -4647,8 +4647,6 @@ export const ja: TranslationDictionary = {
       monthlyTokens: '月額手当',
       ctaFree: '無料で始める',
       ctaPaid: 'このプランを選択してください',
-      temporaryCatalogDisclaimer:
-        '最新の料金情報は一時的に利用できません。表示中の代替料金は正確でない場合があり、サービス復旧後に変更されることがあります。',
       freeName: '無料',
       freeTagline: '少額の日当で ClawAI をお試しください。',
       freeHighlight1: 'エントリー層モデルへのアクセス',

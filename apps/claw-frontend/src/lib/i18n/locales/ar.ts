@@ -4573,8 +4573,6 @@ export const ar: TranslationDictionary = {
       monthlyTokens: 'الرصيد الشهري',
       ctaFree: 'ابدأ مجانًا',
       ctaPaid: 'اختر هذه الخطة',
-      temporaryCatalogDisclaimer:
-        'التسعير المباشر غير متاح مؤقتًا. قد تكون هذه الأسعار الاحتياطية غير دقيقة وقد تتغير عند عودة الخدمة.',
       freeName: 'مجانية',
       freeTagline: 'جرّب ClawAI برصيد يومي صغير.',
       freeHighlight1: 'الوصول إلى نماذج الفئة الأساسية',

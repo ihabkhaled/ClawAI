@@ -4474,8 +4474,6 @@ export const zh: TranslationDictionary = {
       monthlyTokens: '每月津贴',
       ctaFree: '免费开始',
       ctaPaid: '选择此计划',
-      temporaryCatalogDisclaimer:
-        '实时价格暂时不可用。当前显示的备用价格可能不准确，并可能在服务恢复后更新。',
       freeName: '自由的',
       freeTagline: '尝试 ClawAI 每日少量津贴。',
       freeHighlight1: '访问入门级型号',

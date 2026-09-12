@@ -16,6 +16,14 @@ function normalizePublicPlan(plan: PublicPlanResponse): PublicPlan {
   return {
     ...plan,
     paygCreditPercentBps: plan.paygCreditPercentBps ?? 0,
+    // An older auth service omits these columns. Defaulting isPublic/isActive
+    // to true keeps such a catalog renderable rather than filtering every plan
+    // away and showing an empty page, which would look like an outage.
+    isPublic: plan.isPublic ?? true,
+    isActive: plan.isActive ?? true,
+    currency: plan.currency ?? null,
+    isTrial: plan.isTrial ?? false,
+    trialDurationDays: plan.trialDurationDays ?? null,
   };
 }
 
@@ -49,7 +57,14 @@ export async function fetchPublicPricingCatalog(): Promise<PublicPlan[] | null> 
       return null;
     }
     const plans = (await response.json()) as PublicPlanResponse[];
-    return plans.map(normalizePublicPlan);
+    // Filtered here, at the one boundary the catalog crosses, rather than in
+    // each page that renders it. A retired plan still has to be served to
+    // payment-service so existing subscribers keep working — it just must not
+    // be sold to anyone new, and a page that forgot the filter would quietly
+    // offer it.
+    return plans
+      .filter((plan) => plan.isPublic !== false && plan.isActive !== false)
+      .map(normalizePublicPlan);
   } catch {
     return null;
   } finally {

@@ -4595,7 +4595,6 @@ export type TranslationDictionary = {
       monthlyTokens: string;
       ctaFree: string;
       ctaPaid: string;
-      temporaryCatalogDisclaimer: string;
       freeName: string;
       freeTagline: string;
       freeHighlight1: string;

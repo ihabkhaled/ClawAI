@@ -4692,8 +4692,6 @@ export const it: TranslationDictionary = {
       monthlyTokens: 'Plafond mensile',
       ctaFree: 'Inizia gratis',
       ctaPaid: 'Scegli questo piano',
-      temporaryCatalogDisclaimer:
-        'I prezzi in tempo reale non sono temporaneamente disponibili. Questi prezzi di riserva potrebbero non essere accurati e cambiare al ripristino del servizio.',
       freeName: 'Free',
       freeTagline: 'Prova ClawAI con un piccolo plafond giornaliero.',
       freeHighlight1: 'Accesso ai modelli di fascia base',

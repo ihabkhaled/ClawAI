@@ -4670,8 +4670,6 @@ export const ru: TranslationDictionary = {
       monthlyTokens: 'Месячный лимит',
       ctaFree: 'Начать бесплатно',
       ctaPaid: 'Выбрать этот тариф',
-      temporaryCatalogDisclaimer:
-        'Актуальные цены временно недоступны. Эти резервные цены могут быть неточными и измениться после восстановления сервиса.',
       freeName: 'Free',
       freeTagline: 'Попробуйте ClawAI с небольшим дневным лимитом.',
       freeHighlight1: 'Доступ к моделям начального уровня',

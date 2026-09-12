@@ -272,6 +272,20 @@ serialising the projection and grepping it, so the guard survives a refactor.
 Remember `null` means unlimited and `0` means disabled; they are not
 interchangeable, and the projection preserves the difference.
 
+### The public pricing page has no fallback
+
+`usePublicPricing` used to fall back to seven hardcoded plans — names, prices
+and token quotas — whenever the catalog could not be read, while reporting
+`isError: false`. A backend outage therefore rendered confident prices nobody
+had checked against the database in months. A wrong price shown calmly is worse
+than an error, because it is a price a customer can hold us to.
+
+That constant is deleted. If the catalog cannot be read the page says so and
+offers a retry, and "we have no public plans" stays distinct from "we could not
+ask". `isPublic`/`isActive` are filtered at the fetch boundary, not per page: a
+retired plan must still be served to payment-service so existing subscribers
+keep working, and must not be offered to anyone new.
+
 ## Transactional email
 
 Every email to a human account holder is sent in that account's

@@ -20,7 +20,6 @@ function controller(overrides: Record<string, unknown> = {}): Record<string, unk
     plans: [],
     isLoading: false,
     isError: false,
-    isFallback: false,
     error: null,
     interval: BillingInterval.MONTHLY,
     selectInterval: vi.fn(),
@@ -75,29 +74,26 @@ describe('PricingSection', () => {
     expect(screen.queryByText('billing.plans.empty')).not.toBeInTheDocument();
   });
 
-  it('prominently identifies temporary fallback prices and keeps retry available', () => {
-    mockController.mockReturnValue(
-      controller({
-        isFallback: true,
-        plans: [
-          {
-            id: 'fallback-free',
-            slug: 'free',
-            name: 'Free',
-            prices: [],
-            features: [],
-          },
-        ],
-      }),
-    );
+  // Replaces the old "temporary fallback prices" test. There is no fallback any
+  // more: a catalog we could not read shows an error and a retry, never seven
+  // invented prices under a mild disclaimer.
+  it('shows an error with a retry instead of prices it cannot vouch for', () => {
+    mockController.mockReturnValue(controller({ isError: true, plans: [] }));
 
     render(<PricingSection initialPlans={null} />);
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'marketing.pricing.temporaryCatalogDisclaimer',
-    );
+    expect(screen.getByRole('alert')).toHaveTextContent('billing.plans.error');
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(retry).toHaveBeenCalledOnce();
-    expect(screen.getByRole('article')).toHaveTextContent('Free');
+  });
+
+  it('distinguishes a genuinely empty catalog from a failure', () => {
+    mockController.mockReturnValue(controller({ isError: false, plans: [] }));
+
+    render(<PricingSection initialPlans={[]} />);
+
+    expect(screen.getByText('billing.plans.empty')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

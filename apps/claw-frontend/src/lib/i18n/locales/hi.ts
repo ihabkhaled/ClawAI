@@ -4633,8 +4633,6 @@ export const hi: TranslationDictionary = {
       monthlyTokens: 'मासिक टोकन सीमा',
       ctaFree: 'निःशुल्क शुरू करें',
       ctaPaid: 'यह प्लान चुनें',
-      temporaryCatalogDisclaimer:
-        'लाइव कीमतें अस्थायी रूप से उपलब्ध नहीं हैं। ये वैकल्पिक कीमतें सटीक न हो सकती हैं और सेवा लौटने पर बदल सकती हैं।',
       freeName: 'Free',
       freeTagline: 'छोटी दैनिक टोकन सीमा के साथ ClawAI आज़माएँ।',
       freeHighlight1: 'एंट्री-स्तरीय मॉडलों तक पहुँच',

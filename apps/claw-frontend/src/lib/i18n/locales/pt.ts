@@ -4668,8 +4668,6 @@ export const pt: TranslationDictionary = {
       monthlyTokens: 'Cota mensal',
       ctaFree: 'Começar grátis',
       ctaPaid: 'Escolher este plano',
-      temporaryCatalogDisclaimer:
-        'Os preços em tempo real estão temporariamente indisponíveis. Estes preços alternativos podem estar incorretos e mudar quando o serviço voltar.',
       freeName: 'Free',
       freeTagline: 'Experimente o ClawAI com uma pequena cota diária.',
       freeHighlight1: 'Acesso a modelos de nível básico',

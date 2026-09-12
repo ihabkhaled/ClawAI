@@ -4711,8 +4711,6 @@ export const fr: TranslationDictionary = {
       monthlyTokens: 'Quota mensuel',
       ctaFree: 'Commencer gratuitement',
       ctaPaid: 'Choisir ce forfait',
-      temporaryCatalogDisclaimer:
-        'Les tarifs en direct sont temporairement indisponibles. Ces tarifs de secours peuvent être inexacts et changer au rétablissement du service.',
       freeName: 'Free',
       freeTagline: 'Essayez ClawAI avec un petit quota quotidien.',
       freeHighlight1: "Accès aux modèles d'entrée de gamme",

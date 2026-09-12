@@ -4609,8 +4609,6 @@ export const en: TranslationDictionary = {
       monthlyTokens: 'Monthly allowance',
       ctaFree: 'Start free',
       ctaPaid: 'Choose this plan',
-      temporaryCatalogDisclaimer:
-        'Live pricing is temporarily unavailable. These fallback prices may be inaccurate and can change when service returns.',
       freeName: 'Free',
       freeTagline: 'Try ClawAI with a small daily allowance.',
       freeHighlight1: 'Access to entry-tier models',
