@@ -309,6 +309,43 @@ RabbitMQ `claw.events` topic:
 [ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md)'s
 live-crawl-progress amendment.
 
+### Mid-generation crawl retrieval: `get_crawled_page` (Ollama Cloud only)
+
+A completed `SITE_CRAWL` run's pages are already fully in the initial
+prompt — real crawls have overflowed the context window this way, per
+ADR-093. `ChatMessagesService.extractCrawlRetrieval` reads the same
+`metadata.research.bundle.items` field `synthesizeTranscriptFromBundle`
+already uses for the FE transcript, and — only when the triggering
+message's research `mode` was literally `'SITE_CRAWL'` — passes a
+`CrawlRetrievalContext` (`modules/chat-messages/types/crawl-retrieval.types.ts`)
+as `execute()`'s new fourth parameter.
+
+When the resolved candidate is `OLLAMA_CONNECTOR_PROVIDER` and that context
+has at least one page, `ChatExecutionManager.tryRunCrawlRetrievalTurn`
+routes the turn through `runOllamaCloudRetrievalTurn` instead of the normal
+streaming/single-shot path: it builds the request the usual way
+(`buildOllamaChatRequestBody`), appends a `get_crawled_page` tool definition
+listing every crawled URL
+(`utilities/crawl-retrieval-tool.utility.ts`'s
+`buildGetCrawledPageToolDefinition`), and drives it through
+`runOllamaCloudToolLoop` — the same agentic loop `web_search`/`web_fetch`
+already use, reused here for the first time in production (see ADR-093 for
+why that loop had no production callers before this). A `get_crawled_page`
+call is answered from the in-memory pages, not the network
+(`executeGetCrawledPage`) — no PAYG hold, no feature-usage record, because
+the crawl that produced the content was already metered when it ran.
+
+**Billing note, because this path deliberately bypasses `callProvider`.**
+The loop takes its own PAYG hold per turn; going through `callProvider` too
+would double-bill. `runOllamaCloudRetrievalTurn` redoes only the two things
+that chokepoint would otherwise have done for it —
+`assertExposedForExecution` and `recordChokepointUsage` — see ADR-093 for the
+full reasoning and the test that proves exactly one hold per completion.
+
+Ollama Cloud only: OpenAI/Anthropic/Gemini candidates never see this tool,
+even with a populated `CrawlRetrievalContext` — extending it is real,
+separate scope (ADR-093's "Revisit when").
+
 ---
 
 ## Advanced Orchestration Modes

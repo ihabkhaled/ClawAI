@@ -938,6 +938,7 @@ describe('ChatMessagesService', () => {
           criticEnabled: true,
           criticModel: 'ANTHROPIC:claude-sonnet-4',
         }),
+        undefined,
       );
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
@@ -957,6 +958,104 @@ describe('ChatMessagesService', () => {
           code: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
           messageKey: 'chat.errors.videoAttachmentProviderUnsupported',
         },
+      );
+    });
+
+    it('passes crawlRetrieval pages to execute() when the routed message ran a SITE_CRAWL', async () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'MANUAL_MODEL',
+        timestamp: new Date().toISOString(),
+      };
+      const crawlMessage = {
+        ...mockMessage,
+        metadata: {
+          research: {
+            runId: 'run-1',
+            mode: 'SITE_CRAWL',
+            bundle: {
+              items: [
+                { url: 'https://example.com/', title: 'Home', snippet: 'Homepage text' },
+                { url: 'https://example.com/about', title: 'About', snippet: 'About text' },
+              ],
+            },
+          },
+        },
+      };
+      messagesRepo.findRecentByThreadId.mockResolvedValue([crawlMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockResolvedValue({
+        content: 'Audit done.',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 900,
+        usedFallback: false,
+      });
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        role: 'ASSISTANT' as const,
+        content: 'Audit done.',
+      });
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(executionManager.execute).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        {
+          pages: [
+            { url: 'https://example.com/', title: 'Home', content: 'Homepage text' },
+            { url: 'https://example.com/about', title: 'About', content: 'About text' },
+          ],
+        },
+      );
+    });
+
+    it('does not pass crawlRetrieval for a SEARCH_ONLY run — nothing further is worth asking for', async () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'MANUAL_MODEL',
+        timestamp: new Date().toISOString(),
+      };
+      const searchMessage = {
+        ...mockMessage,
+        metadata: {
+          research: {
+            runId: 'run-2',
+            mode: 'SEARCH_ONLY',
+            bundle: { items: [{ url: 'https://example.com/', title: 'Home', snippet: 'x' }] },
+          },
+        },
+      };
+      messagesRepo.findRecentByThreadId.mockResolvedValue([searchMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockResolvedValue({
+        content: 'Answer.',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 900,
+        usedFallback: false,
+      });
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        role: 'ASSISTANT' as const,
+        content: 'Answer.',
+      });
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(executionManager.execute).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        undefined,
       );
     });
 

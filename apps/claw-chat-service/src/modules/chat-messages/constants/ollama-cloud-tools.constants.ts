@@ -5,6 +5,12 @@ import type { OllamaCloudToolDefinition } from '../types/ollama-cloud-tool.types
 export const TOOL_WEB_SEARCH = 'web_search';
 export const TOOL_WEB_FETCH = 'web_fetch';
 
+// Resolved locally from `ExecutionOptions.crawlRetrieval`, never proxied to
+// Ollama Cloud — see `crawl-retrieval-tool.utility.ts`. Not one of the two
+// names above because it answers from a SITE_CRAWL run already in memory,
+// not from a new network call.
+export const TOOL_GET_CRAWLED_PAGE = 'get_crawled_page';
+
 // JSON-schema descriptors exposed to the agentic model in the `tools`
 // field of /api/chat. Mirrors the schemas shown in the Ollama docs so
 // the model emits compatible arguments shapes.

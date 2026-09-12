@@ -45,6 +45,7 @@ import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ResearchRunResponse } from '../types/research.types';
+import type { CrawlRetrievalContext, CrawlRetrievalPage } from '../types/crawl-retrieval.types';
 import {
   type ResearchTranscript,
   type ResearchTranscriptSource,
@@ -769,6 +770,42 @@ export class ChatMessagesService implements OnModuleInit {
     return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
   }
 
+  /**
+   * Pages `runOllamaCloudRetrievalTurn` can offer as `get_crawled_page`,
+   * read from the SAME `metadata.research.bundle` this method's neighbour
+   * (`synthesizeTranscriptFromBundle`) already reads for the transcript —
+   * no second fetch to research-service, no new field threaded across the
+   * `message.routed` event. `undefined` for every workflow except
+   * SITE_CRAWL: a search-only or search+fetch run's items are already
+   * fully in context, so there is nothing further worth letting the model
+   * ask for. See ADR-093.
+   */
+  private extractCrawlRetrieval(
+    latestUserMetadata: Record<string, unknown> | null,
+  ): CrawlRetrievalContext | undefined {
+    if (!latestUserMetadata) {
+      return undefined;
+    }
+    const researchRecord = this.readNestedObject(latestUserMetadata, 'research');
+    if (researchRecord === null || this.readMetaString(researchRecord, 'mode') !== 'SITE_CRAWL') {
+      return undefined;
+    }
+    const bundleRecord = this.readNestedObject(researchRecord, 'bundle');
+    const items = bundleRecord === null ? undefined : recordGet(bundleRecord, 'items');
+    if (!Array.isArray(items)) {
+      return undefined;
+    }
+    const pages: CrawlRetrievalPage[] = items
+      .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+      .map((item) => ({
+        url: this.readMetaString(item, 'url') ?? '',
+        title: this.readMetaString(item, 'title') ?? null,
+        content: this.readMetaString(item, 'snippet') ?? '',
+      }))
+      .filter((page) => page.url.length > 0);
+    return pages.length > 0 ? { pages } : undefined;
+  }
+
   async regenerateMessage(id: string, userId: string): Promise<ChatMessage> {
     this.logger.log(`regenerateMessage: starting for message ${id} by user ${userId}`);
     const message = await this.chatMessagesRepository.findById(id);
@@ -1095,6 +1132,7 @@ export class ChatMessagesService implements OnModuleInit {
       effectivePayload,
       context,
       threadSettings,
+      this.extractCrawlRetrieval(latestUserMetadata),
     );
     // The INJECTED count, not the fetched one. These are different numbers and
     // reporting the fetched one is how the transcript came to claim a memory

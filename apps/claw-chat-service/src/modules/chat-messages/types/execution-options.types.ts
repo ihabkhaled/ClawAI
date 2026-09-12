@@ -1,6 +1,7 @@
 import type { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
 import type { ToolChoiceMode } from '../../../common/enums';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
+import type { CrawlRetrievalContext } from './crawl-retrieval.types';
 
 export type ExecutionOptions = {
   fastPathEnabled: boolean;
@@ -43,4 +44,11 @@ export type ExecutionOptions = {
   // tier cannot be granted, which is reported rather than silently served as
   // standard-with-a-2x-label.
   speedSupportedValues?: readonly string[];
+  // Pages from this turn's SITE_CRAWL run, if any. Presence (not the workflow
+  // string, which this layer never re-checks) is what makes
+  // `invokeProviderWithProgress` route an Ollama Cloud candidate through the
+  // agentic retrieval loop instead of a single buffered/streamed call — see
+  // ADR-093. Undefined on every other path: ordinary chat, compare, judge and
+  // Runtime V2 are unaffected.
+  crawlRetrieval?: CrawlRetrievalContext;
 };
