@@ -6,7 +6,7 @@ import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connecto
 import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { GroupedModels, ModelSelection } from '@/types';
-import { getLocalModelSpecificationLabels } from '@/utilities';
+import { compareModelsByRecency, getLocalModelSpecificationLabels } from '@/utilities';
 
 const PROVIDER_LABELS: Record<string, string> = {
   'local-ollama': 'Ollama (Local)',
@@ -93,7 +93,11 @@ export function useAvailableModels(): {
       result.push({
         provider,
         label: PROVIDER_LABELS[provider] ?? provider,
-        models: providerModels.sort((a, b) => a.displayName.localeCompare(b.displayName)),
+        // Newest first, not alphabetical. Model names sort close to
+        // REVERSE-chronologically, so `localeCompare` reliably put the oldest
+        // thing a provider still serves at the top: "Chatgpt Image Latest" and
+        // "GPT 3.5 Turbo" above "GPT 5.4", in a list ~180 long.
+        models: providerModels.toSorted(compareModelsByRecency),
       });
     }
 

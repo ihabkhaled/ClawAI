@@ -145,6 +145,13 @@ Note this fixes the NAME only. `modelKey` still carries Gemini's `models/`
 prefix, because it is the key used for provider calls, plan model access and
 cost lookups — changing it is a data migration, not a formatting change.
 
+**The same formatting is applied to `getAvailableModels`**, the user-facing
+endpoint behind the composer's model picker. It was missed on the first pass —
+the public marketing catalog was fixed while signed-in users kept seeing
+"Models/gemini 2.5 Pro" in the picker, which was found by opening the real
+picker rather than by any test. Both read paths now format, so neither has to
+wait for an administrator to re-sync a connector.
+
 ## Encryption
 
 API keys and credentials are encrypted at rest using AES-256-GCM:

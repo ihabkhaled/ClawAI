@@ -95,6 +95,7 @@ export type {
   JudgeReview,
   MessageRenderItem,
   ParallelExpandedMessage,
+  ModelRecencyRank,
 } from './chat.types';
 export type { UseDailyTokenIndicatorResult } from './daily-token.types';
 export type {

@@ -21,6 +21,7 @@ import {
   type SyncModelsResult,
 } from '../types/connectors.types';
 import { paygDefaultForProvider, rollUpPaygPolicy } from '../utilities/payg-policy.utility';
+import { formatModelDisplayName } from '../utilities/model-display-name.utility';
 
 @Injectable()
 export class ConnectorsService implements OnApplicationBootstrap {
@@ -387,7 +388,17 @@ export class ConnectorsService implements OnApplicationBootstrap {
   async getAvailableModels(): Promise<ConnectorModel[]> {
     this.logger.debug('getAvailableModels: listing exposed chat models');
     const rows = await this.connectorModelsRepository.findExposedForCatalog();
-    return rows.map(({ connector: _connector, ...model }) => model);
+    // The display name is re-formatted on READ, exactly as the public catalog
+    // does it. Gemini's ids are namespaced (`models/gemini-2.5-pro`) and the
+    // old sync stored the namespace in the name, so the composer's model picker
+    // has been showing users "Models/gemini 2.5 Pro". Rows written before the
+    // formatter existed still hold the mangled name, and a user must not have
+    // to wait for an administrator to re-sync a connector before the list stops
+    // looking broken. The formatter is idempotent, so a clean name is untouched.
+    return rows.map(({ connector: _connector, ...model }) => ({
+      ...model,
+      displayName: formatModelDisplayName(model.displayName),
+    }));
   }
 
   // Admin exposure control. The connector is verified first so a bad id fails as

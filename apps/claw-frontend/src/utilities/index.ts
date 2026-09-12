@@ -24,6 +24,11 @@ export {
 } from './model-view-storage.utility';
 export { buildThreadPreviewSnippet } from './thread-preview-snippet.utility';
 export { findLastUserMessageContent } from './chat-history.utility';
+export {
+  compareModelsByRecency,
+  parseModelVersion,
+  rankModelRecency,
+} from './model-recency.utility';
 export { classifyLoginFailure, resolveLoginFailureCopy } from './login-failure.utility';
 export { getHealthStatusColor } from './health-status.utility';
 export {

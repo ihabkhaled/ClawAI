@@ -13,6 +13,7 @@ import type {
   VisibleProgressActorType,
   VisibleProgressStageStatus,
 } from '@/enums';
+import type { ModelRecencyTier } from '@/enums/model-recency-tier.enum';
 import type { ResearchMode } from '@/enums/research-mode.enum';
 
 export type ChatThread = {
@@ -640,4 +641,16 @@ export type InThreadSearchMatch = {
   role: MessageRole;
   snippet: string;
   createdAt: string;
+};
+
+/**
+ * Where a model sits in the picker's ordering.
+ *
+ * `tier` 0 is the everyday alias, 1 a pinned dated snapshot of it. `version` is
+ * null for a model whose key carries no version at all, which sorts below
+ * anything versioned rather than being treated as version zero.
+ */
+export type ModelRecencyRank = {
+  tier: ModelRecencyTier;
+  version: number | null;
 };
