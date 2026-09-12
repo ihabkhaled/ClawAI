@@ -1,3 +1,5 @@
+import type { CurrencyPreferenceMode } from '@claw/shared-types';
+
 import type {
   Permission,
   UserAppearancePreference,
@@ -19,6 +21,11 @@ export type User = {
   isSuperAdmin?: boolean;
   languagePreference: UserLanguagePreference;
   appearancePreference: UserAppearancePreference;
+  // Display currency. Optional because an older auth service omits the columns,
+  // and a session without them should render prices in USD rather than fail.
+  currencyPreferenceMode?: CurrencyPreferenceMode;
+  preferredCountryCode?: string | null;
+  preferredCurrencyCode?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -38,4 +45,9 @@ export type UserProfile = {
   isSuperAdmin?: boolean;
   languagePreference: UserLanguagePreference;
   appearancePreference: UserAppearancePreference;
+  // Display currency. Optional because an older auth service omits the columns,
+  // and a session without them should render prices in USD rather than fail.
+  currencyPreferenceMode?: CurrencyPreferenceMode;
+  preferredCountryCode?: string | null;
+  preferredCurrencyCode?: string | null;
 };

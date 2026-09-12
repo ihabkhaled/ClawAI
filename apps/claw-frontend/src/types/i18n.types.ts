@@ -1435,6 +1435,10 @@ export type TranslationDictionary = {
     languageDescription: string;
     appearance: string;
     appearanceDescription: string;
+    currency: string;
+    currencyDescription: string;
+    currencyAutomaticActive: string;
+    currencyManualActive: string;
     system: string;
     light: string;
     dark: string;

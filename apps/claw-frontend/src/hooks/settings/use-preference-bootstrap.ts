@@ -1,8 +1,10 @@
 'use client';
 
+import { CurrencyPreferenceMode } from '@claw/shared-types';
 import { useEffect, useRef } from 'react';
 
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
+import { useDisplayCurrency } from '@/hooks/display-currency/use-display-currency';
 import { useLocale } from '@/hooks/use-locale';
 import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
 import { useAppTheme } from '@/hooks/use-theme';
@@ -14,6 +16,7 @@ export function usePreferenceBootstrap(): void {
   const { setLocale } = useLocale();
   const { replaceLocale } = useLocaleNavigation();
   const { setTheme } = useAppTheme();
+  const { currency: activeCurrency, selectCurrency } = useDisplayCurrency();
   const bootstrappedRef = useRef(false);
 
   useEffect(() => {
@@ -35,5 +38,23 @@ export function usePreferenceBootstrap(): void {
 
     const resolvedTheme = appearanceToTheme(user.appearancePreference);
     setTheme(resolvedTheme);
-  }, [replaceLocale, setLocale, setTheme, user]);
+
+    // A MANUAL currency saved on another device arrives here with no cookie, so
+    // this is what makes the preference actually follow the user. Applying it
+    // writes the cookie too, which is what lets the SERVER get the first paint
+    // right on every subsequent navigation.
+    //
+    // Skipped when it already matches, so signing in does not re-render every
+    // price for no reason. AUTO is skipped entirely: the absence of an override
+    // IS detection, and forcing it here would fight a visitor who had picked a
+    // currency in this browser before signing in.
+    const preferred = user.preferredCurrencyCode;
+    if (
+      user.currencyPreferenceMode === CurrencyPreferenceMode.MANUAL &&
+      typeof preferred === 'string' &&
+      preferred !== activeCurrency
+    ) {
+      selectCurrency(preferred);
+    }
+  }, [activeCurrency, replaceLocale, selectCurrency, setLocale, setTheme, user]);
 }

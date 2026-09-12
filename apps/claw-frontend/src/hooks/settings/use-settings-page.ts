@@ -1,10 +1,13 @@
 'use client';
 
+import { CurrencyPreferenceMode } from '@claw/shared-types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
+import { DISPLAY_CURRENCY_AUTO } from '@/constants/display-currency.constants';
 import type { UserAppearancePreference, UserLanguagePreference } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
+import { useDisplayCurrency } from '@/hooks/display-currency/use-display-currency';
 import { useAccountManagement } from '@/hooks/settings/use-account-management';
 import { useChangePassword } from '@/hooks/settings/use-change-password';
 import { useEmailChange } from '@/hooks/settings/use-email-change';
@@ -32,6 +35,11 @@ export function useSettingsPage() {
   const { replaceLocale } = useLocaleNavigation();
   const { theme, setTheme } = useAppTheme();
   const { updatePreferences, isPending: isPreferencesPending } = useUpdatePreferences();
+  const {
+    currency: activeCurrency,
+    context: currencyContext,
+    selectCurrency,
+  } = useDisplayCurrency();
 
   const passwordForm = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -74,6 +82,38 @@ export function useSettingsPage() {
     updatePreferences({ appearancePreference: appearance });
   }
 
+  // Both halves, always together.
+  //
+  // The SERVER reads the first-party cookie to resolve the display context on
+  // the next first paint, and the saved preference is what follows the user to
+  // another device. Writing only one of them gives a setting that works on this
+  // tab and is forgotten on the next, or one that is saved and invisible.
+  function handleCurrencyChange(currency: string): void {
+    logger.info({
+      component: 'settings',
+      action: 'change-currency',
+      message: 'User changing display currency',
+      details: { currency },
+    });
+    selectCurrency(currency);
+    updatePreferences({
+      currencyPreferenceMode: CurrencyPreferenceMode.MANUAL,
+      preferredCurrencyCode: currency,
+    });
+  }
+
+  // Back to detection. The stored currency is deliberately NOT cleared: a user
+  // toggling AUTO on and off should find their previous choice still there.
+  function handleCurrencyAuto(): void {
+    logger.info({
+      component: 'settings',
+      action: 'change-currency-auto',
+      message: 'User switching display currency to automatic',
+    });
+    selectCurrency(DISPLAY_CURRENCY_AUTO);
+    updatePreferences({ currencyPreferenceMode: CurrencyPreferenceMode.AUTO });
+  }
+
   function handlePasswordSubmit(data: ChangePasswordFormValues): void {
     logger.info({
       component: 'settings',
@@ -88,6 +128,11 @@ export function useSettingsPage() {
 
   return {
     user,
+    activeCurrency,
+    isCurrencyAutomatic: user?.currencyPreferenceMode !== CurrencyPreferenceMode.MANUAL,
+    detectedCountry: currencyContext?.countryCode ?? null,
+    handleCurrencyChange,
+    handleCurrencyAuto,
     isLoading,
     isPending: isPreferencesPending,
     currentLanguage,

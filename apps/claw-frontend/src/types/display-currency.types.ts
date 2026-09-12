@@ -66,3 +66,9 @@ export type MoneyFormatter = (
   canonicalCurrency: string,
   policy?: DisplayRoundingPolicy,
 ) => string;
+
+export type CurrencyPreferenceCardProps = {
+  activeCurrency: string;
+  isAutomatic: boolean;
+  detectedCountry: string | null;
+};

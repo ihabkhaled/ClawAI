@@ -3,6 +3,7 @@
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { PasswordInput } from '@/components/common/password-input';
+import { CurrencyPreferenceCard } from '@/components/settings/currency-preference-card';
 import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,9 @@ export default function SettingsPage() {
     currentAppearance,
     handleLanguageChange,
     handleAppearanceChange,
+    activeCurrency,
+    isCurrencyAutomatic,
+    detectedCountry,
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,
@@ -227,6 +231,14 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Separator />
+
+        <CurrencyPreferenceCard
+          activeCurrency={activeCurrency}
+          isAutomatic={isCurrencyAutomatic}
+          detectedCountry={detectedCountry}
+        />
       </div>
     </div>
   );
