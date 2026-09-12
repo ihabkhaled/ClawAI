@@ -252,6 +252,26 @@ error **code** through `classifyLoginFailure` to translated copy. The backend
 message says "Invalid email or password", which is the exact phrasing the product
 rejected.
 
+## What the plan catalog publishes
+
+`PlanCatalogEntry` is an explicit field list, not a spread, so a new `Plan`
+column cannot publish itself. Two categories:
+
+**Published, because the customer is entitled to it.** Price versions, all three
+token windows (`dailyTokenQuota` / `weeklyTokenQuota` / `monthlyTokenQuota`),
+currency, trial terms, `isPublic` / `isActive`, and `paygCreditPercentBps` — the
+share of the monthly price that becomes connector credit. Rule 37 names that
+ratio as public explicitly: a customer is entitled to know what share of their
+payment becomes credit. Until it was added, the public pricing page defaulted it
+to `0` and advertised "0% becomes credit" on every plan.
+
+**Never published.** `monthlyProviderCostCeilingMicroUsd` — a margin control,
+not a product limit. `plan-catalog.utility.spec.ts` asserts it is absent by
+serialising the projection and grepping it, so the guard survives a refactor.
+
+Remember `null` means unlimited and `0` means disabled; they are not
+interchangeable, and the projection preserves the difference.
+
 ## Transactional email
 
 Every email to a human account holder is sent in that account's

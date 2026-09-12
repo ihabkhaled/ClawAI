@@ -1370,6 +1370,11 @@
         "method": "GET",
         "route": "/internal/connectors/payg-policy",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/connectors/public-catalog",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/public-model-catalog.controller.ts"
       }
     ],
     "claw-file-generation-service": [
@@ -3298,5 +3303,5 @@
     ]
   },
   "generated": true,
-  "total": 652
+  "total": 653
 }

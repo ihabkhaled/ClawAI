@@ -1425,6 +1425,11 @@
           "method": "GET",
           "route": "/internal/connectors/payg-policy",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/connectors/public-catalog",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/public-model-catalog.controller.ts"
         }
       ],
       "claw-file-generation-service": [
@@ -9641,7 +9646,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 91
+        "testFiles": 92
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -9653,7 +9658,7 @@
       },
       "claw-connector-service": {
         "runner": "jest",
-        "testFiles": 23
+        "testFiles": 25
       },
       "claw-file-generation-service": {
         "runner": "jest",
@@ -10414,7 +10419,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 652,
+    "endpointCount": 653,
     "envVarCount": 352,
     "eventCount": 178,
     "frontendRouteCount": 154,
@@ -10426,7 +10431,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1216,
+    "totalTestFiles": 1219,
     "workspaceCount": 25
   }
 }

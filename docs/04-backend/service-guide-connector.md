@@ -113,6 +113,38 @@ which already bounds the staleness of an action an administrator takes a handful
 of times a year. Adding an exchange binding, a consumer and a boot-ordering
 dependency to save at most 59 seconds is not worth the failure modes.
 
+## The public model catalog
+
+`GET /api/v1/internal/connectors/public-catalog` (`@Public()` + `ServiceTokenGuard`)
+is what the marketing pages list models from. Three things about it are
+deliberate:
+
+**It reads `findExposedForCatalog` — the same query that fills the in-app model
+picker.** So the public list and the list a signed-in user can actually choose
+from cannot disagree. A page advertising a model nobody can select is a lie; one
+omitting a model users have is a missed sale. Sharing the predicate keeps them in
+step without anyone remembering to.
+
+**It carries no price, no rate, and no connector identity.** Rule 37 forbids a
+provider rate in any non-admin response, and a public page is the least-admin
+surface there is; `usageTier` (a coarse band) is the most the public may learn
+about relative cost. Connector ids, status and base URLs are this deployment's
+operational detail, not product information.
+`public-model-catalog.service.spec.ts` asserts all of that by serialising the
+response and grepping it.
+
+**Display names are formatted on read as well as on write.** Gemini's `/models`
+returns ids namespaced as `models/gemini-2.5-pro`, and the old formatter
+title-cased the whole string — the picker and the catalog both showed
+"Models/gemini 2.5 Pro". `formatModelDisplayName` strips the namespace, keeps
+acronyms uppercase (`TTS`, not `Tts`) and leaves version tokens alone (`70b`,
+not `70B`). It is idempotent, and applied on read too, so rows synced before it
+existed render correctly without waiting for an administrator to re-sync.
+
+Note this fixes the NAME only. `modelKey` still carries Gemini's `models/`
+prefix, because it is the key used for provider calls, plan model access and
+cost lookups — changing it is a data migration, not a formatting change.
+
 ## Encryption
 
 API keys and credentials are encrypted at rest using AES-256-GCM:

@@ -108,7 +108,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 91,
+      "testFiles": 92,
       "testRunner": "jest"
     },
     {
@@ -162,7 +162,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 18,
+      "endpointCount": 19,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -180,7 +180,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 23,
+      "testFiles": 25,
       "testRunner": "jest"
     },
     {
