@@ -302,6 +302,21 @@ text and cannot express a real tool call, so a model on it will truthfully
 report that it has no filesystem, terminal or browser. Keep it on unless a
 deployment has a specific reason to degrade.
 
+### Headless-browser rendering fallback (research-service)
+
+| Variable                           | Required | Default | Description                                                                                         |
+| ---------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `RESEARCH_HEADLESS_RENDER_ENABLED` | No       | `true`  | Retry a thin-looking plain fetch by rendering the page in a real (headless) Chromium via Playwright |
+
+Applies only to `text/html` responses whose extracted text is under
+`HEADLESS_RENDER_MIN_CONTENT_CHARS` — the signature of a page whose real
+content only exists after its own JavaScript runs. Every request the
+rendered page makes goes through the same anti-SSRF check
+(`assertSafeOutboundUrl`) the plain fetch path already applies; see
+ADR-094. Set to `false` only for a deployment that cannot carry Chromium's
+image size or per-request resource cost — it is a resource lever, not a
+safety one.
+
 **Notes:**
 
 - Inside Docker, use the container service name as host (`claw-ollama`).

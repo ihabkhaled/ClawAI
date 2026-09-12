@@ -16,7 +16,7 @@ import { isPathAllowed, parseRobotsTxt } from '../../../common/utilities/robots-
 import { parseSitemapXml } from '../../../common/utilities/sitemap.utility';
 import { CrawlDiscoveryMethod } from '../../../common/enums/crawl-discovery-method.enum';
 import { FetchService } from '../../fetch/services/fetch.service';
-import { traceEntry } from '../utilities/evidence-builder.utility';
+import { pushFetchToolMarker, traceEntry } from '../utilities/evidence-builder.utility';
 import { ResearchProgressPublisher } from './research-progress-publisher.service';
 import type { FeedEntry } from '../../../common/types/feed.types';
 import type { RobotsTxtResult } from '../../../common/types/robots-txt.types';
@@ -69,7 +69,7 @@ export class SiteCrawlManager {
       // read - matches runDirectFetch naming the page that failed.
       return [];
     }
-    toolsUsed.push('web_fetch');
+    pushFetchToolMarker(toolsUsed, homepage);
 
     const discovery = await this.discoverCandidates(
       userId,

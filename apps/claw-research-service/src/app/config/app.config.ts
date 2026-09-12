@@ -43,6 +43,16 @@ const appConfigSchema = z.object({
         .map((s) => s.trim())
         .filter((s) => s.length > 0),
     ),
+  // Whether FetchService may fall back to HeadlessFetchAdapter (a real
+  // Chromium, via Playwright) when a plain fetch's extracted text looks
+  // client-side-rendered. Defaults on; the escape hatch exists for a
+  // deployment that cannot carry the browser's image size or resource cost,
+  // not because the fallback is unsafe — every request a rendered page
+  // makes still goes through the same anti-SSRF check as a plain fetch.
+  RESEARCH_HEADLESS_RENDER_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

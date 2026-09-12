@@ -76,6 +76,21 @@ export function traceEntry(
   };
 }
 
+/**
+ * Records which fetch happened, not just that one did. `web_fetch` alone —
+ * pushed for every page whether it came back as-served or as a rendered
+ * DOM — would let a page FetchService had to open a real browser for read
+ * exactly like an ordinary GET in `toolsUsed`, which is the same
+ * "measurement, not a guess" bar rule 41 already holds every other tool
+ * marker to.
+ */
+export function pushFetchToolMarker(
+  toolsUsed: string[],
+  result: { renderedWithHeadlessBrowser?: true },
+): void {
+  toolsUsed.push(result.renderedWithHeadlessBrowser === true ? 'web_fetch:headless' : 'web_fetch');
+}
+
 function dedupeByUrl(items: EvidenceItem[]): EvidenceItem[] {
   const seen = new Map<string, EvidenceItem>();
   for (const item of items) {

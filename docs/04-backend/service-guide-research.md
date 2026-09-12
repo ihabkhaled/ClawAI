@@ -264,12 +264,57 @@ before. Fire-and-forget: a publish failure is logged and never affects the
 crawl. chat-service is the only consumer today
 (`ResearchProgressBridgeService`, see its own service guide).
 
+## Headless-browser rendering fallback
+
+`FetchService.fetchPage` tries `HttpFetchAdapter` (a plain HTTP GET) first,
+always. When the result is `text/html` and its extracted text is under
+`HEADLESS_RENDER_MIN_CONTENT_CHARS` — the signature of a page whose real
+content only exists after its own JavaScript runs — it retries with
+`HeadlessFetchAdapter` (`modules/fetch/adapters/headless-fetch.adapter.ts`,
+Playwright + a real headless Chromium) and keeps whichever result has more
+extracted text. Gated by `RESEARCH_HEADLESS_RENDER_ENABLED` (default
+`true`, a resource lever, not a safety one — see below). Full design:
+[ADR-094](../13-adr/adr-094-headless-render-fallback-inside-fetchservice.md).
+
+**Still exactly one fetch entry point.** The fallback lives INSIDE
+`FetchService`, never reachable directly — rule 41 item 12's "no second
+fetch path" holds by construction. Extraction reuses the SAME `extractHtml`
+call the plain path uses, so canonical/hreflang/OG/JSON-LD parsing is
+identical regardless of which adapter produced the HTML.
+`FetchResult.renderedWithHeadlessBrowser` is `true` only when a render
+actually happened (never `false` — absent otherwise), and `toolsUsed` gets
+`web_fetch:headless` instead of plain `web_fetch` for that call
+(`pushFetchToolMarker`, shared by every fetch call site in
+`research.manager.ts` and `site-crawl.manager.ts`).
+
+**Every in-page request is re-checked against the anti-SSRF guard —
+not just the navigation URL.** A plain HTTP GET never executes remote code,
+so it never issues a subrequest; a rendered page's own JavaScript can, to
+any host it chooses. `HeadlessFetchAdapter` installs a
+`page.route('**/*', …)` handler that runs the SAME `assertSafeOutboundUrl`
+check (shared via `isHostExplicitlyAllowlisted`, extracted from
+`HttpFetchAdapter` for this) against every request the page makes, and
+aborts anything that fails — a page trying to reach
+`169.254.169.254` from inside its own script is blocked exactly like a
+top-level request to it would be. Image/media/font/stylesheet requests are
+aborted unconditionally: scraping needs text, not pixels.
+
+**One shared Chromium, one throwaway context per fetch.** A browser boot
+per request would be unusably slow; one `Browser` instance is launched
+lazily and reused (`onModuleDestroy` closes it), while each call gets its
+own `BrowserContext` so no cookies/storage survive between two different
+fetches. Both `Dockerfile` and `Dockerfile.dev` run
+`npx playwright install --with-deps chromium`; the prod image sets
+`PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` (world-readable) because the
+browser downloads as root during build but launches later as the
+unprivileged `nestjs` user.
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.
 - `claw-health-service` aggregator now checks the research-service `/api/v1/health` endpoint.
 - All 7 Docker compose files (all-in-one dev, all-in-one prod, dev/prod split databases, dev/prod split services) register `pg-research` (port **5452**) and `research-service` (port **4016**).
-- `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1` seed `PG_RESEARCH_*`, `RESEARCH_PORT`, `RESEARCH_DATABASE_URL`, and `RESEARCH_SERVICE_URL`.
+- `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1` seed `PG_RESEARCH_*`, `RESEARCH_PORT`, `RESEARCH_DATABASE_URL`, `RESEARCH_SERVICE_URL`, and `RESEARCH_HEADLESS_RENDER_ENABLED`.
 - `packages/shared-constants` exports `RESEARCH_SERVICE` and `RESEARCH_SERVICE_PORT`.
 
 ## What's next (phases 2-5)

@@ -30,5 +30,9 @@ WORKDIR /app/apps/claw-research-service
 RUN npx prisma generate
 RUN chmod +x docker-entrypoint.dev.sh
 
+# HeadlessFetchAdapter's Chromium (ADR-094). --with-deps pulls the Debian
+# system libraries Chromium needs to run, not just the browser binary.
+RUN npx playwright install --with-deps chromium
+
 EXPOSE 4016
 CMD ["./docker-entrypoint.dev.sh"]

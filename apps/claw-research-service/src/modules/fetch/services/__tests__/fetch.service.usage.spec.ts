@@ -1,5 +1,6 @@
 import { AppConfig } from '../../../../app/config/app.config';
 import { FetchService } from '../fetch.service';
+import type { HeadlessFetchAdapter } from '../../adapters/headless-fetch.adapter';
 import type { HttpFetchAdapter } from '../../adapters/http-fetch.adapter';
 import type { FetchJobRepository } from '../../repositories/fetch-job.repository';
 import type { PageCacheRepository } from '../../repositories/page-cache.repository';
@@ -12,6 +13,7 @@ jest.mock('../../../../app/config/app.config', () => ({
 describe('FetchService usage accounting', () => {
   const appConfigGet = AppConfig.get as jest.Mock;
   let adapter: { fetchPage: jest.Mock };
+  let headlessAdapter: { fetchPage: jest.Mock };
   let jobs: { create: jest.Mock; update: jest.Mock };
   let cache: { findByKey: jest.Mock; upsert: jest.Mock };
   let usage: { record: jest.Mock };
@@ -22,8 +24,10 @@ describe('FetchService usage accounting', () => {
     appConfigGet.mockReturnValue({
       RESEARCH_DOMAIN_ALLOWLIST: [],
       RESEARCH_DOMAIN_BLOCKLIST: [],
+      RESEARCH_HEADLESS_RENDER_ENABLED: false,
     });
     adapter = { fetchPage: jest.fn() };
+    headlessAdapter = { fetchPage: jest.fn() };
     jobs = {
       create: jest.fn(async () => ({ id: 'fetch-job-1' })),
       update: jest.fn(async () => ({})),
@@ -32,6 +36,7 @@ describe('FetchService usage accounting', () => {
     usage = { record: jest.fn(async () => {}) };
     service = new FetchService(
       adapter as unknown as HttpFetchAdapter,
+      headlessAdapter as unknown as HeadlessFetchAdapter,
       jobs as unknown as FetchJobRepository,
       cache as unknown as PageCacheRepository,
       usage as unknown as ResearchUsageService,

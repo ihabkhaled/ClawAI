@@ -415,7 +415,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 28,
+      "testFiles": 30,
       "testRunner": "jest"
     },
     {
