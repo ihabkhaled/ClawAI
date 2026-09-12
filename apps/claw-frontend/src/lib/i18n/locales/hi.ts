@@ -4572,6 +4572,16 @@ export const hi: TranslationDictionary = {
       languageSwitcherLabel: 'भाषा चुनें',
       themeToggleLabel: 'थीम बदलें',
     },
+    currency: {
+      switcherLabel: 'प्रदर्शन मुद्रा चुनें',
+      automatic: 'स्वचालित',
+      popular: 'लोकप्रिय',
+      allCurrencies: 'सभी मुद्राएँ',
+      approximateNote:
+        'कीमतें आपकी स्थानीय मुद्रा में अनुमानित हैं। शुल्क चेकआउट पर दिखाई गई मुद्रा में लिया जाएगा।',
+      showingUsd: 'कीमतें USD में दिखाई जा रही हैं',
+      convertedFrom: '{amount} से परिवर्तित',
+    },
     footer: {
       tagline:
         'एक सब्सक्रिप्शन, हर अग्रणी एआई मॉडल। Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek और Grok एक ही खाते में, जो भी मॉडल कार्य के अनुकूल हो उसी पर राउट किया जाता है।',

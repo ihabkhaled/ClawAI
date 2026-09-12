@@ -4571,6 +4571,16 @@ export const fa: TranslationDictionary = {
       languageSwitcherLabel: 'زبان را انتخاب کنید',
       themeToggleLabel: 'تغییر موضوع',
     },
+    currency: {
+      switcherLabel: 'انتخاب واحد پول نمایش',
+      automatic: 'خودکار',
+      popular: 'پرکاربرد',
+      allCurrencies: 'همه ارزها',
+      approximateNote:
+        'قیمت‌ها تخمینی و به واحد پول محلی شما نمایش داده می‌شوند. مبلغ با ارزی که در پرداخت نشان داده می‌شود دریافت خواهد شد.',
+      showingUsd: 'نمایش قیمت‌ها به دلار آمریکا',
+      convertedFrom: 'تبدیل‌شده از {amount}',
+    },
     footer: {
       tagline:
         'یک اشتراک، هر مدل هوش مصنوعی مرزی.Claude، GPT، Gemini، Kimi، GLM، Qwen، DeepSeek و Grok در یک حساب واحد، به هر کدام که برای کار مناسب است، هدایت شده است.',

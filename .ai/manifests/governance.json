@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 30179,
+      "bytes": 30550,
       "file": "CLAUDE.md"
     },
     {
@@ -284,7 +284,7 @@
   ],
   "skills": [
     {
-      "bytes": 22672,
+      "bytes": 22988,
       "file": "skills/00-index.md"
     },
     {
@@ -326,6 +326,10 @@
     {
       "bytes": 7017,
       "file": "skills/README.md"
+    },
+    {
+      "bytes": 4473,
+      "file": "skills/add-a-localized-money-surface.md"
     },
     {
       "bytes": 4010,

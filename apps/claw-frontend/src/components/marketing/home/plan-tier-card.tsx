@@ -7,12 +7,12 @@ import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { CHECKOUT_URL_INTERVAL_PARAM } from '@/constants/billing.constants';
 import { BillingInterval } from '@/enums/billing.enum';
+import { useLocalizedMoney } from '@/hooks/display-currency/use-localized-money';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
 import { formatCreditRatePercent, formatPlanConnectorCredit } from '@/utilities/credit.utility';
 import {
-  formatPlanPrice,
   formatPlanQuota,
   resolvePlanMonthlyCreditMicroUsd,
   resolvePlanPrice,
@@ -21,6 +21,10 @@ import {
 export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.ReactElement {
   const { t, locale } = useTranslation();
   const price = resolvePlanPrice(plan, interval);
+  // Localized from the CANONICAL amount, never from a converted figure stored
+  // anywhere. A conversion failure renders the canonical price rather than
+  // blanking the card.
+  const localizedPrice = useLocalizedMoney(price?.amountMinor ?? 0, price?.currency ?? 'USD');
   const creditMicroUsd = resolvePlanMonthlyCreditMicroUsd(plan);
   const creditRatePercent = formatCreditRatePercent(plan.paygCreditPercentBps);
   const isFree = price?.amountMinor === 0;
@@ -62,14 +66,17 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
 
       <p className="mt-6 flex items-baseline gap-1">
         <span className="text-foreground text-3xl font-bold tracking-tight">
-          {price === null
-            ? t('billing.plans.unavailableForInterval')
-            : formatPlanPrice(price, locale)}
+          {price === null ? t('billing.plans.unavailableForInterval') : localizedPrice.text}
         </span>
         {price === null || isFree ? null : (
           <span className="text-muted-foreground text-sm">{t(cadenceKey)}</span>
         )}
       </p>
+      {localizedPrice.canonicalText !== null && price !== null && !isFree ? (
+        <p className="text-muted-foreground mt-1 text-xs">
+          {t('marketing.currency.convertedFrom').replace('{amount}', localizedPrice.canonicalText)}
+        </p>
+      ) : null}
       {showsDiscount && price !== null && !isFree ? (
         <p className="text-primary mt-1 text-xs font-medium">
           {t('marketing.pricing.discountBadge')}

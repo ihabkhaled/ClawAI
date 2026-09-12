@@ -4628,6 +4628,16 @@ export const it: TranslationDictionary = {
       languageSwitcherLabel: 'Seleziona lingua',
       themeToggleLabel: 'Cambia tema',
     },
+    currency: {
+      switcherLabel: 'Scegli la valuta di visualizzazione',
+      automatic: 'Automatico',
+      popular: 'Più usate',
+      allCurrencies: 'Tutte le valute',
+      approximateNote:
+        "I prezzi sono una stima nella tua valuta locale. L'addebito avviene nella valuta mostrata al pagamento.",
+      showingUsd: 'Prezzi mostrati in USD',
+      convertedFrom: 'Convertito da {amount}',
+    },
     footer: {
       tagline:
         'Un solo abbonamento, tutti i modelli IA di frontiera. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek e Grok in un unico account, instradati di volta in volta a quello più adatto al compito.',

@@ -4538,6 +4538,15 @@ export type TranslationDictionary = {
       languageSwitcherLabel: string;
       themeToggleLabel: string;
     };
+    currency: {
+      switcherLabel: string;
+      automatic: string;
+      popular: string;
+      allCurrencies: string;
+      approximateNote: string;
+      showingUsd: string;
+      convertedFrom: string;
+    };
     footer: {
       tagline: string;
       enterpriseContact: string;

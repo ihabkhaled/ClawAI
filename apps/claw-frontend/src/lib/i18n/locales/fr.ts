@@ -4646,6 +4646,16 @@ export const fr: TranslationDictionary = {
       languageSwitcherLabel: 'Choisir la langue',
       themeToggleLabel: 'Changer de thème',
     },
+    currency: {
+      switcherLabel: "Choisir la devise d'affichage",
+      automatic: 'Automatique',
+      popular: 'Les plus utilisées',
+      allCurrencies: 'Toutes les devises',
+      approximateNote:
+        'Les prix sont une estimation dans votre devise locale. Le débit est effectué dans la devise affichée au paiement.',
+      showingUsd: 'Prix affichés en USD',
+      convertedFrom: 'Converti depuis {amount}',
+    },
     footer: {
       tagline:
         "Un seul abonnement, tous les modèles d'IA de pointe. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek et Grok dans un compte unique, avec un routage vers celui qui convient le mieux à la tâche.",

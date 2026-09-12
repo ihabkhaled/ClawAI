@@ -4548,6 +4548,16 @@ export const en: TranslationDictionary = {
       languageSwitcherLabel: 'Select language',
       themeToggleLabel: 'Toggle theme',
     },
+    currency: {
+      switcherLabel: 'Select display currency',
+      automatic: 'Automatic',
+      popular: 'Popular',
+      allCurrencies: 'All currencies',
+      approximateNote:
+        'Prices are shown as an estimate in your local currency. You are charged in the currency shown at checkout.',
+      showingUsd: 'Showing prices in USD',
+      convertedFrom: 'Converted from {amount}',
+    },
     footer: {
       tagline:
         'One subscription, every frontier AI model. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok in a single account, routed to whichever one fits the task.',

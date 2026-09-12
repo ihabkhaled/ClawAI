@@ -4607,6 +4607,16 @@ export const ru: TranslationDictionary = {
       languageSwitcherLabel: 'Выбрать язык',
       themeToggleLabel: 'Переключить тему',
     },
+    currency: {
+      switcherLabel: 'Выберите валюту отображения',
+      automatic: 'Автоматически',
+      popular: 'Популярные',
+      allCurrencies: 'Все валюты',
+      approximateNote:
+        'Цены показаны ориентировочно в вашей местной валюте. Списание произойдёт в валюте, указанной при оплате.',
+      showingUsd: 'Цены показаны в USD',
+      convertedFrom: 'Пересчитано из {amount}',
+    },
     footer: {
       tagline:
         'Одна подписка — все передовые ИИ-модели. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek и Grok в одном аккаунте, с маршрутизацией к той модели, которая лучше подходит для задачи.',

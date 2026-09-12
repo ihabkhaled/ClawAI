@@ -4584,6 +4584,16 @@ export const ja: TranslationDictionary = {
       languageSwitcherLabel: '言語を選択してください',
       themeToggleLabel: 'テーマの切り替え',
     },
+    currency: {
+      switcherLabel: '表示通貨を選択',
+      automatic: '自動',
+      popular: 'よく使われる通貨',
+      allCurrencies: 'すべての通貨',
+      approximateNote:
+        '価格は現地通貨での概算です。実際の請求はお支払い画面に表示される通貨で行われます。',
+      showingUsd: '価格を USD で表示しています',
+      convertedFrom: '{amount} から換算',
+    },
     footer: {
       tagline:
         '1つのサブスクリプションですべてのフロンティアAIモデルを利用できます。Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grokを1つのアカウントにまとめ、タスクに適したモデルへルーティングします。',

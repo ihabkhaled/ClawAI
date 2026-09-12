@@ -17,7 +17,7 @@ npm run dev
 ```
 
 ## Dependencies (generated)
-- Depends on: @claw/shared-constants, @claw/shared-types
+- Depends on: @claw/shared-constants, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=frontend`

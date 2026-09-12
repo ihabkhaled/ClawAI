@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (30179 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (30550 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (30179 vs 27454 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (30550 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7331,7 +7331,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 30179,
+          "bytes": 30550,
           "file": "CLAUDE.md"
         },
         {
@@ -7613,7 +7613,7 @@
       ],
       "skills": [
         {
-          "bytes": 22672,
+          "bytes": 22988,
           "file": "skills/00-index.md"
         },
         {
@@ -7655,6 +7655,10 @@
         {
           "bytes": 7017,
           "file": "skills/README.md"
+        },
+        {
+          "bytes": 4473,
+          "file": "skills/add-a-localized-money-surface.md"
         },
         {
           "bytes": 4010,
@@ -7911,7 +7915,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5171
+        "value": 5179
       },
       "localeCount": 13,
       "locales": [
@@ -9700,7 +9704,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 459
+        "testFiles": 460
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10000,7 +10004,8 @@
         "dir": "apps/claw-frontend",
         "internalDeps": [
           "@claw/shared-constants",
-          "@claw/shared-types"
+          "@claw/shared-types",
+          "@claw/shared-utilities"
         ],
         "name": "claw-frontend",
         "scripts": [
@@ -10461,7 +10466,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1229,
+    "totalTestFiles": 1230,
     "workspaceCount": 25
   }
 }

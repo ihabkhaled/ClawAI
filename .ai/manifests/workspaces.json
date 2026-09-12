@@ -257,7 +257,8 @@
       "dir": "apps/claw-frontend",
       "internalDeps": [
         "@claw/shared-constants",
-        "@claw/shared-types"
+        "@claw/shared-types",
+        "@claw/shared-utilities"
       ],
       "name": "claw-frontend",
       "scripts": [

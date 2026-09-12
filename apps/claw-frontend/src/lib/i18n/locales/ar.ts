@@ -4512,6 +4512,16 @@ export const ar: TranslationDictionary = {
       languageSwitcherLabel: 'اختر اللغة',
       themeToggleLabel: 'تبديل المظهر',
     },
+    currency: {
+      switcherLabel: 'اختر عملة العرض',
+      automatic: 'تلقائي',
+      popular: 'الأكثر استخداماً',
+      allCurrencies: 'كل العملات',
+      approximateNote:
+        'تُعرض الأسعار كتقدير بعملتك المحلية. سيتم تحصيل المبلغ بالعملة الظاهرة عند الدفع.',
+      showingUsd: 'عرض الأسعار بالدولار الأمريكي',
+      convertedFrom: 'محوّل من {amount}',
+    },
     footer: {
       tagline:
         'اشتراك واحد، وكل النماذج المتقدمة للذكاء الاصطناعي. Claude وGPT وGemini وKimi وGLM وQwen وDeepSeek وGrok في حساب واحد، مع توجيه إلى النموذج الأنسب للمهمة.',

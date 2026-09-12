@@ -12,6 +12,10 @@
     "./email": {
       "types": "./dist/email/index.d.ts",
       "default": "./dist/email/index.js"
+    },
+    "./money": {
+      "types": "./dist/money/index.d.ts",
+      "default": "./dist/money/index.js"
     }
   },
   "scripts": {

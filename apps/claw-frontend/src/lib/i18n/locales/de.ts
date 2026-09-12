@@ -4640,6 +4640,16 @@ export const de: TranslationDictionary = {
       languageSwitcherLabel: 'Sprache auswählen',
       themeToggleLabel: 'Design umschalten',
     },
+    currency: {
+      switcherLabel: 'Anzeigewährung wählen',
+      automatic: 'Automatisch',
+      popular: 'Häufig genutzt',
+      allCurrencies: 'Alle Währungen',
+      approximateNote:
+        'Die Preise sind eine Schätzung in Ihrer Landeswährung. Abgerechnet wird in der beim Bezahlen angezeigten Währung.',
+      showingUsd: 'Preise werden in USD angezeigt',
+      convertedFrom: 'Umgerechnet von {amount}',
+    },
     footer: {
       tagline:
         'Ein Abonnement, jedes Spitzenmodell der KI. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek und Grok in einem einzigen Konto – geleitet an das Modell, das am besten zur Aufgabe passt.',

@@ -4531,6 +4531,16 @@ export const th: TranslationDictionary = {
       languageSwitcherLabel: 'เลือกภาษา',
       themeToggleLabel: 'สลับธีม',
     },
+    currency: {
+      switcherLabel: 'เลือกสกุลเงินที่แสดง',
+      automatic: 'อัตโนมัติ',
+      popular: 'ที่ใช้บ่อย',
+      allCurrencies: 'สกุลเงินทั้งหมด',
+      approximateNote:
+        'ราคาเป็นค่าประมาณในสกุลเงินท้องถิ่นของคุณ การเรียกเก็บเงินจะใช้สกุลเงินที่แสดงตอนชำระเงิน',
+      showingUsd: 'แสดงราคาเป็น USD',
+      convertedFrom: 'แปลงจาก {amount}',
+    },
     footer: {
       tagline:
         'การสมัครสมาชิกหนึ่งครั้ง ทุกโมเดล AI ชายแดนClaude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek และ Grok ในบัญชีเดียว กำหนดเส้นทางไปยังบัญชีใดก็ตามที่เหมาะกับงาน',

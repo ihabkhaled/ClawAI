@@ -4606,6 +4606,16 @@ export const pt: TranslationDictionary = {
       languageSwitcherLabel: 'Selecionar idioma',
       themeToggleLabel: 'Alternar tema',
     },
+    currency: {
+      switcherLabel: 'Escolher moeda de exibição',
+      automatic: 'Automático',
+      popular: 'Mais usadas',
+      allCurrencies: 'Todas as moedas',
+      approximateNote:
+        'Os preços são uma estimativa na sua moeda local. A cobrança é feita na moeda exibida no pagamento.',
+      showingUsd: 'Mostrando preços em USD',
+      convertedFrom: 'Convertido de {amount}',
+    },
     footer: {
       tagline:
         'Uma assinatura, todos os modelos de IA de fronteira. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek e Grok em uma única conta, roteados para o que melhor se encaixa em cada tarefa.',

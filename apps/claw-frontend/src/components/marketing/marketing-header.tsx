@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { CurrencySwitcher } from '@/components/marketing/currency-switcher';
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { MarketingMobileMenu } from '@/components/marketing/marketing-mobile-menu';
 import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-toggle';
@@ -50,6 +51,7 @@ export function MarketingHeader(): React.ReactElement {
               {t('marketing.header.github')}
             </a>
           </Button>
+          <CurrencySwitcher />
           <MarketingLocaleSwitcher />
           <MarketingThemeToggle />
           <Button variant="ghost" size="sm" asChild>

@@ -189,6 +189,10 @@
       "to": "@claw/shared-types"
     },
     {
+      "from": "claw-frontend",
+      "to": "@claw/shared-utilities"
+    },
+    {
       "from": "claw-health-service",
       "to": "@claw/shared-utilities"
     },

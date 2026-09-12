@@ -4415,6 +4415,15 @@ export const zh: TranslationDictionary = {
       languageSwitcherLabel: '选择语言',
       themeToggleLabel: '切换主题',
     },
+    currency: {
+      switcherLabel: '选择显示货币',
+      automatic: '自动',
+      popular: '常用货币',
+      allCurrencies: '所有货币',
+      approximateNote: '价格为按当地货币换算的估算值。实际扣款将以结账时显示的货币进行。',
+      showingUsd: '以美元显示价格',
+      convertedFrom: '由 {amount} 换算',
+    },
     footer: {
       tagline:
         '一次订阅，每种前沿人工智能模型。Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek 和 Grok 在一个帐户中，路由到适合任务的帐户。',
