@@ -1,8 +1,8 @@
 {
   "generated": true,
   "hashes": {
-    ".ai/BOOTSTRAP.md": "db346d27",
-    ".ai/manifests/api-endpoints.json": "2dd06277",
+    ".ai/BOOTSTRAP.md": "080dc9ba",
+    ".ai/manifests/api-endpoints.json": "37a5900f",
     ".ai/manifests/data-ownership.json": "3fe8b9d7",
     ".ai/manifests/docker-services.json": "255da189",
     ".ai/manifests/environment-variables.json": "0a9eb0d0",
@@ -17,8 +17,8 @@
     ".ai/manifests/prisma-models.json": "d19ad8b0",
     ".ai/manifests/rabbitmq-events.json": "bcaeb411",
     ".ai/manifests/repository.json": "047d93d0",
-    ".ai/manifests/services.json": "53b8c6f2",
-    ".ai/manifests/tests.json": "66c4609b",
+    ".ai/manifests/services.json": "82b0547c",
+    ".ai/manifests/tests.json": "4c430358",
     ".ai/manifests/workspace-dependency-graph.json": "80e5438b",
     ".ai/manifests/workspaces.json": "e5133fde",
     ".ai/packs/README.md": "2e64753b",

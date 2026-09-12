@@ -10393,7 +10393,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 651,
+    "endpointCount": 652,
     "envVarCount": 352,
     "eventCount": 178,
     "frontendRouteCount": 153,
@@ -10405,7 +10405,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1202,
+    "totalTestFiles": 1204,
     "workspaceCount": 25
   }
 }
