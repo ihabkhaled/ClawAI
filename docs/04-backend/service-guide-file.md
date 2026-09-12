@@ -16,18 +16,18 @@ The file service handles file uploads, local storage, content extraction, and ch
 
 ### File
 
-| Column          | Type                | Notes                                  |
-| --------------- | ------------------- | -------------------------------------- |
-| id              | String              | CUID primary key                       |
-| userId          | String              | Owner                                  |
-| filename        | String              | Original filename                      |
-| mimeType        | String              | MIME type (e.g., text/plain)           |
-| sizeBytes       | Int                 | File size in bytes                     |
-| storagePath     | String              | Local filesystem path                  |
+| Column          | Type                | Notes                                   |
+| --------------- | ------------------- | --------------------------------------- |
+| id              | String              | CUID primary key                        |
+| userId          | String              | Owner                                   |
+| filename        | String              | Original filename                       |
+| mimeType        | String              | MIME type (e.g., text/plain)            |
+| sizeBytes       | Int                 | File size in bytes                      |
+| storagePath     | String              | Local filesystem path                   |
 | content         | String?             | base64 of the ORIGINAL bytes — NOT text |
 | extractedText   | String?             | The readable text a model is shown      |
 | extractionError | String?             | Why extraction failed, when it did      |
-| ingestionStatus | FileIngestionStatus | PENDING, PROCESSING, COMPLETED, FAILED |
+| ingestionStatus | FileIngestionStatus | PENDING, PROCESSING, COMPLETED, FAILED  |
 
 > `content` and `extractedText` are not interchangeable, and the difference is
 > the whole of ADR-093. `content` is base64 of the bytes as uploaded — correct
@@ -113,16 +113,16 @@ than `STALE_PROCESSING_TIMEOUT_MS` (10 min) as FAILED.
 
 ### What each format extracts with
 
-| MIME / extension        | Extractor                                             |
-| ----------------------- | ----------------------------------------------------- |
-| `application/pdf`       | `pdf-parse`, falling back to OCR when the text layer is shorter than `SCANNED_PDF_CHAR_THRESHOLD` |
-| `.docx`                 | `mammoth`                                             |
-| `.xlsx`                 | `ooxml-parser.utility` — sharedStrings + sheet parts, one TSV line per row, grouped by sheet name |
-| `.pptx`                 | `ooxml-parser.utility` — slide parts in numeric order, plus speaker notes |
-| `.rtf`                  | `rtf-parser.utility` — strips control words, font and colour tables |
-| `image/*`               | tesseract OCR when `OCR_ENABLED`, else a filename placeholder |
-| `video/*`               | A filename placeholder; the bytes go to the model natively where supported |
-| everything else         | UTF-8 decode                                          |
+| MIME / extension  | Extractor                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `application/pdf` | `pdf-parse`, falling back to OCR when the text layer is shorter than `SCANNED_PDF_CHAR_THRESHOLD` |
+| `.docx`           | `mammoth`                                                                                         |
+| `.xlsx`           | `ooxml-parser.utility` — sharedStrings + sheet parts, one TSV line per row, grouped by sheet name |
+| `.pptx`           | `ooxml-parser.utility` — slide parts in numeric order, plus speaker notes                         |
+| `.rtf`            | `rtf-parser.utility` — strips control words, font and colour tables                               |
+| `image/*`         | tesseract OCR when `OCR_ENABLED`, else a filename placeholder                                     |
+| `video/*`         | A filename placeholder; the bytes go to the model natively where supported                        |
+| everything else   | UTF-8 decode                                                                                      |
 
 XLSX used to be `buffer.toString('utf-8')` over a ZIP container, and PPTX was
 accepted for upload with no extractor at all.
@@ -183,21 +183,21 @@ Failures (e.g., blob already missing on disk) are logged as `warn` and do NOT ab
 Uploads sent as an archive (`application/zip`, `application/x-zip-compressed`)
 are expanded inside a hardened sandbox before chunking. The expansion guards against four well-known archive attacks: ZIP bombs (extreme compression ratios), entry-count exhaustion, deeply nested archives, and disk-fill attacks.
 
-| Env var                           | Default                    | Purpose                                                                                                            |
-| --------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `ZIP_MAX_EXTRACTED_SIZE_MB`       | `500`                      | Hard cap on total uncompressed bytes across all entries.                                                           |
-| `ZIP_MAX_ENTRY_COUNT`             | `10000`                    | Hard cap on entries (files + directories) inside the archive.                                                      |
-| `ZIP_MAX_NESTING_DEPTH`           | `5`                        | Max archive-inside-archive nesting depth before rejection.                                                         |
+| Env var                     | Default | Purpose                                                       |
+| --------------------------- | ------- | ------------------------------------------------------------- |
+| `ZIP_MAX_EXTRACTED_SIZE_MB` | `500`   | Hard cap on total uncompressed bytes across all entries.      |
+| `ZIP_MAX_ENTRY_COUNT`       | `10000` | Hard cap on entries (files + directories) inside the archive. |
+| `ZIP_MAX_NESTING_DEPTH`     | `5`     | Max archive-inside-archive nesting depth before rejection.    |
 
 **OOXML is a second archive reader, under the same policy.** `.xlsx` and `.pptx`
 are ZIP containers and are user input, but they are read in memory rather than
 expanded to disk, so they do not route through the table above. They carry their
 own equivalent bounds in `ooxml.constants.ts` — entry count, per-entry inflated
-bytes (checked against the declared size *before* inflating), and a total text
+bytes (checked against the declared size _before_ inflating), and a total text
 budget across the whole document. Every archive this service opens is bounded;
 there is no ungated path.
-| `ZIP_COMPRESSION_RATIO_THRESHOLD` | `1000`                     | `uncompressed / compressed` ratio above which the upload is rejected as a likely ZIP bomb.                         |
-| `ZIP_TEMP_EXTRACTION_PATH`        | `/tmp/claw-zip-extraction` | Sandbox directory. Mounted as a 1 GB `tmpfs` in dev + prod docker compose so extraction cannot fill the host disk. |
+| `ZIP_COMPRESSION_RATIO_THRESHOLD` | `1000` | `uncompressed / compressed` ratio above which the upload is rejected as a likely ZIP bomb. |
+| `ZIP_TEMP_EXTRACTION_PATH` | `/tmp/claw-zip-extraction` | Sandbox directory. Mounted as a 1 GB `tmpfs` in dev + prod docker compose so extraction cannot fill the host disk. |
 
 Validation order (a violation at any step aborts the upload and surfaces `files.zip.bombRejected` to the user):
 

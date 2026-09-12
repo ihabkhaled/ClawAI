@@ -5,6 +5,14 @@
 **Deciders**: ClawAI core team
 **Slice**: C foundation 3 (claw-file-service hardening)
 
+> **Amended by [ADR-093](adr-093-attachment-text-extraction-pipeline.md) (2026-09-12).** This ADR describes the expand-to-disk archive path. There is
+> now a second: `.xlsx` and `.pptx` are ZIP containers read **in memory** by
+> `ooxml-parser.utility.ts`, which does not route through the thresholds below.
+> It carries its own equivalent caps in `ooxml.constants.ts` — entry count,
+> per-entry inflated size checked against the declared size before inflating,
+> and a total text budget. Auditing every way this service opens an archive
+> means reading both.
+
 ## Context
 
 `claw-file-service` currently stores every uploaded file forever and accepts

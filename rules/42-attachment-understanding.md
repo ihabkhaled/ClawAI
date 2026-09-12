@@ -8,8 +8,8 @@ never silence dressed up as an empty document.
 
 This rule exists because ClawAI shipped the opposite for months and the symptom
 was blamed on the models. Users attached a CV and every provider answered some
-version of *"I can't access the attached PDF — the file content isn't
-extractable in this chat."* Ollama said it. Gemini said it. OpenAI said it.
+version of _"I can't access the attached PDF — the file content isn't
+extractable in this chat."_ Ollama said it. Gemini said it. OpenAI said it.
 Three independent vendors agreeing is not three vendors failing.
 
 They were not refusing. **chat-service put that sentence in the prompt and the
@@ -43,9 +43,10 @@ Full reasoning:
    `content` to produce prompt text is rebuilding the original bug.
 
 2. **Every upload path starts extraction.** `FilesService.startExtraction` is
-   called from `uploadFile` and `createInternalFile`. A third entry point must
-   call it too. A row created without it stays `PENDING` forever and keeps the
-   file-list poller running against a 4.2 MB endpoint.
+   called from `uploadFile` and `createInternalFile`, and once more from
+   `healLegacyRowIfNeeded` for a row that predates the pipeline. A new entry
+   point must call it too. A row created without it stays `PENDING` forever and
+   keeps the file-list poller running against a 4.2 MB endpoint.
 
 3. **Extraction is started, not awaited.** OCR on a scanned PDF runs to
    `OCR_TIMEOUT_MS` (30s). Holding the upload response open for that long breaks
@@ -61,7 +62,7 @@ Full reasoning:
    the model the file is still being read.
 
 6. **A failure is reported with its reason.** `extractionError` reaches the
-   model, so the user hears *"this PDF is password protected"* rather than a
+   model, so the user hears _"this PDF is password protected"_ rather than a
    generic shrug. A placeholder that does not say why is how this defect hid.
 
 7. **Never claim a file was delivered when it was not, and never claim it could
@@ -92,14 +93,15 @@ Full reasoning:
 
 ## How this is enforced
 
-| Rule | Mechanism |
-| --- | --- |
-| 1, 5, 6 | `context-assembly-attachments.spec.ts` — asserts extracted text is preferred, and that unfinished and failed states are distinguished |
-| 2, 3, 4 | `files.service-extraction.spec.ts` — asserts both upload paths start extraction, that the upload does not wait, and that text and status land together |
-| 8 | `ooxml-parser.utility.spec.ts`, `rtf-parser.utility.spec.ts` — real containers, not mocks |
-| 9 | `ooxml-parser.utility.spec.ts` "archive bounds" — entry count and inflation caps |
-| 11 | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves |
-| 10 | The migration carries no backfill, and says why in its own comment |
+| Rule    | Mechanism                                                                                                                                                                        |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1, 5, 6 | `context-assembly-attachments.spec.ts` — asserts extracted text is preferred, and that unfinished and failed states are distinguished                                            |
+| 2, 3, 4 | `files.service-extraction.spec.ts` — asserts both upload paths start extraction, that the upload does not wait, and that text and status land together                           |
+| 7       | `file-delivery.utility.spec.ts` — asserts the extractable documents record as `EXTRACTED_TEXT` and that `OMITTED_UNSUPPORTED` stays reserved for formats with no extraction path |
+| 8       | `ooxml-parser.utility.spec.ts`, `rtf-parser.utility.spec.ts` — real containers, not mocks                                                                                        |
+| 9       | `ooxml-parser.utility.spec.ts` "archive bounds" — entry count and inflation caps                                                                                                 |
+| 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                  |
+| 10      | The migration carries no backfill, and says why in its own comment                                                                                                               |
 
 ## Runbook
 

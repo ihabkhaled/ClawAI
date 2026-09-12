@@ -1,7 +1,7 @@
 # Debug an attachment the model says it cannot read
 
-A user attaches a file and the model replies with some version of *"I can't
-access the attached PDF"* or *"the file content isn't extractable in this chat"*.
+A user attaches a file and the model replies with some version of _"I can't
+access the attached PDF"_ or _"the file content isn't extractable in this chat"_.
 
 **Start from the assumption that the model is telling the truth about what it
 was given.** It almost always is. The models are not refusing; they are
@@ -25,13 +25,13 @@ docker exec claw-pg-files psql -U claw -d claw_files -c \
 
 Read the answer off this table:
 
-| What you see | What it means | Go to |
-| --- | --- | --- |
-| `COMPLETED`, `text_len` > 0 | Extraction worked. The problem is downstream. | Step 3 |
+| What you see                          | What it means                                                           | Go to  |
+| ------------------------------------- | ----------------------------------------------------------------------- | ------ |
+| `COMPLETED`, `text_len` > 0           | Extraction worked. The problem is downstream.                           | Step 3 |
 | `COMPLETED`, `text_len` empty or null | A row that predates the pipeline, or an extractor that returned nothing | Step 2 |
-| `PENDING`, and it is not seconds old | Extraction never started for this row | Step 1 |
-| `PROCESSING`, and it is minutes old | The worker died mid-run | Step 1 |
-| `FAILED` | `err` is the answer. Read it. | Step 2 |
+| `PENDING`, and it is not seconds old  | Extraction never started for this row                                   | Step 1 |
+| `PROCESSING`, and it is minutes old   | The worker died mid-run                                                 | Step 1 |
+| `FAILED`                              | `err` is the answer. Read it.                                           | Step 2 |
 
 ## Step 1 — extraction never ran
 
@@ -43,9 +43,9 @@ docker logs claw-file-service --since 10m 2>&1 | grep -iE "processFile|extractTe
 ```
 
 **No lines at all** means nothing invoked the pipeline. Check that the upload
-path you used calls `FilesService.startExtraction` — `uploadFile` and
-`createInternalFile` both do. A new third entry point that forgets it produces
-exactly this.
+path you used calls `FilesService.startExtraction`. Three places do:
+`uploadFile`, `createInternalFile`, and `healLegacyRowIfNeeded`. A new entry
+point that forgets it produces exactly this.
 
 A row stuck at `PROCESSING` for more than `STALE_PROCESSING_TIMEOUT_MS`
 (10 minutes) was orphaned by a restart. The retention sweeper closes those out
@@ -128,15 +128,15 @@ passes while the pipeline is broken.
 
 ## What each format is read with
 
-| Format | Extractor | Fails when |
-| --- | --- | --- |
-| PDF | `pdf-parse`, OCR fallback under `SCANNED_PDF_CHAR_THRESHOLD` | encrypted; scanned with `OCR_ENABLED=false` |
-| DOCX | `mammoth` | legacy `.doc` is a different format and is not accepted |
-| XLSX | `ooxml-parser.utility` | legacy `.xls`; values that only exist as formula results |
-| PPTX | `ooxml-parser.utility` | text that lives in an embedded image |
-| RTF | `rtf-parser.utility` | embedded objects |
-| Images | tesseract, when `OCR_ENABLED` | low contrast, unusual fonts, handwriting |
-| Video | none by design | always — video has no text; vision models get the bytes |
+| Format | Extractor                                                    | Fails when                                               |
+| ------ | ------------------------------------------------------------ | -------------------------------------------------------- |
+| PDF    | `pdf-parse`, OCR fallback under `SCANNED_PDF_CHAR_THRESHOLD` | encrypted; scanned with `OCR_ENABLED=false`              |
+| DOCX   | `mammoth`                                                    | legacy `.doc` is a different format and is not accepted  |
+| XLSX   | `ooxml-parser.utility`                                       | legacy `.xls`; values that only exist as formula results |
+| PPTX   | `ooxml-parser.utility`                                       | text that lives in an embedded image                     |
+| RTF    | `rtf-parser.utility`                                         | embedded objects                                         |
+| Images | tesseract, when `OCR_ENABLED`                                | low contrast, unusual fonts, handwriting                 |
+| Video  | none by design                                               | always — video has no text; vision models get the bytes  |
 
 ## Traps
 

@@ -4,15 +4,15 @@
 - **Date**: 2026-09-12
 - **Deciders**: Platform / Backend
 - **Related**: [service-guide-file](../04-backend/service-guide-file.md) ·
-  [ADR-053](adr-053-archive-expansion-thresholds.md) ·
-  [ADR-054](adr-054-file-delivery-records.md) ·
+  [ADR-053](adr-053-file-retention-and-zip-guardrails.md) ·
+  [ADR-054](adr-054-file-delivery-records-extracted-from-json.md) ·
   [ADR-077](adr-077-chat-service-horizontal-scaling.md) ·
   [compare-file-attachments](../03-architecture/compare-file-attachments.md)
 
 ## Context
 
-Users attached a PDF and every model answered the same way: *"the file content
-is not extractable in this chat."* It happened across providers — Ollama,
+Users attached a PDF and every model answered the same way: _"the file content
+is not extractable in this chat."_ It happened across providers — Ollama,
 Gemini, OpenAI — which ruled out any one model's capabilities and pointed at
 the platform.
 
@@ -30,7 +30,7 @@ the frontend's own safety net: `useFiles` polls while any file is
 `PENDING`/`PROCESSING`, and no row was ever either.
 
 **The wrong field was served.** `getFileContent` returned `files.content`,
-which holds base64 of the *original bytes*. chat-service's `decodeFileContent`
+which holds base64 of the _original bytes_. chat-service's `decodeFileContent`
 found a mime it could not decode as text, and emitted
 `[Binary file "x.pdf" (application/pdf) — content not extractable as text]`
 into the prompt. The models were not refusing. They were reading our sentence
@@ -82,8 +82,8 @@ Both are ZIP containers of XML parts. `ooxml-parser.utility.ts` reads
 `sharedStrings.xml` plus the sheet parts for XLSX, and the slide and notes parts
 for PPTX, using the `node-stream-zip` dependency this service already has.
 
-**That reader is bounded like any other archive path.** An `.xlsx` *is* a ZIP
-and *is* user input. A 2 MB workbook whose `sharedStrings.xml` inflates to
+**That reader is bounded like any other archive path.** An `.xlsx` _is_ a ZIP
+and _is_ user input. A 2 MB workbook whose `sharedStrings.xml` inflates to
 several gigabytes is exactly the attack ADR-053 exists to stop, and a second
 ungated way to open an archive would be a hole in that policy. Entry count,
 per-entry inflated size, and total text bytes are all capped, and the declared
@@ -91,20 +91,20 @@ size is checked before inflating.
 
 ## Options considered
 
-| Option | Why not |
-| --- | --- |
-| SheetJS (`xlsx`) for workbooks | The full workbook object model for a text slice of it, plus a licensing and advisory history this repo has no reason to take on. We need cells as text, never formulas, styles, charts or number formats. |
-| `officeparser` / `node-xlsx` | Each pulls its own archive reader, giving the service a *third* way to open a ZIP with its own bomb-guard story to audit. ADR-053 exists precisely to keep that count at one policy. |
-| Reassemble text from `file_chunks` | Lossy, and the endpoint that serves them has no ownership check. |
-| Extract synchronously during upload | A 30s OCR inside the upload request. |
-| Extract via a `FILE_UPLOAD_COMPLETED` RabbitMQ consumer | Genuinely better for durability and would lift the replica constraint. Rejected for this change as a larger blast radius than the defect warrants; recorded as debt below. |
-| Bulk-backfill history to `PENDING` | Creates a permanent uncapped poll against a 4.2 MB endpoint for every existing user. |
+| Option                                                  | Why not                                                                                                                                                                                                   |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SheetJS (`xlsx`) for workbooks                          | The full workbook object model for a text slice of it, plus a licensing and advisory history this repo has no reason to take on. We need cells as text, never formulas, styles, charts or number formats. |
+| `officeparser` / `node-xlsx`                            | Each pulls its own archive reader, giving the service a _third_ way to open a ZIP with its own bomb-guard story to audit. ADR-053 exists precisely to keep that count at one policy.                      |
+| Reassemble text from `file_chunks`                      | Lossy, and the endpoint that serves them has no ownership check.                                                                                                                                          |
+| Extract synchronously during upload                     | A 30s OCR inside the upload request.                                                                                                                                                                      |
+| Extract via a `FILE_UPLOAD_COMPLETED` RabbitMQ consumer | Genuinely better for durability and would lift the replica constraint. Rejected for this change as a larger blast radius than the defect warrants; recorded as debt below.                                |
+| Bulk-backfill history to `PENDING`                      | Creates a permanent uncapped poll against a 4.2 MB endpoint for every existing user.                                                                                                                      |
 
 ## Consequences
 
 **Good.** PDF, DOCX, XLSX, PPTX, RTF and images all reach a model as readable
 text. `ingestionStatus` becomes true, which activates the frontend poller that
-was already written. Extraction failures now carry a *reason* the user can act
+was already written. Extraction failures now carry a _reason_ the user can act
 on instead of a generic "not extractable".
 
 **`file_delivery_records` changes meaning.** PDF/DOCX/XLSX/PPTX were stamped

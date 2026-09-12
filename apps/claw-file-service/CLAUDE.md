@@ -27,7 +27,7 @@ This is the File microservice for the Claw platform. It owns file upload, storag
 text a model reads. They are not the same field and never were.**
 
 Handing `content` to a text model is how this service spent months making every
-provider reply *"I can't read the attached file"* — the model was paraphrasing
+provider reply _"I can't read the attached file"_ — the model was paraphrasing
 the placeholder chat-service emitted, not refusing. Before you touch anything in
 the attachment path, read
 [ADR-093](../../docs/13-adr/adr-093-attachment-text-extraction-pipeline.md).

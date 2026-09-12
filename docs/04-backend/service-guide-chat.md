@@ -104,8 +104,19 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
    - User memories from memory-service (HTTP, limit 20)
    - Context pack items from memory-service (HTTP)
    - Workspace search results from workspace-service (HTTP)
-   - File chunks from file-service (HTTP)
+   - Attachment text from file-service (HTTP), via
+     `GET /internal/files/:id/content` — **never** `/chunks`, which performs no
+     ownership check. `extractedText` is used for every non-image file;
+     `content` (base64) only for an image going to a vision model. See
+     [ADR-093](../13-adr/adr-093-attachment-text-extraction-pipeline.md).
    - Thread message history
+     4b. **Attachment readiness wait** -- `waitForIngestion` polls
+     `GET /internal/files/:id/ingestion-state` until every attachment has
+     finished extracting, bounded by `FILE_INGESTION_WAIT_TIMEOUT_MS` (12s).
+     Extraction is asynchronous, so a message sent the instant an upload returns
+     would otherwise race it. Expiry degrades rather than throwing: the turn
+     proceeds and the model is told the file is still being read. **This is a
+     blocking step inside the turn and it affects latency.**
 5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
 6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
@@ -172,7 +183,7 @@ sentence. Anything unrecognised stays a toast rather than being guessed at.
 | ----------------- | --------------------------------------- |
 | memory-service    | Fetch user memories, pack items         |
 | workspace-service | Fetch grounded workspace search results |
-| file-service      | Fetch file chunks                       |
+| file-service      | Fetch attachment text + ingestion state |
 | connector-service | Execute LLM calls                       |
 | ollama-service    | Execute local Ollama calls              |
 
