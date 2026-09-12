@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "jest",
-      "testFiles": 32
+      "testFiles": 35
     },
     "claw-agent-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1220
+  "total": 1223
 }

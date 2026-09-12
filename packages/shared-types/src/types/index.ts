@@ -90,3 +90,8 @@ export type {
   ResolvedEffort,
 } from './effort-resolution.type';
 export type { ObservedSpeed, ResolvedSpeed, SpeedProviderParameter } from './speed-resolution.type';
+export type {
+  DisplayCurrencyContext,
+  DisplayFxRate,
+  LocalizedMoneyView,
+} from './display-currency.type';

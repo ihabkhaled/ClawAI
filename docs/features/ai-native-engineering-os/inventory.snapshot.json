@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (29712 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (30179 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (29712 vs 27454 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (30179 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7311,7 +7311,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 29712,
+          "bytes": 30179,
           "file": "CLAUDE.md"
         },
         {
@@ -7363,7 +7363,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 22259,
+          "bytes": 22550,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7581,6 +7581,10 @@
         {
           "bytes": 5029,
           "file": "rules/44-live-verification-before-done.md"
+        },
+        {
+          "bytes": 3746,
+          "file": "rules/45-display-currency-versus-settlement-currency.md"
         },
         {
           "bytes": 5156,
@@ -9634,7 +9638,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 32
+        "testFiles": 35
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -10431,7 +10435,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1220,
+    "totalTestFiles": 1223,
     "workspaceCount": 25
   }
 }
