@@ -4372,6 +4372,8 @@ export const hi: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'आपके पास कोई सक्रिय सदस्यता नहीं है।',
     },
     checkout: {
+      chargedExactly: 'आपसे {amount} लिया जाएगा।',
+      chargedInCurrency: 'शुल्क {currency} में लिया जाएगा। सटीक राशि चेकआउट पर पुष्ट होती है।',
       startFailed: 'हम भुगतान शुरू नहीं कर सके। कृपया पुनः प्रयास करें।',
     },
     gatewayDialog: {

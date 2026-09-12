@@ -4315,6 +4315,8 @@ export const ar: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'ليس لديك اشتراك نشط.',
     },
     checkout: {
+      chargedExactly: 'سيتم تحصيل {amount}.',
+      chargedInCurrency: 'سيتم التحصيل بعملة {currency}. يتم تأكيد المبلغ الدقيق عند الدفع.',
       startFailed: 'تعذّر بدء عملية الدفع. يُرجى المحاولة مرة أخرى.',
     },
     gatewayDialog: {

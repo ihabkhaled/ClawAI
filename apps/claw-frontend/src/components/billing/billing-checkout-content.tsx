@@ -34,7 +34,17 @@ export function BillingCheckoutContent(): React.ReactElement {
             <CardTitle>{controller.plan.name}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-5">
-            <p className="text-3xl font-bold">{controller.formattedPrice}</p>
+            <div>
+              <p className="text-3xl font-bold">{controller.formattedPrice}</p>
+              {/* Checkout is the one surface where the estimate and the real
+                  charge always appear together. Everywhere else an approximate
+                  figure is enough; here the visitor is about to be charged. */}
+              {controller.chargeNotice === null ? null : (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {t(controller.chargeNotice.key, controller.chargeNotice.params)}
+                </p>
+              )}
+            </div>
             {!controller.hasAvailableGateways ? (
               <p className="text-muted-foreground text-sm" role="status">
                 {t('billing.gateway.unavailable')}

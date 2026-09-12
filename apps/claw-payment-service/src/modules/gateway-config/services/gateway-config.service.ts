@@ -9,6 +9,7 @@ import {
   decryptGatewayToken,
   encryptGatewayToken,
 } from '../../../common/utilities/token-vault.utility';
+import { resolveSettlementCurrency } from '../../checkout/utilities/settlement-currency.utility';
 import {
   GATEWAY_CONFIG_VAULT_OWNER,
   GATEWAY_CREDENTIAL_FIELDS,
@@ -46,6 +47,9 @@ export class GatewayConfigService {
       mode: record.mode as GatewayMode,
       testingSoon: record.gateway === BillingGateway.PAYMOB,
       publicIdentifier: this.decryptPublicIdentifier(record),
+      // From the same resolver the charge path uses, so the currency checkout
+      // PROMISES and the currency it CHARGES can never drift apart.
+      settlementCurrency: resolveSettlementCurrency(record.gateway as BillingGateway),
     }));
   }
 

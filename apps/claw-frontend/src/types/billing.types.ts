@@ -164,6 +164,14 @@ export type CheckoutGatewayView = {
   mode: string;
   testingSoon: boolean;
   publicIdentifier: string | null;
+  // The currency this gateway settles in, straight from the server, or null
+  // when it settles in the plan's own currency. Never derived here: a UI that
+  // guesses a gateway's currency from its published support list ends up
+  // promising a settlement the merchant account cannot perform.
+  //
+  // Optional because an older payment-service omits it, and a checkout that
+  // stays silent about the charge currency is better than one that invents it.
+  settlementCurrency?: string | null;
 };
 
 export type GatewayConfigFieldView = {
@@ -185,4 +193,12 @@ export type GatewayConfigUpdate = {
   mode?: string;
   credentials?: Record<string, string>;
   options?: { currency?: string; webhookUrl?: string };
+};
+
+// A sentence about the charge currency, resolved server-side facts first and
+// translated at render. The key is chosen where the facts are known; the TSX
+// only prints it.
+export type ChargeNotice = {
+  key: string;
+  params: Record<string, string>;
 };

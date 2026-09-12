@@ -4403,6 +4403,9 @@ export const pt: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'Você não tem uma assinatura ativa.',
     },
     checkout: {
+      chargedExactly: 'Você será cobrado {amount}.',
+      chargedInCurrency:
+        'A cobrança será feita em {currency}. O valor exato é confirmado no pagamento.',
       startFailed: 'Não foi possível iniciar o pagamento. Tente novamente.',
     },
     gatewayDialog: {

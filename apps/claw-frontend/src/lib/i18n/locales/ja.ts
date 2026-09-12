@@ -4384,6 +4384,8 @@ export const ja: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'アクティブなサブスクリプションがありません。',
     },
     checkout: {
+      chargedExactly: '{amount} が請求されます。',
+      chargedInCurrency: '請求は {currency} で行われます。正確な金額はお支払い時に確定します。',
       startFailed: 'チェックアウトを開始できませんでした。もう一度試してください。',
     },
     gatewayDialog: {

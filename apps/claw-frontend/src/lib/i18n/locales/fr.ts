@@ -4441,6 +4441,9 @@ export const fr: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: "Vous n'avez aucun abonnement actif.",
     },
     checkout: {
+      chargedExactly: 'Vous serez débité de {amount}.',
+      chargedInCurrency:
+        'Le débit sera effectué en {currency}. Le montant exact est confirmé au paiement.',
       startFailed: 'Nous n’avons pas pu démarrer le paiement. Veuillez réessayer.',
     },
     gatewayDialog: {

@@ -4221,6 +4221,8 @@ export const zh: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: '您没有有效的订阅。',
     },
     checkout: {
+      chargedExactly: '将向您收取 {amount}。',
+      chargedInCurrency: '将以 {currency} 收款。确切金额将在结账时确认。',
       startFailed: '我们无法开始结帐。请再试一次。',
     },
     gatewayDialog: {

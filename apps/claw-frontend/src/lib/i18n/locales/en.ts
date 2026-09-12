@@ -4350,6 +4350,9 @@ export const en: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'You do not have an active subscription.',
     },
     checkout: {
+      chargedExactly: 'You will be charged {amount}.',
+      chargedInCurrency:
+        'You will be charged in {currency}. The exact amount is confirmed at checkout.',
       startFailed: 'We could not start checkout. Please try again.',
     },
     gatewayDialog: {

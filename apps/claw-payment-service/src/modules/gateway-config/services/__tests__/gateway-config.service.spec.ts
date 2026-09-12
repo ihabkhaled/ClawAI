@@ -120,8 +120,38 @@ describe('GatewayConfigService', () => {
         mode: GatewayMode.SANDBOX,
         testingSoon: false,
         publicIdentifier: 'public-client-id',
+        // null means "settles in the plan's own currency" — PayPal charges the
+        // canonical USD price however the visitor's prices are displayed.
+        settlementCurrency: null,
       },
     ]);
     expect(JSON.stringify(result)).not.toContain('secret');
+  });
+});
+
+describe('GatewayConfigService settlement currency', () => {
+  it('reports the currency each gateway actually settles in', async () => {
+    // Checkout shows a localized ESTIMATE beside the real charge, so this value
+    // has to come from the same resolver the charge path uses. Deriving it in
+    // the frontend from PayPal's published currency list is how a UI ends up
+    // promising a settlement the merchant account cannot perform.
+    const repository = {
+      findEnabled: jest.fn().mockResolvedValue([
+        {
+          gateway: BillingGateway.PAYMOB,
+          mode: GatewayMode.SANDBOX,
+          isEnabled: true,
+          encryptedCredentials: {},
+          options: {},
+          encryptionKeyVersion: 1,
+          createdAt: new Date('2026-08-09T00:00:00.000Z'),
+          updatedAt: new Date('2026-08-09T00:00:00.000Z'),
+        },
+      ]),
+    };
+
+    const result = await new GatewayConfigService(repository as never).listCheckout();
+
+    expect(result[0]?.settlementCurrency).toBe('EGP');
   });
 });

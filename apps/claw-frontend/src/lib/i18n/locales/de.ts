@@ -4435,6 +4435,9 @@ export const de: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'Sie haben kein aktives Abonnement.',
     },
     checkout: {
+      chargedExactly: 'Ihnen werden {amount} berechnet.',
+      chargedInCurrency:
+        'Die Abrechnung erfolgt in {currency}. Der genaue Betrag wird beim Bezahlen bestätigt.',
       startFailed:
         'Der Bezahlvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
     },

@@ -2,6 +2,7 @@ import type { BillingGateway, BillingInterval, BillingReturnPhase } from '@/enum
 import type {
   BillingPlan,
   BillingUsage,
+  ChargeNotice,
   CheckoutGatewayView,
   CurrentSubscription,
   InvoiceView,
@@ -63,7 +64,18 @@ export type CheckoutMutationInput = CheckoutStartInput & {
 export type UseBillingCheckoutPageReturn = {
   t: TranslateFunction;
   plan: BillingPlan | null;
+  // The localized ESTIMATE.
   formattedPrice: string | null;
+  // The canonical price, stated alongside it. Checkout is the one surface where
+  // both figures always appear: a visitor about to pay needs to see the real
+  // amount, not only an approximation of it.
+  canonicalPrice: string | null;
+  // The currency the selected gateway settles in, from the server. Null means
+  // it settles in the plan's own currency.
+  settlementCurrency: string | null;
+  // The sentence to print about that charge, already resolved. Null when the
+  // displayed price is already the settlement price and nothing needs saying.
+  chargeNotice: ChargeNotice | null;
   gateways: CheckoutGatewayView[];
   hasAvailableGateways: boolean;
   gateway: BillingGateway;

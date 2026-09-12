@@ -4406,6 +4406,9 @@ export const ru: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'У вас нет активной подписки.',
     },
     checkout: {
+      chargedExactly: 'С вас будет списано {amount}.',
+      chargedInCurrency:
+        'Списание произойдёт в {currency}. Точная сумма подтверждается при оплате.',
       startFailed: 'Не удалось начать оплату. Попробуйте ещё раз.',
     },
     gatewayDialog: {

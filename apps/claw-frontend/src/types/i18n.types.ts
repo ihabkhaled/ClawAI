@@ -4342,6 +4342,8 @@ export type TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: string;
     };
     checkout: {
+      chargedExactly: string;
+      chargedInCurrency: string;
       startFailed: string;
     };
     gatewayDialog: {

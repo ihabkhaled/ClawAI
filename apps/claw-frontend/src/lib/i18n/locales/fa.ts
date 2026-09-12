@@ -4370,6 +4370,8 @@ export const fa: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'شما اشتراک فعال ندارید.',
     },
     checkout: {
+      chargedExactly: 'مبلغ {amount} از شما دریافت خواهد شد.',
+      chargedInCurrency: 'پرداخت به {currency} انجام می‌شود. مبلغ دقیق هنگام پرداخت تأیید می‌شود.',
       startFailed: 'ما نتوانستیم تسویه حساب را شروع کنیم.لطفا دوباره امتحان کنید.',
     },
     gatewayDialog: {

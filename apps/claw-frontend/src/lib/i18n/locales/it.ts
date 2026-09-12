@@ -4422,6 +4422,9 @@ export const it: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'Non hai un abbonamento attivo.',
     },
     checkout: {
+      chargedExactly: 'Ti verranno addebitati {amount}.',
+      chargedInCurrency:
+        "L'addebito avverrà in {currency}. L'importo esatto viene confermato al pagamento.",
       startFailed: 'Non è stato possibile avviare il pagamento. Riprova.',
     },
     gatewayDialog: {

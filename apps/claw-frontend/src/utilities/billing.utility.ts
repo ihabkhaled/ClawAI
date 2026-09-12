@@ -7,6 +7,7 @@ import {
 } from '@/enums/billing.enum';
 import type {
   BillingPlan,
+  ChargeNotice,
   BillingPlanPrice,
   CurrentSubscription,
   FeatureAllowance,
@@ -212,4 +213,37 @@ export function isSubscriptionEntitling(subscription: CurrentSubscription | null
     subscription.status === SubscriptionStatus.CANCEL_AT_PERIOD_END ||
     subscription.status === SubscriptionStatus.PAST_DUE
   );
+}
+
+/**
+ * What to tell someone about the currency they are about to be charged in.
+ *
+ * Two different promises, so two different sentences.
+ *
+ * A gateway that settles in the plan's own currency can be quoted EXACTLY,
+ * because that amount is the canonical price. One that converts cannot: its
+ * total comes from the server's settlement quote at session creation, and that
+ * quote is newer than any marketing rate, carries the safety margin and is not
+ * commercially rounded. Naming an amount for it here would be quoting a number
+ * ClawAI has not computed yet — and if a user later saw a different figure, the
+ * checkout would look broken rather than correct.
+ *
+ * Returns null when nothing needs saying, which is when the displayed price is
+ * already the settlement price.
+ */
+export function buildChargeNotice(
+  settlementCurrency: string | null,
+  canonicalCurrency: string,
+  canonicalAmount: string,
+): ChargeNotice | null {
+  if (settlementCurrency === null) {
+    return { key: 'billing.checkout.chargedExactly', params: { amount: canonicalAmount } };
+  }
+  if (settlementCurrency === canonicalCurrency) {
+    return null;
+  }
+  return {
+    key: 'billing.checkout.chargedInCurrency',
+    params: { currency: settlementCurrency },
+  };
 }

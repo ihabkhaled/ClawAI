@@ -38,6 +38,15 @@ export type CheckoutGatewayView = {
   mode: GatewayMode;
   testingSoon: boolean;
   publicIdentifier: string | null;
+  // The currency this gateway actually settles in, or null when it settles in
+  // the plan's own currency.
+  //
+  // Exposed so checkout can state the truth beside a localized estimate: a
+  // visitor shown "≈ EGP 515" needs to know PayPal will charge USD. The
+  // frontend must not derive this — hardcoding "PayPal supports EGP" from
+  // PayPal's published currency list is how a UI ends up promising a
+  // settlement the merchant account cannot do.
+  settlementCurrency: string | null;
 };
 
 export type GatewayConfigurationRecord = GatewayConfiguration;

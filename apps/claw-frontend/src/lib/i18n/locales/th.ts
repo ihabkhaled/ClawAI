@@ -4331,6 +4331,8 @@ export const th: TranslationDictionary = {
       SUBSCRIPTION_NOT_FOUND: 'คุณไม่มีการสมัครสมาชิกที่ใช้งานอยู่',
     },
     checkout: {
+      chargedExactly: 'คุณจะถูกเรียกเก็บ {amount}',
+      chargedInCurrency: 'จะเรียกเก็บเป็นสกุลเงิน {currency} ยอดที่แน่นอนจะยืนยันตอนชำระเงิน',
       startFailed: 'เราไม่สามารถเริ่มชำระเงินได้โปรดลองอีกครั้ง',
     },
     gatewayDialog: {
