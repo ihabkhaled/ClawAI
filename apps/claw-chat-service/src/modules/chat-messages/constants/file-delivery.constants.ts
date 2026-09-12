@@ -53,7 +53,7 @@ export const TEXT_LIKE_MIME_EXACT = new Set([
 // These were classified OMITTED_UNSUPPORTED until 2026-09-12, which was accurate
 // at the time: extraction was never wired, so the file genuinely did not reach
 // the model. Rows written before that date mean "the platform could not deliver
-// this", never "this format cannot be delivered". ADR-093.
+// this", never "this format cannot be delivered". ADR-094.
 export const EXTRACTABLE_DOCUMENT_MIME_EXACT = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

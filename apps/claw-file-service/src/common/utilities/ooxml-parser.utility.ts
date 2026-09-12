@@ -9,7 +9,7 @@
 // for archive expansion, rather than pulling in a spreadsheet library. We need
 // text, not formulas, styles, charts or cell types; a full workbook parser would
 // be a large dependency for a small slice of its surface. See
-// docs/13-adr/adr-093-attachment-text-extraction-pipeline.md.
+// docs/13-adr/adr-094-attachment-text-extraction-pipeline.md.
 //
 // An .xlsx IS a ZIP and IS user input, so every entry read here is bounded the
 // same way ADR-053 bounds the archive-expansion path: a 2 MB workbook whose

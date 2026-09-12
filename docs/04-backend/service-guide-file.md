@@ -30,7 +30,7 @@ The file service handles file uploads, local storage, content extraction, and ch
 | ingestionStatus | FileIngestionStatus | PENDING, PROCESSING, COMPLETED, FAILED  |
 
 > `content` and `extractedText` are not interchangeable, and the difference is
-> the whole of ADR-093. `content` is base64 of the bytes as uploaded — correct
+> the whole of ADR-094. `content` is base64 of the bytes as uploaded — correct
 > for a vision model looking at an image, meaningless to a text model looking at
 > a PDF. `extractedText` is what the parsers produced. This table used to
 > describe `content` as "extracted text content", and a reader who believed it
@@ -94,7 +94,7 @@ through it.
 
 Step 3 is the one that did not exist. `processFile` was written, correct, and
 called by nothing on the upload path; its only caller was `ZipExpansionManager`.
-Measured before the fix: nine uploads produced zero chunks. See ADR-093.
+Measured before the fix: nine uploads produced zero chunks. See ADR-094.
 
 **Reading the result.** A caller must consult `ingestionStatus` before deciding
 a file has no text. `PENDING`/`PROCESSING` means "not yet", not "empty" —

@@ -1,4 +1,4 @@
-# ADR-093: Attachments are extracted to text, and the text is a column
+# ADR-094: Attachments are extracted to text, and the text is a column
 
 - **Status**: Accepted
 - **Date**: 2026-09-12

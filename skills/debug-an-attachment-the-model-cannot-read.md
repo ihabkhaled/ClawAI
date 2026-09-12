@@ -10,7 +10,7 @@ different vendors agreeing that a file is unreadable is a platform finding, not
 a vendor finding.
 
 Governing rule: [`rules/42-attachment-understanding.md`](../rules/42-attachment-understanding.md) ·
-[ADR-093](../docs/13-adr/adr-093-attachment-text-extraction-pipeline.md)
+[ADR-094](../docs/13-adr/adr-094-attachment-text-extraction-pipeline.md)
 
 ## The one-minute check
 
@@ -140,7 +140,7 @@ passes while the pipeline is broken.
 
 ## Traps
 
-- **The status column used to lie.** Before ADR-093 it defaulted to `COMPLETED`,
+- **The status column used to lie.** Before ADR-094 it defaulted to `COMPLETED`,
   so every row claimed success. If you are looking at an old database dump,
   `COMPLETED` there means nothing.
 - **`content` is not text.** It is base64 of the upload. Reading it as a string

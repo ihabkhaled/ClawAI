@@ -165,7 +165,16 @@ import {
   describeProviderErrorResponse,
   isProviderErrorResponse,
 } from '../utilities/provider-error-response.utility';
-import { TOOL_WEB_FETCH, TOOL_WEB_SEARCH } from '../constants/ollama-cloud-tools.constants';
+import {
+  TOOL_GET_CRAWLED_PAGE,
+  TOOL_WEB_FETCH,
+  TOOL_WEB_SEARCH,
+} from '../constants/ollama-cloud-tools.constants';
+import {
+  buildGetCrawledPageToolDefinition,
+  executeGetCrawledPage,
+} from '../utilities/crawl-retrieval-tool.utility';
+import type { CrawlRetrievalContext } from '../types/crawl-retrieval.types';
 import type {
   OllamaCloudToolCall,
   OllamaToolTranscript,
@@ -223,6 +232,7 @@ export class ChatExecutionManager implements OnModuleInit {
     payload: MessageRoutedData,
     context: AssembledContext,
     threadSettings?: ThreadSettings,
+    crawlRetrieval?: CrawlRetrievalContext,
   ): Promise<LlmResponse> {
     this.logger.log(
       `execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`,
@@ -243,7 +253,12 @@ export class ChatExecutionManager implements OnModuleInit {
       this.buildCandidateChain(payload, payload.routingMode),
     );
     const userPrompt = this.extractUserPrompt(context);
-    const executionOptions = this.resolveExecutionOptions(payload, userPrompt, threadSettings);
+    const executionOptions = this.resolveExecutionOptions(
+      payload,
+      userPrompt,
+      threadSettings,
+      crawlRetrieval,
+    );
     const baseExecutionContext = this.buildExecutionContext(
       context,
       executionOptions.fastPathEnabled,
@@ -520,6 +535,24 @@ export class ChatExecutionManager implements OnModuleInit {
       threadId: payload.threadId,
       messageId: payload.messageId,
     };
+    // Mid-generation crawl retrieval (ADR-093): checked before the streaming
+    // decision below, because Ollama Cloud is otherwise streamable and this
+    // path deliberately is not — the agentic loop needs the full response
+    // per turn to see `tool_calls`, which a token-by-token stream does not
+    // expose the same way. Buffered-with-heartbeat is the same degraded (but
+    // fully supported) UX every non-streamable candidate already gets below.
+    const retrievalResponse = await this.tryRunCrawlRetrievalTurn(
+      candidate,
+      executionContext,
+      startTime,
+      candidateIndex,
+      threadSettings,
+      payload,
+      executionOptions,
+    );
+    if (retrievalResponse !== null) {
+      return retrievalResponse;
+    }
     if (this.canStreamCandidate(candidate.provider)) {
       return this.streamCandidate(
         candidate,
@@ -556,6 +589,112 @@ export class ChatExecutionManager implements OnModuleInit {
     } finally {
       stopProgressHeartbeat();
     }
+  }
+
+  /**
+   * `null` when this candidate does not qualify — everything except Ollama
+   * Cloud with at least one crawled page for this turn — so the caller
+   * falls through to its normal streaming/buffered decision unchanged.
+   * Split out of `invokeProviderWithProgress` purely to keep that method
+   * under the file's line-count budget.
+   */
+  private async tryRunCrawlRetrievalTurn(
+    candidate: { provider: string; model: string },
+    executionContext: AssembledContext,
+    startTime: number,
+    candidateIndex: number,
+    threadSettings: ThreadSettings | undefined,
+    payload: MessageRoutedData,
+    executionOptions: ExecutionOptions,
+  ): Promise<LlmResponse | null> {
+    if (
+      candidate.provider !== OLLAMA_CONNECTOR_PROVIDER ||
+      (executionOptions.crawlRetrieval?.pages.length ?? 0) === 0
+    ) {
+      return null;
+    }
+    this.chatStreamService.emitResponseStreaming(
+      payload.threadId,
+      candidate.provider,
+      candidate.model,
+    );
+    const stopHeartbeat = this.chatStreamService.startResponseProgressHeartbeat(
+      payload.threadId,
+      candidate.provider,
+      candidate.model,
+    );
+    try {
+      return await this.runOllamaCloudRetrievalTurn(
+        candidate,
+        executionContext,
+        startTime,
+        candidateIndex > 0,
+        payload,
+        threadSettings,
+        executionOptions,
+      );
+    } finally {
+      stopHeartbeat();
+    }
+  }
+
+  /**
+   * Ollama Cloud, offered a `get_crawled_page` tool for this turn's
+   * SITE_CRAWL pages, via `runOllamaCloudToolLoop`.
+   *
+   * Deliberately bypasses `callProvider`: that chokepoint places ONE PAYG
+   * hold before dispatch, but the loop places its OWN hold per turn
+   * (`<run>:turn:<n>`) — going through both would bill the same completion
+   * twice. `runOllamaCloudToolLoop`'s own doc comment states this
+   * constraint; this method is the "entered directly" caller it expects.
+   * `assertExposedForExecution` and `recordChokepointUsage` are the two
+   * pieces of `callProvider`/`dispatchProvider` this path still needs for
+   * itself — the security gate every candidate must pass, and the daily
+   * token-allowance record every completion must leave regardless of which
+   * chokepoint it went through.
+   */
+  private async runOllamaCloudRetrievalTurn(
+    candidate: { provider: string; model: string },
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    payload: MessageRoutedData,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions,
+  ): Promise<LlmResponse> {
+    await this.assertExposedForExecution(candidate.provider, candidate.model);
+    const crawlRetrieval = executionOptions.crawlRetrieval;
+    if (crawlRetrieval === undefined) {
+      throw new BusinessException(
+        'runOllamaCloudRetrievalTurn called without crawlRetrieval',
+        'INTERNAL_ERROR',
+      );
+    }
+    const { baseUrl, apiKey } = await this.resolveProviderConfig(candidate.provider);
+    const initialBody = this.buildOllamaChatRequestBody(
+      candidate.model,
+      context,
+      threadSettings,
+      executionOptions,
+    );
+    initialBody.tools = [
+      ...(initialBody.tools ?? []),
+      buildGetCrawledPageToolDefinition(crawlRetrieval),
+    ];
+    const response = await this.runOllamaCloudToolLoop({
+      provider: candidate.provider,
+      model: candidate.model,
+      initialBody,
+      baseUrl,
+      apiKey,
+      startTime,
+      usedFallback,
+      context,
+      streamThreadId: payload.threadId,
+      crawlRetrieval,
+    });
+    this.recordChokepointUsage(context, response);
+    return { ...response, tokenContext: TokenLedgerContext.CHAT };
   }
 
   // True only when the rich streaming dependencies are present AND the provider
@@ -1478,6 +1617,7 @@ export class ChatExecutionManager implements OnModuleInit {
     payload: MessageRoutedData,
     userPrompt: string,
     threadSettings?: ThreadSettings,
+    crawlRetrieval?: CrawlRetrievalContext,
   ): ExecutionOptions {
     const fastPathEnabled = this.shouldUseFastPath(payload, userPrompt);
     return {
@@ -1489,6 +1629,7 @@ export class ChatExecutionManager implements OnModuleInit {
         payload.selectedModel,
       ),
       applyShortResponseConstraint: fastPathEnabled,
+      ...(crawlRetrieval === undefined ? {} : { crawlRetrieval }),
     };
   }
 
@@ -2658,6 +2799,7 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean;
     context: AssembledContext;
     streamThreadId?: string;
+    crawlRetrieval?: CrawlRetrievalContext;
   }): Promise<LlmResponse> {
     const { provider, model, initialBody, baseUrl, apiKey, startTime, streamThreadId } = args;
     const config = AppConfig.get();
@@ -2681,6 +2823,7 @@ export class ChatExecutionManager implements OnModuleInit {
       userId: args.context.userId,
       usageRunId,
       promptText,
+      crawlRetrieval: args.crawlRetrieval,
     });
     // Graceful wrap-up — when we hit either cap with pending tool_calls,
     // issue one final POST with NO `tools` so the model is forced to
@@ -2748,6 +2891,7 @@ export class ChatExecutionManager implements OnModuleInit {
     userId: string;
     usageRunId: string;
     promptText: string;
+    crawlRetrieval?: CrawlRetrievalContext;
   }): Promise<{
     iteration: number;
     capReached: boolean;
@@ -2797,6 +2941,7 @@ export class ChatExecutionManager implements OnModuleInit {
         iteration,
         userId: args.userId,
         usageRunId: args.usageRunId,
+        crawlRetrieval: args.crawlRetrieval,
       });
     }
     if (this.toolLoopExhaustedWithPendingCalls(iteration, lastData, args.maxIterations)) {
@@ -3046,6 +3191,7 @@ export class ChatExecutionManager implements OnModuleInit {
     iteration: number;
     userId: string;
     usageRunId: string;
+    crawlRetrieval?: CrawlRetrievalContext;
   }): Promise<void> {
     const { messages, turns, turnContent, toolCalls } = args;
     messages.push({ role: 'assistant', content: turnContent, tool_calls: toolCalls });
@@ -3060,6 +3206,7 @@ export class ChatExecutionManager implements OnModuleInit {
       iteration: args.iteration,
       userId: args.userId,
       usageRunId: args.usageRunId,
+      crawlRetrieval: args.crawlRetrieval,
     });
     for (const entry of toolResults) {
       messages.push({ role: 'tool', content: entry.result, tool_call_id: entry.toolCallId });
@@ -3148,6 +3295,47 @@ export class ChatExecutionManager implements OnModuleInit {
     };
   }
 
+  /**
+   * Resolves one call's result text: `get_crawled_page` from memory (no
+   * network, no feature-usage record — the crawl that produced this content
+   * was already metered when it ran), everything else via
+   * `executeOllamaCloudToolCall`'s proxy to Ollama Cloud's own hosted
+   * endpoints. Split out of `executeToolCalls` purely to keep that method
+   * under the file's line-count budget; throws exactly like the call it
+   * replaces, so the caller's existing catch block is unchanged.
+   */
+  private async dispatchOneToolCall(
+    call: OllamaCloudToolCall,
+    toolName: string,
+    callId: string,
+    args: {
+      baseUrl: string;
+      apiKey: string;
+      timeoutMs: number;
+      userId: string;
+      usageRunId: string;
+      iteration: number;
+      crawlRetrieval?: CrawlRetrievalContext;
+    },
+  ): Promise<string> {
+    if (toolName === TOOL_GET_CRAWLED_PAGE) {
+      return args.crawlRetrieval === undefined
+        ? truncateResult(JSON.stringify({ error: 'No crawled pages are available for this turn.' }))
+        : executeGetCrawledPage(call, args.crawlRetrieval);
+    }
+    return executeOllamaCloudToolCall(call, {
+      baseUrl: args.baseUrl,
+      apiKey: args.apiKey,
+      timeoutMs: args.timeoutMs,
+      onDispatch: async () =>
+        this.accessControlService.recordFeatureUsage(
+          args.userId,
+          toolName === TOOL_WEB_SEARCH ? 'WEB_SEARCH' : 'WEB_FETCH',
+          `${args.usageRunId}:${String(args.iteration)}:${callId}`,
+        ),
+    });
+  }
+
   // Per-turn dispatcher. Executes every tool_call serially so we can
   // emit lifecycle events in deterministic order and bail fast on the
   // first failure. Each invocation tracks its own transcript entry so
@@ -3163,6 +3351,7 @@ export class ChatExecutionManager implements OnModuleInit {
     iteration: number;
     userId: string;
     usageRunId: string;
+    crawlRetrieval?: CrawlRetrievalContext;
   }): Promise<
     Array<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }>
   > {
@@ -3188,17 +3377,7 @@ export class ChatExecutionManager implements OnModuleInit {
       let ok = true;
       let errorMessage: string | undefined;
       try {
-        resultText = await executeOllamaCloudToolCall(call, {
-          baseUrl: args.baseUrl,
-          apiKey: args.apiKey,
-          timeoutMs: args.timeoutMs,
-          onDispatch: async () =>
-            this.accessControlService.recordFeatureUsage(
-              args.userId,
-              toolName === TOOL_WEB_SEARCH ? 'WEB_SEARCH' : 'WEB_FETCH',
-              `${args.usageRunId}:${String(args.iteration)}:${callId}`,
-            ),
-        });
+        resultText = await this.dispatchOneToolCall(call, toolName, callId, args);
       } catch (error: unknown) {
         ok = false;
         errorMessage = error instanceof Error ? error.message : 'unknown';
