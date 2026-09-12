@@ -237,10 +237,24 @@ itself two ways at once: the home page advertised "Chatgpt Image Latest" and
 four flavours of GPT 3.5 Turbo as its OpenAI sample, while a signed-in user
 opening the picker saw GPT 5.6 at the top. Both were "working".
 
-`compareModelsByRecency` is now used by the picker AND by
-`sortCatalogModelsByRecency`, which the home roster and every `/model-providers`
-page call. Adapt the data to the comparator at the call site; do not widen the
-comparator, and never write a second one.
+`compareModelsByRecency` is now used by the picker, the judge/referee dropdown,
+and `sortCatalogModelsByRecency`, which the home roster and every
+`/model-providers` page call. Adapt the data to the comparator at the call site;
+do not widen the comparator, and never write a second one.
+
+**When you change an ordering, grep for the others before calling it done.**
+This one was found three times in a row — the picker, then the public pages,
+then the judge dropdown — because each surface built its list separately and
+only the one being looked at got fixed. The sweep is one command:
+
+```bash
+grep -rn "localeCompare" src --include=*.ts --include=*.tsx   | grep -viE "test|spec" | grep -iE "model|displayName|label"
+```
+
+What that turns up legitimately: provider GROUP ordering in
+`use-available-models.ts` (alphabetical is right for section headings) and the
+admin cost table (a rate card is scanned, not chosen from). Anything else that
+is a list of models a user picks from should be on the shared comparator.
 
 **Alphabetical is not a neutral default for versioned names.** Model names sort
 close to REVERSE chronologically — `GPT 3.5` before `GPT 5.4`, `Claude Opus 4.5`

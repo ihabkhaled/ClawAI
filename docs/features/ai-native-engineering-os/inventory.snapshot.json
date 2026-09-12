@@ -7387,7 +7387,7 @@
           "file": "rules/02-monorepo-and-workspace-ownership.md"
         },
         {
-          "bytes": 16785,
+          "bytes": 17538,
           "file": "rules/03-frontend-rules.md"
         },
         {
@@ -9670,7 +9670,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 458
+        "testFiles": 459
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10431,7 +10431,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1219,
+    "totalTestFiles": 1220,
     "workspaceCount": 25
   }
 }
