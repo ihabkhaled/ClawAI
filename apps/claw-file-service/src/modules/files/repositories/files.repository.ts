@@ -40,6 +40,47 @@ export class FilesRepository {
     });
   }
 
+  /**
+   * Stores what a language model will actually be shown for this file.
+   *
+   * Separate from `updateIngestionStatus` because the text and the terminal
+   * status must land together: a row that says COMPLETED with no text, or
+   * carries text while still PROCESSING, is a state the readers cannot
+   * interpret.
+   */
+  async saveExtractionResult(
+    id: string,
+    result: {
+      extractedText: string | null;
+      extractionError: string | null;
+      status: FileIngestionStatus;
+    },
+  ): Promise<File> {
+    return this.prisma.file.update({
+      where: { id },
+      data: {
+        extractedText: result.extractedText,
+        extractionError: result.extractionError,
+        ingestionStatus: result.status,
+      },
+    });
+  }
+
+  /**
+   * Rows whose extraction started and never finished.
+   *
+   * A container restart mid-extraction leaves PROCESSING with nobody to move it,
+   * and an unfinished row keeps the file-list poller running indefinitely. The
+   * sweeper uses this to close them out.
+   */
+  async findStaleProcessingBefore(cutoff: Date, limit: number): Promise<File[]> {
+    return this.prisma.file.findMany({
+      where: { ingestionStatus: 'PROCESSING', updatedAt: { lt: cutoff } },
+      take: limit,
+      orderBy: { updatedAt: 'asc' },
+    });
+  }
+
   async delete(id: string): Promise<File> {
     return this.prisma.file.delete({ where: { id } });
   }

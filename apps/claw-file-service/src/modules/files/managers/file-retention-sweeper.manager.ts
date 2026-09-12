@@ -23,6 +23,7 @@ import { type File } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { deleteFile } from '../../../common/utilities';
 import { FilesRepository } from '../repositories/files.repository';
+import { STALE_PROCESSING_TIMEOUT_MS } from '../constants/file-processing.constants';
 
 @Injectable()
 export class FileRetentionSweeperManager {
@@ -33,6 +34,41 @@ export class FileRetentionSweeperManager {
     private readonly rabbitMQService: RabbitMQService,
   ) {}
 
+  /**
+   * Closes out extractions that started and never finished.
+   *
+   * Extraction runs in-process and unawaited, so a container restart between the
+   * PROCESSING write and the terminal write leaves a row with no owner. Nothing
+   * else would ever move it, and while any row is PENDING or PROCESSING the file
+   * list polls a 4.2 MB endpoint on a loop. Marking it FAILED tells the truth and
+   * stops the poll; the user can re-upload.
+   *
+   * Non-blocking on purpose — a failure here must not stop the retention sweep
+   * that is the manager's main job.
+   */
+  private async reapStaleProcessing(now: Date, limit: number): Promise<void> {
+    const cutoff = new Date(now.getTime() - STALE_PROCESSING_TIMEOUT_MS);
+    try {
+      const stranded = await this.filesRepository.findStaleProcessingBefore(cutoff, limit);
+      if (stranded.length === 0) {
+        return;
+      }
+      for (const file of stranded) {
+        await this.filesRepository.saveExtractionResult(file.id, {
+          extractedText: null,
+          extractionError: 'Extraction did not finish before the service restarted',
+          status: 'FAILED',
+        });
+      }
+      this.logger.warn(
+        `reapStaleProcessing: closed ${String(stranded.length)} stranded extraction(s) older than ${cutoff.toISOString()}`,
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`reapStaleProcessing: failed (non-blocking) — ${message}`);
+    }
+  }
+
   // Cron expression is read once at module load (NestJS reads the decorator
   // metadata eagerly). Default '0 2 * * *' = every day at 02:00.
   @Cron(AppConfig.get().FILE_RETENTION_SWEEP_CRON)
@@ -42,6 +78,8 @@ export class FileRetentionSweeperManager {
     this.logger.debug(
       `runSweep: starting — cutoff=${cutoff.toISOString()} batchLimit=${String(limit)}`,
     );
+
+    await this.reapStaleProcessing(cutoff, limit);
 
     try {
       const expired = await this.filesRepository.findExpiredBefore(cutoff, limit);

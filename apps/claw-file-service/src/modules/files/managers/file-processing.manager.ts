@@ -16,6 +16,11 @@ import { readFile } from '../../../common/utilities';
 import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
 import { extractTextFromDocx } from '../../../common/utilities/docx-parser.utility';
 import { extractTextFromImage } from '../../../common/utilities/ocr-parser.utility';
+import {
+  extractTextFromPptx,
+  extractTextFromXlsx,
+} from '../../../common/utilities/ooxml-parser.utility';
+import { extractTextFromRtf } from '../../../common/utilities/rtf-parser.utility';
 import { AppConfig } from '../../../app/config/app.config';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
@@ -23,7 +28,9 @@ import { type ChunkData } from '../types/files.types';
 import {
   MIME_TYPE_DOCX,
   MIME_TYPE_PDF,
+  MIME_TYPE_PPTX,
   MIME_TYPE_XLSX,
+  RTF_MIME_TYPES,
 } from '../constants/file-processing.constants';
 import { ZIP_MIME_TYPES } from '../constants/zip-expansion.constants';
 import { ZipExpansionManager } from './zip-expansion.manager';
@@ -57,7 +64,14 @@ export class FileProcessingManager {
       const chunks = this.splitIntoChunks(textContent, file.mimeType, file.id);
 
       await this.fileChunksRepository.createMany(chunks);
-      await this.updateIngestionStatus(file.id, FileIngestionStatus.COMPLETED);
+      // The text is persisted on the row as well as chunked. Chunks serve
+      // retrieval and are lossy as a reconstruction of the document; the column
+      // is what gets attached to a chat turn verbatim.
+      await this.filesRepository.saveExtractionResult(file.id, {
+        extractedText: textContent,
+        extractionError: null,
+        status: FileIngestionStatus.COMPLETED,
+      });
 
       const chunkedPayload: FileChunkedPayload = {
         fileId: file.id,
@@ -71,7 +85,14 @@ export class FileProcessingManager {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       this.logger.error(`File ${file.id} processing failed: ${errorMessage}`);
-      await this.updateIngestionStatus(file.id, FileIngestionStatus.FAILED);
+      // The reason is stored, not just the status. Chat-service reads it so the
+      // user is told "this PDF is password protected" rather than the useless
+      // "content not extractable".
+      await this.filesRepository.saveExtractionResult(file.id, {
+        extractedText: null,
+        extractionError: errorMessage,
+        status: FileIngestionStatus.FAILED,
+      });
       this.publishExtractionFailure(file, errorMessage);
     }
   }
@@ -93,9 +114,24 @@ export class FileProcessingManager {
       return extractTextFromDocx(buffer);
     }
 
+    // XLSX and PPTX are ZIP containers. Decoding one as UTF-8 yields deflate
+    // noise, which is what this branch used to hand the models for a workbook.
     if (mimeType === MIME_TYPE_XLSX) {
-      this.logger.debug(`extractText: XLSX detected — converting to CSV text`);
-      return buffer.toString('utf-8');
+      this.logger.debug(`extractText: parsing XLSX "${filename}"`);
+      return extractTextFromXlsx(storagePath);
+    }
+
+    if (mimeType === MIME_TYPE_PPTX) {
+      this.logger.debug(`extractText: parsing PPTX "${filename}"`);
+      return extractTextFromPptx(storagePath);
+    }
+
+    if (
+      (RTF_MIME_TYPES as readonly string[]).includes(mimeType) ||
+      filename.toLowerCase().endsWith('.rtf')
+    ) {
+      this.logger.debug(`extractText: stripping RTF control words from "${filename}"`);
+      return extractTextFromRtf(buffer);
     }
 
     if (mimeType.startsWith('image/')) {
