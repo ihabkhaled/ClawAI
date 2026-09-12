@@ -14,14 +14,17 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'Começar no plano gratuito',
     seeFeatures: 'Ver o que a ClawAI faz',
     catalogHeading: 'Modelos para os quais a ClawAI pode encaminhar',
-    costBandLabel: 'Faixa de custo',
     seePricing: 'Confirme o catálogo em tempo real na página de preços',
-    sourceLabel: 'Fonte',
-    costBandNames: {
-      budget: 'Econômico',
-      standard: 'Padrão',
-      premium: 'Premium',
-      highest: 'Mais alto',
+    catalogLiveNote:
+      'Esta lista é lida em tempo real a partir dos modelos para os quais o ClawAI pode encaminhar neste momento, pelo que muda à medida que fornecedores são ligados ou modelos são descontinuados.',
+    catalogUnavailable:
+      'O catálogo de modelos em tempo real está temporariamente indisponível. Tente novamente dentro de momentos.',
+    catalogMore: 'e mais {count} modelos disponíveis neste fornecedor',
+    contextWindowLabel: 'Contexto',
+    capabilityLabels: {
+      vision: 'Visão',
+      tools: 'Ferramentas',
+      audio: 'Áudio',
     },
   },
   hub: {
@@ -104,8 +107,6 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'A ClawAI pode encaminhar uma requisição para um modelo da OpenAI automaticamente, ou você pode fixar um diretamente — a escolha é sua, sem ficar presa a um único fornecedor.',
-      catalogDisclaimer:
-        'Esta lista reflete os modelos da OpenAI que a ClawAI precificou até a data de revisão acima, não um feed em tempo real. A disponibilidade dos modelos muda.',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -164,8 +165,6 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'A ClawAI pode encaminhar uma requisição para um modelo Claude automaticamente, ou você pode fixar um diretamente — a escolha é sua, sem ficar presa a um único fornecedor.',
-      catalogDisclaimer:
-        'Esta lista reflete os modelos Claude que a ClawAI precificou até a data de revisão acima, não um feed em tempo real. A disponibilidade dos modelos muda.',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -220,8 +219,6 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'A ClawAI pode encaminhar uma requisição para um modelo Gemini automaticamente, ou você pode fixar um diretamente — a escolha é sua, sem ficar presa a um único fornecedor.',
-      catalogDisclaimer:
-        'Esta lista reflete os modelos Gemini que a ClawAI precificou até a data de revisão acima, não um feed em tempo real. A disponibilidade dos modelos muda.',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -276,8 +273,6 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'A ClawAI pode encaminhar uma requisição para um modelo DeepSeek automaticamente, ou você pode fixar um diretamente — a escolha é sua, sem ficar presa a um único fornecedor.',
-      catalogDisclaimer:
-        'Esta lista reflete os modelos DeepSeek que a ClawAI precificou até a data de revisão acima, não um feed em tempo real. A disponibilidade dos modelos muda.',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -332,8 +327,6 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'A ClawAI pode encaminhar uma requisição para um modelo Grok automaticamente, ou você pode fixar um diretamente — a escolha é sua, sem ficar presa a um único fornecedor.',
-      catalogDisclaimer:
-        'Esta lista reflete os modelos Grok que a ClawAI precificou até a data de revisão acima, não um feed em tempo real. A disponibilidade dos modelos muda.',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -392,8 +385,6 @@ export const PT_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'Os conectores Ollama e llama.cpp da ClawAI são conectores reais e já lançados — o modo de roteamento Somente Local mantém cada requisição em hardware que você controla.',
-      catalogDisclaimer:
-        'Nenhum modelo específico é citado aqui de propósito — os modelos de pesos abertos e suas capacidades mudam rapidamente, e você escolhe quais executar. Confirme o comportamento do plano para modelos locais na página de preços.',
     },
   },
 };

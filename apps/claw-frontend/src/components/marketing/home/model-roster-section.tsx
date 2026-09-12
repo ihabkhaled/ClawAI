@@ -4,13 +4,30 @@ import Link from 'next/link';
 
 import { ModelFamilyCard } from '@/components/marketing/home/model-family-card';
 import { MARKETING_HOME_PATHS } from '@/constants/marketing-home.constants';
-import {
-  MARKETING_MODEL_FAMILIES,
-  MARKETING_NEWEST_MODELS,
-} from '@/constants/subscription-marketing.constants';
 import { useTranslation } from '@/lib/i18n';
+import type { ModelRosterSectionProps } from '@/types';
 
-export function ModelRosterSection(): React.ReactElement {
+/**
+ * The models a visitor actually gets, read from the live connector catalog.
+ *
+ * This section used to render two hand-written constants. They had drifted
+ * badly: the family list named Moonshot Kimi, Zhipu GLM, Alibaba Qwen and
+ * Amazon Bedrock — vendors with no working model sync here — alongside a
+ * "newest models" block listing MiniMax and NVIDIA models that appear nowhere
+ * in this codebase, and Claude/GPT version numbers that disagreed with the
+ * other static list one directory away. None of it could be wrong in a way a
+ * test would catch, and the page had no review date.
+ *
+ * Now every name on it is a model this deployment can actually serve. The
+ * "newest models" block is gone rather than reimplemented: the catalog has no
+ * release-date field, so any "newest" claim would be invented again.
+ *
+ * When the catalog cannot be read the section renders its heading and the
+ * link to the models hub, and simply lists nothing — an empty roster is
+ * honest, whereas the previous behaviour was to show a list that had been
+ * wrong for months.
+ */
+export function ModelRosterSection({ providers }: ModelRosterSectionProps): React.ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -23,36 +40,13 @@ export function ModelRosterSection(): React.ReactElement {
           <p className="text-muted-foreground mt-4">{t('marketing.home.modelRoster.intro')}</p>
         </div>
 
-        <div className="border-primary/25 bg-primary/5 mx-auto mt-8 max-w-5xl rounded-xl border p-4 sm:p-5">
-          <h3 className="text-foreground text-center text-sm font-semibold tracking-wide">
-            {t('marketing.home.modelRoster.newestTitle')}
-          </h3>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-2xl text-center text-xs">
-            {t('marketing.home.modelRoster.newestIntro')}
-          </p>
-          <ul
-            aria-label={t('marketing.home.modelRoster.newestTitle')}
-            className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
-          >
-            {MARKETING_NEWEST_MODELS.map((model) => (
-              <li
-                key={model.id}
-                className="border-border bg-card flex min-w-0 flex-col rounded-md border px-3 py-2"
-              >
-                <span className="text-foreground truncate text-sm font-medium">{model.label}</span>
-                <span className="text-muted-foreground touch:text-xs truncate text-[11px]">
-                  {model.provider}
-                </span>
-              </li>
+        {providers.length > 0 ? (
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {providers.map((provider) => (
+              <ModelFamilyCard key={provider.provider} provider={provider} />
             ))}
-          </ul>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {MARKETING_MODEL_FAMILIES.map((family) => (
-            <ModelFamilyCard key={family.name} family={family} />
-          ))}
-        </div>
+          </div>
+        ) : null}
 
         <p className="text-muted-foreground mx-auto mt-8 max-w-3xl text-center text-sm">
           {t('marketing.home.modelRoster.footnote')}

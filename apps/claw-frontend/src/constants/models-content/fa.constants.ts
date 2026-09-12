@@ -14,14 +14,16 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'شروع با پلن رایگان',
     seeFeatures: 'ببینید ClawAI چه کاری انجام می‌دهد',
     catalogHeading: 'مدل‌هایی که ClawAI می‌تواند به آن‌ها مسیریابی کند',
-    costBandLabel: 'رده هزینه',
     seePricing: 'کاتالوگ زنده را در صفحه قیمت‌گذاری بررسی کنید',
-    sourceLabel: 'منبع',
-    costBandNames: {
-      budget: 'اقتصادی',
-      standard: 'استاندارد',
-      premium: 'ویژه',
-      highest: 'بالاترین',
+    catalogLiveNote:
+      'این فهرست به‌صورت زنده از میان مدل‌هایی خوانده می‌شود که ClawAI هم‌اکنون می‌تواند درخواست‌ها را به آن‌ها هدایت کند؛ بنابراین با اتصال ارائه‌دهندگان یا بازنشستگی مدل‌ها تغییر می‌کند.',
+    catalogUnavailable: 'فهرست زنده مدل‌ها موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کنید.',
+    catalogMore: 'و {count} مدل دیگر نزد این ارائه‌دهنده در دسترس است',
+    contextWindowLabel: 'زمینه',
+    capabilityLabels: {
+      vision: 'بینایی',
+      tools: 'ابزارها',
+      audio: 'صدا',
     },
   },
   hub: {
@@ -104,8 +106,6 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI می‌تواند درخواستی را به‌طور خودکار به یک مدل OpenAI مسیریابی کند، یا شما می‌توانید مستقیماً مدلی را ثابت کنید — انتخاب با شماست، نه محدود به یک تأمین‌کننده.',
-      catalogDisclaimer:
-        'این فهرست نشان‌دهنده مدل‌های OpenAI است که ClawAI تا تاریخ بازبینی بالا قیمت‌گذاری کرده، نه یک فید زنده. در دسترس بودن مدل تغییر می‌کند.',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -164,8 +164,6 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI می‌تواند درخواستی را به‌طور خودکار به یک مدل Claude مسیریابی کند، یا شما می‌توانید مستقیماً مدلی را ثابت کنید — انتخاب با شماست، نه محدود به یک تأمین‌کننده.',
-      catalogDisclaimer:
-        'این فهرست نشان‌دهنده مدل‌های Claude است که ClawAI تا تاریخ بازبینی بالا قیمت‌گذاری کرده، نه یک فید زنده. در دسترس بودن مدل تغییر می‌کند.',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -220,8 +218,6 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI می‌تواند درخواستی را به‌طور خودکار به یک مدل Gemini مسیریابی کند، یا شما می‌توانید مستقیماً مدلی را ثابت کنید — انتخاب با شماست، نه محدود به یک تأمین‌کننده.',
-      catalogDisclaimer:
-        'این فهرست نشان‌دهنده مدل‌های Gemini است که ClawAI تا تاریخ بازبینی بالا قیمت‌گذاری کرده، نه یک فید زنده. در دسترس بودن مدل تغییر می‌کند.',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -280,8 +276,6 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI می‌تواند درخواستی را به‌طور خودکار به یک مدل DeepSeek مسیریابی کند، یا شما می‌توانید مستقیماً مدلی را ثابت کنید — انتخاب با شماست، نه محدود به یک تأمین‌کننده.',
-      catalogDisclaimer:
-        'این فهرست نشان‌دهنده مدل‌های DeepSeek است که ClawAI تا تاریخ بازبینی بالا قیمت‌گذاری کرده، نه یک فید زنده. در دسترس بودن مدل تغییر می‌کند.',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -336,8 +330,6 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI می‌تواند درخواستی را به‌طور خودکار به یک مدل Grok مسیریابی کند، یا شما می‌توانید مستقیماً مدلی را ثابت کنید — انتخاب با شماست، نه محدود به یک تأمین‌کننده.',
-      catalogDisclaimer:
-        'این فهرست نشان‌دهنده مدل‌های Grok است که ClawAI تا تاریخ بازبینی بالا قیمت‌گذاری کرده، نه یک فید زنده. در دسترس بودن مدل تغییر می‌کند.',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -396,8 +388,6 @@ export const FA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'رابط‌های Ollama و llama.cpp در ClawAI واقعی و عرضه‌شده هستند — حالت مسیریابی فقط‌محلی هر درخواست را روی سخت‌افزاری که خودتان کنترل می‌کنید نگه می‌دارد.',
-      catalogDisclaimer:
-        'هیچ مدل خاصی عمداً در اینجا نام برده نشده — مدل‌های با وزن باز و قابلیت‌هایشان به‌سرعت تغییر می‌کنند، و این شما هستید که تصمیم می‌گیرید کدام‌ها را اجرا کنید. رفتار پلن برای مدل‌های محلی را در صفحه قیمت‌گذاری بررسی کنید.',
     },
   },
 };

@@ -8,6 +8,12 @@ import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.c
 import { Locale } from '@/enums/locale.enum';
 import { ModelProviderPage } from '@/enums/model-provider-page.enum';
 
+const catalogResult: { value: unknown } = { value: null };
+
+vi.mock('@/lib/models/public-models-api', () => ({
+  fetchPublicModelCatalog: () => Promise.resolve(catalogResult.value),
+}));
+
 vi.mock('next/headers', () => ({
   headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': 'en' }),
 }));
@@ -17,6 +23,20 @@ vi.mock('next/link', () => ({
     <a href={href}>{children}</a>
   ),
 }));
+
+function liveModel(displayName: string): Record<string, unknown> {
+  return {
+    modelKey: displayName.toLowerCase().replaceAll(' ', '-'),
+    displayName,
+    maxContextTokens: null,
+    supportsStreaming: true,
+    supportsTools: true,
+    supportsVision: false,
+    supportsAudio: false,
+    supportsStructuredOutput: true,
+    usageTier: 'UNKNOWN',
+  };
+}
 
 function readJsonLd(container: HTMLElement): { '@graph': Array<Record<string, unknown>> } {
   const script = container.querySelector('script[type="application/ld+json"]');
@@ -67,19 +87,66 @@ describe('ModelProviderPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('names every seeded OpenAI model with a qualitative cost band, never a price', async () => {
+  // Replaces a test that asserted six hand-written model names from a frontend
+  // constant. The page now names whatever the connector catalog says it can
+  // serve, so the test supplies a catalog instead of encoding a roster.
+  it('names the models the live catalog reports for this provider', async () => {
+    catalogResult.value = {
+      providers: [
+        {
+          provider: 'OPENAI',
+          displayName: 'OpenAI',
+          modelCount: 2,
+          models: [liveModel('GPT 5'), liveModel('GPT 5 Mini')],
+        },
+      ],
+      totalModelCount: 2,
+      providerCount: 1,
+      generatedAt: '2026-09-12T00:00:00.000Z',
+    };
+
     render(await ModelProviderPageComponent({ provider: ModelProviderPage.OPENAI }));
-    for (const modelName of ['GPT-5', 'GPT-5 mini', 'GPT-4o', 'GPT-4o mini', 'o3', 'o4-mini']) {
-      expect(screen.getByText(modelName)).toBeInTheDocument();
-    }
-    // No exact currency figure ever appears — cost is qualitative only.
+
+    expect(screen.getByText('GPT 5')).toBeInTheDocument();
+    expect(screen.getByText('GPT 5 Mini')).toBeInTheDocument();
+    // Rule 37: a price never reaches a public surface. The backend does not
+    // send one, and this asserts the page cannot grow one either.
     expect(screen.queryByText(/\$\d/u)).not.toBeInTheDocument();
   });
 
-  it('names no specific model on the Local AI page', async () => {
+  it('shows only the models of the provider whose page this is', async () => {
+    catalogResult.value = {
+      providers: [
+        {
+          provider: 'OPENAI',
+          displayName: 'OpenAI',
+          modelCount: 1,
+          models: [liveModel('GPT 5')],
+        },
+      ],
+      totalModelCount: 1,
+      providerCount: 1,
+      generatedAt: '2026-09-12T00:00:00.000Z',
+    };
+
     render(await ModelProviderPageComponent({ provider: ModelProviderPage.LOCAL_AI }));
-    expect(screen.queryByText('GPT-5')).not.toBeInTheDocument();
-    expect(screen.queryByText('Claude Opus 4')).not.toBeInTheDocument();
+
+    expect(screen.queryByText('GPT 5')).not.toBeInTheDocument();
+  });
+
+  // A failed fetch degrades the catalog block; the translated editorial copy
+  // around it still renders, so the page does not disappear over an outage.
+  it('says the catalog is unavailable rather than inventing one', async () => {
+    catalogResult.value = null;
+
+    render(await ModelProviderPageComponent({ provider: ModelProviderPage.OPENAI }));
+
+    expect(
+      screen.getByText(MODELS_CONTENT_BY_LOCALE[Locale.EN].labels.catalogUnavailable),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Models ClawAI can route to' }),
+    ).toBeInTheDocument();
   });
 
   it('links the catalog disclaimer to /pricing', async () => {

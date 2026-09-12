@@ -8,7 +8,7 @@ import { ModelRail } from '@/components/marketing/models/model-rail';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
-import { MODEL_COST_BAND_BY_CLASS, MODEL_FACTS } from '@/constants/model-facts.constants';
+import { MODEL_PAGE_VISIBLE_MODEL_LIMIT } from '@/constants/model-provider-mapping.constants';
 import {
   MODELS_HUB_PATH,
   MODELS_HUB_SLUG,
@@ -17,6 +17,7 @@ import {
   getModelProviderSlug,
 } from '@/constants/models.constants';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
+import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { ModelProviderPageProps } from '@/types/models-component.types';
 // Imported from their specific submodules rather than the `@/utilities` barrel —
@@ -29,6 +30,7 @@ import {
   getModelProviderContent,
   getModelsContent,
 } from '@/utilities/models.utility';
+import { selectModelsForProviderPage } from '@/utilities/public-models.utility';
 import { buildLearnTopicJsonLd, serializeJsonLd } from '@/utilities/structured-data.utility';
 
 export async function ModelProviderPage({
@@ -40,7 +42,11 @@ export async function ModelProviderPage({
 
   const { labels, hub } = getModelsContent(locale);
   const content = getModelProviderContent(locale, provider);
-  const facts = MODEL_FACTS[provider];
+  // The live catalog, not a hand-maintained constant. Null means the fetch
+  // failed; an empty array means this deployment genuinely has no models for
+  // this provider. The page must say different things about those.
+  const catalog = await fetchPublicModelCatalog();
+  const models = selectModelsForProviderPage(catalog, provider);
   const registryEntry = getPageBySlugAndLocale(getModelProviderSlug(provider), locale);
   const hubEntry = getPageBySlugAndLocale(MODELS_HUB_SLUG, locale);
 
@@ -93,14 +99,15 @@ export async function ModelProviderPage({
 
           <ModelCatalog
             heading={labels.catalogHeading}
-            costBandLabel={labels.costBandLabel}
-            costBandNames={labels.costBandNames}
-            hasNamedModels={facts.hasNamedModels}
-            models={facts.models}
-            costBandByClass={MODEL_COST_BAND_BY_CLASS}
-            source={facts.source}
-            sourceLabel={labels.sourceLabel}
-            disclaimer={content.catalogDisclaimer}
+            models={models}
+            totalCount={models.length}
+            visibleLimit={MODEL_PAGE_VISIBLE_MODEL_LIMIT}
+            isUnavailable={catalog === null}
+            unavailableNote={labels.catalogUnavailable}
+            moreLabel={labels.catalogMore}
+            contextLabel={labels.contextWindowLabel}
+            capabilityLabels={labels.capabilityLabels}
+            disclaimer={labels.catalogLiveNote}
             pricingHref={pricingHref}
             seePricing={labels.seePricing}
           />

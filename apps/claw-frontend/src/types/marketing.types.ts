@@ -2,7 +2,8 @@ import type { BillingInterval } from '@/enums/billing.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { Theme } from '@/enums/theme.enum';
 import type { LocaleConfig } from '@/types/i18n.types';
-import type { MarketingModelFamily, MarketingPlanTier } from '@/types/subscription-marketing.types';
+import type { PublicCatalogProvider } from '@/types/public-models.types';
+import type { MarketingPlanTier } from '@/types/subscription-marketing.types';
 
 export type UseMarketingLocaleSwitcherReturn = {
   locale: Locale;
@@ -69,7 +70,17 @@ export type MarketingPlanTierCardProps = {
 };
 
 export type MarketingModelFamilyCardProps = {
-  family: MarketingModelFamily;
+  provider: PublicCatalogProvider;
+};
+
+/**
+ * The home page's roster reads the live catalog. An empty array means either
+ * "nothing is connected" or "we could not read the catalog" — the section
+ * renders no cards in both cases, because inventing a roster is exactly what
+ * this replaced.
+ */
+export type ModelRosterSectionProps = {
+  providers: readonly PublicCatalogProvider[];
 };
 
 export type MarketingPricingSectionProps = {

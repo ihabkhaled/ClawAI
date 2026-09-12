@@ -4787,9 +4787,7 @@ export const es: TranslationDictionary = {
         lastReviewed: 'Última revisión',
       },
       modelRoster: {
-        newestTitle: 'Modelos más recientes del catálogo',
-        newestIntro:
-          'Un resumen conciso de los modelos añadidos recientemente mediante los conectores actuales.',
+        modelCount: '{count} modelos disponibles ahora',
         title: 'Los modelos que obtiene',
         intro:
           'Una sola suscripción cubre todos los proveedores a continuación. Cambie de modelo a mitad de la conversación, o deje que ClawAI elija el mejor para cada mensaje.',

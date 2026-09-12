@@ -14,14 +14,17 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'Start on the free plan',
     seeFeatures: 'See what ClawAI does',
     catalogHeading: 'Models ClawAI can route to',
-    costBandLabel: 'Cost band',
     seePricing: 'Confirm the live catalog on the pricing page',
-    sourceLabel: 'Source',
-    costBandNames: {
-      budget: 'Budget',
-      standard: 'Standard',
-      premium: 'Premium',
-      highest: 'Highest',
+    catalogLiveNote:
+      'This list is read live from the models ClawAI can route to right now, so it changes as providers are connected or models are retired.',
+    catalogUnavailable:
+      'The live model catalog is temporarily unavailable. Please try again shortly.',
+    catalogMore: 'and {count} more models available on this provider',
+    contextWindowLabel: 'Context',
+    capabilityLabels: {
+      vision: 'Vision',
+      tools: 'Tools',
+      audio: 'Audio',
     },
   },
   hub: {
@@ -104,8 +107,6 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI can route a request to an OpenAI model automatically, or you can pin one directly — the choice is yours, not locked to a single vendor.',
-      catalogDisclaimer:
-        'This list reflects OpenAI models ClawAI has priced as of the review date above, not a live feed. Model availability changes.',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -160,8 +161,6 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI can route a request to a Claude model automatically, or you can pin one directly — the choice is yours, not locked to a single vendor.',
-      catalogDisclaimer:
-        'This list reflects Claude models ClawAI has priced as of the review date above, not a live feed. Model availability changes.',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -216,8 +215,6 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI can route a request to a Gemini model automatically, or you can pin one directly — the choice is yours, not locked to a single vendor.',
-      catalogDisclaimer:
-        'This list reflects Gemini models ClawAI has priced as of the review date above, not a live feed. Model availability changes.',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -272,8 +269,6 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI can route a request to a DeepSeek model automatically, or you can pin one directly — the choice is yours, not locked to a single vendor.',
-      catalogDisclaimer:
-        'This list reflects DeepSeek models ClawAI has priced as of the review date above, not a live feed. Model availability changes.',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -328,8 +323,6 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI can route a request to a Grok model automatically, or you can pin one directly — the choice is yours, not locked to a single vendor.',
-      catalogDisclaimer:
-        'This list reflects Grok models ClawAI has priced as of the review date above, not a live feed. Model availability changes.',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -384,8 +377,6 @@ export const EN_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI’s Ollama and llama.cpp adapters are real, shipped connectors — Local-Only routing mode keeps every request on hardware you control.',
-      catalogDisclaimer:
-        'No specific model is named here on purpose — open-weight models and their capabilities change quickly, and you choose which ones to run. Confirm plan behaviour for local models on the pricing page.',
     },
   },
 };

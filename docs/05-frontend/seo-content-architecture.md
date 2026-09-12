@@ -291,13 +291,51 @@ visibly different, which is the one real cannibalisation risk introduced here.
 
 ## 3. Source of truth for model facts
 
-`constants/model-facts.constants.ts` — one module, consumed by every
-model-level page.
+**Superseded 2026-09-12. The source is now the live connector catalog, not a
+frontend constant.**
 
-Grounded in `model-cost-seed.constants.ts` (16 models across 5 providers, the
-list the product actually prices) and `ConnectorProvider` (which adapters
-exist). Carries per model: provider, positioning, strengths by task, relative
-speed and cost band, context posture, and whether it can run locally.
+`GET /api/v1/internal/connectors/public-catalog`, fetched server-side and read
+through `selectModelsForProviderPage`. It is built from the SAME query that
+fills the in-app model picker (`findExposedForCatalog`), so a page cannot
+advertise a model nobody can select, nor omit one users have.
+
+### Why the constant was deleted
+
+`constants/model-facts.constants.ts` held 16 models across 5 providers, copied
+by hand from `model-cost-seed.constants.ts` and carrying a manual review date.
+The design below argued that was safer than crossing a service boundary. In
+practice it failed in the way hand-copied data always does:
+
+- It drifted from the product. The seed it mirrored is a PRICING list, not an
+  availability list — this deployment actually exposes 170 models across 4
+  providers, and the page named 16.
+- It was not even the only copy. `subscription-marketing.constants.ts` held a
+  SECOND roster for the home page that disagreed with it — naming Moonshot Kimi,
+  Zhipu GLM, Alibaba Qwen and Amazon Bedrock (none of which can serve a model
+  here), plus MiniMax and NVIDIA models that appear nowhere in this codebase.
+  Its test asserted those names, so the fiction was load-bearing.
+- Nothing could catch either. Both were internally consistent and fully typed.
+  The drift detector D1 below describes a manual check that was never run.
+
+The boundary concern the original decision raised was real, and is answered
+rather than ignored: the endpoint is service-token guarded, the token never
+reaches a browser, and the payload carries no price, no rate and no connector
+identity (rule 37). The qualitative-cost rule survives — the backend simply does
+not send a number for a page to leak.
+
+### What still holds
+
+`MODEL_PAGE_CONNECTOR_PROVIDERS` maps each `/model-providers/<page>` to the
+connector providers behind it, because the two vocabularies are different:
+`ConnectorProvider` names an adapter, `ModelProviderPage` names a page, and
+`local-ai` is deliberately one page over two runtimes.
+
+The editorial copy per provider — positioning, strengths by task, FAQ — is
+unchanged and still lives in `constants/models-content/<locale>.constants.ts` in
+13 locales. Only the MODEL LIST moved. A failed catalog fetch renders that copy
+with an "unavailable" note rather than an invented list.
+
+### The original design, for the record
 
 Rules:
 

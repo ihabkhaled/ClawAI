@@ -1071,11 +1071,11 @@ export type {
   MarketingPageHeroProps,
   MarketingPlanTierCardProps,
   MarketingModelFamilyCardProps,
+  ModelRosterSectionProps,
   MarketingPricingSectionProps,
   UsePricingToggleReturn,
 } from './marketing.types';
 export type {
-  MarketingModelFamily,
   MarketingPlanTier,
   MarketingFaqEntry,
   MarketingPageSection,

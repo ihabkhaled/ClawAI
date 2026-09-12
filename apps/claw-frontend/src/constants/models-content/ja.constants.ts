@@ -14,14 +14,17 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
     startFree: '無料プランで始める',
     seeFeatures: 'ClawAIの機能を見る',
     catalogHeading: 'ClawAIがルーティングできるモデル',
-    costBandLabel: 'コスト帯',
     seePricing: '料金ページで最新のカタログを確認してください',
-    sourceLabel: '出典',
-    costBandNames: {
-      budget: 'エコノミー',
-      standard: 'スタンダード',
-      premium: 'プレミアム',
-      highest: '最上位',
+    catalogLiveNote:
+      'この一覧は、ClawAI が現在ルーティングできるモデルから直接読み取っています。そのため、プロバイダーの接続やモデルの提供終了に応じて変化します。',
+    catalogUnavailable:
+      '最新のモデルカタログを一時的にご利用いただけません。しばらくしてからもう一度お試しください。',
+    catalogMore: 'このプロバイダーでは、ほかに {count} 件のモデルをご利用いただけます',
+    contextWindowLabel: 'コンテキスト',
+    capabilityLabels: {
+      vision: '画像認識',
+      tools: 'ツール',
+      audio: '音声',
     },
   },
   hub: {
@@ -99,8 +102,6 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAIはリクエストを自動的にOpenAIモデルへルーティングすることも、特定のモデルを直接固定することもできます — 選択はあなた次第で、特定のベンダーに縛られることはありません。',
-      catalogDisclaimer:
-        'この一覧は、上記の確認日時点でClawAIが料金設定を行ったOpenAIモデルを反映したものであり、リアルタイムのフィードではありません。モデルの提供状況は変わることがあります。',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -155,8 +156,6 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAIはリクエストを自動的にClaudeモデルへルーティングすることも、特定のモデルを直接固定することもできます — 選択はあなた次第で、特定のベンダーに縛られることはありません。',
-      catalogDisclaimer:
-        'この一覧は、上記の確認日時点でClawAIが料金設定を行ったClaudeモデルを反映したものであり、リアルタイムのフィードではありません。モデルの提供状況は変わることがあります。',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -211,8 +210,6 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAIはリクエストを自動的にGeminiモデルへルーティングすることも、特定のモデルを直接固定することもできます — 選択はあなた次第で、特定のベンダーに縛られることはありません。',
-      catalogDisclaimer:
-        'この一覧は、上記の確認日時点でClawAIが料金設定を行ったGeminiモデルを反映したものであり、リアルタイムのフィードではありません。モデルの提供状況は変わることがあります。',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -267,8 +264,6 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAIはリクエストを自動的にDeepSeekモデルへルーティングすることも、特定のモデルを直接固定することもできます — 選択はあなた次第で、特定のベンダーに縛られることはありません。',
-      catalogDisclaimer:
-        'この一覧は、上記の確認日時点でClawAIが料金設定を行ったDeepSeekモデルを反映したものであり、リアルタイムのフィードではありません。モデルの提供状況は変わることがあります。',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -323,8 +318,6 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAIはリクエストを自動的にGrokモデルへルーティングすることも、特定のモデルを直接固定することもできます — 選択はあなた次第で、特定のベンダーに縛られることはありません。',
-      catalogDisclaimer:
-        'この一覧は、上記の確認日時点でClawAIが料金設定を行ったGrokモデルを反映したものであり、リアルタイムのフィードではありません。モデルの提供状況は変わることがあります。',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -379,8 +372,6 @@ export const JA_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAIのOllamaおよびllama.cppアダプターは実際に提供されている接続機能です — Local-Onlyルーティングモードは、すべてのリクエストをあなたが管理するハードウェア上にとどめます。',
-      catalogDisclaimer:
-        'ここで特定のモデルを名指ししていないのは意図的なものです。オープンウェイトモデルとその能力は急速に変化し、どれを動かすかはあなた自身が選びます。ローカルモデルに関するプランの扱いは料金ページで確認してください。',
     },
   },
 };

@@ -1,4 +1,3 @@
-import type { ModelCostBand } from '@/constants/model-facts.constants';
 import type { Locale } from '@/enums/locale.enum';
 import type { ModelProviderPage } from '@/enums/model-provider-page.enum';
 import type { PublicPageSeoCopy } from '@/types/content-registry.types';
@@ -38,7 +37,6 @@ export type ModelProviderContent = {
    * even on `/models/local-ai`, which names no specific models, because it
    * still links to `/pricing` for allowance questions.
    */
-  catalogDisclaimer: string;
 };
 
 export type ModelHubContent = {
@@ -63,13 +61,23 @@ export type ModelsDictionary = {
     seeFeatures: string;
     /** Section heading over the model catalog block. */
     catalogHeading: string;
-    /** Label above the cost-band value for a listed model. */
-    costBandLabel: string;
     /** Link text to `/pricing` inside the disclaimer. */
     seePricing: string;
-    /** Label before the vendor citation link, e.g. "Source". */
-    sourceLabel: string;
-    costBandNames: Readonly<Record<ModelCostBand, string>>;
+    /**
+     * States that the list is read live. Replaces a per-provider disclaimer
+     * that said the opposite ("priced as of the review date, not a live feed")
+     * — true when the list was a dated constant, false the moment it became a
+     * catalog read.
+     */
+    catalogLiveNote: string;
+    /** Shown when the live catalog could not be read — never when it is empty. */
+    catalogUnavailable: string;
+    /** Contains `{count}`, replaced with the number of models not listed. */
+    catalogMore: string;
+    /** Prefix for a model's context window, e.g. "Context: 1,048,576". */
+    contextWindowLabel: string;
+    /** Chips shown only for capabilities the catalog actually reports. */
+    capabilityLabels: { vision: string; tools: string; audio: string };
   };
   hub: ModelHubContent;
   providers: Readonly<Record<ModelProviderPage, ModelProviderContent>>;

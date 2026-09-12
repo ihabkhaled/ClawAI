@@ -14,14 +14,17 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'Démarrer avec le plan gratuit',
     seeFeatures: 'Découvrir ce que fait ClawAI',
     catalogHeading: 'Modèles vers lesquels ClawAI peut router',
-    costBandLabel: 'Niveau de coût',
     seePricing: 'Vérifiez le catalogue en direct sur la page tarifs',
-    sourceLabel: 'Source',
-    costBandNames: {
-      budget: 'Économique',
-      standard: 'Standard',
-      premium: 'Premium',
-      highest: 'Le plus élevé',
+    catalogLiveNote:
+      'Cette liste est lue en direct parmi les modèles vers lesquels ClawAI peut router actuellement ; elle évolue donc à mesure que des fournisseurs sont connectés ou que des modèles sont retirés.',
+    catalogUnavailable:
+      'Le catalogue des modèles en direct est momentanément indisponible. Veuillez réessayer dans un instant.',
+    catalogMore: 'et {count} autres modèles disponibles chez ce fournisseur',
+    contextWindowLabel: 'Contexte',
+    capabilityLabels: {
+      vision: 'Vision',
+      tools: 'Outils',
+      audio: 'Audio',
     },
   },
   hub: {
@@ -104,8 +107,6 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI peut router une requête vers un modèle OpenAI automatiquement, ou vous pouvez en fixer un directement — le choix vous appartient, sans dépendance à un seul fournisseur.',
-      catalogDisclaimer:
-        'Cette liste reflète les modèles OpenAI tarifés par ClawAI à la date de vérification ci-dessus, pas un flux en direct. La disponibilité des modèles change.',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -164,8 +165,6 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI peut router une requête vers un modèle Claude automatiquement, ou vous pouvez en fixer un directement — le choix vous appartient, sans dépendance à un seul fournisseur.',
-      catalogDisclaimer:
-        'Cette liste reflète les modèles Claude tarifés par ClawAI à la date de vérification ci-dessus, pas un flux en direct. La disponibilité des modèles change.',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -220,8 +219,6 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI peut router une requête vers un modèle Gemini automatiquement, ou vous pouvez en fixer un directement — le choix vous appartient, sans dépendance à un seul fournisseur.',
-      catalogDisclaimer:
-        'Cette liste reflète les modèles Gemini tarifés par ClawAI à la date de vérification ci-dessus, pas un flux en direct. La disponibilité des modèles change.',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -276,8 +273,6 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI peut router une requête vers un modèle DeepSeek automatiquement, ou vous pouvez en fixer un directement — le choix vous appartient, sans dépendance à un seul fournisseur.',
-      catalogDisclaimer:
-        'Cette liste reflète les modèles DeepSeek tarifés par ClawAI à la date de vérification ci-dessus, pas un flux en direct. La disponibilité des modèles change.',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -332,8 +327,6 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI peut router une requête vers un modèle Grok automatiquement, ou vous pouvez en fixer un directement — le choix vous appartient, sans dépendance à un seul fournisseur.',
-      catalogDisclaimer:
-        'Cette liste reflète les modèles Grok tarifés par ClawAI à la date de vérification ci-dessus, pas un flux en direct. La disponibilité des modèles change.',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -392,8 +385,6 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'Les connecteurs Ollama et llama.cpp de ClawAI sont des connecteurs réels et livrés — le mode de routage Local uniquement garde chaque requête sur du matériel que vous contrôlez.',
-      catalogDisclaimer:
-        'Aucun modèle précis n’est nommé ici, volontairement — les modèles à poids ouverts et leurs capacités changent rapidement, et c’est vous qui choisissez lesquels exécuter. Vérifiez le comportement du plan pour les modèles locaux sur la page tarifs.',
     },
   },
 };

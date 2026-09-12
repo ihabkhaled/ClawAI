@@ -4706,9 +4706,7 @@ export const en: TranslationDictionary = {
         lastReviewed: 'Last reviewed',
       },
       modelRoster: {
-        newestTitle: 'Newest models in the catalog',
-        newestIntro:
-          'A concise snapshot of recently added models available through current connectors.',
+        modelCount: '{count} models available now',
         title: 'The models you get',
         intro:
           'One subscription covers every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',

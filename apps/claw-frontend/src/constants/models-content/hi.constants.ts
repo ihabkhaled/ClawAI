@@ -14,14 +14,17 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'फ्री प्लान से शुरू करें',
     seeFeatures: 'देखें ClawAI क्या करता है',
     catalogHeading: 'वे मॉडल जिन तक ClawAI रूट कर सकता है',
-    costBandLabel: 'लागत श्रेणी',
     seePricing: 'लाइव कैटलॉग की पुष्टि प्राइसिंग पेज पर करें',
-    sourceLabel: 'स्रोत',
-    costBandNames: {
-      budget: 'बजट',
-      standard: 'स्टैंडर्ड',
-      premium: 'प्रीमियम',
-      highest: 'सबसे ऊँचा',
+    catalogLiveNote:
+      'यह सूची सीधे उन मॉडलों से पढ़ी जाती है जिन पर ClawAI इस समय अनुरोध भेज सकता है, इसलिए प्रदाता जुड़ने या मॉडल बंद होने पर यह बदलती रहती है।',
+    catalogUnavailable:
+      'लाइव मॉडल सूची अस्थायी रूप से उपलब्ध नहीं है। कृपया कुछ देर बाद पुनः प्रयास करें।',
+    catalogMore: 'और इस प्रदाता पर {count} अन्य मॉडल उपलब्ध हैं',
+    contextWindowLabel: 'संदर्भ',
+    capabilityLabels: {
+      vision: 'विज़न',
+      tools: 'टूल',
+      audio: 'ऑडियो',
     },
   },
   hub: {
@@ -108,8 +111,6 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI किसी रिक्वेस्ट को अपने आप किसी OpenAI मॉडल तक रूट कर सकता है, या आप उसे सीधे पिन कर सकते हैं — चुनाव आपका है, किसी एक वेंडर से बंधा हुआ नहीं।',
-      catalogDisclaimer:
-        'यह सूची ऊपर दी गई समीक्षा तिथि तक ClawAI द्वारा कीमत तय किए गए OpenAI मॉडलों को दर्शाती है, कोई लाइव फ़ीड नहीं। मॉडल की उपलब्धता बदलती रहती है।',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -168,8 +169,6 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI किसी रिक्वेस्ट को अपने आप किसी Claude मॉडल तक रूट कर सकता है, या आप उसे सीधे पिन कर सकते हैं — चुनाव आपका है, किसी एक वेंडर से बंधा हुआ नहीं।',
-      catalogDisclaimer:
-        'यह सूची ऊपर दी गई समीक्षा तिथि तक ClawAI द्वारा कीमत तय किए गए Claude मॉडलों को दर्शाती है, कोई लाइव फ़ीड नहीं। मॉडल की उपलब्धता बदलती रहती है।',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -224,8 +223,6 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI किसी रिक्वेस्ट को अपने आप किसी Gemini मॉडल तक रूट कर सकता है, या आप उसे सीधे पिन कर सकते हैं — चुनाव आपका है, किसी एक वेंडर से बंधा हुआ नहीं।',
-      catalogDisclaimer:
-        'यह सूची ऊपर दी गई समीक्षा तिथि तक ClawAI द्वारा कीमत तय किए गए Gemini मॉडलों को दर्शाती है, कोई लाइव फ़ीड नहीं। मॉडल की उपलब्धता बदलती रहती है।',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -284,8 +281,6 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI किसी रिक्वेस्ट को अपने आप किसी DeepSeek मॉडल तक रूट कर सकता है, या आप उसे सीधे पिन कर सकते हैं — चुनाव आपका है, किसी एक वेंडर से बंधा हुआ नहीं।',
-      catalogDisclaimer:
-        'यह सूची ऊपर दी गई समीक्षा तिथि तक ClawAI द्वारा कीमत तय किए गए DeepSeek मॉडलों को दर्शाती है, कोई लाइव फ़ीड नहीं। मॉडल की उपलब्धता बदलती रहती है।',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -340,8 +335,6 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI किसी रिक्वेस्ट को अपने आप किसी Grok मॉडल तक रूट कर सकता है, या आप उसे सीधे पिन कर सकते हैं — चुनाव आपका है, किसी एक वेंडर से बंधा हुआ नहीं।',
-      catalogDisclaimer:
-        'यह सूची ऊपर दी गई समीक्षा तिथि तक ClawAI द्वारा कीमत तय किए गए Grok मॉडलों को दर्शाती है, कोई लाइव फ़ीड नहीं। मॉडल की उपलब्धता बदलती रहती है।',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -396,8 +389,6 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI के Ollama और llama.cpp अडैप्टर असली, शिप किए गए कनेक्टर हैं — Local-Only रूटिंग मोड हर रिक्वेस्ट को आपके नियंत्रण वाले हार्डवेयर पर ही रखता है।',
-      catalogDisclaimer:
-        'यहां जानबूझकर किसी खास मॉडल का नाम नहीं लिया गया है — ओपन-वेट मॉडल और उनकी क्षमताएं तेज़ी से बदलती हैं, और आप ही तय करते हैं कि कौन से चलाने हैं। लोकल मॉडलों के लिए प्लान व्यवहार की पुष्टि प्राइसिंग पेज पर करें।',
     },
   },
 };

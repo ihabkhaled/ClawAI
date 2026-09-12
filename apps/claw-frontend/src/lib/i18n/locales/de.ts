@@ -4804,9 +4804,7 @@ export const de: TranslationDictionary = {
         lastReviewed: 'Zuletzt geprüft',
       },
       modelRoster: {
-        newestTitle: 'Neueste Modelle im Katalog',
-        newestIntro:
-          'Eine kompakte Übersicht kürzlich hinzugefügter Modelle aus den aktuellen Konnektoren.',
+        modelCount: '{count} Modelle derzeit verfügbar',
         title: 'Die Modelle, die Sie erhalten',
         intro:
           'Ein Abonnement deckt jeden der folgenden Anbieter ab. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',

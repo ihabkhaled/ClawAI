@@ -4,15 +4,6 @@
 // components resolve them with t(). The only literals here are brand names,
 // numbers and currency symbols, which are identical in every locale.
 
-export type MarketingModelFamily = {
-  /// Vendor/family label. A brand name — identical in every locale.
-  name: string;
-  /// Representative models a subscriber can reach.
-  models: readonly string[];
-  /// i18n key describing what this family is good at.
-  strengthKey: string;
-};
-
 export type MarketingNewestModel = {
   id: string;
   label: string;

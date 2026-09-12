@@ -61,3 +61,12 @@ export const MARKETING_ENTERPRISE_POINTS: ReadonlyArray<MarketingPageSection> = 
     bodyKey: 'marketing.home.enterprise.point3Body',
   },
 ];
+
+/**
+ * How many model names each provider card shows on the home page.
+ *
+ * OpenAI alone exposes 86 here. A card listing them all would push the rest of
+ * the page below three screens of near-identical snapshot ids; the count beside
+ * the chips is what carries the "there are a lot" message.
+ */
+export const MODEL_ROSTER_CHIP_LIMIT = 6;

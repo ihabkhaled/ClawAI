@@ -138,12 +138,29 @@ describe('/models content locale completeness', () => {
     },
   );
 
+  // Replaces a per-provider "catalogDisclaimer" check. That copy said the list
+  // was "priced as of the review date, not a live feed" — true while the list
+  // was a dated constant, false the moment it became a catalog read. One
+  // shared, accurate note replaced 78 strings that had all become wrong.
   it.each(Object.values(Locale))(
-    '%s: every provider carries a non-empty catalog disclaimer',
+    '%s: carries the live-catalog note and the unavailable note',
     (locale) => {
-      for (const provider of MODEL_PROVIDER_ORDER) {
-        const content = MODELS_CONTENT_BY_LOCALE[locale].providers[provider];
-        expect(content.catalogDisclaimer.length, provider).toBeGreaterThan(20);
+      const { labels } = MODELS_CONTENT_BY_LOCALE[locale];
+      const english = MODELS_CONTENT_BY_LOCALE[Locale.EN].labels;
+
+      // Non-empty, and — for every locale but English — actually different from
+      // English, which catches a copy-paste far better than a length check
+      // would. A character minimum is a Latin-centric test: the Chinese note
+      // says the same thing in a third of the characters.
+      expect(labels.catalogLiveNote.trim().length, locale).toBeGreaterThan(0);
+      expect(labels.catalogUnavailable.trim().length, locale).toBeGreaterThan(0);
+      if (locale !== Locale.EN) {
+        expect(labels.catalogLiveNote, locale).not.toBe(english.catalogLiveNote);
+        expect(labels.catalogUnavailable, locale).not.toBe(english.catalogUnavailable);
+      }
+      expect(labels.catalogMore, locale).toContain('{count}');
+      for (const label of Object.values(labels.capabilityLabels)) {
+        expect(label.length, locale).toBeGreaterThan(0);
       }
     },
   );

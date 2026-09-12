@@ -10,6 +10,7 @@ import { HowItWorksSection } from '@/components/marketing/home/how-it-works-sect
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
+import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { fetchPublicPricingCatalog } from '@/lib/pricing/public-pricing-api';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import { getSiteUrl } from '@/lib/site/site-config';
@@ -42,6 +43,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
   const siteUrl = getSiteUrl();
   const lastReviewed = entry?.lastReviewed ?? '';
   const plans = await fetchPublicPricingCatalog();
+  const modelCatalog = await fetchPublicModelCatalog();
   const slots = getAdSenseSlots();
 
   return (
@@ -55,7 +57,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
       </script>
 
       <HeroSection lastReviewed={lastReviewed} />
-      <ModelRosterSection />
+      <ModelRosterSection providers={modelCatalog?.providers ?? []} />
       <MarketingAdUnit slot={slots.home} pathname="/" className="my-8 px-4 sm:px-6" />
       <PricingSection initialPlans={plans} />
       <HowItWorksSection />

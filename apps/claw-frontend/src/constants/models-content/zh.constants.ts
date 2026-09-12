@@ -13,14 +13,16 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
     startFree: '开始使用免费套餐',
     seeFeatures: '了解 ClawAI 能做什么',
     catalogHeading: 'ClawAI 可路由到的模型',
-    costBandLabel: '费用等级',
     seePricing: '请在定价页确认实时目录',
-    sourceLabel: '来源',
-    costBandNames: {
-      budget: '经济型',
-      standard: '标准型',
-      premium: '高级型',
-      highest: '最高级',
+    catalogLiveNote:
+      '此列表直接读取 ClawAI 当前可路由的模型，因此会随着服务商接入或模型下线而变化。',
+    catalogUnavailable: '实时模型目录暂时不可用，请稍后重试。',
+    catalogMore: '该服务商还提供另外 {count} 个模型',
+    contextWindowLabel: '上下文',
+    capabilityLabels: {
+      vision: '视觉',
+      tools: '工具',
+      audio: '音频',
     },
   },
   hub: {
@@ -98,8 +100,6 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI 可以自动把请求路由到某个 OpenAI 模型,你也可以直接固定选用某一个——选择权在你手里,不会被锁定在单一供应商上。',
-      catalogDisclaimer:
-        '此列表反映的是截至上方审核日期,ClawAI 已定价的 OpenAI 模型,并非实时数据。模型可用性会发生变化。',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -157,8 +157,6 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI 可以自动把请求路由到某个 Claude 模型,你也可以直接固定选用某一个——选择权在你手里,不会被锁定在单一供应商上。',
-      catalogDisclaimer:
-        '此列表反映的是截至上方审核日期,ClawAI 已定价的 Claude 模型,并非实时数据。模型可用性会发生变化。',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -212,8 +210,6 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI 可以自动把请求路由到某个 Gemini 模型,你也可以直接固定选用某一个——选择权在你手里,不会被锁定在单一供应商上。',
-      catalogDisclaimer:
-        '此列表反映的是截至上方审核日期,ClawAI 已定价的 Gemini 模型,并非实时数据。模型可用性会发生变化。',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -271,8 +267,6 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI 可以自动把请求路由到某个 DeepSeek 模型,你也可以直接固定选用某一个——选择权在你手里,不会被锁定在单一供应商上。',
-      catalogDisclaimer:
-        '此列表反映的是截至上方审核日期,ClawAI 已定价的 DeepSeek 模型,并非实时数据。模型可用性会发生变化。',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -326,8 +320,6 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI 可以自动把请求路由到某个 Grok 模型,你也可以直接固定选用某一个——选择权在你手里,不会被锁定在单一供应商上。',
-      catalogDisclaimer:
-        '此列表反映的是截至上方审核日期,ClawAI 已定价的 Grok 模型,并非实时数据。模型可用性会发生变化。',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -382,8 +374,6 @@ export const ZH_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI 的 Ollama 和 llama.cpp 适配器都是真实上线的连接器——仅本地路由模式会让每一次请求都留在你自己掌控的硬件上。',
-      catalogDisclaimer:
-        '这里刻意不指名任何具体模型——开放权重模型及其能力变化很快,由你自己选择运行哪些。本地模型的具体套餐规则请在定价页确认。',
     },
   },
 };

@@ -4566,8 +4566,7 @@ export const zh: TranslationDictionary = {
         lastReviewed: '最后评论',
       },
       modelRoster: {
-        newestTitle: '目录中的最新模型',
-        newestIntro: '简要展示通过当前连接器新近加入并可用的模型。',
+        modelCount: '当前可用 {count} 个模型',
         title: '您获得的模型',
         intro:
           '一份订阅涵盖以下所有提供商。在对话中切换模型，或者让 ClawAI 为每条消息选择最好的模型。',

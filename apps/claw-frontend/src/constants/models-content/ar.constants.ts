@@ -14,14 +14,16 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'ابدأ بالخطة المجانية',
     seeFeatures: 'تعرّف على ما يقدّمه ClawAI',
     catalogHeading: 'النماذج التي يمكن لـ ClawAI التوجيه إليها',
-    costBandLabel: 'فئة التكلفة',
     seePricing: 'تحقّق من الكتالوج الحيّ في صفحة الأسعار',
-    sourceLabel: 'المصدر',
-    costBandNames: {
-      budget: 'اقتصادية',
-      standard: 'قياسية',
-      premium: 'متقدّمة',
-      highest: 'الأعلى',
+    catalogLiveNote:
+      'تُقرأ هذه القائمة مباشرةً من النماذج التي يمكن لـ ClawAI توجيه الطلبات إليها في الوقت الحالي، لذا فهي تتغير عند ربط مزوّدين جدد أو إيقاف نماذج.',
+    catalogUnavailable: 'قائمة النماذج المباشرة غير متاحة مؤقتًا. يرجى المحاولة مرة أخرى بعد قليل.',
+    catalogMore: 'و{count} نموذجًا إضافيًا متاحًا لدى هذا المزوّد',
+    contextWindowLabel: 'السياق',
+    capabilityLabels: {
+      vision: 'الرؤية',
+      tools: 'الأدوات',
+      audio: 'الصوت',
     },
   },
   hub: {
@@ -103,8 +105,6 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'يمكن لـ ClawAI توجيه طلب إلى نموذج من OpenAI تلقائيًا، أو يمكنك تثبيت نموذج مباشرة — الخيار لك، وليس مقيّدًا بمزوّد واحد.',
-      catalogDisclaimer:
-        'تعكس هذه القائمة نماذج OpenAI التي سعّرها ClawAI حتى تاريخ المراجعة أعلاه، وليست بثًّا حيًّا. توفر النماذج يتغيّر.',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -163,8 +163,6 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'يمكن لـ ClawAI توجيه طلب إلى نموذج Claude تلقائيًا، أو يمكنك تثبيت نموذج مباشرة — الخيار لك، وليس مقيّدًا بمزوّد واحد.',
-      catalogDisclaimer:
-        'تعكس هذه القائمة نماذج Claude التي سعّرها ClawAI حتى تاريخ المراجعة أعلاه، وليست بثًّا حيًّا. توفر النماذج يتغيّر.',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -219,8 +217,6 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'يمكن لـ ClawAI توجيه طلب إلى نموذج Gemini تلقائيًا، أو يمكنك تثبيت نموذج مباشرة — الخيار لك، وليس مقيّدًا بمزوّد واحد.',
-      catalogDisclaimer:
-        'تعكس هذه القائمة نماذج Gemini التي سعّرها ClawAI حتى تاريخ المراجعة أعلاه، وليست بثًّا حيًّا. توفر النماذج يتغيّر.',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -279,8 +275,6 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'يمكن لـ ClawAI توجيه طلب إلى نموذج DeepSeek تلقائيًا، أو يمكنك تثبيت نموذج مباشرة — الخيار لك، وليس مقيّدًا بمزوّد واحد.',
-      catalogDisclaimer:
-        'تعكس هذه القائمة نماذج DeepSeek التي سعّرها ClawAI حتى تاريخ المراجعة أعلاه، وليست بثًّا حيًّا. توفر النماذج يتغيّر.',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -335,8 +329,6 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'يمكن لـ ClawAI توجيه طلب إلى نموذج Grok تلقائيًا، أو يمكنك تثبيت نموذج مباشرة — الخيار لك، وليس مقيّدًا بمزوّد واحد.',
-      catalogDisclaimer:
-        'تعكس هذه القائمة نماذج Grok التي سعّرها ClawAI حتى تاريخ المراجعة أعلاه، وليست بثًّا حيًّا. توفر النماذج يتغيّر.',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -395,8 +387,6 @@ export const AR_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'موصلا Ollama وllama.cpp في ClawAI حقيقيان ومطلقان فعليًا — يبقي وضع التوجيه المحلي فقط كل طلب على عتاد تتحكم فيه أنت.',
-      catalogDisclaimer:
-        'لا يُسمّى أي نموذج بعينه هنا عن قصد — فالنماذج المفتوحة الأوزان وقدراتها تتغيّر بسرعة، وأنت من يختار أيّها يشغّل. تحقّق من سلوك الخطة للنماذج المحلية في صفحة الأسعار.',
     },
   },
 };

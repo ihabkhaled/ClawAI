@@ -3,56 +3,83 @@ import Link from 'next/link';
 import type { ModelCatalogProps } from '@/types/models-component.types';
 
 /**
- * Renders the provider's models from `MODEL_FACTS`, never from hand-typed
- * prose. Cost is always the qualitative band (never an exact price — the
- * seed file's numbers are estimates), and no speed/latency value is ever
- * rendered here, because none is sourced (§8.1). The "confirm the live
- * catalog" qualifier and the `/pricing` link are mandatory on every page that
- * names a model.
+ * The models this deployment can actually serve for one provider.
+ *
+ * It used to render `MODEL_FACTS` — a hand-maintained frontend constant holding
+ * 16 models, carrying a manual review date, and quietly disagreeing with both
+ * the product and a second static list on the home page. Now it renders what
+ * the connector catalog says, which is the same list the in-app model picker
+ * offers. A page cannot advertise a model nobody can select, and cannot omit
+ * one users have.
+ *
+ * Still no prices, for the same reason as before but now enforced at the
+ * source: the backend never sends a rate (rule 37). Capability chips and the
+ * context window are shown only where the catalog actually has the fact —
+ * printing "Unknown" 86 times is noise, not information.
+ *
+ * A failed catalog fetch renders the unavailable note rather than an invented
+ * list. The surrounding editorial copy, which is translated and does not depend
+ * on the catalog, still renders — the page degrades, it does not disappear.
  */
 export function ModelCatalog({
   heading,
-  costBandLabel,
-  costBandNames,
-  hasNamedModels,
   models,
-  costBandByClass,
-  source,
-  sourceLabel,
+  totalCount,
+  visibleLimit,
+  isUnavailable,
+  unavailableNote,
+  moreLabel,
+  contextLabel,
+  capabilityLabels,
   disclaimer,
   pricingHref,
   seePricing,
 }: ModelCatalogProps): React.ReactElement {
+  const visible = models.slice(0, visibleLimit);
+  const remaining = totalCount - visible.length;
+
   return (
     <div className="editorial-comparison__section" id="models">
       <h2 className="editorial-comparison__section-heading">{heading}</h2>
-      {hasNamedModels ? (
-        <dl className="editorial-comparison__faq" aria-label={heading}>
-          {models.map((model) => (
-            <div className="editorial-comparison__faq-item" key={model.modelKey}>
-              <dt className="editorial-comparison__faq-question">{model.displayName}</dt>
-              <dd className="editorial-comparison__faq-answer">
-                {costBandLabel}: {costBandNames[costBandByClass[model.costClass]]}
-              </dd>
-            </div>
-          ))}
-        </dl>
+
+      {isUnavailable ? (
+        <p className="editorial-comparison__body" role="status">
+          {unavailableNote}
+        </p>
       ) : null}
+
+      {!isUnavailable && visible.length > 0 ? (
+        <>
+          <ul className="editorial-comparison__model-grid" aria-label={heading}>
+            {visible.map((model) => (
+              <li className="editorial-comparison__model-card" key={model.modelKey}>
+                <p className="editorial-comparison__model-name">{model.displayName}</p>
+                <p className="editorial-comparison__model-meta">
+                  {model.maxContextTokens === null
+                    ? null
+                    : `${contextLabel}: ${model.maxContextTokens.toLocaleString()}`}
+                </p>
+                <ul className="editorial-comparison__model-tags">
+                  {model.supportsVision ? <li>{capabilityLabels.vision}</li> : null}
+                  {model.supportsTools ? <li>{capabilityLabels.tools}</li> : null}
+                  {model.supportsAudio ? <li>{capabilityLabels.audio}</li> : null}
+                </ul>
+              </li>
+            ))}
+          </ul>
+          {remaining > 0 ? (
+            <p className="editorial-comparison__body">
+              {moreLabel.replace('{count}', String(remaining))}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
       <p className="editorial-comparison__body">
         {disclaimer}{' '}
         <Link href={pricingHref} className="editorial-comparison__rail-link">
           {seePricing}
         </Link>
-      </p>
-      <p className="editorial-comparison__body">
-        <a
-          href={source.url}
-          className="editorial-comparison__rail-link"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {sourceLabel}: {source.label}
-        </a>
       </p>
     </div>
   );

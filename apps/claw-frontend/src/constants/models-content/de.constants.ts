@@ -14,14 +14,17 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
     startFree: 'Mit dem kostenlosen Plan starten',
     seeFeatures: 'Erfahren, was ClawAI kann',
     catalogHeading: 'Modelle, an die ClawAI routen kann',
-    costBandLabel: 'Kostenstufe',
     seePricing: 'Aktuellen Katalog auf der Preisseite prüfen',
-    sourceLabel: 'Quelle',
-    costBandNames: {
-      budget: 'Günstig',
-      standard: 'Standard',
-      premium: 'Premium',
-      highest: 'Höchste',
+    catalogLiveNote:
+      'Diese Liste wird live aus den Modellen gelesen, an die ClawAI derzeit weiterleiten kann. Sie ändert sich daher, sobald Anbieter angebunden oder Modelle eingestellt werden.',
+    catalogUnavailable:
+      'Der Live-Modellkatalog ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.',
+    catalogMore: 'und {count} weitere Modelle bei diesem Anbieter verfügbar',
+    contextWindowLabel: 'Kontext',
+    capabilityLabels: {
+      vision: 'Bildverstehen',
+      tools: 'Werkzeuge',
+      audio: 'Audio',
     },
   },
   hub: {
@@ -104,8 +107,6 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI kann eine Anfrage automatisch an ein OpenAI-Modell routen, oder Sie können eines direkt festlegen — die Wahl liegt bei Ihnen, nicht an einen einzelnen Anbieter gebunden.',
-      catalogDisclaimer:
-        'Diese Liste spiegelt die OpenAI-Modelle wider, die ClawAI zum oben genannten Prüfdatum bepreist hat, kein Live-Feed. Die Modellverfügbarkeit ändert sich.',
     },
     [ModelProviderPage.ANTHROPIC]: {
       seo: {
@@ -164,8 +165,6 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI kann eine Anfrage automatisch an ein Claude-Modell routen, oder Sie können eines direkt festlegen — die Wahl liegt bei Ihnen, nicht an einen einzelnen Anbieter gebunden.',
-      catalogDisclaimer:
-        'Diese Liste spiegelt die Claude-Modelle wider, die ClawAI zum oben genannten Prüfdatum bepreist hat, kein Live-Feed. Die Modellverfügbarkeit ändert sich.',
     },
     [ModelProviderPage.GOOGLE]: {
       seo: {
@@ -220,8 +219,6 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI kann eine Anfrage automatisch an ein Gemini-Modell routen, oder Sie können eines direkt festlegen — die Wahl liegt bei Ihnen, nicht an einen einzelnen Anbieter gebunden.',
-      catalogDisclaimer:
-        'Diese Liste spiegelt die Gemini-Modelle wider, die ClawAI zum oben genannten Prüfdatum bepreist hat, kein Live-Feed. Die Modellverfügbarkeit ändert sich.',
     },
     [ModelProviderPage.DEEPSEEK]: {
       seo: {
@@ -276,8 +273,6 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI kann eine Anfrage automatisch an ein DeepSeek-Modell routen, oder Sie können eines direkt festlegen — die Wahl liegt bei Ihnen, nicht an einen einzelnen Anbieter gebunden.',
-      catalogDisclaimer:
-        'Diese Liste spiegelt die DeepSeek-Modelle wider, die ClawAI zum oben genannten Prüfdatum bepreist hat, kein Live-Feed. Die Modellverfügbarkeit ändert sich.',
     },
     [ModelProviderPage.XAI]: {
       seo: {
@@ -332,8 +327,6 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'ClawAI kann eine Anfrage automatisch an ein Grok-Modell routen, oder Sie können eines direkt festlegen — die Wahl liegt bei Ihnen, nicht an einen einzelnen Anbieter gebunden.',
-      catalogDisclaimer:
-        'Diese Liste spiegelt die Grok-Modelle wider, die ClawAI zum oben genannten Prüfdatum bepreist hat, kein Live-Feed. Die Modellverfügbarkeit ändert sich.',
     },
     [ModelProviderPage.LOCAL_AI]: {
       seo: {
@@ -389,8 +382,6 @@ export const DE_MODELS_CONTENT: ModelsDictionary = {
       ],
       productNote:
         'Die Ollama- und llama.cpp-Connectoren von ClawAI sind echte, ausgelieferte Anbindungen — der Modus „Nur lokal“ hält jede Anfrage auf Hardware, die Sie kontrollieren.',
-      catalogDisclaimer:
-        'Hier wird absichtlich kein bestimmtes Modell genannt — Modelle mit offenen Gewichten und ihre Fähigkeiten ändern sich schnell, und Sie entscheiden, welche Sie ausführen. Prüfen Sie das Planverhalten für lokale Modelle auf der Preisseite.',
     },
   },
 };

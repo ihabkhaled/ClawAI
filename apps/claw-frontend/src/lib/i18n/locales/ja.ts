@@ -4746,8 +4746,7 @@ export const ja: TranslationDictionary = {
         lastReviewed: '最終レビュー日',
       },
       modelRoster: {
-        newestTitle: 'カタログの最新モデル',
-        newestIntro: '現在のコネクターから利用できる、最近追加されたモデルの簡潔な一覧です。',
+        modelCount: '現在 {count} 件のモデルをご利用いただけます',
         title: '入手できるモデル',
         intro:
           '1 つのサブスクリプションで、以下のすべてのプロバイダーがカバーされます。会話の途中でモデルを切り替えるか、ClawAI にメッセージごとに最適なモデルを選択させます。',

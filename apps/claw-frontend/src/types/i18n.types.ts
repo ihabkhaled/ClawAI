@@ -4686,11 +4686,10 @@ export type TranslationDictionary = {
       modelRoster: {
         title: string;
         intro: string;
-        newestTitle: string;
-        newestIntro: string;
         footnote: string;
         linkFeatures: string;
         linkArchitecture: string;
+        modelCount: string;
       };
       pricing: {
         title: string;
