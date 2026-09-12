@@ -322,6 +322,16 @@
           "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/agent/organizations/:id/policy",
+          "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/agent/organizations/:id/policy",
+          "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/agent/organizations/:slug/sso/callback",
           "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
@@ -330,6 +340,11 @@
           "method": "POST",
           "route": "/agent/organizations/:slug/sso/metadata",
           "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/agent/organizations/policy/effective",
+          "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
         },
         {
           "method": "GET",
@@ -8658,6 +8673,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-agent-service/prisma/schema.prisma",
+            "value": "OrganizationPolicy"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-agent-service/prisma/schema.prisma",
             "value": "PairingRequest"
           },
           {
@@ -9592,7 +9612,7 @@
       },
       "claw-agent-service": {
         "runner": "jest",
-        "testFiles": 11
+        "testFiles": 13
       },
       "claw-audit-service": {
         "runner": "jest",
@@ -10373,7 +10393,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 649,
+    "endpointCount": 651,
     "envVarCount": 352,
     "eventCount": 178,
     "frontendRouteCount": 153,
