@@ -3,6 +3,7 @@
 import { MODEL_ROSTER_CHIP_LIMIT } from '@/constants/marketing-home.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { MarketingModelFamilyCardProps } from '@/types';
+import { sortCatalogModelsByRecency } from '@/utilities/public-models.utility';
 
 /**
  * One provider, and the models it really offers here.
@@ -15,7 +16,13 @@ import type { MarketingModelFamilyCardProps } from '@/types';
  */
 export function ModelFamilyCard({ provider }: MarketingModelFamilyCardProps): React.ReactElement {
   const { t } = useTranslation();
-  const chips = provider.models.slice(0, MODEL_ROSTER_CHIP_LIMIT);
+  // Newest first before slicing, or the sample is whatever sorts alphabetically
+  // first — which for OpenAI was "Chatgpt Image Latest" and four flavours of
+  // GPT 3.5 Turbo, on the page whose whole job is to say what you get.
+  const chips = sortCatalogModelsByRecency(provider.provider, provider.models).slice(
+    0,
+    MODEL_ROSTER_CHIP_LIMIT,
+  );
 
   return (
     <div className="border-border bg-card flex flex-col rounded-lg border p-5">

@@ -52,25 +52,33 @@ describe('selectModelsForProviderPage', () => {
       { provider: 'LLAMACPP', displayName: 'llama.cpp', models: [model('Llama 3')] },
     ]);
 
-    expect(
-      selectModelsForProviderPage(live, ModelProviderPage.LOCAL_AI).map((m) => m.displayName),
-    ).toEqual(['Llama 3', 'Mistral']);
+    const merged = selectModelsForProviderPage(live, ModelProviderPage.LOCAL_AI).map(
+      (m) => m.displayName,
+    );
+    expect(merged).toHaveLength(2);
+    expect(merged).toEqual(expect.arrayContaining(['Llama 3', 'Mistral']));
   });
 
-  // The database's order shifts on every re-sync; a page that reorders itself
-  // between deploys looks like a different page to a reader and to a diff.
-  it('sorts by display name rather than trusting catalog order', () => {
+  // Was "sorts by display name". Name order is close to REVERSE chronological
+  // for model names, so it reliably surfaced the oldest model a provider still
+  // serves — the home page advertised "GPT 3.5 Turbo" while the in-app picker
+  // showed GPT 5.6. Public pages now use the same comparator as the picker.
+  it('orders newest first, using the same comparator as the model picker', () => {
     const live = catalog([
       {
         provider: 'OPENAI',
         displayName: 'OpenAI',
-        models: [model('GPT 5'), model('Aardvark'), model('Mini')],
+        models: [
+          { ...model('GPT 3.5 Turbo'), modelKey: 'gpt-3.5-turbo' },
+          { ...model('GPT 5.4'), modelKey: 'gpt-5.4' },
+          { ...model('GPT 4o'), modelKey: 'gpt-4o' },
+        ],
       },
     ]);
 
     expect(
       selectModelsForProviderPage(live, ModelProviderPage.OPENAI).map((m) => m.displayName),
-    ).toEqual(['Aardvark', 'GPT 5', 'Mini']);
+    ).toEqual(['GPT 5.4', 'GPT 4o', 'GPT 3.5 Turbo']);
   });
 
   it('returns nothing for a provider this deployment has not connected', () => {

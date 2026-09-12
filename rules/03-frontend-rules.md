@@ -226,6 +226,28 @@ became live, 78 translated strings saying it was "priced as of the review date,
 not a live feed" silently became lies. If a sentence asserts how fresh the data
 is, it belongs beside the fetch, not in per-item content.
 
+### One ordering rule, shared by every surface that lists the same thing
+
+When two surfaces list the same data, they share the comparator. Not the same
+idea of a comparator — the same function.
+
+The model picker was fixed to sort newest-first while the public pages were
+left on the backend's alphabetical order. For a while the product described
+itself two ways at once: the home page advertised "Chatgpt Image Latest" and
+four flavours of GPT 3.5 Turbo as its OpenAI sample, while a signed-in user
+opening the picker saw GPT 5.6 at the top. Both were "working".
+
+`compareModelsByRecency` is now used by the picker AND by
+`sortCatalogModelsByRecency`, which the home roster and every `/model-providers`
+page call. Adapt the data to the comparator at the call site; do not widen the
+comparator, and never write a second one.
+
+**Alphabetical is not a neutral default for versioned names.** Model names sort
+close to REVERSE chronologically — `GPT 3.5` before `GPT 5.4`, `Claude Opus 4.5`
+before `Opus 5` — so `localeCompare` reliably puts the oldest thing you still
+serve first. That is the worst possible sample on a page whose job is to say
+what you offer.
+
 ### Spacing belongs to the shared component, not to each call site
 
 When a primitive is used with an icon anywhere, its **base variant** carries the
