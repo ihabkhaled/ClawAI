@@ -10,8 +10,17 @@ COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-frontend/ ./apps/claw-frontend/
 RUN npm install --ignore-scripts --legacy-peer-deps
+# In dependency order, and with no comment between the lines: shared-types
+# imports shared-constants and shared-utilities imports both, and the build-order
+# test reads consecutive RUN lines as one recipe.
+#
+# shared-utilities is here for its `./money` subpath only - the one
+# toLocalizedMoneyView the frontend and payment-service both convert through.
+# A container that skipped it would silently run the HOST's stale dist, which
+# surfaces as ERR_MODULE_NOT_FOUND on a file that exists on the dev machine.
 RUN cd packages/shared-constants && npm run build
 RUN cd packages/shared-types && npm run build
+RUN cd packages/shared-utilities && npm run build
 
 WORKDIR /app/apps/claw-frontend
 EXPOSE 3000

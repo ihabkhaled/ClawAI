@@ -29,12 +29,17 @@ FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-frontend/ ./apps/claw-frontend/
 
-# @claw/shared-types and @claw/shared-constants resolve through their
-# `main`/`types` fields to dist/, which is gitignored, so they have to be
-# compiled before Next traces the imports. shared-types imports from
-# shared-constants, so it must build second.
+# Every @claw/* package resolves through its `main`/`types` fields to dist/,
+# which is gitignored, so each has to be compiled before Next traces the
+# imports. Order matters: shared-types imports from shared-constants, and
+# shared-utilities imports from both.
+#
+# shared-utilities is here for its `./money` subpath only - the one
+# toLocalizedMoneyView both the frontend and payment-service convert through.
+# Importing the package root would pull NestJS into the client bundle.
 RUN cd /app/packages/shared-constants && npm run build \
  && cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-utilities && npm run build \
  && cd /app/packages/shared-entitlements && npm run build
 
 WORKDIR /app/apps/claw-frontend
