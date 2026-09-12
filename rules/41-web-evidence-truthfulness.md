@@ -136,15 +136,30 @@ from the missing capability statement, and neither knew about the other.**
     loopback. That is TD-031, not a secret.
 
 13. **Head metadata read from a plain fetch is "not present in this markup",
-    never "verified absent."** `extractHtml` (`common/utilities/html-extract.utility.ts`)
-    reads canonical, hreflang, meta robots, Open Graph, Twitter card and
-    JSON-LD straight out of the raw response bytes — no JavaScript execution.
-    A page whose canonical tag, or an entire meta-tag block, is injected
-    client-side will report `null`/empty here even though a browser would show
-    it. `HtmlMetadata`'s own doc comment says this explicitly. A finding built
-    from this data ("no canonical tag") is only true of the markup actually
-    fetched; do not upgrade it to a claim about the live rendered page without
-    a rendered-DOM fetch to back it — that fallback does not exist yet.
+    never "verified absent" — unless a headless render actually ran.**
+    `extractHtml` (`common/utilities/html-extract.utility.ts`) reads
+    canonical, hreflang, meta robots, Open Graph, Twitter card and JSON-LD
+    straight out of the raw response bytes — no JavaScript execution. A page
+    whose canonical tag, or an entire meta-tag block, is injected
+    client-side will report `null`/empty here even though a browser would
+    show it. `HtmlMetadata`'s own doc comment says this explicitly. A
+    finding built from PLAIN-fetch data ("no canonical tag") is only true of
+    the markup actually fetched; do not upgrade it to a claim about the live
+    rendered page without a rendered-DOM fetch to back it.
+
+    **Done 2026-09-12**: that rendered-DOM fetch now exists —
+    `HeadlessFetchAdapter` (ADR-094), a `FetchService`-internal fallback for
+    a plain fetch whose extracted text looks client-side rendered. A result
+    with `renderedWithHeadlessBrowser: true` genuinely did run the page's own
+    JavaScript before extraction, so absence in ITS metadata is a stronger
+    claim than absence in a plain fetch's — check the flag before deciding
+    which sentence a finding is allowed to make.
+
+    Every request the rendered page makes is checked against the SAME
+    anti-SSRF guard the plain path uses (`assertSafeOutboundUrl`, shared via
+    `isHostExplicitlyAllowlisted`) — a rendered page's own JavaScript can
+    issue a subrequest a plain GET never could, so the boundary from item 12
+    has to hold for those too, not just the top-level URL.
 
 ## Prohibited patterns
 
@@ -169,6 +184,9 @@ from the missing capability statement, and neither knew about the other.**
 | **Unit test**        | `apps/claw-research-service/src/common/utilities/__tests__/feed.utility.spec.ts` — RSS and Atom parsing, CDATA/entity decoding, an entry with no link is skipped, unrecognized XML returns `{kind:'unrecognized'}`.                                                                                                                                                                         |
 | **Unit test**        | `apps/claw-research-service/src/modules/research/managers/__tests__/site-audit.manager.spec.ts` — every finding names its evidence item ids, a "missing X" finding is `HIGH` (not `CONFIRMED`) and carries a stated limitation, a fully clean page set produces zero findings.                                                                                                              |
 | **Unit test**        | `apps/claw-chat-service/src/common/utilities/__tests__/research-intent-classifier.utility.spec.ts` — upgrades to SITE_CRAWL only with a URL plus crawl language present, never upgrades SEARCH_ONLY, matches the spec's own "plain fetch" regression case by NOT upgrading it.                                                                                                              |
+| **Unit test**        | `apps/claw-research-service/src/modules/fetch/adapters/__tests__/headless-fetch.adapter.spec.ts` — extraction reuses `extractHtml`, the browser is shared across calls, a private-host URL is refused before a context opens, an in-page request to a private host or a blocked resource type is aborted, a public in-page request is allowed, the post-navigation final URL is re-checked. |
+| **Unit test**        | `apps/claw-research-service/src/modules/fetch/services/__tests__/fetch.service.headless-fallback.spec.ts` — retries only a thin `text/html` result, never a non-HTML one, never when the feature flag is off, keeps the plain result when the render fails or comes back thinner still.                                                                                                     |
+| **Unit test**        | `apps/claw-research-service/src/common/utilities/__tests__/url-safety.utility.spec.ts` — `isHostExplicitlyAllowlisted` (shared by both fetch adapters): exact match, wildcard suffix without matching the bare suffix, empty allowlist, unparseable URL.                                                                                                                                    |
 | **Review checklist** | Rule 7 has no automatable form yet — the counts are assembled in several places. Read them against the bundle before shipping a change to any of them.                                                                                                                                                                                                                                      |
 
 ## Definition of done

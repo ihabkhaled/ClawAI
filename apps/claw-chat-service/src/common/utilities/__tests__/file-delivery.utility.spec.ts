@@ -4,7 +4,7 @@
 //
 // This file exists because the reclassification of PDF/DOCX/XLSX/PPTX/RTF from
 // OMITTED_UNSUPPORTED to EXTRACTED_TEXT — the behavioural claim the whole
-// delivery matrix rests on — shipped with no test at all. See ADR-094.
+// delivery matrix rests on — shipped with no test at all. See ADR-095.
 
 import { buildAttachedFilesManifest, buildFileDeliveryEntries } from '../file-delivery.utility';
 import { FileDeliveryMode } from '../../enums/file-delivery-mode.enum';

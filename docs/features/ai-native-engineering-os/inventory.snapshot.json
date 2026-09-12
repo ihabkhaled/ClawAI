@@ -5276,6 +5276,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "RESEARCH_HEADLESS_RENDER_ENABLED"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "RESEARCH_PORT"
       },
       {
@@ -7537,7 +7542,7 @@
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
-          "bytes": 14429,
+          "bytes": 16517,
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
@@ -9647,7 +9652,7 @@
       },
       "claw-research-service": {
         "runner": "jest",
-        "testFiles": 28
+        "testFiles": 30
       },
       "claw-routing-service": {
         "runner": "jest",
@@ -10369,7 +10374,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 649,
-    "envVarCount": 351,
+    "envVarCount": 352,
     "eventCount": 178,
     "frontendRouteCount": 153,
     "localeCount": 13,
@@ -10380,7 +10385,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1200,
+    "totalTestFiles": 1202,
     "workspaceCount": 25
   }
 }

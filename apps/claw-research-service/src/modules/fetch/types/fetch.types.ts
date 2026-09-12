@@ -39,4 +39,12 @@ export type FetchResult = {
    * will not have them here without a rendered-DOM fetch.
    */
   metadata?: HtmlMetadata;
+  /**
+   * `true` only when this result came from `HeadlessFetchAdapter` (a real
+   * Chromium render), never set for the plain HTTP path. Absent, not
+   * `false`, on every plain result — so a trace or log line can say
+   * "rendered" only when it is actually true, per rule 41's ban on a
+   * hardcoded value read as a measurement.
+   */
+  renderedWithHeadlessBrowser?: true;
 };

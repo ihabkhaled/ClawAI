@@ -25,7 +25,7 @@ row claimed to be processed, which also disabled the frontend poller that
 existed to show the truth.
 
 Full reasoning:
-[ADR-094](../docs/13-adr/adr-094-attachment-text-extraction-pipeline.md).
+[ADR-095](../docs/13-adr/adr-095-attachment-text-extraction-pipeline.md).
 
 ## Applies to
 

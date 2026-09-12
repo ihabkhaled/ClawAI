@@ -29,4 +29,4 @@ ALTER TABLE "files" ALTER COLUMN "ingestion_status" SET DEFAULT 'PENDING';
 -- History is instead healed lazily and per-file: when a legacy row is actually
 -- attached to a message, FilesService re-runs extraction for that one file. A
 -- file nobody opens again costs nothing. See
--- docs/13-adr/adr-094-attachment-text-extraction-pipeline.md.
+-- docs/13-adr/adr-095-attachment-text-extraction-pipeline.md.

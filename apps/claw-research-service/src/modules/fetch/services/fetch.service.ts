@@ -2,11 +2,13 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { FETCH_CACHE_TTL_MS } from '../../../common/constants/fetch.constants';
+import { HEADLESS_RENDER_MIN_CONTENT_CHARS } from '../../../common/constants/headless-fetch.constants';
 import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { sha256Hex } from '../../../common/utilities/crypto.utility';
 import { ResearchUsageService } from '../../../common/services/research-usage.service';
+import { HeadlessFetchAdapter } from '../adapters/headless-fetch.adapter';
 import { HttpFetchAdapter } from '../adapters/http-fetch.adapter';
 import { DomainPolicyOutcome } from '../enums/domain-policy-outcome.enum';
 import { FetchJobRepository } from '../repositories/fetch-job.repository';
@@ -22,6 +24,7 @@ export class FetchService {
 
   constructor(
     private readonly adapter: HttpFetchAdapter,
+    private readonly headlessAdapter: HeadlessFetchAdapter,
     private readonly jobs: FetchJobRepository,
     private readonly cache: PageCacheRepository,
     private readonly researchUsage: ResearchUsageService,
@@ -46,10 +49,11 @@ export class FetchService {
     }
 
     try {
-      const result = await this.adapter.fetchPage({
+      const plain = await this.adapter.fetchPage({
         url: normalized,
         timeoutMs: dto.timeoutMs,
       });
+      const result = await this.maybeRenderHeadless(normalized, dto, plain);
       await this.persist(job.id, result, cacheKey);
       return result;
     } catch (error) {
@@ -81,6 +85,44 @@ export class FetchService {
 
   async listJobs(userId: string, limit: number): Promise<FetchJob[]> {
     return this.jobs.listByUser(userId, limit);
+  }
+
+  /**
+   * Retries with `HeadlessFetchAdapter` when the plain fetch's extracted
+   * text looks client-side-rendered — thin text on an HTML page, per
+   * `HEADLESS_RENDER_MIN_CONTENT_CHARS`. Never a hard failure: a headless
+   * render that errors (timeout, blocked-by-policy in-page request, browser
+   * crash) just means the plain result stands, because it is still strictly
+   * better than failing a fetch that already succeeded once.
+   */
+  private async maybeRenderHeadless(
+    normalized: string,
+    dto: FetchRequestDto,
+    plain: FetchResult,
+  ): Promise<FetchResult> {
+    if (!AppConfig.get().RESEARCH_HEADLESS_RENDER_ENABLED) {
+      return plain;
+    }
+    const looksClientRendered =
+      plain.mimeType === 'text/html' &&
+      plain.content.trim().length < HEADLESS_RENDER_MIN_CONTENT_CHARS;
+    if (!looksClientRendered) {
+      return plain;
+    }
+    try {
+      const rendered = await this.headlessAdapter.fetchPage({
+        url: normalized,
+        timeoutMs: dto.timeoutMs,
+      });
+      this.logger.log(
+        `maybeRenderHeadless: ${normalized} — plain content ${String(plain.content.trim().length)} chars, rendered ${String(rendered.content.trim().length)} chars`,
+      );
+      return rendered.content.trim().length > plain.content.trim().length ? rendered : plain;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`maybeRenderHeadless: headless render failed for ${normalized}: ${message}`);
+      return plain;
+    }
   }
 
   private normalizeUrl(raw: string): string {

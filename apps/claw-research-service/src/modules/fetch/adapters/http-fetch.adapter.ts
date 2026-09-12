@@ -11,7 +11,10 @@ import {
   RAW_BODY_PRESERVED_MIME_TYPES,
 } from '../../../common/constants/fetch.constants';
 import { extractHtml } from '../../../common/utilities/html-extract.utility';
-import { assertSafeOutboundUrl } from '../../../common/utilities/url-safety.utility';
+import {
+  assertSafeOutboundUrl,
+  isHostExplicitlyAllowlisted,
+} from '../../../common/utilities/url-safety.utility';
 import type { HtmlMetadata } from '../../../common/types/html-extract.types';
 import type { FetchAdapter } from './fetch-adapter.interface';
 import type { FetchRequest, FetchResult } from '../types/fetch.types';
@@ -37,7 +40,7 @@ export class HttpFetchAdapter implements FetchAdapter {
     // gets exactly that host rather than the whole private network.
     const allowedHosts = AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST;
     const parsed = assertSafeOutboundUrl(request.url, {
-      allowPrivateHosts: this.isExplicitlyAllowed(request.url, allowedHosts),
+      allowPrivateHosts: isHostExplicitlyAllowlisted(request.url, allowedHosts),
     });
     const response = await fetch(parsed.href, {
       redirect: 'follow',
@@ -85,7 +88,7 @@ export class HttpFetchAdapter implements FetchAdapter {
     // could not.
     try {
       assertSafeOutboundUrl(response.url, {
-        allowPrivateHosts: this.isExplicitlyAllowed(
+        allowPrivateHosts: isHostExplicitlyAllowlisted(
           response.url,
           AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST,
         ),
@@ -94,38 +97,6 @@ export class HttpFetchAdapter implements FetchAdapter {
       this.logger.warn(`Fetch redirected to unsafe target ${response.url}`);
       throw error;
     }
-  }
-
-  /**
-   * Whether the operator named this exact host in the domain allowlist.
-   *
-   * Deliberately narrow: it is the ONLY thing that unlocks a private address,
-   * and an empty allowlist unlocks nothing. Reusing the existing allowlist
-   * rather than adding a new "allow internal fetches" switch keeps the decision
-   * where an operator already makes it, and stops it being a single boolean
-   * that opens the whole private network at once.
-   */
-  private isExplicitlyAllowed(rawUrl: string, allowlist: readonly string[]): boolean {
-    if (allowlist.length === 0) {
-      return false;
-    }
-    let host: string;
-    try {
-      host = new URL(rawUrl).hostname.toLowerCase();
-    } catch {
-      return false;
-    }
-    return allowlist.some((pattern) => {
-      const normalized = pattern.trim().toLowerCase();
-      if (normalized.length === 0) {
-        return false;
-      }
-      if (normalized.startsWith('*.')) {
-        const suffix = normalized.slice(1);
-        return host.endsWith(suffix) && host.length > suffix.length;
-      }
-      return host === normalized;
-    });
   }
 
   private parseMime(header: string | null): string | null {

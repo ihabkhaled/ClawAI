@@ -1104,7 +1104,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    * because it is the only field that holds readable text for a PDF, DOCX,
    * XLSX, PPTX or RTF. This method used to fall through to
    * "content not extractable as text" for exactly those formats, and the models
-   * paraphrased that sentence back to the user as a refusal. See ADR-094.
+   * paraphrased that sentence back to the user as a refusal. See ADR-095.
    */
   private decodeFileContent(file: FileContentResponse): string {
     const extracted = file.extractedText?.trim();

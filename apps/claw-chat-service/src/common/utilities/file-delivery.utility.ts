@@ -158,7 +158,7 @@ function buildFileSnippet(file: FileContentResponse): string {
   }
   // `extractedText` first, for the same reason as everywhere else: `content` is
   // base64, so this used to hand the judge 600 characters of "JVBERi0xLjM..."
-  // and ask it to grade answers against that. ADR-094.
+  // and ask it to grade answers against that. ADR-095.
   const text = (file.extractedText ?? file.content ?? '').trim();
   if (text.length === 0) {
     return '[empty]';

@@ -204,6 +204,27 @@ function hostMatchesAllowlist(host: string, allowed: readonly string[]): boolean
 }
 
 /**
+ * Whether the operator named this exact host in the domain allowlist — the
+ * ONLY thing that unlocks a private address for an outbound fetch. Shared by
+ * every fetch adapter (`HttpFetchAdapter`, `HeadlessFetchAdapter`) so the
+ * decision has exactly one implementation: two adapters computing "is this
+ * host allowlisted" independently is how they'd eventually disagree about
+ * which URLs a self-hosted deployment is allowed to reach internally.
+ */
+export function isHostExplicitlyAllowlisted(rawUrl: string, allowlist: readonly string[]): boolean {
+  if (allowlist.length === 0) {
+    return false;
+  }
+  let host: string;
+  try {
+    host = new URL(rawUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return hostMatchesAllowlist(host, allowlist);
+}
+
+/**
  * Throws unless the URL is a plain http(s) address on a public host.
  *
  * `allowPrivateHosts` is a deliberate escape hatch for a self-hosted deployment

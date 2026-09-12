@@ -4,7 +4,7 @@
 // text]" for every PDF, DOCX, XLSX and PPTX. Models read that sentence and
 // paraphrased it back as a refusal, which users reported as "the AI can't read
 // my file". The AI could read perfectly; we were telling it there was nothing
-// to read. See ADR-094.
+// to read. See ADR-095.
 
 import { ContextAssemblyManager } from '../context-assembly.manager';
 import { type FileContentResponse } from '../../types/context.types';
@@ -187,7 +187,7 @@ describe('ContextAssemblyManager attachment decoding', () => {
     });
   });
 
-  // A file-service that predates ADR-094 does not send the new fields at all.
+  // A file-service that predates ADR-095 does not send the new fields at all.
   describe('older file-service payloads', () => {
     it('falls back to decoding a text file when the new fields are absent', () => {
       const result = decode({

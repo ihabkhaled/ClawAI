@@ -14,7 +14,11 @@ import { ScrapeService } from '../../scrape/services/scrape.service';
 import { SearchExecutionService } from '../../search/services/search-execution.service';
 import { ResearchRunRepository } from '../repositories/research-run.repository';
 import { ResearchUsageService } from '../../../common/services/research-usage.service';
-import { buildEvidenceBundle, traceEntry } from '../utilities/evidence-builder.utility';
+import {
+  buildEvidenceBundle,
+  pushFetchToolMarker,
+  traceEntry,
+} from '../utilities/evidence-builder.utility';
 import { SiteAuditManager } from './site-audit.manager';
 import { SiteCrawlManager } from './site-crawl.manager';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
@@ -308,7 +312,8 @@ export class ResearchManager {
       const start = Date.now();
       try {
         const result = await this.fetchService.fetchPage(userId, { url });
-        toolsUsed.push('web_fetch', 'web_fetch:user_url');
+        pushFetchToolMarker(toolsUsed, result);
+        toolsUsed.push('web_fetch:user_url');
         const evidence = this.directFetchResultToEvidence(result);
         items.push(evidence);
         if (result.rawHtml !== undefined) {
@@ -347,7 +352,7 @@ export class ResearchManager {
       const start = Date.now();
       try {
         const result = await this.fetchService.fetchPage(userId, { url: item.url });
-        toolsUsed.push('web_fetch');
+        pushFetchToolMarker(toolsUsed, result);
         const evidence = this.fetchResultToEvidence(item, result);
         fetched.push(evidence);
         if (result.rawHtml !== undefined) {

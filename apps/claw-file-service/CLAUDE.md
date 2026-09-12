@@ -30,7 +30,7 @@ Handing `content` to a text model is how this service spent months making every
 provider reply _"I can't read the attached file"_ — the model was paraphrasing
 the placeholder chat-service emitted, not refusing. Before you touch anything in
 the attachment path, read
-[ADR-094](../../docs/13-adr/adr-094-attachment-text-extraction-pipeline.md).
+[ADR-095](../../docs/13-adr/adr-095-attachment-text-extraction-pipeline.md).
 
 Four rules follow from it:
 

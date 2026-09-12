@@ -1,4 +1,8 @@
-import { assertSafeOutboundUrl, isPrivateOrLoopbackHost } from '../url-safety.utility';
+import {
+  assertSafeOutboundUrl,
+  isHostExplicitlyAllowlisted,
+  isPrivateOrLoopbackHost,
+} from '../url-safety.utility';
 
 /**
  * The SSRF boundary, at the depth it now has to hold.
@@ -139,5 +143,32 @@ describe('assertSafeOutboundUrl', () => {
     expect(() =>
       assertSafeOutboundUrl('https://api.github.com/', { allowedHosts: ['*.github.com'] }),
     ).not.toThrow();
+  });
+});
+
+describe('isHostExplicitlyAllowlisted', () => {
+  // Both HttpFetchAdapter and HeadlessFetchAdapter call this to decide
+  // whether THIS request may reach a private address at all. One shared
+  // implementation is the point — see the function's own doc comment.
+  it('returns false for an empty allowlist regardless of host', () => {
+    expect(isHostExplicitlyAllowlisted('http://127.0.0.1/', [])).toBe(false);
+  });
+
+  it('matches an exact host', () => {
+    expect(
+      isHostExplicitlyAllowlisted('http://internal.example.com/', ['internal.example.com']),
+    ).toBe(true);
+    expect(isHostExplicitlyAllowlisted('http://other.example.com/', ['internal.example.com'])).toBe(
+      false,
+    );
+  });
+
+  it('matches a wildcard suffix but not the bare suffix itself', () => {
+    expect(isHostExplicitlyAllowlisted('http://api.internal.com/', ['*.internal.com'])).toBe(true);
+    expect(isHostExplicitlyAllowlisted('http://internal.com/', ['*.internal.com'])).toBe(false);
+  });
+
+  it('returns false for an unparseable URL rather than throwing', () => {
+    expect(isHostExplicitlyAllowlisted('not a url', ['internal.example.com'])).toBe(false);
   });
 });

@@ -99,7 +99,7 @@ The shape is consumed by:
 > Affected readers: audit-service, the admin file-usage page, the frontend
 > delivery chips, and the judge prompt, which is told not to penalise a lane for
 > `OMITTED_UNSUPPORTED`. See
-> [ADR-094](../13-adr/adr-094-attachment-text-extraction-pipeline.md).
+> [ADR-095](../13-adr/adr-095-attachment-text-extraction-pipeline.md).
 
 If extracted text overruns the model's token budget it is cut to fit and
 flagged as `TRUNCATED_TEXT` so the user / judge can see the lane received
@@ -134,11 +134,11 @@ only a partial file.
 
 The following are intentionally out-of-scope and tracked for later slices:
 
-- ~~**Native PDF input.**~~ **Done (2026-09-12, ADR-094).** PDF text
+- ~~**Native PDF input.**~~ **Done (2026-09-12, ADR-095).** PDF text
   extraction ships; PDFs deliver as `EXTRACTED_TEXT`. A _native_-PDF adapter
   for the Anthropic and Gemini SDKs, which accept the file itself, is still
   open — extracted text loses layout, tables and figures.
-- ~~**OCR for image attachments.**~~ **Done (2026-09-12, ADR-094).** A
+- ~~**OCR for image attachments.**~~ **Done (2026-09-12, ADR-095).** A
   non-vision lane now receives the image's OCR text when there is any. The
   original note read:
 - **OCR for image attachments.** Even when an image is delivered as
@@ -297,7 +297,7 @@ Outputs:
 
 - OCR text is stored on the `File.extractedText` column, alongside every
   other extractor's output. It is NOT `File.content`, which holds base64 of
-  the original bytes — handing that to a text model is the defect ADR-094
+  the original bytes — handing that to a text model is the defect ADR-095
   exists to fix. context-assembly reads `/internal/files/:id/content` and
   prefers `extractedText` for every non-image file.
 - Tesseract reports a confidence score; results below

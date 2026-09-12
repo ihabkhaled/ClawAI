@@ -15,7 +15,7 @@ export type FileChunkResponse = {
  * `InternalFileContentResponse` in claw-file-service.
  *
  * `content` and `extractedText` are NOT interchangeable, and confusing them is
- * the whole of ADR-094. `content` is base64 of the original bytes — right for a
+ * the whole of ADR-095. `content` is base64 of the original bytes — right for a
  * vision model looking at an image, meaningless to a text model looking at a
  * PDF. `extractedText` is the readable text the parsers produced, and it is
  * null until extraction finishes.
@@ -28,7 +28,7 @@ export type FileContentResponse = {
   filename: string;
   mimeType: string;
   content: string | null;
-  // Optional on the wire so a file-service that predates ADR-094 still parses.
+  // Optional on the wire so a file-service that predates ADR-095 still parses.
   extractedText?: string | null;
   ingestionStatus?: FileIngestionState;
   extractionError?: string | null;

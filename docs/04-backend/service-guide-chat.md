@@ -108,7 +108,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      `GET /internal/files/:id/content` — **never** `/chunks`, which performs no
      ownership check. `extractedText` is used for every non-image file;
      `content` (base64) only for an image going to a vision model. See
-     [ADR-094](../13-adr/adr-094-attachment-text-extraction-pipeline.md).
+     [ADR-095](../13-adr/adr-095-attachment-text-extraction-pipeline.md).
    - Thread message history
      4b. **Attachment readiness wait** -- `waitForIngestion` polls
      `GET /internal/files/:id/ingestion-state` until every attachment has
@@ -324,7 +324,7 @@ live-crawl-progress amendment.
 
 A completed `SITE_CRAWL` run's pages are already fully in the initial
 prompt — real crawls have overflowed the context window this way, per
-ADR-094. `ChatMessagesService.extractCrawlRetrieval` reads the same
+ADR-095. `ChatMessagesService.extractCrawlRetrieval` reads the same
 `metadata.research.bundle.items` field `synthesizeTranscriptFromBundle`
 already uses for the FE transcript, and — only when the triggering
 message's research `mode` was literally `'SITE_CRAWL'` — passes a
@@ -340,7 +340,7 @@ listing every crawled URL
 (`utilities/crawl-retrieval-tool.utility.ts`'s
 `buildGetCrawledPageToolDefinition`), and drives it through
 `runOllamaCloudToolLoop` — the same agentic loop `web_search`/`web_fetch`
-already use, reused here for the first time in production (see ADR-094 for
+already use, reused here for the first time in production (see ADR-095 for
 why that loop had no production callers before this). A `get_crawled_page`
 call is answered from the in-memory pages, not the network
 (`executeGetCrawledPage`) — no PAYG hold, no feature-usage record, because
@@ -350,12 +350,12 @@ the crawl that produced the content was already metered when it ran.
 The loop takes its own PAYG hold per turn; going through `callProvider` too
 would double-bill. `runOllamaCloudRetrievalTurn` redoes only the two things
 that chokepoint would otherwise have done for it —
-`assertExposedForExecution` and `recordChokepointUsage` — see ADR-094 for the
+`assertExposedForExecution` and `recordChokepointUsage` — see ADR-095 for the
 full reasoning and the test that proves exactly one hold per completion.
 
 Ollama Cloud only: OpenAI/Anthropic/Gemini candidates never see this tool,
 even with a populated `CrawlRetrievalContext` — extending it is real,
-separate scope (ADR-094's "Revisit when").
+separate scope (ADR-095's "Revisit when").
 
 ---
 
