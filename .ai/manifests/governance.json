@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 24426,
+      "bytes": 25112,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 20429,
+      "bytes": 20647,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -262,13 +262,17 @@
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
+      "bytes": 5699,
+      "file": "rules/42-attachment-understanding.md"
+    },
+    {
       "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 21547,
+      "bytes": 21791,
       "file": "skills/00-index.md"
     },
     {
@@ -434,6 +438,10 @@
     {
       "bytes": 3192,
       "file": "skills/debug-a-stuck-scheduled-job.md"
+    },
+    {
+      "bytes": 6812,
+      "file": "skills/debug-an-attachment-the-model-cannot-read.md"
     },
     {
       "bytes": 3724,
