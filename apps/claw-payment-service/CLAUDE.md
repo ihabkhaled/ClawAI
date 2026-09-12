@@ -43,6 +43,17 @@ planPriceVersionId) are stored as validated opaque strings with no FK.
 5. Prices come from the database (`PlanPriceVersion`), never from env, never
    from the client.
 6. `null` means unlimited. `0` means disabled. They are not interchangeable.
+7. **`modules/display-fx` never touches a charge.** It localizes PRICES —
+   Frankfurter then fawazahmed0/exchange-api, Redis-cached, commercially
+   rounded, failing open to USD. `modules/fx` settles charges — persisted quote,
+   safety margin, strict expiry, failing closed. Same arithmetic, opposite
+   policies, and the two must never meet. `DisplayFxRate` carries no `quoteId`,
+   no `expiresAt` and no `safetyMarginBps` so it cannot reach a gateway adapter.
+   See ADR-097 and `rules/45-display-currency-versus-settlement-currency.md`.
+8. **Only `X-Real-IP` is a trustworthy address.** nginx overwrites it with
+   `$remote_addr`; `X-Forwarded-For` is APPENDED to, so its head is
+   attacker-controlled forever, and `CF-IPCountry` is blanked at the proxy until
+   ClawAI actually sits behind an edge that rewrites it.
 
 ## Card data
 

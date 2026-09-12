@@ -2179,6 +2179,11 @@
       },
       {
         "method": "GET",
+        "route": "/billing/display-currency",
+        "source": "apps/claw-payment-service/src/modules/display-fx/controllers/public-display-currency.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/billing/gateways",
         "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/checkout-gateways.controller.ts"
       },
@@ -3303,5 +3308,5 @@
     ]
   },
   "generated": true,
-  "total": 653
+  "total": 654
 }

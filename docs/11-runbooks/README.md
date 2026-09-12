@@ -21,6 +21,7 @@
 | Provider connector: sync 500s but the test says OK | [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md) → the test toast lied; read `model_sync_runs.error_message`           |
 | Workspace connector sync failing                   | [runbook-workspace-automation.md](runbook-workspace-automation.md)                                                                                       |
 | Billing reconciliation is stuck                    | [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)                                                                                   |
+| Localized prices are wrong, absurd or all USD      | [runbook-display-fx-outage.md](runbook-display-fx-outage.md)                                                                                             |
 | A billing sweep or delivery job failed             | [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)                                                                                       |
 | Credit paid for but never granted / nothing meters | [runbook-payg-credit.md](runbook-payg-credit.md) → boot order, swallowed seed, empty price table; the log is not evidence                                |
 | Anything else                                      | [troubleshooting.md](troubleshooting.md) · [operational-runbooks.md](operational-runbooks.md)                                                            |
@@ -87,5 +88,6 @@
 
 - [billing-operations.md](billing-operations.md)
 - [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)
+- [runbook-display-fx-outage.md](runbook-display-fx-outage.md)
 - [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)
 - [runbook-payg-credit.md](runbook-payg-credit.md) — deploying, verifying and killing PAYG connector credit

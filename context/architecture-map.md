@@ -100,6 +100,11 @@ client-logs, server-logs) use **Mongoose**. `health` has no database.
    `/api/v1/memories` → memory:4005, `/api/v1/agent` → agent:4015, and
    `/api/v1/payments` or `/api/v1/billing` → payment:4018. Internal payment
    contracts are deliberately absent from nginx.
+   nginx also **blanks** `CF-IPCountry`, `CF-Connecting-IP` and `True-Client-IP`
+   on every proxied request. ClawAI is not behind a CDN, so those headers reach
+   the origin only if a client sent them. `X-Real-IP` is the one address a
+   service may trust, because nginx overwrites it with `$remote_addr`;
+   `X-Forwarded-For` is appended to and its head is never trusted.
 3. The service's **AuthGuard/RolesGuard** (from `@claw/shared-auth`) verifies the
    JWT and permissions, then the request flows Controller → Service →
    Repository/Manager.

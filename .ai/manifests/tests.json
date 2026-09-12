@@ -82,7 +82,7 @@
     },
     "claw-payment-service": {
       "runner": "jest",
-      "testFiles": 105
+      "testFiles": 110
     },
     "claw-research-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1223
+  "total": 1228
 }

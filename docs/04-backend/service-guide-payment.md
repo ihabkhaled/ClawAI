@@ -65,6 +65,32 @@ charge it offsets would round asymmetrically. Use `roundHalfUpDivide`.
 `null` means **unlimited**. `0` means **disabled**. They are never
 interchangeable.
 
+### Two FX subsystems, never one
+
+`modules/fx` settles charges. `modules/display-fx` shows prices. They share the
+scaled-integer arithmetic and no policy at all — see
+[ADR-097](../13-adr/adr-097-display-fx-separate-from-settlement-fx.md).
+
+|               | `modules/fx` (SETTLEMENT)        | `modules/display-fx` (DISPLAY)               |
+| ------------- | -------------------------------- | -------------------------------------------- |
+| Safety margin | `FX_SAFETY_MARGIN_BPS`           | none — a margin on a price is a quiet markup |
+| Rounding      | none; exact                      | commercial, to a readable increment          |
+| Storage       | `FxQuote` row, financial history | Redis, expendable                            |
+| Expiry        | correctness guarantee            | performance knob                             |
+| Failure       | **closed** — refuse the checkout | **open** — render canonical USD              |
+| Upstream      | `EXCHANGE_RATE_API_BASE_URL`     | Frankfurter, then fawazahmed0/exchange-api   |
+
+`DisplayFxRate` deliberately has no `quoteId`, no `expiresAt` and no
+`safetyMarginBps`, so it does not fit anywhere a gateway adapter takes an
+amount. If you find yourself importing `DisplayFxService` into a checkout,
+gateway, invoice or refund path, stop: that is the moment the invariant breaks.
+
+The public resolver is `GET /api/v1/billing/display-currency` — unauthenticated,
+rate-limited at nginx, allowlisted currencies only, and with no `?ip=` parameter,
+because an endpoint that geolocates an arbitrary address is an open proxy living
+inside a billing service. Operational procedure:
+[`runbook-display-fx-outage.md`](../11-runbooks/runbook-display-fx-outage.md).
+
 ## Card data and PCI
 
 ClawAI is **never** in the card-data path. Both gateways use hosted checkout and

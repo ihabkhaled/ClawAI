@@ -54,10 +54,15 @@ today. Country resolution trusts only `X-Real-IP`, which nginx overwrites with
 `CF-IPCountry`, `True-Client-IP` and `X-Real-IP`. CF support is implemented but
 gated off behind a `SystemSetting` for a future Cloudflare move.
 
-**D3 — provider URLs are constants, not env and not DB.**
-Repo preference is DB-level config over new env vars, but `SECURITY §5` forbids a
-user-editable FX URL (SSRF). Base URLs live in `shared-constants`; only the
-_feature flags_ live in `SystemSetting`.
+**D3 — provider URLs are constants; kill switches are env, not `SystemSetting`.**
+Repo preference is DB-level config over new env vars. Two exceptions apply here.
+Provider base URLs must not be settable at all — `SECURITY §5` forbids a
+user-editable FX URL, because that is an SSRF primitive — so they are constants
+in `shared-constants`. The three kill switches stay in payment-service env
+because they are the rollback lever: a switch that needs a database read to be
+honoured cannot be used when the database or the cross-service hop is the
+problem. They are `z.enum(['true','false'])`, not `z.coerce.boolean()`, which
+turns the string `"false"` into `true` and would leave a disabled feature on.
 
 **D4 — no new service.** A dedicated `claw-fx-service` would trigger the whole
 18-item infra checklist for one HTTP call. Display FX goes in payment-service,

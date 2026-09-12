@@ -2234,6 +2234,11 @@
         },
         {
           "method": "GET",
+          "route": "/billing/display-currency",
+          "source": "apps/claw-payment-service/src/modules/display-fx/controllers/public-display-currency.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/billing/gateways",
           "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/checkout-gateways.controller.ts"
         },
@@ -4237,6 +4242,21 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "DISCOVERY_MAX_RESULTS_PER_SOURCE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "DISPLAY_FX_ENABLED"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "DISPLAY_FX_GEO_ENABLED"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "DISPLAY_FX_TRUST_EDGE_COUNTRY_HEADER"
       },
       {
         "confidence": "verified",
@@ -7999,6 +8019,12 @@
         "source": "infra/nginx/locations.conf"
       },
       {
+        "location": "/api/v1/billing/display-currency",
+        "port": 4018,
+        "service": "payment-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
         "location": "/api/v1/chat-messages",
         "port": 4002,
         "service": "chat-service",
@@ -9698,7 +9724,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 105
+        "testFiles": 110
       },
       "claw-research-service": {
         "runner": "jest",
@@ -10423,19 +10449,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 653,
-    "envVarCount": 352,
+    "endpointCount": 654,
+    "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 154,
     "localeCount": 13,
-    "nginxRouteCount": 57,
+    "nginxRouteCount": 58,
     "permissionCount": 51,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1223,
+    "totalTestFiles": 1228,
     "workspaceCount": 25
   }
 }

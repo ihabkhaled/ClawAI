@@ -95,6 +95,19 @@ const appConfigSchema = z
     FX_QUOTE_TTL_MS: z.coerce.number().int().positive().default(900_000),
     FX_SAFETY_MARGIN_BPS: z.coerce.number().int().nonnegative().default(150),
 
+    // Display FX (localized PRICES, never charges - see ADR-097).
+    //
+    // Strings, not z.coerce.boolean(): coercion turns the STRING "false" into
+    // the boolean true, so a kill switch set to "false" would stay on. The
+    // off-path is also exercised by test - a rollback lever nobody pulls is a
+    // rollback nobody can actually perform.
+    DISPLAY_FX_ENABLED: z.enum(['true', 'false']).default('true'),
+    DISPLAY_FX_GEO_ENABLED: z.enum(['true', 'false']).default('true'),
+    // OFF unless the deployment sits behind an edge that REWRITES the country
+    // header. ClawAI's nginx terminates TLS directly today, so a CF-IPCountry
+    // arriving at the origin was written by whoever sent the request.
+    DISPLAY_FX_TRUST_EDGE_COUNTRY_HEADER: z.enum(['true', 'false']).default('false'),
+
     // Lifecycle
     WEBHOOK_REPLAY_TOLERANCE_MS: z.coerce.number().int().positive().default(600_000),
     BILLING_GRACE_PERIOD_MS: z.coerce.number().int().nonnegative().default(259_200_000),

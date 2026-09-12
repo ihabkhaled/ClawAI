@@ -1342,6 +1342,18 @@ USD_TO_EGP_FALLBACK_RATE=0
 FX_QUOTE_TTL_MS=900000
 FX_SAFETY_MARGIN_BPS=150
 
+# ---- Display FX (localized PRICE DISPLAY, never a charge — ADR-097) ----
+# Kill switches only. The FX provider URLs are compile-time constants in
+# @claw/shared-constants, deliberately NOT configuration: an FX endpoint that
+# can be set from a database row or a request is an SSRF primitive.
+#
+# These stay in env rather than in SystemSetting because they are the rollback
+# lever. A kill switch that needs a database read to be honoured cannot be used
+# when the database is the problem.
+DISPLAY_FX_ENABLED=true                              # master switch; false renders every price in canonical USD
+DISPLAY_FX_GEO_ENABLED=true                          # false keeps manual currency selection but stops all IP geolocation
+DISPLAY_FX_TRUST_EDGE_COUNTRY_HEADER=false           # ONLY true behind a CDN that rewrites CF-IPCountry; nginx blanks it otherwise
+
 # Lifecycle, reconciliation and outbound bounds
 WEBHOOK_REPLAY_TOLERANCE_MS=600000
 BILLING_GRACE_PERIOD_MS=259200000

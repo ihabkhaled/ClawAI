@@ -20,6 +20,7 @@ import { CheckoutModule } from '../modules/checkout/checkout.module';
 import { PlanCatalogModule } from '../modules/plan-catalog/plan-catalog.module';
 import { SubscriptionsModule } from '../modules/subscriptions/subscriptions.module';
 import { WebhooksModule } from '../modules/webhooks/webhooks.module';
+import { DisplayFxModule } from '../modules/display-fx/display-fx.module';
 import { FxModule } from '../modules/fx/fx.module';
 import { OutboxModule } from '../modules/outbox/outbox.module';
 import { GatewaysModule } from '../modules/gateways/gateways.module';
@@ -89,6 +90,7 @@ import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.mo
     HealthModule,
     GatewaysModule,
     FxModule,
+    DisplayFxModule,
     OutboxModule,
     BillingModule,
     PlanCatalogModule,
