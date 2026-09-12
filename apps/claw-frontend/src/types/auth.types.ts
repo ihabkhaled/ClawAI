@@ -46,6 +46,15 @@ export type RequestPasswordResetRequest = {
 
 export type RequestPasswordResetResponse = {
   accepted: boolean;
+  /**
+   * Seconds before another request for this address will send anything.
+   *
+   * Present on every response, including one that did send. The forgot-password
+   * screen does not render it — it replaces the form with an address-neutral
+   * success card, so there is nothing left to spam — but the field is part of
+   * the contract and is what the backend rate limit reports.
+   */
+  retryAfterSeconds: number;
 };
 
 export type ConfirmPasswordResetRequest = {

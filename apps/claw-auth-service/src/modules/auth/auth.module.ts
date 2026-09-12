@@ -17,6 +17,7 @@ import { EmailVerificationService } from './services/email-verification.service'
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
 import { AuthEmailAdapter } from './adapters/auth-email.adapter';
 import { AuthEmailRecipientService } from './services/auth-email-recipient.service';
+import { EmailDispatchCooldownService } from './services/email-dispatch-cooldown.service';
 import { EmailChangeManager } from './managers/email-change.manager';
 import { EmailChangeRepository } from './repositories/email-change.repository';
 import { EmailChangeService } from './services/email-change.service';
@@ -38,6 +39,7 @@ import { EmailChangeService } from './services/email-change.service';
     EmailVerificationRepository,
     AuthEmailAdapter,
     AuthEmailRecipientService,
+    EmailDispatchCooldownService,
     EmailChangeRepository,
     EmailChangeManager,
     EmailChangeService,

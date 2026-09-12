@@ -64,6 +64,26 @@ export type PlanCatalogEntry = {
   isDefault: boolean;
   /** The plan the public pricing page badges "Most popular". */
   isPopular: boolean;
+  /** False hides the plan from the public pricing page entirely. */
+  isPublic: boolean;
+  /** False means the plan is no longer sold; existing subscribers keep it. */
+  isActive: boolean;
+  /** ISO 4217. Null only on legacy rows that predate the column. */
+  currency: string | null;
+  isTrial: boolean;
+  trialDurationDays: number | null;
+  /**
+   * Share of the monthly price that becomes pay-as-you-go connector credit, in
+   * basis points (3000 = 30%).
+   *
+   * Safe to publish, and it has to be: it is a headline term of the offer —
+   * "pay $20, get $5 of connector credit" — and the pricing page cannot state
+   * it without this number. It is a RATIO, not a cost: unlike
+   * `monthlyProviderCostCeilingMicroUsd` (deliberately absent above) it reveals
+   * nothing about our margin, because the dollar figure it produces is one the
+   * customer is being promised anyway.
+   */
+  paygCreditPercentBps: number;
   dailyTokenQuota: number | null;
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;

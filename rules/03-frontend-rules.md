@@ -188,7 +188,39 @@ ABSOLUTE RULE — NEVER LEAK ENGLISH INTO NON-EN LOCALES
 8. Every grid names a base column count (`grid grid-cols-1 ...`). An implicit
    track is sized to its content and will overflow a narrow viewport.
    `grid-flow-*`, `auto-cols-*` and `grid-rows-*` are the exceptions.
+9. Any flex or grid container holding MORE THAN ONE child names its own spacing
+   (`gap-*`). A flex row has no spacing by default, so an icon beside a label
+   renders welded to the first letter.
 ```
+
+### Spacing belongs to the shared component, not to each call site
+
+When a primitive is used with an icon anywhere, its **base variant** carries the
+gap — `buttonVariants` sets `gap-2` — rather than each of the dozens of call
+sites remembering to add one.
+
+```tsx
+// CORRECT — the primitive already spaces its children
+<Button><RefreshCw className="h-4 w-4" />Send again</Button>
+
+// WRONG — works here, and the next twenty buttons still get it wrong
+<Button className="gap-2"><RefreshCw className="h-4 w-4" />Send again</Button>
+```
+
+Three reasons this is a rule and not a preference:
+
+- **It costs nothing where it is not needed.** `gap` applies only BETWEEN
+  children, so a text-only button and an icon-only button are unaffected.
+- **A call site that genuinely needs a different value still wins** — `cn()`
+  runs tailwind-merge, so a caller's `gap-4` replaces the base `gap-2`.
+- **No test catches it.** Every test asserting on text passes with the icon
+  jammed against the label; it is only ever found in a screenshot, which is why
+  it kept coming back. `button-icon-spacing.test.tsx` now asserts the base gap
+  survives across variants, sizes and `asChild`, and that an override works.
+
+The same reasoning applies to a loading state: a primitive that renders its own
+spinner (`Button isLoading`) must not have a second spinning icon beside it —
+hide the call site's icon while loading.
 
 ## Extraction Table
 

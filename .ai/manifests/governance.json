@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 29343,
+      "bytes": 29712,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 22023,
+      "bytes": 22259,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -78,7 +78,7 @@
       "file": "rules/02-monorepo-and-workspace-ownership.md"
     },
     {
-      "bytes": 12085,
+      "bytes": 13679,
       "file": "rules/03-frontend-rules.md"
     },
     {
@@ -270,13 +270,17 @@
       "file": "rules/43-account-state-disclosure-and-transactional-email.md"
     },
     {
+      "bytes": 5029,
+      "file": "rules/44-live-verification-before-done.md"
+    },
+    {
       "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 22423,
+      "bytes": 22672,
       "file": "skills/00-index.md"
     },
     {
@@ -538,6 +542,10 @@
     {
       "bytes": 4977,
       "file": "skills/trace-request-end-to-end.md"
+    },
+    {
+      "bytes": 4805,
+      "file": "skills/verify-a-batch-live.md"
     },
     {
       "bytes": 7332,

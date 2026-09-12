@@ -61,6 +61,7 @@
 | `41-web-evidence-truthfulness.md`                        | Never claim a web step that did not run, never stay silent about one that failed; a URL the user wrote is opened, not searched for.                                          |
 | `42-attachment-understanding.md`                         | A model gets the readable TEXT of an attachment or an honest reason it did not; `content` is bytes and `extractedText` is text, and they are never swapped.                  |
 | `43-account-state-disclosure-and-transactional-email.md` | A refusal names a reason only after the caller has proved the account is theirs; every email to a human is sent in that account's language, and the renderer owns every tag. |
+| `44-live-verification-before-done.md`                    | Green unit tests are not evidence the feature works; every batch is exercised against the running stack with curl AND a browser, and the observed outputs go in the report.  |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

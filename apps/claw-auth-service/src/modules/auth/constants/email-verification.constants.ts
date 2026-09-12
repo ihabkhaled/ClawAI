@@ -10,9 +10,3 @@ export const EMAIL_VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
  * to refuse — whether that address is registered here (rule 43 §1).
  */
 export const EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = 60;
-
-/**
- * Redis key prefix for the resend cooldown. The address is hashed, never
- * stored: a Redis keyspace dump should not be a list of who is signing up.
- */
-export const EMAIL_VERIFICATION_RESEND_COOLDOWN_PREFIX = 'auth:email-verification:resend:';

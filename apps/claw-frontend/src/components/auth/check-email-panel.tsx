@@ -109,9 +109,7 @@ export function CheckEmailPanel(): React.ReactElement {
               // which refuses a second send for the same address regardless of
               // what this tab believes.
               disabled={isResending || cooldownSeconds > 0}
-              // The button base has no gap of its own, so an icon+label button
-              // has to ask for one or the two run together.
-              className="w-full gap-2"
+              className="w-full"
             >
               {/* The loading state renders its own spinner; a second spinning
                   icon beside it reads as a glitch. */}

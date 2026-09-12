@@ -1,14 +1,14 @@
-import { createHash, randomBytes } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
 import { hashBearerToken } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
-import { RedisService } from '../../../infrastructure/redis/redis.service';
+import { EmailDispatchCooldownService } from './email-dispatch-cooldown.service';
+import { EmailDispatchPurpose } from '../enums/email-dispatch-purpose.enum';
 import { AuthEmailAdapter } from '../adapters/auth-email.adapter';
 import { AuthEmailRecipientService } from './auth-email-recipient.service';
 import { AuthRepository } from '../repositories/auth.repository';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
 import {
-  EMAIL_VERIFICATION_RESEND_COOLDOWN_PREFIX,
   EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS,
   EMAIL_VERIFICATION_TOKEN_BYTES,
   EMAIL_VERIFICATION_TOKEN_TTL_MS,
@@ -17,14 +17,12 @@ import type { ResendVerificationResult } from '../types/email-verification.types
 
 @Injectable()
 export class EmailVerificationService {
-  private readonly logger = new Logger(EmailVerificationService.name);
-
   constructor(
     private readonly repository: EmailVerificationRepository,
     private readonly authRepository: AuthRepository,
     private readonly emailAdapter: AuthEmailAdapter,
     private readonly recipients: AuthEmailRecipientService,
-    private readonly redis: RedisService,
+    private readonly cooldown: EmailDispatchCooldownService,
   ) {}
 
   async sendForUser(userId: string, email: string): Promise<void> {
@@ -54,14 +52,12 @@ export class EmailVerificationService {
    * signal.
    */
   async resend(email: string): Promise<ResendVerificationResult> {
-    const remaining = await this.redis.claimCooldown(
-      this.cooldownKey(email),
+    const remaining = await this.cooldown.claim(
+      EmailDispatchPurpose.EMAIL_VERIFICATION,
+      email,
       EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS,
     );
-    if (remaining !== null) {
-      // Never logs the address — a rate-limit log line is otherwise a slow leak
-      // of exactly the list this endpoint exists to protect.
-      this.logger.log('resend: refused, address is within its cooldown window');
+    if (remaining > 0) {
       return { accepted: true, retryAfterSeconds: remaining };
     }
 
@@ -74,15 +70,6 @@ export class EmailVerificationService {
 
   async verify(rawToken: string): Promise<{ verified: boolean }> {
     return { verified: await this.repository.consumeAndActivate(this.hash(rawToken)) };
-  }
-
-  // The address is hashed rather than embedded: a Redis keyspace dump must not
-  // be a readable list of who has been signing up. It is a plain SHA-256, not
-  // hashBearerToken — this is a namespacing hash, not a credential, and it has
-  // to be derivable from the address alone on every request.
-  private cooldownKey(email: string): string {
-    const digest = createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
-    return `${EMAIL_VERIFICATION_RESEND_COOLDOWN_PREFIX}${digest}`;
   }
 
   private hash(rawToken: string): string {

@@ -36,6 +36,10 @@ export function toFeatureRuleView(rule: PlanFeatureRule): PlanFeatureRuleView {
  * would silently publish every column added to the Plan model in future — and
  * the very next such column, `monthlyProviderCostCeilingMicroUsd`, is a margin
  * control that must never leave the auth service.
+ *
+ * `paygCreditPercentBps` IS published, deliberately. It is a ratio the customer
+ * is promised, not a cost we absorb: the pricing page has to be able to say
+ * "30% of what you pay becomes connector credit", and it cannot without it.
  */
 export function toCatalogEntry(
   plan: Plan,
@@ -50,6 +54,12 @@ export function toCatalogEntry(
     displayOrder: plan.displayOrder,
     isDefault: plan.isDefault,
     isPopular: plan.isPopular,
+    isPublic: plan.isPublic,
+    isActive: plan.isActive,
+    currency: plan.currency,
+    isTrial: plan.isTrial,
+    trialDurationDays: plan.trialDurationDays,
+    paygCreditPercentBps: plan.paygCreditPercentBps,
     dailyTokenQuota: plan.dailyTokenQuota,
     weeklyTokenQuota: plan.weeklyTokenQuota,
     monthlyTokenQuota: plan.monthlyTokenQuota,

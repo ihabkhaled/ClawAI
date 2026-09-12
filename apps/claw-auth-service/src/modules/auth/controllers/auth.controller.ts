@@ -3,6 +3,7 @@ import { AuthService } from '../services/auth.service';
 import { ConfirmEmailChangeDto, confirmEmailChangeSchema } from '../dto/email-change.dto';
 import { EmailChangeService } from '../services/email-change.service';
 import type { ResendVerificationResult } from '../types/email-verification.types';
+import type { RequestPasswordResetResult } from '../types/password-reset.types';
 import { Public } from '../../../app/decorators/public.decorator';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -74,7 +75,9 @@ export class AuthController {
   @Post('password-reset/request')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(requestPasswordResetSchema))
-  async requestPasswordReset(@Body() dto: RequestPasswordResetDto): Promise<{ accepted: true }> {
+  async requestPasswordReset(
+    @Body() dto: RequestPasswordResetDto,
+  ): Promise<RequestPasswordResetResult> {
     return this.passwordResetService.requestReset(dto.email);
   }
 
