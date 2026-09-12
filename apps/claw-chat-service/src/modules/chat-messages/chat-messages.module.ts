@@ -27,6 +27,7 @@ import { SearchFirstManager } from './managers/search-first.manager';
 import { ChatStreamBusService } from './services/chat-stream-bus.service';
 import { ChatStreamService } from './services/chat-stream.service';
 import { RouterTraceStreamService } from './services/router-trace-stream.service';
+import { ResearchProgressBridgeService } from './services/research-progress-bridge.service';
 import { StreamCancellationService } from './services/stream-cancellation.service';
 import { StreamControlService } from './services/stream-control.service';
 import { ProviderStreamExecutor } from './managers/provider-stream-executor.manager';
@@ -85,6 +86,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     RouterTraceStreamService,
     StreamCancellationService,
     StreamControlService,
+    ResearchProgressBridgeService,
     ProviderStreamExecutor,
     AccessControlService,
     ModelAuthorizationMetricsService,

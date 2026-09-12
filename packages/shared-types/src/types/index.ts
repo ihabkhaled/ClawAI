@@ -2,6 +2,7 @@ export type { AuthenticatedUser, AuthenticatedRequest } from './authenticated-re
 export type { JwtPayload } from './jwt-payload.type';
 export type { UserAccessTokenPayload } from './user-access-token-payload.type';
 export type { PaginationParams, PaginatedResult } from './pagination.type';
+export type { ResearchCrawlProgressMessage } from './research-crawl-progress.type';
 export type { HttpRequestOptions, HttpResponse } from './http-client.type';
 export type {
   RetrievalBundle,

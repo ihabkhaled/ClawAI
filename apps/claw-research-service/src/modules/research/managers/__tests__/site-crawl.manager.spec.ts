@@ -1,4 +1,5 @@
 import { SiteCrawlManager } from '../site-crawl.manager';
+import type { ResearchProgressPublisher } from '../research-progress-publisher.service';
 import type { FetchService } from '../../../fetch/services/fetch.service';
 import type { FetchResult } from '../../../fetch/types/fetch.types';
 import type { ResearchTraceEntry } from '../../types/evidence-bundle.types';
@@ -35,14 +36,15 @@ describe('SiteCrawlManager', () => {
 
   beforeEach(() => {
     fetchPage = jest.fn();
-    manager = new SiteCrawlManager({ fetchPage } as unknown as FetchService);
+    const progressPublisher = { publish: jest.fn() } as unknown as ResearchProgressPublisher;
+    manager = new SiteCrawlManager({ fetchPage } as unknown as FetchService, progressPublisher);
     trace = [];
     toolsUsed = [];
     warnings = [];
   });
 
   it('rejects a start URL that is not a valid absolute URL without calling fetch', async () => {
-    const items = await manager.crawl('u1', 'not-a-url', trace, toolsUsed, warnings);
+    const items = await manager.crawl('u1', 'not-a-url', trace, toolsUsed, warnings, undefined);
 
     expect(items).toEqual([]);
     expect(fetchPage).not.toHaveBeenCalled();
@@ -63,7 +65,14 @@ describe('SiteCrawlManager', () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     expect(items).toHaveLength(1);
     expect(items[0]?.url).toBe('https://example.com/');
@@ -101,7 +110,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url, title: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     const urls = items.map((item) => item.url);
     expect(urls).toEqual([
@@ -146,7 +162,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     expect(items.map((item) => item.url)).toEqual([
       'https://example.com/',
@@ -179,7 +202,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     const urls = items.map((item) => item.url);
     expect(urls).toContain('https://example.com/one-sitemap-page');
@@ -212,7 +242,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     expect(items.map((item) => item.url)).not.toContain(
       'https://example.com/should-not-be-fetched',
@@ -246,7 +283,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     const urls = items.map((item) => item.url);
     expect(urls).not.toContain('https://example.com/admin/secret');
@@ -280,7 +324,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     const urls = items.map((item) => item.url);
     expect(urls).toContain('https://example.com/fine');
@@ -296,7 +347,14 @@ describe('SiteCrawlManager', () => {
       return Promise.reject(new Error('404'));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     expect(items).toEqual([]);
     expect(warnings.some((w) => w.includes('connection refused'))).toBe(true);
@@ -340,7 +398,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     expect(items.map((item) => item.url)).toContain('https://example.com/latest-post');
     expect(toolsUsed).toContain('web_crawl:feed');
@@ -357,7 +422,7 @@ describe('SiteCrawlManager', () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings, undefined);
 
     expect(fetchPage).not.toHaveBeenCalledWith('u1', { url: 'https://example.com/feed.xml' });
     expect(toolsUsed).not.toContain('web_crawl:feed');
@@ -386,7 +451,14 @@ describe('SiteCrawlManager', () => {
       return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
-    const items = await manager.crawl('u1', 'https://example.com/', trace, toolsUsed, warnings);
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
 
     // 20 total (CRAWL_DEFAULT_MAX_PAGES), homepage included.
     expect(items).toHaveLength(20);

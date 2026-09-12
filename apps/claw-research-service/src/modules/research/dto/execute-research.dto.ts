@@ -34,6 +34,15 @@ export const executeResearchSchema = z.object({
    * Ignored by other workflows.
    */
   extractionProfile: z.nativeEnum(ExtractionProfile).optional(),
+  /**
+   * Opaque caller-supplied id for routing SITE_CRAWL progress ticks
+   * (`RESEARCH_CRAWL_PROGRESS_CHANNEL`) back to whoever is waiting on this
+   * run — chat-service sets it to the thread id. Not persisted as anything
+   * meaningful here; research-service never interprets it. Ignored by every
+   * workflow except SITE_CRAWL, since only that one runs long enough for
+   * intermediate progress to matter.
+   */
+  correlationId: z.string().max(128).optional(),
 });
 
 export type ExecuteResearchDto = z.infer<typeof executeResearchSchema>;

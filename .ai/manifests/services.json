@@ -135,7 +135,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 128,
+      "testFiles": 130,
       "testRunner": "jest"
     },
     {
@@ -415,7 +415,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 27,
+      "testFiles": 28,
       "testRunner": "jest"
     },
     {

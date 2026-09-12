@@ -339,6 +339,7 @@ export class ChatMessagesService implements OnModuleInit {
       searchProviderId: options.providerId,
       requestedProvider: options.forcedProvider,
       requestedModel: options.forcedModel,
+      correlationId: threadId,
     });
     if (run === null) {
       this.logger.warn(`research: run failed for user ${userId} — continuing without evidence`);

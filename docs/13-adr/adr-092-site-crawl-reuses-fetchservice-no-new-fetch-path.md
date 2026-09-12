@@ -153,6 +153,74 @@ parallel model lane would multiply the cost by however many providers are
 being compared, which is not what compare mode's lightweight per-lane
 grounding is for.
 
+## Amendment: live crawl progress via Redis pub/sub, not RabbitMQ (2026-09-12)
+
+A `SITE_CRAWL` run can take tens of seconds (up to `CRAWL_DEFAULT_MAX_PAGES`
+sequential+concurrent fetches, plus robots/sitemap/feed discovery), and until
+now chat-service's SSE stream stayed silent for the whole thing — the existing
+`emitResearchStarted`/`emitResearchCompleted` calls in
+`ChatMessagesService.runResearchForIntent` only fire before the call and
+after it returns, with nothing in between.
+
+**Redis pub/sub, not a `claw.events` RabbitMQ topic.** Rule 17 point 7
+explicitly carves out ephemeral `runtime.progress.*`-style signals as
+"delivered over in-process SSE, not durably on RabbitMQ" — a crawl progress
+tick is exactly that: no consumer needs it once the crawl moves past that
+tick, replaying it after a restart is meaningless, and RabbitMQ's rule 17
+point 6 audit-service-consumer requirement would be pure overhead for
+something nothing is meant to durably record. research-service and
+chat-service already share one Redis instance (`REDIS_URL`, unlike Postgres
+where every service owns its own database), so a channel
+(`RESEARCH_CRAWL_PROGRESS_CHANNEL`, `packages/shared-constants`) is the
+lighter-weight mechanism with real precedent (`STREAM_CANCEL_CHANNEL` already
+crosses conceptually the same way, cancel-only, within chat-service's own
+replicas).
+
+**`correlationId` is opaque to research-service.** `ExecuteResearchDto`
+gained an optional `correlationId: string` that research-service never
+interprets — it is a bare pass-through key threaded into
+`ResearchProgressPublisher.publish(...)` at each `SiteCrawlManager` checkpoint
+(started / robots / sitemap / feed / page / completed) and stamped onto the
+published `ResearchCrawlProgressMessage` (`packages/shared-types`) verbatim.
+chat-service is the one that assigns it meaning: `runResearchForIntent` always
+sets it to `threadId`, because that is the only thing on the chat side capable
+of routing a tick back to the right SSE connection.
+
+**A new dedicated subscriber connection, not a shared one.** ioredis puts a
+connection that calls `SUBSCRIBE` into a mode that rejects ordinary commands,
+so chat-service already keeps `CHAT_STREAM_SUBSCRIBER_CLIENT` and
+`STREAM_CANCEL_SUBSCRIBER_CLIENT` as separate connections. `ResearchProgressBridgeService`
+(`apps/claw-chat-service/src/modules/chat-messages/services/research-progress-bridge.service.ts`)
+gets its own `RESEARCH_PROGRESS_SUBSCRIBER_CLIENT` rather than reusing either
+— `StreamCancellationService`'s pattern (subscribe in `onModuleInit`,
+re-subscribe on every `onReady` after a reconnect) is copied exactly, but a
+new connection avoids the alternative of retrofitting a second concern onto
+`CHAT_STREAM_SUBSCRIBER_CLIENT`'s single-handler-slot design, which risks one
+feature's handler silently overwriting the other's.
+
+**Fire-and-forget, matching `ChatStreamBusService.publish()`.**
+`ResearchProgressPublisher.publish()` on the research-service side returns
+`void`, not a `Promise`: a progress tick that never arrives costs nothing (the
+next tick, or the final bundle, supersedes it), so a Redis hiccup is logged as
+a warning and the crawl itself is never at risk of failing because a tick
+could not be sent. The bridge on the chat-service side is equally
+defensive — a malformed or incomplete payload (bad JSON, missing
+`correlationId`/`phase`) is logged and dropped, never thrown, because one
+bad tick must not take down the subscriber loop every other thread's
+progress also flows through.
+
+**Phase-to-stage mapping is lossy, on purpose.** `AiStreamStage` (`STARTED` /
+`SOURCES_FOUND` / `FETCHING` / `COMPLETED` / `FAILED`) was designed for the
+search-then-fetch research enricher, which has no "checking robots.txt"
+equivalent. `mapCrawlPhaseToResearchProgress`
+(`apps/claw-chat-service/src/modules/chat-messages/utilities/research-progress-bridge.utility.ts`)
+folds `started`/`robots` into `RESEARCH_STARTED` and `sitemap`/`feed` into
+`RESEARCH_SOURCES_FOUND` rather than growing `AiStreamStage` for a
+crawl-specific vocabulary; the human-readable `message` on the wire payload
+carries the distinction as a `description` override instead. Revisit if a
+crawl-specific frontend treatment ever needs to tell "checking robots.txt"
+apart from "starting crawl" — today nothing does.
+
 ## Revisit when
 
 - **Done 2026-09-12**: ~~an intent classifier is built that auto-selects
@@ -161,8 +229,12 @@ grounding is for.
   the broader auto-web-intent-router the spec describes (NONE/SEARCH/FETCH
   chosen automatically for every message) is still a separate, larger
   decision, deliberately not built — research stays opt-in.
+- **Done 2026-09-12**: ~~a SITE_CRAWL run streams no intermediate progress~~
+  — see the live-crawl-progress amendment above.
 - Something needs to browse a crawl's page graph independently of the one
   answer it produced — that is the trigger for a persisted schema.
 - A real site with a gzipped sitemap is reported as under-crawled.
 - The compare-mode enricher gets a cost model that could afford a crawl per
   lane — until then it deliberately never requests `SITE_CRAWL`.
+- A crawl-specific frontend treatment needs `robots`/`sitemap`/`feed` told
+  apart as distinct stages rather than folded into the nearest `AiStreamStage`.

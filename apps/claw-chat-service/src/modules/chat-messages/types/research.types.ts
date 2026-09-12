@@ -69,4 +69,12 @@ export type ResearchRequest = {
   requestedModel?: string;
   requestedProvider?: string;
   maxResults?: number;
+  /**
+   * Set to the thread id so `ResearchProgressBridgeService` can route
+   * SITE_CRAWL progress ticks (published by research-service on
+   * `RESEARCH_CRAWL_PROGRESS_CHANNEL`) back to this thread's SSE stream.
+   * Harmless to send for every workflow — research-service ignores it
+   * outside SITE_CRAWL.
+   */
+  correlationId?: string;
 };

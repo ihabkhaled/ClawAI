@@ -61,6 +61,30 @@ describe('runResearch', () => {
     );
   });
 
+  it('forwards correlationId so research-service can route SITE_CRAWL progress ticks', async () => {
+    mockedHttpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { id: 'run-3' },
+    } as never);
+
+    await runResearch('http://localhost:4016', {
+      userToken: 'token',
+      userId: 'u1',
+      intent: 'crawl https://example.com/',
+      workflow: ResearchWorkflow.SITE_CRAWL,
+      correlationId: 'thread-42',
+    });
+
+    expect(mockedHttpRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          correlationId: 'thread-42',
+        }),
+      }),
+    );
+  });
+
   it('returns null on non-2xx responses', async () => {
     mockedHttpRequest.mockResolvedValue({
       ok: false,
