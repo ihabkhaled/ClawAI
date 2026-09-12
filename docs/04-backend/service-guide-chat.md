@@ -104,8 +104,19 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
    - User memories from memory-service (HTTP, limit 20)
    - Context pack items from memory-service (HTTP)
    - Workspace search results from workspace-service (HTTP)
-   - File chunks from file-service (HTTP)
+   - Attachment text from file-service (HTTP), via
+     `GET /internal/files/:id/content` — **never** `/chunks`, which performs no
+     ownership check. `extractedText` is used for every non-image file;
+     `content` (base64) only for an image going to a vision model. See
+     [ADR-095](../13-adr/adr-095-attachment-text-extraction-pipeline.md).
    - Thread message history
+     4b. **Attachment readiness wait** -- `waitForIngestion` polls
+     `GET /internal/files/:id/ingestion-state` until every attachment has
+     finished extracting, bounded by `FILE_INGESTION_WAIT_TIMEOUT_MS` (12s).
+     Extraction is asynchronous, so a message sent the instant an upload returns
+     would otherwise race it. Expiry degrades rather than throwing: the turn
+     proceeds and the model is told the file is still being read. **This is a
+     blocking step inside the turn and it affects latency.**
 5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
 6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
@@ -172,7 +183,7 @@ sentence. Anything unrecognised stays a toast rather than being guessed at.
 | ----------------- | --------------------------------------- |
 | memory-service    | Fetch user memories, pack items         |
 | workspace-service | Fetch grounded workspace search results |
-| file-service      | Fetch file chunks                       |
+| file-service      | Fetch attachment text + ingestion state |
 | connector-service | Execute LLM calls                       |
 | ollama-service    | Execute local Ollama calls              |
 
@@ -313,7 +324,7 @@ live-crawl-progress amendment.
 
 A completed `SITE_CRAWL` run's pages are already fully in the initial
 prompt — real crawls have overflowed the context window this way, per
-ADR-093. `ChatMessagesService.extractCrawlRetrieval` reads the same
+ADR-095. `ChatMessagesService.extractCrawlRetrieval` reads the same
 `metadata.research.bundle.items` field `synthesizeTranscriptFromBundle`
 already uses for the FE transcript, and — only when the triggering
 message's research `mode` was literally `'SITE_CRAWL'` — passes a
@@ -329,7 +340,7 @@ listing every crawled URL
 (`utilities/crawl-retrieval-tool.utility.ts`'s
 `buildGetCrawledPageToolDefinition`), and drives it through
 `runOllamaCloudToolLoop` — the same agentic loop `web_search`/`web_fetch`
-already use, reused here for the first time in production (see ADR-093 for
+already use, reused here for the first time in production (see ADR-095 for
 why that loop had no production callers before this). A `get_crawled_page`
 call is answered from the in-memory pages, not the network
 (`executeGetCrawledPage`) — no PAYG hold, no feature-usage record, because
@@ -339,12 +350,12 @@ the crawl that produced the content was already metered when it ran.
 The loop takes its own PAYG hold per turn; going through `callProvider` too
 would double-bill. `runOllamaCloudRetrievalTurn` redoes only the two things
 that chokepoint would otherwise have done for it —
-`assertExposedForExecution` and `recordChokepointUsage` — see ADR-093 for the
+`assertExposedForExecution` and `recordChokepointUsage` — see ADR-095 for the
 full reasoning and the test that proves exactly one hold per completion.
 
 Ollama Cloud only: OpenAI/Anthropic/Gemini candidates never see this tool,
 even with a populated `CrawlRetrievalContext` — extending it is real,
-separate scope (ADR-093's "Revisit when").
+separate scope (ADR-095's "Revisit when").
 
 ---
 

@@ -13,6 +13,7 @@ import { type Response } from 'express';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { FilesService } from '../files.service';
+import { type FileProcessingContract } from '../../types/zip-expansion.types';
 import { type FilesRepository } from '../../repositories/files.repository';
 import { type FileChunksRepository } from '../../repositories/file-chunks.repository';
 import { type FileSecurityManager } from '../../managers/file-security.manager';
@@ -64,9 +65,11 @@ const mockFilesRepository = (): Record<keyof FilesRepository, jest.Mock> => ({
   findById: jest.fn(),
   findAll: jest.fn(),
   updateIngestionStatus: jest.fn(),
+  saveExtractionResult: jest.fn(),
   delete: jest.fn(),
   countAll: jest.fn(),
   findExpiredBefore: jest.fn(),
+  findStaleProcessingBefore: jest.fn().mockResolvedValue([]),
   deleteById: jest.fn(),
   markAsExtractedChild: jest.fn(),
   recordExtractionMetadata: jest.fn(),
@@ -80,6 +83,13 @@ const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Moc
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockImplementation(async () => {}),
+});
+
+// Extraction is kicked off but never awaited by uploadFile; the stub keeps the
+// fire-and-forget call away from the real pipeline in unit tests.
+const mockProcessingManager = (): FileProcessingContract => ({
+  processFile: jest.fn().mockResolvedValue(void 0),
+  updateIngestionStatus: jest.fn().mockResolvedValue(void 0),
 });
 
 const mockSecurityManager = (): Pick<
@@ -106,6 +116,7 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
       chunksRepo as unknown as FileChunksRepository,
       rabbitMQ as unknown as RabbitMQService,
       mockSecurityManager() as unknown as FileSecurityManager,
+      mockProcessingManager(),
     );
   });
 

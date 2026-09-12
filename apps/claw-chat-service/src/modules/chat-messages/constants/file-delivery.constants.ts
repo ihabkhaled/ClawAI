@@ -46,4 +46,21 @@ export const TEXT_LIKE_MIME_EXACT = new Set([
   'application/sql',
 ]);
 
+// Formats whose bytes are not text but which file-service extracts text FROM.
+// They deliver as EXTRACTED_TEXT, not OMITTED_UNSUPPORTED — the platform can
+// read them.
+//
+// These were classified OMITTED_UNSUPPORTED until 2026-09-12, which was accurate
+// at the time: extraction was never wired, so the file genuinely did not reach
+// the model. Rows written before that date mean "the platform could not deliver
+// this", never "this format cannot be delivered". ADR-095.
+export const EXTRACTABLE_DOCUMENT_MIME_EXACT = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/rtf',
+  'text/rtf',
+]);
+
 export const IMAGE_MIME_PREFIX = 'image/';

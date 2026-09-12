@@ -85,7 +85,21 @@ The shape is consumed by:
 | `image/*`                                                | `NATIVE_IMAGE`           | `NATIVE_IMAGE`              | `OMITTED_NO_VISION`   |
 | `text/*`                                                 | `EXTRACTED_TEXT`         | `EXTRACTED_TEXT`            | `EXTRACTED_TEXT`      |
 | `application/json` / `application/csv` / `text/markdown` | `EXTRACTED_TEXT`         | `EXTRACTED_TEXT`            | `EXTRACTED_TEXT`      |
-| `application/pdf`, `application/zip`, binary, oversize   | `OMITTED_UNSUPPORTED`    | `OMITTED_UNSUPPORTED`       | `OMITTED_UNSUPPORTED` |
+| `application/pdf`, `.docx`, `.xlsx`, `.pptx`, `.rtf`     | `EXTRACTED_TEXT`         | `EXTRACTED_TEXT`            | `EXTRACTED_TEXT`      |
+| `application/zip`, other binary, oversize                | `OMITTED_UNSUPPORTED`    | `OMITTED_UNSUPPORTED`       | `OMITTED_UNSUPPORTED` |
+
+> **Documents changed classification on 2026-09-12.** PDF, DOCX, XLSX, PPTX and
+> RTF were `OMITTED_UNSUPPORTED` until then, which was accurate at the time:
+> extraction was never wired, so the file genuinely did not reach the model.
+> They now deliver as `EXTRACTED_TEXT`.
+>
+> **Reading `file_delivery_records` across that date.** Rows written before it
+> mean _"the platform could not deliver this"_, never _"this format cannot be
+> delivered"_. There is no discriminator on the row beyond its timestamp.
+> Affected readers: audit-service, the admin file-usage page, the frontend
+> delivery chips, and the judge prompt, which is told not to penalise a lane for
+> `OMITTED_UNSUPPORTED`. See
+> [ADR-095](../13-adr/adr-095-attachment-text-extraction-pipeline.md).
 
 If extracted text overruns the model's token budget it is cut to fit and
 flagged as `TRUNCATED_TEXT` so the user / judge can see the lane received
@@ -120,9 +134,13 @@ only a partial file.
 
 The following are intentionally out-of-scope and tracked for later slices:
 
-- **Native PDF input.** All PDFs are routed to `OMITTED_UNSUPPORTED` in
-  Slice A. Slice B will add a PDF text-extraction path + a native-PDF
-  adapter for Anthropic / Gemini where the SDKs accept PDFs directly.
+- ~~**Native PDF input.**~~ **Done (2026-09-12, ADR-095).** PDF text
+  extraction ships; PDFs deliver as `EXTRACTED_TEXT`. A _native_-PDF adapter
+  for the Anthropic and Gemini SDKs, which accept the file itself, is still
+  open — extracted text loses layout, tables and figures.
+- ~~**OCR for image attachments.**~~ **Done (2026-09-12, ADR-095).** A
+  non-vision lane now receives the image's OCR text when there is any. The
+  original note read:
 - **OCR for image attachments.** Even when an image is delivered as
   `NATIVE_IMAGE`, no OCR is performed for non-vision lanes. Slice B will
   introduce an OCR fall-back so a non-vision model can still receive
@@ -197,14 +215,25 @@ file X" and "show me every model that ever received file Y".
 
 ### 2. Native PDF input for Anthropic
 
-**Status: DONE.** Was on Slice A's "NOT in scope" list.
+**Status: TRANSPORT ONLY. The delivery record was never built.**
 
-When `ENABLE_ANTHROPIC_NATIVE_PDF=true`, the Anthropic adapter
-(`apps/claw-connector-service/src/modules/connectors/managers/adapters/anthropic.adapter.ts`)
-forwards PDFs as the native `document` content part instead of routing
-them through extracted-text. Per-model `attachmentDelivery` records
-the mode as `NATIVE_PDF` so the FE renders the new
-`compare.delivery.anthropicNativePdf` badge.
+When `ENABLE_ANTHROPIC_NATIVE_PDF=true`, the Anthropic path
+(`chat-execution.manager.ts:841`, `:3637`) forwards PDFs as the native
+`document` content part instead of routing them through extracted text. That
+half is real.
+
+The rest of this section described a `NATIVE_PDF` delivery mode. **There is no
+such mode.** `FileDeliveryMode`
+(`apps/claw-chat-service/src/common/enums/file-delivery-mode.enum.ts`) has five
+members and that is not one of them; nothing in `apps/` ever assigns it. The
+i18n key `compare.delivery.anthropicNativePdf` exists in all thirteen locales
+and can never render.
+
+So a PDF is recorded as `EXTRACTED_TEXT` in every column of the matrix above,
+including an Anthropic lane that received the file natively. The record
+understates what that lane got. Closing the gap means adding the enum member,
+the classifier branch, and a spec — none of which this change did, because the
+flag is off and the fix belongs with whoever turns it on.
 
 Requires bumping the `anthropic-version` header to `2024-06-01`. The
 bump is centralised in
@@ -266,9 +295,11 @@ applies:
 
 Outputs:
 
-- OCR text is stored on the `File.content` column (same field
-  PDF/DOCX text already uses) so context-assembly's existing chunk
-  loader picks it up with no changes.
+- OCR text is stored on the `File.extractedText` column, alongside every
+  other extractor's output. It is NOT `File.content`, which holds base64 of
+  the original bytes — handing that to a text model is the defect ADR-095
+  exists to fix. context-assembly reads `/internal/files/:id/content` and
+  prefers `extractedText` for every non-image file.
 - Tesseract reports a confidence score; results below
   `OCR_CONFIDENCE_MIN` (default 0.5) are tagged on the FileDelivery
   metadata so the judge/critic prompt sees "low-confidence OCR"

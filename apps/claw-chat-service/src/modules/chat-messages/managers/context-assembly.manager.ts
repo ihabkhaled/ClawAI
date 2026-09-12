@@ -29,6 +29,7 @@ import {
   type AssembledContext,
   type ContextPackResponse,
   type FileContentResponse,
+  type FileIngestionState,
   type MemoryRecordResponse,
   type ResearchEvidenceCitation,
   type WorkspaceCitation,
@@ -37,6 +38,8 @@ import {
 import { type ResearchOptions } from '../types/research-options.types';
 import { type ResearchRunResponse } from '../types/research.types';
 import {
+  FILE_INGESTION_POLL_INTERVAL_MS,
+  FILE_INGESTION_WAIT_TIMEOUT_MS,
   MAX_FILE_CONTENT_LENGTH,
   TEXT_FILE_EXTENSIONS,
   TEXT_MIME_PREFIXES,
@@ -854,6 +857,11 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       const config = AppConfig.get();
       const results: FileContentResponse[] = [];
 
+      // Extraction is asynchronous. A user who attaches a PDF and sends the
+      // message immediately would otherwise race it and be answered about a
+      // document the model never saw.
+      await this.waitForIngestion(fileIds, userId);
+
       for (const fileId of fileIds) {
         const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/content?userId=${encodeURIComponent(userId)}`;
 
@@ -884,6 +892,72 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       this.logger.warn(`fetchFileContents: failed (non-blocking): ${msg}`);
       return [];
     }
+  }
+
+  /**
+   * Waits, briefly, for every attachment to finish extracting.
+   *
+   * Bounded by a deadline rather than an attempt count: what the user feels is
+   * elapsed time, and a fixed number of attempts turns a slow extractor into an
+   * unbounded wait. Expiry is not an error — assembly continues, and
+   * `decodeFileContent` tells the model the file is still being read rather
+   * than claiming it was empty. Degrading is the rule on this path;
+   * `fetchFileContents` is deliberately non-blocking on failure too.
+   */
+  private async waitForIngestion(fileIds: string[], userId: string): Promise<void> {
+    const deadline = Date.now() + FILE_INGESTION_WAIT_TIMEOUT_MS;
+    const pending = new Set(fileIds);
+
+    while (pending.size > 0 && Date.now() < deadline) {
+      for (const fileId of [...pending]) {
+        const state = await this.fetchIngestionState(fileId, userId);
+        // An unreachable or unknown state is treated as settled. Blocking the
+        // turn on a file-service that cannot answer would trade a degraded
+        // reply for no reply at all.
+        if (state !== 'PENDING' && state !== 'PROCESSING') {
+          pending.delete(fileId);
+        }
+      }
+      if (pending.size === 0) {
+        break;
+      }
+      await this.sleep(FILE_INGESTION_POLL_INTERVAL_MS);
+    }
+
+    if (pending.size > 0) {
+      this.logger.warn(
+        `waitForIngestion: ${String(pending.size)} file(s) still extracting after ${String(FILE_INGESTION_WAIT_TIMEOUT_MS)}ms — proceeding; the model is told they are unread`,
+      );
+    }
+  }
+
+  private async fetchIngestionState(
+    fileId: string,
+    userId: string,
+  ): Promise<FileIngestionState | null> {
+    try {
+      const config = AppConfig.get();
+      const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/ingestion-state?userId=${encodeURIComponent(userId)}`;
+      const response = await httpRequest<{ ingestionStatus: FileIngestionState }>({
+        url,
+        method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeoutMs: FILE_INGESTION_WAIT_TIMEOUT_MS,
+      });
+      return response.ok ? response.data.ingestionStatus : null;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `fetchIngestionState: file ${fileId} unreachable (non-blocking): ${message}`,
+      );
+      return null;
+    }
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   }
 
   private async fetchWorkspaceContext(userId: string, query: string): Promise<WorkspaceCitation[]> {
@@ -1023,20 +1097,80 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     return `${text.slice(0, headChars)}\n\n[...truncated older context...]\n\n${text.slice(-tailChars)}`;
   }
 
+  /**
+   * The text a model is shown for one attachment.
+   *
+   * Order matters. `extractedText` comes first for every non-image file,
+   * because it is the only field that holds readable text for a PDF, DOCX,
+   * XLSX, PPTX or RTF. This method used to fall through to
+   * "content not extractable as text" for exactly those formats, and the models
+   * paraphrased that sentence back to the user as a refusal. See ADR-095.
+   */
   private decodeFileContent(file: FileContentResponse): string {
-    if (!file.content) {
-      return `[File "${file.filename}" has no content]`;
+    const extracted = file.extractedText?.trim();
+    if (extracted !== undefined && extracted.length > 0 && !this.isImageFile(file)) {
+      return this.truncateFileText(extracted, file.filename);
+    }
+
+    if (this.isImageFile(file)) {
+      return this.describeImage(file);
+    }
+
+    // A video has no text to extract and its bytes must never be decoded into
+    // the prompt. Providers that can watch it receive the bytes natively
+    // elsewhere; this line is what a text lane is told instead.
+    if (this.isVideoFile(file)) {
+      return `[Video file "${file.filename}" (${file.mimeType}) — video has no text to extract. It is delivered natively to models that accept video; do not describe its contents.]`;
+    }
+
+    // Extraction is asynchronous, so "no text yet" and "no text ever" are
+    // different answers and the model is told which. Saying a document is empty
+    // when it is merely still being read is how a correct pipeline still
+    // produces a wrong answer.
+    const status = file.ingestionStatus;
+    if (status === 'PENDING' || status === 'PROCESSING') {
+      return `[File "${file.filename}" is still being read. Its text was not available for this message — tell the user to send the message again in a moment rather than guessing at the contents.]`;
+    }
+    if (status === 'FAILED') {
+      const reason = file.extractionError ?? 'the file could not be parsed';
+      return `[File "${file.filename}" could not be read: ${reason}. Tell the user this specific reason; do not guess at the contents.]`;
     }
 
     if (this.isTextDecodable(file)) {
       return this.decodeAsText(file);
     }
 
-    if (this.isImageFile(file)) {
-      return `[Image file "${file.filename}" — passed via multimodal images field]`;
+    if (!file.content) {
+      return `[File "${file.filename}" has no content]`;
     }
 
-    return `[Binary file "${file.filename}" (${file.mimeType}) — content not extractable as text]`;
+    return `[File "${file.filename}" (${file.mimeType}) produced no readable text. Tell the user the format could not be read; do not guess at the contents.]`;
+  }
+
+  /**
+   * What a non-vision lane is told about an attached picture.
+   *
+   * A vision lane never reaches this — the bytes ride the multimodal parts. For
+   * a text-only model, OCR text is far better than nothing: an invoice or a
+   * screenshot of a document is usually readable, and the alternative is a model
+   * answering about an image it was never given.
+   */
+  private describeImage(file: FileContentResponse): string {
+    const extracted = file.extractedText?.trim();
+    if (extracted !== undefined && extracted.length > 0 && !extracted.startsWith('[Image file:')) {
+      return `Text read from the image "${file.filename}":\n${this.truncateFileText(extracted, file.filename)}`;
+    }
+    return `[Image file "${file.filename}" — passed via multimodal images field]`;
+  }
+
+  private truncateFileText(text: string, filename: string): string {
+    if (text.length <= MAX_FILE_CONTENT_LENGTH) {
+      return text;
+    }
+    this.logger.debug(
+      `truncateFileText: truncating ${filename} from ${String(text.length)} to ${String(MAX_FILE_CONTENT_LENGTH)}`,
+    );
+    return `${text.slice(0, MAX_FILE_CONTENT_LENGTH)}\n\n[...truncated: this file is longer than the per-file limit...]`;
   }
 
   private isTextDecodable(file: FileContentResponse): boolean {

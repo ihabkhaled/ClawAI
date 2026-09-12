@@ -56,6 +56,7 @@ const buildFile = (overrides: Partial<File> = {}): File =>
 
 const mockFilesRepository = (): Partial<Record<keyof FilesRepository, jest.Mock>> => ({
   findExpiredBefore: jest.fn(),
+  findStaleProcessingBefore: jest.fn().mockResolvedValue([]),
   // jest.fn() defaults to returning undefined synchronously, which awaits to
   // undefined — exactly what FilesRepository.deleteById returns. We avoid
   // .mockResolvedValue() so unicorn/no-useless-undefined and tsgo agree.

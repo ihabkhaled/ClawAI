@@ -136,7 +136,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 132,
+      "testFiles": 135,
       "testRunner": "jest"
     },
     {
@@ -208,7 +208,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 16,
+      "endpointCount": 17,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -224,7 +224,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 17,
+      "testFiles": 20,
       "testRunner": "jest"
     },
     {

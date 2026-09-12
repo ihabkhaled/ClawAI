@@ -31,6 +31,8 @@ const mockFile = {
   sizeBytes: 1024,
   storagePath: '/data/uploads/test-file.txt',
   content: null,
+  extractedText: null,
+  extractionError: null,
   ingestionStatus: FileIngestionStatus.PENDING,
   retentionExpiresAt: null,
   parentFileId: null,
@@ -42,6 +44,7 @@ const mockFile = {
 
 const mockFilesRepository = (): Partial<Record<keyof FilesRepository, jest.Mock>> => ({
   updateIngestionStatus: jest.fn().mockResolvedValue(mockFile),
+  saveExtractionResult: jest.fn().mockResolvedValue(mockFile),
 });
 
 const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Mock> => ({
@@ -99,9 +102,15 @@ describe('FileProcessingManager', () => {
           expect.objectContaining({ fileId: 'file-1', chunkIndex: 2, content: 'Third paragraph.' }),
         ]),
       );
-      expect(filesRepo.updateIngestionStatus).toHaveBeenCalledWith(
+      // Status and text land in one write: a COMPLETED row with no text, or text
+      // on a row still PROCESSING, is a state readers cannot interpret.
+      expect(filesRepo.saveExtractionResult).toHaveBeenCalledWith(
         'file-1',
-        FileIngestionStatus.COMPLETED,
+        expect.objectContaining({
+          status: FileIngestionStatus.COMPLETED,
+          extractedText: expect.stringContaining('First paragraph.'),
+          extractionError: null,
+        }),
       );
     });
 
@@ -138,9 +147,9 @@ describe('FileProcessingManager', () => {
       await manager.processFile(mdFile);
 
       expect(chunksRepo.createMany).toHaveBeenCalled();
-      expect(filesRepo.updateIngestionStatus).toHaveBeenCalledWith(
+      expect(filesRepo.saveExtractionResult).toHaveBeenCalledWith(
         'file-1',
-        FileIngestionStatus.COMPLETED,
+        expect.objectContaining({ status: FileIngestionStatus.COMPLETED }),
       );
     });
 
@@ -188,9 +197,15 @@ describe('FileProcessingManager', () => {
 
       await manager.processFile(mockFile);
 
-      expect(filesRepo.updateIngestionStatus).toHaveBeenCalledWith(
+      // The REASON is stored, not just the status — chat-service reads it so the
+      // user hears "File not found" instead of a generic "not extractable".
+      expect(filesRepo.saveExtractionResult).toHaveBeenCalledWith(
         'file-1',
-        FileIngestionStatus.FAILED,
+        expect.objectContaining({
+          status: FileIngestionStatus.FAILED,
+          extractedText: null,
+          extractionError: 'File not found',
+        }),
       );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.FILE_FAILED,

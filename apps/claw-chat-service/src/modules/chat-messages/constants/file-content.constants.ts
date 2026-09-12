@@ -207,3 +207,22 @@ export const DOCUMENT_MIME_DOCX =
 export const IMAGE_MIME_PREFIX = 'image/';
 
 export const MAX_FILE_CONTENT_LENGTH = 100_000;
+
+// Bounded wait for file-service extraction, used before a turn is assembled.
+//
+// Extraction is asynchronous, so a user who attaches a PDF and sends
+// immediately can outrun it. Without this the model is handed "still being
+// read" and answers about a document nobody gave it.
+//
+// The deadline is the bound, not an attempt count: what matters is how long the
+// user waits, and a fixed attempt count turns a slow extractor into an
+// unbounded wait. Constants rather than environment variables, matching
+// GEMINI_FILES_API_POLL_INTERVAL_MS — an operator has no reason to tune this,
+// and the repo's policy is to avoid new env vars.
+//
+// 12s covers an ordinary PDF or DOCX comfortably. It deliberately does NOT
+// cover a 30s worst-case OCR: waiting half a minute before the first token is a
+// worse experience than one honest "still being read" line, and the user can
+// simply send again.
+export const FILE_INGESTION_WAIT_TIMEOUT_MS = 12_000;
+export const FILE_INGESTION_POLL_INTERVAL_MS = 400;

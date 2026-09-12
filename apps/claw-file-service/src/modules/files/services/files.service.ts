@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type Response } from 'express';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
@@ -10,13 +10,14 @@ import {
   type FileUploadCompletedPayload,
   type FileUploadStartedPayload,
 } from '@claw/shared-types';
-import { type File, type FileChunk } from '../../../generated/prisma';
+import { type File, type FileChunk, FileIngestionStatus } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import {
   MAX_PUBLISHED_COPY_BYTES,
   PUBLISHABLE_COPY_MIME_PREFIX,
 } from '../constants/published-copy.constants';
+import { EXTRACTION_REQUIRED_MIME_TYPES } from '../constants/file-processing.constants';
 import { type PublishedCopyResult } from '../types/published-copy.types';
 import { type PaginatedResult } from '../../../common/types';
 import { AppConfig } from '../../../app/config/app.config';
@@ -27,9 +28,12 @@ import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
 import {
   type CreateInternalFileBody,
+  type FileIngestionState,
   type InternalFileContentResponse,
 } from '../types/internal-file.types';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
+import { FileProcessingManager } from '../managers/file-processing.manager';
+import { type FileProcessingContract } from '../types/zip-expansion.types';
 
 @Injectable()
 export class FilesService {
@@ -40,6 +44,12 @@ export class FilesService {
     private readonly fileChunksRepository: FileChunksRepository,
     private readonly rabbitMQService: RabbitMQService,
     private readonly fileSecurityManager: FileSecurityManager,
+    // Typed as the contract rather than the class for the same ESM reason
+    // documented on FileProcessingContract: a class-typed parameter is emitted
+    // into `design:paramtypes` and read while the module graph is still
+    // evaluating. Do not widen it back to the class type.
+    @Inject(forwardRef(() => FileProcessingManager))
+    private readonly fileProcessingManager: FileProcessingContract,
   ) {}
 
   /**
@@ -67,6 +77,7 @@ export class FilesService {
       retentionExpiresAt: this.computeRetentionExpiry(),
     });
     this.publishUploadCompleted(file);
+    this.startExtraction(file);
     return file;
   }
 
@@ -107,8 +118,33 @@ export class FilesService {
 
     this.logger.log(`uploadFile: uploaded file ${file.id} "${safeName}" (security checks passed)`);
     this.publishUploadCompleted(file);
+    this.startExtraction(file);
 
     return file;
+  }
+
+  /**
+   * Kicks off text extraction for a freshly stored file.
+   *
+   * Deliberately not awaited. OCR on a scanned PDF runs to the OCR_TIMEOUT_MS
+   * ceiling (30s by default), and holding the upload response open for that long
+   * would break the picker. The row is created PENDING and the manager drives it
+   * to COMPLETED or FAILED; readers wait on that status rather than on this call.
+   *
+   * This is the wiring whose absence caused every "I can't read the attached
+   * file" reply: FileProcessingManager existed and was correct, but nothing on
+   * the upload path ever called it.
+   */
+  private startExtraction(file: File): void {
+    void this.fileProcessingManager.processFile(file).catch((error: unknown) => {
+      // processFile already records FAILED and publishes the failure event; this
+      // catch exists only so an unexpected throw cannot become an unhandled
+      // rejection and take the process down.
+      const message = error instanceof Error ? error.message : 'Unknown extraction error';
+      this.logger.error(
+        `startExtraction: fileId=${file.id} threw outside processFile — ${message}`,
+      );
+    });
   }
 
   private publishUploadStarted(args: {
@@ -214,11 +250,75 @@ export class FilesService {
     if (file?.userId !== userId) {
       throw new EntityNotFoundException('File', id);
     }
+    const status = this.healLegacyRowIfNeeded(file);
     return {
       id: file.id,
       filename: file.filename,
       mimeType: file.mimeType,
       content: file.content,
+      extractedText: file.extractedText,
+      ingestionStatus: status,
+      extractionError: file.extractionError,
+    };
+  }
+
+  /**
+   * Re-extracts a row that predates the extraction pipeline, on first use.
+   *
+   * Every file uploaded before this pipeline was wired sits at COMPLETED with no
+   * text, because the old schema defaulted the column to COMPLETED and nothing
+   * ever ran. Those rows are not migrated in bulk: a migration that flipped them
+   * all to PENDING would leave them PENDING forever, and the file-list poller
+   * runs for as long as any row is unfinished.
+   *
+   * So history heals one file at a time, when someone actually attaches it. The
+   * caller is told PROCESSING rather than COMPLETED, which routes it into the
+   * same bounded wait a fresh upload uses.
+   */
+  private healLegacyRowIfNeeded(file: File): FileIngestionStatus {
+    const alreadyResolved =
+      file.ingestionStatus !== FileIngestionStatus.COMPLETED || file.extractedText !== null;
+    if (alreadyResolved || !this.needsTextExtraction(file.mimeType)) {
+      return file.ingestionStatus;
+    }
+    this.logger.log(
+      `healLegacyRowIfNeeded: fileId=${file.id} predates extraction (${file.mimeType}) — re-extracting on demand`,
+    );
+    this.startExtraction(file);
+    return FileIngestionStatus.PROCESSING;
+  }
+
+  // Text files were always readable as-is, so a legacy text row needs nothing.
+  // Only formats whose bytes are meaningless to a model are worth re-running.
+  private needsTextExtraction(mimeType: string): boolean {
+    return (
+      EXTRACTION_REQUIRED_MIME_TYPES.has(mimeType) ||
+      mimeType.startsWith('image/') ||
+      mimeType.startsWith('video/')
+    );
+  }
+
+  /**
+   * Whether extraction has finished, without shipping the text back.
+   *
+   * Chat-service polls this before assembling a turn, so a message sent the
+   * instant an upload returns does not race the extractor. Kept separate from
+   * {@link getFileContent} because a readiness poll must stay cheap — the text
+   * for a large PDF is megabytes, and a caller checking a boolean should not
+   * pay for it on every attempt.
+   */
+  async getIngestionState(id: string, userId: string): Promise<FileIngestionState> {
+    const file = await this.filesRepository.findById(id);
+    if (file?.userId !== userId) {
+      throw new EntityNotFoundException('File', id);
+    }
+    return {
+      id: file.id,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      ingestionStatus: file.ingestionStatus,
+      extractionError: file.extractionError,
+      extractedTextLength: file.extractedText?.length ?? 0,
     };
   }
 

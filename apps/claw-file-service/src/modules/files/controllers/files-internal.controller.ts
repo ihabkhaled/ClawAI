@@ -26,6 +26,7 @@ import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
 import type {
   CreateInternalFileBody,
+  FileIngestionState,
   InternalFileContentResponse,
 } from '../types/internal-file.types';
 import { type PublishedCopyResult } from '../types/published-copy.types';
@@ -54,6 +55,25 @@ export class FilesInternalController {
     query: InternalFileContentQueryDto,
   ): Promise<InternalFileContentResponse> {
     return this.filesService.getFileContent(fileId, query.userId);
+  }
+
+  /**
+   * Cheap readiness poll for the extraction pipeline.
+   *
+   * chat-service calls this in a bounded loop before assembling a turn, so a
+   * message sent the instant an upload returns still sees the document. It
+   * deliberately does not return the text: a poller should not transfer a
+   * megabyte to learn a status.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Get(':id/ingestion-state')
+  async getIngestionState(
+    @Param('id') fileId: string,
+    @Query(new ZodValidationPipe(internalFileContentQuerySchema))
+    query: InternalFileContentQueryDto,
+  ): Promise<FileIngestionState> {
+    return this.filesService.getIngestionState(fileId, query.userId);
   }
 
   @Public()

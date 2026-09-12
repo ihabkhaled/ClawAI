@@ -33,6 +33,8 @@ const mockFile = {
   sizeBytes: 1024,
   storagePath: '/data/uploads/test-file.txt',
   content: null,
+  extractedText: null,
+  extractionError: null,
   ingestionStatus: FileIngestionStatus.PENDING,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -64,9 +66,11 @@ const mockFilesRepository = (): Record<keyof FilesRepository, jest.Mock> => ({
   findById: jest.fn(),
   findAll: jest.fn(),
   updateIngestionStatus: jest.fn(),
+  saveExtractionResult: jest.fn(),
   delete: jest.fn(),
   countAll: jest.fn(),
   findExpiredBefore: jest.fn(),
+  findStaleProcessingBefore: jest.fn().mockResolvedValue([]),
   deleteById: jest.fn(),
   markAsExtractedChild: jest.fn(),
   recordExtractionMetadata: jest.fn(),
@@ -92,6 +96,12 @@ describe('FilesService', () => {
     filesRepo = mockFilesRepository();
     chunksRepo = mockFileChunksRepository();
     rabbitMQ = mockRabbitMQ();
+    // Extraction is kicked off but never awaited by uploadFile; the stub keeps
+    // the fire-and-forget call from touching the real pipeline in unit tests.
+    const mockProcessingManager = {
+      processFile: jest.fn().mockResolvedValue(void 0),
+      updateIngestionStatus: jest.fn().mockResolvedValue(void 0),
+    };
     const mockSecurityManager = {
       runAllChecks: jest.fn().mockResolvedValue({ passed: true, checks: [] }),
       getSanitizedFilename: jest.fn().mockImplementation((name: string) => name),
@@ -101,6 +111,7 @@ describe('FilesService', () => {
       chunksRepo as unknown as FileChunksRepository,
       rabbitMQ as unknown as RabbitMQService,
       mockSecurityManager as any,
+      mockProcessingManager,
     );
   });
 
@@ -306,11 +317,16 @@ describe('FilesService', () => {
 
       const result = await service.getFileContent('file-1', 'user-1');
 
+      // The contract now also carries the extraction outcome, because serving
+      // only `content` is what made every model say it could not read the file.
       expect(result).toEqual({
         id: 'file-1',
         filename: 'test.txt',
         mimeType: 'text/plain',
         content: Buffer.from('private tenant content').toString('base64'),
+        extractedText: null,
+        ingestionStatus: 'PENDING',
+        extractionError: null,
       });
     });
 

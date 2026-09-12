@@ -21,6 +21,36 @@ This is the File microservice for the Claw platform. It owns file upload, storag
 - `files`
 - `file_chunks`
 
+## The one thing that surprises everyone here
+
+**`files.content` is base64 of the original bytes. `files.extractedText` is the
+text a model reads. They are not the same field and never were.**
+
+Handing `content` to a text model is how this service spent months making every
+provider reply _"I can't read the attached file"_ — the model was paraphrasing
+the placeholder chat-service emitted, not refusing. Before you touch anything in
+the attachment path, read
+[ADR-095](../../docs/13-adr/adr-095-attachment-text-extraction-pipeline.md).
+
+Four rules follow from it:
+
+- **Extraction is started by `FilesService.startExtraction`, unawaited.** If you
+  add a third upload entry point, it must call it too. A row created without it
+  sits at PENDING forever and keeps the file-list poller alive.
+- **`ingestionStatus` is load-bearing.** `PENDING`/`PROCESSING` means "not yet",
+  never "empty". A reader that treats an unfinished row as a blank file
+  reintroduces the original bug in a new place.
+- **Write the text and the terminal status in one call** — `saveExtractionResult`.
+  A COMPLETED row with no text is a state no reader can interpret.
+- **Never bulk-migrate rows to PENDING.** Nothing reprocesses history, so they
+  would stay PENDING forever, and the file list polls a 4.2 MB endpoint while any
+  row is unfinished. Legacy rows heal one at a time, on use.
+
+Every archive this service opens is bounded. `zip-extraction.utility.ts` guards
+the expand-to-disk path; `ooxml-parser.utility.ts` guards the in-memory XLSX and
+PPTX path. An `.xlsx` is a ZIP and is user input. Do not add a third way to open
+one without bounds of its own.
+
 ## All Standard Backend Rules Apply
 
 See the root CLAUDE.md for the full set of architecture rules, naming conventions, and code quality requirements. Key points:

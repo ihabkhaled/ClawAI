@@ -1,5 +1,6 @@
 import { FileDeliveryMode } from '../enums/file-delivery-mode.enum';
 import {
+  EXTRACTABLE_DOCUMENT_MIME_EXACT,
   IMAGE_MIME_PREFIX,
   TEXT_LIKE_MIME_EXACT,
   TEXT_LIKE_MIME_PREFIXES,
@@ -14,6 +15,7 @@ import type { ModelMetadata } from '../../modules/chat-messages/types/model-meta
 // AssembledContext's fileContents.
 // Classification rules:
 //   text/*, json, csv, markdown, code → EXTRACTED_TEXT
+//   pdf, docx, xlsx, pptx, rtf         → EXTRACTED_TEXT (file-service extracts)
 //   image/* + model has vision        → NATIVE_IMAGE
 //   image/* + model lacks vision      → OMITTED_NO_VISION
 //   anything else                     → OMITTED_UNSUPPORTED
@@ -49,7 +51,9 @@ function buildSingleEntry(
 ): FileDeliveryEntry {
   const mime = (file.mimeType ?? '').toLowerCase();
 
-  if (isTextLikeMime(mime)) {
+  // A document the platform extracts text from delivers as text. The mime is
+  // binary; what the model receives is not.
+  if (isTextLikeMime(mime) || EXTRACTABLE_DOCUMENT_MIME_EXACT.has(mime)) {
     return {
       fileId: file.id,
       filename: file.filename,
@@ -152,7 +156,10 @@ function buildFileSnippet(file: FileContentResponse): string {
   if (mime.startsWith(IMAGE_MIME_PREFIX)) {
     return '[image]';
   }
-  const text = (file.content ?? '').trim();
+  // `extractedText` first, for the same reason as everywhere else: `content` is
+  // base64, so this used to hand the judge 600 characters of "JVBERi0xLjM..."
+  // and ask it to grade answers against that. ADR-095.
+  const text = (file.extractedText ?? file.content ?? '').trim();
   if (text.length === 0) {
     return '[empty]';
   }

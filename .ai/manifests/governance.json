@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 24426,
+      "bytes": 27272,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 20429,
+      "bytes": 20851,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -262,13 +262,17 @@
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
+      "bytes": 6784,
+      "file": "rules/42-attachment-understanding.md"
+    },
+    {
       "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 21547,
+      "bytes": 22174,
       "file": "skills/00-index.md"
     },
     {
@@ -436,6 +440,10 @@
       "file": "skills/debug-a-stuck-scheduled-job.md"
     },
     {
+      "bytes": 7779,
+      "file": "skills/debug-an-attachment-the-model-cannot-read.md"
+    },
+    {
       "bytes": 3724,
       "file": "skills/debug-flaky-test.md"
     },
@@ -452,7 +460,7 @@
       "file": "skills/find-canonical-owner.md"
     },
     {
-      "bytes": 3539,
+      "bytes": 4445,
       "file": "skills/finish-worktree-branch-with-pr.md"
     },
     {

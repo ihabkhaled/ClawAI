@@ -213,8 +213,11 @@ describe('ContextAssemblyManager', () => {
 
     const prompt = manager.buildPromptString(context);
 
+    // The invariant is that the BYTES never reach the prompt. The placeholder
+    // wording changed with ADR-095; asserting on the exact sentence pinned the
+    // message rather than the guarantee.
     expect(prompt).not.toContain(rawVideoMarker);
-    expect(prompt).toContain('Binary file "demo.mp4"');
+    expect(prompt).toContain('Video file "demo.mp4"');
     expect(prompt).toContain('video/mp4');
   });
 
@@ -232,8 +235,10 @@ describe('ContextAssemblyManager', () => {
 
     const messages = manager.buildChatMessages(context);
 
+    // Same invariant as above: the bytes stay out of the prompt. The
+    // placeholder wording is ADR-095's, not the old "not extractable as text".
     expect(JSON.stringify(messages)).not.toContain(`data:video/mp4;base64,${videoBase64}`);
-    expect(JSON.stringify(messages)).toContain('content not extractable as text');
+    expect(JSON.stringify(messages)).toContain('video has no text to extract');
   });
 
   it('renders Runtime V2 requests and results as an assistant-user exchange', () => {
