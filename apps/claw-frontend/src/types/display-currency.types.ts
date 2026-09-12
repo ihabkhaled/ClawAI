@@ -60,3 +60,9 @@ export type LocalizedMoneyDisplay = {
   canonicalText: string | null;
   isApproximate: boolean;
 };
+
+export type MoneyFormatter = (
+  canonicalAmountMinor: number,
+  canonicalCurrency: string,
+  policy?: DisplayRoundingPolicy,
+) => string;

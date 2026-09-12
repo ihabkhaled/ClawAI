@@ -1,3 +1,5 @@
+'use client';
+
 import { Check } from 'lucide-react';
 import type { ReactElement } from 'react';
 
@@ -6,11 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BillingInterval } from '@/enums/billing.enum';
+import { useLocalizedMoney } from '@/hooks/display-currency/use-localized-money';
 import type { BillingPlanCardProps } from '@/types/billing-component.types';
 import {
   computeYearlySavingMinor,
   findPlanPrice,
-  formatMinorAmount,
   formatQuotaLimit,
 } from '@/utilities/billing.utility';
 
@@ -24,6 +26,10 @@ export function BillingPlanCard({
 }: BillingPlanCardProps): ReactElement {
   const price = findPlanPrice(plan, interval);
   const savingMinor = interval === BillingInterval.YEARLY ? computeYearlySavingMinor(plan) : 0;
+  // Localized from the CANONICAL price. The amount a checkout will actually
+  // charge comes from the server's own quote, never from anything here.
+  const localizedPrice = useLocalizedMoney(price?.amountMinor ?? 0, price?.currency ?? 'USD');
+  const localizedSaving = useLocalizedMoney(savingMinor, price?.currency ?? 'USD');
   const showsDiscountBadge =
     (interval === BillingInterval.QUARTERLY || interval === BillingInterval.SEMIANNUAL) &&
     price !== null &&
@@ -46,15 +52,21 @@ export function BillingPlanCard({
             unavailable rather than free — a missing price is a catalog gap, and
             rendering it as "0" would advertise something we cannot sell. */}
         <p className="text-2xl font-semibold">
-          {price === null
-            ? t('billing.plans.unavailableForInterval')
-            : formatMinorAmount(price.amountMinor, price.currency)}
+          {price === null ? t('billing.plans.unavailableForInterval') : localizedPrice.text}
         </p>
+        {localizedPrice.canonicalText === null ? null : (
+          <p className="text-muted-foreground -mt-3 text-xs">
+            {t('marketing.currency.convertedFrom').replace(
+              '{amount}',
+              localizedPrice.canonicalText,
+            )}
+          </p>
+        )}
 
         {savingMinor > 0 && price !== null ? (
           <p className="text-muted-foreground text-xs">
             {t('billing.plans.yearlySaving', {
-              amount: formatMinorAmount(savingMinor, price.currency),
+              amount: localizedSaving.text,
             })}
           </p>
         ) : null}

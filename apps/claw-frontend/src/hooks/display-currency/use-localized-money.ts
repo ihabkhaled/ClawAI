@@ -4,7 +4,7 @@ import { DisplayRoundingPolicy } from '@claw/shared-types';
 import { useMemo } from 'react';
 
 import { useDisplayCurrency } from '@/hooks/display-currency/use-display-currency';
-import { useTranslation } from '@/lib/i18n';
+import { useDisplayLocale } from '@/hooks/display-currency/use-display-locale';
 import type { LocalizedMoneyDisplay } from '@/types/display-currency.types';
 import { formatCanonicalMoney, formatLocalizedMoney } from '@/utilities/display-currency.utility';
 
@@ -23,7 +23,7 @@ export function useLocalizedMoney(
   policy: DisplayRoundingPolicy = DisplayRoundingPolicy.COMMERCIAL_PRICE,
 ): LocalizedMoneyDisplay {
   const { localize } = useDisplayCurrency();
-  const { locale } = useTranslation();
+  const locale = useDisplayLocale();
 
   return useMemo(() => {
     const view = localize(canonicalAmountMinor, canonicalCurrency, policy);

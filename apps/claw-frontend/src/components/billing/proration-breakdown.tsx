@@ -1,8 +1,10 @@
+'use client';
+
 import type { ReactElement } from 'react';
 
 import { Separator } from '@/components/ui/separator';
+import { useMoneyFormatter } from '@/hooks/display-currency/use-money-formatter';
 import type { ProrationBreakdownProps } from '@/types/billing-component.types';
-import { formatMinorAmount } from '@/utilities/billing.utility';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 
 // Shows the arithmetic behind the amount, not just the total.
@@ -11,6 +13,11 @@ import { formatDateTimeSafe } from '@/utilities/date.utility';
 // period they are part-way through. Showing credit and charge separately is the
 // difference between a considered upgrade and a chargeback.
 export function ProrationBreakdown({ quote, t }: ProrationBreakdownProps): ReactElement {
+  // An ESTIMATE in the viewer's currency. The proration maths stays in the
+  // billing currency on the server, and the amount a checkout actually charges
+  // comes back from that quote - never from this line.
+  const formatMoney = useMoneyFormatter();
+
   if (quote.isScheduledForPeriodEnd) {
     return (
       <div className="border-border grid grid-cols-1 gap-2 rounded-lg border p-3 text-sm">
@@ -28,16 +35,16 @@ export function ProrationBreakdown({ quote, t }: ProrationBreakdownProps): React
     <dl className="border-border grid grid-cols-1 gap-2 rounded-lg border p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
         <dt className="text-muted-foreground">{t('billing.proration.unusedCredit')}</dt>
-        <dd>-{formatMinorAmount(quote.unusedCurrentCreditMinor, quote.currency)}</dd>
+        <dd>-{formatMoney(quote.unusedCurrentCreditMinor, quote.currency)}</dd>
       </div>
       <div className="flex items-center justify-between gap-2">
         <dt className="text-muted-foreground">{t('billing.proration.remainingCharge')}</dt>
-        <dd>{formatMinorAmount(quote.targetRemainingChargeMinor, quote.currency)}</dd>
+        <dd>{formatMoney(quote.targetRemainingChargeMinor, quote.currency)}</dd>
       </div>
       <Separator />
       <div className="flex items-center justify-between gap-2 font-medium">
         <dt>{t('billing.proration.dueToday')}</dt>
-        <dd>{formatMinorAmount(quote.amountDueMinor, quote.currency)}</dd>
+        <dd>{formatMoney(quote.amountDueMinor, quote.currency)}</dd>
       </div>
     </dl>
   );

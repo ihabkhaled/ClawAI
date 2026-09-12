@@ -1,11 +1,13 @@
+'use client';
+
 import type { ReactElement } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SubscriptionStatus } from '@/enums/billing.enum';
+import { useMoneyFormatter } from '@/hooks/display-currency/use-money-formatter';
 import type { SubscriptionSummaryCardProps } from '@/types/billing-component.types';
-import { formatMinorAmount } from '@/utilities/billing.utility';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 
 export function SubscriptionSummaryCard({
@@ -18,6 +20,10 @@ export function SubscriptionSummaryCard({
   isEndNowPending,
   t,
 }: SubscriptionSummaryCardProps): ReactElement {
+  // Localized from the subscription's canonical amount. What the gateway will
+  // actually charge on renewal is the server's business, not this card's.
+  const formatMoney = useMoneyFormatter();
+
   // No subscription is a normal state, not an error: it is what every free
   // account looks like.
   if (subscription === null) {
@@ -48,7 +54,7 @@ export function SubscriptionSummaryCard({
           <div>
             <dt className="text-muted-foreground">{t('billing.summary.price')}</dt>
             <dd className="font-medium">
-              {formatMinorAmount(subscription.amountMinor, subscription.currency)}{' '}
+              {formatMoney(subscription.amountMinor, subscription.currency)}{' '}
               <span className="text-muted-foreground">
                 {t(`billing.interval.${subscription.billingInterval}`)}
               </span>

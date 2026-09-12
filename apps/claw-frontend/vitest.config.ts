@@ -21,6 +21,10 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') },
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      // See tests/server-only-stub.ts: the real guard runs in `next build`.
+      'server-only': path.resolve(__dirname, './tests/server-only-stub.ts'),
+    },
   },
 });

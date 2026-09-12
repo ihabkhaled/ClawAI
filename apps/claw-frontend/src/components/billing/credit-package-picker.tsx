@@ -5,9 +5,9 @@ import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMoneyFormatter } from '@/hooks/display-currency/use-money-formatter';
 import { cn } from '@/lib/utils';
 import type { CreditPackagePickerProps } from '@/types/credit-component.types';
-import { formatMinorAmount } from '@/utilities/billing.utility';
 import { formatMicroUsd } from '@/utilities/credit.utility';
 
 /**
@@ -32,6 +32,13 @@ export function CreditPackagePicker({
   t,
   locale,
 }: CreditPackagePickerProps): ReactElement {
+  // Before the loading guards: a hook cannot live behind an early return.
+  //
+  // The PRICE is localized; the CREDIT is not. A top-up buys a USD-denominated
+  // service allowance, and rendering the wallet in EGP would imply ClawAI holds
+  // Egyptian pounds on the user's behalf, which it does not.
+  const formatMoney = useMoneyFormatter();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -78,7 +85,7 @@ export function CreditPackagePicker({
           >
             <span className="flex w-full items-center justify-between gap-2">
               <bdi className="text-base font-semibold tabular-nums">
-                {formatMinorAmount(pack.priceMinor, pack.currency, locale)}
+                {formatMoney(pack.priceMinor, pack.currency)}
               </bdi>
               {isSelected ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
             </span>

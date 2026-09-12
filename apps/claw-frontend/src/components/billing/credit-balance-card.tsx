@@ -1,5 +1,6 @@
 'use client';
 
+import { DisplayRoundingPolicy } from '@claw/shared-types';
 import { Wallet } from 'lucide-react';
 import type { ReactElement } from 'react';
 
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { USAGE_TONE_BAR_CLASSES } from '@/constants/billing.constants';
+import { useLocalizedMoney } from '@/hooks/display-currency/use-localized-money';
 import { cn } from '@/lib/utils';
 import type { CreditBalanceCardProps } from '@/types/credit-component.types';
 import { resolveUsageTone } from '@/utilities/billing.utility';
@@ -41,6 +43,13 @@ export function CreditBalanceCard({
   t,
   locale,
 }: CreditBalanceCardProps): ReactElement {
+  // Micro-USD is a millionth of a dollar; the converter works in minor units,
+  // so 10_000 micro-USD is one cent. Rounded half-up rather than truncated so a
+  // balance never reads lower than it is.
+  const availableMinor = Math.round((wallet?.availableMicroUsd ?? 0) / 10_000);
+  const localised = useLocalizedMoney(availableMinor, 'USD', DisplayRoundingPolicy.PRECISE_USAGE);
+  const localEquivalent = localised.view.approximate ? localised.text : null;
+
   const percentConsumed = wallet === null ? 0 : computeCreditConsumedPercent(wallet);
   const tone = resolveUsageTone(wallet === null ? null : computeCreditConsumedRatio(wallet));
   const grantWidth = wallet === null ? 0 : computeGrantSegmentPercent(wallet);
@@ -90,6 +99,18 @@ export function CreditBalanceCard({
                 {formatMicroUsd(wallet.availableMicroUsd, locale)}
               </bdi>
             </div>
+            {/* The wallet holds a USD-denominated allowance, so the USD figure
+                stays primary and the local equivalent sits under it. Reversing
+                them would imply ClawAI is holding Egyptian pounds on the user's
+                behalf, which it is not — switching display currency changes
+                nothing about grantMicroUsd, purchasedMicroUsd or
+                reservedMicroUsd. PRECISE_USAGE, because a balance is an account
+                of real money and commercial rounding would misstate it. */}
+            {localEquivalent === null ? null : (
+              <p className="text-muted-foreground -mt-1 text-end text-xs">
+                <bdi>{localEquivalent}</bdi>
+              </p>
+            )}
 
             {/* Two segments, one track. The reserved remainder is deliberately
                 left as bare track: money held for an in-flight request is
