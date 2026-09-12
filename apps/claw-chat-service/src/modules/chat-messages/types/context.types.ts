@@ -10,12 +10,31 @@ export type FileChunkResponse = {
   content: string;
 };
 
+/**
+ * What file-service returns for one attachment. Mirrors
+ * `InternalFileContentResponse` in claw-file-service.
+ *
+ * `content` and `extractedText` are NOT interchangeable, and confusing them is
+ * the whole of ADR-093. `content` is base64 of the original bytes — right for a
+ * vision model looking at an image, meaningless to a text model looking at a
+ * PDF. `extractedText` is the readable text the parsers produced, and it is
+ * null until extraction finishes.
+ *
+ * Consult `ingestionStatus` before concluding a file has no text: PENDING and
+ * PROCESSING mean "not yet", never "empty".
+ */
 export type FileContentResponse = {
   id: string;
   filename: string;
   mimeType: string;
   content: string | null;
+  // Optional on the wire so a file-service that predates ADR-093 still parses.
+  extractedText?: string | null;
+  ingestionStatus?: FileIngestionState;
+  extractionError?: string | null;
 };
+
+export type FileIngestionState = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
 export type WorkspaceCitation = {
   id: string;
