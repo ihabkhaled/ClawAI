@@ -1,6 +1,8 @@
 # Local-Currency Display — Implementation Plan
 
-Status: in progress · Owner: billing/frontend · Source pack: `clawai-local-currency-prompt-pack`
+Status: shipped (batches 1-7) · verified live 2026-09-13 · Owner: billing/frontend · Source pack: `clawai-local-currency-prompt-pack`
+
+Verification: [`local-currency-display-verification.md`](local-currency-display-verification.md)
 
 Canonical rule: [`rules/45-display-currency-versus-settlement-currency.md`](../../rules/45-display-currency-versus-settlement-currency.md) ·
 Decision: [ADR-097](../13-adr/adr-097-display-fx-separate-from-settlement-fx.md)
