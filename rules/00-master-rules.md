@@ -59,6 +59,7 @@
 | `39-worktree-branch-completion-pr-and-release-notes.md` | A task done in an agent-created worktree/branch ends with a PR and release notes, not just pushed commits.                                              |
 | `40-chat-surface-layout-and-composer.md`                | On a conversation surface the transcript is the only element that grows; the composer is sized by its content in rows, never in pixels.                 |
 | `41-web-evidence-truthfulness.md`                       | Never claim a web step that did not run, never stay silent about one that failed; a URL the user wrote is opened, not searched for.                     |
+| `42-attachment-understanding.md`                        | A model gets the readable TEXT of an attachment or an honest reason it did not; `content` is bytes and `extractedText` is text, and they are never swapped. |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

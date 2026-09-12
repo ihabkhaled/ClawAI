@@ -33,6 +33,7 @@ The packs live in `.ai/packs/*.md` (generated). The 11 canonical task kinds:
 | **workspace-connector**     | workspace connector, OAuth, sync, webhook            | claw-workspace-service                       | 02-backend, 08-security | 02-service-scaffold           | workspace reviewer, security         | per-folder gates on workspace-service                                     |
 | **infrastructure**          | docker, nginx, env, port, compose, CI                | `infra/`, `docker/`, `scripts/`, ci.yml      | 05-infra                | 06-docker-toolkit             | infra reviewer                       | `node --check` / compose validate + 18-item infra checklist               |
 | **documentation**           | docs, governance, README, CLAUDE.md                  | `docs/`, `context/`, `rules/`                | 06-docs                 | —                             | docs reviewer                        | `npm run knowledge:verify` (docs:check)                                   |
+| **attachment-understanding** | attachment, upload, PDF, DOCX, XLSX, PPTX, OCR, "can't read the file" | claw-file-service + claw-chat-service | 02-backend, 42-attachment | debug-an-attachment-the-model-cannot-read | data reviewer, security | per-folder gates on file-service and chat-service |
 
 Reviewer roles are defined under `agents/`. Rules are `rules/0N-*.md`; skills are
 `skills/0N-*.md`.
