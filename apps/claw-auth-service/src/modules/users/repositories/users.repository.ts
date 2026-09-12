@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
+  CurrencyPreferenceMode,
   Prisma,
   User,
   UserAppearancePreference,
@@ -117,6 +118,9 @@ export class UsersRepository {
     data: {
       languagePreference?: UserLanguagePreference;
       appearancePreference?: UserAppearancePreference;
+      currencyPreferenceMode?: CurrencyPreferenceMode;
+      preferredCountryCode?: string | null;
+      preferredCurrencyCode?: string | null;
     },
   ): Promise<User> {
     return this.prisma.user.update({

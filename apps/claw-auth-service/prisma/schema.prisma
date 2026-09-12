@@ -54,6 +54,19 @@ enum UserAppearancePreference {
   DARK
 }
 
+// How the user's DISPLAY currency is decided. Presentation state only: it never
+// changes what a gateway charges, what an invoice says, or what the wallet
+// holds. See ADR-097.
+//
+// AUTO re-detects on every visit, so someone who moves country sees the new
+// currency without touching a setting. MANUAL freezes the choice, because a
+// VPN or a mis-resolved IP must never overrule a user who has said what they
+// want to see.
+enum CurrencyPreferenceMode {
+  AUTO
+  MANUAL
+}
+
 model User {
   id                   String                   @id @default(cuid())
   email                String                   @unique
@@ -75,6 +88,15 @@ model User {
   mustChangePassword   Boolean                  @default(false) @map("must_change_password")
   languagePreference   UserLanguagePreference   @default(EN) @map("language_preference")
   appearancePreference UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
+  // Display-currency preference. Country and currency are stored SEPARATELY:
+  // a country can share a currency, hold several, or change one, so a country
+  // is context for AUTO and never the financial answer by itself.
+  //
+  // Both are nullable and both stay set when the mode flips, so switching to
+  // AUTO and back does not lose what the user had chosen.
+  currencyPreferenceMode CurrencyPreferenceMode @default(AUTO) @map("currency_preference_mode")
+  preferredCountryCode   String?                @map("preferred_country_code") @db.VarChar(2)
+  preferredCurrencyCode  String?                @map("preferred_currency_code") @db.VarChar(3)
   createdAt            DateTime                 @default(now()) @map("created_at")
   updatedAt            DateTime                 @updatedAt @map("updated_at")
 

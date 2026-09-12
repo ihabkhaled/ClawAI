@@ -149,6 +149,33 @@ ledgers are the truth for consumption, and an id with no rows is
 indistinguishable from a real user who never spent anything. Both are honestly
 reported as zero.
 
+## Display currency is a PREFERENCE, not a profile field (2026-09-12)
+
+`User.currencyPreferenceMode` / `preferredCountryCode` / `preferredCurrencyCode`
+live on the ordinary `PATCH /users/me/preferences` endpoint, alongside language
+and appearance — NOT on the sensitive profile mutation that demands the current
+password. Choosing which symbol a price prints in cannot move money, change an
+entitlement or reveal anything, and making someone re-enter a password for it
+would teach them to type their password more often for no security.
+
+Three things this service must keep straight:
+
+1. **Country and currency are stored separately.** A country can share a
+   currency, hold several, or change one. Country is context for AUTO; the
+   currency is the answer.
+2. **The MANUAL invariant is checked against the MERGED state, not the payload.**
+   A request can switch to MANUAL without naming a currency because one is
+   already stored, and it can clear the stored currency while leaving the mode
+   alone. Only the merged result says whether MANUAL ends up with nothing to
+   show — `CURRENCY_PREFERENCE_INCOMPLETE`.
+3. **Switching to AUTO keeps the stored choice.** Clearing it on every switch
+   means toggling AUTO off and on silently forgets what the user picked.
+
+Never infer currency from `languagePreference`. Arabic is not EGP and English is
+not USD. Conversion itself belongs to payment-service's `modules/display-fx`;
+this service owns the preference and nothing more — see ADR-097 and
+`rules/45-display-currency-versus-settlement-currency.md`.
+
 ## Commands
 
 ```bash

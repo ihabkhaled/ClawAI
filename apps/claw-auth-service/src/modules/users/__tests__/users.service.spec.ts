@@ -33,6 +33,9 @@ const mockUser = {
   activePlanId: null,
   languagePreference: 'EN' as const,
   appearancePreference: 'SYSTEM' as const,
+  currencyPreferenceMode: 'AUTO' as const,
+  preferredCountryCode: null,
+  preferredCurrencyCode: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -581,6 +584,65 @@ describe('UsersService', () => {
         languagePreference: 'FR' as never,
       });
       expect(result.languagePreference).toBe('FR');
+    });
+
+    it('refuses MANUAL currency mode with nothing to display', async () => {
+      // Checked against the MERGED state, not the payload: a request can switch
+      // to MANUAL without naming a currency because one is already stored.
+      repository.findById.mockResolvedValue(mockUser);
+      await expect(
+        service.updatePreferences('user-1', {
+          currencyPreferenceMode: 'MANUAL' as never,
+        }),
+      ).rejects.toMatchObject({ code: 'CURRENCY_PREFERENCE_INCOMPLETE' });
+      expect(repository.updatePreferences).not.toHaveBeenCalled();
+    });
+
+    it('allows MANUAL when a currency is already stored', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, preferredCurrencyCode: 'EGP' });
+      repository.updatePreferences.mockResolvedValue({
+        ...mockUser,
+        currencyPreferenceMode: 'MANUAL' as const,
+        preferredCurrencyCode: 'EGP',
+      });
+      const result = await service.updatePreferences('user-1', {
+        currencyPreferenceMode: 'MANUAL' as never,
+      });
+      expect(result.currencyPreferenceMode).toBe('MANUAL');
+    });
+
+    it('refuses to clear the currency out from under MANUAL mode', async () => {
+      repository.findById.mockResolvedValue({
+        ...mockUser,
+        currencyPreferenceMode: 'MANUAL' as const,
+        preferredCurrencyCode: 'EGP',
+      });
+      await expect(
+        service.updatePreferences('user-1', {
+          preferredCurrencyCode: null as never,
+        }),
+      ).rejects.toMatchObject({ code: 'CURRENCY_PREFERENCE_INCOMPLETE' });
+    });
+
+    it('keeps the stored choice when switching back to AUTO', async () => {
+      // Toggling AUTO on must not silently forget what the user picked.
+      repository.findById.mockResolvedValue({
+        ...mockUser,
+        currencyPreferenceMode: 'MANUAL' as const,
+        preferredCurrencyCode: 'EGP',
+      });
+      repository.updatePreferences.mockResolvedValue({
+        ...mockUser,
+        currencyPreferenceMode: 'AUTO' as const,
+        preferredCurrencyCode: 'EGP',
+      });
+      const result = await service.updatePreferences('user-1', {
+        currencyPreferenceMode: 'AUTO' as never,
+      });
+      expect(result.preferredCurrencyCode).toBe('EGP');
+      expect((repository.updatePreferences.mock.calls[0] as unknown[])[1]).not.toHaveProperty(
+        'preferredCurrencyCode',
+      );
     });
   });
 

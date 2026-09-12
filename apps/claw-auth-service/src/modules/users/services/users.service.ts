@@ -29,7 +29,7 @@ import {
   SUPER_ADMIN_SELF_LOCKED_CODE,
   SUPER_ADMIN_SELF_LOCKED_MESSAGE,
 } from '../../../common/constants/super-admin.constants';
-import { type User } from '../../../generated/prisma';
+import { CurrencyPreferenceMode, type User } from '../../../generated/prisma';
 import { type SafeUser } from '../types/users.types';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
@@ -330,6 +330,24 @@ export class UsersService {
     const user = await this.usersRepository.findById(userId);
     if (!user) {
       throw new EntityNotFoundException('User', userId);
+    }
+
+    // The invariant has to be checked against the RESULT, not the payload: a
+    // request can switch to MANUAL without naming a currency because one is
+    // already stored, and it can also clear the stored currency while leaving
+    // the mode alone. Only the merged state says whether MANUAL ends up with
+    // nothing to display.
+    const resultingMode = dto.currencyPreferenceMode ?? user.currencyPreferenceMode;
+    const resultingCurrency =
+      dto.preferredCurrencyCode === undefined
+        ? user.preferredCurrencyCode
+        : dto.preferredCurrencyCode;
+    if (resultingMode === CurrencyPreferenceMode.MANUAL && resultingCurrency === null) {
+      throw new BusinessException(
+        'Manual currency mode requires a preferred currency',
+        'CURRENCY_PREFERENCE_INCOMPLETE',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const updated = await this.usersRepository.updatePreferences(userId, dto);

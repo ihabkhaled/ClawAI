@@ -16,19 +16,22 @@ The auth service handles user registration, login, JWT issuance, refresh token r
 
 ### User
 
-| Column               | Type                     | Notes                           |
-| -------------------- | ------------------------ | ------------------------------- |
-| id                   | String (CUID)            | Primary key                     |
-| email                | String                   | Unique, indexed                 |
-| username             | String                   | Unique                          |
-| passwordHash         | String                   | Argon2 hash                     |
-| role                 | UserRole enum            | ADMIN, OPERATOR, VIEWER         |
-| status               | UserStatus enum          | ACTIVE, SUSPENDED, PENDING      |
-| mustChangePassword   | Boolean                  | Forces password change on login |
-| languagePreference   | UserLanguagePreference   | EN, AR, FR, IT, DE, ES, RU, PT  |
-| appearancePreference | UserAppearancePreference | SYSTEM, LIGHT, DARK             |
-| createdAt            | DateTime                 | Auto-set                        |
-| updatedAt            | DateTime                 | Auto-updated                    |
+| Column                 | Type                     | Notes                                |
+| ---------------------- | ------------------------ | ------------------------------------ |
+| id                     | String (CUID)            | Primary key                          |
+| email                  | String                   | Unique, indexed                      |
+| username               | String                   | Unique                               |
+| passwordHash           | String                   | Argon2 hash                          |
+| role                   | UserRole enum            | ADMIN, OPERATOR, VIEWER              |
+| status                 | UserStatus enum          | ACTIVE, SUSPENDED, PENDING           |
+| mustChangePassword     | Boolean                  | Forces password change on login      |
+| languagePreference     | UserLanguagePreference   | EN, AR, FR, IT, DE, ES, RU, PT       |
+| appearancePreference   | UserAppearancePreference | SYSTEM, LIGHT, DARK                  |
+| currencyPreferenceMode | CurrencyPreferenceMode   | AUTO, MANUAL — display only          |
+| preferredCountryCode   | String? (2)              | ISO-3166-1 alpha-2; context for AUTO |
+| preferredCurrencyCode  | String? (3)              | ISO-4217; the answer in MANUAL       |
+| createdAt              | DateTime                 | Auto-set                             |
+| updatedAt              | DateTime                 | Auto-updated                         |
 
 ### Session
 

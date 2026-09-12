@@ -16,6 +16,11 @@ export interface SafeUser {
   mustChangePassword: boolean;
   languagePreference: string;
   appearancePreference: string;
+  // Display currency. Presentation state - it never affects an entitlement,
+  // a charge or an invoice.
+  currencyPreferenceMode: string;
+  preferredCountryCode: string | null;
+  preferredCurrencyCode: string | null;
   activePlanId: string | null;
   firstName: string | null;
   lastName: string | null;
