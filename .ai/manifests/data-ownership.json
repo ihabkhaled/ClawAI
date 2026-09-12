@@ -17,6 +17,7 @@
         "MarketplaceListing",
         "Organization",
         "OrganizationMember",
+        "OrganizationPolicy",
         "PairingRequest",
         "Recipe",
         "RecipeRun",

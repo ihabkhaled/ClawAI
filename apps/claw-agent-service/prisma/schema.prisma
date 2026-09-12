@@ -613,8 +613,43 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   members OrganizationMember[]
+  policy  OrganizationPolicy?
 
   @@map("organizations")
+}
+
+/// The policy an organization imposes on its members' coding-agent clients.
+///
+/// Every field narrows what a client may do and none widens it, which is what
+/// makes it safe to deliver over an authenticated HTTPS request rather than as
+/// a signed document: a forged policy could only refuse work, never grant it.
+/// A signed distribution would additionally survive a compromised backend, and
+/// is deliberately left for the day that threat is in scope — entitlements,
+/// which gate money, already arrive the same way.
+model OrganizationPolicy {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// Empty means every tool is allowed; a non-empty list is exhaustive.
+  allowedTools  String[] @default([])
+  /// Empty means every model is allowed; a non-empty list is exhaustive.
+  allowedModels String[] @default([])
+  /// Highest risk class a member may reach: R0 through R4.
+  maximumRisk   String   @default("R4")
+  /// Effects that are refused outright, by the client's effect taxonomy.
+  deniedEffects String[] @default([])
+  /// Effects that always require an explicit approval, even in automatic modes.
+  requireApproval String[] @default([])
+  /// 0 means the client keeps nothing durable it does not have to.
+  maximumRetentionDays Int @default(3650)
+  /// When set, members cannot select a weaker permission mode than this one.
+  minimumPermissionMode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("organization_policies")
 }
 
 model OrganizationMember {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -8,7 +8,12 @@ import {
   type CreateOrganizationDto,
   createOrganizationSchema,
 } from '../dto/organization.dto';
+import {
+  type UpdateOrganizationPolicyDto,
+  updateOrganizationPolicySchema,
+} from '../dto/organization-policy.dto';
 import { OrganizationRepository } from '../repositories/organization.repository';
+import { OrganizationPolicyService } from '../services/organization-policy.service';
 import {
   type Organization,
   type OrganizationMember,
@@ -16,10 +21,14 @@ import {
 } from '../../../generated/prisma';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { DeviceMatrixRow } from '../types/device-matrix.types';
+import type { EffectivePolicy } from '../types/organization-policy.types';
 
 @Controller('agent/organizations')
 export class FleetController {
-  constructor(private readonly repo: OrganizationRepository) {}
+  constructor(
+    private readonly repo: OrganizationRepository,
+    private readonly policies: OrganizationPolicyService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -56,6 +65,36 @@ export class FleetController {
   @Get(':id/devices')
   async listDevices(@Param('id') id: string): Promise<DeviceMatrixRow[]> {
     return this.repo.listDevicesForOrganization(id);
+  }
+
+  /**
+   * The policy this client must obey, for the signed-in user.
+   *
+   * Deliberately not under `:id`: a client does not know which organizations
+   * its user belongs to, and should not have to ask. The answer is the
+   * intersection of all of them, so belonging to a permissive organization
+   * cannot loosen a stricter one.
+   */
+  @Get('policy/effective')
+  async effectivePolicy(@CurrentUser() user: AuthenticatedUser): Promise<EffectivePolicy> {
+    return this.policies.effectiveForUser(user.id);
+  }
+
+  @Get(':id/policy')
+  async organizationPolicy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<EffectivePolicy> {
+    return this.policies.forOrganization(id, user.id);
+  }
+
+  @Put(':id/policy')
+  async updatePolicy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateOrganizationPolicySchema)) dto: UpdateOrganizationPolicyDto,
+  ): Promise<EffectivePolicy> {
+    return this.policies.update(id, user.id, dto);
   }
 
   @Post(':id/members')

@@ -267,6 +267,16 @@
         "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/agent/organizations/:id/policy",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/agent/organizations/:id/policy",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/agent/organizations/:slug/sso/callback",
         "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
@@ -275,6 +285,11 @@
         "method": "POST",
         "route": "/agent/organizations/:slug/sso/metadata",
         "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/organizations/policy/effective",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
       },
       {
         "method": "GET",
@@ -3278,5 +3293,5 @@
     ]
   },
   "generated": true,
-  "total": 648
+  "total": 651
 }

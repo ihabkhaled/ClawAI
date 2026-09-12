@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import type { DeviceMatrixRow } from '../types/device-matrix.types';
-import type { Organization, OrganizationMember, Prisma } from '../../../generated/prisma';
+import type {
+  Organization,
+  OrganizationMember,
+  OrganizationPolicy,
+  Prisma,
+} from '../../../generated/prisma';
 
 @Injectable()
 export class OrganizationRepository {
@@ -20,9 +25,7 @@ export class OrganizationRepository {
     return this.prisma.organization.findUnique({ where: { slug } });
   }
 
-  async addMember(
-    data: Prisma.OrganizationMemberCreateInput,
-  ): Promise<OrganizationMember> {
+  async addMember(data: Prisma.OrganizationMemberCreateInput): Promise<OrganizationMember> {
     return this.prisma.organizationMember.create({ data });
   }
 
@@ -50,10 +53,43 @@ export class OrganizationRepository {
     return memberships.map((m) => m.organization);
   }
 
-  async updateMetadata(
-    id: string,
-    data: Prisma.OrganizationUpdateInput,
-  ): Promise<Organization> {
+  async findPolicy(organizationId: string): Promise<OrganizationPolicy | null> {
+    return this.prisma.organizationPolicy.findUnique({ where: { organizationId } });
+  }
+
+  /**
+   * One policy per organization, created on first write.
+   *
+   * An upsert rather than create-then-update so an administrator saving a
+   * policy for the first time and saving it again take the same path, and so
+   * two concurrent saves cannot race into a duplicate row the unique index
+   * would then reject.
+   */
+  async upsertPolicy(
+    organizationId: string,
+    data: Omit<Prisma.OrganizationPolicyCreateInput, 'organization'>,
+  ): Promise<OrganizationPolicy> {
+    return this.prisma.organizationPolicy.upsert({
+      where: { organizationId },
+      create: { ...data, organization: { connect: { id: organizationId } } },
+      update: data,
+    });
+  }
+
+  /**
+   * The policies of every organization the user belongs to.
+   *
+   * A user can be in more than one, and the client is given the intersection
+   * rather than a choice: belonging to a permissive organization must not
+   * loosen what a stricter one imposes.
+   */
+  async listPoliciesForUser(userId: string): Promise<OrganizationPolicy[]> {
+    return this.prisma.organizationPolicy.findMany({
+      where: { organization: { members: { some: { userId } } } },
+    });
+  }
+
+  async updateMetadata(id: string, data: Prisma.OrganizationUpdateInput): Promise<Organization> {
     return this.prisma.organization.update({ where: { id }, data });
   }
 
