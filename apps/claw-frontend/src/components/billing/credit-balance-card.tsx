@@ -21,6 +21,7 @@ import {
   formatGrantReset,
   formatMicroUsd,
   hasNoCreditAllowance,
+  microUsdToMinor,
 } from '@/utilities/credit.utility';
 
 /**
@@ -43,10 +44,7 @@ export function CreditBalanceCard({
   t,
   locale,
 }: CreditBalanceCardProps): ReactElement {
-  // Micro-USD is a millionth of a dollar; the converter works in minor units,
-  // so 10_000 micro-USD is one cent. Rounded half-up rather than truncated so a
-  // balance never reads lower than it is.
-  const availableMinor = Math.round((wallet?.availableMicroUsd ?? 0) / 10_000);
+  const availableMinor = microUsdToMinor(wallet?.availableMicroUsd ?? 0);
   const localised = useLocalizedMoney(availableMinor, 'USD', DisplayRoundingPolicy.PRECISE_USAGE);
   const localEquivalent = localised.view.approximate ? localised.text : null;
 

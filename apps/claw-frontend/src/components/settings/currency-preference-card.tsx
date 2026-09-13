@@ -1,6 +1,6 @@
 'use client';
 
-import { CurrencySwitcher } from '@/components/marketing/currency-switcher';
+import { CurrencySwitcher } from '@/components/common/currency-switcher';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import type { CurrencyPreferenceCardProps } from '@/types/display-currency.types';

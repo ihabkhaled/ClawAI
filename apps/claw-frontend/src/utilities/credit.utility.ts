@@ -338,3 +338,18 @@ export function sortCreditPackages(packages: readonly CreditPackageView[]): Cred
     (a, b) => a.displayOrder - b.displayOrder || a.priceMinor - b.priceMinor,
   );
 }
+
+/**
+ * Micro-USD to integer minor units (cents), for the display converter.
+ *
+ * A micro-USD is a millionth of a dollar, so 10,000 of them make one cent.
+ * Rounded half-up rather than truncated: a balance or an allowance should never
+ * read lower than it actually is because of a display conversion.
+ *
+ * Presentation only. The wallet and every ledger row stay in micro-USD — this
+ * exists so a figure can be SHOWN in another currency, never so one can be
+ * stored or charged in one.
+ */
+export function microUsdToMinor(microUsd: number): number {
+  return Math.round(microUsd / 10_000);
+}

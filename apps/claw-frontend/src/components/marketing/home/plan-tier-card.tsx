@@ -1,5 +1,6 @@
 'use client';
 
+import { DisplayRoundingPolicy } from '@claw/shared-types';
 import Link from 'next/link';
 
 import { PlanFeatureGates } from '@/components/account/plan-feature-gates';
@@ -11,7 +12,7 @@ import { useLocalizedMoney } from '@/hooks/display-currency/use-localized-money'
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
-import { formatCreditRatePercent, formatPlanConnectorCredit } from '@/utilities/credit.utility';
+import { formatCreditRatePercent, microUsdToMinor } from '@/utilities/credit.utility';
 import {
   formatPlanQuota,
   resolvePlanMonthlyCreditMicroUsd,
@@ -26,6 +27,18 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
   // blanking the card.
   const localizedPrice = useLocalizedMoney(price?.amountMinor ?? 0, price?.currency ?? 'USD');
   const creditMicroUsd = resolvePlanMonthlyCreditMicroUsd(plan);
+  // The connector credit, localized too — but at PRECISE_USAGE, not the
+  // COMMERCIAL_PRICE the plan price uses.
+  //
+  // A price rounds to whatever reads naturally because nobody is promised an
+  // exact figure by a plan card. A credit allowance is a promise: rounding
+  // 123.30 up to 125 would advertise more connector credit than the plan
+  // actually grants, and the wallet would then look short.
+  const localizedCredit = useLocalizedMoney(
+    microUsdToMinor(creditMicroUsd),
+    'USD',
+    DisplayRoundingPolicy.PRECISE_USAGE,
+  );
   const creditRatePercent = formatCreditRatePercent(plan.paygCreditPercentBps);
   const isFree = price?.amountMinor === 0;
   const cadenceKey = `marketing.pricing.cadence.${interval}`;
@@ -107,12 +120,16 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
           <dt>{t('marketing.pricing.paygCreditLabel')}</dt>
           <dd className="text-foreground text-end font-medium">
             <bdi className="tabular-nums">
-              {formatPlanConnectorCredit(
-                creditMicroUsd,
-                t('marketing.pricing.paygCreditNone'),
-                locale,
-              )}
+              {creditMicroUsd > 0 ? localizedCredit.text : t('marketing.pricing.paygCreditNone')}
             </bdi>
+            {creditMicroUsd > 0 && localizedCredit.canonicalText !== null ? (
+              <span className="text-muted-foreground block font-normal">
+                {t('marketing.currency.convertedFrom').replace(
+                  '{amount}',
+                  localizedCredit.canonicalText,
+                )}
+              </span>
+            ) : null}
             {creditMicroUsd > 0 ? (
               <span className="text-muted-foreground block font-normal">
                 {t('marketing.pricing.paygCreditRate', { percent: creditRatePercent })}

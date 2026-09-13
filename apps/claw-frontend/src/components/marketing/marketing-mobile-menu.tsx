@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { CurrencySwitcher } from '@/components/marketing/currency-switcher';
+import { CurrencySwitcher } from '@/components/common/currency-switcher';
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-toggle';
 import { Button } from '@/components/ui/button';

@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown, Coins } from 'lucide-react';
 
-import { CurrencySwitcherOptionItem } from '@/components/marketing/currency-switcher-option-item';
+import { CurrencySwitcherOptionItem } from '@/components/common/currency-switcher-option-item';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

@@ -2,6 +2,7 @@
 
 import { Menu } from 'lucide-react';
 
+import { CurrencySwitcher } from '@/components/common/currency-switcher';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useTopbarTitle } from '@/hooks/layout/use-topbar-title';
@@ -52,6 +53,10 @@ export function Topbar() {
       <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-2">
         <GlobalSearch />
         <Separator orientation="vertical" className="hidden h-6 sm:block" />
+        {/* Visible at every width, unlike the locale and theme controls beside
+            it. A phone is exactly where someone notices the prices are in the
+            wrong currency, and the portal has no other place to change it. */}
+        <CurrencySwitcher />
         <div className="hidden sm:block">
           <LocaleSwitcher />
         </div>
