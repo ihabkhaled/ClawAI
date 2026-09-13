@@ -13,6 +13,9 @@ export const PERMISSION_GROUP_PREFIXES: ReadonlyArray<{
   { groupKey: PermissionGroupKey.MEMORY, prefix: 'MEMORY_' },
   { groupKey: PermissionGroupKey.WORKSPACE, prefix: 'WORKSPACE_' },
   { groupKey: PermissionGroupKey.AGENT, prefix: 'AGENT_' },
+  { groupKey: PermissionGroupKey.RESEARCH, prefix: 'RESEARCH_' },
+  { groupKey: PermissionGroupKey.ROUTING, prefix: 'ROUTING_' },
+  { groupKey: PermissionGroupKey.MODELS, prefix: 'MODELS_' },
   { groupKey: PermissionGroupKey.ADMIN, prefix: 'ADMIN_' },
 ];
 
@@ -23,6 +26,9 @@ export const PERMISSION_GROUP_ORDER: readonly PermissionGroupKey[] = [
   PermissionGroupKey.CONTEXT_PACK,
   PermissionGroupKey.WORKSPACE,
   PermissionGroupKey.AGENT,
+  PermissionGroupKey.RESEARCH,
+  PermissionGroupKey.ROUTING,
+  PermissionGroupKey.MODELS,
   PermissionGroupKey.ADMIN,
   PermissionGroupKey.OTHER,
 ];

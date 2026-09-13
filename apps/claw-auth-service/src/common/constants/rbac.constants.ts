@@ -55,6 +55,30 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   // empty card rather than a locked one. ADMIN_CREDIT_MANAGE is deliberately
   // NOT here: adjusting someone's balance is an operator action.
   Permission.BILLING_CREDIT_TOPUP,
+  // Workspace sub-pages: granted by default because WORKSPACE_VIEW already
+  // lets a USER reach them, and adding granularity must not quietly take a
+  // feature away. Research, Routing and Models sub-pages are NOT here: those
+  // pages are admin-only today (ADMIN_SYSTEM_VIEW / ADMIN_ROUTING_MANAGE /
+  // MODELS_CATALOG_VIEW), and granting them would have handed admin
+  // observability to every normal user.
+  Permission.WORKSPACE_AUTOMATIONS_VIEW,
+  Permission.WORKSPACE_INBOX_VIEW,
+  Permission.WORKSPACE_SEMANTIC_SEARCH_USE,
+  Permission.WORKSPACE_DIGEST_VIEW,
+  Permission.WORKSPACE_ACTIONS_VIEW,
+  Permission.WORKSPACE_APPROVALS_MANAGE,
+  Permission.WORKSPACE_AUTOMATION_PREFERENCES_MANAGE,
+  Permission.WORKSPACE_EMAIL_SIGNATURES_MANAGE,
+  Permission.WORKSPACE_EMAIL_TEMPLATES_MANAGE,
+  Permission.WORKSPACE_IMPL_HANDOFFS_VIEW,
+  Permission.WORKSPACE_GMAIL_VIEW,
+  Permission.WORKSPACE_JIRA_VIEW,
+  Permission.WORKSPACE_SOURCE_CONTROL_VIEW,
+  Permission.WORKSPACE_SLACK_VIEW,
+  Permission.WORKSPACE_DOCS_VIEW,
+  Permission.WORKSPACE_CONFLUENCE_VIEW,
+  Permission.WORKSPACE_FIGMA_VIEW,
+  Permission.WORKSPACE_WORKFLOWS_VIEW,
 ];
 
 // Slugs of the two system roles. Slugs intentionally equal the UserRole enum

@@ -18,6 +18,26 @@ const USER_PERMISSIONS: Permission[] = [
   Permission.WORKSPACE_ACTION_OWN,
   Permission.MODEL_USE_ALLOWED,
   Permission.AGENT_USE,
+  // Workspace sub-pages each carry their own switch now, and the USER role
+  // holds them by default so what a normal user can reach is unchanged.
+  Permission.WORKSPACE_INBOX_VIEW,
+  Permission.WORKSPACE_AUTOMATIONS_VIEW,
+  Permission.WORKSPACE_SEMANTIC_SEARCH_USE,
+  Permission.WORKSPACE_DIGEST_VIEW,
+  Permission.WORKSPACE_ACTIONS_VIEW,
+  Permission.WORKSPACE_APPROVALS_MANAGE,
+  Permission.WORKSPACE_AUTOMATION_PREFERENCES_MANAGE,
+  Permission.WORKSPACE_EMAIL_SIGNATURES_MANAGE,
+  Permission.WORKSPACE_EMAIL_TEMPLATES_MANAGE,
+  Permission.WORKSPACE_IMPL_HANDOFFS_VIEW,
+  Permission.WORKSPACE_GMAIL_VIEW,
+  Permission.WORKSPACE_JIRA_VIEW,
+  Permission.WORKSPACE_SOURCE_CONTROL_VIEW,
+  Permission.WORKSPACE_SLACK_VIEW,
+  Permission.WORKSPACE_DOCS_VIEW,
+  Permission.WORKSPACE_CONFLUENCE_VIEW,
+  Permission.WORKSPACE_FIGMA_VIEW,
+  Permission.WORKSPACE_WORKFLOWS_VIEW,
 ];
 
 const userCan =

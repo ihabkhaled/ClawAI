@@ -4001,6 +4001,9 @@ export type TranslationDictionary = {
       CONTEXT_PACK: string;
       WORKSPACE: string;
       AGENT: string;
+      RESEARCH: string;
+      ROUTING: string;
+      MODELS: string;
       ADMIN: string;
       OTHER: string;
     };

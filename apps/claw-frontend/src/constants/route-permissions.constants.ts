@@ -39,6 +39,59 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: ROUTES.ADMIN_ROLES, permission: Permission.ADMIN_PERMISSIONS_MANAGE },
   { prefix: '/admin/usage', permission: Permission.ADMIN_USAGE_VIEW },
 
+  // workspace sub-pages, each its own switch. Longest-prefix-first, so these
+  // MUST precede the parent entry they sit under.
+  { prefix: ROUTES.WORKSPACE_AUTOMATIONS, permission: Permission.WORKSPACE_AUTOMATIONS_VIEW },
+  { prefix: ROUTES.WORKSPACE_INBOX, permission: Permission.WORKSPACE_INBOX_VIEW },
+  {
+    prefix: ROUTES.WORKSPACE_SEMANTIC_SEARCH,
+    permission: Permission.WORKSPACE_SEMANTIC_SEARCH_USE,
+  },
+  { prefix: ROUTES.WORKSPACE_DIGEST, permission: Permission.WORKSPACE_DIGEST_VIEW },
+  { prefix: ROUTES.WORKSPACE_ACTIONS, permission: Permission.WORKSPACE_ACTIONS_VIEW },
+  { prefix: ROUTES.WORKSPACE_APPROVALS, permission: Permission.WORKSPACE_APPROVALS_MANAGE },
+  {
+    prefix: ROUTES.WORKSPACE_AUTOMATION_PREFERENCES,
+    permission: Permission.WORKSPACE_AUTOMATION_PREFERENCES_MANAGE,
+  },
+  {
+    prefix: ROUTES.WORKSPACE_EMAIL_SIGNATURES,
+    permission: Permission.WORKSPACE_EMAIL_SIGNATURES_MANAGE,
+  },
+  {
+    prefix: ROUTES.WORKSPACE_EMAIL_TEMPLATES,
+    permission: Permission.WORKSPACE_EMAIL_TEMPLATES_MANAGE,
+  },
+  { prefix: ROUTES.WORKSPACE_IMPL_HANDOFFS, permission: Permission.WORKSPACE_IMPL_HANDOFFS_VIEW },
+  { prefix: ROUTES.WORKSPACE_GMAIL, permission: Permission.WORKSPACE_GMAIL_VIEW },
+  { prefix: ROUTES.WORKSPACE_JIRA, permission: Permission.WORKSPACE_JIRA_VIEW },
+  { prefix: ROUTES.WORKSPACE_SOURCE_CONTROL, permission: Permission.WORKSPACE_SOURCE_CONTROL_VIEW },
+  { prefix: ROUTES.WORKSPACE_SLACK, permission: Permission.WORKSPACE_SLACK_VIEW },
+  { prefix: ROUTES.WORKSPACE_DOCS, permission: Permission.WORKSPACE_DOCS_VIEW },
+  { prefix: ROUTES.WORKSPACE_CONFLUENCE, permission: Permission.WORKSPACE_CONFLUENCE_VIEW },
+  { prefix: ROUTES.WORKSPACE_FIGMA, permission: Permission.WORKSPACE_FIGMA_VIEW },
+  { prefix: ROUTES.WORKSPACE_WORKFLOWS, permission: Permission.WORKSPACE_WORKFLOWS_VIEW },
+
+  // research sub-pages, each its own switch. Longest-prefix-first, so these
+  // MUST precede the parent entry they sit under.
+  { prefix: ROUTES.RESEARCH_PROVIDERS, permission: Permission.RESEARCH_PROVIDERS_MANAGE },
+  { prefix: ROUTES.RESEARCH_RUNS, permission: Permission.RESEARCH_RUNS_VIEW },
+
+  // routing sub-pages, each its own switch. Longest-prefix-first, so these
+  // MUST precede the parent entry they sit under.
+  { prefix: ROUTES.ROUTING_REPLAY, permission: Permission.ROUTING_REPLAY_USE },
+  { prefix: ROUTES.ROUTING_RECOVERY, permission: Permission.ROUTING_RECOVERY_USE },
+  {
+    prefix: ROUTES.ROUTING_ADAPTIVE_INSIGHTS,
+    permission: Permission.ROUTING_ADAPTIVE_INSIGHTS_VIEW,
+  },
+  { prefix: ROUTES.ROUTING_PLAYGROUND, permission: Permission.ROUTING_PLAYGROUND_USE },
+
+  // models sub-pages, each its own switch. Longest-prefix-first, so these
+  // MUST precede the parent entry they sit under.
+  { prefix: ROUTES.MODELS_DISCOVERY, permission: Permission.MODELS_DISCOVERY_VIEW },
+  { prefix: ROUTES.MODELS_LOCAL_FRONTIER, permission: Permission.MODELS_LOCAL_FRONTIER_VIEW },
+
   // Agent sub-pages (MUST precede the bare /agent, which stays on AGENT_USE).
   //
   // Longest-prefix-first, and ACTIVITY_MEMORY before ACTIVITY: '/agent/activity'

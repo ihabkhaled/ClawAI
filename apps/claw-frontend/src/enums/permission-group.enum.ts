@@ -7,6 +7,9 @@ export enum PermissionGroupKey {
   CONTEXT_PACK = 'CONTEXT_PACK',
   WORKSPACE = 'WORKSPACE',
   AGENT = 'AGENT',
+  RESEARCH = 'RESEARCH',
+  ROUTING = 'ROUTING',
+  MODELS = 'MODELS',
   ADMIN = 'ADMIN',
   OTHER = 'OTHER',
 }

@@ -61,20 +61,25 @@ describe('route-permission.utility', () => {
 
     it('covers all sub-pages of a prefixed route', () => {
       expect(requiredPermissionForPath('/routing')).toBe(Permission.ADMIN_ROUTING_MANAGE);
-      expect(requiredPermissionForPath('/routing/replay')).toBe(Permission.ADMIN_ROUTING_MANAGE);
+      // Each routing lab is its own switch now; the parent still guards the
+      // group, and none of these are in the USER set, so they stay admin-only.
+      expect(requiredPermissionForPath('/routing/replay')).toBe(Permission.ROUTING_REPLAY_USE);
       expect(requiredPermissionForPath('/routing/playground')).toBe(
-        Permission.ADMIN_ROUTING_MANAGE,
+        Permission.ROUTING_PLAYGROUND_USE,
       );
       expect(requiredPermissionForPath('/models')).toBe(Permission.MODELS_CATALOG_VIEW);
       expect(requiredPermissionForPath('/models/catalog')).toBe(Permission.MODELS_CATALOG_VIEW);
-      // /research/* are admin observability pages — gated by ADMIN_SYSTEM_VIEW
+      // /research/* stay admin observability: they have their own switches now
+      // but are absent from the USER set, so no normal user gains them.
+      expect(requiredPermissionForPath('/research/providers')).toBe(
+        Permission.RESEARCH_PROVIDERS_MANAGE,
+      );
       // so normal users don't see the standalone Research section. The
       // RESEARCH_USE permission stays for backend research endpoints (used
       // by the in-chat / in-compare research selector and the compare
       // ResearchEnricher's service-to-service calls).
       expect(requiredPermissionForPath('/research')).toBe(Permission.ADMIN_SYSTEM_VIEW);
-      expect(requiredPermissionForPath('/research/providers')).toBe(Permission.ADMIN_SYSTEM_VIEW);
-      expect(requiredPermissionForPath('/research/runs')).toBe(Permission.ADMIN_SYSTEM_VIEW);
+      expect(requiredPermissionForPath('/research/runs')).toBe(Permission.RESEARCH_RUNS_VIEW);
     });
 
     it('maps chat sub-pages to their own per-page lab permission while keeping /chat base open', () => {
@@ -132,9 +137,11 @@ describe('route-permission.utility', () => {
 
     it('gates /workspace by the new WORKSPACE_VIEW permission (visible to USER)', () => {
       expect(requiredPermissionForPath('/workspace')).toBe(Permission.WORKSPACE_VIEW);
-      // Sub-pages without their own entry inherit the /workspace gate.
-      expect(requiredPermissionForPath('/workspace/inbox')).toBe(Permission.WORKSPACE_VIEW);
-      expect(requiredPermissionForPath('/workspace/jira')).toBe(Permission.WORKSPACE_VIEW);
+      // Sub-pages now carry their own switch so an admin can grant Gmail
+      // without granting Jira. Both are in the USER set, so what a normal user
+      // can reach is unchanged.
+      expect(requiredPermissionForPath('/workspace/inbox')).toBe(Permission.WORKSPACE_INBOX_VIEW);
+      expect(requiredPermissionForPath('/workspace/jira')).toBe(Permission.WORKSPACE_JIRA_VIEW);
     });
 
     it('gates /workspace/app-configs by WORKSPACE_APP_CONFIG_VIEW (NOT admin-only)', () => {
@@ -143,6 +150,9 @@ describe('route-permission.utility', () => {
       );
     });
 
+    // Deliberately has NO per-page permission of its own: it is admin
+    // observability, and giving it one alongside the user-visible workspace
+    // pages would have handed it to every normal user.
     it('keeps /workspace/sync-health admin-only (longest-prefix beats /workspace)', () => {
       expect(requiredPermissionForPath('/workspace/sync-health')).toBe(
         Permission.ADMIN_WORKSPACES_VIEW,

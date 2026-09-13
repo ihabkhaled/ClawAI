@@ -7915,7 +7915,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5186
+        "value": 5189
       },
       "localeCount": 13,
       "locales": [
@@ -8542,6 +8542,16 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "MODELS_DISCOVERY_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "MODELS_LOCAL_FRONTIER_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "MODEL_USE_ALLOWED"
       },
       {
@@ -8553,6 +8563,16 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "REPAIR_LAB_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "RESEARCH_PROVIDERS_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "RESEARCH_RUNS_VIEW"
       },
       {
         "confidence": "verified",
@@ -8572,6 +8592,26 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ROUTING_ADAPTIVE_INSIGHTS_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ROUTING_PLAYGROUND_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ROUTING_RECOVERY_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ROUTING_REPLAY_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "TASK_DECOMPOSER_USE"
       },
       {
@@ -8587,7 +8627,17 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_ACTIONS_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "WORKSPACE_ACTION_OWN"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_APPROVALS_MANAGE"
       },
       {
         "confidence": "verified",
@@ -8597,12 +8647,87 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_AUTOMATIONS_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_AUTOMATION_PREFERENCES_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_CONFLUENCE_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "WORKSPACE_CONNECT_OWN"
       },
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_DIGEST_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_DOCS_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_EMAIL_SIGNATURES_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_EMAIL_TEMPLATES_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_FIGMA_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_GMAIL_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_IMPL_HANDOFFS_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_INBOX_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_JIRA_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "WORKSPACE_READ_OWN"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_SEMANTIC_SEARCH_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_SLACK_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_SOURCE_CONTROL_VIEW"
       },
       {
         "confidence": "verified",
@@ -8613,6 +8738,11 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "WORKSPACE_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "WORKSPACE_WORKFLOWS_VIEW"
       }
     ],
     "ports": {
@@ -10495,7 +10625,7 @@
     "frontendRouteCount": 154,
     "localeCount": 13,
     "nginxRouteCount": 58,
-    "permissionCount": 58,
+    "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
