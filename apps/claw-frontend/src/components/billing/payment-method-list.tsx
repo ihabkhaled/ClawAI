@@ -18,12 +18,23 @@ export function PaymentMethodList({
 }: PaymentMethodListProps): ReactElement {
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between gap-4">
-        <div className="grid grid-cols-1 gap-1">
+      {/* Stacks below sm, sits beside the title above it.
+          In one row the button needs `shrink-0` and the text block needs
+          `min-w-0`: without both, flex resolves the squeeze by shrinking the
+          BUTTON — which is `max-w-full` and wraps its label on touch — down to
+          a 45px two-line stub, while the paragraph beside it keeps its width. */}
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-1">
           <CardTitle className="text-lg">{t('billing.paymentMethods.title')}</CardTitle>
           <p className="text-muted-foreground text-xs">{t('billing.paymentMethods.consent')}</p>
         </div>
-        <Button type="button" size="sm" disabled={isAdding} onClick={onAdd}>
+        <Button
+          type="button"
+          size="sm"
+          disabled={isAdding}
+          onClick={onAdd}
+          className="w-full shrink-0 self-start whitespace-nowrap sm:w-auto"
+        >
           {isAdding ? t('billing.paymentMethods.adding') : t('billing.paymentMethods.add')}
         </Button>
       </CardHeader>
