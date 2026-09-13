@@ -3879,6 +3879,7 @@ export const zh: TranslationDictionary = {
       MEMORY: '记忆',
       CONTEXT_PACK: '上下文包',
       WORKSPACE: '工作空间',
+      AGENT: '智能体',
       ADMIN: '行政',
       OTHER: '其他',
     },

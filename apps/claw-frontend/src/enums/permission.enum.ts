@@ -37,6 +37,24 @@ export enum Permission {
   FILES_USE = 'FILES_USE',
   RESEARCH_USE = 'RESEARCH_USE',
   AGENT_USE = 'AGENT_USE',
+
+  // The coding agent's individual surfaces, so a role can be given the agent
+  // without being given the terminal.
+  //
+  // AGENT_USE stays the gate on the agent itself and is unchanged — these are
+  // ADDITIVE and default OFF for the USER role, which is why they are absent
+  // from USER_DEFAULT_PERMISSIONS. ADMIN receives them through ALL_PERMISSIONS.
+  //
+  // A terminal that runs commands on a machine, a capability manifest that
+  // decides what it may do, and a repository list are not the same risk as a
+  // recipe list, so they are separate switches rather than one AGENT_MANAGE.
+  AGENT_TERMINAL_USE = 'AGENT_TERMINAL_USE',
+  AGENT_CAPABILITIES_MANAGE = 'AGENT_CAPABILITIES_MANAGE',
+  AGENT_RECIPES_USE = 'AGENT_RECIPES_USE',
+  AGENT_MARKETPLACE_USE = 'AGENT_MARKETPLACE_USE',
+  AGENT_ACTIVITY_VIEW = 'AGENT_ACTIVITY_VIEW',
+  AGENT_ACTIVITY_MEMORY_VIEW = 'AGENT_ACTIVITY_MEMORY_VIEW',
+  AGENT_REPOS_MANAGE = 'AGENT_REPOS_MANAGE',
   MODELS_CATALOG_VIEW = 'MODELS_CATALOG_VIEW',
   VIEW_DASHBOARD = 'VIEW_DASHBOARD',
   ADMIN_USERS_MANAGE = 'ADMIN_USERS_MANAGE',

@@ -4013,6 +4013,7 @@ export const fa: TranslationDictionary = {
       MEMORY: 'حافظه',
       CONTEXT_PACK: 'بسته های زمینه',
       WORKSPACE: 'فضای کار',
+      AGENT: 'عامل',
       ADMIN: 'اداره',
       OTHER: 'دیگر',
     },

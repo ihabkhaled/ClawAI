@@ -3962,6 +3962,7 @@ export const ar: TranslationDictionary = {
       MEMORY: 'الذاكرة',
       CONTEXT_PACK: 'حزم السياق',
       WORKSPACE: 'مساحة العمل',
+      AGENT: 'الوكيل',
       ADMIN: 'الإدارة',
       OTHER: 'أخرى',
     },

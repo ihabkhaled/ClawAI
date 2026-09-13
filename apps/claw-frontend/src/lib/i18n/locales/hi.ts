@@ -4014,6 +4014,7 @@ export const hi: TranslationDictionary = {
       MEMORY: 'मेमोरी',
       CONTEXT_PACK: 'कॉन्टेक्स्ट पैक',
       WORKSPACE: 'वर्कस्पेस',
+      AGENT: 'एजेंट',
       ADMIN: 'प्रशासन',
       OTHER: 'अन्य',
     },

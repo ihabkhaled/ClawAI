@@ -6,6 +6,7 @@ export enum PermissionGroupKey {
   MEMORY = 'MEMORY',
   CONTEXT_PACK = 'CONTEXT_PACK',
   WORKSPACE = 'WORKSPACE',
+  AGENT = 'AGENT',
   ADMIN = 'ADMIN',
   OTHER = 'OTHER',
 }

@@ -39,6 +39,25 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: ROUTES.ADMIN_ROLES, permission: Permission.ADMIN_PERMISSIONS_MANAGE },
   { prefix: '/admin/usage', permission: Permission.ADMIN_USAGE_VIEW },
 
+  // Agent sub-pages (MUST precede the bare /agent, which stays on AGENT_USE).
+  //
+  // Longest-prefix-first, and ACTIVITY_MEMORY before ACTIVITY: '/agent/activity'
+  // is a prefix of '/agent/activity-memory', so the shorter one would otherwise
+  // swallow it and gate the memory page on the wrong permission.
+  //
+  // All seven default OFF for the USER role — they are absent from
+  // USER_DEFAULT_PERMISSIONS — and ON for ADMIN via ALL_PERMISSIONS. The
+  // sidebar filters on this same table, so an ungranted role simply does not
+  // see the entry.
+  { prefix: ROUTES.AGENT_ACTIVITY_MEMORY, permission: Permission.AGENT_ACTIVITY_MEMORY_VIEW },
+  { prefix: ROUTES.AGENT_ACTIVITY, permission: Permission.AGENT_ACTIVITY_VIEW },
+  { prefix: ROUTES.AGENT_CAPABILITIES, permission: Permission.AGENT_CAPABILITIES_MANAGE },
+  { prefix: ROUTES.AGENT_MARKETPLACE, permission: Permission.AGENT_MARKETPLACE_USE },
+  { prefix: ROUTES.AGENT_RECIPES, permission: Permission.AGENT_RECIPES_USE },
+  { prefix: ROUTES.AGENT_REPOS, permission: Permission.AGENT_REPOS_MANAGE },
+  { prefix: ROUTES.AGENT_TERMINAL, permission: Permission.AGENT_TERMINAL_USE },
+  { prefix: ROUTES.AGENT, permission: Permission.AGENT_USE },
+
   // Chat sub-pages (MUST precede the bare /chat which stays open).
   // Compare is PLAN-feature gated (allowCompareMode). Each of the 9
   // orchestration labs below has its OWN permission + plan-feature gate —

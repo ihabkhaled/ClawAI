@@ -9,12 +9,38 @@ describe('route-permission.utility', () => {
     it('returns null for routes with no entry (open to all authed users)', () => {
       expect(requiredPermissionForPath('/chat')).toBeNull();
       expect(requiredPermissionForPath('/chat/abc-123')).toBeNull();
-      expect(requiredPermissionForPath('/agent')).toBeNull();
-      expect(requiredPermissionForPath('/agent/terminal')).toBeNull();
       expect(requiredPermissionForPath('/profile')).toBeNull();
       expect(requiredPermissionForPath('/settings')).toBeNull();
       expect(requiredPermissionForPath('/plan')).toBeNull();
       expect(requiredPermissionForPath('/usage')).toBeNull();
+    });
+
+    it('gates the agent and each of its surfaces', () => {
+      // /agent used to be open even though AGENT_USE existed, so a role that
+      // had never been granted the agent could still open its page. The
+      // permission now actually gates the route it is named after.
+      expect(requiredPermissionForPath('/agent')).toBe(Permission.AGENT_USE);
+
+      // Each surface is its own switch: a terminal that runs commands on a
+      // machine is not the same risk as a recipe list.
+      expect(requiredPermissionForPath('/agent/terminal')).toBe(Permission.AGENT_TERMINAL_USE);
+      expect(requiredPermissionForPath('/agent/capabilities')).toBe(
+        Permission.AGENT_CAPABILITIES_MANAGE,
+      );
+      expect(requiredPermissionForPath('/agent/recipes')).toBe(Permission.AGENT_RECIPES_USE);
+      expect(requiredPermissionForPath('/agent/marketplace')).toBe(
+        Permission.AGENT_MARKETPLACE_USE,
+      );
+      expect(requiredPermissionForPath('/agent/repos')).toBe(Permission.AGENT_REPOS_MANAGE);
+      expect(requiredPermissionForPath('/agent/activity')).toBe(Permission.AGENT_ACTIVITY_VIEW);
+    });
+
+    it('does not let /agent/activity swallow /agent/activity-memory', () => {
+      // One is a prefix of the other, so a shorter-first table would gate the
+      // memory page on the activity permission and nobody would notice.
+      expect(requiredPermissionForPath('/agent/activity-memory')).toBe(
+        Permission.AGENT_ACTIVITY_MEMORY_VIEW,
+      );
     });
 
     it('returns null for an unknown route', () => {

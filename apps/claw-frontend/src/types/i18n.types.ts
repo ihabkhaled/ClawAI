@@ -4000,6 +4000,7 @@ export type TranslationDictionary = {
       MEMORY: string;
       CONTEXT_PACK: string;
       WORKSPACE: string;
+      AGENT: string;
       ADMIN: string;
       OTHER: string;
     };

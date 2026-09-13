@@ -7915,7 +7915,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5185
+        "value": 5186
       },
       "localeCount": 13,
       "locales": [
@@ -8388,6 +8388,41 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "ADMIN_WORKSPACE_AUTOMATION_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_ACTIVITY_MEMORY_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_ACTIVITY_VIEW"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_CAPABILITIES_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_MARKETPLACE_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_RECIPES_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_REPOS_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "AGENT_TERMINAL_USE"
       },
       {
         "confidence": "verified",
@@ -9680,7 +9715,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 93
+        "testFiles": 94
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -10460,13 +10495,13 @@
     "frontendRouteCount": 154,
     "localeCount": 13,
     "nginxRouteCount": 58,
-    "permissionCount": 51,
+    "permissionCount": 58,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1234,
+    "totalTestFiles": 1235,
     "workspaceCount": 25
   }
 }

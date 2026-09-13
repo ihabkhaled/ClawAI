@@ -4046,6 +4046,7 @@ export const ru: TranslationDictionary = {
       MEMORY: 'Память',
       CONTEXT_PACK: 'Пакеты контекста',
       WORKSPACE: 'Рабочее пространство',
+      AGENT: 'Агент',
       ADMIN: 'Администрирование',
       OTHER: 'Прочее',
     },

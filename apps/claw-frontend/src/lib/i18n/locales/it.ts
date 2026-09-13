@@ -4056,6 +4056,7 @@ export const it: TranslationDictionary = {
       MEMORY: 'Memoria',
       CONTEXT_PACK: 'Pacchetti di contesto',
       WORKSPACE: 'Workspace',
+      AGENT: 'Agente',
       ADMIN: 'Amministrazione',
       OTHER: 'Altro',
     },

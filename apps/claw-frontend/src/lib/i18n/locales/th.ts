@@ -3977,6 +3977,7 @@ export const th: TranslationDictionary = {
       MEMORY: 'หน่วยความจำ',
       CONTEXT_PACK: 'แพ็คบริบท',
       WORKSPACE: 'พื้นที่ทำงาน',
+      AGENT: 'เอเจนต์',
       ADMIN: 'การบริหาร',
       OTHER: 'อื่น',
     },

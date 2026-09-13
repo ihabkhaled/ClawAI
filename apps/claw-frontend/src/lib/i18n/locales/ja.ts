@@ -4026,6 +4026,7 @@ export const ja: TranslationDictionary = {
       MEMORY: 'メモリ',
       CONTEXT_PACK: 'コンテキスト パック',
       WORKSPACE: 'ワークスペース',
+      AGENT: 'エージェント',
       ADMIN: '管理',
       OTHER: 'その他',
     },

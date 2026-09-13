@@ -3992,6 +3992,7 @@ export const en: TranslationDictionary = {
       MEMORY: 'Memory',
       CONTEXT_PACK: 'Context Packs',
       WORKSPACE: 'Workspace',
+      AGENT: 'Agent',
       ADMIN: 'Administration',
       OTHER: 'Other',
     },
