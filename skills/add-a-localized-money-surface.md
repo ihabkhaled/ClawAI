@@ -44,8 +44,16 @@ For a usage or wallet figure, pass the other policy:
 const used = useLocalizedMoney(microUsdToMinor(cost), 'USD', DisplayRoundingPolicy.PRECISE_USAGE);
 ```
 
-`PRECISE_USAGE` does not round. A ledger is an account of what someone consumed,
-and $0.004 displayed as "$0.00" tells them they were charged nothing.
+`PRECISE_USAGE` does not round. Use it for anything that is an ACCOUNT or a
+PROMISE rather than a price: a ledger row, a wallet balance, a credit allowance.
+A ledger showing $0.004 as "$0.00" tells someone they were charged nothing, and
+a credit allowance rounded up advertises more than the plan actually grants —
+the wallet then looks short. A price may round because a plan card promises
+nobody an exact figure; these may not.
+
+Micro-USD figures go through `microUsdToMinor` first — the converter works in
+minor units, and a second hand-written `/ 10_000` is one copy too many of a
+money conversion.
 
 ## The provider must be above you
 
