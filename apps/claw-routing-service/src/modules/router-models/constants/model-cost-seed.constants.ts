@@ -4,8 +4,8 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// Identity of the first-install price bootstrap. Bumping the version re-runs
 /// the seed; changing the payload without bumping it is a checksum mismatch,
 /// not a silent overwrite.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v1';
-export const MODEL_COST_SEED_VERSION = 1;
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v2';
+export const MODEL_COST_SEED_VERSION = 2;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -247,5 +247,96 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     reasoningPerMillionMicroUsd: 500_000,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.CHEAP,
+  }),
+
+  // ── Image generation ─────────────────────────────────────────────────────
+  //
+  // Without a row here `findRate` returns null and every paid image generation
+  // is refused with PAYG_PRICING_UNAVAILABLE — which is exactly what it was
+  // doing: no image model had a price, so image generation could not run at
+  // all, on any provider.
+  //
+  // KEYED AS THE IMAGE SERVICE SENDS THEM — bare, not the connector catalog's
+  // `models/...` form. The reservation looks the price up by the string the
+  // caller passes, so a row under a different spelling is a row nobody finds.
+  //
+  // Gemini bills a generated image as output TOKENS, so its published output
+  // rate is the real rate and the hold prices itself correctly.
+  //
+  // OpenAI bills PER IMAGE, not per token. The reservation has only a token
+  // ceiling to price from (IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS = 8192), so the
+  // per-image list price is expressed as the output rate that makes that
+  // ceiling come out at the price of one image. It is not a per-token rate
+  // OpenAI publishes; it is the per-image price divided by the ceiling, so the
+  // hold matches what the image actually costs.
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-2.5-flash-image',
+    inputPerMillionMicroUsd: 300_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 30_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-3.1-flash-image-preview',
+    inputPerMillionMicroUsd: 300_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 30_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-3-pro-image-preview',
+    inputPerMillionMicroUsd: 2_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 120_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+  }),
+  // $0.040 per 1024x1024 standard image / 8192 nominal tokens.
+  //
+  // DALL-E publishes no per-token INPUT price — it bills per image. The input
+  // rate is set equal to the output rate rather than 0 because
+  // `hasUsablePricing` treats a zero rate as UNPRICED and would block the model
+  // outright. It never charges anything: an image reservation passes 0 prompt
+  // tokens, so this figure is always multiplied by zero.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'dall-e-3',
+    inputPerMillionMicroUsd: 4_882_813,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 4_882_813,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  // $0.020 per 1024x1024 image / 8192 nominal tokens. Input rate mirrors the
+  // output rate for the same reason as dall-e-3 above.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'dall-e-2',
+    inputPerMillionMicroUsd: 2_441_406,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 2_441_406,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+  }),
+  // $0.167 per 1024x1024 high-quality image / 8192 nominal tokens.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-1',
+    inputPerMillionMicroUsd: 10_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 20_385_742,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
   }),
 ]);

@@ -9877,7 +9877,7 @@
       },
       "claw-image-service": {
         "runner": "jest",
-        "testFiles": 11
+        "testFiles": 12
       },
       "claw-llamacpp-service": {
         "runner": "jest",
@@ -10631,7 +10631,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1235,
+    "totalTestFiles": 1236,
     "workspaceCount": 25
   }
 }

@@ -262,7 +262,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 11,
+      "testFiles": 12,
       "testRunner": "jest"
     },
     {
