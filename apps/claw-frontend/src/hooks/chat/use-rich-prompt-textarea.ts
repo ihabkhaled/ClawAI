@@ -22,9 +22,15 @@ import type { UseRichPromptTextareaParams, UseRichPromptTextareaReturn } from '@
  *   - Provide a stable onKeyDown handler that runs the submit contract:
  *     plain Enter → onSubmit (if value non-empty after trim and !disabled),
  *     Shift+Enter → default newline, anything during composition → default.
- *   - ArrowUp on an EMPTY composer recalls `recallValue` (the user's previous
- *     message). Only when empty: once there is text, ArrowUp has to keep
- *     moving the caret, or a multi-line prompt becomes uneditable.
+ *   - ArrowUp / ArrowDown walk `recallHistory` (the user's own past messages,
+ *     most recent first) the way a shell does: up goes older, down goes newer,
+ *     and down past the newest restores the empty composer.
+ *
+ *     Recall STARTS only from an empty composer and CONTINUES only while the
+ *     field still holds exactly what was recalled. Once there is a draft, or
+ *     once the user edits a recalled message, the arrows go back to moving the
+ *     caret — otherwise a multi-line prompt becomes uneditable and typed work
+ *     disappears on a keystroke.
  *   - Provide a forwarder for compositionStart/End and onChange so the
  *     component just spreads what the hook returns.
  */
@@ -38,11 +44,19 @@ export function useRichPromptTextarea(
     disabled = false,
     minRows = RICH_PROMPT_DEFAULT_MIN_ROWS,
     maxRows = RICH_PROMPT_DEFAULT_MAX_ROWS,
-    recallValue,
+    recallHistory,
   } = params;
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isComposingRef = useRef(false);
+  // How far back in the user's own history the composer is currently showing.
+  // -1 means "not recalling" — the field holds a live draft, not a past message.
+  //
+  // The recalled TEXT is tracked alongside it so the next key press can tell an
+  // untouched recall from one the user has started editing. Without that, a
+  // second ArrowUp would silently discard their edit.
+  const recallIndexRef = useRef(-1);
+  const recalledTextRef = useRef<string | null>(null);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
   // True once the user has manually drag-resized the textarea — at that
   // point we stop auto-growing and let the user own the height. Reset to
@@ -122,6 +136,13 @@ export function useRichPromptTextarea(
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+      // Typing ends the recall. From here the field is a draft again, so the
+      // next ArrowUp starts from the most recent message rather than resuming
+      // wherever the user had walked to.
+      if (e.target.value !== recalledTextRef.current) {
+        recallIndexRef.current = -1;
+        recalledTextRef.current = null;
+      }
       onChange(e.target.value);
     },
     [onChange],
@@ -136,16 +157,13 @@ export function useRichPromptTextarea(
       if (composing) {
         return;
       }
-      if (e.key === 'ArrowUp') {
-        // Shell-style history recall, and ONLY from a genuinely empty
-        // composer. With any text present ArrowUp must stay caret movement:
-        // silently replacing a half-typed prompt would destroy work the user
-        // cannot get back. A modifier means the user is selecting or jumping,
-        // never recalling.
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        // Shell-style history. A modifier means the user is selecting or
+        // jumping, never recalling.
         if (
           disabled ||
-          recallValue === undefined ||
-          value.length !== 0 ||
+          recallHistory === undefined ||
+          recallHistory.length === 0 ||
           e.shiftKey ||
           e.ctrlKey ||
           e.metaKey ||
@@ -153,8 +171,49 @@ export function useRichPromptTextarea(
         ) {
           return;
         }
+
+        // Recall may only start from an EMPTY composer, and may only CONTINUE
+        // while the field still holds exactly what was recalled into it. Both
+        // halves matter: the first keeps ArrowUp as caret movement inside a
+        // draft, and the second means that the moment the user edits a recalled
+        // message, the arrows go back to moving the caret through it rather
+        // than throwing the edit away.
+        const isRecalling = recallIndexRef.current >= 0;
+        const isUntouched = isRecalling && value === recalledTextRef.current;
+        if (!(value.length === 0 && !isRecalling) && !isUntouched) {
+          return;
+        }
+
+        // ArrowDown only walks a recall that is already in progress. In a fresh
+        // composer there is nothing newer to go to, and swallowing the key
+        // there would take ArrowDown away from the caret for no gain.
+        if (!isRecalling && e.key === 'ArrowDown') {
+          return;
+        }
+
+        const nextIndex =
+          e.key === 'ArrowUp' ? recallIndexRef.current + 1 : recallIndexRef.current - 1;
+        if (nextIndex >= recallHistory.length) {
+          // Already at the oldest message. Swallow the key rather than letting
+          // the caret jump to the top of a long recalled prompt, which reads as
+          // the history having skipped an entry.
+          e.preventDefault();
+          return;
+        }
+
         e.preventDefault();
-        onChange(recallValue);
+        if (nextIndex < 0) {
+          // Past the newest entry: back to the empty composer the recall
+          // started from.
+          recallIndexRef.current = -1;
+          recalledTextRef.current = null;
+          onChange('');
+          return;
+        }
+        const recalled = recallHistory[nextIndex] ?? '';
+        recallIndexRef.current = nextIndex;
+        recalledTextRef.current = recalled;
+        onChange(recalled);
         return;
       }
       if (e.key !== 'Enter' || e.shiftKey) {
@@ -179,7 +238,7 @@ export function useRichPromptTextarea(
       e.preventDefault();
       onSubmit();
     },
-    [disabled, onChange, onSubmit, recallValue, value],
+    [disabled, onChange, onSubmit, recallHistory, value],
   );
 
   const handleCompositionStart = useCallback((): void => {

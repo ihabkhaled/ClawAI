@@ -23,7 +23,7 @@ export {
   writePersistedModelViewMode,
 } from './model-view-storage.utility';
 export { buildThreadPreviewSnippet } from './thread-preview-snippet.utility';
-export { findLastUserMessageContent } from './chat-history.utility';
+export { collectUserMessageHistory, findLastUserMessageContent } from './chat-history.utility';
 export {
   compareModelsByRecency,
   parseModelVersion,

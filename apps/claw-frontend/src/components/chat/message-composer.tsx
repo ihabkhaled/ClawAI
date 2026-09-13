@@ -48,7 +48,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
           disabled={composer.isPending}
           minRows={composer.minRows}
           maxRows={composer.maxRows}
-          recallValue={composer.recallValue}
+          recallHistory={composer.recallHistory}
           // Strips the shadcn field frame — the card around it is the frame
           // now — and turns off the native drag handle. Dragging is what let
           // the old composer be left in a state the user could not undo, and

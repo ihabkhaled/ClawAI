@@ -15,7 +15,7 @@ import { useToggle } from '@/hooks/common/use-toggle';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
-import { findLastUserMessageContent } from '@/utilities';
+import { collectUserMessageHistory } from '@/utilities';
 
 import { useExportThread } from './use-export-thread';
 import { useInThreadSearch } from './use-in-thread-search';
@@ -78,7 +78,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   // What ArrowUp pulls back into an empty composer. Derived from the messages
   // already in cache — no extra query — and memoised so the composer's props
   // bag does not churn on every unrelated render of this page.
-  const recallValue = useMemo(() => findLastUserMessageContent(data.messages), [data.messages]);
+  // The user's own past messages, most recent first, for ArrowUp/ArrowDown.
+  const recallHistory = useMemo(() => collectUserMessageHistory(data.messages), [data.messages]);
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -241,7 +242,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       selectedModel: data.threadSettings.selectedModel,
       onModelChange: data.threadSettings.handleModelChange,
       threadId,
-      recallValue,
+      recallHistory,
     },
   };
 

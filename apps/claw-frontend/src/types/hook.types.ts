@@ -558,7 +558,7 @@ export type UseMessageComposerReturn = {
   minRows: number;
   maxRows: number;
   /** ArrowUp-recall text handed to RichPromptTextarea. */
-  recallValue?: string;
+  recallHistory?: readonly string[];
   onValueChange: (value: string) => void;
   /** Enter-key submit; the textarea owns the IME-safe key contract. */
   onSubmitValue: () => void;
@@ -601,7 +601,7 @@ export type UseRichPromptTextareaParams = {
   // message. Undefined (the default) disables recall entirely, which is why
   // the compare panel, whose textarea has no history behind it, simply omits
   // it and keeps plain caret movement.
-  recallValue?: string;
+  recallHistory?: readonly string[];
 };
 
 export type UseRichPromptTextareaReturn = {

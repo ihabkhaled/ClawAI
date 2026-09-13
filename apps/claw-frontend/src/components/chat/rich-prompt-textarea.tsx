@@ -12,7 +12,7 @@ import type { RichPromptTextareaProps } from '@/types';
  *   - Auto-resize from minRows to maxRows (then internal scroll)
  *   - Enter → onSubmit (when value non-empty after trim AND !disabled)
  *   - Shift+Enter → default newline behaviour
- *   - ArrowUp on an empty field → recall `recallValue` (opt-in per consumer)
+ *   - ArrowUp/ArrowDown walk `recallHistory` (opt-in per consumer)
  *   - IME-safe composition: never submit while a CJK/IME composition is in
  *     flight (tracked via compositionStart/End + nativeEvent.isComposing)
  *   - ref forwarding so parents can imperatively focus the textarea
@@ -33,7 +33,7 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       maxRows,
       ariaLabel,
       className,
-      recallValue,
+      recallHistory,
     } = props;
 
     const {
@@ -49,7 +49,7 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       disabled,
       minRows,
       maxRows,
-      recallValue,
+      recallHistory,
     });
 
     // Bridge the internal textareaRef (used for autosize measurements) with
