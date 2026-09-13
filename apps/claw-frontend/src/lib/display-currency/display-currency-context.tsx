@@ -4,9 +4,17 @@ import type {
   DisplayCurrencyContext as DisplayContext,
   LocalizedMoneyView,
 } from '@claw/shared-types';
-import { DisplayRoundingPolicy } from '@claw/shared-types';
+import { CurrencyPreferenceMode, DisplayRoundingPolicy } from '@claw/shared-types';
 import { toLocalizedMoneyView } from '@claw/shared-utilities/money';
-import { createContext, useCallback, useMemo, useState, useTransition } from 'react';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 
 import { DISPLAY_CURRENCY_AUTO } from '@/constants/display-currency.constants';
 import type {
@@ -38,6 +46,32 @@ export function DisplayCurrencyProvider({
       });
     });
   }, []);
+
+  // The server resolves the first paint, but it cannot geolocate a request that
+  // never crossed the internet — a local install, a corporate NAT, a container
+  // network — and correctly refuses to guess from a private address. The
+  // browser's time zone is the only signal left, and it exists only here.
+  //
+  // So: if the server came back with no country while in AUTO, ask again from
+  // the client, once, with the time zone attached. Guarded by a ref because
+  // this must never become a loop when the answer is still UNRESOLVED.
+  const hasRetriedWithTimezoneRef = useRef(false);
+  useEffect(() => {
+    if (
+      hasRetriedWithTimezoneRef.current ||
+      context === null ||
+      context.mode !== CurrencyPreferenceMode.AUTO ||
+      context.countryCode !== null
+    ) {
+      return;
+    }
+    hasRetriedWithTimezoneRef.current = true;
+    void fetchClientDisplayContext(DISPLAY_CURRENCY_AUTO, { persist: false }).then((resolved) => {
+      if (resolved !== null && resolved.countryCode !== null) {
+        setContext(resolved);
+      }
+    });
+  }, [context]);
 
   const localize = useCallback(
     (

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { CurrencySwitcher } from '@/components/marketing/currency-switcher';
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -35,13 +36,23 @@ export function MarketingMobileMenu({
               {t(link.labelKey)}
             </Link>
           ))}
-          <a href={MARKETING_GITHUB_URL} target="_blank" rel="noopener noreferrer" onClick={onNavigate} className={navItemClass}>
+          <a
+            href={MARKETING_GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onNavigate}
+            className={navItemClass}
+          >
             {t('marketing.header.github')}
           </a>
         </nav>
 
         <div className="border-border mt-auto flex flex-col gap-3 border-t pt-4">
-          <div className="flex min-h-11 items-center gap-2">
+          {/* Wraps rather than overflowing: three controls do not fit one row
+              on a narrow phone, and a currency picker pushed off-screen is the
+              same as not shipping one. */}
+          <div className="flex min-h-11 flex-wrap items-center gap-2">
+            <CurrencySwitcher />
             <MarketingLocaleSwitcher />
             <MarketingThemeToggle />
           </div>

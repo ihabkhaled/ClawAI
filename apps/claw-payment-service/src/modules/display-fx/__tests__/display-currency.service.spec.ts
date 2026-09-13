@@ -146,6 +146,46 @@ describe('DisplayCurrencyService', () => {
       expect(context.currencyCode).toBe('EGP');
       expect(context.countrySource).toBe(GeoCountrySource.CLIENT_HINT);
     });
+
+    it('resolves a browser time zone to a country', async () => {
+      // The case that makes AUTO work at all on a local install or behind a
+      // NAT: the request never crossed the internet, so the address is private,
+      // the geo lookup correctly declines, and the time zone is all that is
+      // left. Without this, AUTO always meant USD on those deployments.
+      const service = new DisplayCurrencyService(buildGeo(null), buildFx(51 * RATE_SCALE));
+      const context = await service.resolve({
+        headers: {},
+        clientCountryHint: 'Africa/Cairo',
+      });
+
+      expect(context.countryCode).toBe('EG');
+      expect(context.currencyCode).toBe('EGP');
+      expect(context.countrySource).toBe(GeoCountrySource.CLIENT_HINT);
+    });
+
+    it('lets a real geolocation beat the time zone', async () => {
+      // A laptop still set to Europe/London that is demonstrably in Egypt
+      // should follow the address, not the clock.
+      const service = new DisplayCurrencyService(buildGeo('EG'), buildFx(51 * RATE_SCALE));
+      const context = await service.resolve({
+        headers: {},
+        clientCountryHint: 'Europe/London',
+      });
+
+      expect(context.countryCode).toBe('EG');
+      expect(context.countrySource).toBe(GeoCountrySource.IP_LOOKUP);
+    });
+
+    it('ignores an unplaceable time zone rather than guessing', async () => {
+      const service = new DisplayCurrencyService(buildGeo(null), buildFx(51 * RATE_SCALE));
+      const context = await service.resolve({
+        headers: {},
+        clientCountryHint: 'Mars/Olympus',
+      });
+
+      expect(context.currencyCode).toBe('USD');
+      expect(context.countrySource).toBe(GeoCountrySource.UNRESOLVED);
+    });
   });
 });
 

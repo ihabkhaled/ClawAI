@@ -9652,7 +9652,7 @@
       },
       "@claw/shared-constants": {
         "runner": "jest",
-        "testFiles": 2
+        "testFiles": 3
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
@@ -10466,7 +10466,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1232,
+    "totalTestFiles": 1233,
     "workspaceCount": 25
   }
 }

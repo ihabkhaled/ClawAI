@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DISPLAY_BASE_CURRENCY, resolveCountryDisplayCurrency } from '@claw/shared-constants';
+import {
+  DISPLAY_BASE_CURRENCY,
+  resolveCountryDisplayCurrency,
+  resolveTimezoneCountry,
+} from '@claw/shared-constants';
 import {
   CurrencyPreferenceMode,
   type DisplayCurrencyContext,
@@ -102,7 +106,11 @@ export class DisplayCurrencyService {
       };
     }
     // Last resort, and the weakest: the client decides what it sends here.
-    const hinted = normalizeCountryCode(request.clientCountryHint);
+    //
+    // It is also the only signal that survives a request that never crossed the
+    // internet, so on a local install or behind a corporate NAT this is the
+    // difference between AUTO working and AUTO always meaning USD.
+    const hinted = normalizeCountryCode(resolveTimezoneCountry(request.clientCountryHint));
     return hinted === null
       ? { countryCode: null, source: GeoCountrySource.UNRESOLVED }
       : { countryCode: hinted, source: GeoCountrySource.CLIENT_HINT };

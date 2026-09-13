@@ -1,3 +1,4 @@
+import { TIMEZONE_HINT_MAX_LENGTH } from '@claw/shared-constants';
 import { z } from 'zod';
 
 // Query validation for the public display-currency endpoint.
@@ -10,8 +11,11 @@ export const displayCurrencyQuerySchema = z.object({
   // selector the visitor just used. Refined against the display allowlist by
   // the service, so an unknown code degrades to detection rather than a 400.
   currency: z.string().trim().max(8).optional(),
-  // Browser locale/timezone guess. The weakest signal and treated as such.
-  countryHint: z.string().trim().max(8).optional(),
+  // The browser's IANA time zone ("Africa/Cairo"), or a bare country code from
+  // an older client. The weakest signal and treated as such — but the ONLY one
+  // that works when the request never crossed the internet, which is every
+  // local install and every corporate NAT.
+  countryHint: z.string().trim().max(TIMEZONE_HINT_MAX_LENGTH).optional(),
 });
 
 export type DisplayCurrencyQueryDto = z.infer<typeof displayCurrencyQuerySchema>;
