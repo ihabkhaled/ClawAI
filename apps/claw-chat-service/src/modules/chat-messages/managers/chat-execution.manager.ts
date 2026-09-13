@@ -2099,6 +2099,20 @@ export class ChatExecutionManager implements OnModuleInit {
   // connector-service cannot answer, the execution does not happen. Cached
   // briefly inside the client so a busy thread does not add a hop per turn.
   private async assertExposedForExecution(provider: string, model: string): Promise<void> {
+    // Image and file-generation providers are NOT connector providers, so the
+    // connector exposure registry has nothing to say about them and this gate
+    // could only ever fail closed on them.
+    //
+    // It did. `IMAGE_GEMINI/gemini-2.5-flash-image` was asked about a registry
+    // that knows `GEMINI/models/gemini-2.5-flash-image` — a different provider
+    // AND a different key — so the answer was always "not exposed", and image
+    // generation from chat was refused before the image service was contacted.
+    //
+    // These surfaces are gated by their own service plus the PAYG reservation,
+    // which is where a model that ClawAI does not offer is actually stopped.
+    if (provider === FILE_GENERATION_PROVIDER || provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+      return;
+    }
     const startedAt = Date.now();
     if (await this.modelExposure.isExposed(provider, model)) {
       this.authorizationMetrics.recordAllowed(Date.now() - startedAt);

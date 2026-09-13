@@ -3,14 +3,18 @@ export const IMAGE_PROVIDER_GEMINI = 'IMAGE_GEMINI';
 export const IMAGE_PROVIDER_LOCAL = 'IMAGE_LOCAL';
 export const IMAGE_PROVIDER_LOCAL_COMFYUI = 'IMAGE_LOCAL_COMFYUI';
 
-export const IMAGE_MODEL_DALLE3 = 'dall-e-3';
+// OpenAI's current image model. NOT dall-e-3: OpenAI has retired the DALL-E
+// models for new accounts, and an API key without them answers
+// "The model 'dall-e-3' does not exist" — which made the OpenAI rung of the
+// fallback chain fail for everyone whose key is newer than the retirement.
+export const IMAGE_MODEL_OPENAI = 'gpt-image-1';
 export const IMAGE_MODEL_IMAGEN = 'gemini-2.5-flash-image';
 export const IMAGE_MODEL_SD_LOCAL = 'sdxl-turbo';
 export const IMAGE_MODEL_COMFYUI_SD15 = 'sd_v1-5';
 
 export const IMAGE_FALLBACK_CHAIN: Array<{ provider: string; model: string }> = [
   { provider: IMAGE_PROVIDER_GEMINI, model: IMAGE_MODEL_IMAGEN },
-  { provider: IMAGE_PROVIDER_OPENAI, model: IMAGE_MODEL_DALLE3 },
+  { provider: IMAGE_PROVIDER_OPENAI, model: IMAGE_MODEL_OPENAI },
   { provider: IMAGE_PROVIDER_LOCAL, model: IMAGE_MODEL_SD_LOCAL },
   { provider: IMAGE_PROVIDER_LOCAL_COMFYUI, model: IMAGE_MODEL_COMFYUI_SD15 },
 ];
