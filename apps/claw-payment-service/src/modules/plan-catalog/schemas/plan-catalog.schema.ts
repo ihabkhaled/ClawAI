@@ -63,6 +63,18 @@ const catalogEntrySchema = z.object({
   maxContextPacks: quotaSchema,
   maxMemoryItems: quotaSchema,
   featureGates: featureGatesSchema,
+  // The connector-credit RATE, in basis points, so the billing page can show
+  // what a plan grants each month the same way the public pricing page does.
+  //
+  // Optional and defaulted to 0: an auth service that has not shipped the
+  // column simply omits it, and the card then renders "no connector credit"
+  // rather than deriving a figure from `undefined`. Quoting a credit ClawAI
+  // does not grant is the one failure worth being conservative about.
+  //
+  // Bounded at 10_000 bps — a plan cannot return more than 100% of its price
+  // as credit, and a schema drift that said otherwise would advertise money
+  // nobody is going to receive.
+  paygCreditPercentBps: z.number().int().min(0).max(10_000).optional().default(0),
   prices: z.array(priceVersionSchema).max(16),
   features: z.array(featureRuleSchema).max(64),
 });

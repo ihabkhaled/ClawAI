@@ -56,6 +56,8 @@ export type PlanCatalogEntry = {
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
   featureGates: PlanFeatureGatesView;
+  // Connector-credit rate in basis points. 0 means the plan grants none.
+  paygCreditPercentBps: number;
   prices: PlanPriceVersionView[];
   features: PlanFeatureRuleView[];
 };

@@ -1,5 +1,6 @@
 'use client';
 
+import { DisplayRoundingPolicy } from '@claw/shared-types';
 import { Check } from 'lucide-react';
 import type { ReactElement } from 'react';
 
@@ -15,6 +16,11 @@ import {
   findPlanPrice,
   formatQuotaLimit,
 } from '@/utilities/billing.utility';
+import {
+  formatCreditRatePercent,
+  microUsdToMinor,
+  monthlyCreditFromPlan,
+} from '@/utilities/credit.utility';
 
 export function BillingPlanCard({
   plan,
@@ -30,6 +36,19 @@ export function BillingPlanCard({
   // charge comes from the server's own quote, never from anything here.
   const localizedPrice = useLocalizedMoney(price?.amountMinor ?? 0, price?.currency ?? 'USD');
   const localizedSaving = useLocalizedMoney(savingMinor, price?.currency ?? 'USD');
+  const creditMicroUsd = monthlyCreditFromPlan(
+    findPlanPrice(plan, BillingInterval.MONTHLY)?.amountMinor ?? 0,
+    plan.paygCreditPercentBps ?? 0,
+  );
+  const creditRatePercent = formatCreditRatePercent(plan.paygCreditPercentBps ?? 0);
+  // PRECISE_USAGE, not the COMMERCIAL_PRICE the price above uses. A price may
+  // round to whatever reads naturally; an allowance is a promise, and rounding
+  // it up advertises more credit than the plan grants.
+  const localizedCredit = useLocalizedMoney(
+    microUsdToMinor(creditMicroUsd),
+    'USD',
+    DisplayRoundingPolicy.PRECISE_USAGE,
+  );
   const showsDiscountBadge =
     (interval === BillingInterval.QUARTERLY || interval === BillingInterval.SEMIANNUAL) &&
     price !== null &&
@@ -69,6 +88,38 @@ export function BillingPlanCard({
               amount: localizedSaving.text,
             })}
           </p>
+        ) : null}
+
+        {/* The connector credit this plan grants each month, the same figure
+            and the same derivation the public pricing card shows. DERIVED from
+            the plan's own monthly price and rate, never stored and never
+            written into i18n copy: an allowance duplicated across thirteen
+            locale files drifts the first time an operator edits one, and one
+            stored per plan drifts the first time the price changes without it.
+
+            Always the MONTHLY price even while the card shows yearly figures,
+            because the grant lands monthly — reading the yearly amount here
+            would advertise twelve times the credit. */}
+        {creditMicroUsd > 0 ? (
+          <div className="grid grid-cols-1 gap-0.5">
+            <p className="text-muted-foreground text-xs">
+              {t('marketing.pricing.paygCreditLabel')}
+            </p>
+            <p className="text-sm font-medium">
+              <bdi className="tabular-nums">{localizedCredit.text}</bdi>
+            </p>
+            {localizedCredit.canonicalText === null ? null : (
+              <p className="text-muted-foreground text-xs">
+                {t('marketing.currency.convertedFrom').replace(
+                  '{amount}',
+                  localizedCredit.canonicalText,
+                )}
+              </p>
+            )}
+            <p className="text-muted-foreground text-xs">
+              {t('marketing.pricing.paygCreditRate', { percent: creditRatePercent })}
+            </p>
+          </div>
         ) : null}
 
         {showsDiscountBadge ? (

@@ -38,6 +38,10 @@ export type BillingPlan = {
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
   featureGates?: EntitlementFeatureGates;
+  // Connector-credit rate in basis points. Optional because an older
+  // payment-service omits it; 0 and absent both mean "grants none", and the
+  // card says so rather than deriving a figure from undefined.
+  paygCreditPercentBps?: number;
   features: BillingPlanFeature[];
 };
 

@@ -52,4 +52,44 @@ describe('planCatalogResponseSchema', () => {
 
     expect(planCatalogResponseSchema.safeParse([entry]).success).toBe(false);
   });
+
+  describe('connector-credit rate', () => {
+    it('carries the rate through so the billing page can show the grant', () => {
+      const parsed = planCatalogResponseSchema.safeParse([
+        { ...makeCatalogEntry(), paygCreditPercentBps: 3_000 },
+      ]);
+
+      expect(parsed.success).toBe(true);
+      expect(parsed.success && parsed.data[0]?.paygCreditPercentBps).toBe(3_000);
+    });
+
+    it('defaults to zero when auth has not shipped the column', () => {
+      // Renders "no connector credit" rather than deriving a figure from
+      // undefined. Quoting a credit ClawAI does not grant is the one failure
+      // worth being conservative about.
+      const parsed = planCatalogResponseSchema.safeParse([makeCatalogEntry()]);
+
+      expect(parsed.success && parsed.data[0]?.paygCreditPercentBps).toBe(0);
+    });
+
+    it('refuses a rate above 100% of the plan price', () => {
+      // A plan cannot grant more credit than it charges, and a schema drift
+      // that said otherwise would advertise money nobody will receive.
+      const parsed = planCatalogResponseSchema.safeParse([
+        { ...makeCatalogEntry(), paygCreditPercentBps: 10_001 },
+      ]);
+
+      expect(parsed.success).toBe(false);
+    });
+
+    it('refuses a negative or fractional rate', () => {
+      for (const bps of [-1, 12.5]) {
+        expect(
+          planCatalogResponseSchema.safeParse([
+            { ...makeCatalogEntry(), paygCreditPercentBps: bps },
+          ]).success,
+        ).toBe(false);
+      }
+    });
+  });
 });
