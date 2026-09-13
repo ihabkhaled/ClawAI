@@ -15,7 +15,7 @@ export const generateWithGemini = async (
   baseUrl: string,
   apiKey: string,
   prompt: string,
-  _model: string,
+  model: string,
   referenceImageBase64?: string,
   referenceImageMimeType?: string,
 ): Promise<ImageProviderResponse> => {
@@ -53,11 +53,23 @@ export const generateWithGemini = async (
     requestParts.push({ text: `Generate an image: ${prompt}` });
   }
 
-  // Try each model
+  // The REQUESTED model first, then the known-capable list as fallback.
+  //
+  // This parameter used to be ignored entirely (`_model`), so every Gemini
+  // image request — imagen-4.0-ultra, gemini-3-pro-image, anything — was served
+  // by whichever hardcoded model answered first, in practice always
+  // gemini-2.5-flash-image. A user picked one model and silently received
+  // another, while PAYG metered them against the price of the one they picked.
+  //
+  // The fallback list is kept: a model the catalog exposes but that cannot
+  // actually serve `:generateContent` (imagen-* speaks `:predict`) still has to
+  // produce an image rather than an error. The difference is that the choice is
+  // now attempted before it is overridden, and the log names what served it.
+  const candidates = [model, ...IMAGE_CAPABLE_MODELS.filter((m) => m !== model)];
   logger.debug(
-    `generateWithGemini: trying ${String(IMAGE_CAPABLE_MODELS.length)} image-capable models`,
+    `generateWithGemini: requested=${model} trying ${String(candidates.length)} candidate model(s)`,
   );
-  for (const geminiModel of IMAGE_CAPABLE_MODELS) {
+  for (const geminiModel of candidates) {
     {
       const url = `${cleanBaseUrl}/models/${geminiModel}:generateContent?key=${apiKey}`;
       logger.debug(`generateWithGemini: trying model=${geminiModel}`);
@@ -81,6 +93,11 @@ export const generateWithGemini = async (
         const imagePart = parts.find((p) => p.inlineData?.mimeType?.startsWith('image/'));
 
         if (imagePart?.inlineData) {
+          if (geminiModel !== model) {
+            logger.warn(
+              `generateWithGemini: ${model} could not serve the request; generated with ${geminiModel} instead`,
+            );
+          }
           logger.log(`Gemini image generated via ${geminiModel}`);
           const revisedPrompt = parts.find((p) => p.text)?.text;
           // Gemini DOES report usage for an image call — `usageMetadata` on the
