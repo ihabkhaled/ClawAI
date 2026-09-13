@@ -48,6 +48,13 @@ ClawAI can _charge_ in; widening it would silently let checkout accept AED. A ne
 display-only converter that never calls `assertSupportedCurrency`.
 `DISPLAY_SUPPORTED ⊃ BILLING_SUPPORTED` is asserted by test.
 
+**D2a — the browser time zone is a required fallback, not an optional one.**
+The pack lists a locale/timezone heuristic as a weak last resort. On any
+deployment where nginx sees a private address — local installs, corporate NATs,
+container networks — IP geolocation cannot answer at all, so that "optional"
+signal is the only thing standing between AUTO and a permanent USD. It ships,
+mapped server-side through one `TIMEZONE_TO_COUNTRY` table, consulted last.
+
 **D2 — `CF-IPCountry` is not trusted, and nginx is hardened.**
 The pack prefers `CF-IPCountry`. The audit shows ClawAI is not behind Cloudflare
 and nginx does not strip client headers, so that header is attacker-controlled

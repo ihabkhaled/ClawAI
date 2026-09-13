@@ -250,3 +250,20 @@ today, and any future page built as header + transcript + input.
 - [`docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md`](../docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md) — the picker highlight, the short trigger label, and the deliberate width guard in `clamp-title`
 - [`rules/36-floating-ui-and-toast-clearance.md`](36-floating-ui-and-toast-clearance.md)
 - [`rules/03-frontend-rules.md`](03-frontend-rules.md) — TSX is render-only, so every measurement above lives in a hook
+
+## Prompt history is a walk, not a peek
+
+ArrowUp goes older, ArrowDown goes newer, ArrowDown past the newest restores the
+empty composer — the shell contract. `recallHistory` is the user's own messages,
+newest first, so index 0 is one press up.
+
+Two refusals hold it together, and both protect work an undo cannot recover:
+
+- Recall **starts** only from an empty composer, so ArrowUp inside a draft stays
+  caret movement and a multi-line prompt stays editable.
+- Recall **continues** only while the field still holds exactly what was recalled.
+  The moment the user edits a recalled message it is theirs, and the arrows go
+  back to moving the caret.
+
+ArrowDown in a composer that is not recalling is a no-op — swallowing the key to
+do nothing takes the arrow away from the caret for no gain.

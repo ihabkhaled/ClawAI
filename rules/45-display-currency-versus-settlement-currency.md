@@ -39,7 +39,11 @@ this goes wrong.
   usage. A usage figure rounded to zero tells a user they were not charged.
 - Derive country only from a signal ClawAI's own infrastructure produced —
   nginx's `X-Real-IP`, or an edge header the operator has explicitly enabled on
-  a deployment that rewrites it.
+  a deployment that rewrites it. The browser's IANA time zone is the one
+  exception and it is deliberately LAST: it is the only signal that exists when
+  the request never crossed the internet, which is every local install and every
+  corporate NAT. Without it AUTO can only ever resolve USD on those deployments.
+  A real geolocation outranks it; a manual choice outranks everything.
 
 ## MUST NOT
 
