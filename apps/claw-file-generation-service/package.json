@@ -41,7 +41,7 @@
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
-    "markdown-it": "^15.0.1",
+    "markdown-it": "^15.0.2",
     "nestjs-pino": "^5.0.0",
     "pdfkit": "^0.20.1",
     "pino": "^10.3.1",
@@ -53,8 +53,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.1",
-    "@babel/preset-env": "^8.0.2",
+    "@babel/core": "^8.0.5",
+    "@babel/preset-env": "^8.0.5",
     "@eslint/js": "^9.39.4",
     "@nestjs/cli": "^12.0.0",
     "@nestjs/schematics": "^12.0.0",
@@ -64,7 +64,7 @@
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/markdown-it": "^14.2.0",
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.5.1",
     "@types/pdfkit": "^0.17.6",
     "babel-jest": "^30.5.1",
     "babel-plugin-transform-import-meta": "^3.0.0",
