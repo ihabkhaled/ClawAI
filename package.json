@@ -89,7 +89,7 @@
     "better-sqlite3": "^13.0.3",
     "mongoose": "^9.9.1",
     "rxjs": "^7.8.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.2"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.8.13",
