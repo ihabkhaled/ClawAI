@@ -67,6 +67,10 @@ export type PlanView = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  /** Monthly fair-use ceiling on weighted provider spend. Null = no ceiling. */
+  monthlyProviderCostCeilingMicroUsd: number | null;
+  /** Share of the monthly price granted as connector credit, in basis points. */
+  paygCreditPercentBps: number;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;

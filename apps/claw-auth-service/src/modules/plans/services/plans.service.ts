@@ -412,6 +412,19 @@ export class PlansService {
       maxWorkspaceConnections: plan.maxWorkspaceConnections,
       maxContextPacks: plan.maxContextPacks,
       maxMemoryItems: plan.maxMemoryItems,
+      // Both of these are ADMIN-form fields. Omitting them from the view meant
+      // the edit form loaded `undefined`, rendered blank in a number input, and
+      // then failed to save with "expected number, received NaN" — so an
+      // operator could never set either one, and any value already in the
+      // database was invisible to the screen that edits it.
+      // BIGINT in Postgres, so Prisma hands back a bigint. It crosses JSON as a
+      // number because the ceiling is micro-USD and stays far inside the safe
+      // integer range; serialising a bigint would throw at the controller.
+      monthlyProviderCostCeilingMicroUsd:
+        plan.monthlyProviderCostCeilingMicroUsd === null
+          ? null
+          : Number(plan.monthlyProviderCostCeilingMicroUsd),
+      paygCreditPercentBps: plan.paygCreditPercentBps,
       ...this.toFeatureGates(plan),
       modelAccessMode: plan.modelAccessMode,
       allowedCostClasses: plan.allowedCostClasses,
