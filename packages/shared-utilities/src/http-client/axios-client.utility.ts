@@ -1,4 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+
+import { assertSafeRequestUrl } from './request-url.utility';
 import { Logger } from '@nestjs/common';
 import { DEFAULT_HTTP_TIMEOUT } from '@claw/shared-constants';
 
@@ -12,6 +14,9 @@ export function createHttpClient(config: AxiosRequestConfig): AxiosInstance {
 }
 
 export async function httpGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  // Same SSRF chokepoint as the fetch client: a caller-supplied URL must not
+  // reach the network without a protocol/credential check.
+  assertSafeRequestUrl(url);
   logger.debug(`httpGet: GET ${url}`);
   const startTime = Date.now();
   try {

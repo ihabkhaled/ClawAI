@@ -92,6 +92,8 @@
     "zod": "^4.6.2"
   },
   "overrides": {
+    "multer": "^2.4.0",
+    "mysql2": "^3.24.4",
     "@xmldom/xmldom": "^0.8.13",
     "follow-redirects": "^1.16.0",
     "postcss": "^8.5.28",

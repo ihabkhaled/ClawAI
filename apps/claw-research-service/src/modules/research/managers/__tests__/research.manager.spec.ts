@@ -10,6 +10,13 @@ import type { ScrapeService } from '../../../scrape/services/scrape.service';
 import type { ResearchRunRepository } from '../../repositories/research-run.repository';
 import type { ResearchUsageService } from '../../../../common/services/research-usage.service';
 
+// A URL is "mentioned" only when it appears as a whole token — bounded by
+// whitespace, quotes or the end of the string. Plain `includes` treats
+// https://host.example.com as a match for https://host.example.com.evil.test.
+function mentionsUrl(text: string, url: string): boolean {
+  return text.split(/[\s"'<>()]+/u).includes(url);
+}
+
 describe('ResearchManager', () => {
   let runs: {
     create: jest.Mock;
@@ -283,9 +290,12 @@ describe('ResearchManager', () => {
       });
 
       const warnings = lastBundle().warnings ?? [];
-      expect(warnings.some((warning) => warning.includes('https://blocked.example.com/post'))).toBe(
-        true,
-      );
+      // Matched on a URL BOUNDARY, not a bare substring: `includes` on a URL
+      // also matches https://blocked.example.com.evil.test, which is how a
+      // sanitizer check quietly passes for a host it should reject.
+      expect(
+        warnings.some((warning) => mentionsUrl(warning, 'https://blocked.example.com/post')),
+      ).toBe(true);
     });
 
     it('does not open pages in a search-only run, and says so', async () => {
@@ -302,7 +312,7 @@ describe('ResearchManager', () => {
       expect(
         warnings.some(
           (warning) =>
-            warning.includes('https://user-supplied.example.com/post') &&
+            mentionsUrl(warning, 'https://user-supplied.example.com/post') &&
             warning.includes('NOT opened'),
         ),
       ).toBe(true);

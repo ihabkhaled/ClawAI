@@ -1,10 +1,16 @@
 import { Logger } from '@nestjs/common';
 import { type HttpRequestOptions, type HttpResponse } from '@claw/shared-types';
 
+import { assertSafeRequestUrl } from './request-url.utility';
+
 const logger = new Logger('FetchHttpClient');
 
 export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
   const { url, method, headers, body, timeoutMs = 120_000 } = options;
+
+  // Validated before anything else: the URL is caller-supplied and goes
+  // straight to fetch. See assertSafeRequestUrl.
+  const safeUrl = assertSafeRequestUrl(url);
 
   logger.debug(`httpRequest: ${method} ${url} (timeout=${String(timeoutMs)}ms)`);
   const controller = new AbortController();
@@ -12,7 +18,7 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
   const startTime = Date.now();
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(safeUrl, {
       method,
       headers: {
         'Content-Type': 'application/json',

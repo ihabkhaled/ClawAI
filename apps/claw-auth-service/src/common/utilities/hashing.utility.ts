@@ -1,4 +1,5 @@
 import * as argon2 from 'argon2';
+import { randomUUID } from 'node:crypto';
 import { Logger } from '@nestjs/common';
 import { ARGON2_MEMORY_COST, ARGON2_PARALLELISM, ARGON2_TIME_COST } from '../constants';
 
@@ -46,7 +47,10 @@ let decoyHashPromise: Promise<string> | null = null;
  */
 export async function burnPasswordVerification(password: string): Promise<false> {
   try {
-    decoyHashPromise ??= hashPassword(`decoy:${String(Date.now())}:${String(Math.random())}`);
+    // randomUUID, not Math.random: this value seeds the decoy an attacker is
+    // timed against, and Math.random is a predictable PRNG with no security
+    // guarantee. Cheap to make it unguessable, so there is no reason not to.
+    decoyHashPromise ??= hashPassword(`decoy:${String(Date.now())}:${randomUUID()}`);
     await argon2.verify(await decoyHashPromise, password);
   } catch {
     // Expected — the password never matches the decoy.
