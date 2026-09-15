@@ -1,0 +1,15 @@
+# Modern baseline only.
+#
+# Without this, Next transpiles and polyfills for browsers nobody here uses:
+# Lighthouse flagged 13.5 KiB of shims for Array.prototype.at/flat/flatMap,
+# Object.fromEntries/hasOwn and String.prototype.trimStart/trimEnd — all of
+# which have been native in every one of these browsers for years.
+#
+# The floor is deliberately generous: these versions all support ES2022, and
+# every one of them is older than the oldest browser in our analytics.
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Safari versions
+last 2 Edge versions
+last 2 iOS versions
+not dead

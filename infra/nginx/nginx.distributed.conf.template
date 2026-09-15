@@ -143,6 +143,34 @@ http {
         return 301 https://$host$request_uri;
     }
 
+    # ---- www -> apex redirect ---------------------------------------------
+    #
+    # MUST come before the main block: that one ends in `_`, the catch-all, so
+    # without this www.<host> matches it and the whole site is served on TWO
+    # hostnames. Google crawled both (www.claw-ai.co/favicon.ico and
+    # /manifest.webmanifest showed up in Search Console), which splits crawl
+    # budget and link signals across what is really one site.
+    #
+    # 301, not 302: the move is permanent, and only a permanent redirect
+    # consolidates ranking signals onto the apex.
+    #
+    # Listens on 80 as well so http://www takes ONE hop to the canonical URL
+    # rather than bouncing through the generic HTTP->HTTPS block first.
+    #
+    # Uses the same certificate: it already answers for www today, which is
+    # exactly why www returns 200 instead of failing.
+    server {
+        listen 80;
+        listen 443 ssl;
+        http2 on;
+        server_name www.${CLAW_PUBLIC_HOSTNAME};
+
+        ssl_certificate     ${CLAW_TLS_CERT_PATH};
+        ssl_certificate_key ${CLAW_TLS_KEY_PATH};
+
+        return 301 https://${CLAW_PUBLIC_HOSTNAME}$request_uri;
+    }
+
     # ---- Main TLS server block --------------------------------------------
     server {
         listen 443 ssl;
