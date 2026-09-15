@@ -108,7 +108,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 94,
+      "testFiles": 95,
       "testRunner": "jest"
     },
     {
@@ -136,7 +136,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 136,
+      "testFiles": 137,
       "testRunner": "jest"
     },
     {

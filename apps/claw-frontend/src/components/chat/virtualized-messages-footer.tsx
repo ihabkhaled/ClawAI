@@ -32,18 +32,24 @@ export function VirtualizedMessagesFooter({
   return (
     <div className="flex flex-col gap-3 px-4 py-2">
       {limitNotice === null ? null : <ChatLimitNoticeCard notice={limitNotice} />}
-      <RuntimeProgressPanel
-        fallbackAttempts={fallbackAttempts}
-        streamError={streamError}
-        judgeEvaluating={judgeEvaluating}
-        executingModel={executingModel}
-        judgeModel={judgeModel}
-        progressStages={progressStages}
-        currentStageLabel={currentStageLabel}
-        streamLive={streamLive}
-        onCancel={onCancelStream}
-        isCancelling={isCancellingStream}
-      />
+      {/* Only while something is actually running. The notice alone keeps this
+          footer mounted, and the panel used to render underneath it regardless
+          — so a refused message left "AI is thinking..." live forever, under a
+          card explaining that nothing was going to happen. */}
+      {!isWaitingForResponse && !streamError ? null : (
+        <RuntimeProgressPanel
+          fallbackAttempts={fallbackAttempts}
+          streamError={streamError}
+          judgeEvaluating={judgeEvaluating}
+          executingModel={executingModel}
+          judgeModel={judgeModel}
+          progressStages={progressStages}
+          currentStageLabel={currentStageLabel}
+          streamLive={streamLive}
+          onCancel={onCancelStream}
+          isCancelling={isCancellingStream}
+        />
+      )}
     </div>
   );
 }

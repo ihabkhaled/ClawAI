@@ -1,4 +1,4 @@
-import type { Permission, PlanModelAccessMode } from '@claw/shared-types';
+import type { Permission, PlanModelAccessMode, QuotaWindow } from '@claw/shared-types';
 
 export type PlanFeatureGates = {
   allowCompareMode: boolean;
@@ -74,7 +74,19 @@ export type UserEntitlements = {
     remaining: number;
     unlimited: boolean;
     adminBypass: boolean;
+    // Every enforced window, not just the day. Optional because an older
+    // auth-service build omits it; consumers must treat absent as day-only
+    // rather than as "no limits".
+    windows?: QuotaWindowUsage[];
   };
+};
+
+// One enforced token window. `limit: null` means unlimited for that window;
+// `0` means disabled. They are not interchangeable.
+export type QuotaWindowUsage = {
+  window: QuotaWindow;
+  limit: number | null;
+  used: number;
 };
 
 // The role a model is being used in — gates against the per-mode flags.

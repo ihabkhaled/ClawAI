@@ -66,13 +66,20 @@ test('bumpLevelFor raises to major on any breaking commit, even alongside feats'
   assert.equal(bumpLevelFor(commits), 'major');
 });
 
-test('nextVersion patch/minor/major arithmetic', () => {
+test('nextVersion patch/minor arithmetic', () => {
   assert.equal(nextVersion('1.2.3', 'patch'), '1.2.4');
   assert.equal(nextVersion('1.2.3', 'minor'), '1.3.0');
-  assert.equal(nextVersion('1.2.3', 'major'), '2.0.0');
 });
 
-test('nextVersion resets lower segments on a minor/major bump', () => {
+test('a major bump is downgraded to a minor while the major is pinned', () => {
+  // Releasing 2.0.0 is a product decision. One `feat!:` in a commit subject
+  // does not get to make it, so the line runs 1.99.0 -> 1.100.0 -> 1.200.0.
+  assert.equal(nextVersion('1.2.3', 'major'), '1.3.0');
+  assert.equal(nextVersion('1.99.0', 'major'), '1.100.0');
+  assert.equal(nextVersion('1.199.4', 'minor'), '1.200.0');
+});
+
+test('nextVersion resets lower segments, and an off-pin major still bumps', () => {
   assert.equal(nextVersion('4.9.9', 'minor'), '4.10.0');
   assert.equal(nextVersion('4.9.9', 'major'), '5.0.0');
 });

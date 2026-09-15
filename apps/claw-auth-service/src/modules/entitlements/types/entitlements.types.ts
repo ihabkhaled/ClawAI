@@ -1,3 +1,4 @@
+import { type QuotaWindowUsage } from '../../quota/types/quota.types';
 import { type Permission } from '@claw/shared-types';
 import { type PlanModelAccessMode } from '../../../generated/prisma';
 import { type PlanFeatureGates, type PlanModelAccessView } from '../../plans/types/plans.types';
@@ -37,6 +38,8 @@ export type UserEntitlements = {
     dailyLimit: number;
     used: number;
     remaining: number;
+    // Day, week and month. Enforcement reads this; `remaining` is DAY only.
+    windows: QuotaWindowUsage[];
     // ADMIN bypasses quota entirely.
     unlimited: boolean;
     adminBypass: boolean;

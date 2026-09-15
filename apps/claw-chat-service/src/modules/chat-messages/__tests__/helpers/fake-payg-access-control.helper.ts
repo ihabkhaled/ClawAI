@@ -23,6 +23,7 @@ export type FakePaygAccessControl = {
   recordFeatureUsage: jest.Mock;
   assertCanUseCritic: jest.Mock;
   assertResearchAccess: jest.Mock;
+  resolveOutputCeiling: jest.Mock;
 };
 
 /**
@@ -92,6 +93,9 @@ export function createFakePaygAccessControl(
     recordFeatureUsage: jest.fn(async () => {}),
     assertCanUseCritic: jest.fn(async () => {}),
     assertResearchAccess: jest.fn(async () => {}),
+    // null = no quota ceiling, which is what an unlimited/admin entitlement
+    // resolves to. A test that wants the clamp asserts on it explicitly.
+    resolveOutputCeiling: jest.fn(async () => null),
   };
   return double as unknown as FakePaygAccessControl;
 }

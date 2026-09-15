@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { COMPOSER_SEED_STORAGE_KEY } from '@/constants/chat.constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
@@ -37,6 +37,25 @@ export const useMessageComposerState = ({
     onChange: setSelectedFileIds,
     disabled: isPending,
   });
+
+  // Put the text back when a send was refused.
+  //
+  // The composer clears optimistically, so a refusal — a spent quota above all
+  // — used to destroy what the user had just typed. The send's error handler
+  // rewrites the draft; this restores it once the request settles, but ONLY
+  // into an empty composer, so it can never overwrite something typed since.
+  const wasPendingRef = useRef(false);
+  useEffect(() => {
+    const settled = wasPendingRef.current && !isPending;
+    wasPendingRef.current = isPending;
+    if (!settled) {
+      return;
+    }
+    const draft = readComposerDraft(threadId);
+    if (draft.trim().length > 0) {
+      setContent((prev) => (prev.length > 0 ? prev : draft));
+    }
+  }, [isPending, threadId]);
 
   // Hydrate the composer from a one-shot seed written by the /chat
   // suggested-prompt buttons. Read on mount, then immediately clear the key

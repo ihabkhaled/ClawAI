@@ -20,6 +20,7 @@ export {
   type AllowedModel,
   type PlanFeature,
   type PlanFeatureGates,
+  type QuotaWindowUsage,
   type UserEntitlements,
 } from './types';
 export { PermissionGuard } from './permission.guard';

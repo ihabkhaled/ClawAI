@@ -4,7 +4,16 @@ import { QuotaRejectionWindow } from '../../../common/enums/quota-rejection-wind
 import { RedisService } from '../../../infrastructure/redis/redis.service';
 import { TokenLedgerRepository } from '../repositories/token-ledger.repository';
 import { WeightedUsageRepository } from '../repositories/weighted-usage.repository';
-import { quotaKey, secondsUntilEndOfUtcDay, utcDateString } from '../constants/quota.constants';
+import {
+  quotaKey,
+  quotaWindowKey,
+  secondsUntilEndOfUtcDay,
+  secondsUntilEndOfWindow,
+  utcDateString,
+} from '../constants/quota.constants';
+import { QuotaWindow } from '@claw/shared-types';
+import { LEGACY_QUOTA_WINDOWS, NON_DAY_QUOTA_WINDOWS } from '../constants/quota-window.constants';
+import { limitForWindow, periodKeyForWindow } from '../utilities/quota-window.utility';
 import { ADJUST_QUOTA_LUA, RESERVE_QUOTA_LUA } from '../constants/quota-redis.constants';
 import {
   buildAdjustArgv,
@@ -18,6 +27,8 @@ import {
   type QuotaAdjustmentDeltas,
   type QuotaLimits,
   type QuotaSnapshot,
+  type QuotaWindowLimits,
+  type QuotaWindowUsage,
   type ReserveResult,
   type WeightedFinalizeInput,
   type WeightedReservationInput,
@@ -34,11 +45,70 @@ export class QuotaService {
     private readonly weightedUsage: WeightedUsageRepository,
   ) {}
 
-  async getSnapshot(userId: string, dailyLimit: number): Promise<QuotaSnapshot> {
-    const date = utcDateString(new Date());
-    const raw = await this.redis.get(quotaKey(userId, date));
-    const used = raw ? Number.parseInt(raw, 10) : 0;
-    return { dailyLimit, used, remaining: Math.max(0, dailyLimit - used) };
+  // Reads all three legacy windows, not just the day. `remaining` stays the
+  // DAY figure so every existing consumer keeps its meaning; `windows` is what
+  // enforcement should read.
+  async getSnapshot(userId: string, limits: QuotaWindowLimits): Promise<QuotaSnapshot> {
+    const now = new Date();
+    const windows = await Promise.all(
+      LEGACY_QUOTA_WINDOWS.map(async (window) => this.readWindow(userId, window, limits, now)),
+    );
+    const dayUsed = windows.find((w) => w.window === QuotaWindow.DAY)?.used ?? 0;
+    return {
+      dailyLimit: limits.daily,
+      used: dayUsed,
+      remaining: Math.max(0, limits.daily - dayUsed),
+      windows,
+    };
+  }
+
+  private async readWindow(
+    userId: string,
+    window: QuotaWindow,
+    limits: QuotaWindowLimits,
+    now: Date,
+  ): Promise<QuotaWindowUsage> {
+    const raw = await this.redis.get(
+      quotaWindowKey(userId, window, periodKeyForWindow(window, now)),
+    );
+    return {
+      window,
+      limit: limitForWindow(window, limits),
+      used: raw ? Number.parseInt(raw, 10) : 0,
+    };
+  }
+
+  // Every window counter moves together, and each gets its reset TTL on first
+  // write. Before this, finalize() incremented the day key without ever setting
+  // an expiry, so a user whose first write of the day came from finalize (the
+  // chat path — it never calls reserve) carried the counter forever.
+  private async applyWindowDelta(userId: string, delta: number, now: Date): Promise<void> {
+    await this.incrementWindows(userId, delta, now, LEGACY_QUOTA_WINDOWS);
+  }
+
+  // reserve() already moved the day counter atomically (INCRBY then check), so
+  // only the other windows are left to follow it.
+  private async applyNonDayWindowDelta(userId: string, delta: number, now: Date): Promise<void> {
+    await this.incrementWindows(userId, delta, now, NON_DAY_QUOTA_WINDOWS);
+  }
+
+  private async incrementWindows(
+    userId: string,
+    delta: number,
+    now: Date,
+    windows: readonly QuotaWindow[],
+  ): Promise<void> {
+    if (delta === 0) {
+      return;
+    }
+    const client = this.redis.getClient();
+    for (const window of windows) {
+      const key = quotaWindowKey(userId, window, periodKeyForWindow(window, now));
+      const total = await (delta > 0 ? client.incrby(key, delta) : client.decrby(key, -delta));
+      if (total === delta) {
+        await client.expire(key, secondsUntilEndOfWindow(window, now));
+      }
+    }
   }
 
   // Atomically reserve `estimate` tokens. INCRBY is atomic, so concurrent
@@ -61,23 +131,25 @@ export class QuotaService {
       return {
         ok: false,
         reason: 'QUOTA_EXCEEDED',
-        snapshot: { dailyLimit, used, remaining: Math.max(0, dailyLimit - used) },
+        snapshot: {
+          dailyLimit,
+          used,
+          remaining: Math.max(0, dailyLimit - used),
+          windows: [{ window: QuotaWindow.DAY, limit: dailyLimit, used }],
+        },
       };
     }
+    await this.applyNonDayWindowDelta(userId, estimate, now);
     return { ok: true, reservationId: randomUUID(), estimate };
   }
 
   // Reconcile the reservation with actual usage: adjust the Redis counter by
   // (actual - estimate) and persist to the durable ledger.
   async finalize(input: FinalizeInput): Promise<void> {
-    const date = utcDateString(new Date());
+    const now = new Date();
+    const date = utcDateString(now);
     const delta = input.actualTotalTokens - input.estimate;
-    if (delta !== 0) {
-      const client = this.redis.getClient();
-      await (delta > 0
-        ? client.incrby(quotaKey(input.userId, date), delta)
-        : client.decrby(quotaKey(input.userId, date), -delta));
-    }
+    await this.applyWindowDelta(input.userId, delta, now);
     await this.ledger.addUsage({
       userId: input.userId,
       planId: input.planId,
@@ -93,8 +165,8 @@ export class QuotaService {
 
   // Release a reservation when the request failed before consuming tokens.
   async release(userId: string, estimate: number): Promise<void> {
-    const date = utcDateString(new Date());
-    await this.redis.getClient().decrby(quotaKey(userId, date), estimate);
+    const now = new Date();
+    await this.applyWindowDelta(userId, -estimate, now);
     this.logger.debug(`release: user=${userId} estimate=${estimate}`);
   }
 

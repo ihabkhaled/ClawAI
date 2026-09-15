@@ -61,10 +61,30 @@ export class CreditGrantService {
     const now = new Date();
     const periodKey = currentGrantPeriodKey(now);
     const needsRoll = wallet.periodKey !== periodKey || CreditGrantService.isUngranted(wallet);
-    if (!needsRoll) {
-      return CreditGrantService.toBalances(wallet);
+    if (needsRoll) {
+      return CreditGrantService.toBalances(await this.roll(wallet, periodKey, now));
     }
-    return CreditGrantService.toBalances(await this.roll(wallet, periodKey, now));
+    if (await this.isDowngraded(wallet)) {
+      return CreditGrantService.toBalances(await this.roll(wallet, periodKey, now));
+    }
+    return CreditGrantService.toBalances(wallet);
+  }
+
+  /**
+   * Did this wallet's plan shrink under it mid-period?
+   *
+   * A period roll was the ONLY thing that re-read the plan, so a user moved
+   * from Pro back to Free kept the paid plan's grant until the month turned —
+   * a free account able to spend $49.99 of connector credit on paid models.
+   *
+   * Deliberately one-directional. An UPGRADE is left to the period boundary:
+   * rolling on a larger grant would expire what the user has and hand them a
+   * fresh full allowance, so flipping plans twice in a month would mint credit.
+   * Shrinking can only ever take money back, never create it.
+   */
+  private async isDowngraded(wallet: UserCreditWallet): Promise<boolean> {
+    const current = await this.resolvePeriodGrant(wallet.userId);
+    return current < wallet.periodGrantMicroUsd;
   }
 
   /**

@@ -253,11 +253,10 @@ export class ChatExecutionManager implements OnModuleInit {
       this.buildCandidateChain(payload, payload.routingMode),
     );
     const userPrompt = this.extractUserPrompt(context);
-    const executionOptions = this.resolveExecutionOptions(
-      payload,
+    const executionOptions = await this.applyQuotaCeiling(
+      context.userId,
       userPrompt,
-      threadSettings,
-      crawlRetrieval,
+      this.resolveExecutionOptions(payload, userPrompt, threadSettings, crawlRetrieval),
     );
     const baseExecutionContext = this.buildExecutionContext(
       context,
@@ -1611,6 +1610,43 @@ export class ChatExecutionManager implements OnModuleInit {
 
   private isGenerationResponse(response: LlmResponse): boolean {
     return response.imageGenerationId !== undefined || response.fileGenerationId !== undefined;
+  }
+
+  /**
+   * Clamps the reply to what the user's daily allowance can still pay for.
+   *
+   * The entry gate already refuses a request that cannot afford its own prompt.
+   * This is the other half: an ADMITTED request must not overrun either. Before
+   * this, a user one token from their limit could still receive a 1,600-token
+   * essay, and the whole cost landed on the counter afterwards — the overrun
+   * was the entire size of the last answer, with no bound on it.
+   *
+   * Takes the SMALLER of the existing ceiling and the quota ceiling, so a
+   * fast-path or thread-level cap is never widened by this.
+   */
+  private async applyQuotaCeiling(
+    userId: string | undefined,
+    userPrompt: string,
+    options: ExecutionOptions,
+  ): Promise<ExecutionOptions> {
+    if (userId === undefined) {
+      return options;
+    }
+    const quotaCeiling = await this.accessControlService.resolveOutputCeiling(
+      userId,
+      estimateTokensFromText(userPrompt),
+    );
+    if (quotaCeiling === null) {
+      return options;
+    }
+    const existing = options.maxOutputTokens;
+    const ceiling = existing === undefined ? quotaCeiling : Math.min(existing, quotaCeiling);
+    if (ceiling !== existing) {
+      this.logger.debug(
+        `applyQuotaCeiling: capping output to ${String(ceiling)} for the remaining daily allowance`,
+      );
+    }
+    return { ...options, maxOutputTokens: ceiling };
   }
 
   private resolveExecutionOptions(

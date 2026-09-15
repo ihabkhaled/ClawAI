@@ -19,9 +19,15 @@ import { buildGaBootstrapScript, buildGtmBootstrapScript } from '@/utilities/ana
  * framework's sanctioned way to inline one without reaching for the dangerous
  * prop in application code.
  *
- * Every tag here is `afterInteractive`, which is also what Next's and Google's
- * own GTM integration uses. `beforeInteractive` is tempting for a measurement
- * snippet and it broke hydration: it emits an inline
+ * Every tag here is `lazyOnload`. It was `afterInteractive`, which is what
+ * Next's and Google's own GTM integration uses, and on mobile that put the
+ * container's execution in the same frames as hydration — a measured 500ms of
+ * Total Blocking Time. Nothing is removed: the container still loads, still
+ * fires every tag, and `gtm.start` is still stamped when the snippet runs; it
+ * simply stops competing with the work the user is waiting for.
+ *
+ * `beforeInteractive` is tempting for a measurement snippet and it broke
+ * hydration: it emits an inline
  * `(self.__next_s=...).push(...)` element on the server and renders NOTHING on
  * the client, so the server `<head>` carries one more child than the client's
  * and React aligns every following sibling against the wrong node. It showed up
@@ -47,7 +53,7 @@ export async function AnalyticsHead(): Promise<React.ReactElement | null> {
   return (
     <>
       {gtmContainerId === null ? null : (
-        <Script id="gtm-bootstrap" strategy="afterInteractive" nonce={nonce}>
+        <Script id="gtm-bootstrap" strategy="lazyOnload" nonce={nonce}>
           {buildGtmBootstrapScript(gtmContainerId)}
         </Script>
       )}
@@ -55,11 +61,11 @@ export async function AnalyticsHead(): Promise<React.ReactElement | null> {
         <>
           <Script
             id="ga-loader"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
             nonce={nonce}
             src={`${GA_SCRIPT_SRC}?id=${gaMeasurementId}`}
           />
-          <Script id="ga-bootstrap" strategy="afterInteractive" nonce={nonce}>
+          <Script id="ga-bootstrap" strategy="lazyOnload" nonce={nonce}>
             {buildGaBootstrapScript(gaMeasurementId)}
           </Script>
         </>

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { ApiClientError } from '@/services/shared/api-client';
+import { readComposerDraft } from '@/utilities/composer-draft.utility';
 
 const mockCreateMessage = vi.fn();
 const mockToastError = vi.fn();
@@ -43,10 +44,45 @@ describe('useSendMessage', () => {
 
     expect(stopWaiting).toHaveBeenCalledOnce();
     expect(result.current.errorMessage).toBe('t:chat.errors.planTrialExpired');
-    expect(mockToastError).toHaveBeenCalledWith({
-      title: 't:common.error',
-      description: 't:chat.errors.planTrialExpired',
+    // NO toast. Every limit refusal already renders as a card in the
+    // transcript, so a toast on top of it is the same sentence twice — and the
+    // card is the one that stays after the toast has faded.
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it('keeps a toast for an ordinary failure that has no transcript card', async () => {
+    const error = Object.assign(new Error('boom'), { status: 500, code: 'INTERNAL_ERROR' });
+    mockCreateMessage.mockRejectedValue(error);
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useSendMessage('thread-1'), { wrapper });
+
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'hello' }));
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(mockToastError).toHaveBeenCalled();
+  });
+
+  it('puts the typed text back as a draft when the send is refused', async () => {
+    // The composer clears optimistically, so without this a spent quota
+    // destroys what the user just typed.
+    const error = Object.assign(new Error('quota'), {
+      status: 429,
+      code: 'QUOTA_DAILY_EXCEEDED',
     });
+    mockCreateMessage.mockRejectedValue(error);
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useSendMessage('thread-1'), { wrapper });
+
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'do not lose me' }));
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(readComposerDraft('thread-1')).toBe('do not lose me');
   });
 
   // `POST /chat-messages` returns the authoritative row, so a successful send

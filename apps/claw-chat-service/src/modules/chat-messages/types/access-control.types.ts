@@ -4,6 +4,10 @@ import { type Permission } from '@claw/shared-types';
 export type SendMessageAccessOptions = {
   provider?: string;
   model?: string;
+  // The prompt's token cost, counted before the provider is called. Charged
+  // against the daily allowance up front so a user who cannot afford to ask is
+  // refused here rather than after the reply has already been paid for.
+  promptTokens?: number;
   // Plan-feature gate(s) the caller wants enforced alongside the model/quota
   // checks. When set, the user's resolved plan must unlock EVERY listed gate
   // (or the user must be ADMIN) — otherwise a 403 BusinessException with code

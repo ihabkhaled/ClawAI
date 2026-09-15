@@ -1,4 +1,6 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+
+import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -242,9 +244,15 @@ export class ChatMessagesService implements OnModuleInit {
       dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE
         ? 'allowResearchMode'
         : undefined;
+    // The prompt is charged against the allowance BEFORE the provider is
+    // called. Only the user's own text is counted here — the assembled context
+    // is not known yet — so this is a floor on the true prompt cost, not a
+    // guess at the reply's. It is enough to refuse someone who cannot afford
+    // to ask at all, which is the case that used to overrun.
     const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
       provider: forcedProvider,
       model: forcedModel,
+      promptTokens: estimateTokensFromText(dto.content),
       ...(requireFeature ? { requireFeature } : {}),
     });
     // Defense-in-depth — also gate the RESEARCH_USE RBAC permission when the

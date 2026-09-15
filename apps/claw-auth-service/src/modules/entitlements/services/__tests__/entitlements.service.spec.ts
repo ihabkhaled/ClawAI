@@ -96,6 +96,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       dailyLimit: 50000,
       used: 0,
       remaining: 50000,
+      windows: [],
     });
   });
 
@@ -279,6 +280,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       dailyLimit: 0,
       used: 0,
       remaining: 0,
+      windows: [],
       unlimited: true,
       adminBypass: true,
     });

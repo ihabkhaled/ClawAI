@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 30550,
+      "bytes": 30921,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 22550,
+      "bytes": 22787,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -276,6 +276,10 @@
     {
       "bytes": 4099,
       "file": "rules/45-display-currency-versus-settlement-currency.md"
+    },
+    {
+      "bytes": 2637,
+      "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
     },
     {
       "bytes": 5156,

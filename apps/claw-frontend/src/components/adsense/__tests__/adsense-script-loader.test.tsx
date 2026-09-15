@@ -4,6 +4,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AdSenseScriptLoader } from '../adsense-script-loader';
 
 let mockPathname = '/';
+let mockIsIdle = true;
+
+vi.mock('@/hooks/common/use-idle-deferred', () => ({
+  useIdleDeferred: (): boolean => mockIsIdle,
+}));
 
 vi.mock('next/navigation', () => ({
   usePathname: (): string => mockPathname,
@@ -18,17 +23,29 @@ describe('AdSenseScriptLoader', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     mockPathname = '/';
+    mockIsIdle = true;
   });
 
-  it('renders the loader script on the eligible homepage when serving is enabled', () => {
+  it('renders the loader script on the eligible homepage once the browser is idle', () => {
     vi.stubEnv('NEXT_PUBLIC_ADSENSE_CLIENT_ID', 'ca-pub-2415314275784926');
     vi.stubEnv('NEXT_PUBLIC_ADSENSE_SERVING_ENABLED', 'true');
     mockPathname = '/';
+    mockIsIdle = true;
 
     const html = renderToStaticMarkup(<AdSenseScriptLoader nonce="test-nonce" />);
 
     expect(html).toContain('adsbygoogle.js');
     expect(html).toContain('nonce="test-nonce"');
+  });
+
+  it('emits nothing until the browser is idle, so it cannot block hydration', () => {
+    // The tag is deferred, never dropped — useIdleDeferred always flips true.
+    vi.stubEnv('NEXT_PUBLIC_ADSENSE_CLIENT_ID', 'ca-pub-2415314275784926');
+    vi.stubEnv('NEXT_PUBLIC_ADSENSE_SERVING_ENABLED', 'true');
+    mockPathname = '/';
+    mockIsIdle = false;
+
+    expect(renderToStaticMarkup(<AdSenseScriptLoader nonce="test-nonce" />)).toBe('');
   });
 
   it.each([

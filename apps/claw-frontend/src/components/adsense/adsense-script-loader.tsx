@@ -2,6 +2,7 @@
 
 import { ADSENSE_LOADER_SRC } from '@/constants/adsense.constants';
 import { useAdSenseScript } from '@/hooks/adsense/use-adsense-script';
+import { useIdleDeferred } from '@/hooks/common/use-idle-deferred';
 import type { AdSenseScriptLoaderProps } from '@/types/adsense.types';
 
 // The ONLY place the AdSense loader script is emitted. `useAdSenseScript`
@@ -17,8 +18,12 @@ export function AdSenseScriptLoader({
   nonce,
 }: AdSenseScriptLoaderProps): React.ReactElement | null {
   const { shouldLoad, clientId } = useAdSenseScript();
+  // Eligibility says WHETHER the tag loads; idle says WHEN. The loader is
+  // ~350 KiB of third-party JS that used to execute while the page was still
+  // hydrating, which is where mobile Total Blocking Time went.
+  const isIdle = useIdleDeferred();
 
-  if (!shouldLoad || clientId === null) {
+  if (!shouldLoad || clientId === null || !isIdle) {
     return null;
   }
 

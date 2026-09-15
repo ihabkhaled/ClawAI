@@ -10,6 +10,24 @@ export type QuotaSnapshot = {
   dailyLimit: number;
   used: number;
   remaining: number;
+  // Day, week and month, in that order. `limit: null` = unlimited for that
+  // window, `0` = disabled; they are not interchangeable.
+  windows: QuotaWindowUsage[];
+};
+
+// One enforced token window as the entitlements payload carries it.
+export type QuotaWindowUsage = {
+  window: QuotaWindow;
+  limit: number | null;
+  used: number;
+};
+
+// Plan limits for the three enforced token windows. Only DAY is required —
+// weekly/monthly are null on plans that do not set them.
+export type QuotaWindowLimits = {
+  daily: number;
+  weekly: number | null;
+  monthly: number | null;
 };
 
 export type ReserveResult =

@@ -24,11 +24,15 @@ describe('AnalyticsHead script strategy', () => {
     expect(SOURCE).not.toContain('strategy="beforeInteractive"');
   });
 
-  it('keeps every tag on afterInteractive, matching the official GTM integration', () => {
+  it('keeps every tag on lazyOnload so measurement never competes with hydration', () => {
+    // Lowered from afterInteractive: on mobile the container executed in the
+    // same frames as hydration and cost a measured 500ms of Total Blocking
+    // Time. Nothing is removed — the container still loads and still fires
+    // every tag. Raising it back is the regression this guards.
     const strategies = SOURCE.match(/strategy="(\w+)"/gu) ?? [];
 
     expect(strategies.length).toBeGreaterThan(0);
-    expect(new Set(strategies)).toEqual(new Set(['strategy="afterInteractive"']));
+    expect(new Set(strategies)).toEqual(new Set(['strategy="lazyOnload"']));
   });
 
   it('does not reach for dangerouslySetInnerHTML to inline the snippet', () => {

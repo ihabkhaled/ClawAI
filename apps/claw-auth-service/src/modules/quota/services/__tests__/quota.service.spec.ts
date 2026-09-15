@@ -1,3 +1,4 @@
+import { QuotaWindow } from '@claw/shared-types';
 import { QuotaService } from '../quota.service';
 import { type RedisService } from '../../../../infrastructure/redis/redis.service';
 import { type TokenLedgerRepository } from '../../repositories/token-ledger.repository';
@@ -159,8 +160,38 @@ describe('QuotaService', () => {
 
   it('getSnapshot computes remaining from the Redis counter', async () => {
     redis.get.mockResolvedValue('3000');
-    const snap = await service.getSnapshot('u1', 10000);
-    expect(snap).toEqual({ dailyLimit: 10000, used: 3000, remaining: 7000 });
+    const snap = await service.getSnapshot('u1', { daily: 10000, weekly: null, monthly: null });
+    expect(snap.dailyLimit).toBe(10000);
+    expect(snap.used).toBe(3000);
+    expect(snap.remaining).toBe(7000);
+  });
+
+  it('getSnapshot reports every enforced window with its own limit', async () => {
+    redis.get.mockResolvedValue('3000');
+    const snap = await service.getSnapshot('u1', { daily: 10000, weekly: 40000, monthly: 120000 });
+    expect(snap.windows).toEqual([
+      { window: QuotaWindow.DAY, limit: 10000, used: 3000 },
+      { window: QuotaWindow.WEEK, limit: 40000, used: 3000 },
+      { window: QuotaWindow.MONTH, limit: 120000, used: 3000 },
+    ]);
+  });
+
+  it('finalize moves the week and month counters too, not only the day', async () => {
+    client.incrby.mockResolvedValue(500);
+    await service.finalize({
+      userId: 'u1',
+      planId: null,
+      reservationId: '',
+      estimate: 0,
+      actualTotalTokens: 500,
+      inputTokens: 200,
+      outputTokens: 300,
+      provider: 'openai',
+      model: 'gpt-4',
+    });
+    const keys = client.incrby.mock.calls.map((call: unknown[]) => String(call[0]));
+    expect(keys.some((k: string) => k.includes(':week:'))).toBe(true);
+    expect(keys.some((k: string) => k.includes(':month:'))).toBe(true);
   });
 
   describe('weighted multi-window reservation', () => {

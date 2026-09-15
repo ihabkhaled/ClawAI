@@ -1,4 +1,10 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+
+import { resolveQuotaHeadroom } from '../utilities/quota-headroom.utility';
+import {
+  QUOTA_WINDOW_ERROR_CODE,
+  QUOTA_WINDOW_MESSAGE,
+} from '../constants/quota-window-error.constants';
 import {
   describeEntitlementsFailure,
   EntitlementsAdapter,
@@ -17,7 +23,7 @@ import {
   type ResearchUsageFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { BillingErrorCode, PaygSurface, Permission } from '@claw/shared-types';
+import { PaygSurface, Permission, QuotaWindow } from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
@@ -194,8 +200,29 @@ export class AccessControlService {
       }
       this.metrics.recordAllowed(Date.now() - startedAt);
     }
-    this.assertQuotaRemaining(ent, userId);
+    this.assertQuotaRemaining(ent, userId, opts.promptTokens ?? 0);
     return ent;
+  }
+
+  /**
+   * The hard output ceiling this user's remaining allowance permits.
+   *
+   * Null means no ceiling — unlimited, admin, or no plan resolved. Otherwise
+   * the reply physically cannot spend more than the user has left, which is
+   * what turns the daily limit from an after-the-fact accounting note into an
+   * actual limit: the gate refuses a request that cannot afford its prompt,
+   * and this stops an admitted one from overrunning on the way out.
+   *
+   * Fails OPEN on a resolve error, exactly as the gate does. A quota lookup
+   * that cannot answer must not silence a user's conversation.
+   */
+  async resolveOutputCeiling(userId: string, promptTokens: number): Promise<number | null> {
+    try {
+      const ent = await this.resolve(userId);
+      return resolveQuotaHeadroom(ent.quota, promptTokens).maxOutputTokens;
+    } catch {
+      return null;
+    }
   }
 
   // Asserts the user's plan unlocks the given feature. ADMIN bypasses via
@@ -370,18 +397,30 @@ export class AccessControlService {
     );
   }
 
-  private assertQuotaRemaining(ent: UserEntitlements, userId: string): void {
-    if (ent.quota.unlimited || ent.quota.remaining > 0) {
+  /**
+   * Refuses when the allowance cannot cover this request.
+   *
+   * `promptTokens` is counted by the caller BEFORE the provider is called. The
+   * old check admitted anything while `remaining > 0` and reserved nothing, so
+   * a user one token from their limit could still send a request whose reply
+   * cost 1,600 — the overrun was the whole cost of the last answer. The prompt
+   * is the half that can be known exactly, so it is charged against the
+   * allowance up front, and what survives becomes the output ceiling.
+   */
+  private assertQuotaRemaining(ent: UserEntitlements, userId: string, promptTokens = 0): void {
+    const headroom = resolveQuotaHeadroom(ent.quota, promptTokens);
+    if (headroom.allowed) {
       return;
     }
-    this.logger.warn(`assertCanSendMessage: quota exceeded user=${userId}`);
+    const window = headroom.window ?? QuotaWindow.DAY;
+    this.logger.warn(`assertCanSendMessage: quota exceeded user=${userId} window=${window}`);
     // The code has to be the stable machine value the frontend maps, not a
     // message key. It read 'quota.dailyLimitExceeded' here while the frontend
     // mapped QUOTA_DAILY_EXCEEDED, so nothing matched and the user got this
     // sentence in English regardless of their locale.
     throw new BusinessException(
-      'Daily token quota exceeded',
-      BillingErrorCode.QUOTA_DAILY_EXCEEDED,
+      QUOTA_WINDOW_MESSAGE[window],
+      QUOTA_WINDOW_ERROR_CODE[window],
       HttpStatus.TOO_MANY_REQUESTS,
     );
   }

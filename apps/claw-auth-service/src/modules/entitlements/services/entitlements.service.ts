@@ -37,9 +37,13 @@ export class EntitlementsService {
 
     const dailyLimit = plan?.dailyTokenQuota ?? 0;
     const quota = isAdmin
-      ? { dailyLimit: 0, used: 0, remaining: 0, unlimited: true, adminBypass: true }
+      ? { dailyLimit: 0, used: 0, remaining: 0, windows: [], unlimited: true, adminBypass: true }
       : {
-          ...(await this.quotaService.getSnapshot(userId, dailyLimit)),
+          ...(await this.quotaService.getSnapshot(userId, {
+            daily: dailyLimit,
+            weekly: plan?.weeklyTokenQuota ?? null,
+            monthly: plan?.monthlyTokenQuota ?? null,
+          })),
           unlimited: false,
           adminBypass: false,
         };

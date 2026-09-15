@@ -42,7 +42,14 @@ function entitlement(overrides: Partial<UserEntitlements>): UserEntitlements {
     modelAccessMode: 'ALLOW_ALL',
     allowedModels: [],
     allowedProviders: [],
-    quota: { dailyLimit: 0, used: 0, remaining: 0, unlimited: false, adminBypass: false },
+    quota: {
+      dailyLimit: 0,
+      used: 0,
+      remaining: 0,
+      windows: [],
+      unlimited: false,
+      adminBypass: false,
+    },
     ...overrides,
   } as UserEntitlements;
 }
@@ -85,7 +92,14 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
       entitlement({
         isAdmin: true,
         role: UserRole.ADMIN,
-        quota: { dailyLimit: 0, used: 0, remaining: 0, unlimited: true, adminBypass: true },
+        quota: {
+          dailyLimit: 0,
+          used: 0,
+          remaining: 0,
+          windows: [],
+          unlimited: true,
+          adminBypass: true,
+        },
       }),
     );
 
@@ -105,6 +119,7 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
           dailyLimit: 50_000,
           used: 248,
           remaining: 49_752,
+          windows: [],
           unlimited: false,
           adminBypass: false,
         },
@@ -121,7 +136,14 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
     // same change that fixed admins — 0 has to keep reaching the script as 0.
     entitlementsMock.getEnforcedForUser.mockResolvedValue(
       entitlement({
-        quota: { dailyLimit: 0, used: 0, remaining: 0, unlimited: false, adminBypass: false },
+        quota: {
+          dailyLimit: 0,
+          used: 0,
+          remaining: 0,
+          windows: [],
+          unlimited: false,
+          adminBypass: false,
+        },
       }),
     );
 

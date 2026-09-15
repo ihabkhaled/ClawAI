@@ -6,6 +6,8 @@ import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateMessageRequest, UseSendMessageResult } from '@/types';
 import { insertSentMessageIntoCache, logger, showToast } from '@/utilities';
 import { resolveApiErrorMessage } from '@/utilities/api-error-message.utility';
+import { resolveChatLimitNotice } from '@/utilities/chat-limit-notice.utility';
+import { writeComposerDraft } from '@/utilities/composer-draft.utility';
 
 export function useSendMessage(
   threadId: string,
@@ -50,7 +52,7 @@ export function useSendMessage(
       });
       onMessageSent?.();
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables: CreateMessageRequest) => {
       logger.error({
         component: 'chat',
         action: 'send-message-error',
@@ -59,7 +61,18 @@ export function useSendMessage(
       });
       const message = resolveApiErrorMessage(error, t, t('chat.messageSendFailed'));
       onMessageError?.();
-      showToast.error({ title: t('common.error'), description: message });
+      // The composer cleared optimistically on send, so a refusal — a spent
+      // quota above all — used to destroy what the user had just typed. The
+      // draft is put back so the text survives to be retried tomorrow, or on a
+      // larger plan, rather than having to be written again from memory.
+      if (variables.content.trim().length > 0) {
+        writeComposerDraft(threadId, variables.content);
+      }
+      // A limit refusal already renders as a card in the transcript, so a toast
+      // on top of it is the same sentence twice.
+      if (resolveChatLimitNotice(error) === null) {
+        showToast.error({ title: t('common.error'), description: message });
+      }
     },
   });
 

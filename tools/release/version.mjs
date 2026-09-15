@@ -2,9 +2,10 @@
 // Conventional-commit version bump for the whole monorepo.
 //
 // Every push to main produces a release, so this never returns "no bump":
-// `feat` raises the minor, a `!` marker or a BREAKING CHANGE footer raises the
-// major, and anything else — chore, docs, refactor, test, ci — still raises the
-// patch. A commit that parses as nothing conventional is treated as a patch
+// `feat` raises the minor and anything else — chore, docs, refactor, test, ci —
+// raises the patch. A `!` marker or a BREAKING CHANGE footer also raises only
+// the MINOR: the major is pinned (see PINNED_MAJOR), so the line runs
+// 1.99.0 -> 1.100.0 -> 1.200.0 rather than ever reaching 2.0.0 by itself. A commit that parses as nothing conventional is treated as a patch
 // rather than ignored, because silently skipping it would publish a release
 // whose notes omit real work.
 //
@@ -79,12 +80,36 @@ export function bumpLevelFor(commits) {
   return level;
 }
 
-/** Semver arithmetic. Pre-release and build metadata are dropped by design. */
+/**
+ * The major version this project is pinned to.
+ *
+ * ClawAI does not bump to 2.x on its own. A breaking commit raises the MINOR
+ * instead, so the line runs 1.99.0 -> 1.100.0 -> 1.200.0 and onwards; the minor
+ * is an ordinary integer and is not capped at 99.
+ *
+ * Releasing 2.0.0 is a product decision, not something a `!` in a commit
+ * subject gets to make. When that decision is taken, raise this constant
+ * deliberately — that is the only thing that moves the major.
+ */
+export const PINNED_MAJOR = 1;
+
+/**
+ * Semver arithmetic. Pre-release and build metadata are dropped by design.
+ *
+ * A `major` bump is DELIBERATELY downgraded to a minor while the current
+ * version is still on PINNED_MAJOR. Without that, one `feat!:` or one BREAKING
+ * CHANGE footer would publish 2.0.0 by accident, and a major version is a
+ * promise to users that nobody meant to make.
+ */
 export function nextVersion(current, level) {
   const match = /^(\d+)\.(\d+)\.(\d+)/u.exec(String(current).trim());
   if (!match) throw new Error(`not a semver version: ${current}`);
   const [major, minor, patch] = match.slice(1, 4).map(Number);
-  if (level === 'major') return `${major + 1}.0.0`;
+  if (level === 'major') {
+    return major === PINNED_MAJOR
+      ? `${major}.${minor + 1}.0`
+      : `${major + 1}.0.0`;
+  }
   if (level === 'minor') return `${major}.${minor + 1}.0`;
   return `${major}.${minor}.${patch + 1}`;
 }

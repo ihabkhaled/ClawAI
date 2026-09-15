@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (30550 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (30921 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (30550 vs 27454 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (30921 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7331,7 +7331,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 30550,
+          "bytes": 30921,
           "file": "CLAUDE.md"
         },
         {
@@ -7383,7 +7383,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 22550,
+          "bytes": 22787,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7605,6 +7605,10 @@
         {
           "bytes": 4099,
           "file": "rules/45-display-currency-versus-settlement-currency.md"
+        },
+        {
+          "bytes": 2637,
+          "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
         },
         {
           "bytes": 5156,
@@ -9845,11 +9849,11 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 94
+        "testFiles": 95
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 136
+        "testFiles": 137
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9869,7 +9873,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 463
+        "testFiles": 464
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10631,7 +10635,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1237,
+    "totalTestFiles": 1240,
     "workspaceCount": 25
   }
 }

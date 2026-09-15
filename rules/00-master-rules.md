@@ -63,6 +63,7 @@
 | `43-account-state-disclosure-and-transactional-email.md` | A refusal names a reason only after the caller has proved the account is theirs; every email to a human is sent in that account's language, and the renderer owns every tag.  |
 | `44-live-verification-before-done.md`                    | Green unit tests are not evidence the feature works; every batch is exercised against the running stack with curl AND a browser, and the observed outputs go in the report.   |
 | `45-display-currency-versus-settlement-currency.md`      | A price shown and a price charged are different numbers under different policies; display FX fails open to USD and never reaches a gateway, an invoice, a refund or a wallet. |
+| `46-token-quota-enforcement-and-window-integrity.md`     | A quota measured after the fact is a receipt, not a limit: count the prompt first, clamp the output to what is left, enforce every window and let the tightest one win.       |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 
