@@ -73,6 +73,13 @@ export type MarketingModelFamilyCardProps = {
   provider: PublicCatalogProvider;
 };
 
+/** The full model list for one provider, shown over the roster card. */
+export type ModelFamilyDialogProps = {
+  provider: PublicCatalogProvider;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
 /**
  * The home page's roster reads the live catalog. An empty array means either
  * "nothing is connected" or "we could not read the catalog" — the section

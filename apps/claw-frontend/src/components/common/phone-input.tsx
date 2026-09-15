@@ -5,6 +5,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useDetectedCountry } from '@/hooks/common/use-detected-country';
 import { usePhoneInput } from '@/hooks/common/use-phone-input';
 import type { PhoneInputProps } from '@/types/component.types';
 import { flagEmojiFromIso2 } from '@/utilities/phone.utility';
@@ -20,6 +21,10 @@ export function PhoneInput({
   invalidLabel,
   disabled,
 }: PhoneInputProps) {
+  // Same detection the prices use, so a visitor in Egypt is offered +20 rather
+  // than +1. An explicit prop still wins, and a number already saved on the
+  // account always wins — see usePhoneInput.
+  const detectedCountry = useDetectedCountry();
   const {
     selectedCountry,
     setSelectedCountry,
@@ -31,7 +36,7 @@ export function PhoneInput({
     nationalNumber,
     setNationalNumber,
     isValid,
-  } = usePhoneInput(value, onChange, defaultCountryIso2);
+  } = usePhoneInput(value, onChange, defaultCountryIso2 ?? detectedCountry ?? undefined);
 
   return (
     <div className="flex flex-col gap-1">

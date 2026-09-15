@@ -1073,6 +1073,7 @@ export type {
   MarketingPageHeroProps,
   MarketingPlanTierCardProps,
   MarketingModelFamilyCardProps,
+  ModelFamilyDialogProps,
   ModelRosterSectionProps,
   MarketingPricingSectionProps,
   UsePricingToggleReturn,

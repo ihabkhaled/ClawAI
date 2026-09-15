@@ -4751,6 +4751,10 @@ export const hi: TranslationDictionary = {
         lastReviewed: 'अंतिम बार समीक्षित',
       },
       modelRoster: {
+        showAllModels: 'सभी {count} मॉडल दिखाएँ',
+        modelsDialogDescription:
+          'वे सभी मॉडल जो ClawAI अभी {provider} से दे सकता है, किसी भी सशुल्क प्लान पर।',
+        modelsDialogClose: 'बंद करें',
         modelCount: 'अभी {count} मॉडल उपलब्ध',
         title: 'आपको मिलने वाले मॉडल',
         intro:

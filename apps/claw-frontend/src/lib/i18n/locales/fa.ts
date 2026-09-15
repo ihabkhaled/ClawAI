@@ -4752,6 +4752,10 @@ export const fa: TranslationDictionary = {
         lastReviewed: 'آخرین بررسی',
       },
       modelRoster: {
+        showAllModels: 'نمایش همه {count} مدل',
+        modelsDialogDescription:
+          'همه مدل\u200cهایی که ClawAI هم\u200cاکنون می\u200cتواند از {provider} ارائه دهد، با هر طرح پولی.',
+        modelsDialogClose: 'بستن',
         modelCount: '{count} مدل هم‌اکنون در دسترس است',
         title: 'مدل هایی که به دست می آورید',
         intro:

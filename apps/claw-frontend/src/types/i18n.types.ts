@@ -4703,6 +4703,9 @@ export type TranslationDictionary = {
         lastReviewed: string;
       };
       modelRoster: {
+        showAllModels: string;
+        modelsDialogDescription: string;
+        modelsDialogClose: string;
         title: string;
         intro: string;
         footnote: string;

@@ -4689,6 +4689,10 @@ export const ar: TranslationDictionary = {
         lastReviewed: 'آخر مراجعة',
       },
       modelRoster: {
+        showAllModels: 'عرض كل النماذج ({count})',
+        modelsDialogDescription:
+          'كل نموذج يمكن لـ ClawAI تشغيله من {provider} الآن، مع أي باقة مدفوعة.',
+        modelsDialogClose: 'إغلاق',
         modelCount: '{count} نموذجًا متاحة الآن',
         title: 'النماذج التي تحصل عليها',
         intro:

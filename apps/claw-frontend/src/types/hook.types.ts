@@ -1115,3 +1115,10 @@ export type UseProfilePageReturn = {
   email: string;
   save: (event?: React.BaseSyntheticEvent) => Promise<void>;
 };
+
+/** State for a model-roster card's full-model-list dialog. */
+export type UseModelFamilyCardReturn = {
+  isOpen: boolean;
+  open: () => void;
+  setIsOpen: (open: boolean) => void;
+};

@@ -4585,6 +4585,10 @@ export const zh: TranslationDictionary = {
         lastReviewed: '最后评论',
       },
       modelRoster: {
+        showAllModels: '显示全部 {count} 个模型',
+        modelsDialogDescription:
+          'ClawAI 目前可从 {provider} 提供的所有模型，任何付费套餐均可使用。',
+        modelsDialogClose: '关闭',
         modelCount: '当前可用 {count} 个模型',
         title: '您获得的模型',
         intro:

@@ -4766,6 +4766,10 @@ export const ja: TranslationDictionary = {
         lastReviewed: '最終レビュー日',
       },
       modelRoster: {
+        showAllModels: '{count} 件のモデルをすべて表示',
+        modelsDialogDescription:
+          '現在 ClawAI が {provider} から提供できるすべてのモデルです。有料プランならどれでも利用できます。',
+        modelsDialogClose: '閉じる',
         modelCount: '現在 {count} 件のモデルをご利用いただけます',
         title: '入手できるモデル',
         intro:

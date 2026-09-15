@@ -4710,6 +4710,10 @@ export const th: TranslationDictionary = {
         lastReviewed: 'ตรวจสอบครั้งล่าสุด',
       },
       modelRoster: {
+        showAllModels: 'แสดงโมเดลทั้งหมด {count} รายการ',
+        modelsDialogDescription:
+          'ทุกโมเดลที่ ClawAI ให้บริการจาก {provider} ได้ในขณะนี้ ใช้ได้กับแพ็กเกจแบบชำระเงินทุกแบบ',
+        modelsDialogClose: 'ปิด',
         modelCount: 'มี {count} โมเดลพร้อมใช้งานขณะนี้',
         title: 'แบบที่คุณได้รับ',
         intro:

@@ -4808,6 +4808,10 @@ export const es: TranslationDictionary = {
         lastReviewed: 'Última revisión',
       },
       modelRoster: {
+        showAllModels: 'Ver los {count} modelos',
+        modelsDialogDescription:
+          'Todos los modelos que ClawAI puede ofrecer de {provider} ahora mismo, con cualquier plan de pago.',
+        modelsDialogClose: 'Cerrar',
         modelCount: '{count} modelos disponibles ahora',
         title: 'Los modelos que obtiene',
         intro:

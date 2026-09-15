@@ -4790,6 +4790,10 @@ export const ru: TranslationDictionary = {
         lastReviewed: 'Последняя проверка',
       },
       modelRoster: {
+        showAllModels: 'Показать все модели ({count})',
+        modelsDialogDescription:
+          'Все модели {provider}, которые ClawAI может использовать прямо сейчас, на любом платном тарифе.',
+        modelsDialogClose: 'Закрыть',
         modelCount: 'Сейчас доступно моделей: {count}',
         title: 'Модели, которые вы получаете',
         intro:
