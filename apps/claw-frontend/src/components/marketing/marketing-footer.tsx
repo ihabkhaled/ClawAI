@@ -5,36 +5,26 @@ import Link from 'next/link';
 
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
-import { MARKETING_FOOTER_EXPLORE_PATHS } from '@/constants/marketing-footer.constants';
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import { useTranslation } from '@/lib/i18n';
-import {
-  buildComparisonRailItems,
-  getComparisonContent,
-  getConfiguredSocialLinks,
-  getPublishedPagesForLocale,
-} from '@/utilities';
+import type { MarketingFooterProps } from '@/types';
+import { getConfiguredSocialLinks } from '@/utilities/social-links.utility';
 
-// Server-renderable content is computed at module scope (registry + social
-// config are both static per build), so only the two truly interactive
-// leaves (locale switcher) need 'use client' — this component still needs
-// it too because useTranslation is a context hook, but no data fetching
-// happens here.
-export function MarketingFooter(): React.ReactElement {
-  const { t, locale } = useTranslation();
+// Registry-derived links arrive as PROPS, resolved by the server layout.
+//
+// This component needs 'use client' for useTranslation, and calling
+// getPublishedPagesForLocale/getComparisonContent from here dragged the whole
+// content registry into the client bundle — and with it every marketing
+// cluster's long-form prose in all 13 languages. The markup below is
+// unchanged; only the origin of the data moved.
+export function MarketingFooter({
+  explorePages,
+  comparisons,
+  comparisonsHeading,
+}: MarketingFooterProps): React.ReactElement {
+  const { t } = useTranslation();
   const year = new Date().getFullYear();
   const socialLinks = getConfiguredSocialLinks();
-  // Every published page besides the homepage itself — Phase A has none,
-  // Phase B populates this as pages flip from PLANNED to PUBLISHED.
-  const comparisonContent = getComparisonContent(locale);
-  // Comparison pages get their own column rather than joining Explore. Every
-  // one of them then carries a site-wide inbound link — the thing that decides
-  // whether a new page is crawled in days or in months — without turning one
-  // footer column into a nineteen-item list.
-  const comparisons = buildComparisonRailItems(comparisonContent, locale);
-  const explorePages = getPublishedPagesForLocale(locale).filter((page) =>
-    MARKETING_FOOTER_EXPLORE_PATHS.has(page.canonicalPath),
-  );
 
   return (
     <footer className="border-border bg-surface-shell border-t">
@@ -86,9 +76,7 @@ export function MarketingFooter(): React.ReactElement {
           </div>
 
           <div>
-            <h2 className="text-foreground text-sm font-semibold">
-              {comparisonContent.hub.eyebrow}
-            </h2>
+            <h2 className="text-foreground text-sm font-semibold">{comparisonsHeading}</h2>
             <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
               <li>
                 <Link href={COMPARISON_HUB_PATH} className="hover:text-foreground">

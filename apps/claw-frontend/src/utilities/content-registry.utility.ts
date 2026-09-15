@@ -134,6 +134,18 @@ export function isAdEligiblePath(pathname: string): boolean {
   return getAdEligiblePages().some((entry) => entry.canonicalPath === pathname);
 }
 
+/**
+ * The canonical paths the client gate is allowed to know about.
+ *
+ * Server-only by use: this module reaches the whole content registry, which
+ * transitively imports every marketing cluster's prose in 13 languages. The
+ * browser gets this derived list of strings instead, so the registry stays the
+ * single authority without shipping to the client.
+ */
+export function getAdEligiblePaths(): string[] {
+  return getAdEligiblePages().map((entry) => entry.canonicalPath);
+}
+
 export function getIndexablePagesForLocale(locale: Locale): LocalizedContentRegistryEntry[] {
   return PUBLIC_CONTENT_DEFINITIONS.flatMap((definition) => {
     const metadata = definition.locales[locale];

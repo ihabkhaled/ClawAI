@@ -13,6 +13,11 @@ export type AdSenseConfig = {
 export type AdSenseScriptLoaderProps = {
   // CSP nonce forwarded from the request; `undefined` outside a nonced response.
   nonce: string | undefined;
+  // Canonical paths of every ad-eligible page, derived from the content
+  // registry on the SERVER. Reading the registry in the browser pulled all of
+  // the marketing prose into the client bundle; the registry is still the only
+  // authority, and anything missing from this list is denied.
+  eligiblePaths: readonly string[];
 };
 
 export type AdUnitProps = {
@@ -40,6 +45,9 @@ export type AdUnitProps = {
 export type MarketingAdUnitProps = {
   slot: string | null;
   pathname: string;
+  // Server-resolved registry verdict. Required, because an ad unit with no
+  // decision behind it must not render.
+  serverEligibility: boolean;
   className?: string;
 };
 

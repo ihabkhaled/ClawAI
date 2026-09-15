@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (30921 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (31292 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (30921 vs 27454 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (31292 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7331,7 +7331,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 30921,
+          "bytes": 31292,
           "file": "CLAUDE.md"
         },
         {
@@ -7383,7 +7383,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 22787,
+          "bytes": 23024,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7609,6 +7609,10 @@
         {
           "bytes": 2637,
           "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
+        },
+        {
+          "bytes": 3588,
+          "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
         },
         {
           "bytes": 5156,
@@ -9873,7 +9877,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 464
+        "testFiles": 466
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10635,7 +10639,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1240,
+    "totalTestFiles": 1242,
     "workspaceCount": 25
   }
 }

@@ -8,6 +8,7 @@ import type { MarketingAdUnitProps } from '@/types/adsense.types';
 export function MarketingAdUnit({
   slot,
   pathname,
+  serverEligibility,
   className,
 }: MarketingAdUnitProps): React.ReactElement | null {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function MarketingAdUnit({
       slot={slot}
       reservedHeight={MARKETING_AD_RESERVED_HEIGHT}
       pathname={pathname}
+      serverEligibility={serverEligibility}
       label={t('chatShare.public.advertisement')}
       className={className}
     />

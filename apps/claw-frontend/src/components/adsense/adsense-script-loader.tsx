@@ -16,8 +16,9 @@ import type { AdSenseScriptLoaderProps } from '@/types/adsense.types';
 // there by React, so this does not need to live in the document head itself.
 export function AdSenseScriptLoader({
   nonce,
+  eligiblePaths,
 }: AdSenseScriptLoaderProps): React.ReactElement | null {
-  const { shouldLoad, clientId } = useAdSenseScript();
+  const { shouldLoad, clientId } = useAdSenseScript(eligiblePaths);
   // Eligibility says WHETHER the tag loads; idle says WHEN. The loader is
   // ~350 KiB of third-party JS that used to execute while the page was still
   // hydrating, which is where mobile Total Blocking Time went.

@@ -1,6 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { getAdEligiblePaths } from '@/utilities/content-registry.utility';
+
 import { useAdSenseScript } from '../use-adsense-script';
 
 let mockPathname = '/';
@@ -20,7 +22,7 @@ describe('useAdSenseScript', () => {
     vi.stubEnv('NEXT_PUBLIC_ADSENSE_SERVING_ENABLED', 'true');
     mockPathname = '/';
 
-    const { result } = renderHook(() => useAdSenseScript());
+    const { result } = renderHook(() => useAdSenseScript(getAdEligiblePaths()));
 
     expect(result.current.shouldLoad).toBe(true);
     expect(result.current.clientId).toBe('ca-pub-2415314275784926');
@@ -31,7 +33,7 @@ describe('useAdSenseScript', () => {
     vi.stubEnv('NEXT_PUBLIC_ADSENSE_SERVING_ENABLED', 'true');
     mockPathname = '/chat';
 
-    const { result } = renderHook(() => useAdSenseScript());
+    const { result } = renderHook(() => useAdSenseScript(getAdEligiblePaths()));
 
     expect(result.current.shouldLoad).toBe(false);
   });
@@ -41,7 +43,7 @@ describe('useAdSenseScript', () => {
     vi.stubEnv('NEXT_PUBLIC_ADSENSE_REVIEW_MODE', 'true');
     mockPathname = '/en/share/chat/AbCdEfGhIjKlMnOpQrStUv';
 
-    const { result } = renderHook(() => useAdSenseScript());
+    const { result } = renderHook(() => useAdSenseScript(getAdEligiblePaths()));
 
     expect(result.current.shouldLoad).toBe(false);
   });

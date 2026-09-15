@@ -21,7 +21,7 @@ import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PublicLaunchPageProps } from '@/types/public-launch-content.types';
-import { getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
+import { isAdEligiblePath, getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale, localisePath } from '@/utilities/locale.utility';
 import { selectAvailableProviderNames } from '@/utilities/public-models.utility';
 import { buildPublicPageJsonLd, serializeJsonLd } from '@/utilities/structured-data.utility';
@@ -173,7 +173,11 @@ export async function PublicLaunchPage({
             <p>{page.evidence}</p>
           </EvidenceNote>
 
-          <MarketingAdUnit slot={slots.content} pathname={registryEntry?.canonicalPath ?? ''} />
+          <MarketingAdUnit
+            slot={slots.content}
+            pathname={registryEntry?.canonicalPath ?? ''}
+            serverEligibility={isAdEligiblePath(registryEntry?.canonicalPath ?? '')}
+          />
 
           <section
             aria-label={labels.startFree}

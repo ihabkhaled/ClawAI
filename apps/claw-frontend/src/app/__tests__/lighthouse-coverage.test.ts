@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { getIndexablePages } from '@/utilities';
+import { getIndexablePages } from '@/utilities/content-registry.utility';
 import { parseLocaleFromPathname, stripLocaleFromPathname } from '@/utilities/locale.utility';
 
 // Lighthouse gates accessibility, best-practices and SEO as hard errors, but

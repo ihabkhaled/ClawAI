@@ -1067,6 +1067,7 @@ export type {
   UseMarketingMobileMenuReturn,
   MarketingMobileMenuProps,
   MarketingFooterLinkGroup,
+  MarketingFooterProps,
   MarketingSocialLink,
   HomeHeroProps,
   MarketingPageHeroProps,

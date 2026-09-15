@@ -9,6 +9,15 @@ const devOrigins = ['localhost', '127.0.0.1', clawHost];
 if (!isIpv4) devOrigins.push(`*.${clawHost}`);
 
 const nextConfig = {
+  // Our own barrels (`@/enums`, `@/constants`, `@/utilities`, `@/types`) are
+  // imported by nearly every component for one or two names. Without this,
+  // importing `ROUTES` evaluates the whole barrel, which is how ~2.7 MB of
+  // marketing prose reached the client chunk in the first place. The heavy
+  // re-exports are gone now; this keeps the remaining barrels from re-growing
+  // the same way.
+  experimental: {
+    optimizePackageImports: ['@/enums', '@/constants', '@/utilities', '@/types'],
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',

@@ -4,8 +4,12 @@ import { AdSenseHead } from '@/components/adsense/adsense-head';
 import { SkipToContent } from '@/components/layout/skip-to-content';
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
 import { MarketingHeader } from '@/components/marketing/marketing-header';
+import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { DisplayCurrencyProvider } from '@/lib/display-currency/display-currency-context';
 import { fetchDisplayCurrencyContext } from '@/lib/display-currency/fetch-display-currency-context';
+import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
+import { isSupportedLocale } from '@/utilities/locale.utility';
+import { buildMarketingFooterData } from '@/utilities/marketing-footer-data.utility';
 
 export default async function MarketingLayout({
   children,
@@ -15,7 +19,16 @@ export default async function MarketingLayout({
   // Resolved on the SERVER so the first paint already carries the right
   // currency. Doing it after hydration is what produces the "$10 -> EGP 515"
   // flash, and a null result simply renders canonical USD.
-  const displayCurrency = await fetchDisplayCurrencyContext(await headers());
+  const requestHeaders = await headers();
+  const displayCurrency = await fetchDisplayCurrencyContext(requestHeaders);
+
+  // The footer's links are resolved HERE, on the server, and passed down. They
+  // come from the content registry, which transitively imports every marketing
+  // cluster's prose in 13 languages — reading it from the 'use client' footer
+  // put all of that in the shared client chunk.
+  const requestedLocale = requestHeaders.get(LOCALE_REQUEST_HEADER);
+  const locale = isSupportedLocale(requestedLocale) ? requestedLocale : DEFAULT_LOCALE;
+  const footerData = buildMarketingFooterData(locale);
 
   return (
     <DisplayCurrencyProvider initialContext={displayCurrency}>
@@ -35,7 +48,7 @@ export default async function MarketingLayout({
         <main id="main-content" tabIndex={-1} className="flex-1 focus-visible:outline-none">
           {children}
         </main>
-        <MarketingFooter />
+        <MarketingFooter {...footerData} />
       </div>
     </DisplayCurrencyProvider>
   );

@@ -270,7 +270,18 @@ export {
   ORCHESTRATION_STAGE_LABEL_KEYS,
   ORCHESTRATION_STAGE_MOBILE_COLLAPSE_PX,
 } from './orchestration-stage.constants';
-export { CONTENT_REGISTRY, PUBLIC_CONTENT_DEFINITIONS } from './content-registry.constants';
+// DELIBERATELY NOT re-exported: './content-registry.constants'.
+//
+// The registry imports every marketing cluster's SEO constants, and each of
+// those derives its titles from that cluster's full body copy — so this one
+// line pulled ~2.7 MB of long-form prose, in all 13 languages, into this
+// barrel. Every client component that imports so much as `ROUTES` from
+// '@/constants' then carried it: the marketing homepage shipped a 1,364 KiB
+// chunk whose evaluation was 91% of mobile LCP.
+//
+// Nothing imported these through here — `content-registry.utility.ts` uses the
+// deep path. Server code that needs the registry should do the same.
+// Guarded by __tests__/constants-barrel-weight.test.ts.
 export { PRIVATE_ROUTE_PREFIXES } from './private-route-prefixes.constants';
 export { MARKETING_NAV_LINKS, MARKETING_GITHUB_URL } from './marketing-nav.constants';
 export { APP_VERSION } from './app-version.constants';

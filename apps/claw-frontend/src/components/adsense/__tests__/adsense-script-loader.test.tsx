@@ -1,7 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { getAdEligiblePaths } from '@/utilities/content-registry.utility';
+
 import { AdSenseScriptLoader } from '../adsense-script-loader';
+
+// The real registry-derived list the server passes in production.
+const ELIGIBLE_PATHS = getAdEligiblePaths();
 
 let mockPathname = '/';
 let mockIsIdle = true;
@@ -32,7 +37,9 @@ describe('AdSenseScriptLoader', () => {
     mockPathname = '/';
     mockIsIdle = true;
 
-    const html = renderToStaticMarkup(<AdSenseScriptLoader nonce="test-nonce" />);
+    const html = renderToStaticMarkup(
+      <AdSenseScriptLoader nonce="test-nonce" eligiblePaths={ELIGIBLE_PATHS} />,
+    );
 
     expect(html).toContain('adsbygoogle.js');
     expect(html).toContain('nonce="test-nonce"');
@@ -45,7 +52,11 @@ describe('AdSenseScriptLoader', () => {
     mockPathname = '/';
     mockIsIdle = false;
 
-    expect(renderToStaticMarkup(<AdSenseScriptLoader nonce="test-nonce" />)).toBe('');
+    expect(
+      renderToStaticMarkup(
+        <AdSenseScriptLoader nonce="test-nonce" eligiblePaths={ELIGIBLE_PATHS} />,
+      ),
+    ).toBe('');
   });
 
   it.each([
@@ -64,7 +75,9 @@ describe('AdSenseScriptLoader', () => {
     vi.stubEnv('NEXT_PUBLIC_ADSENSE_REVIEW_MODE', 'true');
     mockPathname = path;
 
-    const html = renderToStaticMarkup(<AdSenseScriptLoader nonce="test-nonce" />);
+    const html = renderToStaticMarkup(
+      <AdSenseScriptLoader nonce="test-nonce" eligiblePaths={ELIGIBLE_PATHS} />,
+    );
 
     expect(html).not.toContain('adsbygoogle.js');
   });
@@ -72,7 +85,9 @@ describe('AdSenseScriptLoader', () => {
   it('renders nothing when no client id is configured, regardless of path', () => {
     mockPathname = '/';
 
-    const html = renderToStaticMarkup(<AdSenseScriptLoader nonce="test-nonce" />);
+    const html = renderToStaticMarkup(
+      <AdSenseScriptLoader nonce="test-nonce" eligiblePaths={ELIGIBLE_PATHS} />,
+    );
 
     expect(html).toBe('');
   });

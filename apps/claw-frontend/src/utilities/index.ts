@@ -187,31 +187,20 @@ export {
 export { daysUntilExpiry } from './file-retention.utility';
 export { parseKeyCombo, matchesCombo, isMac, getModKeyLabel } from './keyboard-shortcut.utility';
 export type { ParsedCombo } from './keyboard-shortcut.utility';
-export {
-  getPublishedPages,
-  getIndexablePages,
-  getIndexablePagesForLocale,
-  getAdEligiblePages,
-  getPageBySlug,
-  getPageBySlugAndLocale,
-  getPublishedPagesForLocale,
-  getLocalizedCanonicalPath,
-  getLanguageAlternates,
-  isKnownPublicPath,
-  isKnownPublicPathForLocale,
-  isAdEligiblePath,
-} from './content-registry.utility';
-export {
-  buildComparisonHubCards,
-  buildComparisonRailItems,
-  buildComparisonRows,
-  formatComparisonLabel,
-  getComparisonContent,
-  getComparisonPath,
-  getComparisonSlug,
-  isComparisonRival,
-} from './public-comparison.utility';
-export { isPublicPath } from './route-visibility.utility';
+// DELIBERATELY NOT re-exported: './content-registry.utility' and
+// './public-comparison.utility'.
+//
+// Both reach the marketing content constants, which carry ~2.7 MB of
+// long-form prose across 13 languages. This barrel is imported by client
+// components for small helpers like `logger`, so re-exporting them put all of
+// that in the shared client chunk.
+//
+// Import those two through their deep paths, from SERVER code only.
+// Guarded by __tests__/utilities-barrel-weight.test.ts.
+// Also not re-exported: './route-visibility.utility'. It calls
+// isKnownPublicPathForLocale, so re-exporting it bridged this barrel back to
+// the content registry and undid the exclusion above. Its only consumer is the
+// edge middleware (proxy.ts), which imports it directly.
 export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveAdminUserCapability } from './admin-user-capability.utility';
 export { resolveFloatingClearance } from './floating-obstacle-clearance.utility';

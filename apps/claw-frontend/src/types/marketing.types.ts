@@ -96,3 +96,20 @@ export type UsePricingToggleReturn = {
   interval: BillingInterval;
   selectInterval: (interval: BillingInterval) => void;
 };
+
+/**
+ * Everything the marketing footer renders that comes from the content
+ * registry, resolved on the SERVER and handed down.
+ *
+ * The footer used to call `getPublishedPagesForLocale` and
+ * `getComparisonContent` itself. It is a 'use client' component (it needs
+ * `useTranslation`), so those calls put the whole content registry — and
+ * through it every marketing cluster's long-form prose in 13 languages — into
+ * the shared client chunk. The rendered markup is unchanged; only where the
+ * data is computed moved.
+ */
+export type MarketingFooterProps = {
+  explorePages: { slug: string; canonicalPath: string; title: string }[];
+  comparisons: { rival: string; path: string; summary: string }[];
+  comparisonsHeading: string;
+};

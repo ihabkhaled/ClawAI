@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
-import { getPublishedPages } from '@/utilities';
+import { Locale } from '@/enums/locale.enum';
+import { getPublishedPages } from '@/utilities/content-registry.utility';
+import { buildMarketingFooterData } from '@/utilities/marketing-footer-data.utility';
 
 // Mock factories are hoisted above imports, so they must not reference
 // imported bindings (e.g. the Locale enum) — use the equivalent literal
@@ -32,7 +34,7 @@ vi.mock('next/image', () => ({
 
 describe('MarketingFooter', () => {
   it('renders GitHub and documentation links pointing at the real repository', () => {
-    render(<MarketingFooter />);
+    render(<MarketingFooter {...buildMarketingFooterData(Locale.EN)} />);
     expect(screen.getByText('marketing.footer.github')).toHaveAttribute(
       'href',
       'https://github.com/ihabkhaled/ClawAI',
@@ -44,7 +46,7 @@ describe('MarketingFooter', () => {
   });
 
   it('only links to PUBLISHED registry pages, never a PLANNED slug', () => {
-    render(<MarketingFooter />);
+    render(<MarketingFooter {...buildMarketingFooterData(Locale.EN)} />);
     const publishedPaths = new Set(getPublishedPages().map((page) => page.canonicalPath));
     // Auth/app entry points and same-page anchors (/#pricing) are not registry
     // content, so they are exempt. The guarantee under test is narrower and
@@ -62,12 +64,12 @@ describe('MarketingFooter', () => {
   });
 
   it('hides social links when none are configured', () => {
-    render(<MarketingFooter />);
+    render(<MarketingFooter {...buildMarketingFooterData(Locale.EN)} />);
     expect(screen.queryByText('marketing.footer.socialX')).not.toBeInTheDocument();
   });
 
   it('renders each public destination once for the active locale', () => {
-    render(<MarketingFooter />);
+    render(<MarketingFooter {...buildMarketingFooterData(Locale.EN)} />);
     const internalHrefs = screen
       .getAllByRole('link')
       .map((link) => link.getAttribute('href'))
@@ -78,7 +80,7 @@ describe('MarketingFooter', () => {
   });
 
   it('links cluster hubs without flattening every child into Explore', () => {
-    render(<MarketingFooter />);
+    render(<MarketingFooter {...buildMarketingFooterData(Locale.EN)} />);
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
 
     expect(hrefs).toContain('/learn');

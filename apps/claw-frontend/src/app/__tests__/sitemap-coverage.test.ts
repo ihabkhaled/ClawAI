@@ -7,7 +7,7 @@ import {
   DATA_DRIVEN_MARKETING_ROUTES,
   SEO_CLUSTER_ROUTE_EXPANSIONS,
 } from '@/constants/seo-cluster-routes.constants';
-import { getIndexablePages, getPublishedPages } from '@/utilities';
+import { getIndexablePages, getPublishedPages } from '@/utilities/content-registry.utility';
 
 // Guards the property "the sitemap contains every public page in the app".
 //

@@ -21,7 +21,7 @@ import { getSiteUrl } from '@/lib/site/site-config';
 // same failure mode fixed in not-found.tsx and the root layout) a risk of
 // dragging a client-only dependency into the server bundle and breaking
 // the production build with "createContext is not a function".
-import { getPageBySlug } from '@/utilities/content-registry.utility';
+import { getPageBySlug, isAdEligiblePath } from '@/utilities/content-registry.utility';
 import {
   buildOrganizationJsonLd,
   buildSoftwareApplicationJsonLd,
@@ -58,7 +58,14 @@ export default async function HomePage(): Promise<React.ReactElement> {
 
       <HeroSection lastReviewed={lastReviewed} />
       <ModelRosterSection providers={modelCatalog?.providers ?? []} />
-      <MarketingAdUnit slot={slots.home} pathname="/" className="my-8 px-4 sm:px-6" />
+      <MarketingAdUnit
+        slot={slots.home}
+        pathname="/"
+        // Registry verdict resolved here, on the server. The unit is a client
+        // component and must not read the registry itself.
+        serverEligibility={isAdEligiblePath('/')}
+        className="my-8 px-4 sm:px-6"
+      />
       <PricingSection initialPlans={plans} />
       <HowItWorksSection />
       <FeaturesSection />

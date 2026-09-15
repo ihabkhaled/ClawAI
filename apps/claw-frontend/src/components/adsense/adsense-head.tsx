@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 
 import { AdSenseScriptLoader } from '@/components/adsense/adsense-script-loader';
 import { getAdSenseConfig } from '@/lib/adsense/adsense-config';
+import { getAdEligiblePaths } from '@/utilities/content-registry.utility';
 
 // Mounted once, in the (marketing) layout only — see that layout's comment
 // for why. Two concerns live here and they are gated differently:
@@ -28,7 +29,7 @@ export async function AdSenseHead(): Promise<React.ReactElement | null> {
   return (
     <>
       <meta name="google-adsense-account" content={config.clientId} />
-      <AdSenseScriptLoader nonce={nonce} />
+      <AdSenseScriptLoader nonce={nonce} eligiblePaths={getAdEligiblePaths()} />
     </>
   );
 }

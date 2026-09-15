@@ -1,19 +1,24 @@
 import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
 import { SHARE_CHAT_PATH_PREFIX } from '@/constants/chat-share.constants';
-import { isAdEligiblePath } from '@/utilities/content-registry.utility';
 
 function isChatSharePath(pathname: string): boolean {
   return pathname.includes(SHARE_CHAT_PATH_PREFIX);
 }
 
-// Whether a MANUAL ad unit may render on a given path. This is the single
-// authoritative gate: it delegates to the content registry, which only
-// returns true for a PUBLISHED + reviewed + explicitly ad-ELIGIBLE editorial
-// page. Every portal route, every auth route, every legal/contact/form page,
-// and every unknown/unregistered path resolves to false by construction —
-// there is no allowlist to forget to update, and the default is deny.
-export function isAdUnitEligible(pathname: string): boolean {
-  return isAdEligiblePath(pathname);
+// Whether a path is one of the AdSense-eligible pages.
+//
+// The content registry is STILL the only authority — it is simply consulted on
+// the SERVER now, and the derived canonical paths are handed to the client.
+// Importing the registry here instead put ~2.7 MB of marketing prose, in 13
+// languages, into the client bundle, because every cluster's SEO constants
+// derive their titles from that cluster's full body copy.
+//
+// The property that matters is unchanged: `eligiblePaths` contains only
+// PUBLISHED + REVIEWED + explicitly ad-ELIGIBLE entries, so every portal route,
+// auth route, legal page and unknown path is absent and therefore denied. The
+// default is still deny, and there is still no hand-maintained allowlist.
+export function isAdUnitEligible(pathname: string, eligiblePaths: readonly string[]): boolean {
+  return eligiblePaths.includes(pathname);
 }
 
 /**
@@ -40,10 +45,10 @@ export function resolveAdUnitEligibility(
   if (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED && isChatSharePath(pathname)) {
     return false;
   }
-  if (serverEligibility !== undefined) {
-    return serverEligibility;
-  }
-  return isAdUnitEligible(pathname);
+  // Fails closed. Every caller is rendered by a server component that resolves
+  // the registry verdict and passes it down, so `undefined` means the decision
+  // was never made — which must never be read as a yes.
+  return serverEligibility ?? false;
 }
 
 // Whether the AdSense verification/serving SCRIPT may be injected at all.
@@ -59,11 +64,12 @@ export function shouldLoadAdSenseScript(params: {
   reviewMode: boolean;
   servingEnabled: boolean;
   pathname: string;
+  eligiblePaths: readonly string[];
 }): boolean {
   if (!params.isConfigured) {
     return false;
   }
-  if (!isAdUnitEligible(params.pathname)) {
+  if (!isAdUnitEligible(params.pathname, params.eligiblePaths)) {
     return false;
   }
   if (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED && isChatSharePath(params.pathname)) {
