@@ -1,5 +1,7 @@
 import type { PaygWalletSnapshot } from '@claw/shared-types';
 
+import type { QuotaWindowKind } from '@/enums/quota-window-kind.enum';
+
 import type { PlanLifecycleStatus } from '../enums/plan-lifecycle-status.enum';
 import type { PlanModelAccessMode } from '../enums/plan-model-access-mode.enum';
 import type { UserRole } from '../enums/user-role.enum';
@@ -212,10 +214,21 @@ export type EntitlementPlanLimits = {
   memoryItems: number | null;
 };
 
+// One enforced token window. `limit: null` is unlimited, `0` is disabled —
+// they are not interchangeable.
+export type EntitlementQuotaWindow = {
+  window: QuotaWindowKind;
+  limit: number | null;
+  used: number;
+};
+
 export type EntitlementQuota = {
   dailyLimit: number;
   used: number;
   remaining: number;
+  // Day, week and month. Optional because an older auth-service build sends
+  // none — that must read as day-only, never as "no limits".
+  windows?: EntitlementQuotaWindow[];
   unlimited: boolean;
   adminBypass: boolean;
 };

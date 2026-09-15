@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { type MessageFeedback, RoutingMode } from '@/enums';
 import { ResearchMode } from '@/enums/research-mode.enum';
+import { useEntitlements } from '@/hooks/plans/use-entitlements';
 import type {
   ModelSelection,
   ResearchOptions,
@@ -10,7 +11,10 @@ import type {
   UseVirtualizedMessagesControllerParams,
 } from '@/types';
 import { logger } from '@/utilities';
-import { resolveChatLimitNotice } from '@/utilities/chat-limit-notice.utility';
+import {
+  resolveChatLimitNotice,
+  resolveExhaustedQuotaNotice,
+} from '@/utilities/chat-limit-notice.utility';
 
 import { useCancelStream } from './use-cancel-stream';
 import { useDeleteThread } from './use-delete-thread';
@@ -41,7 +45,13 @@ export const useThreadDataController = ({
   // A limit refusal becomes a line in the transcript instead of a toast that
   // fades; everything else stays a toast, because a provider outage is not a
   // standing fact about this conversation.
-  const limitNotice = resolveChatLimitNotice(sendErrorObject);
+  // On ARRIVAL, not only after a refused send. Somebody whose allowance ran
+  // out an hour ago used to open the thread to an ordinary composer, write a
+  // paragraph, and discover the wall only on submit. A live refusal still
+  // wins, because it is about the message they just tried to send.
+  const { entitlements } = useEntitlements();
+  const limitNotice =
+    resolveChatLimitNotice(sendErrorObject) ?? resolveExhaustedQuotaNotice(entitlements?.quota);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
   const { regenerate } = useRegenerateMessage(threadId, detail.startWaitingForResponse);

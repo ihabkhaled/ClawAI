@@ -12,6 +12,9 @@ const resendVerification = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParams.value,
+  // LocaleProvider wraps this panel and reads the path to keep <html dir> in
+  // step with client transitions, so the mock has to answer usePathname too.
+  usePathname: () => '/en/check-email',
 }));
 
 vi.mock('@/repositories/auth/auth.repository', () => ({

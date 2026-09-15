@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { ApiErrorCode } from '@/enums';
+import { ApiErrorCode, QuotaWindowKind } from '@/enums';
 import { ChatLimitKind } from '@/enums/chat-limit-kind.enum';
-import { resolveChatLimitNotice } from '@/utilities/chat-limit-notice.utility';
+import type { EntitlementQuota } from '@/types';
+import {
+  resolveChatLimitNotice,
+  resolveExhaustedQuotaNotice,
+} from '@/utilities/chat-limit-notice.utility';
 
 describe('resolveChatLimitNotice', () => {
   it('names the window that was hit, not just "a limit"', () => {
@@ -52,5 +56,76 @@ describe('resolveChatLimitNotice', () => {
     expect(resolveChatLimitNotice(undefined)).toBeNull();
     expect(resolveChatLimitNotice({})).toBeNull();
     expect(resolveChatLimitNotice({ code: undefined })).toBeNull();
+  });
+});
+
+describe('resolveExhaustedQuotaNotice', () => {
+  const quota = (
+    windows: { window: QuotaWindowKind; limit: number | null; used: number }[],
+  ): EntitlementQuota => ({
+    dailyLimit: 20_000,
+    used: 0,
+    remaining: 20_000,
+    windows,
+    unlimited: false,
+    adminBypass: false,
+  });
+
+  it('shows the notice on arrival, before the user types anything', () => {
+    const notice = resolveExhaustedQuotaNotice(
+      quota([{ window: QuotaWindowKind.Day, limit: 20_000, used: 20_000 }]),
+    );
+    expect(notice?.kind).toBe(ChatLimitKind.DailyTokens);
+  });
+
+  it('names the MONTH when the day still has room', () => {
+    // Saying "daily" here sends the user back tomorrow to fail again.
+    const notice = resolveExhaustedQuotaNotice(
+      quota([
+        { window: QuotaWindowKind.Day, limit: 20_000, used: 0 },
+        { window: QuotaWindowKind.Month, limit: 300_000, used: 300_000 },
+      ]),
+    );
+    expect(notice?.kind).toBe(ChatLimitKind.MonthlyTokens);
+  });
+
+  it('stays silent while any allowance is left', () => {
+    expect(
+      resolveExhaustedQuotaNotice(
+        quota([{ window: QuotaWindowKind.Day, limit: 20_000, used: 19_999 }]),
+      ),
+    ).toBeNull();
+  });
+
+  it('treats a null limit as unlimited, not as zero', () => {
+    expect(
+      resolveExhaustedQuotaNotice(
+        quota([{ window: QuotaWindowKind.Week, limit: null, used: 900_000 }]),
+      ),
+    ).toBeNull();
+  });
+
+  it('never nags an admin or an unlimited plan', () => {
+    expect(
+      resolveExhaustedQuotaNotice({
+        dailyLimit: 0,
+        used: 0,
+        remaining: 0,
+        unlimited: true,
+        adminBypass: true,
+      }),
+    ).toBeNull();
+  });
+
+  it('falls back to the day figures when the backend sends no windows', () => {
+    expect(
+      resolveExhaustedQuotaNotice({
+        dailyLimit: 20_000,
+        used: 20_000,
+        remaining: 0,
+        unlimited: false,
+        adminBypass: false,
+      })?.kind,
+    ).toBe(ChatLimitKind.DailyTokens);
   });
 });

@@ -1,8 +1,8 @@
-import { ApiErrorCode } from '@/enums';
+import { ApiErrorCode, QuotaWindowKind } from '@/enums';
 import { ChatLimitAction } from '@/enums/chat-limit-action.enum';
 import { ChatLimitKind } from '@/enums/chat-limit-kind.enum';
 import type { ApiClientError } from '@/services/shared/api-client';
-import type { ChatLimitNotice } from '@/types';
+import type { ChatLimitNotice, EntitlementQuota } from '@/types';
 
 const KIND_BY_CODE: ReadonlyMap<string, ChatLimitKind> = new Map([
   [ApiErrorCode.QUOTA_DAILY_EXCEEDED, ChatLimitKind.DailyTokens],
@@ -102,6 +102,54 @@ export function resolveChatLimitNotice(error: unknown): ChatLimitNotice | null {
     return null;
   }
 
+  return {
+    kind,
+    titleKey: TITLE_KEY_BY_KIND[kind],
+    bodyKey: BODY_KEY_BY_KIND[kind],
+    action: ACTION_BY_KIND[kind],
+    showCreditDisclaimer: CREDIT_KINDS.has(kind),
+  };
+}
+
+const NOTICE_KIND_BY_WINDOW: Readonly<Record<QuotaWindowKind, ChatLimitKind>> = {
+  [QuotaWindowKind.Day]: ChatLimitKind.DailyTokens,
+  [QuotaWindowKind.Week]: ChatLimitKind.WeeklyTokens,
+  [QuotaWindowKind.Month]: ChatLimitKind.MonthlyTokens,
+  [QuotaWindowKind.BillingPeriod]: ChatLimitKind.MonthlyTokens,
+};
+
+/**
+ * The notice a user should already be seeing when they OPEN a thread.
+ *
+ * Before this, the only way to learn the allowance was gone was to type a
+ * message and have it refused — so somebody who came back the next hour saw an
+ * ordinary composer, wrote a paragraph, and only then found out. The standing
+ * fact belongs in the transcript on arrival.
+ *
+ * The TIGHTEST exhausted window wins, matching the backend gate: being told
+ * "daily" when the month is the real wall sends the user back tomorrow to fail
+ * again. `limit: null` is unlimited and is skipped; `0` is disabled and blocks.
+ * No `windows` array means an older backend, which falls back to the day
+ * figures rather than to "no limits".
+ */
+export function resolveExhaustedQuotaNotice(
+  quota: EntitlementQuota | null | undefined,
+): ChatLimitNotice | null {
+  if (!quota || quota.unlimited || quota.adminBypass) {
+    return null;
+  }
+  const windows =
+    quota.windows && quota.windows.length > 0
+      ? quota.windows
+      : [{ window: QuotaWindowKind.Day, limit: quota.dailyLimit, used: quota.used }];
+  const exhausted = windows
+    .filter((w) => w.limit !== null && w.used >= w.limit)
+    .sort((a, b) => (a.limit ?? 0) - a.used - ((b.limit ?? 0) - b.used));
+  const blocking = exhausted[0];
+  if (blocking === undefined) {
+    return null;
+  }
+  const kind = NOTICE_KIND_BY_WINDOW[blocking.window];
   return {
     kind,
     titleKey: TITLE_KEY_BY_KIND[kind],

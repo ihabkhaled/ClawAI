@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { useContext } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Direction } from '@/enums/direction.enum';
 import { Locale } from '@/enums/locale.enum';
@@ -15,6 +15,18 @@ vi.mock('@/utilities/locale.utility', () => ({
     locale === Locale.AR ? Direction.RTL : Direction.LTR,
   getHtmlLanguage: (locale: Locale): string => locale,
   persistLocale: vi.fn(),
+  parseLocaleFromPathname: (pathname: string): Locale | null => {
+    const segment = pathname.split('/')[1];
+    return segment === Locale.AR || segment === Locale.EN ? (segment as Locale) : null;
+  },
+}));
+
+// No locale segment by default, so the tests that assert the server-rendered
+// prop wins are testing exactly that.
+let mockPathname = '/';
+
+vi.mock('next/navigation', () => ({
+  usePathname: (): string => mockPathname,
 }));
 
 function TestConsumer(): React.ReactElement {
@@ -72,5 +84,44 @@ describe('LocaleContext without provider', () => {
   it('returns undefined when used outside a provider', () => {
     render(<TestConsumer />);
     expect(screen.getByTestId('no-context')).toHaveTextContent('no context');
+  });
+});
+
+describe('LocaleProvider — direction follows the URL, not just the first render', () => {
+  afterEach(() => {
+    mockPathname = '/';
+  });
+
+  it('flips <html dir> when a client transition changes the locale segment', () => {
+    // Signing in on /ar as an English-preference user does exactly this
+    // transition. React never patches <html> attributes after hydration, so
+    // without watching the path the dictionary went English while dir stayed
+    // rtl — English text in a right-to-left sidebar.
+    mockPathname = '/ar/login';
+    const { rerender } = render(
+      <LocaleProvider initialLocale={Locale.AR} initialDictionary={ar}>
+        <TestConsumer />
+      </LocaleProvider>,
+    );
+    expect(document.documentElement.dir).toBe(Direction.RTL);
+
+    mockPathname = '/en/chat';
+    rerender(
+      <LocaleProvider initialLocale={Locale.AR} initialDictionary={ar}>
+        <TestConsumer />
+      </LocaleProvider>,
+    );
+    expect(document.documentElement.dir).toBe(Direction.LTR);
+    expect(document.documentElement.lang).toBe(Locale.EN);
+  });
+
+  it('falls back to the server locale on a path with no locale segment', () => {
+    mockPathname = '/';
+    render(
+      <LocaleProvider initialLocale={Locale.AR} initialDictionary={ar}>
+        <TestConsumer />
+      </LocaleProvider>,
+    );
+    expect(document.documentElement.dir).toBe(Direction.RTL);
   });
 });
