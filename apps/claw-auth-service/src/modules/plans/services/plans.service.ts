@@ -274,6 +274,24 @@ export class PlansService {
         new Date(),
       );
       if (assignment === null) {
+        // The trial is spent. If this plan is also the DEFAULT one, that must
+        // not block the assignment: putting someone back on the baseline plan
+        // is a downgrade, not a trial grant.
+        //
+        // The default plan is flagged isTrial, so every downgrade to free ran
+        // down this path, collided with the user's existing redemption row and
+        // failed. Once a user had used their trial there was no way back to
+        // free at all — the only way off a paid plan was another paid plan.
+        //
+        // The redemption row is left exactly as it is, so a spent trial stays
+        // spent and this grants only the baseline they would have had anyway.
+        if (plan.isDefault) {
+          await this.plansRepository.assignDefaultPlan(userId, planId);
+          this.logger.log(
+            `assignUserToPlan: user=${userId} downgraded to default plan=${planId} (trial already spent)`,
+          );
+          return this.toView(plan);
+        }
         throw new BusinessException(
           'Plan trial already used',
           'PLAN_TRIAL_ALREADY_USED',

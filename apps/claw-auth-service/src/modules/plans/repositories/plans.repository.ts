@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { addCalendarMonths } from '@claw/shared-utilities';
+import { isUniqueViolationOnUser } from '../utilities/prisma-error.utility';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { POPULAR_PLAN_KEY } from '../constants/popular-plan.constants';
 import {
@@ -215,6 +216,14 @@ export class PlansRepository {
    * be mislabeled `ADMIN_GRANT` or forced to expire on a clock. Called by
    * `AuthManager.register` and `UsersService.assignSignupPlan`.
    */
+  /**
+   * Puts a user on the DEFAULT plan — a new signup, or an admin downgrade.
+   *
+   * No entitlementValidUntil and no trial redemption row: the baseline plan is
+   * where a user lands when nothing else applies, so an expiry on it would mean
+   * the account expires into nothing, and a downgrade must leave a spent trial
+   * spent rather than consuming or restoring one.
+   */
   async assignDefaultPlan(userId: string, planId: string): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.userPlanAssignment.updateMany({
@@ -294,12 +303,19 @@ export class PlansRepository {
         return assignment;
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002' &&
-        Array.isArray(error.meta?.target) &&
-        error.meta.target.includes('user_id')
-      ) {
+      // Matched STRUCTURALLY, not with `instanceof`.
+      //
+      // Two things broke the old guard. Postgres reports the CONSTRAINT NAME as
+      // a string here ("plan_trial_redemptions_user_id_key"), not the array of
+      // column names it required. And `instanceof
+      // Prisma.PrismaClientKnownRequestError` is false in the dev container:
+      // the error comes from the runtime client under dist/generated while the
+      // class is imported from src/generated, so the two are different objects
+      // and the check silently never matches.
+      //
+      // Either way the unique violation escaped and a re-grant became a 500
+      // instead of the PLAN_TRIAL_ALREADY_USED the caller is written around.
+      if (isUniqueViolationOnUser(error)) {
         return null;
       }
       return Promise.reject(error);

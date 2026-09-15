@@ -217,12 +217,31 @@ describe('PlansService', () => {
     expect(repo.assignUserToPlan).not.toHaveBeenCalled();
   });
 
-  it('rejects a trial plan already redeemed by the account', async () => {
-    repo.findById.mockResolvedValue({ ...freePlan, isTrial: true, trialDurationDays: 30 });
+  it('rejects a NON-default trial plan already redeemed by the account', async () => {
+    repo.findById.mockResolvedValue({
+      ...freePlan,
+      isDefault: false,
+      isTrial: true,
+      trialDurationDays: 30,
+    });
     repo.assignTrialPlanOnce.mockResolvedValue(null);
     await expect(service.assignUserToPlan('u1', 'plan-free', 'admin')).rejects.toThrow(
       /already used/i,
     );
+  });
+
+  it('downgrades to the DEFAULT plan even when its trial is already spent', async () => {
+    // The default plan is also flagged isTrial, so every downgrade to free ran
+    // the trial path, collided with the existing redemption row and failed —
+    // once a user had used their trial there was no way back to free at all.
+    repo.findById.mockResolvedValue({ ...freePlan, isTrial: true, trialDurationDays: 30 });
+    repo.assignTrialPlanOnce.mockResolvedValue(null);
+
+    await expect(service.assignUserToPlan('u1', 'plan-free', 'admin')).resolves.toBeDefined();
+
+    expect(repo.assignDefaultPlan).toHaveBeenCalledWith('u1', 'plan-free');
+    // The redemption row is untouched: a spent trial stays spent.
+    expect(repo.assignUserToPlan).not.toHaveBeenCalled();
   });
 
   it('getDefaultPlan throws when none configured', async () => {
