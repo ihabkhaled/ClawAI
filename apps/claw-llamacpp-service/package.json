@@ -52,7 +52,7 @@
     "rxjs": "^7.8.2",
     "tar": "^7.5.22",
     "undici": "^8.10.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@babel/core": "^8.0.5",
