@@ -4898,6 +4898,17 @@ Your task:
       if (typeof error === 'string' && error.trim().length > 0) {
         return error;
       }
+
+      // Anthropic and OpenAI both nest the useful sentence one level down, as
+      // { error: { message } }. Reading only the string form threw that away and
+      // left every provider rejection logged as a bare status code, which is the
+      // one thing a status code cannot explain.
+      if (error !== null && typeof error === 'object') {
+        const nested = (error as Record<string, unknown>)['message'];
+        if (typeof nested === 'string' && nested.trim().length > 0) {
+          return nested;
+        }
+      }
     }
 
     return fallbackMessage;
