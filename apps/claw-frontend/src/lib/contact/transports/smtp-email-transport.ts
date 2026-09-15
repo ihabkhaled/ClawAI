@@ -6,10 +6,15 @@ import type {
   ContactSmtpConfig,
 } from '@/types/contact.types';
 
-// Real delivery via nodemailer (patched 9.x — the 7.x line had CRLF/header
-// injection advisories). nodemailer is imported lazily so it is only loaded
-// when SMTP is actually selected, and never pulled into other bundles.
-// Header-injection defence is layered: nodemailer 9 sanitizes, AND we already
+// Real delivery via nodemailer 10 (the 7.x line had CRLF/header injection
+// advisories; 9.x patched them and 10.x carries the fix forward). nodemailer is
+// imported lazily so it is only loaded when SMTP is actually selected, and
+// never pulled into other bundles.
+//
+// The v10 major keeps `createTransport` on the module namespace, so this
+// `await import()` still works unchanged — verified, not assumed, because a
+// CommonJS package that goes ESM-only silently yields `undefined` here.
+// Header-injection defence is layered: nodemailer sanitizes, AND we already
 // stripped control characters when building the payload.
 export function createSmtpEmailTransport(smtp: ContactSmtpConfig): ContactEmailTransport {
   return {
