@@ -510,10 +510,38 @@ DROPIN="$PUBLIC_TLS_DIR/$PRIMARY_DOMAIN.conf"
   echo "# The paths below are read through the read-only /etc/letsencrypt mount, not"
   echo "# copied, so a renewed certificate is picked up by an nginx reload alone."
   echo "# =============================================================================="
+  # www redirects to the apex instead of being served as a second copy of the
+  # site. Listing www in the main server_name below meant nginx answered 200 on
+  # BOTH hostnames, so Google crawled both (www.<domain>/favicon.ico and
+  # /manifest.webmanifest turned up in Search Console) and split crawl budget
+  # and link signals across what is really one site.
+  #
+  # Emitted only when a www name was actually issued in this certificate — a
+  # redirect block for a name the cert does not cover would fail the TLS
+  # handshake before it could redirect anything.
+  #
+  # 301, not 302: only a permanent redirect consolidates ranking signals.
+  for domain in "${DOMAINS[@]}"; do
+    if [[ "$domain" == "www.$PRIMARY_DOMAIN" ]]; then
+      echo "server {"
+      echo "    listen 443 ssl;"
+      echo "    http2 on;"
+      echo "    server_name $domain;"
+      echo ""
+      echo "    ssl_certificate         $LIVE_DIR/fullchain.pem;"
+      echo "    ssl_certificate_key     $LIVE_DIR/privkey.pem;"
+      echo "    ssl_trusted_certificate $LIVE_DIR/chain.pem;"
+      echo ""
+      echo "    return 301 https://$PRIMARY_DOMAIN\$request_uri;"
+      echo "}"
+      echo ""
+    fi
+  done
   echo "server {"
   echo "    listen 443 ssl;"
   echo "    http2 on;"
-  echo "    server_name ${DOMAINS[*]};"
+  # Every issued name EXCEPT the www alias, which has its own redirect block.
+  echo "    server_name ${DOMAINS[*]/www.$PRIMARY_DOMAIN/};"
   echo ""
   echo "    ssl_certificate         $LIVE_DIR/fullchain.pem;"
   echo "    ssl_certificate_key     $LIVE_DIR/privkey.pem;"
