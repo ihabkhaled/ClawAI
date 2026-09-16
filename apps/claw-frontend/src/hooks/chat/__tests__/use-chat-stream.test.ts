@@ -420,4 +420,91 @@ describe('useChatStream', () => {
     expect(result.current.streamCompletedAt).not.toBeNull();
     expect(result.current.currentStageLabel).toBe('Response complete');
   });
+  it('shows text as deltas arrive, without waiting for another frame type', async () => {
+    // The defect: CONTENT_DELTA only appended to a ref. The answer stayed
+    // invisible until an unrelated LIFECYCLE/METRICS/USAGE frame happened to
+    // trigger a flush, so a model that streamed cleanly still landed in the UI
+    // as one lump.
+    const { result } = renderHook(() => useChatStream('thread-stream', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-stream',
+          type: StreamEventType.CONTENT_DELTA,
+          delta: 'Hello',
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve(null)));
+    });
+
+    expect(result.current.streamLive.content).toBe('Hello');
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-stream',
+          type: StreamEventType.CONTENT_DELTA,
+          delta: ' world',
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve(null)));
+    });
+
+    expect(result.current.streamLive.content).toBe('Hello world');
+    expect(result.current.streamLive.isStreaming).toBe(true);
+  });
+
+  it('coalesces a burst of tokens into one paint per frame', async () => {
+    // One render per token would be the opposite mistake. The browser cannot
+    // paint more than once per frame anyway.
+    const { result } = renderHook(() => useChatStream('thread-burst', true));
+
+    act(() => {
+      for (const delta of ['a', 'b', 'c', 'd']) {
+        capturedOptions.onMessage(
+          JSON.stringify({
+            threadId: 'thread-burst',
+            type: StreamEventType.CONTENT_DELTA,
+            delta,
+          }),
+        );
+      }
+    });
+    await act(async () => {
+      await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve(null)));
+    });
+
+    expect(result.current.streamLive.content).toBe('abcd');
+  });
+
+  it('paints the final text on DONE even if a frame was still queued', async () => {
+    const { result } = renderHook(() => useChatStream('thread-done', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-done',
+          type: StreamEventType.CONTENT_DELTA,
+          delta: 'final answer',
+        }),
+      );
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-done',
+          type: StreamEventType.DONE,
+          provider: 'local-ollama',
+          model: 'qwen3:1.7b',
+          label: 'Response complete',
+        }),
+      );
+    });
+
+    expect(result.current.streamLive.content).toBe('final answer');
+    expect(result.current.streamLive.isStreaming).toBe(false);
+  });
 });

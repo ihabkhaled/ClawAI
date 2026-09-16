@@ -88,6 +88,12 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   // on the throttled METRICS events to avoid one React render per token.
   const contentRef = useRef('');
   const reasoningRef = useRef('');
+  // Pending frame for the coalesced content flush. CONTENT_DELTA fires per
+  // token; painting each one would be a render per token, and painting none —
+  // which is what happened before — means the answer appears in one lump
+  // whenever an unrelated LIFECYCLE/METRICS/USAGE frame happens to arrive.
+  const flushFrameRef = useRef<number | null>(null);
+  const hasPendingFlushRef = useRef(false);
   // Mirrors progressStages synchronously so upsertStage can read the
   // just-applied stage (for the sequence guard below) and decide whether to
   // touch currentStageLabel without depending on React's setState-updater
@@ -110,21 +116,61 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     setCurrentStageLabel(null);
     contentRef.current = '';
     reasoningRef.current = '';
+    hasPendingFlushRef.current = false;
     progressStagesRef.current = [];
     processedEventIdsRef.current = new Set();
     setStreamLive({ content: '', reasoning: '', isStreaming: false });
   }, []);
 
-  const flushLive = useCallback((event: LiveFlushStreamEvent, isStreaming: boolean): void => {
-    setStreamLive((prev) => ({
-      content: contentRef.current,
-      reasoning: reasoningRef.current,
-      reasoningVisibility: event.reasoningVisibility ?? prev.reasoningVisibility,
-      stage: event.stage ?? prev.stage,
-      metrics: event.metrics ?? prev.metrics,
-      usage: event.usage ?? prev.usage,
-      isStreaming,
-    }));
+  // `event` is null for a content-only repaint: the text grew, nothing else
+  // about the stream changed, so every other field keeps its previous value.
+  const flushLive = useCallback(
+    (event: LiveFlushStreamEvent | null, isStreaming: boolean): void => {
+      setStreamLive((prev) => ({
+        content: contentRef.current,
+        reasoning: reasoningRef.current,
+        reasoningVisibility: event?.reasoningVisibility ?? prev.reasoningVisibility,
+        stage: event?.stage ?? prev.stage,
+        metrics: event?.metrics ?? prev.metrics,
+        usage: event?.usage ?? prev.usage,
+        isStreaming,
+      }));
+    },
+    [],
+  );
+
+  /**
+   * Paints whatever has accumulated, at most once per animation frame.
+   *
+   * CONTENT_DELTA used to append to contentRef and stop there, so the text a
+   * model streamed was invisible until some other frame type triggered a
+   * flush. One frame is the right granularity: the browser cannot show more
+   * than one paint per frame anyway, so this is the smoothest update possible
+   * without wasting renders.
+   */
+  const scheduleLiveFlush = useCallback((): void => {
+    hasPendingFlushRef.current = true;
+    if (flushFrameRef.current !== null) {
+      return;
+    }
+    flushFrameRef.current = globalThis.requestAnimationFrame(() => {
+      flushFrameRef.current = null;
+      if (hasPendingFlushRef.current) {
+        hasPendingFlushRef.current = false;
+        flushLive(null, true);
+      }
+    });
+  }, [flushLive]);
+
+  // A terminal frame must paint NOW, not next frame: cancelling first stops a
+  // queued in-progress flush from landing after it and re-marking the stream
+  // as still streaming.
+  const cancelScheduledFlush = useCallback((): void => {
+    if (flushFrameRef.current !== null) {
+      globalThis.cancelAnimationFrame(flushFrameRef.current);
+      flushFrameRef.current = null;
+    }
+    hasPendingFlushRef.current = false;
   }, []);
 
   const settleActiveStages = useCallback((): void => {
@@ -251,6 +297,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
 
           if (parsed.type === StreamEventType.CONTENT_DELTA) {
             contentRef.current += parsed.delta ?? '';
+            scheduleLiveFlush();
           }
 
           if (parsed.type === StreamEventType.REASONING_DELTA) {
@@ -317,6 +364,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
 
           if (parsed.type === StreamEventType.DONE) {
             sawTerminalEventRef.current = true;
+            cancelScheduledFlush();
             setJudgeEvaluating(false);
             setExecutingModel(null);
             setJudgeModel(null);
@@ -328,6 +376,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
 
           if (parsed.type === StreamEventType.ERROR) {
             sawTerminalEventRef.current = true;
+            cancelScheduledFlush();
             const localizedError = resolveChatStreamError(parsed, tRef.current);
             logger.error({
               component: 'chat',
@@ -364,6 +413,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     connectionRef.current = connection;
 
     return () => {
+      cancelScheduledFlush();
       connection.close();
       connectionRef.current = null;
     };
@@ -374,6 +424,8 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     resetStream,
     upsertStage,
     flushLive,
+    scheduleLiveFlush,
+    cancelScheduledFlush,
     settleActiveStages,
     rememberProcessedEventId,
   ]);

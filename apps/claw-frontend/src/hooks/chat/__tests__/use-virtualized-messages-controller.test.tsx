@@ -148,3 +148,45 @@ describe('useVirtualizedMessagesController', () => {
     expect(onStartReached).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('useVirtualizedMessagesController — sending re-pins to the bottom', () => {
+  it('snaps back to the latest message when a send starts', () => {
+    // A user who scrolled up to read history used to stay parked there after
+    // hitting send, never seeing their own message or the reply. Asserted
+    // through showJumpToLatest, which is exactly "the user is not at the
+    // bottom" — the observable state, rather than the imperative scroll call.
+    const { result, rerender } = renderHook(
+      ({ waiting }: { waiting: boolean }) =>
+        useVirtualizedMessagesController(makeParams({ isWaitingForResponse: waiting })),
+      { initialProps: { waiting: false } },
+    );
+
+    act(() => {
+      result.current.onAtBottomStateChange(false);
+    });
+    expect(result.current.showJumpToLatest).toBe(true);
+
+    rerender({ waiting: true });
+
+    expect(result.current.showJumpToLatest).toBe(false);
+  });
+
+  it('does not keep yanking the viewport for the whole response', () => {
+    // Re-pinning is a false -> true edge. Holding it down would fight a user
+    // who scrolls up mid-stream, which the at-bottom guard exists to protect.
+    const { result, rerender } = renderHook(
+      ({ waiting }: { waiting: boolean }) =>
+        useVirtualizedMessagesController(makeParams({ isWaitingForResponse: waiting })),
+      { initialProps: { waiting: false } },
+    );
+
+    rerender({ waiting: true });
+
+    act(() => {
+      result.current.onAtBottomStateChange(false);
+    });
+    rerender({ waiting: true });
+
+    expect(result.current.showJumpToLatest).toBe(true);
+  });
+});

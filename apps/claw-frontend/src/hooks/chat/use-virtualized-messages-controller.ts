@@ -63,6 +63,28 @@ export function useVirtualizedMessagesController(
     lastIndex,
   });
 
+  // Sending re-pins the viewport to the bottom.
+  //
+  // Following only resumes when `isAtBottom` is true, so a user who had
+  // scrolled up to read history stayed parked there after hitting send and
+  // never saw their own message or the reply. Sending is an explicit "I am
+  // done reading history" gesture, so it is the one moment it is right to
+  // move the viewport under them.
+  //
+  // Fires on the false -> true edge only. Holding it down for the whole
+  // response would fight a user who scrolls up mid-stream, which is exactly
+  // the behaviour the at-bottom guard exists to protect.
+  const wasWaitingRef = useRef(false);
+  useEffect(() => {
+    const startedWaiting = params.isWaitingForResponse && !wasWaitingRef.current;
+    wasWaitingRef.current = params.isWaitingForResponse;
+    if (!startedWaiting || lastIndex < 0) {
+      return;
+    }
+    setIsAtBottom(true);
+    virtuosoRef.current?.scrollToIndex({ index: lastIndex, behavior: 'auto', align: 'end' });
+  }, [params.isWaitingForResponse, lastIndex]);
+
   // Reset the unread-water-mark whenever the user is back at the bottom so a
   // future scroll-away starts the count fresh.
   useEffect(() => {
