@@ -44,6 +44,22 @@ export type PlannerCandidate = {
   privacyClass?: string | null;
   domainStrengths?: string[];
   weakDomains?: string[];
+  /// Does picking this model spend the user's connector credit?
+  ///
+  /// Local models cost nothing to run, so "good enough and free" should beat
+  /// "marginally better and paid" for an ordinary request. Without this the
+  /// planner could not tell the difference and treated a local 8B and a
+  /// frontier cloud model as the same kind of choice.
+  requiresCredit?: boolean;
+  /// Actual dollars per 1M tokens, when the catalog knows them. A cost CLASS
+  /// says "PREMIUM"; this says how much more premium, which is what makes
+  /// "cheapest model that can still do the job" a decidable question.
+  inputCostPer1M?: number | null;
+  outputCostPer1M?: number | null;
+  contextWindowTokens?: number | null;
+  /// Requests this provider is already handling. Used to spread load rather
+  /// than pile every request onto whichever model scores highest.
+  inFlightCount?: number;
 };
 
 export type AIRoutePlannerInput = {

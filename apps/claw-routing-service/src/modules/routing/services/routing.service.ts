@@ -21,7 +21,13 @@ import { RouterEducationManager } from '../managers/router-education.manager';
 import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
 import { AIRoutePlannerManager } from '../../intelligence/managers/ai-route-planner.manager';
 import { SemanticIntentAnalyzerManager } from '../../intelligence/managers/semantic-intent-analyzer.manager';
+import { AI_ROUTE_PLANNER_MAX_CANDIDATES_IN_PROMPT } from '../../intelligence/constants/ai-route-planner.constants';
+import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { detectHighRisk } from '../utilities/high-risk-detector.utility';
+import {
+  orderCandidatesForPrompt,
+  toPlannerCandidate,
+} from '../utilities/planner-candidate.utility';
 import { applyPlanModelGate } from '../utilities/plan-model-gate.utility';
 import type {
   AIRoutePlannerInput,
@@ -91,6 +97,7 @@ export class RoutingService implements OnModuleInit {
     private readonly semanticAnalyzer: SemanticIntentAnalyzerManager,
     private readonly aiRoutePlanner: AIRoutePlannerManager,
     private readonly liveWorkflowSelector: LiveWorkflowSelectorManager,
+    private readonly modelRegistry: RouterModelRegistryRepository,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -750,7 +757,7 @@ export class RoutingService implements OnModuleInit {
         message: messageContent,
         routingMode: decision.routingMode,
         semanticIntent,
-        candidates: this.buildPlannerCandidates(decision),
+        candidates: await this.buildPlannerCandidates(decision),
       };
       const record = await this.aiRoutePlanner.plan(input);
       await this.decisionsRepository.updateAiRoutePlanByMessageId(messageId, toInputJson(record));
@@ -780,28 +787,72 @@ export class RoutingService implements OnModuleInit {
   // minimal — primary + fallback chain from the calibrated decision.
   // Phase 3 (model intelligence enrichment) will replace this with a
   // full provider/model registry snapshot, but the shape stays stable.
-  private buildPlannerCandidates(decision: RoutingDecisionResult): PlannerCandidate[] {
-    const seen = new Set<string>();
-    const candidates: PlannerCandidate[] = [];
-    const push = (provider: string, model: string): void => {
-      const key = `${provider}::${model}`;
-      if (seen.has(key)) {
-        return;
+  /**
+   * The models the planner is allowed to choose between.
+   *
+   * This used to return the deterministic router's own pick plus its
+   * fallbacks, with every capability field blank — so the planner was asked to
+   * weigh cost, tier, latency and domain strength across one to three entries
+   * that carried none of those fields. It could only ratify what had already
+   * been decided.
+   *
+   * Now it is the live execution catalog, enriched from RouterModelRegistry,
+   * with the deterministic choice ordered first so a truncated list can never
+   * drop it. A registry read that fails falls back to the old behaviour rather
+   * than routing nothing: a degraded plan beats a dead request.
+   */
+  private async buildPlannerCandidates(
+    decision: RoutingDecisionResult,
+  ): Promise<PlannerCandidate[]> {
+    const preferredKeys = new Set<string>([
+      `${decision.selectedProvider}::${decision.selectedModel}`,
+      ...(decision.fallbackChain ?? []).map((entry) => `${entry.provider}::${entry.model}`),
+    ]);
+    try {
+      const records = await this.modelRegistry.findExecutionCandidates({});
+      if (records.length === 0) {
+        return this.buildFallbackPlannerCandidates(preferredKeys);
       }
-      seen.add(key);
-      candidates.push({
-        provider,
-        model,
-        isAvailable: true,
-        isRouterOnly: false,
-        isExecutionModel: true,
-      });
-    };
-    push(decision.selectedProvider, decision.selectedModel);
-    for (const entry of decision.fallbackChain ?? []) {
-      push(entry.provider, entry.model);
+      const inFlight = this.buildProviderInFlightCounts();
+      const candidates = records.map((record) =>
+        toPlannerCandidate(record, inFlight.get(record.provider) ?? 0),
+      );
+      return orderCandidatesForPrompt(
+        candidates,
+        preferredKeys,
+        AI_ROUTE_PLANNER_MAX_CANDIDATES_IN_PROMPT,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `buildPlannerCandidates: registry read failed, using the deterministic pick only — ${(error as Error).message}`,
+      );
+      return this.buildFallbackPlannerCandidates(preferredKeys);
     }
-    return candidates;
+  }
+
+  /** The pre-enrichment shape, kept for the degraded path only. */
+  private buildFallbackPlannerCandidates(preferredKeys: ReadonlySet<string>): PlannerCandidate[] {
+    return [...preferredKeys].map((key) => {
+      const [provider = '', model = ''] = key.split('::');
+      return { provider, model, isAvailable: true, isRouterOnly: false, isExecutionModel: true };
+    });
+  }
+
+  /**
+   * How many requests each provider is already carrying.
+   *
+   * Derived from the latency cache rather than a new counter: a provider whose
+   * observed latency has climbed above the slow threshold is the one to route
+   * around. It is a coarse signal and it is labelled as one in the prompt —
+   * the planner treats it as a tie-breaker, never as a capability.
+   */
+  private buildProviderInFlightCounts(): Map<string, number> {
+    const slowThresholdMs = AppConfig.get().ROUTING_PROVIDER_SLOW_THRESHOLD_MS;
+    const counts = new Map<string, number>();
+    for (const [provider, latencyMs] of this.providerLatencyCache) {
+      counts.set(provider, latencyMs >= slowThresholdMs ? 1 : 0);
+    }
+    return counts;
   }
 
   private buildConnectorHealthSnapshot(): {

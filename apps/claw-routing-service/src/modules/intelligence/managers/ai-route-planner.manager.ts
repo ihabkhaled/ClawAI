@@ -25,10 +25,10 @@ import {
 import { aiRoutePlanSchema } from '../schemas/ai-route-plan.schema';
 import type {
   AIRoutePlan,
-  AIRoutePlanRecord,
-  AIRoutePlanValidationIssue,
   AIRoutePlannerInput,
   AIRoutePlannerStatus,
+  AIRoutePlanRecord,
+  AIRoutePlanValidationIssue,
   OllamaGeneratePlannerResponse,
   PlannerCandidate,
 } from '../types/ai-route-plan.types';
@@ -198,6 +198,23 @@ export class AIRoutePlannerManager {
     }
     if (c.weakDomains && c.weakDomains.length > 0) {
       fields.push(`weak=[${c.weakDomains.slice(0, 4).join(',')}]`);
+    }
+    if (c.requiresCredit !== undefined) {
+      fields.push(`credit=${c.requiresCredit ? 'yes' : 'no'}`);
+    }
+    // Real dollars beat a cost CLASS: "PREMIUM" cannot be compared against
+    // another "PREMIUM", but 3.00 against 15.00 can.
+    if (c.inputCostPer1M !== null && c.inputCostPer1M !== undefined) {
+      fields.push(`in$/1M=${c.inputCostPer1M}`);
+    }
+    if (c.outputCostPer1M !== null && c.outputCostPer1M !== undefined) {
+      fields.push(`out$/1M=${c.outputCostPer1M}`);
+    }
+    if (c.contextWindowTokens !== null && c.contextWindowTokens !== undefined) {
+      fields.push(`ctx=${c.contextWindowTokens}`);
+    }
+    if (c.inFlightCount !== undefined) {
+      fields.push(`inflight=${c.inFlightCount}`);
     }
     return `- ${fields.join(' | ')}`;
   }

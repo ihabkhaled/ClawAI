@@ -192,6 +192,10 @@ describe('RoutingService', () => {
       // canonical DIRECT_LLM selection so any downstream code that checks
       // the workflow gets a sane default in tests that don't care.
       liveWorkflowSelector as any,
+      // RouterModelRegistryRepository — the execution catalog the planner now
+      // reasons over. Empty here: these tests do not exercise the AI planner, and
+      // an empty catalog exercises the documented degraded path.
+      { findExecutionCandidates: jest.fn().mockResolvedValue([]) } as never,
     );
   });
 

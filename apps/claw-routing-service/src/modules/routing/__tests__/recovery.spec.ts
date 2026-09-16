@@ -52,6 +52,10 @@ describe('RoutingService.getRecoveryStats', () => {
       { plan: jest.fn() } as any,
       // Phase 6 — LiveWorkflowSelectorManager; not exercised here.
       { selectWorkflow: jest.fn() } as any,
+      // RouterModelRegistryRepository — the execution catalog the planner now
+      // reasons over. Empty here: these tests do not exercise the AI planner, and
+      // an empty catalog exercises the documented degraded path.
+      { findExecutionCandidates: jest.fn().mockResolvedValue([]) } as never,
     );
   });
 

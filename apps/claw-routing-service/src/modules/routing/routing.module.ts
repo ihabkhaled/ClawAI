@@ -1,3 +1,4 @@
+import { RouterModelsModule } from '../router-models/router-models.module';
 import { Module } from '@nestjs/common';
 import { IntelligenceModule } from '../intelligence/intelligence.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
@@ -34,7 +35,10 @@ import { CloudRouterPromptManager } from './managers/cloud-router-prompt.manager
 import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluation.manager';
 
 @Module({
-  imports: [IntelligenceModule, WorkflowsModule],
+  // RouterModelsModule supplies the execution catalog the route planner now
+  // reasons over — before this it was handed the deterministic pick with every
+  // capability field blank.
+  imports: [IntelligenceModule, WorkflowsModule, RouterModelsModule],
   controllers: [RoutingController],
   providers: [
     RoutingService,
