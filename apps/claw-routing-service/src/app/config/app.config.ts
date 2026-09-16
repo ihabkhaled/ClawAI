@@ -44,8 +44,16 @@ const appConfigSchema = z.object({
     .default('change-me-inter-service-token-32-chars-min'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
-  OLLAMA_ROUTER_MODEL: z.string().min(1).default('qwen3:1.7b'),
-  OLLAMA_ROUTER_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
+  // The route PLANNER, not an answering model. An Ollama Cloud model rather
+  // than the old local qwen3:1.7b — routing quality caps the quality of every
+  // answer, and a 1.7B model reasoning over thirty candidates was the weakest
+  // link. A failed or slow call falls back to the deterministic router, so a
+  // wrong value degrades routing instead of breaking chat.
+  OLLAMA_ROUTER_MODEL: z.string().min(1).default('deepseek-v4-pro'),
+  // Raised with the model: a cloud round-trip cannot answer inside the budget
+  // a local 1.7B could, and a timeout silently drops back to the deterministic
+  // router — the routing gets quietly worse rather than visibly failing.
+  OLLAMA_ROUTER_TIMEOUT_MS: z.coerce.number().int().positive().default(20_000),
   OLLAMA_KEEP_ALIVE: z.string().min(1).default('20m'),
   OLLAMA_ROUTER_WARMUP_ENABLED: z
     .string()

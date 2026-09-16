@@ -1297,8 +1297,14 @@ OLLAMA_BASE_URL=http://ollama:11434
 # Bearer token for a hosted Ollama-compatible API. Empty for the local runtime.
 # Never expose to the frontend / any NEXT_PUBLIC_* variable.
 OLLAMA_API_KEY=
-OLLAMA_ROUTER_MODEL=qwen3:1.7b
-OLLAMA_ROUTER_TIMEOUT_MS=10000
+# The model that PLANS the route — it never answers the user, it only picks
+# which model should. An Ollama Cloud model rather than a local 1.7B: routing
+# quality is the ceiling on every answer. A failed or slow call falls back to
+# the deterministic router, so a wrong value degrades routing, not chat.
+OLLAMA_ROUTER_MODEL=deepseek-v4-pro
+# Raised with the model: a cloud round-trip cannot answer in the time a local
+# 1.7B could, and a timeout silently drops the plan.
+OLLAMA_ROUTER_TIMEOUT_MS=20000
 ROUTER_COMPACT_PROMPT=true
 OLLAMA_GENERATE_TIMEOUT_MS=300000
 # Native /api/chat — the tool-calling surface. Own budget: an agent turn is a

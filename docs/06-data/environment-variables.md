@@ -260,22 +260,22 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 
 ## Ollama (Local AI Runtime)
 
-| Variable                     | Required | Default                    | Description                                                                |
-| ---------------------------- | -------- | -------------------------- | -------------------------------------------------------------------------- |
-| `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                   |
-| `OLLAMA_ROUTER_MODEL`        | No       | `qwen3:1.7b`               | Model used for routing decisions                                           |
-| `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                        |
-| `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                      |
-| `OLLAMA_GENERATE_TIMEOUT_MS` | No       | `300000`                   | Timeout for non-router generation calls (ms)                               |
-| `OLLAMA_CHAT_TIMEOUT_MS`     | No       | `300000`                   | Timeout for native `/api/chat` calls — the tool-calling surface (ms)       |
-| `OLLAMA_API_KEY`             | No       | —                          | Bearer key for a signed-in local Ollama proxying to Cloud models           |
-| `OLLAMA_KEEP_ALIVE`          | No       | `-1m`                      | How long the runtime keeps a model resident; `-1m` = forever until evicted |
-| `OLLAMA_MAX_LOADED_MODELS`   | No       | `2`                        | Max number of models loaded into VRAM concurrently                         |
-| `OLLAMA_NUM_PARALLEL`        | No       | `1`                        | Parallel generation slots per loaded model                                 |
-| `OLLAMA_FLASH_ATTENTION`     | No       | `1`                        | Enable flash-attention kernel when supported by the GPU                    |
-| `OLLAMA_KV_CACHE_TYPE`       | No       | `q8_0`                     | KV-cache quantization (`f16`, `q8_0`, `q4_0`)                              |
-| `MEMORY_EXTRACTION_MODEL`    | No       | `AUTO`                     | Model used for memory extraction (`AUTO` picks best installed)             |
-| `AUTO_PULL_MODELS`           | No       | `qwen3:1.7b`               | Space-separated list of models to auto-pull on startup                     |
+| Variable                     | Required | Default                    | Description                                                                                                  |
+| ---------------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                                                     |
+| `OLLAMA_ROUTER_MODEL`        | No       | `deepseek-v4-pro`          | Model that PLANS the route (never answers the user). Cloud, not local — routing quality caps answer quality. |
+| `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                                                          |
+| `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                                                        |
+| `OLLAMA_GENERATE_TIMEOUT_MS` | No       | `300000`                   | Timeout for non-router generation calls (ms)                                                                 |
+| `OLLAMA_CHAT_TIMEOUT_MS`     | No       | `300000`                   | Timeout for native `/api/chat` calls — the tool-calling surface (ms)                                         |
+| `OLLAMA_API_KEY`             | No       | —                          | Bearer key for a signed-in local Ollama proxying to Cloud models                                             |
+| `OLLAMA_KEEP_ALIVE`          | No       | `-1m`                      | How long the runtime keeps a model resident; `-1m` = forever until evicted                                   |
+| `OLLAMA_MAX_LOADED_MODELS`   | No       | `2`                        | Max number of models loaded into VRAM concurrently                                                           |
+| `OLLAMA_NUM_PARALLEL`        | No       | `1`                        | Parallel generation slots per loaded model                                                                   |
+| `OLLAMA_FLASH_ATTENTION`     | No       | `1`                        | Enable flash-attention kernel when supported by the GPU                                                      |
+| `OLLAMA_KV_CACHE_TYPE`       | No       | `q8_0`                     | KV-cache quantization (`f16`, `q8_0`, `q4_0`)                                                                |
+| `MEMORY_EXTRACTION_MODEL`    | No       | `AUTO`                     | Model used for memory extraction (`AUTO` picks best installed)                                               |
+| `AUTO_PULL_MODELS`           | No       | `qwen3:1.7b`               | Space-separated list of models to auto-pull on startup                                                       |
 
 ### Runtime V2 provider-native tool calling (chat-service)
 
