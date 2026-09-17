@@ -414,3 +414,38 @@ The `ParallelExecutionManager` handles:
 - Each model must belong to a healthy, active connector (or be a local Ollama model)
 - Thread ownership is validated before execution
 - All models share the same assembled context (system prompt, memories, files, history)
+
+## Coding agent conversations are a separate origin
+
+The VS Code coding agent talks to this service through the same endpoints as
+the web app, authenticated as the same user. Until `ThreadOrigin` existed, that
+meant every agent run appeared in the user's chat list beside conversations
+they had held themselves, and nothing in the data said which was which.
+
+`ChatThread.origin` is `WEB` or `CODING_AGENT`, defaulting to `WEB`. Three
+things follow, and the first is the one that surprises people:
+
+- **`listThreadsQuerySchema` defaults `origin` to `WEB`, not to "any".** A list
+  that returned every origin would put the agent's runs straight back where
+  they were. The repository's `buildWhereClause` applies the same default
+  again, so a caller that bypasses the DTO still gets one origin rather than
+  all of them.
+- **The migration made every existing row `WEB`.** Nothing moved out of
+  anyone's chat list; only threads created from here on separate.
+- **`coding-agent-chats` is read-only by construction.** The module has a
+  controller with two `@Get` routes and a service with no create, update or
+  delete method, so a later change cannot add a write by accident. nginx also
+  refuses anything but `GET`, `HEAD` and `OPTIONS` on that path, in both
+  `locations.conf` and the distributed template.
+
+The web app shows what the agent did. It does not join in: a reply typed into a
+finished run has no agent listening for it.
+
+Each read in `CodingAgentChatsService` pins `origin` as well as `userId`. The
+origin filter is what keeps agent runs out of the web list; pinning it again on
+the agent endpoint is what stops that endpoint becoming a second, unfiltered
+way to read the user's ordinary conversations. A missing thread, another user's
+thread and a web thread all refuse identically, so the endpoint cannot be used
+to learn which thread ids exist.
+
+The daily chat ceiling still counts agent threads. They cost the same money.

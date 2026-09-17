@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RoutingMode } from '../../../generated/prisma';
+import { RoutingMode, ThreadOrigin } from '../../../generated/prisma';
 
 export const createThreadSchema = z.object({
   title: z.string().max(255, 'Title must be at most 255 characters').optional(),
@@ -13,6 +13,9 @@ export const createThreadSchema = z.object({
     .optional(),
   preferredModel: z.string().max(255, 'Preferred model must be at most 255 characters').optional(),
   contextPackIds: z.array(z.string().max(255)).max(10, 'Maximum 10 context packs').optional(),
+  // Where this conversation is being started from. Omitted means WEB, so every
+  // existing caller keeps creating web threads without being changed.
+  origin: z.nativeEnum(ThreadOrigin).optional(),
   // ADR-087 — "use relevant previous chats". Omitted means false: a new thread
   // never reads a user's other conversations unless it is asked to.
   useCrossThreadContext: z.boolean().optional(),

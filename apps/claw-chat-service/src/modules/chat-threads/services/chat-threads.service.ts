@@ -42,6 +42,7 @@ export class ChatThreadsService {
         preferredProvider: dto.preferredProvider,
         preferredModel: dto.preferredModel,
         contextPackIds: dto.contextPackIds,
+        origin: dto.origin,
         useCrossThreadContext: dto.useCrossThreadContext,
       },
       resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),
@@ -124,6 +125,7 @@ export class ChatThreadsService {
   ): Promise<PaginatedResult<ThreadWithMessageCount>> {
     const filters = {
       userId,
+      origin: query.origin,
       search: query.search,
       isPinned: query.isPinned,
       isArchived: query.isArchived,

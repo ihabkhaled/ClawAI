@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type ChatThread, Prisma } from '../../../generated/prisma';
+import { type ChatThread, Prisma, ThreadOrigin } from '../../../generated/prisma';
 import { type SortOrder } from '../../../common/enums';
 import {
   type CreateThreadData,
@@ -125,6 +125,10 @@ export class ChatThreadsRepository {
   private buildWhereClause(filters: ThreadFilters): Prisma.ChatThreadWhereInput {
     const where: Prisma.ChatThreadWhereInput = {
       userId: filters.userId,
+      // Always narrowed to one origin. Leaving it off would list every
+      // conversation the user has, which is how the coding agent's runs ended
+      // up in the web chat list in the first place.
+      origin: filters.origin ?? ThreadOrigin.WEB,
     };
 
     if (filters.isPinned !== undefined) {

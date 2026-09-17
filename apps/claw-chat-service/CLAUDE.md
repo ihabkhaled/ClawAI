@@ -647,3 +647,17 @@ chain drafting and implementation handoff all spend real provider money through
 (audit U1, U8–U10, U12). An optional `userId` would have been omitted by exactly
 the callers that most need it. The response carries `clamped` so the calling
 service can tell its own user why the answer is short.
+
+## ThreadOrigin
+
+`ChatThread.origin` separates the VS Code coding agent's runs from the user's
+own conversations. Both clients are the same user on the same endpoints, so
+without it they were one list.
+
+`WEB` is the default everywhere — on the column, in `createThreadSchema`, and
+in `listThreadsQuerySchema`. That last one is load-bearing: a thread list that
+did not narrow by origin would show agent runs in the web app again.
+
+Reads for the agent's conversations live in `modules/coding-agent-chats`, which
+is read-only by construction — no create, update or delete exists to be called.
+Full rationale: `docs/04-backend/service-guide-chat.md`.

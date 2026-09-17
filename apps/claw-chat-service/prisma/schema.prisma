@@ -28,6 +28,17 @@ enum MessageRole {
 
 // ─── Models ──────────────────────────────────────────────
 
+/// Where a conversation was started, and therefore who may see it.
+///
+/// The coding agent talks to the same chat API as the web app and as the same
+/// user, so without this every agent run appeared in the user's chat list
+/// beside their own conversations. WEB is the default so that every thread
+/// that already exists stays exactly where it was.
+enum ThreadOrigin {
+  WEB
+  CODING_AGENT
+}
+
 model ChatThread {
   id                 String      @id @default(cuid())
   userId             String      @map("user_id")
@@ -36,6 +47,7 @@ model ChatThread {
   lastProvider       String?     @map("last_provider")
   lastModel          String?     @map("last_model")
   isPinned           Boolean     @default(false) @map("is_pinned")
+  origin             ThreadOrigin @default(WEB) @map("origin")
   isArchived         Boolean     @default(false) @map("is_archived")
   preferredProvider  String?     @map("preferred_provider")
   preferredModel     String?     @map("preferred_model")
@@ -68,6 +80,7 @@ model ChatThread {
   messages ChatMessage[]
 
   @@index([userId])
+  @@index([userId, origin])
   @@index([createdAt])
   @@map("chat_threads")
 }
