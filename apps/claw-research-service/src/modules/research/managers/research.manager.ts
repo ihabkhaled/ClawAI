@@ -152,19 +152,30 @@ export class ResearchManager {
     warnings: string[],
     items: EvidenceItem[],
   ): Promise<ResearchRun> {
-    const crawlUrl = requestedUrls[0];
-    if (crawlUrl === undefined) {
+    if (requestedUrls.length === 0) {
       warnings.push('Crawl requested but the message contained no URL to crawl.');
     } else {
-      const crawled = await this.siteCrawlManager.crawl(
-        userId,
-        crawlUrl,
-        trace,
-        toolsUsed,
-        warnings,
-        dto.correlationId,
-      );
-      items.push(...crawled);
+      // EVERY url in the message, not just the first. A message that names
+      // three pages is asking about three pages; crawling only one and
+      // answering confidently from it is worse than saying nothing about the
+      // other two.
+      //
+      // Sequential on purpose. Each crawl already fans out internally across a
+      // site's pages with its own concurrency limit, so running the sites in
+      // parallel too would multiply the outbound request rate against hosts
+      // that have done nothing to deserve it — and getting the crawler banned
+      // costs more than the seconds saved.
+      for (const crawlUrl of requestedUrls) {
+        const crawled = await this.siteCrawlManager.crawl(
+          userId,
+          crawlUrl,
+          trace,
+          toolsUsed,
+          warnings,
+          dto.correlationId,
+        );
+        items.push(...crawled);
+      }
     }
     const bundle = this.finalize(
       dto,

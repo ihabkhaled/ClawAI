@@ -1,5 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { type RetrievalBundle } from '@claw/shared-types';
+import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
+import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { AppConfig } from '../../../app/config/app.config';
 import {
   buildInterServiceAuthHeader,
@@ -334,6 +336,7 @@ ${evidence.snippet}`);
           args.lastUserContent,
           args.research,
           args.lastUserMessage,
+          args.threadId,
         ),
       ]);
     return { memories, contextPackItems, fileContents, workspaceCitations, researchRun };
@@ -344,6 +347,7 @@ ${evidence.snippet}`);
     intent: string,
     research: ResearchOptions | undefined,
     lastUserMessage: ChatMessage | undefined,
+    threadId: string | undefined,
   ): Promise<ResearchRunResponse | null> {
     // Primary path: the research bundle was attached to the user message
     // when it was created (with the caller's bearer token). Re-use it.
@@ -351,20 +355,42 @@ ${evidence.snippet}`);
     if (fromMetadata !== null) {
       return fromMetadata;
     }
-    // Fallback: caller passed an explicit ResearchOptions and still holds
-    // a bearer token. Useful for internal orchestrators.
-    if (research === undefined || research.mode === ResearchMode.NONE || intent.length === 0) {
+    if (research === undefined || intent.length === 0) {
+      return null;
+    }
+    // A pasted link is crawled REGARDLESS of research mode, NONE included.
+    //
+    // Searching and crawling answer different questions. Search asks "what is
+    // out there about this"; a URL in the message is the user pointing at one
+    // specific page and expecting it to be read. Gating the second behind the
+    // first meant a link in a message with research off was silently ignored —
+    // the model answered about a page it had never seen.
+    const promptUrls = detectPromptUrls(intent);
+    const hasCrawlTarget = promptUrls.length > 0;
+    if (research.mode === ResearchMode.NONE && !hasCrawlTarget) {
       return null;
     }
     const config = AppConfig.get();
+    // With a URL present and research also on, BOTH run: SITE_CRAWL reads the
+    // named pages and the search workflow brings in everything else. The
+    // evidence bundles merge downstream, so the model sees the page the user
+    // pointed at and the wider web.
+    const workflow = hasCrawlTarget
+      ? ResearchWorkflow.SITE_CRAWL
+      : mapResearchModeToWorkflow(research.mode);
     const run = await runResearch(config.RESEARCH_SERVICE_URL, {
       userToken: research.userToken,
       userId,
       intent,
-      workflow: mapResearchModeToWorkflow(research.mode),
+      workflow,
       searchProviderId: research.providerId,
       requestedModel: research.requestedModel,
       requestedProvider: research.requestedProvider,
+      // Carries the live crawl ticks back to THIS thread's SSE stream.
+      // ResearchProgressBridgeService keys on it, so a crawl started without
+      // it runs invisibly — the user watches a spinner with no idea a site is
+      // being read.
+      correlationId: threadId,
     });
     if (run === null) {
       this.logger.warn(
