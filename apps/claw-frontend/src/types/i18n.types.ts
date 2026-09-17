@@ -2585,6 +2585,7 @@ export type TranslationDictionary = {
       placeholder: string;
       autoProvider: string;
       noProviders: string;
+      tooltipAuto: string;
       tooltipNone: string;
       tooltipSearch: string;
       tooltipSearchFetch: string;
@@ -2592,6 +2593,7 @@ export type TranslationDictionary = {
       lockedUpgrade: string;
     };
     modes: {
+      auto: string;
       none: string;
       search: string;
       searchFetch: string;

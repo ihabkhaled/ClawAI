@@ -64,9 +64,7 @@ describe('Research-mode enum migration (PR1 contract)', () => {
     const filePath = join(__dirname, '..', 'services', 'chat-messages.service.ts');
     // eslint-disable-next-line security/detect-non-literal-fs-filename
     const source = readFileSync(filePath, 'utf-8');
-    const stripped = source
-      .replaceAll(/\/\/[^\n]*/g, '')
-      .replaceAll(/\/\*[\S\s]*?\*\//g, '');
+    const stripped = source.replaceAll(/\/\/[^\n]*/g, '').replaceAll(/\/\*[\S\s]*?\*\//g, '');
     expect(stripped).not.toMatch(/['"]OFF['"]/);
     expect(stripped).not.toMatch(/ResearchMode\.OFF/);
     // Confirm the canonical comparison IS there (regression: if the service
@@ -114,13 +112,18 @@ describe('Research-mode enum migration (PR1 contract)', () => {
     // NONE falls through to SEARCH_ONLY (callers short-circuit before this
     // function — but the fallthrough must NOT throw).
     expect(mapResearchModeToWorkflow(ResearchMode.NONE)).toBe(ResearchWorkflow.SEARCH_ONLY);
-    // Sanity: the canonical enum has exactly four values (defensive — if a
-    // refactor adds a 5th value, this test fails so the engineer adds a case
+    // AUTO is resolved to a concrete mode before any research call is made, so
+    // it should never arrive here. It still has an explicit case rather than a
+    // silent fall-through, and falls through to SEARCH_ONLY if it somehow does.
+    expect(mapResearchModeToWorkflow(ResearchMode.AUTO)).toBe(ResearchWorkflow.SEARCH_ONLY);
+    // Sanity: the canonical enum has exactly five values (defensive — if a
+    // refactor adds a 6th value, this test fails so the engineer adds a case
     // to the mapping table at the same time).
     const valueSet = new Set(Object.values(ResearchMode));
     expect(valueSet).toEqual(
       new Set([
         ResearchMode.NONE,
+        ResearchMode.AUTO,
         ResearchMode.SEARCH,
         ResearchMode.SEARCH_FETCH,
         ResearchMode.SEARCH_EXTRACT,

@@ -20,6 +20,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { AiStreamStage } from '../../../common/enums';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
+import { resolveEffectiveResearchMode } from '../utilities/auto-research-mode.utility';
 import { httpRequest } from '../../../common/utilities';
 import {
   RESEARCH_ENRICHER_DEFAULT_TOP_FETCH,
@@ -59,7 +60,10 @@ export class ResearchEnricherManager {
     this.logger.debug(
       `enrich: mode=${input.mode} queryPreview="${input.query.slice(0, RESEARCH_ENRICHER_QUERY_LOG_PREVIEW_CHARS)}"`,
     );
-    if (input.mode === ResearchMode.NONE) {
+    // AUTO is resolved here, before anything downstream can see it: the rest
+    // of this manager branches on concrete modes only.
+    const mode = resolveEffectiveResearchMode(input.mode, input.query);
+    if (mode === ResearchMode.NONE) {
       return {
         evidence: '',
         sources: [],
@@ -68,8 +72,9 @@ export class ResearchEnricherManager {
         fetchRequestCount: 0,
       };
     }
-    this.emitResearch(input, AiStreamStage.RESEARCH_STARTED, {
-      mode: input.mode,
+    const resolvedInput = { ...input, mode };
+    this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_STARTED, {
+      mode,
       query: input.query,
     });
     try {
@@ -78,43 +83,43 @@ export class ResearchEnricherManager {
         input.topResults ?? RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
       );
       const searchResults = searchOutcome.entries;
-      this.emitResearch(input, AiStreamStage.RESEARCH_SOURCES_FOUND, {
-        mode: input.mode,
+      this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_SOURCES_FOUND, {
+        mode,
         query: input.query,
         sourcesCount: searchResults.length,
       });
       if (searchResults.length === 0) {
-        this.logger.log(`enrich: mode=${input.mode} sources=0 (empty search)`);
-        this.emitResearch(input, AiStreamStage.RESEARCH_COMPLETED, {
-          mode: input.mode,
+        this.logger.log(`enrich: mode=${mode} sources=0 (empty search)`);
+        this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_COMPLETED, {
+          mode,
           query: input.query,
           sourcesCount: 0,
         });
         return {
           evidence: RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
           sources: [],
-          mode: input.mode,
+          mode,
           searchRequestCount: searchOutcome.requestCount,
           fetchRequestCount: 0,
           ...this.providerOutcome(searchOutcome),
         };
       }
-      const sources = await this.enrichSourcesByMode(input, searchResults);
+      const sources = await this.enrichSourcesByMode(resolvedInput, searchResults);
       const fetchRequestCount =
-        input.mode === ResearchMode.SEARCH
+        mode === ResearchMode.SEARCH
           ? 0
           : Math.min(searchResults.length, input.topFetch ?? RESEARCH_ENRICHER_DEFAULT_TOP_FETCH);
-      const evidence = this.buildEvidenceBlock(input.mode, sources, fetchRequestCount);
-      this.logger.log(`enrich: mode=${input.mode} sources=${String(sources.length)} (completed)`);
-      this.emitResearch(input, AiStreamStage.RESEARCH_COMPLETED, {
-        mode: input.mode,
+      const evidence = this.buildEvidenceBlock(mode, sources, fetchRequestCount);
+      this.logger.log(`enrich: mode=${mode} sources=${String(sources.length)} (completed)`);
+      this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_COMPLETED, {
+        mode,
         query: input.query,
         sourcesCount: sources.length,
       });
       return {
         evidence,
         sources,
-        mode: input.mode,
+        mode,
         searchRequestCount: searchOutcome.requestCount,
         fetchRequestCount,
         ...this.providerOutcome(searchOutcome),
@@ -122,8 +127,8 @@ export class ResearchEnricherManager {
     } catch (error) {
       const message = (error as Error).message;
       this.logger.error(`enrich: failed mode=${input.mode} — ${message}`);
-      this.emitResearch(input, AiStreamStage.RESEARCH_FAILED, {
-        mode: input.mode,
+      this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_FAILED, {
+        mode,
         query: input.query,
         error: message,
       });
@@ -148,8 +153,8 @@ export class ResearchEnricherManager {
   async enrichForOrchestration(
     input: ResearchOrchestrationInput,
   ): Promise<ResearchOrchestrationResult> {
-    const mode = input.mode;
-    if (mode === undefined || mode === ResearchMode.NONE) {
+    const mode = resolveEffectiveResearchMode(input.mode, input.query);
+    if (mode === ResearchMode.NONE) {
       return { transcript: null, systemPrompt: '' };
     }
     if (input.userToken.length === 0) {

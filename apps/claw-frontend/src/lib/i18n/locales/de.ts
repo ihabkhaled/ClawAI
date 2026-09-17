@@ -2485,6 +2485,8 @@ export const de: TranslationDictionary = {
       placeholder: 'Recherche',
       autoProvider: 'Auto-Provider',
       noProviders: 'Keine Provider konfiguriert',
+      tooltipAuto:
+        'Entscheidet anhand Ihrer Nachricht: öffnet einen eingefügten Link, sucht, wenn die Antwort von aktuellen Fakten abhängt, und überspringt das Web sonst.',
       tooltipNone: 'Keine Webrecherche. Das Modell antwortet nur aus seinem Training.',
       tooltipSearch: 'Eine Websuche ausführen und Titel und Auszüge an das Modell übergeben.',
       tooltipSearchFetch:
@@ -2494,6 +2496,7 @@ export const de: TranslationDictionary = {
       lockedUpgrade: 'Webrecherche ist in Ihrem Tarif gesperrt. Upgraden, um zu aktivieren.',
     },
     modes: {
+      auto: 'Automatisch',
       none: 'Keine Recherche',
       search: 'Websuche',
       searchFetch: 'Suche + Abruf',

@@ -2483,6 +2483,8 @@ export const fr: TranslationDictionary = {
       placeholder: 'Recherche',
       autoProvider: 'Fournisseur automatique',
       noProviders: 'Aucun fournisseur configuré',
+      tooltipAuto:
+        'Décide d’après votre message : ouvre un lien collé, cherche quand la réponse dépend de l’actualité, et ignore le web sinon.',
       tooltipNone:
         'Pas de recherche web. Le modèle répond uniquement à partir de son entraînement.',
       tooltipSearch:
@@ -2495,6 +2497,7 @@ export const fr: TranslationDictionary = {
         'La recherche web est verrouillée dans votre forfait. Mettez à niveau pour l’activer.',
     },
     modes: {
+      auto: 'Automatique',
       none: 'Pas de recherche',
       search: 'Recherche web',
       searchFetch: 'Recherche + récupération',

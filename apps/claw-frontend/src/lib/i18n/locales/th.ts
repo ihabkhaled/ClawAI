@@ -2407,6 +2407,8 @@ export const th: TranslationDictionary = {
       placeholder: 'วิจัย',
       autoProvider: 'ผู้ให้บริการรถยนต์',
       noProviders: 'ไม่มีการกำหนดค่าผู้ให้บริการ',
+      tooltipAuto:
+        'ตัดสินจากข้อความของคุณ: เปิดลิงก์ที่วางไว้ ค้นหาเมื่อคำตอบขึ้นกับสถานการณ์ปัจจุบัน และข้ามเว็บในกรณีอื่น',
       tooltipNone: 'ไม่มีการวิจัยเว็บโมเดลจะตอบจากการฝึกเท่านั้น',
       tooltipSearch: 'ดำเนินการค้นหาเว็บและส่งชื่อผลลัพธ์ + ตัวอย่างข้อมูลไปยังโมเดล',
       tooltipSearchFetch:
@@ -2416,6 +2418,7 @@ export const th: TranslationDictionary = {
       lockedUpgrade: 'การวิจัยเว็บถูกล็อคไว้ในแผนของคุณอัปเกรดเพื่อเปิดใช้งาน',
     },
     modes: {
+      auto: 'อัตโนมัติ',
       none: 'ไม่มีการวิจัย',
       search: 'ค้นหาเว็บ',
       searchFetch: 'ค้นหา + ดึงข้อมูล',

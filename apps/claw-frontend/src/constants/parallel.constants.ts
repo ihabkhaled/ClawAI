@@ -1,4 +1,4 @@
-import { Download, Globe, ScanText, Search } from 'lucide-react';
+import { Download, Globe, ScanText, Search, Sparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import { CompareResearchMode } from '@/enums';
@@ -47,8 +47,11 @@ export const COMPARE_RESEARCH_MODE_OPTIONS: ReadonlyArray<CompareResearchModeOpt
 ];
 
 // Icon assignments for the CompareResearchModeControl. Lives next to the
-// option list so the four-mode set has a single source of truth.
+// option list so the mode set has a single source of truth.
 export const COMPARE_RESEARCH_MODE_ICONS: Record<CompareResearchMode, LucideIcon> = {
+  // Sparkles for AUTO: the mode that decides for you, matching how the same
+  // idea is marked everywhere else in the composer.
+  [CompareResearchMode.AUTO]: Sparkles,
   [CompareResearchMode.NONE]: Globe,
   [CompareResearchMode.SEARCH]: Search,
   [CompareResearchMode.SEARCH_FETCH]: Download,

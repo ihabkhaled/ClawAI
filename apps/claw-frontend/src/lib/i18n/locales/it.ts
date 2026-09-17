@@ -2476,6 +2476,8 @@ export const it: TranslationDictionary = {
       placeholder: 'Ricerca',
       autoProvider: 'Provider automatico',
       noProviders: 'Nessun provider configurato',
+      tooltipAuto:
+        'Decide dal tuo messaggio: apre un link incollato, cerca quando la risposta dipende dall’attualità e altrimenti salta il web.',
       tooltipNone: 'Nessuna ricerca web. Il modello risponde solo dal suo addestramento.',
       tooltipSearch:
         'Esegui una ricerca web e passa al modello i titoli e i frammenti dei risultati.',
@@ -2486,6 +2488,7 @@ export const it: TranslationDictionary = {
       lockedUpgrade: 'La ricerca web è bloccata nel tuo piano. Aggiorna per abilitarla.',
     },
     modes: {
+      auto: 'Automatico',
       none: 'Nessuna ricerca',
       search: 'Ricerca web',
       searchFetch: 'Ricerca + recupero',

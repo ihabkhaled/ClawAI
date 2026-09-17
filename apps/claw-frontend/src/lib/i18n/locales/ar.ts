@@ -2403,6 +2403,8 @@ export const ar: TranslationDictionary = {
       placeholder: 'البحث',
       autoProvider: 'مزود تلقائي',
       noProviders: 'لا توجد مزودات مُهيَّأة',
+      tooltipAuto:
+        'يقرّر من رسالتك: يفتح أي رابط تلصقه، ويبحث عندما تعتمد الإجابة على الوضع الحالي، ويتخطى الويب فيما عدا ذلك.',
       tooltipNone: 'لا يوجد بحث على الويب. يجيب النموذج من تدريبه فقط.',
       tooltipSearch: 'تشغيل بحث على الويب وتمرير العناوين والمقتطفات إلى النموذج.',
       tooltipSearchFetch: 'البحث على الويب، ثم جلب أهم الصفحات وتأسيس النموذج على النص الكامل.',
@@ -2411,6 +2413,7 @@ export const ar: TranslationDictionary = {
       lockedUpgrade: 'البحث على الويب مقيد في خطتك. قم بالترقية للتفعيل.',
     },
     modes: {
+      auto: 'تلقائي',
       none: 'بدون بحث',
       search: 'بحث ويب',
       searchFetch: 'بحث + جلب',

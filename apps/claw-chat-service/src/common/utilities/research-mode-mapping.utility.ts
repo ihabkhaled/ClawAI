@@ -9,6 +9,12 @@ import { ResearchWorkflow } from '../enums/research-workflow.enum';
  * dialect on the input side while still talking to research-service in its
  * existing workflow vocabulary on the wire.
  *
+ * AUTO never reaches here: it is resolved to a concrete mode by
+ * `resolveEffectiveResearchMode` before any research call is made. It is
+ * listed explicitly rather than left to the default so that adding a mode to
+ * the enum without deciding its workflow is a compile-time choice, not a
+ * silent fall-through to "search anyway".
+ *
  * NONE is rejected at the call site (the chat-messages.service short-circuits
  * before calling research-service), so this function does not have a NONE
  * branch — passing it falls through to the SEARCH_ONLY default, which is the
@@ -27,6 +33,7 @@ export function mapResearchModeToWorkflow(mode: ResearchMode): ResearchWorkflow 
     case ResearchMode.SEARCH_EXTRACT:
       return ResearchWorkflow.SEARCH_FETCH_EXTRACT;
     case ResearchMode.NONE:
+    case ResearchMode.AUTO:
     default:
       return ResearchWorkflow.SEARCH_ONLY;
   }

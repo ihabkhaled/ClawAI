@@ -2462,6 +2462,8 @@ export const pt: TranslationDictionary = {
       placeholder: 'Pesquisa',
       autoProvider: 'Provedor Automático',
       noProviders: 'Nenhum provedor configurado',
+      tooltipAuto:
+        'Decide pela sua mensagem: abre um link colado, pesquisa quando a resposta depende do momento atual e ignora a web nos outros casos.',
       tooltipNone: 'Sem pesquisa na web. O modelo responde apenas com base em seu treinamento.',
       tooltipSearch:
         'Execute uma pesquisa na web e passe os títulos e trechos dos resultados ao modelo.',
@@ -2472,6 +2474,7 @@ export const pt: TranslationDictionary = {
       lockedUpgrade: 'A pesquisa na web está bloqueada no seu plano. Faça upgrade para ativar.',
     },
     modes: {
+      auto: 'Automático',
       none: 'Sem pesquisa',
       search: 'Pesquisa web',
       searchFetch: 'Pesquisa + busca',

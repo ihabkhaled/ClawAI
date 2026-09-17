@@ -2439,6 +2439,8 @@ export const hi: TranslationDictionary = {
       placeholder: 'रिसर्च',
       autoProvider: 'ऑटो प्रोवाइडर',
       noProviders: 'कोई प्रोवाइडर कॉन्फ़िगर नहीं',
+      tooltipAuto:
+        'आपके संदेश से तय करता है: चिपकाया गया लिंक खोलता है, जब उत्तर वर्तमान स्थिति पर निर्भर हो तो खोजता है, अन्यथा वेब छोड़ देता है।',
       tooltipNone: 'कोई वेब रिसर्च नहीं। मॉडल केवल अपने प्रशिक्षण से उत्तर देता है।',
       tooltipSearch: 'वेब खोज चलाएँ और परिणामों के शीर्षक एवं अंश मॉडल को दें।',
       tooltipSearchFetch:
@@ -2448,6 +2450,7 @@ export const hi: TranslationDictionary = {
       lockedUpgrade: 'वेब रिसर्च आपकी योजना में लॉक है। सक्षम करने के लिए अपग्रेड करें।',
     },
     modes: {
+      auto: 'स्वचालित',
       none: 'कोई रिसर्च नहीं',
       search: 'वेब खोज',
       searchFetch: 'खोज + फ़ेच',

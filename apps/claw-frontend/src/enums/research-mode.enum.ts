@@ -9,6 +9,10 @@
 // dialect.
 export enum ResearchMode {
   NONE = 'NONE',
+  /// Let the backend decide from the message. Resolved to a concrete mode
+  /// server-side before any research call — see chat-service's
+  /// auto-research-mode.utility.ts.
+  AUTO = 'AUTO',
   SEARCH = 'SEARCH',
   SEARCH_FETCH = 'SEARCH_FETCH',
   SEARCH_EXTRACT = 'SEARCH_EXTRACT',

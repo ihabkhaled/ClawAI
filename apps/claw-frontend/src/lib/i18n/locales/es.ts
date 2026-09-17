@@ -2476,6 +2476,8 @@ export const es: TranslationDictionary = {
       placeholder: 'Investigación',
       autoProvider: 'Proveedor automático',
       noProviders: 'No hay proveedores configurados',
+      tooltipAuto:
+        'Decide según tu mensaje: abre un enlace que pegues, busca cuando la respuesta depende de la actualidad y omite la web en los demás casos.',
       tooltipNone: 'Sin investigación web. El modelo responde solo desde su entrenamiento.',
       tooltipSearch:
         'Ejecuta una búsqueda web y pasa los títulos y fragmentos de los resultados al modelo.',
@@ -2486,6 +2488,7 @@ export const es: TranslationDictionary = {
       lockedUpgrade: 'La investigación web está bloqueada en tu plan. Actualiza para habilitarla.',
     },
     modes: {
+      auto: 'Automático',
       none: 'Sin investigación',
       search: 'Búsqueda web',
       searchFetch: 'Búsqueda + obtener',

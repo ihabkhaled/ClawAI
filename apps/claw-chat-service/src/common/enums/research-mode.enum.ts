@@ -12,6 +12,10 @@
 // implementation report for the rationale.
 export enum ResearchMode {
   NONE = 'NONE',
+  /// Decide from the prompt. See auto-research-mode.utility.ts — resolved to a
+  /// concrete mode before any research call is made, so nothing downstream
+  /// ever sees AUTO.
+  AUTO = 'AUTO',
   SEARCH = 'SEARCH',
   SEARCH_FETCH = 'SEARCH_FETCH',
   SEARCH_EXTRACT = 'SEARCH_EXTRACT',

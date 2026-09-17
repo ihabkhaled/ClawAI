@@ -2441,6 +2441,8 @@ export const ja: TranslationDictionary = {
       placeholder: '研究',
       autoProvider: '自動プロバイダー',
       noProviders: 'プロバイダーが構成されていません',
+      tooltipAuto:
+        'メッセージから判断します。貼られたリンクは開き、最新の状況に依存する質問では検索し、それ以外はウェブを使いません。',
       tooltipNone: 'ウェブ調査はありません。モデルはトレーニングのみから応答します。',
       tooltipSearch: 'Web 検索を実行し、結果のタイトルとスニペットをモデルに渡します。',
       tooltipSearchFetch:
@@ -2451,6 +2453,7 @@ export const ja: TranslationDictionary = {
         'ウェブリサーチはあなたのプランに固定されています。アップグレードして有効にします。',
     },
     modes: {
+      auto: '自動',
       none: '研究なし',
       search: 'ウェブ検索',
       searchFetch: '検索 + フェッチ',

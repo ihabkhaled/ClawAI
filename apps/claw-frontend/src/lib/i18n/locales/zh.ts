@@ -2346,6 +2346,8 @@ export const zh: TranslationDictionary = {
       placeholder: '研究',
       autoProvider: '汽车供应商',
       noProviders: '没有配置提供商',
+      tooltipAuto:
+        '根据你的消息判断：打开你粘贴的链接，当答案取决于当前情况时进行搜索，其余情况不联网。',
       tooltipNone: '没有网络研究。该模型仅根据训练给出答案。',
       tooltipSearch: '运行网络搜索并将结果标题+片段传递给模型。',
       tooltipSearchFetch: '搜索网络，然后获取热门页面并根据全文建立模型。',
@@ -2353,6 +2355,7 @@ export const zh: TranslationDictionary = {
       lockedUpgrade: '网络研究已锁定您的计划。升级即可启用。',
     },
     modes: {
+      auto: '自动',
       none: '没有研究',
       search: '网页搜索',
       searchFetch: '搜索+获取',

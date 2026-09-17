@@ -2423,6 +2423,8 @@ export const en: TranslationDictionary = {
       placeholder: 'Research',
       autoProvider: 'Auto Provider',
       noProviders: 'No providers configured',
+      tooltipAuto:
+        'Decides from your message: fetches a link you paste, searches when the answer depends on what is true now, and skips the web otherwise.',
       tooltipNone: 'No web research. The model answers from its training only.',
       tooltipSearch: 'Run a web search and pass the result titles + snippets to the model.',
       tooltipSearchFetch:
@@ -2432,6 +2434,7 @@ export const en: TranslationDictionary = {
       lockedUpgrade: 'Web research is locked on your plan. Upgrade to enable.',
     },
     modes: {
+      auto: 'Automatic',
       none: 'No research',
       search: 'Web search',
       searchFetch: 'Search + fetch',

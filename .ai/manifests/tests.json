@@ -38,7 +38,7 @@
     },
     "claw-chat-service": {
       "runner": "jest",
-      "testFiles": 137
+      "testFiles": 138
     },
     "claw-client-logs-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1246
+  "total": 1247
 }

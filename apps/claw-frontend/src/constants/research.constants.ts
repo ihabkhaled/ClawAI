@@ -2,7 +2,12 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResearchOptions } from '@/types';
 
-export const DEFAULT_RESEARCH_OPTIONS: ResearchOptions = { mode: ResearchMode.NONE };
+// AUTO, not NONE. Research was opt-in behind a selector most people never
+// touched, so a question about today's news was answered from training data
+// unless the user knew to change a dropdown first. AUTO is conservative — it
+// searches on explicit evidence and stays quiet otherwise — and NONE is still
+// there for anyone who wants the web off.
+export const DEFAULT_RESEARCH_OPTIONS: ResearchOptions = { mode: ResearchMode.AUTO };
 
 // Labels bind to the canonical `research.modes.*` i18n keys after the Phase 2
 // rename (NONE/SEARCH/SEARCH_FETCH/SEARCH_EXTRACT). Tooltip keys describe
@@ -12,6 +17,11 @@ export const RESEARCH_MODES: ReadonlyArray<{
   labelKey: string;
   tooltipKey: string;
 }> = [
+  {
+    value: ResearchMode.AUTO,
+    labelKey: 'research.modes.auto',
+    tooltipKey: 'research.toggle.tooltipAuto',
+  },
   {
     value: ResearchMode.NONE,
     labelKey: 'research.modes.none',

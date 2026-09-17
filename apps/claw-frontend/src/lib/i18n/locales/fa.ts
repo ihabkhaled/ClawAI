@@ -2434,6 +2434,8 @@ export const fa: TranslationDictionary = {
       placeholder: 'تحقیق کنید',
       autoProvider: 'ارائه دهنده خودکار',
       noProviders: 'هیچ ارائه دهنده ای پیکربندی نشده است',
+      tooltipAuto:
+        'بر اساس پیام شما تصمیم می\u200cگیرد: لینک چسبانده\u200cشده را باز می\u200cکند، وقتی پاسخ به وضعیت فعلی بستگی دارد جست\u200cوجو می\u200cکند و در غیر این صورت از وب استفاده نمی\u200cکند.',
       tooltipNone: 'بدون تحقیق وبمدل فقط از آموزشش جواب میده.',
       tooltipSearch: 'یک جستجوی وب را اجرا کنید و عناوین نتایج + قطعات را به مدل ارسال کنید.',
       tooltipSearchFetch:
@@ -2443,6 +2445,7 @@ export const fa: TranslationDictionary = {
       lockedUpgrade: 'تحقیقات وب روی طرح شما قفل شده است.برای فعال کردن ارتقا دهید.',
     },
     modes: {
+      auto: 'خودکار',
       none: 'بدون تحقیق',
       search: 'جستجوی وب',
       searchFetch: 'جستجو + واکشی',
