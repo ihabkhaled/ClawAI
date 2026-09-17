@@ -83,3 +83,12 @@ export interface ChainEntryInput {
   maxCostMicroUsd?: number;
   billingModel: BillingModel;
 }
+
+/** One row of the chain-entry model picker. */
+export interface SelectableDeployment {
+  id: string;
+  provider: string;
+  providerModelId: string;
+  /** False for a model that exists but has not passed a validation yet. */
+  isValidated: boolean;
+}

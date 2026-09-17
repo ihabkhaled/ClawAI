@@ -12,3 +12,17 @@ export interface EligibleDeploymentRecord {
   provider: RouterProvider;
   providerModelId: string;
 }
+
+/**
+ * One row of the chain-entry model picker.
+ *
+ * `isValidated` is surfaced rather than filtered on: a model awaiting its first
+ * validation is still a legitimate thing to configure, and hiding it would make
+ * most of the catalog unpickable.
+ */
+export interface SelectableDeploymentRecord {
+  id: string;
+  provider: string;
+  providerModelId: string;
+  isValidated: boolean;
+}

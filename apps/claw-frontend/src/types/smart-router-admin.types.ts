@@ -170,6 +170,8 @@ export type UseSmartRouterSetEnabledResult = {
 };
 
 export type UseSmartRouterAddEntryFormResult = {
+  /** Catalog models for the selected provider, for the model picker. */
+  modelOptions: readonly SelectableDeployment[];
   provider: RouterProvider;
   setProvider: (value: RouterProvider) => void;
   modelAlias: string;
@@ -359,4 +361,19 @@ export type SmartRouterCompareDiffRowProps = {
 
 export type SmartRouterCompareTabProps = SmartRouterCompareSection & {
   t: TranslateFunction;
+};
+
+/** One row of the chain-entry model picker (mirrors the routing-service DTO). */
+export type SelectableDeployment = {
+  id: string;
+  provider: RouterProvider;
+  providerModelId: string;
+  /** False for a model that exists but has not passed a validation yet. */
+  isValidated: boolean;
+};
+
+export type UseSmartRouterSelectableDeploymentsResult = {
+  deployments: readonly SelectableDeployment[];
+  isLoading: boolean;
+  isError: boolean;
 };

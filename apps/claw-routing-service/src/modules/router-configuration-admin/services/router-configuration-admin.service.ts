@@ -3,6 +3,7 @@ import { RouterConfigurationStatus } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { RouterConfigurationRepository } from '../../routing/repositories/router-configuration.repository';
+import { ModelDeploymentRepository } from '../../routing/repositories/model-deployment.repository';
 import {
   type ChainEntryInputDto,
   type UpdateChainEntriesDto,
@@ -14,11 +15,20 @@ import type {
   ChainEntryInput,
   RouterConfigurationDetail,
   RouterConfigurationSummary,
+  SelectableDeployment,
 } from '../types/router-configuration-admin.types';
 
 @Injectable()
 export class RouterConfigurationAdminService {
-  constructor(private readonly repository: RouterConfigurationRepository) {}
+  constructor(
+    private readonly repository: RouterConfigurationRepository,
+    private readonly deployments: ModelDeploymentRepository,
+  ) {}
+
+  /** The models an admin may name in a chain entry. */
+  async listSelectableDeployments(): Promise<readonly SelectableDeployment[]> {
+    return this.deployments.findAllForChainSelection();
+  }
 
   async list(
     query: ListRouterConfigurationsQueryDto,

@@ -11,6 +11,8 @@ import type {
   UseSmartRouterAddEntryFormResult,
 } from '@/types/smart-router-admin.types';
 
+import { useSmartRouterSelectableDeployments } from './use-smart-router-selectable-deployments';
+
 /** Local form state for the "add chain entry" form. Covers the fields an
  * operator needs day to day (provider, model, role, billing model,
  * deployment id, timeout, retries, triggers); `enabled` and
@@ -28,11 +30,39 @@ export function useSmartRouterAddEntryForm(): UseSmartRouterAddEntryFormResult {
     SMART_ROUTER_ENTRY_FORM_DEFAULTS.billingModel,
   );
   const [deploymentId, setDeploymentId] = useState('');
+  const { deployments } = useSmartRouterSelectableDeployments();
+
+  /** The catalog narrowed to the chosen provider — a chain entry names a model
+   * on one provider, so offering the rest would only invite a mismatch. */
+  const modelOptions = useMemo(
+    () => deployments.filter((deployment) => deployment.provider === provider),
+    [deployments, provider],
+  );
   const [attemptTimeoutMs, setAttemptTimeoutMs] = useState<number>(
     SMART_ROUTER_ENTRY_FORM_DEFAULTS.attemptTimeoutMs,
   );
   const [retries, setRetries] = useState<number>(SMART_ROUTER_ENTRY_FORM_DEFAULTS.retries);
   const [triggers, setTriggers] = useState('');
+
+  /** Changing provider invalidates the chosen model: the previous one almost
+   * certainly does not exist on the new provider, and leaving it selected would
+   * submit a pair that cannot resolve. */
+  const selectProvider = useCallback((next: RouterProvider): void => {
+    setProvider(next);
+    setModelAlias('');
+    setDeploymentId('');
+  }, []);
+
+  /** Selecting a model also binds its deployment, so the entry is pinned to the
+   * exact endpoint the admin picked instead of being matched by name later. */
+  const selectModel = useCallback(
+    (next: string): void => {
+      setModelAlias(next);
+      const match = modelOptions.find((option) => option.providerModelId === next);
+      setDeploymentId(match?.id ?? '');
+    },
+    [modelOptions],
+  );
 
   const fieldErrors = useMemo(
     () => (modelAlias.trim().length === 0 ? { modelAlias: ['required'] } : {}),
@@ -74,9 +104,10 @@ export function useSmartRouterAddEntryForm(): UseSmartRouterAddEntryFormResult {
 
   return {
     provider,
-    setProvider,
+    setProvider: selectProvider,
     modelAlias,
-    setModelAlias,
+    setModelAlias: selectModel,
+    modelOptions,
     role,
     setRole,
     billingModel,

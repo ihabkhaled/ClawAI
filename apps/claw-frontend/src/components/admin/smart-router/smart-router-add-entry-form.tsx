@@ -34,6 +34,7 @@ export function SmartRouterAddEntryForm({
     setProvider,
     modelAlias,
     setModelAlias,
+    modelOptions,
     role,
     setRole,
     billingModel,
@@ -91,13 +92,39 @@ export function SmartRouterAddEntryForm({
               <label htmlFor="smart-router-entry-model-alias" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.modelAlias')}
               </label>
-              <Input
-                id="smart-router-entry-model-alias"
-                value={modelAlias}
-                onChange={(event) => setModelAlias(event.target.value)}
-                placeholder={t('smartRouterAdmin.entryForm.modelAliasPlaceholder')}
-                aria-invalid={fieldErrors.modelAlias !== undefined}
-              />
+              {/*
+                A picker, not a text box. An alias resolves to a deployment
+                exactly or not at all, so a typed name that has since been
+                renamed produces an entry which is skipped on every request with
+                nothing to see. The list is the catalog for the selected
+                provider, so an unresolvable entry cannot be created here.
+              */}
+              <Select value={modelAlias} onValueChange={setModelAlias}>
+                <SelectTrigger
+                  id="smart-router-entry-model-alias"
+                  aria-invalid={fieldErrors.modelAlias !== undefined}
+                  disabled={modelOptions.length === 0}
+                >
+                  <SelectValue
+                    placeholder={t('smartRouterAdmin.entryForm.modelAliasPlaceholder')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.providerModelId}>
+                      {option.providerModelId}
+                      {option.isValidated
+                        ? ''
+                        : ` · ${t('smartRouterAdmin.entryForm.modelUnvalidatedSuffix')}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {modelOptions.length === 0 ? (
+                <p className="text-muted-foreground text-xs">
+                  {t('smartRouterAdmin.entryForm.noModelsForProvider')}
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

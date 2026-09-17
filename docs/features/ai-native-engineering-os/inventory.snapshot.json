@@ -2573,6 +2573,11 @@
         },
         {
           "method": "GET",
+          "route": "/routing/configurations/selectable-deployments",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/routing/decisions/:id/legacy-vs-cloud",
           "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
         },
@@ -10470,7 +10475,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 656,
+    "endpointCount": 657,
     "envVarCount": 357,
     "eventCount": 178,
     "frontendRouteCount": 154,

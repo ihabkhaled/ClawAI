@@ -85,3 +85,27 @@ describe('SmartRouterChainEntryRow', () => {
     expect(screen.getByLabelText('common.next')).toBeInTheDocument();
   });
 });
+
+// An alias resolves to a deployment exactly or not at all — there is no family
+// fallback — so one stale name silently removes an entry from every routing
+// walk. Three entries sat dead for a month behind a page that looked healthy,
+// which is why an unresolved entry now says so on its own row.
+describe('SmartRouterChainEntryRow unresolved state', () => {
+  it('marks an entry whose alias matched no deployment', () => {
+    render(<SmartRouterChainEntryRow {...baseProps()} />);
+
+    expect(screen.getByText('smartRouterAdmin.entryRow.unresolvedBadge')).toBeInTheDocument();
+    expect(screen.getByText('smartRouterAdmin.entryRow.unresolvedHint')).toBeInTheDocument();
+  });
+
+  it('stays quiet when the alias resolved', () => {
+    render(
+      <SmartRouterChainEntryRow
+        {...baseProps({ entry: { ...entry, deploymentId: 'deployment-1' } })}
+      />,
+    );
+
+    expect(screen.queryByText('smartRouterAdmin.entryRow.unresolvedBadge')).not.toBeInTheDocument();
+    expect(screen.queryByText('smartRouterAdmin.entryRow.unresolvedHint')).not.toBeInTheDocument();
+  });
+});

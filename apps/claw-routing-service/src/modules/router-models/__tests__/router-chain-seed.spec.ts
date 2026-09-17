@@ -1,12 +1,13 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { SeedApplyOutcome } from '../../../common/enums';
-import { RouterChainEntryRole, RouterProvider } from '../../../generated/prisma';
+import { BillingModel, RouterChainEntryRole, RouterProvider } from '../../../generated/prisma';
 import {
   ROUTER_CHAIN_SEED_CONFIGURATION,
   ROUTER_CHAIN_SEED_ENTRIES,
   ROUTER_CHAIN_SEED_NAME,
 } from '../constants/router-chain-seed.constants';
 import { type RouterChainSeedRepository } from '../repositories/router-chain-seed.repository';
+import { normalizeModelId } from '../utilities/model-alias-matching.utility';
 import { RouterChainSeedService } from '../services/router-chain-seed.service';
 import type { ChainSeedInput } from '../types/router-chain-seed.types';
 
@@ -20,16 +21,25 @@ describe('default chain definition', () => {
     );
   });
 
-  it('starts on Gemini and falls across to Ollama Cloud', () => {
-    expect(ROUTER_CHAIN_SEED_ENTRIES[0]?.provider).toBe(RouterProvider.GEMINI);
+  // Routing is a small, constant, every-request job. Running it on a metered
+  // provider put a per-token cost on the cheapest question in the system.
+  it('runs the router on the Ollama Cloud connector, not on Gemini', () => {
+    expect(ROUTER_CHAIN_SEED_ENTRIES[0]?.provider).toBe(RouterProvider.OLLAMA_CLOUD);
     expect(ROUTER_CHAIN_SEED_ENTRIES[0]?.role).toBe(RouterChainEntryRole.PRIMARY);
-    expect(ROUTER_CHAIN_SEED_ENTRIES.some((e) => e.provider === RouterProvider.OLLAMA_CLOUD)).toBe(
-      true,
-    );
+    expect(ROUTER_CHAIN_SEED_ENTRIES[0]?.billingModel).toBe(BillingModel.SUBSCRIPTION);
+  });
+
+  // Gemini keeps its place in the chain, just not the first one: a chain with
+  // only one provider cannot survive that provider going down.
+  it('keeps a cross-provider hop so one provider outage is survivable', () => {
+    const providers = new Set(ROUTER_CHAIN_SEED_ENTRIES.map((entry) => entry.provider));
+
+    expect(providers.has(RouterProvider.GEMINI)).toBe(true);
+    expect(providers.has(RouterProvider.OLLAMA_CLOUD)).toBe(true);
   });
 
   // Entry 2 is a same-provider sibling so a model-specific fault tries it
-  // before abandoning Google; a provider-wide failure skips it.
+  // before abandoning the connector; a provider-wide failure skips it.
   it('places a same-provider model fallback before the first cross-provider hop', () => {
     const modelFallback = ROUTER_CHAIN_SEED_ENTRIES.find(
       (e) => e.role === RouterChainEntryRole.MODEL_FALLBACK,
@@ -38,9 +48,40 @@ describe('default chain definition', () => {
       (e) => e.role === RouterChainEntryRole.PROVIDER_FALLBACK,
     );
 
-    expect(modelFallback?.provider).toBe(RouterProvider.GEMINI);
-    expect(providerFallback?.provider).toBe(RouterProvider.OLLAMA_CLOUD);
+    expect(modelFallback?.provider).toBe(ROUTER_CHAIN_SEED_ENTRIES[0]?.provider);
+    expect(providerFallback?.provider).not.toBe(ROUTER_CHAIN_SEED_ENTRIES[0]?.provider);
     expect(modelFallback?.order).toBeLessThan(providerFallback?.order ?? 0);
+  });
+
+  // The defect this guards against shipped silently for a month. v2 named
+  // glm-4.7, minimax-m2.1 and qwen3.5 against a catalog holding glm-5.2,
+  // minimax-m2.5 and qwen3.5:397b. Matching is exact after normalization, so
+  // each of those entries resolved to nothing and was skipped on every walk —
+  // the admin page showed a four-entry cross-provider chain that behaved as
+  // Gemini-only. Nothing failed; the entries just never ran.
+  it('names no model that was already known to be retired or renamed', () => {
+    const retired = ['glm-4.7', 'minimax-m2.1', 'qwen3.5:cloud', 'gemini-2.5-flash-lite'];
+    const aliases = ROUTER_CHAIN_SEED_ENTRIES.map((entry) =>
+      normalizeModelId(entry.modelAlias, entry.provider),
+    );
+
+    for (const name of retired) {
+      expect(aliases).not.toContain(name);
+    }
+  });
+
+  // A bare alias is what the catalog actually stores for OLLAMA_CLOUD. The
+  // `:cloud` suffix normalizes away, so writing it is not wrong — but a size or
+  // date suffix does NOT normalize away, and that is where a typo hides.
+  it('writes every Ollama Cloud alias in its catalog form', () => {
+    const ollamaAliases = ROUTER_CHAIN_SEED_ENTRIES.filter(
+      (entry) => entry.provider === RouterProvider.OLLAMA_CLOUD,
+    ).map((entry) => entry.modelAlias);
+
+    expect(ollamaAliases.length).toBeGreaterThan(0);
+    for (const alias of ollamaAliases) {
+      expect(alias).toBe(normalizeModelId(alias, RouterProvider.OLLAMA_CLOUD));
+    }
   });
 
   // Quality escalation answers low confidence, which is not a provider failure.

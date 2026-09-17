@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
   BillingModel,
@@ -8,6 +8,7 @@ import {
 } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { RouterConfigurationRepository } from '../../routing/repositories/router-configuration.repository';
+import { ModelDeploymentRepository } from '../../routing/repositories/model-deployment.repository';
 import { RouterConfigurationAdminService } from '../services/router-configuration-admin.service';
 import type { RouterConfigurationDetail } from '../types/router-configuration-admin.types';
 import type { UpdateChainEntriesDto } from '../dto/update-chain-entries.dto';
@@ -41,8 +42,13 @@ const detail = (overrides: Partial<RouterConfigurationDetail> = {}): RouterConfi
 describe('RouterConfigurationAdminService', () => {
   let service: RouterConfigurationAdminService;
   let repository: Mocked<RouterConfigurationRepository>;
+  let deployments: Mocked<ModelDeploymentRepository>;
 
   beforeEach(async () => {
+    deployments = {
+      findEligibleForCloudRouting: vi.fn(),
+      findAllForChainSelection: vi.fn(),
+    } as unknown as Mocked<ModelDeploymentRepository>;
     repository = {
       listRevisions: vi.fn(),
       findRevisionById: vi.fn(),
@@ -58,6 +64,7 @@ describe('RouterConfigurationAdminService', () => {
       providers: [
         RouterConfigurationAdminService,
         { provide: RouterConfigurationRepository, useValue: repository },
+        { provide: ModelDeploymentRepository, useValue: deployments },
       ],
     }).compile();
 
@@ -218,5 +225,29 @@ describe('RouterConfigurationAdminService', () => {
       const result = await service.setEnabled('GLOBAL', true);
       expect(result.enabled).toBe(true);
     });
+  });
+});
+
+// The chain's model field is a picker over this list rather than free text: an
+// alias resolves to a deployment exactly or not at all, so a typed name that
+// has since been renamed produces an entry which is silently skipped.
+describe('RouterConfigurationAdminService selectable deployments', () => {
+  it('returns the catalog the chain form may choose from', async () => {
+    const catalog = [
+      { id: 'd1', provider: 'OLLAMA_CLOUD', providerModelId: 'glm-5.2', isValidated: true },
+    ];
+    const deployments = {
+      findAllForChainSelection: vi.fn().mockResolvedValue(catalog),
+    } as unknown as Mocked<ModelDeploymentRepository>;
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        RouterConfigurationAdminService,
+        { provide: RouterConfigurationRepository, useValue: {} },
+        { provide: ModelDeploymentRepository, useValue: deployments },
+      ],
+    }).compile();
+    const service = module.get<RouterConfigurationAdminService>(RouterConfigurationAdminService);
+
+    await expect(service.listSelectableDeployments()).resolves.toEqual(catalog);
   });
 });

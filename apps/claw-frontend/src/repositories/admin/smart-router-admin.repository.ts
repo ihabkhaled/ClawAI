@@ -5,6 +5,7 @@ import type {
   ListRouterConfigurationsQuery,
   PaginatedRouterConfigurations,
   RouterConfigurationDetail,
+  SelectableDeployment,
   UpdateChainEntriesRequest,
 } from '@/types/smart-router-admin.types';
 
@@ -27,6 +28,14 @@ function toListParams(query: ListRouterConfigurationsQuery): Record<string, stri
 export const smartRouterAdminRepository = {
   async list(query: ListRouterConfigurationsQuery = {}): Promise<PaginatedRouterConfigurations> {
     const response = await apiClient.get<PaginatedRouterConfigurations>(BASE, toListParams(query));
+    return response.data;
+  },
+
+  /** Every model an entry may name, so the chain form can be a picker. */
+  async listSelectableDeployments(): Promise<readonly SelectableDeployment[]> {
+    const response = await apiClient.get<readonly SelectableDeployment[]>(
+      `${BASE}/selectable-deployments`,
+    );
     return response.data;
   },
 

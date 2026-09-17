@@ -89,8 +89,21 @@ export function SmartRouterChainEntryRow({
             {!entry.enabled ? (
               <Badge variant="destructive">{t('smartRouterAdmin.entryRow.disabledBadge')}</Badge>
             ) : null}
+            {entry.deploymentId === null ? (
+              <Badge variant="destructive">{t('smartRouterAdmin.entryRow.unresolvedBadge')}</Badge>
+            ) : null}
           </div>
           <p className="truncate text-sm font-medium">{entry.modelAlias}</p>
+          {entry.deploymentId === null ? (
+            // An alias matches a deployment exactly or not at all - there is no
+            // family fallback, on purpose, so the page never shows a chain
+            // different from the one running. The cost is that one stale name
+            // removes an entry from the walk with nothing to see: three entries
+            // sat dead for a month while this page looked healthy.
+            <p className="text-destructive text-xs">
+              {t('smartRouterAdmin.entryRow.unresolvedHint')}
+            </p>
+          ) : null}
           <p className="text-muted-foreground text-xs">
             {entry.attemptTimeoutMs}
             {t('smartRouterAdmin.entryRow.timeoutSuffix')} · {entry.retries}x

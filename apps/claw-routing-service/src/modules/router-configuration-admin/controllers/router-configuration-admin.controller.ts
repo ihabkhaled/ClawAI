@@ -27,6 +27,7 @@ import {
 import type {
   RouterConfigurationDetail,
   RouterConfigurationSummary,
+  SelectableDeployment,
 } from '../types/router-configuration-admin.types';
 
 // Reuses the same class-level guard as RoutingController: config revisions and
@@ -52,6 +53,15 @@ export class RouterConfigurationAdminController {
     @Body(new ZodValidationPipe(createRouterConfigurationSchema)) dto: CreateRouterConfigurationDto,
   ): Promise<RouterConfigurationDetail> {
     return this.service.createDraft(dto);
+  }
+
+  // The models an admin may put in the chain. The chain's model field is a
+  // picker over this list rather than free text: an alias resolves to a
+  // deployment exactly or not at all, so a typed name that has been renamed
+  // produces an entry that silently never runs.
+  @Get('selectable-deployments')
+  async selectableDeployments(): Promise<readonly SelectableDeployment[]> {
+    return this.service.listSelectableDeployments();
   }
 
   @Post('enable')

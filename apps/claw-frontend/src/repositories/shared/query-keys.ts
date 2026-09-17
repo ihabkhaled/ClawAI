@@ -496,5 +496,9 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.smartRouterAdmin.lists(), filters] as const,
     detail: (id: string | null) => [...queryKeys.smartRouterAdmin.all, 'detail', id] as const,
+    // The model catalog an entry may name. Separate from the revision keys on
+    // purpose: publishing a revision does not change which models exist.
+    selectableDeployments: () =>
+      [...queryKeys.smartRouterAdmin.all, 'selectableDeployments'] as const,
   },
 } as const;

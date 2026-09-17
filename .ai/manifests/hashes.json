@@ -1,8 +1,8 @@
 {
   "generated": true,
   "hashes": {
-    ".ai/BOOTSTRAP.md": "0e3635bc",
-    ".ai/manifests/api-endpoints.json": "f69a4337",
+    ".ai/BOOTSTRAP.md": "dd72b8cb",
+    ".ai/manifests/api-endpoints.json": "80cbeeeb",
     ".ai/manifests/data-ownership.json": "3fe8b9d7",
     ".ai/manifests/docker-services.json": "255da189",
     ".ai/manifests/environment-variables.json": "5053fb77",
@@ -17,7 +17,7 @@
     ".ai/manifests/prisma-models.json": "d19ad8b0",
     ".ai/manifests/rabbitmq-events.json": "bcaeb411",
     ".ai/manifests/repository.json": "047d93d0",
-    ".ai/manifests/services.json": "15fc0b86",
+    ".ai/manifests/services.json": "3ff7f93f",
     ".ai/manifests/tests.json": "7eb49ab9",
     ".ai/manifests/workspace-dependency-graph.json": "2220c6ba",
     ".ai/manifests/workspaces.json": "31804648",
@@ -49,7 +49,7 @@
     "apps/claw-ollama-service/AGENTS.md": "20170257",
     "apps/claw-payment-service/AGENTS.md": "febc02e2",
     "apps/claw-research-service/AGENTS.md": "c3fa462b",
-    "apps/claw-routing-service/AGENTS.md": "f2054be9",
+    "apps/claw-routing-service/AGENTS.md": "37473186",
     "apps/claw-server-logs-service/AGENTS.md": "e33051a9",
     "apps/claw-workspace-service/AGENTS.md": "9b5c1117",
     "packages/shared-auth/AGENTS.md": "049afff2",

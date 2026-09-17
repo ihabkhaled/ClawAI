@@ -2518,6 +2518,11 @@
       },
       {
         "method": "GET",
+        "route": "/routing/configurations/selectable-deployments",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/routing/decisions/:id/legacy-vs-cloud",
         "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
       },
@@ -3318,5 +3323,5 @@
     ]
   },
   "generated": true,
-  "total": 656
+  "total": 657
 }

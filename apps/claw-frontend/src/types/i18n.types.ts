@@ -5757,6 +5757,8 @@ export type SmartRouterAdminLocaleTranslation = {
     provider: string;
     modelAlias: string;
     modelAliasPlaceholder: string;
+    modelUnvalidatedSuffix: string;
+    noModelsForProvider: string;
     role: string;
     billingModel: string;
     deploymentId: string;
@@ -5778,6 +5780,8 @@ export type SmartRouterAdminLocaleTranslation = {
     orderPrefix: string;
     timeoutSuffix: string;
     disabledBadge: string;
+    unresolvedBadge: string;
+    unresolvedHint: string;
   };
   revisions: {
     createDraft: string;
