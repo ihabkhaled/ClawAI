@@ -1,6 +1,6 @@
 {
   "name": "claw",
-  "version": "1.92.1",
+  "version": "1.93.0",
   "private": true,
   "description": "Claw — Local-first AI orchestration platform (microservices)",
   "workspaces": [
