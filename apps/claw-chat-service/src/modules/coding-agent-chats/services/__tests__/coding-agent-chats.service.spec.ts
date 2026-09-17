@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { CodingAgentChatsService } from '../coding-agent-chats.service';
 import { EntityNotFoundException } from '../../../../common/errors';
 import { SortOrder } from '../../../../common/enums';
@@ -15,15 +16,15 @@ const query = {
 
 function threadsRepository(thread: unknown): ChatThreadsRepository {
   return {
-    findAll: jest.fn().mockResolvedValue([]),
-    countAll: jest.fn().mockResolvedValue(0),
-    findById: jest.fn().mockResolvedValue(thread),
+    findAll: vi.fn().mockResolvedValue([]),
+    countAll: vi.fn().mockResolvedValue(0),
+    findById: vi.fn().mockResolvedValue(thread),
   } as unknown as ChatThreadsRepository;
 }
 
 function messagesRepository(): ChatMessagesRepository {
   return {
-    findAllByThreadIdAscending: jest.fn().mockResolvedValue([{ id: 'm1' }]),
+    findAllByThreadIdAscending: vi.fn().mockResolvedValue([{ id: 'm1' }]),
   } as unknown as ChatMessagesRepository;
 }
 

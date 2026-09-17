@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { ChatThreadsRepository } from '../chat-threads.repository';
 import { SortOrder } from '../../../../common/enums';
 import { ThreadOrigin } from '../../../../generated/prisma';
@@ -6,11 +7,11 @@ import type { PrismaService } from '../../../../infrastructure/database/prisma/p
 
 function repositoryWithSpy(): {
   repository: ChatThreadsRepository;
-  findMany: jest.Mock;
-  count: jest.Mock;
+  findMany: Mock;
+  count: Mock;
 } {
-  const findMany = jest.fn().mockResolvedValue([]);
-  const count = jest.fn().mockResolvedValue(0);
+  const findMany = vi.fn().mockResolvedValue([]);
+  const count = vi.fn().mockResolvedValue(0);
   const prisma = { chatThread: { findMany, count } } as unknown as PrismaService;
   return { repository: new ChatThreadsRepository(prisma), findMany, count };
 }
@@ -21,7 +22,9 @@ describe('thread listing is always narrowed to one origin', () => {
 
     await repository.findAll({ userId: 'user-1' }, 1, 20, 'updatedAt', SortOrder.DESC);
 
-    expect(findMany.mock.calls[0][0].where).toEqual(
+    const call = findMany.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].where).toEqual(
       expect.objectContaining({ userId: 'user-1', origin: ThreadOrigin.WEB }),
     );
   });
@@ -37,7 +40,9 @@ describe('thread listing is always narrowed to one origin', () => {
       SortOrder.DESC,
     );
 
-    expect(findMany.mock.calls[0][0].where.origin).toBe(ThreadOrigin.CODING_AGENT);
+    const call = findMany.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].where.origin).toBe(ThreadOrigin.CODING_AGENT);
   });
 
   it('counts the same set it lists', async () => {
@@ -47,7 +52,9 @@ describe('thread listing is always narrowed to one origin', () => {
 
     await repository.countAll({ userId: 'user-1' });
 
-    expect(count.mock.calls[0][0].where).toEqual(
+    const call = count.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].where).toEqual(
       expect.objectContaining({ origin: ThreadOrigin.WEB }),
     );
   });
