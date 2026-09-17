@@ -9909,7 +9909,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 97
+        "testFiles": 98
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -10639,7 +10639,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1250,
+    "totalTestFiles": 1251,
     "workspaceCount": 25
   }
 }

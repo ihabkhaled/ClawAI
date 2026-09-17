@@ -23,6 +23,7 @@ import { AIRoutePlannerManager } from '../../intelligence/managers/ai-route-plan
 import { SemanticIntentAnalyzerManager } from '../../intelligence/managers/semantic-intent-analyzer.manager';
 import { AI_ROUTE_PLANNER_MAX_CANDIDATES_IN_PROMPT } from '../../intelligence/constants/ai-route-planner.constants';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
+import { resolveRouterModel } from '../../intelligence/utilities/router-model-resolver.utility';
 import { detectHighRisk } from '../utilities/high-risk-detector.utility';
 import {
   orderCandidatesForPrompt,
@@ -758,6 +759,7 @@ export class RoutingService implements OnModuleInit {
         routingMode: decision.routingMode,
         semanticIntent,
         candidates: await this.buildPlannerCandidates(decision),
+        routerModel: await this.resolveRouterModel(),
       };
       const record = await this.aiRoutePlanner.plan(input);
       await this.decisionsRepository.updateAiRoutePlanByMessageId(messageId, toInputJson(record));
@@ -827,6 +829,31 @@ export class RoutingService implements OnModuleInit {
         `buildPlannerCandidates: registry read failed, using the deterministic pick only — ${(error as Error).message}`,
       );
       return this.buildFallbackPlannerCandidates(preferredKeys);
+    }
+  }
+
+  /**
+   * The planner model, chosen against what the Ollama connector actually has.
+   *
+   * A hardcoded OLLAMA_ROUTER_MODEL fails in both directions: pin a model the
+   * deployment never pulled and every plan fails silently until somebody reads
+   * the env var, or pin a small one and it stays the planner long after better
+   * models appear on the connector. The configured value is now a preference.
+   *
+   * Falls back to the configured name if the inventory cannot be read — the
+   * planner failing is already a handled path (deterministic routing), so this
+   * degrades rather than throws.
+   */
+  private async resolveRouterModel(): Promise<string> {
+    const configured = AppConfig.get().OLLAMA_ROUTER_MODEL;
+    try {
+      const installed = await this.promptBuilder.getInstalledModels();
+      return resolveRouterModel(configured, installed);
+    } catch (error) {
+      this.logger.warn(
+        `resolveRouterModel: inventory read failed, using configured "${configured}" — ${(error as Error).message}`,
+      );
+      return configured;
     }
   }
 

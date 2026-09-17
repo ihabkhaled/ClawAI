@@ -40,16 +40,19 @@ export class AIRoutePlannerManager {
   async plan(input: AIRoutePlannerInput): Promise<AIRoutePlanRecord> {
     const start = Date.now();
     const config = AppConfig.get();
+    // Resolved by the caller against the connector's real inventory; the
+    // configured name is the fallback, not the authority.
+    const routerModel = input.routerModel ?? config.OLLAMA_ROUTER_MODEL;
 
     if (!config.ROUTING_AI_ROUTE_PLANNER_ENABLED) {
-      return this.buildSkipped('SKIPPED_FLAG_DISABLED', config.OLLAMA_ROUTER_MODEL, start);
+      return this.buildSkipped('SKIPPED_FLAG_DISABLED', routerModel, start);
     }
 
     if (!input.semanticIntent) {
       // Planner relies on the Phase 2 analyzer output to be meaningful.
       // Without intent it would degenerate into "pick any model" — better
       // to skip and let the v1 hot path handle it.
-      return this.buildSkipped('SKIPPED_NO_ANALYSIS', config.OLLAMA_ROUTER_MODEL, start);
+      return this.buildSkipped('SKIPPED_NO_ANALYSIS', routerModel, start);
     }
 
     this.logger.debug(
@@ -67,11 +70,11 @@ export class AIRoutePlannerManager {
         ? `${AI_ROUTE_PLANNER_SYSTEM_PROMPT}\n\n${AI_ROUTE_PLANNER_RETRY_PROMPT}\n\n${userPrompt}\n\nPrevious malformed/invalid output:\n${lastRaw.slice(0, 500)}`
         : `${AI_ROUTE_PLANNER_SYSTEM_PROMPT}\n\n${userPrompt}`;
 
-      const callResult = await this.callOllama(fullPrompt, config.OLLAMA_ROUTER_MODEL);
+      const callResult = await this.callOllama(fullPrompt, routerModel);
       if (callResult.status !== 'SUCCESS' || callResult.raw === null) {
         return this.buildFailure(
           callResult.status,
-          config.OLLAMA_ROUTER_MODEL,
+          routerModel,
           attempts,
           start,
           callResult.failureReason,
@@ -96,7 +99,7 @@ export class AIRoutePlannerManager {
           status: 'SUCCESS',
           plan: parsed,
           validationIssues: [],
-          routerModel: config.OLLAMA_ROUTER_MODEL,
+          routerModel: routerModel,
           attempts,
           durationMs: Date.now() - start,
         };
@@ -112,7 +115,7 @@ export class AIRoutePlannerManager {
 
       return this.buildFailure(
         'VALIDATION_FAILED',
-        config.OLLAMA_ROUTER_MODEL,
+        routerModel,
         attempts,
         start,
         `Validation failed: ${validationIssues.map((i) => i.code).join(', ')}`,
@@ -123,7 +126,7 @@ export class AIRoutePlannerManager {
 
     return this.buildFailure(
       'INVALID_JSON_AFTER_RETRY',
-      config.OLLAMA_ROUTER_MODEL,
+      routerModel,
       attempts,
       start,
       'Parsed JSON did not match AIRoutePlan schema after retry',

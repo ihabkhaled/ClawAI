@@ -71,6 +71,11 @@ export type AIRoutePlannerInput = {
   activePolicyName?: string;
   providerHealth?: Record<string, boolean>;
   budgetClass?: string;
+  /// The model that should PLAN this route, resolved against what the Ollama
+  /// connector actually has. Absent falls back to the configured name — see
+  /// router-model-resolver.utility.ts for why the configured value is a
+  /// preference rather than a requirement.
+  routerModel?: string;
 };
 
 export type AIRoutePlanFallback = {
