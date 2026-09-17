@@ -31,6 +31,9 @@ export type CrossThreadSelection = {
   content: string;
   score: number;
   reasons: string[];
+  /// When it was said. Relevance decides which messages are eligible; this
+  /// decides which of them survive a full context pack — the newest do.
+  createdAt: Date;
 };
 
 /** Everything a generation used from other conversations, and why. */

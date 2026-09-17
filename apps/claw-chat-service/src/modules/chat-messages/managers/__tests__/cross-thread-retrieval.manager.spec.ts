@@ -56,6 +56,7 @@ function messageRow(
   threadId: string,
   content: string,
   title = 'Project ORCHID-731 architecture',
+  createdAt = new Date('2026-08-01T00:00:00Z'),
 ): CrossThreadMessageRow {
   return {
     messageId,
@@ -63,7 +64,7 @@ function messageRow(
     threadTitle: title,
     role: 'USER',
     content,
-    createdAt: new Date('2026-08-01T00:00:00Z'),
+    createdAt,
   };
 }
 
@@ -285,5 +286,94 @@ describe('CrossThreadRetrievalManager', () => {
       // 15% of 10,000.
       expect(result.estimatedTokens).toBeLessThanOrEqual(1500);
     });
+  });
+});
+
+describe('CrossThreadRetrievalManager — recency and isolation', () => {
+  const INTENT = 'what did we decide about Project ORCHID-731 architecture';
+
+  it('reads only the requesting user, in both queries', async () => {
+    // The privacy boundary is the USER, not the thread. Two filters rather
+    // than one because the thread ids reach the second query as an array from
+    // a caller, and a caller is exactly where a bug can substitute an id.
+    const { repo, calls } = repositoryWith({
+      candidates: [candidate('t-old', 'Project ORCHID-731 architecture')],
+      messages: [messageRow('m1', 't-old', 'Project ORCHID-731 architecture uses a queue')],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    await manager.retrieve({ ...BASE, enabled: true, intent: INTENT });
+
+    expect(calls.length).toBeGreaterThanOrEqual(2);
+    for (const call of calls) {
+      expect(call.userId).toBe('user-1');
+    }
+  });
+
+  it('keeps the newest messages when the pack is full', async () => {
+    // A relevance-ranked fill could spend the whole ceiling on old-but-wordy
+    // matches and drop last week's conversation on the same subject.
+    const older = messageRow(
+      'old',
+      't-old',
+      `Project ORCHID-731 architecture ${'old '.repeat(400)}`,
+      undefined,
+      new Date('2026-01-01T00:00:00Z'),
+    );
+    const newer = messageRow(
+      'new',
+      't-old',
+      'Project ORCHID-731 architecture was changed last week',
+      undefined,
+      new Date('2026-09-01T00:00:00Z'),
+    );
+    const { repo } = repositoryWith({
+      candidates: [candidate('t-old', 'Project ORCHID-731 architecture')],
+      messages: [older, newer],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    const result = await manager.retrieve({
+      ...BASE,
+      enabled: true,
+      intent: INTENT,
+      availableInputTokens: 900,
+    });
+
+    expect(result.selections.map((entry) => entry.messageId)).toContain('new');
+  });
+
+  it('orders what it returns newest first', async () => {
+    const { repo } = repositoryWith({
+      candidates: [candidate('t-old', 'Project ORCHID-731 architecture')],
+      messages: [
+        messageRow(
+          'a',
+          't-old',
+          'Project ORCHID-731 architecture note A',
+          undefined,
+          new Date('2026-02-01T00:00:00Z'),
+        ),
+        messageRow(
+          'c',
+          't-old',
+          'Project ORCHID-731 architecture note C',
+          undefined,
+          new Date('2026-09-01T00:00:00Z'),
+        ),
+        messageRow(
+          'b',
+          't-old',
+          'Project ORCHID-731 architecture note B',
+          undefined,
+          new Date('2026-05-01T00:00:00Z'),
+        ),
+      ],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    const result = await manager.retrieve({ ...BASE, enabled: true, intent: INTENT });
+
+    expect(result.selections.map((entry) => entry.messageId)).toEqual(['c', 'b', 'a']);
   });
 });

@@ -35,9 +35,15 @@ import { extractSalientTerms, searchTermsFor } from '../utilities/salient-terms.
  *
  * Three properties hold at all times, in this order of importance:
  *
- *   1. OFF BY DEFAULT. `useCrossThreadContext` defaults to false. Reaching into
- *      other conversations is a privacy decision and must be asked for.
- *   2. USER-SCOPED. Every read filters on userId, twice (ADR-087).
+ *   1. USER-SCOPED, ALWAYS. Every read filters on userId — once when choosing
+ *      candidate threads, once when reading their messages (ADR-087). Two
+ *      filters rather than one because the thread ids arrive as an array from
+ *      a caller, and a caller is exactly where a bug can substitute an id.
+ *      This can surface a user's own past conversations and nothing else.
+ *   2. OPT-OUT, NOT OPT-IN, since 2026-09-17. `useCrossThreadContext` defaults
+ *      to true: an assistant that forgets what you told it in another
+ *      conversation is the complaint this exists to answer. A thread can still
+ *      turn it off.
  *   3. FAILS SILENT. A retrieval error returns nothing and records why. The
  *      current conversation must stay usable when the enhancement breaks.
  */
@@ -121,10 +127,15 @@ export class CrossThreadRetrievalManager {
     const searchedThreadIds = scoredThreads.map((entry) => entry.candidate.threadId);
     const rows = await this.repository.findMessagesForThreads(args.userId, searchedThreadIds);
 
+    // Relevance decides WHICH messages are eligible; recency decides which of
+    // them survive the budget. Ranking the fill by score meant a token ceiling
+    // could be spent entirely on old-but-wordy matches while last week's
+    // conversation on the same subject was dropped — and "what did we decide
+    // recently" is the question people actually ask across threads.
     const scoredMessages = rows
       .map((row) => this.scoreMessage(row, args.intent))
       .filter((entry): entry is CrossThreadSelection => entry !== null)
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     if (scoredMessages.length === 0) {
       return {
@@ -136,12 +147,16 @@ export class CrossThreadRetrievalManager {
       };
     }
 
+    // Newest first, and STOP at the ceiling rather than skipping over an
+    // expensive message to fit a cheaper older one. Continuing would quietly
+    // reorder the pack by size, so a full pack would no longer be "the latest
+    // bunch" — it would be "the latest cheap bunch".
     const selections: CrossThreadSelection[] = [];
     let spent = 0;
     for (const entry of scoredMessages) {
       if (selections.length >= CROSS_THREAD_PROMPT_MESSAGE_LIMIT) break;
       const cost = estimateTokensFromText(entry.content);
-      if (spent + cost > tokenCeiling) continue;
+      if (spent + cost > tokenCeiling) break;
       selections.push(entry);
       spent += cost;
     }
@@ -221,6 +236,7 @@ export class CrossThreadRetrievalManager {
       content: row.content,
       score,
       reasons,
+      createdAt: row.createdAt,
     };
   }
 

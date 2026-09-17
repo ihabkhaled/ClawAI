@@ -53,11 +53,15 @@ model ChatThread {
   useMemory          Boolean     @default(true) @map("use_memory")
   useContext         Boolean     @default(true) @map("use_context")
   // === ADR-087 — cross-thread retrieval ===
-  // OFF by default, and deliberately so. Silently reaching into a user's other
-  // conversations is a privacy decision, not a quality tweak: it must be asked
-  // for. When off, nothing from another thread can enter the prompt except a
-  // durable memory the user's own memory preferences already allow.
-  useCrossThreadContext Boolean  @default(false) @map("use_cross_thread_context")
+  // ON by default as of 2026-09-17, at the product owner's explicit direction:
+  // an assistant that forgets what you told it in another conversation is the
+  // complaint this feature exists to answer.
+  //
+  // The privacy boundary is unchanged and is the USER, not the thread. Every
+  // read filters on userId twice — once when choosing candidate threads, once
+  // when reading their messages — so this can surface your own past
+  // conversations and nothing else. Per-thread opt-OUT remains.
+  useCrossThreadContext Boolean  @default(true) @map("use_cross_thread_context")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
 
