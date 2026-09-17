@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import type { ChatMessage } from '../../../../generated/prisma';
 import { ContextAssemblyManager } from '../context-assembly.manager';
 import { ContextComposerManager } from '../context-composer.manager';
@@ -11,7 +11,6 @@ vi.mock('../../../../common/utilities', () => ({
   runResearch: vi.fn(),
 }));
 
-
 // AppConfig exposes a STATIC get(); neither a bare automock nor importMock
 // hands that same static back, so the spec configured one object while the code
 // under test read another. A hoisted vi.fn keeps both on one mock.
@@ -22,7 +21,7 @@ vi.mock('../../../../app/config/app.config', () => ({
 }));
 
 const AppConfig = { get: appConfigGet };
-const { httpRequest } = await vi.importMock('../../../../common/utilities') as {
+const { httpRequest } = (await vi.importMock('../../../../common/utilities')) as {
   httpRequest: Mock;
 };
 
@@ -97,7 +96,8 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
     const manager = new ContextAssemblyManager(
       new ContextComposerManager(),
       new CrossThreadRetrievalManager(stubCrossThreadRepository()),
-    { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
+      { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
+      { hasResearchAccess: async () => true } as never,
     );
 
     const context = await manager.assemble('tenant-user-1', [userMessage], undefined, undefined, [

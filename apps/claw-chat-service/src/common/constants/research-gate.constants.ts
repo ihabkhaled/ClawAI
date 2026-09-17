@@ -30,5 +30,24 @@ Return ONLY the JSON object. No preamble. No code fence.`;
 /** A gate that takes longer than this is worse than no gate. */
 export const RESEARCH_GATE_TIMEOUT_MS = 6_000;
 
-/** Enough for one small JSON object; anything longer is the model misbehaving. */
+/**
+ * Enough for one small JSON object; anything longer is the model misbehaving.
+ *
+ * Only safe because the request disables thinking. A reasoning model with
+ * thinking on spends this entire budget before it writes a single character of
+ * the answer.
+ */
 export const RESEARCH_GATE_MAX_TOKENS = 64;
+
+/**
+ * How long one verdict stays reusable.
+ *
+ * The same message reaches the gate twice in a turn: once where research is
+ * started, once again in context assembly for the flows that go there. The
+ * window only has to outlive a single turn, so it is short enough that a
+ * repeated question later still gets a fresh reading.
+ */
+export const RESEARCH_GATE_CACHE_TTL_MS = 60_000;
+
+/** Entries kept before the oldest is dropped. */
+export const RESEARCH_GATE_CACHE_MAX_ENTRIES = 500;

@@ -258,6 +258,24 @@ export class AccessControlService {
     this.assertPermissionGranted(ent, Permission.RESEARCH_USE, userId);
   }
 
+  /**
+   * The same check as assertResearchAccess, as a question instead of a demand.
+   *
+   * AUTO means "decide for me", which is what the composer now sends on every
+   * message. Treating that as a research REQUEST made assertResearchAccess
+   * reject every free-plan message with PLAN_FEATURE_DISABLED — the user could
+   * not chat at all. AUTO asks this instead and simply stays off the web when
+   * the answer is no. Fails closed: any error means no research.
+   */
+  async hasResearchAccess(userId: string): Promise<boolean> {
+    try {
+      await this.assertResearchAccess(userId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private assertFeaturesEnabled(
     ent: UserEntitlements,
     features: PlanFeature | readonly PlanFeature[],

@@ -53,6 +53,17 @@ prevention), [rules/31](../rules/31-anti-gaming-and-semantic-compliance.md)
 scenarios
 [context/agent-self-regulation-scenarios.md](agent-self-regulation-scenarios.md).
 
+Verification, QA and testing tasks route the same way in every pack — and so
+does the verification step at the end of any other task. Nothing is done until it
+has been seen running ([rules/44](../rules/44-live-verification-before-done.md)),
+and while you look you are the whole QA team and you produce evidence
+([rules/49](../rules/49-qa-team-discipline-and-test-evidence.md)): every hat, ≥3
+widths per platform in both orientations plus RTL, every role _and_ plan tier,
+and an exact command, screenshot or log line behind every claim. Runbooks
+[skills/run-the-qa-team.md](../skills/run-the-qa-team.md) (the walk) and
+[skills/verify-a-batch-live.md](../skills/verify-a-batch-live.md) (the
+stale-container traps).
+
 Before committing, run the per-folder gates on the folders you touched (see
 [stack-and-toolchain.md](stack-and-toolchain.md)):
 

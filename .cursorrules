@@ -14,7 +14,13 @@ repositories; process.env outside AppConfig; console.log; logging/exposing
 secrets; user-facing text without i18n (13 locales); code without a test;
 shipping a change with no knowledge delta (docs/skills/rules/context in the SAME
 commit, rules/33); gating per-commit or all-workspace instead of once at the end,
-scoped (rules/34).
+scoped (rules/34); calling a change done without the whole QA-team walk and real
+evidence — Playwright + curl API lane + RBAC across roles AND plan tiers (free
+included) + UAT + regression + security + performance + the device matrix (>=3
+widths per platform, both orientations, plus RTL), each with the exact command and
+its real output, a screenshot per breakpoint, and the log line proving your branch
+ran; never fabricate a lane you did not run (rules/49, extends rules/44; runbook
+skills/run-the-qa-team.md).
 
 Validation (touched folders only):
   npm run affected:list

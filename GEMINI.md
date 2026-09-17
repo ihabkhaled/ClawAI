@@ -41,6 +41,12 @@ Release: `npm run release:preflight`.
 - Do NOT invent repository facts — derive them from `.ai/manifests/` and real code.
 - NEVER ship a change with no knowledge delta — docs/skills/rules/context ship in the SAME commit (rules/33).
 - NEVER gate per-commit or all-workspace; gate once at the end, scoped. Never re-prove an unchanged tree (rules/34).
+- NEVER call a change done without the whole QA-team walk and real evidence — Playwright browser
+  lane, `curl` API lane, RBAC across roles AND plan tiers (free included), UAT, regression, security,
+  performance, and the device matrix (≥3 widths per platform, both orientations, plus RTL). Exact
+  command + real output, screenshot per breakpoint, the log line proving your branch ran. Never
+  fabricate a result — an honestly skipped lane is fine, an imagined one is not. Extends rules/44
+  (rules/49; runbook `skills/run-the-qa-team.md`).
 
 ## Gemini emphasis
 

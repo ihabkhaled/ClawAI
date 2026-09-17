@@ -113,6 +113,14 @@ grep/knowledge commands that verify the finding.
   `@claw/shared-*` into a service: `package.json` + BOTH Dockerfiles + CI, and
   the stale-host-dist `ERR_MODULE_NOT_FOUND` crash it prevents (rule 14 §6)
 
+### Verification and QA (before calling anything done)
+
+- [`run-the-qa-team.md`](./run-the-qa-team.md) — every QA hat over one change:
+  the API lane, the RBAC/plan lane, the browser lane, the ≥3-widths-per-platform
+  responsive lane, and the evidence each one has to produce (rule 49); its
+  companion [`verify-a-batch-live.md`](./verify-a-batch-live.md) carries the
+  stale-container traps
+
 ### Legacy numbered skills (still authoritative)
 
 The original numbered runbooks remain in force and are cross-linked from the

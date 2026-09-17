@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ChatMessagesService } from '../services/chat-messages.service';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
@@ -162,6 +162,7 @@ describe('ChatMessagesService', () => {
       {
         assertCanSendMessage,
         assertResearchAccess: vi.fn(),
+        hasResearchAccess: vi.fn().mockResolvedValue(true),
         recordUsage: vi.fn(),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
       // ResearchEnricherManager was removed from this service on 2026-09-10:
@@ -171,6 +172,9 @@ describe('ChatMessagesService', () => {
       { tryHandleRouted: vi.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
         typeof ChatMessagesService
       >[19],
+      {
+        needsWeb: vi.fn().mockResolvedValue({ needsWeb: false, reason: 'test' }),
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[20],
     );
   });
 
@@ -458,11 +462,15 @@ describe('ChatMessagesService', () => {
         {
           assertCanSendMessage: vi.fn(),
           assertResearchAccess: vi.fn(),
+          hasResearchAccess: vi.fn().mockResolvedValue(true),
           recordUsage: vi.fn(),
         } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
         { tryHandleRouted: vi.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
           typeof ChatMessagesService
         >[19],
+        {
+          needsWeb: vi.fn().mockResolvedValue({ needsWeb: false, reason: 'test' }),
+        } as unknown as ConstructorParameters<typeof ChatMessagesService>[20],
       );
 
       const result = await localService.executeVerify(

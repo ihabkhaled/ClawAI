@@ -77,6 +77,16 @@ stated explicitly, never applied silently.
   ship in the **same commit** — [`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md).
 - **NEVER** re-run a gate you have already proven green over an unchanged tree, and
   never run all-workspace gates. Gate once, at the end, scoped — [`rules/34-gate-economy-and-machine-resources.md`](rules/34-gate-economy-and-machine-resources.md).
+- **NEVER** call a change done without walking it as the whole QA team and
+  producing real evidence — Playwright browser lane, `curl` API lane, RBAC across
+  roles **and** plan tiers (free included), UAT, regression, security, performance,
+  and the device matrix (≥3 widths per platform, both orientations, plus RTL). The
+  exact command and its real output, a screenshot per breakpoint, the log line
+  proving your branch ran. A lane you could not run is reported as not run; a
+  fabricated or assumed result is a prohibited sentence. Extends
+  [`rules/44-live-verification-before-done.md`](rules/44-live-verification-before-done.md) —
+  [`rules/49-qa-team-discipline-and-test-evidence.md`](rules/49-qa-team-discipline-and-test-evidence.md) ·
+  [`skills/run-the-qa-team.md`](skills/run-the-qa-team.md).
 
 Full list with rationale: [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md).
 
@@ -193,6 +203,7 @@ Full checklist with rationale: [`rules/05-infra-rules.md`](rules/05-infra-rules.
 | A model says it cannot read an attached file                    | [`rules/42-attachment-understanding.md`](rules/42-attachment-understanding.md) · [`skills/debug-an-attachment-the-model-cannot-read.md`](skills/debug-an-attachment-the-model-cannot-read.md) · [ADR-095](docs/13-adr/adr-095-attachment-text-extraction-pipeline.md)                                        |
 | Login errors, account-state leaks, transactional email          | [`rules/43-account-state-disclosure-and-transactional-email.md`](rules/43-account-state-disclosure-and-transactional-email.md) · [`skills/change-a-transactional-email.md`](skills/change-a-transactional-email.md) · [ADR-096](docs/13-adr/adr-096-login-failure-taxonomy-without-account-enumeration.md)   |
 | Proving a batch actually works (API + browser)                  | [`rules/44-live-verification-before-done.md`](rules/44-live-verification-before-done.md) · [`skills/verify-a-batch-live.md`](skills/verify-a-batch-live.md)                                                                                                                                                  |
+| Being the whole QA team, the device matrix, test evidence       | [`rules/49-qa-team-discipline-and-test-evidence.md`](rules/49-qa-team-discipline-and-test-evidence.md) · [`skills/run-the-qa-team.md`](skills/run-the-qa-team.md)                                                                                                                                            |
 | Local-currency display vs the amount actually charged           | [`rules/45-display-currency-versus-settlement-currency.md`](rules/45-display-currency-versus-settlement-currency.md) · [ADR-097](docs/13-adr/adr-097-display-fx-separate-from-settlement-fx.md) · [`docs/implementation/local-currency-display-plan.md`](docs/implementation/local-currency-display-plan.md) |
 | A user going over a daily/weekly/monthly token limit            | [`rules/46-token-quota-enforcement-and-window-integrity.md`](rules/46-token-quota-enforcement-and-window-integrity.md)                                                                                                                                                                                       |
 | A slow page, a huge JS chunk, or a barrel import question       | [`rules/47-client-bundle-weight-and-barrel-boundaries.md`](rules/47-client-bundle-weight-and-barrel-boundaries.md)                                                                                                                                                                                           |

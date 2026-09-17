@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (31663 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (32840 vs 6646 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (31663 vs 27454 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (32840 vs 28213 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -27,7 +27,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 2 identical headings (6104 vs 27454 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 2 identical headings (6646 vs 28213 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -7152,23 +7152,23 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 31663,
+          "bytes": 32840,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 6104,
+          "bytes": 6646,
           "file": "CODEX.md"
         },
         {
-          "bytes": 27454,
+          "bytes": 28213,
           "file": "cursor.md"
         },
         {
-          "bytes": 9684,
+          "bytes": 10239,
           "file": "AGENTS.md"
         },
         {
-          "bytes": 2919,
+          "bytes": 3414,
           "file": ".cursorrules"
         }
       ],
@@ -7204,11 +7204,11 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 23261,
+          "bytes": 23498,
           "file": "rules/00-master-rules.md"
         },
         {
-          "bytes": 5691,
+          "bytes": 6905,
           "file": "rules/00-non-negotiable-rules.md"
         },
         {
@@ -7420,7 +7420,7 @@
           "file": "rules/43-account-state-disclosure-and-transactional-email.md"
         },
         {
-          "bytes": 5029,
+          "bytes": 5393,
           "file": "rules/44-live-verification-before-done.md"
         },
         {
@@ -7440,13 +7440,17 @@
           "file": "rules/48-lint-and-test-only-what-changed.md"
         },
         {
-          "bytes": 5156,
+          "bytes": 6206,
+          "file": "rules/49-qa-team-discipline-and-test-evidence.md"
+        },
+        {
+          "bytes": 6156,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 23238,
+          "bytes": 23488,
           "file": "skills/00-index.md"
         },
         {
@@ -7486,7 +7490,7 @@
           "file": "skills/09-refactor-toolkit.md"
         },
         {
-          "bytes": 7017,
+          "bytes": 7410,
           "file": "skills/README.md"
         },
         {
@@ -7702,6 +7706,10 @@
           "file": "skills/run-gates-once-and-land.md"
         },
         {
+          "bytes": 5211,
+          "file": "skills/run-the-qa-team.md"
+        },
+        {
           "bytes": 4455,
           "file": "skills/security-review.md"
         },
@@ -7718,7 +7726,7 @@
           "file": "skills/trace-request-end-to-end.md"
         },
         {
-          "bytes": 4805,
+          "bytes": 5122,
           "file": "skills/verify-a-batch-live.md"
         },
         {
@@ -9692,7 +9700,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 144
+        "testFiles": 146
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10474,7 +10482,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1260,
+    "totalTestFiles": 1262,
     "workspaceCount": 25
   }
 }

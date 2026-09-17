@@ -12,6 +12,8 @@ import {
 import { allowedModelKeys, type PlanFeature, resolvePlanLimit } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
+import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
+import { ResearchGateService } from './research-gate.service';
 import { AppConfig } from '../../../app/config/app.config';
 import { classifyResearchWorkflow, recordGet, runResearch } from '../../../common/utilities';
 import {
@@ -136,6 +138,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly contextReceiptService: ContextReceiptService,
     private readonly accessControlService: AccessControlService,
     private readonly runtimeV2LoopManager: RuntimeV2LoopManager,
+    private readonly researchGate: ResearchGateService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -240,8 +243,14 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): Promise<Awaited<ReturnType<AccessControlService['assertCanSendMessage']>>> {
+    // AUTO is deliberately NOT a research request. The composer sends AUTO on
+    // every message, so demanding the paid unlock here rejected every free-plan
+    // message with PLAN_FEATURE_DISABLED. AUTO is resolved later, and the plan
+    // is consulted there: no unlock simply means it resolves to NONE.
     const requireFeature: PlanFeature | undefined =
-      dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE
+      dto.researchMode !== undefined &&
+      dto.researchMode !== ResearchMode.NONE &&
+      dto.researchMode !== ResearchMode.AUTO
         ? 'allowResearchMode'
         : undefined;
     // The prompt is charged against the allowance BEFORE the provider is
@@ -289,7 +298,11 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     researchMode: ResearchMode | undefined,
   ): Promise<void> {
-    if (researchMode === undefined || researchMode === ResearchMode.NONE) {
+    if (
+      researchMode === undefined ||
+      researchMode === ResearchMode.NONE ||
+      researchMode === ResearchMode.AUTO
+    ) {
       return;
     }
     await this.accessControlService.assertResearchAccess(userId);
@@ -303,15 +316,46 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): Promise<ResearchRunResponse | null> {
-    if (dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE) {
-      this.chatStreamService.emitResearchStarted(threadId, dto.researchMode);
-    }
+    // No research_started here. AUTO is only decided inside runResearchForIntent,
+    // and announcing a start that then resolves to NONE leaves the UI showing
+    // "researching" forever — there is no completion event to follow it.
     return this.runResearchForIntent(userId, userToken, threadId, dto.content, {
       mode: dto.researchMode,
       providerId: dto.researchProviderId,
       forcedProvider,
       forcedModel,
     });
+  }
+
+  /**
+   * Turns AUTO into a concrete decision; every other mode is the user's own
+   * choice and passes through untouched.
+   *
+   * A URL in the message skips the classifier — a pasted link is an explicit
+   * instruction to read that page, and asking a model to confirm it would only
+   * add latency to a decision the URL already made.
+   */
+  private async resolveAutoResearchMode(
+    userId: string,
+    mode: ResearchMode | string,
+    intent: string,
+  ): Promise<ResearchMode> {
+    if (mode !== ResearchMode.AUTO) {
+      return mode as ResearchMode;
+    }
+    if (detectPromptUrls(intent).length > 0) {
+      return ResearchMode.SEARCH_FETCH;
+    }
+    // Asked before the classifier, because a plan that does not unlock research
+    // makes the classifier's answer irrelevant and a model call is not free.
+    if (!(await this.accessControlService.hasResearchAccess(userId))) {
+      return ResearchMode.NONE;
+    }
+    const verdict = await this.researchGate.needsWeb(intent);
+    this.logger.log(
+      `research: AUTO -> ${verdict.needsWeb ? 'SEARCH' : 'NONE'} ("${verdict.reason}")`,
+    );
+    return verdict.needsWeb ? ResearchMode.SEARCH : ResearchMode.NONE;
   }
 
   /**
@@ -334,11 +378,25 @@ export class ChatMessagesService implements OnModuleInit {
     if (options.mode === undefined || options.mode === ResearchMode.NONE) {
       return null;
     }
+    // AUTO is decided HERE, because this is where research actually starts.
+    //
+    // The bundle produced below is attached to the user message, and every
+    // later stage reads it from that metadata — so a gate placed downstream in
+    // context assembly was never consulted. AUTO is not NONE, so before this
+    // check existed every ordinary turn ran a web search: typing "test" went
+    // to the internet.
+    const resolvedMode = await this.resolveAutoResearchMode(userId, options.mode, intent);
+    if (resolvedMode === ResearchMode.NONE) {
+      return null;
+    }
     if (userToken.length === 0) {
       this.logger.warn(`research: researchMode=${options.mode} but no bearer token; skipping`);
       return null;
     }
-    const workflow = classifyResearchWorkflow(options.mode as ResearchMode, intent);
+    // Announced only once research is actually going to run, so every start
+    // the user sees is followed by a completion.
+    this.chatStreamService.emitResearchStarted(threadId, resolvedMode);
+    const workflow = classifyResearchWorkflow(resolvedMode, intent);
     const config = AppConfig.get();
     const run = await runResearch(config.RESEARCH_SERVICE_URL, {
       userToken,
@@ -353,7 +411,7 @@ export class ChatMessagesService implements OnModuleInit {
     if (run === null) {
       this.logger.warn(`research: run failed for user ${userId} — continuing without evidence`);
     } else {
-      this.logger.log(`research: run ${run.id} completed (${options.mode})`);
+      this.logger.log(`research: run ${run.id} completed (${resolvedMode})`);
       const bundle = this.extractResearchBundle(run);
       this.chatStreamService.emitResearchCompleted(threadId, bundle.itemCount, bundle.toolsUsed);
     }

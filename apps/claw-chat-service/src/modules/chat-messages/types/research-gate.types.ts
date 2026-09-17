@@ -10,3 +10,8 @@ export type ResearchGateVerdict = {
 export type ResearchGateModelReply = {
   response?: string;
 };
+
+export interface ResearchGateCacheEntry {
+  verdict: ResearchGateVerdict;
+  expiresAt: number;
+}

@@ -38,6 +38,15 @@ Two rules govern the paths that move money, and they compose rather than overlap
 | [`28-billing-integrity-and-api-contracts.md`](28-billing-integrity-and-api-contracts.md) | Charging for something already delivered: prices, invoices, refunds, subscription entitlement, quota windows                    |
 | [`37-payg-credit-integrity.md`](37-payg-credit-integrity.md)                             | Spending a customer's money **before** they see a result: PAYG reservation, the affordability clamp, the credit ledger, top-ups |
 
+### Verification and QA rules
+
+Two rules govern proving a change works, and they compose rather than overlap:
+
+| Rule                                                                                       | Governs                                                                                                                      |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`44-live-verification-before-done.md`](44-live-verification-before-done.md)               | Whether the change was seen running at all: the API lane, the browser lane, and the stale-container traps that fake a pass   |
+| [`49-qa-team-discipline-and-test-evidence.md`](49-qa-team-discipline-and-test-evidence.md) | **Who you must be** while verifying and what you must produce: every QA hat, the device matrix, and evidence for every claim |
+
 ## Rule file format
 
 Every numbered file uses the same sections, in this order:

@@ -4,6 +4,11 @@
 
 **Governing rule**: [rules/44](../rules/44-live-verification-before-done.md)
 
+**Companion**: [skills/run-the-qa-team.md](run-the-qa-team.md) — the full QA walk
+(every hat, the RBAC/plan lane, the responsive matrix, the evidence block) under
+[rules/49](../rules/49-qa-team-discipline-and-test-evidence.md). This file is the
+mechanics: is the stack running your code, and how to drive each lane.
+
 ---
 
 ## 0. Is the stack up, and is it running YOUR code?

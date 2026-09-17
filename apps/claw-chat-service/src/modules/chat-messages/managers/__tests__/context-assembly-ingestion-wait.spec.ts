@@ -18,7 +18,7 @@ vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: vi.fn(() => ({ FILE_SERVICE_URL: 'https://file-service:4006' })) },
 }));
 
-const { httpRequest } = await vi.importMock('../../../../common/utilities') as {
+const { httpRequest } = (await vi.importMock('../../../../common/utilities')) as {
   httpRequest: Mock;
 };
 
@@ -39,7 +39,8 @@ describe('ContextAssemblyManager ingestion wait', () => {
     const manager = new ContextAssemblyManager(
       { select: vi.fn() } as never,
       { retrieve: vi.fn() } as never,
-    { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
+      { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
+      { hasResearchAccess: async () => true } as never,
     );
     wait = (fileIds, userId) =>
       (manager as unknown as { waitForIngestion: Waiter }).waitForIngestion(fileIds, userId);
@@ -147,8 +148,8 @@ describe('ContextAssemblyManager ingestion wait', () => {
 
     await settle(wait(['file-1', 'file-2'], 'user-1'));
 
-    const pollsForSettledFile = httpRequest.mock.calls.filter(
-      ([args]) => args.url.includes('file-1'),
+    const pollsForSettledFile = httpRequest.mock.calls.filter(([args]) =>
+      args.url.includes('file-1'),
     );
     expect(pollsForSettledFile).toHaveLength(1);
   });

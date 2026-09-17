@@ -46,6 +46,14 @@ Every workspace: all 17 `apps/claw-*` services, `apps/claw-frontend`, all six
     constraint gets a rule; both must be reachable from their index. Record the
     _why_, the rejected alternatives, and the operational consequence — see
     [33-knowledge-compounding-and-context-velocity.md](33-knowledge-compounding-and-context-velocity.md).
+14. **The QA team walk, with evidence.** No change is done until you have been
+    every QA hat over it — manual, API, UI, UX, responsive (≥3 widths per
+    platform, both orientations, plus RTL), UAT, regression, RBAC across roles
+    _and_ plan tiers, security, performance, stress — and every claim in the
+    report carries real evidence: the exact command and its output, a screenshot
+    per breakpoint, the log line proving the branch ran. A lane you could not run
+    is reported as not run; a result you did not observe is never written. See
+    [49-qa-team-discipline-and-test-evidence.md](49-qa-team-discipline-and-test-evidence.md).
 
 ## Prohibited patterns
 
@@ -61,6 +69,8 @@ Every workspace: all 17 `apps/claw-*` services, `apps/claw-frontend`, all six
 - "I'll document it in a follow-up." The follow-up does not happen.
 - A new `rules/*.md` or `skills/*.md` that no index references.
 - Hand-editing anything under `.ai/**` or the inventory snapshot.
+- "Tested and working" with nothing behind it — and reporting a check, a
+  screenshot, a number or a lane you did not actually run.
 
 ## Correct pattern
 
@@ -84,11 +94,14 @@ npx tsgo --noEmit && npm run lint && npm test && npm run build   # per-folder ga
 - Prohibited casts/unions → **ESLint** + **TS config** (`tsgo --noEmit`).
 - 13 → **Knowledge check** (`npm run knowledge:coverage`, CI + unit suite — kept
   out of the hooks so the commit path stays fast) + **Review checklist**.
+- 14 → **Review checklist** (the evidence block in the batch report) + **Unit
+  test** / **CI job** for whatever the walk turned into an automated check.
 
 ## Related skills
 
 - [04-debug-toolkit](../skills/04-debug-toolkit.md) — verify logs/DB before guessing.
 - [05-qa-toolkit](../skills/05-qa-toolkit.md) — the QA script bar.
+- [run-the-qa-team](../skills/run-the-qa-team.md) — every QA hat over a change, and the evidence each one produces.
 
 ## Related context
 
@@ -104,3 +117,5 @@ npx tsgo --noEmit && npm run lint && npm test && npm run build   # per-folder ga
       `git log --oneline origin/<branch>..HEAD` is empty.
 - [ ] No prohibited pattern present anywhere in the diff.
 - [ ] The knowledge delta landed in the same commit, and `npm run knowledge:coverage` passes.
+- [ ] The QA team walk was done against the running stack and every claim in the
+      report has its evidence line; any lane that could not run is named as unproven.

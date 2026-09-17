@@ -74,6 +74,7 @@
 | Lint and Test Only What Changed          | `lint-and-test-only-what-changed.md`           | The exact commands before a commit: eslint the changed FILES, test the touched workspace once (rule 48)                                                   |
 | Add a Shared Package to a Service        | `add-a-shared-package-to-a-service.md`         | Declare `@claw/shared-*` AND build it in both Dockerfiles; the stale-host-dist `ERR_MODULE_NOT_FOUND` crash it prevents (rule 14 §6)                      |
 | Finish Worktree/Branch with a PR         | `finish-worktree-branch-with-pr.md`            | The agent created a dedicated worktree + branch for a task; the task ends with a PR and release notes, not just pushed commits (rule 39)                  |
+| Run the Whole QA Team                    | `run-the-qa-team.md`                           | Before saying done on ANY change: every QA hat, the API/RBAC/browser/responsive lanes, and the evidence each one produces (rule 49)                       |
 
 ---
 

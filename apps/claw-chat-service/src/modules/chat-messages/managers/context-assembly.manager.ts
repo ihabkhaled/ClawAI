@@ -3,6 +3,7 @@ import { type RetrievalBundle } from '@claw/shared-types';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { ResearchGateService } from '../services/research-gate.service';
+import { AccessControlService } from '../services/access-control.service';
 import { AppConfig } from '../../../app/config/app.config';
 import {
   buildInterServiceAuthHeader,
@@ -68,6 +69,7 @@ export class ContextAssemblyManager {
     private readonly composer: ContextComposerManager,
     private readonly crossThread: CrossThreadRetrievalManager,
     private readonly researchGate: ResearchGateService,
+    private readonly accessControl: AccessControlService,
     @Optional() private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -352,6 +354,7 @@ ${evidence.snippet}`);
    * did not say", not to second-guess someone who did.
    */
   private async resolveResearchMode(
+    userId: string,
     mode: ResearchMode | undefined,
     intent: string,
     hasCrawlTarget: boolean,
@@ -362,6 +365,12 @@ ${evidence.snippet}`);
     if (hasCrawlTarget) {
       // The crawl runs regardless; asking the classifier would only add latency
       // to a decision the URL has already made.
+      return ResearchMode.NONE;
+    }
+    // AUTO skips the 403 that an explicit mode would raise, so the plan has to
+    // be checked here as well. Without it AUTO would be a way around the paid
+    // unlock: this path runs whenever no bundle was attached upstream.
+    if (!(await this.accessControl.hasResearchAccess(userId))) {
       return ResearchMode.NONE;
     }
     const verdict = await this.researchGate.needsWeb(intent);
@@ -409,7 +418,12 @@ ${evidence.snippet}`);
     //
     // A URL skips the gate entirely: a pasted link is an explicit instruction
     // to read that page and needs no interpretation.
-    const effectiveMode = await this.resolveResearchMode(research.mode, intent, hasCrawlTarget);
+    const effectiveMode = await this.resolveResearchMode(
+      userId,
+      research.mode,
+      intent,
+      hasCrawlTarget,
+    );
     if (effectiveMode === ResearchMode.NONE && !hasCrawlTarget) {
       return null;
     }

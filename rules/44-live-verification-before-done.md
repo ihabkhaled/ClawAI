@@ -3,10 +3,17 @@
 **Applies to**: every batch, every fix, every change that reaches a user or an
 API client. No exceptions for "small".
 
-**Related**: [rules/22](22-testing-and-coverage.md) ·
+**Related**: [rules/49](49-qa-team-discipline-and-test-evidence.md) ·
+[rules/22](22-testing-and-coverage.md) ·
 [rules/34](34-gate-economy-and-machine-resources.md) ·
 [rules/03](03-frontend-rules.md) ·
-[skills/verify-a-batch-live.md](../skills/verify-a-batch-live.md)
+[skills/verify-a-batch-live.md](../skills/verify-a-batch-live.md) ·
+[skills/run-the-qa-team.md](../skills/run-the-qa-team.md)
+
+This rule says a change must be seen running;
+[rules/49](49-qa-team-discipline-and-test-evidence.md) says **who you must be**
+while you look — every QA hat, the device matrix, every role and plan tier — and
+what evidence each one has to produce.
 
 ---
 

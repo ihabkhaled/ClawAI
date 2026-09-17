@@ -36,6 +36,15 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 6. **UI manual testing** — real browser: loading / empty / error / success states
 7. **Coverage ≥ 95%** on all new code
 8. **QA evidence** documented in `.claude/Integrations/<feature>__QA_output.md`
+9. **The whole QA-team walk, with evidence** (rules/49, which extends rules/44) — every
+   change, no exemptions: Playwright against `https://claw.local`, `curl` API lane, RBAC
+   across roles AND plan tiers (free included), UAT, regression, security, performance, and
+   the device matrix (≥3 widths per platform — mobile 360/390/430, tablet 768/820/1024,
+   desktop 1280/1440/1920 — both orientations, plus RTL). Evidence = exact command + real
+   output, a screenshot per breakpoint, the log line proving your branch ran, before/after
+   numbers for performance. Never fabricate or assume a lane: an honestly skipped lane is
+   fine, an imagined one is not. Anything hand-verified gets automated in the same batch.
+   Runbook: `skills/run-the-qa-team.md`.
 
 ## Mandatory rule
 
