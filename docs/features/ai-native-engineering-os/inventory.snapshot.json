@@ -5127,6 +5127,16 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "RESEARCH_GATE_FALLBACK_MODELS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "RESEARCH_GATE_MODEL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "RESEARCH_HEADLESS_RENDER_ENABLED"
       },
       {
@@ -10453,7 +10463,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 656,
-    "envVarCount": 355,
+    "envVarCount": 357,
     "eventCount": 178,
     "frontendRouteCount": 154,
     "localeCount": 13,

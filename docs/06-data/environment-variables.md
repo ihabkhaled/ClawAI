@@ -264,6 +264,8 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 | ---------------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                                                     |
 | `OLLAMA_ROUTER_MODEL`        | No       | `deepseek-v4-pro`          | Model that PLANS the route (never answers the user). Cloud, not local — routing quality caps answer quality. |
+| `RESEARCH_GATE_MODEL`        | No       | `gpt-oss:20b`              | Decides whether a turn needs the web, before the answering model runs. Cloud — production has no local Ollama. |
+| `RESEARCH_GATE_FALLBACK_MODELS` | No    | `deepseek-v4-pro,glm-5.2,qwen3:1.7b` | Tried in order when the primary is unreachable. Local is last. |
 | `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                                                          |
 | `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                                                        |
 | `OLLAMA_GENERATE_TIMEOUT_MS` | No       | `300000`                   | Timeout for non-router generation calls (ms)                                                                 |
