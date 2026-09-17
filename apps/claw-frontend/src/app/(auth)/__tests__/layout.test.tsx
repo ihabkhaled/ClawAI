@@ -17,6 +17,6 @@ describe('AuthLayout', () => {
       </LocaleProvider>,
     );
 
-    expect(screen.getByText(`Claw v${APP_VERSION}`)).toBeInTheDocument();
+    expect(screen.getByText(`ClawAI v${APP_VERSION}`)).toBeInTheDocument();
   });
 });

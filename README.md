@@ -7,11 +7,11 @@
   \_____|_|\__,_| \_/\_/
 ```
 
-# Claw
+# ClawAI
 
 **Local-first AI orchestration platform.**
 
-Claw is an open-source platform for orchestrating AI models across multiple providers -- cloud and local -- through a unified interface. It routes prompts intelligently, manages provider connections securely, and keeps your data under your control.
+ClawAI is an open-source platform for orchestrating AI models across multiple providers -- cloud and local -- through a unified interface. It routes prompts intelligently, manages provider connections securely, and keeps your data under your control.
 
 ---
 
