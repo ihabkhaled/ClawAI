@@ -1,3 +1,4 @@
+import { mergeProviderResults } from '../utilities/merge-provider-results.utility';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import {
@@ -50,6 +51,26 @@ export class SearchExecutionService {
     const attemptedProviders: string[] = [];
     const networkCallIds: string[] = [];
     try {
+      // Fan out first when more than one provider is configured: each one
+      // indexes a different slice of the web, so stopping at the first that
+      // answers throws away everything the others found. The chain below is
+      // kept as the degraded path — if every fan-out call fails, availability
+      // still matters more than breadth.
+      const fannedOut =
+        selection.candidates.length > 1
+          ? await this.executeAcrossProviders(
+              selection,
+              run,
+              dto,
+              maxResults,
+              attemptedProviders,
+              warnings,
+              networkCallIds,
+            )
+          : null;
+      if (fannedOut) {
+        return fannedOut;
+      }
       const result = await this.executeWithFallbackChain(
         selection,
         run,
@@ -83,6 +104,116 @@ export class SearchExecutionService {
         warnings,
         networkCallIds,
       );
+    }
+  }
+
+  /**
+   * Every provider at once, merged into one ranked list.
+   *
+   * Runs with allSettled rather than all: one dead provider must not lose the
+   * results the others returned, which is the whole failure mode a fallback
+   * chain was protecting against. Returns null when nothing came back at all
+   * so the caller can fall through to the chain.
+   *
+   * The run is completed ONCE, with the merged list — completing per provider
+   * would leave the run's stored results as whichever call happened to finish
+   * last.
+   */
+  private async executeAcrossProviders(
+    selection: {
+      primary: SearchProvider;
+      candidates: SearchProvider[];
+      mode: ProviderSelectionMode;
+    },
+    run: SearchRun,
+    dto: ExecuteSearchDto,
+    maxResults: number,
+    attemptedProviders: string[],
+    warnings: string[],
+    networkCallIds: string[],
+  ): Promise<SearchExecutionResult | null> {
+    const started = Date.now();
+    const settled = await Promise.allSettled(
+      selection.candidates.map(async (provider) => {
+        attemptedProviders.push(provider.name);
+        return this.fetchProviderResults(provider, run, dto, maxResults, networkCallIds, warnings);
+      }),
+    );
+
+    const resultSets: SearchResult[][] = [];
+    const contributing: SearchProvider[] = [];
+    for (const [index, outcome] of settled.entries()) {
+      const provider = selection.candidates[index];
+      if (outcome.status === 'fulfilled' && outcome.value !== null && provider !== undefined) {
+        resultSets.push(outcome.value);
+        contributing.push(provider);
+      }
+    }
+
+    if (resultSets.length === 0) {
+      return null;
+    }
+
+    const merged = mergeProviderResults(resultSets).slice(0, maxResults);
+    const latencyMs = Date.now() - started;
+    await this.completeRun(run, merged, latencyMs);
+    if (contributing.length > 1) {
+      warnings.push(
+        `Combined results from ${contributing.length} providers: ${contributing
+          .map((provider) => provider.name)
+          .join(', ')}`,
+      );
+    }
+
+    // Attribute the run to a provider that actually answered. Naming the
+    // primary when it failed and another provider supplied every result would
+    // hide the outage behind a healthy-looking run, and `fallbackUsed` is what
+    // tells an operator the preferred provider is not working.
+    const primaryContributed = contributing.some(
+      (provider) => provider.id === selection.primary.id,
+    );
+    const attributed = primaryContributed ? selection.primary : contributing[0];
+    if (attributed !== undefined && attributed.id !== run.providerId) {
+      await this.runRepository.update(run.id, { provider: { connect: { id: attributed.id } } });
+    }
+
+    return {
+      runId: run.id,
+      providerId: attributed?.id ?? selection.primary.id,
+      providerName: attributed?.name ?? selection.primary.name,
+      providerKind: attributed?.kind ?? selection.primary.kind,
+      selectionMode: selection.mode,
+      fallbackUsed: !primaryContributed,
+      attemptedProviders,
+      searchRequestCount: networkCallIds.length,
+      query: dto.query,
+      results: merged,
+      latencyMs,
+      warnings,
+    };
+  }
+
+  /** The adapter call alone — no run completion, so results can be merged. */
+  private async fetchProviderResults(
+    provider: SearchProvider,
+    run: SearchRun,
+    dto: ExecuteSearchDto,
+    maxResults: number,
+    networkCallIds: string[],
+    warnings: string[],
+  ): Promise<SearchResult[] | null> {
+    try {
+      const adapter = this.adapterFactory.getAdapter(provider.kind);
+      const context = this.buildMeteredContext(provider, run, networkCallIds);
+      const response = await adapter.search(
+        { query: dto.query, maxResults, filters: dto.filters },
+        context,
+      );
+      return this.applyDomainPolicy(response.results, provider);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      warnings.push(`Provider ${provider.name} failed: ${message}`);
+      return null;
     }
   }
 

@@ -132,12 +132,11 @@ describe('SearchExecutionService', () => {
       ['user-1', 'WEB_SEARCH', 'run-1:provider-firecrawl:1'],
       ['user-1', 'WEB_SEARCH', 'run-1:provider-exa:2'],
     ]);
-    expect(result.warnings).toEqual(
-      expect.arrayContaining([
-        'Provider Firecrawl failed: timeout',
-        'Fallback chain used: Firecrawl -> Exa',
-      ]),
-    );
+    // No "fallback chain" line any more: providers are queried in PARALLEL, so
+    // nothing fell back to anything. The fact that matters — the preferred
+    // provider is broken — is still reported, and fallbackUsed above still
+    // says the primary did not answer.
+    expect(result.warnings).toEqual(expect.arrayContaining(['Provider Firecrawl failed: timeout']));
   });
 
   it('honors an explicit provider selection', async () => {
