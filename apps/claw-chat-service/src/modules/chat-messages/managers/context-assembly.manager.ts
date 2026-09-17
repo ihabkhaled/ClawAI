@@ -2,6 +2,7 @@ import { Injectable, Logger, Optional } from '@nestjs/common';
 import { type RetrievalBundle } from '@claw/shared-types';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
+import { ResearchGateService } from '../services/research-gate.service';
 import { AppConfig } from '../../../app/config/app.config';
 import {
   buildInterServiceAuthHeader,
@@ -66,6 +67,7 @@ export class ContextAssemblyManager {
   constructor(
     private readonly composer: ContextComposerManager,
     private readonly crossThread: CrossThreadRetrievalManager,
+    private readonly researchGate: ResearchGateService,
     @Optional() private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -342,6 +344,30 @@ ${evidence.snippet}`);
     return { memories, contextPackItems, fileContents, workspaceCitations, researchRun };
   }
 
+  /**
+   * AUTO becomes a concrete mode; an explicit choice is returned untouched.
+   *
+   * The user overrode the default on purpose when they picked a mode, so the
+   * classifier is never consulted in that case — it exists to answer "the user
+   * did not say", not to second-guess someone who did.
+   */
+  private async resolveResearchMode(
+    mode: ResearchMode | undefined,
+    intent: string,
+    hasCrawlTarget: boolean,
+  ): Promise<ResearchMode> {
+    if (mode !== ResearchMode.AUTO) {
+      return mode ?? ResearchMode.NONE;
+    }
+    if (hasCrawlTarget) {
+      // The crawl runs regardless; asking the classifier would only add latency
+      // to a decision the URL has already made.
+      return ResearchMode.NONE;
+    }
+    const verdict = await this.researchGate.needsWeb(intent);
+    return verdict.needsWeb ? ResearchMode.SEARCH : ResearchMode.NONE;
+  }
+
   private async fetchResearchEvidence(
     userId: string,
     intent: string,
@@ -367,7 +393,24 @@ ${evidence.snippet}`);
     // the model answered about a page it had never seen.
     const promptUrls = detectPromptUrls(intent);
     const hasCrawlTarget = promptUrls.length > 0;
-    if (research.mode === ResearchMode.NONE && !hasCrawlTarget) {
+    // AUTO must be RESOLVED here, not merely compared against NONE.
+    //
+    // It is the default mode, and `AUTO !== NONE`, so an unresolved comparison
+    // let every ordinary message through to mapResearchModeToWorkflow, whose
+    // fallthrough is SEARCH_ONLY. The result was a web search on literally
+    // every chat turn — typing "test" went to the internet.
+    // AUTO asks a MODEL, not a keyword list.
+    //
+    // Keywords cannot separate "what's the latest on X" from "summarise the
+    // latest version of my essay", and the failure they produced was the
+    // expensive one: research running on ordinary chat, including a message
+    // that just said "test". The classifier reads the sentence, and it fails
+    // closed — anything it cannot answer means no web access.
+    //
+    // A URL skips the gate entirely: a pasted link is an explicit instruction
+    // to read that page and needs no interpretation.
+    const effectiveMode = await this.resolveResearchMode(research.mode, intent, hasCrawlTarget);
+    if (effectiveMode === ResearchMode.NONE && !hasCrawlTarget) {
       return null;
     }
     const config = AppConfig.get();
@@ -377,7 +420,7 @@ ${evidence.snippet}`);
     // pointed at and the wider web.
     const workflow = hasCrawlTarget
       ? ResearchWorkflow.SITE_CRAWL
-      : mapResearchModeToWorkflow(research.mode);
+      : mapResearchModeToWorkflow(effectiveMode);
     const run = await runResearch(config.RESEARCH_SERVICE_URL, {
       userToken: research.userToken,
       userId,

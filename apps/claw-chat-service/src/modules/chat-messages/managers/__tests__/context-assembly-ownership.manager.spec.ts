@@ -97,6 +97,7 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
     const manager = new ContextAssemblyManager(
       new ContextComposerManager(),
       new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+    { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
     );
 
     const context = await manager.assemble('tenant-user-1', [userMessage], undefined, undefined, [

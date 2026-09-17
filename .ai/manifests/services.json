@@ -40,7 +40,7 @@
         "TerminalCommand"
       ],
       "testFiles": 13,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "mongodb",
@@ -64,7 +64,7 @@
       "portSource": "shared-constants",
       "prismaModels": [],
       "testFiles": 21,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -109,7 +109,7 @@
         "WeightedUsageRecord"
       ],
       "testFiles": 95,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -136,8 +136,8 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 143,
-      "testRunner": "jest"
+      "testFiles": 144,
+      "testRunner": "vitest"
     },
     {
       "database": "mongodb",
@@ -157,7 +157,7 @@
       "portSource": "env-only (no constant)",
       "prismaModels": [],
       "testFiles": 6,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -181,7 +181,7 @@
         "ModelSyncRun"
       ],
       "testFiles": 25,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -203,7 +203,7 @@
         "FileGenerationEvent"
       ],
       "testFiles": 7,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -225,7 +225,7 @@
         "FileChunk"
       ],
       "testFiles": 20,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "none",
@@ -240,7 +240,7 @@
       "portSource": "shared-constants",
       "prismaModels": [],
       "testFiles": 4,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -263,7 +263,7 @@
         "ImageGenerationEvent"
       ],
       "testFiles": 12,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -290,7 +290,7 @@
         "RuntimeConfig"
       ],
       "testFiles": 17,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -322,7 +322,7 @@
         "WorkspaceObjectEmbedding"
       ],
       "testFiles": 14,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -350,7 +350,7 @@
         "RuntimeConfig"
       ],
       "testFiles": 18,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -391,7 +391,7 @@
         "WebhookEvent"
       ],
       "testFiles": 110,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -417,7 +417,7 @@
         "SearchRun"
       ],
       "testFiles": 31,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -461,7 +461,7 @@
         "TaxonomyRole"
       ],
       "testFiles": 98,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "mongodb",
@@ -482,7 +482,7 @@
       "portSource": "env-only (no constant)",
       "prismaModels": [],
       "testFiles": 7,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     },
     {
       "database": "postgresql",
@@ -531,7 +531,7 @@
         "WorkspaceSyncRun"
       ],
       "testFiles": 96,
-      "testRunner": "jest"
+      "testRunner": "vitest"
     }
   ]
 }

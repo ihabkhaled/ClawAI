@@ -39,6 +39,7 @@ describe('ContextAssemblyManager ingestion wait', () => {
     const manager = new ContextAssemblyManager(
       { select: vi.fn() } as never,
       { retrieve: vi.fn() } as never,
+    { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
     );
     wait = (fileIds, userId) =>
       (manager as unknown as { waitForIngestion: Waiter }).waitForIngestion(fileIds, userId);

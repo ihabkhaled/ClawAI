@@ -31,6 +31,7 @@ describe('ContextAssemblyManager attachment decoding', () => {
     const manager = new ContextAssemblyManager(
       { select: vi.fn() } as never,
       { retrieve: vi.fn() } as never,
+    { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
     );
     // decodeFileContent is private by design — it is an implementation detail of
     // prompt assembly — but it is the exact seam the defect lived in, so it is

@@ -3372,206 +3372,7 @@
         }
       ]
     },
-    "coverageThresholds": {
-      "claw-agent-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-agent-service/jest.config.ts",
-        "value": {
-          "branches": 10,
-          "functions": 10,
-          "lines": 10,
-          "statements": 10
-        }
-      },
-      "claw-audit-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-audit-service/jest.config.ts",
-        "value": {
-          "branches": 80,
-          "functions": 92,
-          "lines": 92,
-          "statements": 92
-        }
-      },
-      "claw-auth-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-auth-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 92,
-          "lines": 90,
-          "statements": 90
-        }
-      },
-      "claw-chat-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-chat-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 70,
-          "lines": 70,
-          "statements": 70
-        }
-      },
-      "claw-client-logs-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-client-logs-service/jest.config.ts",
-        "value": {
-          "branches": 80,
-          "functions": 92,
-          "lines": 92,
-          "statements": 92
-        }
-      },
-      "claw-connector-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-connector-service/jest.config.ts",
-        "value": {
-          "branches": 65,
-          "functions": 80,
-          "lines": 80,
-          "statements": 80
-        }
-      },
-      "claw-file-generation-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-file-generation-service/jest.config.ts",
-        "value": {
-          "branches": 65,
-          "functions": 80,
-          "lines": 70,
-          "statements": 75
-        }
-      },
-      "claw-file-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-file-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 80,
-          "lines": 80,
-          "statements": 80
-        }
-      },
-      "claw-health-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-health-service/jest.config.ts",
-        "value": {
-          "branches": 80,
-          "functions": 92,
-          "lines": 92,
-          "statements": 92
-        }
-      },
-      "claw-image-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-image-service/jest.config.ts",
-        "value": {
-          "branches": 50,
-          "functions": 70,
-          "lines": 55,
-          "statements": 55
-        }
-      },
-      "claw-llamacpp-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-llamacpp-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 70,
-          "lines": 70,
-          "statements": 70
-        }
-      },
-      "claw-memory-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-memory-service/jest.config.ts",
-        "value": {
-          "branches": 75,
-          "functions": 90,
-          "lines": 88,
-          "statements": 88
-        }
-      },
-      "claw-ollama-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-ollama-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 70,
-          "lines": 70,
-          "statements": 70
-        }
-      },
-      "claw-payment-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-payment-service/jest.config.ts",
-        "value": {
-          "branches": 92,
-          "functions": 92,
-          "lines": 92,
-          "statements": 92
-        }
-      },
-      "claw-research-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-research-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 70,
-          "lines": 70,
-          "statements": 70
-        }
-      },
-      "claw-routing-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-routing-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 70,
-          "lines": 70,
-          "statements": 70
-        }
-      },
-      "claw-server-logs-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-server-logs-service/jest.config.ts",
-        "value": {
-          "branches": 80,
-          "functions": 92,
-          "lines": 92,
-          "statements": 92
-        }
-      },
-      "claw-workspace-service": {
-        "confidence": "unverified",
-        "reason": "declared threshold; not the executed coverage result",
-        "source": "apps/claw-workspace-service/jest.config.ts",
-        "value": {
-          "branches": 70,
-          "functions": 70,
-          "lines": 70,
-          "statements": 70
-        }
-      }
-    },
+    "coverageThresholds": {},
     "dockerServices": [
       {
         "files": [
@@ -7593,7 +7394,7 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 18885,
+          "bytes": 20590,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
@@ -7625,7 +7426,7 @@
           "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
         },
         {
-          "bytes": 2072,
+          "bytes": 2978,
           "file": "rules/48-lint-and-test-only-what-changed.md"
         },
         {
@@ -9844,103 +9645,103 @@
     },
     "tests": {
       "@claw/shared-auth": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 1
       },
       "@claw/shared-constants": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 3
       },
       "@claw/shared-entitlements": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 8
       },
       "@claw/shared-rabbitmq": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 0
       },
       "@claw/shared-types": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 3
       },
       "@claw/shared-utilities": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 36
       },
       "claw-agent-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 13
       },
       "claw-audit-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 21
       },
       "claw-auth-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 95
       },
       "claw-chat-service": {
-        "runner": "jest",
-        "testFiles": 143
+        "runner": "vitest",
+        "testFiles": 144
       },
       "claw-client-logs-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 6
       },
       "claw-connector-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 25
       },
       "claw-file-generation-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 7
       },
       "claw-file-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 20
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 467
+        "testFiles": 471
       },
       "claw-health-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 4
       },
       "claw-image-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 12
       },
       "claw-llamacpp-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 17
       },
       "claw-memory-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 14
       },
       "claw-ollama-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 18
       },
       "claw-payment-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 110
       },
       "claw-research-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 31
       },
       "claw-routing-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 98
       },
       "claw-server-logs-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 7
       },
       "claw-workspace-service": {
-        "runner": "jest",
+        "runner": "vitest",
         "testFiles": 96
       }
     },
@@ -10663,7 +10464,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1255,
+    "totalTestFiles": 1260,
     "workspaceCount": 25
   }
 }

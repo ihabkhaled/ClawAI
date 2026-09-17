@@ -24,6 +24,10 @@ const appConfigSchema = z.object({
 
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
+  // The model that decides whether a turn needs the web. Small on purpose: it
+  // runs before EVERY reply, including the ones that need nothing, so its
+  // latency is pure overhead on ordinary chat.
+  RESEARCH_GATE_MODEL: z.string().min(1).default('qwen3:1.7b'),
   LLAMACPP_SERVICE_URL: z.string().min(1).default('http://llamacpp-service:4017'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   // Read for one thing only: the selected model's real context window, which

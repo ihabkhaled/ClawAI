@@ -1,106 +1,106 @@
 {
   "byWorkspace": {
     "@claw/shared-auth": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 1
     },
     "@claw/shared-constants": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 3
     },
     "@claw/shared-entitlements": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 8
     },
     "@claw/shared-rabbitmq": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 0
     },
     "@claw/shared-types": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 3
     },
     "@claw/shared-utilities": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 36
     },
     "claw-agent-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 13
     },
     "claw-audit-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 21
     },
     "claw-auth-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 95
     },
     "claw-chat-service": {
-      "runner": "jest",
-      "testFiles": 143
+      "runner": "vitest",
+      "testFiles": 144
     },
     "claw-client-logs-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 6
     },
     "claw-connector-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 25
     },
     "claw-file-generation-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 7
     },
     "claw-file-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 20
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 467
+      "testFiles": 471
     },
     "claw-health-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 4
     },
     "claw-image-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 12
     },
     "claw-llamacpp-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 17
     },
     "claw-memory-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 14
     },
     "claw-ollama-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 18
     },
     "claw-payment-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 110
     },
     "claw-research-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 31
     },
     "claw-routing-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 98
     },
     "claw-server-logs-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 7
     },
     "claw-workspace-service": {
-      "runner": "jest",
+      "runner": "vitest",
       "testFiles": 96
     }
   },
   "generated": true,
-  "total": 1255
+  "total": 1260
 }

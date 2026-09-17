@@ -254,7 +254,7 @@
       "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
     },
     {
-      "bytes": 18885,
+      "bytes": 20590,
       "file": "rules/40-chat-surface-layout-and-composer.md"
     },
     {
@@ -286,7 +286,7 @@
       "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
     },
     {
-      "bytes": 2072,
+      "bytes": 2978,
       "file": "rules/48-lint-and-test-only-what-changed.md"
     },
     {

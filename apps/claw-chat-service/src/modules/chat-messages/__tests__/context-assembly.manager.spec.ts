@@ -26,6 +26,7 @@ describe('ContextAssemblyManager', () => {
   const manager = new ContextAssemblyManager(
     new ContextComposerManager(),
     new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+  { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
   );
 
   const buildContext = (): AssembledContext => ({
@@ -449,6 +450,7 @@ describe('ContextAssemblyManager memory selection', () => {
   const manager = new ContextAssemblyManager(
     new ContextComposerManager(),
     new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+  { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
   );
 
   const memory = (

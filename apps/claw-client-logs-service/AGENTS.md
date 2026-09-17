@@ -22,7 +22,7 @@ npm run dev
 - Prisma models: none
 - Mongoose models: ClientLog
 - API endpoints: 6 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 6 (jest)
+- Test files: 6 (vitest)
 - Depends on: @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
