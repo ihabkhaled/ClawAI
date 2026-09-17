@@ -18,12 +18,16 @@ function buildMessage(
 
 describe('mapCrawlPhaseToResearchProgress', () => {
   it.each([
-    ['started', AiStreamStage.RESEARCH_STARTED],
-    ['robots', AiStreamStage.RESEARCH_STARTED],
-    ['sitemap', AiStreamStage.RESEARCH_SOURCES_FOUND],
-    ['feed', AiStreamStage.RESEARCH_SOURCES_FOUND],
-    ['page', AiStreamStage.RESEARCH_FETCHING],
-    ['completed', AiStreamStage.RESEARCH_COMPLETED],
+    // CRAWL_*, not RESEARCH_*. Crawling a page the user named and searching
+    // the web are different operations at different times; mapping crawl onto
+    // the research stages left the UI able to show only one undifferentiated
+    // "researching" blob while both were happening.
+    ['started', AiStreamStage.CRAWL_STARTED],
+    ['robots', AiStreamStage.CRAWL_STARTED],
+    ['sitemap', AiStreamStage.CRAWL_DISCOVERING],
+    ['feed', AiStreamStage.CRAWL_DISCOVERING],
+    ['page', AiStreamStage.CRAWL_READING_PAGE],
+    ['completed', AiStreamStage.CRAWL_COMPLETED],
   ] as const)('maps phase=%s to stage=%s', (phase, stage) => {
     const result = mapCrawlPhaseToResearchProgress(buildMessage({ phase }));
 

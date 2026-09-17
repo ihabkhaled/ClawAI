@@ -396,6 +396,10 @@ export type TranslationDictionary = {
         toolCalling: string;
         critiquing: string;
         judging: string;
+        crawlStarted: string;
+        crawlDiscovering: string;
+        crawlReadingPage: string;
+        crawlCompleted: string;
         researchStarted: string;
         researchSourcesFound: string;
         researchFetching: string;

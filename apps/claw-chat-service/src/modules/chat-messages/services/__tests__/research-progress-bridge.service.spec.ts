@@ -44,7 +44,7 @@ describe('ResearchProgressBridgeService', () => {
     expect(subscriber.subscribe).toHaveBeenCalledWith(RESEARCH_CRAWL_PROGRESS_CHANNEL);
   });
 
-  it('forwards a well-formed page tick to the correlationId thread as RESEARCH_FETCHING', async () => {
+  it('forwards a well-formed page tick to the correlationId thread as CRAWL_READING_PAGE', async () => {
     const { service, emitResearchProgress, deliver } = build();
     await service.onModuleInit();
 
@@ -62,7 +62,7 @@ describe('ResearchProgressBridgeService', () => {
     expect(emitResearchProgress).toHaveBeenCalledWith(
       'thread-1',
       expect.objectContaining({
-        stage: AiStreamStage.RESEARCH_FETCHING,
+        stage: AiStreamStage.CRAWL_READING_PAGE,
         description: 'Fetched https://example.com/about',
       }),
     );

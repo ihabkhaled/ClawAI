@@ -22,6 +22,12 @@ export enum AiStreamStage {
   // can show live web-research activity (search, per-URL fetch, completion,
   // failure) instead of a generic "thinking" spinner. Stages mirror the
   // RuntimeProgressStage.RESEARCH_* family on the cross-service envelope.
+  // Crawl is its own phase, not a flavour of research — see
+  // RuntimeProgressStage.CRAWL_* for why they are not merged.
+  CRAWL_STARTED = 'crawl_started',
+  CRAWL_DISCOVERING = 'crawl_discovering',
+  CRAWL_READING_PAGE = 'crawl_reading_page',
+  CRAWL_COMPLETED = 'crawl_completed',
   RESEARCH_STARTED = 'research_started',
   RESEARCH_SOURCES_FOUND = 'research_sources_found',
   RESEARCH_FETCHING = 'research_fetching',

@@ -3,13 +3,18 @@ import type { ResearchProgressEmitInput } from '../types/stream.types';
 import type { ResearchCrawlProgressMessage } from '@claw/shared-types';
 
 /**
- * Maps a SITE_CRAWL progress tick (research-service's own `phase` vocabulary)
- * onto the four-stage `AiStreamStage` lifecycle the frontend already renders
- * via `emitResearchProgress`. Not a 1:1 mapping — `AiStreamStage` was
- * designed for the search-then-fetch enricher, which has no direct
- * "checking robots.txt" equivalent, so `started`/`robots` both read as
- * RESEARCH_STARTED and the human-readable `message` (carried as a
- * `description` override) is what actually distinguishes them for the user.
+ * Maps a SITE_CRAWL progress tick onto the CRAWL_* stage lifecycle.
+ *
+ * These used to be mapped onto RESEARCH_*, which meant crawling and searching
+ * arrived at the UI as the same stage and the user saw one undifferentiated
+ * "researching" blob covering two different operations. Crawling a page the
+ * user named and searching the web happen at different times and deserve to be
+ * shown as what they are.
+ *
+ * `started` and `robots` both read as CRAWL_STARTED — fetching robots.txt is
+ * setup, not a phase a user needs named — and the human-readable `message`
+ * carried as a `description` override distinguishes them for anyone watching
+ * closely.
  */
 export function mapCrawlPhaseToResearchProgress(
   payload: ResearchCrawlProgressMessage,
@@ -28,13 +33,13 @@ function crawlPhaseStage(phase: ResearchCrawlProgressMessage['phase']): AiStream
   switch (phase) {
     case 'started':
     case 'robots':
-      return AiStreamStage.RESEARCH_STARTED;
+      return AiStreamStage.CRAWL_STARTED;
     case 'sitemap':
     case 'feed':
-      return AiStreamStage.RESEARCH_SOURCES_FOUND;
+      return AiStreamStage.CRAWL_DISCOVERING;
     case 'page':
-      return AiStreamStage.RESEARCH_FETCHING;
+      return AiStreamStage.CRAWL_READING_PAGE;
     case 'completed':
-      return AiStreamStage.RESEARCH_COMPLETED;
+      return AiStreamStage.CRAWL_COMPLETED;
   }
 }
