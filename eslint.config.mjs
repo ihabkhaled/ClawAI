@@ -83,7 +83,7 @@ export default tseslint.config(
       // `include`, so the type-aware parser cannot resolve a tsconfigRootDir
       // for them and errors before any rule runs. jest.config.ts was ignored
       // for exactly this reason; its Vitest replacements need the same.
-      '**/vitest.config.ts',
+      '**/vitest*.config.ts',
       '**/vitest.setup.ts',
     ],
   },
