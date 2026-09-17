@@ -2393,6 +2393,11 @@
       },
       {
         "method": "GET",
+        "route": "/internal/assistant-models/:role/candidates",
+        "source": "apps/claw-routing-service/src/modules/assistant-models/controllers/assistant-models-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/internal/router-models/context-window/:provider/:model",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-context-window-internal.controller.ts"
       },
@@ -2455,6 +2460,16 @@
         "method": "GET",
         "route": "/routing/adaptive-insights",
         "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/assistant-models/:role",
+        "source": "apps/claw-routing-service/src/modules/assistant-models/controllers/assistant-models.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/routing/assistant-models/:role",
+        "source": "apps/claw-routing-service/src/modules/assistant-models/controllers/assistant-models.controller.ts"
       },
       {
         "method": "GET",
@@ -3323,5 +3338,5 @@
     ]
   },
   "generated": true,
-  "total": 657
+  "total": 660
 }

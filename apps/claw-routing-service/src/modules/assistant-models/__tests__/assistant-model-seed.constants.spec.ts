@@ -1,0 +1,39 @@
+import { AssistantModelRole, RouterProvider } from '../../../generated/prisma';
+import { ASSISTANT_MODEL_SEED_ENTRIES } from '../constants/assistant-model-seed.constants';
+
+describe('assistant model seed', () => {
+  it('orders the research gate candidates uniquely and contiguously from 1', () => {
+    const orders = ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (entry) => entry.role === AssistantModelRole.RESEARCH_GATE,
+    ).map((entry) => entry.order);
+
+    expect(new Set(orders).size).toBe(orders.length);
+    expect([...orders].sort((a, b) => a - b)).toEqual(
+      Array.from({ length: orders.length }, (_, index) => index + 1),
+    );
+  });
+
+  // The gate fails closed: a candidate it cannot reach answers "no web". A
+  // local model first on a production box that runs no local Ollama therefore
+  // does not fail loudly, it silently turns automatic research off.
+  it('tries a cloud model before the local one', () => {
+    const gate = ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (entry) => entry.role === AssistantModelRole.RESEARCH_GATE,
+    ).sort((left, right) => left.order - right.order);
+
+    expect(gate[0]?.provider).toBe(RouterProvider.OLLAMA_CLOUD);
+
+    const firstLocal = gate.findIndex((entry) => entry.provider === RouterProvider.OLLAMA);
+    const firstCloud = gate.findIndex((entry) => entry.provider === RouterProvider.OLLAMA_CLOUD);
+    expect(firstCloud).toBeLessThan(firstLocal);
+  });
+
+  // It runs before EVERY reply, including the ones that need nothing, so its
+  // budget is paid on messages that gain nothing from it.
+  it('keeps every candidate cheap', () => {
+    for (const entry of ASSISTANT_MODEL_SEED_ENTRIES) {
+      expect(entry.maxTokens).toBeLessThanOrEqual(128);
+      expect(entry.timeoutMs).toBeLessThanOrEqual(10_000);
+    }
+  });
+});

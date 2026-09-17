@@ -377,3 +377,61 @@ export type UseSmartRouterSelectableDeploymentsResult = {
   isLoading: boolean;
   isError: boolean;
 };
+
+/** A model job that runs beside routing rather than inside it. */
+export const ASSISTANT_MODEL_ROLE_RESEARCH_GATE = 'RESEARCH_GATE';
+
+/** One configured candidate for an assistant model role. */
+export type AssistantModelRecord = {
+  id: string;
+  role: string;
+  order: number;
+  enabled: boolean;
+  provider: RouterProvider;
+  modelAlias: string;
+  deploymentId: string | null;
+  timeoutMs: number;
+  maxTokens: number;
+};
+
+export type AssistantModelInput = {
+  provider: RouterProvider;
+  modelAlias: string;
+  deploymentId?: string;
+  enabled: boolean;
+  timeoutMs: number;
+  maxTokens: number;
+};
+
+export type ReplaceAssistantModelsRequest = {
+  entries: readonly AssistantModelInput[];
+};
+
+export type UseAssistantModelsResult = {
+  entries: readonly AssistantModelRecord[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  replace: (entries: readonly AssistantModelInput[]) => void;
+  isReplacePending: boolean;
+};
+
+export type SmartRouterAssistantTabProps = {
+  t: TranslateFunction;
+};
+
+export type UseAssistantModelAddFormResult = {
+  provider: RouterProvider;
+  setProvider: (provider: RouterProvider) => void;
+  modelAlias: string;
+  setModelAlias: (modelAlias: string) => void;
+  modelOptions: readonly SelectableDeployment[];
+  buildInput: () => AssistantModelInput | null;
+  reset: () => void;
+};
+
+export type SmartRouterAssistantAddFormProps = {
+  onAdd: (input: AssistantModelInput) => void;
+  isPending: boolean;
+  t: TranslateFunction;
+};

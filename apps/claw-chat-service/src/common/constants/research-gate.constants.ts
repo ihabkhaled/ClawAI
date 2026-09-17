@@ -51,3 +51,19 @@ export const RESEARCH_GATE_CACHE_TTL_MS = 60_000;
 
 /** Entries kept before the oldest is dropped. */
 export const RESEARCH_GATE_CACHE_MAX_ENTRIES = 500;
+
+/** Where the configured candidates come from. */
+export const RESEARCH_GATE_CANDIDATES_PATH =
+  '/api/v1/internal/assistant-models/RESEARCH_GATE/candidates';
+
+/**
+ * How long the candidate list is reused.
+ *
+ * Long enough that the gate does not fetch configuration on every message,
+ * short enough that an admin changing the model on the Smart Router page sees
+ * it take effect without a restart.
+ */
+export const RESEARCH_GATE_CANDIDATES_TTL_MS = 60_000;
+
+/** A configuration lookup must not cost more than the classifier call itself. */
+export const RESEARCH_GATE_CANDIDATES_TIMEOUT_MS = 3_000;

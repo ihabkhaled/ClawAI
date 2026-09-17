@@ -144,6 +144,7 @@
       "SearchRun"
     ],
     "claw-routing-service": [
+      "AssistantModel",
       "CapabilityEvidence",
       "ModelCostVersion",
       "ModelDeployment",

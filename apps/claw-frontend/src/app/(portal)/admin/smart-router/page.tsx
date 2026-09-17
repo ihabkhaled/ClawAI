@@ -3,6 +3,7 @@
 import { Coins } from 'lucide-react';
 import Link from 'next/link';
 
+import { SmartRouterAssistantTab } from '@/components/admin/smart-router/smart-router-assistant-tab';
 import { SmartRouterChainTab } from '@/components/admin/smart-router/smart-router-chain-tab';
 import { SmartRouterCompareTab } from '@/components/admin/smart-router/smart-router-compare-tab';
 import { SmartRouterOverviewTab } from '@/components/admin/smart-router/smart-router-overview-tab';
@@ -15,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/constants/routes.constants';
 import {
   SMART_ROUTER_TAB_CHAIN,
+  SMART_ROUTER_TAB_ASSISTANT,
   SMART_ROUTER_TAB_COMPARE,
   SMART_ROUTER_TAB_OVERVIEW,
   SMART_ROUTER_TAB_PUBLISH,
@@ -61,7 +63,14 @@ export default function AdminSmartRouterPage(): React.ReactElement {
           <TabsTrigger value={SMART_ROUTER_TAB_COMPARE}>
             {controller.t('smartRouterAdmin.tabs.compare')}
           </TabsTrigger>
+          <TabsTrigger value={SMART_ROUTER_TAB_ASSISTANT}>
+            {controller.t('smartRouterAdmin.tabs.assistant')}
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value={SMART_ROUTER_TAB_ASSISTANT} className="mt-4">
+          <SmartRouterAssistantTab t={controller.t} />
+        </TabsContent>
 
         <TabsContent value={SMART_ROUTER_TAB_OVERVIEW} className="mt-4">
           <SmartRouterOverviewTab {...controller.overview} t={controller.t} />

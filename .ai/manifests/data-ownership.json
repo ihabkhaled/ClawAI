@@ -226,6 +226,7 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "AssistantModel",
         "CapabilityEvidence",
         "ModelCostVersion",
         "ModelDeployment",

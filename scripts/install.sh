@@ -1468,14 +1468,10 @@ OLLAMA_ROUTER_MODEL=deepseek-v4-pro
 OLLAMA_ROUTER_TIMEOUT_MS=20000
 
 # ── Research gate ────────────────────────────────────────────────────────────
-# The model that decides whether a chat turn needs the web, asked BEFORE the
-# answering model runs. Cloud by default: production runs no local Ollama, and
-# a local model there would fail every call, fail closed, and make automatic
-# research silently never fire.
-RESEARCH_GATE_MODEL=gpt-oss:20b
-# Tried in order when the primary is unreachable. The local 1.7B is last — the
-# right choice on a laptop, absent in production.
-RESEARCH_GATE_FALLBACK_MODELS=deepseek-v4-pro,glm-5.2,qwen3:1.7b
+# NOTE: the research gate's model is NOT set here any more. Which model decides
+# whether a chat turn needs the web is an operator choice, changeable from the
+# Smart Router admin page without a redeploy, and checked against the real model
+# catalog - a model named in an env var is validated against nothing.
 ROUTER_COMPACT_PROMPT=true
 OLLAMA_GENERATE_TIMEOUT_MS=300000
 # Native /api/chat — the tool-calling surface. Own budget: an agent turn is a

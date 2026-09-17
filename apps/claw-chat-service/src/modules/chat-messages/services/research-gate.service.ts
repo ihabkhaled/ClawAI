@@ -4,13 +4,15 @@ import { AppConfig } from '../../../app/config/app.config';
 import {
   RESEARCH_GATE_CACHE_MAX_ENTRIES,
   RESEARCH_GATE_CACHE_TTL_MS,
-  RESEARCH_GATE_MAX_TOKENS,
+  RESEARCH_GATE_CANDIDATES_PATH,
+  RESEARCH_GATE_CANDIDATES_TIMEOUT_MS,
+  RESEARCH_GATE_CANDIDATES_TTL_MS,
   RESEARCH_GATE_SYSTEM_PROMPT,
-  RESEARCH_GATE_TIMEOUT_MS,
 } from '../../../common/constants/research-gate.constants';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import type {
   ResearchGateCacheEntry,
+  ResearchGateCandidate,
   ResearchGateModelReply,
   ResearchGateVerdict,
 } from '../types/research-gate.types';
@@ -37,10 +39,15 @@ import { parseResearchGateVerdict } from '../utilities/research-gate.utility';
  * A URL in the message does NOT come here — a pasted link is an explicit
  * instruction to read that page and needs no interpretation.
  *
- * Candidates are tried in order and are CLOUD-FIRST. Production runs no local
- * Ollama, so a local default there fails every call, fails closed, and makes
- * AUTO research silently never fire — a feature that looks implemented and
- * does nothing. The local 1.7B is last: right on a laptop, absent in prod.
+ * Candidates are tried in order and come from routing-service, where an admin
+ * owns them on the Smart Router page. They used to be environment variables,
+ * which was wrong twice: changing the model meant a redeploy, and a name in an
+ * env var is checked against nothing, so a retired model would fail closed
+ * forever with nothing to see.
+ *
+ * The configured order is CLOUD-FIRST. Production runs no local Ollama, so a
+ * local first choice fails every call, fails closed, and makes AUTO research
+ * silently never fire — a feature that looks implemented and does nothing.
  */
 @Injectable()
 export class ResearchGateService {
@@ -53,18 +60,29 @@ export class ResearchGateService {
    */
   private readonly cache = new Map<string, ResearchGateCacheEntry>();
 
+  /** Last fetched candidate list, and when it goes stale. */
+  private candidates: readonly ResearchGateCandidate[] | null = null;
+  private candidatesExpireAt = 0;
+
   async needsWeb(message: string): Promise<ResearchGateVerdict> {
     const cached = this.readCache(message);
     if (cached !== null) {
       return cached;
     }
-    const config = AppConfig.get();
-    const candidates = [config.RESEARCH_GATE_MODEL, ...config.RESEARCH_GATE_FALLBACK_MODELS];
-    for (const model of candidates) {
-      const verdict = await this.ask(model, message);
+    const candidates = await this.resolveCandidates();
+    if (candidates.length === 0) {
+      // No configured candidate is not an error: an admin may have switched the
+      // gate off by emptying the list, and that means "never research", which
+      // is the same answer failing closed gives.
+      const verdict: ResearchGateVerdict = { needsWeb: false, reason: 'no classifier configured' };
+      this.writeCache(message, verdict);
+      return verdict;
+    }
+    for (const candidate of candidates) {
+      const verdict = await this.ask(candidate, message);
       if (verdict !== null) {
         this.logger.log(
-          `needsWeb=${String(verdict.needsWeb)} model=${model} reason="${verdict.reason}"`,
+          `needsWeb=${String(verdict.needsWeb)} model=${candidate.modelAlias} reason="${verdict.reason}"`,
         );
         this.writeCache(message, verdict);
         return verdict;
@@ -72,7 +90,7 @@ export class ResearchGateService {
     }
     // Every candidate refused or timed out. Fail closed: no web access.
     this.logger.warn(
-      `needsWeb: no classifier answered (tried ${candidates.join(', ')}) - assuming no`,
+      `needsWeb: no classifier answered (tried ${candidates.map((c) => c.modelAlias).join(', ')}) - assuming no`,
     );
     const verdict: ResearchGateVerdict = { needsWeb: false, reason: 'no classifier reachable' };
     // Cached too: if no classifier is reachable for this message, the second
@@ -104,15 +122,51 @@ export class ResearchGateService {
     this.cache.set(message, { verdict, expiresAt: Date.now() + RESEARCH_GATE_CACHE_TTL_MS });
   }
 
+  /**
+   * The admin-configured candidates, briefly cached.
+   *
+   * Cached so the gate does not fetch configuration on every message, and only
+   * briefly so an admin's change on the Smart Router page takes effect without
+   * a restart. An unreachable routing-service reuses the last known list rather
+   * than disabling the gate on a transient blip.
+   */
+  private async resolveCandidates(): Promise<readonly ResearchGateCandidate[]> {
+    if (this.candidates !== null && this.candidatesExpireAt > Date.now()) {
+      return this.candidates;
+    }
+    const config = AppConfig.get();
+    try {
+      const response = await httpRequest<readonly ResearchGateCandidate[]>({
+        url: `${config.ROUTING_SERVICE_URL}${RESEARCH_GATE_CANDIDATES_PATH}`,
+        method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeoutMs: RESEARCH_GATE_CANDIDATES_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        this.logger.warn(`resolveCandidates: routing-service returned ${String(response.status)}`);
+        return this.candidates ?? [];
+      }
+      this.candidates = response.data;
+      this.candidatesExpireAt = Date.now() + RESEARCH_GATE_CANDIDATES_TTL_MS;
+      return this.candidates;
+    } catch (error) {
+      this.logger.warn(`resolveCandidates: ${(error as Error).message}`);
+      return this.candidates ?? [];
+    }
+  }
+
   /** Null means "this model did not answer", so the caller tries the next. */
-  private async ask(model: string, message: string): Promise<ResearchGateVerdict | null> {
+  private async ask(
+    candidate: ResearchGateCandidate,
+    message: string,
+  ): Promise<ResearchGateVerdict | null> {
     const config = AppConfig.get();
     try {
       const response = await httpRequest<ResearchGateModelReply>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: 'POST',
         body: {
-          model,
+          model: candidate.modelAlias,
           prompt: `${RESEARCH_GATE_SYSTEM_PROMPT}
 
 User message:
@@ -127,17 +181,17 @@ ${message}`,
           // thinking and an empty answer. With it off the same model replies
           // with the JSON object on the first try.
           think: false,
-          options: { num_predict: RESEARCH_GATE_MAX_TOKENS, temperature: 0 },
+          options: { num_predict: candidate.maxTokens, temperature: 0 },
         },
-        timeoutMs: RESEARCH_GATE_TIMEOUT_MS,
+        timeoutMs: candidate.timeoutMs,
       });
       if (!response.ok) {
-        this.logger.debug(`ask: ${model} returned ${String(response.status)}`);
+        this.logger.debug(`ask: ${candidate.modelAlias} returned ${String(response.status)}`);
         return null;
       }
       return parseResearchGateVerdict(response.data.response ?? '');
     } catch (error) {
-      this.logger.debug(`ask: ${model} failed - ${(error as Error).message}`);
+      this.logger.debug(`ask: ${candidate.modelAlias} failed - ${(error as Error).message}`);
       return null;
     }
   }

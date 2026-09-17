@@ -5734,6 +5734,7 @@ export type SmartRouterAdminLocaleTranslation = {
     revisionDetail: string;
     publish: string;
     compare: string;
+    assistant: string;
   };
   overview: {
     currentRevisionLabel: string;
@@ -5775,6 +5776,15 @@ export type SmartRouterAdminLocaleTranslation = {
     skipWhenProviderCircuitOpen: string;
     submit: string;
     validationError: string;
+  };
+  assistant: {
+    researchGateTitle: string;
+    researchGateDescription: string;
+    emptyMeansDisabled: string;
+    firstChoiceBadge: string;
+    tokenSuffix: string;
+    addCandidateTitle: string;
+    addCandidateSubmit: string;
   };
   entryRow: {
     orderPrefix: string;

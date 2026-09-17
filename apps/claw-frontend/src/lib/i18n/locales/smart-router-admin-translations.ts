@@ -25,6 +25,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Revision Detail',
       publish: 'Publish',
       compare: 'Compare',
+      assistant: 'Assistant models',
     },
     overview: {
       currentRevisionLabel: 'Current published revision',
@@ -66,6 +67,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Skip when provider circuit is open',
       submit: 'Add entry',
       validationError: 'Enter a provider and a model alias.',
+    },
+    assistant: {
+      researchGateTitle: 'Research gate',
+      researchGateDescription:
+        'The model asked whether a turn needs the web, before any answering model runs. Candidates are tried in order.',
+      emptyMeansDisabled:
+        'No candidate configured, so the gate never runs and no turn is researched automatically.',
+      firstChoiceBadge: 'First choice',
+      tokenSuffix: ' tokens',
+      addCandidateTitle: 'Add candidate',
+      addCandidateSubmit: 'Add candidate',
     },
     entryRow: {
       orderPrefix: 'Position',
@@ -175,6 +187,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'تفاصيل الإصدار',
       publish: 'النشر',
       compare: 'المقارنة',
+      assistant: 'نماذج المساعدة',
     },
     overview: {
       currentRevisionLabel: 'الإصدار المنشور الحالي',
@@ -216,6 +229,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'التخطي عند فتح دارة المزوّد',
       submit: 'إضافة العنصر',
       validationError: 'أدخل مزوّدًا واسمًا مستعارًا للنموذج.',
+    },
+    assistant: {
+      researchGateTitle: 'بوابة البحث',
+      researchGateDescription:
+        'النموذج الذي يُسأل إن كانت الرسالة تحتاج إلى الإنترنت، قبل تشغيل أي نموذج مُجيب. تُجرَّب المرشحات بالترتيب.',
+      emptyMeansDisabled:
+        'لا يوجد مرشح مُهيأ، لذلك لا تعمل البوابة ولا يتم البحث تلقائيًا لأي رسالة.',
+      firstChoiceBadge: 'الخيار الأول',
+      tokenSuffix: ' رمز',
+      addCandidateTitle: 'إضافة مرشح',
+      addCandidateSubmit: 'إضافة مرشح',
     },
     entryRow: {
       orderPrefix: 'الموضع',
@@ -320,6 +344,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Revisionsdetails',
       publish: 'Veröffentlichen',
       compare: 'Vergleichen',
+      assistant: 'Hilfsmodelle',
     },
     overview: {
       currentRevisionLabel: 'Aktuell veröffentlichte Revision',
@@ -362,6 +387,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Überspringen, wenn der Anbieter-Schutzschalter offen ist',
       submit: 'Element hinzufügen',
       validationError: 'Geben Sie einen Anbieter und einen Modell-Alias ein.',
+    },
+    assistant: {
+      researchGateTitle: 'Recherche-Gate',
+      researchGateDescription:
+        'Das Modell, das gefragt wird, ob eine Nachricht das Web braucht, bevor ein antwortendes Modell läuft. Kandidaten werden der Reihe nach versucht.',
+      emptyMeansDisabled:
+        'Kein Kandidat konfiguriert: Das Gate läuft nie und es wird nichts automatisch recherchiert.',
+      firstChoiceBadge: 'Erste Wahl',
+      tokenSuffix: ' Token',
+      addCandidateTitle: 'Kandidat hinzufügen',
+      addCandidateSubmit: 'Kandidat hinzufügen',
     },
     entryRow: {
       orderPrefix: 'Position',
@@ -476,6 +512,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Detalle de revisión',
       publish: 'Publicar',
       compare: 'Comparar',
+      assistant: 'Modelos auxiliares',
     },
     overview: {
       currentRevisionLabel: 'Revisión publicada actual',
@@ -517,6 +554,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Omitir cuando el circuito del proveedor esté abierto',
       submit: 'Añadir elemento',
       validationError: 'Introduce un proveedor y un alias de modelo.',
+    },
+    assistant: {
+      researchGateTitle: 'Puerta de investigación',
+      researchGateDescription:
+        'El modelo al que se pregunta si un mensaje necesita la web, antes de que se ejecute cualquier modelo que responda. Los candidatos se prueban en orden.',
+      emptyMeansDisabled:
+        'Ningún candidato configurado: la puerta nunca se ejecuta y no se investiga nada automáticamente.',
+      firstChoiceBadge: 'Primera opción',
+      tokenSuffix: ' tokens',
+      addCandidateTitle: 'Añadir candidato',
+      addCandidateSubmit: 'Añadir candidato',
     },
     entryRow: {
       orderPrefix: 'Posición',
@@ -630,6 +678,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'جزئیات نسخه',
       publish: 'انتشار',
       compare: 'مقایسه',
+      assistant: 'مدل‌های کمکی',
     },
     overview: {
       currentRevisionLabel: 'نسخهٔ منتشرشدهٔ فعلی',
@@ -671,6 +720,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'رد شدن هنگامی که مدار ارائه‌دهنده باز است',
       submit: 'افزودن ورودی',
       validationError: 'یک ارائه‌دهنده و نام مستعار مدل وارد کنید.',
+    },
+    assistant: {
+      researchGateTitle: 'دروازه پژوهش',
+      researchGateDescription:
+        'مدلی که پرسیده می‌شود آیا این پیام به وب نیاز دارد، پیش از اجرای هر مدل پاسخ‌دهنده. نامزدها به ترتیب آزموده می‌شوند.',
+      emptyMeansDisabled:
+        'هیچ نامزدی پیکربندی نشده است، بنابراین دروازه هرگز اجرا نمی‌شود و چیزی خودکار جست‌وجو نمی‌شود.',
+      firstChoiceBadge: 'انتخاب نخست',
+      tokenSuffix: ' توکن',
+      addCandidateTitle: 'افزودن نامزد',
+      addCandidateSubmit: 'افزودن نامزد',
     },
     entryRow: {
       orderPrefix: 'موقعیت',
@@ -782,6 +842,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Détail de révision',
       publish: 'Publier',
       compare: 'Comparer',
+      assistant: 'Modèles auxiliaires',
     },
     overview: {
       currentRevisionLabel: 'Révision publiée actuelle',
@@ -823,6 +884,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Ignorer si le disjoncteur du fournisseur est ouvert',
       submit: "Ajouter l'élément",
       validationError: 'Saisissez un fournisseur et un alias de modèle.',
+    },
+    assistant: {
+      researchGateTitle: 'Filtre de recherche',
+      researchGateDescription:
+        "Le modèle auquel on demande si un message nécessite le web, avant l'exécution de tout modèle de réponse. Les candidats sont essayés dans l'ordre.",
+      emptyMeansDisabled:
+        "Aucun candidat configuré : le filtre ne s'exécute jamais et rien n'est recherché automatiquement.",
+      firstChoiceBadge: 'Premier choix',
+      tokenSuffix: ' jetons',
+      addCandidateTitle: 'Ajouter un candidat',
+      addCandidateSubmit: 'Ajouter un candidat',
     },
     entryRow: {
       orderPrefix: 'Position',
@@ -936,6 +1008,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'संशोधन विवरण',
       publish: 'प्रकाशित करें',
       compare: 'तुलना करें',
+      assistant: 'सहायक मॉडल',
     },
     overview: {
       currentRevisionLabel: 'वर्तमान प्रकाशित संशोधन',
@@ -978,6 +1051,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'जब प्रदाता सर्किट खुला हो तो छोड़ें',
       submit: 'प्रविष्टि जोड़ें',
       validationError: 'एक प्रदाता और मॉडल उपनाम दर्ज करें।',
+    },
+    assistant: {
+      researchGateTitle: 'शोध गेट',
+      researchGateDescription:
+        'वह मॉडल जिससे पूछा जाता है कि क्या किसी संदेश को वेब की आवश्यकता है, किसी भी उत्तर देने वाले मॉडल के चलने से पहले। उम्मीदवारों को क्रम में आज़माया जाता है।',
+      emptyMeansDisabled:
+        'कोई उम्मीदवार कॉन्फ़िगर नहीं है, इसलिए गेट कभी नहीं चलता और कुछ भी स्वतः खोजा नहीं जाता।',
+      firstChoiceBadge: 'पहली पसंद',
+      tokenSuffix: ' टोकन',
+      addCandidateTitle: 'उम्मीदवार जोड़ें',
+      addCandidateSubmit: 'उम्मीदवार जोड़ें',
     },
     entryRow: {
       orderPrefix: 'स्थिति',
@@ -1088,6 +1172,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Dettaglio revisione',
       publish: 'Pubblica',
       compare: 'Confronta',
+      assistant: 'Modelli ausiliari',
     },
     overview: {
       currentRevisionLabel: 'Revisione pubblicata corrente',
@@ -1129,6 +1214,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Salta quando il circuito del provider è aperto',
       submit: 'Aggiungi elemento',
       validationError: 'Inserisci un provider e un alias del modello.',
+    },
+    assistant: {
+      researchGateTitle: 'Filtro di ricerca',
+      researchGateDescription:
+        'Il modello a cui si chiede se un messaggio richiede il web, prima che venga eseguito qualsiasi modello di risposta. I candidati vengono provati in ordine.',
+      emptyMeansDisabled:
+        'Nessun candidato configurato: il filtro non viene mai eseguito e nulla viene cercato automaticamente.',
+      firstChoiceBadge: 'Prima scelta',
+      tokenSuffix: ' token',
+      addCandidateTitle: 'Aggiungi candidato',
+      addCandidateSubmit: 'Aggiungi candidato',
     },
     entryRow: {
       orderPrefix: 'Posizione',
@@ -1241,6 +1337,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'リビジョン詳細',
       publish: '公開',
       compare: '比較',
+      assistant: '補助モデル',
     },
     overview: {
       currentRevisionLabel: '現在公開中のリビジョン',
@@ -1282,6 +1379,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'プロバイダーのサーキットが開いている場合はスキップ',
       submit: '項目を追加',
       validationError: 'プロバイダーとモデルエイリアスを入力してください。',
+    },
+    assistant: {
+      researchGateTitle: 'リサーチゲート',
+      researchGateDescription:
+        '回答するモデルを実行する前に、その発言がウェブを必要とするかを尋ねるモデルです。候補は順に試されます。',
+      emptyMeansDisabled:
+        '候補が設定されていないため、ゲートは実行されず、自動的な調査も行われません。',
+      firstChoiceBadge: '第一候補',
+      tokenSuffix: ' トークン',
+      addCandidateTitle: '候補を追加',
+      addCandidateSubmit: '候補を追加',
     },
     entryRow: {
       orderPrefix: '位置',
@@ -1389,6 +1497,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Detalhe da revisão',
       publish: 'Publicar',
       compare: 'Comparar',
+      assistant: 'Modelos auxiliares',
     },
     overview: {
       currentRevisionLabel: 'Revisão publicada atual',
@@ -1430,6 +1539,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Ignorar quando o circuito do provedor estiver aberto',
       submit: 'Adicionar item',
       validationError: 'Informe um provedor e um alias de modelo.',
+    },
+    assistant: {
+      researchGateTitle: 'Porta de pesquisa',
+      researchGateDescription:
+        'O modelo a que se pergunta se uma mensagem precisa da web, antes de qualquer modelo de resposta ser executado. Os candidatos são tentados por ordem.',
+      emptyMeansDisabled:
+        'Nenhum candidato configurado: a porta nunca é executada e nada é pesquisado automaticamente.',
+      firstChoiceBadge: 'Primeira escolha',
+      tokenSuffix: ' tokens',
+      addCandidateTitle: 'Adicionar candidato',
+      addCandidateSubmit: 'Adicionar candidato',
     },
     entryRow: {
       orderPrefix: 'Posição',
@@ -1542,6 +1662,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'Детали ревизии',
       publish: 'Публикация',
       compare: 'Сравнение',
+      assistant: 'Вспомогательные модели',
     },
     overview: {
       currentRevisionLabel: 'Текущая опубликованная ревизия',
@@ -1584,6 +1705,17 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'Пропускать, если цепь провайдера разомкнута',
       submit: 'Добавить элемент',
       validationError: 'Укажите провайдера и псевдоним модели.',
+    },
+    assistant: {
+      researchGateTitle: 'Фильтр исследования',
+      researchGateDescription:
+        'Модель, у которой спрашивают, нужен ли сообщению интернет, прежде чем запустится отвечающая модель. Кандидаты пробуются по порядку.',
+      emptyMeansDisabled:
+        'Кандидаты не настроены: фильтр не запускается и ничего не ищется автоматически.',
+      firstChoiceBadge: 'Первый выбор',
+      tokenSuffix: ' токенов',
+      addCandidateTitle: 'Добавить кандидата',
+      addCandidateSubmit: 'Добавить кандидата',
     },
     entryRow: {
       orderPrefix: 'Позиция',
@@ -1694,6 +1826,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: 'รายละเอียดรีวิชัน',
       publish: 'เผยแพร่',
       compare: 'เปรียบเทียบ',
+      assistant: 'โมเดลผู้ช่วย',
     },
     overview: {
       currentRevisionLabel: 'รีวิชันที่เผยแพร่ปัจจุบัน',
@@ -1735,6 +1868,16 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: 'ข้ามเมื่อวงจรของผู้ให้บริการเปิดอยู่',
       submit: 'เพิ่มรายการ',
       validationError: 'กรอกผู้ให้บริการและชื่อเรียกโมเดล',
+    },
+    assistant: {
+      researchGateTitle: 'ประตูการค้นคว้า',
+      researchGateDescription:
+        'โมเดลที่ถูกถามว่าข้อความนี้ต้องใช้เว็บหรือไม่ ก่อนที่โมเดลผู้ตอบจะทำงาน ตัวเลือกจะถูกลองตามลำดับ',
+      emptyMeansDisabled: 'ไม่ได้ตั้งค่าตัวเลือกไว้ ประตูจึงไม่ทำงานและจะไม่มีการค้นคว้าอัตโนมัติ',
+      firstChoiceBadge: 'ตัวเลือกแรก',
+      tokenSuffix: ' โทเคน',
+      addCandidateTitle: 'เพิ่มตัวเลือก',
+      addCandidateSubmit: 'เพิ่มตัวเลือก',
     },
     entryRow: {
       orderPrefix: 'ตำแหน่ง',
@@ -1843,6 +1986,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       revisionDetail: '修订详情',
       publish: '发布',
       compare: '比较',
+      assistant: '辅助模型',
     },
     overview: {
       currentRevisionLabel: '当前已发布的修订版本',
@@ -1884,6 +2028,16 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       skipWhenProviderCircuitOpen: '提供商熔断开启时跳过',
       submit: '添加条目',
       validationError: '请输入提供商和模型别名。',
+    },
+    assistant: {
+      researchGateTitle: '研究门控',
+      researchGateDescription:
+        '在任何回答模型运行之前，用于判断该消息是否需要联网的模型。候选模型按顺序依次尝试。',
+      emptyMeansDisabled: '未配置候选模型，因此门控不会运行，也不会自动进行任何研究。',
+      firstChoiceBadge: '首选',
+      tokenSuffix: ' 个令牌',
+      addCandidateTitle: '添加候选模型',
+      addCandidateSubmit: '添加候选模型',
     },
     entryRow: {
       orderPrefix: '位置',

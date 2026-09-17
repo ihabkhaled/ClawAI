@@ -500,5 +500,9 @@ export const queryKeys = {
     // purpose: publishing a revision does not change which models exist.
     selectableDeployments: () =>
       [...queryKeys.smartRouterAdmin.all, 'selectableDeployments'] as const,
+    // Assistant models are a different surface from the chain: changing the
+    // research gate's model must not invalidate the revision list.
+    assistantModels: (role: string) =>
+      [...queryKeys.smartRouterAdmin.all, 'assistantModels', role] as const,
   },
 } as const;

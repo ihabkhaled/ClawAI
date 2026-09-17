@@ -20,6 +20,8 @@ export const SMART_ROUTER_TAB_REVISIONS = 'revisions';
 export const SMART_ROUTER_TAB_REVISION_DETAIL = 'revision-detail';
 export const SMART_ROUTER_TAB_PUBLISH = 'publish';
 export const SMART_ROUTER_TAB_COMPARE = 'compare';
+/** The models that run BESIDE routing — today, the research gate. */
+export const SMART_ROUTER_TAB_ASSISTANT = 'assistant';
 
 export const SMART_ROUTER_REVISIONS_PAGE_SIZE = 20;
 
@@ -31,6 +33,20 @@ export const SMART_ROUTER_ALL_STATUSES_VALUE = 'ALL';
 /** Defaults mirror the backend's Zod schema defaults for a new chain entry
  * (update-chain-entries.dto.ts) so a freshly opened add-entry form matches
  * what an omitted field would resolve to server-side. */
+/**
+ * Defaults for a new assistant-model candidate.
+ *
+ * Small on purpose: the research gate runs before EVERY reply, including the
+ * ones that need nothing, so its latency and token budget are paid on messages
+ * that gain nothing from it. The token ceiling is only safe because the request
+ * disables thinking — a reasoning model with thinking on spends the entire
+ * budget before writing a character of the answer, and returns an empty one.
+ */
+export const ASSISTANT_MODEL_FORM_DEFAULTS = {
+  timeoutMs: 6000,
+  maxTokens: 64,
+} as const;
+
 export const SMART_ROUTER_ENTRY_FORM_DEFAULTS = {
   provider: RouterProvider.ANTHROPIC,
   role: RouterChainEntryRole.PROVIDER_FALLBACK,

@@ -15,3 +15,11 @@ export interface ResearchGateCacheEntry {
   verdict: ResearchGateVerdict;
   expiresAt: number;
 }
+
+/** One configured classifier candidate, as routing-service serves it. */
+export interface ResearchGateCandidate {
+  provider: string;
+  modelAlias: string;
+  timeoutMs: number;
+  maxTokens: number;
+}

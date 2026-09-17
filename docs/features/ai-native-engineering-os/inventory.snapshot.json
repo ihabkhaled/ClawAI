@@ -2448,6 +2448,11 @@
         },
         {
           "method": "GET",
+          "route": "/internal/assistant-models/:role/candidates",
+          "source": "apps/claw-routing-service/src/modules/assistant-models/controllers/assistant-models-internal.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/internal/router-models/context-window/:provider/:model",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-context-window-internal.controller.ts"
         },
@@ -2510,6 +2515,16 @@
           "method": "GET",
           "route": "/routing/adaptive-insights",
           "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/routing/assistant-models/:role",
+          "source": "apps/claw-routing-service/src/modules/assistant-models/controllers/assistant-models.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/routing/assistant-models/:role",
+          "source": "apps/claw-routing-service/src/modules/assistant-models/controllers/assistant-models.controller.ts"
         },
         {
           "method": "GET",
@@ -5128,16 +5143,6 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "RESEARCH_DATABASE_URL"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
-        "value": "RESEARCH_GATE_FALLBACK_MODELS"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
-        "value": "RESEARCH_GATE_MODEL"
       },
       {
         "confidence": "verified",
@@ -9392,6 +9397,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "AssistantModel"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "CapabilityEvidence"
           },
           {
@@ -9757,7 +9767,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 98
+        "testFiles": 99
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -10475,8 +10485,8 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 657,
-    "envVarCount": 357,
+    "endpointCount": 660,
+    "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 154,
     "localeCount": 13,
@@ -10487,7 +10497,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1262,
+    "totalTestFiles": 1263,
     "workspaceCount": 25
   }
 }

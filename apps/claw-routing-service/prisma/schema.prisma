@@ -240,6 +240,18 @@ enum RouterConfigurationStatus {
 /// validation aid — the coordinator branches on canonical error scope, never on
 /// this — but a chain whose roles contradict its order is a misconfiguration
 /// worth refusing.
+/// A model job that is NOT "which model answers this turn".
+///
+/// These run beside routing, not inside it: the research gate asks whether a
+/// turn needs the web at all, before any answering model is chosen. They live
+/// here rather than in environment variables because picking a model is an
+/// operator decision that has to be changeable without a deploy — and because
+/// a model named in an env var cannot be validated against the catalog, which
+/// is how a chain full of retired aliases went unnoticed for a month.
+enum AssistantModelRole {
+  RESEARCH_GATE
+}
+
 enum RouterChainEntryRole {
   PRIMARY
   MODEL_FALLBACK
@@ -770,6 +782,37 @@ model ModelDeployment {
 /// `scope` is GLOBAL today. routing-service has no tenant columns anywhere, so
 /// per-tenant configuration needs a scoping migration first; the column exists
 /// so that arrives as data rather than as a schema change.
+/// One candidate for an assistant model role, tried in `order`.
+///
+/// Ordered rather than single because these calls fail closed: the research
+/// gate that cannot reach a model answers "no web", so a single unreachable
+/// model silently disables the feature instead of breaking loudly. Production
+/// runs no local Ollama, which is exactly how a local default ends up looking
+/// implemented and doing nothing.
+model AssistantModel {
+  id   String             @id @default(cuid())
+  role AssistantModelRole
+
+  order   Int
+  enabled Boolean @default(true)
+
+  /// The endpoint this candidate calls. Nullable for the same reason as a chain
+  /// entry's: a seeded alias is recorded before discovery confirms it exists.
+  deploymentId String?        @map("deployment_id")
+  modelAlias   String         @map("model_alias")
+  provider     RouterProvider
+
+  timeoutMs Int @default(6000) @map("timeout_ms")
+  maxTokens Int @default(64) @map("max_tokens")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([role, order])
+  @@index([role, enabled])
+  @@map("assistant_models")
+}
+
 model RouterConfiguration {
   id       String                    @id @default(cuid())
   scope    String                    @default("GLOBAL")

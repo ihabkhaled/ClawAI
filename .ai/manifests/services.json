@@ -422,7 +422,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 71,
+      "endpointCount": 74,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -435,6 +435,7 @@
       "port": 4004,
       "portSource": "shared-constants",
       "prismaModels": [
+        "AssistantModel",
         "CapabilityEvidence",
         "ModelCostVersion",
         "ModelDeployment",
@@ -460,7 +461,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 98,
+      "testFiles": 99,
       "testRunner": "vitest"
     },
     {

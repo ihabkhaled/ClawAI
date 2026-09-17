@@ -24,26 +24,14 @@ const appConfigSchema = z.object({
 
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
-  // The model that decides whether a turn needs the web.
+  // NOTE: the research gate's model is NOT configured here.
   //
-  // A CLOUD model by default, served through the OLLAMA connector, because
-  // production does not run a local Ollama — a local default there means every
-  // gate call fails, the gate fails closed, and AUTO research silently never
-  // fires. Small on purpose all the same: it runs before EVERY reply,
-  // including the ones that need nothing.
-  RESEARCH_GATE_MODEL: z.string().min(1).default('gpt-oss:20b'),
-  // Tried in order when the primary is unreachable or not installed. The local
-  // 1.7B is last: it is the right choice on a laptop and absent in production,
-  // which is exactly the order this list encodes.
-  RESEARCH_GATE_FALLBACK_MODELS: z
-    .string()
-    .default('deepseek-v4-pro,glm-5.2,qwen3:1.7b')
-    .transform((value) =>
-      value
-        .split(',')
-        .map((model) => model.trim())
-        .filter((model) => model.length > 0),
-    ),
+  // It used to be, as RESEARCH_GATE_MODEL plus a comma-separated fallback list,
+  // and that was the wrong home twice over: changing which model decides
+  // "does this turn need the web" meant a redeploy, and a model named in an env
+  // var cannot be checked against the catalog, so a retired name would fail
+  // closed forever with nothing to see. The candidates are now admin-managed
+  // rows served by routing-service — see ResearchGateService.
   LLAMACPP_SERVICE_URL: z.string().min(1).default('http://llamacpp-service:4017'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   // Read for one thing only: the selected model's real context window, which
