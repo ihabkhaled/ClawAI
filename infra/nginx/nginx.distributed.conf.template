@@ -255,6 +255,19 @@ http {
             proxy_pass $backend;
         }
 
+        # What the coding agent did, for a person to read afterwards.
+        #
+        # Read verbs only, refused at the edge. The web app shows the agent's runs;
+        # it does not join in. Denying writes here means a routing mistake behind
+        # this line can never turn a transcript into something you can post to.
+        location /api/v1/coding-agent-chats {
+            limit_except GET HEAD OPTIONS {
+                deny all;
+            }
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+        }
+
         location /api/v1/chat-messages/stream {
             set $backend https://$origin_chat;
             proxy_pass $backend;

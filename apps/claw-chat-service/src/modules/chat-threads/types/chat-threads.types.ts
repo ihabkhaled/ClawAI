@@ -1,4 +1,4 @@
-import { type ChatThread, type RoutingMode } from '../../../generated/prisma';
+import { type ChatThread, type RoutingMode, type ThreadOrigin } from '../../../generated/prisma';
 
 export interface CreateThreadData {
   userId: string;
@@ -10,6 +10,7 @@ export interface CreateThreadData {
   preferredProvider?: string;
   preferredModel?: string;
   contextPackIds?: string[];
+  origin?: ThreadOrigin;
   /** ADR-087 — "use relevant previous chats". Omitted means false. */
   useCrossThreadContext?: boolean;
 }
@@ -40,6 +41,7 @@ export interface UpdateThreadData {
 
 export interface ThreadFilters {
   userId: string;
+  origin?: ThreadOrigin;
   search?: string;
   isPinned?: boolean;
   isArchived?: boolean;

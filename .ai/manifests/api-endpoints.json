@@ -1204,6 +1204,16 @@
       },
       {
         "method": "GET",
+        "route": "/coding-agent-chats",
+        "source": "apps/claw-chat-service/src/modules/coding-agent-chats/controllers/coding-agent-chats.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/coding-agent-chats/:id/messages",
+        "source": "apps/claw-chat-service/src/modules/coding-agent-chats/controllers/coding-agent-chats.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/health",
         "source": "apps/claw-chat-service/src/modules/health/controllers/health.controller.ts"
       },
@@ -3308,5 +3318,5 @@
     ]
   },
   "generated": true,
-  "total": 654
+  "total": 656
 }

@@ -1,3 +1,4 @@
+import { ThreadOrigin } from '../../../generated/prisma';
 import { ChatThreadsService } from '../services/chat-threads.service';
 import { type ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { type ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
@@ -181,6 +182,7 @@ describe('ChatThreadsService', () => {
       const result = await service.getThreads('user-1', {
         page: 1,
         limit: 20,
+        origin: ThreadOrigin.WEB,
         sortBy: 'updatedAt',
         sortOrder: SortOrder.DESC,
       });
@@ -200,12 +202,19 @@ describe('ChatThreadsService', () => {
         limit: 20,
         search: 'test',
         isPinned: true,
+        origin: ThreadOrigin.WEB,
         sortBy: 'updatedAt',
         sortOrder: SortOrder.DESC,
       });
 
       expect(threadsRepo.findAll).toHaveBeenCalledWith(
-        { userId: 'user-1', search: 'test', isPinned: true, isArchived: undefined },
+        {
+          userId: 'user-1',
+          origin: ThreadOrigin.WEB,
+          search: 'test',
+          isPinned: true,
+          isArchived: undefined,
+        },
         1,
         20,
         'updatedAt',
@@ -399,6 +408,7 @@ describe('ChatThreadsService', () => {
       const result = await service.getThreads('user-1', {
         page: 1,
         limit: 20,
+        origin: ThreadOrigin.WEB,
         sortBy: 'updatedAt',
         sortOrder: SortOrder.DESC,
       });
@@ -414,6 +424,7 @@ describe('ChatThreadsService', () => {
       const result = await service.getThreads('user-1', {
         page: 1,
         limit: 20,
+        origin: ThreadOrigin.WEB,
         sortBy: 'updatedAt',
         sortOrder: SortOrder.DESC,
       });
