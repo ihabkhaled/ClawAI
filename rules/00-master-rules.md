@@ -65,6 +65,7 @@
 | `45-display-currency-versus-settlement-currency.md`      | A price shown and a price charged are different numbers under different policies; display FX fails open to USD and never reaches a gateway, an invoice, a refund or a wallet. |
 | `46-token-quota-enforcement-and-window-integrity.md`     | A quota measured after the fact is a receipt, not a limit: count the prompt first, clamp the output to what is left, enforce every window and let the tightest one win.       |
 | `47-client-bundle-weight-and-barrel-boundaries.md`       | A barrel imported by client components may only re-export leaf modules; server components resolve registry/content data and pass it down as props.                            |
+| `48-lint-and-test-only-what-changed.md`                  | Lint the FILES you changed, test the workspace you touched, and do not re-prove what the hooks are about to prove.                                                            |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

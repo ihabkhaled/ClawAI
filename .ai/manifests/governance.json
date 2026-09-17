@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 31292,
+      "bytes": 31663,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 23024,
+      "bytes": 23261,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -286,13 +286,17 @@
       "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
     },
     {
+      "bytes": 2072,
+      "file": "rules/48-lint-and-test-only-what-changed.md"
+    },
+    {
       "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 22988,
+      "bytes": 23238,
       "file": "skills/00-index.md"
     },
     {
@@ -506,6 +510,10 @@
     {
       "bytes": 3008,
       "file": "skills/inspect-affected-workspaces.md"
+    },
+    {
+      "bytes": 2167,
+      "file": "skills/lint-and-test-only-what-changed.md"
     },
     {
       "bytes": 6050,

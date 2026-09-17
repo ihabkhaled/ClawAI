@@ -71,6 +71,7 @@
 | Write Unit Tests                         | `write-unit-tests.md`                          | New/changed utility in `src/common/utilities/` or `packages/shared-utilities/`.                                                                           |
 | Grow the Knowledge Layer                 | `grow-the-knowledge-layer.md`                  | Every change: work out which rules/skills/docs/.ai files must move with the code (rule 33)                                                                |
 | Run the Gates Once and Land              | `run-gates-once-and-land.md`                   | Proving a change green once, landing it, and giving the machine back (rule 34)                                                                            |
+| Lint and Test Only What Changed          | `lint-and-test-only-what-changed.md`           | The exact commands before a commit: eslint the changed FILES, test the touched workspace once (rule 48)                                                   |
 | Add a Shared Package to a Service        | `add-a-shared-package-to-a-service.md`         | Declare `@claw/shared-*` AND build it in both Dockerfiles; the stale-host-dist `ERR_MODULE_NOT_FOUND` crash it prevents (rule 14 §6)                      |
 | Finish Worktree/Branch with a PR         | `finish-worktree-branch-with-pr.md`            | The agent created a dedicated worktree + branch for a task; the task ends with a PR and release notes, not just pushed commits (rule 39)                  |
 
