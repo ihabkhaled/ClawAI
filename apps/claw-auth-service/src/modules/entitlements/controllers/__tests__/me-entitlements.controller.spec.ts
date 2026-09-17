@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MeEntitlementsController } from '../me-entitlements.controller';
 import { EntitlementsService } from '../../services/entitlements.service';
@@ -6,12 +7,12 @@ import { UserRole } from '../../../../common/enums';
 
 describe('MeEntitlementsController', () => {
   let controller: MeEntitlementsController;
-  let serviceMock: jest.Mocked<{ getForUser: jest.Mock }>;
-  let usageMock: jest.Mocked<{ getForUser: jest.Mock }>;
+  let serviceMock: { getForUser: Mock };
+  let usageMock: { getForUser: Mock };
 
   beforeEach(async () => {
-    serviceMock = { getForUser: jest.fn() };
-    usageMock = { getForUser: jest.fn() };
+    serviceMock = { getForUser: vi.fn() };
+    usageMock = { getForUser: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MeEntitlementsController],
       providers: [

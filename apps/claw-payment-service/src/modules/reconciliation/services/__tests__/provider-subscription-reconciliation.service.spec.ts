@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingGateway, SubscriptionStatus } from '@claw/shared-types';
 
 import {
@@ -13,20 +14,20 @@ import { subscriptionFixture } from './reconciliation.fixture';
 
 describe('ProviderSubscriptionReconciliationService', () => {
   let subscriptions: {
-    countProviderBoundNonTerminal: jest.Mock;
-    findProviderBoundNonTerminal: jest.Mock;
+    countProviderBoundNonTerminal: Mock;
+    findProviderBoundNonTerminal: Mock;
   };
-  let paypal: { getSubscription: jest.Mock };
-  let reconciliation: { recordFinding: jest.Mock };
+  let paypal: { getSubscription: Mock };
+  let reconciliation: { recordFinding: Mock };
   let service: ProviderSubscriptionReconciliationService;
 
   beforeEach(() => {
     subscriptions = {
-      countProviderBoundNonTerminal: jest.fn().mockResolvedValue(1),
-      findProviderBoundNonTerminal: jest.fn().mockResolvedValue([subscriptionFixture()]),
+      countProviderBoundNonTerminal: vi.fn().mockResolvedValue(1),
+      findProviderBoundNonTerminal: vi.fn().mockResolvedValue([subscriptionFixture()]),
     };
     paypal = {
-      getSubscription: jest.fn().mockResolvedValue({
+      getSubscription: vi.fn().mockResolvedValue({
         subscriptionId: 'provider-1',
         status: 'ACTIVE',
         isActive: true,
@@ -34,12 +35,12 @@ describe('ProviderSubscriptionReconciliationService', () => {
         checkoutSessionId: 'checkout-1',
       }),
     };
-    reconciliation = { recordFinding: jest.fn() };
+    reconciliation = { recordFinding: vi.fn() };
     service = new ProviderSubscriptionReconciliationService(
       subscriptions as unknown as SubscriptionRepository,
       paypal as unknown as PaypalAdapter,
       {
-        decrypt: jest.fn().mockReturnValue('provider-1'),
+        decrypt: vi.fn().mockReturnValue('provider-1'),
       } as unknown as GatewaySubscriptionVaultService,
       reconciliation as unknown as ReconciliationRepository,
     );

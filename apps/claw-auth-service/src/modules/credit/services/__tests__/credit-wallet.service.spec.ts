@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { CreditLedgerKind } from '../../../../generated/prisma';
@@ -5,7 +6,7 @@ import { type CreditWalletRepository } from '../../repositories/credit-wallet.re
 import { CreditWalletService } from '../credit-wallet.service';
 
 // An in-memory stand-in for the wallet table that applies Prisma's relative
-// `increment`/`decrement` operations for real. A jest.fn() returning a fixed
+// `increment`/`decrement` operations for real. A vi.fn() returning a fixed
 // object would prove nothing here: the property under test is that the balances
 // and the ledger stay in step across a SEQUENCE of movements, which only shows
 // up if the movements actually accumulate.
@@ -45,9 +46,9 @@ const makeFakeRepository = (seed: Partial<Record<string, bigint>> = {}) => {
   return {
     wallet,
     ledger,
-    ensure: jest.fn().mockImplementation(() => Promise.resolve(wallet)),
-    findByUserId: jest.fn().mockImplementation(() => Promise.resolve(wallet)),
-    applyMovements: jest.fn().mockImplementation((_id: string, steps: any[]) => {
+    ensure: vi.fn().mockImplementation(() => Promise.resolve(wallet)),
+    findByUserId: vi.fn().mockImplementation(() => Promise.resolve(wallet)),
+    applyMovements: vi.fn().mockImplementation((_id: string, steps: any[]) => {
       for (const step of steps) {
         for (const [key, operation] of Object.entries(step.walletUpdate)) {
           applyField(key, operation);
@@ -60,7 +61,7 @@ const makeFakeRepository = (seed: Partial<Record<string, bigint>> = {}) => {
       }
       return Promise.resolve(wallet);
     }),
-    sumLedgerDeltas: jest.fn().mockImplementation(() =>
+    sumLedgerDeltas: vi.fn().mockImplementation(() =>
       Promise.resolve({
         grantMicroUsd: ledger.reduce(
           (total, row) => total + (row['grantDeltaMicroUsd'] as bigint),
@@ -76,8 +77,8 @@ const makeFakeRepository = (seed: Partial<Record<string, bigint>> = {}) => {
         ),
       }),
     ),
-    findLedgerEntryBySourceEventId: jest.fn().mockResolvedValue(null),
-    findStalePeriodWallets: jest.fn().mockResolvedValue([]),
+    findLedgerEntryBySourceEventId: vi.fn().mockResolvedValue(null),
+    findStalePeriodWallets: vi.fn().mockResolvedValue([]),
   };
 };
 

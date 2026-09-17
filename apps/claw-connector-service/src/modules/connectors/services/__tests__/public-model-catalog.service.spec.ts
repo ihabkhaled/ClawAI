@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConnectorProvider } from '../../../../generated/prisma';
 import { PublicModelCatalogService } from '../public-model-catalog.service';
 import type { ConnectorModelsRepository } from '../../repositories/connector-models.repository';
@@ -39,9 +40,9 @@ function row(provider: ConnectorProvider, modelKey: string, overrides: Partial<R
 
 function build(rows: Row[]): {
   service: PublicModelCatalogService;
-  repository: { findExposedForCatalog: jest.Mock };
+  repository: { findExposedForCatalog: Mock };
 } {
-  const repository = { findExposedForCatalog: jest.fn().mockResolvedValue(rows) };
+  const repository = { findExposedForCatalog: vi.fn().mockResolvedValue(rows) };
   return {
     service: new PublicModelCatalogService(repository as unknown as ConnectorModelsRepository),
     repository,

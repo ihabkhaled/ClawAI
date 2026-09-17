@@ -1,6 +1,7 @@
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 
+import { MEDIA_QUERY_NAV_RAIL } from '@/constants/media-query.constants';
 import { useSidebarVisibleItems } from '@/hooks/layout/use-sidebar-visible-items';
 import { useSidebarStore } from '@/stores/sidebar.store';
 import type { UseSidebarControllerReturn } from '@/types';
@@ -16,7 +17,11 @@ export function useSidebarController(): UseSidebarControllerReturn {
   }, [pathname, close]);
 
   useEffect(() => {
-    if (!isOpen || window.matchMedia('(min-width: 768px)').matches) {
+    // The modal treatment — body-scroll lock, focus trap, Escape to close —
+    // belongs to the DRAWER, so the test is the exact complement of the CSS
+    // that makes the sidebar a rail. A hard-coded `(min-width: 768px)` here
+    // disagreed with the CSS on every tablet.
+    if (!isOpen || window.matchMedia(MEDIA_QUERY_NAV_RAIL).matches) {
       return;
     }
 

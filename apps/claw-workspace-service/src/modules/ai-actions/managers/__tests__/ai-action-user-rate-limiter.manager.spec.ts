@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AiActionUserRateLimiterManager } from '../ai-action-user-rate-limiter.manager';
 import { AppConfig } from '../../../../app/config/app.config';
 
@@ -11,11 +12,11 @@ describe('AiActionUserRateLimiterManager', () => {
 
   beforeEach(() => {
     limiter = new AiActionUserRateLimiterManager();
-    jest.spyOn(AppConfig, 'get').mockReturnValue(baseConfig as unknown as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue(baseConfig as unknown as ReturnType<typeof AppConfig.get>);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     limiter.reset();
   });
 
@@ -29,7 +30,7 @@ describe('AiActionUserRateLimiterManager', () => {
   });
 
   it('blocks with PER_HOUR when minute cap is high but hour cap is low', () => {
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({
         AI_ACTION_PER_USER_RATE_PER_MIN: 100,
@@ -54,14 +55,14 @@ describe('AiActionUserRateLimiterManager', () => {
 
   it('lets traffic resume after the minute window slides out', () => {
     const now = 1_700_000_000_000;
-    jest.spyOn(Date, 'now').mockReturnValue(now);
+    vi.spyOn(Date, 'now').mockReturnValue(now);
     for (let i = 0; i < 3; i += 1) {
       expect(limiter.tryReserve('u1').allowed).toBe(true);
     }
     // Still in same window — blocked
     expect(limiter.tryReserve('u1').allowed).toBe(false);
     // Slide past 60 seconds
-    jest.spyOn(Date, 'now').mockReturnValue(now + 61 * 1000);
+    vi.spyOn(Date, 'now').mockReturnValue(now + 61 * 1000);
     expect(limiter.tryReserve('u1').allowed).toBe(true);
   });
 

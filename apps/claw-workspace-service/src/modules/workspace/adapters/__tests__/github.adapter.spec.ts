@@ -1,9 +1,10 @@
+import { vi, type Mock } from 'vitest';
 import { GitHubAdapter } from '../github.adapter';
 import { GitHubWriteActionsHelper } from '../github-write-actions.helper';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 import { AppConfig } from '../../../../app/config/app.config';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   WORKSPACE_DATABASE_URL: 'postgres://localhost/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -72,46 +73,46 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
   CLAW_HOSTNAME: 'claw.local',
 });
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('GitHubAdapter', () => {
   let adapter: GitHubAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new GitHubAdapter(new GitHubWriteActionsHelper());
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unauthorized — invalid token');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
     });
 
     it('should return DISCONNECTED on non-Error throw', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue('boom');
+      (global.fetch as Mock).mockRejectedValue('boom');
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unknown error');
@@ -193,7 +194,7 @@ describe('GitHubAdapter', () => {
         merged_at: '2024-03-02T00:00:00Z',
       };
 
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         // user/repos
         .mockResolvedValueOnce({ ok: true, json: async () => [repo1, repo2] })
         // repo1 issues
@@ -235,7 +236,7 @@ describe('GitHubAdapter', () => {
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-02-01T00:00:00Z',
       };
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => [repo] })
         .mockResolvedValueOnce({ ok: false, status: 503 })
         .mockRejectedValueOnce(new Error('net'));
@@ -249,7 +250,7 @@ describe('GitHubAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('REPOSITORY — resolves by externalId', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -274,13 +275,13 @@ describe('GitHubAdapter', () => {
     });
 
     it('REPOSITORY — returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', '42', 'REPOSITORY');
       expect(live).toBeNull();
     });
 
     it('ISSUE — uses fullName/number from metadata', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -306,7 +307,7 @@ describe('GitHubAdapter', () => {
     });
 
     it('PULL_REQUEST — flags merged when merged_at is set', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({

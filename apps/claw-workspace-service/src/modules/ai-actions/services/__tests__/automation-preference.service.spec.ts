@@ -1,35 +1,36 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { AutomationPreferenceService } from '../automation-preference.service';
 
 const mockConfig = { MEMORY_SERVICE_URL: 'http://memory-service:4013' };
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('AutomationPreferenceService.fetchLearned', () => {
   let service: AutomationPreferenceService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest
+    vi.clearAllMocks();
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
     service = new AutomationPreferenceService({} as never);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('requests memory-service with the userId and returns the parsed rows', async () => {
     const rows = [
       { id: 'p1', content: 'User prefers X', type: 'PREFERENCE', createdAt: 'a', updatedAt: 'b' },
     ];
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: () => Promise.resolve(rows) });
+    (global.fetch as Mock).mockResolvedValue({ ok: true, json: () => Promise.resolve(rows) });
 
     const result = await service.fetchLearned('user-1');
 
     expect(result).toEqual(rows);
-    const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (global.fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain(
       'http://memory-service:4013/api/v1/internal/memories/learned-preferences',
     );
@@ -37,17 +38,17 @@ describe('AutomationPreferenceService.fetchLearned', () => {
   });
 
   it('includes actionKind and limit in the query string when given', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: () => Promise.resolve([]) });
+    (global.fetch as Mock).mockResolvedValue({ ok: true, json: () => Promise.resolve([]) });
 
     await service.fetchLearned('user-1', 'DRAFT', 5);
 
-    const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+    const [url] = (global.fetch as Mock).mock.calls[0] as [string];
     expect(url).toContain('actionKind=DRAFT');
     expect(url).toContain('limit=5');
   });
 
   it('returns an empty list when memory-service responds with a non-OK status', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+    (global.fetch as Mock).mockResolvedValue({ ok: false });
 
     const result = await service.fetchLearned('user-1');
 
@@ -55,7 +56,7 @@ describe('AutomationPreferenceService.fetchLearned', () => {
   });
 
   it('returns an empty list rather than throwing when the request itself fails', async () => {
-    (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+    (global.fetch as Mock).mockRejectedValue(new Error('network down'));
 
     const result = await service.fetchLearned('user-1');
 

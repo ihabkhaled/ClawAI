@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway, CheckoutPurpose, CheckoutSessionStatus } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -25,23 +26,23 @@ const setupSession = (overrides: Record<string, unknown> = {}): Record<string, u
 
 describe('PaymentMethodSetupService', () => {
   const sessions = {
-    findByIdempotencyKey: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    attachProviderOrder: jest.fn(),
-    markFailed: jest.fn(),
+    findByIdempotencyKey: vi.fn(),
+    findById: vi.fn(),
+    create: vi.fn(),
+    attachProviderOrder: vi.fn(),
+    markFailed: vi.fn(),
   };
   const paymob = {
-    createSetupIntention: jest.fn(),
+    createSetupIntention: vi.fn(),
   };
   const runtimeConfig = {
-    getPaymobCheckout: jest.fn(),
+    getPaymobCheckout: vi.fn(),
   };
   let service: PaymentMethodSetupService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.clearAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_PUBLIC_KEY: 'pk_test',
       PAYMOB_CURRENCY: 'EGP',
     } as ReturnType<typeof AppConfig.get>);
@@ -64,7 +65,7 @@ describe('PaymentMethodSetupService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('creates a planless verification-charge session with recorded consent', async () => {

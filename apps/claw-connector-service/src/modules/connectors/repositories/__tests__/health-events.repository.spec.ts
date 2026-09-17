@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HealthEventsRepository } from '../health-events.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,14 +6,14 @@ import { PrismaService } from '../../../../infrastructure/database/prisma/prisma
 describe('HealthEventsRepository', () => {
   let repository: HealthEventsRepository;
   let prismaMock: {
-    connectorHealthEvent: { create: jest.Mock; findMany: jest.Mock };
+    connectorHealthEvent: { create: Mock; findMany: Mock };
   };
 
   beforeEach(async () => {
     prismaMock = {
       connectorHealthEvent: {
-        create: jest.fn().mockResolvedValue({ id: 'h1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'h1' }]),
+        create: vi.fn().mockResolvedValue({ id: 'h1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'h1' }]),
       },
     };
     const module: TestingModule = await Test.createTestingModule({

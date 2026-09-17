@@ -1,3 +1,4 @@
+import { type Mock, type Mocked, vi } from 'vitest';
 import { AuditEventManager } from '@modules/audits/managers/audit-event.manager';
 import { type AuditsService } from '@modules/audits/services/audits.service';
 import { type UsageService } from '@modules/audits/services/usage.service';
@@ -5,28 +6,28 @@ import { EventPattern } from '@claw/shared-types';
 
 describe('AuditEventManager', () => {
   let manager: AuditEventManager;
-  let auditsService: jest.Mocked<AuditsService>;
-  let usageService: jest.Mocked<UsageService>;
-  let rabbitMQService: { subscribe: jest.Mock; publish: jest.Mock };
+  let auditsService: Mocked<AuditsService>;
+  let usageService: Mocked<UsageService>;
+  let rabbitMQService: { subscribe: Mock; publish: Mock };
 
   beforeEach(() => {
     auditsService = {
-      createAuditLog: jest.fn().mockResolvedValue({ _id: 'audit-1' }),
-      getAuditLogs: jest.fn(),
-      getAuditStats: jest.fn(),
-    } as unknown as jest.Mocked<AuditsService>;
+      createAuditLog: vi.fn().mockResolvedValue({ _id: 'audit-1' }),
+      getAuditLogs: vi.fn(),
+      getAuditStats: vi.fn(),
+    } as unknown as Mocked<AuditsService>;
 
     usageService = {
-      createUsageEntry: jest.fn().mockResolvedValue({ _id: 'usage-1' }),
-      getUsageEntries: jest.fn(),
-      getUsageSummary: jest.fn(),
-      getCostSummary: jest.fn(),
-      getLatencySummary: jest.fn(),
-    } as unknown as jest.Mocked<UsageService>;
+      createUsageEntry: vi.fn().mockResolvedValue({ _id: 'usage-1' }),
+      getUsageEntries: vi.fn(),
+      getUsageSummary: vi.fn(),
+      getCostSummary: vi.fn(),
+      getLatencySummary: vi.fn(),
+    } as unknown as Mocked<UsageService>;
 
     rabbitMQService = {
-      subscribe: jest.fn().mockResolvedValue(void 0),
-      publish: jest.fn().mockResolvedValue(void 0),
+      subscribe: vi.fn().mockResolvedValue(void 0),
+      publish: vi.fn().mockResolvedValue(void 0),
     };
 
     manager = new AuditEventManager(rabbitMQService as never, auditsService, usageService);
@@ -278,7 +279,7 @@ describe('AuditEventManager', () => {
     });
 
     it('should warn on unhandled event pattern', async () => {
-      const warnSpy = jest.spyOn(manager['logger'], 'warn').mockImplementation();
+      const warnSpy = vi.spyOn(manager['logger'], 'warn').mockImplementation(() => {});
       await manager.handleEvent('unknown.event', {});
       expect(warnSpy).toHaveBeenCalledWith('Unhandled event pattern: unknown.event');
       warnSpy.mockRestore();

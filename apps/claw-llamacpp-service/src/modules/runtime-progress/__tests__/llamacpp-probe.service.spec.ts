@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RuntimeExecutionProfile, RuntimeProbeStatus, RuntimeProvider } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { LlamacppProbeService } from '../services/llamacpp-probe.service';
@@ -20,11 +21,11 @@ function setEnv(extra: Record<string, string> = {}): void {
 function buildService(deps: {
   binary?: { snapshot: () => unknown } | { snapshot: () => never };
   supervisor?: { getCurrent: () => unknown } | { getCurrent: () => never };
-  loadEvents?: { findRecent: jest.Mock };
+  loadEvents?: { findRecent: Mock };
 }): LlamacppProbeService {
   const binary = deps.binary ?? { snapshot: (): unknown => null };
   const supervisor = deps.supervisor ?? { getCurrent: (): unknown => null };
-  const loadEvents = deps.loadEvents ?? { findRecent: jest.fn().mockResolvedValue([]) };
+  const loadEvents = deps.loadEvents ?? { findRecent: vi.fn().mockResolvedValue([]) };
   return new LlamacppProbeService(binary as any, supervisor as any, loadEvents as any);
 }
 
@@ -46,7 +47,7 @@ describe('LlamacppProbeService', () => {
       supervisor: {
         getCurrent: (): unknown => ({ modelId: 'model-1', port: 48500, pid: 9000 }),
       },
-      loadEvents: { findRecent: jest.fn().mockResolvedValue([]) },
+      loadEvents: { findRecent: vi.fn().mockResolvedValue([]) },
     });
     const report = await service.probe();
     expect(report.provider).toBe(RuntimeProvider.LLAMACPP);
@@ -146,7 +147,7 @@ describe('LlamacppProbeService', () => {
       errorMessage: i === 0 ? 'boom' : null,
       occurredAt: new Date(1_700_000_000_000 + i * 1000),
     }));
-    const findRecent = jest
+    const findRecent = vi
       .fn()
       .mockImplementation((limit: number) => Promise.resolve(rows.slice(0, limit)));
     const service = buildService({

@@ -1,18 +1,19 @@
+import { type Mock, vi } from 'vitest';
 import { GmailAdapter } from '../gmail.adapter';
 import { GmailComposeHelper } from '../gmail-compose.helper';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   let adapter: GmailAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new GmailAdapter();
   });
 
   it('returns success with draftId and #drafts URL when Gmail draft creation succeeds', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({
@@ -38,7 +39,7 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   });
 
   it('falls back to #drafts URL without thread fragment when Gmail returns no threadId', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ id: 'r-draft-7', message: { id: 'msg-7' } }),
@@ -67,7 +68,7 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   });
 
   it('surfaces Gmail API error response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: false,
       status: 403,
       text: async () => 'forbidden',
@@ -85,7 +86,7 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   });
 
   it('passes threadId through when supplied (reply-as-draft semantics)', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ id: 'd1', message: { id: 'm1', threadId: 'tx' } }),
@@ -98,8 +99,9 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
       threadId: 'tx',
     });
 
-    const call = (global.fetch as jest.Mock).mock.calls[0];
-    const requestBody = JSON.parse(call[1].body) as {
+    const call = (global.fetch as Mock).mock.calls[0];
+    expect(call).toBeDefined();
+    const requestBody = JSON.parse(call?.[1].body) as {
       message: { raw: string; threadId?: string };
     };
     expect(requestBody.message.threadId).toBe('tx');
@@ -129,7 +131,7 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   it('compose helper appends signature into the RFC822 raw body', async () => {
     const composeHelper = new GmailComposeHelper();
     const wiredAdapter = new GmailAdapter(composeHelper);
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'd1', message: { id: 'm1', threadId: 'tx' } }),
     });
@@ -139,7 +141,9 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
       body: 'hello',
       signature: 'Best,\nAlice',
     });
-    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as {
+    const sentCall = (global.fetch as Mock).mock.calls[0];
+    expect(sentCall).toBeDefined();
+    const sent = JSON.parse(sentCall?.[1].body) as {
       message: { raw: string };
     };
     const decoded = Buffer.from(sent.message.raw, 'base64url').toString('utf-8');

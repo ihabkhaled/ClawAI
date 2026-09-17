@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,16 +6,16 @@ import { InternalPaymentsRepository } from '../internal-payments.repository';
 
 describe('InternalPaymentsRepository', () => {
   const paymentTransaction = {
-    findUnique: jest.fn(),
+    findUnique: vi.fn(),
   };
   const subscription = {
-    findUnique: jest.fn(),
-    findFirst: jest.fn(),
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
   };
   let repository: InternalPaymentsRepository;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       providers: [
         InternalPaymentsRepository,

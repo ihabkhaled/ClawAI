@@ -1,9 +1,10 @@
+import { vi } from 'vitest';
 import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
 
 import { ReconciliationAdminController } from '../reconciliation-admin.controller';
 
-jest.mock('../../managers/reconciliation.manager', () => ({
+vi.mock('../../managers/reconciliation.manager', () => ({
   ReconciliationManager: class ReconciliationManager {},
 }));
 
@@ -21,7 +22,7 @@ describe('ReconciliationAdminController', () => {
       quarantinedCount: 1,
       unprocessedCount: 2,
     };
-    const manager = { reconcile: jest.fn().mockResolvedValue(result) };
+    const manager = { reconcile: vi.fn().mockResolvedValue(result) };
     const controller = new ReconciliationAdminController(manager as never);
 
     await expect(controller.run()).resolves.toEqual(result);

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { WorkspaceSyncSchedulerManager } from '../workspace-sync-scheduler.manager';
@@ -75,23 +76,23 @@ const BASE_CFG = {
   CLAW_HOSTNAME: 'claw.local',
 };
 
-jest.spyOn(AppConfig, 'get').mockReturnValue(BASE_CFG);
+vi.spyOn(AppConfig, 'get').mockReturnValue(BASE_CFG);
 
 describe('WorkspaceSyncSchedulerManager', () => {
   const prisma = {} as PrismaService;
   const connectorRepo = {
-    findScheduleCandidates: jest.fn(),
-    markTick: jest.fn(),
+    findScheduleCandidates: vi.fn(),
+    markTick: vi.fn(),
   } as unknown as WorkspaceConnectorRepository;
   const cadenceRepo = {
-    findAll: jest.fn().mockResolvedValue([]),
+    findAll: vi.fn().mockResolvedValue([]),
   } as unknown as SyncCadenceRepository;
-  const rabbitmq = { publish: jest.fn() } as unknown as RabbitMQService;
+  const rabbitmq = { publish: vi.fn() } as unknown as RabbitMQService;
 
   let manager: WorkspaceSyncSchedulerManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     manager = new WorkspaceSyncSchedulerManager(prisma, connectorRepo, cadenceRepo, rabbitmq);
   });
 
@@ -183,7 +184,7 @@ describe('WorkspaceSyncSchedulerManager', () => {
 
   describe('getCadenceForProvider', () => {
     it('returns cached cadence when present', async () => {
-      (cadenceRepo.findAll as jest.Mock).mockResolvedValueOnce([
+      (cadenceRepo.findAll as Mock).mockResolvedValueOnce([
         {
           provider: WorkspaceProvider.SLACK,
           intervalSeconds: 30,

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BusinessException } from '../../../common/errors';
 import { InferenceService } from '../services/inference.service';
 
@@ -29,11 +30,11 @@ describe('InferenceService', () => {
     it('swaps to requested model when different model is loaded', async () => {
       const lifecycle = {
         getLoaded: async () => ({ id: 'id-1', name: 'qwen3-coder', tag: 'Q4_K_M', port: 48500 }),
-        load: jest.fn().mockResolvedValue({ id: 'id-2', port: 48800 }),
+        load: vi.fn().mockResolvedValue({ id: 'id-2', port: 48800 }),
       };
       const catalogRepo = {
-        findByName: jest.fn().mockResolvedValue({ id: 'id-2', name: 'phi-4-mini', tag: 'Q4_K_M' }),
-        findById: jest.fn(),
+        findByName: vi.fn().mockResolvedValue({ id: 'id-2', name: 'phi-4-mini', tag: 'Q4_K_M' }),
+        findById: vi.fn(),
       };
       const svc = new InferenceService(lifecycle as any, catalogRepo as any);
       const result = await svc.ensureReady('phi-4-mini:Q4_K_M');
@@ -44,11 +45,11 @@ describe('InferenceService', () => {
     it('auto-loads requested model when nothing is loaded', async () => {
       const lifecycle = {
         getLoaded: async () => null,
-        load: jest.fn().mockResolvedValue({ id: 'id-2', port: 48800 }),
+        load: vi.fn().mockResolvedValue({ id: 'id-2', port: 48800 }),
       };
       const catalogRepo = {
-        findByName: jest.fn().mockResolvedValue({ id: 'id-2', name: 'phi-4-mini', tag: 'Q4_K_M' }),
-        findById: jest.fn(),
+        findByName: vi.fn().mockResolvedValue({ id: 'id-2', name: 'phi-4-mini', tag: 'Q4_K_M' }),
+        findById: vi.fn(),
       };
       const svc = new InferenceService(lifecycle as any, catalogRepo as any);
       const result = await svc.ensureReady('phi-4-mini:Q4_K_M');
@@ -64,8 +65,8 @@ describe('InferenceService', () => {
     it('throws MODEL_NOT_FOUND when requested model not in catalog', async () => {
       const lifecycle = { getLoaded: async () => null };
       const catalogRepo = {
-        findByName: jest.fn().mockResolvedValue(null),
-        findById: jest.fn().mockResolvedValue(null),
+        findByName: vi.fn().mockResolvedValue(null),
+        findById: vi.fn().mockResolvedValue(null),
       };
       const svc = new InferenceService(lifecycle as any, catalogRepo as any);
       await expect(svc.ensureReady('unknown:abc')).rejects.toThrow(BusinessException);

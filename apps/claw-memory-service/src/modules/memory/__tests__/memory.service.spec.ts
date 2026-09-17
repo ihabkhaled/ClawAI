@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   MemoryAuditAction,
   type MemoryRecord,
@@ -18,11 +19,11 @@ import { type MemoryPreferenceService } from '../../memory-preferences/services/
 import type { CreateMemoryDto } from '../dto/create-memory.dto';
 
 function makeStub<T extends object>(): T {
-  const cache: Record<string | symbol, jest.Mock> = {};
+  const cache: Record<string | symbol, Mock> = {};
   return new Proxy({} as T, {
     get: (_target, prop) => {
       if (!cache[prop]) {
-        cache[prop] = jest.fn();
+        cache[prop] = vi.fn();
       }
       return cache[prop];
     },
@@ -69,7 +70,7 @@ describe('MemoryService (V2)', () => {
   let suggestionRepo: MemorySuggestionRepository;
   let auditService: MemoryAuditService;
   let preferenceService: MemoryPreferenceService;
-  let rabbit: { publish: ReturnType<typeof jest.fn>; subscribe: ReturnType<typeof jest.fn> };
+  let rabbit: { publish: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> };
   let service: MemoryService;
 
   beforeEach(() => {
@@ -80,7 +81,7 @@ describe('MemoryService (V2)', () => {
     suggestionRepo = makeStub<MemorySuggestionRepository>();
     auditService = makeStub<MemoryAuditService>();
     preferenceService = makeStub<MemoryPreferenceService>();
-    rabbit = { publish: jest.fn(), subscribe: jest.fn() };
+    rabbit = { publish: vi.fn(), subscribe: vi.fn() };
     service = new MemoryService(
       memoryRepo,
       extraction,
@@ -90,13 +91,13 @@ describe('MemoryService (V2)', () => {
       auditService,
       preferenceService,
       rabbit as unknown as ConstructorParameters<typeof MemoryService>[7],
-      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
+      { resolve: vi.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
   });
 
   it('creates a normal memory and records audit', async () => {
     const created = buildMemoryRecord();
-    (memoryRepo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(created);
+    (memoryRepo.createWithinLimit as unknown as Mock).mockResolvedValue(created);
 
     const dto: CreateMemoryDto = {
       type: MemoryType.FACT,
@@ -116,7 +117,7 @@ describe('MemoryService (V2)', () => {
   });
 
   it('rejects creation when the atomic memory-item limit is exhausted', async () => {
-    (memoryRepo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(null);
+    (memoryRepo.createWithinLimit as unknown as Mock).mockResolvedValue(null);
     service = new MemoryService(
       memoryRepo,
       extraction,
@@ -127,7 +128,7 @@ describe('MemoryService (V2)', () => {
       preferenceService,
       rabbit as never,
       {
-        resolve: jest.fn().mockResolvedValue({
+        resolve: vi.fn().mockResolvedValue({
           isAdmin: false,
           plan: { featureGates: { allowMemory: true }, limits: { memoryItems: 10 } },
         }),
@@ -144,7 +145,7 @@ describe('MemoryService (V2)', () => {
       content: 'AK********0000',
       sensitivity: MemorySensitivity.REDACTED,
     });
-    (memoryRepo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(created);
+    (memoryRepo.createWithinLimit as unknown as Mock).mockResolvedValue(created);
 
     const dto: CreateMemoryDto = {
       type: MemoryType.FACT,
@@ -168,7 +169,7 @@ describe('MemoryService (V2)', () => {
   describe('IDOR — cross-user access is rejected', () => {
     beforeEach(() => {
       // The memory belongs to user-1; every call below comes from "attacker".
-      (memoryRepo.findById as unknown as jest.Mock).mockResolvedValue(
+      (memoryRepo.findById as unknown as Mock).mockResolvedValue(
         buildMemoryRecord({ userId: 'user-1' }),
       );
     });
@@ -183,14 +184,14 @@ describe('MemoryService (V2)', () => {
       await expect(
         service.updateMemory('mem-1', 'attacker', { content: 'hijacked' }),
       ).rejects.toMatchObject({ code: 'FORBIDDEN_MEMORY_ACCESS' });
-      expect(memoryRepo.update as unknown as jest.Mock).not.toHaveBeenCalled();
+      expect(memoryRepo.update as unknown as Mock).not.toHaveBeenCalled();
     });
 
     it('deleteMemory rejects a non-owner even with confirmForget and never deletes', async () => {
       await expect(service.deleteMemory('mem-1', 'attacker', true)).rejects.toMatchObject({
         code: 'FORBIDDEN_MEMORY_ACCESS',
       });
-      expect(memoryRepo.delete as unknown as jest.Mock).not.toHaveBeenCalled();
+      expect(memoryRepo.delete as unknown as Mock).not.toHaveBeenCalled();
     });
 
     it('toggleMemory rejects a non-owner', async () => {

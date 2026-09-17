@@ -1,10 +1,11 @@
+import { vi, type Mock } from 'vitest';
 import { DeploymentActivationState, PrivacyClass, RouterProvider } from '../../../generated/prisma';
 import { type PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
 
 const buildRepo = (
-  findMany: jest.Mock = jest.fn().mockResolvedValue([]),
-): { repository: ModelDeploymentRepository; findMany: jest.Mock } => {
+  findMany: Mock = vi.fn().mockResolvedValue([]),
+): { repository: ModelDeploymentRepository; findMany: Mock } => {
   const prisma = { modelDeployment: { findMany } };
   return {
     repository: new ModelDeploymentRepository(prisma as unknown as PrismaService),
@@ -41,7 +42,7 @@ describe('ModelDeploymentRepository.findEligibleForCloudRouting', () => {
     const rows = [
       { id: 'dep_1', provider: RouterProvider.GEMINI, providerModelId: 'gemini-2.5-flash' },
     ];
-    const { repository } = buildRepo(jest.fn().mockResolvedValue(rows));
+    const { repository } = buildRepo(vi.fn().mockResolvedValue(rows));
 
     const result = await repository.findEligibleForCloudRouting();
 

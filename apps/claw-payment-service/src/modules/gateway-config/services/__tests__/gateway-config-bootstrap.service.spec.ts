@@ -1,19 +1,20 @@
+import { vi } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { GatewayConfigErrorCode } from '../../enums/gateway-config-error-code.enum';
 import { GatewayConfigBootstrapService } from '../gateway-config-bootstrap.service';
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
 }));
 
 describe('GatewayConfigBootstrapService', () => {
-  const repository = { importEnvironmentOnce: jest.fn() };
+  const repository = { importEnvironmentOnce: vi.fn() };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.mocked(AppConfig.get).mockReturnValue({
+    vi.clearAllMocks();
+    vi.mocked(AppConfig.get).mockReturnValue({
       PAYMENT_TOKEN_ENCRYPTION_KEY: 'ab'.repeat(32),
       PAYMENT_TOKEN_KEY_VERSION: 4,
       PAYPAL_CLIENT_ID: 'paypal-client',

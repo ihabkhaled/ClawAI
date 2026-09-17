@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { DeploymentTriggerMode, Permission } from '@claw/shared-types';
 
 import { PERMISSIONS_KEY } from '../../../../app/decorators/permissions.decorator';
@@ -11,10 +12,10 @@ import { DeploymentAdminController } from '../deployment-admin.controller';
 const ACTOR = { id: 'super-admin', role: UserRole.ADMIN };
 
 describe('DeploymentAdminController', () => {
-  const getStatus = jest.fn();
-  const trigger = jest.fn();
-  const reset = jest.fn();
-  const setAutomation = jest.fn();
+  const getStatus = vi.fn();
+  const trigger = vi.fn();
+  const reset = vi.fn();
+  const setAutomation = vi.fn();
   const controller = new DeploymentAdminController({
     getStatus,
     trigger,
@@ -22,7 +23,7 @@ describe('DeploymentAdminController', () => {
     setAutomation,
   } as never);
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('forwards the authenticated actor id', async () => {
     getStatus.mockResolvedValue({ state: 'unknown' });

@@ -1,5 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-
+import { vi, beforeEach, describe, expect, it } from 'vitest';
 import {
   DownloadStatus,
   type ModelCatalogEntry,
@@ -8,9 +7,9 @@ import {
 } from '../../../../generated/prisma';
 import { CatalogRemoteMetadataService } from '../catalog-remote-metadata.service';
 
-const getMock = jest.fn<(url: string, config?: unknown) => Promise<unknown>>();
+const getMock = vi.fn<(url: string, config?: unknown) => Promise<unknown>>();
 
-jest.mock('@common/utilities', () => ({
+vi.mock('@common/utilities', () => ({
   createHttpClient: () => ({
     get: getMock,
   }),

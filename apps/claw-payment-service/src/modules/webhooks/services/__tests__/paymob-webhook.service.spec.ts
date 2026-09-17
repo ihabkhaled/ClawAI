@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway, CheckoutPurpose, CheckoutSessionStatus } from '@claw/shared-types';
 
 import type { CheckoutSessionRepository } from '../../../billing/repositories/checkout-session.repository';
@@ -22,26 +23,26 @@ function callbackBody(): string {
 
 describe('PaymobWebhookService', () => {
   const paymob = {
-    verifyCallback: jest.fn(),
-    fetchTransaction: jest.fn(),
+    verifyCallback: vi.fn(),
+    fetchTransaction: vi.fn(),
   };
   const events = {
-    claim: jest.fn(),
-    markFailed: jest.fn(),
-    markProcessed: jest.fn(),
-    markProcessing: jest.fn(),
-    recordInvalidSignature: jest.fn(),
+    claim: vi.fn(),
+    markFailed: vi.fn(),
+    markProcessed: vi.fn(),
+    markProcessing: vi.fn(),
+    recordInvalidSignature: vi.fn(),
   };
   const sessions = {
-    findById: jest.fn(),
-    markFailed: jest.fn(),
+    findById: vi.fn(),
+    markFailed: vi.fn(),
   };
-  const activation = { activate: jest.fn() };
-  const compensation = { compensate: jest.fn() };
+  const activation = { activate: vi.fn() };
+  const compensation = { compensate: vi.fn() };
   let service: PaymobWebhookService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     events.claim.mockResolvedValue({ id: 'event-1' });
     paymob.verifyCallback.mockReturnValue({
       verified: true,

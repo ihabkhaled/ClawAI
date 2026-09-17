@@ -1,34 +1,39 @@
+import { vi } from 'vitest';
 import type { PaygMeter } from '@claw/shared-entitlements';
 import { AccessControlService } from '../access-control.service';
 import { BillingErrorCode } from '@claw/shared-types';
 
-const getEntitlements = jest.fn();
-const finalizeQuota = jest.fn();
-const recordFeatureUsage = jest.fn();
+const getEntitlements = vi.fn();
+const finalizeQuota = vi.fn();
+const recordFeatureUsage = vi.fn();
 // Exposure is a network call to connector-service; the harness stubs it so the
 // suite tests the gate's decision, not connectivity. Default: exposed.
-const isExposed = jest.fn().mockResolvedValue(true);
+const isExposed = vi.fn().mockResolvedValue(true);
 
-jest.mock('../../clients/model-exposure.client', () => ({
-  ModelExposureClient: jest.fn().mockImplementation(() => ({
-    isExposed: (...args: unknown[]) => isExposed(...args),
-  })),
+vi.mock('../../clients/model-exposure.client', () => ({
+  ModelExposureClient: vi.fn(function () {
+    return {
+      isExposed: (...args: unknown[]) => isExposed(...args),
+    };
+  }),
 }));
 
-jest.mock('@claw/shared-entitlements', () => {
-  const actual = jest.requireActual('@claw/shared-entitlements');
+vi.mock('@claw/shared-entitlements', async () => {
+  const actual = await vi.importActual('@claw/shared-entitlements');
   return {
     ...actual,
-    EntitlementsAdapter: jest.fn().mockImplementation(() => ({
-      getEntitlements: (...args: unknown[]) => getEntitlements(...args),
-      finalizeQuota: (...args: unknown[]) => finalizeQuota(...args),
-      recordFeatureUsage: (...args: unknown[]) => recordFeatureUsage(...args),
-    })),
+    EntitlementsAdapter: vi.fn(function () {
+      return {
+        getEntitlements: (...args: unknown[]) => getEntitlements(...args),
+        finalizeQuota: (...args: unknown[]) => finalizeQuota(...args),
+        recordFeatureUsage: (...args: unknown[]) => recordFeatureUsage(...args),
+      };
+    }),
   };
 });
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn().mockReturnValue({ AUTH_SERVICE_URL: 'http://auth:4001' }) },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn().mockReturnValue({ AUTH_SERVICE_URL: 'http://auth:4001' }) },
 }));
 
 const ent = (overrides: Record<string, unknown> = {}) => ({
@@ -47,7 +52,7 @@ const ent = (overrides: Record<string, unknown> = {}) => ({
 // gates, not credit, so a stub that reports "not metered" keeps every existing
 // assertion about those gates unchanged.
 const paygMeter = {
-  reserve: jest.fn().mockResolvedValue({
+  reserve: vi.fn().mockResolvedValue({
     metered: false,
     maxOutputTokens: 4096,
     clamped: false,
@@ -56,15 +61,15 @@ const paygMeter = {
     availableAfterMicroUsd: 0,
     reason: 'NOT_PAYG',
   }),
-  finalize: jest.fn().mockResolvedValue(undefined),
-  release: jest.fn().mockResolvedValue(undefined),
+  finalize: vi.fn().mockResolvedValue(undefined),
+  release: vi.fn().mockResolvedValue(undefined),
 } as unknown as PaygMeter;
 
 describe('AccessControlService', () => {
   let service: AccessControlService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     service = new AccessControlService(paygMeter);
   });
 

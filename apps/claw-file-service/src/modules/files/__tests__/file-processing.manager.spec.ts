@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { FileProcessingManager } from '../managers/file-processing.manager';
 import { type ZipExpansionManager } from '../managers/zip-expansion.manager';
 import { type FilesRepository } from '../repositories/files.repository';
@@ -6,15 +7,15 @@ import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { FileIngestionStatus } from '../../../generated/prisma';
 
-jest.mock('../../../common/utilities', () => ({
-  verifyAccessToken: jest.fn(),
-  saveFile: jest.fn().mockReturnValue('/data/uploads/test-file.txt'),
-  deleteFile: jest.fn(),
-  readFile: jest.fn().mockReturnValue(Buffer.from('default')),
+vi.mock('../../../common/utilities', () => ({
+  verifyAccessToken: vi.fn(),
+  saveFile: vi.fn().mockReturnValue('/data/uploads/test-file.txt'),
+  deleteFile: vi.fn(),
+  readFile: vi.fn().mockReturnValue(Buffer.from('default')),
 }));
 
-const { readFile } = jest.requireMock('../../../common/utilities') as {
-  readFile: jest.Mock;
+const { readFile } = await vi.importMock('../../../common/utilities') as {
+  readFile: Mock;
 };
 
 const MOCK_TEXT_CONTENT = 'First paragraph.\n\nSecond paragraph.\n\nThird paragraph.';
@@ -42,23 +43,23 @@ const mockFile = {
   updatedAt: new Date(),
 };
 
-const mockFilesRepository = (): Partial<Record<keyof FilesRepository, jest.Mock>> => ({
-  updateIngestionStatus: jest.fn().mockResolvedValue(mockFile),
-  saveExtractionResult: jest.fn().mockResolvedValue(mockFile),
+const mockFilesRepository = (): Partial<Record<keyof FilesRepository, Mock>> => ({
+  updateIngestionStatus: vi.fn().mockResolvedValue(mockFile),
+  saveExtractionResult: vi.fn().mockResolvedValue(mockFile),
 });
 
-const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Mock> => ({
-  createMany: jest.fn().mockResolvedValue(3),
-  findByFileId: jest.fn(),
-  deleteByFileId: jest.fn(),
+const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({
+  createMany: vi.fn().mockResolvedValue(3),
+  findByFileId: vi.fn(),
+  deleteByFileId: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
-const mockZipExpansion = (): Partial<Record<keyof ZipExpansionManager, jest.Mock>> => ({
-  expandArchive: jest.fn().mockResolvedValue(void 0),
+const mockZipExpansion = (): Partial<Record<keyof ZipExpansionManager, Mock>> => ({
+  expandArchive: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('FileProcessingManager', () => {

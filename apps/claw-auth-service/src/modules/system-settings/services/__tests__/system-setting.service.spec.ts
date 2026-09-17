@@ -1,17 +1,18 @@
+import { vi, type Mock } from 'vitest';
 import { PAYG_ENABLED_SETTING_KEY } from '@claw/shared-constants';
 
 import { type SystemSettingRepository } from '../../repositories/system-setting.repository';
 import { SystemSettingService } from '../system-setting.service';
 
 describe('SystemSettingService', () => {
-  let repository: { findByKey: jest.Mock; listAll: jest.Mock; upsert: jest.Mock };
+  let repository: { findByKey: Mock; listAll: Mock; upsert: Mock };
   let service: SystemSettingService;
 
   beforeEach(() => {
     repository = {
-      findByKey: jest.fn().mockResolvedValue(null),
-      listAll: jest.fn().mockResolvedValue([]),
-      upsert: jest.fn(),
+      findByKey: vi.fn().mockResolvedValue(null),
+      listAll: vi.fn().mockResolvedValue([]),
+      upsert: vi.fn(),
     };
     service = new SystemSettingService(repository as unknown as SystemSettingRepository);
   });

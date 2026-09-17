@@ -1,26 +1,27 @@
+import { vi, type Mock } from 'vitest';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 
-jest.mock('../../../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn(),
 }));
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn(() => ({
+    get: vi.fn(() => ({
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
     })),
   },
 }));
 
-const { httpRequest } = jest.requireMock('../../../common/utilities/http-client.utility') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../common/utilities/http-client.utility') as {
+  httpRequest: Mock;
 };
 
 describe('LocalModelSelectionService', () => {
   let service: LocalModelSelectionService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     service = new LocalModelSelectionService();
   });
 

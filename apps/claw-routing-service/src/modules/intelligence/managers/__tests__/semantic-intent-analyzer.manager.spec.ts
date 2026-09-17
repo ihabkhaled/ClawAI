@@ -1,17 +1,18 @@
+import { type Mock, vi } from 'vitest';
 import { SemanticIntentAnalyzerManager } from '../semantic-intent-analyzer.manager';
 import { httpRequest } from '../../../../common/utilities/http-client.utility';
 import { AppConfig } from '../../../../app/config/app.config';
 import type { SemanticIntentAnalyzerInput } from '../../types/semantic-intent-analysis.types';
 
-jest.mock('../../../../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn(),
 }));
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
 }));
 
-const mockedHttpRequest = httpRequest as unknown as jest.Mock;
-const mockedGetConfig = AppConfig.get as jest.Mock;
+const mockedHttpRequest = httpRequest as unknown as Mock;
+const mockedGetConfig = AppConfig.get as Mock;
 
 function baseConfig(enabled: boolean) {
   return {
@@ -166,7 +167,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'nope' } })
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: validAnalysisJson } });
       await manager.analyze(makeInput());
-      const secondCall = mockedHttpRequest.mock.calls[1][0];
+      const secondCallCall = mockedHttpRequest.mock.calls[1];
+      expect(secondCallCall).toBeDefined();
+      const secondCall = secondCallCall?.[0];
       const secondPrompt = secondCall.body.prompt as string;
       expect(secondPrompt).toContain('Your previous response could not be parsed');
       expect(secondPrompt).toContain('Previous malformed output');
@@ -204,7 +207,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput({ message: 'unique-marker-XYZ123 hello world' }));
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('unique-marker-XYZ123');
     });
 
@@ -215,7 +220,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput({ routingMode: 'PRIVACY_FIRST' as never }));
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('Routing mode: PRIVACY_FIRST');
     });
 
@@ -233,7 +240,9 @@ describe('SemanticIntentAnalyzerManager', () => {
           ],
         }),
       );
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('medical');
       expect(prompt).toContain('diagnosis');
       expect(prompt).toContain('finance');
@@ -248,7 +257,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput({ keywordSignals: [] }));
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).not.toContain('Weak keyword hints');
     });
 
@@ -264,7 +275,9 @@ describe('SemanticIntentAnalyzerManager', () => {
           followUpSignals: ['make_it_x', 'short_reply'],
         }),
       );
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('make_it_x');
       expect(prompt).toContain('short_reply');
     });
@@ -278,7 +291,9 @@ describe('SemanticIntentAnalyzerManager', () => {
       await manager.analyze(
         makeInput({ threadSummary: 'Earlier we discussed migrating to Kubernetes.' }),
       );
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('migrating to Kubernetes');
     });
 
@@ -296,7 +311,9 @@ describe('SemanticIntentAnalyzerManager', () => {
           ],
         }),
       );
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('[user]');
       expect(prompt).toContain('[assistant]');
       expect(prompt).toContain('Jira story about routing');
@@ -313,7 +330,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         content: `msg-${i}`,
       }));
       await manager.analyze(makeInput({ recentMessages: many }));
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       // The first messages should be dropped (only the last few survive).
       expect(prompt).not.toContain('msg-0');
       expect(prompt).toContain('msg-29');
@@ -327,7 +346,9 @@ describe('SemanticIntentAnalyzerManager', () => {
       });
       const huge = 'x'.repeat(20_000);
       await manager.analyze(makeInput({ message: huge }));
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt.length).toBeLessThan(20_000);
     });
 
@@ -342,7 +363,9 @@ describe('SemanticIntentAnalyzerManager', () => {
           attachmentMetadata: [{ fileName: 'q3-report.pdf', mimeType: 'application/pdf' }],
         }),
       );
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('q3-report.pdf');
       expect(prompt).toContain('application/pdf');
     });
@@ -356,7 +379,9 @@ describe('SemanticIntentAnalyzerManager', () => {
       await manager.analyze(
         makeInput({ availableWorkflowKinds: ['DIRECT_LLM', 'PDF_EXTRACTION'] }),
       );
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('DIRECT_LLM');
       expect(prompt).toContain('PDF_EXTRACTION');
     });
@@ -368,7 +393,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput({ activePolicyName: 'enterprise-privacy-first' }));
-      const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+      const promptCall = mockedHttpRequest.mock.calls[0];
+      expect(promptCall).toBeDefined();
+      const prompt = promptCall?.[0].body.prompt as string;
       expect(prompt).toContain('enterprise-privacy-first');
     });
   });
@@ -381,7 +408,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput());
-      const body = mockedHttpRequest.mock.calls[0][0].body;
+      const bodyCall = mockedHttpRequest.mock.calls[0];
+      expect(bodyCall).toBeDefined();
+      const body = bodyCall?.[0].body;
       expect(body.options.temperature).toBe(0);
       expect(body.options.num_predict).toBe(800);
     });
@@ -393,7 +422,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput());
-      const call = mockedHttpRequest.mock.calls[0][0];
+      const callCall = mockedHttpRequest.mock.calls[0];
+      expect(callCall).toBeDefined();
+      const call = callCall?.[0];
       expect(call.url).toBe('http://ollama-service:4008/api/v1/ollama/generate');
       expect(call.method).toBe('POST');
     });
@@ -405,7 +436,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput());
-      const body = mockedHttpRequest.mock.calls[0][0].body;
+      const bodyCall = mockedHttpRequest.mock.calls[0];
+      expect(bodyCall).toBeDefined();
+      const body = bodyCall?.[0].body;
       expect(body.model).toBe('qwen3:1.7b');
     });
 
@@ -416,7 +449,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         data: { response: validAnalysisJson },
       });
       await manager.analyze(makeInput());
-      const body = mockedHttpRequest.mock.calls[0][0].body;
+      const bodyCall = mockedHttpRequest.mock.calls[0];
+      expect(bodyCall).toBeDefined();
+      const body = bodyCall?.[0].body;
       expect(body.think).toBe(false);
     });
   });

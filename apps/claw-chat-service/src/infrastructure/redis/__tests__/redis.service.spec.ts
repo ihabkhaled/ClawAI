@@ -1,20 +1,19 @@
-import { describe, expect, it, jest } from '@jest/globals';
-
+import { vi, type Mocked, describe, expect, it } from 'vitest';
 import { AppConfig } from '../../../app/config/app.config';
 import type { RedisClientPort } from '../types/redis-client.types';
 import { RuntimeV2RedisOperation } from '../enums/runtime-v2-redis-operation.enum';
 import { RedisService } from '../redis.service';
 
-const client = (): jest.Mocked<RedisClientPort> => ({
-  ping: jest.fn<RedisClientPort['ping']>(),
-  get: jest.fn<RedisClientPort['get']>(),
-  set: jest.fn<RedisClientPort['set']>(),
-  del: jest.fn<RedisClientPort['del']>(),
-  eval: jest.fn<RedisClientPort['eval']>(),
-  evalRuntimeV2: jest.fn<RedisClientPort['evalRuntimeV2']>(),
-  disconnect: jest.fn<RedisClientPort['disconnect']>(),
-  quit: jest.fn<RedisClientPort['quit']>(),
-  lrange: jest.fn<RedisClientPort['lrange']>(),
+const client = (): Mocked<RedisClientPort> => ({
+  ping: vi.fn<RedisClientPort['ping']>(),
+  get: vi.fn<RedisClientPort['get']>(),
+  set: vi.fn<RedisClientPort['set']>(),
+  del: vi.fn<RedisClientPort['del']>(),
+  eval: vi.fn<RedisClientPort['eval']>(),
+  evalRuntimeV2: vi.fn<RedisClientPort['evalRuntimeV2']>(),
+  disconnect: vi.fn<RedisClientPort['disconnect']>(),
+  quit: vi.fn<RedisClientPort['quit']>(),
+  lrange: vi.fn<RedisClientPort['lrange']>(),
 });
 
 describe('RedisService atomic boundary', () => {
@@ -40,7 +39,7 @@ describe('RedisService atomic boundary', () => {
     const redisClient = client();
     const runtimeV2Client = client();
     runtimeV2Client.evalRuntimeV2.mockResolvedValue('["ok"]');
-    const deadline = jest.spyOn(AppConfig, 'runtimeV2RedisDeadlineMs').mockReturnValue(250);
+    const deadline = vi.spyOn(AppConfig, 'runtimeV2RedisDeadlineMs').mockReturnValue(250);
     const service = new RedisService(redisClient, runtimeV2Client);
 
     await expect(

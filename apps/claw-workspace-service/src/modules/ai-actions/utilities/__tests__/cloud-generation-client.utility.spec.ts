@@ -1,10 +1,11 @@
+import { vi, type Mock } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { callCloudGenerate } from '../cloud-generation-client.utility';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
-const fetchMock = (): jest.Mock => global.fetch as jest.Mock;
+const fetchMock = (): Mock => global.fetch as Mock;
 
 const okResponse = (
   body: unknown,

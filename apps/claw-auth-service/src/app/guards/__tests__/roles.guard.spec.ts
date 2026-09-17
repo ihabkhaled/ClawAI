@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Permission } from '@claw/shared-types';
@@ -6,7 +7,7 @@ import { PERMISSIONS_KEY } from '../../decorators/permissions.decorator';
 import { RolesGuard } from '../roles.guard';
 
 describe('RolesGuard permission enforcement', () => {
-  const resolvePermissionsBySlug = jest.fn();
+  const resolvePermissionsBySlug = vi.fn();
   function permissionProtectedHandler(): void {}
   Reflect.defineMetadata(
     PERMISSIONS_KEY,

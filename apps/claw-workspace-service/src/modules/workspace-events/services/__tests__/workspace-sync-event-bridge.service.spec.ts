@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { WorkspaceObjectType } from '../../../../common/enums/workspace-object-type.enum';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import type { WorkspaceEventRepository } from '../../repositories/workspace-event.repository';
@@ -7,7 +8,7 @@ import { WorkspaceSyncEventBridgeService } from '../workspace-sync-event-bridge.
 function fakeRepo(): { repo: WorkspaceEventRepository; keys: Set<string> } {
   const keys = new Set<string>();
   const repo = {
-    createIfNew: jest.fn(async (input: { idempotencyKey: string }) => {
+    createIfNew: vi.fn(async (input: { idempotencyKey: string }) => {
       if (keys.has(input.idempotencyKey)) {
         return { created: false, event: {} };
       }
@@ -91,7 +92,7 @@ describe('WorkspaceSyncEventBridgeService', () => {
 
   it('a repository failure for one object does not stop the rest of the batch', async () => {
     const repo = {
-      createIfNew: jest
+      createIfNew: vi
         .fn()
         .mockRejectedValueOnce(new Error('db down'))
         .mockResolvedValueOnce({ created: true, event: {} }),

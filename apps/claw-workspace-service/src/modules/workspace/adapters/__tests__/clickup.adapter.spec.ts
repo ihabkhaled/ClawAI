@@ -1,40 +1,41 @@
+import { vi, type Mock } from 'vitest';
 import { ClickUpAdapter } from '../clickup.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('ClickUpAdapter', () => {
   let adapter: ClickUpAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new ClickUpAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unauthorized');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
       expect(result.errorMessage).toBe('HTTP 503');
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
@@ -94,7 +95,7 @@ describe('ClickUpAdapter', () => {
     });
 
     it('walks teams → spaces → lists → tasks and maps every task', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         // team
         .mockResolvedValueOnce({
           ok: true,
@@ -133,7 +134,7 @@ describe('ClickUpAdapter', () => {
     });
 
     it('returns no objects when a team has no spaces', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ teams: [{ id: 'team1', name: 'Eng' }] }),
@@ -145,7 +146,7 @@ describe('ClickUpAdapter', () => {
     });
 
     it('tolerates a failed task fetch for one list without losing sibling lists', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ teams: [{ id: 'team1', name: 'Eng' }] }),
@@ -182,7 +183,7 @@ describe('ClickUpAdapter', () => {
     // fetch, matching GitHub's safeFetchIssues fault-isolation pattern.
     it('tolerates a malformed task (missing status) without losing sibling lists', async () => {
       const malformedTask = task({ id: 't-malformed', status: undefined });
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ teams: [{ id: 'team1', name: 'Eng' }] }),
@@ -219,7 +220,7 @@ describe('ClickUpAdapter', () => {
 
     it('caps tasks per list at CLICKUP_SYNC_TASKS_PER_LIST', async () => {
       const manyTasks = Array.from({ length: 40 }, (_, i) => task({ id: `t${String(i)}` }));
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ teams: [{ id: 'team1', name: 'Eng' }] }),
@@ -241,7 +242,7 @@ describe('ClickUpAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('TICKET — resolves by externalId', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -270,13 +271,13 @@ describe('ClickUpAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'TICKET');
       expect(live).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.fetchObjectDetails('token', 't1', 'TICKET')).rejects.toThrow(/HTTP 500/);
     });
   });
@@ -284,7 +285,7 @@ describe('ClickUpAdapter', () => {
   describe('write actions', () => {
     describe('CREATE_CLICKUP_TASK', () => {
       it('posts to the list task endpoint and returns the created id/url', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'new-task', url: 'https://app.clickup.com/t/new-task' }),
         });
@@ -298,13 +299,13 @@ describe('ClickUpAdapter', () => {
           externalId: 'new-task',
           url: 'https://app.clickup.com/t/new-task',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toBe('https://api.clickup.com/api/v2/list/list1/task');
         expect(init.method).toBe('POST');
       });
 
       it('returns success:false with the API error on failure', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: false,
           status: 400,
           text: async () => 'Bad request',
@@ -320,12 +321,12 @@ describe('ClickUpAdapter', () => {
 
     describe('UPDATE_CLICKUP_TASK', () => {
       it('only sends the fields present in the payload', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
+        (global.fetch as Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
         await adapter.executeWriteAction('token', 'UPDATE_CLICKUP_TASK', {
           taskId: 'task1',
           status: 'done',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toBe('https://api.clickup.com/api/v2/task/task1');
         expect(JSON.parse(init.body as string)).toEqual({ status: 'done' });
       });
@@ -333,12 +334,12 @@ describe('ClickUpAdapter', () => {
 
     describe('COMMENT_CLICKUP_TASK', () => {
       it('posts the comment text to the task comment endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
+        (global.fetch as Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
         await adapter.executeWriteAction('token', 'COMMENT_CLICKUP_TASK', {
           taskId: 'task1',
           commentText: 'Looks good',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toBe('https://api.clickup.com/api/v2/task/task1/comment');
         expect(JSON.parse(init.body as string)).toEqual({ comment_text: 'Looks good' });
       });
@@ -351,7 +352,7 @@ describe('ClickUpAdapter', () => {
     });
 
     it('catches a thrown error and returns success:false', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+      (global.fetch as Mock).mockRejectedValue(new Error('network down'));
       const result = await adapter.executeWriteAction('token', 'CREATE_CLICKUP_TASK', {
         listId: 'list1',
         name: 'x',

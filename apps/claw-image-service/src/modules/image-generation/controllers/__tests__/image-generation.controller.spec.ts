@@ -1,33 +1,34 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ImageGenerationController } from '../image-generation.controller';
 import { InternalImageController } from '../internal-image.controller';
 import { ImageGenerationService } from '../../services/image-generation.service';
 import { ImageGenerationEventsService } from '../../services/image-generation-events.service';
 
-const buildServiceMock = (): jest.Mocked<{
-  enqueueGeneration: jest.Mock;
-  getById: jest.Mock;
-  getByIdForUser: jest.Mock;
-  listByUser: jest.Mock;
-  retryGeneration: jest.Mock;
-  retryWithAlternateModel: jest.Mock;
-}> => ({
-  enqueueGeneration: jest.fn(),
-  getById: jest.fn(),
-  getByIdForUser: jest.fn(),
-  listByUser: jest.fn(),
-  retryGeneration: jest.fn(),
-  retryWithAlternateModel: jest.fn(),
+const buildServiceMock = (): {
+  enqueueGeneration: Mock;
+  getById: Mock;
+  getByIdForUser: Mock;
+  listByUser: Mock;
+  retryGeneration: Mock;
+  retryWithAlternateModel: Mock;
+} => ({
+  enqueueGeneration: vi.fn(),
+  getById: vi.fn(),
+  getByIdForUser: vi.fn(),
+  listByUser: vi.fn(),
+  retryGeneration: vi.fn(),
+  retryWithAlternateModel: vi.fn(),
 });
 
 describe('ImageGenerationController', () => {
   let controller: ImageGenerationController;
   let serviceMock: ReturnType<typeof buildServiceMock>;
-  let eventsMock: jest.Mocked<{ subscribe: jest.Mock }>;
+  let eventsMock: { subscribe: Mock };
 
   beforeEach(async () => {
     serviceMock = buildServiceMock();
-    eventsMock = { subscribe: jest.fn() };
+    eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ImageGenerationController],
       providers: [
@@ -84,7 +85,7 @@ describe('ImageGenerationController', () => {
   });
 
   it('events subscribes via eventsService', () => {
-    const obs = { subscribe: jest.fn() };
+    const obs = { subscribe: vi.fn() };
     eventsMock.subscribe.mockReturnValue(obs);
     expect(controller.events('g1')).toBe(obs);
     expect(eventsMock.subscribe).toHaveBeenCalledWith('g1');
@@ -94,11 +95,11 @@ describe('ImageGenerationController', () => {
 describe('InternalImageController', () => {
   let controller: InternalImageController;
   let serviceMock: ReturnType<typeof buildServiceMock>;
-  let eventsMock: jest.Mocked<{ subscribe: jest.Mock }>;
+  let eventsMock: { subscribe: Mock };
 
   beforeEach(async () => {
     serviceMock = buildServiceMock();
-    eventsMock = { subscribe: jest.fn() };
+    eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [InternalImageController],
       providers: [
@@ -148,7 +149,7 @@ describe('InternalImageController', () => {
   });
 
   it('events subscribes via eventsService', () => {
-    const obs = { subscribe: jest.fn() };
+    const obs = { subscribe: vi.fn() };
     eventsMock.subscribe.mockReturnValue(obs);
     expect(controller.events('g1')).toBe(obs);
   });

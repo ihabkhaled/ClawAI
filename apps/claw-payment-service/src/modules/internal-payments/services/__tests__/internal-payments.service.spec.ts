@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import {
   BillingGateway,
@@ -13,14 +14,14 @@ import { InternalPaymentsService } from '../internal-payments.service';
 describe('InternalPaymentsService', () => {
   const now = new Date('2026-07-26T12:00:00.000Z');
   const repository = {
-    findPaymentById: jest.fn(),
-    findSubscriptionById: jest.fn(),
-    findAuthoritativeSubscriptionForUser: jest.fn(),
+    findPaymentById: vi.fn(),
+    findSubscriptionById: vi.fn(),
+    findAuthoritativeSubscriptionForUser: vi.fn(),
   };
   let service: InternalPaymentsService;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       providers: [
         InternalPaymentsService,

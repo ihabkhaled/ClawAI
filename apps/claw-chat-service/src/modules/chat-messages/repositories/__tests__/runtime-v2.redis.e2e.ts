@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import Redis from 'ioredis';
 
 import { AppConfig } from '../../../../app/config/app.config';

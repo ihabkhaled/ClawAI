@@ -1,11 +1,12 @@
+import { vi } from 'vitest';
 import { Permission, UserRole } from '@claw/shared-types';
 import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 
 import { RefundController } from '../refund.controller';
 
 describe('RefundController', () => {
-  const manager = { request: jest.fn() };
-  const queries = { listRefundableTransactions: jest.fn() };
+  const manager = { request: vi.fn() };
+  const queries = { listRefundableTransactions: vi.fn() };
   const admin = {
     id: 'admin-1',
     sessionId: 'session-1',
@@ -16,7 +17,7 @@ describe('RefundController', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('derives the operator identity from the authenticated principal', async () => {

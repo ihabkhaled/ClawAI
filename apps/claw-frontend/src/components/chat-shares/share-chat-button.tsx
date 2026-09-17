@@ -10,9 +10,12 @@ import type { ShareChatButtonProps } from '@/types';
  * a different glyph: an owner scanning their threads should be able to see which
  * conversations are reachable from the open internet without opening each one.
  *
- * Icon-only until `lg`, matching the other three primary header actions. It
- * used to reveal its label from `sm` up, which left it as the single labelled
- * control on a tablet header full of icons.
+ * Icon-only at every width, matching the other three primary actions beside it
+ * in `ChatThreadActionRail`. It used to reveal its label from `lg` up, back
+ * when those four sat on the header row and there was horizontal room to spend
+ * on a word. In a vertical rail there is not: a rail wide enough for "Share" is
+ * a sidebar. The name stays on `aria-label`, on `title`, and spelled out in the
+ * `…` menu, which is the only form below `sm`.
  */
 export function ShareChatButton({
   label,
@@ -23,17 +26,11 @@ export function ShareChatButton({
     <Button
       variant={isShared ? 'default' : 'ghost'}
       size="icon-sm"
-      className="lg:size-auto lg:h-8 lg:w-auto lg:px-2.5"
       onClick={onClick}
       aria-label={label}
       title={label}
     >
-      {isShared ? (
-        <Globe className="h-4 w-4 lg:me-1.5" />
-      ) : (
-        <Share2 className="h-4 w-4 lg:me-1.5" />
-      )}
-      <span className="hidden lg:inline">{label}</span>
+      {isShared ? <Globe className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
     </Button>
   );
 }

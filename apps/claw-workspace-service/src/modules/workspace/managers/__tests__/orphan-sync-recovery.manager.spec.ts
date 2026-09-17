@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -76,11 +77,11 @@ const validBaseConfig = {
 
 describe('OrphanSyncRecoveryManager', () => {
   let manager: OrphanSyncRecoveryManager;
-  let markOrphanedRunsAsFailed: jest.Mock;
+  let markOrphanedRunsAsFailed: Mock;
 
   beforeEach(async () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(validBaseConfig);
-    markOrphanedRunsAsFailed = jest.fn();
+    vi.spyOn(AppConfig, 'get').mockReturnValue(validBaseConfig);
+    markOrphanedRunsAsFailed = vi.fn();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrphanSyncRecoveryManager,
@@ -95,7 +96,7 @@ describe('OrphanSyncRecoveryManager', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('sweeps runs older than ORPHAN_RUN_MAX_AGE_MS', async () => {
@@ -111,7 +112,7 @@ describe('OrphanSyncRecoveryManager', () => {
   });
 
   it('is a no-op when scheduler disabled', async () => {
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ ...validBaseConfig, WORKSPACE_SCHEDULER_ENABLED: false });
     const module: TestingModule = await Test.createTestingModule({

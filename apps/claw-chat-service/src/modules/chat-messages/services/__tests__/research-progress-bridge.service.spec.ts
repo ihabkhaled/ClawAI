@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { RESEARCH_CRAWL_PROGRESS_CHANNEL } from '@claw/shared-constants';
 
 import { AiStreamStage } from '../../../../common/enums';
@@ -9,13 +10,13 @@ type MessageHandler = (channel: string, payload: string) => void;
 function build() {
   let messageHandler: MessageHandler | null = null;
   const subscriber = {
-    subscribe: jest.fn(() => Promise.resolve()),
-    onMessage: jest.fn((handler: MessageHandler) => {
+    subscribe: vi.fn(() => Promise.resolve()),
+    onMessage: vi.fn((handler: MessageHandler) => {
       messageHandler = handler;
     }),
-    onReady: jest.fn(),
+    onReady: vi.fn(),
   };
-  const emitResearchProgress = jest.fn();
+  const emitResearchProgress = vi.fn();
   const chatStreamService = { emitResearchProgress } as unknown as ChatStreamService;
   const service = new ResearchProgressBridgeService(subscriber as never, chatStreamService);
   return {

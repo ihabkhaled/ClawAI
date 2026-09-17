@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { SyncCadenceSeederManager } from '../sync-cadence-seeder.manager';
 import { PROVIDER_DEFINITION_SEEDS } from '../../constants/provider-registry.constants';
 import {
@@ -10,7 +11,7 @@ import type { SyncCadenceRepository } from '../../repositories/sync-cadence.repo
 
 describe('SyncCadenceSeederManager', () => {
   it('upserts a default row for every registered provider', async () => {
-    const repo = { upsertDefault: jest.fn().mockResolvedValue(undefined) };
+    const repo = { upsertDefault: vi.fn().mockResolvedValue(undefined) };
     const manager = new SyncCadenceSeederManager(repo as unknown as SyncCadenceRepository);
 
     await manager.onApplicationBootstrap();
@@ -19,7 +20,7 @@ describe('SyncCadenceSeederManager', () => {
   });
 
   it('seeds each provider using its own fallback cadence and drift-tested capabilities', async () => {
-    const repo = { upsertDefault: jest.fn().mockResolvedValue(undefined) };
+    const repo = { upsertDefault: vi.fn().mockResolvedValue(undefined) };
     const manager = new SyncCadenceSeederManager(repo as unknown as SyncCadenceRepository);
 
     await manager.onApplicationBootstrap();
@@ -45,7 +46,7 @@ describe('SyncCadenceSeederManager', () => {
   // drift-tested PROVIDER_DEFINITION_SEEDS source, never a separately
   // hand-maintained value that could silently diverge from it.
   it('never hardcodes true for a provider PROVIDER_DEFINITION_SEEDS marks false', async () => {
-    const repo = { upsertDefault: jest.fn().mockResolvedValue(undefined) };
+    const repo = { upsertDefault: vi.fn().mockResolvedValue(undefined) };
     const manager = new SyncCadenceSeederManager(repo as unknown as SyncCadenceRepository);
 
     await manager.onApplicationBootstrap();

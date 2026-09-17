@@ -1,7 +1,9 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 // Phase 9 — Learning loop integration test. Exercises the path that
 // flows learned-score data from LearningLoopManager into the scoring
 // engine's learnedSuccessRate input.
 
+import { AppConfig } from '../../../app/config/app.config';
 import { DomainTag } from '../../../generated/prisma';
 import type { ClassifierManager } from '../../classifier/managers/classifier.manager';
 import type { LearningLoopManager } from '../../learning-loop/managers/learning-loop.manager';
@@ -10,10 +12,14 @@ import type { RouterModelRegistryRepository } from '../../router-models/reposito
 import type { ScoringEngineManager } from '../../scoring/managers/scoring-engine.manager';
 import { RouteEvaluatorManager } from '../managers/route-evaluator.manager';
 
-jest.mock('../../../app/config/app.config');
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig is a class with a STATIC get(); the bare automock does not give
+// that static a settable mock, so the manager's defensive try/catch swallowed
+// the undefined read and every candidate came back with a null learned score.
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
+}));
+
+const mockedGetConfig = AppConfig.get as Mock;
 
 const makeProfile = (provider: string, modelKey: string): any => ({
   id: `${provider}-${modelKey}`,
@@ -37,15 +43,15 @@ const makeProfile = (provider: string, modelKey: string): any => ({
 });
 
 describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
-  let classifier: jest.Mocked<Partial<ClassifierManager>>;
-  let registryRepo: { list: jest.Mock };
-  let scorer: jest.Mocked<Partial<ScoringEngineManager>>;
-  let circuit: { getState: jest.Mock };
-  let learningLoop: { getRollingScore: jest.Mock };
+  let classifier: Mocked<Partial<ClassifierManager>>;
+  let registryRepo: { list: Mock };
+  let scorer: Mocked<Partial<ScoringEngineManager>>;
+  let circuit: { getState: Mock };
+  let learningLoop: { getRollingScore: Mock };
 
   beforeEach(() => {
     classifier = {
-      classify: jest.fn().mockReturnValue({
+      classify: vi.fn().mockReturnValue({
         domain: DomainTag.CODING,
         secondaryDomain: null,
         modalityIn: ['TEXT'],
@@ -55,14 +61,14 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
         confidence: 0.9,
         reasonTags: ['coding'],
       }),
-    } as unknown as jest.Mocked<Partial<ClassifierManager>>;
+    } as unknown as Mocked<Partial<ClassifierManager>>;
     registryRepo = {
-      list: jest.fn().mockResolvedValue({
+      list: vi.fn().mockResolvedValue({
         items: [makeProfile('OPENAI', 'gpt-4o'), makeProfile('ANTHROPIC', 'claude-sonnet-4')],
       }),
     };
     scorer = {
-      score: jest.fn().mockReturnValue({
+      score: vi.fn().mockReturnValue({
         ranked: [
           {
             profileId: 'OPENAI-gpt-4o',
@@ -75,17 +81,17 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
         ],
         rejected: [],
       }),
-    } as unknown as jest.Mocked<Partial<ScoringEngineManager>>;
+    } as unknown as Mocked<Partial<ScoringEngineManager>>;
     circuit = {
-      getState: jest.fn().mockResolvedValue({ isAvailable: true }),
+      getState: vi.fn().mockResolvedValue({ isAvailable: true }),
     };
     learningLoop = {
-      getRollingScore: jest.fn().mockResolvedValue(0.87),
+      getRollingScore: vi.fn().mockResolvedValue(0.87),
     };
   });
 
   it('passes learnedSuccessRate=null when the flag is OFF (back-compat)', async () => {
-    AppConfig.get.mockReturnValue({
+    mockedGetConfig.mockReturnValue({
       ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED: false,
     });
     const manager = new RouteEvaluatorManager(
@@ -109,14 +115,14 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
     expect(scoringInput.candidates[1].learnedSuccessRate).toBeNull();
     expect(learningLoop.getRollingScore).not.toHaveBeenCalled();
   });
 
   it('passes the learned score from LearningLoopManager when the flag is ON', async () => {
-    AppConfig.get.mockReturnValue({
+    mockedGetConfig.mockReturnValue({
       ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED: true,
     });
     const manager = new RouteEvaluatorManager(
@@ -140,7 +146,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBe(0.87);
     expect(learningLoop.getRollingScore).toHaveBeenCalledWith(
       'OPENAI/gpt-4o',
@@ -150,7 +156,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
   });
 
   it('falls back to null when LearningLoopManager throws (never poisons routing)', async () => {
-    AppConfig.get.mockReturnValue({
+    mockedGetConfig.mockReturnValue({
       ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED: true,
     });
     learningLoop.getRollingScore.mockRejectedValueOnce(new Error('db unreachable'));
@@ -175,12 +181,12 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
   });
 
   it('keeps learnedSuccessRate=null when LearningLoopManager is not provided', async () => {
-    AppConfig.get.mockReturnValue({
+    mockedGetConfig.mockReturnValue({
       ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED: true,
     });
     const manager = new RouteEvaluatorManager(
@@ -202,7 +208,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
   });
 });

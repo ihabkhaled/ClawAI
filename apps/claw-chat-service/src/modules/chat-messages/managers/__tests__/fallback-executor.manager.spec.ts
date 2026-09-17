@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { FallbackExecutorManager } from '../fallback-executor.manager';
 import type {
   AttemptRecord,
@@ -5,10 +6,16 @@ import type {
   FallbackCandidate,
 } from '../../types/fallback-executor.types';
 
-jest.mock('../../../../app/config/app.config');
-const { AppConfig } = jest.requireMock('../../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const candidates: FallbackCandidate[] = [
   { provider: 'OPENAI', model: 'gpt-4o' },
@@ -71,9 +78,9 @@ describe('FallbackExecutorManager', () => {
 
   describe('executeChain', () => {
     it('returns success on the first candidate when SUCCESS is returned', async () => {
-      const callback = jest.fn<
-        Promise<CandidateCallbackResult<string>>,
-        [FallbackCandidate, number]
+      const callback = vi.fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
       >().mockResolvedValueOnce({ status: 'SUCCESS', response: 'ok', qualityScore: 0.9 });
 
       const outcome = await manager.executeChain(candidates, callback);
@@ -91,8 +98,11 @@ describe('FallbackExecutorManager', () => {
     });
 
     it('moves to the next candidate on FAILURE and stops on the next SUCCESS', async () => {
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockResolvedValueOnce({
           status: 'FAILURE',
           error: new Error('boom'),
@@ -118,8 +128,11 @@ describe('FallbackExecutorManager', () => {
     });
 
     it('moves to the next candidate on RE_ROUTE and records the quality score', async () => {
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockResolvedValueOnce({
           status: 'RE_ROUTE',
           qualityScore: 0.2,
@@ -139,8 +152,11 @@ describe('FallbackExecutorManager', () => {
     });
 
     it('returns exhausted with the last error when every candidate fails', async () => {
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockResolvedValue({
           status: 'FAILURE',
           error: new Error('still down'),
@@ -162,8 +178,11 @@ describe('FallbackExecutorManager', () => {
         ROUTING_FALLBACK_ATTEMPTS_ENABLED: true,
         ROUTING_MAX_FALLBACK_ATTEMPTS: 2,
       });
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockResolvedValue({ status: 'FAILURE', error: new Error('x'), errorMessage: 'x' });
 
       const outcome = await manager.executeChain(candidates, callback);
@@ -178,8 +197,11 @@ describe('FallbackExecutorManager', () => {
         ROUTING_FALLBACK_ATTEMPTS_ENABLED: false,
         ROUTING_MAX_FALLBACK_ATTEMPTS: 3,
       });
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockResolvedValue({ status: 'FAILURE', error: new Error('x'), errorMessage: 'x' });
 
       const outcome = await manager.executeChain(candidates, callback);
@@ -189,8 +211,11 @@ describe('FallbackExecutorManager', () => {
     });
 
     it('captures attempts even when the callback throws (no crash)', async () => {
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockImplementationOnce(() => {
           throw new Error('uncaught');
         })
@@ -209,8 +234,11 @@ describe('FallbackExecutorManager', () => {
     });
 
     it('records durationMs as a non-negative number per attempt', async () => {
-      const callback = jest
-        .fn<Promise<CandidateCallbackResult<string>>, [FallbackCandidate, number]>()
+      const callback = vi
+        .fn<
+        (candidate: FallbackCandidate, attemptIndex: number) =>
+          Promise<CandidateCallbackResult<string>>
+      >()
         .mockImplementationOnce(async () => {
           await new Promise((resolve) => setTimeout(resolve, 5));
           return { status: 'SUCCESS', response: 'ok' };
@@ -227,7 +255,7 @@ describe('FallbackExecutorManager', () => {
     });
 
     it('returns exhausted with zero attempts when candidate chain is empty', async () => {
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const outcome = await manager.executeChain([], callback);
 

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RoutingManager } from '../managers/routing.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
@@ -14,21 +15,21 @@ import { type RoutingPoliciesRepository } from '../repositories/routing-policies
 import { type RoutingContext } from '../types/routing.types';
 import { LocalModelRole } from '@claw/shared-types';
 
-const mockPoliciesRepo = (): Partial<Record<keyof RoutingPoliciesRepository, jest.Mock>> => ({
-  findActivePolicies: jest.fn().mockResolvedValue([]),
+const mockPoliciesRepo = (): Partial<Record<keyof RoutingPoliciesRepository, Mock>> => ({
+  findActivePolicies: vi.fn().mockResolvedValue([]),
 });
 
 // Defaults to "nothing eligible", so every test that does not care about the
 // cloud router falls straight through to the v1 path unchanged — exactly as
 // tryCloudRouting behaves in production when no deployment qualifies.
 const mockCloudRouterDeps = (): {
-  cloudRouter: { route: jest.Mock };
-  cloudRouterEligibility: { resolveEligibleDeployments: jest.Mock };
-  cloudRouterPrompt: { buildPrompt: jest.Mock };
+  cloudRouter: { route: Mock };
+  cloudRouterEligibility: { resolveEligibleDeployments: Mock };
+  cloudRouterPrompt: { buildPrompt: Mock };
 } => ({
-  cloudRouter: { route: jest.fn() },
-  cloudRouterEligibility: { resolveEligibleDeployments: jest.fn().mockResolvedValue([]) },
-  cloudRouterPrompt: { buildPrompt: jest.fn().mockReturnValue('cloud router prompt') },
+  cloudRouter: { route: vi.fn() },
+  cloudRouterEligibility: { resolveEligibleDeployments: vi.fn().mockResolvedValue([]) },
+  cloudRouterPrompt: { buildPrompt: vi.fn().mockReturnValue('cloud router prompt') },
 });
 
 const baseContext: RoutingContext = {
@@ -45,24 +46,24 @@ const baseContext: RoutingContext = {
 
 describe('RoutingManager', () => {
   let manager: RoutingManager;
-  let policiesRepo: Partial<Record<keyof RoutingPoliciesRepository, jest.Mock>>;
+  let policiesRepo: Partial<Record<keyof RoutingPoliciesRepository, Mock>>;
   let promptBuilder: {
-    fetchInstalledModels: jest.Mock;
-    getInstalledModels: jest.Mock;
-    invalidateCache: jest.Mock;
+    fetchInstalledModels: Mock;
+    getInstalledModels: Mock;
+    invalidateCache: Mock;
   };
-  let cloudRouter: { route: jest.Mock };
-  let cloudRouterEligibility: { resolveEligibleDeployments: jest.Mock };
-  let cloudRouterPrompt: { buildPrompt: jest.Mock };
-  let ollamaRouter: { route: jest.Mock };
+  let cloudRouter: { route: Mock };
+  let cloudRouterEligibility: { resolveEligibleDeployments: Mock };
+  let cloudRouterPrompt: { buildPrompt: Mock };
+  let ollamaRouter: { route: Mock };
 
   beforeEach(() => {
     policiesRepo = mockPoliciesRepo();
-    ollamaRouter = { route: jest.fn().mockResolvedValue(null) };
+    ollamaRouter = { route: vi.fn().mockResolvedValue(null) };
     promptBuilder = {
-      fetchInstalledModels: jest.fn().mockResolvedValue([]),
-      getInstalledModels: jest.fn().mockResolvedValue([]),
-      invalidateCache: jest.fn(),
+      fetchInstalledModels: vi.fn().mockResolvedValue([]),
+      getInstalledModels: vi.fn().mockResolvedValue([]),
+      invalidateCache: vi.fn(),
     };
     ({ cloudRouter, cloudRouterEligibility, cloudRouterPrompt } = mockCloudRouterDeps());
     // Use real managers (pure logic, no deps)
@@ -1208,7 +1209,7 @@ describe('RoutingManager', () => {
     it.each(PRIVACY_MESSAGES)(
       'does not invoke the router model for %s content',
       async (_domain, message) => {
-        const route = jest.fn().mockResolvedValue({
+        const route = vi.fn().mockResolvedValue({
           provider: 'ANTHROPIC',
           model: 'claude-sonnet-4',
           confidence: 0.9,
@@ -1255,7 +1256,7 @@ describe('RoutingManager', () => {
     // either, so a local model that merely failed to load handed regulated
     // content to Anthropic, OpenAI, Gemini, Grok or ollama.com.
     it('never offers a cloud fallback even when the router returns a cloud choice', async () => {
-      const route = jest.fn().mockResolvedValue({
+      const route = vi.fn().mockResolvedValue({
         provider: 'GEMINI',
         model: 'gemini-2.5-flash',
         confidence: 0.95,

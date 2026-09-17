@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { RefundManager } from '../refund.manager';
@@ -40,21 +41,21 @@ describe('RefundManager', () => {
     updatedAt: new Date('2026-07-27T00:00:00.000Z'),
   };
   const repository = {
-    findByIdempotencyKey: jest.fn(),
-    findCapturedCharge: jest.fn(),
-    listReservedAmounts: jest.fn(),
-    listReservedProviderAmounts: jest.fn(),
-    reserve: jest.fn(),
-    markProviderAccepted: jest.fn(),
-    markFailed: jest.fn(),
+    findByIdempotencyKey: vi.fn(),
+    findCapturedCharge: vi.fn(),
+    listReservedAmounts: vi.fn(),
+    listReservedProviderAmounts: vi.fn(),
+    reserve: vi.fn(),
+    markProviderAccepted: vi.fn(),
+    markFailed: vi.fn(),
   };
-  const paypal = { refundCapture: jest.fn() };
-  const paymob = { refund: jest.fn() };
-  const completion = { complete: jest.fn() };
+  const paypal = { refundCapture: vi.fn() };
+  const paymob = { refund: vi.fn() };
+  const completion = { complete: vi.fn() };
   let manager: RefundManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     repository.findByIdempotencyKey.mockResolvedValue(null);
     repository.findCapturedCharge.mockResolvedValue(charge);
     repository.listReservedAmounts.mockResolvedValue([1_000]);

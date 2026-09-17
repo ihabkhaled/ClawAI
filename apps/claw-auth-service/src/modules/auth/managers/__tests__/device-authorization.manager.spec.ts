@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { InvalidCredentialsException } from '../../../../common/errors';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import { DeviceAuthorizationStatus } from '../../enums/device-authorization-status.enum';
@@ -6,13 +7,13 @@ import type { DeviceAuthorizationRepository } from '../../repositories/device-au
 import type { TokenSessionManager } from '../token-session.manager';
 import { DeviceAuthorizationManager } from '../device-authorization.manager';
 
-jest.mock('@claw/shared-utilities', () => ({
-  hashBearerToken: jest.fn().mockReturnValue('device-code-digest'),
+vi.mock('@claw/shared-utilities', () => ({
+  hashBearerToken: vi.fn().mockReturnValue('device-code-digest'),
 }));
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       JWT_SECRET: 'test-secret-key-that-is-long-enough',
     }),
   },
@@ -46,33 +47,33 @@ const grant = {
 
 describe('DeviceAuthorizationManager', () => {
   let deviceRepository: {
-    create: jest.Mock;
-    findByDeviceCodeHash: jest.Mock;
-    approve: jest.Mock;
-    deny: jest.Mock;
-    recordPoll: jest.Mock;
-    slowDown: jest.Mock;
-    consume: jest.Mock;
+    create: Mock;
+    findByDeviceCodeHash: Mock;
+    approve: Mock;
+    deny: Mock;
+    recordPoll: Mock;
+    slowDown: Mock;
+    consume: Mock;
   };
-  let authRepository: { findUserById: jest.Mock };
-  let tokenSessionManager: { issue: jest.Mock };
+  let authRepository: { findUserById: Mock };
+  let tokenSessionManager: { issue: Mock };
   let manager: DeviceAuthorizationManager;
 
   beforeEach(() => {
     deviceRepository = {
-      create: jest.fn().mockResolvedValue(grant),
-      findByDeviceCodeHash: jest.fn().mockResolvedValue(grant),
-      approve: jest.fn().mockResolvedValue(true),
-      deny: jest.fn().mockResolvedValue(true),
-      recordPoll: jest.fn().mockResolvedValue(true),
-      slowDown: jest.fn().mockResolvedValue(10),
-      consume: jest.fn().mockResolvedValue(true),
+      create: vi.fn().mockResolvedValue(grant),
+      findByDeviceCodeHash: vi.fn().mockResolvedValue(grant),
+      approve: vi.fn().mockResolvedValue(true),
+      deny: vi.fn().mockResolvedValue(true),
+      recordPoll: vi.fn().mockResolvedValue(true),
+      slowDown: vi.fn().mockResolvedValue(10),
+      consume: vi.fn().mockResolvedValue(true),
     };
     authRepository = {
-      findUserById: jest.fn().mockResolvedValue(activeUser),
+      findUserById: vi.fn().mockResolvedValue(activeUser),
     };
     tokenSessionManager = {
-      issue: jest.fn().mockResolvedValue({
+      issue: vi.fn().mockResolvedValue({
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
         expiresIn: 900,

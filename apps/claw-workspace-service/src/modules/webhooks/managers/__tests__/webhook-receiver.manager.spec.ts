@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { createHmac } from 'node:crypto';
 
 import { EventPattern } from '@claw/shared-types';
@@ -13,7 +14,7 @@ import type { WebhookDelivery } from '../../../../generated/prisma';
 
 const GITHUB_SECRET = 'githubsecret';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   WEBHOOK_BODY_MAX_BYTES: 1_048_576,
   GITHUB_WEBHOOK_SECRET: GITHUB_SECRET,
   GITLAB_WEBHOOK_SECRET: '',
@@ -53,25 +54,25 @@ function mockRow(overrides: Partial<WebhookDelivery> = {}): WebhookDelivery {
 
 describe('WebhookReceiverManager', () => {
   let manager: WebhookReceiverManager;
-  let repo: jest.Mocked<
+  let repo: Mocked<
     Pick<
       WebhookDeliveryRepository,
       'create' | 'findByExternalId' | 'findById' | 'markProcessed' | 'setPublishFailed'
     >
   >;
-  let rabbitmq: jest.Mocked<Pick<RabbitMQService, 'publish'>>;
-  let rateLimiter: jest.Mocked<Pick<WebhookRateLimiterManager, 'tryReserve'>>;
+  let rabbitmq: Mocked<Pick<RabbitMQService, 'publish'>>;
+  let rateLimiter: Mocked<Pick<WebhookRateLimiterManager, 'tryReserve'>>;
 
   beforeEach(() => {
     repo = {
-      create: jest.fn().mockResolvedValue(mockRow()),
-      findByExternalId: jest.fn().mockResolvedValue(null),
-      findById: jest.fn().mockResolvedValue(null),
-      markProcessed: jest.fn().mockResolvedValue(undefined),
-      setPublishFailed: jest.fn().mockResolvedValue(undefined),
+      create: vi.fn().mockResolvedValue(mockRow()),
+      findByExternalId: vi.fn().mockResolvedValue(null),
+      findById: vi.fn().mockResolvedValue(null),
+      markProcessed: vi.fn().mockResolvedValue(undefined),
+      setPublishFailed: vi.fn().mockResolvedValue(undefined),
     };
-    rabbitmq = { publish: jest.fn().mockResolvedValue(undefined) };
-    rateLimiter = { tryReserve: jest.fn().mockReturnValue(true) };
+    rabbitmq = { publish: vi.fn().mockResolvedValue(undefined) };
+    rateLimiter = { tryReserve: vi.fn().mockReturnValue(true) };
     manager = new WebhookReceiverManager(
       repo as unknown as WebhookDeliveryRepository,
       rabbitmq as unknown as RabbitMQService,

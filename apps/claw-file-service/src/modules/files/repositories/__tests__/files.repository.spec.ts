@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FilesRepository } from '../files.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,24 +7,24 @@ describe('FilesRepository', () => {
   let repository: FilesRepository;
   let prismaMock: {
     file: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
-      update: jest.Mock;
-      delete: jest.Mock;
-      count: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findMany: Mock;
+      update: Mock;
+      delete: Mock;
+      count: Mock;
     };
   };
 
   beforeEach(async () => {
     prismaMock = {
       file: {
-        create: jest.fn().mockResolvedValue({ id: 'f1' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'f1', chunks: [] }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'f1' }, { id: 'f2' }]),
-        update: jest.fn().mockResolvedValue({ id: 'f1' }),
-        delete: jest.fn().mockResolvedValue({ id: 'f1' }),
-        count: jest.fn().mockResolvedValue(3),
+        create: vi.fn().mockResolvedValue({ id: 'f1' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'f1', chunks: [] }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'f1' }, { id: 'f2' }]),
+        update: vi.fn().mockResolvedValue({ id: 'f1' }),
+        delete: vi.fn().mockResolvedValue({ id: 'f1' }),
+        count: vi.fn().mockResolvedValue(3),
       },
     };
 
@@ -47,7 +48,9 @@ describe('FilesRepository', () => {
 
   it('findById includes chunks ordered by chunkIndex asc', async () => {
     await repository.findById('f1');
-    const args = prismaMock.file.findUnique.mock.calls[0][0];
+    const argsCall = prismaMock.file.findUnique.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.id).toBe('f1');
     expect(args.include.chunks.orderBy).toEqual({ chunkIndex: 'asc' });
   });
@@ -55,7 +58,9 @@ describe('FilesRepository', () => {
   describe('findAll', () => {
     it('paginates with skip/take and createdAt desc', async () => {
       await repository.findAll({ userId: 'u1' } as never, 2, 10);
-      const args = prismaMock.file.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.file.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.skip).toBe(10);
       expect(args.take).toBe(10);
       expect(args.orderBy).toEqual({ createdAt: 'desc' });
@@ -63,19 +68,25 @@ describe('FilesRepository', () => {
 
     it('applies ingestionStatus filter', async () => {
       await repository.findAll({ userId: 'u1', ingestionStatus: 'COMPLETED' } as never, 1, 20);
-      const args = prismaMock.file.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.file.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.ingestionStatus).toBe('COMPLETED');
     });
 
     it('applies filename search filter', async () => {
       await repository.findAll({ userId: 'u1', search: 'doc' } as never, 1, 20);
-      const args = prismaMock.file.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.file.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.filename).toEqual({ contains: 'doc', mode: 'insensitive' });
     });
 
     it('always scopes by userId', async () => {
       await repository.findAll({ userId: 'u1' } as never, 1, 20);
-      const args = prismaMock.file.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.file.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.userId).toBe('u1');
     });
   });

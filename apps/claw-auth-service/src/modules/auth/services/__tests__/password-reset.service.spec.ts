@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PasswordResetService } from '../password-reset.service';
 import { PasswordResetManager } from '../../managers/password-reset.manager';
@@ -8,10 +9,10 @@ import { EmailDispatchPurpose } from '../../enums/email-dispatch-purpose.enum';
 import { PASSWORD_RESET_COOLDOWN_SECONDS } from '../../constants/email-dispatch-cooldown.constants';
 import { UserLanguagePreference } from '../../../../generated/prisma';
 
-jest.mock('../../managers/password-reset.manager');
-jest.mock('../../adapters/auth-email.adapter');
-jest.mock('../auth-email-recipient.service');
-jest.mock('../email-dispatch-cooldown.service');
+vi.mock('../../managers/password-reset.manager');
+vi.mock('../../adapters/auth-email.adapter');
+vi.mock('../auth-email-recipient.service');
+vi.mock('../email-dispatch-cooldown.service');
 
 // The reset email is now addressed to a person in a language, not to a string.
 const RECIPIENT = {
@@ -22,10 +23,10 @@ const RECIPIENT = {
 
 describe('PasswordResetService', () => {
   let service: PasswordResetService;
-  let manager: jest.Mocked<PasswordResetManager>;
-  let emailAdapter: jest.Mocked<AuthEmailAdapter>;
-  let recipients: jest.Mocked<AuthEmailRecipientService>;
-  let cooldown: jest.Mocked<EmailDispatchCooldownService>;
+  let manager: Mocked<PasswordResetManager>;
+  let emailAdapter: Mocked<AuthEmailAdapter>;
+  let recipients: Mocked<AuthEmailRecipientService>;
+  let cooldown: Mocked<EmailDispatchCooldownService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -95,7 +96,7 @@ describe('PasswordResetService', () => {
       const token = 'secret-token-xyz';
       manager.request.mockResolvedValue(token);
       emailAdapter.sendPasswordReset.mockRejectedValue(new Error('SMTP down'));
-      const loggerSpy = jest.spyOn((service as any).logger, 'error');
+      const loggerSpy = vi.spyOn((service as any).logger, 'error');
 
       await service.requestReset(email);
 

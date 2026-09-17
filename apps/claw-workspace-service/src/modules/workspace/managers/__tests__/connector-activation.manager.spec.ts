@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConnectorActivationManager } from '../connector-activation.manager';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
@@ -32,15 +33,15 @@ const buildConnector = (overrides: Partial<WorkspaceConnector> = {}): WorkspaceC
   }) as unknown as WorkspaceConnector;
 
 describe('ConnectorActivationManager', () => {
-  let repo: { findById: jest.Mock };
-  let syncManager: { syncConnector: jest.Mock };
-  let rabbit: { subscribe: jest.Mock };
+  let repo: { findById: Mock };
+  let syncManager: { syncConnector: Mock };
+  let rabbit: { subscribe: Mock };
   let manager: ConnectorActivationManager;
 
   beforeEach(() => {
-    repo = { findById: jest.fn() };
-    syncManager = { syncConnector: jest.fn().mockImplementation(async () => {}) };
-    rabbit = { subscribe: jest.fn().mockImplementation(async () => {}) };
+    repo = { findById: vi.fn() };
+    syncManager = { syncConnector: vi.fn().mockImplementation(async () => {}) };
+    rabbit = { subscribe: vi.fn().mockImplementation(async () => {}) };
     manager = new ConnectorActivationManager(
       repo as unknown as WorkspaceConnectorRepository,
       syncManager as unknown as WorkspaceSyncManager,

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { WorkspaceSyncManager } from '../workspace-sync.manager';
 import { AppConfig } from '../../../../app/config/app.config';
 import type { WorkspaceConnectorRepository } from '../../repositories/workspace-connector.repository';
@@ -9,7 +10,7 @@ import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnector } from '../../../../generated/prisma';
 import { WorkspaceSyncStatus } from '../../../../common/enums/workspace-sync-status.enum';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   WORKSPACE_DATABASE_URL: 'postgres://localhost/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -99,44 +100,44 @@ const mockConnector = {
 } as unknown as WorkspaceConnector;
 
 const mockAdapter = {
-  syncObjects: jest.fn(),
+  syncObjects: vi.fn(),
 };
 
 const mockAdapterFactory = {
-  getAdapter: jest.fn().mockReturnValue(mockAdapter),
+  getAdapter: vi.fn().mockReturnValue(mockAdapter),
 } as unknown as WorkspaceAdapterFactory;
 
 const mockRepo = {
-  createSyncRun: jest.fn().mockResolvedValue({ id: 'run1' }),
-  updateSyncRun: jest.fn().mockImplementation(() => Promise.resolve({})),
-  update: jest.fn().mockImplementation(() => Promise.resolve({})),
-  getObjectCount: jest.fn().mockResolvedValue(0),
+  createSyncRun: vi.fn().mockResolvedValue({ id: 'run1' }),
+  updateSyncRun: vi.fn().mockImplementation(() => Promise.resolve({})),
+  update: vi.fn().mockImplementation(() => Promise.resolve({})),
+  getObjectCount: vi.fn().mockResolvedValue(0),
 } as unknown as WorkspaceConnectorRepository;
 
 const mockTokenManager = {
-  getValidAccessToken: jest.fn().mockResolvedValue('tok'),
+  getValidAccessToken: vi.fn().mockResolvedValue('tok'),
 } as unknown as TokenRefreshManager;
 
 const mockObjectManager = {
-  upsertBatch: jest.fn().mockResolvedValue({ synced: 0, objects: [] }),
-  detectAndCreateLinks: jest.fn().mockResolvedValue(undefined),
-  resolveLinksForObjects: jest.fn().mockResolvedValue(undefined),
+  upsertBatch: vi.fn().mockResolvedValue({ synced: 0, objects: [] }),
+  detectAndCreateLinks: vi.fn().mockResolvedValue(undefined),
+  resolveLinksForObjects: vi.fn().mockResolvedValue(undefined),
 } as unknown as WorkspaceObjectManager;
 
 const mockRabbitMQ = {
-  publish: jest.fn().mockImplementation(() => Promise.resolve()),
+  publish: vi.fn().mockImplementation(() => Promise.resolve()),
 } as unknown as RabbitMQService;
 
 const mockSyncEventBridge = {
-  bridge: jest.fn().mockResolvedValue(0),
+  bridge: vi.fn().mockResolvedValue(0),
 } as unknown as WorkspaceSyncEventBridgeService;
 
 describe('WorkspaceSyncManager', () => {
   let manager: WorkspaceSyncManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (mockTokenManager.getValidAccessToken as jest.Mock).mockResolvedValue('tok');
+    vi.clearAllMocks();
+    (mockTokenManager.getValidAccessToken as Mock).mockResolvedValue('tok');
     manager = new WorkspaceSyncManager(
       mockRepo,
       mockAdapterFactory,
@@ -149,7 +150,7 @@ describe('WorkspaceSyncManager', () => {
 
   describe('syncConnector', () => {
     it('should return successful sync result', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+      (mockAdapter.syncObjects as Mock).mockResolvedValue({
         objectsFound: 10,
         objectsSynced: 10,
         objectsFailed: 0,
@@ -161,7 +162,7 @@ describe('WorkspaceSyncManager', () => {
     });
 
     it('should update sync run with COMPLETED on success', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+      (mockAdapter.syncObjects as Mock).mockResolvedValue({
         objectsFound: 5,
         objectsSynced: 5,
         objectsFailed: 0,
@@ -175,14 +176,14 @@ describe('WorkspaceSyncManager', () => {
     });
 
     it('should return error result after 3 retries', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockRejectedValue(new Error('Rate limit'));
+      (mockAdapter.syncObjects as Mock).mockRejectedValue(new Error('Rate limit'));
       const result = await manager.syncConnector(mockConnector, false);
       expect(result.errorMessage).toContain('Rate limit');
       expect(mockAdapter.syncObjects).toHaveBeenCalledTimes(3);
     });
 
     it('should update sync run with FAILED on all retries exhausted', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockRejectedValue(new Error('fail'));
+      (mockAdapter.syncObjects as Mock).mockRejectedValue(new Error('fail'));
       await manager.syncConnector(mockConnector, false);
       expect(mockRepo.updateSyncRun).toHaveBeenCalledWith(
         'run1',
@@ -191,7 +192,7 @@ describe('WorkspaceSyncManager', () => {
     });
 
     it('should update deltaToken when sync returns one', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+      (mockAdapter.syncObjects as Mock).mockResolvedValue({
         objectsFound: 3,
         objectsSynced: 3,
         objectsFailed: 0,
@@ -206,7 +207,7 @@ describe('WorkspaceSyncManager', () => {
     });
 
     it('should call getValidAccessToken for the connector before syncing', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+      (mockAdapter.syncObjects as Mock).mockResolvedValue({
         objectsFound: 0,
         objectsSynced: 0,
         objectsFailed: 0,
@@ -224,13 +225,13 @@ describe('WorkspaceSyncManager', () => {
           title: 'my-repo',
         },
       ];
-      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+      (mockAdapter.syncObjects as Mock).mockResolvedValue({
         objectsFound: 1,
         objectsSynced: 1,
         objectsFailed: 0,
         objects,
       });
-      (mockObjectManager.upsertBatch as jest.Mock).mockResolvedValue({
+      (mockObjectManager.upsertBatch as Mock).mockResolvedValue({
         synced: 1,
         objects: [{ id: 'stored-1' }],
       });
@@ -241,7 +242,7 @@ describe('WorkspaceSyncManager', () => {
     });
 
     it('should publish WORKSPACE_OBJECT_SYNCED event on success', async () => {
-      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+      (mockAdapter.syncObjects as Mock).mockResolvedValue({
         objectsFound: 2,
         objectsSynced: 2,
         objectsFailed: 0,

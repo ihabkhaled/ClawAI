@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingErrorCode, EventPattern, SubscriptionStatus } from '@claw/shared-types';
 
 import { SubscriptionCancelService } from '../subscription-cancel.service';
@@ -30,27 +31,27 @@ function makeSubscription(overrides: Record<string, unknown> = {}): Record<strin
 }
 
 describe('SubscriptionCancelService', () => {
-  let prisma: { $transaction: jest.Mock; subscription: { update: jest.Mock } };
-  let subscriptions: { findActiveByUserId: jest.Mock };
-  let outbox: { enqueue: jest.Mock };
-  let catalog: { listCatalog: jest.Mock };
-  let txUpdate: jest.Mock;
-  let txUpdateMany: jest.Mock;
-  let txFindUnique: jest.Mock;
+  let prisma: { $transaction: Mock; subscription: { update: Mock } };
+  let subscriptions: { findActiveByUserId: Mock };
+  let outbox: { enqueue: Mock };
+  let catalog: { listCatalog: Mock };
+  let txUpdate: Mock;
+  let txUpdateMany: Mock;
+  let txFindUnique: Mock;
   let service: SubscriptionCancelService;
 
   beforeEach(() => {
-    txUpdate = jest.fn();
-    txUpdateMany = jest.fn();
-    txFindUnique = jest.fn();
+    txUpdate = vi.fn();
+    txUpdateMany = vi.fn();
+    txFindUnique = vi.fn();
     prisma = {
-      $transaction: jest.fn(
+      $transaction: vi.fn(
         async (
           fn: (tx: {
             subscription: {
-              update: jest.Mock;
-              updateMany: jest.Mock;
-              findUnique: jest.Mock;
+              update: Mock;
+              updateMany: Mock;
+              findUnique: Mock;
             };
           }) => Promise<unknown>,
         ) =>
@@ -62,11 +63,11 @@ describe('SubscriptionCancelService', () => {
             },
           }),
       ),
-      subscription: { update: jest.fn() },
+      subscription: { update: vi.fn() },
     };
-    subscriptions = { findActiveByUserId: jest.fn().mockResolvedValue(makeSubscription()) };
-    outbox = { enqueue: jest.fn() };
-    catalog = { listCatalog: jest.fn().mockResolvedValue([{ id: 'plan-pro', name: 'Pro' }]) };
+    subscriptions = { findActiveByUserId: vi.fn().mockResolvedValue(makeSubscription()) };
+    outbox = { enqueue: vi.fn() };
+    catalog = { listCatalog: vi.fn().mockResolvedValue([{ id: 'plan-pro', name: 'Pro' }]) };
 
     service = new SubscriptionCancelService(
       prisma as unknown as PrismaService,
@@ -77,7 +78,7 @@ describe('SubscriptionCancelService', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('cancelAtPeriodEnd', () => {
@@ -175,8 +176,8 @@ describe('SubscriptionCancelService', () => {
 
   describe('endNow', () => {
     it('immediately revokes entitlement but preserves the subscription row', async () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-07-28T19:30:00.000Z'));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-28T19:30:00.000Z'));
       txUpdateMany.mockResolvedValue({ count: 1 });
       txFindUnique.mockResolvedValue(
         makeSubscription({

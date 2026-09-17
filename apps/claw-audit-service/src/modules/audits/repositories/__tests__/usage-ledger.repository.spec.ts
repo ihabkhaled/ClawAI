@@ -1,3 +1,4 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { UsageLedgerRepository } from '../usage-ledger.repository';
@@ -5,34 +6,34 @@ import { UsageLedger } from '../../schemas/usage-ledger.schema';
 
 describe('UsageLedgerRepository', () => {
   let repository: UsageLedgerRepository;
-  let modelMock: jest.Mocked<{
-    find: jest.Mock;
-    countDocuments: jest.Mock;
-    aggregate: jest.Mock;
+  let modelMock: Mocked<{
+    find: Mock;
+    countDocuments: Mock;
+    aggregate: Mock;
   }>;
 
   const buildQueryChain = (): {
-    sort: jest.Mock;
-    skip: jest.Mock;
-    limit: jest.Mock;
-    exec: jest.Mock;
+    sort: Mock;
+    skip: Mock;
+    limit: Mock;
+    exec: Mock;
   } => ({
-    sort: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([{ _id: 'u1' }]),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([{ _id: 'u1' }]),
   });
 
   beforeEach(async () => {
     const queryChain = buildQueryChain();
-    const docMock = { save: jest.fn().mockResolvedValue({ _id: 'usage-1' }) };
+    const docMock = { save: vi.fn().mockResolvedValue({ _id: 'usage-1' }) };
     function modelFactory(): typeof docMock {
       return docMock;
     }
     Object.assign(modelFactory, {
-      find: jest.fn().mockReturnValue(queryChain),
-      countDocuments: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(11) }),
-      aggregate: jest
+      find: vi.fn().mockReturnValue(queryChain),
+      countDocuments: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(11) }),
+      aggregate: vi
         .fn()
         .mockResolvedValue([{ provider: 'openai', count: 100, totalTokens: 5000 }]),
     });

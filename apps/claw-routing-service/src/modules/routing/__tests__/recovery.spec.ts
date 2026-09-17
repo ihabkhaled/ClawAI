@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RoutingService } from '../services/routing.service';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { type RawRecoveryData } from '../types/recovery.types';
@@ -24,11 +25,11 @@ const mockRawData: RawRecoveryData = {
 
 describe('RoutingService.getRecoveryStats', () => {
   let service: RoutingService;
-  let decisionsRepo: { getRecoveryStats: jest.Mock };
+  let decisionsRepo: { getRecoveryStats: Mock };
 
   beforeEach(() => {
     decisionsRepo = {
-      getRecoveryStats: jest.fn().mockResolvedValue(mockRawData),
+      getRecoveryStats: vi.fn().mockResolvedValue(mockRawData),
     };
 
     service = new RoutingService(
@@ -41,21 +42,21 @@ describe('RoutingService.getRecoveryStats', () => {
       {} as any,
       {} as any,
       {
-        subscribe: jest.fn(),
-        publish: jest.fn(),
+        subscribe: vi.fn(),
+        publish: vi.fn(),
       } as any,
       {} as any,
       { isFrontierAvailable: () => false } as any,
       // Phase 2 — SemanticIntentAnalyzerManager; not exercised here.
-      { analyze: jest.fn() } as any,
+      { analyze: vi.fn() } as any,
       // Phase 4 — AIRoutePlannerManager; not exercised here.
-      { plan: jest.fn() } as any,
+      { plan: vi.fn() } as any,
       // Phase 6 — LiveWorkflowSelectorManager; not exercised here.
-      { selectWorkflow: jest.fn() } as any,
+      { selectWorkflow: vi.fn() } as any,
       // RouterModelRegistryRepository — the execution catalog the planner now
       // reasons over. Empty here: these tests do not exercise the AI planner, and
       // an empty catalog exercises the documented degraded path.
-      { findExecutionCandidates: jest.fn().mockResolvedValue([]) } as never,
+      { findExecutionCandidates: vi.fn().mockResolvedValue([]) } as never,
     );
   });
 

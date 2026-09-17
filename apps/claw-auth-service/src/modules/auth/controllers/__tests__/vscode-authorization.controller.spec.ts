@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { PIPES_METADATA } from '@nestjs/common/constants';
 import { Test, type TestingModule } from '@nestjs/testing';
 
@@ -7,19 +8,19 @@ import { VscodeAuthorizationController } from '../vscode-authorization.controlle
 
 describe('VscodeAuthorizationController', () => {
   let controller: VscodeAuthorizationController;
-  let authorizationMock: jest.Mocked<{
-    approve: jest.Mock;
-    details: jest.Mock;
-    exchange: jest.Mock;
-    initialize: jest.Mock;
-  }>;
+  let authorizationMock: {
+    approve: Mock;
+    details: Mock;
+    exchange: Mock;
+    initialize: Mock;
+  };
 
   beforeEach(async () => {
     authorizationMock = {
-      approve: jest.fn(),
-      details: jest.fn(),
-      exchange: jest.fn(),
-      initialize: jest.fn(),
+      approve: vi.fn(),
+      details: vi.fn(),
+      exchange: vi.fn(),
+      initialize: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [VscodeAuthorizationController],

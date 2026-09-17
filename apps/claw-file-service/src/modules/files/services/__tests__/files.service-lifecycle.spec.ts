@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 // Slice D backend 3 — lifecycle event publisher unit tests.
 //
 // Verifies that FilesService and FileRetentionSweeperManager publish the
@@ -20,16 +21,16 @@ import { type FileSecurityManager } from '../../managers/file-security.manager';
 import { FileRetentionSweeperManager } from '../../managers/file-retention-sweeper.manager';
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
 
-jest.mock('../../../../common/utilities', () => ({
-  verifyAccessToken: jest.fn(),
-  saveFile: jest.fn().mockReturnValue('/data/uploads/test-file.txt'),
-  deleteFile: jest.fn(),
-  readFile: jest.fn().mockReturnValue(Buffer.from('test content')),
+vi.mock('../../../../common/utilities', () => ({
+  verifyAccessToken: vi.fn(),
+  saveFile: vi.fn().mockReturnValue('/data/uploads/test-file.txt'),
+  deleteFile: vi.fn(),
+  readFile: vi.fn().mockReturnValue(Buffer.from('test content')),
 }));
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn(() => ({
+    get: vi.fn(() => ({
       FILE_RETENTION_DAYS: 0,
       FILE_RETENTION_SWEEP_CRON: '0 2 * * *',
       FILE_RETENTION_SWEEP_BATCH_LIMIT: 5,
@@ -37,8 +38,8 @@ jest.mock('../../../../app/config/app.config', () => ({
   },
 }));
 
-const { deleteFile: mockedDeleteFile } = jest.requireMock('../../../../common/utilities') as {
-  deleteFile: jest.Mock;
+const { deleteFile: mockedDeleteFile } = await vi.importMock('../../../../common/utilities') as {
+  deleteFile: Mock;
 };
 
 const buildFile = (overrides: Partial<File> = {}): File =>
@@ -60,44 +61,44 @@ const buildFile = (overrides: Partial<File> = {}): File =>
     ...overrides,
   }) as unknown as File;
 
-const mockFilesRepository = (): Record<keyof FilesRepository, jest.Mock> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
-  findAll: jest.fn(),
-  updateIngestionStatus: jest.fn(),
-  saveExtractionResult: jest.fn(),
-  delete: jest.fn(),
-  countAll: jest.fn(),
-  findExpiredBefore: jest.fn(),
-  findStaleProcessingBefore: jest.fn().mockResolvedValue([]),
-  deleteById: jest.fn(),
-  markAsExtractedChild: jest.fn(),
-  recordExtractionMetadata: jest.fn(),
+const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
+  findAll: vi.fn(),
+  updateIngestionStatus: vi.fn(),
+  saveExtractionResult: vi.fn(),
+  delete: vi.fn(),
+  countAll: vi.fn(),
+  findExpiredBefore: vi.fn(),
+  findStaleProcessingBefore: vi.fn().mockResolvedValue([]),
+  deleteById: vi.fn(),
+  markAsExtractedChild: vi.fn(),
+  recordExtractionMetadata: vi.fn(),
 });
 
-const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Mock> => ({
-  createMany: jest.fn(),
-  findByFileId: jest.fn(),
-  deleteByFileId: jest.fn(),
+const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({
+  createMany: vi.fn(),
+  findByFileId: vi.fn(),
+  deleteByFileId: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockImplementation(async () => {}),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockImplementation(async () => {}),
 });
 
 // Extraction is kicked off but never awaited by uploadFile; the stub keeps the
 // fire-and-forget call away from the real pipeline in unit tests.
 const mockProcessingManager = (): FileProcessingContract => ({
-  processFile: jest.fn().mockResolvedValue(void 0),
-  updateIngestionStatus: jest.fn().mockResolvedValue(void 0),
+  processFile: vi.fn().mockResolvedValue(void 0),
+  updateIngestionStatus: vi.fn().mockResolvedValue(void 0),
 });
 
 const mockSecurityManager = (): Pick<
   FileSecurityManager,
   'runAllChecks' | 'getSanitizedFilename'
 > => ({
-  runAllChecks: jest.fn().mockResolvedValue({ passed: true, checks: [] }),
-  getSanitizedFilename: jest.fn().mockImplementation((name: string) => name),
+  runAllChecks: vi.fn().mockResolvedValue({ passed: true, checks: [] }),
+  getSanitizedFilename: vi.fn().mockImplementation((name: string) => name),
 });
 
 describe('FilesService lifecycle events (Slice D backend 3)', () => {
@@ -107,7 +108,7 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     filesRepo = mockFilesRepository();
     chunksRepo = mockFileChunksRepository();
     rabbitMQ = mockRabbitMQ();
@@ -207,8 +208,8 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
   describe('downloadFile', () => {
     const buildResponse = (): Response => {
       const res: Partial<Response> = {
-        set: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        send: vi.fn().mockReturnThis(),
       };
       return res as Response;
     };
@@ -295,7 +296,7 @@ describe('FileRetentionSweeperManager retention sweep events (Slice D backend 3)
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     filesRepo = mockFilesRepository();
     rabbitMQ = mockRabbitMQ();
     manager = new FileRetentionSweeperManager(

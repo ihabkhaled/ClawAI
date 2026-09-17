@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RouterErrorCode } from '../../../common/enums';
 import {
   BillingModel,
@@ -60,9 +61,9 @@ const snapshot = (
 const adapter = (
   provider: RouterProvider,
   response: RouterInferenceResponse,
-): { provider: RouterProvider; invoke: jest.Mock } => ({
+): { provider: RouterProvider; invoke: Mock } => ({
   provider,
-  invoke: jest.fn().mockResolvedValue(response),
+  invoke: vi.fn().mockResolvedValue(response),
 });
 
 const goodAnswer: RouterInferenceResponse = {
@@ -83,19 +84,19 @@ const build = (
   geminiResponse: RouterInferenceResponse = goodAnswer,
 ): {
   manager: CloudRouterManager;
-  gemini: { invoke: jest.Mock };
-  emitTrace: jest.Mock;
-  recordAttempts: jest.Mock;
+  gemini: { invoke: Mock };
+  emitTrace: Mock;
+  recordAttempts: Mock;
 } => {
-  const recordAttempts = jest.fn().mockResolvedValue(1);
-  const emitTrace = jest.fn().mockResolvedValue(true);
+  const recordAttempts = vi.fn().mockResolvedValue(1);
+  const emitTrace = vi.fn().mockResolvedValue(true);
   const gemini = adapter(RouterProvider.GEMINI, geminiResponse);
   const ollama = adapter(RouterProvider.OLLAMA_CLOUD, goodAnswer);
   const local = adapter(RouterProvider.OLLAMA, goodAnswer);
 
   const manager = new CloudRouterManager(
     {
-      findPublishedSnapshot: jest.fn().mockResolvedValue(loaded),
+      findPublishedSnapshot: vi.fn().mockResolvedValue(loaded),
     } as unknown as RouterConfigurationRepository,
     new RouterInferenceCoordinatorManager(),
     { recordAttempts: recordAttempts } as unknown as RouterAttemptRepository,
@@ -128,7 +129,7 @@ describe('CloudRouterManager.route', () => {
   // to a guess, so the value has to survive the hop verbatim.
   it('carries the requesting user through to the coordinator', async () => {
     const { manager } = build(snapshot());
-    const coordinator = jest.spyOn(RouterInferenceCoordinatorManager.prototype, 'run');
+    const coordinator = vi.spyOn(RouterInferenceCoordinatorManager.prototype, 'run');
 
     await manager.route({ ...request, userId: 'usr_42' });
 
@@ -140,7 +141,7 @@ describe('CloudRouterManager.route', () => {
 
   it('leaves the user undefined when the request carries none', async () => {
     const { manager } = build(snapshot());
-    const coordinator = jest.spyOn(RouterInferenceCoordinatorManager.prototype, 'run');
+    const coordinator = vi.spyOn(RouterInferenceCoordinatorManager.prototype, 'run');
 
     await manager.route(request);
 

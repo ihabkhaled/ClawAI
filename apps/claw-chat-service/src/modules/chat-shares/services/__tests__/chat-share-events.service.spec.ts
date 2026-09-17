@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 
@@ -23,11 +24,11 @@ const STATE = {
 };
 
 describe('ChatShareEventsService', () => {
-  let rabbit: { publish: jest.Mock };
+  let rabbit: { publish: Mock };
   let service: ChatShareEventsService;
 
   beforeEach(() => {
-    rabbit = { publish: jest.fn().mockResolvedValue(RESOLVED_VOID) };
+    rabbit = { publish: vi.fn().mockResolvedValue(RESOLVED_VOID) };
     service = new ChatShareEventsService(rabbit as unknown as RabbitMQService);
   });
 

@@ -1,14 +1,15 @@
+import { vi, type Mock } from 'vitest';
 import { LlamacppAuditConsumer } from '../consumers/llamacpp.consumer';
 import { LLAMACPP_AUDIT_ENTITY_TYPE } from '../constants/llamacpp-audit.constants';
 
 describe('LlamacppAuditConsumer', () => {
   function build(): {
     consumer: LlamacppAuditConsumer;
-    audits: { createAuditLog: jest.Mock };
-    rabbit: { subscribe: jest.Mock };
+    audits: { createAuditLog: Mock };
+    rabbit: { subscribe: Mock };
   } {
-    const audits = { createAuditLog: jest.fn().mockResolvedValue({}) };
-    const rabbit = { subscribe: jest.fn().mockImplementation(async () => {}) };
+    const audits = { createAuditLog: vi.fn().mockResolvedValue({}) };
+    const rabbit = { subscribe: vi.fn().mockImplementation(async () => {}) };
     const consumer = new LlamacppAuditConsumer(rabbit as any, audits as any);
     return { consumer, audits, rabbit };
   }
@@ -96,7 +97,7 @@ describe('LlamacppAuditConsumer', () => {
 });
 
 function handlerForPattern(
-  rabbit: { subscribe: jest.Mock },
+  rabbit: { subscribe: Mock },
   pattern: string,
 ): (raw: unknown) => Promise<void> {
   const call = rabbit.subscribe.mock.calls.find((c) => c[0] === pattern);

@@ -1,6 +1,6 @@
 'use client';
 
-import { ModelFamilyDialog } from '@/components/marketing/home/model-family-dialog';
+import { ModelFamilyDialog } from '@/components/marketing/home/model-family-dialog.lazy';
 import { Button } from '@/components/ui/button';
 import { MODEL_ROSTER_CHIP_LIMIT } from '@/constants/marketing-home.constants';
 import { useModelFamilyCard } from '@/hooks/marketing/use-model-family-card';

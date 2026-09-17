@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { httpRequest } from '../http-client.utility';
 
 describe('httpRequest cancellation', () => {
@@ -13,7 +14,7 @@ describe('httpRequest cancellation', () => {
 
   it('composes a caller abort signal with the request timeout signal', async () => {
     let fetchSignal: AbortSignal | undefined;
-    global.fetch = jest.fn(async (_url, init) => {
+    global.fetch = vi.fn(async (_url, init) => {
       fetchSignal = init?.signal ?? undefined;
       return new Promise<Response>((_resolve, reject) => {
         fetchSignal?.addEventListener('abort', () => reject(new Error('aborted')), {

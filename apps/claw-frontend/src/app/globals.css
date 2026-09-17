@@ -27,6 +27,49 @@
   }
 }
 
+/* `nav-rail:` is the ONE answer to "is the portal's sidenav a permanent rail?".
+ *
+ * Its absence is drawer mode. There is deliberately no `nav-drawer:` twin:
+ * drawer styling is the UNPREFIXED base and `nav-rail:` overrides it, so the
+ * two states are strict complements by construction and no width can land
+ * between them. That is the whole point of this variant.
+ *
+ * It replaces a `md:` / `touch:` pair that were NOT complements. The sidebar
+ * turned itself into a hidden bottom sheet under `touch:`
+ * (`(hover:none) and (pointer:coarse), (max-width:767px)`) while both of its
+ * drawer triggers — the topbar hamburger and the mobile bottom nav — hid
+ * themselves under `md:hidden` (width >= 768px). A tablet satisfies BOTH: the
+ * pointer is coarse at 1032px, so `touch:invisible` won the cascade over
+ * `md:visible` (it is emitted later, same specificity) and every trigger was
+ * already gone. The result was a band from 768px to the top of the tablet range
+ * with no navigation at all, and a 256px invisible `md:static` sidebar still
+ * holding its column — the "stranded content" in the report. Measured at
+ * 1032x1376: sidebar 256px wide, `visibility: hidden`, hamburger absent,
+ * bottom nav 0px tall.
+ *
+ * The condition, in two clauses:
+ *   1. width >= 768px AND height >= 600px — a real tablet in either
+ *      orientation (1024x768, 1280x800, 960x1440, 1032x1376) clears it; a
+ *      PHONE in landscape (915x412, 844x390) does not, which is the case the
+ *      old `touch:` guard existed to catch. Height is the honest discriminator
+ *      here: a rail costs 256px of width and gives back nothing, and a 412px
+ *      viewport has no height to spare for one either.
+ *   2. width >= 768px on a fine pointer — a mouse keeps EXACTLY the old `md:`
+ *      behaviour, including a short desktop window, so nothing on a desktop
+ *      moves because of this variant.
+ *
+ * Anything that flips between rail and drawer uses this and only this:
+ * sidebar.tsx, topbar.tsx (the hamburger), mobile-bottom-nav.tsx,
+ * portal-shell.tsx (the bottom-nav clearance) and `.safe-bottom-base-nav`
+ * below. The JS twin is MEDIA_QUERY_NAV_RAIL in
+ * src/constants/media-query.constants.ts — keep the two strings identical. */
+@custom-variant nav-rail {
+  @media (min-width: 768px) and (min-height: 600px),
+    (hover: hover) and (pointer: fine) and (min-width: 768px) {
+    @slot;
+  }
+}
+
 .dark pre code.hljs {
   background: transparent;
 }
@@ -248,7 +291,20 @@
      * The composer's own height is NOT a token: it follows its content between
      * COMPOSER_MIN_ROWS and COMPOSER_MAX_ROWS. The pair of dvh caps that used
      * to live here went with the drag-resize handle (ADR-088). */
-    --chat-content-max: 68rem;
+    --chat-content-max: 72rem;
+
+    /* The strip the chat thread's action rail occupies beside the reading
+     * column: one `icon-sm` button (2rem) plus the row's `sm:gap-2` (0.5rem),
+     * rounded up for the rail's own 1px border and padding.
+     *
+     * It is reserved OUTSIDE `--chat-content-max` rather than taken out of it,
+     * so moving the header's controls to the side did not make the transcript
+     * narrower on a monitor that has the gutter to spare. On a laptop, where
+     * the row binds before the reserve does, the rail and the column share
+     * what there is — which is the trade the move is making on purpose: a
+     * conversation can scroll sideways past 40px of width, and cannot scroll
+     * back the header height it gets in return. */
+    --chat-rail-reserve: 2.75rem;
 
     /* Typography scale (UI/UX refactor — phase 1 foundation) */
     --text-xs: 0.75rem; /* 12px */
@@ -524,6 +580,18 @@
    * of them is edited. */
   .chat-content-column {
     max-width: var(--chat-content-max);
+  }
+
+  /* The outer bound of the chat thread page: the reading column plus the strip
+   * the action rail sits in.
+   *
+   * Both the header and the body row take it, which is what keeps the thread
+   * title starting at the same x as the first message. Binding the header to
+   * `.chat-content-column` instead would centre it inside the column while the
+   * body centred the column inside the row — a half-rail offset that is
+   * invisible in code review and obvious on a 2560px monitor. */
+  .chat-thread-row {
+    max-width: calc(var(--chat-content-max) + var(--chat-rail-reserve));
   }
 
   /* Phase 3 — Topbar polish. Small "kbd-style" pill that hints at a keyboard
@@ -1534,12 +1602,16 @@
     --safe-bottom-base: 1.25rem;
   }
 
+  /* The clearance is for the mobile bottom nav, so it has to follow the bottom
+   * nav rather than a width. `@variant nav-rail` reuses the single media
+   * condition declared at the top of this file instead of restating
+   * `(min-width: 768px)` here — the restated copy was one of the places the
+   * old split drifted: on a tablet the nav was hidden by `md:hidden` while this
+   * rule still reserved 5rem of padding for it. */
   .safe-bottom-base-nav {
     --safe-bottom-base: calc(var(--mobile-bottom-nav-height, 4rem) + 1rem);
-  }
 
-  @media (min-width: 768px) {
-    .safe-bottom-base-nav {
+    @variant nav-rail {
       --safe-bottom-base: 1rem;
     }
   }
@@ -1565,17 +1637,24 @@
   /*
    * The chat thread header's vertical rhythm.
    *
-   * The breakpoint lives here rather than as `sm:pt-7` on the element because
+   * The breakpoint lives here rather than as `sm:pt-2` on the element because
    * `.safe-top` owns padding-top; a `pt-*` utility alongside it is simply
-   * discarded. Values match `pt-5` / `sm:pt-7`.
+   * discarded. Values match `pt-1.5` / `sm:pt-2`.
+   *
+   * It was `pt-5` / `sm:pt-7`. That was 28px of empty band on a laptop sitting
+   * directly under the portal's own `sm:p-6`, so the thread title floated 52px
+   * below the topbar with nothing between them. Height on a conversation page
+   * belongs to the conversation (rule 40 §1); breathing room that is already
+   * supplied by the ancestor's padding is not breathing room, it is a second
+   * copy of it.
    */
   .safe-top-base-header {
-    --safe-top-base: 1.25rem;
+    --safe-top-base: 0.375rem;
   }
 
   @media (min-width: 640px) {
     .safe-top-base-header {
-      --safe-top-base: 1.75rem;
+      --safe-top-base: 0.5rem;
     }
   }
 

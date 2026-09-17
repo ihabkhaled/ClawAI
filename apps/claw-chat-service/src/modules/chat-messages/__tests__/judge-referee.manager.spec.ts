@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 
 import { JudgeRefereeManager } from '../managers/judge-referee.manager';
@@ -73,9 +74,9 @@ const criticJson = JSON.stringify({ feedback: [], score: 0.95 });
 
 describe('JudgeRefereeManager — cloud judge + token capture', () => {
   let manager: JudgeRefereeManager;
-  let callProvider: jest.Mock;
-  let chatStream: Partial<Record<keyof ChatStreamService, jest.Mock>>;
-  let localSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>>;
+  let callProvider: Mock;
+  let chatStream: Partial<Record<keyof ChatStreamService, Mock>>;
+  let localSelection: Partial<Record<keyof LocalModelSelectionService, Mock>>;
 
   // Critic + judge are both exercised here so the "cloud judge + token
   // capture" assertions can verify the combined ledger entry. criticEnabled
@@ -91,9 +92,9 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
   };
 
   beforeEach(() => {
-    callProvider = jest.fn();
-    chatStream = { emitJudgeEvaluating: jest.fn(), emitOrchestrationStage: jest.fn() };
-    localSelection = { resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b') };
+    callProvider = vi.fn();
+    chatStream = { emitJudgeEvaluating: vi.fn(), emitOrchestrationStage: vi.fn() };
+    localSelection = { resolveDefaultModel: vi.fn().mockResolvedValue('gemma3:4b') };
 
     manager = new JudgeRefereeManager(
       chatStream as unknown as ChatStreamService,
@@ -144,12 +145,15 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
     // The judge call (second callProvider invocation) targeted the cloud model
     // and was tagged JUDGE.
     const judgeCall = callProvider.mock.calls[1];
-    expect(judgeCall[0]).toBe('OPENAI');
-    expect(judgeCall[1]).toBe('gpt-4o-mini');
-    expect(judgeCall[8]).toBe(TokenLedgerContext.JUDGE);
+    expect(judgeCall).toBeDefined();
+    expect(judgeCall?.[0]).toBe('OPENAI');
+    expect(judgeCall?.[1]).toBe('gpt-4o-mini');
+    expect(judgeCall?.[8]).toBe(TokenLedgerContext.JUDGE);
 
     // The critic call was also tagged JUDGE.
-    expect(callProvider.mock.calls[0][8]).toBe(TokenLedgerContext.JUDGE);
+    const call = callProvider.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[8]).toBe(TokenLedgerContext.JUDGE);
   });
 
   it('combines critic + judge token usage and exposes it via buildMetadata', async () => {
@@ -221,8 +225,9 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
     });
 
     const judgeCall = callProvider.mock.calls[1];
-    expect(judgeCall[0]).toBe('local-ollama');
-    expect(judgeCall[1]).toBe('gemma3:4b');
+    expect(judgeCall).toBeDefined();
+    expect(judgeCall?.[0]).toBe('local-ollama');
+    expect(judgeCall?.[1]).toBe('gemma3:4b');
   });
 
   it('routes a plain local model name through local-ollama', async () => {
@@ -247,8 +252,9 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
     });
 
     const judgeCall = callProvider.mock.calls[1];
-    expect(judgeCall[0]).toBe('local-ollama');
-    expect(judgeCall[1]).toBe('phi4-mini');
+    expect(judgeCall).toBeDefined();
+    expect(judgeCall?.[0]).toBe('local-ollama');
+    expect(judgeCall?.[1]).toBe('phi4-mini');
   });
 
   it('does not crash the flow when the judge call fails (judge-failed fallback)', async () => {

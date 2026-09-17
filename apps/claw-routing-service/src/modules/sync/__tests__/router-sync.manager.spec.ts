@@ -1,3 +1,4 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -7,35 +8,35 @@ import { RouterSyncManager } from '../managers/router-sync.manager';
 
 const originalFetch = globalThis.fetch;
 
-function mock200(models: unknown[]): jest.Mock {
-  return jest.fn().mockResolvedValue({
+function mock200(models: unknown[]): Mock {
+  return vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     json: () => Promise.resolve({ models }),
   });
 }
 
-function mock404(): jest.Mock {
-  return jest.fn().mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve({}) });
+function mock404(): Mock {
+  return vi.fn().mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve({}) });
 }
 
 describe('RouterSyncManager', () => {
   let manager: RouterSyncManager;
-  let registryRepo: jest.Mocked<RouterModelRegistryRepository>;
-  let registryManager: jest.Mocked<RouterModelRegistryManager>;
-  let rabbitMQ: jest.Mocked<RabbitMQService>;
+  let registryRepo: Mocked<RouterModelRegistryRepository>;
+  let registryManager: Mocked<RouterModelRegistryManager>;
+  let rabbitMQ: Mocked<RabbitMQService>;
 
   beforeEach(async () => {
     registryRepo = {
-      findByProviderAndModelKey: jest.fn().mockResolvedValue(null),
-      upsert: jest.fn().mockResolvedValue({ id: 'r1' }),
-    } as unknown as jest.Mocked<RouterModelRegistryRepository>;
+      findByProviderAndModelKey: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn().mockResolvedValue({ id: 'r1' }),
+    } as unknown as Mocked<RouterModelRegistryRepository>;
     registryManager = {
-      getProtectedFieldNames: jest.fn().mockResolvedValue(new Set<string>()),
-    } as unknown as jest.Mocked<RouterModelRegistryManager>;
+      getProtectedFieldNames: vi.fn().mockResolvedValue(new Set<string>()),
+    } as unknown as Mocked<RouterModelRegistryManager>;
     rabbitMQ = {
-      publish: jest.fn(() => Promise.resolve()),
-    } as unknown as jest.Mocked<RabbitMQService>;
+      publish: vi.fn(() => Promise.resolve()),
+    } as unknown as Mocked<RabbitMQService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

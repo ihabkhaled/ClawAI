@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import {
@@ -14,17 +15,17 @@ import {
   fallbackModelTokenBudget,
 } from '../utilities/assembled-context.utility';
 
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
 }));
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({ RESEARCH_SERVICE_URL: 'http://research:4016' }),
+    get: vi.fn().mockReturnValue({ RESEARCH_SERVICE_URL: 'http://research:4016' }),
   },
 }));
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../common/utilities') as {
+  httpRequest: Mock;
 };
 
 function makeContext(systemPrompt: string | null = null): AssembledContext {
@@ -80,7 +81,7 @@ describe('SearchFirstManager', () => {
   let manager: SearchFirstManager;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [SearchFirstManager],
     }).compile();

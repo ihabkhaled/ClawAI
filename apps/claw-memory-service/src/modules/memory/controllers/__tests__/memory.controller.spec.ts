@@ -1,26 +1,27 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MemoryController } from '../memory.controller';
 import { MemoryService } from '../../services/memory.service';
 
 describe('MemoryController', () => {
   let controller: MemoryController;
-  let serviceMock: jest.Mocked<{
-    createMemory: jest.Mock;
-    getMemories: jest.Mock;
-    getMemory: jest.Mock;
-    updateMemory: jest.Mock;
-    deleteMemory: jest.Mock;
-    toggleMemory: jest.Mock;
-  }>;
+  let serviceMock: {
+    createMemory: Mock;
+    getMemories: Mock;
+    getMemory: Mock;
+    updateMemory: Mock;
+    deleteMemory: Mock;
+    toggleMemory: Mock;
+  };
 
   beforeEach(async () => {
     serviceMock = {
-      createMemory: jest.fn(),
-      getMemories: jest.fn(),
-      getMemory: jest.fn(),
-      updateMemory: jest.fn(),
-      deleteMemory: jest.fn(),
-      toggleMemory: jest.fn(),
+      createMemory: vi.fn(),
+      getMemories: vi.fn(),
+      getMemory: vi.fn(),
+      updateMemory: vi.fn(),
+      deleteMemory: vi.fn(),
+      toggleMemory: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MemoryController],

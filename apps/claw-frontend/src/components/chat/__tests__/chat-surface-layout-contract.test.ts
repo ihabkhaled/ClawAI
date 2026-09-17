@@ -24,6 +24,10 @@ const TOOLBAR = resolve(CHAT_COMPONENTS, 'composer-toolbar.tsx');
 // which is exactly how the research select ended up 90px wide on a phone.
 const MODEL_SELECTOR = resolve(CHAT_COMPONENTS, 'model-selector.tsx');
 const RESEARCH_TOGGLE = resolve(CHAT_COMPONENTS, 'research-toggle.tsx');
+// The header's controls now live here. It is on the height scan for the same
+// reason the shell is: it is a permanent element of the conversation surface.
+const ACTION_RAIL = resolve(CHAT_COMPONENTS, 'chat-thread-action-rail.tsx');
+const GLOBALS_CSS = resolve(__dirname, '../../../app/globals.css');
 
 // Tailwind arbitrary heights (`h-[600px]`, `max-h-[50vh]`, `min-h-[80px]`) and
 // inline style heights. Rule 40 §2: growth is bounded in rows or dvh, never in
@@ -48,8 +52,8 @@ function withoutComments(source: string): string {
 }
 
 describe('chat surface layout contract (rules/40)', () => {
-  it('puts no fixed height on the shell, the composer or the toolbar', () => {
-    for (const file of [SHELL, COMPOSER, TOOLBAR]) {
+  it('puts no fixed height on the shell, the composer, the toolbar or the rail', () => {
+    for (const file of [SHELL, COMPOSER, TOOLBAR, ACTION_RAIL]) {
       const source = read(file);
       expect(source.match(ARBITRARY_HEIGHT) ?? []).toEqual([]);
       expect(source.match(INLINE_HEIGHT) ?? []).toEqual([]);
@@ -68,7 +72,48 @@ describe('chat surface layout contract (rules/40)', () => {
   it('binds the reading column to the shared token, not to a local value', () => {
     // Transcript and composer share one bound so they cannot drift apart.
     expect(read(SHELL)).toContain('chat-content-column');
-    expect(read(resolve(__dirname, '../../../app/globals.css'))).toContain('--chat-content-max');
+    expect(read(GLOBALS_CSS)).toContain('--chat-content-max');
+  });
+
+  it('reserves the rail OUTSIDE the reading column, so the transcript did not pay for it', () => {
+    // `.chat-thread-row` is the column plus the rail's strip. Built from the
+    // same token the column is built from, so a change to one cannot leave the
+    // other behind — and so the header, which also takes the row, starts the
+    // title at the x the first message starts at.
+    const css = read(GLOBALS_CSS);
+    expect(css).toContain('--chat-rail-reserve');
+    expect(css).toMatch(
+      /\.chat-thread-row\s*\{\s*max-width:\s*calc\(var\(--chat-content-max\) \+ var\(--chat-rail-reserve\)\);/,
+    );
+    // Both the header and the body row take it; the column alone would offset
+    // the header by half the rail.
+    expect(withoutComments(read(SHELL)).match(/chat-thread-row/g) ?? []).toHaveLength(2);
+  });
+
+  it('keeps the thread actions off the header and beside the conversation', () => {
+    const shell = read(SHELL);
+    // The header is the title, and the `…` only where there is no rail.
+    // A primary action reappearing on the header row is the regression this
+    // whole change exists to prevent: it costs height at every scroll position.
+    expect(shell).toContain('<ChatThreadActionRail');
+    const header = shell.slice(0, shell.indexOf('<ChatThreadActionRail'));
+    expect(header).not.toContain('<ShareChatButton');
+    expect(header).not.toContain('GitCompareArrows');
+    expect(header).not.toContain('<Gavel');
+  });
+
+  it('places the rail at the inline-end by document order, not by a physical side', () => {
+    const shell = withoutComments(read(SHELL));
+    // Last child of the body row: the browser puts it right in LTR and left in
+    // RTL for free. A `right-*`/`ms-auto` pair would need an `rtl:` twin that
+    // somebody eventually forgets to update.
+    expect(shell.indexOf('<ChatThreadActionRail')).toBeGreaterThan(
+      shell.indexOf('<MessageComposer'),
+    );
+    // And nothing inside the rail may pin itself to a physical edge.
+    expect(withoutComments(read(ACTION_RAIL))).not.toMatch(
+      /\b(?:ml|mr|pl|pr|left|right|border-l|border-r|text-left|text-right)-/,
+    );
   });
 
   it('renders one control row, not a mobile row and a desktop row', () => {

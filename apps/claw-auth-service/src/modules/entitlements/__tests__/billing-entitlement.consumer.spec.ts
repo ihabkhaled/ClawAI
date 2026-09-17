@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
@@ -5,13 +6,13 @@ import type { EntitlementInboxService } from '../services/entitlement-inbox.serv
 import { BillingEntitlementConsumer } from '../consumers/billing-entitlement.consumer';
 
 describe('BillingEntitlementConsumer', () => {
-  let rabbit: { subscribe: jest.Mock };
-  let inbox: { handle: jest.Mock };
+  let rabbit: { subscribe: Mock };
+  let inbox: { handle: Mock };
   let consumer: BillingEntitlementConsumer;
 
   beforeEach(() => {
-    rabbit = { subscribe: jest.fn() };
-    inbox = { handle: jest.fn() };
+    rabbit = { subscribe: vi.fn() };
+    inbox = { handle: vi.fn() };
     consumer = new BillingEntitlementConsumer(
       rabbit as unknown as RabbitMQService,
       inbox as unknown as EntitlementInboxService,

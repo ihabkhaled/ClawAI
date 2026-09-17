@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PrismaService } from '../prisma.service';
 import type { PrismaMockRegistry } from './types/prisma-mock-registry.types';
@@ -6,12 +7,12 @@ import type { PrismaMockRegistry } from './types/prisma-mock-registry.types';
 // wiring (connect on init, disconnect on destroy, URL sourced from AppConfig),
 // not Prisma's own behaviour — a real client would need a live database.
 //
-// The spies are created INSIDE each factory and re-exported, because ts-jest
-// hoists jest.mock above the imports; a spy declared in module scope would not
+// The spies are created INSIDE each factory and re-exported, because ts-vi
+// hoists vi.mock above the imports; a spy declared in module scope would not
 // yet be initialised when the factory runs.
-jest.mock('../../../../generated/prisma', () => {
-  const connect = jest.fn(async () => undefined);
-  const disconnect = jest.fn(async () => undefined);
+vi.mock('../../../../generated/prisma', () => {
+  const connect = vi.fn(async () => undefined);
+  const disconnect = vi.fn(async () => undefined);
   return {
     PrismaClient: class {
       $connect = connect;
@@ -23,8 +24,8 @@ jest.mock('../../../../generated/prisma', () => {
   };
 });
 
-jest.mock('@prisma/adapter-pg', () => {
-  const construct = jest.fn();
+vi.mock('@prisma/adapter-pg', () => {
+  const construct = vi.fn();
   return {
     PrismaPg: class {
       constructor(config: unknown) {
@@ -35,14 +36,14 @@ jest.mock('@prisma/adapter-pg', () => {
   };
 });
 
-const generated = jest.requireMock('../../../../generated/prisma') as PrismaMockRegistry;
-const adapter = jest.requireMock('@prisma/adapter-pg') as PrismaMockRegistry;
+const generated = await vi.importMock('../../../../generated/prisma') as PrismaMockRegistry;
+const adapter = await vi.importMock('@prisma/adapter-pg') as PrismaMockRegistry;
 
 describe('PrismaService', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env = {
       PAYMENT_DATABASE_URL: 'postgresql://u:p@payments-db:5432/claw_payments',
       REDIS_URL: 'redis://localhost:6379',

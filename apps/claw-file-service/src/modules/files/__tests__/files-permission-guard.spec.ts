@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Reflector } from '@nestjs/core';
 import { Permission, UserRole } from '@claw/shared-types';
 import { PermissionGuard, REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
@@ -18,8 +19,8 @@ import { type FilesService } from '../services/files.service';
 // spec pattern in packages/shared-entitlements/src/__tests__ and keeps this
 // test deterministic with no nginx/auth-service dependency.
 
-type MockReflector = { getAllAndOverride: jest.Mock };
-type MockAdapter = { getEntitlements: jest.Mock };
+type MockReflector = { getAllAndOverride: Mock };
+type MockAdapter = { getEntitlements: Mock };
 
 type GuardedUser = { sub?: string; id?: string; role?: string };
 
@@ -33,7 +34,7 @@ function makeContext(user?: GuardedUser, handler?: () => unknown, klass?: () => 
         method: 'GET',
         url: '/api/v1/files',
         ip: '127.0.0.1',
-        headers: { 'user-agent': 'jest' },
+        headers: { 'user-agent': 'vi' },
       }),
     }),
   };
@@ -67,8 +68,8 @@ describe('FilesController @RequirePermissions(Permission.FILES_USE) gate', () =>
     const meta = realReflector.get<Permission[]>(REQUIRE_PERMISSIONS_KEY, FilesController);
     expect(meta).toEqual([Permission.FILES_USE]);
 
-    reflector = { getAllAndOverride: jest.fn() };
-    adapter = { getEntitlements: jest.fn() };
+    reflector = { getAllAndOverride: vi.fn() };
+    adapter = { getEntitlements: vi.fn() };
     guard = new PermissionGuard(reflector as never, adapter as never);
   });
 
@@ -103,12 +104,12 @@ describe('FilesController @RequirePermissions(Permission.FILES_USE) gate', () =>
     // would have allowed the request. Mock the service layer and call the
     // controller method directly — the guard already passed above.
     const serviceMock = {
-      uploadFile: jest.fn(),
-      getFiles: jest.fn().mockResolvedValue({ data: [], meta: { total: 0, page: 1 } }),
-      getFile: jest.fn(),
-      deleteFile: jest.fn(),
-      downloadFile: jest.fn(),
-      getChunks: jest.fn(),
+      uploadFile: vi.fn(),
+      getFiles: vi.fn().mockResolvedValue({ data: [], meta: { total: 0, page: 1 } }),
+      getFile: vi.fn(),
+      deleteFile: vi.fn(),
+      downloadFile: vi.fn(),
+      getChunks: vi.fn(),
     };
     const controller = new FilesController(serviceMock as unknown as FilesService);
     const result = await controller.findAll(

@@ -1,3 +1,4 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel, type ServerLogPayload } from '@claw/shared-types';
@@ -6,17 +7,17 @@ import { ServerLogsService } from '../../services/server-logs.service';
 
 describe('ServerLogEventManager', () => {
   let manager: ServerLogEventManager;
-  let rabbitMock: jest.Mocked<{ subscribe: jest.Mock }>;
-  let serviceMock: jest.Mocked<{ createLog: jest.Mock }>;
+  let rabbitMock: Mocked<{ subscribe: Mock }>;
+  let serviceMock: Mocked<{ createLog: Mock }>;
   let capturedHandler: ((payload: unknown) => Promise<void>) | undefined;
 
   beforeEach(async () => {
     rabbitMock = {
-      subscribe: jest.fn().mockImplementation(async (_pattern, handler) => {
+      subscribe: vi.fn().mockImplementation(async (_pattern, handler) => {
         capturedHandler = handler;
       }),
     };
-    serviceMock = { createLog: jest.fn().mockResolvedValue({ id: 'x' }) };
+    serviceMock = { createLog: vi.fn().mockResolvedValue({ id: 'x' }) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { OllamaManager } from '../managers/ollama.manager';
 import { type LocalModelsRepository } from '../repositories/local-models.repository';
 import { type RoleAssignmentsRepository } from '../repositories/role-assignments.repository';
@@ -6,33 +7,33 @@ import { type RuntimeConfigsRepository } from '../repositories/runtime-configs.r
 import { LocalModelRole, PullJobStatus, RuntimeType } from '../../../generated/prisma';
 import { getRuntimeAdapter } from '../managers/adapters/runtime-adapter-factory';
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_BASE_URL: 'http://localhost:11434',
     }),
   },
 }));
 
-jest.mock('../../../common/utilities', () => ({
-  createHttpClient: jest.fn().mockReturnValue({
-    get: jest.fn(),
-    post: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  createHttpClient: vi.fn().mockReturnValue({
+    get: vi.fn(),
+    post: vi.fn(),
   }),
-  httpGet: jest.fn(),
-  httpPost: jest.fn(),
-  verifyAccessToken: jest.fn(),
+  httpGet: vi.fn(),
+  httpPost: vi.fn(),
+  verifyAccessToken: vi.fn(),
 }));
 
 const mockRuntimeAdapter = {
-  listModels: jest.fn(),
-  pullModel: jest.fn(),
-  healthCheck: jest.fn(),
-  generate: jest.fn(),
+  listModels: vi.fn(),
+  pullModel: vi.fn(),
+  healthCheck: vi.fn(),
+  generate: vi.fn(),
 };
 
-jest.mock('../managers/adapters/runtime-adapter-factory', () => ({
-  getRuntimeAdapter: jest.fn(),
+vi.mock('../managers/adapters/runtime-adapter-factory', () => ({
+  getRuntimeAdapter: vi.fn(),
 }));
 
 const mockLocalModel = {
@@ -57,47 +58,47 @@ const mockRoleAssignment = {
   createdAt: new Date(),
 };
 
-const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, jest.Mock>> => ({
-  findAll: jest.fn().mockResolvedValue([mockLocalModel]),
-  findByRuntime: jest.fn().mockResolvedValue([mockLocalModel]),
-  upsertByNameTagRuntime: jest.fn().mockResolvedValue(mockLocalModel),
-  findById: jest.fn().mockResolvedValue(mockLocalModel),
-  countAll: jest.fn().mockResolvedValue(1),
+const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, Mock>> => ({
+  findAll: vi.fn().mockResolvedValue([mockLocalModel]),
+  findByRuntime: vi.fn().mockResolvedValue([mockLocalModel]),
+  upsertByNameTagRuntime: vi.fn().mockResolvedValue(mockLocalModel),
+  findById: vi.fn().mockResolvedValue(mockLocalModel),
+  countAll: vi.fn().mockResolvedValue(1),
 });
 
 const mockRoleAssignmentsRepo = (): Partial<
-  Record<keyof RoleAssignmentsRepository, jest.Mock>
+  Record<keyof RoleAssignmentsRepository, Mock>
 > => ({
-  create: jest.fn().mockResolvedValue(mockRoleAssignment),
-  findActiveByRole: jest.fn().mockResolvedValue(mockRoleAssignment),
-  deactivateByRole: jest.fn().mockResolvedValue(void 0),
+  create: vi.fn().mockResolvedValue(mockRoleAssignment),
+  findActiveByRole: vi.fn().mockResolvedValue(mockRoleAssignment),
+  deactivateByRole: vi.fn().mockResolvedValue(void 0),
 });
 
-const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
-  create: jest.fn().mockResolvedValue({
+const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, Mock>> => ({
+  create: vi.fn().mockResolvedValue({
     id: 'job-1',
     status: PullJobStatus.IN_PROGRESS,
     startedAt: new Date(),
     downloadedBytes: 0n,
   }),
-  update: jest.fn().mockResolvedValue({ id: 'job-1', status: PullJobStatus.COMPLETED }),
-  findById: jest.fn().mockResolvedValue({
+  update: vi.fn().mockResolvedValue({ id: 'job-1', status: PullJobStatus.COMPLETED }),
+  findById: vi.fn().mockResolvedValue({
     id: 'job-1',
     status: PullJobStatus.IN_PROGRESS,
     startedAt: new Date(),
     downloadedBytes: 0n,
   }),
-  findActiveByModelName: jest.fn().mockResolvedValue(null),
-  findAllResumable: jest.fn().mockResolvedValue([]),
-  deleteOlderByModelName: jest.fn().mockResolvedValue(0),
-  incrementRetryAttempts: jest.fn().mockResolvedValue(undefined),
-  incrementInstallAttempts: jest.fn().mockResolvedValue(undefined),
-  markResumed: jest.fn().mockResolvedValue(undefined),
+  findActiveByModelName: vi.fn().mockResolvedValue(null),
+  findAllResumable: vi.fn().mockResolvedValue([]),
+  deleteOlderByModelName: vi.fn().mockResolvedValue(0),
+  incrementRetryAttempts: vi.fn().mockResolvedValue(undefined),
+  incrementInstallAttempts: vi.fn().mockResolvedValue(undefined),
+  markResumed: vi.fn().mockResolvedValue(undefined),
 });
 
-const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, jest.Mock>> => ({
-  findAll: jest.fn().mockResolvedValue([]),
-  findByRuntime: jest.fn().mockResolvedValue(null),
+const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, Mock>> => ({
+  findAll: vi.fn().mockResolvedValue([]),
+  findByRuntime: vi.fn().mockResolvedValue(null),
 });
 
 describe('OllamaManager', () => {
@@ -130,7 +131,7 @@ describe('OllamaManager', () => {
       response: 'Hello!',
       done: true,
     });
-    (getRuntimeAdapter as jest.Mock).mockReturnValue(mockRuntimeAdapter);
+    (getRuntimeAdapter as Mock).mockReturnValue(mockRuntimeAdapter);
     localModelsRepo = mockLocalModelsRepo();
     roleAssignmentsRepo = mockRoleAssignmentsRepo();
     pullJobsRepo = mockPullJobsRepo();
@@ -217,7 +218,7 @@ describe('OllamaManager', () => {
 
   describe('pullModelFromCatalog', () => {
     it('should fail the job when the runtime does not list the catalog model after pull', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       mockRuntimeAdapter.listModels.mockResolvedValue([]);
 
       await manager.pullModelFromCatalog({
@@ -234,7 +235,7 @@ describe('OllamaManager', () => {
       // Install retries use exponential backoff up to 5 attempts: 2+4+8+16+32 = 62s
       // Advance fake timers to skip those waits.
       for (let i = 0; i < 5; i++) {
-        await jest.advanceTimersByTimeAsync(60_000);
+        await vi.advanceTimersByTimeAsync(60_000);
         await Promise.resolve();
       }
 
@@ -246,7 +247,7 @@ describe('OllamaManager', () => {
           errorMessage: 'Model glm5.1:latest was not found in the runtime after pull',
         }),
       );
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 

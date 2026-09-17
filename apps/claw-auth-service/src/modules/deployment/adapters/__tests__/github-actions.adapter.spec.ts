@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { DeploymentCredentialSource } from '@claw/shared-types';
 
 import { AppConfig, type AppConfigType } from '../../../../app/config/app.config';
@@ -15,7 +16,7 @@ const BASE_CONFIG = {
 } as unknown as AppConfigType;
 
 function mockConfig(overrides: Record<string, string | undefined> = {}): void {
-  jest.spyOn(AppConfig, 'get').mockReturnValue({ ...BASE_CONFIG, ...overrides } as AppConfigType);
+  vi.spyOn(AppConfig, 'get').mockReturnValue({ ...BASE_CONFIG, ...overrides } as AppConfigType);
 }
 
 function storedRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -34,19 +35,19 @@ function storedRow(overrides: Record<string, unknown> = {}): Record<string, unkn
 }
 
 describe('GithubActionsAdapter', () => {
-  const fetchMock = jest.fn();
-  const find = jest.fn();
+  const fetchMock = vi.fn();
+  const find = vi.fn();
   const repository = { find } as unknown as DeploymentCredentialRepository;
   const adapter = (): GithubActionsAdapter => new GithubActionsAdapter(repository);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     global.fetch = fetchMock as unknown as typeof fetch;
     fetchMock.mockResolvedValue({ ok: true, status: 204 });
     find.mockResolvedValue(null);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('prefers the stored credentials over the environment', async () => {
     mockConfig();

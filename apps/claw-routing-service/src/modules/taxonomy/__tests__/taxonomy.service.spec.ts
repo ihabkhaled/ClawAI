@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { DomainTag, PrivacyClass } from '../../../generated/prisma';
 import { EntityNotFoundException } from '../../../common/errors';
@@ -18,14 +19,14 @@ const fakeRole = {
 
 describe('TaxonomyService', () => {
   let service: TaxonomyService;
-  let repo: jest.Mocked<TaxonomyRoleRepository>;
+  let repo: Mocked<TaxonomyRoleRepository>;
 
   beforeEach(async () => {
     repo = {
-      list: jest.fn(),
-      findById: jest.fn(),
-      create: jest.fn(),
-    } as unknown as jest.Mocked<TaxonomyRoleRepository>;
+      list: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn(),
+    } as unknown as Mocked<TaxonomyRoleRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [TaxonomyService, { provide: TaxonomyRoleRepository, useValue: repo }],

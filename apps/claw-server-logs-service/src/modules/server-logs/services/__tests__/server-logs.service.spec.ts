@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ServerLogsService } from '../server-logs.service';
 import { ServerLogsRepository } from '../../repositories/server-logs.repository';
@@ -5,25 +6,25 @@ import { SortOrder } from '../../../../common/enums/sort-order.enum';
 
 describe('ServerLogsService', () => {
   let service: ServerLogsService;
-  let repo: jest.Mocked<ServerLogsRepository>;
+  let repo: Mocked<ServerLogsRepository>;
 
   beforeEach(async () => {
     repo = {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findAll: jest.fn(),
-      countAll: jest.fn(),
-      getDistinctValues: jest.fn(),
-      getTimeSeries: jest.fn(),
-      aggregateByLevel: jest.fn(),
-      aggregateByService: jest.fn(),
-      aggregateByAction: jest.fn(),
-      aggregateByMethod: jest.fn(),
-      aggregateByStatusCode: jest.fn(),
-      aggregateByModule: jest.fn(),
-      getErrorCount: jest.fn(),
-      getAvgLatency: jest.fn(),
-    } as unknown as jest.Mocked<ServerLogsRepository>;
+      create: vi.fn(),
+      createMany: vi.fn(),
+      findAll: vi.fn(),
+      countAll: vi.fn(),
+      getDistinctValues: vi.fn(),
+      getTimeSeries: vi.fn(),
+      aggregateByLevel: vi.fn(),
+      aggregateByService: vi.fn(),
+      aggregateByAction: vi.fn(),
+      aggregateByMethod: vi.fn(),
+      aggregateByStatusCode: vi.fn(),
+      aggregateByModule: vi.fn(),
+      getErrorCount: vi.fn(),
+      getAvgLatency: vi.fn(),
+    } as unknown as Mocked<ServerLogsRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [ServerLogsService, { provide: ServerLogsRepository, useValue: repo }],

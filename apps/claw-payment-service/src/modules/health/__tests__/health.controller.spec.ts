@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { HealthController } from '../health.controller';
@@ -13,7 +14,7 @@ describe('HealthController', () => {
   };
 
   it('delegates to the service and returns its report unchanged', async () => {
-    const healthService = { report: jest.fn(async () => report) } as unknown as HealthService;
+    const healthService = { report: vi.fn(async () => report) } as unknown as HealthService;
     const controller = new HealthController(healthService);
 
     await expect(controller.check()).resolves.toBe(report);
@@ -22,7 +23,7 @@ describe('HealthController', () => {
 
   it('propagates a service failure rather than masking it as healthy', async () => {
     const healthService = {
-      report: jest.fn(() => Promise.reject(new Error('boom'))),
+      report: vi.fn(() => Promise.reject(new Error('boom'))),
     } as unknown as HealthService;
     const controller = new HealthController(healthService);
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import {
   ChatShareSafetyStatus,
@@ -8,7 +9,7 @@ import { ChatSharesRepository } from '../chat-shares.repository';
 
 describe('ChatSharesRepository discovery query', () => {
   it('requires indexing eligibility without coupling discovery to ads', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
+    const findMany = vi.fn().mockResolvedValue([]);
     const prisma = { chatShare: { findMany } };
     const repository = new ChatSharesRepository(prisma as unknown as PrismaService);
 
@@ -30,7 +31,7 @@ describe('ChatSharesRepository discovery query', () => {
   });
 
   it('uses a stable compound keyset after equal timestamps', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
+    const findMany = vi.fn().mockResolvedValue([]);
     const prisma = { chatShare: { findMany } };
     const repository = new ChatSharesRepository(prisma as unknown as PrismaService);
     const updatedAt = new Date('2026-07-26T10:20:30.000Z');

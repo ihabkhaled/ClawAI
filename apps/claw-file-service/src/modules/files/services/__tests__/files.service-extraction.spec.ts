@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 // The defect this file exists to prevent from returning:
 //
 // FileProcessingManager was complete and correct, and nothing on the upload path
@@ -14,16 +15,16 @@ import { type FileSecurityManager } from '../../managers/file-security.manager';
 import { type FileProcessingContract } from '../../types/zip-expansion.types';
 import { type File } from '../../../../generated/prisma';
 
-jest.mock('../../../../common/utilities', () => ({
-  verifyAccessToken: jest.fn(),
-  saveFile: jest.fn().mockReturnValue('/data/files/stored'),
-  deleteFile: jest.fn(),
-  readFile: jest.fn().mockReturnValue(Buffer.from('bytes')),
+vi.mock('../../../../common/utilities', () => ({
+  verifyAccessToken: vi.fn(),
+  saveFile: vi.fn().mockReturnValue('/data/files/stored'),
+  deleteFile: vi.fn(),
+  readFile: vi.fn().mockReturnValue(Buffer.from('bytes')),
 }));
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn(() => ({
+    get: vi.fn(() => ({
       FILE_RETENTION_DAYS: 0,
       FILE_RETENTION_SWEEP_CRON: '0 2 * * *',
       FILE_RETENTION_SWEEP_BATCH_LIMIT: 5,
@@ -57,41 +58,41 @@ const buildFile = (overrides: Partial<File> = {}): File =>
 
 describe('FilesService extraction wiring', () => {
   let service: FilesService;
-  let filesRepo: Record<string, jest.Mock>;
+  let filesRepo: Record<string, Mock>;
   let processing: FileProcessingContract;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     filesRepo = {
-      create: jest.fn().mockResolvedValue(buildFile()),
-      findById: jest.fn(),
-      findAll: jest.fn(),
-      updateIngestionStatus: jest.fn(),
-      saveExtractionResult: jest.fn(),
-      delete: jest.fn(),
-      countAll: jest.fn(),
-      findExpiredBefore: jest.fn(),
-      findStaleProcessingBefore: jest.fn(),
-      deleteById: jest.fn(),
-      markAsExtractedChild: jest.fn(),
-      recordExtractionMetadata: jest.fn(),
+      create: vi.fn().mockResolvedValue(buildFile()),
+      findById: vi.fn(),
+      findAll: vi.fn(),
+      updateIngestionStatus: vi.fn(),
+      saveExtractionResult: vi.fn(),
+      delete: vi.fn(),
+      countAll: vi.fn(),
+      findExpiredBefore: vi.fn(),
+      findStaleProcessingBefore: vi.fn(),
+      deleteById: vi.fn(),
+      markAsExtractedChild: vi.fn(),
+      recordExtractionMetadata: vi.fn(),
     };
     processing = {
-      processFile: jest.fn().mockResolvedValue(void 0),
-      updateIngestionStatus: jest.fn().mockResolvedValue(void 0),
+      processFile: vi.fn().mockResolvedValue(void 0),
+      updateIngestionStatus: vi.fn().mockResolvedValue(void 0),
     };
     const security = {
-      runAllChecks: jest.fn().mockResolvedValue({ passed: true, checks: [] }),
-      getSanitizedFilename: jest.fn().mockImplementation((name: string) => name),
+      runAllChecks: vi.fn().mockResolvedValue({ passed: true, checks: [] }),
+      getSanitizedFilename: vi.fn().mockImplementation((name: string) => name),
     };
     service = new FilesService(
       filesRepo as unknown as FilesRepository,
       {
-        createMany: jest.fn(),
-        findByFileId: jest.fn(),
-        deleteByFileId: jest.fn(),
+        createMany: vi.fn(),
+        findByFileId: vi.fn(),
+        deleteByFileId: vi.fn(),
       } as unknown as FileChunksRepository,
-      { publish: jest.fn().mockResolvedValue(void 0) } as unknown as RabbitMQService,
+      { publish: vi.fn().mockResolvedValue(void 0) } as unknown as RabbitMQService,
       security as unknown as FileSecurityManager,
       processing,
     );
@@ -113,7 +114,7 @@ describe('FilesService extraction wiring', () => {
 
     it('returns without waiting for extraction to finish', async () => {
       let release = (): void => {};
-      (processing.processFile as jest.Mock).mockReturnValue(
+      (processing.processFile as Mock).mockReturnValue(
         new Promise<void>((resolve) => {
           release = resolve;
         }),
@@ -132,7 +133,7 @@ describe('FilesService extraction wiring', () => {
     });
 
     it('does not reject the upload when extraction throws', async () => {
-      (processing.processFile as jest.Mock).mockRejectedValue(new Error('tesseract exploded'));
+      (processing.processFile as Mock).mockRejectedValue(new Error('tesseract exploded'));
 
       await expect(
         service.uploadFile(USER_ID, {

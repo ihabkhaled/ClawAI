@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../app/config/app.config';
 import { EscalationChainManager } from '../modules/chat-messages/managers/escalation-chain.manager';
 import { EscalationChainStatus } from '../common/enums/escalation-chain-status.enum';
@@ -9,7 +10,7 @@ import {
   fallbackModelTokenBudget,
 } from '../modules/chat-messages/utilities/assembled-context.utility';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -28,34 +29,34 @@ describe('EscalationChainManager', () => {
   let manager: EscalationChainManager;
 
   const mockChatExecutionManager = {
-    callProvider: jest.fn(),
+    callProvider: vi.fn(),
   };
 
   const mockContextAssemblyManager = {
-    assemble: jest.fn(),
+    assemble: vi.fn(),
   };
 
   const mockChatMessagesRepository = {
-    create: jest.fn(),
-    findRecentByThreadId: jest.fn(),
+    create: vi.fn(),
+    findRecentByThreadId: vi.fn(),
   };
 
   const mockChatThreadsRepository = {
-    findById: jest.fn(),
+    findById: vi.fn(),
   };
 
   const mockChatStreamService = {
-    emitCompletion: jest.fn(),
-    emitError: jest.fn(),
+    emitCompletion: vi.fn(),
+    emitError: vi.fn(),
   };
 
   const mockQualityCheckManager = {
-    checkResponseQuality: jest.fn(),
+    checkResponseQuality: vi.fn(),
   };
 
   // Universal-research PR2: research-enricher dependency.
   const mockResearchEnricherManager = {
-    enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+    enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
   };
 
   const mockContext: AssembledContext = {
@@ -99,7 +100,7 @@ describe('EscalationChainManager', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-1', content: 'test' });
     mockChatMessagesRepository.findRecentByThreadId.mockResolvedValue([]);
@@ -214,8 +215,8 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.escalated).toBe(true);
-      expect(resultCall[0].metadata.stepUsed).toBe(2);
+      expect(resultCall?.[0].metadata.escalated).toBe(true);
+      expect(resultCall?.[0].metadata.stepUsed).toBe(2);
     });
 
     it('should have SINGLE_STEP status when chain has 2 steps and step 1 passes', async () => {
@@ -235,8 +236,8 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.status).toBe(EscalationChainStatus.SINGLE_STEP);
-      expect(resultCall[0].metadata.escalated).toBe(false);
+      expect(resultCall?.[0].metadata.status).toBe(EscalationChainStatus.SINGLE_STEP);
+      expect(resultCall?.[0].metadata.escalated).toBe(false);
     });
 
     it('should have RESOLVED_AT_STEP status when chain has 3 steps and step 2 passes', async () => {
@@ -255,9 +256,9 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.status).toBe(EscalationChainStatus.RESOLVED_AT_STEP);
-      expect(resultCall[0].metadata.stepUsed).toBe(2);
-      expect(resultCall[0].metadata.escalated).toBe(true);
+      expect(resultCall?.[0].metadata.status).toBe(EscalationChainStatus.RESOLVED_AT_STEP);
+      expect(resultCall?.[0].metadata.stepUsed).toBe(2);
+      expect(resultCall?.[0].metadata.escalated).toBe(true);
     });
 
     it('should have EXHAUSTED status when all steps fail quality check', async () => {
@@ -276,8 +277,8 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
-      expect(resultCall[0].metadata.stepUsed).toBe(2);
+      expect(resultCall?.[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
+      expect(resultCall?.[0].metadata.stepUsed).toBe(2);
     });
 
     it('should store result message with escalationChain: true in metadata', async () => {
@@ -297,9 +298,9 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.escalationChain).toBe(true);
-      expect(resultCall[0].metadata.stepResults).toBeDefined();
-      expect(Array.isArray(resultCall[0].metadata.stepResults)).toBe(true);
+      expect(resultCall?.[0].metadata.escalationChain).toBe(true);
+      expect(resultCall?.[0].metadata.stepResults).toBeDefined();
+      expect(Array.isArray(resultCall?.[0].metadata.stepResults)).toBe(true);
     });
 
     it('should call emitCompletion after successful chain execution', async () => {
@@ -359,8 +360,8 @@ describe('EscalationChainManager', () => {
       );
       expect(resultCall).toBeDefined();
       // twoStepChain last step is ANTHROPIC / claude-sonnet-4
-      expect(resultCall[0].metadata.finalProvider).toBe('ANTHROPIC');
-      expect(resultCall[0].metadata.finalModel).toBe('claude-sonnet-4');
+      expect(resultCall?.[0].metadata.finalProvider).toBe('ANTHROPIC');
+      expect(resultCall?.[0].metadata.finalModel).toBe('claude-sonnet-4');
     });
 
     it('EXHAUSTED: selectBestAnswer picks the step with the highest quality score', async () => {
@@ -382,8 +383,8 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].content).toBe('Slightly better answer');
-      expect(resultCall[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
+      expect(resultCall?.[0].content).toBe('Slightly better answer');
+      expect(resultCall?.[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
     });
 
     it('EXHAUSTED: selectBestAnswer returns fallback message when all steps produce errors (content=null)', async () => {
@@ -407,8 +408,8 @@ describe('EscalationChainManager', () => {
       );
       expect(resultCall).toBeDefined();
       // selectBestAnswer fallback message when no successful steps exist
-      expect(resultCall[0].content).toBe('All escalation steps failed to produce a valid response');
-      expect(resultCall[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
+      expect(resultCall?.[0].content).toBe('All escalation steps failed to produce a valid response');
+      expect(resultCall?.[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
     });
 
     it('should store stepResults array with one entry per step executed', async () => {
@@ -427,11 +428,11 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.stepResults).toHaveLength(2);
-      expect(resultCall[0].metadata.stepResults[0].step).toBe(1);
-      expect(resultCall[0].metadata.stepResults[0].passed).toBe(false);
-      expect(resultCall[0].metadata.stepResults[1].step).toBe(2);
-      expect(resultCall[0].metadata.stepResults[1].passed).toBe(true);
+      expect(resultCall?.[0].metadata.stepResults).toHaveLength(2);
+      expect(resultCall?.[0].metadata.stepResults[0].step).toBe(1);
+      expect(resultCall?.[0].metadata.stepResults[0].passed).toBe(false);
+      expect(resultCall?.[0].metadata.stepResults[1].step).toBe(2);
+      expect(resultCall?.[0].metadata.stepResults[1].passed).toBe(true);
     });
 
     it('should record errorMessage in stepResult when a step LLM call throws', async () => {
@@ -452,10 +453,10 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.stepResults[0].errorMessage).toBe('LLM provider timeout');
-      expect(resultCall[0].metadata.stepResults[0].content).toBeNull();
-      expect(resultCall[0].metadata.stepResults[0].qualityScore).toBe(0);
-      expect(resultCall[0].metadata.stepResults[0].passed).toBe(false);
+      expect(resultCall?.[0].metadata.stepResults[0].errorMessage).toBe('LLM provider timeout');
+      expect(resultCall?.[0].metadata.stepResults[0].content).toBeNull();
+      expect(resultCall?.[0].metadata.stepResults[0].qualityScore).toBe(0);
+      expect(resultCall?.[0].metadata.stepResults[0].passed).toBe(false);
     });
 
     it('RESOLVED_AT_STEP: escalated flag is true when resolution happens at step 2+', async () => {
@@ -478,9 +479,9 @@ describe('EscalationChainManager', () => {
         (args: any[]) => args[0]?.metadata?.escalationChain === true,
       );
       expect(resultCall).toBeDefined();
-      expect(resultCall[0].metadata.escalated).toBe(true);
-      expect(resultCall[0].metadata.totalSteps).toBe(3);
-      expect(resultCall[0].metadata.stepUsed).toBe(2);
+      expect(resultCall?.[0].metadata.escalated).toBe(true);
+      expect(resultCall?.[0].metadata.totalSteps).toBe(3);
+      expect(resultCall?.[0].metadata.stepUsed).toBe(2);
     });
   });
 });

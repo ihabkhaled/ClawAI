@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingMode } from '../../../generated/prisma';
@@ -30,10 +31,10 @@ const makeDecision = (
 
 describe('AdaptiveLearningManager', () => {
   let manager: AdaptiveLearningManager;
-  let decisionsRepo: { findInWindow: jest.Mock };
+  let decisionsRepo: { findInWindow: Mock };
 
   beforeEach(() => {
-    decisionsRepo = { findInWindow: jest.fn() };
+    decisionsRepo = { findInWindow: vi.fn() };
     manager = new AdaptiveLearningManager(decisionsRepo as unknown as RoutingDecisionsRepository);
   });
 

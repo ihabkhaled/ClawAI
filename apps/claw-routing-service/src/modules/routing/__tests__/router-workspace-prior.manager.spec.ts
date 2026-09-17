@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { RouterWorkspacePriorManager } from '../managers/router-workspace-prior.manager';
 import {
   MAX_WORKSPACE_PRIOR_NUDGE,
@@ -5,8 +6,8 @@ import {
 } from '../constants/routing-education.constants';
 
 const mockRepository = () => ({
-  findWorkspacePrior: jest.fn(),
-  upsertWorkspacePrior: jest.fn().mockImplementation((input) => Promise.resolve(input)),
+  findWorkspacePrior: vi.fn(),
+  upsertWorkspacePrior: vi.fn().mockImplementation((input) => Promise.resolve(input)),
 });
 
 const baseDecision = () => ({
@@ -57,7 +58,9 @@ describe('RouterWorkspacePriorManager.ingestOutcome', () => {
       executionSuccess: false,
     });
 
-    const call = repository.upsertWorkspacePrior.mock.calls[0][0];
+    const upsertCall = repository.upsertWorkspacePrior.mock.calls[0];
+    expect(upsertCall).toBeDefined();
+    const call = upsertCall?.[0];
     expect(call.routeCount).toBe(4);
     expect(call.successRate).toBeCloseTo(0.75, 5);
   });
@@ -79,7 +82,9 @@ describe('RouterWorkspacePriorManager.ingestOutcome', () => {
       executionSuccess: true,
     });
 
-    const call = repository.upsertWorkspacePrior.mock.calls[0][0];
+    const upsertCall = repository.upsertWorkspacePrior.mock.calls[0];
+    expect(upsertCall).toBeDefined();
+    const call = upsertCall?.[0];
     expect(call.confidenceInPrior).toBe(1);
   });
 });

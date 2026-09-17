@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   BillingErrorCode,
   BillingGateway,
@@ -51,27 +52,27 @@ function makeQuote(overrides: Record<string, unknown> = {}): Record<string, unkn
 }
 
 describe('PlanChangeService', () => {
-  let subscriptions: { findActiveByUserId: jest.Mock };
-  let proration: { quote: jest.Mock; consume: jest.Mock };
-  let catalog: { requirePriceVersion: jest.Mock; requireActivePrice: jest.Mock };
-  let downgrades: { schedule: jest.Mock; applyImmediately: jest.Mock };
-  let checkout: { startPlanChange: jest.Mock };
+  let subscriptions: { findActiveByUserId: Mock };
+  let proration: { quote: Mock; consume: Mock };
+  let catalog: { requirePriceVersion: Mock; requireActivePrice: Mock };
+  let downgrades: { schedule: Mock; applyImmediately: Mock };
+  let checkout: { startPlanChange: Mock };
   let service: PlanChangeService;
 
   beforeEach(() => {
-    subscriptions = { findActiveByUserId: jest.fn().mockResolvedValue(makeSubscription()) };
-    proration = { quote: jest.fn().mockResolvedValue(makeQuote()), consume: jest.fn() };
+    subscriptions = { findActiveByUserId: vi.fn().mockResolvedValue(makeSubscription()) };
+    proration = { quote: vi.fn().mockResolvedValue(makeQuote()), consume: vi.fn() };
     catalog = {
-      requirePriceVersion: jest
+      requirePriceVersion: vi
         .fn()
         .mockResolvedValue({ id: 'ppv-old', currency: 'USD', amountMinor: 999 }),
-      requireActivePrice: jest
+      requireActivePrice: vi
         .fn()
         .mockResolvedValue({ id: 'ppv-new', currency: 'USD', amountMinor: 1999 }),
     };
-    downgrades = { schedule: jest.fn(), applyImmediately: jest.fn() };
+    downgrades = { schedule: vi.fn(), applyImmediately: vi.fn() };
     checkout = {
-      startPlanChange: jest.fn().mockResolvedValue({
+      startPlanChange: vi.fn().mockResolvedValue({
         id: 'cs-upgrade',
         status: 'AWAITING_PAYMENT',
         gateway: 'PAYPAL',

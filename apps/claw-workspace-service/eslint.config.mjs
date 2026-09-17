@@ -54,7 +54,11 @@ export default tseslint.config(
       '*.mjs',
       '*.cjs',
       '*.js',
-      'jest.config.ts',
+      // Workspace-root tooling configs sit outside every tsconfig include, so
+      // the type-aware parser has no root for them. jest.config.ts was ignored
+      // for that reason; its Vitest replacements need the same.
+      'vitest.config.ts',
+      'vitest.setup.ts',
     ],
   },
   eslint.configs.recommended,

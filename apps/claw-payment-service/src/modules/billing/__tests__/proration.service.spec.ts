@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ProrationQuoteStatus } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -30,31 +31,31 @@ const input = (overrides: Partial<ProrationQuoteInput> = {}): ProrationQuoteInpu
 describe('ProrationService', () => {
   let service: ProrationService;
   let repository: {
-    create: jest.Mock;
-    findById: jest.Mock;
-    consumeIfActive: jest.Mock;
-    markStatus: jest.Mock;
+    create: Mock;
+    findById: Mock;
+    consumeIfActive: Mock;
+    markStatus: Mock;
   };
 
   beforeEach(() => {
     repository = {
-      create: jest
+      create: vi
         .fn()
         .mockImplementation((data: Record<string, unknown>) =>
           Promise.resolve({ id: 'q1', ...data }),
         ),
-      findById: jest.fn(),
-      consumeIfActive: jest.fn().mockResolvedValue(1),
-      markStatus: jest.fn(),
+      findById: vi.fn(),
+      consumeIfActive: vi.fn().mockResolvedValue(1),
+      markStatus: vi.fn(),
     };
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       FX_QUOTE_TTL_MS: 600_000,
     } as unknown as ReturnType<typeof AppConfig.get>);
     service = new ProrationService(repository as unknown as ProrationQuoteRepository);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('charges the exact prorated difference on an upgrade', async () => {

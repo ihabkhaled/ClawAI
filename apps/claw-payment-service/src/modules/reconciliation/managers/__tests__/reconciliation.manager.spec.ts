@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ReconciliationRunStatus } from '../../../../common/enums/reconciliation.enum';
 import type { ScheduledJobRunnerService } from '../../../scheduled-jobs/services/scheduled-job-runner.service';
 import type { ReconciliationRepository } from '../../repositories/reconciliation.repository';
@@ -9,34 +10,34 @@ import type { PlanRetirementReconciliationService } from '../../services/plan-re
 import { ReconciliationManager } from '../reconciliation.manager';
 import type { ScheduledJobCallback } from '../../../scheduled-jobs/types/scheduled-job.types';
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
     get: () => ({ BILLING_RECONCILIATION_CRON: '0 */15 * * * *' }),
   },
 }));
 
 describe('ReconciliationManager', () => {
-  let jobs: { run: jest.Mock };
-  let repository: { createRun: jest.Mock; completeRun: jest.Mock };
-  let gateways: { reconcile: jest.Mock };
-  let lifecycle: { reconcile: jest.Mock };
-  let transactions: { reconcile: jest.Mock };
-  let providerSubscriptions: { reconcile: jest.Mock };
-  let planRetirements: { reconcile: jest.Mock };
+  let jobs: { run: Mock };
+  let repository: { createRun: Mock; completeRun: Mock };
+  let gateways: { reconcile: Mock };
+  let lifecycle: { reconcile: Mock };
+  let transactions: { reconcile: Mock };
+  let providerSubscriptions: { reconcile: Mock };
+  let planRetirements: { reconcile: Mock };
   let manager: ReconciliationManager;
 
   beforeEach(() => {
     jobs = {
-      run: jest.fn(async (_options: unknown, callback: ScheduledJobCallback<unknown>) =>
+      run: vi.fn(async (_options: unknown, callback: ScheduledJobCallback<unknown>) =>
         callback(),
       ),
     };
     repository = {
-      createRun: jest.fn().mockResolvedValue({ id: 'run-1' }),
-      completeRun: jest.fn(),
+      createRun: vi.fn().mockResolvedValue({ id: 'run-1' }),
+      completeRun: vi.fn(),
     };
     gateways = {
-      reconcile: jest.fn().mockResolvedValue({
+      reconcile: vi.fn().mockResolvedValue({
         scannedCount: 2,
         repairedCount: 1,
         quarantinedCount: 1,
@@ -44,7 +45,7 @@ describe('ReconciliationManager', () => {
       }),
     };
     lifecycle = {
-      reconcile: jest.fn().mockResolvedValue({
+      reconcile: vi.fn().mockResolvedValue({
         scannedCount: 4,
         repairedCount: 4,
         quarantinedCount: 0,
@@ -52,7 +53,7 @@ describe('ReconciliationManager', () => {
       }),
     };
     transactions = {
-      reconcile: jest.fn().mockResolvedValue({
+      reconcile: vi.fn().mockResolvedValue({
         scannedCount: 1,
         repairedCount: 0,
         quarantinedCount: 1,
@@ -60,7 +61,7 @@ describe('ReconciliationManager', () => {
       }),
     };
     providerSubscriptions = {
-      reconcile: jest.fn().mockResolvedValue({
+      reconcile: vi.fn().mockResolvedValue({
         scannedCount: 0,
         repairedCount: 0,
         quarantinedCount: 0,
@@ -68,7 +69,7 @@ describe('ReconciliationManager', () => {
       }),
     };
     planRetirements = {
-      reconcile: jest.fn().mockResolvedValue({
+      reconcile: vi.fn().mockResolvedValue({
         scannedCount: 2,
         repairedCount: 1,
         quarantinedCount: 0,

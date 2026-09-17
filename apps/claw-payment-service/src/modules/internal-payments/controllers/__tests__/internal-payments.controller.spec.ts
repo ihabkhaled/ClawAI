@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 
 import { InternalPaymentsService } from '../../services/internal-payments.service';
@@ -5,14 +6,14 @@ import { InternalPaymentsController } from '../internal-payments.controller';
 
 describe('InternalPaymentsController', () => {
   const payments = {
-    getPaymentStatus: jest.fn(),
-    getSubscriptionStatus: jest.fn(),
-    getAuthoritativeEntitlement: jest.fn(),
+    getPaymentStatus: vi.fn(),
+    getSubscriptionStatus: vi.fn(),
+    getAuthoritativeEntitlement: vi.fn(),
   };
   let controller: InternalPaymentsController;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       controllers: [InternalPaymentsController],
       providers: [{ provide: InternalPaymentsService, useValue: payments }],

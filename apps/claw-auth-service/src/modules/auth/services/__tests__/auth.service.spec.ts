@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
@@ -11,29 +12,29 @@ import { EmailVerificationService } from '../email-verification.service';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let managerMock: jest.Mocked<{
-    login: jest.Mock;
-    refresh: jest.Mock;
-    logout: jest.Mock;
-    getProfile: jest.Mock;
-  }>;
-  let rabbitMock: jest.Mocked<{ publish: jest.Mock }>;
+  let managerMock: {
+    login: Mock;
+    refresh: Mock;
+    logout: Mock;
+    getProfile: Mock;
+  };
+  let rabbitMock: { publish: Mock };
 
   beforeEach(async () => {
     managerMock = {
-      login: jest.fn(),
-      refresh: jest.fn(),
-      logout: jest.fn(),
-      getProfile: jest.fn(),
+      login: vi.fn(),
+      refresh: vi.fn(),
+      logout: vi.fn(),
+      getProfile: vi.fn(),
     };
-    rabbitMock = { publish: jest.fn().mockResolvedValue(null) };
+    rabbitMock = { publish: vi.fn().mockResolvedValue(null) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: AuthManager, useValue: managerMock },
         { provide: RabbitMQService, useValue: rabbitMock },
-        { provide: EmailVerificationService, useValue: { sendForUser: jest.fn() } },
+        { provide: EmailVerificationService, useValue: { sendForUser: vi.fn() } },
       ],
     }).compile();
 
@@ -41,7 +42,7 @@ describe('AuthService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('login', () => {
@@ -115,9 +116,9 @@ describe('AuthService', () => {
       const captureLog = (...parts: unknown[]): void => {
         logged.push(...parts);
       };
-      jest.spyOn(Logger.prototype, 'log').mockImplementation(captureLog);
-      jest.spyOn(Logger.prototype, 'debug').mockImplementation(captureLog);
-      jest.spyOn(Logger.prototype, 'warn').mockImplementation(captureLog);
+      vi.spyOn(Logger.prototype, 'log').mockImplementation(captureLog);
+      vi.spyOn(Logger.prototype, 'debug').mockImplementation(captureLog);
+      vi.spyOn(Logger.prototype, 'warn').mockImplementation(captureLog);
 
       await service.refresh(presented);
 

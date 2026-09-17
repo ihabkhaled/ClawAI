@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EventPattern, PaymentTransactionType, SubscriptionStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,19 +7,19 @@ import type { BillingRecordService } from '../billing-record.service';
 import { SubscriptionLifecycleService } from '../subscription-lifecycle.service';
 
 describe('SubscriptionLifecycleService grace expiry', () => {
-  let updateMany: jest.Mock;
-  let outbox: { enqueue: jest.Mock };
+  let updateMany: Mock;
+  let outbox: { enqueue: Mock };
   let service: SubscriptionLifecycleService;
 
   beforeEach(() => {
-    updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const prisma = {
-      $transaction: jest.fn(
-        async (callback: (tx: { subscription: { updateMany: jest.Mock } }) => Promise<unknown>) =>
+      $transaction: vi.fn(
+        async (callback: (tx: { subscription: { updateMany: Mock } }) => Promise<unknown>) =>
           callback({ subscription: { updateMany } }),
       ),
     };
-    outbox = { enqueue: jest.fn() };
+    outbox = { enqueue: vi.fn() };
     service = new SubscriptionLifecycleService(
       prisma as unknown as PrismaService,
       outbox as unknown as OutboxRepository,
@@ -121,13 +122,13 @@ describe('SubscriptionLifecycleService paid plan change activation', () => {
       entitlementValidUntil: new Date('2026-09-04T00:00:00.000Z'),
     };
     const subscription = {
-      create: jest.fn(),
-      findUnique: jest.fn().mockResolvedValue(source),
-      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      create: vi.fn(),
+      findUnique: vi.fn().mockResolvedValue(source),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     };
-    const checkoutSession = { update: jest.fn() };
+    const checkoutSession = { update: vi.fn() };
     const prorationQuote = {
-      findUnique: jest.fn().mockResolvedValue({
+      findUnique: vi.fn().mockResolvedValue({
         id: 'quote-1',
         userId: 'user-1',
         subscriptionId: 'subscription-1',
@@ -146,13 +147,13 @@ describe('SubscriptionLifecycleService paid plan change activation', () => {
     };
     const tx = { subscription, checkoutSession, prorationQuote };
     const prisma = {
-      $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
+      $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
         callback(tx),
       ),
     };
-    const outbox = { enqueue: jest.fn() };
+    const outbox = { enqueue: vi.fn() };
     const records = {
-      recordCharge: jest.fn().mockResolvedValue({
+      recordCharge: vi.fn().mockResolvedValue({
         transactionId: 'transaction-1',
         invoiceNumber: 'CLAW-00000001',
       }),

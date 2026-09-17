@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   type ArgumentsHost,
   BadRequestException,
@@ -12,8 +13,8 @@ import { GlobalExceptionFilter } from '../global-exception.filter';
 
 type MockResponse = {
   headersSent: boolean;
-  status: jest.Mock;
-  json: jest.Mock;
+  status: Mock;
+  json: Mock;
 };
 
 function buildHost(response: MockResponse): ArgumentsHost {
@@ -25,8 +26,8 @@ function buildHost(response: MockResponse): ArgumentsHost {
 function buildResponse(headersSent = false): MockResponse {
   const response: MockResponse = {
     headersSent,
-    status: jest.fn(() => response),
-    json: jest.fn(() => response),
+    status: vi.fn(() => response),
+    json: vi.fn(() => response),
   };
   return response;
 }
@@ -36,11 +37,11 @@ describe('GlobalExceptionFilter', () => {
 
   beforeEach(() => {
     filter = new GlobalExceptionFilter();
-    jest.spyOn(filter['logger'], 'error').mockImplementation(() => {});
+    vi.spyOn(filter['logger'], 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('maps a BillingException to its status, code and message key', () => {

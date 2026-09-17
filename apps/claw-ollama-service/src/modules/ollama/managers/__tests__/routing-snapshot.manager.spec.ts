@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { type LocalModelsRepository } from '../../repositories/local-models.repository';
 import { RoutingSnapshotManager } from '../routing-snapshot.manager';
 
@@ -14,7 +15,7 @@ function makeRow(overrides: Partial<Row> = {}): Row {
 describe('RoutingSnapshotManager (ollama)', () => {
   function buildManager(rows: Row[]): RoutingSnapshotManager {
     const repo = {
-      findAllInstalled: jest.fn().mockResolvedValue(rows),
+      findAllInstalled: vi.fn().mockResolvedValue(rows),
     };
     return new RoutingSnapshotManager(repo as unknown as LocalModelsRepository);
   }

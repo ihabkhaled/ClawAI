@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { RouterEducationManager } from '../managers/router-education.manager';
 import { RouterWorkspacePriorManager } from '../managers/router-workspace-prior.manager';
 import type {
@@ -118,12 +119,12 @@ const baseDecisions = () => [
 ];
 
 const mockRepository = () => ({
-  findDecisionByMessageId: jest.fn(),
-  findDecisionByAssistantMessageId: jest.fn(),
-  upsertOutcomeRecord: jest.fn().mockImplementation(() => Promise.resolve()),
-  createFeedbackRecord: jest.fn().mockImplementation(() => Promise.resolve()),
-  findEducationWindow: jest.fn().mockResolvedValue(baseDecisions()),
-  commitCalibrationBatch: jest.fn().mockImplementation((input) =>
+  findDecisionByMessageId: vi.fn(),
+  findDecisionByAssistantMessageId: vi.fn(),
+  upsertOutcomeRecord: vi.fn().mockImplementation(() => Promise.resolve()),
+  createFeedbackRecord: vi.fn().mockImplementation(() => Promise.resolve()),
+  findEducationWindow: vi.fn().mockResolvedValue(baseDecisions()),
+  commitCalibrationBatch: vi.fn().mockImplementation((input) =>
     Promise.resolve({
       id: 'snapshot-1',
       version: input.version,
@@ -136,13 +137,13 @@ const mockRepository = () => ({
       generatedAt: new Date(),
     }),
   ),
-  restoreCalibrationSnapshot: jest.fn().mockImplementation(() => Promise.resolve()),
-  getLatestCalibrationSnapshot: jest.fn().mockResolvedValue(null),
-  getCalibrationSnapshotByVersion: jest.fn().mockResolvedValue(null),
-  getPreviousCalibrationSnapshot: jest.fn().mockResolvedValue(null),
-  listModelProfiles: jest.fn().mockResolvedValue([]),
-  listTopicProfiles: jest.fn().mockResolvedValue([]),
-  findBestModelProfile: jest.fn().mockResolvedValue({
+  restoreCalibrationSnapshot: vi.fn().mockImplementation(() => Promise.resolve()),
+  getLatestCalibrationSnapshot: vi.fn().mockResolvedValue(null),
+  getCalibrationSnapshotByVersion: vi.fn().mockResolvedValue(null),
+  getPreviousCalibrationSnapshot: vi.fn().mockResolvedValue(null),
+  listModelProfiles: vi.fn().mockResolvedValue([]),
+  listTopicProfiles: vi.fn().mockResolvedValue([]),
+  findBestModelProfile: vi.fn().mockResolvedValue({
     provider: 'ANTHROPIC',
     model: 'claude-sonnet-4',
     taskFamily: 'coding',
@@ -152,7 +153,7 @@ const mockRepository = () => ({
     sampleSize: 4,
     calibrationTrustScore: 0.9,
   }),
-  findModelProfile: jest.fn().mockResolvedValue({
+  findModelProfile: vi.fn().mockResolvedValue({
     provider: 'OPENAI',
     model: 'gpt-4o-mini',
     taskFamily: 'coding',
@@ -163,8 +164,8 @@ const mockRepository = () => ({
     calibrationTrustScore: 0.5,
   }),
   // V6 learning evolution (ADR-070)
-  findWorkspacePrior: jest.fn().mockResolvedValue(null),
-  upsertWorkspacePrior: jest.fn().mockImplementation((input) => Promise.resolve(input)),
+  findWorkspacePrior: vi.fn().mockResolvedValue(null),
+  upsertWorkspacePrior: vi.fn().mockImplementation((input) => Promise.resolve(input)),
 });
 
 describe('RouterEducationManager', () => {

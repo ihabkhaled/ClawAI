@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ContextPacksRepository } from '../context-packs.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,37 +7,37 @@ describe('ContextPacksRepository', () => {
   let repository: ContextPacksRepository;
   let prismaMock: {
     contextPack: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
-      update: jest.Mock;
-      delete: jest.Mock;
-      count: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findMany: Mock;
+      update: Mock;
+      delete: Mock;
+      count: Mock;
     };
     contextPackItem: {
-      create: jest.Mock;
-      delete: jest.Mock;
-      update: jest.Mock;
+      create: Mock;
+      delete: Mock;
+      update: Mock;
     };
-    $transaction: jest.Mock;
+    $transaction: Mock;
   };
 
   beforeEach(async () => {
     prismaMock = {
       contextPack: {
-        create: jest.fn().mockResolvedValue({ id: 'cp1' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'cp1', items: [] }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'cp1' }]),
-        update: jest.fn().mockResolvedValue({ id: 'cp1' }),
-        delete: jest.fn().mockResolvedValue({ id: 'cp1' }),
-        count: jest.fn().mockResolvedValue(5),
+        create: vi.fn().mockResolvedValue({ id: 'cp1' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'cp1', items: [] }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'cp1' }]),
+        update: vi.fn().mockResolvedValue({ id: 'cp1' }),
+        delete: vi.fn().mockResolvedValue({ id: 'cp1' }),
+        count: vi.fn().mockResolvedValue(5),
       },
       contextPackItem: {
-        create: jest.fn().mockResolvedValue({ id: 'item-1' }),
-        delete: jest.fn().mockResolvedValue({ id: 'item-1' }),
-        update: jest.fn().mockResolvedValue({ id: 'item-1' }),
+        create: vi.fn().mockResolvedValue({ id: 'item-1' }),
+        delete: vi.fn().mockResolvedValue({ id: 'item-1' }),
+        update: vi.fn().mockResolvedValue({ id: 'item-1' }),
       },
-      $transaction: jest.fn().mockResolvedValue([]),
+      $transaction: vi.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -53,21 +54,27 @@ describe('ContextPacksRepository', () => {
 
   it('findById includes items ordered by sortOrder asc', async () => {
     await repository.findById('cp1');
-    const args = prismaMock.contextPack.findUnique.mock.calls[0][0];
+    const argsCall = prismaMock.contextPack.findUnique.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.id).toBe('cp1');
     expect(args.include.items.orderBy).toEqual({ sortOrder: 'asc' });
   });
 
   it('findAll paginates correctly', async () => {
     await repository.findAll({ userId: 'u1' } as never, 2, 10);
-    const args = prismaMock.contextPack.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.contextPack.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.skip).toBe(10);
     expect(args.take).toBe(10);
   });
 
   it('findAll applies search filter when set', async () => {
     await repository.findAll({ userId: 'u1', search: 'pack' } as never, 1, 20);
-    const args = prismaMock.contextPack.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.contextPack.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.name).toEqual({ contains: 'pack', mode: 'insensitive' });
   });
 

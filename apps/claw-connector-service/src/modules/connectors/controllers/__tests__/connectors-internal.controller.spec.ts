@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ConnectorsInternalController } from '../connectors-internal.controller';
 import { ConnectorsService } from '../../services/connectors.service';
@@ -6,21 +7,21 @@ import { ModelsSnapshotManager } from '../../managers/models-snapshot.manager';
 describe('ConnectorsInternalController', () => {
   let controller: ConnectorsInternalController;
   let serviceMock: {
-    getConnectorConfig: jest.Mock;
-    getHealthSnapshot: jest.Mock;
-    getPaygPolicy: jest.Mock;
-    validateExposedModels: jest.Mock;
+    getConnectorConfig: Mock;
+    getHealthSnapshot: Mock;
+    getPaygPolicy: Mock;
+    validateExposedModels: Mock;
   };
-  let snapshotMock: { build: jest.Mock };
+  let snapshotMock: { build: Mock };
 
   beforeEach(async () => {
     serviceMock = {
-      getConnectorConfig: jest.fn(),
-      getHealthSnapshot: jest.fn(),
-      getPaygPolicy: jest.fn(),
-      validateExposedModels: jest.fn(),
+      getConnectorConfig: vi.fn(),
+      getHealthSnapshot: vi.fn(),
+      getPaygPolicy: vi.fn(),
+      validateExposedModels: vi.fn(),
     };
-    snapshotMock = { build: jest.fn() };
+    snapshotMock = { build: vi.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConnectorsInternalController],

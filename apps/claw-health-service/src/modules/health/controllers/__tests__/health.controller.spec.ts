@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ServiceStatus } from '@claw/shared-types';
 import { HealthController } from '../health.controller';
@@ -6,10 +7,10 @@ import { AggregatedHealthStatus } from '../../enums/aggregated-health-status.enu
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let serviceMock: { checkAll: jest.Mock };
+  let serviceMock: { checkAll: Mock };
 
   beforeEach(async () => {
-    serviceMock = { checkAll: jest.fn() };
+    serviceMock = { checkAll: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
       providers: [{ provide: HealthService, useValue: serviceMock }],

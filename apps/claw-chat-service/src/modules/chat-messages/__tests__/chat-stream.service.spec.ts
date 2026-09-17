@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { createFakeChatStreamBus } from './helpers/fake-chat-stream-bus.helper';
 import { AiStreamStage, ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ChatStreamService } from '../services/chat-stream.service';
@@ -13,8 +14,8 @@ describe('ChatStreamService', () => {
   });
 
   it('emits safe live model progress beats while the model call is in flight', () => {
-    jest.useFakeTimers();
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    vi.useFakeTimers();
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     const stop = service.startResponseProgressHeartbeat(
       'thread-live',
@@ -22,9 +23,9 @@ describe('ChatStreamService', () => {
       'qwen3:1.7b',
     );
 
-    jest.advanceTimersByTime(4_500);
+    vi.advanceTimersByTime(4_500);
     stop();
-    jest.advanceTimersByTime(3_000);
+    vi.advanceTimersByTime(3_000);
 
     expect(nextSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -64,11 +65,11 @@ describe('ChatStreamService', () => {
     );
     expect(nextSpy).toHaveBeenCalledTimes(4);
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('emits request accepted progress details', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitRequestAccepted('thread-1');
 
@@ -87,7 +88,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emits structured localizable error metadata', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitError('thread-video', 'The selected model cannot process video attachments', {
       code: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
@@ -106,7 +107,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emits research completion with a fallback tool label when no tools are present', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitResearchCompleted('thread-2', 4, []);
 
@@ -126,7 +127,7 @@ describe('ChatStreamService', () => {
   });
 
   it('sanitizes unsafe progress text and emits ordered visible progress metadata', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitProgressStage('thread-safe', StreamEventType.TOOL_STARTED, {
       label: 'Reading hidden chain of thought',
@@ -266,7 +267,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emitResearchProgress(STARTED) puts a RESEARCH_PROGRESS frame on the bus with mode+query details', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitResearchProgress('thread-research-1', {
       stage: AiStreamStage.RESEARCH_STARTED,
@@ -290,7 +291,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emitResearchProgress(SOURCES_FOUND) carries the sourcesCount in researchDetails', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitResearchProgress('thread-research-2', {
       stage: AiStreamStage.RESEARCH_SOURCES_FOUND,
@@ -308,7 +309,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emitResearchProgress(FETCHING) includes currentUrl in researchDetails', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitResearchProgress('thread-research-3', {
       stage: AiStreamStage.RESEARCH_FETCHING,
@@ -325,7 +326,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emitResearchProgress(COMPLETED) marks the event status as completed', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitResearchProgress('thread-research-4', {
       stage: AiStreamStage.RESEARCH_COMPLETED,
@@ -343,7 +344,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emitResearchProgress(FAILED) emits with status=error, actorType=system and error in details', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitResearchProgress('thread-research-5', {
       stage: AiStreamStage.RESEARCH_FAILED,
@@ -386,7 +387,7 @@ describe('ChatStreamService', () => {
   });
 
   it('emits custom progress stages with provider and model context', () => {
-    const nextSpy = jest.spyOn(service.eventBus, 'next');
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
 
     service.emitProgressStage('thread-3', StreamEventType.RESPONSE_STREAMING, {
       label: 'Drafting answer',

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { BusinessException } from '../../../common/errors';
 import {
   executeOllamaCloudToolCall,
@@ -6,17 +7,17 @@ import {
 } from '../utilities/ollama-cloud-tool-runner.utility';
 import { OLLAMA_TOOL_RESULT_MAX_CHARS } from '../constants/agentic-loop.constants';
 
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
 }));
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../common/utilities') as {
+  httpRequest: Mock;
 };
 
 describe('OllamaCloudToolRunner', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('exposes web_search + web_fetch JSON-schema definitions', () => {
@@ -30,7 +31,7 @@ describe('OllamaCloudToolRunner', () => {
   });
 
   it('executes a web_search call and returns the stringified result', async () => {
-    const onDispatch = jest.fn(async () => {});
+    const onDispatch = vi.fn(async () => {});
     httpRequest.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -71,7 +72,9 @@ describe('OllamaCloudToolRunner', () => {
       },
       { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000 },
     );
-    const body = httpRequest.mock.calls[0][0].body as Record<string, unknown>;
+    const bodyCall = httpRequest.mock.calls[0];
+    expect(bodyCall).toBeDefined();
+    const body = bodyCall?.[0].body as Record<string, unknown>;
     expect(body).toEqual({ query: 'foo', max_results: 3 });
   });
 
@@ -87,12 +90,14 @@ describe('OllamaCloudToolRunner', () => {
       },
       { baseUrl: 'https://ollama.com/api/', apiKey: 'k', timeoutMs: 5_000 },
     );
-    expect(httpRequest.mock.calls[0][0].url).toBe('https://ollama.com/api/web_fetch');
+    const call = httpRequest.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].url).toBe('https://ollama.com/api/web_fetch');
     expect(result).toContain('Body content here');
   });
 
   it('throws BusinessException with OLLAMA_TOOL_CALL_FAILED on non-2xx', async () => {
-    const onDispatch = jest.fn(async () => {});
+    const onDispatch = vi.fn(async () => {});
     httpRequest.mockResolvedValueOnce({
       ok: false,
       status: 503,
@@ -120,7 +125,7 @@ describe('OllamaCloudToolRunner', () => {
   });
 
   it('rejects web_search calls missing the required query argument', async () => {
-    const onDispatch = jest.fn(async () => {});
+    const onDispatch = vi.fn(async () => {});
     await expect(
       executeOllamaCloudToolCall(
         { function: { name: 'web_search', arguments: {} } },
@@ -131,7 +136,7 @@ describe('OllamaCloudToolRunner', () => {
   });
 
   it('continues the tool request when accounting is unavailable', async () => {
-    const onDispatch = jest.fn(async () => {
+    const onDispatch = vi.fn(async () => {
       throw new Error('meter unavailable');
     });
     httpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { results: [] } });

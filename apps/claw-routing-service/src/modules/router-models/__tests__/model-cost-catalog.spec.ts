@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ModelCostClass } from '@claw/shared-types';
 import { ModelPricingSource } from '../../../common/enums';
 import { ModelCostCatalogService } from '../services/model-cost-catalog.service';
@@ -105,9 +106,9 @@ describe('ModelCostCatalogService', () => {
       displayName: `Model ${index}`,
     }));
     const registry = {
-      listCatalogEntries: jest.fn().mockResolvedValue(entries),
+      listCatalogEntries: vi.fn().mockResolvedValue(entries),
     } as unknown as RouterModelRegistryRepository;
-    const getSnapshot = jest.fn(async (provider: string, modelKey: string) =>
+    const getSnapshot = vi.fn(async (provider: string, modelKey: string) =>
       snapshot({ provider, model: modelKey }),
     );
     const costs = { getSnapshot } as unknown as ModelCostService;
@@ -125,9 +126,9 @@ describe('ModelCostCatalogService', () => {
 
   it('returns an empty catalogue rather than throwing on an empty registry', async () => {
     const registry = {
-      listCatalogEntries: jest.fn().mockResolvedValue([]),
+      listCatalogEntries: vi.fn().mockResolvedValue([]),
     } as unknown as RouterModelRegistryRepository;
-    const costs = { getSnapshot: jest.fn() } as unknown as ModelCostService;
+    const costs = { getSnapshot: vi.fn() } as unknown as ModelCostService;
 
     await expect(new ModelCostCatalogService(registry, costs).listCatalog()).resolves.toEqual([]);
   });

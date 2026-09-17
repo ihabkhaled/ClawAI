@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SeedApplyOutcome } from '../../../common/enums';
 import { RouterChainEntryRole, RouterProvider } from '../../../generated/prisma';
 import {
@@ -106,8 +107,8 @@ describe('default chain definition', () => {
 describe('RouterChainSeedService', () => {
   const build = (
     outcome: SeedApplyOutcome,
-  ): { service: RouterChainSeedService; applyOnce: jest.Mock } => {
-    const applyOnce = jest.fn().mockResolvedValue(outcome);
+  ): { service: RouterChainSeedService; applyOnce: Mock } => {
+    const applyOnce = vi.fn().mockResolvedValue(outcome);
     return {
       service: new RouterChainSeedService({
         applyOnce,

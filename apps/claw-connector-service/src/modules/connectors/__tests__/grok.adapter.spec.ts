@@ -1,10 +1,11 @@
+import { vi } from 'vitest';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
 import { GrokAdapter } from '../managers/adapters/grok.adapter';
 import { GROK_DEFAULT_BASE_URL } from '../constants/grok.constants';
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) }),
+    get: vi.fn().mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) }),
   },
 }));
 
@@ -28,7 +29,7 @@ const mockModelsResponse = {
 };
 
 function mockFetchOk(body: unknown): void {
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     text: () => Promise.resolve(JSON.stringify(body)),
@@ -36,7 +37,7 @@ function mockFetchOk(body: unknown): void {
 }
 
 function mockFetchError(status: number): void {
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = vi.fn().mockResolvedValue({
     ok: false,
     status,
     text: () => Promise.resolve(JSON.stringify({})),
@@ -44,7 +45,7 @@ function mockFetchError(status: number): void {
 }
 
 function mockFetchThrow(message: string): void {
-  global.fetch = jest.fn().mockRejectedValue(new Error(message));
+  global.fetch = vi.fn().mockRejectedValue(new Error(message));
 }
 
 describe('GrokAdapter', () => {
@@ -109,7 +110,7 @@ describe('GrokAdapter', () => {
     });
 
     it('returns DOWN with generic errorMessage for non-Error throws', async () => {
-      global.fetch = jest.fn().mockRejectedValue('string-error');
+      global.fetch = vi.fn().mockRejectedValue('string-error');
 
       const result = await adapter.healthCheck(mockConfig);
 

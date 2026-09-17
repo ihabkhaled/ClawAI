@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ActionExecutionManager } from '../action-execution.manager';
 import { WorkspaceAdapterFactory } from '../../../workspace/adapters/workspace-adapter.factory';
@@ -6,20 +7,20 @@ import { WorkspaceConnectorRepository } from '../../../workspace/repositories/wo
 import type { WorkspaceActionWithConnector } from '../../types/action.types';
 
 const mockAdapter = {
-  supportsWrite: jest.fn().mockReturnValue(true),
-  executeWriteAction: jest.fn(),
+  supportsWrite: vi.fn().mockReturnValue(true),
+  executeWriteAction: vi.fn(),
 };
 
 const mockAdapterFactory = {
-  getAdapter: jest.fn().mockReturnValue(mockAdapter),
+  getAdapter: vi.fn().mockReturnValue(mockAdapter),
 };
 
 const mockTokenManager = {
-  getValidAccessToken: jest.fn().mockResolvedValue('tok123'),
+  getValidAccessToken: vi.fn().mockResolvedValue('tok123'),
 };
 
 const mockConnectorRepository = {
-  findById: jest.fn().mockResolvedValue({ id: 'c1', encryptedTokens: 'enc' }),
+  findById: vi.fn().mockResolvedValue({ id: 'c1', encryptedTokens: 'enc' }),
 };
 
 const makeAction = (overrides = {}): WorkspaceActionWithConnector =>
@@ -48,7 +49,7 @@ describe('ActionExecutionManager', () => {
     }).compile();
 
     manager = module.get<ActionExecutionManager>(ActionExecutionManager);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('execute', () => {

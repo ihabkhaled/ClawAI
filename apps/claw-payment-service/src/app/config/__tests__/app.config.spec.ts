@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../app.config';
 
 const VALID_HEX_KEY = 'a'.repeat(64);
@@ -208,14 +209,16 @@ describe('AppConfig', () => {
       expect(AppConfig.get()).toBe(validated);
     });
 
-    it('validates lazily when nothing has been cached yet', () => {
+    it('validates lazily when nothing has been cached yet', async () => {
       // A fresh module registry means the module-level cache is empty, which is
       // the state on the very first get() during boot.
-      jest.isolateModules(() => {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const fresh = require('../app.config') as { AppConfig: typeof AppConfig };
-        expect(fresh.AppConfig.get().PAYMENT_SERVICE_PORT).toBe(4018);
-      });
+      //
+      // Vitest has no isolateModules: resetModules clears the registry and the
+      // dynamic import below re-evaluates the module against it, which is the
+      // same guarantee expressed in ESM.
+      vi.resetModules();
+      const fresh = (await import('../app.config')) as { AppConfig: typeof AppConfig };
+      expect(fresh.AppConfig.get().PAYMENT_SERVICE_PORT).toBe(4018);
     });
   });
 });

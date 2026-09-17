@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import type { PaygMeter } from '@claw/shared-entitlements';
 import { Permission, UserRole } from '@claw/shared-types';
 import { AccessControlService } from '../services/access-control.service';
@@ -35,21 +36,23 @@ import {
 //    permission re-checks at chat-messages.service.ts L325-337).
 //  - ADMIN bypass through every gate.
 
-const getEntitlements = jest.fn();
+const getEntitlements = vi.fn();
 
-jest.mock('@claw/shared-entitlements', () => {
-  const actual = jest.requireActual('@claw/shared-entitlements');
+vi.mock('@claw/shared-entitlements', async () => {
+  const actual = await vi.importActual('@claw/shared-entitlements');
   return {
     ...actual,
-    EntitlementsAdapter: jest.fn().mockImplementation(() => ({
-      getEntitlements: (...args: unknown[]) => getEntitlements(...args),
-      finalizeQuota: jest.fn(),
-    })),
+    EntitlementsAdapter: vi.fn(function () {
+      return {
+        getEntitlements: (...args: unknown[]) => getEntitlements(...args),
+        finalizeQuota: vi.fn(),
+      };
+    }),
   };
 });
 
-jest.mock('../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn().mockReturnValue({ AUTH_SERVICE_URL: 'http://auth:4001' }) },
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn().mockReturnValue({ AUTH_SERVICE_URL: 'http://auth:4001' }) },
 }));
 
 type EntitlementOverrides = {
@@ -139,7 +142,7 @@ async function runCompareGate(
 // gates, not credit, so a stub that reports "not metered" keeps every existing
 // assertion about those gates unchanged.
 const paygMeter = {
-  reserve: jest.fn().mockResolvedValue({
+  reserve: vi.fn().mockResolvedValue({
     metered: false,
     maxOutputTokens: 4096,
     clamped: false,
@@ -148,15 +151,15 @@ const paygMeter = {
     availableAfterMicroUsd: 0,
     reason: 'NOT_PAYG',
   }),
-  finalize: jest.fn().mockResolvedValue(undefined),
-  release: jest.fn().mockResolvedValue(undefined),
+  finalize: vi.fn().mockResolvedValue(undefined),
+  release: vi.fn().mockResolvedValue(undefined),
 } as unknown as PaygMeter;
 
 describe('Slice C — compare + judge + critic plan gates', () => {
   let access: AccessControlService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     access = new AccessControlService(paygMeter);
   });
 
@@ -278,7 +281,7 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         }),
       );
 
-      const callProvider = jest.fn().mockResolvedValueOnce({
+      const callProvider = vi.fn().mockResolvedValueOnce({
         // Judge result — critic never made it to callProvider because
         // assertCanUseCritic threw before callProvider could fire.
         content: JSON.stringify({
@@ -295,12 +298,12 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         latencyMs: 30,
         usedFallback: false,
       } as LlmResponse);
-      const chatStream: Partial<Record<keyof ChatStreamService, jest.Mock>> = {
-        emitJudgeEvaluating: jest.fn(),
-        emitOrchestrationStage: jest.fn(),
+      const chatStream: Partial<Record<keyof ChatStreamService, Mock>> = {
+        emitJudgeEvaluating: vi.fn(),
+        emitOrchestrationStage: vi.fn(),
       };
-      const localSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>> = {
-        resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b'),
+      const localSelection: Partial<Record<keyof LocalModelSelectionService, Mock>> = {
+        resolveDefaultModel: vi.fn().mockResolvedValue('gemma3:4b'),
       };
 
       const manager = new JudgeRefereeManager(
@@ -377,7 +380,7 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         }),
       );
 
-      const callProvider = jest
+      const callProvider = vi
         .fn()
         // Critic call (cloud) — returns valid critic JSON
         .mockResolvedValueOnce({
@@ -404,12 +407,12 @@ describe('Slice C — compare + judge + critic plan gates', () => {
           usedFallback: false,
         } as LlmResponse);
 
-      const chatStream: Partial<Record<keyof ChatStreamService, jest.Mock>> = {
-        emitJudgeEvaluating: jest.fn(),
-        emitOrchestrationStage: jest.fn(),
+      const chatStream: Partial<Record<keyof ChatStreamService, Mock>> = {
+        emitJudgeEvaluating: vi.fn(),
+        emitOrchestrationStage: vi.fn(),
       };
-      const localSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>> = {
-        resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b'),
+      const localSelection: Partial<Record<keyof LocalModelSelectionService, Mock>> = {
+        resolveDefaultModel: vi.fn().mockResolvedValue('gemma3:4b'),
       };
       const manager = new JudgeRefereeManager(
         chatStream as unknown as ChatStreamService,

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   BillingGateway,
   PaymentTransactionStatus,
@@ -11,15 +12,15 @@ import { RefundRepository } from '../refund.repository';
 describe('RefundRepository', () => {
   const prisma = {
     paymentTransaction: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     refund: {
-      aggregate: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
+      aggregate: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
     },
   };
   const repository = new RefundRepository(prisma as never);
@@ -62,7 +63,7 @@ describe('RefundRepository', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('finds an operator refund by its scoped idempotency key', async () => {
@@ -281,7 +282,7 @@ describe('RefundRepository', () => {
   it('hydrates the locked completion context and preserves a missing result', async () => {
     const transaction = {
       refund: {
-        findUnique: jest
+        findUnique: vi
           .fn()
           .mockResolvedValueOnce(null)
           .mockResolvedValueOnce({
@@ -308,11 +309,11 @@ describe('RefundRepository', () => {
     const completedAt = new Date('2026-07-27T11:00:00.000Z');
     const transaction = {
       refund: {
-        aggregate: jest
+        aggregate: vi
           .fn()
           .mockResolvedValueOnce({ _sum: { amountMinor: 4_000 } })
           .mockResolvedValueOnce({ _sum: { amountMinor: null } }),
-        update: jest.fn().mockResolvedValueOnce({
+        update: vi.fn().mockResolvedValueOnce({
           ...refund,
           status: RefundStatus.SUCCEEDED,
           providerRefundId: 'provider-refund-1',

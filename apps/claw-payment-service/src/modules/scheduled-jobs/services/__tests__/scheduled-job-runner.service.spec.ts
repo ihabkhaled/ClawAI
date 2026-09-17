@@ -1,3 +1,4 @@
+import { type Mocked, vi } from 'vitest';
 import type { RedisService } from '../../../../infrastructure/redis/redis.service';
 import { ScheduledJobRunnerService } from '../scheduled-job-runner.service';
 
@@ -7,19 +8,19 @@ describe('ScheduledJobRunnerService', () => {
     lockKey: 'locks:test-job',
     lockTtlSeconds: 60,
   };
-  let redis: jest.Mocked<Pick<RedisService, 'acquireLock' | 'releaseLock'>>;
+  let redis: Mocked<Pick<RedisService, 'acquireLock' | 'releaseLock'>>;
   let service: ScheduledJobRunnerService;
 
   beforeEach(() => {
     redis = {
-      acquireLock: jest.fn<Promise<boolean>, [string, string, number]>(async () => true),
-      releaseLock: jest.fn<Promise<boolean>, [string, string]>(async () => true),
+      acquireLock: vi.fn<RedisService['acquireLock']>(async () => true),
+      releaseLock: vi.fn<RedisService['releaseLock']>(async () => true),
     };
     service = new ScheduledJobRunnerService(redis as unknown as RedisService);
   });
 
   it('runs a job once and releases its owner-token lock', async () => {
-    const job = jest.fn(async () => 7);
+    const job = vi.fn(async () => 7);
 
     await expect(service.run(options, job)).resolves.toBe(7);
     expect(job).toHaveBeenCalledTimes(1);
@@ -34,7 +35,7 @@ describe('ScheduledJobRunnerService', () => {
 
   it('returns null without running when another replica owns the lock', async () => {
     redis.acquireLock.mockResolvedValueOnce(false);
-    const job = jest.fn(async () => 7);
+    const job = vi.fn(async () => 7);
 
     await expect(service.run(options, job)).resolves.toBeNull();
     expect(job).not.toHaveBeenCalled();
@@ -51,7 +52,7 @@ describe('ScheduledJobRunnerService', () => {
 
   it('attempts owner-safe release when the job fails', async () => {
     const failure = new Error('job failed');
-    const job = jest.fn(async () => {
+    const job = vi.fn(async () => {
       throw failure;
     });
 

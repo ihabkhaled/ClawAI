@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -7,15 +8,15 @@ import { BillingEntitlementReconcileConsumer } from '../billing-entitlement-reco
 
 describe('BillingEntitlementReconcileConsumer', () => {
   const rabbitmq = {
-    subscribe: jest.fn(),
+    subscribe: vi.fn(),
   };
   const reconciliation = {
-    handle: jest.fn(),
+    handle: vi.fn(),
   };
   let consumer: BillingEntitlementReconcileConsumer;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       providers: [
         BillingEntitlementReconcileConsumer,

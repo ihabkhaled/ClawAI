@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { FileDeliveryRecordService } from '../file-delivery-record.service';
 import { type FileDeliveryRecordRepository } from '../../repositories/file-delivery-record.repository';
 import { type ChatMessagesRepository } from '../../repositories/chat-messages.repository';
@@ -6,19 +7,19 @@ import { BusinessException, EntityNotFoundException } from '../../../../common/e
 import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.enum';
 import { type FileDeliveryRecordInput } from '../../types/file-delivery-record.types';
 
-const buildRepo = (): Record<keyof FileDeliveryRecordRepository, jest.Mock> => ({
-  createMany: jest.fn().mockImplementation(async () => {}),
-  findByMessageId: jest.fn().mockResolvedValue([]),
-  findByThreadId: jest.fn().mockResolvedValue([]),
-  deleteByMessageId: jest.fn().mockImplementation(async () => {}),
+const buildRepo = (): Record<keyof FileDeliveryRecordRepository, Mock> => ({
+  createMany: vi.fn().mockImplementation(async () => {}),
+  findByMessageId: vi.fn().mockResolvedValue([]),
+  findByThreadId: vi.fn().mockResolvedValue([]),
+  deleteByMessageId: vi.fn().mockImplementation(async () => {}),
 });
 
-const buildMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  findById: jest.fn(),
+const buildMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  findById: vi.fn(),
 });
 
-const buildThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  findById: jest.fn(),
+const buildThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  findById: vi.fn(),
 });
 
 const buildRecord = (
@@ -77,7 +78,7 @@ describe('FileDeliveryRecordService', () => {
       const err = new Error('db boom');
       repo.createMany.mockRejectedValueOnce(err);
       // Silence the expected logger.error
-      const errorSpy = jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(service['logger'], 'error').mockImplementation(() => {});
 
       await expect(service.recordDeliveries([buildRecord()])).rejects.toThrow('db boom');
       expect(errorSpy).toHaveBeenCalled();
@@ -106,7 +107,7 @@ describe('FileDeliveryRecordService', () => {
     it('throws FORBIDDEN BusinessException when the message belongs to another user', async () => {
       messagesRepo.findById!.mockResolvedValueOnce({ id: messageId, threadId });
       threadsRepo.findById!.mockResolvedValueOnce({ id: threadId, userId: 'other-user' });
-      jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
+      vi.spyOn(service['logger'], 'error').mockImplementation(() => {});
 
       await expect(service.getDeliveriesForMessage(messageId, userId)).rejects.toMatchObject({
         code: 'FORBIDDEN_MESSAGE_ACCESS',
@@ -120,7 +121,7 @@ describe('FileDeliveryRecordService', () => {
 
     it("throws EntityNotFoundException when the message doesn't exist", async () => {
       messagesRepo.findById!.mockResolvedValueOnce(null);
-      jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
+      vi.spyOn(service['logger'], 'error').mockImplementation(() => {});
 
       await expect(service.getDeliveriesForMessage(messageId, userId)).rejects.toBeInstanceOf(
         EntityNotFoundException,
@@ -132,7 +133,7 @@ describe('FileDeliveryRecordService', () => {
     it('throws EntityNotFoundException when the parent thread is missing', async () => {
       messagesRepo.findById!.mockResolvedValueOnce({ id: messageId, threadId });
       threadsRepo.findById!.mockResolvedValueOnce(null);
-      jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
+      vi.spyOn(service['logger'], 'error').mockImplementation(() => {});
 
       await expect(service.getDeliveriesForMessage(messageId, userId)).rejects.toBeInstanceOf(
         EntityNotFoundException,
@@ -145,7 +146,7 @@ describe('FileDeliveryRecordService', () => {
       threadsRepo.findById!.mockResolvedValueOnce({ id: threadId, userId });
       const repoErr = new Error('query failed');
       repo.findByMessageId.mockRejectedValueOnce(repoErr);
-      jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
+      vi.spyOn(service['logger'], 'error').mockImplementation(() => {});
 
       await expect(service.getDeliveriesForMessage(messageId, userId)).rejects.toThrow(
         'query failed',

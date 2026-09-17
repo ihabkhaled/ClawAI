@@ -1,8 +1,14 @@
+import { type Mock, vi } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
-import { BillingErrorCode, PaygSurface } from '@claw/shared-types';
+import { BillingErrorCode, PaygSurface, TokenUsageSource } from '@claw/shared-types';
 import { PaygCreditExhaustedError, type PaygMeter } from '@claw/shared-entitlements';
 
+import { buildInterServiceAuthHeader, httpGet, httpPost } from '@common/utilities';
+
 import { BusinessException } from '../../../../common/errors';
+import { generateWithGemini } from '../../adapters/gemini-image.adapter';
+import { generateWithOpenAI } from '../../adapters/openai-image.adapter';
+import { generateWithStableDiffusion } from '../../adapters/stable-diffusion.adapter';
 import {
   IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
   IMAGE_PAYG_PROMPT_TOKENS,
@@ -11,34 +17,37 @@ import { ImageExecutionManager } from '../image-execution.manager';
 import type { ComfyUIProgressAdapter } from '../../../runtime-progress/adapters/comfyui-progress.adapter';
 import type { ExecuteImageInput } from '../../types/image-generation.types';
 
-jest.mock('../../../../app/config/app.config');
-jest.mock('@common/utilities');
-jest.mock('../../adapters/openai-image.adapter');
-jest.mock('../../adapters/gemini-image.adapter');
-jest.mock('../../adapters/stable-diffusion.adapter');
+vi.mock('@common/utilities');
+vi.mock('../../adapters/openai-image.adapter');
+vi.mock('../../adapters/gemini-image.adapter');
+vi.mock('../../adapters/stable-diffusion.adapter');
 
-const { AppConfig } = jest.requireMock('../../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
-const utilities = jest.requireMock('@common/utilities') as {
-  httpGet: jest.Mock;
-  httpPost: jest.Mock;
-  buildInterServiceAuthHeader: jest.Mock;
-};
-const openai = jest.requireMock('../../adapters/openai-image.adapter') as {
-  generateWithOpenAI: jest.Mock;
-};
-const gemini = jest.requireMock('../../adapters/gemini-image.adapter') as {
-  generateWithGemini: jest.Mock;
-};
-const stableDiffusion = jest.requireMock('../../adapters/stable-diffusion.adapter') as {
-  generateWithStableDiffusion: jest.Mock;
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
 
-type MeterMock = { reserve: jest.Mock; finalize: jest.Mock; release: jest.Mock };
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
+// vi.importMock hands back a FRESH automock, not the instance the manager
+// imported, so anything configured on it was invisible to the code under test.
+// Mocking the real imported binding is the same handle the manager holds.
+const utilities = {
+  httpGet: vi.mocked(httpGet),
+  httpPost: vi.mocked(httpPost),
+  buildInterServiceAuthHeader: vi.mocked(buildInterServiceAuthHeader),
+};
+const openai = { generateWithOpenAI: vi.mocked(generateWithOpenAI) };
+const gemini = { generateWithGemini: vi.mocked(generateWithGemini) };
+const stableDiffusion = { generateWithStableDiffusion: vi.mocked(generateWithStableDiffusion) };
+
+type MeterMock = { reserve: Mock; finalize: Mock; release: Mock };
 
 const meter = (): MeterMock => ({
-  reserve: jest.fn().mockResolvedValue({
+  reserve: vi.fn().mockResolvedValue({
     metered: true,
     reservationId: 'res-image-1',
     maxOutputTokens: IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
@@ -47,8 +56,8 @@ const meter = (): MeterMock => ({
     availableAfterMicroUsd: 959_000,
     reason: null,
   }),
-  finalize: jest.fn().mockResolvedValue(undefined),
-  release: jest.fn().mockResolvedValue(undefined),
+  finalize: vi.fn().mockResolvedValue(undefined),
+  release: vi.fn().mockResolvedValue(undefined),
 });
 
 const input = (overrides: Partial<ExecuteImageInput> = {}): ExecuteImageInput => ({
@@ -62,13 +71,13 @@ const input = (overrides: Partial<ExecuteImageInput> = {}): ExecuteImageInput =>
 
 const build = (payg: MeterMock): ImageExecutionManager =>
   new ImageExecutionManager(
-    { streamGenerate: jest.fn() } as unknown as ComfyUIProgressAdapter,
+    { streamGenerate: vi.fn() } as unknown as ComfyUIProgressAdapter,
     payg as unknown as PaygMeter,
   );
 
 describe('ImageExecutionManager — PAYG metering (U3)', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue({
       FILE_SERVICE_URL: 'http://file-service:4005',
       CONNECTOR_SERVICE_URL: 'http://connector-service:4004',
@@ -115,6 +124,7 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
         cachedPromptTokens: 0,
         reasoningTokens: 20,
         estimated: false,
+        source: TokenUsageSource.NATIVE,
       },
     });
 

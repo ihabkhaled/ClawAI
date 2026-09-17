@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { type PaygMeter } from '@claw/shared-entitlements';
 import { PaygSurface } from '@claw/shared-types';
 import { RouterErrorCode } from '../../../common/enums';
@@ -73,10 +74,10 @@ const options = (overrides: Partial<RouterCoordinatorOptions> = {}): RouterCoord
   ...overrides,
 });
 
-type MeterMock = { reserve: jest.Mock; finalize: jest.Mock; release: jest.Mock };
+type MeterMock = { reserve: Mock; finalize: Mock; release: Mock };
 
 const meter = (maxOutputTokens = ROUTER_MAX_OUTPUT_TOKENS): MeterMock => ({
-  reserve: jest.fn().mockResolvedValue({
+  reserve: vi.fn().mockResolvedValue({
     metered: true,
     reservationId: 'res-1',
     maxOutputTokens,
@@ -84,8 +85,8 @@ const meter = (maxOutputTokens = ROUTER_MAX_OUTPUT_TOKENS): MeterMock => ({
     heldMicroUsd: 3_500,
     availableAfterMicroUsd: 96_500,
   }),
-  finalize: jest.fn().mockResolvedValue(undefined),
-  release: jest.fn().mockResolvedValue(undefined),
+  finalize: vi.fn().mockResolvedValue(undefined),
+  release: vi.fn().mockResolvedValue(undefined),
 });
 
 const build = (payg?: MeterMock): RouterInferenceCoordinatorManager =>

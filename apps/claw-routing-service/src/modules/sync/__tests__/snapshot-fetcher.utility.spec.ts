@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { fetchSnapshot } from '../utilities/snapshot-fetcher.utility';
 
 const originalFetch = globalThis.fetch;
@@ -8,7 +9,7 @@ describe('fetchSnapshot', () => {
   });
 
   it('returns OK with models on 200', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve({ models: [{ provider: 'X', modelKey: 'm', displayName: 'M' }] }),
@@ -23,7 +24,7 @@ describe('fetchSnapshot', () => {
   });
 
   it('returns UPSTREAM_404 when endpoint not yet implemented', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 404,
       json: () => Promise.resolve({}),
@@ -34,7 +35,7 @@ describe('fetchSnapshot', () => {
   });
 
   it('returns UPSTREAM_ERROR on 500', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
       json: () => Promise.resolve({ error: 'boom' }),
@@ -48,7 +49,7 @@ describe('fetchSnapshot', () => {
   });
 
   it('returns UPSTREAM_ERROR when fetch throws (network)', async () => {
-    globalThis.fetch = jest
+    globalThis.fetch = vi
       .fn()
       .mockRejectedValue(new Error('ECONNREFUSED')) as unknown as typeof fetch;
 
@@ -60,7 +61,7 @@ describe('fetchSnapshot', () => {
   });
 
   it('treats missing models field as empty array', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve({}),

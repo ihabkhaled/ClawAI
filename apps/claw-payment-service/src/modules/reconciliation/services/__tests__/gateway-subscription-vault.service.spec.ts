@@ -1,10 +1,11 @@
+import { vi } from 'vitest';
 import { encryptGatewayToken } from '../../../../common/utilities/token-vault.utility';
 import { GatewaySubscriptionVaultService } from '../gateway-subscription-vault.service';
 import { subscriptionFixture } from './reconciliation.fixture';
 
 const KEY = '11'.repeat(32);
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
     get: () => ({ PAYMENT_TOKEN_ENCRYPTION_KEY: '11'.repeat(32) }),
   },

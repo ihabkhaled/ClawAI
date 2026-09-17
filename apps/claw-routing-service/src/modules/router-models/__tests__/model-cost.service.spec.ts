@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { ModelCostService } from '../services/model-cost.service';
@@ -63,7 +64,7 @@ const syncInput = (overrides: Partial<PublishModelCostInput> = {}): PublishModel
 });
 
 const mockConfig = (ownership: string, rate: number): void => {
-  jest.spyOn(AppConfig, 'get').mockReturnValue({
+  vi.spyOn(AppConfig, 'get').mockReturnValue({
     LOCAL_COMPUTE_OWNERSHIP: ownership,
     LOCAL_COMPUTE_COST_PER_MILLION_MICRO_USD: rate,
   } as unknown as ReturnType<typeof AppConfig.get>);
@@ -72,23 +73,23 @@ const mockConfig = (ownership: string, rate: number): void => {
 describe('ModelCostService', () => {
   let service: ModelCostService;
   let repository: {
-    findActive: jest.Mock;
-    listActive: jest.Mock;
-    listVersions: jest.Mock;
-    publish: jest.Mock;
-    touchVerified: jest.Mock;
+    findActive: Mock;
+    listActive: Mock;
+    listVersions: Mock;
+    publish: Mock;
+    touchVerified: Mock;
   };
-  let rabbitMQ: { publish: jest.Mock };
+  let rabbitMQ: { publish: Mock };
 
   beforeEach(() => {
     repository = {
-      findActive: jest.fn(),
-      listActive: jest.fn(),
-      listVersions: jest.fn(),
-      publish: jest.fn().mockResolvedValue({ version: 4 }),
-      touchVerified: jest.fn(),
+      findActive: vi.fn(),
+      listActive: vi.fn(),
+      listVersions: vi.fn(),
+      publish: vi.fn().mockResolvedValue({ version: 4 }),
+      touchVerified: vi.fn(),
     };
-    rabbitMQ = { publish: jest.fn().mockResolvedValue(undefined) };
+    rabbitMQ = { publish: vi.fn().mockResolvedValue(undefined) };
     service = new ModelCostService(
       repository as unknown as ModelCostRepository,
       rabbitMQ as unknown as RabbitMQService,
@@ -97,7 +98,7 @@ describe('ModelCostService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('getSnapshot', () => {
@@ -382,7 +383,7 @@ describe('ModelCostService', () => {
 describe('ModelCostService — provider id decoration', () => {
   it('matches a Gemini models/ prefixed id against its unprefixed price row', async () => {
     const repository = {
-      findActive: jest.fn(async (_provider: string, key: string) =>
+      findActive: vi.fn(async (_provider: string, key: string) =>
         key === 'gemini-2.5-flash-lite'
           ? baseRecord({ provider: 'GEMINI', modelKey: 'gemini-2.5-flash-lite' })
           : null,
@@ -409,7 +410,7 @@ describe('ModelCostService — provider id decoration', () => {
     // is still resolved.
     mockConfig('USER_OWNED', 0);
     const repository = {
-      findActive: jest.fn(async () => null),
+      findActive: vi.fn(async () => null),
     } as unknown as ModelCostRepository;
     const service = new ModelCostService(repository);
 

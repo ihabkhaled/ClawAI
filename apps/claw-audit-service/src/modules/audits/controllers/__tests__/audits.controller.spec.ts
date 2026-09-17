@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AuditsController } from '../audits.controller';
 import { AuditsService } from '../../services/audits.service';
@@ -5,24 +6,24 @@ import { UsageService } from '../../services/usage.service';
 
 describe('AuditsController', () => {
   let controller: AuditsController;
-  let auditsMock: jest.Mocked<{
-    getAuditLogs: jest.Mock;
-    getAuditStats: jest.Mock;
-  }>;
-  let usageMock: jest.Mocked<{
-    getUsageEntries: jest.Mock;
-    getUsageSummary: jest.Mock;
-    getCostSummary: jest.Mock;
-    getLatencySummary: jest.Mock;
-  }>;
+  let auditsMock: {
+    getAuditLogs: Mock;
+    getAuditStats: Mock;
+  };
+  let usageMock: {
+    getUsageEntries: Mock;
+    getUsageSummary: Mock;
+    getCostSummary: Mock;
+    getLatencySummary: Mock;
+  };
 
   beforeEach(async () => {
-    auditsMock = { getAuditLogs: jest.fn(), getAuditStats: jest.fn() };
+    auditsMock = { getAuditLogs: vi.fn(), getAuditStats: vi.fn() };
     usageMock = {
-      getUsageEntries: jest.fn(),
-      getUsageSummary: jest.fn(),
-      getCostSummary: jest.fn(),
-      getLatencySummary: jest.fn(),
+      getUsageEntries: vi.fn(),
+      getUsageSummary: vi.fn(),
+      getCostSummary: vi.fn(),
+      getLatencySummary: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuditsController],

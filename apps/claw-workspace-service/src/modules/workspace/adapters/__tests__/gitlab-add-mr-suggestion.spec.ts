@@ -1,6 +1,7 @@
+import { type Mock, vi } from 'vitest';
 import { GitLabWriteActionsHelper } from '../gitlab-write-actions.helper';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const validPayload = {
   projectId: '42',
@@ -17,12 +18,12 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
   let helper: GitLabWriteActionsHelper;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     helper = new GitLabWriteActionsHelper();
   });
 
   it('posts to /discussions with a ```suggestion fenced body + position object', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'disc-1', web_url: 'https://gitlab.com/x/y/-/merge_requests/7#note_1' }),
     });
@@ -32,9 +33,10 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
     expect(result.externalId).toBe('disc-1');
     expect(result.url).toBe('https://gitlab.com/x/y/-/merge_requests/7#note_1');
 
-    const call = (global.fetch as jest.Mock).mock.calls[0];
-    expect(call[0]).toBe('https://gitlab.com/api/v4/projects/42/merge_requests/7/discussions');
-    const sent = JSON.parse(call[1].body) as { body: string; position: Record<string, unknown> };
+    const call = (global.fetch as Mock).mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0]).toBe('https://gitlab.com/api/v4/projects/42/merge_requests/7/discussions');
+    const sent = JSON.parse(call?.[1].body) as { body: string; position: Record<string, unknown> };
     expect(sent.body).toBe('```suggestion\nconst x = 1;\n```');
     expect(sent.position).toMatchObject({
       base_sha: 'base123',
@@ -50,7 +52,7 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
   });
 
   it('honors a custom oldPath when caller passes a rename', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'd2' }),
     });
@@ -59,7 +61,9 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
       oldPath: 'src/old-foo.ts',
       oldLine: 9,
     });
-    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as {
+    const sentCall = (global.fetch as Mock).mock.calls[0];
+    expect(sentCall).toBeDefined();
+    const sent = JSON.parse(sentCall?.[1].body) as {
       position: Record<string, unknown>;
     };
     expect(sent.position['old_path']).toBe('src/old-foo.ts');
@@ -82,7 +86,7 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
   });
 
   it('surfaces GitLab API error response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: false,
       status: 422,
       text: async () => 'unprocessable',
@@ -94,7 +98,7 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
   });
 
   it('resolves self-hosted baseUrl to the GitLab v4 API root', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'd' }),
     });
@@ -102,7 +106,9 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
       ...validPayload,
       baseUrl: 'https://gitlab.acme.example',
     });
-    const url = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+    const urlCall = (global.fetch as Mock).mock.calls[0];
+    expect(urlCall).toBeDefined();
+    const url = urlCall?.[0] as string;
     expect(url).toBe(
       'https://gitlab.acme.example/api/v4/projects/42/merge_requests/7/discussions',
     );

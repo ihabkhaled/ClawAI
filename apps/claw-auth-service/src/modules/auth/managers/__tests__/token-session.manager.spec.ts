@@ -1,21 +1,22 @@
+import { vi, type Mock } from 'vitest';
 import { InvalidRefreshTokenException } from '../../../../common/errors';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { type AuthRepository } from '../../repositories/auth.repository';
 import { TokenSessionManager } from '../token-session.manager';
 
-jest.mock('@common/utilities', () => ({
-  signAccessToken: jest.fn().mockReturnValue('access-token'),
-  signRefreshToken: jest.fn().mockReturnValue('raw-refresh-token'),
+vi.mock('@common/utilities', () => ({
+  signAccessToken: vi.fn().mockReturnValue('access-token'),
+  signRefreshToken: vi.fn().mockReturnValue('raw-refresh-token'),
 }));
 
-jest.mock('@claw/shared-utilities', () => ({
-  hashBearerToken: jest.fn().mockReturnValue('refresh-digest'),
+vi.mock('@claw/shared-utilities', () => ({
+  hashBearerToken: vi.fn().mockReturnValue('refresh-digest'),
 }));
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       JWT_SECRET: 'test-secret-key-that-is-long-enough',
       JWT_ACCESS_EXPIRY: '15m',
       JWT_REFRESH_EXPIRY: '7d',
@@ -47,26 +48,26 @@ const sessionFixture = {
 
 describe('TokenSessionManager', () => {
   let repository: {
-    createSession: jest.Mock;
-    findSessionByRefreshTokenHash: jest.Mock;
-    findUserById: jest.Mock;
-    rotateSession: jest.Mock;
-    revokeSessionFamily: jest.Mock;
-    revokeSessionForUser: jest.Mock;
+    createSession: Mock;
+    findSessionByRefreshTokenHash: Mock;
+    findUserById: Mock;
+    rotateSession: Mock;
+    revokeSessionFamily: Mock;
+    revokeSessionForUser: Mock;
   };
   let manager: TokenSessionManager;
 
   beforeEach(() => {
     repository = {
-      createSession: jest.fn().mockResolvedValue(sessionFixture),
-      findSessionByRefreshTokenHash: jest.fn(),
-      findUserById: jest.fn().mockResolvedValue(userFixture),
-      rotateSession: jest.fn().mockResolvedValue({
+      createSession: vi.fn().mockResolvedValue(sessionFixture),
+      findSessionByRefreshTokenHash: vi.fn(),
+      findUserById: vi.fn().mockResolvedValue(userFixture),
+      rotateSession: vi.fn().mockResolvedValue({
         ...sessionFixture,
         id: 'session-2',
       }),
-      revokeSessionFamily: jest.fn().mockResolvedValue(1),
-      revokeSessionForUser: jest.fn().mockResolvedValue(1),
+      revokeSessionFamily: vi.fn().mockResolvedValue(1),
+      revokeSessionForUser: vi.fn().mockResolvedValue(1),
     };
     manager = new TokenSessionManager(repository as unknown as AuthRepository);
   });

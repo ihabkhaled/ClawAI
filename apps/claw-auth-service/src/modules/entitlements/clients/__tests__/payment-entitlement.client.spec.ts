@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { HttpMethod, SubscriptionStatus } from '@claw/shared-types';
 import { httpRequest } from '@claw/shared-utilities';
@@ -5,17 +6,17 @@ import { httpRequest } from '@claw/shared-utilities';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaymentEntitlementClient } from '../payment-entitlement.client';
 
-jest.mock('@claw/shared-utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', () => ({
+  httpRequest: vi.fn(),
 }));
-jest.mock('../../../../app/config/app.config');
+vi.mock('../../../../app/config/app.config');
 
 describe('PaymentEntitlementClient', () => {
   let client: PaymentEntitlementClient;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.mocked(AppConfig.get).mockReturnValue({
+    vi.clearAllMocks();
+    vi.mocked(AppConfig.get).mockReturnValue({
       PAYMENT_SERVICE_URL: 'http://payment-service:4018',
       INTER_SERVICE_AUTH_TOKEN: 'service-token-with-at-least-32-characters',
     } as ReturnType<typeof AppConfig.get>);
@@ -26,7 +27,7 @@ describe('PaymentEntitlementClient', () => {
   });
 
   it('uses service authentication and validates the authoritative response', async () => {
-    jest.mocked(httpRequest).mockResolvedValue({
+    vi.mocked(httpRequest).mockResolvedValue({
       ok: true,
       status: 200,
       data: paidEntitlement(),
@@ -47,7 +48,7 @@ describe('PaymentEntitlementClient', () => {
   });
 
   it('rejects a response for a different user', async () => {
-    jest.mocked(httpRequest).mockResolvedValue({
+    vi.mocked(httpRequest).mockResolvedValue({
       ok: true,
       status: 200,
       data: paidEntitlement({ userId: 'user-2' }),
@@ -59,7 +60,7 @@ describe('PaymentEntitlementClient', () => {
   });
 
   it('rejects malformed and non-success responses', async () => {
-    jest.mocked(httpRequest).mockResolvedValueOnce({
+    vi.mocked(httpRequest).mockResolvedValueOnce({
       ok: true,
       status: 200,
       data: { hasPaidEntitlement: true },
@@ -68,7 +69,7 @@ describe('PaymentEntitlementClient', () => {
       'Payment entitlement response invalid',
     );
 
-    jest.mocked(httpRequest).mockResolvedValueOnce({
+    vi.mocked(httpRequest).mockResolvedValueOnce({
       ok: false,
       status: 503,
       data: null,

@@ -1,3 +1,4 @@
+import { vi, type MockInstance, type Mock } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -21,17 +22,17 @@ function makeDeps(
   } = {},
 ): {
   manager: ChainNlDraftManager;
-  connectorRepo: { findAllByUser: jest.Mock };
-  modelResolver: { resolveDefaults: jest.Mock };
+  connectorRepo: { findAllByUser: Mock };
+  modelResolver: { resolveDefaults: Mock };
 } {
   const connectors = opts.connectors ?? [
     { id: 'jira-1', provider: 'JIRA', encryptedTokens: 'enc' },
   ];
   const connectorRepo = {
-    findAllByUser: jest.fn().mockResolvedValue({ data: connectors, total: connectors.length }),
+    findAllByUser: vi.fn().mockResolvedValue({ data: connectors, total: connectors.length }),
   };
   const modelResolver = {
-    resolveDefaults: jest.fn().mockResolvedValue({
+    resolveDefaults: vi.fn().mockResolvedValue({
       primary: opts.primary === undefined ? primaryModel : opts.primary,
       fallbackChain: opts.fallbackChain ?? [],
     }),
@@ -41,17 +42,17 @@ function makeDeps(
 }
 
 describe('ChainNlDraftManager.draft', () => {
-  let callSpy: jest.SpyInstance;
+  let callSpy: MockInstance;
 
   beforeEach(() => {
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
-    callSpy = jest.spyOn(cloudClient, 'callCloudGenerate');
+    callSpy = vi.spyOn(cloudClient, 'callCloudGenerate');
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('returns the parsed dsl when the model responds with valid JSON on the first try', async () => {

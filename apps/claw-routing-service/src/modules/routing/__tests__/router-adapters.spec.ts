@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { RouterErrorCode } from '../../../common/enums';
 import { httpRequest } from '../../../common/utilities';
 import { RouterProvider } from '../../../generated/prisma';
@@ -8,12 +9,12 @@ import { type ConnectorCredentialService } from '../services/connector-credentia
 import type { RouterInferenceRequest } from '../types/router-inference.types';
 import { extractProviderMessage } from '../utilities/router-adapter-response.utility';
 
-jest.mock('../../../common/utilities', () => ({
-  ...jest.requireActual('../../../common/utilities'),
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', async () => ({
+  ...await vi.importActual('../../../common/utilities'),
+  httpRequest: vi.fn(),
 }));
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
     get: (): Record<string, string> => ({
       CONNECTOR_SERVICE_URL: 'http://connector:4003',
@@ -23,7 +24,7 @@ jest.mock('../../../app/config/app.config', () => ({
   },
 }));
 
-const httpRequestMock = jest.mocked(httpRequest);
+const httpRequestMock = vi.mocked(httpRequest);
 
 const request = (overrides: Partial<RouterInferenceRequest> = {}): RouterInferenceRequest => ({
   traceId: 'trace-1',
@@ -35,7 +36,7 @@ const request = (overrides: Partial<RouterInferenceRequest> = {}): RouterInferen
 });
 
 const credentialService = (credential: unknown): ConnectorCredentialService =>
-  ({ resolve: jest.fn().mockResolvedValue(credential) }) as unknown as ConnectorCredentialService;
+  ({ resolve: vi.fn().mockResolvedValue(credential) }) as unknown as ConnectorCredentialService;
 
 const GEMINI_CRED = {
   provider: 'GEMINI',

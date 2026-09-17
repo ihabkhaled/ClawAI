@@ -1,3 +1,4 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ServerLogsRepository } from '../server-logs.repository';
@@ -6,38 +7,38 @@ import { SortOrder } from '../../../../common/enums/sort-order.enum';
 
 describe('ServerLogsRepository', () => {
   let repository: ServerLogsRepository;
-  let modelMock: jest.Mocked<{
-    find: jest.Mock;
-    countDocuments: jest.Mock;
-    distinct: jest.Mock;
-    aggregate: jest.Mock;
-    insertMany: jest.Mock;
+  let modelMock: Mocked<{
+    find: Mock;
+    countDocuments: Mock;
+    distinct: Mock;
+    aggregate: Mock;
+    insertMany: Mock;
   }>;
 
   const buildQueryChain = (): {
-    sort: jest.Mock;
-    skip: jest.Mock;
-    limit: jest.Mock;
-    exec: jest.Mock;
+    sort: Mock;
+    skip: Mock;
+    limit: Mock;
+    exec: Mock;
   } => ({
-    sort: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([{ _id: '1' }]),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([{ _id: '1' }]),
   });
 
   beforeEach(async () => {
     const queryChain = buildQueryChain();
-    const docMock = { save: jest.fn().mockResolvedValue({ _id: 'saved' }) };
+    const docMock = { save: vi.fn().mockResolvedValue({ _id: 'saved' }) };
     function modelFactory(): typeof docMock {
       return docMock;
     }
     Object.assign(modelFactory, {
-      find: jest.fn().mockReturnValue(queryChain),
-      countDocuments: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(42) }),
-      distinct: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(['a', 'b']) }),
-      aggregate: jest.fn().mockResolvedValue([{ _id: 'info', count: 10 }]),
-      insertMany: jest.fn().mockResolvedValue([{}, {}, {}]),
+      find: vi.fn().mockReturnValue(queryChain),
+      countDocuments: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(42) }),
+      distinct: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(['a', 'b']) }),
+      aggregate: vi.fn().mockResolvedValue([{ _id: 'info', count: 10 }]),
+      insertMany: vi.fn().mockResolvedValue([{}, {}, {}]),
     });
     modelMock = modelFactory as never;
 
@@ -210,7 +211,7 @@ describe('ServerLogsRepository', () => {
   describe('getDistinctValues', () => {
     it('caps results at 200', async () => {
       modelMock.distinct.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(Array.from({ length: 250 }, (_, i) => `v${String(i)}`)),
+        exec: vi.fn().mockResolvedValue(Array.from({ length: 250 }, (_, i) => `v${String(i)}`)),
       });
       const result = await repository.getDistinctValues('serviceName', {});
       expect(result.values).toHaveLength(200);

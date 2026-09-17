@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -15,21 +16,21 @@ const encrypt = (gateway: BillingGateway, field: string, value: string): string 
 
 describe('GatewayConfigService', () => {
   const repository = {
-    findAll: jest.fn(),
-    findEnabled: jest.fn(),
-    findByGateway: jest.fn(),
-    upsert: jest.fn(),
+    findAll: vi.fn(),
+    findEnabled: vi.fn(),
+    findByGateway: vi.fn(),
+    upsert: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.clearAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMENT_TOKEN_ENCRYPTION_KEY: KEY,
       PAYMENT_TOKEN_KEY_VERSION: 1,
     } as ReturnType<typeof AppConfig.get>);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('returns configured metadata without exposing stored credentials', async () => {
     const encryptedSecret = encrypt(BillingGateway.PAYPAL, 'clientSecret', 'never-return-this');
@@ -136,7 +137,7 @@ describe('GatewayConfigService settlement currency', () => {
     // the frontend from PayPal's published currency list is how a UI ends up
     // promising a settlement the merchant account cannot perform.
     const repository = {
-      findEnabled: jest.fn().mockResolvedValue([
+      findEnabled: vi.fn().mockResolvedValue([
         {
           gateway: BillingGateway.PAYMOB,
           mode: GatewayMode.SANDBOX,

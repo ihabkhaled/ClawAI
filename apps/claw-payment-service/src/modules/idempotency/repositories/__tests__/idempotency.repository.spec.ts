@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import {
   IDEMPOTENCY_STATUS_COMPLETED,
@@ -6,22 +7,22 @@ import {
 import { IdempotencyRepository } from '../idempotency.repository';
 
 type IdempotencyDelegate = {
-  createMany: jest.Mock;
-  findUnique: jest.Mock;
-  findMany: jest.Mock;
-  update: jest.Mock;
-  delete: jest.Mock;
-  deleteMany: jest.Mock;
+  createMany: Mock;
+  findUnique: Mock;
+  findMany: Mock;
+  update: Mock;
+  delete: Mock;
+  deleteMany: Mock;
 };
 
 function buildPrisma(): { prisma: PrismaService; idempotencyRecord: IdempotencyDelegate } {
   const idempotencyRecord: IdempotencyDelegate = {
-    createMany: jest.fn(async () => ({ count: 1 })),
-    findUnique: jest.fn(async () => ({ id: 'idem_1' })),
-    findMany: jest.fn(async () => []),
-    update: jest.fn(async () => ({ id: 'idem_1' })),
-    delete: jest.fn(async () => ({ id: 'idem_1' })),
-    deleteMany: jest.fn(async () => ({ count: 0 })),
+    createMany: vi.fn(async () => ({ count: 1 })),
+    findUnique: vi.fn(async () => ({ id: 'idem_1' })),
+    findMany: vi.fn(async () => []),
+    update: vi.fn(async () => ({ id: 'idem_1' })),
+    delete: vi.fn(async () => ({ id: 'idem_1' })),
+    deleteMany: vi.fn(async () => ({ count: 0 })),
   };
   return { prisma: { idempotencyRecord } as unknown as PrismaService, idempotencyRecord };
 }
@@ -42,11 +43,11 @@ describe('IdempotencyRepository', () => {
     const built = buildPrisma();
     idempotencyRecord = built.idempotencyRecord;
     repository = new IdempotencyRepository(built.prisma);
-    jest.spyOn(repository['logger'], 'warn').mockImplementation(() => {});
+    vi.spyOn(repository['logger'], 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('claim', () => {

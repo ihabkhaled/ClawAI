@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RouterModelsService } from '../services/router-models.service';
@@ -12,22 +13,22 @@ const fakeRecord = {
 
 describe('RouterModelsService', () => {
   let service: RouterModelsService;
-  let registryRepo: jest.Mocked<RouterModelRegistryRepository>;
-  let manager: jest.Mocked<RouterModelRegistryManager>;
+  let registryRepo: Mocked<RouterModelRegistryRepository>;
+  let manager: Mocked<RouterModelRegistryManager>;
 
   beforeEach(async () => {
     registryRepo = {
-      list: jest.fn(),
-      findById: jest.fn(),
-    } as unknown as jest.Mocked<RouterModelRegistryRepository>;
+      list: vi.fn(),
+      findById: vi.fn(),
+    } as unknown as Mocked<RouterModelRegistryRepository>;
 
     manager = {
-      createProfile: jest.fn(),
-      updateProfile: jest.fn(),
-      softRemoveProfile: jest.fn(),
-      listOverrides: jest.fn(),
-      clearOverride: jest.fn(),
-    } as unknown as jest.Mocked<RouterModelRegistryManager>;
+      createProfile: vi.fn(),
+      updateProfile: vi.fn(),
+      softRemoveProfile: vi.fn(),
+      listOverrides: vi.fn(),
+      clearOverride: vi.fn(),
+    } as unknown as Mocked<RouterModelRegistryManager>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

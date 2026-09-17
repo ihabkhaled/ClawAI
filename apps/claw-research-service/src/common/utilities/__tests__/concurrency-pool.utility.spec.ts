@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { runWithConcurrencyLimit } from '../concurrency-pool.utility';
 
 describe('runWithConcurrencyLimit', () => {
@@ -26,7 +27,7 @@ describe('runWithConcurrencyLimit', () => {
   });
 
   it('does nothing for an empty list', async () => {
-    const worker = jest.fn();
+    const worker = vi.fn();
     await runWithConcurrencyLimit([], 4, worker);
     expect(worker).not.toHaveBeenCalled();
   });

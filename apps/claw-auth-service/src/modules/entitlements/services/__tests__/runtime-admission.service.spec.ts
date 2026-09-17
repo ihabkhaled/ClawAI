@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Permission, UserRole } from '@claw/shared-types';
 
 import { RuntimeAdmissionService } from '../runtime-admission.service';
@@ -55,9 +56,9 @@ function entitlement(overrides: Partial<UserEntitlements>): UserEntitlements {
 }
 
 describe('RuntimeAdmissionService — admin quota lockout', () => {
-  let evalMock: jest.Mock;
+  let evalMock: Mock;
   let service: RuntimeAdmissionService;
-  let entitlementsMock: { getEnforcedForUser: jest.Mock };
+  let entitlementsMock: { getEnforcedForUser: Mock };
 
   const input = {
     userId: 'u1',
@@ -68,8 +69,8 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
   };
 
   beforeEach(() => {
-    evalMock = jest.fn().mockResolvedValue(['OK', JSON.stringify({})]);
-    entitlementsMock = { getEnforcedForUser: jest.fn() };
+    evalMock = vi.fn().mockResolvedValue(['OK', JSON.stringify({})]);
+    entitlementsMock = { getEnforcedForUser: vi.fn() };
     service = new RuntimeAdmissionService(
       entitlementsMock as unknown as EntitlementsService,
       { getClient: () => ({ eval: evalMock }) } as unknown as RedisService,
@@ -82,7 +83,9 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
   // `undefined` instead of failing on the thing it claims to test.
   const limitArg = (): string => {
     expect(evalMock).toHaveBeenCalledTimes(1);
-    return String(evalMock.mock.calls[0][ARGV_DAILY_LIMIT_INDEX]);
+    const call = evalMock.mock.calls[0];
+    expect(call).toBeDefined();
+    return String(call?.[ARGV_DAILY_LIMIT_INDEX]);
   };
 
   it('sends the unlimited sentinel for an admin, not 0', async () => {

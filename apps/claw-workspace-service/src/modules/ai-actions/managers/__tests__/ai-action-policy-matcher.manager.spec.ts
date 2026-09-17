@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AiActionPolicyKind } from '../../../../common/enums/ai-action-policy-kind.enum';
 import { AiActionRiskLabel } from '../../../../common/enums/ai-action-risk-label.enum';
 import { AiActionPolicyMatcherManager } from '../ai-action-policy-matcher.manager';
@@ -23,8 +24,8 @@ const makePolicy = (overrides: Record<string, unknown> = {}): unknown => ({
 });
 
 describe('AiActionPolicyMatcherManager', () => {
-  const makeRepo = (policies: unknown[]): { findActive: jest.Mock } => ({
-    findActive: jest.fn().mockResolvedValue(policies),
+  const makeRepo = (policies: unknown[]): { findActive: Mock } => ({
+    findActive: vi.fn().mockResolvedValue(policies),
   });
 
   it('returns DENIED when DENY policy matches and risk meets the deny threshold', async () => {

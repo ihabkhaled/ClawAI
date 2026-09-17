@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FeedbackSignal } from '../../../common/enums';
 import { DomainTag } from '../../../generated/prisma';
@@ -28,14 +29,14 @@ function makeRecord(overrides: Partial<LearnedScoreRecord> = {}): LearnedScoreRe
 
 describe('LearningLoopManager', () => {
   let manager: LearningLoopManager;
-  let repo: jest.Mocked<LearnedScoreRepository>;
+  let repo: Mocked<LearnedScoreRepository>;
 
   beforeEach(async () => {
     repo = {
-      findByKey: jest.fn(),
-      upsert: jest.fn(),
-      listForProfile: jest.fn(),
-    } as unknown as jest.Mocked<LearnedScoreRepository>;
+      findByKey: vi.fn(),
+      upsert: vi.fn(),
+      listForProfile: vi.fn(),
+    } as unknown as Mocked<LearnedScoreRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [LearningLoopManager, { provide: LearnedScoreRepository, useValue: repo }],

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   RuntimeProgressConfidence,
   RuntimeProgressEventType,
@@ -11,10 +12,10 @@ import {
   SD_PROGRESS_POLL_MIN_INTERVAL_MS,
 } from '../constants/sd-webui-progress.constants';
 
-const httpGetMock = jest.fn();
-const httpPostMock = jest.fn();
+const httpGetMock = vi.fn();
+const httpPostMock = vi.fn();
 
-jest.mock('@common/utilities', () => ({
+vi.mock('@common/utilities', () => ({
   httpGet: (...args: unknown[]) => httpGetMock(...args),
   httpPost: (...args: unknown[]) => httpPostMock(...args),
 }));
@@ -29,14 +30,14 @@ describe('StableDiffusionWebuiProgressAdapter', () => {
   let adapter: StableDiffusionWebuiProgressAdapter;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     httpGetMock.mockReset();
     httpPostMock.mockReset();
     adapter = new StableDiffusionWebuiProgressAdapter();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('start', () => {
@@ -165,7 +166,7 @@ describe('StableDiffusionWebuiProgressAdapter', () => {
       const allowed = SD_PROGRESS_MAX_CONSECUTIVE_ERRORS + 2;
       for (let i = 0; i < allowed; i += 1) {
         await Promise.race([session.events.next(), flushAll(2)]);
-        jest.advanceTimersByTime(SD_PROGRESS_POLL_MIN_INTERVAL_MS);
+        vi.advanceTimersByTime(SD_PROGRESS_POLL_MIN_INTERVAL_MS);
       }
       session.stop();
       expect(httpGetMock.mock.calls.length).toBeGreaterThanOrEqual(1);

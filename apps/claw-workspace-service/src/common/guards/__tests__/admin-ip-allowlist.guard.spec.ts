@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ForbiddenException, type ExecutionContext } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -21,41 +22,41 @@ describe('AdminIpAllowlistGuard', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('passes through when the allowlist is empty (disabled)', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(makeConfig(''));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(makeConfig(''));
     const ctx = makeCtx({ ip: '203.0.113.7' });
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('passes through when the allowlist is only whitespace', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('  ,  ,'));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('  ,  ,'));
     const ctx = makeCtx({ ip: '203.0.113.7' });
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('allows a request whose client IP is in the allowlist', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.1, 10.0.0.2'));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.1, 10.0.0.2'));
     const ctx = makeCtx({ ip: '10.0.0.2' });
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('denies a request whose client IP is not in the allowlist', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.1'));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.1'));
     const ctx = makeCtx({ ip: '203.0.113.7' });
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 
   it('denies when the IP cannot be resolved', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.1'));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.1'));
     const ctx = makeCtx({ headers: {} });
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 
   it('honors X-Forwarded-For when set (uses first hop as client IP)', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.2'));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(makeConfig('10.0.0.2'));
     const ctx = makeCtx({
       ip: '127.0.0.1', // proxy IP
       headers: { 'x-forwarded-for': '10.0.0.2, 192.0.2.99' }, // real client

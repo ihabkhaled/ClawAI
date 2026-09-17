@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConnectorsManager } from '../managers/connectors.manager';
 import { type ConnectorsRepository } from '../repositories/connectors.repository';
 import { type ConnectorModelsRepository } from '../repositories/connector-models.repository';
@@ -10,18 +11,18 @@ import {
   ModelSyncStatus,
 } from '../../../generated/prisma';
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       ENCRYPTION_KEY: 'a'.repeat(64),
     }),
   },
 }));
 
-jest.mock('../../../common/utilities', () => ({
-  encrypt: jest.fn().mockReturnValue('encrypted'),
-  decrypt: jest.fn().mockReturnValue('sk-test-key'),
-  verifyAccessToken: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  encrypt: vi.fn().mockReturnValue('encrypted'),
+  decrypt: vi.fn().mockReturnValue('sk-test-key'),
+  verifyAccessToken: vi.fn(),
 }));
 
 const mockOpenAIModelsResponse = {
@@ -74,7 +75,7 @@ function mockFetchForProvider(provider: string): void {
     [ConnectorProvider.GROK]: mockGrokModelsResponse,
   };
   const body = responseMap[provider] ?? mockOpenAIModelsResponse;
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     text: () => Promise.resolve(JSON.stringify(body)),
@@ -98,23 +99,23 @@ const mockConnector = {
   updatedAt: new Date(),
 };
 
-const mockConnectorsRepo = (): Partial<Record<keyof ConnectorsRepository, jest.Mock>> => ({
-  update: jest.fn().mockResolvedValue(mockConnector),
+const mockConnectorsRepo = (): Partial<Record<keyof ConnectorsRepository, Mock>> => ({
+  update: vi.fn().mockResolvedValue(mockConnector),
 });
 
-const mockModelsRepo = (): Partial<Record<keyof ConnectorModelsRepository, jest.Mock>> => ({
-  upsertMany: jest.fn().mockResolvedValue(3),
-  replaceMany: jest.fn().mockResolvedValue({ upserted: 3, deleted: 0 }),
-  findByConnectorId: jest.fn().mockResolvedValue([]),
+const mockModelsRepo = (): Partial<Record<keyof ConnectorModelsRepository, Mock>> => ({
+  upsertMany: vi.fn().mockResolvedValue(3),
+  replaceMany: vi.fn().mockResolvedValue({ upserted: 3, deleted: 0 }),
+  findByConnectorId: vi.fn().mockResolvedValue([]),
 });
 
-const mockHealthEventsRepo = (): Partial<Record<keyof HealthEventsRepository, jest.Mock>> => ({
-  create: jest.fn().mockResolvedValue({ id: 'event-1' }),
+const mockHealthEventsRepo = (): Partial<Record<keyof HealthEventsRepository, Mock>> => ({
+  create: vi.fn().mockResolvedValue({ id: 'event-1' }),
 });
 
-const mockSyncRunsRepo = (): Partial<Record<keyof SyncRunsRepository, jest.Mock>> => ({
-  create: jest.fn().mockResolvedValue({ id: 'run-1' }),
-  update: jest.fn().mockResolvedValue({ id: 'run-1' }),
+const mockSyncRunsRepo = (): Partial<Record<keyof SyncRunsRepository, Mock>> => ({
+  create: vi.fn().mockResolvedValue({ id: 'run-1' }),
+  update: vi.fn().mockResolvedValue({ id: 'run-1' }),
 });
 
 describe('ConnectorsManager', () => {

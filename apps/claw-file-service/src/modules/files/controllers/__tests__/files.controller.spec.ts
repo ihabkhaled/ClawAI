@@ -1,26 +1,27 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../../services/files.service';
 
 describe('FilesController', () => {
   let controller: FilesController;
-  let serviceMock: jest.Mocked<{
-    uploadFile: jest.Mock;
-    getFiles: jest.Mock;
-    getFile: jest.Mock;
-    deleteFile: jest.Mock;
-    downloadFile: jest.Mock;
-    getChunks: jest.Mock;
-  }>;
+  let serviceMock: {
+    uploadFile: Mock;
+    getFiles: Mock;
+    getFile: Mock;
+    deleteFile: Mock;
+    downloadFile: Mock;
+    getChunks: Mock;
+  };
 
   beforeEach(async () => {
     serviceMock = {
-      uploadFile: jest.fn(),
-      getFiles: jest.fn(),
-      getFile: jest.fn(),
-      deleteFile: jest.fn(),
-      downloadFile: jest.fn(),
-      getChunks: jest.fn(),
+      uploadFile: vi.fn(),
+      getFiles: vi.fn(),
+      getFile: vi.fn(),
+      deleteFile: vi.fn(),
+      downloadFile: vi.fn(),
+      getChunks: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FilesController],

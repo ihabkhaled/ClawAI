@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { HealthService } from '../health.service';
@@ -6,7 +7,7 @@ import { HealthCheckStatus, ServiceStatus } from '../../../../common/enums';
 
 describe('HealthService', () => {
   let connectionMock: { readyState: number };
-  let redisMock: { getClient: jest.Mock };
+  let redisMock: { getClient: Mock };
 
   const buildService = async (): Promise<HealthService> => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,8 +23,8 @@ describe('HealthService', () => {
   beforeEach(() => {
     connectionMock = { readyState: 1 };
     redisMock = {
-      getClient: jest.fn().mockReturnValue({
-        ping: jest.fn().mockResolvedValue('PONG'),
+      getClient: vi.fn().mockReturnValue({
+        ping: vi.fn().mockResolvedValue('PONG'),
       }),
     };
   });
@@ -38,16 +39,16 @@ describe('HealthService', () => {
 
   it('returns DOWN when both down', async () => {
     connectionMock.readyState = 0;
-    redisMock.getClient = jest.fn().mockReturnValue({
-      ping: jest.fn().mockRejectedValue(new Error('redis off')),
+    redisMock.getClient = vi.fn().mockReturnValue({
+      ping: vi.fn().mockRejectedValue(new Error('redis off')),
     });
     const service = await buildService();
     expect((await service.check()).status).toBe(HealthCheckStatus.DOWN);
   });
 
   it('returns DEGRADED when only redis is down', async () => {
-    redisMock.getClient = jest.fn().mockReturnValue({
-      ping: jest.fn().mockResolvedValue('not pong'),
+    redisMock.getClient = vi.fn().mockReturnValue({
+      ping: vi.fn().mockResolvedValue('not pong'),
     });
     const service = await buildService();
     const result = await service.check();

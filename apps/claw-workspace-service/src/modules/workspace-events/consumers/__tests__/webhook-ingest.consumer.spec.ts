@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 
 import { WorkspaceCanonicalEventType } from '../../../../common/enums/workspace-canonical-event-type.enum';
@@ -16,7 +17,7 @@ function fakeStore(): {
   const rows: Array<{ id: string; idempotencyKey: string; provider: string }> = [];
   let seq = 0;
   const repo = {
-    createIfNew: jest.fn(
+    createIfNew: vi.fn(
       async (input: {
         provider: string;
         idempotencyKey: string;
@@ -78,8 +79,8 @@ function githubPrOpened(deliveryId: string): WebhookReceivedEvent {
 describe('WebhookIngestConsumer', () => {
   it('maps and persists a canonical event, then publishes WORKSPACE_EVENT_INGESTED', async () => {
     const { repo } = fakeStore();
-    const publish = jest.fn().mockResolvedValue(undefined);
-    const rabbitmq = { subscribe: jest.fn(), publish } as never;
+    const publish = vi.fn().mockResolvedValue(undefined);
+    const rabbitmq = { subscribe: vi.fn(), publish } as never;
     const consumer = new WebhookIngestConsumer(rabbitmq, new WorkspaceEventMapperService(), repo);
 
     await consumer.handle(githubPrOpened('delivery-1'));
@@ -96,8 +97,8 @@ describe('WebhookIngestConsumer', () => {
 
   it('skips persistence entirely when the mapper has no canonical mapping for this delivery', async () => {
     const { repo } = fakeStore();
-    const publish = jest.fn().mockResolvedValue(undefined);
-    const rabbitmq = { subscribe: jest.fn(), publish } as never;
+    const publish = vi.fn().mockResolvedValue(undefined);
+    const rabbitmq = { subscribe: vi.fn(), publish } as never;
     const consumer = new WebhookIngestConsumer(rabbitmq, new WorkspaceEventMapperService(), repo);
 
     await consumer.handle({
@@ -116,8 +117,8 @@ describe('WebhookIngestConsumer', () => {
 
   it('duplicate delivery: handling the same webhook event twice creates exactly one WorkspaceEvent and publishes exactly once', async () => {
     const { repo } = fakeStore();
-    const publish = jest.fn().mockResolvedValue(undefined);
-    const rabbitmq = { subscribe: jest.fn(), publish } as never;
+    const publish = vi.fn().mockResolvedValue(undefined);
+    const rabbitmq = { subscribe: vi.fn(), publish } as never;
     const consumer = new WebhookIngestConsumer(rabbitmq, new WorkspaceEventMapperService(), repo);
 
     const event = githubPrOpened('delivery-dup');
@@ -130,8 +131,8 @@ describe('WebhookIngestConsumer', () => {
 
   it('out-of-order delivery: two distinct deliveries for the same resource, processed in reverse chronological order, both persist as separate correctly-typed events', async () => {
     const { repo } = fakeStore();
-    const publish = jest.fn().mockResolvedValue(undefined);
-    const rabbitmq = { subscribe: jest.fn(), publish } as never;
+    const publish = vi.fn().mockResolvedValue(undefined);
+    const rabbitmq = { subscribe: vi.fn(), publish } as never;
     const consumer = new WebhookIngestConsumer(rabbitmq, new WorkspaceEventMapperService(), repo);
 
     const openedLater: WebhookReceivedEvent = {
@@ -180,8 +181,8 @@ describe('WebhookIngestConsumer', () => {
   it('derives resourceType/resourceExternalId from the mapping onto the persisted event input', async () => {
     const { repo } = fakeStore();
     const rabbitmq = {
-      subscribe: jest.fn(),
-      publish: jest.fn().mockResolvedValue(undefined),
+      subscribe: vi.fn(),
+      publish: vi.fn().mockResolvedValue(undefined),
     } as never;
     const consumer = new WebhookIngestConsumer(rabbitmq, new WorkspaceEventMapperService(), repo);
 

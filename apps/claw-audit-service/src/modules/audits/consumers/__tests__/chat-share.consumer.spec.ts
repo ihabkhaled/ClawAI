@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 
@@ -17,20 +18,20 @@ const BASE = {
 };
 
 describe('ChatShareAuditConsumer', () => {
-  let rabbitmq: { subscribe: jest.Mock };
-  let audits: { createAuditLog: jest.Mock };
+  let rabbitmq: { subscribe: Mock };
+  let audits: { createAuditLog: Mock };
   let consumer: ChatShareAuditConsumer;
   let handlers: Map<string, (raw: unknown) => Promise<void>>;
 
   beforeEach(async () => {
     handlers = new Map();
     rabbitmq = {
-      subscribe: jest.fn().mockImplementation((pattern: string, handler) => {
+      subscribe: vi.fn().mockImplementation((pattern: string, handler) => {
         handlers.set(pattern, handler as (raw: unknown) => Promise<void>);
         return Promise.resolve();
       }),
     };
-    audits = { createAuditLog: jest.fn().mockResolvedValue(RESOLVED_VOID) };
+    audits = { createAuditLog: vi.fn().mockResolvedValue(RESOLVED_VOID) };
     consumer = new ChatShareAuditConsumer(
       rabbitmq as unknown as RabbitMQService,
       audits as unknown as AuditsService,

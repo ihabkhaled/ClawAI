@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RESEARCH_CRAWL_PROGRESS_CHANNEL } from '@claw/shared-constants';
 
 import { ResearchProgressPublisher } from '../research-progress-publisher.service';
@@ -9,11 +10,11 @@ import type { RedisService } from '../../../../infrastructure/redis/redis.servic
  * every failure path here asserts the crawl-facing call still resolves.
  */
 describe('ResearchProgressPublisher', () => {
-  let publish: jest.Mock;
+  let publish: Mock;
   let publisher: ResearchProgressPublisher;
 
   beforeEach(() => {
-    publish = jest.fn().mockResolvedValue(undefined);
+    publish = vi.fn().mockResolvedValue(undefined);
     publisher = new ResearchProgressPublisher({ publish } as unknown as RedisService);
   });
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { WebhookRateLimiterManager } from '../webhook-rate-limiter.manager';
 
 beforeAll(() => {
@@ -43,13 +44,13 @@ describe('WebhookRateLimiterManager (11.4)', () => {
   it('drops timestamps older than 1 minute', () => {
     const realNow = Date.now;
     const t0 = 1_700_000_000_000;
-    Date.now = jest.fn(() => t0);
+    Date.now = vi.fn(() => t0);
     manager.tryReserve('conn-1');
     manager.tryReserve('conn-1');
     manager.tryReserve('conn-1');
     expect(manager.tryReserve('conn-1')).toBe(false);
 
-    Date.now = jest.fn(() => t0 + 60 * 1000 + 1);
+    Date.now = vi.fn(() => t0 + 60 * 1000 + 1);
     expect(manager.tryReserve('conn-1')).toBe(true);
 
     Date.now = realNow;

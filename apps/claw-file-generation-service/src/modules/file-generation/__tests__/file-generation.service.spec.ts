@@ -1,10 +1,11 @@
+import { vi, type Mock } from 'vitest';
 import { FileGenerationService } from '../services/file-generation.service';
 import { type FileGenerationRepository } from '../repositories/file-generation.repository';
 import { type FileExecutionManager } from '../managers/file-execution.manager';
 import { type FileGenerationEventsService } from '../services/file-generation-events.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 
-jest.mock('../managers/file-execution.manager');
+vi.mock('../managers/file-execution.manager');
 
 const mockRecord = {
   id: 'fg-1',
@@ -29,14 +30,14 @@ const mockRecord = {
   assets: [],
 };
 
-const mockRepo = (): Partial<Record<keyof FileGenerationRepository, jest.Mock>> => ({
-  create: jest.fn().mockResolvedValue(mockRecord),
-  findById: jest.fn().mockResolvedValue({ ...mockRecord, status: 'COMPLETED', assets: [] }),
-  findByUserId: jest.fn().mockResolvedValue([mockRecord]),
-  countByUserId: jest.fn().mockResolvedValue(1),
-  updateStatus: jest.fn().mockResolvedValue(mockRecord),
-  createEvent: jest.fn().mockResolvedValue(void 0),
-  createAsset: jest.fn().mockResolvedValue({
+const mockRepo = (): Partial<Record<keyof FileGenerationRepository, Mock>> => ({
+  create: vi.fn().mockResolvedValue(mockRecord),
+  findById: vi.fn().mockResolvedValue({ ...mockRecord, status: 'COMPLETED', assets: [] }),
+  findByUserId: vi.fn().mockResolvedValue([mockRecord]),
+  countByUserId: vi.fn().mockResolvedValue(1),
+  updateStatus: vi.fn().mockResolvedValue(mockRecord),
+  createEvent: vi.fn().mockResolvedValue(void 0),
+  createAsset: vi.fn().mockResolvedValue({
     id: 'asset-1',
     url: '/api/v1/files/download/file-1',
     downloadUrl: '/api/v1/files/download/file-1',
@@ -45,18 +46,18 @@ const mockRepo = (): Partial<Record<keyof FileGenerationRepository, jest.Mock>> 
   }),
 });
 
-const mockExecManager = (): Partial<Record<keyof FileExecutionManager, jest.Mock>> => ({
-  convert: jest.fn().mockResolvedValue(Buffer.from('Hello world')),
-  storeFile: jest.fn().mockResolvedValue('file-1'),
-  generateFilename: jest.fn().mockReturnValue('generated-123.txt'),
+const mockExecManager = (): Partial<Record<keyof FileExecutionManager, Mock>> => ({
+  convert: vi.fn().mockResolvedValue(Buffer.from('Hello world')),
+  storeFile: vi.fn().mockResolvedValue('file-1'),
+  generateFilename: vi.fn().mockReturnValue('generated-123.txt'),
 });
 
-const mockEventsService = (): Partial<Record<keyof FileGenerationEventsService, jest.Mock>> => ({
-  publish: jest.fn(),
+const mockEventsService = (): Partial<Record<keyof FileGenerationEventsService, Mock>> => ({
+  publish: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('FileGenerationService', () => {

@@ -1,11 +1,12 @@
+import { vi } from 'vitest';
 import { BillingErrorCode, InvoiceLineKind, InvoiceStatus } from '@claw/shared-types';
 
 import { InvoiceDocumentService } from '../invoice-document.service';
 
 const renderedBytes = new Uint8Array([37, 80, 68, 70]);
 
-jest.mock('../../../../common/utilities/invoice-pdf.utility', () => ({
-  renderInvoicePdf: jest.fn(async () => renderedBytes),
+vi.mock('../../../../common/utilities/invoice-pdf.utility', () => ({
+  renderInvoicePdf: vi.fn(async () => renderedBytes),
 }));
 
 describe('InvoiceDocumentService', () => {
@@ -39,11 +40,11 @@ describe('InvoiceDocumentService', () => {
       },
     ],
   };
-  const repository = { findOwnedWithLines: jest.fn() };
+  const repository = { findOwnedWithLines: vi.fn() };
   const service = new InvoiceDocumentService(repository as never);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     repository.findOwnedWithLines.mockResolvedValue(invoice);
   });
 

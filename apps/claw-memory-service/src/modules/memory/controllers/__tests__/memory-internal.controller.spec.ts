@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MemoryInternalController } from '../memory-internal.controller';
 import { MemoryRepository } from '../../repositories/memory.repository';
@@ -5,12 +6,12 @@ import { MemoryService } from '../../services/memory.service';
 
 describe('MemoryInternalController', () => {
   let controller: MemoryInternalController;
-  let serviceMock: jest.Mocked<{ getMemoriesForContext: jest.Mock }>;
-  let repoMock: jest.Mocked<{ findLearnedPreferences: jest.Mock }>;
+  let serviceMock: { getMemoriesForContext: Mock };
+  let repoMock: { findLearnedPreferences: Mock };
 
   beforeEach(async () => {
-    serviceMock = { getMemoriesForContext: jest.fn() };
-    repoMock = { findLearnedPreferences: jest.fn() };
+    serviceMock = { getMemoriesForContext: vi.fn() };
+    repoMock = { findLearnedPreferences: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MemoryInternalController],
       providers: [

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { BillingErrorCode, PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 import { PaygCreditExhaustedError } from '@claw/shared-entitlements';
@@ -17,26 +18,34 @@ import { BusinessException } from '../../../common/errors';
 import { PAYG_WORKFLOW_VISION_PROMPT } from '../constants/payg.constants';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
-jest.mock('../clients/model-exposure.client', () => ({
-  ModelExposureClient: jest.fn().mockImplementation(() => ({
-    isExposed: jest.fn().mockResolvedValue(true),
-  })),
+vi.mock('../clients/model-exposure.client', () => ({
+  ModelExposureClient: vi.fn(function () {
+    return {
+      isExposed: vi.fn().mockResolvedValue(true),
+    };
+  }),
 }));
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     if (!record) return undefined;
     return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
   },
 }));
-jest.mock('../../../app/config/app.config');
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as {
+  httpRequest: Mock;
 };
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const DEFAULT_APP_CONFIG = {
   OLLAMA_SERVICE_URL: 'http://ollama:4008',
@@ -79,53 +88,53 @@ const cloudOk = (content = 'answer'): unknown => ({
 describe('PAYG credit — the chat chokepoint', () => {
   let manager: ChatExecutionManager;
   let accessControl: ReturnType<typeof createFakePaygAccessControl>;
-  let streamService: Record<string, jest.Mock>;
+  let streamService: Record<string, Mock>;
 
   const build = (access: ReturnType<typeof createFakePaygAccessControl>): ChatExecutionManager => {
     streamService = {
-      emitRouterStarted: jest.fn(),
-      emitProviderSelected: jest.fn(),
-      emitResponseStreaming: jest.fn(),
-      startResponseProgressHeartbeat: jest.fn().mockReturnValue(jest.fn()),
-      emitFallbackAttempt: jest.fn(),
-      emitError: jest.fn(),
-      emitProgressStage: jest.fn(),
+      emitRouterStarted: vi.fn(),
+      emitProviderSelected: vi.fn(),
+      emitResponseStreaming: vi.fn(),
+      startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
+      emitFallbackAttempt: vi.fn(),
+      emitError: vi.fn(),
+      emitProgressStage: vi.fn(),
     };
     return new ChatExecutionManager(
       {
-        buildPromptString: jest.fn().mockReturnValue('a prompt of some length'),
-        buildChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
-        buildGeminiChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+        buildPromptString: vi.fn().mockReturnValue('a prompt of some length'),
+        buildChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+        buildGeminiChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
       } as unknown as ContextAssemblyManager,
       {
-        checkResponseQuality: jest.fn().mockReturnValue({ score: 0.9, reasons: [] }),
-        shouldReRoute: jest.fn().mockReturnValue({ shouldReRoute: false }),
+        checkResponseQuality: vi.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+        shouldReRoute: vi.fn().mockReturnValue({ shouldReRoute: false }),
       } as unknown as QualityCheckManager,
       {
-        setExecutionManager: jest.fn(),
-        shouldActivate: jest.fn().mockReturnValue(false),
+        setExecutionManager: vi.fn(),
+        shouldActivate: vi.fn().mockReturnValue(false),
       } as unknown as JudgeRefereeManager,
       streamService as unknown as ChatStreamService,
       {
-        run: jest.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+        run: vi.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
           context: ctx,
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as unknown as SearchFirstManager,
       access as unknown as AccessControlService,
       {
-        uploadFile: jest.fn(),
-        getCachedOrUpload: jest.fn(),
+        uploadFile: vi.fn(),
+        getCachedOrUpload: vi.fn(),
       } as unknown as GeminiFilesApiManager,
       {
-        resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
-        resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b']),
+        resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
+        resolveModelList: vi.fn().mockResolvedValue(['qwen3:7b']),
       } as unknown as LocalModelSelectionService,
     );
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
     accessControl = createFakePaygAccessControl();
     manager = build(accessControl);
@@ -208,7 +217,7 @@ describe('PAYG credit — the chat chokepoint', () => {
     );
 
     const providerCall = httpRequest.mock.calls.find(
-      (call: [{ url: string }]) => !call[0].url.includes('/internal/connectors/config'),
+      (call) => !call[0].url.includes('/internal/connectors/config'),
     );
     const body = providerCall?.[0].body as { max_tokens?: number; max_completion_tokens?: number };
     expect(body.max_tokens ?? body.max_completion_tokens).toBe(700);
@@ -219,7 +228,7 @@ describe('PAYG credit — the chat chokepoint', () => {
   it('does not overwrite an unset ceiling when the hold took nothing away', async () => {
     await manager.callProvider('OPENAI', 'gpt-5', makeContext('hello'), Date.now(), false);
     const providerCall = httpRequest.mock.calls.find(
-      (call: [{ url: string }]) => !call[0].url.includes('/internal/connectors/config'),
+      (call) => !call[0].url.includes('/internal/connectors/config'),
     );
     const body = providerCall?.[0].body as { max_tokens?: number };
     expect(body.max_tokens).toBeUndefined();
@@ -328,7 +337,7 @@ describe('PAYG credit — the chat chokepoint', () => {
     );
 
     const visionReserve = accessControl.reserveCredit.mock.calls.find(
-      (call: [Record<string, unknown>]) => call[0]['workflow'] === PAYG_WORKFLOW_VISION_PROMPT,
+      (call) => call[0]['workflow'] === PAYG_WORKFLOW_VISION_PROMPT,
     );
     expect(visionReserve).toBeDefined();
     expect(visionReserve?.[0]).toMatchObject({ surface: PaygSurface.IMAGE });
@@ -354,7 +363,7 @@ describe('PAYG credit — the chat chokepoint', () => {
     ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_CREDIT_EXHAUSTED });
     // Nothing was sent to the provider.
     const providerCalls = httpRequest.mock.calls.filter(
-      (call: [{ url: string }]) => !call[0].url.includes('/internal/connectors/config'),
+      (call) => !call[0].url.includes('/internal/connectors/config'),
     );
     expect(providerCalls).toHaveLength(0);
   });

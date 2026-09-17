@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { BillingException } from '../../../../common/errors';
@@ -17,20 +18,20 @@ const USD_PRICE = {
 
 describe('ChargeResolverService', () => {
   let catalog: {
-    requireActivePrice: jest.Mock;
-    requirePriceVersion: jest.Mock;
-    listCatalog: jest.Mock;
+    requireActivePrice: Mock;
+    requirePriceVersion: Mock;
+    listCatalog: Mock;
   };
-  let fx: { quote: jest.Mock; requireFresh: jest.Mock };
+  let fx: { quote: Mock; requireFresh: Mock };
   let service: ChargeResolverService;
 
   beforeEach(() => {
     catalog = {
-      requireActivePrice: jest.fn(),
-      requirePriceVersion: jest.fn(),
-      listCatalog: jest.fn().mockResolvedValue([{ id: 'plan-pro', slug: 'pro' }]),
+      requireActivePrice: vi.fn(),
+      requirePriceVersion: vi.fn(),
+      listCatalog: vi.fn().mockResolvedValue([{ id: 'plan-pro', slug: 'pro' }]),
     };
-    fx = { quote: jest.fn(), requireFresh: jest.fn() };
+    fx = { quote: vi.fn(), requireFresh: vi.fn() };
     service = new ChargeResolverService(
       catalog as unknown as PlanCatalogClient,
       fx as unknown as FxService,

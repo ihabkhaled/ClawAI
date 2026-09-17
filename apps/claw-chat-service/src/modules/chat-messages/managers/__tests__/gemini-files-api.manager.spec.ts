@@ -1,11 +1,18 @@
+import { vi } from 'vitest';
 import { BusinessException } from '../../../../common/errors';
 import { GEMINI_FILES_API_BASE_URL } from '../../constants/gemini-files-api.constants';
 import { GeminiFilesApiManager } from '../gemini-files-api.manager';
 
-jest.mock('../../../../app/config/app.config');
-const { AppConfig } = jest.requireMock('../../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 type FetchArgs = [string | URL | Request, RequestInit | undefined];
 
@@ -19,10 +26,10 @@ const buildResponse = (
     ok,
     status,
     headers: {
-      get: jest.fn((name: string) => init.headers?.[name.toLowerCase()] ?? null),
+      get: vi.fn((name: string) => init.headers?.[name.toLowerCase()] ?? null),
     },
-    json: jest.fn().mockResolvedValue(body),
-    text: jest.fn().mockResolvedValue(JSON.stringify(body)),
+    json: vi.fn().mockResolvedValue(body),
+    text: vi.fn().mockResolvedValue(JSON.stringify(body)),
   } as unknown as Response;
 };
 
@@ -63,14 +70,14 @@ describe('GeminiFilesApiManager', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     delete process.env['GEMINI_API_KEY'];
   });
 
   describe('uploadFile', () => {
     it('uses the documented resumable protocol and keeps the connector key out of URLs', async () => {
-      const fetchMock = jest
-        .fn<Promise<Response>, FetchArgs>()
+      const fetchMock = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
         .mockResolvedValueOnce(
           buildUploadedFileResponse('files/abc-99', {
@@ -125,8 +132,8 @@ describe('GeminiFilesApiManager', () => {
     });
 
     it('rejects a missing or untrusted upload session URL', async () => {
-      global.fetch = jest
-        .fn<Promise<Response>, FetchArgs>()
+      global.fetch = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValue(
           buildUploadStartResponse('https://attacker.example/upload'),
         ) as unknown as typeof fetch;
@@ -139,8 +146,8 @@ describe('GeminiFilesApiManager', () => {
     });
 
     it('throws GEMINI_FILES_API_RATE_LIMITED when the resumable start is rejected', async () => {
-      global.fetch = jest
-        .fn<Promise<Response>, FetchArgs>()
+      global.fetch = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValue(
           buildResponse({ error: { message: 'rate-limited' } }, { status: 429 }),
         ) as unknown as typeof fetch;
@@ -153,8 +160,8 @@ describe('GeminiFilesApiManager', () => {
     });
 
     it('throws GEMINI_FILES_API_UPLOAD_FAILED when finalize is rejected', async () => {
-      global.fetch = jest
-        .fn<Promise<Response>, FetchArgs>()
+      global.fetch = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
         .mockResolvedValueOnce(
           buildResponse({ error: { message: 'oops' } }, { status: 500 }),
@@ -168,8 +175,8 @@ describe('GeminiFilesApiManager', () => {
     });
 
     it('throws GEMINI_FILES_API_MISSING_URI when finalize lacks file.uri', async () => {
-      global.fetch = jest
-        .fn<Promise<Response>, FetchArgs>()
+      global.fetch = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
         .mockResolvedValueOnce(buildResponse({ file: {} })) as unknown as typeof fetch;
 
@@ -185,8 +192,8 @@ describe('GeminiFilesApiManager', () => {
         ...defaultConfig,
         GEMINI_FILES_API_TTL_MINUTES: 60,
       });
-      global.fetch = jest
-        .fn<Promise<Response>, FetchArgs>()
+      global.fetch = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
         .mockResolvedValueOnce(
           buildResponse({ file: { uri: 'files/no-exp' } }),
@@ -201,10 +208,10 @@ describe('GeminiFilesApiManager', () => {
     });
 
     it('polls a processing video until the Files API reports ACTIVE', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        const fetchMock = jest
-          .fn<Promise<Response>, FetchArgs>()
+        const fetchMock = vi
+          .fn<(...args: FetchArgs) => Promise<Response>>()
           .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
           .mockResolvedValueOnce(
             buildUploadedFileResponse('files/video-1', {
@@ -228,14 +235,14 @@ describe('GeminiFilesApiManager', () => {
           'clip.mp4',
           CONNECTOR_KEY,
         );
-        await jest.runAllTimersAsync();
+        await vi.runAllTimersAsync();
         const result = await uploadPromise;
 
         expect(fetchMock).toHaveBeenCalledTimes(3);
         expect(String(fetchMock.mock.calls[2]![0])).toContain('/v1beta/files/video-1');
         expect(result.state).toBe('ACTIVE');
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
   });
@@ -250,8 +257,8 @@ describe('GeminiFilesApiManager', () => {
       const firstStart = new Promise<Response>((resolve) => {
         resolveFirstStart = resolve;
       });
-      const fetchMock = jest
-        .fn<Promise<Response>, FetchArgs>()
+      const fetchMock = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockImplementationOnce(async () => firstStart)
         .mockResolvedValueOnce(buildUploadedFileResponse('files/first'));
       global.fetch = fetchMock as unknown as typeof fetch;
@@ -282,7 +289,7 @@ describe('GeminiFilesApiManager', () => {
 
     it('aborts an active upload request with the run signal', async () => {
       let fetchSignal: AbortSignal | undefined;
-      const fetchMock = jest.fn<Promise<Response>, FetchArgs>().mockImplementation(
+      const fetchMock = vi.fn<(...args: FetchArgs) => Promise<Response>>().mockImplementation(
         async (_url, init) =>
           new Promise<Response>((_resolve, reject) => {
             fetchSignal = init?.signal ?? undefined;
@@ -311,8 +318,8 @@ describe('GeminiFilesApiManager', () => {
 
   describe('getCachedOrUpload', () => {
     it('returns a cached URI on a second call without uploading again', async () => {
-      const fetchMock = jest
-        .fn<Promise<Response>, FetchArgs>()
+      const fetchMock = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
         .mockResolvedValueOnce(buildUploadedFileResponse('files/once-only'));
       global.fetch = fetchMock as unknown as typeof fetch;
@@ -338,8 +345,8 @@ describe('GeminiFilesApiManager', () => {
     it('re-uploads after the cached entry expires', async () => {
       const secondSession =
         'https://generativelanguage.googleapis.com/upload/v1beta/files/session-2';
-      const fetchMock = jest
-        .fn<Promise<Response>, FetchArgs>()
+      const fetchMock = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
         .mockResolvedValueOnce(buildUploadStartResponse(UPLOAD_SESSION_URL))
         .mockResolvedValueOnce(
           buildUploadedFileResponse('files/expired', {
@@ -374,7 +381,7 @@ describe('GeminiFilesApiManager', () => {
         GEMINI_FILES_API_CACHE_ENABLED: false,
       });
       let session = 0;
-      const fetchMock = jest.fn<Promise<Response>, FetchArgs>().mockImplementation(async (url) => {
+      const fetchMock = vi.fn<(...args: FetchArgs) => Promise<Response>>().mockImplementation(async (url) => {
         if (String(url) === GEMINI_FILES_API_BASE_URL) {
           session++;
           return buildUploadStartResponse(
@@ -401,7 +408,7 @@ describe('GeminiFilesApiManager', () => {
       let session = 0;
       let activeFinalizations = 0;
       let peakFinalizations = 0;
-      const fetchMock = jest.fn<Promise<Response>, FetchArgs>().mockImplementation(async (url) => {
+      const fetchMock = vi.fn<(...args: FetchArgs) => Promise<Response>>().mockImplementation(async (url) => {
         if (String(url) === GEMINI_FILES_API_BASE_URL) {
           session++;
           return buildUploadStartResponse(

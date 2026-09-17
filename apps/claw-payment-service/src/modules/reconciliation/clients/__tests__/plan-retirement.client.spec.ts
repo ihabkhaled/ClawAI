@@ -1,11 +1,12 @@
+import { vi, type MockedFunction } from 'vitest';
 import { HttpMethod } from '@claw/shared-types';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { PlanRetirementMigrationStatus } from '../../enums/plan-retirement-migration-status.enum';
 import { PlanRetirementClient } from '../plan-retirement.client';
 
-jest.mock('@claw/shared-utilities', () => ({ httpRequest: jest.fn() }));
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('@claw/shared-utilities', () => ({ httpRequest: vi.fn() }));
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
     get: () => ({
       AUTH_SERVICE_URL: 'http://auth-service:4001',
@@ -14,7 +15,7 @@ jest.mock('../../../../app/config/app.config', () => ({
   },
 }));
 
-const request = httpRequest as jest.MockedFunction<typeof httpRequest>;
+const request = httpRequest as MockedFunction<typeof httpRequest>;
 const MIGRATION = {
   id: 'migration-1',
   userId: 'user-1',
@@ -27,7 +28,7 @@ const MIGRATION = {
 describe('PlanRetirementClient', () => {
   const client = new PlanRetirementClient();
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('polls a bounded internal endpoint with service authentication', async () => {
     request.mockResolvedValueOnce({ ok: true, status: 200, data: [MIGRATION] });

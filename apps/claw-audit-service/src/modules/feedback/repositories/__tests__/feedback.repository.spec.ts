@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { FEEDBACK_TICKET_NUMBER_PAD, FEEDBACK_TICKET_PREFIX } from '@claw/shared-constants';
 
 import { FeedbackRepository } from '../feedback.repository';
@@ -7,30 +8,30 @@ import { FeedbackRepository } from '../feedback.repository';
 // than on whatever a service happened to return.
 
 function models(): {
-  ticketModel: Record<string, jest.Mock>;
-  counterModel: Record<string, jest.Mock>;
+  ticketModel: Record<string, Mock>;
+  counterModel: Record<string, Mock>;
   lastFilter: () => unknown;
 } {
   const captured: unknown[] = [];
   const chain = {
-    sort: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([]),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([]),
   };
   const ticketModel = {
-    find: jest.fn((filter: unknown) => {
+    find: vi.fn((filter: unknown) => {
       captured.push(filter);
       return chain;
     }),
-    countDocuments: jest.fn(() => ({ exec: jest.fn().mockResolvedValue(0) })),
-    findById: jest.fn(() => ({ exec: jest.fn().mockResolvedValue(null) })),
-    findOne: jest.fn(() => ({ exec: jest.fn().mockResolvedValue(null) })),
-    aggregate: jest.fn(() => ({ exec: jest.fn().mockResolvedValue([]) })),
-    findByIdAndUpdate: jest.fn(() => ({ exec: jest.fn().mockResolvedValue(null) })),
+    countDocuments: vi.fn(() => ({ exec: vi.fn().mockResolvedValue(0) })),
+    findById: vi.fn(() => ({ exec: vi.fn().mockResolvedValue(null) })),
+    findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue(null) })),
+    aggregate: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })),
+    findByIdAndUpdate: vi.fn(() => ({ exec: vi.fn().mockResolvedValue(null) })),
   };
   const counterModel = {
-    findOneAndUpdate: jest.fn(() => ({ exec: jest.fn().mockResolvedValue({ seq: 42 }) })),
+    findOneAndUpdate: vi.fn(() => ({ exec: vi.fn().mockResolvedValue({ seq: 42 }) })),
   };
   return { ticketModel, counterModel, lastFilter: () => captured.at(-1) };
 }

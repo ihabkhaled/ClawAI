@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE } from '../../constants/runtime-v2-failure.constants';
 import {
   RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS,
@@ -48,7 +49,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
     });
   }
 
-  function repair(callProvider: jest.Mock): Promise<{ output: { kind: string } }> {
+  function repair(callProvider: Mock): Promise<{ output: { kind: string } }> {
     const loop = new RuntimeV2LoopManager(
       {} as never,
       {} as never,
@@ -68,7 +69,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   }
 
   it('asks again when the model names a tool it was never given', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({ content: toolJson('workspace.shell') })
       .mockResolvedValueOnce({ content: toolJson('workspace.files') });
@@ -80,7 +81,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   });
 
   it('asks again when the model calls a tool in its own dialect', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({
         content: 'I will start by exploring. [TOOL_CALL] {toolName="workspace.files"}',
@@ -101,7 +102,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
       operation: 'list',
       arguments: { rootKey: 'workspace-1', path: '', targetId: 'target:workspace' },
     });
-    const callProvider = jest.fn().mockResolvedValue({ content: nestedTargetRequest });
+    const callProvider = vi.fn().mockResolvedValue({ content: nestedTargetRequest });
 
     const result = await repair(callProvider);
 
@@ -114,7 +115,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   });
 
   it('reports something a person can act on when the corrected turn is no better', async () => {
-    const callProvider = jest.fn().mockResolvedValue({ content: toolJson('workspace.shell') });
+    const callProvider = vi.fn().mockResolvedValue({ content: toolJson('workspace.shell') });
 
     await expect(repair(callProvider)).rejects.toMatchObject({
       code: RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
@@ -131,7 +132,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   }
 
   it('gives a truncated request more than the single retry a malformed one gets', async () => {
-    const callProvider = jest.fn().mockResolvedValue({ content: truncatedToolJson() });
+    const callProvider = vi.fn().mockResolvedValue({ content: truncatedToolJson() });
 
     await expect(repair(callProvider)).rejects.toMatchObject({
       code: RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
@@ -140,7 +141,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   });
 
   it('recovers when the model finally sends a body that fits', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({ content: truncatedToolJson() })
       .mockResolvedValueOnce({ content: truncatedToolJson() })
@@ -153,7 +154,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   });
 
   it('tells a truncated request it was too long, not invalid, and by how much', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({ content: truncatedToolJson() })
       .mockResolvedValueOnce({ content: toolJson('workspace.files') });
@@ -167,7 +168,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   });
 
   it('shrinks the demanded size on each further truncation', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({ content: truncatedToolJson() })
       .mockResolvedValueOnce({ content: truncatedToolJson() })
@@ -180,7 +181,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
   });
 
   it('leaves a plain answer untouched', async () => {
-    const callProvider = jest.fn().mockResolvedValue({ content: 'The workspace has 7 files.' });
+    const callProvider = vi.fn().mockResolvedValue({ content: 'The workspace has 7 files.' });
 
     const result = await repair(callProvider);
 

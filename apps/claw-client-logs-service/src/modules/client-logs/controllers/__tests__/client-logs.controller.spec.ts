@@ -1,24 +1,25 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ClientLogsController } from '../client-logs.controller';
 import { ClientLogsService } from '../../services/client-logs.service';
 
 describe('ClientLogsController', () => {
   let controller: ClientLogsController;
-  let serviceMock: jest.Mocked<{
-    create: jest.Mock;
-    createMany: jest.Mock;
-    search: jest.Mock;
-    getStats: jest.Mock;
-    getDistinctValues: jest.Mock;
-  }>;
+  let serviceMock: {
+    create: Mock;
+    createMany: Mock;
+    search: Mock;
+    getStats: Mock;
+    getDistinctValues: Mock;
+  };
 
   beforeEach(async () => {
     serviceMock = {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      search: jest.fn(),
-      getStats: jest.fn(),
-      getDistinctValues: jest.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      search: vi.fn(),
+      getStats: vi.fn(),
+      getDistinctValues: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ClientLogsController],

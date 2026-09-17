@@ -1,20 +1,21 @@
+import { vi } from 'vitest';
 import { AutomaticCompensationManager } from '../automatic-compensation.manager';
 
 describe('AutomaticCompensationManager', () => {
   const jobs = {
-    run: jest.fn(
+    run: vi.fn(
       async (_options: Record<string, unknown>, operation: () => Promise<void>): Promise<void> =>
         operation(),
     ),
   };
-  const refunds = { listRetryableAutomaticCompensations: jest.fn() };
-  const compensation = { retry: jest.fn() };
+  const refunds = { listRetryableAutomaticCompensations: vi.fn() };
+  const compensation = { retry: vi.fn() };
   const first = { refund: { id: 'refund-1' } };
   const second = { refund: { id: 'refund-2' } };
   let manager: AutomaticCompensationManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     refunds.listRetryableAutomaticCompensations.mockResolvedValue([first, second]);
     compensation.retry
       .mockRejectedValueOnce(new Error('provider unavailable'))

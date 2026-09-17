@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import 'reflect-metadata';
 import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
@@ -13,14 +14,14 @@ import type { ModelDiscoveryService } from '../services/model-discovery.service'
 // retroactive backfill of the other pre-existing routes.
 describe('RouterModelsController.runDiscovery', () => {
   const service = {} as unknown as RouterModelsService;
-  const discoveryService = { run: jest.fn() };
+  const discoveryService = { run: vi.fn() };
 
   const controller = new RouterModelsController(
     service,
     discoveryService as unknown as ModelDiscoveryService,
   );
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('is restricted to ADMIN and gated on ADMIN_MODELS_MANAGE', () => {
     const roles = Reflect.getMetadata(ROLES_KEY, RouterModelsController.prototype.runDiscovery) as

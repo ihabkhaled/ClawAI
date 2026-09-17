@@ -1,11 +1,12 @@
+import { vi } from 'vitest';
 import nodemailer from 'nodemailer';
 
 import { buildSmtpTransportOptions, createSmtpEmailTransport } from '../smtp-email.utility';
 
-jest.mock('nodemailer', () => ({
+vi.mock('nodemailer', () => ({
   __esModule: true,
   default: {
-    createTransport: jest.fn(),
+    createTransport: vi.fn(),
   },
 }));
 
@@ -19,7 +20,7 @@ describe('SMTP email utility', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('requires STARTTLS and disables file and URL attachment access', () => {
@@ -42,8 +43,8 @@ describe('SMTP email utility', () => {
   });
 
   it('sends an in-memory PDF attachment with a stable message id', async () => {
-    const sendMail = jest.fn().mockResolvedValue({ messageId: 'accepted' });
-    jest.mocked(nodemailer.createTransport).mockReturnValue({ sendMail } as never);
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'accepted' });
+    vi.mocked(nodemailer.createTransport).mockReturnValue({ sendMail } as never);
     const transport = createSmtpEmailTransport(smtp);
     const content = new Uint8Array([37, 80, 68, 70]);
 

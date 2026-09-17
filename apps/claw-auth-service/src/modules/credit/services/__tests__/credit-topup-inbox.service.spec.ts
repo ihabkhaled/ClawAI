@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 
 import { CreditLedgerKind } from '../../../../generated/prisma';
@@ -30,24 +31,24 @@ const REVERSED = {
 };
 
 describe('CreditTopupInboxService', () => {
-  let inbox: { claim: jest.Mock; markProcessed: jest.Mock; markFailed: jest.Mock };
+  let inbox: { claim: Mock; markProcessed: Mock; markFailed: Mock };
   let wallets: {
-    ensure: jest.Mock;
-    applyCredit: jest.Mock;
-    applyTopupReversal: jest.Mock;
+    ensure: Mock;
+    applyCredit: Mock;
+    applyTopupReversal: Mock;
   };
   let service: CreditTopupInboxService;
 
   beforeEach(() => {
     inbox = {
-      claim: jest.fn().mockResolvedValue(true),
-      markProcessed: jest.fn().mockResolvedValue(undefined),
-      markFailed: jest.fn().mockResolvedValue(undefined),
+      claim: vi.fn().mockResolvedValue(true),
+      markProcessed: vi.fn().mockResolvedValue(undefined),
+      markFailed: vi.fn().mockResolvedValue(undefined),
     };
     wallets = {
-      ensure: jest.fn().mockResolvedValue({ id: 'wallet-1' }),
-      applyCredit: jest.fn().mockResolvedValue({ id: 'wallet-1' }),
-      applyTopupReversal: jest.fn().mockResolvedValue({
+      ensure: vi.fn().mockResolvedValue({ id: 'wallet-1' }),
+      applyCredit: vi.fn().mockResolvedValue({ id: 'wallet-1' }),
+      applyTopupReversal: vi.fn().mockResolvedValue({
         wallet: { id: 'wallet-1' },
         reversedMicroUsd: 15_000_000n,
         shortfallMicroUsd: 0n,

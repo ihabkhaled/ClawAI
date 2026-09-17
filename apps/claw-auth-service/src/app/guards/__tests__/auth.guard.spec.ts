@@ -1,3 +1,4 @@
+import { type Mocked, vi } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
 import { type Reflector } from '@nestjs/core';
 import { AuthGuard } from '../auth.guard';
@@ -5,20 +6,20 @@ import { UserRole } from '../../../common/enums';
 import * as utilities from '@common/utilities';
 
 // Mock the @common/utilities module
-jest.mock('@common/utilities', () => ({
-  verifyAccessToken: jest.fn(),
+vi.mock('@common/utilities', () => ({
+  verifyAccessToken: vi.fn(),
 }));
 
 // Mock AppConfig
-jest.mock('../../config/app.config', () => ({
+vi.mock('../../config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       JWT_SECRET: 'test-secret-key-that-is-long-enough',
     }),
   },
 }));
 
-const { verifyAccessToken } = jest.mocked(utilities);
+const { verifyAccessToken } = vi.mocked(utilities);
 
 function createMockExecutionContext(headers: Record<string, string | undefined> = {}): {
   context: unknown;
@@ -39,15 +40,15 @@ function createMockExecutionContext(headers: Record<string, string | undefined> 
 
 describe('AuthGuard', () => {
   let guard: AuthGuard;
-  let reflector: jest.Mocked<Reflector>;
+  let reflector: Mocked<Reflector>;
 
   beforeEach(() => {
     reflector = {
-      getAllAndOverride: jest.fn().mockReturnValue(false),
-    } as unknown as jest.Mocked<Reflector>;
+      getAllAndOverride: vi.fn().mockReturnValue(false),
+    } as unknown as Mocked<Reflector>;
 
     guard = new AuthGuard(reflector);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Restore default mock after clearAllMocks
     reflector.getAllAndOverride.mockReturnValue(false);
   });

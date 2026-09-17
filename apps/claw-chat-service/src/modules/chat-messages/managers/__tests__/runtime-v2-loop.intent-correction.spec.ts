@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BusinessException } from '../../../../common/errors';
 import {
   RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
@@ -60,7 +61,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
     });
   }
 
-  function nudge(callProvider: jest.Mock): Promise<{ output: { kind: string } }> {
+  function nudge(callProvider: Mock): Promise<{ output: { kind: string } }> {
     const loop = new RuntimeV2LoopManager(
       {} as never,
       {} as never,
@@ -84,7 +85,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
   }
 
   it('turns an announcement into the tool call it announced', async () => {
-    const callProvider = jest.fn().mockResolvedValueOnce({ content: toolJson() });
+    const callProvider = vi.fn().mockResolvedValueOnce({ content: toolJson() });
 
     await expect(nudge(callProvider)).resolves.toMatchObject({ output: { kind: 'tool' } });
     expect(callProvider).toHaveBeenCalledTimes(1);
@@ -96,7 +97,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
   // call it was describing, but the correction never said either, so the run
   // ended having done nothing three narrations later.
   it('tells a model blocked on a precondition to request it rather than describe it', async () => {
-    const callProvider = jest.fn().mockResolvedValueOnce({ content: toolJson() });
+    const callProvider = vi.fn().mockResolvedValueOnce({ content: toolJson() });
 
     await nudge(callProvider);
 
@@ -109,7 +110,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
     // The correction asks for a tool request, which is when a model is most
     // likely to produce a slightly wrong one. Inline parsing threw here, and
     // the caller swallowed it.
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({
         content: JSON.stringify({ kind: 'tool', toolName: 'workspace.shell' }),
@@ -122,7 +123,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
   it('keeps asking after a correction attempt fails outright', async () => {
     // One transient failure used to end every remaining attempt. The provider
     // fails once, then answers correctly, and the run must survive that.
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValueOnce(new Error('connector unreachable'))
       .mockRejectedValueOnce(new Error('connector unreachable'))
@@ -133,7 +134,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
   });
 
   it('fails loudly, naming the last correction failure, rather than reporting success', async () => {
-    const callProvider = jest.fn().mockRejectedValue(new Error('connector unreachable'));
+    const callProvider = vi.fn().mockRejectedValue(new Error('connector unreachable'));
 
     await expect(nudge(callProvider)).rejects.toMatchObject({
       code: RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
@@ -142,7 +143,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
   });
 
   it('spends every attempt it is given before giving up', async () => {
-    const callProvider = jest.fn().mockRejectedValue(new Error('connector unreachable'));
+    const callProvider = vi.fn().mockRejectedValue(new Error('connector unreachable'));
 
     await expect(nudge(callProvider)).rejects.toBeDefined();
     // Each attempt calls the provider once; a repair only happens when a reply
@@ -151,7 +152,7 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
   });
 
   it('never accepts a second announcement as the answer', async () => {
-    const callProvider = jest.fn().mockResolvedValue({ content: ANNOUNCEMENT });
+    const callProvider = vi.fn().mockResolvedValue({ content: ANNOUNCEMENT });
 
     await expect(nudge(callProvider)).rejects.toMatchObject({
       code: RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
@@ -176,7 +177,7 @@ describe('RuntimeV2LoopManager transient provider retry', () => {
     toolDefinitions: [],
   };
 
-  function call(callProvider: jest.Mock): Promise<{ content: string }> {
+  function call(callProvider: Mock): Promise<{ content: string }> {
     const loop = new RuntimeV2LoopManager(
       {} as never,
       {} as never,
@@ -196,7 +197,7 @@ describe('RuntimeV2LoopManager transient provider retry', () => {
   }
 
   it('retries an unavailable provider and keeps the run', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValueOnce(
         new BusinessException('Internal Server Error', RUNTIME_V2_TRANSIENT_PROVIDER_CODE),
@@ -208,7 +209,7 @@ describe('RuntimeV2LoopManager transient provider retry', () => {
   });
 
   it('gives up after the configured retries rather than looping forever', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValue(
         new BusinessException('Internal Server Error', RUNTIME_V2_TRANSIENT_PROVIDER_CODE),
@@ -222,7 +223,7 @@ describe('RuntimeV2LoopManager transient provider retry', () => {
 
   it('never retries a request the provider rejected', async () => {
     // A 4xx is the same failure every time; retrying only makes the error slower.
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValue(new BusinessException('Bad request', 'CLOUD_PROVIDER_REQUEST_FAILED'));
 

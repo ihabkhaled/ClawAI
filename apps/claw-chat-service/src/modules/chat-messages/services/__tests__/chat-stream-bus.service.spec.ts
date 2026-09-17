@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { CHAT_STREAM_CHANNEL } from '../../constants/chat-stream-bus.constants';
 import { ChatStreamBusService } from '../chat-stream-bus.service';
 import type { StreamEvent } from '../../types/stream.types';
@@ -9,22 +10,22 @@ function build(overrides: { evalRejects?: boolean; lrangeRejects?: boolean } = {
   let readyHandler: (() => void) | null = null;
 
   const redis = {
-    eval: jest.fn(() =>
+    eval: vi.fn(() =>
       overrides.evalRejects === true ? Promise.reject(new Error('redis down')) : Promise.resolve(1),
     ),
-    lrange: jest.fn((): Promise<string[]> =>
+    lrange: vi.fn((): Promise<string[]> =>
       overrides.lrangeRejects === true
         ? Promise.reject(new Error('redis down'))
         : Promise.resolve<string[]>([]),
     ),
-    del: jest.fn(() => Promise.resolve(1)),
+    del: vi.fn(() => Promise.resolve(1)),
   };
   const subscriber = {
-    subscribe: jest.fn(() => Promise.resolve()),
-    onMessage: jest.fn((handler: MessageHandler) => {
+    subscribe: vi.fn(() => Promise.resolve()),
+    onMessage: vi.fn((handler: MessageHandler) => {
       messageHandler = handler;
     }),
-    onReady: jest.fn((handler: () => void) => {
+    onReady: vi.fn((handler: () => void) => {
       readyHandler = handler;
     }),
   };

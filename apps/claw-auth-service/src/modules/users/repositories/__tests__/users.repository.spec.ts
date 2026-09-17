@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { UsersRepository } from '../users.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -7,29 +8,29 @@ describe('UsersRepository', () => {
   let repository: UsersRepository;
   let prismaMock: {
     user: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
-      count: jest.Mock;
-      update: jest.Mock;
-      delete: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findMany: Mock;
+      count: Mock;
+      update: Mock;
+      delete: Mock;
     };
-    session: { updateMany: jest.Mock };
-    $transaction: jest.Mock;
+    session: { updateMany: Mock };
+    $transaction: Mock;
   };
 
   beforeEach(async () => {
     prismaMock = {
       user: {
-        create: jest.fn().mockResolvedValue({ id: 'u1' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'u1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]),
-        count: jest.fn().mockResolvedValue(2),
-        update: jest.fn().mockResolvedValue({ id: 'u1' }),
-        delete: jest.fn().mockResolvedValue({ id: 'u1' }),
+        create: vi.fn().mockResolvedValue({ id: 'u1' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'u1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]),
+        count: vi.fn().mockResolvedValue(2),
+        update: vi.fn().mockResolvedValue({ id: 'u1' }),
+        delete: vi.fn().mockResolvedValue({ id: 'u1' }),
       },
-      session: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
-      $transaction: jest.fn().mockResolvedValue([[{ id: 'u1' }, { id: 'u2' }], 2]),
+      session: { updateMany: vi.fn().mockResolvedValue({ count: 2 }) },
+      $transaction: vi.fn().mockResolvedValue([[{ id: 'u1' }, { id: 'u2' }], 2]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,7 +64,9 @@ describe('UsersRepository', () => {
   describe('findAll', () => {
     it('uses default sortBy=createdAt and sortOrder=DESC when omitted', async () => {
       await repository.findAll({ skip: 0, take: 10 });
-      const findManyArgs = prismaMock.user.findMany.mock.calls[0][0];
+      const findManyArgsCall = prismaMock.user.findMany.mock.calls[0];
+      expect(findManyArgsCall).toBeDefined();
+      const findManyArgs = findManyArgsCall?.[0];
       expect(findManyArgs.orderBy).toEqual({ createdAt: SortOrder.DESC });
       expect(findManyArgs.skip).toBe(0);
       expect(findManyArgs.take).toBe(10);
@@ -71,7 +74,9 @@ describe('UsersRepository', () => {
 
     it('uses custom sortBy and SortOrder.ASC when provided', async () => {
       await repository.findAll({ skip: 5, take: 5, sortBy: 'email', sortOrder: SortOrder.ASC });
-      const findManyArgs = prismaMock.user.findMany.mock.calls[0][0];
+      const findManyArgsCall = prismaMock.user.findMany.mock.calls[0];
+      expect(findManyArgsCall).toBeDefined();
+      const findManyArgs = findManyArgsCall?.[0];
       expect(findManyArgs.orderBy).toEqual({ email: SortOrder.ASC });
     });
 
@@ -87,7 +92,9 @@ describe('UsersRepository', () => {
         take: 10,
         filters: { role: UserRole.OPERATOR, status: UserStatus.ACTIVE },
       });
-      const findManyArgs = prismaMock.user.findMany.mock.calls[0][0];
+      const findManyArgsCall = prismaMock.user.findMany.mock.calls[0];
+      expect(findManyArgsCall).toBeDefined();
+      const findManyArgs = findManyArgsCall?.[0];
       expect(findManyArgs.where).toEqual({
         role: UserRole.OPERATOR,
         status: UserStatus.ACTIVE,
@@ -100,14 +107,18 @@ describe('UsersRepository', () => {
         take: 10,
         filters: { search: 'admin' },
       });
-      const findManyArgs = prismaMock.user.findMany.mock.calls[0][0];
+      const findManyArgsCall = prismaMock.user.findMany.mock.calls[0];
+      expect(findManyArgsCall).toBeDefined();
+      const findManyArgs = findManyArgsCall?.[0];
       expect(findManyArgs.where.OR).toHaveLength(2);
       expect(findManyArgs.where.OR[0].email).toEqual({ contains: 'admin', mode: 'insensitive' });
     });
 
     it('builds empty where clause when no filters provided', async () => {
       await repository.findAll({ skip: 0, take: 10 });
-      const findManyArgs = prismaMock.user.findMany.mock.calls[0][0];
+      const findManyArgsCall = prismaMock.user.findMany.mock.calls[0];
+      expect(findManyArgsCall).toBeDefined();
+      const findManyArgs = findManyArgsCall?.[0];
       expect(findManyArgs.where).toEqual({});
     });
   });

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SeedApplyOutcome } from '../../../common/enums';
 import { CostClass, CostConfidence, ModelCostSource } from '../../../generated/prisma';
 import { ModelCostSeedRepository } from '../repositories/model-cost-seed.repository';
@@ -42,21 +43,21 @@ const seedInput = (overrides: Partial<ModelCostSeedInput> = {}): ModelCostSeedIn
 });
 
 type TransactionMock = {
-  $queryRaw: jest.Mock;
-  seedExecution: { findUnique: jest.Mock; upsert: jest.Mock; update: jest.Mock };
-  modelCostVersion: { findMany: jest.Mock; createMany: jest.Mock };
+  $queryRaw: Mock;
+  seedExecution: { findUnique: Mock; upsert: Mock; update: Mock };
+  modelCostVersion: { findMany: Mock; createMany: Mock };
 };
 
 const buildTransaction = (): TransactionMock => ({
-  $queryRaw: jest.fn().mockResolvedValue([]),
+  $queryRaw: vi.fn().mockResolvedValue([]),
   seedExecution: {
-    findUnique: jest.fn().mockResolvedValue(null),
-    upsert: jest.fn().mockResolvedValue(undefined),
-    update: jest.fn().mockResolvedValue(undefined),
+    findUnique: vi.fn().mockResolvedValue(null),
+    upsert: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockResolvedValue(undefined),
   },
   modelCostVersion: {
-    findMany: jest.fn().mockResolvedValue([]),
-    createMany: jest.fn().mockResolvedValue({ count: 2 }),
+    findMany: vi.fn().mockResolvedValue([]),
+    createMany: vi.fn().mockResolvedValue({ count: 2 }),
   },
 });
 
@@ -157,13 +158,13 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
 
 describe('ModelCostSeedRepository', () => {
   let transaction: TransactionMock;
-  let prisma: { $transaction: jest.Mock };
+  let prisma: { $transaction: Mock };
   let repository: ModelCostSeedRepository;
 
   beforeEach(() => {
     transaction = buildTransaction();
     prisma = {
-      $transaction: jest.fn((callback: (tx: TransactionMock) => unknown) => callback(transaction)),
+      $transaction: vi.fn((callback: (tx: TransactionMock) => unknown) => callback(transaction)),
     };
     repository = new ModelCostSeedRepository(prisma as unknown as PrismaService);
   });
@@ -297,12 +298,12 @@ describe('ModelCostSeedRepository', () => {
 });
 
 describe('ModelCostSeedService', () => {
-  let repository: { applyOnce: jest.Mock };
+  let repository: { applyOnce: Mock };
   let service: ModelCostSeedService;
 
   beforeEach(() => {
     repository = {
-      applyOnce: jest
+      applyOnce: vi
         .fn()
         .mockResolvedValue({ outcome: SeedApplyOutcome.APPLIED, inserted: 16, skipped: 0 }),
     };

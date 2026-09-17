@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   BillingErrorCode,
   BillingGateway,
@@ -26,22 +27,22 @@ const session = (overrides: Record<string, unknown> = {}): Record<string, unknow
 
 describe('PaymobCheckoutCompletionService', () => {
   const sessions = {
-    findById: jest.fn(),
-    markFailed: jest.fn(),
+    findById: vi.fn(),
+    markFailed: vi.fn(),
   };
   const paymob = {
-    fetchTransactionByReference: jest.fn(),
+    fetchTransactionByReference: vi.fn(),
   };
   const activation = {
-    activate: jest.fn(),
+    activate: vi.fn(),
   };
   const compensation = {
-    compensate: jest.fn(),
+    compensate: vi.fn(),
   };
   let service: PaymobCheckoutCompletionService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     sessions.findById.mockResolvedValue(session());
     paymob.fetchTransactionByReference.mockResolvedValue({
       verified: true,

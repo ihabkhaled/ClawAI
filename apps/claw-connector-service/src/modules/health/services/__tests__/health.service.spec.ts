@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HealthService } from '../health.service';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,8 +6,8 @@ import { RedisService } from '../../../../infrastructure/redis/redis.service';
 import { HealthCheckStatus, ServiceStatus } from '../../../../common/enums';
 
 describe('HealthService', () => {
-  let prismaMock: { $queryRaw: jest.Mock };
-  let redisMock: { getClient: jest.Mock };
+  let prismaMock: { $queryRaw: Mock };
+  let redisMock: { getClient: Mock };
 
   const buildService = async (): Promise<HealthService> => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,10 +21,10 @@ describe('HealthService', () => {
   };
 
   beforeEach(() => {
-    prismaMock = { $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]) };
+    prismaMock = { $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]) };
     redisMock = {
-      getClient: jest.fn().mockReturnValue({
-        ping: jest.fn().mockResolvedValue('PONG'),
+      getClient: vi.fn().mockReturnValue({
+        ping: vi.fn().mockResolvedValue('PONG'),
       }),
     };
   });
@@ -34,17 +35,17 @@ describe('HealthService', () => {
   });
 
   it('returns DOWN when both down', async () => {
-    prismaMock.$queryRaw = jest.fn().mockRejectedValue(new Error('db'));
-    redisMock.getClient = jest.fn().mockReturnValue({
-      ping: jest.fn().mockRejectedValue(new Error('redis')),
+    prismaMock.$queryRaw = vi.fn().mockRejectedValue(new Error('db'));
+    redisMock.getClient = vi.fn().mockReturnValue({
+      ping: vi.fn().mockRejectedValue(new Error('redis')),
     });
     const service = await buildService();
     expect((await service.check()).status).toBe(HealthCheckStatus.DOWN);
   });
 
   it('returns DEGRADED when only redis down', async () => {
-    redisMock.getClient = jest.fn().mockReturnValue({
-      ping: jest.fn().mockResolvedValue('not-pong'),
+    redisMock.getClient = vi.fn().mockReturnValue({
+      ping: vi.fn().mockResolvedValue('not-pong'),
     });
     const service = await buildService();
     const result = await service.check();
@@ -53,7 +54,7 @@ describe('HealthService', () => {
   });
 
   it('returns DEGRADED when only db down', async () => {
-    prismaMock.$queryRaw = jest.fn().mockRejectedValue(new Error('db'));
+    prismaMock.$queryRaw = vi.fn().mockRejectedValue(new Error('db'));
     const service = await buildService();
     const result = await service.check();
     expect(result.status).toBe(HealthCheckStatus.DEGRADED);

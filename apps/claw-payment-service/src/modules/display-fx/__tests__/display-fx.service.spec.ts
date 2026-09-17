@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { DisplayFxSource } from '@claw/shared-types';
 
 import { type RedisService } from '../../../infrastructure/redis/redis.service';
@@ -9,10 +10,10 @@ const RATE_SCALE = 10_000_000;
 
 function buildRedis(overrides: Partial<Record<string, unknown>> = {}): RedisService {
   return {
-    get: jest.fn().mockResolvedValue(null),
-    set: jest.fn().mockResolvedValue(undefined),
-    acquireLock: jest.fn().mockResolvedValue(true),
-    releaseLock: jest.fn().mockResolvedValue(true),
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    acquireLock: vi.fn().mockResolvedValue(true),
+    releaseLock: vi.fn().mockResolvedValue(true),
     ...overrides,
   } as unknown as RedisService;
 }
@@ -30,8 +31,8 @@ const fallbackRate = {
 
 describe('DisplayFxService', () => {
   it('returns null for USD because there is nothing to convert', async () => {
-    const primary = { fetchRate: jest.fn() } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const primary = { fetchRate: vi.fn() } as unknown as FrankfurterProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const service = new DisplayFxService(buildRedis(), primary, fallback);
 
     expect(await service.getRate('USD')).toBeNull();
@@ -42,8 +43,8 @@ describe('DisplayFxService', () => {
     // An unvalidated currency in a Redis namespace is a way to mint unlimited
     // keys from a query string.
     const redis = buildRedis();
-    const primary = { fetchRate: jest.fn() } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const primary = { fetchRate: vi.fn() } as unknown as FrankfurterProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const service = new DisplayFxService(redis, primary, fallback);
 
     for (const code of ['BTC', 'ZZZ', '../../etc', 'A'.repeat(500), '']) {
@@ -55,9 +56,9 @@ describe('DisplayFxService', () => {
 
   it('uses the primary and does not call the fallback', async () => {
     const primary = {
-      fetchRate: jest.fn().mockResolvedValue(frankfurterRate),
+      fetchRate: vi.fn().mockResolvedValue(frankfurterRate),
     } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const service = new DisplayFxService(buildRedis(), primary, fallback);
 
     const rate = await service.getRate('EGP');
@@ -68,10 +69,10 @@ describe('DisplayFxService', () => {
 
   it('falls through to the fallback when the primary cannot answer', async () => {
     const primary = {
-      fetchRate: jest.fn().mockResolvedValue(null),
+      fetchRate: vi.fn().mockResolvedValue(null),
     } as unknown as FrankfurterProvider;
     const fallback = {
-      fetchRate: jest.fn().mockResolvedValue(fallbackRate),
+      fetchRate: vi.fn().mockResolvedValue(fallbackRate),
     } as unknown as FawazExchangeProvider;
     const service = new DisplayFxService(buildRedis(), primary, fallback);
 
@@ -81,10 +82,10 @@ describe('DisplayFxService', () => {
 
   it('returns null when both providers fail, so the caller renders USD', async () => {
     const primary = {
-      fetchRate: jest.fn().mockResolvedValue(null),
+      fetchRate: vi.fn().mockResolvedValue(null),
     } as unknown as FrankfurterProvider;
     const fallback = {
-      fetchRate: jest.fn().mockResolvedValue(null),
+      fetchRate: vi.fn().mockResolvedValue(null),
     } as unknown as FawazExchangeProvider;
     const redis = buildRedis();
     const service = new DisplayFxService(redis, primary, fallback);
@@ -109,9 +110,9 @@ describe('DisplayFxService caching', () => {
       asOf: '2026-09-11',
       source: DisplayFxSource.FRANKFURTER,
     });
-    const primary = { fetchRate: jest.fn() } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
-    const redis = buildRedis({ get: jest.fn().mockResolvedValue(cached) });
+    const primary = { fetchRate: vi.fn() } as unknown as FrankfurterProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
+    const redis = buildRedis({ get: vi.fn().mockResolvedValue(cached) });
     const service = new DisplayFxService(redis, primary, fallback);
 
     const rate = await service.getRate('EGP');
@@ -123,9 +124,9 @@ describe('DisplayFxService caching', () => {
     // A cache is storage, not a source of truth. A poisoned or half-written
     // entry must not become a price.
     const primary = {
-      fetchRate: jest.fn().mockResolvedValue(frankfurterRate),
+      fetchRate: vi.fn().mockResolvedValue(frankfurterRate),
     } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const poisoned = JSON.stringify({
       baseCurrency: 'USD',
       quoteCurrency: 'EGP',
@@ -135,7 +136,7 @@ describe('DisplayFxService caching', () => {
     });
     const service = new DisplayFxService(
       buildRedis({
-        get: jest
+        get: vi
           .fn()
           .mockImplementation((key: string) =>
             Promise.resolve(key.includes('display-fx:rate') ? poisoned : null),
@@ -151,10 +152,10 @@ describe('DisplayFxService caching', () => {
   });
 
   it('skips both providers for a currency known to be unquotable', async () => {
-    const primary = { fetchRate: jest.fn() } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const primary = { fetchRate: vi.fn() } as unknown as FrankfurterProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const redis = buildRedis({
-      get: jest
+      get: vi
         .fn()
         .mockImplementation((key: string) =>
           Promise.resolve(key.includes('unsupported') ? '1' : null),
@@ -169,14 +170,14 @@ describe('DisplayFxService caching', () => {
   it('still renders a price when Redis is down', async () => {
     // Losing the cache degrades performance. It must not degrade the page.
     const primary = {
-      fetchRate: jest.fn().mockResolvedValue(frankfurterRate),
+      fetchRate: vi.fn().mockResolvedValue(frankfurterRate),
     } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const redis = buildRedis({
-      get: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      set: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      acquireLock: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      releaseLock: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      get: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      set: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      acquireLock: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      releaseLock: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
     });
     const service = new DisplayFxService(redis, primary, fallback);
 
@@ -193,25 +194,25 @@ describe('DisplayFxService single-flight', () => {
     let stored: string | null = null;
     let lockHeld = false;
     const primary = {
-      fetchRate: jest.fn().mockResolvedValue(frankfurterRate),
+      fetchRate: vi.fn().mockResolvedValue(frankfurterRate),
     } as unknown as FrankfurterProvider;
-    const fallback = { fetchRate: jest.fn() } as unknown as FawazExchangeProvider;
+    const fallback = { fetchRate: vi.fn() } as unknown as FawazExchangeProvider;
     const redis = buildRedis({
-      get: jest.fn().mockImplementation(() => Promise.resolve(stored)),
-      set: jest.fn().mockImplementation((key: string, value: string) => {
+      get: vi.fn().mockImplementation(() => Promise.resolve(stored)),
+      set: vi.fn().mockImplementation((key: string, value: string) => {
         if (key.includes('display-fx:rate')) {
           stored = value;
         }
         return Promise.resolve(undefined);
       }),
-      acquireLock: jest.fn().mockImplementation(() => {
+      acquireLock: vi.fn().mockImplementation(() => {
         if (lockHeld) {
           return Promise.resolve(false);
         }
         lockHeld = true;
         return Promise.resolve(true);
       }),
-      releaseLock: jest.fn().mockImplementation(() => {
+      releaseLock: vi.fn().mockImplementation(() => {
         lockHeld = false;
         return Promise.resolve(true);
       }),
@@ -222,6 +223,6 @@ describe('DisplayFxService single-flight', () => {
       Array.from({ length: 25 }, async () => service.getRate('EGP')),
     );
     expect(results.every((rate) => rate?.rateScaled === 51 * RATE_SCALE)).toBe(true);
-    expect((primary.fetchRate as jest.Mock).mock.calls).toHaveLength(1);
+    expect((primary.fetchRate as Mock).mock.calls).toHaveLength(1);
   });
 });

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SubscriptionStatus } from '@claw/shared-types';
 
 import {
@@ -53,36 +54,36 @@ function subscription(overrides: Partial<Subscription> = {}): Subscription {
 
 describe('LifecycleReconciliationService', () => {
   let subscriptions: {
-    countGraceExpired: jest.Mock;
-    findGraceExpired: jest.Mock;
-    countDueScheduledChanges: jest.Mock;
-    findDueScheduledChanges: jest.Mock;
-    countLapsedEntitlements: jest.Mock;
-    findLapsedEntitlements: jest.Mock;
+    countGraceExpired: Mock;
+    findGraceExpired: Mock;
+    countDueScheduledChanges: Mock;
+    findDueScheduledChanges: Mock;
+    countLapsedEntitlements: Mock;
+    findLapsedEntitlements: Mock;
   };
   let lifecycle: {
-    expirePastDueIfVersionMatches: jest.Mock;
-    expireLapsedIfVersionMatches: jest.Mock;
+    expirePastDueIfVersionMatches: Mock;
+    expireLapsedIfVersionMatches: Mock;
   };
-  let downgrades: { applyDue: jest.Mock };
-  let reconciliation: { recordFinding: jest.Mock };
+  let downgrades: { applyDue: Mock };
+  let reconciliation: { recordFinding: Mock };
   let service: LifecycleReconciliationService;
 
   beforeEach(() => {
     subscriptions = {
-      countGraceExpired: jest.fn().mockResolvedValue(0),
-      findGraceExpired: jest.fn().mockResolvedValue([]),
-      countDueScheduledChanges: jest.fn().mockResolvedValue(0),
-      findDueScheduledChanges: jest.fn().mockResolvedValue([]),
-      countLapsedEntitlements: jest.fn().mockResolvedValue(0),
-      findLapsedEntitlements: jest.fn().mockResolvedValue([]),
+      countGraceExpired: vi.fn().mockResolvedValue(0),
+      findGraceExpired: vi.fn().mockResolvedValue([]),
+      countDueScheduledChanges: vi.fn().mockResolvedValue(0),
+      findDueScheduledChanges: vi.fn().mockResolvedValue([]),
+      countLapsedEntitlements: vi.fn().mockResolvedValue(0),
+      findLapsedEntitlements: vi.fn().mockResolvedValue([]),
     };
     lifecycle = {
-      expirePastDueIfVersionMatches: jest.fn().mockResolvedValue(true),
-      expireLapsedIfVersionMatches: jest.fn().mockResolvedValue(true),
+      expirePastDueIfVersionMatches: vi.fn().mockResolvedValue(true),
+      expireLapsedIfVersionMatches: vi.fn().mockResolvedValue(true),
     };
-    downgrades = { applyDue: jest.fn().mockResolvedValue(true) };
-    reconciliation = { recordFinding: jest.fn() };
+    downgrades = { applyDue: vi.fn().mockResolvedValue(true) };
+    reconciliation = { recordFinding: vi.fn() };
     service = new LifecycleReconciliationService(
       subscriptions as unknown as SubscriptionRepository,
       lifecycle as unknown as SubscriptionLifecycleService,

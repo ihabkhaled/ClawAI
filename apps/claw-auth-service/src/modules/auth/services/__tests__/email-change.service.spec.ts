@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { DuplicateEntityException } from '../../../../common/errors';
@@ -11,12 +12,12 @@ import { UserLanguagePreference } from '../../../../generated/prisma';
 describe('EmailChangeService', () => {
   let service: EmailChangeService;
   const manager = {
-    cancel: jest.fn(),
-    confirm: jest.fn(),
-    getPendingState: jest.fn(),
-    request: jest.fn(),
-    resendOldEmailOtp: jest.fn(),
-    verifyOldEmail: jest.fn(),
+    cancel: vi.fn(),
+    confirm: vi.fn(),
+    getPendingState: vi.fn(),
+    request: vi.fn(),
+    resendOldEmailOtp: vi.fn(),
+    verifyOldEmail: vi.fn(),
   };
   // Each send now names a person and a language. The resolver is stubbed to
   // echo the address back so assertions stay about WHICH address was written to.
@@ -26,19 +27,19 @@ describe('EmailChangeService', () => {
     firstName: 'Ada',
   });
   const recipients = {
-    forEmail: jest.fn(),
-    forUserId: jest.fn(),
-    forUserIdAtOtherAddress: jest.fn(),
+    forEmail: vi.fn(),
+    forUserId: vi.fn(),
+    forUserIdAtOtherAddress: vi.fn(),
   };
   const emailAdapter = {
-    assertEmailDeliveryAvailable: jest.fn(),
-    sendEmailChangeCompletedNotice: jest.fn(),
-    sendEmailChangeConfirmation: jest.fn(),
-    sendEmailChangeOtp: jest.fn(),
+    assertEmailDeliveryAvailable: vi.fn(),
+    sendEmailChangeCompletedNotice: vi.fn(),
+    sendEmailChangeConfirmation: vi.fn(),
+    sendEmailChangeOtp: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EmailChangeService,
@@ -195,7 +196,7 @@ describe('EmailChangeService', () => {
   });
 
   it('swallows only completion-notice delivery failure', async () => {
-    const warning = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    const warning = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
     manager.confirm.mockResolvedValue({ changed: true, oldEmail: 'old@example.com' });
     emailAdapter.sendEmailChangeCompletedNotice.mockRejectedValue(new Error('delivery failed'));
     await expect(service.confirmEmailChange('raw-token')).resolves.toEqual({ changed: true });

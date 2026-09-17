@@ -1,39 +1,40 @@
+import { vi, type Mock } from 'vitest';
 import { BitbucketAdapter } from '../bitbucket.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('BitbucketAdapter', () => {
   let adapter: BitbucketAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new BitbucketAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toContain('Unauthorized');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
       expect(result.errorMessage).toBe('HTTP 503');
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
@@ -72,7 +73,7 @@ describe('BitbucketAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens via Basic auth', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -87,7 +88,7 @@ describe('BitbucketAdapter', () => {
       });
       expect(tokens.accessToken).toBe('at');
       expect(tokens.scopes).toEqual(['repository', 'account']);
-      const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+      const [, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
       expect((init.headers as Record<string, string>)['Authorization']).toMatch(/^Basic /);
     });
 
@@ -98,7 +99,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -114,7 +115,7 @@ describe('BitbucketAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', expires_in: 3600 }),
       });
@@ -154,7 +155,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('walks workspaces → repos → PRs for the first 3 repos', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [{ slug: 'acme' }] }) })
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [repo()] }) })
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [pr()] }) });
@@ -172,18 +173,18 @@ describe('BitbucketAdapter', () => {
     });
 
     it('returns an empty repo list when the account has no workspaces (410)', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 410 });
+      (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 410 });
       const result = await adapter.syncObjects('token');
       expect(result.objects).toEqual([]);
     });
 
     it('throws when the workspaces fetch fails with a non-410 error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 });
       await expect(adapter.syncObjects('token')).rejects.toThrow(/HTTP 500/);
     });
 
     it('skips a workspace whose repo fetch fails, without aborting the whole sync', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ values: [{ slug: 'bad-ws' }, { slug: 'good-ws' }] }),
@@ -201,7 +202,7 @@ describe('BitbucketAdapter', () => {
     // lose repos already collected, matching GitHub's safeFetchIssues and
     // the fix Phase 13 applied to ClickUp.
     it('tolerates a failed PR fetch for one repo without losing the repo objects', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [{ slug: 'acme' }] }) })
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [repo()] }) })
         .mockResolvedValueOnce({ ok: false, status: 500 });
@@ -212,7 +213,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('tolerates a thrown network error during PR fetch without aborting', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [{ slug: 'acme' }] }) })
         .mockResolvedValueOnce({ ok: true, json: async () => ({ values: [repo()] }) })
         .mockRejectedValueOnce(new Error('ECONNRESET'));
@@ -224,7 +225,7 @@ describe('BitbucketAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('REPOSITORY — resolves by fullName metadata', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -250,7 +251,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('REPOSITORY — returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'REPOSITORY', {
         fullName: 'acme/missing',
       });
@@ -258,14 +259,14 @@ describe('BitbucketAdapter', () => {
     });
 
     it('REPOSITORY — throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(
         adapter.fetchObjectDetails('token', '{repo-1}', 'REPOSITORY', { fullName: 'acme/backend' }),
       ).rejects.toThrow(/HTTP 500/);
     });
 
     it('PULL_REQUEST — resolves by fullName + prId metadata', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -293,7 +294,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('PULL_REQUEST — returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', '42', 'PULL_REQUEST', {
         fullName: 'acme/backend',
         prId: 42,
@@ -311,7 +312,7 @@ describe('BitbucketAdapter', () => {
   describe('write actions', () => {
     describe('CREATE_PR_COMMENT_BB', () => {
       it('posts a raw-content comment to the PR comments endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({
             id: 1,
@@ -329,7 +330,7 @@ describe('BitbucketAdapter', () => {
           externalId: '1',
           url: 'https://bitbucket.org/comment/1',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/repositories/acme/backend/pullrequests/42/comments');
         expect(JSON.parse(init.body as string)).toEqual({ content: { raw: 'Looks good' } });
       });
@@ -337,13 +338,13 @@ describe('BitbucketAdapter', () => {
 
     describe('APPROVE_PR_BB', () => {
       it('posts to the PR approve endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
+        (global.fetch as Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
         await adapter.executeWriteAction('token', 'APPROVE_PR_BB', {
           workspace: 'acme',
           repo: 'backend',
           prId: '42',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/pullrequests/42/approve');
         expect(init.method).toBe('POST');
       });
@@ -351,7 +352,7 @@ describe('BitbucketAdapter', () => {
 
     describe('CREATE_BITBUCKET_ISSUE', () => {
       it('posts title+description to the issues endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 7, links: { html: { href: 'https://bitbucket.org/issue/7' } } }),
         });
@@ -362,7 +363,7 @@ describe('BitbucketAdapter', () => {
           description: 'It breaks',
         });
         expect(result.success).toBe(true);
-        const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(JSON.parse(init.body as string)).toEqual({
           title: 'Bug',
           content: { raw: 'It breaks' },
@@ -371,7 +372,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('returns success:false with the API error on failure', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         text: async () => 'Bad request',
@@ -392,7 +393,7 @@ describe('BitbucketAdapter', () => {
     });
 
     it('catches a thrown error from the dispatched handler', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+      (global.fetch as Mock).mockRejectedValue(new Error('network down'));
       const result = await adapter.executeWriteAction('token', 'APPROVE_PR_BB', {
         workspace: 'acme',
         repo: 'backend',

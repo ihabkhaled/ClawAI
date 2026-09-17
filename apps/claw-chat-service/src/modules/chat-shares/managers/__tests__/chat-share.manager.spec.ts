@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { EntityNotFoundException } from '../../../../common/errors';
 import { ChatShareManager } from '../chat-share.manager';
@@ -75,72 +76,72 @@ function makeShare(overrides: Record<string, unknown> = {}): Record<string, unkn
 }
 
 type SharesRepoMock = {
-  findByThreadId: jest.Mock;
-  create: jest.Mock;
-  update: jest.Mock;
-  replaceSnapshot: jest.Mock;
-  deleteById: jest.Mock;
-  listIndexable: jest.Mock;
-  revokeForThread: jest.Mock;
-  findPublicByShareId: jest.Mock;
-  listStoredAssetFileIds: jest.Mock;
+  findByThreadId: Mock;
+  create: Mock;
+  update: Mock;
+  replaceSnapshot: Mock;
+  deleteById: Mock;
+  listIndexable: Mock;
+  revokeForThread: Mock;
+  findPublicByShareId: Mock;
+  listStoredAssetFileIds: Mock;
 };
 
 type EventsMock = {
-  published: jest.Mock;
-  updated: jest.Mock;
-  visibilityChanged: jest.Mock;
-  revoked: jest.Mock;
-  urlRegenerated: jest.Mock;
-  safetyRejected: jest.Mock;
+  published: Mock;
+  updated: Mock;
+  visibilityChanged: Mock;
+  revoked: Mock;
+  urlRegenerated: Mock;
+  safetyRejected: Mock;
 };
 
 describe('ChatShareManager', () => {
   let shares: SharesRepoMock;
-  let threads: { findById: jest.Mock };
-  let messages: { findAllByThreadIdAscending: jest.Mock; countByThreadId: jest.Mock };
+  let threads: { findById: Mock };
+  let messages: { findAllByThreadIdAscending: Mock; countByThreadId: Mock };
   let events: EventsMock;
-  let shareAssets: { attachCopies: jest.Mock; releaseCopies: jest.Mock };
+  let shareAssets: { attachCopies: Mock; releaseCopies: Mock };
   let manager: ChatShareManager;
 
   beforeEach(() => {
     events = {
-      published: jest.fn(),
-      updated: jest.fn(),
-      visibilityChanged: jest.fn(),
-      revoked: jest.fn(),
-      urlRegenerated: jest.fn(),
-      safetyRejected: jest.fn(),
+      published: vi.fn(),
+      updated: vi.fn(),
+      visibilityChanged: vi.fn(),
+      revoked: vi.fn(),
+      urlRegenerated: vi.fn(),
+      safetyRejected: vi.fn(),
     };
     shares = {
-      findByThreadId: jest.fn().mockResolvedValue(null),
-      create: jest
+      findByThreadId: vi.fn().mockResolvedValue(null),
+      create: vi
         .fn()
         .mockImplementation(async (data: Record<string, unknown>) => makeShare(data)),
-      update: jest
+      update: vi
         .fn()
         .mockImplementation(async (_id: string, data: Record<string, unknown>) => makeShare(data)),
-      replaceSnapshot: jest.fn().mockImplementation(async (_id, _msgs, data) => makeShare(data)),
-      deleteById: jest.fn(),
-      listIndexable: jest.fn(),
-      revokeForThread: jest.fn(),
-      findPublicByShareId: jest.fn(),
-      listStoredAssetFileIds: jest.fn().mockResolvedValue([]),
+      replaceSnapshot: vi.fn().mockImplementation(async (_id, _msgs, data) => makeShare(data)),
+      deleteById: vi.fn(),
+      listIndexable: vi.fn(),
+      revokeForThread: vi.fn(),
+      findPublicByShareId: vi.fn(),
+      listStoredAssetFileIds: vi.fn().mockResolvedValue([]),
     };
     threads = {
-      findById: jest.fn().mockResolvedValue({ id: 'thread-1', userId: 'user-1', title: 'Setup' }),
+      findById: vi.fn().mockResolvedValue({ id: 'thread-1', userId: 'user-1', title: 'Setup' }),
     };
     messages = {
-      findAllByThreadIdAscending: jest.fn().mockResolvedValue(fourMessages()),
-      countByThreadId: jest.fn().mockResolvedValue(4),
+      findAllByThreadIdAscending: vi.fn().mockResolvedValue(fourMessages()),
+      countByThreadId: vi.fn().mockResolvedValue(4),
     };
     // No thread in these fixtures carries images, so the publisher passes the
     // messages through untouched. Asset copying has its own spec.
     shareAssets = {
-      attachCopies: jest.fn(async (messages: unknown) => messages),
-      releaseCopies: jest.fn(async () => {}),
+      attachCopies: vi.fn(async (messages: unknown) => messages),
+      releaseCopies: vi.fn(async () => {}),
     };
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ PUBLIC_SITE_URL: 'https://claw.local' } as ReturnType<
         typeof AppConfig.get
@@ -155,12 +156,12 @@ describe('ChatShareManager', () => {
       shareAssets as unknown as ShareAssetPublisherService,
       // Moderation is fire-and-forget after publish; these tests assert the
       // publish itself, so a no-op scanner keeps them focused on that.
-      { scanShare: jest.fn(async () => {}) } as unknown as ImageSafetyScannerService,
+      { scanShare: vi.fn(async () => {}) } as unknown as ImageSafetyScannerService,
     );
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('ownership', () => {

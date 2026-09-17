@@ -199,6 +199,34 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     expect(result.current.shellProps.backToThreadsHref).toBe('/chat');
   });
 
+  it('wires the side rail with the same actions the header row used to carry', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+    const rail = result.current.shellProps.actionRailProps;
+
+    expect(rail.canCompare).toBe(true);
+    expect(rail.canUseQualityControls).toBe(true);
+    expect(rail.compareLabel).toBe('compare.title');
+    expect(rail.qualityLabel).toBe('chat.judgeReferee');
+    expect(rail.searchLabel).toBe('chat.search.action');
+    expect(rail.shareButtonProps).toBe(shareControllerMock.buttonProps);
+    // One menu bag, two hosts. The rail renders it only where
+    // showInlineActions is true, which is where it must NOT repeat the four
+    // buttons standing above it.
+    expect(rail.menuProps).toBe(result.current.shellProps.headerMenuProps);
+  });
+
+  it('keeps the rail in step with which panel is open', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+
+    expect(result.current.shellProps.actionRailProps.compareIsOpen).toBe(false);
+    act(() => result.current.shellProps.actionRailProps.onCompare());
+    expect(result.current.shellProps.actionRailProps.compareIsOpen).toBe(true);
+
+    act(() => result.current.shellProps.actionRailProps.onQuality());
+    expect(result.current.shellProps.actionRailProps.compareIsOpen).toBe(false);
+    expect(result.current.shellProps.actionRailProps.qualityIsOpen).toBe(true);
+  });
+
   it('falls back to chat.untitled when the thread has no title', async () => {
     const mod = await import('@/hooks/chat/use-thread-data-controller');
     vi.mocked(mod.useThreadDataController).mockReturnValueOnce({

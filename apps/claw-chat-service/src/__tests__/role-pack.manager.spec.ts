@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { BusinessException } from '../common/errors/business.exception';
 import { RolePackManager } from '../modules/chat-messages/managers/role-pack.manager';
@@ -10,16 +11,16 @@ import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
-jest.mock('../app/config/app.config', () => ({
+vi.mock('../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://localhost:11434',
     }),
   },
 }));
 
-jest.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn().mockResolvedValue({
+vi.mock('../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     data: { response: 'mocked role output' },
@@ -82,23 +83,23 @@ const mockAssistantMessage = {
   createdAt: new Date(),
 };
 
-const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  create: jest.fn(),
+const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  create: vi.fn(),
 });
 
-const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
+const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
 });
 
-const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
-  emitCompletion: jest.fn(),
-  emitError: jest.fn(),
+const mockStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
+  emitCompletion: vi.fn(),
+  emitError: vi.fn(),
 });
 
 // Universal-research PR2: research-enricher dependency stub.
 const mockResearchEnricherManager = {
-  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
 describe('RolePackManager', () => {
@@ -124,8 +125,8 @@ describe('RolePackManager', () => {
       createFakePaygAccessControl() as any,
     );
 
-    jest.clearAllMocks();
-    (httpClientModule.httpRequest as jest.Mock).mockResolvedValue({
+    vi.clearAllMocks();
+    (httpClientModule.httpRequest as Mock).mockResolvedValue({
       ok: true,
       status: 200,
       data: { response: 'mocked role output' },
@@ -219,7 +220,9 @@ describe('RolePackManager', () => {
         'user-1',
       );
 
-      const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+      const callCall = (messagesRepo.create as Mock).mock.calls[0];
+      expect(callCall).toBeDefined();
+      const call = callCall?.[0] as Record<string, unknown>;
       const meta = call['metadata'] as Record<string, unknown>;
       const members = meta['members'] as unknown[];
       expect(Array.isArray(members)).toBe(true);
@@ -244,7 +247,7 @@ describe('RolePackManager', () => {
     });
 
     it('should emit SSE error and store error message when Ollama fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(
         new Error('Ollama unreachable'),
       );
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
@@ -263,7 +266,7 @@ describe('RolePackManager', () => {
     });
 
     it('should resolve (fire-and-forget) even when everything fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Fatal'));
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -272,7 +275,7 @@ describe('RolePackManager', () => {
     });
 
     it('should handle partial failures — some members succeed, some fail', async () => {
-      (httpClientModule.httpRequest as jest.Mock)
+      (httpClientModule.httpRequest as Mock)
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'coder output' } })
         .mockRejectedValueOnce(new Error('Debugger failed'))
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'reviewer output' } });
@@ -286,7 +289,9 @@ describe('RolePackManager', () => {
         'user-1',
       );
 
-      const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+      const callCall = (messagesRepo.create as Mock).mock.calls[0];
+      expect(callCall).toBeDefined();
+      const call = callCall?.[0] as Record<string, unknown>;
       const meta = call['metadata'] as Record<string, unknown>;
       const members = meta['members'] as Array<{ output: string }>;
       expect(members).toHaveLength(3);
@@ -337,9 +342,9 @@ describe('RolePackManager', () => {
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
       const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+        Record<keyof AdvancedModuleModelSelectionService, Mock>
       > = {
-        resolveSelection: jest
+        resolveSelection: vi
           .fn()
           .mockRejectedValue(
             new BusinessException(
@@ -404,7 +409,7 @@ describe('RolePackManager', () => {
         manualResolution,
       );
 
-      const assistantCall = (messagesRepo.create as jest.Mock).mock.calls.find(
+      const assistantCall = (messagesRepo.create as Mock).mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
       );
       expect(assistantCall).toBeDefined();

@@ -1,8 +1,9 @@
+import { vi } from 'vitest';
 import { LlamaServerLauncherManager } from '../managers/llama-server-launcher.manager';
 
 describe('LlamaServerLauncherManager - argv safety', () => {
   const binaryService = {
-    snapshot: jest.fn().mockReturnValue({
+    snapshot: vi.fn().mockReturnValue({
       installed: true,
       path: '/tmp/llama-server',
       version: 'b4123',
@@ -30,7 +31,7 @@ describe('LlamaServerLauncherManager - argv safety', () => {
 
 describe('LlamaServerLauncherManager - --jinja gating', () => {
   const binaryService = {
-    snapshot: jest.fn().mockReturnValue({
+    snapshot: vi.fn().mockReturnValue({
       installed: true,
       path: '/tmp/llama-server',
       version: 'b4123',

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RouterShadowEvaluationManager } from '../managers/router-shadow-evaluation.manager';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { type CloudRouterManager } from '../managers/cloud-router.manager';
@@ -74,21 +75,21 @@ const availableCloudResult = (overrides: Partial<CloudRouteResult> = {}): CloudR
 
 describe('RouterShadowEvaluationManager', () => {
   let manager: RouterShadowEvaluationManager;
-  let decisionsRepo: { findByIdWithOutcome: jest.Mock; findRecentWithOutcomes: jest.Mock };
-  let cloudRouter: { route: jest.Mock };
-  let eligibility: { resolveEligibleDeployments: jest.Mock };
-  let prompt: { buildPrompt: jest.Mock };
+  let decisionsRepo: { findByIdWithOutcome: Mock; findRecentWithOutcomes: Mock };
+  let cloudRouter: { route: Mock };
+  let eligibility: { resolveEligibleDeployments: Mock };
+  let prompt: { buildPrompt: Mock };
 
   beforeEach(() => {
     decisionsRepo = {
-      findByIdWithOutcome: jest.fn().mockResolvedValue(mockDecision()),
-      findRecentWithOutcomes: jest.fn().mockResolvedValue([mockDecision()]),
+      findByIdWithOutcome: vi.fn().mockResolvedValue(mockDecision()),
+      findRecentWithOutcomes: vi.fn().mockResolvedValue([mockDecision()]),
     };
-    cloudRouter = { route: jest.fn().mockResolvedValue(availableCloudResult()) };
+    cloudRouter = { route: vi.fn().mockResolvedValue(availableCloudResult()) };
     eligibility = {
-      resolveEligibleDeployments: jest.fn().mockResolvedValue([eligibleDeployment]),
+      resolveEligibleDeployments: vi.fn().mockResolvedValue([eligibleDeployment]),
     };
-    prompt = { buildPrompt: jest.fn().mockReturnValue('compact router prompt') };
+    prompt = { buildPrompt: vi.fn().mockReturnValue('compact router prompt') };
 
     manager = new RouterShadowEvaluationManager(
       decisionsRepo as unknown as RoutingDecisionsRepository,

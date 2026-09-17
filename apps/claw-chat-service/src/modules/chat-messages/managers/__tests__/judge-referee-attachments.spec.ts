@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { JudgeRefereeManager } from '../judge-referee.manager';
 import { ChatExecutionManager } from '../chat-execution.manager';
 import { ChatStreamService } from '../../services/chat-stream.service';
@@ -82,21 +83,21 @@ describe('JudgeRefereeManager — attachments injection', () => {
   let chatStream: ChatStreamService;
   let localSelection: LocalModelSelectionService;
   let executionManager: ChatExecutionManager;
-  let callProviderMock: jest.Mock;
-  let emitJudgeEvaluatingMock: jest.Mock;
+  let callProviderMock: Mock;
+  let emitJudgeEvaluatingMock: Mock;
 
   beforeEach(() => {
-    emitJudgeEvaluatingMock = jest.fn();
-    callProviderMock = jest.fn();
+    emitJudgeEvaluatingMock = vi.fn();
+    callProviderMock = vi.fn();
 
     chatStream = Object.create(ChatStreamService.prototype) as ChatStreamService;
     chatStream.emitJudgeEvaluating = emitJudgeEvaluatingMock;
-    chatStream.emitOrchestrationStage = jest.fn();
+    chatStream.emitOrchestrationStage = vi.fn();
 
     localSelection = Object.create(
       LocalModelSelectionService.prototype,
     ) as LocalModelSelectionService;
-    localSelection.resolveDefaultModel = jest.fn().mockResolvedValue('gemma3:4b');
+    localSelection.resolveDefaultModel = vi.fn().mockResolvedValue('gemma3:4b');
 
     executionManager = Object.create(ChatExecutionManager.prototype) as ChatExecutionManager;
     executionManager.callProvider = callProviderMock;

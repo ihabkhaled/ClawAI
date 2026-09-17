@@ -1,20 +1,21 @@
+import { vi, type Mock } from 'vitest';
 import { FileDeliveryRecordRepository } from '../file-delivery-record.repository';
 import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.enum';
 import { type FileDeliveryRecordInput } from '../../types/file-delivery-record.types';
 
 type PrismaMock = {
   fileDeliveryRecord: {
-    createMany: jest.Mock;
-    findMany: jest.Mock;
-    deleteMany: jest.Mock;
+    createMany: Mock;
+    findMany: Mock;
+    deleteMany: Mock;
   };
 };
 
 const buildPrismaMock = (): PrismaMock => ({
   fileDeliveryRecord: {
-    createMany: jest.fn().mockResolvedValue({ count: 0 }),
-    findMany: jest.fn().mockResolvedValue([]),
-    deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+    createMany: vi.fn().mockResolvedValue({ count: 0 }),
+    findMany: vi.fn().mockResolvedValue([]),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
   },
 });
 

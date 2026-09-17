@@ -346,6 +346,7 @@ export type {
   MessageComposerProps,
   ComposerToolbarProps,
   ChatThreadHeaderMenuProps,
+  ChatThreadActionRailProps,
   RichPromptTextareaProps,
   CodingAgentInstallFigureProps,
   MessageBranchActionProps,

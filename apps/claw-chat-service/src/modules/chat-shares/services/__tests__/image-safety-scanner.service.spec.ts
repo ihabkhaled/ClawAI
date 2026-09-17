@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ChatShareAssetScanStatus } from '../../../../generated/prisma';
 import type { CloudVisionClient } from '../../clients/cloud-vision.client';
 import type { ChatSharesRepository } from '../../repositories/chat-shares.repository';
@@ -15,17 +16,17 @@ describe('ImageSafetyScannerService', () => {
     allApproved?: boolean;
   }) {
     const vision = {
-      isConfigured: jest.fn().mockReturnValue(overrides.configured ?? true),
-      classify: jest.fn().mockResolvedValue(overrides.annotation ?? null),
+      isConfigured: vi.fn().mockReturnValue(overrides.configured ?? true),
+      classify: vi.fn().mockResolvedValue(overrides.annotation ?? null),
     };
     const shares = {
-      findPendingAssets: jest.fn().mockResolvedValue(overrides.pending ?? [asset]),
-      recordAssetScan: jest.fn().mockResolvedValue(undefined),
-      allAssetsApproved: jest.fn().mockResolvedValue(overrides.allApproved ?? true),
-      setEligibility: jest.fn().mockResolvedValue(undefined),
+      findPendingAssets: vi.fn().mockResolvedValue(overrides.pending ?? [asset]),
+      recordAssetScan: vi.fn().mockResolvedValue(undefined),
+      allAssetsApproved: vi.fn().mockResolvedValue(overrides.allApproved ?? true),
+      setEligibility: vi.fn().mockResolvedValue(undefined),
     };
     const assets = {
-      readPublishedImage: jest
+      readPublishedImage: vi
         .fn()
         .mockResolvedValue(overrides.image === undefined ? 'base64' : overrides.image),
     };

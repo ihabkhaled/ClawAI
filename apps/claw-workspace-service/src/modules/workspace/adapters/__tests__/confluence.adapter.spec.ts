@@ -1,38 +1,39 @@
+import { vi, type Mock } from 'vitest';
 import { ConfluenceAdapter } from '../confluence.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('ConfluenceAdapter', () => {
   let adapter: ConfluenceAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new ConfluenceAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unauthorized');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
     });
@@ -64,7 +65,7 @@ describe('ConfluenceAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -88,7 +89,7 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -104,7 +105,7 @@ describe('ConfluenceAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', expires_in: 3600 }),
       });
@@ -140,7 +141,7 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('picks the confluence-scoped resource, fetches pages, and maps them', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => [resource()] })
         .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [page()] }) });
 
@@ -158,7 +159,7 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('falls back to the first resource when none advertise a confluence scope', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [resource({ id: 'fallback', scopes: ['read:jira-work'] })],
@@ -169,7 +170,7 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('returns an empty result when no resource is accessible at all', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => [] });
+      (global.fetch as Mock).mockResolvedValueOnce({ ok: true, json: async () => [] });
       const result = await adapter.syncObjects('token');
       expect(result).toEqual(
         expect.objectContaining({ objectsFound: 0, objectsSynced: 0, objects: [] }),
@@ -177,12 +178,12 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('throws when the resources fetch fails', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 });
       await expect(adapter.syncObjects('token')).rejects.toThrow(/HTTP 500/);
     });
 
     it('throws when the pages fetch fails', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => [resource()] })
         .mockResolvedValueOnce({ ok: false, status: 500 });
       await expect(adapter.syncObjects('token')).rejects.toThrow(/HTTP 500/);
@@ -191,7 +192,7 @@ describe('ConfluenceAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('DOCUMENT — resolves by externalId + cloudId metadata', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -223,7 +224,7 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'DOCUMENT', {
         cloudId: 'cloud1',
       });
@@ -231,7 +232,7 @@ describe('ConfluenceAdapter', () => {
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(
         adapter.fetchObjectDetails('token', 'page1', 'DOCUMENT', { cloudId: 'cloud1' }),
       ).rejects.toThrow(/HTTP 500/);
@@ -241,7 +242,7 @@ describe('ConfluenceAdapter', () => {
   describe('write actions', () => {
     describe('CREATE_CONFLUENCE', () => {
       it('creates a page under the first accessible site', async () => {
-        (global.fetch as jest.Mock)
+        (global.fetch as Mock)
           .mockResolvedValueOnce({
             ok: true,
             json: async () => [{ id: 'cloud1', url: 'https://acme.atlassian.net' }],
@@ -259,7 +260,7 @@ describe('ConfluenceAdapter', () => {
       });
 
       it('returns success:false when no Confluence site is accessible', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => [] });
+        (global.fetch as Mock).mockResolvedValueOnce({ ok: true, json: async () => [] });
         const result = await adapter.executeWriteAction('token', 'CREATE_CONFLUENCE', {
           title: 'x',
         });
@@ -268,7 +269,7 @@ describe('ConfluenceAdapter', () => {
       });
 
       it('returns success:false when the site lookup fails', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+        (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 });
         const result = await adapter.executeWriteAction('token', 'CREATE_CONFLUENCE', {
           title: 'x',
         });
@@ -277,7 +278,7 @@ describe('ConfluenceAdapter', () => {
       });
 
       it('returns success:false on a non-ok create response', async () => {
-        (global.fetch as jest.Mock)
+        (global.fetch as Mock)
           .mockResolvedValueOnce({ ok: true, json: async () => [{ id: 'cloud1', url: 'x' }] })
           .mockResolvedValueOnce({ ok: false, status: 400 });
         const result = await adapter.executeWriteAction('token', 'CREATE_CONFLUENCE', {
@@ -290,7 +291,7 @@ describe('ConfluenceAdapter', () => {
 
     describe('EDIT_CONFLUENCE', () => {
       it('increments expectedVersion and PUTs the update', async () => {
-        (global.fetch as jest.Mock)
+        (global.fetch as Mock)
           .mockResolvedValueOnce({ ok: true, json: async () => [{ id: 'cloud1', url: 'x' }] })
           .mockResolvedValueOnce({
             ok: true,
@@ -308,13 +309,13 @@ describe('ConfluenceAdapter', () => {
         });
         expect(result.success).toBe(true);
         expect(result.metadata).toEqual({ newVersion: 4 });
-        const [, init] = (global.fetch as jest.Mock).mock.calls[1] as [string, RequestInit];
+        const [, init] = (global.fetch as Mock).mock.calls[1] as [string, RequestInit];
         expect(JSON.parse(init.body as string).version).toEqual({ number: 4 });
       });
     });
 
     it('returns success:false for an unsupported action type', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'cloud1', url: 'x' }],
       });

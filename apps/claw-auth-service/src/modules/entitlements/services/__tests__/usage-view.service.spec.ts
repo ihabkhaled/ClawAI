@@ -1,37 +1,38 @@
+import { vi } from 'vitest';
 import { PlanFeatureKey } from '../../../../generated/prisma';
 import { UsageViewService } from '../usage-view.service';
 
 describe('UsageViewService', () => {
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
+    vi.useFakeTimers().setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('reports finalized durable token totals for the current UTC day, week and month', async () => {
     const ledger = {
-      sumTotalTokens: jest
+      sumTotalTokens: vi
         .fn()
         .mockResolvedValueOnce(125)
         .mockResolvedValueOnce(900)
         .mockResolvedValueOnce(2400),
     };
     const users = {
-      findUserById: jest.fn().mockResolvedValue({ role: 'USER', activePlanId: 'plan-1' }),
+      findUserById: vi.fn().mockResolvedValue({ role: 'USER', activePlanId: 'plan-1' }),
     };
     const plans = {
-      findEffectiveForUser: jest.fn().mockResolvedValue({
+      findEffectiveForUser: vi.fn().mockResolvedValue({
         id: 'plan-1',
         dailyTokenQuota: 1000,
         weeklyTokenQuota: 5000,
         monthlyTokenQuota: 20_000,
       }),
-      findDefault: jest.fn(),
+      findDefault: vi.fn(),
     };
     const features = {
-      evaluate: jest.fn().mockResolvedValue({
+      evaluate: vi.fn().mockResolvedValue({
         feature: PlanFeatureKey.WEB_SEARCH,
         allowed: true,
         limit: null,
@@ -39,7 +40,7 @@ describe('UsageViewService', () => {
         remaining: null,
         window: null,
       }),
-      evaluateObserved: jest.fn(),
+      evaluateObserved: vi.fn(),
     };
     const service = new UsageViewService(
       ledger as never,
@@ -71,14 +72,14 @@ describe('UsageViewService', () => {
   });
 
   it('shows durable observed operation counts for a user without a plan', async () => {
-    const ledger = { sumTotalTokens: jest.fn().mockResolvedValue(0) };
+    const ledger = { sumTotalTokens: vi.fn().mockResolvedValue(0) };
     const users = {
-      findUserById: jest.fn().mockResolvedValue({ role: 'USER', activePlanId: null }),
+      findUserById: vi.fn().mockResolvedValue({ role: 'USER', activePlanId: null }),
     };
-    const plans = { findEffectiveForUser: jest.fn(), findDefault: jest.fn() };
+    const plans = { findEffectiveForUser: vi.fn(), findDefault: vi.fn() };
     const features = {
-      evaluate: jest.fn(),
-      evaluateObserved: jest.fn(({ feature }) => ({
+      evaluate: vi.fn(),
+      evaluateObserved: vi.fn(({ feature }) => ({
         feature,
         allowed: true,
         limit: null,
@@ -103,14 +104,14 @@ describe('UsageViewService', () => {
   });
 
   it('does not expose an assigned commercial-plan limit in the admin usage view', async () => {
-    const ledger = { sumTotalTokens: jest.fn().mockResolvedValue(321) };
+    const ledger = { sumTotalTokens: vi.fn().mockResolvedValue(321) };
     const users = {
-      findUserById: jest.fn().mockResolvedValue({ role: 'ADMIN', activePlanId: 'plan-team' }),
+      findUserById: vi.fn().mockResolvedValue({ role: 'ADMIN', activePlanId: 'plan-team' }),
     };
-    const plans = { findEffectiveForUser: jest.fn(), findDefault: jest.fn() };
+    const plans = { findEffectiveForUser: vi.fn(), findDefault: vi.fn() };
     const features = {
-      evaluate: jest.fn(),
-      evaluateObserved: jest.fn(({ feature }) => ({
+      evaluate: vi.fn(),
+      evaluateObserved: vi.fn(({ feature }) => ({
         feature,
         allowed: true,
         limit: null,

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AuthManager } from '../auth.manager';
 import { type TokenSessionManager } from '../token-session.manager';
 import { type AuthRepository } from '../../repositories/auth.repository';
@@ -13,13 +14,13 @@ import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import * as utilities from '@common/utilities';
 
 // Mock the utilities module (the @common/utilities alias)
-jest.mock('@common/utilities', () => ({
-  verifyPassword: jest.fn(),
-  hashPassword: jest.fn().mockResolvedValue('hashed-password'),
-  burnPasswordVerification: jest.fn().mockResolvedValue(false),
+vi.mock('@common/utilities', () => ({
+  verifyPassword: vi.fn(),
+  hashPassword: vi.fn().mockResolvedValue('hashed-password'),
+  burnPasswordVerification: vi.fn().mockResolvedValue(false),
 }));
 
-const mockedUtilities = jest.mocked(utilities);
+const mockedUtilities = vi.mocked(utilities);
 
 const mockUser = {
   id: 'user-1',
@@ -37,41 +38,41 @@ const mockUser = {
   updatedAt: new Date('2025-01-01'),
 };
 
-const mockRepository = (): Record<keyof AuthRepository, jest.Mock> => ({
-  findUserByEmail: jest.fn(),
-  findUserByUsername: jest.fn(),
-  findUserById: jest.fn(),
-  createUser: jest.fn(),
-  createSession: jest.fn().mockResolvedValue({ id: 'session-1' }),
-  findSessionByRefreshTokenHash: jest.fn(),
-  rotateSession: jest.fn(),
-  revokeSessionFamily: jest.fn(),
-  revokeSessionForUser: jest.fn(),
-  deleteSession: jest.fn().mockResolvedValue(void 0),
-  deleteSessionsByUserId: jest.fn().mockResolvedValue(void 0),
-  deleteExpiredSessions: jest.fn().mockResolvedValue(0),
+const mockRepository = (): Record<keyof AuthRepository, Mock> => ({
+  findUserByEmail: vi.fn(),
+  findUserByUsername: vi.fn(),
+  findUserById: vi.fn(),
+  createUser: vi.fn(),
+  createSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
+  findSessionByRefreshTokenHash: vi.fn(),
+  rotateSession: vi.fn(),
+  revokeSessionFamily: vi.fn(),
+  revokeSessionForUser: vi.fn(),
+  deleteSession: vi.fn().mockResolvedValue(void 0),
+  deleteSessionsByUserId: vi.fn().mockResolvedValue(void 0),
+  deleteExpiredSessions: vi.fn().mockResolvedValue(0),
 });
 
 // RolesService is consulted for permission resolution + default role id.
 const mockRolesService = (): {
-  resolvePermissionsForUser: jest.Mock;
-  resolvePermissionsBySlug: jest.Mock;
-  getDefaultUserRoleId: jest.Mock;
+  resolvePermissionsForUser: Mock;
+  resolvePermissionsBySlug: Mock;
+  getDefaultUserRoleId: Mock;
 } => ({
-  resolvePermissionsForUser: jest.fn().mockResolvedValue([]),
-  resolvePermissionsBySlug: jest.fn().mockResolvedValue([]),
-  getDefaultUserRoleId: jest.fn().mockResolvedValue('role-user'),
+  resolvePermissionsForUser: vi.fn().mockResolvedValue([]),
+  resolvePermissionsBySlug: vi.fn().mockResolvedValue([]),
+  getDefaultUserRoleId: vi.fn().mockResolvedValue('role-user'),
 });
 
 // PlansRepository — registration assigns the default plan.
 const mockPlansRepository = (): {
-  findDefault: jest.Mock;
-  assignDefaultPlan: jest.Mock;
-  assignTrialPlanOnce: jest.Mock;
+  findDefault: Mock;
+  assignDefaultPlan: Mock;
+  assignTrialPlanOnce: Mock;
 } => ({
-  findDefault: jest.fn().mockResolvedValue({ id: 'plan-free', slug: 'free', isTrial: true }),
-  assignDefaultPlan: jest.fn(),
-  assignTrialPlanOnce: jest.fn().mockResolvedValue({ id: 'assignment-free' }),
+  findDefault: vi.fn().mockResolvedValue({ id: 'plan-free', slug: 'free', isTrial: true }),
+  assignDefaultPlan: vi.fn(),
+  assignTrialPlanOnce: vi.fn().mockResolvedValue({ id: 'assignment-free' }),
 });
 
 const tokenPair = {
@@ -83,13 +84,13 @@ const tokenPair = {
 };
 
 const mockTokenSessionManager = (): {
-  issue: jest.Mock;
-  rotate: jest.Mock;
-  revokeCurrent: jest.Mock;
+  issue: Mock;
+  rotate: Mock;
+  revokeCurrent: Mock;
 } => ({
-  issue: jest.fn().mockResolvedValue(tokenPair),
-  rotate: jest.fn().mockResolvedValue(tokenPair),
-  revokeCurrent: jest.fn().mockResolvedValue(void 0),
+  issue: vi.fn().mockResolvedValue(tokenPair),
+  rotate: vi.fn().mockResolvedValue(tokenPair),
+  revokeCurrent: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('AuthManager', () => {
@@ -110,7 +111,7 @@ describe('AuthManager', () => {
       plansRepository as unknown as PlansRepository,
       tokenSessionManager as unknown as TokenSessionManager,
     );
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Re-set defaults after clearAllMocks
     repository.createSession.mockResolvedValue({ id: 'session-1' });
     repository.deleteSession.mockResolvedValue(void 0);

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 const { run } = require('../plan-quarterly-semiannual-pricing.seeder.cjs');
 
 type PlanRow = { id: string; slug: string };
@@ -16,8 +17,8 @@ function makePrisma(options: {
   existingActiveKeys?: Set<string>;
 }): {
   prisma: {
-    plan: { findMany: jest.Mock };
-    planPriceVersion: { findFirst: jest.Mock; findUnique: jest.Mock; create: jest.Mock };
+    plan: { findMany: Mock };
+    planPriceVersion: { findFirst: Mock; findUnique: Mock; create: Mock };
   };
   createCalls: Array<{ data: Record<string, unknown> }>;
 } {
@@ -26,16 +27,16 @@ function makePrisma(options: {
 
   const prisma = {
     plan: {
-      findMany: jest.fn().mockResolvedValue(options.plans),
+      findMany: vi.fn().mockResolvedValue(options.plans),
     },
     planPriceVersion: {
-      findFirst: jest.fn(({ where }: { where: { planId: string } }) =>
+      findFirst: vi.fn(({ where }: { where: { planId: string } }) =>
         Promise.resolve(options.activeMonthlyByPlanId[where.planId] ?? null),
       ),
-      findUnique: jest.fn(({ where }: { where: { activeKey: string } }) =>
+      findUnique: vi.fn(({ where }: { where: { activeKey: string } }) =>
         Promise.resolve(existingActiveKeys.has(where.activeKey) ? { id: 'existing' } : null),
       ),
-      create: jest.fn((args: { data: Record<string, unknown> }) => {
+      create: vi.fn((args: { data: Record<string, unknown> }) => {
         createCalls.push(args);
         return Promise.resolve({ id: 'new', ...args.data });
       }),

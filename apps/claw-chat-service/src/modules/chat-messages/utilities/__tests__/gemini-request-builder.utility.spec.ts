@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 // Slice D — Gemini generateContent request builder unit tests.
 //
 // The builder routes each base64 image_url part to either inline_data (under
@@ -8,6 +9,7 @@ import { buildGeminiRequestBody } from '../gemini-request-builder.utility';
 import type { OpenAiChatMessage } from '../../types/execution.types';
 import type {
   GeminiFileDataPart,
+  GeminiFileUploadFn,
   GeminiInlineDataPart,
   GeminiTextPart,
 } from '../../types/gemini.types';
@@ -19,7 +21,7 @@ const base64OfSize = (decodedBytes: number): string => {
 
 describe('buildGeminiRequestBody', () => {
   it('returns text-only contents and never invokes the upload fn for string messages', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
     const source: OpenAiChatMessage[] = [{ role: 'user', content: 'Hello Gemini' }];
 
     const result = await buildGeminiRequestBody(source, uploadFn, 1000);
@@ -35,7 +37,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('extracts system messages into systemInstruction and never invokes upload fn for them', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
     const source: OpenAiChatMessage[] = [
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: 'Hi' },
@@ -52,7 +54,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('inlines a small image (size < threshold) and never calls the upload fn', async () => {
-    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>();
+    const uploadFn = vi.fn<GeminiFileUploadFn>();
     // ~96 decoded bytes — well under threshold.
     const tinyPng = base64OfSize(96);
     const source: OpenAiChatMessage[] = [
@@ -81,7 +83,7 @@ describe('buildGeminiRequestBody', () => {
 
   it('uploads a large image (size >= threshold) and emits a file_data part with the returned uri', async () => {
     const fileUri = 'files/abc-12345';
-    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockResolvedValue(fileUri);
+    const uploadFn = vi.fn<GeminiFileUploadFn>().mockResolvedValue(fileUri);
     const bigPng = base64OfSize(50_000); // 50 KB decoded
     const source: OpenAiChatMessage[] = [
       {
@@ -111,7 +113,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('inlines a small video with its original MIME type without decoding it as text', async () => {
-    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>();
+    const uploadFn = vi.fn<GeminiFileUploadFn>();
     const videoBase64 = Buffer.from('small-video-bytes').toString('base64');
     const source: OpenAiChatMessage[] = [
       {
@@ -138,8 +140,8 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('uploads a large video through the Gemini Files API path', async () => {
-    const uploadFn = jest
-      .fn<Promise<string>, [Buffer, string]>()
+    const uploadFn = vi
+      .fn<GeminiFileUploadFn>()
       .mockResolvedValue('files/video-123');
     const videoBase64 = base64OfSize(50_000);
     const source: OpenAiChatMessage[] = [
@@ -171,8 +173,8 @@ describe('buildGeminiRequestBody', () => {
     const smallPng = base64OfSize(100);
     const largePng = base64OfSize(80_000);
     const largePdf = base64OfSize(60_000);
-    const uploadFn = jest
-      .fn<Promise<string>, [Buffer, string]>()
+    const uploadFn = vi
+      .fn<GeminiFileUploadFn>()
       .mockResolvedValueOnce('files/large-png')
       .mockResolvedValueOnce('files/large-pdf');
 
@@ -219,7 +221,7 @@ describe('buildGeminiRequestBody', () => {
   it('does not inline an oversized attachment when the Files API upload fails', async () => {
     const bigPng = base64OfSize(50_000);
     const uploadErr = new Error('Files API: 503 Service Unavailable');
-    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockRejectedValue(uploadErr);
+    const uploadFn = vi.fn<GeminiFileUploadFn>().mockRejectedValue(uploadErr);
     const source: OpenAiChatMessage[] = [
       {
         role: 'user',
@@ -244,7 +246,7 @@ describe('buildGeminiRequestBody', () => {
   it('uses Files API when aggregate encoded inline bytes exceed the request ceiling', async () => {
     const first = base64OfSize(6);
     const second = base64OfSize(6);
-    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockResolvedValue('files/second');
+    const uploadFn = vi.fn<GeminiFileUploadFn>().mockResolvedValue('files/second');
     const source: OpenAiChatMessage[] = [
       {
         role: 'user',
@@ -273,7 +275,7 @@ describe('buildGeminiRequestBody', () => {
     ['video/x-msvideo', 'video/avi'],
   ])('normalizes %s to Gemini provider MIME %s', async (inputMime, providerMime) => {
     const payload = base64OfSize(50_000);
-    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockResolvedValue('files/video');
+    const uploadFn = vi.fn<GeminiFileUploadFn>().mockResolvedValue('files/video');
     const source: OpenAiChatMessage[] = [
       {
         role: 'user',
@@ -290,7 +292,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('maps assistant role to "model" and user role to "user"', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
     const source: OpenAiChatMessage[] = [
       { role: 'user', content: 'Question' },
       { role: 'assistant', content: 'Answer' },
@@ -304,7 +306,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('drops a malformed data URL with a MALFORMED_DATA_URL warning', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
     const source: OpenAiChatMessage[] = [
       {
         role: 'user',
@@ -326,7 +328,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('drops a non-data: URL with a NON_DATA_URL_IMAGE warning', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
     const source: OpenAiChatMessage[] = [
       {
         role: 'user',
@@ -347,7 +349,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('drops an empty payload with an EMPTY_IMAGE_PAYLOAD warning', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
     const source: OpenAiChatMessage[] = [
       {
         role: 'user',
@@ -368,7 +370,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('returns empty contents and no warnings for empty input', async () => {
-    const uploadFn = jest.fn();
+    const uploadFn = vi.fn();
 
     const result = await buildGeminiRequestBody([], uploadFn, 1000);
 

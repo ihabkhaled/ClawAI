@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingIntervalKind, type UserCreditWallet } from '../../../../generated/prisma';
 import { CreditGrantService } from '../credit-grant.service';
 import { currentGrantPeriodKey } from '../../utilities/credit-period.utility';
@@ -24,11 +25,11 @@ function wallet(overrides: Partial<UserCreditWallet> = {}): UserCreditWallet {
 }
 
 describe('CreditGrantService — mid-period plan changes', () => {
-  const wallets = { ensure: jest.fn(), applyPeriodRoll: jest.fn() };
-  const walletRepository = { findStalePeriodWallets: jest.fn() };
-  const plans = { findEffectiveForUser: jest.fn(), findDefault: jest.fn() };
-  const planBilling = { findActivePrice: jest.fn() };
-  const events = { publishGrantRenewed: jest.fn() };
+  const wallets = { ensure: vi.fn(), applyPeriodRoll: vi.fn() };
+  const walletRepository = { findStalePeriodWallets: vi.fn() };
+  const plans = { findEffectiveForUser: vi.fn(), findDefault: vi.fn() };
+  const planBilling = { findActivePrice: vi.fn() };
+  const events = { publishGrantRenewed: vi.fn() };
 
   function makeService(): CreditGrantService {
     return new CreditGrantService(
@@ -41,7 +42,7 @@ describe('CreditGrantService — mid-period plan changes', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     plans.findEffectiveForUser.mockResolvedValue({
       id: 'free',
       slug: 'free',

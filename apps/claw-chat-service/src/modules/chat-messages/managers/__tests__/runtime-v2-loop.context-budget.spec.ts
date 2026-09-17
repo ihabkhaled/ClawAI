@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BusinessException } from '../../../../common/errors';
 import { RUNTIME_V2_EMPTY_RESPONSE_RETRIES } from '../../constants/runtime-v2-failure.constants';
 import {
@@ -24,10 +25,10 @@ describe('RuntimeV2LoopManager context budget', () => {
     toolDefinitions: [],
   };
 
-  function manager(assemble: jest.Mock): RuntimeV2LoopManager {
+  function manager(assemble: Mock): RuntimeV2LoopManager {
     const messages = {
-      findRecentByThreadId: jest.fn().mockResolvedValue([]),
-      findById: jest.fn().mockResolvedValue(null),
+      findRecentByThreadId: vi.fn().mockResolvedValue([]),
+      findById: vi.fn().mockResolvedValue(null),
     };
     return new RuntimeV2LoopManager(
       messages as never,
@@ -38,12 +39,12 @@ describe('RuntimeV2LoopManager context budget', () => {
     );
   }
 
-  function budgetOf(assemble: jest.Mock): unknown {
+  function budgetOf(assemble: Mock): unknown {
     return assemble.mock.calls[0]?.[2];
   }
 
   it('gives the first turn a budget that fits the tool catalog', async () => {
-    const assemble = jest.fn().mockResolvedValue({ systemPrompt: 'base' });
+    const assemble = vi.fn().mockResolvedValue({ systemPrompt: 'base' });
     const loop = manager(assemble);
 
     await (
@@ -60,7 +61,7 @@ describe('RuntimeV2LoopManager context budget', () => {
   });
 
   it('keeps the same budget on a continuation', async () => {
-    const assemble = jest.fn().mockResolvedValue({ systemPrompt: 'base' });
+    const assemble = vi.fn().mockResolvedValue({ systemPrompt: 'base' });
     const loop = manager(assemble);
     const command = {
       result: {
@@ -92,32 +93,32 @@ describe('RuntimeV2LoopManager continuation ordering', () => {
     const origin = { id: 'message_1', role: 'USER', content: 'Complete the mission.' };
     const request = { id: 'request_1', role: 'TOOL', content: '{"kind":"tool"}' };
     const stored = [origin, request];
-    const create = jest.fn().mockImplementation((data: { role: string; content: string }) => {
+    const create = vi.fn().mockImplementation((data: { role: string; content: string }) => {
       const created = { ...data, id: `message_${String(stored.length + 1)}` };
       if (data.role === 'TOOL') stored.push(created);
       return Promise.resolve(created);
     });
     const messages = {
       create,
-      findRecentByThreadId: jest
+      findRecentByThreadId: vi
         .fn()
         .mockImplementation(() => Promise.resolve([...stored].reverse())),
-      findById: jest.fn().mockResolvedValue(origin),
+      findById: vi.fn().mockResolvedValue(origin),
     };
-    const assemble = jest
+    const assemble = vi
       .fn()
       .mockImplementation((_ownerId, history) =>
         Promise.resolve({ systemPrompt: 'base', threadMessages: history }),
       );
-    const callProvider = jest.fn().mockResolvedValue({
+    const callProvider = vi.fn().mockResolvedValue({
       content: '{"kind":"final","content":"finished"}',
       provider: 'OLLAMA',
       model: 'kimi-k2.7-code:cloud',
       latencyMs: 1,
     });
     const store = {
-      appendModelOutput: jest.fn().mockResolvedValue(void 0),
-      terminalize: jest.fn().mockResolvedValue(void 0),
+      appendModelOutput: vi.fn().mockResolvedValue(void 0),
+      terminalize: vi.fn().mockResolvedValue(void 0),
     };
     const loop = new RuntimeV2LoopManager(
       messages as never,
@@ -203,7 +204,7 @@ describe('RuntimeV2LoopManager intent correction fallback', () => {
   };
   const announced = { content: 'Let me start by exploring the workspace.' };
 
-  function correct(callProvider: jest.Mock): Promise<{ output: { content?: string } }> {
+  function correct(callProvider: Mock): Promise<{ output: { content?: string } }> {
     const loop = new RuntimeV2LoopManager(
       {} as never,
       {} as never,
@@ -235,7 +236,7 @@ describe('RuntimeV2LoopManager intent correction fallback', () => {
     // ended on "Let me also check the existing test file content." and reported
     // success with nothing logged. It also stopped after ONE failure, spending
     // neither of the two attempts still owed.
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValue(new Error('Cloud provider OLLAMA returned no message content'));
 
@@ -252,7 +253,7 @@ describe('RuntimeV2LoopManager intent correction fallback', () => {
       arguments: { rootKey: 'workspace-1', path: '' },
       targetId: 'target:workspace',
     });
-    const callProvider = jest.fn().mockResolvedValue({ content: toolJson });
+    const callProvider = vi.fn().mockResolvedValue({ content: toolJson });
 
     const result = await correct(callProvider);
 
@@ -285,7 +286,7 @@ describe('RuntimeV2LoopManager announced-without-acting', () => {
     // Storing a second announcement as a completed answer is the silent stop:
     // the panel shows "I'll start by…" and the task is simply over.
     const announcement = 'I will now read the configuration files to understand the layout.';
-    const callProvider = jest.fn().mockResolvedValue({ content: announcement });
+    const callProvider = vi.fn().mockResolvedValue({ content: announcement });
     const loop = new RuntimeV2LoopManager(
       {} as never,
       {} as never,
@@ -327,7 +328,7 @@ describe('RuntimeV2LoopManager announced-without-acting', () => {
       arguments: {},
       targetId: 'target:workspace',
     });
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockResolvedValueOnce({ content: 'Let me read the specific line ranges first.' })
       .mockResolvedValueOnce({ content: toolCall });
@@ -369,7 +370,7 @@ describe('RuntimeV2LoopManager empty-response retry', () => {
     toolDefinitions: [],
   };
 
-  function callRuntime(callProvider: jest.Mock): Promise<{ content: string }> {
+  function callRuntime(callProvider: Mock): Promise<{ content: string }> {
     const loop = new RuntimeV2LoopManager(
       {} as never,
       {} as never,
@@ -391,7 +392,7 @@ describe('RuntimeV2LoopManager empty-response retry', () => {
   it('asks again when the provider returns nothing, rather than discarding the run', async () => {
     // A tool had already executed and its result was in hand when the
     // continuation came back empty; giving up there threw the work away.
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValueOnce(
         new BusinessException(
@@ -408,7 +409,7 @@ describe('RuntimeV2LoopManager empty-response retry', () => {
   });
 
   it('gives up after the bounded retry rather than looping', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValue(
         new BusinessException(
@@ -429,7 +430,7 @@ describe('RuntimeV2LoopManager empty-response retry', () => {
     // tokens. Around the tenth tool step Ollama stopped generating at all,
     // answering in under a second with done_reason=load and, decisively,
     // prompt_eval_count=0 — it never evaluated a prompt.
-    const callProvider = jest.fn().mockResolvedValue({ content: 'Seven rule files.' });
+    const callProvider = vi.fn().mockResolvedValue({ content: 'Seven rule files.' });
 
     await callRuntime(callProvider);
 
@@ -441,7 +442,7 @@ describe('RuntimeV2LoopManager empty-response retry', () => {
   });
 
   it('does not retry a failure that is not emptiness', async () => {
-    const callProvider = jest
+    const callProvider = vi
       .fn()
       .mockRejectedValue(new BusinessException('Unauthorized', 'OLLAMA_REQUEST_FAILED'));
 

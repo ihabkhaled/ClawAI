@@ -1,8 +1,9 @@
+import { vi, type Mock } from 'vitest';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { TavilyAdapter } from '../tavily.adapter';
 import { runSearchAdapterContract } from './search-adapter-contract';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('TavilyAdapter', () => {
   runSearchAdapterContract(() => new TavilyAdapter());
@@ -16,7 +17,7 @@ describe('TavilyAdapter', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('healthCheck returns unhealthy when apiKey is missing', async () => {
@@ -29,14 +30,14 @@ describe('TavilyAdapter', () => {
   });
 
   it('healthCheck returns healthy on 200', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+    (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
     const result = await adapter.healthCheck(context);
     expect(result.healthy).toBe(true);
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
   it('search normalizes Tavily results', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
         query: 'q',
@@ -65,7 +66,7 @@ describe('TavilyAdapter', () => {
   });
 
   it('search throws on non-2xx', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+    (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
     await expect(adapter.search({ query: 'q', maxResults: 5 }, context)).rejects.toThrow(/500/);
   });
 });

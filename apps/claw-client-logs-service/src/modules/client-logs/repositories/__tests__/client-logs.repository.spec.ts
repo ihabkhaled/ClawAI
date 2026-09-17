@@ -1,3 +1,4 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ClientLogsRepository } from '../client-logs.repository';
@@ -6,34 +7,34 @@ import { SortOrder } from '../../../../common/enums/sort-order.enum';
 
 describe('ClientLogsRepository', () => {
   let repository: ClientLogsRepository;
-  let modelMock: jest.Mocked<{
-    find: jest.Mock;
-    countDocuments: jest.Mock;
-    distinct: jest.Mock;
-    aggregate: jest.Mock;
-    insertMany: jest.Mock;
-    save: jest.Mock;
+  let modelMock: Mocked<{
+    find: Mock;
+    countDocuments: Mock;
+    distinct: Mock;
+    aggregate: Mock;
+    insertMany: Mock;
+    save: Mock;
   }>;
 
   const buildQueryChain = () => ({
-    sort: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([{ _id: '1' }]),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([{ _id: '1' }]),
   });
 
   beforeEach(async () => {
     const queryChain = buildQueryChain();
-    const docMock = { save: jest.fn().mockResolvedValue({ _id: 'saved' }) };
+    const docMock = { save: vi.fn().mockResolvedValue({ _id: 'saved' }) };
     function modelFactory(): typeof docMock {
       return docMock;
     }
     Object.assign(modelFactory, {
-      find: jest.fn().mockReturnValue(queryChain),
-      countDocuments: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(99) }),
-      distinct: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(['a', 'b', 'c']) }),
-      aggregate: jest.fn().mockResolvedValue([{ _id: 'info', count: 10 }]),
-      insertMany: jest.fn().mockResolvedValue([{ _id: 'bulk-1' }, { _id: 'bulk-2' }]),
+      find: vi.fn().mockReturnValue(queryChain),
+      countDocuments: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(99) }),
+      distinct: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(['a', 'b', 'c']) }),
+      aggregate: vi.fn().mockResolvedValue([{ _id: 'info', count: 10 }]),
+      insertMany: vi.fn().mockResolvedValue([{ _id: 'bulk-1' }, { _id: 'bulk-2' }]),
     });
     modelMock = modelFactory as never;
 
@@ -163,7 +164,7 @@ describe('ClientLogsRepository', () => {
   describe('getDistinctValues', () => {
     it('returns the field plus distinct values capped at 200', async () => {
       modelMock.distinct.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(Array.from({ length: 250 }, (_, i) => `v${String(i)}`)),
+        exec: vi.fn().mockResolvedValue(Array.from({ length: 250 }, (_, i) => `v${String(i)}`)),
       });
       const result = await repository.getDistinctValues('component', {});
       expect(result.field).toBe('component');
@@ -213,7 +214,7 @@ describe('ClientLogsRepository', () => {
 
 describe('ClientLogsRepository.createMany', () => {
   it('writes the whole batch in one round trip, unordered', async () => {
-    const insertMany = jest.fn().mockResolvedValue([{ _id: '1' }, { _id: '2' }]);
+    const insertMany = vi.fn().mockResolvedValue([{ _id: '1' }, { _id: '2' }]);
     function modelFactory(): Record<string, never> {
       return {} as Record<string, never>;
     }

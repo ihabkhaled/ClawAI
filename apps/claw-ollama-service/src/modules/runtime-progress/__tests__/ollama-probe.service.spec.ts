@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   RuntimeExecutionProfile,
   RuntimeProbeStatus,
@@ -7,13 +8,13 @@ import {
 
 import { OllamaProbeService } from '../services/ollama-probe.service';
 
-const mockGet = jest.fn();
+const mockGet = vi.fn();
 
-jest.mock('@common/utilities', () => ({
-  createHttpClient: jest.fn(() => ({ get: mockGet })),
+vi.mock('@common/utilities', () => ({
+  createHttpClient: vi.fn(() => ({ get: mockGet })),
 }));
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
     get: (): { OLLAMA_BASE_URL: string } => ({ OLLAMA_BASE_URL: 'http://ollama:11434' }),
   },

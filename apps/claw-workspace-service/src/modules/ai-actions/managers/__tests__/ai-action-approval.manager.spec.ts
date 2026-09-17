@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AiActionPolicyKind } from '../../../../common/enums/ai-action-policy-kind.enum';
 import { AiActionQueueStatus } from '../../../../common/enums/ai-action-queue-status.enum';
 import { AiActionRiskLabel } from '../../../../common/enums/ai-action-risk-label.enum';
@@ -13,8 +14,8 @@ beforeAll(() => {
 });
 
 describe('AiActionApprovalManager', () => {
-  const makeRiskScorer = (score: number, label: AiActionRiskLabel): { assess: jest.Mock } => ({
-    assess: jest.fn().mockReturnValue({ riskScore: score, riskLabel: label, reasons: [] }),
+  const makeRiskScorer = (score: number, label: AiActionRiskLabel): { assess: Mock } => ({
+    assess: vi.fn().mockReturnValue({ riskScore: score, riskLabel: label, reasons: [] }),
   });
 
   const decisionKindMap: Record<
@@ -29,7 +30,7 @@ describe('AiActionApprovalManager', () => {
   const makeMatcher = (
     decision: 'AUTO_APPROVE' | 'PENDING_APPROVAL' | 'DENIED',
     policyName: string | null = null,
-  ): { match: jest.Mock } => {
+  ): { match: Mock } => {
     const kind = decisionKindMap[decision];
     const matchedPolicy =
       policyName === null
@@ -52,7 +53,7 @@ describe('AiActionApprovalManager', () => {
             updatedAt: new Date(),
           };
     return {
-      match: jest.fn().mockResolvedValue({
+      match: vi.fn().mockResolvedValue({
         matchedPolicy,
         effectiveKind: kind,
         decision,
@@ -60,8 +61,8 @@ describe('AiActionApprovalManager', () => {
     };
   };
 
-  const makeQueueRepo = (): { create: jest.Mock } => ({
-    create: jest.fn().mockImplementation(async (input: { status: AiActionQueueStatus }) => ({
+  const makeQueueRepo = (): { create: Mock } => ({
+    create: vi.fn().mockImplementation(async (input: { status: AiActionQueueStatus }) => ({
       id: 'q1',
       ...input,
       matchedPolicyId: 'p1',
@@ -69,15 +70,15 @@ describe('AiActionApprovalManager', () => {
     })),
   });
 
-  const makeRabbit = (): { publish: jest.Mock } => ({
-    publish: jest.fn().mockImplementation(async () => {}),
+  const makeRabbit = (): { publish: Mock } => ({
+    publish: vi.fn().mockImplementation(async () => {}),
   });
 
   const makeLimiter = (
     allowed = true,
     reason = 'PER_MINUTE',
-  ): { tryReserve: jest.Mock } => ({
-    tryReserve: jest.fn().mockReturnValue(allowed ? { allowed: true } : { allowed: false, reason }),
+  ): { tryReserve: Mock } => ({
+    tryReserve: vi.fn().mockReturnValue(allowed ? { allowed: true } : { allowed: false, reason }),
   });
 
   const makePrefRepo = (
@@ -88,8 +89,8 @@ describe('AiActionApprovalManager', () => {
       providers?: string[];
     } | null = null,
     todayCount = 0,
-  ): { findOne: jest.Mock; countTodayForBudget: jest.Mock } => ({
-    findOne: jest.fn().mockResolvedValue(
+  ): { findOne: Mock; countTodayForBudget: Mock } => ({
+    findOne: vi.fn().mockResolvedValue(
       pref === null
         ? null
         : {
@@ -98,7 +99,7 @@ describe('AiActionApprovalManager', () => {
             providers: pref.providers ?? [],
           },
     ),
-    countTodayForBudget: jest.fn().mockResolvedValue(todayCount),
+    countTodayForBudget: vi.fn().mockResolvedValue(todayCount),
   });
 
   const baseInput = {

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SeedApplyOutcome } from '../../../common/enums';
 import { DeploymentType, PrivacyClass, RouterProvider } from '../../../generated/prisma';
 import { type PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
@@ -31,22 +32,22 @@ const input = (overrides: Partial<SeedApplyInput> = {}): SeedApplyInput => ({
 });
 
 interface TransactionMocks {
-  queryRaw: jest.Mock;
-  seedFindUnique: jest.Mock;
-  seedUpsert: jest.Mock;
-  seedUpdate: jest.Mock;
-  deploymentUpsert: jest.Mock;
+  queryRaw: Mock;
+  seedFindUnique: Mock;
+  seedUpsert: Mock;
+  seedUpdate: Mock;
+  deploymentUpsert: Mock;
 }
 
 const buildRepository = (
   existing: { status: string; checksum: string } | null,
 ): { repository: DeploymentSeedRepository; mocks: TransactionMocks } => {
   const mocks: TransactionMocks = {
-    queryRaw: jest.fn().mockResolvedValue([]),
-    seedFindUnique: jest.fn().mockResolvedValue(existing),
-    seedUpsert: jest.fn().mockResolvedValue(undefined),
-    seedUpdate: jest.fn().mockResolvedValue(undefined),
-    deploymentUpsert: jest.fn().mockResolvedValue(undefined),
+    queryRaw: vi.fn().mockResolvedValue([]),
+    seedFindUnique: vi.fn().mockResolvedValue(existing),
+    seedUpsert: vi.fn().mockResolvedValue(undefined),
+    seedUpdate: vi.fn().mockResolvedValue(undefined),
+    deploymentUpsert: vi.fn().mockResolvedValue(undefined),
   };
 
   const transaction = {
@@ -60,7 +61,7 @@ const buildRepository = (
   };
 
   const prisma = {
-    $transaction: jest.fn().mockImplementation((fn: (tx: unknown) => unknown) => fn(transaction)),
+    $transaction: vi.fn().mockImplementation((fn: (tx: unknown) => unknown) => fn(transaction)),
   };
 
   return {
@@ -169,7 +170,7 @@ describe('DeploymentSeedRepository.applyOnce', () => {
 
   it('runs the whole apply inside one transaction', async () => {
     const { repository } = buildRepository(null);
-    const prismaTransaction = jest.fn().mockResolvedValue(SeedApplyOutcome.APPLIED);
+    const prismaTransaction = vi.fn().mockResolvedValue(SeedApplyOutcome.APPLIED);
     const bare = new DeploymentSeedRepository({
       $transaction: prismaTransaction,
     } as unknown as PrismaService);

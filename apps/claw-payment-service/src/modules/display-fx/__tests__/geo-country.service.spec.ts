@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 import { GeoCountrySource } from '@claw/shared-types';
 
@@ -5,23 +6,23 @@ import { AppConfig } from '../../../app/config/app.config';
 import { type RedisService } from '../../../infrastructure/redis/redis.service';
 import { GeoCountryService } from '../services/geo-country.service';
 
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const mockHttp = httpRequest as unknown as jest.Mock;
+const mockHttp = httpRequest as unknown as Mock;
 
 function buildRedis(overrides: Partial<Record<string, unknown>> = {}): RedisService {
   return {
-    get: jest.fn().mockResolvedValue(null),
-    set: jest.fn().mockResolvedValue(undefined),
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as RedisService;
 }
 
 function configure(edgeTrusted: 'true' | 'false'): void {
-  jest.spyOn(AppConfig, 'get').mockReturnValue({
+  vi.spyOn(AppConfig, 'get').mockReturnValue({
     DISPLAY_FX_TRUST_EDGE_COUNTRY_HEADER: edgeTrusted,
   } as unknown as ReturnType<typeof AppConfig.get>);
 }
@@ -33,7 +34,7 @@ describe('GeoCountryService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('header spoofing', () => {
@@ -143,13 +144,13 @@ describe('GeoCountryService', () => {
       const service = new GeoCountryService(redis);
       await service.resolve({ 'x-real-ip': '41.33.10.5' });
 
-      const [key, value] = (redis.set as jest.Mock).mock.calls[0] as [string, string];
+      const [key, value] = (redis.set as Mock).mock.calls[0] as [string, string];
       expect(key).not.toContain('41.33.10.5');
       expect(value).toBe('EG');
     });
 
     it('reuses a cached country without calling upstream again', async () => {
-      const redis = buildRedis({ get: jest.fn().mockResolvedValue('EG') });
+      const redis = buildRedis({ get: vi.fn().mockResolvedValue('EG') });
       const service = new GeoCountryService(redis);
       const resolved = await service.resolve({ 'x-real-ip': '41.33.10.5' });
 

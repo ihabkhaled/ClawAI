@@ -1,6 +1,7 @@
+import { vi } from 'vitest';
 import { WorkspaceSearchManager } from '../workspace-search.manager';
 
-const mockSearch = jest.fn();
+const mockSearch = vi.fn();
 
 const mockObjectRepository = {
   search: mockSearch,
@@ -25,7 +26,7 @@ describe('WorkspaceSearchManager', () => {
   let manager: WorkspaceSearchManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     manager = new WorkspaceSearchManager(mockObjectRepository as never);
   });
 

@@ -1,37 +1,38 @@
+import { vi, type Mock } from 'vitest';
 import { GoogleCalendarAdapter } from '../google-calendar.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('GoogleCalendarAdapter', () => {
   let adapter: GoogleCalendarAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new GoogleCalendarAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
     });
@@ -69,7 +70,7 @@ describe('GoogleCalendarAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -92,7 +93,7 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -108,7 +109,7 @@ describe('GoogleCalendarAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', expires_in: 3600 }),
       });
@@ -137,7 +138,7 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('maps events to SyncedObject and filters out cancelled ones', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ items: [event(), event({ id: 'evt2', status: 'cancelled' })] }),
       });
@@ -148,7 +149,7 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('falls back to "(no title)" when summary is absent', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ items: [event({ summary: undefined })] }),
       });
@@ -157,17 +158,17 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('threads the incoming deltaToken through as syncToken', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ items: [] }),
       });
       await adapter.syncObjects('token', 'prior-sync-token');
-      const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+      const [url] = (global.fetch as Mock).mock.calls[0] as [string];
       expect(url).toContain('syncToken=prior-sync-token');
     });
 
     it('returns nextSyncToken as deltaTokenOut when present', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ items: [], nextSyncToken: 'next-sync' }),
       });
@@ -176,7 +177,7 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('falls back to nextPageToken when nextSyncToken is absent', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ items: [], nextPageToken: 'next-page' }),
       });
@@ -185,7 +186,7 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('throws on a non-ok list response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 500,
         text: async () => 'server error',
@@ -196,7 +197,7 @@ describe('GoogleCalendarAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('MEETING — resolves by externalId', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -217,13 +218,13 @@ describe('GoogleCalendarAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'MEETING');
       expect(live).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.fetchObjectDetails('token', 'evt1', 'MEETING')).rejects.toThrow(
         /HTTP 500/,
       );
@@ -240,7 +241,7 @@ describe('GoogleCalendarAdapter', () => {
 
     describe('CREATE_GOOGLE_CALENDAR_EVENT', () => {
       it('creates an event and returns its id/link', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'new-evt', htmlLink: 'https://calendar.google.com/new-evt' }),
         });
@@ -255,7 +256,7 @@ describe('GoogleCalendarAdapter', () => {
           externalId: 'new-evt',
           url: 'https://calendar.google.com/new-evt',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/calendars/primary/events');
         const body = JSON.parse(init.body as string);
         expect(body.attendees).toEqual([{ email: 'bob@example.com' }]);
@@ -271,7 +272,7 @@ describe('GoogleCalendarAdapter', () => {
       });
 
       it('returns success:false on a non-ok API response', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: false,
           status: 403,
           text: async () => 'forbidden',
@@ -286,7 +287,7 @@ describe('GoogleCalendarAdapter', () => {
       });
 
       it('catches a thrown network error', async () => {
-        (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+        (global.fetch as Mock).mockRejectedValue(new Error('network down'));
         const result = await adapter.executeWriteAction('token', 'CREATE_GOOGLE_CALENDAR_EVENT', {
           summary: 'x',
           startDateTime: '2026-02-01T10:00:00',

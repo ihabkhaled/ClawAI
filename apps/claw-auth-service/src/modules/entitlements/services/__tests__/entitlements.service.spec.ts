@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { PlanModelAccessMode, UserRole } from '@claw/shared-types';
 import { EntitlementsService } from '../entitlements.service';
 import { type AuthRepository } from '../../../auth/repositories/auth.repository';
@@ -13,15 +14,15 @@ import { type PlanWithAccess } from '../../../plans/types/plans.types';
 // the chat picker for Free/Pro users.
 describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contract', () => {
   let service: EntitlementsService;
-  let authRepoMock: jest.Mocked<Pick<AuthRepository, 'findUserById'>>;
-  let rolesServiceMock: jest.Mocked<Pick<RolesService, 'resolvePermissionsForUser'>>;
-  let plansRepoMock: jest.Mocked<
+  let authRepoMock: Mocked<Pick<AuthRepository, 'findUserById'>>;
+  let rolesServiceMock: Mocked<Pick<RolesService, 'resolvePermissionsForUser'>>;
+  let plansRepoMock: Mocked<
     Pick<
       PlansRepository,
       'findById' | 'findDefault' | 'findEffectiveForUser' | 'findActiveTrialState'
     >
   >;
-  let quotaServiceMock: jest.Mocked<Pick<QuotaService, 'getSnapshot'>>;
+  let quotaServiceMock: Mocked<Pick<QuotaService, 'getSnapshot'>>;
 
   const baseUser = {
     id: 'u1',
@@ -73,15 +74,15 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
   } as unknown as PlanWithAccess;
 
   beforeEach(() => {
-    authRepoMock = { findUserById: jest.fn() };
-    rolesServiceMock = { resolvePermissionsForUser: jest.fn() };
+    authRepoMock = { findUserById: vi.fn() };
+    rolesServiceMock = { resolvePermissionsForUser: vi.fn() };
     plansRepoMock = {
-      findById: jest.fn(),
-      findDefault: jest.fn().mockResolvedValue(null),
-      findEffectiveForUser: jest.fn(),
-      findActiveTrialState: jest.fn().mockResolvedValue(null),
+      findById: vi.fn(),
+      findDefault: vi.fn().mockResolvedValue(null),
+      findEffectiveForUser: vi.fn(),
+      findActiveTrialState: vi.fn().mockResolvedValue(null),
     };
-    quotaServiceMock = { getSnapshot: jest.fn() };
+    quotaServiceMock = { getSnapshot: vi.fn() };
 
     service = new EntitlementsService(
       authRepoMock as unknown as AuthRepository,
@@ -133,7 +134,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       isTrial: true,
       expiresAt: new Date('2026-08-09T12:00:00.000Z'),
     });
-    jest.useFakeTimers().setSystemTime(new Date('2026-08-09T12:00:00.000Z'));
+    vi.useFakeTimers().setSystemTime(new Date('2026-08-09T12:00:00.000Z'));
     plansRepoMock.findEffectiveForUser.mockResolvedValue(null);
     plansRepoMock.findDefault.mockResolvedValue(freePlanWithNoModelAccess);
     const result = await service.getForUser('u1');
@@ -142,7 +143,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       trialEndsAt: '2026-08-09T12:00:00.000Z',
       isTrialExpired: true,
     });
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('returns only isAllowed=true rows when PlanModelAccess is populated', async () => {

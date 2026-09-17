@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingErrorCode, EventPattern, PaymentTransactionType } from '@claw/shared-types';
 
 import { CreditTopupLifecycleService } from '../credit-topup-lifecycle.service';
@@ -42,28 +43,28 @@ const REVERSAL = {
 };
 
 describe('CreditTopupLifecycleService', () => {
-  let tx: { checkoutSession: { update: jest.Mock }; subscription: { update: jest.Mock } };
-  let prisma: { $transaction: jest.Mock };
-  let outbox: { enqueue: jest.Mock };
-  let records: { recordCharge: jest.Mock; recordReversal: jest.Mock };
+  let tx: { checkoutSession: { update: Mock }; subscription: { update: Mock } };
+  let prisma: { $transaction: Mock };
+  let outbox: { enqueue: Mock };
+  let records: { recordCharge: Mock; recordReversal: Mock };
   let service: CreditTopupLifecycleService;
 
   beforeEach(() => {
     tx = {
-      checkoutSession: { update: jest.fn().mockResolvedValue({}) },
-      subscription: { update: jest.fn().mockResolvedValue({}) },
+      checkoutSession: { update: vi.fn().mockResolvedValue({}) },
+      subscription: { update: vi.fn().mockResolvedValue({}) },
     };
     prisma = {
-      $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
+      $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
         callback(tx),
       ),
     };
-    outbox = { enqueue: jest.fn().mockResolvedValue({}) };
+    outbox = { enqueue: vi.fn().mockResolvedValue({}) };
     records = {
-      recordCharge: jest
+      recordCharge: vi
         .fn()
         .mockResolvedValue({ transactionId: 'txn-1', invoiceId: 'inv-1', invoiceNumber: 'CLAW-1' }),
-      recordReversal: jest.fn().mockResolvedValue('rev-1'),
+      recordReversal: vi.fn().mockResolvedValue('rev-1'),
     };
     service = new CreditTopupLifecycleService(
       prisma as unknown as PrismaService,

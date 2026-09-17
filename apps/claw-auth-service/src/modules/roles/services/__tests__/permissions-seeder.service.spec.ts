@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Permission, UserRole } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -9,27 +10,27 @@ import { USER_DEFAULT_PERMISSIONS } from '../../../../common/constants/rbac.cons
 // are stubbed; everything else throws if hit, so tests catch accidental
 // dependency growth.
 type PrismaDouble = {
-  role: { findUnique: jest.Mock };
+  role: { findUnique: Mock };
   rolePermission: {
-    findMany: jest.Mock;
-    createMany: jest.Mock;
-    deleteMany: jest.Mock;
+    findMany: Mock;
+    createMany: Mock;
+    deleteMany: Mock;
   };
 };
 
 const makePrismaDouble = (): PrismaDouble => ({
-  role: { findUnique: jest.fn() },
+  role: { findUnique: vi.fn() },
   rolePermission: {
-    findMany: jest.fn(),
-    createMany: jest.fn(),
-    deleteMany: jest.fn(),
+    findMany: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
   },
 });
 
 // AppConfig.get() is called inside reconcile() — stub it per test so we can
 // flip SEED_RECONCILE_PERMISSIONS without touching real env vars.
 const stubAppConfig = (seedReconcile: boolean): void => {
-  jest.spyOn(AppConfig, 'get').mockReturnValue({
+  vi.spyOn(AppConfig, 'get').mockReturnValue({
     AUTH_DATABASE_URL: 'postgres://test',
     AUTH_PORT: 4001,
     REDIS_URL: 'redis://test',
@@ -65,7 +66,7 @@ describe('PermissionsSeederService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('reconcile (drift detection + add path)', () => {
@@ -251,7 +252,7 @@ describe('PermissionsSeederService', () => {
   describe('onModuleInit (startup soft-fail)', () => {
     it('runs reconcile() on module init', async () => {
       stubAppConfig(true);
-      const spy = jest.spyOn(service, 'reconcile').mockResolvedValue({
+      const spy = vi.spyOn(service, 'reconcile').mockResolvedValue({
         results: [],
         reconcileEnabled: true,
       });
@@ -263,7 +264,7 @@ describe('PermissionsSeederService', () => {
 
     it('does NOT crash startup when reconcile() throws', async () => {
       stubAppConfig(true);
-      jest.spyOn(service, 'reconcile').mockRejectedValue(new Error('db unavailable'));
+      vi.spyOn(service, 'reconcile').mockRejectedValue(new Error('db unavailable'));
 
       // The whole point: onModuleInit MUST resolve so the auth service still
       // boots even if the DB is briefly flaky during startup.

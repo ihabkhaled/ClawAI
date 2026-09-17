@@ -1,10 +1,11 @@
+import { vi } from 'vitest';
 import { ProviderCostMetricsService } from '../provider-cost-metrics.service';
 import type { WeightedUsageRepository } from '../../repositories/weighted-usage.repository';
 
 describe('ProviderCostMetricsService', () => {
   it('serializes bigint provider costs at the service boundary', async () => {
     const usage = {
-      aggregateProviderCosts: jest
+      aggregateProviderCosts: vi
         .fn()
         .mockResolvedValue([{ planId: 'plan-pro', costMicroUsd: 1_234_567n }]),
     };

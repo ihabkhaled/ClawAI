@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { OutboxEventStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,20 +6,20 @@ import type { Prisma } from '../../../../generated/prisma';
 import { OutboxRepository } from '../outbox.repository';
 
 type OutboxDelegate = {
-  create: jest.Mock;
-  findMany: jest.Mock;
-  update: jest.Mock;
-  updateMany: jest.Mock;
-  count: jest.Mock;
+  create: Mock;
+  findMany: Mock;
+  update: Mock;
+  updateMany: Mock;
+  count: Mock;
 };
 
 function buildPrisma(): { prisma: PrismaService; outboxEvent: OutboxDelegate } {
   const outboxEvent: OutboxDelegate = {
-    create: jest.fn(async (args: unknown) => args),
-    findMany: jest.fn(async () => []),
-    update: jest.fn(async () => ({ id: 'ob_1' })),
-    updateMany: jest.fn(async () => ({ count: 0 })),
-    count: jest.fn(async () => 0),
+    create: vi.fn(async (args: unknown) => args),
+    findMany: vi.fn(async () => []),
+    update: vi.fn(async () => ({ id: 'ob_1' })),
+    updateMany: vi.fn(async () => ({ count: 0 })),
+    count: vi.fn(async () => 0),
   };
   return { prisma: { outboxEvent } as unknown as PrismaService, outboxEvent };
 }
@@ -39,19 +40,19 @@ describe('OutboxRepository', () => {
     const built = buildPrisma();
     outboxEvent = built.outboxEvent;
     repository = new OutboxRepository(built.prisma);
-    jest.spyOn(repository['logger'], 'warn').mockImplementation(() => {});
-    jest.spyOn(repository['logger'], 'error').mockImplementation(() => {});
+    vi.spyOn(repository['logger'], 'warn').mockImplementation(() => {});
+    vi.spyOn(repository['logger'], 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('enqueue', () => {
     it('writes through the CALLER transaction, not a fresh connection', async () => {
       // The whole point of an outbox: the event row commits atomically with the
       // state change it announces, or not at all.
-      const txCreate = jest.fn(async (args: unknown) => args);
+      const txCreate = vi.fn(async (args: unknown) => args);
       const tx = { outboxEvent: { create: txCreate } } as unknown as Prisma.TransactionClient;
 
       await repository.enqueue(tx, ENQUEUE);

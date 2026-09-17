@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import type { CreateTriggerRuleDto, UpdateTriggerRuleDto } from '../../dto/trigger-rule.dto';
@@ -20,13 +21,13 @@ const makeRule = (overrides: Record<string, unknown> = {}): unknown => ({
   updatedAt: new Date(),
 });
 
-const makeRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
-  findById: jest.fn(),
-  findByName: jest.fn(),
-  listAll: jest.fn(),
-  createCustom: jest.fn(),
-  update: jest.fn(),
-  deleteById: jest.fn(),
+const makeRepo = (overrides: Record<string, Mock> = {}): Record<string, Mock> => ({
+  findById: vi.fn(),
+  findByName: vi.fn(),
+  listAll: vi.fn(),
+  createCustom: vi.fn(),
+  update: vi.fn(),
+  deleteById: vi.fn(),
   ...overrides,
 });
 
@@ -34,7 +35,7 @@ describe('SuggestionTriggerRuleService', () => {
   describe('list', () => {
     it('returns all rules from repo', async () => {
       const rule = makeRule();
-      const repo = makeRepo({ listAll: jest.fn().mockResolvedValue([rule]) });
+      const repo = makeRepo({ listAll: vi.fn().mockResolvedValue([rule]) });
       const service = new SuggestionTriggerRuleService(repo as any);
       const result = await service.list();
       expect(result).toEqual([rule]);
@@ -42,7 +43,7 @@ describe('SuggestionTriggerRuleService', () => {
     });
 
     it('returns empty array when no rules', async () => {
-      const repo = makeRepo({ listAll: jest.fn().mockResolvedValue([]) });
+      const repo = makeRepo({ listAll: vi.fn().mockResolvedValue([]) });
       const service = new SuggestionTriggerRuleService(repo as any);
       const result = await service.list();
       expect(result).toEqual([]);
@@ -52,14 +53,14 @@ describe('SuggestionTriggerRuleService', () => {
   describe('getById', () => {
     it('returns rule when found', async () => {
       const rule = makeRule();
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(rule) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(rule) });
       const service = new SuggestionTriggerRuleService(repo as any);
       const result = await service.getById('r1');
       expect(result).toEqual(rule);
     });
 
     it('throws NotFoundException when missing', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new SuggestionTriggerRuleService(repo as any);
       await expect(service.getById('missing')).rejects.toBeInstanceOf(NotFoundException);
       await expect(service.getById('missing')).rejects.toMatchObject({
@@ -82,8 +83,8 @@ describe('SuggestionTriggerRuleService', () => {
     it('creates a rule when name is unique', async () => {
       const created = makeRule();
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        createCustom: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        createCustom: vi.fn().mockResolvedValue(created),
       });
       const service = new SuggestionTriggerRuleService(repo as any);
       const result = await service.create(validDto, 'u1');
@@ -93,7 +94,7 @@ describe('SuggestionTriggerRuleService', () => {
 
     it('throws ConflictException when name is taken', async () => {
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(makeRule()),
+        findByName: vi.fn().mockResolvedValue(makeRule()),
       });
       const service = new SuggestionTriggerRuleService(repo as any);
       await expect(service.create(validDto, 'u1')).rejects.toBeInstanceOf(ConflictException);
@@ -110,8 +111,8 @@ describe('SuggestionTriggerRuleService', () => {
       const existing = makeRule();
       const updated = makeRule({ isActive: false });
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(existing),
-        update: jest.fn().mockResolvedValue(updated),
+        findById: vi.fn().mockResolvedValue(existing),
+        update: vi.fn().mockResolvedValue(updated),
       });
       const service = new SuggestionTriggerRuleService(repo as any);
       const result = await service.update('r1', dto);
@@ -120,7 +121,7 @@ describe('SuggestionTriggerRuleService', () => {
     });
 
     it('throws NotFoundException when id missing', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new SuggestionTriggerRuleService(repo as any);
       await expect(service.update('missing', {})).rejects.toBeInstanceOf(NotFoundException);
       expect(repo['update']).not.toHaveBeenCalled();
@@ -130,8 +131,8 @@ describe('SuggestionTriggerRuleService', () => {
   describe('deleteById', () => {
     it('deletes user-created rule', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeRule({ isSystemDefault: false })),
-        deleteById: jest.fn().mockReturnValue(Promise.resolve()),
+        findById: vi.fn().mockResolvedValue(makeRule({ isSystemDefault: false })),
+        deleteById: vi.fn().mockReturnValue(Promise.resolve()),
       });
       const service = new SuggestionTriggerRuleService(repo as any);
       await service.deleteById('r1');
@@ -140,7 +141,7 @@ describe('SuggestionTriggerRuleService', () => {
 
     it('throws ConflictException when system-default', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeRule({ isSystemDefault: true })),
+        findById: vi.fn().mockResolvedValue(makeRule({ isSystemDefault: true })),
       });
       const service = new SuggestionTriggerRuleService(repo as any);
       await expect(service.deleteById('r1')).rejects.toBeInstanceOf(ConflictException);
@@ -151,7 +152,7 @@ describe('SuggestionTriggerRuleService', () => {
     });
 
     it('throws NotFoundException when id missing', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new SuggestionTriggerRuleService(repo as any);
       await expect(service.deleteById('missing')).rejects.toBeInstanceOf(NotFoundException);
       expect(repo['deleteById']).not.toHaveBeenCalled();

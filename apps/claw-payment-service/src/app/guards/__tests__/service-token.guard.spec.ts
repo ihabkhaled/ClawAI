@@ -1,16 +1,17 @@
+import { vi } from 'vitest';
 import { type ExecutionContext, UnauthorizedException } from '@nestjs/common';
 
 import { AppConfig } from '../../config/app.config';
 import { ServiceTokenGuard } from '../service-token.guard';
 
-jest.mock('../../config/app.config');
+vi.mock('../../config/app.config');
 
 describe('ServiceTokenGuard', () => {
   const token = 'service-token-with-at-least-32-characters';
   const guard = new ServiceTokenGuard();
 
   beforeEach(() => {
-    jest.mocked(AppConfig.get).mockReturnValue({
+    vi.mocked(AppConfig.get).mockReturnValue({
       INTER_SERVICE_AUTH_TOKEN: token,
     } as ReturnType<typeof AppConfig.get>);
   });

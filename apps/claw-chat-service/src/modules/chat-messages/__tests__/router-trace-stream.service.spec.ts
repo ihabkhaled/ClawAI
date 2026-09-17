@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ROUTER_TRACE_EVENT_PATTERNS } from '@claw/shared-constants';
 import type { RouterTraceEvent } from '@claw/shared-types';
 import { StreamEventType } from '../../../common/enums';
@@ -22,8 +23,8 @@ const event = (
     payload,
   }) as RouterTraceEvent;
 
-const build = (): { service: RouterTraceStreamService; emitProgressStage: jest.Mock } => {
-  const emitProgressStage = jest.fn();
+const build = (): { service: RouterTraceStreamService; emitProgressStage: Mock } => {
+  const emitProgressStage = vi.fn();
   return {
     service: new RouterTraceStreamService({
       emitProgressStage,
@@ -164,7 +165,7 @@ describe('RouterTraceStreamService.render', () => {
 
   // A trace is evidence about a decision the user is already receiving.
   it('never throws when the stream rejects', () => {
-    const emitProgressStage = jest.fn().mockImplementation(() => {
+    const emitProgressStage = vi.fn().mockImplementation(() => {
       throw new Error('stream closed');
     });
     const service = new RouterTraceStreamService({

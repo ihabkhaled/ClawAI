@@ -21,7 +21,7 @@ export function Sidebar() {
     <>
       {isOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          className="nav-rail:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
           onClick={handleOverlayClick}
           role="presentation"
           aria-hidden
@@ -34,12 +34,16 @@ export function Sidebar() {
         aria-modal={isOpen ? true : undefined}
         aria-label={isOpen ? t('accessibility.navigation') : undefined}
         className={cn(
+          // Drawer first, rail as the override. The closed state below is now
+          // UNPREFIXED, so the bottom sheet is genuinely hidden at every width
+          // that is not `nav-rail:` — it used to be gated on `touch:`, which a
+          // tablet also matches, so the sheet hid itself at 1032px where the
+          // hamburger that reopens it was already gone. See the `nav-rail`
+          // declaration in globals.css for the measurement.
           'bg-card duration-normal ease-expo-out fixed z-50 flex flex-col transition-transform',
           'shadow-floating inset-x-0 top-auto bottom-0 h-[85dvh] rounded-t-2xl border-t',
-          'md:visible md:static md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
-          isOpen
-            ? 'visible translate-y-0'
-            : 'touch:invisible touch:pointer-events-none touch:translate-y-full',
+          'nav-rail:visible nav-rail:pointer-events-auto nav-rail:static nav-rail:inset-auto nav-rail:h-full nav-rail:w-[var(--sidebar-width)] nav-rail:translate-y-0 nav-rail:rounded-none nav-rail:border-e nav-rail:border-t-0 nav-rail:shadow-none',
+          isOpen ? 'visible translate-y-0' : 'invisible pointer-events-none translate-y-full',
         )}
       >
         <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
@@ -60,7 +64,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="nav-rail:hidden"
             onClick={close}
             aria-label={t('accessibility.closeSidebar')}
           >

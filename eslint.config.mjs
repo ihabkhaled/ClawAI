@@ -79,8 +79,25 @@ export default tseslint.config(
       '*.mjs',
       '*.cjs',
       '*.js',
-      '**/jest.config.ts',
+      // Tooling configs at a workspace ROOT are outside every tsconfig's
+      // `include`, so the type-aware parser cannot resolve a tsconfigRootDir
+      // for them and errors before any rule runs. jest.config.ts was ignored
+      // for exactly this reason; its Vitest replacements need the same.
+      '**/vitest.config.ts',
+      '**/vitest.setup.ts',
     ],
+  },
+
+  // ── Parser root ────────────────────────────────────────────────────────────
+  // Applies to EVERY file, including ones the typed block below does not match
+  // (a spec outside src/, for instance). Without it, typescript-eslint tries to
+  // infer the root, finds a tsconfig in each workspace, and refuses with
+  // "multiple candidate TSConfigRootDirs are present" — which only shows up
+  // when lint-staged batches files from several workspaces into one invocation.
+  {
+    languageOptions: {
+      parserOptions: { tsconfigRootDir: import.meta.dirname },
+    },
   },
 
   // ── Base configs ───────────────────────────────────────────────────────────

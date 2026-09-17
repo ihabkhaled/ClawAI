@@ -1,3 +1,4 @@
+import { vi, type MockInstance } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { MultiModelReviewOrchestratorManager } from '../multi-model-review-orchestrator.manager';
@@ -20,18 +21,18 @@ const valid = {
 
 describe('MultiModelReviewOrchestratorManager', () => {
   let manager: MultiModelReviewOrchestratorManager;
-  let callSpy: jest.SpyInstance;
+  let callSpy: MockInstance;
 
   beforeEach(() => {
     manager = new MultiModelReviewOrchestratorManager();
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
-    callSpy = jest.spyOn(cloudClient, 'callCloudGenerate');
+    callSpy = vi.spyOn(cloudClient, 'callCloudGenerate');
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('runs every reviewer in parallel and returns successes with labels', async () => {

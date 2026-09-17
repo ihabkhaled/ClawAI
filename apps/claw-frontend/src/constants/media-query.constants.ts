@@ -45,3 +45,19 @@ export const MEDIA_QUERY_SM_UP = '(min-width: 640px)';
  * Keep in step with `md` in tailwind.config — 768px.
  */
 export const MEDIA_QUERY_BELOW_MD = '(max-width: 767px)';
+
+/**
+ * "The portal sidenav is a permanent rail, not a drawer."
+ *
+ * The JS twin of the `nav-rail:` custom variant in src/app/globals.css. The two
+ * strings MUST stay character-identical: CSS decides whether the sidebar is a
+ * rail, and this decides whether opening it should trap focus and lock body
+ * scroll like a modal. When they disagreed — the CSS said `touch:`, the JS said
+ * `(min-width: 768px)` — a tablet got a sidebar that was invisible to the eye
+ * and still modal to the keyboard.
+ *
+ * Read the variant's own comment in globals.css for why the condition is
+ * width AND height on a coarse pointer, and width alone on a fine one.
+ */
+export const MEDIA_QUERY_NAV_RAIL =
+  '(min-width: 768px) and (min-height: 600px), (hover: hover) and (pointer: fine) and (min-width: 768px)';

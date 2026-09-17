@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 
 import type { ScheduledJobRunnerService } from '../../../scheduled-jobs/services/scheduled-job-runner.service';
@@ -9,7 +10,7 @@ import type { OutboxRepository } from '../../repositories/outbox.repository';
 import type { OutboxPublishCandidate } from '../../types/outbox-publisher.types';
 import { OutboxPublisherService } from '../outbox-publisher.service';
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
     get: () => ({
       PAYMENT_OUTBOX_MAX_ATTEMPTS: 10,
@@ -19,17 +20,23 @@ jest.mock('../../../../app/config/app.config', () => ({
 }));
 
 type OutboxRepositoryMock = {
-  claimBatch: jest.Mock<Promise<OutboxPublishCandidate[]>, [number, Date]>;
-  markFailed: jest.Mock<Promise<void>, [string, number, number, Date, string]>;
-  markPublished: jest.Mock<Promise<void>, [string]>;
+  claimBatch: Mock<(limit: number, now: Date) => Promise<OutboxPublishCandidate[]>>;
+  markFailed: Mock<
+    (id: string, attempts: number, maxAttempts: number, retryAt: Date, errorCode: string) =>
+      Promise<void>
+  >;
+  markPublished: Mock<(id: string) => Promise<void>>;
 };
 
 type RabbitMock = {
-  publish: jest.Mock<Promise<void>, [string, unknown]>;
+  publish: Mock<(pattern: string, payload: unknown) => Promise<void>>;
 };
 
 type ScheduledJobsMock = {
-  run: jest.Mock<Promise<number | null>, [ScheduledJobOptions, ScheduledJobCallback<number>]>;
+  run: Mock<
+    (options: ScheduledJobOptions, callback: ScheduledJobCallback<number>) =>
+      Promise<number | null>
+  >;
 };
 
 describe('OutboxPublisherService', () => {
@@ -47,15 +54,23 @@ describe('OutboxPublisherService', () => {
 
   beforeEach(() => {
     repository = {
-      claimBatch: jest.fn<Promise<OutboxPublishCandidate[]>, [number, Date]>(async () => [event]),
-      markFailed: jest.fn<Promise<void>, [string, number, number, Date, string]>(async () => {}),
-      markPublished: jest.fn<Promise<void>, [string]>(async () => {}),
+      claimBatch: vi.fn<(limit: number, now: Date) => Promise<OutboxPublishCandidate[]>>(async () => [event]),
+      markFailed: vi.fn<
+        (
+          id: string,
+          attempts: number,
+          maxAttempts: number,
+          retryAt: Date,
+          errorCode: string,
+        ) => Promise<void>
+      >(async () => {}),
+      markPublished: vi.fn<(id: string) => Promise<void>>(async () => {}),
     };
     rabbit = {
-      publish: jest.fn<Promise<void>, [string, unknown]>(async () => {}),
+      publish: vi.fn<(pattern: string, payload: unknown) => Promise<void>>(async () => {}),
     };
     jobs = {
-      run: jest.fn(
+      run: vi.fn(
         async (
           _options: ScheduledJobOptions,
           callback: ScheduledJobCallback<number>,
@@ -103,7 +118,7 @@ describe('OutboxPublisherService', () => {
   });
 
   it('routes scheduler ticks through the guarded drain path', async () => {
-    const drain = jest.spyOn(service, 'drain').mockResolvedValueOnce(0);
+    const drain = vi.spyOn(service, 'drain').mockResolvedValueOnce(0);
 
     await service.scheduledDrain();
     expect(drain).toHaveBeenCalledTimes(1);

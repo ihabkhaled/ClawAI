@@ -1,10 +1,11 @@
+import { vi, type Mock } from 'vitest';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
 import { AnthropicAdapter } from '../managers/adapters/anthropic.adapter';
 import { ANTHROPIC_DEFAULT_BASE_URL, ANTHROPIC_VERSION } from '../constants/anthropic.constants';
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) }),
+    get: vi.fn().mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) }),
   },
 }));
 
@@ -36,7 +37,7 @@ const mockModelsResponse = {
 };
 
 function mockFetchOk(body: unknown): void {
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     text: () => Promise.resolve(JSON.stringify(body)),
@@ -44,7 +45,7 @@ function mockFetchOk(body: unknown): void {
 }
 
 function mockFetchError(status: number): void {
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = vi.fn().mockResolvedValue({
     ok: false,
     status,
     text: () => Promise.resolve('{}'),
@@ -52,7 +53,7 @@ function mockFetchError(status: number): void {
 }
 
 function lastRequestHeaders(): Record<string, string> {
-  const call = (global.fetch as jest.Mock).mock.calls[0] as [
+  const call = (global.fetch as Mock).mock.calls[0] as [
     string,
     { headers: Record<string, string> },
   ];
@@ -149,7 +150,7 @@ describe('AnthropicAdapter', () => {
     };
 
     function mockFetchErrorBody(status: number, body: unknown): void {
-      global.fetch = jest.fn().mockResolvedValue({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status,
         text: () => Promise.resolve(JSON.stringify(body)),

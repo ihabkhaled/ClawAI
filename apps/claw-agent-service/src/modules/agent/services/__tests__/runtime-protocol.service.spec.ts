@@ -1,5 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
-
+import { describe, expect, it } from 'vitest';
 import { RuntimeProtocolService } from '../runtime-protocol.service';
 
 describe('RuntimeProtocolService', () => {

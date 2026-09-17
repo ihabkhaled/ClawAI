@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ChatMessagesService } from '../services/chat-messages.service';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
@@ -61,37 +62,37 @@ const mockMessage = {
   createdAt: new Date(),
 };
 
-const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Mock> => ({
-  create: jest.fn(),
-  createUserMessageWithinDailyLimit: jest.fn(),
-  findById: jest.fn(),
-  findByThreadId: jest.fn(),
-  searchByThreadId: jest.fn().mockResolvedValue([]),
-  findRecentByThreadId: jest.fn(),
-  findAllByThreadIdAscending: jest.fn(),
-  countByThreadId: jest.fn(),
-  updateFeedback: jest.fn(),
-  updateMetadata: jest.fn(),
-  deleteById: jest.fn(),
-  deleteByThreadId: jest.fn(),
-  deleteCreatedAfter: jest.fn().mockResolvedValue(0),
-  replaceContent: jest.fn().mockResolvedValue(undefined),
+const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> => ({
+  create: vi.fn(),
+  createUserMessageWithinDailyLimit: vi.fn(),
+  findById: vi.fn(),
+  findByThreadId: vi.fn(),
+  searchByThreadId: vi.fn().mockResolvedValue([]),
+  findRecentByThreadId: vi.fn(),
+  findAllByThreadIdAscending: vi.fn(),
+  countByThreadId: vi.fn(),
+  updateFeedback: vi.fn(),
+  updateMetadata: vi.fn(),
+  deleteById: vi.fn(),
+  deleteByThreadId: vi.fn(),
+  deleteCreatedAfter: vi.fn().mockResolvedValue(0),
+  replaceContent: vi.fn().mockResolvedValue(undefined),
 });
 
-const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  findById: jest.fn(),
-  update: jest.fn().mockResolvedValue(undefined),
+const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  findById: vi.fn(),
+  update: vi.fn().mockResolvedValue(undefined),
 });
 
-const mockExecutionManager = (): Partial<Record<keyof ChatExecutionManager, jest.Mock>> => ({
-  execute: jest.fn(),
+const mockExecutionManager = (): Partial<Record<keyof ChatExecutionManager, Mock>> => ({
+  execute: vi.fn(),
 });
 
-const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jest.Mock>> => ({
+const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, Mock>> => ({
   // The injected count is asked for on every stored answer, because the number
   // the transcript reports has to be the number the prompt carried.
-  injectedMemories: jest.fn().mockReturnValue([]),
-  assemble: jest.fn().mockResolvedValue({
+  injectedMemories: vi.fn().mockReturnValue([]),
+  assemble: vi.fn().mockResolvedValue({
     systemPrompt: null,
     threadMessages: [],
     memories: [],
@@ -100,13 +101,13 @@ const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jes
     workspaceCitations: [],
     tokenBudget: 4096,
   }),
-  buildPromptString: jest.fn().mockReturnValue(''),
-  buildChatMessages: jest.fn().mockReturnValue([]),
+  buildPromptString: vi.fn().mockReturnValue(''),
+  buildChatMessages: vi.fn().mockReturnValue([]),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
-  subscribe: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
+  subscribe: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('ChatMessagesService', () => {
@@ -116,8 +117,8 @@ describe('ChatMessagesService', () => {
   let executionManager: ReturnType<typeof mockExecutionManager>;
   let contextAssembly: ReturnType<typeof mockContextAssembly>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
-  let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
-  let assertCanSendMessage: jest.Mock;
+  let streamService: Partial<Record<keyof ChatStreamService, Mock>>;
+  let assertCanSendMessage: Mock;
 
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
@@ -127,11 +128,11 @@ describe('ChatMessagesService', () => {
     contextAssembly = mockContextAssembly();
     rabbitMQ = mockRabbitMQ();
     streamService = {
-      emitRequestAccepted: jest.fn(),
-      emitCompletion: jest.fn(),
-      emitError: jest.fn(),
+      emitRequestAccepted: vi.fn(),
+      emitCompletion: vi.fn(),
+      emitError: vi.fn(),
     };
-    assertCanSendMessage = jest.fn().mockResolvedValue({
+    assertCanSendMessage = vi.fn().mockResolvedValue({
       isAdmin: false,
       plan: { limits: { messagesPerDay: 12 } },
       allowedModels: [],
@@ -141,33 +142,33 @@ describe('ChatMessagesService', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       executionManager as unknown as ChatExecutionManager,
       contextAssembly as unknown as ContextAssemblyManager,
-      { executeParallel: jest.fn() } as unknown as ParallelExecutionManager,
-      { executeConsensus: jest.fn() } as unknown as ConsensusExecutionManager,
-      { executeEscalationChain: jest.fn() } as unknown as EscalationChainManager,
-      { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
-      { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
-      { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
-      { executeCostEnsemble: jest.fn() } as unknown as CostEnsembleManager,
-      { executeVerify: jest.fn() } as unknown as VerifierManager,
-      { executePipeline: jest.fn() } as unknown as PipelineManager,
-      { executeRolePack: jest.fn() } as unknown as RolePackManager,
+      { executeParallel: vi.fn() } as unknown as ParallelExecutionManager,
+      { executeConsensus: vi.fn() } as unknown as ConsensusExecutionManager,
+      { executeEscalationChain: vi.fn() } as unknown as EscalationChainManager,
+      { executeRepair: vi.fn() } as unknown as AnswerRepairManager,
+      { executeDecomposition: vi.fn() } as unknown as TaskDecompositionManager,
+      { executeBestOfN: vi.fn() } as unknown as BestOfNManager,
+      { executeCostEnsemble: vi.fn() } as unknown as CostEnsembleManager,
+      { executeVerify: vi.fn() } as unknown as VerifierManager,
+      { executePipeline: vi.fn() } as unknown as PipelineManager,
+      { executeRolePack: vi.fn() } as unknown as RolePackManager,
       streamService as unknown as ChatStreamService,
-      { render: jest.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
+      { render: vi.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
       rabbitMQ as unknown as RabbitMQService,
       {
-        write: jest.fn().mockResolvedValue(undefined),
-        getByMessageId: jest.fn(),
+        write: vi.fn().mockResolvedValue(undefined),
+        getByMessageId: vi.fn(),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
       {
         assertCanSendMessage,
-        assertResearchAccess: jest.fn(),
-        recordUsage: jest.fn(),
+        assertResearchAccess: vi.fn(),
+        recordUsage: vi.fn(),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
       // ResearchEnricherManager was removed from this service on 2026-09-10:
       // its only consumer here was runEnricherTranscript, which had no
       // production callers. The manager itself lives on for the orchestration
       // managers that do use it.
-      { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
+      { tryHandleRouted: vi.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
         typeof ChatMessagesService
       >[19],
     );
@@ -429,37 +430,37 @@ describe('ChatMessagesService', () => {
   describe('executeVerify', () => {
     it('should delegate to verifierManager.executeVerify', async () => {
       const mockResult = { messageId: 'msg-v-1', threadId: 'thread-v-1' };
-      const verifierManager = { executeVerify: jest.fn().mockResolvedValue(mockResult) };
+      const verifierManager = { executeVerify: vi.fn().mockResolvedValue(mockResult) };
       const localService = new ChatMessagesService(
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         executionManager as unknown as ChatExecutionManager,
         contextAssembly as unknown as ContextAssemblyManager,
-        { executeParallel: jest.fn() } as unknown as ParallelExecutionManager,
-        { executeConsensus: jest.fn() } as unknown as ConsensusExecutionManager,
-        { executeEscalationChain: jest.fn() } as unknown as EscalationChainManager,
-        { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
-        { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
-        { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
-        { executeCostEnsemble: jest.fn() } as unknown as CostEnsembleManager,
+        { executeParallel: vi.fn() } as unknown as ParallelExecutionManager,
+        { executeConsensus: vi.fn() } as unknown as ConsensusExecutionManager,
+        { executeEscalationChain: vi.fn() } as unknown as EscalationChainManager,
+        { executeRepair: vi.fn() } as unknown as AnswerRepairManager,
+        { executeDecomposition: vi.fn() } as unknown as TaskDecompositionManager,
+        { executeBestOfN: vi.fn() } as unknown as BestOfNManager,
+        { executeCostEnsemble: vi.fn() } as unknown as CostEnsembleManager,
         verifierManager as unknown as VerifierManager,
-        { executePipeline: jest.fn() } as unknown as PipelineManager,
-        { executeRolePack: jest.fn() } as unknown as RolePackManager,
+        { executePipeline: vi.fn() } as unknown as PipelineManager,
+        { executeRolePack: vi.fn() } as unknown as RolePackManager,
         {
-          emitRequestAccepted: jest.fn(),
-          emitCompletion: jest.fn(),
+          emitRequestAccepted: vi.fn(),
+          emitCompletion: vi.fn(),
         } as unknown as ChatStreamService,
-        { render: jest.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
+        { render: vi.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
         rabbitMQ as unknown as RabbitMQService,
-        { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
+        { write: vi.fn(), getByMessageId: vi.fn() } as unknown as ConstructorParameters<
           typeof ChatMessagesService
         >[17],
         {
-          assertCanSendMessage: jest.fn(),
-          assertResearchAccess: jest.fn(),
-          recordUsage: jest.fn(),
+          assertCanSendMessage: vi.fn(),
+          assertResearchAccess: vi.fn(),
+          recordUsage: vi.fn(),
         } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
-        { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
+        { tryHandleRouted: vi.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
           typeof ChatMessagesService
         >[19],
       );

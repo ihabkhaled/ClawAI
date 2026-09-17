@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { type BusinessException } from '../../../../common/errors/business.exception';
 import { ResearchErrorCode } from '../../../../common/enums/research-error-code.enum';
@@ -30,43 +31,43 @@ describe('SearchExecutionService', () => {
   };
 
   let providerRepository: {
-    findById: jest.Mock;
-    findEnabled: jest.Mock;
+    findById: Mock;
+    findEnabled: Mock;
   };
   let runRepository: {
-    create: jest.Mock;
-    update: jest.Mock;
-    findById: jest.Mock;
-    listByUser: jest.Mock;
+    create: Mock;
+    update: Mock;
+    findById: Mock;
+    listByUser: Mock;
   };
   let providerService: {
-    buildContext: jest.Mock;
+    buildContext: Mock;
   };
   let adapterFactory: {
-    getAdapter: jest.Mock;
+    getAdapter: Mock;
   };
   let service: SearchExecutionService;
-  let recordUsage: jest.Mock;
+  let recordUsage: Mock;
 
   beforeEach(() => {
     providerRepository = {
-      findById: jest.fn(),
-      findEnabled: jest.fn(),
+      findById: vi.fn(),
+      findEnabled: vi.fn(),
     };
     runRepository = {
-      create: jest.fn(async () => ({ id: 'run-1', userId: 'user-1' })),
-      update: jest.fn(async () => ({})),
-      findById: jest.fn(),
-      listByUser: jest.fn(),
+      create: vi.fn(async () => ({ id: 'run-1', userId: 'user-1' })),
+      update: vi.fn(async () => ({})),
+      findById: vi.fn(),
+      listByUser: vi.fn(),
     };
     providerService = {
-      buildContext: jest.fn(() => context),
+      buildContext: vi.fn(() => context),
     };
     adapterFactory = {
-      getAdapter: jest.fn(),
+      getAdapter: vi.fn(),
     };
 
-    recordUsage = jest.fn(async () => {});
+    recordUsage = vi.fn(async () => {});
     service = new SearchExecutionService(
       providerRepository as unknown as SearchProviderRepository,
       runRepository as unknown as SearchRunRepository,
@@ -86,13 +87,13 @@ describe('SearchExecutionService', () => {
     providerRepository.findEnabled.mockResolvedValue([exa, firecrawl]);
 
     const firecrawlAdapter = {
-      search: jest.fn(async (_request, adapterContext: SearchAdapterContext) => {
+      search: vi.fn(async (_request, adapterContext: SearchAdapterContext) => {
         await adapterContext.onNetworkCall?.();
         throw new Error('timeout');
       }),
     };
     const exaAdapter = {
-      search: jest.fn(async (_request, adapterContext: SearchAdapterContext) => {
+      search: vi.fn(async (_request, adapterContext: SearchAdapterContext) => {
         await adapterContext.onNetworkCall?.();
         return {
           results: [
@@ -147,7 +148,7 @@ describe('SearchExecutionService', () => {
     });
     providerRepository.findById.mockResolvedValue(brave);
     adapterFactory.getAdapter.mockReturnValue({
-      search: jest.fn(async (_request, adapterContext: SearchAdapterContext) => {
+      search: vi.fn(async (_request, adapterContext: SearchAdapterContext) => {
         await adapterContext.onNetworkCall?.();
         await adapterContext.onNetworkCall?.();
         return { results: [], latencyMs: 10 };

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { CapabilityBlastRadius } from '../../../../common/enums/capability-blast-radius.enum';
 import { CapabilityClass } from '../../../../common/enums/capability-class.enum';
 import { CapabilityInvocationStatus } from '../../../../common/enums/capability-invocation-status.enum';
@@ -57,7 +58,7 @@ function fakePolicy(overrides: AccessPolicyLike): AccessPolicy {
 
 function fakeRepoWith(policies: AccessPolicy[]): PolicyRepository {
   return {
-    findActiveForCapabilityClass: jest.fn().mockResolvedValue(policies),
+    findActiveForCapabilityClass: vi.fn().mockResolvedValue(policies),
   } as unknown as PolicyRepository;
 }
 

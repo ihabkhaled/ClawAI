@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { constantTimeTokenHashEquals, hashBearerToken } from '@claw/shared-utilities';
 import { AppConfig } from '../../../../app/config/app.config';
 import { BusinessException } from '../../../../common/errors';
@@ -6,27 +7,27 @@ import { EMAIL_CHANGE_MAX_REQUESTS_PER_DAY } from '../../constants/email-change.
 import { EmailChangeStage } from '../../enums/email-change-stage.enum';
 import { EmailChangeManager } from '../email-change.manager';
 
-jest.mock('@claw/shared-utilities', () => ({
-  constantTimeTokenHashEquals: jest.fn(),
-  hashBearerToken: jest.fn(),
+vi.mock('@claw/shared-utilities', () => ({
+  constantTimeTokenHashEquals: vi.fn(),
+  hashBearerToken: vi.fn(),
 }));
-jest.mock('../../../../common/utilities', () => ({ verifyPassword: jest.fn() }));
+vi.mock('../../../../common/utilities', () => ({ verifyPassword: vi.fn() }));
 
 describe('EmailChangeManager', () => {
   const users = {
-    findByEmail: jest.fn(),
-    findById: jest.fn(),
+    findByEmail: vi.fn(),
+    findById: vi.fn(),
   };
   const repository = {
-    cancel: jest.fn(),
-    consumeAndApplyEmailChange: jest.fn(),
-    countRecentForUser: jest.fn(),
-    createRequest: jest.fn(),
-    findActiveById: jest.fn(),
-    findActiveByUserId: jest.fn(),
-    markOldEmailVerified: jest.fn(),
-    recordOldEmailFailure: jest.fn(),
-    updateOldEmailOtp: jest.fn(),
+    cancel: vi.fn(),
+    consumeAndApplyEmailChange: vi.fn(),
+    countRecentForUser: vi.fn(),
+    createRequest: vi.fn(),
+    findActiveById: vi.fn(),
+    findActiveByUserId: vi.fn(),
+    markOldEmailVerified: vi.fn(),
+    recordOldEmailFailure: vi.fn(),
+    updateOldEmailOtp: vi.fn(),
   };
   const manager = new EmailChangeManager(users as never, repository as never);
   const currentUser = {
@@ -46,18 +47,18 @@ describe('EmailChangeManager', () => {
   };
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({ JWT_SECRET: 'test-secret' } as never);
+    vi.resetAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({ JWT_SECRET: 'test-secret' } as never);
     users.findById.mockResolvedValue(currentUser);
     users.findByEmail.mockResolvedValue(null);
     repository.countRecentForUser.mockResolvedValue(0);
-    jest.mocked(verifyPassword).mockResolvedValue(true);
-    jest.mocked(hashBearerToken).mockReturnValue('hashed-value');
-    jest.mocked(constantTimeTokenHashEquals).mockReturnValue(true);
+    vi.mocked(verifyPassword).mockResolvedValue(true);
+    vi.mocked(hashBearerToken).mockReturnValue('hashed-value');
+    vi.mocked(constantTimeTokenHashEquals).mockReturnValue(true);
   });
 
   it('rejects an incorrect current password', async () => {
-    jest.mocked(verifyPassword).mockResolvedValue(false);
+    vi.mocked(verifyPassword).mockResolvedValue(false);
     await expect(manager.request('user-1', 'wrong', 'new@example.com')).rejects.toThrow(
       BusinessException,
     );
@@ -84,7 +85,7 @@ describe('EmailChangeManager', () => {
 
   it('increments attempts for a wrong OTP', async () => {
     repository.findActiveById.mockResolvedValue(activeRequest);
-    jest.mocked(constantTimeTokenHashEquals).mockReturnValue(false);
+    vi.mocked(constantTimeTokenHashEquals).mockReturnValue(false);
     repository.recordOldEmailFailure.mockResolvedValue({
       ...activeRequest,
       oldEmailAttempts: 1,
@@ -99,7 +100,7 @@ describe('EmailChangeManager', () => {
 
   it('reports cancellation on the fifth wrong OTP', async () => {
     repository.findActiveById.mockResolvedValue(activeRequest);
-    jest.mocked(constantTimeTokenHashEquals).mockReturnValue(false);
+    vi.mocked(constantTimeTokenHashEquals).mockReturnValue(false);
     repository.recordOldEmailFailure.mockResolvedValue({
       ...activeRequest,
       oldEmailAttempts: 5,

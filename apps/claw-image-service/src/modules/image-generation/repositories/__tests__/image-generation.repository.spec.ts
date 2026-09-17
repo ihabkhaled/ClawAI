@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ImageGenerationRepository } from '../image-generation.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,27 +7,27 @@ describe('ImageGenerationRepository', () => {
   let repository: ImageGenerationRepository;
   let prismaMock: {
     imageGeneration: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
-      count: jest.Mock;
-      update: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findMany: Mock;
+      count: Mock;
+      update: Mock;
     };
-    imageGenerationEvent: { create: jest.Mock };
-    imageGenerationAsset: { create: jest.Mock };
+    imageGenerationEvent: { create: Mock };
+    imageGenerationAsset: { create: Mock };
   };
 
   beforeEach(async () => {
     prismaMock = {
       imageGeneration: {
-        create: jest.fn().mockResolvedValue({ id: 'g1', status: 'QUEUED' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'g1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'g1' }]),
-        count: jest.fn().mockResolvedValue(2),
-        update: jest.fn().mockResolvedValue({ id: 'g1', status: 'COMPLETED' }),
+        create: vi.fn().mockResolvedValue({ id: 'g1', status: 'QUEUED' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'g1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'g1' }]),
+        count: vi.fn().mockResolvedValue(2),
+        update: vi.fn().mockResolvedValue({ id: 'g1', status: 'COMPLETED' }),
       },
-      imageGenerationEvent: { create: jest.fn().mockResolvedValue({ id: 'e1' }) },
-      imageGenerationAsset: { create: jest.fn().mockResolvedValue({ id: 'a1' }) },
+      imageGenerationEvent: { create: vi.fn().mockResolvedValue({ id: 'e1' }) },
+      imageGenerationAsset: { create: vi.fn().mockResolvedValue({ id: 'a1' }) },
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [ImageGenerationRepository, { provide: PrismaService, useValue: prismaMock }],
@@ -41,7 +42,9 @@ describe('ImageGenerationRepository', () => {
       provider: 'openai',
       model: 'dall-e-3',
     });
-    const args = prismaMock.imageGeneration.create.mock.calls[0][0];
+    const argsCall = prismaMock.imageGeneration.create.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.data.status).toBe('QUEUED');
     expect(args.data.width).toBe(1024);
     expect(args.data.height).toBe(1024);
@@ -59,7 +62,9 @@ describe('ImageGenerationRepository', () => {
       quality: 'hd',
       style: 'vivid',
     });
-    const args = prismaMock.imageGeneration.create.mock.calls[0][0];
+    const argsCall = prismaMock.imageGeneration.create.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.data.width).toBe(512);
     expect(args.data.height).toBe(768);
     expect(args.data.quality).toBe('hd');
@@ -75,7 +80,9 @@ describe('ImageGenerationRepository', () => {
 
   it('findByUserId paginates with createdAt desc', async () => {
     await repository.findByUserId('u1', 2, 10);
-    const args = prismaMock.imageGeneration.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.imageGeneration.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.userId).toBe('u1');
     expect(args.skip).toBe(10);
     expect(args.take).toBe(10);
@@ -89,7 +96,9 @@ describe('ImageGenerationRepository', () => {
   describe('updateStatus', () => {
     it('updates status without extras', async () => {
       await repository.updateStatus('g1', 'COMPLETED' as never);
-      const args = prismaMock.imageGeneration.update.mock.calls[0][0];
+      const argsCall = prismaMock.imageGeneration.update.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.data.status).toBe('COMPLETED');
     });
 
@@ -100,7 +109,9 @@ describe('ImageGenerationRepository', () => {
         errorMessage: 'oops',
         completedAt,
       });
-      const args = prismaMock.imageGeneration.update.mock.calls[0][0];
+      const argsCall = prismaMock.imageGeneration.update.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.data.errorCode).toBe('PROVIDER_FAILURE');
       expect(args.data.completedAt).toBe(completedAt);
     });
@@ -124,7 +135,9 @@ describe('ImageGenerationRepository', () => {
 
   it('findActiveByThreadId queries non-terminal statuses ordered by createdAt asc', async () => {
     await repository.findActiveByThreadId('t1');
-    const args = prismaMock.imageGeneration.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.imageGeneration.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.threadId).toBe('t1');
     expect(args.where.status.in).toEqual(['QUEUED', 'STARTING', 'GENERATING', 'FINALIZING']);
     expect(args.orderBy).toEqual({ createdAt: 'asc' });

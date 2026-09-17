@@ -1,24 +1,25 @@
+import { type Mock, vi } from 'vitest';
 import { WorkspaceObjectManager } from '../workspace-object.manager';
 import type { WorkspaceObjectRepository } from '../../repositories/workspace-object.repository';
 import { WorkspaceObjectType } from '../../../../common/enums/workspace-object-type.enum';
 
 const mockRepository = {
-  upsert: jest.fn(),
-  createLink: jest.fn(),
-  resolveLinksByExternalRef: jest.fn(),
+  upsert: vi.fn(),
+  createLink: vi.fn(),
+  resolveLinksByExternalRef: vi.fn(),
 } as unknown as WorkspaceObjectRepository;
 
 describe('WorkspaceObjectManager', () => {
   let manager: WorkspaceObjectManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     manager = new WorkspaceObjectManager(mockRepository);
   });
 
   describe('upsertBatch', () => {
     it('should upsert all objects and return count', async () => {
-      (mockRepository.upsert as jest.Mock).mockResolvedValue({ id: 'obj1' });
+      (mockRepository.upsert as Mock).mockResolvedValue({ id: 'obj1' });
       const objects = [
         {
           externalId: 'ext1',
@@ -38,7 +39,7 @@ describe('WorkspaceObjectManager', () => {
     });
 
     it('should handle partial failures and return synced count', async () => {
-      (mockRepository.upsert as jest.Mock)
+      (mockRepository.upsert as Mock)
         .mockResolvedValueOnce({ id: 'obj1' })
         .mockRejectedValueOnce(new Error('DB error'));
       const objects = [
@@ -58,7 +59,7 @@ describe('WorkspaceObjectManager', () => {
     });
 
     it('should truncate content longer than max length', async () => {
-      (mockRepository.upsert as jest.Mock).mockResolvedValue({ id: 'obj1' });
+      (mockRepository.upsert as Mock).mockResolvedValue({ id: 'obj1' });
       const longContent = 'a'.repeat(70_000);
       const objects = [
         {
@@ -69,14 +70,16 @@ describe('WorkspaceObjectManager', () => {
         },
       ];
       await manager.upsertBatch('c1', 'u1', 'GOOGLE_DRIVE', objects);
-      const callArg = (mockRepository.upsert as jest.Mock).mock.calls[0][3];
+      const callArgCall = (mockRepository.upsert as Mock).mock.calls[0];
+      expect(callArgCall).toBeDefined();
+      const callArg = callArgCall?.[3];
       expect(callArg.content).toHaveLength(65_536);
     });
   });
 
   describe('detectAndCreateLinks', () => {
     it('should detect Jira references and create links', async () => {
-      (mockRepository.createLink as jest.Mock).mockImplementation(() => Promise.resolve());
+      (mockRepository.createLink as Mock).mockImplementation(() => Promise.resolve());
       const objects = [
         {
           id: 'obj1',
@@ -101,7 +104,7 @@ describe('WorkspaceObjectManager', () => {
     });
 
     it('should detect GitHub PR URL references', async () => {
-      (mockRepository.createLink as jest.Mock).mockImplementation(() => Promise.resolve());
+      (mockRepository.createLink as Mock).mockImplementation(() => Promise.resolve());
       const objects = [
         {
           id: 'obj2',
@@ -127,7 +130,7 @@ describe('WorkspaceObjectManager', () => {
     });
 
     it('should silently skip link creation on error', async () => {
-      (mockRepository.createLink as jest.Mock).mockRejectedValue(new Error('DB constraint'));
+      (mockRepository.createLink as Mock).mockRejectedValue(new Error('DB constraint'));
       const objects = [{ id: 'obj4', content: 'PROJ-999' }] as Parameters<
         typeof manager.detectAndCreateLinks
       >[0];

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MemoryRepository } from '../memory.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,26 +7,26 @@ describe('MemoryRepository', () => {
   let repository: MemoryRepository;
   let prismaMock: {
     memoryRecord: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findFirst: jest.Mock;
-      findMany: jest.Mock;
-      update: jest.Mock;
-      delete: jest.Mock;
-      count: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findFirst: Mock;
+      findMany: Mock;
+      update: Mock;
+      delete: Mock;
+      count: Mock;
     };
   };
 
   beforeEach(async () => {
     prismaMock = {
       memoryRecord: {
-        create: jest.fn().mockResolvedValue({ id: 'm1' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'm1' }),
-        findFirst: jest.fn().mockResolvedValue(null),
-        findMany: jest.fn().mockResolvedValue([{ id: 'm1' }]),
-        update: jest.fn().mockResolvedValue({ id: 'm1' }),
-        delete: jest.fn().mockResolvedValue({ id: 'm1' }),
-        count: jest.fn().mockResolvedValue(7),
+        create: vi.fn().mockResolvedValue({ id: 'm1' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'm1' }),
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([{ id: 'm1' }]),
+        update: vi.fn().mockResolvedValue({ id: 'm1' }),
+        delete: vi.fn().mockResolvedValue({ id: 'm1' }),
+        count: vi.fn().mockResolvedValue(7),
       },
     };
 
@@ -49,7 +50,9 @@ describe('MemoryRepository', () => {
   describe('findAll', () => {
     it('paginates with skip/take and orderBy createdAt desc', async () => {
       await repository.findAll({ userId: 'u1' } as never, 2, 10);
-      const args = prismaMock.memoryRecord.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.memoryRecord.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.skip).toBe(10);
       expect(args.take).toBe(10);
       expect(args.orderBy).toEqual({ createdAt: 'desc' });
@@ -57,19 +60,25 @@ describe('MemoryRepository', () => {
 
     it('applies type filter when set', async () => {
       await repository.findAll({ userId: 'u1', type: 'FACT' } as never, 1, 20);
-      const args = prismaMock.memoryRecord.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.memoryRecord.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.type).toBe('FACT');
     });
 
     it('applies isEnabled filter when set', async () => {
       await repository.findAll({ userId: 'u1', isEnabled: true } as never, 1, 20);
-      const args = prismaMock.memoryRecord.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.memoryRecord.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.isEnabled).toBe(true);
     });
 
     it('applies content search when set', async () => {
       await repository.findAll({ userId: 'u1', search: 'foo' } as never, 1, 20);
-      const args = prismaMock.memoryRecord.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.memoryRecord.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.content).toEqual({ contains: 'foo', mode: 'insensitive' });
     });
   });
@@ -89,7 +98,9 @@ describe('MemoryRepository', () => {
 
   it('findEnabledByUserId queries enabled-only with the V2 pause-aware filter', async () => {
     await repository.findEnabledByUserId('u1', 25);
-    const args = prismaMock.memoryRecord.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.memoryRecord.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.userId).toBe('u1');
     expect(args.where.isEnabled).toBe(true);
     // V2 (ADR-034): pause filter applied as OR on pausedUntil
@@ -101,7 +112,7 @@ describe('MemoryRepository', () => {
 
   describe('existsSimilar', () => {
     it('returns true when a matching record exists', async () => {
-      prismaMock.memoryRecord.findFirst = jest.fn().mockResolvedValue({ id: 'existing' });
+      prismaMock.memoryRecord.findFirst = vi.fn().mockResolvedValue({ id: 'existing' });
       const result = await repository.existsSimilar(
         'u1',
         'FACT' as never,
@@ -118,7 +129,9 @@ describe('MemoryRepository', () => {
     it('truncates content to first 100 chars in the contains query', async () => {
       const long = 'a'.repeat(500);
       await repository.existsSimilar('u1', 'FACT' as never, long);
-      const args = prismaMock.memoryRecord.findFirst.mock.calls[0][0];
+      const argsCall = prismaMock.memoryRecord.findFirst.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.content.contains).toHaveLength(100);
     });
   });

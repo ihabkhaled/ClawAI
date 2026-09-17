@@ -1,39 +1,46 @@
+import { type Mock, vi } from 'vitest';
 import { ResearchEnricherManager } from '../research-enricher.manager';
 import { RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK } from '../../constants/research-enricher.constants';
 import { ResearchMode } from '../../../../common/enums/research-mode.enum';
 import { AiStreamStage } from '../../../../common/enums';
 import { type ChatStreamService } from '../../services/chat-stream.service';
 
-jest.mock('../../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
 }));
-jest.mock('../../../../app/config/app.config');
 
-const { httpRequest } = jest.requireMock('../../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../../common/utilities') as {
+  httpRequest: Mock;
 };
-const { AppConfig } = jest.requireMock('../../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const RESEARCH_URL = 'http://research-service:4016';
 const AUTH_HEADER = 'Bearer abc.def.ghi';
 
 const buildStreamServiceMock = (): {
-  emitResearchProgress: jest.Mock;
+  emitResearchProgress: Mock<ChatStreamService['emitResearchProgress']>;
   service: ChatStreamService;
 } => {
-  const emitResearchProgress = jest.fn();
+  const emitResearchProgress = vi.fn<ChatStreamService['emitResearchProgress']>();
   const service = { emitResearchProgress } as unknown as ChatStreamService;
   return { emitResearchProgress, service };
 };
 
 describe('ResearchEnricherManager', () => {
   let manager: ResearchEnricherManager;
-  let emitResearchProgress: jest.Mock;
+  let emitResearchProgress: Mock<ChatStreamService['emitResearchProgress']>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue({ RESEARCH_SERVICE_URL: RESEARCH_URL });
     const stream = buildStreamServiceMock();
     emitResearchProgress = stream.emitResearchProgress;
@@ -90,7 +97,9 @@ describe('ResearchEnricherManager', () => {
     });
 
     expect(httpRequest).toHaveBeenCalledTimes(1);
-    const call = httpRequest.mock.calls[0][0];
+    const callCall = httpRequest.mock.calls[0];
+    expect(callCall).toBeDefined();
+    const call = callCall?.[0];
     expect(call.url).toBe(`${RESEARCH_URL}/api/v1/research/search`);
     expect(call.method).toBe('POST');
     expect(call.headers).toEqual({ Authorization: AUTH_HEADER });
@@ -146,11 +155,21 @@ describe('ResearchEnricherManager', () => {
     });
 
     expect(httpRequest).toHaveBeenCalledTimes(4);
-    expect(httpRequest.mock.calls[0][0].url).toBe(`${RESEARCH_URL}/api/v1/research/search`);
-    expect(httpRequest.mock.calls[1][0].url).toBe(`${RESEARCH_URL}/api/v1/research/fetch`);
-    expect(httpRequest.mock.calls[1][0].body).toEqual({ url: 'https://a/1' });
-    expect(httpRequest.mock.calls[2][0].body).toEqual({ url: 'https://a/2' });
-    expect(httpRequest.mock.calls[3][0].body).toEqual({ url: 'https://a/3' });
+    const call = httpRequest.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].url).toBe(`${RESEARCH_URL}/api/v1/research/search`);
+    const call2 = httpRequest.mock.calls[1];
+    expect(call2).toBeDefined();
+    expect(call2?.[0].url).toBe(`${RESEARCH_URL}/api/v1/research/fetch`);
+    const call3 = httpRequest.mock.calls[1];
+    expect(call3).toBeDefined();
+    expect(call3?.[0].body).toEqual({ url: 'https://a/1' });
+    const call4 = httpRequest.mock.calls[2];
+    expect(call4).toBeDefined();
+    expect(call4?.[0].body).toEqual({ url: 'https://a/2' });
+    const call5 = httpRequest.mock.calls[3];
+    expect(call5).toBeDefined();
+    expect(call5?.[0].body).toEqual({ url: 'https://a/3' });
 
     expect(result.sources).toHaveLength(3);
     const [first, second, third] = result.sources;
@@ -190,7 +209,9 @@ describe('ResearchEnricherManager', () => {
     });
 
     expect(httpRequest).toHaveBeenCalledTimes(2);
-    expect(httpRequest.mock.calls[1][0].url).toBe(`${RESEARCH_URL}/api/v1/research/fetch`);
+    const call = httpRequest.mock.calls[1];
+    expect(call).toBeDefined();
+    expect(call?.[0].url).toBe(`${RESEARCH_URL}/api/v1/research/fetch`);
     expect(result.sources).toHaveLength(1);
     const [only] = result.sources;
     if (!only) throw new Error('expected one source');
@@ -288,7 +309,9 @@ describe('ResearchEnricherManager', () => {
       expect.objectContaining({ mode: ResearchMode.SEARCH_FETCH, query: 'sse test' }),
     );
 
-    const sourcesFoundPayload = emitResearchProgress.mock.calls[1][1] as {
+    const sourcesFoundPayloadCall = emitResearchProgress.mock.calls[1];
+    expect(sourcesFoundPayloadCall).toBeDefined();
+    const sourcesFoundPayload = sourcesFoundPayloadCall?.[1] as {
       details: { sourcesCount?: number };
     };
     expect(sourcesFoundPayload.details.sourcesCount).toBe(2);
@@ -298,7 +321,7 @@ describe('ResearchEnricherManager', () => {
         (call: [string, { stage: AiStreamStage }]) =>
           call[1].stage === AiStreamStage.RESEARCH_FETCHING,
       )
-      .map((call: [string, { details: { currentUrl?: string } }]) => call[1].details.currentUrl);
+      .map((call) => call[1].details?.currentUrl);
     expect(fetchingUrls).toEqual(['https://a/1', 'https://a/2']);
 
     const completedPayload = emitResearchProgress.mock.calls.at(-1)?.[1] as {
@@ -372,7 +395,7 @@ describe('ResearchEnricherManager', () => {
     ).enrichSourcesByMode;
     (
       manager as unknown as { enrichSourcesByMode: (...args: unknown[]) => Promise<unknown> }
-    ).enrichSourcesByMode = jest.fn().mockRejectedValueOnce(new Error('boom'));
+    ).enrichSourcesByMode = vi.fn().mockRejectedValueOnce(new Error('boom'));
 
     await expect(
       manager.enrich({

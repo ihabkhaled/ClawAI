@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { EmailSignatureService } from '../email-signature.service';
@@ -12,22 +13,22 @@ const makeSig = (overrides: Record<string, unknown> = {}): unknown => ({
   updatedAt: new Date(),
 });
 
-const makeRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
-  listForUser: jest.fn(),
-  findById: jest.fn(),
-  findByName: jest.fn(),
-  findDefaultForUser: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  deleteById: jest.fn(),
-  clearDefaultsForUser: jest.fn(),
+const makeRepo = (overrides: Record<string, Mock> = {}): Record<string, Mock> => ({
+  listForUser: vi.fn(),
+  findById: vi.fn(),
+  findByName: vi.fn(),
+  findDefaultForUser: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteById: vi.fn(),
+  clearDefaultsForUser: vi.fn(),
   ...overrides,
 });
 
 describe('EmailSignatureService', () => {
   describe('list', () => {
     it('returns all signatures for the user', async () => {
-      const repo = makeRepo({ listForUser: jest.fn().mockResolvedValue([makeSig()]) });
+      const repo = makeRepo({ listForUser: vi.fn().mockResolvedValue([makeSig()]) });
       const service = new EmailSignatureService(repo as any);
       const result = await service.list('u1');
       expect(result).toHaveLength(1);
@@ -38,7 +39,7 @@ describe('EmailSignatureService', () => {
   describe('getOwn', () => {
     it('returns the signature when owned', async () => {
       const sig = makeSig();
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(sig) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(sig) });
       const service = new EmailSignatureService(repo as any);
       const result = await service.getOwn('u1', 'sig-1');
       expect(result).toEqual(sig);
@@ -46,14 +47,14 @@ describe('EmailSignatureService', () => {
 
     it('404s when the signature belongs to a different user', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeSig({ userId: 'bob' })),
+        findById: vi.fn().mockResolvedValue(makeSig({ userId: 'bob' })),
       });
       const service = new EmailSignatureService(repo as any);
       await expect(service.getOwn('alice', 'sig-1')).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('404s when the signature does not exist', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new EmailSignatureService(repo as any);
       await expect(service.getOwn('u1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
     });
@@ -62,14 +63,14 @@ describe('EmailSignatureService', () => {
   describe('getDefault', () => {
     it('returns the default signature for the user', async () => {
       const sig = makeSig({ isDefault: true });
-      const repo = makeRepo({ findDefaultForUser: jest.fn().mockResolvedValue(sig) });
+      const repo = makeRepo({ findDefaultForUser: vi.fn().mockResolvedValue(sig) });
       const service = new EmailSignatureService(repo as any);
       const result = await service.getDefault('u1');
       expect(result).toEqual(sig);
     });
 
     it('returns null when no default is set', async () => {
-      const repo = makeRepo({ findDefaultForUser: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findDefaultForUser: vi.fn().mockResolvedValue(null) });
       const service = new EmailSignatureService(repo as any);
       expect(await service.getDefault('u1')).toBeNull();
     });
@@ -79,8 +80,8 @@ describe('EmailSignatureService', () => {
     it('creates a new signature when the name is unique', async () => {
       const created = makeSig();
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
       const service = new EmailSignatureService(repo as any);
       const result = await service.create('u1', { name: 'Work', body: 'Best,\nAlice' });
@@ -91,8 +92,8 @@ describe('EmailSignatureService', () => {
     it('clears other defaults when creating with isDefault=true', async () => {
       const created = makeSig({ isDefault: true }) as { id: string };
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
       const service = new EmailSignatureService(repo as any);
       await service.create('u1', { name: 'Work', body: 'Best,\nAlice', isDefault: true });
@@ -100,7 +101,7 @@ describe('EmailSignatureService', () => {
     });
 
     it('409s when the name is already taken for the user', async () => {
-      const repo = makeRepo({ findByName: jest.fn().mockResolvedValue(makeSig()) });
+      const repo = makeRepo({ findByName: vi.fn().mockResolvedValue(makeSig()) });
       const service = new EmailSignatureService(repo as any);
       await expect(service.create('u1', { name: 'Work', body: 'x' })).rejects.toBeInstanceOf(
         ConflictException,
@@ -112,9 +113,9 @@ describe('EmailSignatureService', () => {
   describe('update', () => {
     it('updates fields and clears other defaults when promoting to default', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeSig()),
-        findByName: jest.fn().mockResolvedValue(null),
-        update: jest.fn().mockResolvedValue(makeSig({ isDefault: true })),
+        findById: vi.fn().mockResolvedValue(makeSig()),
+        findByName: vi.fn().mockResolvedValue(null),
+        update: vi.fn().mockResolvedValue(makeSig({ isDefault: true })),
       });
       const service = new EmailSignatureService(repo as any);
       await service.update('u1', 'sig-1', { isDefault: true });
@@ -123,8 +124,8 @@ describe('EmailSignatureService', () => {
 
     it('blocks rename when the new name is taken by another row', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeSig()),
-        findByName: jest.fn().mockResolvedValue(makeSig({ id: 'sig-other' })),
+        findById: vi.fn().mockResolvedValue(makeSig()),
+        findByName: vi.fn().mockResolvedValue(makeSig({ id: 'sig-other' })),
       });
       const service = new EmailSignatureService(repo as any);
       await expect(service.update('u1', 'sig-1', { name: 'Conflict' })).rejects.toBeInstanceOf(
@@ -135,9 +136,9 @@ describe('EmailSignatureService', () => {
 
     it('allows renaming to a name that is taken by the SAME row', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeSig()),
-        findByName: jest.fn().mockResolvedValue(makeSig()),
-        update: jest.fn().mockResolvedValue(makeSig()),
+        findById: vi.fn().mockResolvedValue(makeSig()),
+        findByName: vi.fn().mockResolvedValue(makeSig()),
+        update: vi.fn().mockResolvedValue(makeSig()),
       });
       const service = new EmailSignatureService(repo as any);
       await service.update('u1', 'sig-1', { name: 'Work' });
@@ -148,8 +149,8 @@ describe('EmailSignatureService', () => {
   describe('deleteById', () => {
     it('deletes only when owned', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeSig()),
-        deleteById: jest.fn().mockResolvedValue(undefined),
+        findById: vi.fn().mockResolvedValue(makeSig()),
+        deleteById: vi.fn().mockResolvedValue(undefined),
       });
       const service = new EmailSignatureService(repo as any);
       await service.deleteById('u1', 'sig-1');
@@ -158,7 +159,7 @@ describe('EmailSignatureService', () => {
 
     it('404s before deleting when the row is not owned', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeSig({ userId: 'bob' })),
+        findById: vi.fn().mockResolvedValue(makeSig({ userId: 'bob' })),
       });
       const service = new EmailSignatureService(repo as any);
       await expect(service.deleteById('alice', 'sig-1')).rejects.toBeInstanceOf(NotFoundException);

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FilesInternalController } from '../files-internal.controller';
 import { FileChunksRepository } from '../../repositories/file-chunks.repository';
@@ -6,21 +7,21 @@ import { FilesService } from '../../services/files.service';
 
 describe('FilesInternalController', () => {
   let controller: FilesInternalController;
-  let chunksMock: jest.Mocked<{ findByFileId: jest.Mock }>;
-  let filesRepoMock: jest.Mocked<{ findById: jest.Mock }>;
-  let serviceMock: jest.Mocked<{
-    downloadFilePublic: jest.Mock;
-    getFileContent: jest.Mock;
-    storeImage: jest.Mock;
-  }>;
+  let chunksMock: { findByFileId: Mock };
+  let filesRepoMock: { findById: Mock };
+  let serviceMock: {
+    downloadFilePublic: Mock;
+    getFileContent: Mock;
+    storeImage: Mock;
+  };
 
   beforeEach(async () => {
-    chunksMock = { findByFileId: jest.fn() };
-    filesRepoMock = { findById: jest.fn() };
+    chunksMock = { findByFileId: vi.fn() };
+    filesRepoMock = { findById: vi.fn() };
     serviceMock = {
-      downloadFilePublic: jest.fn(),
-      getFileContent: jest.fn(),
-      storeImage: jest.fn(),
+      downloadFilePublic: vi.fn(),
+      getFileContent: vi.fn(),
+      storeImage: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FilesInternalController],

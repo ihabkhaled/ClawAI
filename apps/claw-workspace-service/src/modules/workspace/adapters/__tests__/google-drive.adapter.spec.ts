@@ -1,32 +1,33 @@
+import { vi, type Mock } from 'vitest';
 import { GoogleDriveAdapter } from '../google-drive.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('GoogleDriveAdapter', () => {
   let adapter: GoogleDriveAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new GoogleDriveAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unauthorized');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 503,
         text: async () => 'unavailable',
@@ -37,7 +38,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
@@ -75,7 +76,7 @@ describe('GoogleDriveAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -99,7 +100,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -115,7 +116,7 @@ describe('GoogleDriveAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', expires_in: 3600 }),
       });
@@ -142,7 +143,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('maps files to SyncedObject with resolved object type', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ files: [file()] }),
       });
@@ -158,7 +159,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('resolves spreadsheet mime type to SPREADSHEET', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           files: [file({ mimeType: 'application/vnd.google-apps.spreadsheet' })],
@@ -169,7 +170,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('resolves folder mime type to PROJECT', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ files: [file({ mimeType: 'application/vnd.google-apps.folder' })] }),
       });
@@ -178,17 +179,17 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('threads the incoming deltaToken through as pageToken', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ files: [] }),
       });
       await adapter.syncObjects('token', 'prior-page-token');
-      const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+      const [url] = (global.fetch as Mock).mock.calls[0] as [string];
       expect(url).toContain('pageToken=prior-page-token');
     });
 
     it('returns nextPageToken as deltaTokenOut when present', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ files: [], nextPageToken: 'next-token' }),
       });
@@ -197,7 +198,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('throws on a non-ok list response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 500,
         text: async () => 'server error',
@@ -208,7 +209,7 @@ describe('GoogleDriveAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('resolves metadata and inlines exported text content for a Google Doc', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -227,7 +228,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('returns null content when the file type has no export path', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -243,13 +244,13 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'FILE');
       expect(live).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.fetchObjectDetails('token', 'file1', 'FILE')).rejects.toThrow(
         /HTTP 500/,
       );
@@ -258,7 +259,7 @@ describe('GoogleDriveAdapter', () => {
 
   describe('downloadFileContent', () => {
     it('streams a binary file as-is via ?alt=media', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         body: {},
@@ -273,7 +274,7 @@ describe('GoogleDriveAdapter', () => {
     });
 
     it('exports a Google Doc to PDF with the .pdf extension', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         body: {},
@@ -285,18 +286,18 @@ describe('GoogleDriveAdapter', () => {
       });
       expect(stream?.filename).toBe('Notes.pdf');
       expect(stream?.mimeType).toBe('application/pdf');
-      const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+      const [url] = (global.fetch as Mock).mock.calls[0] as [string];
       expect(url).toContain('/export?mimeType=');
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const stream = await adapter.downloadFileContent('token', 'missing');
       expect(stream).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500, body: null });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500, body: null });
       await expect(adapter.downloadFileContent('token', 'file1')).rejects.toThrow(/HTTP 500/);
     });
   });
@@ -304,7 +305,7 @@ describe('GoogleDriveAdapter', () => {
   describe('write actions', () => {
     describe('UPLOAD_DRIVE', () => {
       it('multipart-uploads name+content and returns the created id/url', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'new-file', webViewLink: 'https://drive.google.com/new-file' }),
         });
@@ -317,7 +318,7 @@ describe('GoogleDriveAdapter', () => {
           externalId: 'new-file',
           url: 'https://drive.google.com/new-file',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('uploadType=multipart');
         expect(init.method).toBe('POST');
       });
@@ -330,7 +331,7 @@ describe('GoogleDriveAdapter', () => {
       });
 
       it('returns success:false on a non-ok upload response', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 400 });
+        (global.fetch as Mock).mockResolvedValue({ ok: false, status: 400 });
         const result = await adapter.executeWriteAction('token', 'UPLOAD_DRIVE', {
           name: 'x.txt',
           content: 'y',
@@ -342,7 +343,7 @@ describe('GoogleDriveAdapter', () => {
 
     describe('MOVE_DRIVE', () => {
       it('PATCHes addParents/removeParents as query params', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'file1', webViewLink: 'https://drive.google.com/file1' }),
         });
@@ -352,14 +353,14 @@ describe('GoogleDriveAdapter', () => {
           removeParents: 'folderB',
         });
         expect(result.success).toBe(true);
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('addParents=folderA');
         expect(url).toContain('removeParents=folderB');
         expect(init.method).toBe('PATCH');
       });
 
       it('returns success:false on a non-ok move response', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 403 });
+        (global.fetch as Mock).mockResolvedValue({ ok: false, status: 403 });
         const result = await adapter.executeWriteAction('token', 'MOVE_DRIVE', {
           fileId: 'file1',
         });

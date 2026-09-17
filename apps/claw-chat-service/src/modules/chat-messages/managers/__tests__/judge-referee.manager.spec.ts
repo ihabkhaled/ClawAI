@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { JudgeRefereeManager } from '../judge-referee.manager';
 import { JudgeDecision } from '../../../../common/enums';
 import type { ChatExecutionManager } from '../chat-execution.manager';
@@ -58,16 +59,16 @@ const buildPayload = (): MessageRoutedData => ({
 
 describe('JudgeRefereeManager — critic invocation', () => {
   let manager: JudgeRefereeManager;
-  let chatStream: jest.Mocked<
+  let chatStream: Mocked<
     Pick<ChatStreamService, 'emitJudgeEvaluating' | 'emitOrchestrationStage'>
   >;
-  let localSelection: jest.Mocked<Pick<LocalModelSelectionService, 'resolveDefaultModel'>>;
-  let executionManager: jest.Mocked<Pick<ChatExecutionManager, 'callProvider'>>;
+  let localSelection: Mocked<Pick<LocalModelSelectionService, 'resolveDefaultModel'>>;
+  let executionManager: Mocked<Pick<ChatExecutionManager, 'callProvider'>>;
 
   beforeEach(() => {
-    chatStream = { emitJudgeEvaluating: jest.fn(), emitOrchestrationStage: jest.fn() };
-    localSelection = { resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b') };
-    executionManager = { callProvider: jest.fn() };
+    chatStream = { emitJudgeEvaluating: vi.fn(), emitOrchestrationStage: vi.fn() };
+    localSelection = { resolveDefaultModel: vi.fn().mockResolvedValue('gemma3:4b') };
+    executionManager = { callProvider: vi.fn() };
     manager = new JudgeRefereeManager(
       chatStream as unknown as ChatStreamService,
       localSelection as unknown as LocalModelSelectionService,

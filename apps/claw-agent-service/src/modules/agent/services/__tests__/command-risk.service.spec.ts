@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { CapabilityInvocationStatus } from '../../../../common/enums/capability-invocation-status.enum';
 import { PolicyKind } from '../../../../common/enums/policy-kind.enum';
 import { RiskLabel } from '../../../../common/enums/risk-label.enum';
@@ -39,12 +40,12 @@ function fakePolicy(overrides: Partial<AccessPolicy> = {}): AccessPolicy {
   } as AccessPolicy;
 }
 
-function fakePolicyRepo(policies: AccessPolicy[]): jest.Mocked<PolicyRepository> {
+function fakePolicyRepo(policies: AccessPolicy[]): Mocked<PolicyRepository> {
   return {
-    findActive: jest.fn().mockResolvedValue(policies),
-    findActiveForCapabilityClass: jest.fn(),
-    findOrgIdsForUser: jest.fn(),
-  } as unknown as jest.Mocked<PolicyRepository>;
+    findActive: vi.fn().mockResolvedValue(policies),
+    findActiveForCapabilityClass: vi.fn(),
+    findOrgIdsForUser: vi.fn(),
+  } as unknown as Mocked<PolicyRepository>;
 }
 
 function fakeCapRiskService(
@@ -54,9 +55,9 @@ function fakeCapRiskService(
     riskScore: number;
     riskLabel: RiskLabel;
   }> = {},
-): jest.Mocked<CapabilityRiskService> {
+): Mocked<CapabilityRiskService> {
   return {
-    assess: jest.fn().mockResolvedValue({
+    assess: vi.fn().mockResolvedValue({
       status: result.status ?? CapabilityInvocationStatus.PENDING_APPROVAL,
       matchedPolicyName: result.matchedPolicyName ?? null,
       matchedPolicyId: null,
@@ -65,7 +66,7 @@ function fakeCapRiskService(
       riskLabel: result.riskLabel ?? RiskLabel.LOW,
       reasons: [],
     }),
-  } as unknown as jest.Mocked<CapabilityRiskService>;
+  } as unknown as Mocked<CapabilityRiskService>;
 }
 
 describe('CommandRiskService', () => {
@@ -129,8 +130,8 @@ describe('CommandRiskService', () => {
   it('records a capability-path error as a divergence with errorMessage', async () => {
     const repo = fakePolicyRepo([]);
     const capRisk = {
-      assess: jest.fn().mockRejectedValue(new Error('boom')),
-    } as unknown as jest.Mocked<CapabilityRiskService>;
+      assess: vi.fn().mockRejectedValue(new Error('boom')),
+    } as unknown as Mocked<CapabilityRiskService>;
     const metrics = new CapabilityDualWriteMetricsService();
     const svc = new CommandRiskService(repo, capRisk, metrics);
 

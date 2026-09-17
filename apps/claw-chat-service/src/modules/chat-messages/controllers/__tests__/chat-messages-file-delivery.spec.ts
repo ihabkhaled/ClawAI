@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { ChatMessagesController } from '../chat-messages.controller';
 import { type ChatMessagesService } from '../../services/chat-messages.service';
@@ -14,14 +15,14 @@ const buildUser = (overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUse
 });
 
 describe('ChatMessagesController — GET /chat-messages/:id/file-delivery', () => {
-  let chatMessagesService: { [key: string]: jest.Mock };
-  let fileDeliveryRecordService: { getDeliveriesForMessage: jest.Mock };
+  let chatMessagesService: { [key: string]: Mock };
+  let fileDeliveryRecordService: { getDeliveriesForMessage: Mock };
   let controller: ChatMessagesController;
 
   beforeEach(() => {
-    chatMessagesService = {} as { [key: string]: jest.Mock };
+    chatMessagesService = {} as { [key: string]: Mock };
     fileDeliveryRecordService = {
-      getDeliveriesForMessage: jest.fn(),
+      getDeliveriesForMessage: vi.fn(),
     };
     controller = new ChatMessagesController(
       chatMessagesService as unknown as ChatMessagesService,

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AutoSuggestSchedulerManager } from '../auto-suggest-scheduler.manager';
 
 beforeAll(() => {
@@ -23,15 +24,15 @@ type StubMessage = {
 const makePrisma = (
   rows: StubMessage[],
 ): {
-  workspaceObject: { findMany: jest.Mock };
+  workspaceObject: { findMany: Mock };
 } => ({
   workspaceObject: {
-    findMany: jest.fn().mockResolvedValue(rows),
+    findMany: vi.fn().mockResolvedValue(rows),
   },
 });
 
-const makeOrchestrator = (): { runJob: jest.Mock } => ({
-  runJob: jest.fn(async (_job: string, collector: () => Promise<unknown[]>) => {
+const makeOrchestrator = (): { runJob: Mock } => ({
+  runJob: vi.fn(async (_job: string, collector: () => Promise<unknown[]>) => {
     return collector();
   }),
 });

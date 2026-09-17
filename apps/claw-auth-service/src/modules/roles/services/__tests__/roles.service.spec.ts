@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Permission, UserRole } from '@claw/shared-types';
 import { RolesService } from '../roles.service';
 import { type RolesRepository } from '../../repositories/roles.repository';
@@ -26,16 +27,16 @@ const customRole = {
   permissions: [{ permission: Permission.ADMIN_USAGE_VIEW }],
 };
 
-const mockRepo = (): Record<keyof RolesRepository, jest.Mock> => ({
-  findAll: jest.fn(),
-  findById: jest.fn(),
-  findBySlug: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  replacePermissions: jest.fn(),
-  countUsersWithRole: jest.fn(),
-  isSuperAdminActor: jest.fn().mockResolvedValue(true),
+const mockRepo = (): Record<keyof RolesRepository, Mock> => ({
+  findAll: vi.fn(),
+  findById: vi.fn(),
+  findBySlug: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+  replacePermissions: vi.fn(),
+  countUsersWithRole: vi.fn(),
+  isSuperAdminActor: vi.fn().mockResolvedValue(true),
 });
 
 describe('RolesService', () => {

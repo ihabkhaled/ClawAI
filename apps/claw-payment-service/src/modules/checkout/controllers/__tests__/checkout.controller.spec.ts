@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UserRole } from '@claw/shared-types';
 
@@ -9,15 +10,15 @@ import { PaypalCheckoutCompletionService } from '../../services/paypal-checkout-
 import { CheckoutController } from '../checkout.controller';
 
 describe('CheckoutController', () => {
-  const checkout = { findOwned: jest.fn(), start: jest.fn() };
-  const paymentMethodSetup = { start: jest.fn(), findOwned: jest.fn() };
-  const catalog = { listCatalog: jest.fn() };
-  const paypalCompletion = { complete: jest.fn(), completeSdk: jest.fn() };
-  const paymobCompletion = { complete: jest.fn() };
+  const checkout = { findOwned: vi.fn(), start: vi.fn() };
+  const paymentMethodSetup = { start: vi.fn(), findOwned: vi.fn() };
+  const catalog = { listCatalog: vi.fn() };
+  const paypalCompletion = { complete: vi.fn(), completeSdk: vi.fn() };
+  const paymobCompletion = { complete: vi.fn() };
   let controller: CheckoutController;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       controllers: [CheckoutController],
       providers: [

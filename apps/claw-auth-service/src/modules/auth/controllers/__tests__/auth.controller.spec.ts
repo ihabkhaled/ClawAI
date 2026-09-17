@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../../services/auth.service';
@@ -10,32 +11,32 @@ import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let serviceMock: jest.Mocked<{
-    register: jest.Mock;
-    login: jest.Mock;
-    refresh: jest.Mock;
-    logout: jest.Mock;
-    getProfile: jest.Mock;
-  }>;
-  let passwordResetServiceMock: jest.Mocked<{
-    requestReset: jest.Mock;
-    confirmReset: jest.Mock;
-  }>;
-  let emailChangeServiceMock: jest.Mocked<{ confirmEmailChange: jest.Mock }>;
+  let serviceMock: {
+    register: Mock;
+    login: Mock;
+    refresh: Mock;
+    logout: Mock;
+    getProfile: Mock;
+  };
+  let passwordResetServiceMock: {
+    requestReset: Mock;
+    confirmReset: Mock;
+  };
+  let emailChangeServiceMock: { confirmEmailChange: Mock };
 
   beforeEach(async () => {
     serviceMock = {
-      register: jest.fn(),
-      login: jest.fn(),
-      refresh: jest.fn(),
-      logout: jest.fn(),
-      getProfile: jest.fn(),
+      register: vi.fn(),
+      login: vi.fn(),
+      refresh: vi.fn(),
+      logout: vi.fn(),
+      getProfile: vi.fn(),
     };
     passwordResetServiceMock = {
-      requestReset: jest.fn(),
-      confirmReset: jest.fn(),
+      requestReset: vi.fn(),
+      confirmReset: vi.fn(),
     };
-    emailChangeServiceMock = { confirmEmailChange: jest.fn() };
+    emailChangeServiceMock = { confirmEmailChange: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -44,7 +45,7 @@ describe('AuthController', () => {
         { provide: EmailChangeService, useValue: emailChangeServiceMock },
         {
           provide: EmailVerificationService,
-          useValue: { resend: jest.fn(), verify: jest.fn() },
+          useValue: { resend: vi.fn(), verify: vi.fn() },
         },
       ],
     }).compile();

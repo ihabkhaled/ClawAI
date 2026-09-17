@@ -1,22 +1,23 @@
+import { vi, type MockedFunction } from 'vitest';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
 import { OllamaAdapter } from '../managers/adapters/ollama.adapter';
 import { httpGet, httpGetText } from '../../../common/utilities/http.utility';
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_BASE_URL: 'http://ollama:11434',
     }),
   },
 }));
 
-jest.mock('../../../common/utilities/http.utility', () => ({
-  httpGet: jest.fn(),
-  httpGetText: jest.fn(),
+vi.mock('../../../common/utilities/http.utility', () => ({
+  httpGet: vi.fn(),
+  httpGetText: vi.fn(),
 }));
 
-const mockedHttpGet = httpGet as jest.MockedFunction<typeof httpGet>;
-const mockedHttpGetText = httpGetText as jest.MockedFunction<typeof httpGetText>;
+const mockedHttpGet = httpGet as MockedFunction<typeof httpGet>;
+const mockedHttpGetText = httpGetText as MockedFunction<typeof httpGetText>;
 
 describe('OllamaAdapter', () => {
   let adapter: OllamaAdapter;

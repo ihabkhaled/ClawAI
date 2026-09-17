@@ -1,23 +1,24 @@
+import { vi, type Mock } from 'vitest';
 import { WebhookEventStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { WebhookEventRepository } from '../webhook-event.repository';
 
 type WebhookDelegate = {
-  createMany: jest.Mock;
-  findUnique: jest.Mock;
-  findMany: jest.Mock;
-  update: jest.Mock;
-  count: jest.Mock;
+  createMany: Mock;
+  findUnique: Mock;
+  findMany: Mock;
+  update: Mock;
+  count: Mock;
 };
 
 function buildPrisma(): { prisma: PrismaService; webhookEvent: WebhookDelegate } {
   const webhookEvent: WebhookDelegate = {
-    createMany: jest.fn(async () => ({ count: 1 })),
-    findUnique: jest.fn(async () => ({ id: 'wh_1' })),
-    findMany: jest.fn(async () => []),
-    update: jest.fn(async () => ({ id: 'wh_1' })),
-    count: jest.fn(async () => 0),
+    createMany: vi.fn(async () => ({ count: 1 })),
+    findUnique: vi.fn(async () => ({ id: 'wh_1' })),
+    findMany: vi.fn(async () => []),
+    update: vi.fn(async () => ({ id: 'wh_1' })),
+    count: vi.fn(async () => 0),
   };
   return { prisma: { webhookEvent } as unknown as PrismaService, webhookEvent };
 }
@@ -38,12 +39,12 @@ describe('WebhookEventRepository', () => {
     const built = buildPrisma();
     webhookEvent = built.webhookEvent;
     repository = new WebhookEventRepository(built.prisma);
-    jest.spyOn(repository['logger'], 'warn').mockImplementation(() => {});
-    jest.spyOn(repository['logger'], 'error').mockImplementation(() => {});
+    vi.spyOn(repository['logger'], 'warn').mockImplementation(() => {});
+    vi.spyOn(repository['logger'], 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('claim', () => {

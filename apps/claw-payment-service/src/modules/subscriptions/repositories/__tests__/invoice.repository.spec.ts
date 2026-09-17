@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { InvoiceStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,8 +6,8 @@ import { INVOICE_LIST_LIMIT, PAID_INVOICE_SCAN_LIMIT } from '../../constants/sub
 import { InvoiceRepository } from '../invoice.repository';
 
 type InvoiceDelegate = {
-  findMany: jest.Mock;
-  findFirst: jest.Mock;
+  findMany: Mock;
+  findFirst: Mock;
 };
 
 // A Prisma delegate has far more methods than a repository calls, so the stub
@@ -15,8 +16,8 @@ type InvoiceDelegate = {
 // double type assertion this codebase bans stay out of the test.
 function buildPrisma(): { prisma: PrismaService; invoice: InvoiceDelegate } {
   const invoice: InvoiceDelegate = {
-    findMany: jest.fn(async () => []),
-    findFirst: jest.fn(async () => null),
+    findMany: vi.fn(async () => []),
+    findFirst: vi.fn(async () => null),
   };
   const prisma: PrismaService = Object.create(null);
   Object.assign(prisma, { invoice });

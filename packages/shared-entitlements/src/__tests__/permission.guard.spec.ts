@@ -1,8 +1,9 @@
+import { vi, type Mock } from 'vitest';
 import { Permission } from '@claw/shared-types';
 import { PermissionGuard } from '../permission.guard';
 
-type MockReflector = { getAllAndOverride: jest.Mock };
-type MockAdapter = { getEntitlements: jest.Mock };
+type MockReflector = { getAllAndOverride: Mock };
+type MockAdapter = { getEntitlements: Mock };
 
 function makeContext(user?: unknown): any {
   return {
@@ -32,8 +33,8 @@ describe('PermissionGuard', () => {
   let guard: PermissionGuard;
 
   beforeEach(() => {
-    reflector = { getAllAndOverride: jest.fn() };
-    adapter = { getEntitlements: jest.fn() };
+    reflector = { getAllAndOverride: vi.fn() };
+    adapter = { getEntitlements: vi.fn() };
     guard = new PermissionGuard(reflector as any, adapter as any);
   });
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { RefundStatus } from '../../../../generated/prisma';
@@ -32,15 +33,15 @@ describe('RefundWebhookService', () => {
     status: RefundStatus.PENDING,
   };
   const repository = {
-    findByProviderRefundId: jest.fn(),
-    findCapturedCharge: jest.fn(),
-    reserve: jest.fn(),
+    findByProviderRefundId: vi.fn(),
+    findCapturedCharge: vi.fn(),
+    reserve: vi.fn(),
   };
-  const completion = { complete: jest.fn() };
+  const completion = { complete: vi.fn() };
   let service: RefundWebhookService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     repository.findByProviderRefundId.mockResolvedValue(null);
     repository.findCapturedCharge.mockResolvedValue(charge);
     repository.reserve.mockResolvedValue(reservation);

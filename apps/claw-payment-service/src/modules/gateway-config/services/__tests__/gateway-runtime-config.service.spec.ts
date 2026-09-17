@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -6,15 +7,15 @@ import { GatewayCredentialField } from '../../enums/gateway-credential-field.enu
 import { GatewayMode } from '../../enums/gateway-mode.enum';
 import { GatewayRuntimeConfigService } from '../gateway-runtime-config.service';
 
-jest.mock('../../../../app/config/app.config', () => ({ AppConfig: { get: jest.fn() } }));
+vi.mock('../../../../app/config/app.config', () => ({ AppConfig: { get: vi.fn() } }));
 
 describe('GatewayRuntimeConfigService', () => {
   const key = 'ab'.repeat(32);
-  const repository = { findByGateway: jest.fn() };
+  const repository = { findByGateway: vi.fn() };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.mocked(AppConfig.get).mockReturnValue({
+    vi.clearAllMocks();
+    vi.mocked(AppConfig.get).mockReturnValue({
       PAYMENT_TOKEN_ENCRYPTION_KEY: key,
     } as ReturnType<typeof AppConfig.get>);
   });

@@ -1,18 +1,19 @@
+import { vi, type Mocked } from 'vitest';
 import { AuditsService } from '@modules/audits/services/audits.service';
 import { type AuditsRepository } from '@modules/audits/repositories/audits.repository';
 
 describe('AuditsService', () => {
   let service: AuditsService;
-  let repository: jest.Mocked<AuditsRepository>;
+  let repository: Mocked<AuditsRepository>;
 
   beforeEach(() => {
     repository = {
-      createAuditLog: jest.fn(),
-      findAll: jest.fn(),
-      countAll: jest.fn(),
-      aggregateByAction: jest.fn(),
-      aggregateBySeverity: jest.fn(),
-    } as unknown as jest.Mocked<AuditsRepository>;
+      createAuditLog: vi.fn(),
+      findAll: vi.fn(),
+      countAll: vi.fn(),
+      aggregateByAction: vi.fn(),
+      aggregateBySeverity: vi.fn(),
+    } as unknown as Mocked<AuditsRepository>;
 
     service = new AuditsService(repository);
   });

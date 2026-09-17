@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 import { DownloadStatus } from '../../../../generated/prisma';
 
 import { CATALOG_ENTRIES } from '../../constants/catalog-entries.constants';

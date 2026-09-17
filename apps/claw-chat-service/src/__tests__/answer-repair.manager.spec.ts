@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../app/config/app.config';
 import { BusinessException } from '../common/errors';
 import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
@@ -7,7 +8,7 @@ import { repairMessageSchema } from '../modules/chat-messages/dto/repair-message
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -22,8 +23,8 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_PORT: 4002,
 } as any);
 
-const mockHttpRequest = jest.fn();
-jest.mock('../common/utilities/http-client.utility', () => ({
+const mockHttpRequest = vi.fn();
+vi.mock('../common/utilities/http-client.utility', () => ({
   httpRequest: (...args: any[]) => mockHttpRequest(...args),
 }));
 
@@ -31,29 +32,29 @@ describe('AnswerRepairManager', () => {
   let manager: AnswerRepairManager;
 
   const mockChatMessagesRepository = {
-    create: jest.fn(),
-    findById: jest.fn(),
+    create: vi.fn(),
+    findById: vi.fn(),
   };
 
   const mockChatThreadsRepository = {
-    findById: jest.fn(),
-    create: jest.fn(),
+    findById: vi.fn(),
+    create: vi.fn(),
   };
 
   const mockChatStreamService = {
-    emitCompletion: jest.fn(),
-    emitError: jest.fn(),
+    emitCompletion: vi.fn(),
+    emitError: vi.fn(),
   };
 
   // Universal-research PR2: orchestration managers now take a
   // ResearchEnricherManager. Default stub returns the no-op shape so existing
   // tests don't accidentally invoke web-research.
   const mockResearchEnricherManager = {
-    enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+    enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
       transcript: null,
       systemPrompt: '',
@@ -212,7 +213,7 @@ describe('AnswerRepairManager', () => {
 
   describe('executeRepair — background task behavior', () => {
     it('stores ASSISTANT message with repaired metadata on success', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'user-msg' })
         .mockResolvedValueOnce({ id: 'assistant-msg' });
@@ -253,11 +254,11 @@ describe('AnswerRepairManager', () => {
     });
 
     it('emits SSE completion after successful repair', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-1' })
         .mockResolvedValueOnce({ id: 'a-1' });
-      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
       const isolatedManager = new AnswerRepairManager(
         { ...mockChatMessagesRepository, create: createMock } as any,
         mockChatThreadsRepository as any,
@@ -290,7 +291,7 @@ describe('AnswerRepairManager', () => {
     });
 
     it('stores repairTypes in ASSISTANT metadata correctly', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-2' })
         .mockResolvedValueOnce({ id: 'a-2' });
@@ -329,11 +330,11 @@ describe('AnswerRepairManager', () => {
     });
 
     it('emits SSE error then stores error message when Ollama fails', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-3' })
         .mockResolvedValueOnce({ id: 'err-msg' });
-      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
       const isolatedManager = new AnswerRepairManager(
         { ...mockChatMessagesRepository, create: createMock } as any,
         mockChatThreadsRepository as any,
@@ -368,11 +369,11 @@ describe('AnswerRepairManager', () => {
     });
 
     it('executeRepair always resolves even when background Ollama fails (fire-and-forget)', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-4' })
         .mockResolvedValue({ id: 'err-4' });
-      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
       const isolatedManager = new AnswerRepairManager(
         { ...mockChatMessagesRepository, create: createMock } as any,
         mockChatThreadsRepository as any,
@@ -412,11 +413,11 @@ describe('AnswerRepairManager', () => {
     });
 
     it('throws when Ollama returns empty response string', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-5' })
         .mockResolvedValue({ id: 'err-5' });
-      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
       const isolatedManager = new AnswerRepairManager(
         { ...mockChatMessagesRepository, create: createMock } as any,
         mockChatThreadsRepository as any,
@@ -444,7 +445,7 @@ describe('AnswerRepairManager', () => {
     });
 
     it('uses the requested local model in ASSISTANT metadata when provided', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-6' })
         .mockResolvedValueOnce({ id: 'a-6' });
@@ -489,7 +490,7 @@ describe('AnswerRepairManager', () => {
 
     it('rejects unsupported manual providers before queuing a repair request', async () => {
       const selectionService = {
-        resolveSelection: jest
+        resolveSelection: vi
           .fn()
           .mockRejectedValue(
             new BusinessException(
@@ -533,7 +534,7 @@ describe('AnswerRepairManager', () => {
         actualProvider: 'local-ollama',
         actualModel: 'qwen2.5:7b',
       };
-      const createMock = jest.fn().mockResolvedValue({ id: 'a-8' });
+      const createMock = vi.fn().mockResolvedValue({ id: 'a-8' });
       const isolatedManager = new AnswerRepairManager(
         { ...mockChatMessagesRepository, create: createMock } as any,
         mockChatThreadsRepository as any,
@@ -569,7 +570,7 @@ describe('AnswerRepairManager', () => {
     });
 
     it('defaults to local-ollama/AUTO when no targetProvider/targetModel given', async () => {
-      const createMock = jest
+      const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-7' })
         .mockResolvedValueOnce({ id: 'a-7' });

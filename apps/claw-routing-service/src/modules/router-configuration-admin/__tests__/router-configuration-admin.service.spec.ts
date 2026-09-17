@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
   BillingModel,
@@ -39,19 +40,19 @@ const detail = (overrides: Partial<RouterConfigurationDetail> = {}): RouterConfi
 
 describe('RouterConfigurationAdminService', () => {
   let service: RouterConfigurationAdminService;
-  let repository: jest.Mocked<RouterConfigurationRepository>;
+  let repository: Mocked<RouterConfigurationRepository>;
 
   beforeEach(async () => {
     repository = {
-      listRevisions: jest.fn(),
-      findRevisionById: jest.fn(),
-      findPublishedRevision: jest.fn(),
-      createDraft: jest.fn(),
-      replaceEntries: jest.fn(),
-      updateFields: jest.fn(),
-      publish: jest.fn(),
-      setEnabled: jest.fn(),
-    } as unknown as jest.Mocked<RouterConfigurationRepository>;
+      listRevisions: vi.fn(),
+      findRevisionById: vi.fn(),
+      findPublishedRevision: vi.fn(),
+      createDraft: vi.fn(),
+      replaceEntries: vi.fn(),
+      updateFields: vi.fn(),
+      publish: vi.fn(),
+      setEnabled: vi.fn(),
+    } as unknown as Mocked<RouterConfigurationRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

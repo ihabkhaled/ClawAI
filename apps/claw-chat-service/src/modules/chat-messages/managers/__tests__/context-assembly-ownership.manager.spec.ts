@@ -1,24 +1,29 @@
+import { vi, type Mock } from 'vitest';
 import type { ChatMessage } from '../../../../generated/prisma';
 import { ContextAssemblyManager } from '../context-assembly.manager';
 import { ContextComposerManager } from '../context-composer.manager';
 import { CrossThreadRetrievalManager } from '../cross-thread-retrieval.manager';
 
-jest.mock('../../../../common/utilities', () => ({
-  buildInterServiceAuthHeader: jest.fn(() => 'Service test-service-token'),
-  httpRequest: jest.fn(),
-  mapResearchModeToWorkflow: jest.fn(),
-  runResearch: jest.fn(),
+vi.mock('../../../../common/utilities', () => ({
+  buildInterServiceAuthHeader: vi.fn(() => 'Service test-service-token'),
+  httpRequest: vi.fn(),
+  mapResearchModeToWorkflow: vi.fn(),
+  runResearch: vi.fn(),
 }));
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
 }));
 
-const { AppConfig } = jest.requireMock('../../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
-const { httpRequest } = jest.requireMock('../../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const AppConfig = { get: appConfigGet };
+const { httpRequest } = await vi.importMock('../../../../common/utilities') as {
+  httpRequest: Mock;
 };
 
 const userMessage = {
@@ -85,7 +90,7 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('sends the authenticated chat user when fetching attached file content', async () => {

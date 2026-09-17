@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { SuggestionFactoryRateLimiterManager } from '../suggestion-factory-rate-limiter.manager';
 
 beforeAll(() => {
@@ -52,14 +53,14 @@ describe('SuggestionFactoryRateLimiterManager (13.3)', () => {
   it('drops timestamps older than 1 hour from the bucket', () => {
     const now = Date.now();
     const realNow = Date.now;
-    Date.now = jest.fn(() => now);
+    Date.now = vi.fn(() => now);
     manager.tryReserve('webhook.github.pull_request');
     manager.tryReserve('webhook.github.pull_request');
     manager.tryReserve('webhook.github.pull_request');
     expect(manager.tryReserve('webhook.github.pull_request')).toBe(false);
 
     // Advance time by > 1 hour — old timestamps should expire and we have full headroom.
-    Date.now = jest.fn(() => now + 60 * 60 * 1000 + 1);
+    Date.now = vi.fn(() => now + 60 * 60 * 1000 + 1);
     expect(manager.tryReserve('webhook.github.pull_request')).toBe(true);
 
     Date.now = realNow;

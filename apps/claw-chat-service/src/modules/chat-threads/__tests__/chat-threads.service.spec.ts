@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ThreadOrigin } from '../../../generated/prisma';
 import { ChatThreadsService } from '../services/chat-threads.service';
 import { type ChatThreadsRepository } from '../repositories/chat-threads.repository';
@@ -29,24 +30,24 @@ const mockThreadWithCount = {
   _count: { messages: 5 },
 };
 
-const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, jest.Mock> => ({
-  create: jest.fn(),
-  createWithinDailyLimit: jest.fn(),
-  createBranchWithinDailyLimit: jest.fn(),
-  findById: jest.fn(),
-  findAll: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  countAll: jest.fn(),
+const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, Mock> => ({
+  create: vi.fn(),
+  createWithinDailyLimit: vi.fn(),
+  createBranchWithinDailyLimit: vi.fn(),
+  findById: vi.fn(),
+  findAll: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+  countAll: vi.fn(),
 });
 
-const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  deleteByThreadId: jest.fn().mockResolvedValue(0),
-  findById: jest.fn(),
+const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  deleteByThreadId: vi.fn().mockResolvedValue(0),
+  findById: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('ChatThreadsService', () => {
@@ -65,7 +66,7 @@ describe('ChatThreadsService', () => {
       messagesRepo as unknown as ChatMessagesRepository,
       rabbitMQ as unknown as RabbitMQService,
       {
-        resolve: jest
+        resolve: vi
           .fn()
           .mockResolvedValue({ isAdmin: false, plan: { limits: { chatsPerDay: 2 } } }),
       } as unknown as DailyLimitService,

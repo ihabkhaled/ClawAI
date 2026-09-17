@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { RouterAdminOverrideRepository } from '../repositories/router-admin-override.repository';
@@ -15,14 +16,14 @@ const fakeRow = {
 
 describe('RouterAdminOverrideRepository', () => {
   let repo: RouterAdminOverrideRepository;
-  let prisma: { routerAdminOverride: Record<string, jest.Mock> };
+  let prisma: { routerAdminOverride: Record<string, Mock> };
 
   beforeEach(async () => {
     prisma = {
       routerAdminOverride: {
-        findMany: jest.fn(),
-        upsert: jest.fn(),
-        updateMany: jest.fn(),
+        findMany: vi.fn(),
+        upsert: vi.fn(),
+        updateMany: vi.fn(),
       },
     };
 

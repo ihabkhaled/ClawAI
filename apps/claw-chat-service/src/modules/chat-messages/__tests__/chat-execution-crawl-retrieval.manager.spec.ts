@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 // Mid-generation crawl retrieval (ADR-093) at the ChatExecutionManager
 // boundary: an Ollama Cloud candidate offered a `get_crawled_page` tool for
 // this turn's SITE_CRAWL pages, resolved from memory rather than a second
@@ -17,26 +18,34 @@ import type { AssembledContext } from '../types/context.types';
 import type { CrawlRetrievalContext } from '../types/crawl-retrieval.types';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
-jest.mock('../clients/model-exposure.client', () => ({
-  ModelExposureClient: jest.fn().mockImplementation(() => ({
-    isExposed: jest.fn().mockResolvedValue(true),
-  })),
+vi.mock('../clients/model-exposure.client', () => ({
+  ModelExposureClient: vi.fn(function () {
+    return {
+      isExposed: vi.fn().mockResolvedValue(true),
+    };
+  }),
 }));
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     if (!record) return undefined;
     return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
   },
 }));
-jest.mock('../../../app/config/app.config');
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as {
+  httpRequest: Mock;
 };
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const DEFAULT_APP_CONFIG = {
   OLLAMA_SERVICE_URL: 'http://ollama:4008',
@@ -112,38 +121,38 @@ const buildExecution = (
 ): ChatExecutionManager =>
   new ChatExecutionManager(
     {
-      buildPromptString: jest.fn().mockReturnValue('a prompt of some length'),
-      buildChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'audit the site' }]),
-      buildGeminiChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+      buildPromptString: vi.fn().mockReturnValue('a prompt of some length'),
+      buildChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'audit the site' }]),
+      buildGeminiChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
     } as unknown as ContextAssemblyManager,
     {
-      checkResponseQuality: jest.fn().mockReturnValue({ score: 0.9, reasons: [] }),
-      shouldReRoute: jest.fn().mockReturnValue({ shouldReRoute: false }),
+      checkResponseQuality: vi.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+      shouldReRoute: vi.fn().mockReturnValue({ shouldReRoute: false }),
     } as unknown as QualityCheckManager,
     {
-      setExecutionManager: jest.fn(),
-      shouldActivate: jest.fn().mockReturnValue(false),
+      setExecutionManager: vi.fn(),
+      shouldActivate: vi.fn().mockReturnValue(false),
     } as unknown as JudgeRefereeManager,
     {
-      emitRouterStarted: jest.fn(),
-      emitProviderSelected: jest.fn(),
-      emitResponseStreaming: jest.fn(),
-      startResponseProgressHeartbeat: jest.fn().mockReturnValue(jest.fn()),
-      emitFallbackAttempt: jest.fn(),
-      emitError: jest.fn(),
-      emitProgressStage: jest.fn(),
+      emitRouterStarted: vi.fn(),
+      emitProviderSelected: vi.fn(),
+      emitResponseStreaming: vi.fn(),
+      startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
+      emitFallbackAttempt: vi.fn(),
+      emitError: vi.fn(),
+      emitProgressStage: vi.fn(),
     } as unknown as ChatStreamService,
     {
-      run: jest.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+      run: vi.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
         context: ctx,
         outcome: { applied: false, results: [], runId: null, warning: null },
       })),
     } as unknown as SearchFirstManager,
     access as unknown as AccessControlService,
-    { uploadFile: jest.fn(), getCachedOrUpload: jest.fn() } as unknown as GeminiFilesApiManager,
+    { uploadFile: vi.fn(), getCachedOrUpload: vi.fn() } as unknown as GeminiFilesApiManager,
     {
-      resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
-      resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b']),
+      resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
+      resolveModelList: vi.fn().mockResolvedValue(['qwen3:7b']),
     } as unknown as LocalModelSelectionService,
   );
 
@@ -152,7 +161,7 @@ describe('ChatExecutionManager — mid-generation crawl retrieval', () => {
   let manager: ChatExecutionManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
     accessControl = createFakePaygAccessControl();
     manager = buildExecution(accessControl);

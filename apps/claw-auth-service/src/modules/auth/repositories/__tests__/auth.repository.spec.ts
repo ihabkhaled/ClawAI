@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { AuthRepository } from '../auth.repository';
@@ -6,30 +7,30 @@ import { PrismaService } from '../../../../infrastructure/database/prisma/prisma
 describe('AuthRepository', () => {
   let repository: AuthRepository;
   let prismaMock: {
-    user: { findUnique: jest.Mock };
+    user: { findUnique: Mock };
     session: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      update: jest.Mock;
-      updateMany: jest.Mock;
-      delete: jest.Mock;
-      deleteMany: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      update: Mock;
+      updateMany: Mock;
+      delete: Mock;
+      deleteMany: Mock;
     };
-    $transaction: jest.Mock;
+    $transaction: Mock;
   };
 
   beforeEach(async () => {
     prismaMock = {
-      user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1' }) },
+      user: { findUnique: vi.fn().mockResolvedValue({ id: 'u1' }) },
       session: {
-        create: jest.fn().mockResolvedValue({ id: 's1' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 's1' }),
-        update: jest.fn().mockResolvedValue({ id: 's1' }),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        delete: jest.fn().mockResolvedValue({ id: 's1' }),
-        deleteMany: jest.fn().mockResolvedValue({ count: 3 }),
+        create: vi.fn().mockResolvedValue({ id: 's1' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 's1' }),
+        update: vi.fn().mockResolvedValue({ id: 's1' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        delete: vi.fn().mockResolvedValue({ id: 's1' }),
+        deleteMany: vi.fn().mockResolvedValue({ count: 3 }),
       },
-      $transaction: jest
+      $transaction: vi
         .fn()
         .mockImplementation(async (operation: (transaction: typeof prismaMock) => unknown) =>
           operation(prismaMock),
@@ -178,7 +179,9 @@ describe('AuthRepository', () => {
   it('deleteExpiredSessions deletes by expiresAt < now and returns count', async () => {
     const result = await repository.deleteExpiredSessions();
     expect(result).toBe(3);
-    const callArg = prismaMock.session.deleteMany.mock.calls[0][0];
+    const callArgCall = prismaMock.session.deleteMany.mock.calls[0];
+    expect(callArgCall).toBeDefined();
+    const callArg = callArgCall?.[0];
     expect(callArg.where.expiresAt.lt).toBeInstanceOf(Date);
   });
 });

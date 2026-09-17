@@ -1,40 +1,41 @@
+import { vi, type Mock } from 'vitest';
 import { OneDriveAdapter } from '../onedrive.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('OneDriveAdapter', () => {
   let adapter: OneDriveAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new OneDriveAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unauthorized');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
       expect(result.errorMessage).toBe('HTTP 503');
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
@@ -74,7 +75,7 @@ describe('OneDriveAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -99,7 +100,7 @@ describe('OneDriveAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -115,7 +116,7 @@ describe('OneDriveAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', refresh_token: 'rt2', expires_in: 3600 }),
       });
@@ -143,7 +144,7 @@ describe('OneDriveAdapter', () => {
     });
 
     it('maps recent file items to SyncedObject and ignores folders', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           value: [item(), { ...item(), id: 'folder1', file: undefined, folder: {} }],
@@ -166,25 +167,25 @@ describe('OneDriveAdapter', () => {
     });
 
     it('ignores the incoming deltaToken — always calls /me/drive/recent', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ value: [] }),
       });
       await adapter.syncObjects('token', 'some-stale-cursor');
-      const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+      const [url] = (global.fetch as Mock).mock.calls[0] as [string];
       expect(url).toContain('/me/drive/recent');
       expect(url).not.toContain('some-stale-cursor');
     });
 
     it('throws on a non-ok list response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.syncObjects('token')).rejects.toThrow(/HTTP 500/);
     });
   });
 
   describe('fetchObjectDetails', () => {
     it('FILE — resolves by externalId', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -207,13 +208,13 @@ describe('OneDriveAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'FILE');
       expect(live).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.fetchObjectDetails('token', 'item1', 'FILE')).rejects.toThrow(
         /HTTP 500/,
       );
@@ -222,7 +223,7 @@ describe('OneDriveAdapter', () => {
 
   describe('downloadFileContent', () => {
     it('streams file bytes with metadata from headers', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         body: {},
@@ -238,13 +239,13 @@ describe('OneDriveAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const stream = await adapter.downloadFileContent('token', 'missing');
       expect(stream).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500, body: null });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500, body: null });
       await expect(adapter.downloadFileContent('token', 'item1')).rejects.toThrow(/HTTP 500/);
     });
   });
@@ -252,7 +253,7 @@ describe('OneDriveAdapter', () => {
   describe('write actions', () => {
     describe('UPLOAD_ONEDRIVE', () => {
       it('PUTs the decoded bytes to the drive content endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'new-item', webUrl: 'https://onedrive.example/new-item' }),
         });
@@ -268,7 +269,7 @@ describe('OneDriveAdapter', () => {
           externalId: 'new-item',
           url: 'https://onedrive.example/new-item',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/drives/drive1/root:');
         expect(init.method).toBe('PUT');
       });
@@ -289,7 +290,7 @@ describe('OneDriveAdapter', () => {
 
     describe('MOVE_ONEDRIVE', () => {
       it('looks up the target folder id then PATCHes the item parent reference', async () => {
-        (global.fetch as jest.Mock)
+        (global.fetch as Mock)
           .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'target-folder-id' }) })
           .mockResolvedValueOnce({
             ok: true,
@@ -301,7 +302,7 @@ describe('OneDriveAdapter', () => {
           targetParentFolderPath: '/Archive',
         });
         expect(result.success).toBe(true);
-        const [, init] = (global.fetch as jest.Mock).mock.calls[1] as [string, RequestInit];
+        const [, init] = (global.fetch as Mock).mock.calls[1] as [string, RequestInit];
         expect(init.method).toBe('PATCH');
         expect(JSON.parse(init.body as string)).toEqual({
           parentReference: { id: 'target-folder-id' },
@@ -309,7 +310,7 @@ describe('OneDriveAdapter', () => {
       });
 
       it('fails when the target folder lookup 404s', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: false,
           status: 404,
           text: async () => 'Not found',
@@ -331,7 +332,7 @@ describe('OneDriveAdapter', () => {
     });
 
     it('catches a thrown error from the dispatched handler', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+      (global.fetch as Mock).mockRejectedValue(new Error('network down'));
       const result = await adapter.executeWriteAction('token', 'UPLOAD_ONEDRIVE', {
         driveId: 'drive1',
         parentFolderPath: '/Docs',

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { EventPattern, SubscriptionStatus } from '@claw/shared-types';
 
@@ -8,21 +9,21 @@ import { EntitlementReconciliationService } from '../entitlement-reconciliation.
 
 describe('EntitlementReconciliationService', () => {
   const repository = {
-    claim: jest.fn(),
-    retryFailed: jest.fn(),
-    markProcessed: jest.fn(),
-    markFailed: jest.fn(),
+    claim: vi.fn(),
+    retryFailed: vi.fn(),
+    markProcessed: vi.fn(),
+    markFailed: vi.fn(),
   };
   const client = {
-    getAuthoritativeEntitlement: jest.fn(),
+    getAuthoritativeEntitlement: vi.fn(),
   };
   const applier = {
-    apply: jest.fn(),
+    apply: vi.fn(),
   };
   let service: EntitlementReconciliationService;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     repository.claim.mockResolvedValue(true);
     repository.retryFailed.mockResolvedValue(false);
     repository.markProcessed.mockImplementation(async () => {});

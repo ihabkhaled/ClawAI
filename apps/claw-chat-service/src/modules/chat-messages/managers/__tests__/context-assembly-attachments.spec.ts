@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 // The defect this file exists to prevent from returning:
 //
 // decodeFileContent fell through to "[Binary file ... content not extractable as
@@ -28,8 +29,8 @@ describe('ContextAssemblyManager attachment decoding', () => {
 
   beforeEach(() => {
     const manager = new ContextAssemblyManager(
-      { select: jest.fn() } as never,
-      { retrieve: jest.fn() } as never,
+      { select: vi.fn() } as never,
+      { retrieve: vi.fn() } as never,
     );
     // decodeFileContent is private by design — it is an implementation detail of
     // prompt assembly — but it is the exact seam the defect lived in, so it is

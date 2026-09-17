@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { OllamaAdapter } from '../managers/adapters/ollama.adapter';
 import {
   OLLAMA_TOOL_PROBE_FAILURE_NO_CALL,
@@ -8,14 +9,14 @@ import {
 } from '../constants/ollama-tool-probe.constants';
 import type { ConnectorConfig } from '../managers/provider-adapter.interface';
 
-jest.mock('../../../common/utilities/http.utility', () => ({
-  httpGet: jest.fn(),
-  httpGetText: jest.fn(),
-  httpPost: jest.fn(),
+vi.mock('../../../common/utilities/http.utility', () => ({
+  httpGet: vi.fn(),
+  httpGetText: vi.fn(),
+  httpPost: vi.fn(),
 }));
 
-const { httpPost } = jest.requireMock('../../../common/utilities/http.utility') as {
-  httpPost: jest.Mock;
+const { httpPost } = await vi.importMock('../../../common/utilities/http.utility') as {
+  httpPost: Mock;
 };
 
 // The behavioural probe is what turns an ADVERTISED claim into PROVEN. The
@@ -31,7 +32,7 @@ describe('OllamaAdapter.probeToolCapability', () => {
   let adapter: OllamaAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     httpPost.mockReset();
     adapter = new OllamaAdapter();
   });
@@ -112,7 +113,9 @@ describe('OllamaAdapter.probeToolCapability', () => {
 
     await adapter.probeToolCapability(CONFIG, 'qwen3:8b');
 
-    const body = httpPost.mock.calls[0][0].body as {
+    const bodyCall = httpPost.mock.calls[0];
+    expect(bodyCall).toBeDefined();
+    const body = bodyCall?.[0].body as {
       model: string;
       stream: boolean;
       tools: unknown[];

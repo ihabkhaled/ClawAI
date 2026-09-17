@@ -1,37 +1,38 @@
+import { vi, type Mock } from 'vitest';
 import { OutlookCalendarAdapter } from '../outlook-calendar.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('OutlookCalendarAdapter', () => {
   let adapter: OutlookCalendarAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new OutlookCalendarAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
     });
@@ -67,7 +68,7 @@ describe('OutlookCalendarAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -90,7 +91,7 @@ describe('OutlookCalendarAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -106,7 +107,7 @@ describe('OutlookCalendarAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', expires_in: 3600 }),
       });
@@ -135,7 +136,7 @@ describe('OutlookCalendarAdapter', () => {
     });
 
     it('maps events to SyncedObject and filters out cancelled ones', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ value: [event(), event({ id: 'evt2', isCancelled: true })] }),
       });
@@ -146,7 +147,7 @@ describe('OutlookCalendarAdapter', () => {
     });
 
     it('falls back to "(no title)" when subject is absent', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ value: [event({ subject: undefined })] }),
       });
@@ -155,17 +156,17 @@ describe('OutlookCalendarAdapter', () => {
     });
 
     it('ignores the incoming deltaToken', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ value: [] }),
       });
       await adapter.syncObjects('token', 'some-stale-cursor');
-      const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+      const [url] = (global.fetch as Mock).mock.calls[0] as [string];
       expect(url).not.toContain('some-stale-cursor');
     });
 
     it('throws on a non-ok list response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 500,
         text: async () => 'server error',
@@ -176,7 +177,7 @@ describe('OutlookCalendarAdapter', () => {
 
   describe('fetchObjectDetails', () => {
     it('MEETING — resolves by externalId', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -197,13 +198,13 @@ describe('OutlookCalendarAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'MEETING');
       expect(live).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.fetchObjectDetails('token', 'evt1', 'MEETING')).rejects.toThrow(
         /HTTP 500/,
       );
@@ -220,7 +221,7 @@ describe('OutlookCalendarAdapter', () => {
 
     describe('CREATE_OUTLOOK_CALENDAR_EVENT', () => {
       it('creates an event and returns its id/link', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'new-evt', webLink: 'https://outlook.office.com/new-evt' }),
         });
@@ -235,7 +236,7 @@ describe('OutlookCalendarAdapter', () => {
           externalId: 'new-evt',
           url: 'https://outlook.office.com/new-evt',
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/me/events');
         const body = JSON.parse(init.body as string);
         expect(body.attendees).toEqual([
@@ -253,7 +254,7 @@ describe('OutlookCalendarAdapter', () => {
       });
 
       it('returns success:false on a non-ok API response', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: false,
           status: 403,
           text: async () => 'forbidden',
@@ -268,7 +269,7 @@ describe('OutlookCalendarAdapter', () => {
       });
 
       it('catches a thrown network error', async () => {
-        (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+        (global.fetch as Mock).mockRejectedValue(new Error('network down'));
         const result = await adapter.executeWriteAction('token', 'CREATE_OUTLOOK_CALENDAR_EVENT', {
           subject: 'x',
           startDateTime: '2026-02-01T10:00:00',

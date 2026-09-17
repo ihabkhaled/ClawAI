@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { UserRole } from '@claw/shared-types';
 
 import { SubscriptionsController } from '../subscriptions.controller';
@@ -5,12 +6,12 @@ import { SubscriptionsController } from '../subscriptions.controller';
 describe('SubscriptionsController invoice documents', () => {
   it('downloads only through the owned document service with safe headers', async () => {
     const documents = {
-      renderOwned: jest.fn().mockResolvedValue({
+      renderOwned: vi.fn().mockResolvedValue({
         bytes: new Uint8Array([37, 80, 68, 70]),
         filename: 'CLAW-00000001.pdf',
       }),
     };
-    const response = { set: jest.fn() };
+    const response = { set: vi.fn() };
     const controller = new SubscriptionsController(
       {} as never,
       {} as never,
@@ -43,7 +44,7 @@ describe('SubscriptionsController invoice documents', () => {
 describe('SubscriptionsController cancellation', () => {
   it('ends only the authenticated user subscription immediately', async () => {
     const cancellation = {
-      endNow: jest.fn().mockResolvedValue({ id: 'subscription-1', status: 'CANCELLED' }),
+      endNow: vi.fn().mockResolvedValue({ id: 'subscription-1', status: 'CANCELLED' }),
     };
     const controller = new SubscriptionsController(
       {} as never,

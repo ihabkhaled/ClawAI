@@ -1,10 +1,11 @@
+import { vi, type Mock } from 'vitest';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { type ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { type ImageExecutionManager } from '../managers/image-execution.manager';
 import { type ImageGenerationEventsService } from '../services/image-generation-events.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 
-jest.mock('../managers/image-execution.manager');
+vi.mock('../managers/image-execution.manager');
 
 const mockRecord = {
   id: 'img-1',
@@ -31,14 +32,14 @@ const mockRecord = {
   assets: [],
 };
 
-const mockRepo = (): Partial<Record<keyof ImageGenerationRepository, jest.Mock>> => ({
-  create: jest.fn().mockResolvedValue(mockRecord),
-  findById: jest.fn().mockResolvedValue({ ...mockRecord, status: 'COMPLETED', assets: [] }),
-  findByUserId: jest.fn().mockResolvedValue([mockRecord]),
-  countByUserId: jest.fn().mockResolvedValue(1),
-  updateStatus: jest.fn().mockResolvedValue(mockRecord),
-  createEvent: jest.fn().mockResolvedValue(void 0),
-  createAsset: jest.fn().mockResolvedValue({
+const mockRepo = (): Partial<Record<keyof ImageGenerationRepository, Mock>> => ({
+  create: vi.fn().mockResolvedValue(mockRecord),
+  findById: vi.fn().mockResolvedValue({ ...mockRecord, status: 'COMPLETED', assets: [] }),
+  findByUserId: vi.fn().mockResolvedValue([mockRecord]),
+  countByUserId: vi.fn().mockResolvedValue(1),
+  updateStatus: vi.fn().mockResolvedValue(mockRecord),
+  createEvent: vi.fn().mockResolvedValue(void 0),
+  createAsset: vi.fn().mockResolvedValue({
     id: 'asset-1',
     url: '/api/v1/files/download/file-1',
     downloadUrl: '/api/v1/files/download/file-1',
@@ -49,20 +50,20 @@ const mockRepo = (): Partial<Record<keyof ImageGenerationRepository, jest.Mock>>
   }),
 });
 
-const mockExecManager = (): Partial<Record<keyof ImageExecutionManager, jest.Mock>> => ({
-  execute: jest.fn().mockResolvedValue({
+const mockExecManager = (): Partial<Record<keyof ImageExecutionManager, Mock>> => ({
+  execute: vi.fn().mockResolvedValue({
     fileId: 'file-1',
     revisedPrompt: 'A photorealistic cute tabby cat',
     latencyMs: 3500,
   }),
 });
 
-const mockEventsService = (): Partial<Record<keyof ImageGenerationEventsService, jest.Mock>> => ({
-  publish: jest.fn(),
+const mockEventsService = (): Partial<Record<keyof ImageGenerationEventsService, Mock>> => ({
+  publish: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('ImageGenerationService', () => {

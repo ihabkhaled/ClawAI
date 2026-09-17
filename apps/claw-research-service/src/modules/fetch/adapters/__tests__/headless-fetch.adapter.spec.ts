@@ -1,11 +1,12 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { HeadlessFetchAdapter } from '../headless-fetch.adapter';
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
 }));
-jest.mock('playwright', () => ({
-  chromium: { launch: jest.fn() },
+vi.mock('playwright', () => ({
+  chromium: { launch: vi.fn() },
 }));
 
 type RouteHandler = (route: {
@@ -14,8 +15,8 @@ type RouteHandler = (route: {
   continue: () => Promise<void>;
 }) => void;
 
-const { chromium } = jest.requireMock('playwright') as {
-  chromium: { launch: jest.Mock };
+const { chromium } = await vi.importMock('playwright') as {
+  chromium: { launch: Mock };
 };
 
 /**
@@ -25,30 +26,30 @@ const { chromium } = jest.requireMock('playwright') as {
  * navigation gets), not Playwright's own behavior.
  */
 describe('HeadlessFetchAdapter.fetchPage', () => {
-  const appConfigGet = AppConfig.get as jest.Mock;
+  const appConfigGet = AppConfig.get as Mock;
   let adapter: HeadlessFetchAdapter;
-  let newContextMock: jest.Mock;
-  let closeContextMock: jest.Mock;
-  let closeBrowserMock: jest.Mock;
+  let newContextMock: Mock;
+  let closeContextMock: Mock;
+  let closeBrowserMock: Mock;
   let routeHandler: RouteHandler | null;
-  let gotoMock: jest.Mock;
-  let urlMock: jest.Mock;
-  let contentMock: jest.Mock;
+  let gotoMock: Mock;
+  let urlMock: Mock;
+  let contentMock: Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     appConfigGet.mockReturnValue({ RESEARCH_DOMAIN_ALLOWLIST: [] });
     routeHandler = null;
 
-    gotoMock = jest.fn().mockResolvedValue({ status: () => 200 });
-    urlMock = jest.fn().mockReturnValue('https://example.com/');
-    contentMock = jest
+    gotoMock = vi.fn().mockResolvedValue({ status: () => 200 });
+    urlMock = vi.fn().mockReturnValue('https://example.com/');
+    contentMock = vi
       .fn()
       .mockResolvedValue(
         '<html><head><title>Rendered</title></head><body><p>Rendered content here</p></body></html>',
       );
     const fakePage = {
-      route: jest.fn((_pattern: string, handler: RouteHandler) => {
+      route: vi.fn((_pattern: string, handler: RouteHandler) => {
         routeHandler = handler;
         return Promise.resolve();
       }),
@@ -56,12 +57,12 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
       url: urlMock,
       content: contentMock,
     };
-    closeContextMock = jest.fn().mockResolvedValue(undefined);
-    newContextMock = jest.fn().mockResolvedValue({
-      newPage: jest.fn().mockResolvedValue(fakePage),
+    closeContextMock = vi.fn().mockResolvedValue(undefined);
+    newContextMock = vi.fn().mockResolvedValue({
+      newPage: vi.fn().mockResolvedValue(fakePage),
       close: closeContextMock,
     });
-    closeBrowserMock = jest.fn().mockResolvedValue(undefined);
+    closeBrowserMock = vi.fn().mockResolvedValue(undefined);
     chromium.launch.mockResolvedValue({ newContext: newContextMock, close: closeBrowserMock });
     adapter = new HeadlessFetchAdapter();
   });
@@ -110,8 +111,8 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
     await adapter.fetchPage({ url: 'https://example.com/' });
     expect(routeHandler).not.toBeNull();
 
-    const abort = jest.fn().mockResolvedValue(undefined);
-    const continueRoute = jest.fn().mockResolvedValue(undefined);
+    const abort = vi.fn().mockResolvedValue(undefined);
+    const continueRoute = vi.fn().mockResolvedValue(undefined);
     routeHandler?.({
       request: () => ({
         url: () => 'http://169.254.169.254/latest/meta-data/',
@@ -128,8 +129,8 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
   it('allows an in-page request to a safe public host', async () => {
     await adapter.fetchPage({ url: 'https://example.com/' });
 
-    const abort = jest.fn().mockResolvedValue(undefined);
-    const continueRoute = jest.fn().mockResolvedValue(undefined);
+    const abort = vi.fn().mockResolvedValue(undefined);
+    const continueRoute = vi.fn().mockResolvedValue(undefined);
     routeHandler?.({
       request: () => ({ url: () => 'https://example.com/api/data', resourceType: () => 'xhr' }),
       abort,
@@ -143,8 +144,8 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
   it('aborts an image/media/font/stylesheet request regardless of host safety', async () => {
     await adapter.fetchPage({ url: 'https://example.com/' });
 
-    const abort = jest.fn().mockResolvedValue(undefined);
-    const continueRoute = jest.fn().mockResolvedValue(undefined);
+    const abort = vi.fn().mockResolvedValue(undefined);
+    const continueRoute = vi.fn().mockResolvedValue(undefined);
     routeHandler?.({
       request: () => ({ url: () => 'https://example.com/logo.png', resourceType: () => 'image' }),
       abort,

@@ -1,8 +1,9 @@
+import { vi, type Mock } from 'vitest';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { SearxngAdapter } from '../searxng.adapter';
 import { runSearchAdapterContract } from './search-adapter-contract';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('SearxngAdapter', () => {
   runSearchAdapterContract(() => new SearxngAdapter());
@@ -16,11 +17,11 @@ describe('SearxngAdapter', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('search normalizes SearXNG results', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
         query: 'q',
@@ -35,7 +36,7 @@ describe('SearxngAdapter', () => {
   });
 
   it('health on 5xx returns unhealthy', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 502 });
+    (global.fetch as Mock).mockResolvedValue({ ok: false, status: 502 });
     const result = await adapter.healthCheck(context);
     expect(result.healthy).toBe(false);
     expect(result.errorMessage).toContain('502');

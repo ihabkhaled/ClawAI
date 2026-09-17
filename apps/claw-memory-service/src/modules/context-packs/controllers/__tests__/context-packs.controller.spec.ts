@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ContextPacksController } from '../context-packs.controller';
 import { ContextPacksInternalController } from '../context-packs-internal.controller';
@@ -5,25 +6,25 @@ import { ContextPacksService } from '../../services/context-packs.service';
 
 describe('ContextPacksController', () => {
   let controller: ContextPacksController;
-  let serviceMock: jest.Mocked<{
-    createContextPack: jest.Mock;
-    getContextPacks: jest.Mock;
-    getContextPack: jest.Mock;
-    updateContextPack: jest.Mock;
-    deleteContextPack: jest.Mock;
-    addItem: jest.Mock;
-    removeItem: jest.Mock;
-  }>;
+  let serviceMock: {
+    createContextPack: Mock;
+    getContextPacks: Mock;
+    getContextPack: Mock;
+    updateContextPack: Mock;
+    deleteContextPack: Mock;
+    addItem: Mock;
+    removeItem: Mock;
+  };
 
   beforeEach(async () => {
     serviceMock = {
-      createContextPack: jest.fn(),
-      getContextPacks: jest.fn(),
-      getContextPack: jest.fn(),
-      updateContextPack: jest.fn(),
-      deleteContextPack: jest.fn(),
-      addItem: jest.fn(),
-      removeItem: jest.fn(),
+      createContextPack: vi.fn(),
+      getContextPacks: vi.fn(),
+      getContextPack: vi.fn(),
+      updateContextPack: vi.fn(),
+      deleteContextPack: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ContextPacksController],
@@ -91,10 +92,10 @@ describe('ContextPacksController', () => {
 
 describe('ContextPacksInternalController', () => {
   let controller: ContextPacksInternalController;
-  let serviceMock: jest.Mocked<{ getContextPackItemsInternal: jest.Mock }>;
+  let serviceMock: { getContextPackItemsInternal: Mock };
 
   beforeEach(async () => {
-    serviceMock = { getContextPackItemsInternal: jest.fn() };
+    serviceMock = { getContextPackItemsInternal: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ContextPacksInternalController],
       providers: [{ provide: ContextPacksService, useValue: serviceMock }],

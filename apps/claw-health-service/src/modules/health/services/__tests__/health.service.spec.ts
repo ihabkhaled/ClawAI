@@ -1,20 +1,21 @@
+import { vi, type MockedFunction } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ServiceStatus } from '@claw/shared-types';
 import { httpGet } from '@common/utilities';
 import { HealthService } from '../health.service';
 import { AggregatedHealthStatus } from '../../enums/aggregated-health-status.enum';
 
-jest.mock('@common/utilities', () => ({
-  httpGet: jest.fn(),
+vi.mock('@common/utilities', () => ({
+  httpGet: vi.fn(),
 }));
 
-const mockHttpGet = httpGet as jest.MockedFunction<typeof httpGet>;
+const mockHttpGet = httpGet as MockedFunction<typeof httpGet>;
 
 describe('HealthService', () => {
   let service: HealthService;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [HealthService],
     }).compile();

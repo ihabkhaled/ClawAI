@@ -26,13 +26,28 @@ export function Topbar() {
       // is pinned there; without this it would cover the search box and the
       // account menu.
       data-top-obstacle=""
-      className="border-border/30 bg-card/85 sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))] sm:gap-2 sm:px-6"
+      // `@container`: the controls in here have to answer to the WIDTH OF THIS
+      // BAR, not the width of the window. Once the sidenav is a 256px rail the
+      // two numbers are 256px apart, and every `sm:`-gated label in here was
+      // sizing itself against the wrong one — at 793x773 the right-hand cluster
+      // came to 564px inside a 537px bar, so the account menu was clipped by
+      // the viewport edge and the page title was squeezed to 0px. See the
+      // username label in user-menu.tsx for the one `@`-gated element.
+      // The gap and the side padding are `@`-gated for the same reason as the
+      // labels: at 768x1024 the bar is 512px and `sm:px-6` was spending 48px of
+      // it on air, which is where the last 3px of overflow came from.
+      className="border-border/30 bg-card/85 @container @2xl:gap-2 @2xl:px-6 sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))]"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 md:hidden"
+          // `nav-rail:hidden`, not `md:hidden`: this button is the ONLY way to
+          // reopen the sidebar in drawer mode, so it has to disappear on
+          // exactly the condition that makes the sidebar permanent — never one
+          // pixel earlier. Under `md:hidden` a tablet lost it at 768px while
+          // the sidebar stayed a hidden sheet, leaving no navigation at all.
+          className="nav-rail:hidden shrink-0"
           onClick={toggle}
           aria-label={t('accessibility.toggleSidebar')}
         >

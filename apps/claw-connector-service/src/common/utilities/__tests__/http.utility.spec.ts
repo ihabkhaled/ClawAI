@@ -1,7 +1,8 @@
+import { vi } from 'vitest';
 import { httpGet } from '../http.utility';
 
 function mockFetchBody(status: number, bodyText: string): void {
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
     text: () => Promise.resolve(bodyText),

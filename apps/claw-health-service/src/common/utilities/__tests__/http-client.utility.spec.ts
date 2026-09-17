@@ -1,17 +1,18 @@
+import { vi, type MockedFunction } from 'vitest';
 import { httpGet as sharedHttpGet, httpPost as sharedHttpPost } from '@claw/shared-utilities';
 import { httpGet, httpPost } from '../http-client.utility';
 
-jest.mock('@claw/shared-utilities', () => ({
-  httpGet: jest.fn(),
-  httpPost: jest.fn(),
+vi.mock('@claw/shared-utilities', () => ({
+  httpGet: vi.fn(),
+  httpPost: vi.fn(),
 }));
 
-const mockSharedGet = sharedHttpGet as jest.MockedFunction<typeof sharedHttpGet>;
-const mockSharedPost = sharedHttpPost as jest.MockedFunction<typeof sharedHttpPost>;
+const mockSharedGet = sharedHttpGet as MockedFunction<typeof sharedHttpGet>;
+const mockSharedPost = sharedHttpPost as MockedFunction<typeof sharedHttpPost>;
 
 describe('http-client.utility', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('httpGet', () => {

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -5,12 +6,12 @@ import type { PrismaService } from '../../../infrastructure/database/prisma/pris
 import { HealthService } from '../health.service';
 
 function buildPrisma(queryImpl: () => Promise<unknown>): PrismaService {
-  return { $queryRaw: jest.fn(queryImpl) } as unknown as PrismaService;
+  return { $queryRaw: vi.fn(queryImpl) } as unknown as PrismaService;
 }
 
 describe('HealthService', () => {
   const originalEnv = process.env;
-  const gatewayConfig = { listAdmin: jest.fn() };
+  const gatewayConfig = { listAdmin: vi.fn() };
 
   beforeEach(() => {
     process.env = {
@@ -39,7 +40,7 @@ describe('HealthService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   afterAll(() => {

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import { PlansService } from '../plans.service';
 import { type PlansRepository } from '../../repositories/plans.repository';
@@ -46,52 +47,52 @@ const proPlan = {
   dailyTokenQuota: 500000,
 };
 
-const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
-  findAll: jest.fn(),
-  findById: jest.fn(),
-  findBySlug: jest.fn(),
-  findDefault: jest.fn(),
-  findEffectiveForUser: jest.fn(),
-  findActiveTrialState: jest.fn(),
-  findLatestAssignmentForUser: jest.fn(),
-  findTrialRedemption: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  setActive: jest.fn(),
-  makeDefault: jest.fn(),
-  makePopular: jest.fn(),
-  clearPopular: jest.fn(),
-  reorder: jest.fn(),
-  countActiveAssignments: jest.fn(),
-  replaceModelAccess: jest.fn(),
-  assignUserToPlan: jest.fn(),
-  assignDefaultPlan: jest.fn(),
-  assignTrialPlanOnce: jest.fn(),
-  listUserIdsOnPlan: jest.fn(),
-  findRetirementReplacement: jest.fn(),
-  retirePlan: jest.fn(),
-  listPendingRetirementMigrations: jest.fn(),
-  recordRetirementMigrationOutcome: jest.fn(),
-  findUserMutabilityFacts: jest.fn().mockResolvedValue({ id: 'user-1', isSuperAdmin: false }),
+const mockRepo = (): Record<keyof PlansRepository, Mock> => ({
+  findAll: vi.fn(),
+  findById: vi.fn(),
+  findBySlug: vi.fn(),
+  findDefault: vi.fn(),
+  findEffectiveForUser: vi.fn(),
+  findActiveTrialState: vi.fn(),
+  findLatestAssignmentForUser: vi.fn(),
+  findTrialRedemption: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  setActive: vi.fn(),
+  makeDefault: vi.fn(),
+  makePopular: vi.fn(),
+  clearPopular: vi.fn(),
+  reorder: vi.fn(),
+  countActiveAssignments: vi.fn(),
+  replaceModelAccess: vi.fn(),
+  assignUserToPlan: vi.fn(),
+  assignDefaultPlan: vi.fn(),
+  assignTrialPlanOnce: vi.fn(),
+  listUserIdsOnPlan: vi.fn(),
+  findRetirementReplacement: vi.fn(),
+  retirePlan: vi.fn(),
+  listPendingRetirementMigrations: vi.fn(),
+  recordRetirementMigrationOutcome: vi.fn(),
+  findUserMutabilityFacts: vi.fn().mockResolvedValue({ id: 'user-1', isSuperAdmin: false }),
 });
 
 describe('PlansService', () => {
   let service: PlansService;
   let repo: ReturnType<typeof mockRepo>;
-  let exposedModels: { findExposed: jest.Mock };
-  let rabbit: { publish: jest.Mock };
+  let exposedModels: { findExposed: Mock };
+  let rabbit: { publish: Mock };
 
   beforeEach(() => {
     repo = mockRepo();
     // Default: connector-service says every requested pair is real and exposed.
     // Tests that care about rejection narrow this per case.
     exposedModels = {
-      findExposed: jest.fn(async (pairs: Array<{ provider: string; model: string }>) => pairs),
+      findExposed: vi.fn(async (pairs: Array<{ provider: string; model: string }>) => pairs),
     };
     // The audit log is a real side effect of a model-access mutation, so the
     // publisher is stubbed rather than omitted; the assertions below check that
     // both the grant and the refusal reach it.
-    rabbit = { publish: jest.fn(async () => {}) };
+    rabbit = { publish: vi.fn(async () => {}) };
     service = new PlansService(
       repo as unknown as PlansRepository,
       exposedModels as unknown as ExposedModelClient,

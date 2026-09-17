@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { ChainExecutorManager } from '../chain-executor.manager';
 
@@ -15,15 +16,15 @@ const twoStepDsl = {
   ],
 };
 
-const makeChainRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
-  findById: jest.fn(),
-  createRun: jest.fn().mockResolvedValue({ id: 'run-1' }),
-  updateRun: jest.fn().mockResolvedValue({}),
-  createStep: jest
+const makeChainRepo = (overrides: Record<string, Mock> = {}): Record<string, Mock> => ({
+  findById: vi.fn(),
+  createRun: vi.fn().mockResolvedValue({ id: 'run-1' }),
+  updateRun: vi.fn().mockResolvedValue({}),
+  createStep: vi
     .fn()
     .mockImplementation((d: { stepId: string }) => Promise.resolve({ id: `step-${d.stepId}` })),
-  updateStep: jest.fn().mockResolvedValue({}),
-  findRunWithSteps: jest.fn(),
+  updateStep: vi.fn().mockResolvedValue({}),
+  findRunWithSteps: vi.fn(),
   ...overrides,
 });
 
@@ -33,17 +34,17 @@ const makeDeps = (
     canAccess?: boolean;
     connector?: unknown;
     token?: string | null;
-    adapter?: { executeWriteAction?: jest.Mock };
+    adapter?: { executeWriteAction?: Mock };
     runWithSteps?: unknown;
-    chainRepoOverrides?: Record<string, jest.Mock>;
+    chainRepoOverrides?: Record<string, Mock>;
   } = {},
 ): {
   manager: ChainExecutorManager;
-  chainRepo: Record<string, jest.Mock>;
+  chainRepo: Record<string, Mock>;
 } => {
   const chainRepo = makeChainRepo({
-    findById: jest.fn().mockResolvedValue(opts.chain ?? null),
-    findRunWithSteps: jest.fn().mockResolvedValue(
+    findById: vi.fn().mockResolvedValue(opts.chain ?? null),
+    findRunWithSteps: vi.fn().mockResolvedValue(
       opts.runWithSteps ?? {
         id: 'run-1',
         chainId: 'chain-1',
@@ -57,22 +58,22 @@ const makeDeps = (
     ...opts.chainRepoOverrides,
   });
   const connectorRepo = {
-    findById: jest
+    findById: vi
       .fn()
       .mockResolvedValue(opts.connector ?? { id: 'c1', provider: 'JIRA', encryptedTokens: 'enc' }),
   };
   const adapterFactory = {
-    getAdapter: jest.fn().mockReturnValue(
+    getAdapter: vi.fn().mockReturnValue(
       opts.adapter ?? {
-        executeWriteAction: jest.fn().mockResolvedValue({ success: true, externalId: 'X' }),
+        executeWriteAction: vi.fn().mockResolvedValue({ success: true, externalId: 'X' }),
       },
     ),
   };
   const tokenRefresh = {
-    getValidAccessToken: jest.fn().mockResolvedValue(opts.token === undefined ? 'tok' : opts.token),
+    getValidAccessToken: vi.fn().mockResolvedValue(opts.token === undefined ? 'tok' : opts.token),
   };
   const accessService = {
-    can: jest.fn().mockResolvedValue(opts.canAccess ?? true),
+    can: vi.fn().mockResolvedValue(opts.canAccess ?? true),
   };
   const manager = new ChainExecutorManager(
     chainRepo as never,
@@ -105,7 +106,7 @@ describe('ChainExecutorManager', () => {
   });
 
   it('runs both steps and threads step output into the next step payload', async () => {
-    const executeWriteAction = jest
+    const executeWriteAction = vi
       .fn()
       .mockResolvedValueOnce({ success: true, externalId: 'PROJ-9' })
       .mockResolvedValueOnce({ success: true, externalId: 'msg-1' });
@@ -138,7 +139,7 @@ describe('ChainExecutorManager', () => {
         },
       ],
     };
-    const executeWriteAction = jest.fn();
+    const executeWriteAction = vi.fn();
     const { manager, chainRepo } = makeDeps({
       chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: badDsl },
       adapter: { executeWriteAction },
@@ -164,7 +165,7 @@ describe('ChainExecutorManager', () => {
   });
 
   it('stops the chain when a step adapter returns success=false', async () => {
-    const executeWriteAction = jest
+    const executeWriteAction = vi
       .fn()
       .mockResolvedValueOnce({ success: false, errorMessage: 'jira 500' });
     const { manager, chainRepo } = makeDeps({
@@ -181,7 +182,7 @@ describe('ChainExecutorManager', () => {
   });
 
   it('fails the step when the adapter throws', async () => {
-    const executeWriteAction = jest.fn().mockRejectedValue(new Error('network down'));
+    const executeWriteAction = vi.fn().mockRejectedValue(new Error('network down'));
     const { manager, chainRepo } = makeDeps({
       chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
       adapter: { executeWriteAction },
@@ -194,7 +195,7 @@ describe('ChainExecutorManager', () => {
   });
 
   it('classifies a step failure and persists errorClass on the step row', async () => {
-    const executeWriteAction = jest
+    const executeWriteAction = vi
       .fn()
       .mockResolvedValueOnce({ success: false, errorMessage: 'Jira API error: HTTP 429' });
     const { manager, chainRepo } = makeDeps({
@@ -277,7 +278,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('does NOT re-execute an already-SUCCEEDED step — only resumes from the failed step onward', async () => {
-      const executeWriteAction = jest
+      const executeWriteAction = vi
         .fn()
         .mockResolvedValue({ success: true, externalId: 'msg-1' });
       const { manager, chainRepo } = makeDeps({
@@ -302,7 +303,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('marks wasResumed: true the moment resume() is called, distinguishing a manually-repaired run from one that succeeded on the first try', async () => {
-      const executeWriteAction = jest
+      const executeWriteAction = vi
         .fn()
         .mockResolvedValue({ success: true, externalId: 'msg-1' });
       const { manager, chainRepo } = makeDeps({
@@ -321,7 +322,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('marks the run RUNNING before resuming and FAILED again if the resumed step fails again', async () => {
-      const executeWriteAction = jest
+      const executeWriteAction = vi
         .fn()
         .mockResolvedValue({ success: false, errorMessage: 'still down' });
       const { manager, chainRepo } = makeDeps({
@@ -344,7 +345,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('uses the run dslSnapshot, not the chain current dsl, so an edited chain does not change what a resume replays', async () => {
-      const executeWriteAction = jest
+      const executeWriteAction = vi
         .fn()
         .mockResolvedValue({ success: true, externalId: 'msg-1' });
       const editedDsl = {

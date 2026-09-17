@@ -1,15 +1,16 @@
+import { vi, type Mock } from 'vitest';
 import { AuditEventManager } from '../audit-event.manager';
 
 describe('AuditEventManager.handleMessageCompleted', () => {
   function build(): {
     manager: AuditEventManager;
-    audits: { createAuditLog: jest.Mock };
-    usage: { createUsageEntry: jest.Mock };
-    rabbit: { subscribe: jest.Mock };
+    audits: { createAuditLog: Mock };
+    usage: { createUsageEntry: Mock };
+    rabbit: { subscribe: Mock };
   } {
-    const audits = { createAuditLog: jest.fn().mockResolvedValue({}) };
-    const usage = { createUsageEntry: jest.fn().mockResolvedValue({}) };
-    const rabbit = { subscribe: jest.fn().mockImplementation(async () => {}) };
+    const audits = { createAuditLog: vi.fn().mockResolvedValue({}) };
+    const usage = { createUsageEntry: vi.fn().mockResolvedValue({}) };
+    const rabbit = { subscribe: vi.fn().mockImplementation(async () => {}) };
     const manager = new AuditEventManager(rabbit as any, audits as any, usage as any);
     return { manager, audits, usage, rabbit };
   }

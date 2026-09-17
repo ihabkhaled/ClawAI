@@ -1,13 +1,14 @@
+import { vi, type Mock } from 'vitest';
 import { httpPost } from '@common/utilities';
 
 import { generateWithOpenAI } from '../openai-image.adapter';
 
-jest.mock('@common/utilities', () => ({
-  ...jest.requireActual('@common/utilities'),
-  httpPost: jest.fn(),
+vi.mock('@common/utilities', async () => ({
+  ...await vi.importActual('@common/utilities'),
+  httpPost: vi.fn(),
 }));
 
-const mockPost = httpPost as unknown as jest.Mock;
+const mockPost = httpPost as unknown as Mock;
 
 function bodyOf(): Record<string, unknown> {
   return mockPost.mock.calls[0]?.[1] as Record<string, unknown>;

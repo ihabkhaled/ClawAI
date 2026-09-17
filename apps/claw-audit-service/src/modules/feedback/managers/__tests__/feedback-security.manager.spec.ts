@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 
@@ -5,7 +6,7 @@ import { FeedbackManager } from '../feedback.manager';
 
 import type { FeedbackRepository } from '../../repositories/feedback.repository';
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
     get: () => ({
       FILE_SERVICE_URL: 'https://file-service:4006',
@@ -20,19 +21,19 @@ jest.mock('../../../../app/config/app.config', () => ({
 // own, or a state change the lifecycle forbids.
 
 type RepositoryMock = {
-  [K in keyof FeedbackRepository]: jest.Mock;
+  [K in keyof FeedbackRepository]: Mock;
 };
 
 function repositoryMock(): RepositoryMock {
   return {
-    nextTicketNumber: jest.fn().mockResolvedValue('FDB-000001'),
-    create: jest.fn().mockResolvedValue({ id: 'id-1', ticketNumber: 'FDB-000001', status: 'OPEN' }),
-    findById: jest.fn(),
-    findByIdForUser: jest.fn(),
-    findByTicketNumber: jest.fn(),
-    findPaginated: jest.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
-    countsByStatus: jest.fn().mockResolvedValue({}),
-    applyStatusChange: jest.fn().mockResolvedValue(undefined),
+    nextTicketNumber: vi.fn().mockResolvedValue('FDB-000001'),
+    create: vi.fn().mockResolvedValue({ id: 'id-1', ticketNumber: 'FDB-000001', status: 'OPEN' }),
+    findById: vi.fn(),
+    findByIdForUser: vi.fn(),
+    findByTicketNumber: vi.fn(),
+    findPaginated: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
+    countsByStatus: vi.fn().mockResolvedValue({}),
+    applyStatusChange: vi.fn().mockResolvedValue(undefined),
   } as unknown as RepositoryMock;
 }
 
@@ -107,14 +108,14 @@ describe('feedback authorisation — attachments', () => {
   // The manager reads the peer response as text and parses it itself, because
   // file-service does not always answer an ok status with a JSON body.
   function mockFileServiceBody(body: string, ok = true): void {
-    global.fetch = jest.fn().mockResolvedValue({
+    global.fetch = vi.fn().mockResolvedValue({
       ok,
       text: async () => body,
     }) as unknown as typeof fetch;
   }
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   // file-service answers 200 with an empty body for an id that does not exist.
@@ -239,7 +240,9 @@ describe('feedback authorisation — attachments', () => {
       }),
     );
 
-    const stored = repository.create.mock.calls[0][0].attachments[0];
+    const storedCall = repository.create.mock.calls[0];
+    expect(storedCall).toBeDefined();
+    const stored = storedCall?.[0].attachments[0];
     expect(stored.mimeType).toBe('image/png');
     expect(stored.filename).toBe('real-name.png');
     expect(stored.sizeBytes).toBe(2_048);
@@ -258,7 +261,9 @@ describe('feedback authorisation — attachments', () => {
 
     await manager.createTicket('user-a', 'a@test', createDto());
 
-    const stored = repository.create.mock.calls[0][0].attachments[0];
+    const storedCall = repository.create.mock.calls[0];
+    expect(storedCall).toBeDefined();
+    const stored = storedCall?.[0].attachments[0];
     expect(stored.filename).toBe('passwd.png');
     expect(stored.filename).not.toContain('..');
     expect(stored.filename).not.toContain('/');
@@ -317,7 +322,9 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
       status: FeedbackStatus.RESOLVED,
     } as never);
 
-    const [, patch] = repository.applyStatusChange.mock.calls[0];
+    const statusCall = repository.applyStatusChange.mock.calls[0];
+    expect(statusCall).toBeDefined();
+    const patch = statusCall?.[1];
     expect(patch.set.resolvedAt).toBeInstanceOf(Date);
     expect(patch.set.status).toBe(FeedbackStatus.RESOLVED);
     expect(patch.history).toMatchObject({
@@ -338,7 +345,9 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
       status: FeedbackStatus.OPEN,
     } as never);
 
-    const [, patch] = repository.applyStatusChange.mock.calls[0];
+    const statusCall = repository.applyStatusChange.mock.calls[0];
+    expect(statusCall).toBeDefined();
+    const patch = statusCall?.[1];
     expect(patch.set.reopenedAt).toBeInstanceOf(Date);
   });
 
@@ -358,7 +367,7 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
 describe('feedback content is sanitised before it is stored', () => {
   it('never persists raw markup, even though the renderer is already safe', async () => {
     const repository = repositoryMock();
-    global.fetch = jest.fn() as unknown as typeof fetch;
+    global.fetch = vi.fn() as unknown as typeof fetch;
     const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
 
     await manager.createTicket('user-a', 'a@test', {
@@ -367,7 +376,9 @@ describe('feedback content is sanitised before it is stored', () => {
       contentMarkdown: '<script>alert(1)</script> and [x](javascript:alert(1))',
     } as never);
 
-    const stored = repository.create.mock.calls[0][0];
+    const storedCall = repository.create.mock.calls[0];
+    expect(storedCall).toBeDefined();
+    const stored = storedCall?.[0];
     expect(stored.contentMarkdown).not.toContain('<');
     expect(stored.contentMarkdown.toLowerCase()).not.toContain('javascript:');
     expect(stored.searchText).not.toContain('<');

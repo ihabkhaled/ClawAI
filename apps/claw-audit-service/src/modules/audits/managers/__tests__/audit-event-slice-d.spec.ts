@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 // Slice D backend 3 — audit-event handler unit tests for the 8 new file
 // lifecycle/OCR events introduced by file-service.
 //
@@ -13,9 +14,9 @@
 
 import { AuditEventManager } from '../audit-event.manager';
 
-type AuditMock = { createAuditLog: jest.Mock };
-type UsageMock = { createUsageEntry: jest.Mock };
-type RabbitMock = { subscribe: jest.Mock };
+type AuditMock = { createAuditLog: Mock };
+type UsageMock = { createUsageEntry: Mock };
+type RabbitMock = { subscribe: Mock };
 
 function build(): {
   manager: AuditEventManager;
@@ -23,9 +24,9 @@ function build(): {
   usage: UsageMock;
   rabbit: RabbitMock;
 } {
-  const audits: AuditMock = { createAuditLog: jest.fn().mockResolvedValue({}) };
-  const usage: UsageMock = { createUsageEntry: jest.fn().mockResolvedValue({}) };
-  const rabbit: RabbitMock = { subscribe: jest.fn().mockImplementation(async () => {}) };
+  const audits: AuditMock = { createAuditLog: vi.fn().mockResolvedValue({}) };
+  const usage: UsageMock = { createUsageEntry: vi.fn().mockResolvedValue({}) };
+  const rabbit: RabbitMock = { subscribe: vi.fn().mockImplementation(async () => {}) };
 
   const manager = new AuditEventManager(rabbit as any, audits as any, usage as any);
   return { manager, audits, usage, rabbit };
@@ -365,7 +366,7 @@ describe('AuditEventManager Slice D handlers — error swallowing', () => {
     it(`${name} does NOT rethrow when createAuditLog throws (event-bus stability)`, async () => {
       const { manager, audits } = build();
       audits.createAuditLog.mockRejectedValueOnce(new Error('mongo down'));
-      const errorSpy = jest.spyOn((manager as any).logger, 'error').mockImplementation();
+      const errorSpy = vi.spyOn((manager as any).logger, 'error').mockImplementation(() => {});
 
       const fn = (manager as any)[name].bind(manager) as (p: unknown) => Promise<void>;
       await expect(fn(payload)).resolves.toBeUndefined();

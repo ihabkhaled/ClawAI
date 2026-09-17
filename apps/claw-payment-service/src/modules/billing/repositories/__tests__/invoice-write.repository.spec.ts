@@ -1,13 +1,14 @@
+import { vi } from 'vitest';
 import { InvoiceLineKind } from '@claw/shared-types';
 
 import { InvoiceWriteRepository } from '../invoice-write.repository';
 
 describe('InvoiceWriteRepository', () => {
   it('creates the immutable invoice and durable delivery intent atomically', async () => {
-    const create = jest.fn().mockResolvedValue({ id: 'invoice-1' });
+    const create = vi.fn().mockResolvedValue({ id: 'invoice-1' });
     const tx = {
       invoice: {
-        count: jest.fn().mockResolvedValue(0),
+        count: vi.fn().mockResolvedValue(0),
         create,
       },
     };

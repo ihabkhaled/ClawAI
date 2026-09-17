@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
   CostConfidence,
@@ -18,21 +19,21 @@ const fakeRecord = {
 
 describe('RouterModelRegistryManager', () => {
   let manager: RouterModelRegistryManager;
-  let registryRepo: jest.Mocked<RouterModelRegistryRepository>;
-  let overrideRepo: jest.Mocked<RouterAdminOverrideRepository>;
+  let registryRepo: Mocked<RouterModelRegistryRepository>;
+  let overrideRepo: Mocked<RouterAdminOverrideRepository>;
 
   beforeEach(async () => {
     registryRepo = {
-      create: jest.fn(),
-      update: jest.fn(),
-      softDelete: jest.fn(),
-    } as unknown as jest.Mocked<RouterModelRegistryRepository>;
+      create: vi.fn(),
+      update: vi.fn(),
+      softDelete: vi.fn(),
+    } as unknown as Mocked<RouterModelRegistryRepository>;
 
     overrideRepo = {
-      upsertOverride: jest.fn(),
-      listByProfileId: jest.fn(),
-      deactivate: jest.fn(),
-    } as unknown as jest.Mocked<RouterAdminOverrideRepository>;
+      upsertOverride: vi.fn(),
+      listByProfileId: vi.fn(),
+      deactivate: vi.fn(),
+    } as unknown as Mocked<RouterAdminOverrideRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

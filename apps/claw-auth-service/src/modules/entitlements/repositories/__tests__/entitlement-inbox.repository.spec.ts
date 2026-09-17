@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,12 +6,12 @@ import { EntitlementInboxRepository } from '../entitlement-inbox.repository';
 
 describe('EntitlementInboxRepository', () => {
   const entitlementInboxEvent = {
-    updateMany: jest.fn(),
+    updateMany: vi.fn(),
   };
   let repository: EntitlementInboxRepository;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       providers: [
         EntitlementInboxRepository,

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { createHash } from 'node:crypto';
 import { EMAIL_DISPATCH_COOLDOWN_PREFIX } from '../../constants/email-dispatch-cooldown.constants';
 import { EmailDispatchPurpose } from '../../enums/email-dispatch-purpose.enum';
@@ -6,9 +7,9 @@ import type { RedisService } from '../../../../infrastructure/redis/redis.servic
 
 function build(): {
   service: EmailDispatchCooldownService;
-  redis: { claimCooldown: jest.Mock };
+  redis: { claimCooldown: Mock };
 } {
-  const redis = { claimCooldown: jest.fn() };
+  const redis = { claimCooldown: vi.fn() };
   return {
     service: new EmailDispatchCooldownService(redis as unknown as RedisService),
     redis,

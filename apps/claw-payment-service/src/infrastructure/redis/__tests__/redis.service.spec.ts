@@ -1,22 +1,23 @@
+import { vi, type Mock } from 'vitest';
 import type Redis from 'ioredis';
 
 import { RedisService } from '../redis.service';
 
 type MockRedis = {
-  get: jest.Mock;
-  set: jest.Mock;
-  del: jest.Mock;
-  eval: jest.Mock;
-  quit: jest.Mock;
+  get: Mock;
+  set: Mock;
+  del: Mock;
+  eval: Mock;
+  quit: Mock;
 };
 
 function buildClient(): MockRedis {
   return {
-    get: jest.fn(async () => null),
-    set: jest.fn(async () => 'OK'),
-    del: jest.fn(async () => 1),
-    eval: jest.fn(async () => 1),
-    quit: jest.fn(async () => 'OK'),
+    get: vi.fn(async () => null),
+    set: vi.fn(async () => 'OK'),
+    del: vi.fn(async () => 1),
+    eval: vi.fn(async () => 1),
+    quit: vi.fn(async () => 'OK'),
   };
 }
 

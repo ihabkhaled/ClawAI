@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { BillingIntervalKind, PlanFeatureKey } from '../../../../generated/prisma';
 import { PlanCatalogService } from '../plan-catalog.service';
 import type { PlanBillingRepository } from '../../repositories/plan-billing.repository';
@@ -64,8 +65,8 @@ function makePrice(overrides: PlanRow = {}): PlanRow {
 }
 
 describe('PlanCatalogService', () => {
-  let plans: jest.Mocked<Pick<PlansRepository, 'findAll' | 'findById'>>;
-  let billing: jest.Mocked<
+  let plans: Mocked<Pick<PlansRepository, 'findAll' | 'findById'>>;
+  let billing: Mocked<
     Pick<
       PlanBillingRepository,
       | 'listActivePrices'
@@ -79,14 +80,14 @@ describe('PlanCatalogService', () => {
   let service: PlanCatalogService;
 
   beforeEach(() => {
-    plans = { findAll: jest.fn(), findById: jest.fn() } as never;
+    plans = { findAll: vi.fn(), findById: vi.fn() } as never;
     billing = {
-      listActivePrices: jest.fn(),
-      listFeatureRules: jest.fn(),
-      findActivePrice: jest.fn(),
-      findPriceById: jest.fn(),
-      listPricesForPlan: jest.fn(),
-      publishNewPrice: jest.fn(),
+      listActivePrices: vi.fn(),
+      listFeatureRules: vi.fn(),
+      findActivePrice: vi.fn(),
+      findPriceById: vi.fn(),
+      listPricesForPlan: vi.fn(),
+      publishNewPrice: vi.fn(),
     } as never;
     service = new PlanCatalogService(
       plans as unknown as PlansRepository,

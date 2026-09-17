@@ -62,16 +62,32 @@ today, and any future page built as header + transcript + input.
    expressed in it follows the keyboard down instead of pushing controls under
    it.
 
-7. **A header row is one row at every width.** Actions past the fourth go into
-   an overflow `…` menu; labels are shown only where there is room
-   (`lg:` and up) with `aria-label` and `title` carrying the name otherwise.
-   A header that wraps is a header that has stopped being compact.
+7. **The header carries the title. Thread actions go beside the conversation,
+   not above it.** A control on the header row costs height at every scroll
+   position, forever; the same control in a vertical rail beside the bounded
+   reading column costs width that was empty gutter. `ChatThreadActionRail`
+   holds compare, judge, find, share and the `…` menu, icon-only, as the **last
+   child** of the body flex row — which is what puts it on the right in LTR and
+   the left in RTL without a `dir` read or an `rtl:` twin.
 
-   **Below `sm`, every action goes into the menu.** Count the row before
-   designing it: the global touch rule floors each control at 44px, so a 375px
-   row holds four of them and the title. Seven left the title 2px wide, and it
-   wrapped one character per line into a 926px header with a 2px conversation
-   under it.
+   The rail's strip is reserved **outside** `--chat-content-max`, by
+   `.chat-thread-row` (`--chat-content-max + --chat-rail-reserve`). Moving the
+   controls sideways must not make the transcript narrower on a screen that has
+   the gutter to spare. The header takes the same row class, so the title starts
+   at the x the first message starts at.
+
+   **A header row is still one row at every width**, and what is left on it is
+   the title, its routing meta and — below `sm` only — the `…`. The title block
+   stacks below `sm` and goes inline from `sm` up: on a phone every control is
+   floored at 44px by the global touch rule, so the second line is free there;
+   on a mouse the row is exactly as tall as that block and the second line is
+   pure cost.
+
+   **Below `sm`, every action goes into the menu** and no rail is rendered.
+   Count the row before designing it: 44px per control means a 375px row holds
+   four of them and the title. Seven left the title 2px wide, and it wrapped one
+   character per line into a 926px header with a 2px conversation under it. A
+   360px screen has no gutter to put a rail in either.
 
 8. **A heading that truncates needs `clamp-title` as well as `truncate`.**
    `globals.css` deliberately neutralises `.truncate` under the touch query — a
@@ -192,6 +208,13 @@ today, and any future page built as header + transcript + input.
 - Two control rows rendered at once and hidden by breakpoint.
 - `100vh` on a surface a mobile keyboard can open over.
 - A header that wraps to a second row at any tested width.
+- A thread action put back on the header row because "there is space for one".
+  There is not: that space is the conversation's height.
+- A side rail positioned with a physical utility (`right-*`, `mr-*`, `ml-auto`)
+  instead of by document order in a flex row. The physical form needs an `rtl:`
+  twin, and the twin is what gets forgotten.
+- Taking the rail's width out of `--chat-content-max`. Reserve it beside the
+  column with `.chat-thread-row`, so the transcript keeps its full bound.
 - A truncating heading with no `clamp-title` beside it.
 - More controls on a phone header row than 44px each will fit beside the title.
 - `flex-1` or `min-w-0` on a composer toolbar control, which lets it shrink
@@ -216,7 +239,7 @@ today, and any future page built as header + transcript + input.
 
 | Mechanism            | What it checks                                                                                                                                                                                                                                                                                                                                                                |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/chat-surface-layout-contract.test.ts` reads the shell, composer and toolbar source and fails on an arbitrary pixel/vh height, an inline `height:`, a missing `min-h-0` on the transcript, a missing `chat-content-column`, twin breakpoint-hidden control rows, a missing `resize-none`, or a missing `data-rail-obstacle`. |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/chat-surface-layout-contract.test.ts` reads the shell, composer, toolbar and action-rail source and fails on an arbitrary pixel/vh height, an inline `height:`, a missing `min-h-0` on the transcript, a missing `chat-content-column`, a rail strip taken out of the reading column instead of reserved beside it, a primary action back on the header row, a rail placed with a physical utility, twin breakpoint-hidden control rows, a missing `resize-none`, or a missing `data-rail-obstacle`. |
 | **Unit test**        | `hooks/chat/__tests__/use-message-composer.test.tsx` asserts the composer is bounded in rows and that the variant is resolved once, not rendered twice.                                                                                                                                                                                                                       |
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/model-picker.test.tsx` asserts the picker opens with the current choice highlighted, re-seeds on each open, still finds a model by display name after the item value became its id, and shows the short label with the full one on `title`/`aria-label`.                                                                    |
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/stream-health-notice.test.tsx` — renders nothing when healthy, distinguishes reconnecting from lost, and announces politely to a screen reader.                                                                                                                                                                             |

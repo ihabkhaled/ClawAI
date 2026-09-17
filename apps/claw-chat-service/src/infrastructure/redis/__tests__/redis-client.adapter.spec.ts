@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { vi, describe, expect, it } from 'vitest';
 import Redis from 'ioredis';
 
 import { RedisClientAdapter, RedisSubscriberAdapter } from '../redis-client.adapter';
@@ -6,13 +6,13 @@ import { RedisClientAdapter, RedisSubscriberAdapter } from '../redis-client.adap
 describe('RedisClientAdapter', () => {
   it('delegates lifecycle, keys, writes, deletion and evaluation exactly', async () => {
     const client = new Redis({ lazyConnect: true });
-    const ping = jest.spyOn(client, 'ping').mockResolvedValue('PONG');
-    const get = jest.spyOn(client, 'get').mockResolvedValue('value');
-    const set = jest.spyOn(client, 'set').mockResolvedValue('OK');
-    const del = jest.spyOn(client, 'del').mockResolvedValue(2);
-    const evaluate = jest.spyOn(client, 'eval').mockResolvedValue(['OK', 'ack']);
-    const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
-    const quit = jest.spyOn(client, 'quit').mockResolvedValue('OK');
+    const ping = vi.spyOn(client, 'ping').mockResolvedValue('PONG');
+    const get = vi.spyOn(client, 'get').mockResolvedValue('value');
+    const set = vi.spyOn(client, 'set').mockResolvedValue('OK');
+    const del = vi.spyOn(client, 'del').mockResolvedValue(2);
+    const evaluate = vi.spyOn(client, 'eval').mockResolvedValue(['OK', 'ack']);
+    const disconnect = vi.spyOn(client, 'disconnect').mockImplementation(() => {});
+    const quit = vi.spyOn(client, 'quit').mockResolvedValue('OK');
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.ping()).resolves.toBe('PONG');
@@ -39,8 +39,8 @@ describe('RedisClientAdapter', () => {
 
   it('disconnects the dedicated Runtime V2 client so a timed-out command cannot execute later', async () => {
     const client = new Redis({ lazyConnect: true });
-    jest.spyOn(client, 'eval').mockImplementation(() => new Promise(() => {}));
-    const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
+    vi.spyOn(client, 'eval').mockImplementation(() => new Promise(() => {}));
+    const disconnect = vi.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.evalRuntimeV2('script', 1, ['key'], 20)).rejects.toThrow(
@@ -50,10 +50,10 @@ describe('RedisClientAdapter', () => {
   });
 
   it('caps an oversized Runtime V2 deadline before scheduling its timer', async () => {
-    jest.useFakeTimers();
-    const schedule = jest.spyOn(globalThis, 'setTimeout');
+    vi.useFakeTimers();
+    const schedule = vi.spyOn(globalThis, 'setTimeout');
     const client = new Redis({ lazyConnect: true });
-    jest.spyOn(client, 'eval').mockResolvedValue('OK');
+    vi.spyOn(client, 'eval').mockResolvedValue('OK');
     const adapter = new RedisClientAdapter(client);
 
     await expect(
@@ -62,28 +62,28 @@ describe('RedisClientAdapter', () => {
     expect(schedule).toHaveBeenLastCalledWith(expect.any(Function), 10_000);
 
     schedule.mockRestore();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it.each([Number.NaN, -1])('uses the hard cap for an invalid deadline %p', async (deadlineMs) => {
-    jest.useFakeTimers();
-    const schedule = jest.spyOn(globalThis, 'setTimeout');
+    vi.useFakeTimers();
+    const schedule = vi.spyOn(globalThis, 'setTimeout');
     const client = new Redis({ lazyConnect: true });
-    jest.spyOn(client, 'eval').mockResolvedValue('OK');
+    vi.spyOn(client, 'eval').mockResolvedValue('OK');
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.evalRuntimeV2('script', 1, ['key'], deadlineMs)).resolves.toBe('OK');
     expect(schedule).toHaveBeenLastCalledWith(expect.any(Function), 10_000);
 
     schedule.mockRestore();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('disconnects and preserves Runtime V2 Redis errors', async () => {
     const client = new Redis({ lazyConnect: true });
     const failure = new Error('redis unavailable');
-    jest.spyOn(client, 'eval').mockRejectedValue(failure);
-    const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
+    vi.spyOn(client, 'eval').mockRejectedValue(failure);
+    const disconnect = vi.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.evalRuntimeV2('script', 1, ['key'], 100)).rejects.toBe(failure);
@@ -92,8 +92,8 @@ describe('RedisClientAdapter', () => {
 
   it('normalizes non-Error Runtime V2 Redis rejections', async () => {
     const client = new Redis({ lazyConnect: true });
-    jest.spyOn(client, 'eval').mockRejectedValue('offline');
-    jest.spyOn(client, 'disconnect').mockImplementation(() => {});
+    vi.spyOn(client, 'eval').mockRejectedValue('offline');
+    vi.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.evalRuntimeV2('script', 1, ['key'], 100)).rejects.toThrow(
@@ -102,67 +102,67 @@ describe('RedisClientAdapter', () => {
   });
 
   it('ignores a late Redis resolution after the deadline', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const client = new Redis({ lazyConnect: true });
     let resolveEvaluation: (value: unknown) => void = () => {};
-    jest.spyOn(client, 'eval').mockImplementation(
+    vi.spyOn(client, 'eval').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveEvaluation = resolve;
         }),
     );
-    jest.spyOn(client, 'disconnect').mockImplementation(() => {});
+    vi.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
     const result = adapter.evalRuntimeV2('script', 1, ['key'], 10);
     const rejection = expect(result).rejects.toThrow('Runtime V2 Redis deadline exceeded');
 
-    await jest.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(10);
     await rejection;
     resolveEvaluation('late');
     await Promise.resolve();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('ignores a late Redis rejection after the deadline', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const client = new Redis({ lazyConnect: true });
     let rejectEvaluation: (reason: unknown) => void = () => {};
-    jest.spyOn(client, 'eval').mockImplementation(
+    vi.spyOn(client, 'eval').mockImplementation(
       () =>
         new Promise((_resolve, reject) => {
           rejectEvaluation = reject;
         }),
     );
-    jest.spyOn(client, 'disconnect').mockImplementation(() => {});
+    vi.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
     const result = adapter.evalRuntimeV2('script', 1, ['key'], 10);
     const rejection = expect(result).rejects.toThrow('Runtime V2 Redis deadline exceeded');
 
-    await jest.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(10);
     await rejection;
     rejectEvaluation(new Error('late'));
     await Promise.resolve();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('makes a settled deadline callback a no-op', async () => {
-    jest.useFakeTimers();
-    const clearTimer = jest.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
+    vi.useFakeTimers();
+    const clearTimer = vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
     const client = new Redis({ lazyConnect: true });
-    jest.spyOn(client, 'eval').mockResolvedValue('OK');
-    const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
+    vi.spyOn(client, 'eval').mockResolvedValue('OK');
+    const disconnect = vi.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.evalRuntimeV2('script', 1, ['key'], 10)).resolves.toBe('OK');
-    await jest.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(10);
     expect(disconnect).not.toHaveBeenCalled();
     clearTimer.mockRestore();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('uses a plain write when the expiration arguments are incomplete', async () => {
     const client = new Redis({ lazyConnect: true });
-    const set = jest.spyOn(client, 'set').mockResolvedValue('OK');
+    const set = vi.spyOn(client, 'set').mockResolvedValue('OK');
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.set('key', 'value', 'EX')).resolves.toBe('OK');
@@ -171,7 +171,7 @@ describe('RedisClientAdapter', () => {
 
   it('reads a whole list for the chat replay buffer', async () => {
     const client = new Redis({ lazyConnect: true });
-    const lrange = jest.spyOn(client, 'lrange').mockResolvedValue(['a', 'b']);
+    const lrange = vi.spyOn(client, 'lrange').mockResolvedValue(['a', 'b']);
     const adapter = new RedisClientAdapter(client);
 
     await expect(adapter.lrange('key', 0, -1)).resolves.toEqual(['a', 'b']);
@@ -182,7 +182,7 @@ describe('RedisClientAdapter', () => {
 describe('RedisSubscriberAdapter', () => {
   it('subscribes to a channel', async () => {
     const client = new Redis({ lazyConnect: true });
-    const subscribe = jest.spyOn(client, 'subscribe').mockResolvedValue(1);
+    const subscribe = vi.spyOn(client, 'subscribe').mockResolvedValue(1);
     const adapter = new RedisSubscriberAdapter(client);
 
     await adapter.subscribe('claw:chat:stream');
@@ -220,7 +220,7 @@ describe('RedisSubscriberAdapter', () => {
 
   it('closes its connection on quit', async () => {
     const client = new Redis({ lazyConnect: true });
-    const quit = jest.spyOn(client, 'quit').mockResolvedValue('OK');
+    const quit = vi.spyOn(client, 'quit').mockResolvedValue('OK');
     const adapter = new RedisSubscriberAdapter(client);
 
     await expect(adapter.quit()).resolves.toBe('OK');

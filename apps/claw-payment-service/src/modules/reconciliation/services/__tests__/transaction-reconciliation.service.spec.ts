@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   ReconciliationClassification,
   ReconciliationEntityType,
@@ -12,20 +13,20 @@ import { transactionFixture } from './reconciliation.fixture';
 
 describe('TransactionReconciliationService', () => {
   let transactions: {
-    countNonTerminalForReconciliation: jest.Mock;
-    listNonTerminalForReconciliation: jest.Mock;
+    countNonTerminalForReconciliation: Mock;
+    listNonTerminalForReconciliation: Mock;
   };
-  let paypal: { getOrder: jest.Mock };
-  let reconciliation: { recordFinding: jest.Mock };
+  let paypal: { getOrder: Mock };
+  let reconciliation: { recordFinding: Mock };
   let service: TransactionReconciliationService;
 
   beforeEach(() => {
     transactions = {
-      countNonTerminalForReconciliation: jest.fn().mockResolvedValue(1),
-      listNonTerminalForReconciliation: jest.fn().mockResolvedValue([transactionFixture()]),
+      countNonTerminalForReconciliation: vi.fn().mockResolvedValue(1),
+      listNonTerminalForReconciliation: vi.fn().mockResolvedValue([transactionFixture()]),
     };
     paypal = {
-      getOrder: jest.fn().mockResolvedValue({
+      getOrder: vi.fn().mockResolvedValue({
         verified: true,
         captureId: 'capture-1',
         status: 'COMPLETED',
@@ -35,11 +36,11 @@ describe('TransactionReconciliationService', () => {
         mismatchReason: null,
       }),
     };
-    reconciliation = { recordFinding: jest.fn() };
+    reconciliation = { recordFinding: vi.fn() };
     service = new TransactionReconciliationService(
       transactions as unknown as PaymentTransactionRepository,
       paypal as unknown as PaypalAdapter,
-      { fetchTransaction: jest.fn() } as unknown as PaymobAdapter,
+      { fetchTransaction: vi.fn() } as unknown as PaymobAdapter,
       reconciliation as unknown as ReconciliationRepository,
     );
   });

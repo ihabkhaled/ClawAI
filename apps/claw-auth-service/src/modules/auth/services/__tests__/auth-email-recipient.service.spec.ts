@@ -1,9 +1,10 @@
+import { vi, type Mock } from 'vitest';
 import { UserLanguagePreference } from '../../../../generated/prisma';
 import type { AuthRepository } from '../../repositories/auth.repository';
 import { AuthEmailRecipientService } from '../auth-email-recipient.service';
 
-function repository(): { findUserByEmail: jest.Mock; findUserById: jest.Mock } {
-  return { findUserByEmail: jest.fn(), findUserById: jest.fn() };
+function repository(): { findUserByEmail: Mock; findUserById: Mock } {
+  return { findUserByEmail: vi.fn(), findUserById: vi.fn() };
 }
 
 describe('AuthEmailRecipientService', () => {

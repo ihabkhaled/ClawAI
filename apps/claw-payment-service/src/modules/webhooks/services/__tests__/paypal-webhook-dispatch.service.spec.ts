@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { PaypalWebhookService } from '../paypal-webhook.service';
@@ -54,51 +55,51 @@ function subscriptionBody(eventType: string): string {
 }
 
 describe('PaypalWebhookService — event dispatch', () => {
-  let paypal: { verifyWebhookSignature: jest.Mock; getOrder: jest.Mock };
+  let paypal: { verifyWebhookSignature: Mock; getOrder: Mock };
   let events: {
-    claim: jest.Mock;
-    recordInvalidSignature: jest.Mock;
-    markProcessing: jest.Mock;
-    markProcessed: jest.Mock;
-    markFailed: jest.Mock;
-    markIgnored: jest.Mock;
+    claim: Mock;
+    recordInvalidSignature: Mock;
+    markProcessing: Mock;
+    markProcessed: Mock;
+    markFailed: Mock;
+    markIgnored: Mock;
   };
-  let sessions: { findById: jest.Mock; markFailed: jest.Mock };
-  let activation: { activate: jest.Mock };
-  let reversals: { refund: jest.Mock; chargeback: jest.Mock };
+  let sessions: { findById: Mock; markFailed: Mock };
+  let activation: { activate: Mock };
+  let reversals: { refund: Mock; chargeback: Mock };
   let transactions: {
-    findByProviderTransactionId: jest.Mock;
-    findLatestChargeForSubscription: jest.Mock;
+    findByProviderTransactionId: Mock;
+    findLatestChargeForSubscription: Mock;
   };
-  let subscriptions: { findByGatewayLookupHash: jest.Mock };
-  let lifecycle: { revokeEntitlement: jest.Mock; markPastDue: jest.Mock };
+  let subscriptions: { findByGatewayLookupHash: Mock };
+  let lifecycle: { revokeEntitlement: Mock; markPastDue: Mock };
   let service: PaypalWebhookService;
 
   beforeEach(() => {
     paypal = {
-      verifyWebhookSignature: jest.fn().mockResolvedValue(true),
-      getOrder: jest.fn(),
+      verifyWebhookSignature: vi.fn().mockResolvedValue(true),
+      getOrder: vi.fn(),
     };
     events = {
-      claim: jest.fn().mockResolvedValue({ id: 'we-1' }),
-      recordInvalidSignature: jest.fn(),
-      markProcessing: jest.fn(),
-      markProcessed: jest.fn(),
-      markFailed: jest.fn(),
-      markIgnored: jest.fn(),
+      claim: vi.fn().mockResolvedValue({ id: 'we-1' }),
+      recordInvalidSignature: vi.fn(),
+      markProcessing: vi.fn(),
+      markProcessed: vi.fn(),
+      markFailed: vi.fn(),
+      markIgnored: vi.fn(),
     };
-    sessions = { findById: jest.fn(), markFailed: jest.fn() };
-    activation = { activate: jest.fn() };
+    sessions = { findById: vi.fn(), markFailed: vi.fn() };
+    activation = { activate: vi.fn() };
     reversals = {
-      refund: jest.fn().mockResolvedValue(true),
-      chargeback: jest.fn().mockResolvedValue(true),
+      refund: vi.fn().mockResolvedValue(true),
+      chargeback: vi.fn().mockResolvedValue(true),
     };
     transactions = {
-      findByProviderTransactionId: jest.fn().mockResolvedValue(null),
-      findLatestChargeForSubscription: jest.fn().mockResolvedValue(null),
+      findByProviderTransactionId: vi.fn().mockResolvedValue(null),
+      findLatestChargeForSubscription: vi.fn().mockResolvedValue(null),
     };
-    subscriptions = { findByGatewayLookupHash: jest.fn().mockResolvedValue(null) };
-    lifecycle = { revokeEntitlement: jest.fn(), markPastDue: jest.fn() };
+    subscriptions = { findByGatewayLookupHash: vi.fn().mockResolvedValue(null) };
+    lifecycle = { revokeEntitlement: vi.fn(), markPastDue: vi.fn() };
 
     service = new PaypalWebhookService(
       paypal as unknown as PaypalAdapter,

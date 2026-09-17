@@ -1,19 +1,20 @@
+import { vi, type Mock } from 'vitest';
 import { FeaturePolicyService } from '../feature-policy.service';
 import { type PlanBillingRepository } from '../../../plans/repositories/plan-billing.repository';
 import { type FeatureUsageRepository } from '../../repositories/feature-usage.repository';
 
 describe('FeaturePolicyService', () => {
   let service: FeaturePolicyService;
-  let planBilling: { findFeatureRule: jest.Mock };
-  let usage: { reserve: jest.Mock; countActive: jest.Mock; consume: jest.Mock; release: jest.Mock };
+  let planBilling: { findFeatureRule: Mock };
+  let usage: { reserve: Mock; countActive: Mock; consume: Mock; release: Mock };
 
   beforeEach(() => {
-    planBilling = { findFeatureRule: jest.fn() };
+    planBilling = { findFeatureRule: vi.fn() };
     usage = {
-      reserve: jest.fn().mockResolvedValue({ id: 'rec-1' }),
-      countActive: jest.fn().mockResolvedValue(0),
-      consume: jest.fn(),
-      release: jest.fn(),
+      reserve: vi.fn().mockResolvedValue({ id: 'rec-1' }),
+      countActive: vi.fn().mockResolvedValue(0),
+      consume: vi.fn(),
+      release: vi.fn(),
     };
     service = new FeaturePolicyService(
       planBilling as unknown as PlanBillingRepository,

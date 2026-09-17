@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EntitlementInboxService } from '../services/entitlement-inbox.service';
 import { type EntitlementInboxRepository } from '../repositories/entitlement-inbox.repository';
 import { type EntitlementApplierService } from '../services/entitlement-applier.service';
@@ -19,21 +20,21 @@ const validEvent = (overrides: Record<string, unknown> = {}): Record<string, unk
 describe('EntitlementInboxService', () => {
   let service: EntitlementInboxService;
   let repository: {
-    claim: jest.Mock;
-    markProcessed: jest.Mock;
-    markFailed: jest.Mock;
-    markSkipped: jest.Mock;
+    claim: Mock;
+    markProcessed: Mock;
+    markFailed: Mock;
+    markSkipped: Mock;
   };
-  let applier: { apply: jest.Mock };
+  let applier: { apply: Mock };
 
   beforeEach(() => {
     repository = {
-      claim: jest.fn().mockResolvedValue(true),
-      markProcessed: jest.fn(),
-      markFailed: jest.fn(),
-      markSkipped: jest.fn(),
+      claim: vi.fn().mockResolvedValue(true),
+      markProcessed: vi.fn(),
+      markFailed: vi.fn(),
+      markSkipped: vi.fn(),
     };
-    applier = { apply: jest.fn().mockResolvedValue(true) };
+    applier = { apply: vi.fn().mockResolvedValue(true) };
     service = new EntitlementInboxService(
       repository as unknown as EntitlementInboxRepository,
       applier as unknown as EntitlementApplierService,

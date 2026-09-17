@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SuggestionFactoryManager } from '../suggestion-factory.manager';
 import type { WorkspaceEventInput } from '../../types/suggestion-factory.types';
 
@@ -18,20 +19,20 @@ describe('SuggestionFactoryManager — rate limiter integration (13.3)', () => {
     body: { foo: 'bar' },
   };
 
-  const makeRuleRepo = (rules: unknown[]): { findActiveByEvent: jest.Mock } => ({
-    findActiveByEvent: jest.fn().mockResolvedValue(rules),
+  const makeRuleRepo = (rules: unknown[]): { findActiveByEvent: Mock } => ({
+    findActiveByEvent: vi.fn().mockResolvedValue(rules),
   });
-  const makeApproval = (): { enqueueSuggestion: jest.Mock } => ({
-    enqueueSuggestion: jest.fn().mockResolvedValue({ queueId: 'q1' }),
+  const makeApproval = (): { enqueueSuggestion: Mock } => ({
+    enqueueSuggestion: vi.fn().mockResolvedValue({ queueId: 'q1' }),
   });
-  const makeRabbit = (): { publish: jest.Mock } => ({
-    publish: jest.fn().mockImplementation(async () => {}),
+  const makeRabbit = (): { publish: Mock } => ({
+    publish: vi.fn().mockImplementation(async () => {}),
   });
-  const makeAlwaysAllow = (): { tryReserve: jest.Mock } => ({
-    tryReserve: jest.fn().mockReturnValue(true),
+  const makeAlwaysAllow = (): { tryReserve: Mock } => ({
+    tryReserve: vi.fn().mockReturnValue(true),
   });
-  const makeAlwaysDeny = (): { tryReserve: jest.Mock } => ({
-    tryReserve: jest.fn().mockReturnValue(false),
+  const makeAlwaysDeny = (): { tryReserve: Mock } => ({
+    tryReserve: vi.fn().mockReturnValue(false),
   });
 
   it('skips rule evaluation entirely when rate-limited', async () => {
@@ -103,8 +104,8 @@ describe('SuggestionFactoryManager — rate limiter integration (13.3)', () => {
     ]);
     const approval = makeApproval();
     const limiter = {
-      tryReserve: jest.fn().mockReturnValue(true),
-      tryReserveForRule: jest.fn().mockReturnValue(false), // rule-level cap hit
+      tryReserve: vi.fn().mockReturnValue(true),
+      tryReserveForRule: vi.fn().mockReturnValue(false), // rule-level cap hit
     };
     const manager = new SuggestionFactoryManager(
       repo as any,

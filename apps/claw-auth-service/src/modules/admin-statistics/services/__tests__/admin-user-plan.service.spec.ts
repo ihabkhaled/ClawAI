@@ -1,14 +1,15 @@
+import { vi } from 'vitest';
 import { AdminUserPlanService } from '../admin-user-plan.service';
 
 describe('AdminUserPlanService', () => {
   const NOW = new Date('2026-09-06T12:00:00.000Z');
 
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(NOW);
+    vi.useFakeTimers().setSystemTime(NOW);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   function buildAssignment(): Record<string, unknown> {
@@ -37,13 +38,13 @@ describe('AdminUserPlanService', () => {
 
   it('reports the plan, its grant provenance and the trial together', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue(buildAssignment()),
-      findTrialRedemption: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue(buildAssignment()),
+      findTrialRedemption: vi.fn().mockResolvedValue({
         assignmentId: 'assign-trial',
         startedAt: new Date('2026-08-20T09:00:00.000Z'),
         expiresAt: new Date('2026-09-19T09:00:00.000Z'),
       }),
-      findById: jest.fn().mockResolvedValue(buildPlan()),
+      findById: vi.fn().mockResolvedValue(buildPlan()),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -80,13 +81,13 @@ describe('AdminUserPlanService', () => {
 
   it('marks a lapsed trial expired with zero days rather than a negative count', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue(null),
-      findTrialRedemption: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue(null),
+      findTrialRedemption: vi.fn().mockResolvedValue({
         assignmentId: 'assign-trial',
         startedAt: new Date('2026-06-01T00:00:00.000Z'),
         expiresAt: new Date('2026-07-01T00:00:00.000Z'),
       }),
-      findById: jest.fn(),
+      findById: vi.fn(),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -102,9 +103,9 @@ describe('AdminUserPlanService', () => {
 
   it('does not look up a plan when the user has no assignment', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue(null),
-      findTrialRedemption: jest.fn().mockResolvedValue(null),
-      findById: jest.fn(),
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue(null),
+      findTrialRedemption: vi.fn().mockResolvedValue(null),
+      findById: vi.fn(),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -122,15 +123,15 @@ describe('AdminUserPlanService', () => {
 
   it('reports an expired grant instead of hiding it', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue({
         ...buildAssignment(),
         status: 'EXPIRED',
         grantType: 'ADMIN_GRANT',
         grantReason: 'Migrated from legacy contract',
         entitlementValidUntil: new Date('2026-08-15T00:00:00.000Z'),
       }),
-      findTrialRedemption: jest.fn().mockResolvedValue(null),
-      findById: jest.fn().mockResolvedValue(buildPlan()),
+      findTrialRedemption: vi.fn().mockResolvedValue(null),
+      findById: vi.fn().mockResolvedValue(buildPlan()),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -158,7 +159,7 @@ describe('AdminUserPlanService', () => {
 
   it('reports a trial replaced by an admin grant as SUPERSEDED, not as a live countdown', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue({
         ...buildAssignment(),
         id: 'assign-admin',
         grantType: 'ADMIN_GRANT',
@@ -167,8 +168,8 @@ describe('AdminUserPlanService', () => {
         entitlementValidUntil: new Date('2027-09-06T14:04:37.000Z'),
         sourceSubscriptionId: null,
       }),
-      findTrialRedemption: jest.fn().mockResolvedValue(buildTrialRedemption()),
-      findById: jest.fn().mockResolvedValue(buildPlan()),
+      findTrialRedemption: vi.fn().mockResolvedValue(buildTrialRedemption()),
+      findById: vi.fn().mockResolvedValue(buildPlan()),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -184,14 +185,14 @@ describe('AdminUserPlanService', () => {
 
   it('keeps a trial ACTIVE while it is still the grant in force', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue({
         ...buildAssignment(),
         id: 'assign-trial',
         grantType: 'FREE_DEFAULT',
         sourceSubscriptionId: null,
       }),
-      findTrialRedemption: jest.fn().mockResolvedValue(buildTrialRedemption()),
-      findById: jest.fn().mockResolvedValue(buildPlan()),
+      findTrialRedemption: vi.fn().mockResolvedValue(buildTrialRedemption()),
+      findById: vi.fn().mockResolvedValue(buildPlan()),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -203,17 +204,17 @@ describe('AdminUserPlanService', () => {
 
   it('calls a trial that ran out under its own assignment EXPIRED', async () => {
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue({
         ...buildAssignment(),
         id: 'assign-trial',
         grantType: 'FREE_DEFAULT',
         sourceSubscriptionId: null,
       }),
-      findTrialRedemption: jest.fn().mockResolvedValue({
+      findTrialRedemption: vi.fn().mockResolvedValue({
         ...buildTrialRedemption(),
         expiresAt: new Date('2026-08-01T00:00:00.000Z'),
       }),
-      findById: jest.fn().mockResolvedValue(buildPlan()),
+      findById: vi.fn().mockResolvedValue(buildPlan()),
     };
     const service = new AdminUserPlanService(plans as never);
 
@@ -227,16 +228,16 @@ describe('AdminUserPlanService', () => {
     // Both are true. Reporting EXPIRED would read as "this user lost access on
     // 1 August", when what they actually hold is the grant that replaced it.
     const plans = {
-      findLatestAssignmentForUser: jest.fn().mockResolvedValue({
+      findLatestAssignmentForUser: vi.fn().mockResolvedValue({
         ...buildAssignment(),
         id: 'assign-admin',
         grantType: 'ADMIN_GRANT',
       }),
-      findTrialRedemption: jest.fn().mockResolvedValue({
+      findTrialRedemption: vi.fn().mockResolvedValue({
         ...buildTrialRedemption(),
         expiresAt: new Date('2026-08-01T00:00:00.000Z'),
       }),
-      findById: jest.fn().mockResolvedValue(buildPlan()),
+      findById: vi.fn().mockResolvedValue(buildPlan()),
     };
     const service = new AdminUserPlanService(plans as never);
 

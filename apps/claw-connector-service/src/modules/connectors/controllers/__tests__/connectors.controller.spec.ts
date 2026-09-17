@@ -1,32 +1,33 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ConnectorsController } from '../connectors.controller';
 import { ConnectorsService } from '../../services/connectors.service';
 
 describe('ConnectorsController', () => {
   let controller: ConnectorsController;
-  let serviceMock: jest.Mocked<{
-    createConnector: jest.Mock;
-    getConnectors: jest.Mock;
-    getConnector: jest.Mock;
-    updateConnector: jest.Mock;
-    deleteConnector: jest.Mock;
-    testConnector: jest.Mock;
-    syncModels: jest.Mock;
-    getModels: jest.Mock;
-    setModelExposure: jest.Mock;
-  }>;
+  let serviceMock: {
+    createConnector: Mock;
+    getConnectors: Mock;
+    getConnector: Mock;
+    updateConnector: Mock;
+    deleteConnector: Mock;
+    testConnector: Mock;
+    syncModels: Mock;
+    getModels: Mock;
+    setModelExposure: Mock;
+  };
 
   beforeEach(async () => {
     serviceMock = {
-      createConnector: jest.fn(),
-      getConnectors: jest.fn(),
-      getConnector: jest.fn(),
-      updateConnector: jest.fn(),
-      deleteConnector: jest.fn(),
-      testConnector: jest.fn(),
-      syncModels: jest.fn(),
-      getModels: jest.fn(),
-      setModelExposure: jest.fn(),
+      createConnector: vi.fn(),
+      getConnectors: vi.fn(),
+      getConnector: vi.fn(),
+      updateConnector: vi.fn(),
+      deleteConnector: vi.fn(),
+      testConnector: vi.fn(),
+      syncModels: vi.fn(),
+      getModels: vi.fn(),
+      setModelExposure: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConnectorsController],

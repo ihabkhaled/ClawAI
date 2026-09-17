@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EventPattern, SubscriptionStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -66,22 +67,22 @@ function quote(): ProrationQuoteView {
 }
 
 describe('ScheduledDowngradeService', () => {
-  let update: jest.Mock;
-  let updateMany: jest.Mock;
-  let outbox: { enqueue: jest.Mock };
+  let update: Mock;
+  let updateMany: Mock;
+  let outbox: { enqueue: Mock };
   let service: ScheduledDowngradeService;
 
   beforeEach(() => {
-    update = jest.fn();
-    updateMany = jest.fn().mockResolvedValue({ count: 1 });
-    const transaction = jest.fn(
+    update = vi.fn();
+    updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const transaction = vi.fn(
       async (
         callback: (tx: {
-          subscription: { update: jest.Mock; updateMany: jest.Mock };
+          subscription: { update: Mock; updateMany: Mock };
         }) => Promise<unknown>,
       ) => callback({ subscription: { update, updateMany } }),
     );
-    outbox = { enqueue: jest.fn() };
+    outbox = { enqueue: vi.fn() };
     service = new ScheduledDowngradeService(
       { $transaction: transaction } as unknown as PrismaService,
       outbox as unknown as OutboxRepository,

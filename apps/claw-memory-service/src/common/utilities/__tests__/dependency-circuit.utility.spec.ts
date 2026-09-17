@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   CIRCUIT_OLLAMA_EMBEDDINGS,
   CIRCUIT_OLLAMA_GENERATE,
@@ -27,12 +28,12 @@ import {
 describe('dependency circuit', () => {
   beforeEach(() => {
     resetCircuits();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   afterEach(() => {
     resetCircuits();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   const openIt = (key: string): void => {
@@ -84,8 +85,8 @@ describe('dependency circuit', () => {
 
   it('closes on its own once the window elapses', () => {
     openIt(CIRCUIT_OLLAMA_GENERATE);
-    jest.useFakeTimers();
-    jest.setSystemTime(Date.now() + DEPENDENCY_CIRCUIT_OPEN_MS + 1);
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + DEPENDENCY_CIRCUIT_OPEN_MS + 1);
 
     // Self-healing matters: installing the model must not require a restart.
     expect(isCircuitOpen(CIRCUIT_OLLAMA_GENERATE)).toBe(false);
@@ -125,8 +126,11 @@ describe('dependency circuit', () => {
       expect(isCircuitOpen(CIRCUIT_OLLAMA_GENERATE)).toBe(true);
 
       // Move past the open window without closing the circuit.
-      jest.useFakeTimers({ doNotFake: ['setTimeout'] });
-      jest.setSystemTime(Date.now() + DEPENDENCY_CIRCUIT_OPEN_MS + 1);
+      // Vitest has no `doNotFake`; it takes the inverse list. Only the clock
+      // needs faking here — faking setTimeout too would hang the 20ms sleep
+      // inside the call under test.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(Date.now() + DEPENDENCY_CIRCUIT_OPEN_MS + 1);
       expect(isCircuitOpen(CIRCUIT_OLLAMA_GENERATE)).toBe(false);
 
       let invocations = 0;

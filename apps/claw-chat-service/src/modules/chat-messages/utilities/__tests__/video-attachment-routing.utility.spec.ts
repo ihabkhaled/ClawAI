@@ -1,3 +1,5 @@
+import { HttpStatus } from '@nestjs/common';
+
 import { BusinessException } from '../../../../common/errors';
 import type { AssembledContext } from '../../types/context.types';
 import type { MessageRoutedData } from '../../types/execution.types';
@@ -101,9 +103,14 @@ describe('resolveVideoAttachmentCandidates', () => {
         fallbackCandidates,
       ),
     ).toThrow(
+      // Vitest compares the whole thrown object where Jest compared only the
+      // message, so the expected exception carries the same status and
+      // messageKey the utility actually raises.
       new BusinessException(
         'The selected provider/model OPENAI/gpt-4o cannot process video attachments. Choose Gemini/gemini-2.5-flash, Gemini/gemini-2.5-pro, or use Auto.',
         'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+        HttpStatus.BAD_REQUEST,
+        'chat.errors.videoAttachmentProviderUnsupported',
       ),
     );
   });

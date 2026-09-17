@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import type { PaygHold } from '@claw/shared-entitlements';
 
 import type { AccessControlService } from '../../services/access-control.service';
@@ -15,15 +16,15 @@ export type FakePaygAccessControlOptions = {
 /** The shape a PAYG test asserts against. */
 export type FakePaygAccessControl = {
   hold: PaygHold;
-  reserveCredit: jest.Mock;
-  finalizeCredit: jest.Mock;
-  releaseCredit: jest.Mock;
-  meterOrchestrationCall: jest.Mock;
-  recordUsage: jest.Mock;
-  recordFeatureUsage: jest.Mock;
-  assertCanUseCritic: jest.Mock;
-  assertResearchAccess: jest.Mock;
-  resolveOutputCeiling: jest.Mock;
+  reserveCredit: Mock;
+  finalizeCredit: Mock;
+  releaseCredit: Mock;
+  meterOrchestrationCall: Mock;
+  recordUsage: Mock;
+  recordFeatureUsage: Mock;
+  assertCanUseCritic: Mock;
+  assertResearchAccess: Mock;
+  resolveOutputCeiling: Mock;
 };
 
 /**
@@ -54,17 +55,17 @@ export function createFakePaygAccessControl(
     availableAfterMicroUsd: 0,
     reason: options.metered === false ? 'NOT_PAYG' : null,
   };
-  const reserveCredit = jest.fn(async () => {
+  const reserveCredit = vi.fn(async () => {
     if (options.refuseWith !== undefined) {
       throw options.refuseWith;
     }
     return hold;
   });
-  const finalizeCredit = jest.fn(async () => {});
-  const releaseCredit = jest.fn(async () => {});
+  const finalizeCredit = vi.fn(async () => {});
+  const releaseCredit = vi.fn(async () => {});
   // Mirrors the real implementation closely enough to prove the two things that
   // matter: a successful call settles, and a thrown one gives the money back.
-  const meterOrchestrationCall = jest.fn(
+  const meterOrchestrationCall = vi.fn(
     async (
       _call: unknown,
       run: (held: PaygHold) => Promise<unknown>,
@@ -89,13 +90,13 @@ export function createFakePaygAccessControl(
     finalizeCredit,
     releaseCredit,
     meterOrchestrationCall,
-    recordUsage: jest.fn(),
-    recordFeatureUsage: jest.fn(async () => {}),
-    assertCanUseCritic: jest.fn(async () => {}),
-    assertResearchAccess: jest.fn(async () => {}),
+    recordUsage: vi.fn(),
+    recordFeatureUsage: vi.fn(async () => {}),
+    assertCanUseCritic: vi.fn(async () => {}),
+    assertResearchAccess: vi.fn(async () => {}),
     // null = no quota ceiling, which is what an unlimited/admin entitlement
     // resolves to. A test that wants the clamp asserts on it explicitly.
-    resolveOutputCeiling: jest.fn(async () => null),
+    resolveOutputCeiling: vi.fn(async () => null),
   };
   return double as unknown as FakePaygAccessControl;
 }

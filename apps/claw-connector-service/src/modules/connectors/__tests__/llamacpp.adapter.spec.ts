@@ -1,12 +1,13 @@
+import { vi, type Mock } from 'vitest';
 import { LlamacppAdapter } from '../managers/adapters/llamacpp.adapter';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
 import { httpGet } from '../../../common/utilities/http.utility';
 
-jest.mock('../../../common/utilities/http.utility', () => ({
-  httpGet: jest.fn(),
+vi.mock('../../../common/utilities/http.utility', () => ({
+  httpGet: vi.fn(),
 }));
 
-const mockedHttpGet = httpGet as unknown as jest.Mock;
+const mockedHttpGet = httpGet as unknown as Mock;
 
 describe('LlamacppAdapter', () => {
   let adapter: LlamacppAdapter;

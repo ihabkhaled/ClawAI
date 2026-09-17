@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 // Slice D — OCR parser utility unit tests.
 //
 // tesseract.js is mocked because (a) booting a real worker pool is slow in
@@ -13,9 +14,9 @@ const recognizeJobs: Array<{
   reject: (reason: unknown) => void;
 }> = [];
 
-const addWorker = jest.fn();
-const terminate = jest.fn(async () => {});
-const addJob = jest.fn();
+const addWorker = vi.fn();
+const terminate = vi.fn(async () => {});
+const addJob = vi.fn();
 
 const buildRecognizeResult = (
   text: string,
@@ -41,20 +42,20 @@ const buildRecognizeResult = (
   },
 });
 
-jest.mock('tesseract.js', () => {
+vi.mock('tesseract.js', () => {
   return {
-    createScheduler: jest.fn(() => ({
+    createScheduler: vi.fn(() => ({
       addWorker,
       addJob,
       terminate,
     })),
-    createWorker: jest.fn(async () => ({ id: 'mock-worker' })),
+    createWorker: vi.fn(async () => ({ id: 'mock-worker' })),
   };
 });
 
-const tesseract = jest.requireMock('tesseract.js') as {
-  createScheduler: jest.Mock;
-  createWorker: jest.Mock;
+const tesseract = await vi.importMock('tesseract.js') as {
+  createScheduler: Mock;
+  createWorker: Mock;
 };
 
 const DEFAULT_OPTS: OcrExtractionOptions = {

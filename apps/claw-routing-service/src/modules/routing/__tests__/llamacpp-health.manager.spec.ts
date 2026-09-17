@@ -1,11 +1,12 @@
+import { vi, type Mock } from 'vitest';
 import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 
-jest.mock('../../../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn(),
 }));
 
-const mockedHttpRequest = httpRequest as unknown as jest.Mock;
+const mockedHttpRequest = httpRequest as unknown as Mock;
 
 describe('LlamacppHealthManager', () => {
   beforeEach(() => {

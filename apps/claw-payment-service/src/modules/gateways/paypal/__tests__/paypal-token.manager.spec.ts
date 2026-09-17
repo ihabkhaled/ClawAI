@@ -1,8 +1,9 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaypalTokenManager } from '../managers/paypal-token.manager';
 import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
 
-const fetchMock = jest.fn();
+const fetchMock = vi.fn();
 
 const tokenOk = (expiresIn: number): Response =>
   new Response(
@@ -13,13 +14,13 @@ const tokenOk = (expiresIn: number): Response =>
 describe('PaypalTokenManager', () => {
   let manager: PaypalTokenManager;
   const runtimeConfig = {
-    getPaypalOperations: jest.fn(),
+    getPaypalOperations: vi.fn(),
   };
 
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock;
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       PAYPAL_ENV: 'sandbox',
       PAYPAL_CLIENT_ID: 'id',
       PAYPAL_CLIENT_SECRET: 'secret',
@@ -36,7 +37,7 @@ describe('PaypalTokenManager', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('fetches a token on first use', async () => {

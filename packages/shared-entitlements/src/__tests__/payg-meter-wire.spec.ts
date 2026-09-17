@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingErrorCode, PaygSurface } from '@claw/shared-types';
 
 import { PaygCreditExhaustedError } from '../payg-credit-exhausted.error';
@@ -44,8 +45,8 @@ function input(overrides: Partial<Parameters<PaygMeter['reserve']>[0]> = {}) {
   };
 }
 
-function respondWith(status: number, body: unknown): jest.Mock {
-  const stub = jest.fn().mockResolvedValue({
+function respondWith(status: number, body: unknown): Mock {
+  const stub = vi.fn().mockResolvedValue({
     status,
     ok: status >= 200 && status < 300,
     json: () => Promise.resolve(body),
@@ -58,7 +59,7 @@ describe('PaygMeter wire contract', () => {
   const realFetch = globalThis.fetch;
   afterEach(() => {
     globalThis.fetch = realFetch;
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('the unmetered reply', () => {
@@ -164,13 +165,13 @@ describe('PaygMeter wire contract', () => {
 
   describe('an unreachable meter', () => {
     it('fails CLOSED for a metered provider', async () => {
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED')) as never;
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED')) as never;
 
       await expect(meter().reserve(input())).rejects.toBeInstanceOf(PaygCreditExhaustedError);
     });
 
     it('fails OPEN for an exempt one', async () => {
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED')) as never;
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED')) as never;
 
       await expect(meter().reserve(input({ provider: 'OLLAMA' }))).resolves.toMatchObject({
         metered: false,

@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { CapabilityClass } from '../../../../common/enums/capability-class.enum';
 import { CapabilityInvocationStatus } from '../../../../common/enums/capability-invocation-status.enum';
 import { CapabilityOperation } from '../../../../common/enums/capability-operation.enum';
@@ -80,37 +81,37 @@ function fakeStep(idx: number, overrides: Partial<RecipeRunStep> = {}): RecipeRu
   } as RecipeRunStep;
 }
 
-function fakeRecipeRepo(recipe: Recipe | null): jest.Mocked<RecipeRepository> {
+function fakeRecipeRepo(recipe: Recipe | null): Mocked<RecipeRepository> {
   return {
-    create: jest.fn(),
-    findByIdForUser: jest.fn().mockResolvedValue(recipe),
-    findByNameForUser: jest.fn(),
-    update: jest.fn(),
-    deleteById: jest.fn(),
-    list: jest.fn(),
-  } as unknown as jest.Mocked<RecipeRepository>;
+    create: vi.fn(),
+    findByIdForUser: vi.fn().mockResolvedValue(recipe),
+    findByNameForUser: vi.fn(),
+    update: vi.fn(),
+    deleteById: vi.fn(),
+    list: vi.fn(),
+  } as unknown as Mocked<RecipeRepository>;
 }
 
-function fakeRunRepo(): jest.Mocked<RecipeRunRepository> {
+function fakeRunRepo(): Mocked<RecipeRunRepository> {
   return {
-    createRun: jest.fn(),
-    createSteps: jest.fn(),
-    findRunByIdForUser: jest.fn(),
-    findRunByIdInternal: jest.fn(),
-    findRunWithSteps: jest.fn(),
-    findStepByInvocationId: jest.fn(),
-    findStepsForRun: jest.fn(),
-    updateRun: jest.fn(),
-    updateStep: jest.fn(),
-    updateStepMetadata: jest.fn(),
-    listRunsForRecipe: jest.fn(),
-  } as unknown as jest.Mocked<RecipeRunRepository>;
+    createRun: vi.fn(),
+    createSteps: vi.fn(),
+    findRunByIdForUser: vi.fn(),
+    findRunByIdInternal: vi.fn(),
+    findRunWithSteps: vi.fn(),
+    findStepByInvocationId: vi.fn(),
+    findStepsForRun: vi.fn(),
+    updateRun: vi.fn(),
+    updateStep: vi.fn(),
+    updateStepMetadata: vi.fn(),
+    listRunsForRecipe: vi.fn(),
+  } as unknown as Mocked<RecipeRunRepository>;
 }
 
-function fakeApproval(): jest.Mocked<CapabilityApprovalManager> {
+function fakeApproval(): Mocked<CapabilityApprovalManager> {
   return {
-    propose: jest.fn(),
-  } as unknown as jest.Mocked<CapabilityApprovalManager>;
+    propose: vi.fn(),
+  } as unknown as Mocked<CapabilityApprovalManager>;
 }
 
 describe('RecipeRunnerManager', () => {

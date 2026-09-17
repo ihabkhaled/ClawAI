@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { buildPeriodKeys } from '../../../quota/utilities/quota-reservation.utility';
 import { AdminUserStatisticsService } from '../admin-user-statistics.service';
 
@@ -5,16 +6,16 @@ describe('AdminUserStatisticsService', () => {
   const NOW = new Date('2026-08-01T12:00:00.000Z');
 
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(NOW);
+    vi.useFakeTimers().setSystemTime(NOW);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
-  function buildTokens(): { sumUsageBreakdown: jest.Mock } {
+  function buildTokens(): { sumUsageBreakdown: Mock } {
     return {
-      sumUsageBreakdown: jest
+      sumUsageBreakdown: vi
         .fn()
         .mockResolvedValueOnce({
           inputTokens: 100,
@@ -39,7 +40,7 @@ describe('AdminUserStatisticsService', () => {
 
   it('sums each token window over the UTC day, ISO week and calendar month to date', async () => {
     const tokens = buildTokens();
-    const credits = { aggregateMonthlyConsumption: jest.fn().mockResolvedValue([]) };
+    const credits = { aggregateMonthlyConsumption: vi.fn().mockResolvedValue([]) };
     const service = new AdminUserStatisticsService(tokens as never, credits as never);
 
     const result = await service.getUsageForUser('user-1');
@@ -74,7 +75,7 @@ describe('AdminUserStatisticsService', () => {
 
   it('labels each window with the period key its own calendar unit uses', async () => {
     const tokens = buildTokens();
-    const credits = { aggregateMonthlyConsumption: jest.fn().mockResolvedValue([]) };
+    const credits = { aggregateMonthlyConsumption: vi.fn().mockResolvedValue([]) };
     const service = new AdminUserStatisticsService(tokens as never, credits as never);
 
     const result = await service.getUsageForUser('user-1');
@@ -92,7 +93,7 @@ describe('AdminUserStatisticsService', () => {
 
   it('asks for credit consumption from the first of the twelfth month back', async () => {
     const tokens = buildTokens();
-    const credits = { aggregateMonthlyConsumption: jest.fn().mockResolvedValue([]) };
+    const credits = { aggregateMonthlyConsumption: vi.fn().mockResolvedValue([]) };
     const service = new AdminUserStatisticsService(tokens as never, credits as never);
 
     await service.getUsageForUser('user-1');
@@ -106,7 +107,7 @@ describe('AdminUserStatisticsService', () => {
   it('serialises micro-USD as a string so no digits are lost in JSON', async () => {
     const tokens = buildTokens();
     const credits = {
-      aggregateMonthlyConsumption: jest.fn().mockResolvedValue([
+      aggregateMonthlyConsumption: vi.fn().mockResolvedValue([
         { monthKey: '2026-08', consumedMicroUsd: 9_007_199_254_740_993n, entryCount: 4n },
         { monthKey: '2026-07', consumedMicroUsd: 4_100_000n, entryCount: 912n },
       ]),
@@ -128,7 +129,7 @@ describe('AdminUserStatisticsService', () => {
 
   it('reports a user with no settled spend as an empty series, not zeroed months', async () => {
     const tokens = buildTokens();
-    const credits = { aggregateMonthlyConsumption: jest.fn().mockResolvedValue([]) };
+    const credits = { aggregateMonthlyConsumption: vi.fn().mockResolvedValue([]) };
     const service = new AdminUserStatisticsService(tokens as never, credits as never);
 
     const result = await service.getUsageForUser('user-1');

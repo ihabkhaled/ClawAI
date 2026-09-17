@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { PullJobPhase, PullJobStatus } from '../../../common/enums';
 import { PullJobResumeManager } from '../managers/pull-job-resume.manager';
 import { type PullJobRunnerManager } from '../managers/pull-job-runner.manager';
@@ -28,13 +29,13 @@ const baseJob = (overrides: Partial<PullJob> = {}): PullJob => ({
 });
 
 describe('PullJobResumeManager', () => {
-  let jobsRepo: { findAllResumable: jest.Mock };
-  let runner: { run: jest.Mock; isRunning: jest.Mock };
+  let jobsRepo: { findAllResumable: Mock };
+  let runner: { run: Mock; isRunning: Mock };
   let manager: PullJobResumeManager;
 
   beforeEach(() => {
-    jobsRepo = { findAllResumable: jest.fn() };
-    runner = { run: jest.fn().mockResolvedValue(undefined), isRunning: jest.fn().mockReturnValue(false) };
+    jobsRepo = { findAllResumable: vi.fn() };
+    runner = { run: vi.fn().mockResolvedValue(undefined), isRunning: vi.fn().mockReturnValue(false) };
     manager = new PullJobResumeManager(
       jobsRepo as unknown as PullJobsRepository,
       runner as unknown as PullJobRunnerManager,

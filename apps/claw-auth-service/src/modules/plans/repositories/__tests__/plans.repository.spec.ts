@@ -1,14 +1,15 @@
+import { vi } from 'vitest';
 import { PlanModelAccessMode } from '../../../../generated/prisma';
 import { type PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { PlansRepository } from '../plans.repository';
 
 describe('PlansRepository model-access policy', () => {
   const plan = { id: 'plan-1', modelAccess: [] };
-  const planUpdate = jest.fn();
-  const accessDeleteMany = jest.fn();
-  const accessCreateMany = jest.fn();
-  const findUnique = jest.fn();
-  const transaction = jest.fn();
+  const planUpdate = vi.fn();
+  const accessDeleteMany = vi.fn();
+  const accessCreateMany = vi.fn();
+  const findUnique = vi.fn();
+  const transaction = vi.fn();
 
   const prisma = {
     plan: { update: planUpdate, findUnique },
@@ -20,7 +21,7 @@ describe('PlansRepository model-access policy', () => {
   } as unknown as PrismaService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     planUpdate.mockReturnValue(Promise.resolve(plan));
     accessDeleteMany.mockReturnValue(Promise.resolve({ count: 0 }));
     accessCreateMany.mockReturnValue(Promise.resolve({ count: 1 }));
@@ -67,7 +68,7 @@ describe('PlansRepository model-access policy', () => {
 
 describe('PlansRepository retirement', () => {
   it('excludes retired tombstones from the normal admin list', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
+    const findMany = vi.fn().mockResolvedValue([]);
     const prisma = { plan: { findMany } } as unknown as PrismaService;
     await new PlansRepository(prisma).findAll();
     expect(findMany).toHaveBeenCalledWith(
@@ -76,7 +77,7 @@ describe('PlansRepository retirement', () => {
   });
 
   it('tombstones a plan and preserves paid assignment provenance', async () => {
-    const planUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const planUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
     const assignment = {
       id: 'assignment-old',
       userId: 'user-1',
@@ -89,16 +90,16 @@ describe('PlansRepository retirement', () => {
     };
     const tx = {
       plan: { updateMany: planUpdateMany },
-      planRetirementMigration: { create: jest.fn(), count: jest.fn() },
+      planRetirementMigration: { create: vi.fn(), count: vi.fn() },
       userPlanAssignment: {
-        findMany: jest.fn().mockResolvedValue([assignment]),
-        update: jest.fn(),
-        create: jest.fn().mockResolvedValue({ id: 'assignment-new' }),
+        findMany: vi.fn().mockResolvedValue([assignment]),
+        update: vi.fn(),
+        create: vi.fn().mockResolvedValue({ id: 'assignment-new' }),
       },
-      user: { update: jest.fn() },
+      user: { update: vi.fn() },
     };
     const prisma = {
-      $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
+      $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
         callback(tx),
       ),
     } as unknown as PrismaService;
@@ -127,15 +128,15 @@ describe('PlansRepository retirement', () => {
   it('replays the persisted replacement on an idempotent second removal', async () => {
     const tx = {
       plan: {
-        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-        findUnique: jest.fn().mockResolvedValue({ replacementPlanId: 'plan-persisted' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findUnique: vi.fn().mockResolvedValue({ replacementPlanId: 'plan-persisted' }),
       },
       planRetirementMigration: {
-        count: jest.fn().mockResolvedValueOnce(2).mockResolvedValueOnce(1),
+        count: vi.fn().mockResolvedValueOnce(2).mockResolvedValueOnce(1),
       },
     };
     const prisma = {
-      $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
+      $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
         callback(tx),
       ),
     } as unknown as PrismaService;
@@ -147,7 +148,7 @@ describe('PlansRepository retirement', () => {
   it('derives the pending replacement slug from the auth plan table', async () => {
     const prisma = {
       planRetirementMigration: {
-        findMany: jest.fn().mockResolvedValue([
+        findMany: vi.fn().mockResolvedValue([
           {
             id: 'migration-1',
             userId: 'user-1',
@@ -158,7 +159,7 @@ describe('PlansRepository retirement', () => {
         ]),
       },
       plan: {
-        findMany: jest.fn().mockResolvedValue([{ id: 'plan-pro', slug: 'pro' }]),
+        findMany: vi.fn().mockResolvedValue([{ id: 'plan-pro', slug: 'pro' }]),
       },
     } as unknown as PrismaService;
     const result = await new PlansRepository(prisma).listPendingRetirementMigrations(10);
@@ -168,10 +169,10 @@ describe('PlansRepository retirement', () => {
 
 describe('PlansRepository.assignDefaultPlan (signup grant)', () => {
   it('assigns the default plan with no admin actor, reason, or expiry', async () => {
-    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
-    const create = jest.fn().mockResolvedValue({ id: 'assignment-new' });
-    const userUpdate = jest.fn().mockResolvedValue({});
-    const transaction = jest.fn(async (ops: unknown[]) => ops);
+    const updateMany = vi.fn().mockResolvedValue({ count: 0 });
+    const create = vi.fn().mockResolvedValue({ id: 'assignment-new' });
+    const userUpdate = vi.fn().mockResolvedValue({});
+    const transaction = vi.fn(async (ops: unknown[]) => ops);
     const prisma = {
       userPlanAssignment: { updateMany, create },
       user: { update: userUpdate },
@@ -207,10 +208,10 @@ describe('PlansRepository.assignDefaultPlan (signup grant)', () => {
 
 describe('PlansRepository.assignUserToPlan (admin grant)', () => {
   it('expires the prior assignment and creates an attributed, time-limited grant', async () => {
-    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
-    const create = jest.fn().mockResolvedValue({ id: 'assignment-new' });
-    const userUpdate = jest.fn().mockResolvedValue({});
-    const transaction = jest.fn(async (ops: unknown[]) => ops);
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const create = vi.fn().mockResolvedValue({ id: 'assignment-new' });
+    const userUpdate = vi.fn().mockResolvedValue({});
+    const transaction = vi.fn(async (ops: unknown[]) => ops);
     const prisma = {
       userPlanAssignment: { updateMany, create },
       user: { update: userUpdate },
@@ -247,7 +248,7 @@ describe('PlansRepository.assignUserToPlan (admin grant)', () => {
 
 describe('PlansRepository.findEffectiveForUser (admin grant expiry)', () => {
   it('excludes an admin grant whose entitlementValidUntil has passed, via the existing lazy filter', async () => {
-    const findFirst = jest.fn().mockResolvedValue(null);
+    const findFirst = vi.fn().mockResolvedValue(null);
     const prisma = { userPlanAssignment: { findFirst } } as unknown as PrismaService;
     const repository = new PlansRepository(prisma);
     const now = new Date('2026-05-01T00:00:00.000Z');
@@ -272,7 +273,7 @@ describe('PlansRepository.findEffectiveForUser (admin grant expiry)', () => {
     // is neither null nor > now), so the caller falls back to the default
     // plan through whatever already handles "no effective assignment found" —
     // proving no new expiry-enforcement code path is needed for this feature.
-    const findFirst = jest.fn().mockResolvedValue(null);
+    const findFirst = vi.fn().mockResolvedValue(null);
     const prisma = { userPlanAssignment: { findFirst } } as unknown as PrismaService;
     const repository = new PlansRepository(prisma);
     const result = await repository.findEffectiveForUser('user-1', new Date());

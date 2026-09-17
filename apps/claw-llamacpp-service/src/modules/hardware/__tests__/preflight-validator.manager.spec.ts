@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   DownloadStatus,
   GpuBackend,
@@ -12,10 +13,10 @@ import { type HardwareSnapshot } from '../types/hardware.types';
 
 describe('PreflightValidatorManager', () => {
   const fakePrisma = {
-    preflightOverrideAudit: { create: jest.fn().mockResolvedValue({}) },
+    preflightOverrideAudit: { create: vi.fn().mockResolvedValue({}) },
   };
   const fakeEvents = {
-    preflightOverridden: jest.fn(),
+    preflightOverridden: vi.fn(),
   };
   const validator = new PreflightValidatorManager(fakePrisma as any, fakeEvents as any);
 

@@ -1,13 +1,14 @@
+import { vi } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { RefundQueryService } from '../refund-query.service';
 
 describe('RefundQueryService', () => {
-  const repository = { listRefundableCharges: jest.fn() };
+  const repository = { listRefundableCharges: vi.fn() };
   const service = new RefundQueryService(repository as never);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns only charges with a positive refundable balance', async () => {

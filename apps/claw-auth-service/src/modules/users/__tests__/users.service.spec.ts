@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { UsersService } from '../services/users.service';
 import { type UsersRepository } from '../repositories/users.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
@@ -11,9 +12,9 @@ import { type AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 import { type RolesService } from '../../roles/services/roles.service';
 import { type PlansRepository } from '../../plans/repositories/plans.repository';
 
-jest.mock('@common/utilities', () => ({
-  hashPassword: jest.fn().mockResolvedValue('hashed-password'),
-  verifyPassword: jest.fn(),
+vi.mock('@common/utilities', () => ({
+  hashPassword: vi.fn().mockResolvedValue('hashed-password'),
+  verifyPassword: vi.fn(),
 }));
 
 const mockUser = {
@@ -40,23 +41,23 @@ const mockUser = {
   updatedAt: new Date(),
 };
 
-const mockRepository = (): Record<keyof UsersRepository, jest.Mock> => ({
-  create: jest.fn(),
-  activateAndVerify: jest.fn(),
-  findById: jest.fn(),
-  findByEmail: jest.fn(),
-  findByUsername: jest.fn(),
-  findAll: jest.fn(),
-  updateById: jest.fn(),
-  deleteById: jest.fn(),
-  countAll: jest.fn(),
-  updatePreferences: jest.fn(),
-  revokeSessionsByUserId: jest.fn(),
-  revokeOtherSessionsByUserId: jest.fn(),
+const mockRepository = (): Record<keyof UsersRepository, Mock> => ({
+  create: vi.fn(),
+  activateAndVerify: vi.fn(),
+  findById: vi.fn(),
+  findByEmail: vi.fn(),
+  findByUsername: vi.fn(),
+  findAll: vi.fn(),
+  updateById: vi.fn(),
+  deleteById: vi.fn(),
+  countAll: vi.fn(),
+  updatePreferences: vi.fn(),
+  revokeSessionsByUserId: vi.fn(),
+  revokeOtherSessionsByUserId: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 const SUPER_ADMIN_ID = 'super-1';
@@ -77,23 +78,23 @@ describe('UsersService', () => {
   let service: UsersService;
   let repository: ReturnType<typeof mockRepository>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
-  let authEmailAdapter: { sendTemporaryPassword: jest.Mock };
-  let rolesService: { getRoleIdBySlug: jest.Mock };
+  let authEmailAdapter: { sendTemporaryPassword: Mock };
+  let rolesService: { getRoleIdBySlug: Mock };
   let plansRepository: {
-    findDefault: jest.Mock;
-    assignDefaultPlan: jest.Mock;
-    assignTrialPlanOnce: jest.Mock;
+    findDefault: Mock;
+    assignDefaultPlan: Mock;
+    assignTrialPlanOnce: Mock;
   };
 
   beforeEach(() => {
     repository = mockRepository();
     rabbitMQ = mockRabbitMQ();
-    authEmailAdapter = { sendTemporaryPassword: jest.fn() };
-    rolesService = { getRoleIdBySlug: jest.fn().mockResolvedValue('role-1') };
+    authEmailAdapter = { sendTemporaryPassword: vi.fn() };
+    rolesService = { getRoleIdBySlug: vi.fn().mockResolvedValue('role-1') };
     plansRepository = {
-      findDefault: jest.fn().mockResolvedValue(null),
-      assignDefaultPlan: jest.fn(),
-      assignTrialPlanOnce: jest.fn(),
+      findDefault: vi.fn().mockResolvedValue(null),
+      assignDefaultPlan: vi.fn(),
+      assignTrialPlanOnce: vi.fn(),
     };
     service = new UsersService(
       repository as unknown as UsersRepository,
@@ -162,7 +163,7 @@ describe('UsersService', () => {
     it('verifies the current password, updates only profile fields, and revokes the other sessions', async () => {
       const updatedUser = { ...mockUser, username: 'renamed' };
       repository.findById.mockResolvedValue(mockUser);
-      jest.mocked(verifyPassword).mockResolvedValue(true);
+      vi.mocked(verifyPassword).mockResolvedValue(true);
       repository.findByUsername.mockResolvedValue(null);
       repository.updateById.mockResolvedValue(updatedUser);
 
@@ -185,7 +186,7 @@ describe('UsersService', () => {
     });
     it('saves personal details without signing the user out everywhere', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      jest.mocked(verifyPassword).mockResolvedValue(true);
+      vi.mocked(verifyPassword).mockResolvedValue(true);
       repository.updateById.mockResolvedValue({
         ...mockUser,
         firstName: 'Ada',
@@ -215,7 +216,7 @@ describe('UsersService', () => {
 
     it('keeps sessions when the submitted username is unchanged', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      jest.mocked(verifyPassword).mockResolvedValue(true);
+      vi.mocked(verifyPassword).mockResolvedValue(true);
       repository.findByUsername.mockResolvedValue(null);
       repository.updateById.mockResolvedValue(mockUser);
 
@@ -233,7 +234,7 @@ describe('UsersService', () => {
 
     it('rejects an incorrect current password without changing the profile', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      jest.mocked(verifyPassword).mockResolvedValue(false);
+      vi.mocked(verifyPassword).mockResolvedValue(false);
 
       await expect(
         service.updateOwnProfile(
@@ -252,7 +253,7 @@ describe('UsersService', () => {
   describe('deleteOwnAccount', () => {
     it('verifies the current password, revokes sessions, and deletes the user', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      jest.mocked(verifyPassword).mockResolvedValue(true);
+      vi.mocked(verifyPassword).mockResolvedValue(true);
       repository.deleteById.mockResolvedValue(mockUser);
 
       await service.deleteOwnAccount('user-1', { currentPassword: 'CurrentPass1!' });
@@ -263,7 +264,7 @@ describe('UsersService', () => {
 
     it('rejects an incorrect password without deleting the user', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      jest.mocked(verifyPassword).mockResolvedValue(false);
+      vi.mocked(verifyPassword).mockResolvedValue(false);
 
       await expect(
         service.deleteOwnAccount('user-1', { currentPassword: 'WrongPass1!' }),
@@ -830,7 +831,7 @@ describe('UsersService', () => {
     });
 
     it('refuses the super administrator deleting their own account', async () => {
-      (verifyPassword as jest.Mock).mockResolvedValue(true);
+      (verifyPassword as Mock).mockResolvedValue(true);
       repository.findById.mockResolvedValue(superAdminRow);
 
       await expect(

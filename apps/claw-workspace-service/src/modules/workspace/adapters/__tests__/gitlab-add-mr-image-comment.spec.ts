@@ -1,6 +1,7 @@
+import { type Mock, vi } from 'vitest';
 import { GitLabWriteActionsHelper } from '../gitlab-write-actions.helper';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const valid = {
   projectId: '42',
@@ -20,12 +21,12 @@ describe('GitLabWriteActionsHelper — ADD_MR_IMAGE_COMMENT', () => {
   let helper: GitLabWriteActionsHelper;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     helper = new GitLabWriteActionsHelper();
   });
 
   it('posts to /discussions with position_type=image and x/y/width/height', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'img-disc-1' }),
     });
@@ -34,9 +35,10 @@ describe('GitLabWriteActionsHelper — ADD_MR_IMAGE_COMMENT', () => {
     expect(result.success).toBe(true);
     expect(result.externalId).toBe('img-disc-1');
 
-    const call = (global.fetch as jest.Mock).mock.calls[0];
-    expect(call[0]).toContain('/projects/42/merge_requests/7/discussions');
-    const sent = JSON.parse(call[1].body) as { body: string; position: Record<string, unknown> };
+    const call = (global.fetch as Mock).mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0]).toContain('/projects/42/merge_requests/7/discussions');
+    const sent = JSON.parse(call?.[1].body) as { body: string; position: Record<string, unknown> };
     expect(sent.body).toBe('Move this button 20px left');
     expect(sent.position).toMatchObject({
       position_type: 'image',
@@ -69,7 +71,7 @@ describe('GitLabWriteActionsHelper — ADD_MR_IMAGE_COMMENT', () => {
   });
 
   it('honors a custom oldPath when caller renamed the image', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'img-2' }),
     });
@@ -77,7 +79,9 @@ describe('GitLabWriteActionsHelper — ADD_MR_IMAGE_COMMENT', () => {
       ...valid,
       oldPath: 'old-design.png',
     });
-    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as {
+    const sentCall = (global.fetch as Mock).mock.calls[0];
+    expect(sentCall).toBeDefined();
+    const sent = JSON.parse(sentCall?.[1].body) as {
       position: Record<string, unknown>;
     };
     expect(sent.position['old_path']).toBe('old-design.png');
@@ -85,7 +89,7 @@ describe('GitLabWriteActionsHelper — ADD_MR_IMAGE_COMMENT', () => {
   });
 
   it('surfaces GitLab API error response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: false,
       status: 422,
       text: async () => 'invalid position',

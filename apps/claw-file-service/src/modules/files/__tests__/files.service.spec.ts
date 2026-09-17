@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { FilesService } from '../services/files.service';
 import { type FilesRepository } from '../repositories/files.repository';
 import { type FileChunksRepository } from '../repositories/file-chunks.repository';
@@ -7,19 +8,19 @@ import { BusinessException, EntityNotFoundException } from '../../../common/erro
 import { FileIngestionStatus } from '../../../generated/prisma';
 import { MAX_FILE_SIZE } from '../types/files.types';
 
-jest.mock('../../../common/utilities', () => ({
-  verifyAccessToken: jest.fn(),
-  saveFile: jest.fn().mockReturnValue('/data/uploads/test-file.txt'),
-  deleteFile: jest.fn(),
-  readFile: jest.fn().mockReturnValue(Buffer.from('test content')),
+vi.mock('../../../common/utilities', () => ({
+  verifyAccessToken: vi.fn(),
+  saveFile: vi.fn().mockReturnValue('/data/uploads/test-file.txt'),
+  deleteFile: vi.fn(),
+  readFile: vi.fn().mockReturnValue(Buffer.from('test content')),
 }));
 
 // Slice C foundation 3 — mock AppConfig so computeRetentionExpiry()
 // inside uploadFile/createTextFile/uploadFileWithSecurity does not hit
 // the Zod env validator in unit tests (no FILES_DATABASE_URL etc. needed).
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn(() => ({
+    get: vi.fn(() => ({
       FILE_RETENTION_DAYS: 0,
     })),
   },
@@ -61,29 +62,29 @@ const mockChunk = {
   createdAt: new Date(),
 };
 
-const mockFilesRepository = (): Record<keyof FilesRepository, jest.Mock> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
-  findAll: jest.fn(),
-  updateIngestionStatus: jest.fn(),
-  saveExtractionResult: jest.fn(),
-  delete: jest.fn(),
-  countAll: jest.fn(),
-  findExpiredBefore: jest.fn(),
-  findStaleProcessingBefore: jest.fn().mockResolvedValue([]),
-  deleteById: jest.fn(),
-  markAsExtractedChild: jest.fn(),
-  recordExtractionMetadata: jest.fn(),
+const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
+  findAll: vi.fn(),
+  updateIngestionStatus: vi.fn(),
+  saveExtractionResult: vi.fn(),
+  delete: vi.fn(),
+  countAll: vi.fn(),
+  findExpiredBefore: vi.fn(),
+  findStaleProcessingBefore: vi.fn().mockResolvedValue([]),
+  deleteById: vi.fn(),
+  markAsExtractedChild: vi.fn(),
+  recordExtractionMetadata: vi.fn(),
 });
 
-const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Mock> => ({
-  createMany: jest.fn(),
-  findByFileId: jest.fn(),
-  deleteByFileId: jest.fn(),
+const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({
+  createMany: vi.fn(),
+  findByFileId: vi.fn(),
+  deleteByFileId: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('FilesService', () => {
@@ -99,12 +100,12 @@ describe('FilesService', () => {
     // Extraction is kicked off but never awaited by uploadFile; the stub keeps
     // the fire-and-forget call from touching the real pipeline in unit tests.
     const mockProcessingManager = {
-      processFile: jest.fn().mockResolvedValue(void 0),
-      updateIngestionStatus: jest.fn().mockResolvedValue(void 0),
+      processFile: vi.fn().mockResolvedValue(void 0),
+      updateIngestionStatus: vi.fn().mockResolvedValue(void 0),
     };
     const mockSecurityManager = {
-      runAllChecks: jest.fn().mockResolvedValue({ passed: true, checks: [] }),
-      getSanitizedFilename: jest.fn().mockImplementation((name: string) => name),
+      runAllChecks: vi.fn().mockResolvedValue({ passed: true, checks: [] }),
+      getSanitizedFilename: vi.fn().mockImplementation((name: string) => name),
     };
     service = new FilesService(
       filesRepo as unknown as FilesRepository,

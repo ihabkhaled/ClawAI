@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 // Sampling parameters at the ChatExecutionManager boundary.
 //
 // Claude Fable 5, Opus 5, Opus 4.8/4.7 and Sonnet 5 removed sampling: sending
@@ -22,24 +23,32 @@ import type { ExecutionOptions } from '../types/execution-options.types';
 import type { OpenAiChatRequest, ThreadSettings } from '../types/execution.types';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
-jest.mock('../clients/model-exposure.client', () => ({
-  ModelExposureClient: jest.fn().mockImplementation(() => ({
-    isExposed: jest.fn().mockResolvedValue(true),
-  })),
+vi.mock('../clients/model-exposure.client', () => ({
+  ModelExposureClient: vi.fn(function () {
+    return {
+      isExposed: vi.fn().mockResolvedValue(true),
+    };
+  }),
 }));
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     if (!record) return undefined;
     return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
   },
 }));
-jest.mock('../../../app/config/app.config');
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as { httpRequest: jest.Mock };
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as { httpRequest: Mock };
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const makeContext = (userMessage: string): AssembledContext =>
   ({
@@ -59,7 +68,7 @@ describe('ChatExecutionManager sampling parameters', () => {
   let manager: ChatExecutionManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
       OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
@@ -73,42 +82,42 @@ describe('ChatExecutionManager sampling parameters', () => {
 
     manager = new ChatExecutionManager(
       {
-        buildPromptString: jest.fn().mockReturnValue('user prompt'),
-        buildChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
-        buildGeminiChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+        buildPromptString: vi.fn().mockReturnValue('user prompt'),
+        buildChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+        buildGeminiChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
       } as unknown as ContextAssemblyManager,
       {
-        checkResponseQuality: jest.fn().mockReturnValue({ score: 0.9, reasons: [] }),
-        shouldReRoute: jest.fn().mockReturnValue({ shouldReRoute: false }),
+        checkResponseQuality: vi.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+        shouldReRoute: vi.fn().mockReturnValue({ shouldReRoute: false }),
       } as unknown as QualityCheckManager,
       {
-        setExecutionManager: jest.fn(),
-        shouldActivate: jest.fn().mockReturnValue(false),
-        evaluate: jest.fn(),
-        buildMetadata: jest.fn().mockReturnValue({ judgeEnabled: false }),
+        setExecutionManager: vi.fn(),
+        shouldActivate: vi.fn().mockReturnValue(false),
+        evaluate: vi.fn(),
+        buildMetadata: vi.fn().mockReturnValue({ judgeEnabled: false }),
       } as unknown as JudgeRefereeManager,
       {
-        emitRouterStarted: jest.fn(),
-        emitProviderSelected: jest.fn(),
-        emitResponseStreaming: jest.fn(),
-        startResponseProgressHeartbeat: jest.fn().mockReturnValue(jest.fn()),
-        emitFallbackAttempt: jest.fn(),
-        emitError: jest.fn(),
+        emitRouterStarted: vi.fn(),
+        emitProviderSelected: vi.fn(),
+        emitResponseStreaming: vi.fn(),
+        startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
+        emitFallbackAttempt: vi.fn(),
+        emitError: vi.fn(),
       } as unknown as ChatStreamService,
       {
-        run: jest.fn().mockImplementation(async (_query: string, ctx: unknown) => ({
+        run: vi.fn().mockImplementation(async (_query: string, ctx: unknown) => ({
           context: ctx,
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as unknown as SearchFirstManager,
       createFakePaygAccessControl() as unknown as AccessControlService,
       {
-        uploadFile: jest.fn(),
-        getCachedOrUpload: jest.fn(),
+        uploadFile: vi.fn(),
+        getCachedOrUpload: vi.fn(),
       } as unknown as GeminiFilesApiManager,
       {
-        resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
-        resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b']),
+        resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
+        resolveModelList: vi.fn().mockResolvedValue(['qwen3:7b']),
       } as unknown as LocalModelSelectionService,
     );
   });
@@ -157,7 +166,11 @@ describe('ChatExecutionManager sampling parameters', () => {
       });
   }
 
-  const requestBodyOf = <T>(callIndex = 1): T => httpRequest.mock.calls[callIndex][0].body as T;
+  const requestBodyOf = <T>(callIndex = 1): T => {
+    const call = httpRequest.mock.calls[callIndex];
+    expect(call).toBeDefined();
+    return call?.[0].body as T;
+  };
 
   const settings = { temperature: 0.7 } as unknown as ThreadSettings;
 

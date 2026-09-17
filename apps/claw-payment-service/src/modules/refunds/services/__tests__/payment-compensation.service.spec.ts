@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway } from '@claw/shared-types';
 
 import { RefundStatus } from '../../../../generated/prisma';
@@ -5,13 +6,13 @@ import { PaymentCompensationService } from '../payment-compensation.service';
 
 describe('PaymentCompensationService', () => {
   const repository = {
-    markAutomaticAttemptFailed: jest.fn(),
-    markProviderAccepted: jest.fn(),
-    prepareAutomaticCompensation: jest.fn(),
+    markAutomaticAttemptFailed: vi.fn(),
+    markProviderAccepted: vi.fn(),
+    prepareAutomaticCompensation: vi.fn(),
   };
-  const paypal = { refundCapture: jest.fn() };
-  const paymob = { refund: jest.fn() };
-  const completion = { complete: jest.fn() };
+  const paypal = { refundCapture: vi.fn() };
+  const paymob = { refund: vi.fn() };
+  const completion = { complete: vi.fn() };
   const baseRefund = {
     id: 'refund-1',
     status: RefundStatus.PENDING,
@@ -35,7 +36,7 @@ describe('PaymentCompensationService', () => {
   let service: PaymentCompensationService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     repository.prepareAutomaticCompensation.mockResolvedValue({
       refund: baseRefund,
       providerTransactionId: 'capture-1',

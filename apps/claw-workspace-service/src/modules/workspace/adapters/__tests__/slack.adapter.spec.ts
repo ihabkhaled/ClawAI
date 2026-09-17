@@ -1,25 +1,26 @@
+import { vi, type Mock } from 'vitest';
 import { SlackAdapter } from '../slack.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('SlackAdapter', () => {
   let adapter: SlackAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new SlackAdapter();
   });
 
   describe('healthCheck', () => {
     it('returns CONNECTED when auth.test reports ok:true', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ json: async () => ({ ok: true }) });
+      (global.fetch as Mock).mockResolvedValue({ json: async () => ({ ok: true }) });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
     });
 
     it('returns DISCONNECTED on invalid_auth', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: false, error: 'invalid_auth' }),
       });
       const result = await adapter.healthCheck('bad-token');
@@ -28,7 +29,7 @@ describe('SlackAdapter', () => {
     });
 
     it('returns DISCONNECTED on token_revoked', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: false, error: 'token_revoked' }),
       });
       const result = await adapter.healthCheck('token');
@@ -36,7 +37,7 @@ describe('SlackAdapter', () => {
     });
 
     it('returns DEGRADED on any other Slack error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: false, error: 'rate_limited' }),
       });
       const result = await adapter.healthCheck('token');
@@ -45,7 +46,7 @@ describe('SlackAdapter', () => {
     });
 
     it('returns DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
@@ -78,7 +79,7 @@ describe('SlackAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for a bot access token', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({
           ok: true,
           access_token: 'xoxb-abc',
@@ -94,7 +95,7 @@ describe('SlackAdapter', () => {
     });
 
     it('falls back to authed_user.access_token when bot token is absent', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: true, authed_user: { access_token: 'xoxp-user' } }),
       });
       const tokens = await adapter.exchangeCodeForTokens('code', 'https://cb', undefined, {
@@ -111,7 +112,7 @@ describe('SlackAdapter', () => {
     });
 
     it('throws when Slack reports ok:false', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: false, error: 'invalid_code' }),
       });
       await expect(
@@ -133,7 +134,7 @@ describe('SlackAdapter', () => {
 
   describe('syncObjects', () => {
     it('maps public/private channels to SyncedObject', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({
           ok: true,
           channels: [
@@ -153,13 +154,13 @@ describe('SlackAdapter', () => {
     });
 
     it('returns an empty list when Slack reports no channels', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ json: async () => ({ ok: true }) });
+      (global.fetch as Mock).mockResolvedValue({ json: async () => ({ ok: true }) });
       const result = await adapter.syncObjects('token');
       expect(result.objects).toEqual([]);
     });
 
     it('throws when Slack reports ok:false', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: false, error: 'missing_scope' }),
       });
       await expect(adapter.syncObjects('token')).rejects.toThrow(/missing_scope/);
@@ -169,7 +170,7 @@ describe('SlackAdapter', () => {
   describe('write actions', () => {
     describe.each(['SEND_SLACK', 'SEND_SLACK_MESSAGE'])('%s', (actionType) => {
       it('posts channel+text to chat.postMessage', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           json: async () => ({ ok: true, ts: '1700000000.000100' }),
         });
         const result = await adapter.executeWriteAction('token', actionType, {
@@ -177,14 +178,14 @@ describe('SlackAdapter', () => {
           text: 'Hello',
         });
         expect(result).toEqual({ success: true, externalId: '1700000000.000100' });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/chat.postMessage');
         expect(JSON.parse(init.body as string)).toEqual({ channel: 'C1', text: 'Hello' });
       });
     });
 
     it('REPLY_SLACK includes thread_ts when threadTs is provided', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: true, ts: '2.000' }),
       });
       await adapter.executeWriteAction('token', 'REPLY_SLACK', {
@@ -192,7 +193,7 @@ describe('SlackAdapter', () => {
         text: 'Reply',
         threadTs: '1.000',
       });
-      const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+      const [, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
       expect(JSON.parse(init.body as string)).toEqual({
         channel: 'C1',
         text: 'Reply',
@@ -201,7 +202,7 @@ describe('SlackAdapter', () => {
     });
 
     it('includes blocks when provided', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: true, ts: '3.000' }),
       });
       const blocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'hi' } }];
@@ -210,12 +211,12 @@ describe('SlackAdapter', () => {
         text: 'x',
         blocks,
       });
-      const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+      const [, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
       expect(JSON.parse(init.body as string).blocks).toEqual(blocks);
     });
 
     it('returns success:false with the Slack error on ok:false', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         json: async () => ({ ok: false, error: 'channel_not_found' }),
       });
       const result = await adapter.executeWriteAction('token', 'SEND_SLACK', {

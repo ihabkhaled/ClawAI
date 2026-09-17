@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 import { OrganizationPolicyService } from '../organization-policy.service';
@@ -8,10 +9,10 @@ import type { OrganizationRepository } from '../../repositories/organization.rep
 
 function repository(overrides: Partial<OrganizationRepository> = {}): OrganizationRepository {
   return {
-    listPoliciesForUser: jest.fn().mockResolvedValue([]),
-    findPolicy: jest.fn().mockResolvedValue(null),
-    upsertPolicy: jest.fn(),
-    findMembershipForUser: jest.fn().mockResolvedValue({ role: OrganizationRole.ADMIN }),
+    listPoliciesForUser: vi.fn().mockResolvedValue([]),
+    findPolicy: vi.fn().mockResolvedValue(null),
+    upsertPolicy: vi.fn(),
+    findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.ADMIN }),
     ...overrides,
   } as unknown as OrganizationRepository;
 }
@@ -37,7 +38,7 @@ describe('OrganizationPolicyService', () => {
     it('intersects every organization the user belongs to', async () => {
       const service = new OrganizationPolicyService(
         repository({
-          listPoliciesForUser: jest.fn().mockResolvedValue([
+          listPoliciesForUser: vi.fn().mockResolvedValue([
             { ...storedPolicy, maximumRisk: 'R4' },
             { ...storedPolicy, maximumRisk: 'R1' },
           ]),
@@ -54,7 +55,7 @@ describe('OrganizationPolicyService', () => {
     it('never names the organization that imposed a constraint', async () => {
       const service = new OrganizationPolicyService(
         repository({
-          listPoliciesForUser: jest
+          listPoliciesForUser: vi
             .fn()
             .mockResolvedValue([{ ...storedPolicy, id: 'p1', organizationId: 'org-secret' }]),
         }),
@@ -73,8 +74,8 @@ describe('OrganizationPolicyService', () => {
     it('lets a plain member read the policy', async () => {
       const service = new OrganizationPolicyService(
         repository({
-          findMembershipForUser: jest.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
-          findPolicy: jest.fn().mockResolvedValue(storedPolicy),
+          findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
+          findPolicy: vi.fn().mockResolvedValue(storedPolicy),
         }),
       );
 
@@ -86,7 +87,7 @@ describe('OrganizationPolicyService', () => {
     // Telling a non-member that an organization exists is itself a disclosure.
     it('reports not found rather than forbidden to a non-member', async () => {
       const service = new OrganizationPolicyService(
-        repository({ findMembershipForUser: jest.fn().mockResolvedValue(null) }),
+        repository({ findMembershipForUser: vi.fn().mockResolvedValue(null) }),
       );
 
       await expect(service.forOrganization('org-1', 'outsider')).rejects.toBeInstanceOf(
@@ -105,10 +106,10 @@ describe('OrganizationPolicyService', () => {
 
   describe('update', () => {
     it('lets an owner or admin save a policy', async () => {
-      const upsertPolicy = jest.fn().mockResolvedValue(storedPolicy);
+      const upsertPolicy = vi.fn().mockResolvedValue(storedPolicy);
       const service = new OrganizationPolicyService(
         repository({
-          findMembershipForUser: jest.fn().mockResolvedValue({ role: OrganizationRole.OWNER }),
+          findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.OWNER }),
           upsertPolicy,
         }),
       );
@@ -131,10 +132,10 @@ describe('OrganizationPolicyService', () => {
 
     // Writing a policy is administrative; reading it is not.
     it('refuses a plain member', async () => {
-      const upsertPolicy = jest.fn();
+      const upsertPolicy = vi.fn();
       const service = new OrganizationPolicyService(
         repository({
-          findMembershipForUser: jest.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
+          findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
           upsertPolicy,
         }),
       );

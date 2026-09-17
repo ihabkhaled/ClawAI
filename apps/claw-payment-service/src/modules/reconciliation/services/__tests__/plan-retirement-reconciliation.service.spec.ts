@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import type { Subscription } from '../../../../generated/prisma';
 import type { PlanCatalogClient } from '../../../plan-catalog/plan-catalog.client';
 import type { SubscriptionRepository } from '../../../subscriptions/repositories/subscription.repository';
@@ -54,22 +55,22 @@ const MIGRATION = {
 };
 
 describe('PlanRetirementReconciliationService', () => {
-  let client: { listPending: jest.Mock; recordOutcome: jest.Mock };
-  let subscriptions: { findById: jest.Mock; schedulePlanRetirementIfUnchanged: jest.Mock };
-  let catalog: { requireActivePrice: jest.Mock; requirePriceVersion: jest.Mock };
+  let client: { listPending: Mock; recordOutcome: Mock };
+  let subscriptions: { findById: Mock; schedulePlanRetirementIfUnchanged: Mock };
+  let catalog: { requireActivePrice: Mock; requirePriceVersion: Mock };
   let service: PlanRetirementReconciliationService;
 
   beforeEach(() => {
     client = {
-      listPending: jest.fn().mockResolvedValue([MIGRATION]),
-      recordOutcome: jest.fn().mockResolvedValue(true),
+      listPending: vi.fn().mockResolvedValue([MIGRATION]),
+      recordOutcome: vi.fn().mockResolvedValue(true),
     };
     subscriptions = {
-      findById: jest.fn().mockResolvedValue(subscription()),
-      schedulePlanRetirementIfUnchanged: jest.fn().mockResolvedValue(true),
+      findById: vi.fn().mockResolvedValue(subscription()),
+      schedulePlanRetirementIfUnchanged: vi.fn().mockResolvedValue(true),
     };
     catalog = {
-      requireActivePrice: jest.fn().mockResolvedValue({
+      requireActivePrice: vi.fn().mockResolvedValue({
         id: 'price-new',
         planId: 'plan-new',
         billingInterval: 'MONTHLY',
@@ -78,7 +79,7 @@ describe('PlanRetirementReconciliationService', () => {
         version: 1,
         isActive: true,
       }),
-      requirePriceVersion: jest.fn().mockResolvedValue({
+      requirePriceVersion: vi.fn().mockResolvedValue({
         id: 'price-new',
         planId: 'plan-new',
         billingInterval: 'MONTHLY',

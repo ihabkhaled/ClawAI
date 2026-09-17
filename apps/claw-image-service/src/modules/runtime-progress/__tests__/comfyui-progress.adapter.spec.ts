@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   type ClawRuntimeProgressEvent,
   RuntimeProgressEventType,
@@ -99,7 +100,7 @@ function createAdapter(opts: ScenarioOptions): {
     return ws;
   };
 
-  const httpPostStub = jest.fn(async (url: string) => {
+  const httpPostStub = vi.fn(async (url: string) => {
     if (url.includes('/interrupt')) {
       return {};
     }
@@ -109,7 +110,7 @@ function createAdapter(opts: ScenarioOptions): {
     return { prompt_id: 'prompt-1', number: 1 };
   });
 
-  const httpGetStub = jest.fn(async (url: string) => {
+  const httpGetStub = vi.fn(async (url: string) => {
     if (url.includes('/history/')) {
       return {
         'prompt-1': {

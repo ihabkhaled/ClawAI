@@ -1,8 +1,9 @@
+import { vi, type Mock } from 'vitest';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { OllamaWebSearchAdapter } from '../ollama-web.adapter';
 import { runSearchAdapterContract } from './search-adapter-contract';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('OllamaWebSearchAdapter', () => {
   runSearchAdapterContract(() => new OllamaWebSearchAdapter());
@@ -16,17 +17,17 @@ describe('OllamaWebSearchAdapter', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('healthCheck returns healthy on 200', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+    (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
     const result = await adapter.healthCheck(context);
     expect(result.healthy).toBe(true);
   });
 
   it('healthCheck falls back to Bing RSS when Ollama Web returns 401', async () => {
-    (global.fetch as jest.Mock)
+    (global.fetch as Mock)
       .mockResolvedValueOnce({ ok: false, status: 401 })
       .mockResolvedValueOnce({ ok: true, status: 200 });
     const result = await adapter.healthCheck(context);
@@ -34,7 +35,7 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('search normalizes results and assigns descending scores', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
         results: [
@@ -53,7 +54,7 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('search falls back to DuckDuckGo HTML when Ollama Web is unauthorized', async () => {
-    (global.fetch as jest.Mock)
+    (global.fetch as Mock)
       .mockResolvedValueOnce({ ok: false, status: 401 })
       .mockResolvedValueOnce({
         ok: true,
@@ -78,7 +79,7 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('falls back when Ollama Web results are weakly matched to the query', async () => {
-    (global.fetch as jest.Mock)
+    (global.fetch as Mock)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -114,8 +115,8 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('withholds evidence when both providers return weakly matched results', async () => {
-    const onNetworkCall = jest.fn(async () => {});
-    (global.fetch as jest.Mock)
+    const onNetworkCall = vi.fn(async () => {});
+    (global.fetch as Mock)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -165,8 +166,8 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('counts a failed primary request and both fallback dispatches', async () => {
-    const onNetworkCall = jest.fn(async () => {});
-    (global.fetch as jest.Mock)
+    const onNetworkCall = vi.fn(async () => {});
+    (global.fetch as Mock)
       .mockResolvedValueOnce({ ok: false, status: 429 })
       .mockResolvedValueOnce({ ok: false, status: 503 })
       .mockResolvedValueOnce({ ok: false, status: 503 });

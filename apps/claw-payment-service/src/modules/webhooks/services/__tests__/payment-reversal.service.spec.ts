@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   BillingErrorCode,
   BillingGateway,
@@ -17,10 +18,10 @@ const TOPUP_SNAPSHOT = {
 };
 
 describe('PaymentReversalService', () => {
-  const lifecycle = { reverseAndRevoke: jest.fn() };
-  const refundWebhooks = { apply: jest.fn() };
-  const creditTopups = { reverseCreditTopup: jest.fn() };
-  const transactions = { findById: jest.fn() };
+  const lifecycle = { reverseAndRevoke: vi.fn() };
+  const refundWebhooks = { apply: vi.fn() };
+  const creditTopups = { reverseCreditTopup: vi.fn() };
+  const transactions = { findById: vi.fn() };
   const service = new PaymentReversalService(
     lifecycle as never,
     refundWebhooks as never,
@@ -42,7 +43,7 @@ describe('PaymentReversalService', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('delegates refunds to the first-class refund workflow', async () => {

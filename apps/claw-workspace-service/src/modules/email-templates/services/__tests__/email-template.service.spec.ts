@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { EmailTemplateService } from '../email-template.service';
@@ -13,22 +14,22 @@ const makeTpl = (overrides: Record<string, unknown> = {}): unknown => ({
   updatedAt: new Date(),
 });
 
-const makeRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
-  listForUser: jest.fn(),
-  findById: jest.fn(),
-  findByName: jest.fn(),
-  findDefaultForUser: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  deleteById: jest.fn(),
-  clearDefaultsForUser: jest.fn(),
+const makeRepo = (overrides: Record<string, Mock> = {}): Record<string, Mock> => ({
+  listForUser: vi.fn(),
+  findById: vi.fn(),
+  findByName: vi.fn(),
+  findDefaultForUser: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteById: vi.fn(),
+  clearDefaultsForUser: vi.fn(),
   ...overrides,
 });
 
 describe('EmailTemplateService', () => {
   describe('list', () => {
     it('returns all templates for the user', async () => {
-      const repo = makeRepo({ listForUser: jest.fn().mockResolvedValue([makeTpl()]) });
+      const repo = makeRepo({ listForUser: vi.fn().mockResolvedValue([makeTpl()]) });
       const service = new EmailTemplateService(repo as never);
       const result = await service.list('u1');
       expect(result).toHaveLength(1);
@@ -39,21 +40,21 @@ describe('EmailTemplateService', () => {
   describe('getOwn', () => {
     it('returns the template when owned', async () => {
       const tpl = makeTpl();
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(tpl) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(tpl) });
       const service = new EmailTemplateService(repo as never);
       expect(await service.getOwn('u1', 'tpl-1')).toEqual(tpl);
     });
 
     it('404s when the template belongs to another user', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeTpl({ userId: 'bob' })),
+        findById: vi.fn().mockResolvedValue(makeTpl({ userId: 'bob' })),
       });
       const service = new EmailTemplateService(repo as never);
       await expect(service.getOwn('alice', 'tpl-1')).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('404s when the template does not exist', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new EmailTemplateService(repo as never);
       await expect(service.getOwn('u1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
     });
@@ -62,13 +63,13 @@ describe('EmailTemplateService', () => {
   describe('getDefault', () => {
     it('returns the default template for the user', async () => {
       const tpl = makeTpl({ isDefault: true });
-      const repo = makeRepo({ findDefaultForUser: jest.fn().mockResolvedValue(tpl) });
+      const repo = makeRepo({ findDefaultForUser: vi.fn().mockResolvedValue(tpl) });
       const service = new EmailTemplateService(repo as never);
       expect(await service.getDefault('u1')).toEqual(tpl);
     });
 
     it('returns null when no default is set', async () => {
-      const repo = makeRepo({ findDefaultForUser: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findDefaultForUser: vi.fn().mockResolvedValue(null) });
       const service = new EmailTemplateService(repo as never);
       expect(await service.getDefault('u1')).toBeNull();
     });
@@ -78,8 +79,8 @@ describe('EmailTemplateService', () => {
     it('creates a new template when the name is unique', async () => {
       const created = makeTpl();
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
       const service = new EmailTemplateService(repo as never);
       const result = await service.create('u1', {
@@ -94,8 +95,8 @@ describe('EmailTemplateService', () => {
     it('clears other defaults when creating with isDefault=true', async () => {
       const created = makeTpl({ isDefault: true }) as { id: string };
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
       const service = new EmailTemplateService(repo as never);
       await service.create('u1', {
@@ -108,7 +109,7 @@ describe('EmailTemplateService', () => {
     });
 
     it('409s when the name is already taken for the user', async () => {
-      const repo = makeRepo({ findByName: jest.fn().mockResolvedValue(makeTpl()) });
+      const repo = makeRepo({ findByName: vi.fn().mockResolvedValue(makeTpl()) });
       const service = new EmailTemplateService(repo as never);
       await expect(
         service.create('u1', { name: 'Follow-up', subject: 'S', body: 'B' }),
@@ -120,9 +121,9 @@ describe('EmailTemplateService', () => {
   describe('update', () => {
     it('updates fields and clears other defaults when promoting to default', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeTpl()),
-        findByName: jest.fn().mockResolvedValue(null),
-        update: jest.fn().mockResolvedValue(makeTpl({ isDefault: true })),
+        findById: vi.fn().mockResolvedValue(makeTpl()),
+        findByName: vi.fn().mockResolvedValue(null),
+        update: vi.fn().mockResolvedValue(makeTpl({ isDefault: true })),
       });
       const service = new EmailTemplateService(repo as never);
       await service.update('u1', 'tpl-1', { isDefault: true, subject: 'New subject' });
@@ -135,8 +136,8 @@ describe('EmailTemplateService', () => {
 
     it('blocks rename when the new name is taken by another row', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeTpl()),
-        findByName: jest.fn().mockResolvedValue(makeTpl({ id: 'tpl-other' })),
+        findById: vi.fn().mockResolvedValue(makeTpl()),
+        findByName: vi.fn().mockResolvedValue(makeTpl({ id: 'tpl-other' })),
       });
       const service = new EmailTemplateService(repo as never);
       await expect(
@@ -147,9 +148,9 @@ describe('EmailTemplateService', () => {
 
     it('allows renaming to a name that is taken by the SAME row', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeTpl()),
-        findByName: jest.fn().mockResolvedValue(makeTpl()),
-        update: jest.fn().mockResolvedValue(makeTpl()),
+        findById: vi.fn().mockResolvedValue(makeTpl()),
+        findByName: vi.fn().mockResolvedValue(makeTpl()),
+        update: vi.fn().mockResolvedValue(makeTpl()),
       });
       const service = new EmailTemplateService(repo as never);
       await service.update('u1', 'tpl-1', { name: 'Follow-up' });
@@ -160,8 +161,8 @@ describe('EmailTemplateService', () => {
   describe('deleteById', () => {
     it('deletes only when owned', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeTpl()),
-        deleteById: jest.fn().mockResolvedValue(undefined),
+        findById: vi.fn().mockResolvedValue(makeTpl()),
+        deleteById: vi.fn().mockResolvedValue(undefined),
       });
       const service = new EmailTemplateService(repo as never);
       await service.deleteById('u1', 'tpl-1');
@@ -170,7 +171,7 @@ describe('EmailTemplateService', () => {
 
     it('404s before deleting when the row is not owned', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeTpl({ userId: 'bob' })),
+        findById: vi.fn().mockResolvedValue(makeTpl({ userId: 'bob' })),
       });
       const service = new EmailTemplateService(repo as never);
       await expect(service.deleteById('alice', 'tpl-1')).rejects.toBeInstanceOf(NotFoundException);

@@ -1,8 +1,9 @@
+import { vi } from 'vitest';
 import { LlamacppEventsPublisher } from '../llamacpp-events.publisher';
 import { PreflightReason, PullReasonCode } from '../../enums';
 
 describe('LlamacppEventsPublisher', () => {
-  const makeRabbit = () => ({ publish: jest.fn().mockImplementation(async () => {}) });
+  const makeRabbit = () => ({ publish: vi.fn().mockImplementation(async () => {}) });
 
   function build(): { publisher: LlamacppEventsPublisher; rabbit: ReturnType<typeof makeRabbit> } {
     const rabbit = makeRabbit();
@@ -126,7 +127,7 @@ describe('LlamacppEventsPublisher', () => {
 
   it('swallows publish errors without throwing (logs only)', () => {
     const rabbit = {
-      publish: jest.fn().mockImplementation(() => {
+      publish: vi.fn().mockImplementation(() => {
         throw new Error('amqp down');
       }),
     };

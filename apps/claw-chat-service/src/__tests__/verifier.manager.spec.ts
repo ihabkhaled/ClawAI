@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { BusinessException } from '../common/errors/business.exception';
 import { VerifierManager } from '../modules/chat-messages/managers/verifier.manager';
@@ -10,23 +11,23 @@ import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
-jest.mock('../modules/chat-messages/managers/verifier.manager', () => {
-  const actual = jest.requireActual<{ VerifierManager: typeof VerifierManager }>(
+vi.mock('../modules/chat-messages/managers/verifier.manager', async () => {
+  const actual = await vi.importActual<{ VerifierManager: typeof VerifierManager }>(
     '../modules/chat-messages/managers/verifier.manager',
   );
   return actual;
 });
 
-jest.mock('../app/config/app.config', () => ({
+vi.mock('../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://localhost:11434',
     }),
   },
 }));
 
-jest.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn().mockResolvedValue({
+vi.mock('../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     data: { response: 'mocked draft response' },
@@ -89,18 +90,18 @@ const mockAssistantMessage = {
   createdAt: new Date(),
 };
 
-const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  create: jest.fn(),
+const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  create: vi.fn(),
 });
 
-const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
+const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
 });
 
-const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
-  emitCompletion: jest.fn(),
-  emitError: jest.fn(),
+const mockStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
+  emitCompletion: vi.fn(),
+  emitError: vi.fn(),
 });
 
 const verifierJsonResponse = JSON.stringify({
@@ -111,7 +112,7 @@ const verifierJsonResponse = JSON.stringify({
 
 // Universal-research PR2: research-enricher dependency stub.
 const mockResearchEnricherManager = {
-  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
 describe('VerifierManager', () => {
@@ -137,8 +138,8 @@ describe('VerifierManager', () => {
       createFakePaygAccessControl() as any,
     );
 
-    jest.clearAllMocks();
-    (httpClientModule.httpRequest as jest.Mock)
+    vi.clearAllMocks();
+    (httpClientModule.httpRequest as Mock)
       .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'mocked draft response' } })
       .mockResolvedValue({ ok: true, status: 200, data: { response: verifierJsonResponse } });
   });
@@ -223,7 +224,7 @@ describe('VerifierManager', () => {
     });
 
     it('should emit SSE error and store error message when draft generation fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(
         new Error('Ollama unreachable'),
       );
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
@@ -237,7 +238,7 @@ describe('VerifierManager', () => {
     });
 
     it('should resolve (fire-and-forget) even when everything fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Fatal'));
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -293,9 +294,9 @@ describe('VerifierManager', () => {
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
       const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+        Record<keyof AdvancedModuleModelSelectionService, Mock>
       > = {
-        resolveSelection: jest
+        resolveSelection: vi
           .fn()
           .mockRejectedValue(
             new BusinessException(

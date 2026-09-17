@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { type ExecutionContext, UnauthorizedException } from '@nestjs/common';
 
 import { AppConfig } from '../../config/app.config';
@@ -18,13 +19,13 @@ describe('ServiceTokenGuard', () => {
 
   beforeEach(() => {
     guard = new ServiceTokenGuard();
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ INTER_SERVICE_AUTH_TOKEN: TOKEN } as ReturnType<typeof AppConfig.get>);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('admits a request carrying the exact service token', () => {

@@ -1,20 +1,21 @@
+import { vi, type Mocked } from 'vitest';
 import { UsageService } from '@modules/audits/services/usage.service';
 import { type UsageLedgerRepository } from '@modules/audits/repositories/usage-ledger.repository';
 
 describe('UsageService', () => {
   let service: UsageService;
-  let repository: jest.Mocked<UsageLedgerRepository>;
+  let repository: Mocked<UsageLedgerRepository>;
 
   beforeEach(() => {
     repository = {
-      create: jest.fn(),
-      findAll: jest.fn(),
-      countAll: jest.fn(),
-      aggregateByProvider: jest.fn(),
-      aggregateByModel: jest.fn(),
-      aggregateCostSummary: jest.fn(),
-      aggregateLatencySummary: jest.fn(),
-    } as unknown as jest.Mocked<UsageLedgerRepository>;
+      create: vi.fn(),
+      findAll: vi.fn(),
+      countAll: vi.fn(),
+      aggregateByProvider: vi.fn(),
+      aggregateByModel: vi.fn(),
+      aggregateCostSummary: vi.fn(),
+      aggregateLatencySummary: vi.fn(),
+    } as unknown as Mocked<UsageLedgerRepository>;
 
     service = new UsageService(repository);
   });

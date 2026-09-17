@@ -1,21 +1,22 @@
+import { vi } from 'vitest';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ComfyUIRuntimeAdapter } from './comfyui-runtime.adapter';
 
-jest.mock('@common/utilities', () => {
-  const mockClient = { get: jest.fn() };
-  return {
-    __mockClient: mockClient,
-    createHttpClient: jest.fn(() => mockClient),
-  };
-});
+// vi.hoisted runs before the hoisted vi.mock factories, so the spec and the
+// adapter share one client object without a top-level await inside describe.
+const { mockClient } = vi.hoisted(() => ({ mockClient: { get: vi.fn() } }));
+
+vi.mock('@common/utilities', () => ({
+  createHttpClient: vi.fn(() => mockClient),
+}));
 
 const tempRoot = { path: '' };
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockImplementation(() => ({
+    get: vi.fn().mockImplementation(() => ({
       COMFYUI_BASE_URL: 'http://comfyui:8188',
       COMFYUI_MODELS_PATH: tempRoot.path,
     })),
@@ -23,13 +24,9 @@ jest.mock('../../../../app/config/app.config', () => ({
 }));
 
 describe('ComfyUIRuntimeAdapter', () => {
-  const mockClient = jest.requireMock('@common/utilities').__mockClient as {
-    get: jest.Mock;
-  };
-
   beforeEach(async () => {
     tempRoot.path = await mkdtemp(join(tmpdir(), 'comfyui-adapter-'));
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {

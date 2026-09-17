@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 
 import { CapabilityClass } from '../../../../common/enums/capability-class.enum';
@@ -38,15 +39,15 @@ function fakeRecipe(overrides: Partial<Recipe> = {}): Recipe {
   } as Recipe;
 }
 
-function fakeRepo(): jest.Mocked<RecipeRepository> {
+function fakeRepo(): Mocked<RecipeRepository> {
   return {
-    create: jest.fn(),
-    findByIdForUser: jest.fn(),
-    findByNameForUser: jest.fn(),
-    update: jest.fn(),
-    deleteById: jest.fn(),
-    list: jest.fn(),
-  } as unknown as jest.Mocked<RecipeRepository>;
+    create: vi.fn(),
+    findByIdForUser: vi.fn(),
+    findByNameForUser: vi.fn(),
+    update: vi.fn(),
+    deleteById: vi.fn(),
+    list: vi.fn(),
+  } as unknown as Mocked<RecipeRepository>;
 }
 
 describe('RecipeService', () => {

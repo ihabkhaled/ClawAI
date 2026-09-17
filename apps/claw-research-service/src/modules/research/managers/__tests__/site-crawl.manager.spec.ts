@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SiteCrawlManager } from '../site-crawl.manager';
 import type { ResearchProgressPublisher } from '../research-progress-publisher.service';
 import type { FetchService } from '../../../fetch/services/fetch.service';
@@ -28,15 +29,15 @@ function buildFetchResult(overrides: Partial<FetchResult> = {}): FetchResult {
  * network (rule 41 item 12: no second fetch path).
  */
 describe('SiteCrawlManager', () => {
-  let fetchPage: jest.Mock;
+  let fetchPage: Mock;
   let manager: SiteCrawlManager;
   let trace: ResearchTraceEntry[];
   let toolsUsed: string[];
   let warnings: string[];
 
   beforeEach(() => {
-    fetchPage = jest.fn();
-    const progressPublisher = { publish: jest.fn() } as unknown as ResearchProgressPublisher;
+    fetchPage = vi.fn();
+    const progressPublisher = { publish: vi.fn() } as unknown as ResearchProgressPublisher;
     manager = new SiteCrawlManager({ fetchPage } as unknown as FetchService, progressPublisher);
     trace = [];
     toolsUsed = [];

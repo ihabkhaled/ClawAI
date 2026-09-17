@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { createFakeChatStreamBus } from '../../__tests__/helpers/fake-chat-stream-bus.helper';
 import { Test } from '@nestjs/testing';
 import { firstValueFrom } from 'rxjs';
@@ -19,7 +20,7 @@ describe('ChatStreamController', () => {
         {
           provide: RuntimeV2StreamService,
           useValue: {
-            selectEvents: jest.fn(
+            selectEvents: vi.fn(
               (_ownerId: string, threadId: string, query: Record<string, string>) =>
                 streamService.streamEvents(threadId, query['replay'] !== 'false'),
             ),
@@ -28,8 +29,8 @@ describe('ChatStreamController', () => {
         {
           provide: StreamControlService,
           useValue: {
-            assertOwnership: jest.fn(async (): Promise<void> => {}),
-            cancelStream: jest.fn(),
+            assertOwnership: vi.fn(async (): Promise<void> => {}),
+            cancelStream: vi.fn(),
           },
         },
       ],
@@ -66,7 +67,7 @@ describe('ChatStreamController', () => {
         {
           provide: RuntimeV2StreamService,
           useValue: {
-            selectEvents: jest.fn((_ownerId: string, threadId: string) =>
+            selectEvents: vi.fn((_ownerId: string, threadId: string) =>
               streamService.streamEvents(threadId, false),
             ),
           },
@@ -74,8 +75,8 @@ describe('ChatStreamController', () => {
         {
           provide: StreamControlService,
           useValue: {
-            assertOwnership: jest.fn(async (): Promise<void> => {}),
-            cancelStream: jest.fn(),
+            assertOwnership: vi.fn(async (): Promise<void> => {}),
+            cancelStream: vi.fn(),
           },
         },
       ],
@@ -110,14 +111,14 @@ describe('ChatStreamController', () => {
           useValue: {
             // Heartbeats are merged in by the controller itself, not by
             // selectEvents — an observable that never emits is enough here.
-            selectEvents: jest.fn(() => streamService.streamEvents('thread-heartbeat-only', false)),
+            selectEvents: vi.fn(() => streamService.streamEvents('thread-heartbeat-only', false)),
           },
         },
         {
           provide: StreamControlService,
           useValue: {
-            assertOwnership: jest.fn(async (): Promise<void> => {}),
-            cancelStream: jest.fn(),
+            assertOwnership: vi.fn(async (): Promise<void> => {}),
+            cancelStream: vi.fn(),
           },
         },
       ],
@@ -145,7 +146,7 @@ describe('ChatStreamController', () => {
   it('forwards the Last-Event-ID header so a reconnect can resume instead of replaying everything', async () => {
     const streamService = new ChatStreamService(createFakeChatStreamBus());
     streamService.onModuleInit();
-    const selectEvents = jest.fn((_ownerId: string, threadId: string) =>
+    const selectEvents = vi.fn((_ownerId: string, threadId: string) =>
       streamService.streamEvents(threadId, true),
     );
     const module = await Test.createTestingModule({
@@ -156,8 +157,8 @@ describe('ChatStreamController', () => {
         {
           provide: StreamControlService,
           useValue: {
-            assertOwnership: jest.fn(async (): Promise<void> => {}),
-            cancelStream: jest.fn(),
+            assertOwnership: vi.fn(async (): Promise<void> => {}),
+            cancelStream: vi.fn(),
           },
         },
       ],

@@ -1,15 +1,16 @@
+import { vi, type Mock } from 'vitest';
 import { httpRequest, normalizeDisplayCurrency } from '@claw/shared-utilities';
 import { DisplayFxSource } from '@claw/shared-types';
 
 import { FawazExchangeProvider } from '../providers/fawaz-exchange.provider';
 import { FrankfurterProvider } from '../providers/frankfurter.provider';
 
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const mockHttp = httpRequest as unknown as jest.Mock;
+const mockHttp = httpRequest as unknown as Mock;
 const RATE_SCALE = 10_000_000;
 
 const ok = (data: unknown) => ({ ok: true, status: 200, data });

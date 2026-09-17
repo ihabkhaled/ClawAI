@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   type ContextPack,
   ContextPackItemType,
@@ -8,11 +9,11 @@ import { ContextPacksService } from '../services/context-packs.service';
 import { type ContextPacksRepository } from '../repositories/context-packs.repository';
 
 function makeStub<T extends object>(): T {
-  const cache: Record<string | symbol, jest.Mock> = {};
+  const cache: Record<string | symbol, Mock> = {};
   return new Proxy({} as T, {
     get: (_target, prop) => {
       if (!cache[prop]) {
-        cache[prop] = jest.fn();
+        cache[prop] = vi.fn();
       }
       return cache[prop];
     },
@@ -50,15 +51,15 @@ function buildPack(overrides: Partial<ContextPack> = {}): ContextPack {
 describe('ContextPacksService (V2)', () => {
   it('createContextPack passes the new V2 fields through to the repository', async () => {
     const repo = makeStub<ContextPacksRepository>();
-    const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
+    const rabbit = { publish: vi.fn(), subscribe: vi.fn() };
     const created = buildPack({ name: 'Engineering' });
-    (repo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(created);
+    (repo.createWithinLimit as unknown as Mock).mockResolvedValue(created);
 
     const service = new ContextPacksService(
       repo,
       rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
       makeStub(),
-      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
+      { resolve: vi.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
 
     const pack = await service.createContextPack('user-1', {
@@ -85,13 +86,13 @@ describe('ContextPacksService (V2)', () => {
 
   it('rejects creation when the atomic context-pack limit is exhausted', async () => {
     const repo = makeStub<ContextPacksRepository>();
-    (repo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(null);
+    (repo.createWithinLimit as unknown as Mock).mockResolvedValue(null);
     const service = new ContextPacksService(
       repo,
-      { publish: jest.fn(), subscribe: jest.fn() } as never,
+      { publish: vi.fn(), subscribe: vi.fn() } as never,
       makeStub(),
       {
-        resolve: jest.fn().mockResolvedValue({
+        resolve: vi.fn().mockResolvedValue({
           isAdmin: false,
           plan: { featureGates: { allowContextPacks: true }, limits: { contextPacks: 10 } },
         }),
@@ -106,12 +107,12 @@ describe('ContextPacksService (V2)', () => {
 
   it('resolves a legacy free-text item.type to a V2 enum', async () => {
     const repo = makeStub<ContextPacksRepository>();
-    const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
-    (repo.findById as unknown as jest.Mock).mockResolvedValue({
+    const rabbit = { publish: vi.fn(), subscribe: vi.fn() };
+    (repo.findById as unknown as Mock).mockResolvedValue({
       ...buildPack(),
       items: [],
     });
-    (repo.addItem as unknown as jest.Mock).mockImplementation(async (input) => ({
+    (repo.addItem as unknown as Mock).mockImplementation(async (input) => ({
       id: 'item-1',
       contextPackId: input.contextPackId,
       itemType: input.itemType,
@@ -133,7 +134,7 @@ describe('ContextPacksService (V2)', () => {
       repo,
       rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
       makeStub(),
-      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
+      { resolve: vi.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
 
     const item = await service.addItem('pack-1', 'user-1', {
@@ -151,9 +152,9 @@ describe('ContextPacksService (V2)', () => {
       repo: ContextPacksRepository;
     } => {
       const repo = makeStub<ContextPacksRepository>();
-      const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
+      const rabbit = { publish: vi.fn(), subscribe: vi.fn() };
       // The pack is owned by user-1; the attacker is a different user.
-      (repo.findById as unknown as jest.Mock).mockResolvedValue({
+      (repo.findById as unknown as Mock).mockResolvedValue({
         ...buildPack({ userId: 'user-1', ownerUserId: 'user-1' }),
         items: [],
       });
@@ -161,7 +162,7 @@ describe('ContextPacksService (V2)', () => {
         repo,
         rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
         makeStub(),
-        { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
+        { resolve: vi.fn().mockResolvedValue({ isAdmin: true }) } as never,
       );
       return { service, repo };
     };
@@ -178,7 +179,7 @@ describe('ContextPacksService (V2)', () => {
       await expect(
         service.updateContextPack('pack-1', 'attacker', { name: 'hijacked' }),
       ).rejects.toMatchObject({ code: 'FORBIDDEN_CONTEXT_PACK_ACCESS' });
-      expect(repo.update as unknown as jest.Mock).not.toHaveBeenCalled();
+      expect(repo.update as unknown as Mock).not.toHaveBeenCalled();
     });
 
     it('deleteContextPack rejects a non-owner and never calls repository.delete', async () => {
@@ -186,7 +187,7 @@ describe('ContextPacksService (V2)', () => {
       await expect(service.deleteContextPack('pack-1', 'attacker')).rejects.toMatchObject({
         code: 'FORBIDDEN_CONTEXT_PACK_ACCESS',
       });
-      expect(repo.delete as unknown as jest.Mock).not.toHaveBeenCalled();
+      expect(repo.delete as unknown as Mock).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../app/config/app.config';
 import { ConsensusExecutionManager } from '../modules/chat-messages/managers/consensus-execution.manager';
 import type { ParallelModelTarget } from '../modules/chat-messages/types/parallel.types';
@@ -9,7 +10,7 @@ import {
   fallbackModelTokenBudget,
 } from '../modules/chat-messages/utilities/assembled-context.utility';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -28,30 +29,30 @@ describe('ConsensusExecutionManager', () => {
   let manager: ConsensusExecutionManager;
 
   const mockChatExecutionManager = {
-    callProvider: jest.fn(),
+    callProvider: vi.fn(),
   };
 
   const mockContextAssemblyManager = {
-    assemble: jest.fn(),
+    assemble: vi.fn(),
   };
 
   const mockChatMessagesRepository = {
-    create: jest.fn(),
-    findRecentByThreadId: jest.fn(),
+    create: vi.fn(),
+    findRecentByThreadId: vi.fn(),
   };
 
   const mockChatThreadsRepository = {
-    findById: jest.fn(),
+    findById: vi.fn(),
   };
 
   const mockChatStreamService = {
-    emitCompletion: jest.fn(),
-    emitError: jest.fn(),
+    emitCompletion: vi.fn(),
+    emitError: vi.fn(),
   };
 
   // Universal-research PR2: research-enricher dependency.
   const mockResearchEnricherManager = {
-    enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+    enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
   };
 
   const mockContext: AssembledContext = {
@@ -79,7 +80,7 @@ describe('ConsensusExecutionManager', () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-1', content: 'test' });
     mockChatMessagesRepository.findRecentByThreadId.mockResolvedValue([]);
@@ -165,7 +166,7 @@ describe('ConsensusExecutionManager', () => {
 
   describe('background synthesis', () => {
     it('clears the candidate timeout after a model completes', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
         mockChatExecutionManager.callProvider.mockResolvedValue({
           provider: 'ANTHROPIC',
@@ -190,15 +191,15 @@ describe('ConsensusExecutionManager', () => {
           undefined,
         ]);
 
-        expect(jest.getTimerCount()).toBe(0);
+        expect(vi.getTimerCount()).toBe(0);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it('should store model messages and synthesis message when all models succeed', async () => {
       // Use isolated mocks to prevent call-count leakage from other tests' background tasks
-      const isolatedCreate = jest.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });
+      const isolatedCreate = vi.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });
       const isolatedRepo = { ...mockChatMessagesRepository, create: isolatedCreate };
 
       const responses = sampleModels.map((m, i) => ({
@@ -210,7 +211,7 @@ describe('ConsensusExecutionManager', () => {
         outputTokens: 20,
       }));
 
-      const isolatedCallProvider = jest
+      const isolatedCallProvider = vi
         .fn()
         .mockResolvedValueOnce(responses[0])
         .mockResolvedValueOnce(responses[1]);
@@ -227,7 +228,7 @@ describe('ConsensusExecutionManager', () => {
       );
 
       // Mock Ollama synthesis to fail (test heuristic fallback path)
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Ollama unavailable'));
 
       await isolatedManager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
 
@@ -242,10 +243,10 @@ describe('ConsensusExecutionManager', () => {
 
     it('should store both model messages before the synthesis message when exactly 2 models complete', async () => {
       // Use isolated mocks to avoid call-count leakage from other tests' background tasks
-      const isolatedCreate = jest.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });
+      const isolatedCreate = vi.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });
       const isolatedRepo = { ...mockChatMessagesRepository, create: isolatedCreate };
 
-      const isolatedCallProvider = jest
+      const isolatedCallProvider = vi
         .fn()
         .mockResolvedValueOnce({
           provider: 'ANTHROPIC',
@@ -275,7 +276,7 @@ describe('ConsensusExecutionManager', () => {
         createFakePaygAccessControl() as any,
       );
 
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Ollama unavailable'));
 
       await isolatedManager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -332,8 +333,8 @@ describe('ConsensusExecutionManager', () => {
       });
 
       expect(synthCall).toBeDefined();
-      expect(synthCall[0].metadata.consensusSynthesis).toBe(true);
-      expect(synthCall[0].metadata.consensusGroupId).toBeDefined();
+      expect(synthCall?.[0].metadata.consensusSynthesis).toBe(true);
+      expect(synthCall?.[0].metadata.consensusGroupId).toBeDefined();
     });
 
     it('should set synthesis consensusGroupId to match the user message id', async () => {
@@ -359,7 +360,7 @@ describe('ConsensusExecutionManager', () => {
           outputTokens: 20,
         });
 
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Ollama unavailable'));
 
       await manager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -384,7 +385,7 @@ describe('ConsensusExecutionManager', () => {
         outputTokens: 10,
       });
 
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Ollama unavailable'));
 
       await manager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -412,7 +413,7 @@ describe('ConsensusExecutionManager', () => {
 
   describe('heuristic synthesis (Ollama unavailable)', () => {
     beforeEach(() => {
-      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Ollama unavailable'));
     });
 
     afterEach(() => {
@@ -444,7 +445,8 @@ describe('ConsensusExecutionManager', () => {
       const synthCall = mockChatMessagesRepository.create.mock.calls.find(
         (args: any[]) => args[0]?.metadata?.consensusSynthesis === true,
       );
-      expect(synthCall[0].content).toBe('Much longer response with more detail and information');
+      expect(synthCall).toBeDefined();
+      expect(synthCall?.[0].content).toBe('Much longer response with more detail and information');
     });
   });
 });

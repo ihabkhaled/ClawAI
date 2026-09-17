@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { UsersController } from '../users.controller';
 import { UsersService } from '../../services/users.service';
@@ -9,47 +10,47 @@ import { EmailChangeService } from '../../../auth/services/email-change.service'
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let usersMock: jest.Mocked<{
-    create: jest.Mock;
-    findAll: jest.Mock;
-    findById: jest.Mock;
-    updateUser: jest.Mock;
-    deactivateUser: jest.Mock;
-    reactivateUser: jest.Mock;
-    changeRole: jest.Mock;
-    changePassword: jest.Mock;
-    updatePreferences: jest.Mock;
-    updateOwnProfile: jest.Mock;
-    deleteOwnAccount: jest.Mock;
-  }>;
-  let emailChangeMock: jest.Mocked<{
-    requestEmailChange: jest.Mock;
-    verifyCurrentEmail: jest.Mock;
-    resendCurrentEmailOtp: jest.Mock;
-    getPendingEmailChange: jest.Mock;
-    cancelEmailChange: jest.Mock;
-  }>;
+  let usersMock: {
+    create: Mock;
+    findAll: Mock;
+    findById: Mock;
+    updateUser: Mock;
+    deactivateUser: Mock;
+    reactivateUser: Mock;
+    changeRole: Mock;
+    changePassword: Mock;
+    updatePreferences: Mock;
+    updateOwnProfile: Mock;
+    deleteOwnAccount: Mock;
+  };
+  let emailChangeMock: {
+    requestEmailChange: Mock;
+    verifyCurrentEmail: Mock;
+    resendCurrentEmailOtp: Mock;
+    getPendingEmailChange: Mock;
+    cancelEmailChange: Mock;
+  };
 
   beforeEach(async () => {
     usersMock = {
-      create: jest.fn(),
-      findAll: jest.fn(),
-      findById: jest.fn(),
-      updateUser: jest.fn(),
-      deactivateUser: jest.fn(),
-      reactivateUser: jest.fn(),
-      changeRole: jest.fn(),
-      changePassword: jest.fn(),
-      updatePreferences: jest.fn(),
-      updateOwnProfile: jest.fn(),
-      deleteOwnAccount: jest.fn(),
+      create: vi.fn(),
+      findAll: vi.fn(),
+      findById: vi.fn(),
+      updateUser: vi.fn(),
+      deactivateUser: vi.fn(),
+      reactivateUser: vi.fn(),
+      changeRole: vi.fn(),
+      changePassword: vi.fn(),
+      updatePreferences: vi.fn(),
+      updateOwnProfile: vi.fn(),
+      deleteOwnAccount: vi.fn(),
     };
     emailChangeMock = {
-      requestEmailChange: jest.fn(),
-      verifyCurrentEmail: jest.fn(),
-      resendCurrentEmailOtp: jest.fn(),
-      getPendingEmailChange: jest.fn(),
-      cancelEmailChange: jest.fn(),
+      requestEmailChange: vi.fn(),
+      verifyCurrentEmail: vi.fn(),
+      resendCurrentEmailOtp: vi.fn(),
+      getPendingEmailChange: vi.fn(),
+      cancelEmailChange: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],

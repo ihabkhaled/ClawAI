@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
   CostConfidence,
@@ -50,19 +51,19 @@ const baseFakeRow = {
 
 describe('RouterModelRegistryRepository', () => {
   let repo: RouterModelRegistryRepository;
-  let prisma: { routerModelRegistry: Record<string, jest.Mock>; $transaction: jest.Mock };
+  let prisma: { routerModelRegistry: Record<string, Mock>; $transaction: Mock };
 
   beforeEach(async () => {
     prisma = {
       routerModelRegistry: {
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        count: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        upsert: jest.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        count: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
       },
-      $transaction: jest.fn(),
+      $transaction: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

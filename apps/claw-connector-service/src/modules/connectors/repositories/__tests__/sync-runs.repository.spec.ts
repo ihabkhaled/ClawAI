@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { SyncRunsRepository } from '../sync-runs.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,15 +6,15 @@ import { PrismaService } from '../../../../infrastructure/database/prisma/prisma
 describe('SyncRunsRepository', () => {
   let repository: SyncRunsRepository;
   let prismaMock: {
-    modelSyncRun: { create: jest.Mock; update: jest.Mock; findMany: jest.Mock };
+    modelSyncRun: { create: Mock; update: Mock; findMany: Mock };
   };
 
   beforeEach(async () => {
     prismaMock = {
       modelSyncRun: {
-        create: jest.fn().mockResolvedValue({ id: 's1' }),
-        update: jest.fn().mockResolvedValue({ id: 's1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 's1' }]),
+        create: vi.fn().mockResolvedValue({ id: 's1' }),
+        update: vi.fn().mockResolvedValue({ id: 's1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 's1' }]),
       },
     };
     const module: TestingModule = await Test.createTestingModule({

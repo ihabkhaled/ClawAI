@@ -1,12 +1,13 @@
+import { vi } from 'vitest';
 import { createSmtpEmailTransport } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { InvoiceDeliveryStatus } from '../../../../generated/prisma';
 import { InvoiceDeliveryService } from '../invoice-delivery.service';
 
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  createSmtpEmailTransport: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  createSmtpEmailTransport: vi.fn(),
 }));
 
 describe('InvoiceDeliveryService', () => {
@@ -26,22 +27,22 @@ describe('InvoiceDeliveryService', () => {
     },
   };
   const repository = {
-    listDue: jest.fn(),
-    markDelivered: jest.fn(),
-    markFailed: jest.fn(),
+    listDue: vi.fn(),
+    markDelivered: vi.fn(),
+    markFailed: vi.fn(),
   };
   const documents = {
-    renderByInvoiceId: jest.fn(),
+    renderByInvoiceId: vi.fn(),
   };
   const jobs = {
-    run: jest.fn(async (_options: unknown, callback: () => Promise<number>) => callback()),
+    run: vi.fn(async (_options: unknown, callback: () => Promise<number>) => callback()),
   };
-  const send = jest.fn();
+  const send = vi.fn();
   let service: InvoiceDeliveryService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.clearAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       CONTACT_EMAIL_ENABLED: 'true',
       CONTACT_EMAIL_PROVIDER: 'smtp',
       CONTACT_EMAIL_FROM: 'billing@claw.ai',
@@ -52,7 +53,7 @@ describe('InvoiceDeliveryService', () => {
       CONTACT_SMTP_PASS: 'secret',
       PAYMENT_OUTBOX_MAX_ATTEMPTS: 10,
     } as never);
-    jest.mocked(createSmtpEmailTransport).mockReturnValue({ send });
+    vi.mocked(createSmtpEmailTransport).mockReturnValue({ send });
     repository.listDue.mockResolvedValue([job]);
     documents.renderByInvoiceId.mockResolvedValue({
       bytes: new Uint8Array([37, 80, 68, 70]),
@@ -62,7 +63,7 @@ describe('InvoiceDeliveryService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('delivers a due invoice through the shared SMTP adapter', async () => {
@@ -98,7 +99,7 @@ describe('InvoiceDeliveryService', () => {
   });
 
   it('leaves durable jobs pending when email delivery is disabled', async () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       CONTACT_EMAIL_ENABLED: 'false',
       CONTACT_EMAIL_PROVIDER: 'none',
     } as never);

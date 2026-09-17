@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { TokenRefreshManager } from '../token-refresh.manager';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 import { AppConfig } from '../../../../app/config/app.config';
@@ -9,7 +10,7 @@ import type { WorkspaceConnector } from '../../../../generated/prisma';
 
 const TEST_KEY = 'a'.repeat(64);
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   WORKSPACE_DATABASE_URL: 'postgres://localhost/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -52,25 +53,25 @@ const buildConnector = (overrides: Partial<WorkspaceConnector> = {}): WorkspaceC
 
 describe('TokenRefreshManager', () => {
   let manager: TokenRefreshManager;
-  let mockRepository: jest.Mocked<WorkspaceConnectorRepository>;
-  let mockAdapterFactory: jest.Mocked<WorkspaceAdapterFactory>;
-  let mockTokenManager: jest.Mocked<OAuthTokenManager>;
-  let mockProviderAppConfigs: jest.Mocked<ProviderAppConfigService>;
+  let mockRepository: Mocked<WorkspaceConnectorRepository>;
+  let mockAdapterFactory: Mocked<WorkspaceAdapterFactory>;
+  let mockTokenManager: Mocked<OAuthTokenManager>;
+  let mockProviderAppConfigs: Mocked<ProviderAppConfigService>;
 
   beforeEach(() => {
-    mockRepository = { update: jest.fn().mockResolvedValue({}) } as any;
-    mockAdapterFactory = { getAdapter: jest.fn() } as any;
+    mockRepository = { update: vi.fn().mockResolvedValue({}) } as any;
+    mockAdapterFactory = { getAdapter: vi.fn() } as any;
     mockTokenManager = {
-      decryptTokenSet: jest.fn(),
-      encryptTokenSet: jest.fn(),
-      isTokenExpired: jest.fn(),
-      acquireRefreshLock: jest.fn(),
-      releaseRefreshLock: jest.fn(),
-      logTokenRefresh: jest.fn(),
+      decryptTokenSet: vi.fn(),
+      encryptTokenSet: vi.fn(),
+      isTokenExpired: vi.fn(),
+      acquireRefreshLock: vi.fn(),
+      releaseRefreshLock: vi.fn(),
+      logTokenRefresh: vi.fn(),
     } as any;
     mockProviderAppConfigs = {
-      getById: jest.fn(),
-      getDecryptedSecret: jest.fn(),
+      getById: vi.fn(),
+      getDecryptedSecret: vi.fn(),
     } as any;
 
     manager = new TokenRefreshManager(
@@ -145,7 +146,7 @@ describe('TokenRefreshManager', () => {
       mockTokenManager.encryptTokenSet.mockReturnValue('new_encrypted');
 
       const mockAdapter = {
-        refreshTokens: jest.fn().mockResolvedValue({
+        refreshTokens: vi.fn().mockResolvedValue({
           accessToken: 'new_token',
           refreshToken: 'new_refresh',
           expiresAt: future,
@@ -178,7 +179,7 @@ describe('TokenRefreshManager', () => {
       mockTokenManager.acquireRefreshLock.mockResolvedValue(true);
 
       const mockAdapter = {
-        refreshTokens: jest.fn().mockRejectedValue(new Error('401 Unauthorized')),
+        refreshTokens: vi.fn().mockRejectedValue(new Error('401 Unauthorized')),
       };
       mockAdapterFactory.getAdapter.mockReturnValue(mockAdapter as any);
 
@@ -204,7 +205,7 @@ describe('TokenRefreshManager', () => {
       mockTokenManager.encryptTokenSet.mockReturnValue('new_encrypted');
 
       const mockAdapter = {
-        refreshTokens: jest.fn().mockResolvedValue({
+        refreshTokens: vi.fn().mockResolvedValue({
           accessToken: 'fresh',
           // no refreshToken returned by provider (e.g. Google only rotates occasionally)
           scopes: [],

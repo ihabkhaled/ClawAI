@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ConnectorsRepository } from '../connectors.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,26 +7,26 @@ describe('ConnectorsRepository', () => {
   let repository: ConnectorsRepository;
   let prismaMock: {
     connector: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findFirst: jest.Mock;
-      findMany: jest.Mock;
-      update: jest.Mock;
-      delete: jest.Mock;
-      count: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findFirst: Mock;
+      findMany: Mock;
+      update: Mock;
+      delete: Mock;
+      count: Mock;
     };
   };
 
   beforeEach(async () => {
     prismaMock = {
       connector: {
-        create: jest.fn().mockResolvedValue({ id: 'c1' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'c1' }),
-        findFirst: jest.fn().mockResolvedValue({ id: 'c1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'c1' }]),
-        update: jest.fn().mockResolvedValue({ id: 'c1' }),
-        delete: jest.fn().mockResolvedValue({ id: 'c1' }),
-        count: jest.fn().mockResolvedValue(2),
+        create: vi.fn().mockResolvedValue({ id: 'c1' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'c1' }),
+        findFirst: vi.fn().mockResolvedValue({ id: 'c1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'c1' }]),
+        update: vi.fn().mockResolvedValue({ id: 'c1' }),
+        delete: vi.fn().mockResolvedValue({ id: 'c1' }),
+        count: vi.fn().mockResolvedValue(2),
       },
     };
 
@@ -51,7 +52,9 @@ describe('ConnectorsRepository', () => {
 
     const rows = await repository.findPaygPolicyRows();
 
-    const args = prismaMock.connector.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.connector.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where).toBeUndefined();
     expect(args.select).toEqual({ provider: true, isEnabled: true, isPayAsYouGo: true });
     expect(rows).toEqual([{ provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true }]);
@@ -65,7 +68,9 @@ describe('ConnectorsRepository', () => {
   describe('findAll', () => {
     it('paginates with skip/take and includes _count.models', async () => {
       await repository.findAll({} as never, 2, 10);
-      const args = prismaMock.connector.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.connector.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.skip).toBe(10);
       expect(args.take).toBe(10);
       expect(args.include._count.select.models).toBe(true);
@@ -73,7 +78,9 @@ describe('ConnectorsRepository', () => {
 
     it('orders by createdAt desc', async () => {
       await repository.findAll({} as never, 1, 20);
-      const args = prismaMock.connector.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.connector.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.orderBy).toEqual({ createdAt: 'desc' });
     });
 
@@ -87,7 +94,9 @@ describe('ConnectorsRepository', () => {
         1,
         20,
       );
-      const args = prismaMock.connector.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.connector.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.provider).toBe('OPENAI');
       expect(args.where.status).toBe('ACTIVE');
       expect(args.where.isEnabled).toBe(true);
@@ -95,7 +104,9 @@ describe('ConnectorsRepository', () => {
 
     it('applies search filter', async () => {
       await repository.findAll({ search: 'open' } as never, 1, 20);
-      const args = prismaMock.connector.findMany.mock.calls[0][0];
+      const argsCall = prismaMock.connector.findMany.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.name).toEqual({ contains: 'open', mode: 'insensitive' });
     });
   });
@@ -110,7 +121,9 @@ describe('ConnectorsRepository', () => {
 
   it('findByProvider finds the most recent enabled connector for the provider', async () => {
     await repository.findByProvider('OPENAI');
-    const args = prismaMock.connector.findFirst.mock.calls[0][0];
+    const argsCall = prismaMock.connector.findFirst.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.isEnabled).toBe(true);
     expect(args.orderBy).toEqual({ createdAt: 'desc' });
   });

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { providerPlaceholder } from '../../constants/chain-template-seeds.constants';
@@ -27,9 +28,9 @@ const template = {
 
 function makeDeps(opts: { connectors?: Record<string, unknown> } = {}): {
   service: ChainTemplateService;
-  chainService: { create: jest.Mock };
+  chainService: { create: Mock };
 } {
-  const templateRepo = { findByKey: jest.fn().mockResolvedValue(template) };
+  const templateRepo = { findByKey: vi.fn().mockResolvedValue(template) };
   const connectors: Record<string, unknown> = opts.connectors ?? {
     'jira-connector': {
       id: 'jira-connector',
@@ -45,9 +46,9 @@ function makeDeps(opts: { connectors?: Record<string, unknown> } = {}): {
     },
   };
   const connectorRepo = {
-    findById: jest.fn().mockImplementation((id: string) => Promise.resolve(connectors[id] ?? null)),
+    findById: vi.fn().mockImplementation((id: string) => Promise.resolve(connectors[id] ?? null)),
   };
-  const chainService = { create: jest.fn().mockResolvedValue({ id: 'chain-1' }) };
+  const chainService = { create: vi.fn().mockResolvedValue({ id: 'chain-1' }) };
   const service = new ChainTemplateService(
     templateRepo as never,
     connectorRepo as never,
@@ -165,7 +166,7 @@ describe('ChainTemplateService.instantiate', () => {
   });
 
   it('404s for an unknown template key', async () => {
-    const templateRepo = { findByKey: jest.fn().mockResolvedValue(null) };
+    const templateRepo = { findByKey: vi.fn().mockResolvedValue(null) };
     const service = new ChainTemplateService(templateRepo as never, {} as never, {} as never);
     await expect(
       service.instantiate('u1', 'missing', { name: 'x', connectorSelections: {} }),

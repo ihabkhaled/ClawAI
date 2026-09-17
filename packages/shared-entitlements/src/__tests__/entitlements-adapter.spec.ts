@@ -1,12 +1,13 @@
+import { vi } from 'vitest';
 import { EntitlementsAdapter, EntitlementsRequestError } from '../entitlements-adapter';
 
 describe('EntitlementsAdapter feature usage', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('records a research request through the auth-service ledger endpoint', async () => {
-    const request = jest
+    const request = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response(null, { status: 204 }));
     const adapter = new EntitlementsAdapter({ authServiceUrl: 'http://auth:4001/' });
@@ -31,7 +32,7 @@ describe('EntitlementsAdapter feature usage', () => {
   });
 
   it('preserves a bounded auth business error code', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ errorCode: 'PLAN_TRIAL_EXPIRED' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -64,7 +65,7 @@ describe('EntitlementsAdapter transport retry', () => {
     // An upstream restart kills pooled keep-alive sockets, each failing once as
     // it is discovered dead. Without this the burst surfaced as user-visible
     // 503s on writes that would otherwise have succeeded.
-    const fetchMock = jest
+    const fetchMock = vi
       .fn()
       .mockRejectedValueOnce(transportError())
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ userId: 'u1' }) });
@@ -76,7 +77,7 @@ describe('EntitlementsAdapter transport retry', () => {
   });
 
   it('gives up after one retry rather than hammering a dead upstream', async () => {
-    const fetchMock = jest.fn().mockRejectedValue(transportError());
+    const fetchMock = vi.fn().mockRejectedValue(transportError());
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const adapter = new EntitlementsAdapter({ authServiceUrl: url });
@@ -87,7 +88,7 @@ describe('EntitlementsAdapter transport retry', () => {
   it('does not retry a response the server actually sent', async () => {
     // A 500 means auth-service answered. Its answer stands; repeating it would
     // just double the load on something already struggling.
-    const fetchMock = jest
+    const fetchMock = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 500, json: async () => null });
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -100,7 +101,7 @@ describe('EntitlementsAdapter transport retry', () => {
   it('does not retry the caller-imposed timeout', async () => {
     const abort = new Error('The operation was aborted');
     abort.name = 'AbortError';
-    const fetchMock = jest.fn().mockRejectedValue(abort);
+    const fetchMock = vi.fn().mockRejectedValue(abort);
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const adapter = new EntitlementsAdapter({ authServiceUrl: url });
@@ -110,7 +111,7 @@ describe('EntitlementsAdapter transport retry', () => {
 
   it('never retries a quota reservation', async () => {
     // Retrying a reserve would double-charge. Only the idempotent GET repeats.
-    const fetchMock = jest.fn().mockRejectedValue(transportError());
+    const fetchMock = vi.fn().mockRejectedValue(transportError());
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const adapter = new EntitlementsAdapter({ authServiceUrl: url });

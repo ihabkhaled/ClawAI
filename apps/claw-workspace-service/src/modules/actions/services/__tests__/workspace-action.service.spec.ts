@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { WorkspaceActionService } from '../workspace-action.service';
@@ -12,23 +13,23 @@ import { WorkspacePermissionLevel } from '../../../../common/enums/workspace-per
 import { ConnectorAccessService } from '../../../connector-access/services/connector-access.service';
 
 const mockActionRepository = {
-  create: jest.fn(),
-  findById: jest.fn(),
-  findAllByUser: jest.fn(),
-  update: jest.fn(),
-  findManyByIds: jest.fn(),
+  create: vi.fn(),
+  findById: vi.fn(),
+  findAllByUser: vi.fn(),
+  update: vi.fn(),
+  findManyByIds: vi.fn(),
 };
 
 const mockConnectorRepository = {
-  findById: jest.fn(),
+  findById: vi.fn(),
 };
 
 const mockExecutionManager = {
-  execute: jest.fn(),
+  execute: vi.fn(),
 };
 
 const mockRabbitMQ = {
-  publish: jest.fn().mockResolvedValue(null),
+  publish: vi.fn().mockResolvedValue(null),
 };
 
 const makeConnector = (overrides = {}) => ({
@@ -59,7 +60,7 @@ describe('WorkspaceActionService', () => {
   // v3 round 6 — mocked access service. Default: every call passes
   // (matches the legacy owner-check semantics). Individual tests override.
   const mockAccessService = {
-    can: jest.fn().mockResolvedValue(true),
+    can: vi.fn().mockResolvedValue(true),
   };
 
   beforeEach(async () => {
@@ -75,7 +76,7 @@ describe('WorkspaceActionService', () => {
     }).compile();
 
     service = module.get<WorkspaceActionService>(WorkspaceActionService);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAccessService.can.mockResolvedValue(true);
   });
 
@@ -201,7 +202,7 @@ describe('WorkspaceActionService', () => {
 
       try {
         await service.approve('a1', 'u1');
-        fail('Should have thrown');
+        expect.fail('Should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(BusinessException);
         expect((e as BusinessException).getStatus()).toBe(HttpStatus.GONE);
@@ -405,7 +406,7 @@ describe('WorkspaceActionService', () => {
       const outcome = await service.bulkApprove('u1', { actionIds: ['a1', 'a2'] });
 
       expect(outcome.bulkGroupId).toMatch(/[0-9a-f-]{36}/);
-      const updateCalls = (mockActionRepository.update as jest.Mock).mock.calls;
+      const updateCalls = (mockActionRepository.update as Mock).mock.calls;
       const bulkIds = updateCalls
         .map((call) => call[1]?.bulkGroupId)
         .filter((v): v is string => Boolean(v));

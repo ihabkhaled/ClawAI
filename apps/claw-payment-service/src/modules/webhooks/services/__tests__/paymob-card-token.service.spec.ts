@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingGateway, CheckoutPurpose } from '@claw/shared-types';
 
 import { PaymobCardTokenService } from '../paymob-card-token.service';
@@ -31,40 +32,40 @@ function body(overrides: Record<string, unknown> = {}): string {
 }
 
 describe('PaymobCardTokenService', () => {
-  let paymob: { extractSavedCard: jest.Mock };
+  let paymob: { extractSavedCard: Mock };
   let events: {
-    claim: jest.Mock;
-    recordInvalidSignature: jest.Mock;
-    markProcessing: jest.Mock;
-    markProcessed: jest.Mock;
-    markFailed: jest.Mock;
-    markIgnored: jest.Mock;
+    claim: Mock;
+    recordInvalidSignature: Mock;
+    markProcessing: Mock;
+    markProcessed: Mock;
+    markFailed: Mock;
+    markIgnored: Mock;
   };
-  let sessions: { findByProviderOrderId: jest.Mock; markPaymentMethodSetupCompleted: jest.Mock };
-  let vault: { vaultCard: jest.Mock };
+  let sessions: { findByProviderOrderId: Mock; markPaymentMethodSetupCompleted: Mock };
+  let vault: { vaultCard: Mock };
   let service: PaymobCardTokenService;
 
   beforeEach(() => {
-    paymob = { extractSavedCard: jest.fn().mockReturnValue(SAVED_CARD) };
+    paymob = { extractSavedCard: vi.fn().mockReturnValue(SAVED_CARD) };
     events = {
-      claim: jest.fn().mockResolvedValue({ id: 'we-1' }),
-      recordInvalidSignature: jest.fn(),
-      markProcessing: jest.fn(),
-      markProcessed: jest.fn(),
-      markFailed: jest.fn(),
-      markIgnored: jest.fn(),
+      claim: vi.fn().mockResolvedValue({ id: 'we-1' }),
+      recordInvalidSignature: vi.fn(),
+      markProcessing: vi.fn(),
+      markProcessed: vi.fn(),
+      markFailed: vi.fn(),
+      markIgnored: vi.fn(),
     };
     sessions = {
-      findByProviderOrderId: jest.fn().mockResolvedValue({
+      findByProviderOrderId: vi.fn().mockResolvedValue({
         id: 'cs-1',
         userId: 'user-1',
         purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
         paymentMethodConsentedAt: null,
       }),
-      markPaymentMethodSetupCompleted: jest.fn(),
+      markPaymentMethodSetupCompleted: vi.fn(),
     };
     vault = {
-      vaultCard: jest
+      vaultCard: vi
         .fn()
         .mockResolvedValue({ paymentMethodId: 'pm-1', active: true, alreadyExisted: false }),
     };

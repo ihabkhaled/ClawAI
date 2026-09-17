@@ -1,12 +1,13 @@
+import { vi } from 'vitest';
 import { ResearchWorkflow } from '../../enums/research-workflow.enum';
 import { runResearch } from '../research-client.utility';
 import { httpRequest } from '../http-client.utility';
 
-jest.mock('../http-client.utility', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../http-client.utility', () => ({
+  httpRequest: vi.fn(),
 }));
 
-const mockedHttpRequest = jest.mocked(httpRequest);
+const mockedHttpRequest = vi.mocked(httpRequest);
 
 describe('runResearch', () => {
   beforeEach(() => {

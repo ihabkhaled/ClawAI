@@ -1,6 +1,7 @@
+import { type Mock, vi } from 'vitest';
 import { GitHubWriteActionsHelper } from '../github-write-actions.helper';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const validBase = {
   owner: 'me',
@@ -16,9 +17,9 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
   let helper: GitHubWriteActionsHelper;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     helper = new GitHubWriteActionsHelper();
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 999, html_url: 'https://github.com/me/app/pulls/42#disc-999' }),
     });
@@ -28,7 +29,9 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
     const result = await helper.execute('tok', 'ADD_PR_SUGGESTION', validBase);
     expect(result.success).toBe(true);
 
-    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as Record<
+    const sentCall = (global.fetch as Mock).mock.calls[0];
+    expect(sentCall).toBeDefined();
+    const sent = JSON.parse(sentCall?.[1].body) as Record<
       string,
       unknown
     >;
@@ -45,7 +48,9 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
       startLine: 7,
       line: 10,
     });
-    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as Record<
+    const sentCall = (global.fetch as Mock).mock.calls[0];
+    expect(sentCall).toBeDefined();
+    const sent = JSON.parse(sentCall?.[1].body) as Record<
       string,
       unknown
     >;
@@ -60,7 +65,9 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
       startLine: 5,
       startSide: 'LEFT',
     });
-    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as Record<
+    const sentCall = (global.fetch as Mock).mock.calls[0];
+    expect(sentCall).toBeDefined();
+    const sent = JSON.parse(sentCall?.[1].body) as Record<
       string,
       unknown
     >;
@@ -69,7 +76,7 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
   });
 
   it('returns failure when GitHub API rejects the comment', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 422 });
+    (global.fetch as Mock).mockResolvedValue({ ok: false, status: 422 });
     const result = await helper.execute('tok', 'ADD_PR_SUGGESTION', validBase);
     expect(result.success).toBe(false);
     expect(result.errorMessage).toContain('HTTP 422');

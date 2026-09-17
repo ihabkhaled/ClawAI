@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   BillingErrorCode,
   EntitlementGrantType,
@@ -47,25 +48,25 @@ describe('RefundCompletionService', () => {
     entitlementValidUntil: new Date('2026-08-27T00:00:00.000Z'),
   };
   const tx = {
-    subscription: { update: jest.fn() },
+    subscription: { update: vi.fn() },
   };
   const prisma = {
-    $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
+    $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
       callback(tx),
     ),
   };
   const repository = {
-    findForCompletion: jest.fn(),
-    markSucceeded: jest.fn(),
-    sumSucceededAmount: jest.fn(),
+    findForCompletion: vi.fn(),
+    markSucceeded: vi.fn(),
+    sumSucceededAmount: vi.fn(),
   };
-  const records = { recordReversal: jest.fn() };
-  const outbox = { enqueue: jest.fn() };
-  const creditTopups = { enqueueReversalInTransaction: jest.fn() };
+  const records = { recordReversal: vi.fn() };
+  const outbox = { enqueue: vi.fn() };
+  const creditTopups = { enqueueReversalInTransaction: vi.fn() };
   let service: RefundCompletionService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     repository.findForCompletion.mockResolvedValue({ refund, charge, subscription });
     repository.markSucceeded.mockResolvedValue({
       ...refund,
@@ -82,11 +83,11 @@ describe('RefundCompletionService', () => {
       outbox as never,
       creditTopups as never,
     );
-    jest.useFakeTimers().setSystemTime(now);
+    vi.useFakeTimers().setSystemTime(now);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('records a partial refund without revoking the subscription', async () => {

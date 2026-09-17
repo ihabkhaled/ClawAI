@@ -50,8 +50,13 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
           // on <main>'s padding-bottom let users scroll into a dead band of
           // pure padding past their content. Margin-bottom here shrinks the
           // column instead, so the scroll container's bottom edge ALWAYS
-          // matches the last rendered child. Desktop has no bottom nav.
-          'mb-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-0',
+          // matches the last rendered child.
+          //
+          // Cleared on `nav-rail:` — the exact condition under which
+          // MobileBottomNav stops rendering. Under `md:mb-0` a tablet kept a
+          // 4rem hole at the bottom of every page for a nav bar that `md:hidden`
+          // had already removed.
+          'nav-rail:mb-0 mb-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom))]',
         ].join(' ')}
       >
         <Topbar />

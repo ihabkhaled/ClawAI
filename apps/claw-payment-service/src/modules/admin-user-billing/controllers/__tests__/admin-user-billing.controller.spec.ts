@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 import { type AdminUserSubscriptionStatistics, Permission } from '@claw/shared-types';
 
@@ -25,7 +26,7 @@ describe('AdminUserBillingController', () => {
   });
 
   it('passes the validated userId straight to the service and returns its answer', async () => {
-    const getSubscriptionStatistics = jest.fn().mockResolvedValue(STATISTICS);
+    const getSubscriptionStatistics = vi.fn().mockResolvedValue(STATISTICS);
     const billing: Partial<AdminUserBillingService> = { getSubscriptionStatistics };
     const controller = new AdminUserBillingController(billing as AdminUserBillingService);
 

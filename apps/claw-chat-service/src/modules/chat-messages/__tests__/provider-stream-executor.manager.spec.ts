@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { createFakeChatStreamBus } from './helpers/fake-chat-stream-bus.helper';
 import { AiStreamProtocol, AiStreamStage, StreamEventType } from '../../../common/enums';
 import { httpStream as httpStreamMock } from '../../../common/utilities';
@@ -6,15 +7,15 @@ import { ProviderStreamExecutor } from '../managers/provider-stream-executor.man
 import type { StreamExecutionInput } from '../types/stream-execution.types';
 import type { StreamEvent } from '../types/stream.types';
 
-jest.mock('../../../common/utilities', () => {
-  const actual: Record<string, unknown> = jest.requireActual('../../../common/utilities');
+vi.mock('../../../common/utilities', async () => {
+  const actual: Record<string, unknown> = await vi.importActual('../../../common/utilities');
   return {
     ...actual,
-    httpStream: jest.fn(),
+    httpStream: vi.fn(),
   };
 });
 
-const mockedHttpStream = httpStreamMock as unknown as jest.Mock;
+const mockedHttpStream = httpStreamMock as unknown as Mock;
 
 async function* asyncChunks(chunks: string[]): AsyncGenerator<string> {
   for (const chunk of chunks) {
@@ -150,7 +151,7 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
   });
 
   it('stops a simulated buffered replay when the run is cancelled', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const controller = new AbortController();
       const fullContent = 'A cancellable buffered response. '.repeat(30);
@@ -166,14 +167,14 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
       });
       await Promise.resolve();
       controller.abort();
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
 
       const result = await replay;
 
       expect(result.cancelled).toBe(true);
       expect(result.content.length).toBeLessThan(fullContent.length);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

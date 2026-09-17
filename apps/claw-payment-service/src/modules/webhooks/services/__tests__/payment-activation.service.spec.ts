@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   BillingErrorCode,
   BillingInterval,
@@ -46,40 +47,40 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
 }
 
 describe('PaymentActivationService', () => {
-  let sessions: { findById: jest.Mock; markFailed: jest.Mock };
-  let customers: { ensureForUser: jest.Mock };
+  let sessions: { findById: Mock; markFailed: Mock };
+  let customers: { ensureForUser: Mock };
   let lifecycle: {
-    activateFromVerifiedPayment: jest.Mock;
-    activatePlanChangeFromVerifiedPayment: jest.Mock;
+    activateFromVerifiedPayment: Mock;
+    activatePlanChangeFromVerifiedPayment: Mock;
   };
-  let creditTopups: { activateFromVerifiedPayment: jest.Mock };
+  let creditTopups: { activateFromVerifiedPayment: Mock };
   let service: PaymentActivationService;
 
   beforeEach(() => {
-    sessions = { findById: jest.fn(), markFailed: jest.fn() };
-    customers = { ensureForUser: jest.fn().mockResolvedValue({ id: 'bc-1' }) };
+    sessions = { findById: vi.fn(), markFailed: vi.fn() };
+    customers = { ensureForUser: vi.fn().mockResolvedValue({ id: 'bc-1' }) };
     // Returns an ActivationResult, not a bare id: activation now also records the
     // payment transaction and issues the invoice, and the caller reports the
     // invoice number in its log line.
     lifecycle = {
-      activateFromVerifiedPayment: jest.fn().mockResolvedValue({
+      activateFromVerifiedPayment: vi.fn().mockResolvedValue({
         subscriptionId: 'sub-1',
         transactionId: 'tx-1',
         invoiceNumber: 'CLAW-00000001',
       }),
-      activatePlanChangeFromVerifiedPayment: jest.fn().mockResolvedValue({
+      activatePlanChangeFromVerifiedPayment: vi.fn().mockResolvedValue({
         subscriptionId: 'sub-existing',
         transactionId: 'tx-upgrade',
         invoiceNumber: 'CLAW-00000002',
       }),
     };
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ BILLING_GRACE_PERIOD_MS: 259_200_000 } as ReturnType<
         typeof AppConfig.get
       >);
     creditTopups = {
-      activateFromVerifiedPayment: jest.fn().mockResolvedValue({
+      activateFromVerifiedPayment: vi.fn().mockResolvedValue({
         paymentTransactionId: 'tx-topup',
         invoiceNumber: 'CLAW-00000003',
         outboxEventId: 'evt-1',
@@ -94,7 +95,7 @@ describe('PaymentActivationService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('activates a matching payment and asserts verification to the lifecycle', async () => {
@@ -225,13 +226,13 @@ describe('PaymentActivationService', () => {
  * wallet purchase, and granting the same credit twice on a redelivered webhook.
  */
 describe('PaymentActivationService — credit top-up', () => {
-  let sessions: { findById: jest.Mock; markFailed: jest.Mock };
-  let customers: { ensureForUser: jest.Mock };
+  let sessions: { findById: Mock; markFailed: Mock };
+  let customers: { ensureForUser: Mock };
   let lifecycle: {
-    activateFromVerifiedPayment: jest.Mock;
-    activatePlanChangeFromVerifiedPayment: jest.Mock;
+    activateFromVerifiedPayment: Mock;
+    activatePlanChangeFromVerifiedPayment: Mock;
   };
-  let creditTopups: { activateFromVerifiedPayment: jest.Mock };
+  let creditTopups: { activateFromVerifiedPayment: Mock };
   let service: PaymentActivationService;
 
   const topupSession = (overrides: Record<string, unknown> = {}): Record<string, unknown> =>
@@ -255,20 +256,20 @@ describe('PaymentActivationService — credit top-up', () => {
   const topupPayment = { ...PAYMENT, amountMinor: 2500 };
 
   beforeEach(() => {
-    sessions = { findById: jest.fn(), markFailed: jest.fn() };
-    customers = { ensureForUser: jest.fn().mockResolvedValue({ id: 'bc-1' }) };
+    sessions = { findById: vi.fn(), markFailed: vi.fn() };
+    customers = { ensureForUser: vi.fn().mockResolvedValue({ id: 'bc-1' }) };
     lifecycle = {
-      activateFromVerifiedPayment: jest.fn(),
-      activatePlanChangeFromVerifiedPayment: jest.fn(),
+      activateFromVerifiedPayment: vi.fn(),
+      activatePlanChangeFromVerifiedPayment: vi.fn(),
     };
     creditTopups = {
-      activateFromVerifiedPayment: jest.fn().mockResolvedValue({
+      activateFromVerifiedPayment: vi.fn().mockResolvedValue({
         paymentTransactionId: 'tx-topup',
         invoiceNumber: 'CLAW-00000003',
         outboxEventId: 'evt-1',
       }),
     };
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ BILLING_GRACE_PERIOD_MS: 259_200_000 } as ReturnType<
         typeof AppConfig.get
@@ -282,7 +283,7 @@ describe('PaymentActivationService — credit top-up', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('grants credit and creates NO subscription', async () => {

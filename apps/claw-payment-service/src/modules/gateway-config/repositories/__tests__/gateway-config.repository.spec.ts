@@ -1,18 +1,19 @@
+import { vi } from 'vitest';
 import { GatewayConfigRepository } from '../gateway-config.repository';
 
 describe('GatewayConfigRepository', () => {
   it('casts the advisory lock result to a Prisma-supported scalar', async () => {
     const transaction = {
-      $queryRaw: jest.fn().mockResolvedValue([{ lock: '' }]),
+      $queryRaw: vi.fn().mockResolvedValue([{ lock: '' }]),
       seedExecution: {
-        findUnique: jest.fn().mockResolvedValue({
+        findUnique: vi.fn().mockResolvedValue({
           status: 'COMPLETED',
           checksum: 'checksum',
         }),
       },
     };
     const prisma = {
-      $transaction: jest.fn(async (callback: (client: typeof transaction) => Promise<unknown>) =>
+      $transaction: vi.fn(async (callback: (client: typeof transaction) => Promise<unknown>) =>
         callback(transaction),
       ),
     };

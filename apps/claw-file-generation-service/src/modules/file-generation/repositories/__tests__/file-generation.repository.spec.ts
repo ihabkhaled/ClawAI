@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FileGenerationRepository } from '../file-generation.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,27 +7,27 @@ describe('FileGenerationRepository', () => {
   let repository: FileGenerationRepository;
   let prismaMock: {
     fileGeneration: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
-      count: jest.Mock;
-      update: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      findMany: Mock;
+      count: Mock;
+      update: Mock;
     };
-    fileGenerationEvent: { create: jest.Mock };
-    fileGenerationAsset: { create: jest.Mock };
+    fileGenerationEvent: { create: Mock };
+    fileGenerationAsset: { create: Mock };
   };
 
   beforeEach(async () => {
     prismaMock = {
       fileGeneration: {
-        create: jest.fn().mockResolvedValue({ id: 'g1', status: 'QUEUED' }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'g1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'g1' }, { id: 'g2' }]),
-        count: jest.fn().mockResolvedValue(5),
-        update: jest.fn().mockResolvedValue({ id: 'g1', status: 'COMPLETED' }),
+        create: vi.fn().mockResolvedValue({ id: 'g1', status: 'QUEUED' }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'g1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'g1' }, { id: 'g2' }]),
+        count: vi.fn().mockResolvedValue(5),
+        update: vi.fn().mockResolvedValue({ id: 'g1', status: 'COMPLETED' }),
       },
-      fileGenerationEvent: { create: jest.fn().mockResolvedValue({ id: 'e1' }) },
-      fileGenerationAsset: { create: jest.fn().mockResolvedValue({ id: 'a1' }) },
+      fileGenerationEvent: { create: vi.fn().mockResolvedValue({ id: 'e1' }) },
+      fileGenerationAsset: { create: vi.fn().mockResolvedValue({ id: 'a1' }) },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -45,21 +46,27 @@ describe('FileGenerationRepository', () => {
       provider: 'openai',
       model: 'gpt-4',
     });
-    const args = prismaMock.fileGeneration.create.mock.calls[0][0];
+    const argsCall = prismaMock.fileGeneration.create.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.data.status).toBe('QUEUED');
     expect(args.include.assets).toBe(true);
   });
 
   it('findById uses prisma findUnique with assets included', async () => {
     await repository.findById('g1');
-    const args = prismaMock.fileGeneration.findUnique.mock.calls[0][0];
+    const argsCall = prismaMock.fileGeneration.findUnique.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.id).toBe('g1');
     expect(args.include.assets).toBe(true);
   });
 
   it('findByUserId paginates with desc ordering', async () => {
     await repository.findByUserId('u1', 2, 10);
-    const args = prismaMock.fileGeneration.findMany.mock.calls[0][0];
+    const argsCall = prismaMock.fileGeneration.findMany.mock.calls[0];
+    expect(argsCall).toBeDefined();
+    const args = argsCall?.[0];
     expect(args.where.userId).toBe('u1');
     expect(args.skip).toBe(10);
     expect(args.take).toBe(10);
@@ -74,7 +81,9 @@ describe('FileGenerationRepository', () => {
   describe('updateStatus', () => {
     it('updates status without extras', async () => {
       await repository.updateStatus('g1', 'COMPLETED' as never);
-      const args = prismaMock.fileGeneration.update.mock.calls[0][0];
+      const argsCall = prismaMock.fileGeneration.update.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.where.id).toBe('g1');
       expect(args.data.status).toBe('COMPLETED');
     });
@@ -86,7 +95,9 @@ describe('FileGenerationRepository', () => {
         errorMessage: 'oops',
         completedAt,
       });
-      const args = prismaMock.fileGeneration.update.mock.calls[0][0];
+      const argsCall = prismaMock.fileGeneration.update.mock.calls[0];
+      expect(argsCall).toBeDefined();
+      const args = argsCall?.[0];
       expect(args.data.errorCode).toBe('CONVERSION_FAILURE');
       expect(args.data.completedAt).toBe(completedAt);
     });

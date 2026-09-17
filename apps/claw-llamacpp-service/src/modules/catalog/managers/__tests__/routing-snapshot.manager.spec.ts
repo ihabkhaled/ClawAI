@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { DownloadStatus, LoadStatus, ModelCategory, QualityTier } from '../../../../common/enums';
 import { type CatalogRepository } from '../../repositories/catalog.repository';
 import { type CatalogEntry } from '../../types/catalog.types';
@@ -41,7 +42,7 @@ function makeEntry(overrides: Partial<CatalogEntry> = {}): CatalogEntry {
 describe('RoutingSnapshotManager (llamacpp)', () => {
   function buildManager(rows: CatalogEntry[]): RoutingSnapshotManager {
     const repo = {
-      findAllReadyForRouting: jest.fn().mockResolvedValue(rows),
+      findAllReadyForRouting: vi.fn().mockResolvedValue(rows),
     };
     return new RoutingSnapshotManager(repo as unknown as CatalogRepository);
   }

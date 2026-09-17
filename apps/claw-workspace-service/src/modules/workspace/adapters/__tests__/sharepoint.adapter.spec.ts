@@ -1,40 +1,41 @@
+import { vi, type Mock } from 'vitest';
 import { SharePointAdapter } from '../sharepoint.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('SharePointAdapter', () => {
   let adapter: SharePointAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new SharePointAdapter();
   });
 
   describe('healthCheck', () => {
     it('should return CONNECTED on 200 response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
+      (global.fetch as Mock).mockResolvedValue({ ok: true, status: 200 });
       const result = await adapter.healthCheck('token-abc');
       expect(result.status).toBe(WorkspaceConnectorStatus.CONNECTED);
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
     });
 
     it('should return DISCONNECTED on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 401 });
       const result = await adapter.healthCheck('bad-token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('Unauthorized');
     });
 
     it('should return DEGRADED on non-401 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 503 });
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DEGRADED);
       expect(result.errorMessage).toBe('HTTP 503');
     });
 
     it('should return DISCONNECTED on network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
+      (global.fetch as Mock).mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await adapter.healthCheck('token');
       expect(result.status).toBe(WorkspaceConnectorStatus.DISCONNECTED);
       expect(result.errorMessage).toBe('ECONNREFUSED');
@@ -69,7 +70,7 @@ describe('SharePointAdapter', () => {
 
   describe('exchangeCodeForTokens', () => {
     it('exchanges a code for tokens', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           access_token: 'at',
@@ -93,7 +94,7 @@ describe('SharePointAdapter', () => {
     });
 
     it('throws on a non-ok token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({ error: 'invalid_grant' }),
@@ -109,7 +110,7 @@ describe('SharePointAdapter', () => {
 
   describe('refreshTokens', () => {
     it('refreshes and normalizes the token response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ access_token: 'at2', refresh_token: 'rt2', expires_in: 3600 }),
       });
@@ -135,7 +136,7 @@ describe('SharePointAdapter', () => {
     });
 
     it('maps sites to SyncedObject', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ value: [site()] }),
       });
@@ -155,7 +156,7 @@ describe('SharePointAdapter', () => {
     });
 
     it('falls back to name when displayName is absent', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({ value: [site({ displayName: undefined })] }),
       });
@@ -164,14 +165,14 @@ describe('SharePointAdapter', () => {
     });
 
     it('throws on a non-ok list response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.syncObjects('token')).rejects.toThrow(/HTTP 500/);
     });
   });
 
   describe('fetchObjectDetails', () => {
     it('DOCUMENT — resolves by externalId', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -194,13 +195,13 @@ describe('SharePointAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const live = await adapter.fetchObjectDetails('token', 'missing', 'DOCUMENT');
       expect(live).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500 });
       await expect(adapter.fetchObjectDetails('token', 'site1', 'DOCUMENT')).rejects.toThrow(
         /HTTP 500/,
       );
@@ -209,7 +210,7 @@ describe('SharePointAdapter', () => {
 
   describe('downloadFileContent', () => {
     it('streams file bytes when driveId metadata is present', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         body: {},
@@ -233,13 +234,13 @@ describe('SharePointAdapter', () => {
     });
 
     it('returns null on 404', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 404 });
       const stream = await adapter.downloadFileContent('token', 'item1', { driveId: 'drive1' });
       expect(stream).toBeNull();
     });
 
     it('throws on a non-404 HTTP error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500, body: null });
+      (global.fetch as Mock).mockResolvedValue({ ok: false, status: 500, body: null });
       await expect(
         adapter.downloadFileContent('token', 'item1', { driveId: 'drive1' }),
       ).rejects.toThrow(/HTTP 500/);
@@ -249,7 +250,7 @@ describe('SharePointAdapter', () => {
   describe('write actions', () => {
     describe('UPLOAD_SHAREPOINT', () => {
       it('PUTs the decoded bytes to the site drive content endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'new-item', webUrl: 'https://contoso.sharepoint.com/new-item' }),
         });
@@ -261,7 +262,7 @@ describe('SharePointAdapter', () => {
           contentBase64: Buffer.from('hello').toString('base64'),
         });
         expect(result.success).toBe(true);
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toContain('/sites/site1/drives/drive1/root:');
         expect(init.method).toBe('PUT');
       });
@@ -283,7 +284,7 @@ describe('SharePointAdapter', () => {
 
     describe('CREATE_SHAREPOINT_LIST_ITEM', () => {
       it('posts fields to the list items endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({
+        (global.fetch as Mock).mockResolvedValue({
           ok: true,
           json: async () => ({ id: 'item1' }),
         });
@@ -293,7 +294,7 @@ describe('SharePointAdapter', () => {
           fields: { Title: 'New task' },
         });
         expect(result.success).toBe(true);
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toBe('https://graph.microsoft.com/v1.0/sites/site1/lists/list1/items');
         expect(JSON.parse(init.body as string)).toEqual({ fields: { Title: 'New task' } });
       });
@@ -301,14 +302,14 @@ describe('SharePointAdapter', () => {
 
     describe('UPDATE_SHAREPOINT_LIST_ITEM', () => {
       it('PATCHes the item fields endpoint', async () => {
-        (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
+        (global.fetch as Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
         await adapter.executeWriteAction('token', 'UPDATE_SHAREPOINT_LIST_ITEM', {
           siteId: 'site1',
           listId: 'list1',
           itemId: 'item1',
           fields: { Status: 'Done' },
         });
-        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
         expect(url).toBe(
           'https://graph.microsoft.com/v1.0/sites/site1/lists/list1/items/item1/fields',
         );
@@ -324,7 +325,7 @@ describe('SharePointAdapter', () => {
     });
 
     it('catches a thrown error from the dispatched handler', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+      (global.fetch as Mock).mockRejectedValue(new Error('network down'));
       const result = await adapter.executeWriteAction('token', 'CREATE_SHAREPOINT_LIST_ITEM', {
         siteId: 'site1',
         listId: 'list1',

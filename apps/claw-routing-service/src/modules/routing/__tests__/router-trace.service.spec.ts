@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ROUTER_TRACE_EVENT_PATTERNS } from '@claw/shared-constants';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -15,8 +16,8 @@ const context = (): RouterTraceContext => ({
 });
 
 const build = (
-  publish: jest.Mock = jest.fn().mockResolvedValue(undefined),
-): { service: RouterTraceService; publish: jest.Mock } => ({
+  publish: Mock = vi.fn().mockResolvedValue(undefined),
+): { service: RouterTraceService; publish: Mock } => ({
   service: new RouterTraceService({ publish } as unknown as RabbitMQService),
   publish,
 });
@@ -144,7 +145,7 @@ describe('RouterTraceService.publish', () => {
 
   // A trace is evidence about a decision, not part of it.
   it('never throws when the broker is down', async () => {
-    const { service } = build(jest.fn().mockRejectedValue(new Error('broker down')));
+    const { service } = build(vi.fn().mockRejectedValue(new Error('broker down')));
 
     await expect(service.emit(context(), success)).resolves.toBe(false);
   });

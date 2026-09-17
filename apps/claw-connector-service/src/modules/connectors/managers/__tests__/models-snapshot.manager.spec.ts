@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { type ConnectorModelsRepository } from '../../repositories/connector-models.repository';
 import { ModelsSnapshotManager } from '../models-snapshot.manager';
 
@@ -25,7 +26,7 @@ function makeRow(overrides: Partial<Row> = {}): Row {
 describe('ModelsSnapshotManager', () => {
   function buildManager(rows: Row[]): ModelsSnapshotManager {
     const repo = {
-      findAllForSnapshot: jest.fn().mockResolvedValue(rows),
+      findAllForSnapshot: vi.fn().mockResolvedValue(rows),
     };
     return new ModelsSnapshotManager(repo as unknown as ConnectorModelsRepository);
   }

@@ -9,8 +9,8 @@
     "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f",
     "lint": "eslint src/ --concurrency=1",
     "lint:fix": "eslint src/ --fix",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@claw/shared-constants": "*",
@@ -19,21 +19,18 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.5",
-    "@babel/preset-env": "^8.0.5",
     "@eslint/js": "^9.39.4",
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
+    "@swc/core": "^1.16.2",
     "@types/amqplib": "^0.10.8",
-    "@types/jest": "^30.0.0",
-    "babel-jest": "^30.5.1",
     "babel-plugin-transform-import-meta": "^3.0.0",
     "eslint": "^10.10.0",
     "eslint-plugin-unicorn": "74.0.0",
-    "jest": "^30.4.2",
-    "ts-jest": "^29.4.12",
     "tsc-alias": "^1.9.4",
-    "typescript": "^6.0.3"
+    "typescript": "6.0.3",
+    "unplugin-swc": "^1.6.0",
+    "vitest": "5.0.1"
   },
   "type": "module"
 }

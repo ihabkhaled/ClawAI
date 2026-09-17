@@ -1,8 +1,9 @@
+import { vi } from 'vitest';
 import { TokenLedgerRepository } from '../token-ledger.repository';
 
 describe('TokenLedgerRepository', () => {
   it('sums finalized token totals over an inclusive UTC date range', async () => {
-    const aggregate = jest.fn().mockResolvedValue({ _sum: { totalTokens: 4321 } });
+    const aggregate = vi.fn().mockResolvedValue({ _sum: { totalTokens: 4321 } });
     const repository = new TokenLedgerRepository({ tokenUsageLedger: { aggregate } } as never);
 
     await expect(

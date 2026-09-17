@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 // Extraction is asynchronous, so a user who attaches a PDF and sends the message
 // immediately can outrun it. This wait closes that race — and it is bounded,
 // because an unbounded wait on another service inside the chat hot path is how a
@@ -6,19 +7,19 @@
 import { ContextAssemblyManager } from '../context-assembly.manager';
 import { FILE_INGESTION_WAIT_TIMEOUT_MS } from '../../constants/file-content.constants';
 
-jest.mock('../../../../common/utilities', () => ({
-  buildInterServiceAuthHeader: jest.fn().mockReturnValue('Service token'),
-  httpRequest: jest.fn(),
-  mapResearchModeToWorkflow: jest.fn(),
-  runResearch: jest.fn(),
+vi.mock('../../../../common/utilities', () => ({
+  buildInterServiceAuthHeader: vi.fn().mockReturnValue('Service token'),
+  httpRequest: vi.fn(),
+  mapResearchModeToWorkflow: vi.fn(),
+  runResearch: vi.fn(),
 }));
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn(() => ({ FILE_SERVICE_URL: 'https://file-service:4006' })) },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn(() => ({ FILE_SERVICE_URL: 'https://file-service:4006' })) },
 }));
 
-const { httpRequest } = jest.requireMock('../../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../../common/utilities') as {
+  httpRequest: Mock;
 };
 
 type Waiter = (fileIds: string[], userId: string) => Promise<void>;
@@ -33,18 +34,18 @@ describe('ContextAssemblyManager ingestion wait', () => {
   let wait: Waiter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
     const manager = new ContextAssemblyManager(
-      { select: jest.fn() } as never,
-      { retrieve: jest.fn() } as never,
+      { select: vi.fn() } as never,
+      { retrieve: vi.fn() } as never,
     );
     wait = (fileIds, userId) =>
       (manager as unknown as { waitForIngestion: Waiter }).waitForIngestion(fileIds, userId);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   // Drives fake timers until the promise settles, so a polling loop advances
@@ -56,7 +57,7 @@ describe('ContextAssemblyManager ingestion wait', () => {
     });
     for (let tick = 0; tick < 200 && !done; tick++) {
       await Promise.resolve();
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     }
     await tracked;
   }
@@ -146,7 +147,7 @@ describe('ContextAssemblyManager ingestion wait', () => {
     await settle(wait(['file-1', 'file-2'], 'user-1'));
 
     const pollsForSettledFile = httpRequest.mock.calls.filter(
-      ([args]: [{ url: string }]) => args.url.includes('file-1'),
+      ([args]) => args.url.includes('file-1'),
     );
     expect(pollsForSettledFile).toHaveLength(1);
   });

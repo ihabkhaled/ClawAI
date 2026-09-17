@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -8,12 +9,12 @@ import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
 // Mocked at the HTTP boundary, not the service boundary: the point of these
 // tests is that the adapter's own request-building, response-validation and
 // verification logic is exercised for real.
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const mockHttp = httpRequest as unknown as jest.Mock;
+const mockHttp = httpRequest as unknown as Mock;
 
 const EXPECTED = { amountMinor: 500, currency: 'USD', checkoutSessionId: 'cs_1' };
 
@@ -63,13 +64,13 @@ describe('PaypalAdapter', () => {
   let adapter: PaypalAdapter;
   let tokens: PaypalTokenManager;
   const runtimeConfig = {
-    getPaypalCheckout: jest.fn(),
-    getPaypalOperations: jest.fn(),
+    getPaypalCheckout: vi.fn(),
+    getPaypalOperations: vi.fn(),
   };
 
   beforeEach(() => {
     mockHttp.mockReset();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       PAYPAL_ENV: 'sandbox',
       PAYPAL_CLIENT_ID: 'id',
       PAYPAL_CLIENT_SECRET: 'secret',
@@ -86,12 +87,12 @@ describe('PaypalAdapter', () => {
     runtimeConfig.getPaypalCheckout.mockResolvedValue(paypalConfig);
     runtimeConfig.getPaypalOperations.mockResolvedValue(paypalConfig);
     tokens = new PaypalTokenManager(runtimeConfig as never);
-    jest.spyOn(tokens, 'getAccessToken').mockResolvedValue('tok');
+    vi.spyOn(tokens, 'getAccessToken').mockResolvedValue('tok');
     adapter = new PaypalAdapter(tokens, runtimeConfig as never);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('createOrder', () => {
@@ -294,7 +295,7 @@ describe('PaypalAdapter', () => {
     it('refuses to verify at all when no webhook id is configured', async () => {
       // Without the id there is no way to check the signature. Trusting the
       // event instead would let anyone activate a paid plan.
-      jest.spyOn(AppConfig, 'get').mockReturnValue({
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
         PAYPAL_ENV: 'sandbox',
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
         PAYMENT_GATEWAY_MAX_RETRIES: 3,
@@ -332,7 +333,7 @@ describe('PaypalAdapter', () => {
     });
 
     it('drops the cached token on 401 so the retry re-authenticates', async () => {
-      const invalidate = jest.spyOn(tokens, 'invalidate');
+      const invalidate = vi.spyOn(tokens, 'invalidate');
       mockHttp
         .mockResolvedValueOnce({ ok: false, status: 401, data: {} })
         .mockResolvedValueOnce(okResponse(orderResponse({})));

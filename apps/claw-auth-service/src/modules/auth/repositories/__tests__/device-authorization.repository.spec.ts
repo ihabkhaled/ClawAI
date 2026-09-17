@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { DeviceAuthorizationRepository } from '../device-authorization.repository';
@@ -6,20 +7,20 @@ describe('DeviceAuthorizationRepository', () => {
   let repository: DeviceAuthorizationRepository;
   let prisma: {
     deviceAuthorizationGrant: {
-      create: jest.Mock;
-      findUnique: jest.Mock;
-      updateMany: jest.Mock;
-      update: jest.Mock;
+      create: Mock;
+      findUnique: Mock;
+      updateMany: Mock;
+      update: Mock;
     };
   };
 
   beforeEach(async () => {
     prisma = {
       deviceAuthorizationGrant: {
-        create: jest.fn(),
-        findUnique: jest.fn(),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({ intervalSeconds: 10 }),
+        create: vi.fn(),
+        findUnique: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        update: vi.fn().mockResolvedValue({ intervalSeconds: 10 }),
       },
     };
     const module: TestingModule = await Test.createTestingModule({

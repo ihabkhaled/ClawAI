@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { CurrencyPreferenceMode, DisplayFxSource, GeoCountrySource } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -8,7 +9,7 @@ import { type GeoCountryService } from '../services/geo-country.service';
 const RATE_SCALE = 10_000_000;
 
 function configure(overrides: Record<string, string> = {}): void {
-  jest.spyOn(AppConfig, 'get').mockReturnValue({
+  vi.spyOn(AppConfig, 'get').mockReturnValue({
     DISPLAY_FX_ENABLED: 'true',
     DISPLAY_FX_GEO_ENABLED: 'true',
     ...overrides,
@@ -17,7 +18,7 @@ function configure(overrides: Record<string, string> = {}): void {
 
 function buildGeo(countryCode: string | null): GeoCountryService {
   return {
-    resolve: jest.fn().mockResolvedValue({
+    resolve: vi.fn().mockResolvedValue({
       countryCode,
       source: countryCode === null ? GeoCountrySource.UNRESOLVED : GeoCountrySource.IP_LOOKUP,
     }),
@@ -26,7 +27,7 @@ function buildGeo(countryCode: string | null): GeoCountryService {
 
 function buildFx(rateScaled: number | null): DisplayFxService {
   return {
-    getRate: jest.fn().mockImplementation((currency: string) =>
+    getRate: vi.fn().mockImplementation((currency: string) =>
       Promise.resolve(
         rateScaled === null
           ? null
@@ -48,7 +49,7 @@ describe('DisplayCurrencyService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('the product promises', () => {
@@ -195,7 +196,7 @@ describe('DisplayCurrencyService degradation', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('falls back to USD when no provider can quote the detected currency', async () => {

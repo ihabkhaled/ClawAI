@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   BillingModel,
   Prisma,
@@ -64,32 +65,32 @@ const configRow = (
 });
 
 interface TransactionMocks {
-  configFindFirst: jest.Mock;
-  configFindUnique: jest.Mock;
-  configFindUniqueOrThrow: jest.Mock;
-  configCreate: jest.Mock;
-  configUpdate: jest.Mock;
-  configCount: jest.Mock;
-  configFindMany: jest.Mock;
-  entryDeleteMany: jest.Mock;
-  entryCreate: jest.Mock;
+  configFindFirst: Mock;
+  configFindUnique: Mock;
+  configFindUniqueOrThrow: Mock;
+  configCreate: Mock;
+  configUpdate: Mock;
+  configCount: Mock;
+  configFindMany: Mock;
+  entryDeleteMany: Mock;
+  entryCreate: Mock;
 }
 
 const buildRepository = (): {
   repository: RouterConfigurationRepository;
   mocks: TransactionMocks;
-  arrayTransaction: jest.Mock;
+  arrayTransaction: Mock;
 } => {
   const mocks: TransactionMocks = {
-    configFindFirst: jest.fn(),
-    configFindUnique: jest.fn(),
-    configFindUniqueOrThrow: jest.fn(),
-    configCreate: jest.fn(),
-    configUpdate: jest.fn(),
-    configCount: jest.fn(),
-    configFindMany: jest.fn(),
-    entryDeleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-    entryCreate: jest.fn(),
+    configFindFirst: vi.fn(),
+    configFindUnique: vi.fn(),
+    configFindUniqueOrThrow: vi.fn(),
+    configCreate: vi.fn(),
+    configUpdate: vi.fn(),
+    configCount: vi.fn(),
+    configFindMany: vi.fn(),
+    entryDeleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    entryCreate: vi.fn(),
   };
 
   const transaction = {
@@ -108,10 +109,10 @@ const buildRepository = (): {
     },
   };
 
-  const arrayTransaction = jest.fn();
+  const arrayTransaction = vi.fn();
 
   const prisma = {
-    $transaction: jest.fn().mockImplementation((arg: unknown) => {
+    $transaction: vi.fn().mockImplementation((arg: unknown) => {
       if (Array.isArray(arg)) {
         return arrayTransaction(arg);
       }

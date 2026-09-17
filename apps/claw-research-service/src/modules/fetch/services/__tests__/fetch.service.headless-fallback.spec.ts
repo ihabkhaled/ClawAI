@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { FetchService } from '../fetch.service';
 import type { HeadlessFetchAdapter } from '../../adapters/headless-fetch.adapter';
@@ -7,8 +8,8 @@ import type { PageCacheRepository } from '../../repositories/page-cache.reposito
 import type { ResearchUsageService } from '../../../../common/services/research-usage.service';
 import type { FetchResult } from '../../types/fetch.types';
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
 }));
 
 function buildPlainResult(overrides: Partial<FetchResult> = {}): FetchResult {
@@ -34,29 +35,29 @@ function buildPlainResult(overrides: Partial<FetchResult> = {}): FetchResult {
  * already covers.
  */
 describe('FetchService headless fallback', () => {
-  const appConfigGet = AppConfig.get as jest.Mock;
-  let adapter: { fetchPage: jest.Mock };
-  let headlessAdapter: { fetchPage: jest.Mock };
-  let jobs: { create: jest.Mock; update: jest.Mock };
-  let cache: { findByKey: jest.Mock; upsert: jest.Mock };
-  let usage: { record: jest.Mock };
+  const appConfigGet = AppConfig.get as Mock;
+  let adapter: { fetchPage: Mock };
+  let headlessAdapter: { fetchPage: Mock };
+  let jobs: { create: Mock; update: Mock };
+  let cache: { findByKey: Mock; upsert: Mock };
+  let usage: { record: Mock };
   let service: FetchService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     appConfigGet.mockReturnValue({
       RESEARCH_DOMAIN_ALLOWLIST: [],
       RESEARCH_DOMAIN_BLOCKLIST: [],
       RESEARCH_HEADLESS_RENDER_ENABLED: true,
     });
-    adapter = { fetchPage: jest.fn() };
-    headlessAdapter = { fetchPage: jest.fn() };
+    adapter = { fetchPage: vi.fn() };
+    headlessAdapter = { fetchPage: vi.fn() };
     jobs = {
-      create: jest.fn(async () => ({ id: 'fetch-job-1' })),
-      update: jest.fn(async () => ({})),
+      create: vi.fn(async () => ({ id: 'fetch-job-1' })),
+      update: vi.fn(async () => ({})),
     };
-    cache = { findByKey: jest.fn(async () => null), upsert: jest.fn(async () => ({})) };
-    usage = { record: jest.fn(async () => {}) };
+    cache = { findByKey: vi.fn(async () => null), upsert: vi.fn(async () => ({})) };
+    usage = { record: vi.fn(async () => {}) };
     service = new FetchService(
       adapter as unknown as HttpFetchAdapter,
       headlessAdapter as unknown as HeadlessFetchAdapter,

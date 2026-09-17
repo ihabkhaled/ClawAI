@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 // Slice C foundation 3 — file retention sweeper unit tests.
 //
 // Mocks FilesRepository, RabbitMQService, the disk-delete utility and
@@ -11,28 +12,28 @@ import { type FilesRepository } from '../../repositories/files.repository';
 import { AppConfig } from '../../../../app/config/app.config';
 import { type File } from '../../../../generated/prisma';
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn(() => ({
+    get: vi.fn(() => ({
       FILE_RETENTION_SWEEP_CRON: '0 2 * * *',
       FILE_RETENTION_SWEEP_BATCH_LIMIT: 5,
     })),
   },
 }));
 
-jest.mock('../../../../common/utilities', () => ({
-  verifyAccessToken: jest.fn(),
-  saveFile: jest.fn(),
-  deleteFile: jest.fn(),
-  readFile: jest.fn(),
+vi.mock('../../../../common/utilities', () => ({
+  verifyAccessToken: vi.fn(),
+  saveFile: vi.fn(),
+  deleteFile: vi.fn(),
+  readFile: vi.fn(),
 }));
 
-const { deleteFile } = jest.requireMock('../../../../common/utilities') as {
-  deleteFile: jest.Mock;
+const { deleteFile } = await vi.importMock('../../../../common/utilities') as {
+  deleteFile: Mock;
 };
 
-const { AppConfig: MockedAppConfig } = jest.requireMock('../../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
+const { AppConfig: MockedAppConfig } = await vi.importMock('../../../../app/config/app.config') as {
+  AppConfig: { get: Mock };
 };
 
 const buildFile = (overrides: Partial<File> = {}): File =>
@@ -54,18 +55,18 @@ const buildFile = (overrides: Partial<File> = {}): File =>
     ...overrides,
   }) as unknown as File;
 
-const mockFilesRepository = (): Partial<Record<keyof FilesRepository, jest.Mock>> => ({
-  findExpiredBefore: jest.fn(),
-  findStaleProcessingBefore: jest.fn().mockResolvedValue([]),
-  // jest.fn() defaults to returning undefined synchronously, which awaits to
+const mockFilesRepository = (): Partial<Record<keyof FilesRepository, Mock>> => ({
+  findExpiredBefore: vi.fn(),
+  findStaleProcessingBefore: vi.fn().mockResolvedValue([]),
+  // vi.fn() defaults to returning undefined synchronously, which awaits to
   // undefined — exactly what FilesRepository.deleteById returns. We avoid
   // .mockResolvedValue() so unicorn/no-useless-undefined and tsgo agree.
-  deleteById: jest.fn(),
+  deleteById: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
   // Same reasoning as deleteById above.
-  publish: jest.fn(),
+  publish: vi.fn(),
 });
 
 describe('FileRetentionSweeperManager', () => {
@@ -74,7 +75,7 @@ describe('FileRetentionSweeperManager', () => {
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     MockedAppConfig.get.mockReturnValue({
       FILE_RETENTION_SWEEP_CRON: '0 2 * * *',
       FILE_RETENTION_SWEEP_BATCH_LIMIT: 5,
@@ -194,7 +195,7 @@ describe('FileRetentionSweeperManager', () => {
       }
     });
 
-    const errorSpy = jest.spyOn(manager['logger'], 'error').mockImplementation();
+    const errorSpy = vi.spyOn(manager['logger'], 'error').mockImplementation(() => {});
 
     await manager.runSweep();
 

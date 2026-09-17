@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { SearchProviderStatus } from '../../../../common/enums/search-provider-status.enum';
 import {
@@ -9,19 +10,19 @@ import type { SearchProviderRepository } from '../../repositories/search-provide
 
 describe('SearchProviderBootstrapService', () => {
   let repository: {
-    findFirstEnabled: jest.Mock;
-    findByName: jest.Mock;
-    update: jest.Mock;
-    create: jest.Mock;
+    findFirstEnabled: Mock;
+    findByName: Mock;
+    update: Mock;
+    create: Mock;
   };
   let service: SearchProviderBootstrapService;
 
   beforeEach(() => {
     repository = {
-      findFirstEnabled: jest.fn(),
-      findByName: jest.fn(),
-      update: jest.fn(),
-      create: jest.fn(),
+      findFirstEnabled: vi.fn(),
+      findByName: vi.fn(),
+      update: vi.fn(),
+      create: vi.fn(),
     };
     service = new SearchProviderBootstrapService(repository as unknown as SearchProviderRepository);
   });

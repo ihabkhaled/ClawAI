@@ -933,6 +933,32 @@ export type ChatThreadHeaderMenuProps = {
   isDeleting: boolean;
 };
 
+/**
+ * The vertical action rail beside the conversation on `/chat/[threadId]`.
+ *
+ * Same five controls the header row used to carry — compare, judge, find,
+ * share and the `…` menu — moved off the top band so the transcript keeps the
+ * height they were spending. Rendered only when `showInlineActions` is true;
+ * below `sm` the menu in the header holds all of them instead.
+ */
+export type ChatThreadActionRailProps = {
+  canCompare: boolean;
+  compareLabel: string;
+  compareIsOpen: boolean;
+  onCompare: () => void;
+  canUseQualityControls: boolean;
+  qualityLabel: string;
+  qualityIsOpen: boolean;
+  onQuality: () => void;
+  searchLabel: string;
+  searchIsOpen: boolean;
+  onSearch: () => void;
+  shareButtonProps: ShareChatButtonProps;
+  /** The same overflow menu the header shows below `sm`, with the primary
+   *  actions NOT collapsed into it — they are the buttons above. */
+  menuProps: ChatThreadHeaderMenuProps;
+};
+
 export type MessageComposerProps = {
   onSend: (
     content: string,
@@ -1958,6 +1984,10 @@ export type ChatThreadShellProps = {
   // Overflow menu. Holds export / settings / delete, plus the four primary
   // actions when the row is too narrow for them.
   headerMenuProps: ChatThreadHeaderMenuProps;
+  // The side rail beside the conversation. Rendered only when
+  // `showInlineActions` is true; it is where compare / judge / find / share /
+  // `…` live from `sm` up, instead of on the header row.
+  actionRailProps: ChatThreadActionRailProps;
   /**
    * Whether compare / judge / find / share render as buttons on the header row.
    * Resolved once from a media query in useThreadDetailPage rather than hidden

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { BillingErrorCode, ModelCostClass, PaygSurface, UserRole } from '@claw/shared-types';
 
 import { type RedisService } from '../../../../infrastructure/redis/redis.service';
@@ -107,30 +108,30 @@ const makeInput = (overrides: Partial<CreditReserveInput> = {}): CreditReserveIn
 });
 
 describe('CreditReservationManager', () => {
-  let client: { eval: jest.Mock; mget: jest.Mock };
-  let redis: { getClient: jest.Mock };
+  let client: { eval: Mock; mget: Mock };
+  let redis: { getClient: Mock };
   let wallets: {
-    ensure: jest.Mock;
-    getBalances: jest.Mock;
-    applyHold: jest.Mock;
-    applyRelease: jest.Mock;
-    applySettlement: jest.Mock;
+    ensure: Mock;
+    getBalances: Mock;
+    applyHold: Mock;
+    applyRelease: Mock;
+    applySettlement: Mock;
   };
-  let grants: { ensureCurrentPeriod: jest.Mock };
-  let rates: { findRate: jest.Mock; invalidate: jest.Mock };
-  let policy: { getPolicy: jest.Mock };
-  let settings: { isEnabled: jest.Mock };
+  let grants: { ensureCurrentPeriod: Mock };
+  let rates: { findRate: Mock; invalidate: Mock };
+  let policy: { getPolicy: Mock };
+  let settings: { isEnabled: Mock };
   let usage: {
-    findOpenPaygReservation: jest.Mock;
-    createReservation: jest.Mock;
-    findByReservationId: jest.Mock;
-    markFinalized: jest.Mock;
-    markReleased: jest.Mock;
-    deleteByReservationId: jest.Mock;
+    findOpenPaygReservation: Mock;
+    createReservation: Mock;
+    findByReservationId: Mock;
+    markFinalized: Mock;
+    markReleased: Mock;
+    deleteByReservationId: Mock;
   };
-  let users: { findUserById: jest.Mock };
-  let events: { publishBalanceState: jest.Mock };
-  let ledger: { findReservationAttribution: jest.Mock };
+  let users: { findUserById: Mock };
+  let events: { publishBalanceState: Mock };
+  let ledger: { findReservationAttribution: Mock };
   let manager: CreditReservationManager;
 
   const build = (): CreditReservationManager =>
@@ -149,19 +150,19 @@ describe('CreditReservationManager', () => {
 
   beforeEach(() => {
     client = {
-      eval: jest.fn().mockResolvedValue([1, '', '0', '0']),
-      mget: jest.fn().mockResolvedValue([null, null]),
+      eval: vi.fn().mockResolvedValue([1, '', '0', '0']),
+      mget: vi.fn().mockResolvedValue([null, null]),
     };
-    redis = { getClient: jest.fn().mockReturnValue(client) };
+    redis = { getClient: vi.fn().mockReturnValue(client) };
     wallets = {
-      ensure: jest.fn().mockResolvedValue(makeWallet()),
-      getBalances: jest.fn().mockResolvedValue({
+      ensure: vi.fn().mockResolvedValue(makeWallet()),
+      getBalances: vi.fn().mockResolvedValue({
         wallet: makeWallet(),
         availableMicroUsd: 50_000n,
       }),
-      applyHold: jest.fn().mockResolvedValue(makeWallet()),
-      applyRelease: jest.fn().mockResolvedValue(makeWallet()),
-      applySettlement: jest.fn().mockResolvedValue({
+      applyHold: vi.fn().mockResolvedValue(makeWallet()),
+      applyRelease: vi.fn().mockResolvedValue(makeWallet()),
+      applySettlement: vi.fn().mockResolvedValue({
         chargedMicroUsd: 21_000n,
         refundedMicroUsd: 29_000n,
         availableAfterMicroUsd: 29_000n,
@@ -169,26 +170,26 @@ describe('CreditReservationManager', () => {
       }),
     };
     grants = {
-      ensureCurrentPeriod: jest.fn().mockResolvedValue({
+      ensureCurrentPeriod: vi.fn().mockResolvedValue({
         wallet: makeWallet(),
         availableMicroUsd: 50_000n,
       }),
     };
-    rates = { findRate: jest.fn().mockResolvedValue(PRICED_RATE), invalidate: jest.fn() };
-    policy = { getPolicy: jest.fn().mockResolvedValue({ OPENAI: true }) };
-    settings = { isEnabled: jest.fn().mockResolvedValue(true) };
+    rates = { findRate: vi.fn().mockResolvedValue(PRICED_RATE), invalidate: vi.fn() };
+    policy = { getPolicy: vi.fn().mockResolvedValue({ OPENAI: true }) };
+    settings = { isEnabled: vi.fn().mockResolvedValue(true) };
     usage = {
-      findOpenPaygReservation: jest.fn().mockResolvedValue(null),
-      createReservation: jest.fn().mockResolvedValue(makeRecord()),
-      findByReservationId: jest.fn().mockResolvedValue(makeRecord()),
-      markFinalized: jest.fn().mockResolvedValue(1),
-      markReleased: jest.fn().mockResolvedValue(1),
-      deleteByReservationId: jest.fn().mockResolvedValue(undefined),
+      findOpenPaygReservation: vi.fn().mockResolvedValue(null),
+      createReservation: vi.fn().mockResolvedValue(makeRecord()),
+      findByReservationId: vi.fn().mockResolvedValue(makeRecord()),
+      markFinalized: vi.fn().mockResolvedValue(1),
+      markReleased: vi.fn().mockResolvedValue(1),
+      deleteByReservationId: vi.fn().mockResolvedValue(undefined),
     };
-    users = { findUserById: jest.fn().mockResolvedValue({ id: 'user-1', role: UserRole.USER }) };
-    events = { publishBalanceState: jest.fn().mockResolvedValue(undefined) };
+    users = { findUserById: vi.fn().mockResolvedValue({ id: 'user-1', role: UserRole.USER }) };
+    events = { publishBalanceState: vi.fn().mockResolvedValue(undefined) };
     ledger = {
-      findReservationAttribution: jest
+      findReservationAttribution: vi
         .fn()
         .mockResolvedValue({ surface: PaygSurface.CHAT, workflow: null }),
     };
@@ -312,7 +313,9 @@ describe('CreditReservationManager', () => {
     // derived from that balance.
     it('holds no more than the balance it was computed from', async () => {
       await manager.reserve(makeInput());
-      const held = wallets['applyHold'].mock.calls[0][0].split;
+      const holdCall = wallets['applyHold'].mock.calls[0];
+      expect(holdCall).toBeDefined();
+      const held = holdCall?.[0].split;
       expect(held.grantMicroUsd + held.purchasedMicroUsd).toBe(50_000n);
       expect(held.grantMicroUsd).toBe(50_000n);
       expect(held.purchasedMicroUsd).toBe(0n);

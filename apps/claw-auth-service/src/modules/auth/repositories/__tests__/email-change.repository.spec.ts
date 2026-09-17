@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { EmailChangeStage } from '../../enums/email-change-stage.enum';
@@ -6,24 +7,24 @@ import { EmailChangeRepository } from '../email-change.repository';
 describe('EmailChangeRepository', () => {
   const transaction = {
     emailChangeRequest: {
-      findFirst: jest.fn(),
-      updateMany: jest.fn(),
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
     },
-    emailVerificationToken: { deleteMany: jest.fn() },
-    passwordResetToken: { deleteMany: jest.fn() },
-    session: { deleteMany: jest.fn() },
-    user: { findUnique: jest.fn(), update: jest.fn() },
+    emailVerificationToken: { deleteMany: vi.fn() },
+    passwordResetToken: { deleteMany: vi.fn() },
+    session: { deleteMany: vi.fn() },
+    user: { findUnique: vi.fn(), update: vi.fn() },
   };
   const prisma = {
-    $transaction: jest.fn(async (callback: (client: typeof transaction) => unknown) =>
+    $transaction: vi.fn(async (callback: (client: typeof transaction) => unknown) =>
       callback(transaction),
     ),
-    emailChangeRequest: { updateMany: jest.fn() },
+    emailChangeRequest: { updateMany: vi.fn() },
   };
   let repository: EmailChangeRepository;
 
   beforeEach(async () => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     prisma.$transaction.mockImplementation(
       async (callback: (client: typeof transaction) => unknown) => callback(transaction),
     );

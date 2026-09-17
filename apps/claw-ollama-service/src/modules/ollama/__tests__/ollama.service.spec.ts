@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { OllamaService } from '../ollama.service';
 import { type LocalModelsRepository } from '../repositories/local-models.repository';
 import { type RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
@@ -14,8 +15,8 @@ import {
   RuntimeType,
 } from '../../../generated/prisma';
 
-jest.mock('../managers/adapters/runtime-adapter-factory', () => ({
-  getRuntimeAdapter: jest.fn(),
+vi.mock('../managers/adapters/runtime-adapter-factory', () => ({
+  getRuntimeAdapter: vi.fn(),
 }));
 
 const mockLocalModel = {
@@ -60,41 +61,41 @@ const mockCatalogEntry = {
   updatedAt: new Date(),
 };
 
-const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, jest.Mock>> => ({
-  findAll: jest.fn().mockResolvedValue([mockLocalModel]),
-  countAll: jest.fn().mockResolvedValue(1),
-  findById: jest.fn().mockResolvedValue(mockLocalModel),
-  findAllInstalled: jest.fn().mockResolvedValue([mockLocalModel]),
+const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, Mock>> => ({
+  findAll: vi.fn().mockResolvedValue([mockLocalModel]),
+  countAll: vi.fn().mockResolvedValue(1),
+  findById: vi.fn().mockResolvedValue(mockLocalModel),
+  findAllInstalled: vi.fn().mockResolvedValue([mockLocalModel]),
 });
 
-const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, jest.Mock>> => ({
-  findAll: jest.fn().mockResolvedValue([]),
+const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, Mock>> => ({
+  findAll: vi.fn().mockResolvedValue([]),
 });
 
-const mockManager = (): Partial<Record<keyof OllamaManager, jest.Mock>> => ({
-  pullModel: jest.fn().mockResolvedValue(mockLocalModel),
-  assignRole: jest.fn().mockResolvedValue(mockRoleAssignment),
-  generate: jest.fn().mockResolvedValue({
+const mockManager = (): Partial<Record<keyof OllamaManager, Mock>> => ({
+  pullModel: vi.fn().mockResolvedValue(mockLocalModel),
+  assignRole: vi.fn().mockResolvedValue(mockRoleAssignment),
+  generate: vi.fn().mockResolvedValue({
     model: 'llama3',
     createdAt: '2024-01-01T00:00:00Z',
     response: 'Hello!',
     done: true,
   }),
-  checkRuntimeHealth: jest.fn().mockResolvedValue({
+  checkRuntimeHealth: vi.fn().mockResolvedValue({
     runtime: 'OLLAMA',
     healthy: true,
     latencyMs: 50,
   }),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 const mockCatalogRemoteMetadataService = (): Partial<
-  Record<keyof CatalogRemoteMetadataService, jest.Mock>
+  Record<keyof CatalogRemoteMetadataService, Mock>
 > => ({
-  getMetadata: jest.fn().mockResolvedValue({
+  getMetadata: vi.fn().mockResolvedValue({
     sourceUrl: 'https://registry.ollama.com/library/llama3',
     isAvailable: true,
     isDownloadable: true,
@@ -108,26 +109,26 @@ describe('OllamaService', () => {
   let service: OllamaService;
   let localModelsRepo: ReturnType<typeof mockLocalModelsRepo>;
   let runtimeConfigsRepo: ReturnType<typeof mockRuntimeConfigsRepo>;
-  let modelCatalogRepo: Partial<Record<keyof ModelCatalogRepository, jest.Mock>>;
-  let pullJobsRepo: Partial<Record<keyof PullJobsRepository, jest.Mock>>;
+  let modelCatalogRepo: Partial<Record<keyof ModelCatalogRepository, Mock>>;
+  let pullJobsRepo: Partial<Record<keyof PullJobsRepository, Mock>>;
   let manager: ReturnType<typeof mockManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
   let catalogRemoteMetadataService: ReturnType<typeof mockCatalogRemoteMetadataService>;
 
-  const mockModelCatalogRepo = (): Partial<Record<keyof ModelCatalogRepository, jest.Mock>> => ({
-    findAll: jest.fn().mockResolvedValue([]),
-    findById: jest.fn().mockResolvedValue(null),
-    countAll: jest.fn().mockResolvedValue(0),
-    search: jest.fn().mockResolvedValue([]),
-    updateSourceUrlIfChanged: jest.fn().mockResolvedValue(void 0),
+  const mockModelCatalogRepo = (): Partial<Record<keyof ModelCatalogRepository, Mock>> => ({
+    findAll: vi.fn().mockResolvedValue([]),
+    findById: vi.fn().mockResolvedValue(null),
+    countAll: vi.fn().mockResolvedValue(0),
+    search: vi.fn().mockResolvedValue([]),
+    updateSourceUrlIfChanged: vi.fn().mockResolvedValue(void 0),
   });
 
-  const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
-    create: jest.fn().mockResolvedValue({ id: 'pull-1', status: 'PENDING' }),
-    findById: jest.fn().mockResolvedValue(null),
-    update: jest.fn().mockResolvedValue({ id: 'pull-1' }),
-    findRecent: jest.fn().mockResolvedValue([]),
-    findLatestByModelName: jest.fn().mockResolvedValue(null),
+  const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, Mock>> => ({
+    create: vi.fn().mockResolvedValue({ id: 'pull-1', status: 'PENDING' }),
+    findById: vi.fn().mockResolvedValue(null),
+    update: vi.fn().mockResolvedValue({ id: 'pull-1' }),
+    findRecent: vi.fn().mockResolvedValue([]),
+    findLatestByModelName: vi.fn().mockResolvedValue(null),
   });
 
   beforeEach(() => {

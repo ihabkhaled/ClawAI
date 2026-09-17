@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ClientLogsService } from '../client-logs.service';
 import { ClientLogsRepository } from '../../repositories/client-logs.repository';
@@ -5,21 +6,21 @@ import { SortOrder } from '../../../../common/enums/sort-order.enum';
 
 describe('ClientLogsService', () => {
   let service: ClientLogsService;
-  let repo: jest.Mocked<ClientLogsRepository>;
+  let repo: Mocked<ClientLogsRepository>;
 
   beforeEach(async () => {
     repo = {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findAll: jest.fn(),
-      countAll: jest.fn(),
-      getDistinctValues: jest.fn(),
-      aggregateByLevel: jest.fn(),
-      aggregateByComponent: jest.fn(),
-      aggregateByAction: jest.fn(),
-      aggregateByRoute: jest.fn(),
-      getErrorCount: jest.fn(),
-    } as unknown as jest.Mocked<ClientLogsRepository>;
+      create: vi.fn(),
+      createMany: vi.fn(),
+      findAll: vi.fn(),
+      countAll: vi.fn(),
+      getDistinctValues: vi.fn(),
+      aggregateByLevel: vi.fn(),
+      aggregateByComponent: vi.fn(),
+      aggregateByAction: vi.fn(),
+      aggregateByRoute: vi.fn(),
+      getErrorCount: vi.fn(),
+    } as unknown as Mocked<ClientLogsRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [ClientLogsService, { provide: ClientLogsRepository, useValue: repo }],

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { JudgeDecision } from '../common/enums';
 import { JudgeRefereeManager } from '../modules/chat-messages/managers/judge-referee.manager';
 import type {
@@ -10,8 +11,8 @@ describe('JudgeRefereeManager', () => {
 
   beforeEach(() => {
     const mockStreamService = {
-      emitJudgeEvaluating: jest.fn(),
-      emitOrchestrationStage: jest.fn(),
+      emitJudgeEvaluating: vi.fn(),
+      emitOrchestrationStage: vi.fn(),
     } as any;
     manager = new JudgeRefereeManager(mockStreamService);
   });
@@ -314,7 +315,7 @@ describe('JudgeRefereeManager', () => {
     // renders "Critic was not requested for this review.".
     it('skips the critic call entirely when criticEnabled is unset and judges via local', async () => {
       const executionManager = {
-        callProvider: jest.fn().mockResolvedValueOnce({
+        callProvider: vi.fn().mockResolvedValueOnce({
           content: '{"decision":"ACCEPT","reasoning":"Looks good","confidence":0.95}',
           provider: 'local-ollama',
           model: 'AUTO',

@@ -45,4 +45,21 @@ npm run typecheck && npx vitest run
 git add <explicit paths> && git commit && git push
 ```
 
+## TypeScript runs side by side, deliberately
+
+`typescript` is pinned to **6.0.3** and `typescript7` is an alias for
+**7.0.2**. That is not drift — it is the arrangement Microsoft documents for
+running the new compiler alongside tooling that has not caught up.
+
+- **Build and typecheck use 7.0.2**, through `tools/typescript/run-ts7.mjs`,
+  which resolves the `typescript7` alias. This is what `npm run build` and
+  `npm run typecheck` actually execute.
+- **ESLint uses the 6.x API.** `typescript-eslint` does not support TS 7.0
+  (typescript-eslint#10940). Bumping the plain `typescript` dependency to 7.0.2
+  breaks `npx eslint` **repo-wide** with "typescript-eslint does not support TS
+  7.0" — including the `lint-staged` step in pre-commit, so nobody can commit.
+
+If you need to raise the compiler, raise the `typescript7` alias. Leave
+`typescript` on 6.x until typescript-eslint ships TS 7 support.
+
 Related: [`rules/34-gate-economy-and-machine-resources.md`](34-gate-economy-and-machine-resources.md)

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { BusinessException } from '../common/errors/business.exception';
 import { BestOfNManager } from '../modules/chat-messages/managers/best-of-n.manager';
@@ -11,23 +12,23 @@ import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
-jest.mock('../modules/chat-messages/managers/best-of-n.manager', () => {
-  const actual = jest.requireActual<{ BestOfNManager: typeof BestOfNManager }>(
+vi.mock('../modules/chat-messages/managers/best-of-n.manager', async () => {
+  const actual = await vi.importActual<{ BestOfNManager: typeof BestOfNManager }>(
     '../modules/chat-messages/managers/best-of-n.manager',
   );
   return actual;
 });
 
-jest.mock('../app/config/app.config', () => ({
+vi.mock('../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://localhost:11434',
     }),
   },
 }));
 
-jest.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn().mockResolvedValue({
+vi.mock('../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     data: { response: 'mocked response content' },
@@ -90,27 +91,27 @@ const mockAssistantMessage = {
   createdAt: new Date(),
 };
 
-const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  create: jest.fn(),
+const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  create: vi.fn(),
 });
 
-const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
+const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
 });
 
-const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
-  emitCompletion: jest.fn(),
-  emitError: jest.fn(),
+const mockStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
+  emitCompletion: vi.fn(),
+  emitError: vi.fn(),
 });
 
-const mockQualityCheckManager = (): Partial<Record<keyof QualityCheckManager, jest.Mock>> => ({
-  checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
+const mockQualityCheckManager = (): Partial<Record<keyof QualityCheckManager, Mock>> => ({
+  checkResponseQuality: vi.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
 });
 
 // Universal-research PR2: stub for the new ResearchEnricherManager dependency.
 const mockResearchEnricherManager = {
-  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
 describe('BestOfNManager', () => {
@@ -139,8 +140,8 @@ describe('BestOfNManager', () => {
       createFakePaygAccessControl() as any,
     );
 
-    jest.clearAllMocks();
-    (httpClientModule.httpRequest as jest.Mock).mockResolvedValue({
+    vi.clearAllMocks();
+    (httpClientModule.httpRequest as Mock).mockResolvedValue({
       ok: true,
       status: 200,
       data: { response: 'mocked response content' },
@@ -259,7 +260,7 @@ describe('BestOfNManager', () => {
     });
 
     it('should store error message and emit SSE error on failure', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(
         new Error('Ollama unreachable'),
       );
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
@@ -270,7 +271,7 @@ describe('BestOfNManager', () => {
     });
 
     it('should resolve (fire-and-forget) even if everything fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Fatal'));
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -279,8 +280,8 @@ describe('BestOfNManager', () => {
     });
 
     it('stores error message with error:true metadata when all candidates fail', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Network timeout'));
-      const createMock = jest.fn().mockResolvedValue({ id: 'error-msg-1' });
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Network timeout'));
+      const createMock = vi.fn().mockResolvedValue({ id: 'error-msg-1' });
       const isolatedManager = new BestOfNManager(
         {
           ...messagesRepo,
@@ -300,14 +301,16 @@ describe('BestOfNManager', () => {
 
     it('stores candidates array in metadata with all n candidates', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as jest.Mock)
+      (httpClientModule.httpRequest as Mock)
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer A' } })
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer B' } })
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer C' } });
 
       await manager.executeInBackground('thread-best-1', 'prompt', 3, 'user-1');
 
-      const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+      const callCall = (messagesRepo.create as Mock).mock.calls[0];
+      expect(callCall).toBeDefined();
+      const call = callCall?.[0] as Record<string, unknown>;
       const meta = call['metadata'] as Record<string, unknown>;
       const candidates = meta['candidates'] as unknown[];
       expect(candidates).toHaveLength(3);
@@ -329,8 +332,8 @@ describe('BestOfNManager', () => {
     });
 
     it('stores error message with { error: true } when storeErrorMessage itself fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Ollama down'));
-      const createMock = jest
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Ollama down'));
+      const createMock = vi
         .fn()
         .mockRejectedValueOnce(new Error('DB write 1 failed'))
         .mockRejectedValueOnce(new Error('DB write 2 failed'));
@@ -385,9 +388,9 @@ describe('BestOfNManager', () => {
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
       const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+        Record<keyof AdvancedModuleModelSelectionService, Mock>
       > = {
-        resolveSelection: jest
+        resolveSelection: vi
           .fn()
           .mockRejectedValue(
             new BusinessException(

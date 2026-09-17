@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 
 import { DeploymentState } from '@claw/shared-types';
@@ -5,18 +6,18 @@ import { DeploymentState } from '@claw/shared-types';
 import { AppConfig } from '../../../../app/config/app.config';
 import { DeploymentStatusFileAdapter } from '../deployment-status-file.adapter';
 
-jest.mock('node:fs/promises', () => ({
-  mkdir: jest.fn(),
-  readFile: jest.fn(),
-  rename: jest.fn(),
-  writeFile: jest.fn(),
+vi.mock('node:fs/promises', () => ({
+  mkdir: vi.fn(),
+  readFile: vi.fn(),
+  rename: vi.fn(),
+  writeFile: vi.fn(),
 }));
 
 const SHA = 'a'.repeat(40);
 
 describe('DeploymentStatusFileAdapter', () => {
   beforeEach(() => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       AUTH_DATABASE_URL: 'postgresql://example',
       AUTH_PORT: 4001,
       REDIS_URL: 'redis://example',
@@ -42,10 +43,10 @@ describe('DeploymentStatusFileAdapter', () => {
     });
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('reads and validates the fixed configured status file', async () => {
-    jest.mocked(readFile).mockResolvedValue(
+    vi.mocked(readFile).mockResolvedValue(
       JSON.stringify({
         schemaVersion: 1,
         state: 'completed',
@@ -73,15 +74,15 @@ describe('DeploymentStatusFileAdapter', () => {
   it.each([new Error('missing'), '{not-json}', JSON.stringify({ unsafe: true })])(
     'returns null for unreadable or invalid input',
     async (input) => {
-      if (input instanceof Error) jest.mocked(readFile).mockRejectedValue(input);
-      else jest.mocked(readFile).mockResolvedValue(input);
+      if (input instanceof Error) vi.mocked(readFile).mockRejectedValue(input);
+      else vi.mocked(readFile).mockResolvedValue(input);
 
       await expect(new DeploymentStatusFileAdapter().read()).resolves.toBeNull();
     },
   );
 
   it('reads the automation switch from its own configured file', async () => {
-    jest
+    vi
       .mocked(readFile)
       .mockResolvedValue(
         JSON.stringify({ schemaVersion: 1, enabled: false, updatedAt: '2026-08-13T10:29:58Z' }),
@@ -113,7 +114,7 @@ describe('DeploymentStatusFileAdapter', () => {
   });
 
   it('propagates a write failure instead of reporting a reset that never landed', async () => {
-    jest.mocked(writeFile).mockRejectedValue(new Error('read-only file system'));
+    vi.mocked(writeFile).mockRejectedValue(new Error('read-only file system'));
 
     await expect(
       new DeploymentStatusFileAdapter().writeAutomation({

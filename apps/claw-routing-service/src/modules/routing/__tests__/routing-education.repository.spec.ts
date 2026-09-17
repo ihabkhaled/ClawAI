@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { type PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { RoutingEducationRepository } from '../repositories/routing-education.repository';
 import type {
@@ -63,39 +64,39 @@ const buildRepo = (): {
   repository: RoutingEducationRepository;
   prisma: {
     routingCalibrationSnapshot: {
-      updateMany: jest.Mock;
-      create: jest.Mock;
-      findFirst: jest.Mock;
-      findMany: jest.Mock;
+      updateMany: Mock;
+      create: Mock;
+      findFirst: Mock;
+      findMany: Mock;
     };
-    routerModelProfile: { deleteMany: jest.Mock; createMany: jest.Mock };
-    routerTopicProfile: { deleteMany: jest.Mock; createMany: jest.Mock };
-    routerWorkspacePrior: { findUnique: jest.Mock; upsert: jest.Mock };
-    $queryRaw: jest.Mock;
-    $transaction: jest.Mock;
+    routerModelProfile: { deleteMany: Mock; createMany: Mock };
+    routerTopicProfile: { deleteMany: Mock; createMany: Mock };
+    routerWorkspacePrior: { findUnique: Mock; upsert: Mock };
+    $queryRaw: Mock;
+    $transaction: Mock;
   };
 } => {
   const routingCalibrationSnapshot = {
-    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-    create: jest
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    create: vi
       .fn()
       .mockImplementation(({ data }: { data: Record<string, unknown> }) =>
         Promise.resolve({ id: 'snap-1', generatedAt: new Date(), ...data }),
       ),
-    findFirst: jest.fn().mockResolvedValue(null),
-    findMany: jest.fn().mockResolvedValue([]),
+    findFirst: vi.fn().mockResolvedValue(null),
+    findMany: vi.fn().mockResolvedValue([]),
   };
   const routerModelProfile = {
-    deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-    createMany: jest.fn().mockResolvedValue({ count: 0 }),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    createMany: vi.fn().mockResolvedValue({ count: 0 }),
   };
   const routerTopicProfile = {
-    deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-    createMany: jest.fn().mockResolvedValue({ count: 0 }),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    createMany: vi.fn().mockResolvedValue({ count: 0 }),
   };
   const routerWorkspacePrior = {
-    findUnique: jest.fn().mockResolvedValue(null),
-    upsert: jest
+    findUnique: vi.fn().mockResolvedValue(null),
+    upsert: vi
       .fn()
       .mockImplementation(({ create }: { create: Record<string, unknown> }) =>
         Promise.resolve({ id: 'prior-1', ...create }),
@@ -109,11 +110,11 @@ const buildRepo = (): {
     routerWorkspacePrior,
     // The advisory lock that serialises the replace. Returns a resolved value
     // so it can sit inside the $transaction array like any PrismaPromise.
-    $queryRaw: jest.fn().mockResolvedValue([{ pg_advisory_xact_lock: '' }]),
+    $queryRaw: vi.fn().mockResolvedValue([{ pg_advisory_xact_lock: '' }]),
     // Mirrors Prisma's array-form $transaction: resolve each already-created
     // PrismaPromise and return the results in order, so commitCalibrationBatch
     // can destructure the created snapshot out of the batch.
-    $transaction: jest
+    $transaction: vi
       .fn()
       .mockImplementation((operations: Array<Promise<unknown>>) => Promise.all(operations)),
   };

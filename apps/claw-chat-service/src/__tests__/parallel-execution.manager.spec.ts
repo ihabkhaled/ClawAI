@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../app/config/app.config';
 import { ParallelExecutionManager } from '../modules/chat-messages/managers/parallel-execution.manager';
 import type {
@@ -11,7 +12,7 @@ import {
   fallbackModelTokenBudget,
 } from '../modules/chat-messages/utilities/assembled-context.utility';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -35,62 +36,62 @@ describe('ParallelExecutionManager', () => {
   // providers; the buffered callProvider remains the fallback.) Explicit type
   // annotation breaks the self-referential implicit-any inference.
   const mockChatExecutionManager: {
-    callProvider: jest.Mock;
-    streamModelForLane: jest.Mock;
-    reserveCompareLane: jest.Mock;
-    releaseCompareLane: jest.Mock;
+    callProvider: Mock;
+    streamModelForLane: Mock;
+    reserveCompareLane: Mock;
+    releaseCompareLane: Mock;
   } = {
-    callProvider: jest.fn(),
-    streamModelForLane: jest.fn(),
+    callProvider: vi.fn(),
+    streamModelForLane: vi.fn(),
     // Compare funds every lane BEFORE any provider call, so a run that cannot
     // pay for all N is refused whole rather than returning error columns the
     // user still paid for. These suites test fan-out, not metering, so the
     // lanes come back unmetered.
-    reserveCompareLane: jest.fn(),
-    releaseCompareLane: jest.fn(),
+    reserveCompareLane: vi.fn(),
+    releaseCompareLane: vi.fn(),
   };
   mockChatExecutionManager.streamModelForLane.mockImplementation((...args: unknown[]) =>
     mockChatExecutionManager.callProvider(...args),
   );
 
   const mockContextAssemblyManager = {
-    assemble: jest.fn(),
+    assemble: vi.fn(),
   };
 
   const mockJudgeRefereeManager = {
-    evaluate: jest.fn(),
-    buildMetadata: jest.fn(),
+    evaluate: vi.fn(),
+    buildMetadata: vi.fn(),
   };
 
   const mockChatMessagesRepository = {
-    create: jest.fn(),
-    findRecentByThreadId: jest.fn(),
+    create: vi.fn(),
+    findRecentByThreadId: vi.fn(),
   };
 
   const mockChatThreadsRepository = {
-    findById: jest.fn(),
+    findById: vi.fn(),
   };
 
   const mockChatStreamService = {
-    emitRequestAccepted: jest.fn(),
-    emitProgressStage: jest.fn(),
-    emitCompletion: jest.fn(),
-    emitError: jest.fn(),
+    emitRequestAccepted: vi.fn(),
+    emitProgressStage: vi.fn(),
+    emitCompletion: vi.fn(),
+    emitError: vi.fn(),
   };
 
   // Default to a no-op enricher that returns the original mode + empty
   // evidence so existing tests stay assertion-equivalent (compare path is
   // unchanged when researchMode is NONE / undefined).
   const mockResearchEnricherManager = {
-    enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
+    enrich: vi.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
   };
 
   // Slice D — FileDeliveryRecordService dual-write. No-op mock keeps the
   // existing parallel-execution assertions intact while satisfying the
   // updated constructor signature.
   const mockFileDeliveryRecordService = {
-    recordDeliveries: jest.fn().mockImplementation(async () => {}),
-    getDeliveriesForMessage: jest.fn().mockResolvedValue([]),
+    recordDeliveries: vi.fn().mockImplementation(async () => {}),
+    getDeliveriesForMessage: vi.fn().mockResolvedValue([]),
   };
 
   const mockContext: AssembledContext = {
@@ -120,7 +121,7 @@ describe('ParallelExecutionManager', () => {
   const disabledCriticConfig = { enabled: false, model: null };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // `clearAllMocks` drains call history but NOT the `mockResolvedValueOnce`
     // queue. `executeAllModels` queues one response per lane and can now stop
     // early — all lanes are funded before any provider call — so leftovers would

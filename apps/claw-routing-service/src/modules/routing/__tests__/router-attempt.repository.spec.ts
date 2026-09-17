@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RouterErrorCode } from '../../../common/enums';
 import { RouterProvider } from '../../../generated/prisma';
 import { type PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
@@ -41,16 +42,16 @@ const persisted = (overrides: Partial<ProviderAttemptRecord> = {}): ProviderAtte
 });
 
 const buildRepo = (
-  overrides: { createMany?: jest.Mock; scoreCreateMany?: jest.Mock } = {},
+  overrides: { createMany?: Mock; scoreCreateMany?: Mock } = {},
 ): {
   repository: RouterAttemptRepository;
-  createMany: jest.Mock;
-  scoreCreateMany: jest.Mock;
+  createMany: Mock;
+  scoreCreateMany: Mock;
 } => {
-  const createMany = overrides.createMany ?? jest.fn().mockResolvedValue({ count: 1 });
-  const scoreCreateMany = overrides.scoreCreateMany ?? jest.fn().mockResolvedValue({ count: 1 });
+  const createMany = overrides.createMany ?? vi.fn().mockResolvedValue({ count: 1 });
+  const scoreCreateMany = overrides.scoreCreateMany ?? vi.fn().mockResolvedValue({ count: 1 });
   const prisma = {
-    routerProviderAttempt: { createMany, findMany: jest.fn().mockResolvedValue([]) },
+    routerProviderAttempt: { createMany, findMany: vi.fn().mockResolvedValue([]) },
     routingCandidateScore: { createMany: scoreCreateMany },
   };
   return {
@@ -111,7 +112,7 @@ describe('toAttemptRecords', () => {
 describe('RouterAttemptRepository.recordAttempts', () => {
   it('writes every attempt in one call', async () => {
     const { repository, createMany } = buildRepo({
-      createMany: jest.fn().mockResolvedValue({ count: 3 }),
+      createMany: vi.fn().mockResolvedValue({ count: 3 }),
     });
 
     const written = await repository.recordAttempts([
@@ -137,7 +138,7 @@ describe('RouterAttemptRepository.recordAttempts', () => {
   // audit trail could not be written.
   it('never throws when the write fails', async () => {
     const { repository } = buildRepo({
-      createMany: jest.fn().mockRejectedValue(new Error('db down')),
+      createMany: vi.fn().mockRejectedValue(new Error('db down')),
     });
 
     await expect(repository.recordAttempts([persisted()])).resolves.toBe(0);
@@ -166,7 +167,7 @@ describe('RouterAttemptRepository.recordAttempts', () => {
 describe('RouterAttemptRepository.recordCandidateScores', () => {
   it('writes a ranked candidate set', async () => {
     const { repository } = buildRepo({
-      scoreCreateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      scoreCreateMany: vi.fn().mockResolvedValue({ count: 2 }),
     });
 
     const written = await repository.recordCandidateScores([
@@ -203,7 +204,7 @@ describe('RouterAttemptRepository.recordCandidateScores', () => {
 
   it('never throws when the write fails', async () => {
     const { repository } = buildRepo({
-      scoreCreateMany: jest.fn().mockRejectedValue(new Error('db down')),
+      scoreCreateMany: vi.fn().mockRejectedValue(new Error('db down')),
     });
 
     await expect(

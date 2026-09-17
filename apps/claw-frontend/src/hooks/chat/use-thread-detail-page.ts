@@ -14,7 +14,11 @@ import { useShareChatController } from '@/hooks/chat-shares/use-share-chat-contr
 import { useToggle } from '@/hooks/common/use-toggle';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
+import type {
+  ChatThreadHeaderMenuProps,
+  ChatThreadShellProps,
+  UseThreadDetailPageReturn,
+} from '@/types';
 import { collectUserMessageHistory } from '@/utilities';
 
 import { useExportThread } from './use-export-thread';
@@ -80,6 +84,35 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   // bag does not churn on every unrelated render of this page.
   // The user's own past messages, most recent first, for ArrowUp/ArrowDown.
   const recallHistory = useMemo(() => collectUserMessageHistory(data.messages), [data.messages]);
+
+  // Built once and handed to two places: the header renders it below `sm`
+  // (where it carries every action), and the side rail renders it from `sm` up
+  // (where it carries only the once-per-thread three, because the other four
+  // are the buttons above it). `collapsePrimaryActions` is the switch, and it
+  // is derived from the same media query that decides which of the two hosts
+  // exists — so the menu can never disagree with its host about what it holds.
+  const headerMenuProps: ChatThreadHeaderMenuProps = {
+    menuLabel: t('chat.moreActions'),
+    collapsePrimaryActions: !showInlineActions,
+    canCompare,
+    compareLabel: t('compare.title'),
+    onCompare: () => togglePanel(ActiveThreadPanel.COMPARE),
+    canUseQualityControls: canJudge || canCritic,
+    qualityLabel: t('chat.judgeReferee'),
+    onQuality: () => togglePanel(ActiveThreadPanel.QUALITY),
+    searchLabel: t('chat.search.action'),
+    onSearch: search.isOpen ? search.close : search.open,
+    shareLabel: share.buttonProps.label,
+    onShare: share.buttonProps.onClick,
+    exportLabel: t('chat.export.action'),
+    onExport: exportThread.exportThread,
+    canExport: exportThread.canExport,
+    settingsLabel: t('chat.threadSettings'),
+    onOpenSettings: () => togglePanel(ActiveThreadPanel.SETTINGS),
+    deleteLabel: t('common.delete'),
+    onDelete: deleteConfirm.open,
+    isDeleting: data.isDeleting,
+  };
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -214,28 +247,29 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     // the only consumer, and the list itself never scrolls on its own behalf.
     onJumpToMessage: jumpToMessage,
     showInlineActions,
-    headerMenuProps: {
-      menuLabel: t('chat.moreActions'),
-      collapsePrimaryActions: !showInlineActions,
+    // The rail beside the conversation, from `sm` up. Same five controls the
+    // header row used to carry; `collapsePrimaryActions: false` on its menu
+    // because the four above it are already rendered as buttons.
+    actionRailProps: {
       canCompare,
       compareLabel: t('compare.title'),
+      compareIsOpen: activePanel === ActiveThreadPanel.COMPARE,
       onCompare: () => togglePanel(ActiveThreadPanel.COMPARE),
       canUseQualityControls: canJudge || canCritic,
       qualityLabel: t('chat.judgeReferee'),
+      qualityIsOpen: activePanel === ActiveThreadPanel.QUALITY,
       onQuality: () => togglePanel(ActiveThreadPanel.QUALITY),
       searchLabel: t('chat.search.action'),
+      searchIsOpen: search.isOpen,
       onSearch: search.isOpen ? search.close : search.open,
-      shareLabel: share.buttonProps.label,
-      onShare: share.buttonProps.onClick,
-      exportLabel: t('chat.export.action'),
-      onExport: exportThread.exportThread,
-      canExport: exportThread.canExport,
-      settingsLabel: t('chat.threadSettings'),
-      onOpenSettings: () => togglePanel(ActiveThreadPanel.SETTINGS),
-      deleteLabel: t('common.delete'),
-      onDelete: deleteConfirm.open,
-      isDeleting: data.isDeleting,
+      shareButtonProps: share.buttonProps,
+      // The same bag the header uses. It is safe to share because the rail only
+      // renders when showInlineActions is true, which is exactly when
+      // `collapsePrimaryActions` is false — the four primary actions are the
+      // buttons above it, so the menu must not repeat them.
+      menuProps: headerMenuProps,
     },
+    headerMenuProps,
     composerProps: {
       onSend: data.handleSend,
       isPending: data.isSending,

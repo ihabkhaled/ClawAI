@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   ReconciliationClassification,
   ReconciliationEntityType,
@@ -8,16 +9,16 @@ import type { PrismaService } from '../../../../infrastructure/database/prisma/p
 import { ReconciliationRepository } from '../reconciliation.repository';
 
 describe('ReconciliationRepository', () => {
-  let run: { create: jest.Mock; update: jest.Mock };
-  let divergence: { create: jest.Mock };
+  let run: { create: Mock; update: Mock };
+  let divergence: { create: Mock };
   let repository: ReconciliationRepository;
 
   beforeEach(() => {
     run = {
-      create: jest.fn().mockResolvedValue({ id: 'run-1' }),
-      update: jest.fn(),
+      create: vi.fn().mockResolvedValue({ id: 'run-1' }),
+      update: vi.fn(),
     };
-    divergence = { create: jest.fn() };
+    divergence = { create: vi.fn() };
     repository = new ReconciliationRepository({
       reconciliationRun: run,
       reconciliationDivergence: divergence,

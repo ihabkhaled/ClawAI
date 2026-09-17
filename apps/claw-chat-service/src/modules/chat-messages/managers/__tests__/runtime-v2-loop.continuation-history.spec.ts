@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { THREAD_CONTEXT_LIMIT } from '../../../../common/constants';
 import { RUNTIME_V2_CONTINUATION_HISTORY_MESSAGES } from '../../constants/runtime-v2-run.constants';
 import { RuntimeV2LoopManager } from '../runtime-v2-loop.manager';
@@ -25,12 +26,12 @@ describe('RuntimeV2LoopManager continuation history', () => {
 
   function loopWith(stored: { id: string; content: string }[]): {
     history: () => Promise<{ id: string }[]>;
-    findById: jest.Mock;
+    findById: Mock;
   } {
     // findRecentByThreadId returns newest first, which the manager reverses.
-    const findById = jest.fn().mockResolvedValue(null);
+    const findById = vi.fn().mockResolvedValue(null);
     const messages = {
-      findRecentByThreadId: jest
+      findRecentByThreadId: vi
         .fn()
         .mockImplementation((_threadId: string, limit: number) =>
           Promise.resolve([...stored].reverse().slice(0, limit)),

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ConnectorAccessService } from '../connector-access.service';
 import { ConnectorAccessSource } from '../../enums/connector-access-source.enum';
 import { ConnectorAction } from '../../enums/connector-action.enum';
@@ -9,12 +10,12 @@ const makeService = (
     grant?: unknown;
   } = {},
 ): { svc: ConnectorAccessService; connectorRepo: any; grantRepo: any } => {
-  const connectorRepo = { findById: jest.fn().mockResolvedValue(overrides.connector ?? null) };
+  const connectorRepo = { findById: vi.fn().mockResolvedValue(overrides.connector ?? null) };
   const grantRepo = {
-    findForUserConnector: jest.fn().mockResolvedValue(overrides.grant ?? null),
-    upsert: jest.fn().mockResolvedValue({ id: 'g1' }),
-    deleteOne: jest.fn().mockResolvedValue(undefined),
-    recordRevocation: jest.fn().mockResolvedValue(undefined),
+    findForUserConnector: vi.fn().mockResolvedValue(overrides.grant ?? null),
+    upsert: vi.fn().mockResolvedValue({ id: 'g1' }),
+    deleteOne: vi.fn().mockResolvedValue(undefined),
+    recordRevocation: vi.fn().mockResolvedValue(undefined),
   };
   const svc = new ConnectorAccessService(connectorRepo as any, grantRepo as any);
   return { svc, connectorRepo, grantRepo };
@@ -184,10 +185,10 @@ describe('ConnectorAccessService', () => {
       overrides: { connector?: unknown; grant?: unknown },
       grants: unknown[],
     ): ConnectorAccessService => {
-      const connectorRepo = { findById: jest.fn().mockResolvedValue(overrides.connector ?? null) };
+      const connectorRepo = { findById: vi.fn().mockResolvedValue(overrides.connector ?? null) };
       const grantRepo = {
-        findForUserConnector: jest.fn().mockResolvedValue(overrides.grant ?? null),
-        listForConnector: jest.fn().mockResolvedValue(grants),
+        findForUserConnector: vi.fn().mockResolvedValue(overrides.grant ?? null),
+        listForConnector: vi.fn().mockResolvedValue(grants),
       };
       return new ConnectorAccessService(connectorRepo as any, grantRepo as any);
     };
@@ -224,8 +225,8 @@ describe('ConnectorAccessService', () => {
       grants: unknown[],
       connectors: unknown[],
     ): { svc: ConnectorAccessService; connectorRepo: any } => {
-      const connectorRepo = { findManyByIds: jest.fn().mockResolvedValue(connectors) };
-      const grantRepo = { listForUser: jest.fn().mockResolvedValue(grants) };
+      const connectorRepo = { findManyByIds: vi.fn().mockResolvedValue(connectors) };
+      const grantRepo = { listForUser: vi.fn().mockResolvedValue(grants) };
       const svc = new ConnectorAccessService(connectorRepo as any, grantRepo as any);
       return { svc, connectorRepo };
     };

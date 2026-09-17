@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -5,12 +6,12 @@ import { PaymobAdapter } from '../paymob.adapter';
 import { type PaymobTokenManager } from '../managers/paymob-token.manager';
 import { computePaymobCardTokenHmac, computePaymobHmac } from '../utilities/paymob-hmac.utility';
 
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const mockHttp = httpRequest as unknown as jest.Mock;
+const mockHttp = httpRequest as unknown as Mock;
 const SECRET = 'hmac-secret';
 const EXPECTED = { amountMinor: 50_000, currency: 'EGP', checkoutSessionId: 'cs_1' };
 
@@ -29,15 +30,15 @@ const transaction = (overrides: Record<string, unknown> = {}): Record<string, un
 
 describe('PaymobAdapter', () => {
   let adapter: PaymobAdapter;
-  let tokens: { getAccessToken: jest.Mock };
+  let tokens: { getAccessToken: Mock };
   const runtimeConfig = {
-    getPaymobCheckout: jest.fn(),
-    getPaymobOperations: jest.fn(),
+    getPaymobCheckout: vi.fn(),
+    getPaymobOperations: vi.fn(),
   };
 
   beforeEach(() => {
     mockHttp.mockReset();
-    tokens = { getAccessToken: jest.fn().mockResolvedValue('paymob-access-token') };
+    tokens = { getAccessToken: vi.fn().mockResolvedValue('paymob-access-token') };
     const paymobConfig = {
       secretKey: 'sk',
       publicKey: 'pk',
@@ -48,7 +49,7 @@ describe('PaymobAdapter', () => {
     };
     runtimeConfig.getPaymobCheckout.mockResolvedValue(paymobConfig);
     runtimeConfig.getPaymobOperations.mockResolvedValue(paymobConfig);
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_SECRET_KEY: 'sk',
       PAYMOB_PUBLIC_KEY: 'pk',
       PAYMOB_API_KEY: 'api-key',
@@ -63,7 +64,7 @@ describe('PaymobAdapter', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('createIntention', () => {
@@ -105,7 +106,7 @@ describe('PaymobAdapter', () => {
         currency: 'EGP',
         webhookUrl: 'https://billing-webhooks.example.com/payments/webhooks/paymob',
       });
-      jest.spyOn(AppConfig, 'get').mockReturnValue({
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMOB_SECRET_KEY: 'sk',
         PAYMOB_CARD_INTEGRATION_ID: '4242',
         PAYMOB_WEBHOOK_URL: 'https://billing-webhooks.example.com/payments/webhooks/paymob',
@@ -138,7 +139,7 @@ describe('PaymobAdapter', () => {
     });
 
     it('refuses when Paymob is not fully configured', async () => {
-      jest.spyOn(AppConfig, 'get').mockReturnValue({
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       } as unknown as ReturnType<typeof AppConfig.get>);
       await expect(
@@ -187,7 +188,7 @@ describe('PaymobAdapter', () => {
     });
 
     it('refuses setup when Paymob is not fully configured', async () => {
-      jest.spyOn(AppConfig, 'get').mockReturnValue({
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       } as unknown as ReturnType<typeof AppConfig.get>);
 
@@ -304,7 +305,7 @@ describe('PaymobAdapter', () => {
     });
 
     it('refuses everything when no HMAC secret is configured', async () => {
-      jest.spyOn(AppConfig, 'get').mockReturnValue({
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       } as unknown as ReturnType<typeof AppConfig.get>);
       runtimeConfig.getPaymobOperations.mockRejectedValue(new Error('missing HMAC secret'));

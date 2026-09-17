@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import type { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import type { QualityCheckManager } from '../managers/quality-check.manager';
@@ -20,31 +21,39 @@ import {
   createFakePaygAccessControl,
 } from './helpers/fake-payg-access-control.helper';
 
-jest.mock('../clients/model-exposure.client', () => ({
-  ModelExposureClient: jest.fn().mockImplementation(() => ({
-    // Exposure is a network call to connector-service. These suites test
-    // dispatch behaviour, not connectivity, so the deployment is exposed.
-    isExposed: jest.fn().mockResolvedValue(true),
-  })),
+vi.mock('../clients/model-exposure.client', () => ({
+  ModelExposureClient: vi.fn(function () {
+    return {
+      // Exposure is a network call to connector-service. These suites test
+      // dispatch behaviour, not connectivity, so the deployment is exposed.
+      isExposed: vi.fn().mockResolvedValue(true),
+    };
+  }),
 }));
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     if (!record) return undefined;
     return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
   },
 }));
-jest.mock('../../../app/config/app.config');
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as {
+  httpRequest: Mock;
 };
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 // Default AppConfig fixture used by EVERY test. Re-applied inside the
-// beforeEach (after `jest.clearAllMocks()` wipes mock state) so the new
+// beforeEach (after `vi.clearAllMocks()` wipes mock state) so the new
 // OLLAMA_TOOL_LOOP_* caps survive the reset. Without this, the agentic
 // loop reads `undefined` and every cloud-Ollama test fails with
 // "No API key configured for provider OLLAMA" because the iteration cap
@@ -80,15 +89,15 @@ const makeContext = (content: string): AssembledContext =>
 
 describe('ChatExecutionManager', () => {
   let manager: ChatExecutionManager;
-  let contextAssembly: Partial<Record<keyof ContextAssemblyManager, jest.Mock>>;
-  let qualityManager: Partial<Record<keyof QualityCheckManager, jest.Mock>>;
-  let judgeManager: Partial<Record<keyof JudgeRefereeManager, jest.Mock>>;
-  let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
-  let localModelSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>>;
+  let contextAssembly: Partial<Record<keyof ContextAssemblyManager, Mock>>;
+  let qualityManager: Partial<Record<keyof QualityCheckManager, Mock>>;
+  let judgeManager: Partial<Record<keyof JudgeRefereeManager, Mock>>;
+  let streamService: Partial<Record<keyof ChatStreamService, Mock>>;
+  let localModelSelection: Partial<Record<keyof LocalModelSelectionService, Mock>>;
   let accessControl: ReturnType<typeof createFakePaygAccessControl>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // `clearAllMocks` drains call history but NOT the `mockResolvedValueOnce`
     // queue. Any test that returns early — a PAYG refusal now short-circuits the
     // candidate loop instead of trying every provider — leaves its unconsumed
@@ -101,39 +110,39 @@ describe('ChatExecutionManager', () => {
     AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
 
     contextAssembly = {
-      buildPromptString: jest.fn().mockReturnValue('user prompt'),
-      buildChatMessages: jest
+      buildPromptString: vi.fn().mockReturnValue('user prompt'),
+      buildChatMessages: vi
         .fn()
         .mockReturnValue([{ role: 'user', content: 'Explain this briefly' }]),
-      buildGeminiChatMessages: jest
+      buildGeminiChatMessages: vi
         .fn()
         .mockReturnValue([{ role: 'user', content: 'Explain this briefly' }]),
     };
 
     qualityManager = {
-      checkResponseQuality: jest.fn().mockReturnValue({ score: 0.9, reasons: [] }),
-      shouldReRoute: jest.fn().mockReturnValue({ shouldReRoute: false }),
+      checkResponseQuality: vi.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+      shouldReRoute: vi.fn().mockReturnValue({ shouldReRoute: false }),
     };
 
     judgeManager = {
-      setExecutionManager: jest.fn(),
-      shouldActivate: jest.fn().mockReturnValue(false),
-      evaluate: jest.fn(),
-      buildMetadata: jest.fn().mockReturnValue({ judgeEnabled: true }),
+      setExecutionManager: vi.fn(),
+      shouldActivate: vi.fn().mockReturnValue(false),
+      evaluate: vi.fn(),
+      buildMetadata: vi.fn().mockReturnValue({ judgeEnabled: true }),
     };
 
     streamService = {
-      emitRouterStarted: jest.fn(),
-      emitProviderSelected: jest.fn(),
-      emitResponseStreaming: jest.fn(),
-      startResponseProgressHeartbeat: jest.fn().mockReturnValue(jest.fn()),
-      emitFallbackAttempt: jest.fn(),
-      emitError: jest.fn(),
+      emitRouterStarted: vi.fn(),
+      emitProviderSelected: vi.fn(),
+      emitResponseStreaming: vi.fn(),
+      startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
+      emitFallbackAttempt: vi.fn(),
+      emitError: vi.fn(),
     };
 
     localModelSelection = {
-      resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
-      resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b', 'llama3.3:8b']),
+      resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
+      resolveModelList: vi.fn().mockResolvedValue(['qwen3:7b', 'llama3.3:8b']),
     };
     // Metered by default so the chokepoint's reserve/finalize path is the one
     // under test; a suite that wants the local-runtime path opts out.
@@ -148,7 +157,7 @@ describe('ChatExecutionManager', () => {
       // so tests that don't set selectedWorkflow=SEARCH_FIRST keep their
       // existing behaviour.
       {
-        run: jest.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+        run: vi.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
           context: ctx,
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
@@ -158,8 +167,8 @@ describe('ChatExecutionManager', () => {
       // ENABLE_GEMINI_FILES_API=false path (no uploads), so no test should
       // hit it unless it explicitly flips the flag.
       {
-        uploadFile: jest.fn(),
-        getCachedOrUpload: jest.fn(),
+        uploadFile: vi.fn(),
+        getCachedOrUpload: vi.fn(),
       } as any,
       localModelSelection as unknown as LocalModelSelectionService,
     );
@@ -212,7 +221,9 @@ describe('ChatExecutionManager', () => {
     expect(judgeManager.shouldActivate).not.toHaveBeenCalled();
     expect(result.fastPathUsed).toBe(true);
 
-    const requestBody = httpRequest.mock.calls[0][0].body as {
+    const requestBodyCall = httpRequest.mock.calls[0];
+    expect(requestBodyCall).toBeDefined();
+    const requestBody = requestBodyCall?.[0].body as {
       think: boolean;
       options: { num_predict: number };
       prompt: string;
@@ -253,7 +264,9 @@ describe('ChatExecutionManager', () => {
     expect(judgeManager.shouldActivate).toHaveBeenCalledTimes(1);
     expect(result.fastPathUsed).toBe(false);
 
-    const requestBody = httpRequest.mock.calls[0][0].body as {
+    const requestBodyCall = httpRequest.mock.calls[0];
+    expect(requestBodyCall).toBeDefined();
+    const requestBody = requestBodyCall?.[0].body as {
       think: boolean;
       options: { num_predict: number };
     };
@@ -304,7 +317,9 @@ describe('ChatExecutionManager', () => {
     );
 
     expect(result.content).toBe('Service is healthy.');
-    const completionRequest = httpRequest.mock.calls[1][0].body as {
+    const completionRequestCall = httpRequest.mock.calls[1];
+    expect(completionRequestCall).toBeDefined();
+    const completionRequest = completionRequestCall?.[0].body as {
       max_tokens: number;
       messages: Array<{ role: string; content: string }>;
     };
@@ -391,13 +406,17 @@ describe('ChatExecutionManager', () => {
     expect(result.model).toBe('gemini-2.5-flash');
     expect(result.content).toBe('The clip shows a demo.');
     expect(httpRequest).toHaveBeenCalledTimes(2);
-    expect(httpRequest.mock.calls[1][0]).toEqual(
+    const call = httpRequest.mock.calls[1];
+    expect(call).toBeDefined();
+    expect(call?.[0]).toEqual(
       expect.objectContaining({
         url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         headers: { 'x-goog-api-key': 'gemini-key' },
       }),
     );
-    const providerRequest = httpRequest.mock.calls[1][0].body as {
+    const providerRequestCall = httpRequest.mock.calls[1];
+    expect(providerRequestCall).toBeDefined();
+    const providerRequest = providerRequestCall?.[0].body as {
       contents: Array<{
         parts: Array<{
           inline_data?: { mime_type: string; data: string };
@@ -415,11 +434,11 @@ describe('ChatExecutionManager', () => {
 
   it('cancels a buffered Gemini generate request without attempting the fallback chain', async () => {
     const cancellationController = new AbortController();
-    const runSimulated = jest.fn();
+    const runSimulated = vi.fn();
     const simulatedExecutor = { runSimulated };
-    const releaseCancellation = jest.fn();
+    const releaseCancellation = vi.fn();
     const cancellation = {
-      register: jest.fn().mockReturnValue(cancellationController),
+      register: vi.fn().mockReturnValue(cancellationController),
       release: releaseCancellation,
     };
     const cancellableManager = new ChatExecutionManager(
@@ -428,15 +447,15 @@ describe('ChatExecutionManager', () => {
       judgeManager as unknown as JudgeRefereeManager,
       streamService as unknown as ChatStreamService,
       {
-        run: jest.fn().mockImplementation(async (_query: string, requestContext: unknown) => ({
+        run: vi.fn().mockImplementation(async (_query: string, requestContext: unknown) => ({
           context: requestContext,
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as unknown as ConstructorParameters<typeof ChatExecutionManager>[4],
       asAccessControlService(createFakePaygAccessControl()),
       {
-        uploadFile: jest.fn(),
-        getCachedOrUpload: jest.fn(),
+        uploadFile: vi.fn(),
+        getCachedOrUpload: vi.fn(),
       } as unknown as ConstructorParameters<typeof ChatExecutionManager>[6],
       localModelSelection as unknown as LocalModelSelectionService,
       simulatedExecutor as unknown as ConstructorParameters<typeof ChatExecutionManager>[8],
@@ -583,7 +602,9 @@ describe('ChatExecutionManager', () => {
         method: 'POST',
       }),
     );
-    const requestBody = httpRequest.mock.calls[0][0].body as {
+    const requestBodyCall = httpRequest.mock.calls[0];
+    expect(requestBodyCall).toBeDefined();
+    const requestBody = requestBodyCall?.[0].body as {
       model: string;
       prompt: string;
     };
@@ -647,7 +668,9 @@ describe('ChatExecutionManager', () => {
         headers: { Authorization: 'Bearer ollama-cloud-key' },
       }),
     );
-    const requestBody = httpRequest.mock.calls[1][0].body as {
+    const requestBodyCall = httpRequest.mock.calls[1];
+    expect(requestBodyCall).toBeDefined();
+    const requestBody = requestBodyCall?.[0].body as {
       model: string;
       messages: Array<{ role: string; content: string }>;
       options: { num_predict: number };
@@ -729,7 +752,9 @@ describe('ChatExecutionManager', () => {
       }),
     );
 
-    const ollamaBody = httpRequest.mock.calls[0][0].body as {
+    const ollamaBodyCall = httpRequest.mock.calls[0];
+    expect(ollamaBodyCall).toBeDefined();
+    const ollamaBody = ollamaBodyCall?.[0].body as {
       model: string;
       options: { num_predict: number };
     };
@@ -737,7 +762,9 @@ describe('ChatExecutionManager', () => {
     // file-gen path uses the HARD cap when thread.maxTokens is undefined.
     expect(ollamaBody.options.num_predict).toBe(HARD_MAX_OUTPUT_TOKENS);
 
-    const fileGenerationBody = httpRequest.mock.calls[1][0].body as {
+    const fileGenerationBodyCall = httpRequest.mock.calls[1];
+    expect(fileGenerationBodyCall).toBeDefined();
+    const fileGenerationBody = fileGenerationBodyCall?.[0].body as {
       provider: string;
       model: string;
       format: string;
@@ -809,14 +836,18 @@ describe('ChatExecutionManager', () => {
       }),
     );
 
-    const retryOllamaBody = httpRequest.mock.calls[1][0].body as {
+    const retryOllamaBodyCall = httpRequest.mock.calls[1];
+    expect(retryOllamaBodyCall).toBeDefined();
+    const retryOllamaBody = retryOllamaBodyCall?.[0].body as {
       model: string;
       options: { num_predict: number };
     };
     expect(retryOllamaBody.model).toBe('llama3.3:8b');
     expect(retryOllamaBody.options.num_predict).toBe(HARD_MAX_OUTPUT_TOKENS);
 
-    const fileGenerationBody = httpRequest.mock.calls[2][0].body as {
+    const fileGenerationBodyCall = httpRequest.mock.calls[2];
+    expect(fileGenerationBodyCall).toBeDefined();
+    const fileGenerationBody = fileGenerationBodyCall?.[0].body as {
       provider: string;
       model: string;
     };
@@ -839,8 +870,8 @@ describe('ChatExecutionManager', () => {
       },
     });
 
-    judgeManager.shouldActivate = jest.fn().mockReturnValue(true);
-    judgeManager.evaluate = jest.fn().mockResolvedValue({
+    judgeManager.shouldActivate = vi.fn().mockReturnValue(true);
+    judgeManager.evaluate = vi.fn().mockResolvedValue({
       originalResponse: {
         content: 'All good.',
         provider: 'local-ollama',
@@ -913,8 +944,8 @@ describe('ChatExecutionManager', () => {
       },
     });
 
-    judgeManager.shouldActivate = jest.fn().mockReturnValue(true);
-    judgeManager.evaluate = jest.fn().mockResolvedValue({
+    judgeManager.shouldActivate = vi.fn().mockReturnValue(true);
+    judgeManager.evaluate = vi.fn().mockResolvedValue({
       originalResponse: {
         content: 'Weak answer.',
         provider: 'local-ollama',
@@ -1013,7 +1044,9 @@ describe('ChatExecutionManager', () => {
       expect(result.provider).toBe('local-llamacpp');
       expect(result.model).toBe('glm-5.1:Q4_K_M');
 
-      const url = httpRequest.mock.calls[0][0].url as string;
+      const urlCall = httpRequest.mock.calls[0];
+      expect(urlCall).toBeDefined();
+      const url = urlCall?.[0].url as string;
       expect(url).toBe('http://llamacpp-service:4017/api/v1/v1/chat/completions');
     });
 
@@ -1047,7 +1080,9 @@ describe('ChatExecutionManager', () => {
       );
 
       expect(result.content).toBe('response');
-      const url = httpRequest.mock.calls[0][0].url as string;
+      const urlCall = httpRequest.mock.calls[0];
+      expect(urlCall).toBeDefined();
+      const url = urlCall?.[0].url as string;
       expect(url).toContain('/api/v1/v1/chat/completions');
     });
 
@@ -1367,7 +1402,9 @@ describe('ChatExecutionManager', () => {
       expect(result.content).toBe('Direct answer, no tools needed.');
       expect(result.toolTranscript).toBeUndefined();
       expect(httpRequest).toHaveBeenCalledTimes(2);
-      const firstChatBody = httpRequest.mock.calls[1][0].body as {
+      const firstChatBodyCall = httpRequest.mock.calls[1];
+      expect(firstChatBodyCall).toBeDefined();
+      const firstChatBody = firstChatBodyCall?.[0].body as {
         tools?: Array<{ type: string; function: { name: string } }>;
       };
       expect(firstChatBody.tools).toBeUndefined();
@@ -1449,7 +1486,9 @@ describe('ChatExecutionManager', () => {
       // resolveOllamaConnectorBaseUrl pins the cloud connector baseUrl to
       // 'https://ollama.com/api' regardless of what the connector record
       // stores, so tool dispatch lands there too.
-      const toolUrl = httpRequest.mock.calls[1][0].url as string;
+      const toolUrlCall = httpRequest.mock.calls[1];
+      expect(toolUrlCall).toBeDefined();
+      const toolUrl = toolUrlCall?.[0].url as string;
       expect(toolUrl).toBe('https://ollama.com/api/web_search');
       expect(accessControl.recordFeatureUsage).toHaveBeenCalledWith(
         'user-1',
@@ -1458,7 +1497,9 @@ describe('ChatExecutionManager', () => {
       );
 
       // The follow-up chat carries the tool result as a `tool` message.
-      const secondChatBody = httpRequest.mock.calls[2][0].body as {
+      const secondChatBodyCall = httpRequest.mock.calls[2];
+      expect(secondChatBodyCall).toBeDefined();
+      const secondChatBody = secondChatBodyCall?.[0].body as {
         messages: Array<{ role: string; content: string; tool_call_id?: string }>;
       };
       const toolMessage = secondChatBody.messages.find((m) => m.role === 'tool');

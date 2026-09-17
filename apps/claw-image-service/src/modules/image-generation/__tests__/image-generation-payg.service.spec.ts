@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { BillingErrorCode } from '@claw/shared-types';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
@@ -45,13 +46,13 @@ const creditRefusal = (): BusinessException =>
   );
 
 type RepoMock = {
-  create: jest.Mock;
-  findById: jest.Mock;
-  updateStatus: jest.Mock;
-  createEvent: jest.Mock;
-  createAsset: jest.Mock;
-  findByUserId: jest.Mock;
-  countByUserId: jest.Mock;
+  create: Mock;
+  findById: Mock;
+  updateStatus: Mock;
+  createEvent: Mock;
+  createAsset: Mock;
+  findByUserId: Mock;
+  countByUserId: Mock;
 };
 
 /**
@@ -66,15 +67,15 @@ const buildRepo = (): RepoMock => {
   let nextId = 2;
 
   return {
-    create: jest.fn((data: { provider: string; model: string; userId: string }) => {
+    create: vi.fn((data: { provider: string; model: string; userId: string }) => {
       const id = `img-${String(nextId)}`;
       nextId += 1;
       const row = baseRecord({ id, provider: data.provider, model: data.model });
       rows.set(id, row);
       return Promise.resolve(row);
     }),
-    findById: jest.fn((id: string) => Promise.resolve(rows.get(id) ?? null)),
-    updateStatus: jest.fn(
+    findById: vi.fn((id: string) => Promise.resolve(rows.get(id) ?? null)),
+    updateStatus: vi.fn(
       (
         id: string,
         status: ImageGenerationRecord['status'],
@@ -91,8 +92,8 @@ const buildRepo = (): RepoMock => {
         return Promise.resolve(updated);
       },
     ),
-    createEvent: jest.fn().mockResolvedValue(undefined),
-    createAsset: jest.fn().mockResolvedValue({
+    createEvent: vi.fn().mockResolvedValue(undefined),
+    createAsset: vi.fn().mockResolvedValue({
       id: 'asset-1',
       url: '/api/v1/files/download/file-1',
       downloadUrl: '/api/v1/files/download/file-1',
@@ -101,8 +102,8 @@ const buildRepo = (): RepoMock => {
       height: null,
       sizeBytes: null,
     }),
-    findByUserId: jest.fn().mockResolvedValue([]),
-    countByUserId: jest.fn().mockResolvedValue(0),
+    findByUserId: vi.fn().mockResolvedValue([]),
+    countByUserId: vi.fn().mockResolvedValue(0),
   };
 };
 
@@ -124,19 +125,19 @@ const flush = async (): Promise<void> => {
 
 describe('ImageGenerationService — PAYG credit failures (U4)', () => {
   let repo: RepoMock;
-  let execute: jest.Mock;
-  let events: { publish: jest.Mock; subscribe: jest.Mock };
+  let execute: Mock;
+  let events: { publish: Mock; subscribe: Mock };
   let service: ImageGenerationService;
 
   beforeEach(() => {
     repo = buildRepo();
-    execute = jest.fn();
-    events = { publish: jest.fn(), subscribe: jest.fn() };
+    execute = vi.fn();
+    events = { publish: vi.fn(), subscribe: vi.fn() };
     service = new ImageGenerationService(
       repo as unknown as ImageGenerationRepository,
       { execute } as unknown as ImageExecutionManager,
       events as unknown as ImageGenerationEventsService,
-      { publish: jest.fn().mockResolvedValue(undefined) } as unknown as RabbitMQService,
+      { publish: vi.fn().mockResolvedValue(undefined) } as unknown as RabbitMQService,
     );
   });
 

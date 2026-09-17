@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { AIRoutePlannerManager } from '../ai-route-planner.manager';
 import { httpRequest } from '../../../../common/utilities/http-client.utility';
 import { AppConfig } from '../../../../app/config/app.config';
@@ -7,15 +8,15 @@ import type {
 } from '../../types/ai-route-plan.types';
 import type { SemanticIntentAnalysis } from '../../types/semantic-intent-analysis.types';
 
-jest.mock('../../../../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn(),
 }));
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
 }));
 
-const mockedHttpRequest = httpRequest as unknown as jest.Mock;
-const mockedGetConfig = AppConfig.get as jest.Mock;
+const mockedHttpRequest = httpRequest as unknown as Mock;
+const mockedGetConfig = AppConfig.get as Mock;
 
 function baseConfig(enabled: boolean) {
   return {
@@ -241,7 +242,9 @@ describe('AIRoutePlannerManager', () => {
     }));
     mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
     await manager.plan(makeInput({ candidates: many }));
-    const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+    const promptCall = mockedHttpRequest.mock.calls[0];
+    expect(promptCall).toBeDefined();
+    const prompt = promptCall?.[0].body.prompt as string;
     expect(prompt).toContain('P0/m0');
     // The default cap is 30 — anything beyond should be absent.
     expect(prompt).not.toContain('P40/m40');
@@ -250,7 +253,9 @@ describe('AIRoutePlannerManager', () => {
   it('omits router-only + non-execution models from the candidate prompt', async () => {
     mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
     await manager.plan(makeInput());
-    const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+    const promptCall = mockedHttpRequest.mock.calls[0];
+    expect(promptCall).toBeDefined();
+    const prompt = promptCall?.[0].body.prompt as string;
     // The router-only qwen3:1.7b candidate should be filtered out of the prompt.
     expect(prompt).not.toContain('qwen3:1.7b');
   });
@@ -262,7 +267,9 @@ describe('AIRoutePlannerManager', () => {
         providerHealth: { ANTHROPIC: true, OPENAI: false, GEMINI: false },
       }),
     );
-    const prompt = mockedHttpRequest.mock.calls[0][0].body.prompt as string;
+    const promptCall = mockedHttpRequest.mock.calls[0];
+    expect(promptCall).toBeDefined();
+    const prompt = promptCall?.[0].body.prompt as string;
     expect(prompt).toMatch(/Providers currently DOWN:.*OPENAI/);
     expect(prompt).toMatch(/Providers currently DOWN:.*GEMINI/);
   });
@@ -270,7 +277,9 @@ describe('AIRoutePlannerManager', () => {
   it('sends temperature=0 and a 1200 num_predict to Ollama', async () => {
     mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
     await manager.plan(makeInput());
-    const body = mockedHttpRequest.mock.calls[0][0].body;
+    const bodyCall = mockedHttpRequest.mock.calls[0];
+    expect(bodyCall).toBeDefined();
+    const body = bodyCall?.[0].body;
     expect(body.options.temperature).toBe(0);
     expect(body.options.num_predict).toBe(1200);
     expect(body.think).toBe(false);
@@ -279,7 +288,9 @@ describe('AIRoutePlannerManager', () => {
   it('targets the configured Ollama service URL', async () => {
     mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
     await manager.plan(makeInput());
-    expect(mockedHttpRequest.mock.calls[0][0].url).toBe(
+    const call = mockedHttpRequest.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].url).toBe(
       'http://ollama-service:4008/api/v1/ollama/generate',
     );
   });
@@ -289,7 +300,9 @@ describe('AIRoutePlannerManager', () => {
       .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'nope' } })
       .mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
     await manager.plan(makeInput());
-    const secondPrompt = mockedHttpRequest.mock.calls[1][0].body.prompt as string;
+    const secondPromptCall = mockedHttpRequest.mock.calls[1];
+    expect(secondPromptCall).toBeDefined();
+    const secondPrompt = secondPromptCall?.[0].body.prompt as string;
     expect(secondPrompt).toContain('Your previous response could not be parsed');
   });
 });

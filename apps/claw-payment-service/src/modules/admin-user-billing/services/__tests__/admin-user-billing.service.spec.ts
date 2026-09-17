@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingInterval, InvoiceStatus, SubscriptionStatus } from '@claw/shared-types';
 
 import { type InvoiceRepository } from '../../../subscriptions/repositories/invoice.repository';
@@ -7,13 +8,13 @@ import { ADMIN_USER_RECENT_INVOICE_LIMIT } from '../../constants/admin-user-bill
 import { AdminUserBillingService } from '../admin-user-billing.service';
 
 type SubscriptionMocks = {
-  findActiveByUserId: jest.Mock;
-  findAllByUserId: jest.Mock;
+  findActiveByUserId: Mock;
+  findAllByUserId: Mock;
 };
 
 type InvoiceMocks = {
-  listPaidForUser: jest.Mock;
-  listForUser: jest.Mock;
+  listPaidForUser: Mock;
+  listForUser: Mock;
 };
 
 function buildService(): {
@@ -22,12 +23,12 @@ function buildService(): {
   invoices: InvoiceMocks;
 } {
   const subscriptions: SubscriptionMocks = {
-    findActiveByUserId: jest.fn().mockResolvedValue(null),
-    findAllByUserId: jest.fn().mockResolvedValue([]),
+    findActiveByUserId: vi.fn().mockResolvedValue(null),
+    findAllByUserId: vi.fn().mockResolvedValue([]),
   };
   const invoices: InvoiceMocks = {
-    listPaidForUser: jest.fn().mockResolvedValue([]),
-    listForUser: jest.fn().mockResolvedValue([]),
+    listPaidForUser: vi.fn().mockResolvedValue([]),
+    listForUser: vi.fn().mockResolvedValue([]),
   };
   const subscriptionRepository: Partial<SubscriptionRepository> = subscriptions;
   const invoiceRepository: Partial<InvoiceRepository> = invoices;

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SeedApplyOutcome } from '../../../common/enums';
 import { PrivacyClass } from '../../../generated/prisma';
 import { type DeploymentSeedRepository } from '../repositories/deployment-seed.repository';
@@ -25,11 +26,11 @@ const buildService = (
   definitions: DeploymentSeedSourceRow[],
 ): {
   service: DeploymentSeedService;
-  findDefinitionsForBackfill: jest.Mock;
-  applyOnce: jest.Mock;
+  findDefinitionsForBackfill: Mock;
+  applyOnce: Mock;
 } => {
-  const findDefinitionsForBackfill = jest.fn().mockResolvedValue(definitions);
-  const applyOnce = jest.fn().mockResolvedValue(SeedApplyOutcome.APPLIED);
+  const findDefinitionsForBackfill = vi.fn().mockResolvedValue(definitions);
+  const applyOnce = vi.fn().mockResolvedValue(SeedApplyOutcome.APPLIED);
   const repository = { findDefinitionsForBackfill, applyOnce };
 
   return {

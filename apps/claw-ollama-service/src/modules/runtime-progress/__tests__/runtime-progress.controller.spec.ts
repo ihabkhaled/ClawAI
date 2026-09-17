@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import {
   RuntimeExecutionProfile,
   type RuntimeProbeReport,
@@ -10,11 +11,11 @@ import { type OllamaProbeService } from '../services/ollama-probe.service';
 import { ROLES_KEY } from '../../../app/decorators/roles.decorator';
 import { UserRole } from '../../../common/enums/user-role.enum';
 
-jest.mock('@common/utilities', () => ({
-  createHttpClient: jest.fn(() => ({ get: jest.fn() })),
+vi.mock('@common/utilities', () => ({
+  createHttpClient: vi.fn(() => ({ get: vi.fn() })),
 }));
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
     get: (): { OLLAMA_BASE_URL: string } => ({ OLLAMA_BASE_URL: 'http://ollama:11434' }),
   },
@@ -43,10 +44,10 @@ const buildReport = (): RuntimeProbeReport => ({
 
 describe('RuntimeProgressController', () => {
   let controller: RuntimeProgressController;
-  let probeService: jest.Mocked<Pick<OllamaProbeService, 'probe'>>;
+  let probeService: Mocked<Pick<OllamaProbeService, 'probe'>>;
 
   beforeEach(() => {
-    probeService = { probe: jest.fn() };
+    probeService = { probe: vi.fn() };
     controller = new RuntimeProgressController(probeService as unknown as OllamaProbeService);
   });
 

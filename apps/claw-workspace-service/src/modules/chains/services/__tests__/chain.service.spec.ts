@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { ChainService } from '../chain.service';
@@ -18,13 +19,13 @@ const makeChain = (overrides: Record<string, unknown> = {}): unknown => ({
   updatedAt: new Date(),
 });
 
-const makeRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
-  listForUser: jest.fn(),
-  findById: jest.fn(),
-  findByName: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  deleteById: jest.fn(),
+const makeRepo = (overrides: Record<string, Mock> = {}): Record<string, Mock> => ({
+  listForUser: vi.fn(),
+  findById: vi.fn(),
+  findByName: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteById: vi.fn(),
   ...overrides,
 });
 
@@ -32,21 +33,21 @@ describe('ChainService', () => {
   describe('getOwn', () => {
     it('returns the chain when owned', async () => {
       const chain = makeChain();
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(chain) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(chain) });
       const service = new ChainService(repo as never);
       expect(await service.getOwn('u1', 'chain-1')).toEqual(chain);
     });
 
     it('404s when the chain belongs to another user', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeChain({ userId: 'bob' })),
+        findById: vi.fn().mockResolvedValue(makeChain({ userId: 'bob' })),
       });
       const service = new ChainService(repo as never);
       await expect(service.getOwn('alice', 'chain-1')).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('404s when the chain does not exist', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new ChainService(repo as never);
       await expect(service.getOwn('u1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
     });
@@ -56,8 +57,8 @@ describe('ChainService', () => {
     it('creates a chain when the name is unique', async () => {
       const created = makeChain();
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
       const service = new ChainService(repo as never);
       const result = await service.create('u1', { name: 'Triage flow', dsl: sampleDsl });
@@ -68,7 +69,7 @@ describe('ChainService', () => {
     });
 
     it('409s when the name is already taken', async () => {
-      const repo = makeRepo({ findByName: jest.fn().mockResolvedValue(makeChain()) });
+      const repo = makeRepo({ findByName: vi.fn().mockResolvedValue(makeChain()) });
       const service = new ChainService(repo as never);
       await expect(
         service.create('u1', { name: 'Triage flow', dsl: sampleDsl }),
@@ -81,8 +82,8 @@ describe('ChainService', () => {
     it('bumps version when the DSL changes', async () => {
       const existing = makeChain();
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(existing),
-        update: jest.fn().mockResolvedValue(existing),
+        findById: vi.fn().mockResolvedValue(existing),
+        update: vi.fn().mockResolvedValue(existing),
       });
       const service = new ChainService(repo as never);
       const newDsl = {
@@ -101,12 +102,12 @@ describe('ChainService', () => {
     it('does NOT bump version when only isEnabled toggles', async () => {
       const existing = makeChain();
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(existing),
-        update: jest.fn().mockResolvedValue(existing),
+        findById: vi.fn().mockResolvedValue(existing),
+        update: vi.fn().mockResolvedValue(existing),
       });
       const service = new ChainService(repo as never);
       await service.update('u1', 'chain-1', { isEnabled: false });
-      const updateMock = repo['update'] as jest.Mock;
+      const updateMock = repo['update'] as Mock;
       const updateArg = (updateMock.mock.calls[0]?.[1] ?? {}) as Record<string, unknown>;
       expect(updateArg['version']).toBeUndefined();
       expect(updateArg['isEnabled']).toBe(false);
@@ -115,8 +116,8 @@ describe('ChainService', () => {
     it('409s when renaming to a name owned by a different chain', async () => {
       const existing = makeChain({ id: 'chain-1', name: 'Old' });
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(existing),
-        findByName: jest.fn().mockResolvedValue(makeChain({ id: 'chain-other', name: 'Taken' })),
+        findById: vi.fn().mockResolvedValue(existing),
+        findByName: vi.fn().mockResolvedValue(makeChain({ id: 'chain-other', name: 'Taken' })),
       });
       const service = new ChainService(repo as never);
       await expect(
@@ -129,8 +130,8 @@ describe('ChainService', () => {
   describe('deleteById', () => {
     it('deletes only when owned', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeChain()),
-        deleteById: jest.fn().mockResolvedValue(undefined),
+        findById: vi.fn().mockResolvedValue(makeChain()),
+        deleteById: vi.fn().mockResolvedValue(undefined),
       });
       const service = new ChainService(repo as never);
       await service.deleteById('u1', 'chain-1');
@@ -139,7 +140,7 @@ describe('ChainService', () => {
 
     it('404s before deleting when not owned', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makeChain({ userId: 'bob' })),
+        findById: vi.fn().mockResolvedValue(makeChain({ userId: 'bob' })),
       });
       const service = new ChainService(repo as never);
       await expect(service.deleteById('alice', 'chain-1')).rejects.toBeInstanceOf(

@@ -1,6 +1,8 @@
+import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
+import * as httpClient from '../../../common/utilities/http-client.utility';
 import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
 import { type ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -11,45 +13,51 @@ import { decomposeTaskSchema } from '../dto/decompose-task.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
-jest.mock('../../../common/utilities/http-client.utility');
-jest.mock('../../../app/config/app.config');
+vi.mock('../../../common/utilities/http-client.utility');
 
-const { httpRequest } = jest.requireMock('../../../common/utilities/http-client.utility') as {
-  httpRequest: jest.Mock;
-};
+// vi.importMock hands back a FRESH automock rather than the instance the
+// manager imported, so nothing configured here reached the code under test.
+// Mocking the real imported binding is the handle the manager actually holds.
+const httpRequest = vi.mocked(httpClient.httpRequest);
 
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 AppConfig.get.mockReturnValue({ OLLAMA_SERVICE_URL: 'http://ollama:4008' });
 
-const mockMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  create: jest.fn(),
+const mockMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  create: vi.fn(),
 });
 
-const mockThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
+const mockThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
 });
 
-const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
-  emitRequestAccepted: jest.fn(),
-  emitProgressStage: jest.fn(),
-  emitCompletion: jest.fn(),
-  emitError: jest.fn(),
+const mockStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
+  emitRequestAccepted: vi.fn(),
+  emitProgressStage: vi.fn(),
+  emitCompletion: vi.fn(),
+  emitError: vi.fn(),
 });
 
-const makeOllamaSuccess = (text: string) =>
-  Promise.resolve({ ok: true, status: 200, data: { response: text } });
+const makeOllamaSuccess = (text: string) => ({ ok: true, status: 200, data: { response: text } });
 
 type ResearchEnricherStub = {
-  enrichForOrchestration: jest.Mock;
+  enrichForOrchestration: Mock;
   service: ResearchEnricherManager;
 };
 
 function mockResearchEnricher(): ResearchEnricherStub {
-  const enrichForOrchestration = jest
+  const enrichForOrchestration = vi
     .fn()
     .mockResolvedValue({ transcript: null, systemPrompt: '' });
   const service = { enrichForOrchestration } as unknown as ResearchEnricherManager;
@@ -64,7 +72,7 @@ describe('TaskDecompositionManager', () => {
   let researchEnricher: ResearchEnricherStub;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     messagesRepo = mockMessagesRepo();
     threadsRepo = mockThreadsRepo();
     streamService = mockStreamService();
@@ -279,9 +287,9 @@ describe('TaskDecompositionManager', () => {
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
       const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+        Record<keyof AdvancedModuleModelSelectionService, Mock>
       > = {
-        resolveSelection: jest
+        resolveSelection: vi
           .fn()
           .mockRejectedValue(
             new BusinessException(

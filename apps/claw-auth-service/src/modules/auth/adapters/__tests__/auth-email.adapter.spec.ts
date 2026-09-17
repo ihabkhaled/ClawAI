@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { createSmtpEmailTransport } from '@claw/shared-utilities/email';
 import {
   DeploymentPhase,
@@ -21,7 +22,7 @@ function recipient(
   return { email, locale, firstName };
 }
 
-jest.mock('@claw/shared-utilities/email', () => ({ createSmtpEmailTransport: jest.fn() }));
+vi.mock('@claw/shared-utilities/email', () => ({ createSmtpEmailTransport: vi.fn() }));
 
 const STATUS: DeploymentStatusDocument = {
   schemaVersion: 1,
@@ -72,19 +73,19 @@ function emailConfig(overrides: Partial<AppConfigType> = {}): AppConfigType {
 }
 
 describe('AuthEmailAdapter deployment notification', () => {
-  const send = jest.fn();
+  const send = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig());
-    jest.mocked(createSmtpEmailTransport).mockReturnValue({ send });
+    vi.clearAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue(emailConfig());
+    vi.mocked(createSmtpEmailTransport).mockReturnValue({ send });
     send.mockResolvedValue(undefined);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('throws EMAIL_DELIVERY_UNAVAILABLE when SMTP transport is unavailable', () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
 
     expect(() => new AuthEmailAdapter().assertEmailDeliveryAvailable()).toThrow(
       'Email delivery is unavailable',
@@ -109,7 +110,7 @@ describe('AuthEmailAdapter deployment notification', () => {
         adapter.sendEmailChangeCompletedNotice(recipient('old@example.com')),
     ],
   ])('rejects the email-change %s sender when SMTP is unavailable', async (_label, sendEmail) => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
 
     await expect(sendEmail(new AuthEmailAdapter())).rejects.toMatchObject({
       code: 'EMAIL_DELIVERY_UNAVAILABLE',
@@ -189,7 +190,7 @@ describe('AuthEmailAdapter deployment notification', () => {
     { CONTACT_EMAIL_TO: '' },
     { CONTACT_SMTP_HOST: undefined },
   ])('returns false when deployment email is not configured: %o', async (override) => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig(override));
+    vi.spyOn(AppConfig, 'get').mockReturnValue(emailConfig(override));
 
     await expect(new AuthEmailAdapter().sendDeploymentNotification(STATUS)).resolves.toBe(false);
     expect(send).not.toHaveBeenCalled();

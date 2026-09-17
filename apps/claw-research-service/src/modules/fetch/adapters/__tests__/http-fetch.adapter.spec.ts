@@ -1,8 +1,9 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { HttpFetchAdapter } from '../http-fetch.adapter';
 
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn() },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
 }));
 
 /**
@@ -13,11 +14,11 @@ jest.mock('../../../../app/config/app.config', () => ({
  * rather than adding an untested field on top of an untested method.
  */
 describe('HttpFetchAdapter.fetchPage', () => {
-  const appConfigGet = AppConfig.get as jest.Mock;
+  const appConfigGet = AppConfig.get as Mock;
   let adapter: HttpFetchAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     appConfigGet.mockReturnValue({ RESEARCH_DOMAIN_ALLOWLIST: [] });
     adapter = new HttpFetchAdapter();
   });
@@ -25,7 +26,7 @@ describe('HttpFetchAdapter.fetchPage', () => {
   function mockHtmlResponse(html: string): void {
     const body = Buffer.from(html, 'utf8');
     let sent = false;
-    global.fetch = jest.fn().mockResolvedValue({
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       url: 'https://example.com/',
@@ -69,7 +70,7 @@ describe('HttpFetchAdapter.fetchPage', () => {
 
   it('leaves metadata undefined for a non-HTML response', async () => {
     let sent = false;
-    global.fetch = jest.fn().mockResolvedValue({
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       url: 'https://example.com/data.json',

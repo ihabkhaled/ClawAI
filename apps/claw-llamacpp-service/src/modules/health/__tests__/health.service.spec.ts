@@ -1,19 +1,20 @@
+import { vi } from 'vitest';
 import { HealthCheckStatus, ServiceStatus } from '../../../common/enums';
 import { HealthService } from '../services/health.service';
 
 describe('HealthService', () => {
   function buildService(opts: { dbOk?: boolean; binaryInstalled?: boolean; loaded?: boolean } = {}) {
     const dbOk = opts.dbOk ?? true;
-    const prisma = { $queryRaw: dbOk ? jest.fn().mockResolvedValue([]) : jest.fn().mockRejectedValue(new Error('down')) };
+    const prisma = { $queryRaw: dbOk ? vi.fn().mockResolvedValue([]) : vi.fn().mockRejectedValue(new Error('down')) };
     const binaryService = {
-      snapshot: jest.fn().mockReturnValue(
+      snapshot: vi.fn().mockReturnValue(
         opts.binaryInstalled
           ? { installed: true, version: 'b4123', platform: 'linux-x64-cuda12', path: '/var/lib/claw/llamacpp/bin/llama-server' }
           : { installed: false, version: null, platform: null, path: null },
       ),
     };
     const lifecycle = {
-      getLoadedSnapshot: jest.fn().mockReturnValue(opts.loaded ? { id: 'm', name: 'glm-5.1', tag: 'Q4_K_M', loadStatus: 'READY', port: 48500 } : null),
+      getLoadedSnapshot: vi.fn().mockReturnValue(opts.loaded ? { id: 'm', name: 'glm-5.1', tag: 'Q4_K_M', loadStatus: 'READY', port: 48500 } : null),
     };
     return new HealthService(prisma as any, binaryService as any, lifecycle as any);
   }

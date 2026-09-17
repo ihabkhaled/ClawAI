@@ -13,6 +13,12 @@ import type { UseEditableTitleReturn } from '@/types';
  * `docs/02-business-product/chat-thread-page-spec.md`. It now holds one line
  * and truncates, carrying the full title in a `title` attribute so a long one
  * is still readable on hover without the header growing a second row.
+ *
+ * `sm:text-base` rather than `sm:text-lg`: it is the only thing left on the
+ * header now that the actions moved to the rail, and a heading that is the
+ * tallest element on a row it shares with 32px buttons is setting the row's
+ * height by itself. Mobile keeps `text-base`, where the 44px touch floor sets
+ * the height anyway and shrinking the title would buy nothing.
  */
 export function EditableTitle({
   title,
@@ -60,7 +66,7 @@ export function EditableTitle({
     <div className="group/title flex min-w-0 items-center gap-1">
       <h1
         title={title}
-        className="clamp-title truncate text-base leading-tight font-semibold tracking-tight sm:text-lg"
+        className="clamp-title truncate text-base leading-tight font-semibold tracking-tight"
       >
         {title}
       </h1>

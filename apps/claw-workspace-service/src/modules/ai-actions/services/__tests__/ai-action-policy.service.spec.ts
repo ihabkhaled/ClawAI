@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 /* eslint-disable unicorn/no-useless-undefined */
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
@@ -27,22 +28,22 @@ const makePolicy = (overrides: Record<string, unknown> = {}): unknown => ({
   updatedAt: new Date(),
 });
 
-const makeRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
-  findById: jest.fn(),
-  findByName: jest.fn(),
-  listAll: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  deleteById: jest.fn(),
+const makeRepo = (overrides: Record<string, Mock> = {}): Record<string, Mock> => ({
+  findById: vi.fn(),
+  findByName: vi.fn(),
+  listAll: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteById: vi.fn(),
   ...overrides,
 });
 
-const mockRabbit = { publish: jest.fn().mockResolvedValue(undefined) };
+const mockRabbit = { publish: vi.fn().mockResolvedValue(undefined) };
 
 describe('AiActionPolicyService', () => {
   describe('list', () => {
     it('returns all policies', async () => {
-      const repo = makeRepo({ listAll: jest.fn().mockResolvedValue([makePolicy()]) });
+      const repo = makeRepo({ listAll: vi.fn().mockResolvedValue([makePolicy()]) });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       const result = await service.list();
       expect(result).toHaveLength(1);
@@ -53,14 +54,14 @@ describe('AiActionPolicyService', () => {
   describe('getById', () => {
     it('returns policy when found', async () => {
       const policy = makePolicy();
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(policy) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(policy) });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       const result = await service.getById('p1');
       expect(result).toEqual(policy);
     });
 
     it('throws NotFoundException when missing', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await expect(service.getById('missing')).rejects.toBeInstanceOf(NotFoundException);
       await expect(service.getById('missing')).rejects.toMatchObject({
@@ -85,8 +86,8 @@ describe('AiActionPolicyService', () => {
     it('creates policy when name is unique', async () => {
       const created = makePolicy();
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       const result = await service.create(validDto, 'u1');
@@ -96,7 +97,7 @@ describe('AiActionPolicyService', () => {
 
     it('throws ConflictException when name is taken', async () => {
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(makePolicy()),
+        findByName: vi.fn().mockResolvedValue(makePolicy()),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await expect(service.create(validDto, 'u1')).rejects.toBeInstanceOf(ConflictException);
@@ -108,8 +109,8 @@ describe('AiActionPolicyService', () => {
 
     it('sets isSystemDefault to false', async () => {
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(makePolicy()),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(makePolicy()),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await service.create(validDto, 'u1');
@@ -123,8 +124,8 @@ describe('AiActionPolicyService', () => {
     it('updates policy when id exists', async () => {
       const dto: UpdateAiActionPolicyDto = { isActive: false };
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makePolicy()),
-        update: jest.fn().mockResolvedValue(makePolicy({ isActive: false })),
+        findById: vi.fn().mockResolvedValue(makePolicy()),
+        update: vi.fn().mockResolvedValue(makePolicy({ isActive: false })),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       const result = await service.update('p1', dto, 'actor-u1');
@@ -132,7 +133,7 @@ describe('AiActionPolicyService', () => {
     });
 
     it('throws NotFoundException when id missing', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await expect(service.update('missing', {}, 'actor-u1')).rejects.toBeInstanceOf(
         NotFoundException,
@@ -143,8 +144,8 @@ describe('AiActionPolicyService', () => {
     it('only writes fields explicitly present in dto', async () => {
       const dto: UpdateAiActionPolicyDto = { isActive: false };
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makePolicy()),
-        update: jest.fn().mockResolvedValue(makePolicy({ isActive: false })),
+        findById: vi.fn().mockResolvedValue(makePolicy()),
+        update: vi.fn().mockResolvedValue(makePolicy({ isActive: false })),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await service.update('p1', dto, 'actor-u1');
@@ -156,10 +157,10 @@ describe('AiActionPolicyService', () => {
       const before = makePolicy({ isActive: true });
       const after = makePolicy({ isActive: false });
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(before),
-        update: jest.fn().mockResolvedValue(after),
+        findById: vi.fn().mockResolvedValue(before),
+        update: vi.fn().mockResolvedValue(after),
       });
-      const rabbit = { publish: jest.fn().mockResolvedValue(undefined) };
+      const rabbit = { publish: vi.fn().mockResolvedValue(undefined) };
       const service = new AiActionPolicyService(repo as any, rabbit as any);
       await service.update('p1', dto, 'actor-u1');
       expect(rabbit.publish).toHaveBeenCalledWith(
@@ -177,8 +178,8 @@ describe('AiActionPolicyService', () => {
   describe('deleteById', () => {
     it('deletes user-created policy', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makePolicy({ isSystemDefault: false })),
-        deleteById: jest.fn().mockResolvedValue(undefined),
+        findById: vi.fn().mockResolvedValue(makePolicy({ isSystemDefault: false })),
+        deleteById: vi.fn().mockResolvedValue(undefined),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await service.deleteById('p1', 'actor-u1');
@@ -187,7 +188,7 @@ describe('AiActionPolicyService', () => {
 
     it('throws ConflictException when system-default', async () => {
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(makePolicy({ isSystemDefault: true })),
+        findById: vi.fn().mockResolvedValue(makePolicy({ isSystemDefault: true })),
       });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await expect(service.deleteById('p1', 'actor-u1')).rejects.toBeInstanceOf(ConflictException);
@@ -198,7 +199,7 @@ describe('AiActionPolicyService', () => {
     });
 
     it('throws NotFoundException when id missing', async () => {
-      const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
+      const repo = makeRepo({ findById: vi.fn().mockResolvedValue(null) });
       const service = new AiActionPolicyService(repo as any, mockRabbit as any);
       await expect(service.deleteById('missing', 'actor-u1')).rejects.toBeInstanceOf(
         NotFoundException,
@@ -209,10 +210,10 @@ describe('AiActionPolicyService', () => {
     it('publishes AI_ACTION_POLICY_DELETED audit event when policy removed', async () => {
       const policy = makePolicy({ isSystemDefault: false });
       const repo = makeRepo({
-        findById: jest.fn().mockResolvedValue(policy),
-        deleteById: jest.fn().mockResolvedValue(undefined),
+        findById: vi.fn().mockResolvedValue(policy),
+        deleteById: vi.fn().mockResolvedValue(undefined),
       });
-      const rabbit = { publish: jest.fn().mockResolvedValue(undefined) };
+      const rabbit = { publish: vi.fn().mockResolvedValue(undefined) };
       const service = new AiActionPolicyService(repo as any, rabbit as any);
       await service.deleteById('p1', 'actor-u1');
       expect(rabbit.publish).toHaveBeenCalledWith(
@@ -243,10 +244,10 @@ describe('AiActionPolicyService', () => {
     it('publishes AI_ACTION_POLICY_CREATED audit event with new policy', async () => {
       const created = makePolicy();
       const repo = makeRepo({
-        findByName: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(created),
+        findByName: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(created),
       });
-      const rabbit = { publish: jest.fn().mockResolvedValue(undefined) };
+      const rabbit = { publish: vi.fn().mockResolvedValue(undefined) };
       const service = new AiActionPolicyService(repo as any, rabbit as any);
       await service.create(dto, 'creator-u1');
       expect(rabbit.publish).toHaveBeenCalledWith(

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { SubscriptionStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -5,20 +6,20 @@ import { SubscriptionRepository } from '../subscription.repository';
 import { ScheduledPlanChangeReason } from '../../enums/scheduled-plan-change-reason.enum';
 
 type SubscriptionDelegate = {
-  create: jest.Mock;
-  findUnique: jest.Mock;
-  findMany: jest.Mock;
-  updateMany: jest.Mock;
-  count: jest.Mock;
+  create: Mock;
+  findUnique: Mock;
+  findMany: Mock;
+  updateMany: Mock;
+  count: Mock;
 };
 
 function buildPrisma(): { prisma: PrismaService; subscription: SubscriptionDelegate } {
   const subscription: SubscriptionDelegate = {
-    create: jest.fn(async (args: unknown) => args),
-    findUnique: jest.fn(async () => null),
-    findMany: jest.fn(async () => []),
-    updateMany: jest.fn(async () => ({ count: 1 })),
-    count: jest.fn(async () => 0),
+    create: vi.fn(async (args: unknown) => args),
+    findUnique: vi.fn(async () => null),
+    findMany: vi.fn(async () => []),
+    updateMany: vi.fn(async () => ({ count: 1 })),
+    count: vi.fn(async () => 0),
   };
   return { prisma: { subscription } as unknown as PrismaService, subscription };
 }

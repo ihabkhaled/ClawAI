@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 // Universal-research PR1 — slice 2 coverage for the ResearchEnricherManager
 // from a different angle than managers/__tests__/research-enricher.manager.spec.ts:
 // instead of asserting raw SSE-stage ordering, this file pins down the public
@@ -39,17 +40,23 @@ import type {
   ResearchTranscriptSource,
 } from '../types/research-transcript.types';
 
-jest.mock('../../../common/utilities', () => ({
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  httpRequest: vi.fn(),
 }));
-jest.mock('../../../app/config/app.config');
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../common/utilities') as {
+  httpRequest: Mock;
 };
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const RESEARCH_URL = 'http://research-service:4016';
 const SEARCH_URL = `${RESEARCH_URL}/api/v1/research/search`;
@@ -57,12 +64,12 @@ const FETCH_URL = `${RESEARCH_URL}/api/v1/research/fetch`;
 const AUTH_HEADER = 'Bearer abc.def.ghi';
 
 type StreamStub = {
-  emitResearchProgress: jest.Mock;
+  emitResearchProgress: Mock<ChatStreamService['emitResearchProgress']>;
   service: ChatStreamService;
 };
 
 function buildStreamStub(): StreamStub {
-  const emitResearchProgress = jest.fn();
+  const emitResearchProgress = vi.fn<ChatStreamService['emitResearchProgress']>();
   const service = { emitResearchProgress } as unknown as ChatStreamService;
   return { emitResearchProgress, service };
 }
@@ -113,7 +120,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
   let stream: StreamStub;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue({ RESEARCH_SERVICE_URL: RESEARCH_URL });
     stream = buildStreamStub();
     manager = new ResearchEnricherManager(stream.service);
@@ -164,7 +171,8 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
 
     expect(httpRequest).toHaveBeenCalledTimes(1);
     const [searchCall] = httpRequest.mock.calls;
-    expect(searchCall[0]).toEqual(
+    expect(searchCall).toBeDefined();
+    expect(searchCall?.[0]).toEqual(
       expect.objectContaining({
         url: SEARCH_URL,
         method: 'POST',
@@ -219,9 +227,15 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     });
 
     expect(httpRequest).toHaveBeenCalledTimes(3);
-    expect(httpRequest.mock.calls[0][0].url).toBe(SEARCH_URL);
-    expect(httpRequest.mock.calls[1][0].url).toBe(FETCH_URL);
-    expect(httpRequest.mock.calls[2][0].url).toBe(FETCH_URL);
+    const call = httpRequest.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[0].url).toBe(SEARCH_URL);
+    const call2 = httpRequest.mock.calls[1];
+    expect(call2).toBeDefined();
+    expect(call2?.[0].url).toBe(FETCH_URL);
+    const call3 = httpRequest.mock.calls[2];
+    expect(call3).toBeDefined();
+    expect(call3?.[0].url).toBe(FETCH_URL);
 
     expect(result.sources).toHaveLength(2);
     expect(result.searchRequestCount).toBe(1);
@@ -257,7 +271,9 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     });
 
     expect(httpRequest).toHaveBeenCalledTimes(2);
-    expect(httpRequest.mock.calls[1][0].url).toBe(FETCH_URL);
+    const call = httpRequest.mock.calls[1];
+    expect(call).toBeDefined();
+    expect(call?.[0].url).toBe(FETCH_URL);
     const [only] = result.sources;
     if (!only) {
       throw new Error('expected one source');
@@ -312,7 +328,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
       enrichSourcesByMode: (...args: unknown[]) => Promise<unknown>;
     };
     const original = inner.enrichSourcesByMode;
-    inner.enrichSourcesByMode = jest
+    inner.enrichSourcesByMode = vi
       .fn()
       .mockRejectedValueOnce(new Error('downstream-network-collapse'));
 

@@ -1,3 +1,4 @@
+import { vi, type MockInstance, type Mock } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -25,21 +26,21 @@ function makeManager(
   } = {},
 ): {
   manager: AiActionExecutionManager;
-  router: { resolve: jest.Mock };
-  resolver: { resolveDefaults: jest.Mock };
-  automationPreferences: { fetchLearned: jest.Mock };
+  router: { resolve: Mock };
+  resolver: { resolveDefaults: Mock };
+  automationPreferences: { fetchLearned: Mock };
 } {
   const router = {
-    resolve: jest.fn().mockResolvedValue({
+    resolve: vi.fn().mockResolvedValue({
       mode: opts.mode ?? AiActionMode.MANUAL,
       primary: primaryModel,
       fallbackChain: opts.fallbackChain ?? [],
     }),
   };
   const resolver = {
-    resolveDefaults: jest.fn().mockResolvedValue({ primary: null, fallbackChain: [] }),
+    resolveDefaults: vi.fn().mockResolvedValue({ primary: null, fallbackChain: [] }),
   };
-  const automationPreferences = { fetchLearned: jest.fn().mockResolvedValue([]) };
+  const automationPreferences = { fetchLearned: vi.fn().mockResolvedValue([]) };
   const manager = new AiActionExecutionManager(
     router as never,
     resolver as never,
@@ -49,17 +50,17 @@ function makeManager(
 }
 
 describe('AiActionExecutionManager.run', () => {
-  let callSpy: jest.SpyInstance;
+  let callSpy: MockInstance;
 
   beforeEach(() => {
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
-    callSpy = jest.spyOn(cloudClient, 'callCloudGenerate');
+    callSpy = vi.spyOn(cloudClient, 'callCloudGenerate');
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('generates via the resolved primary model and returns the result', async () => {

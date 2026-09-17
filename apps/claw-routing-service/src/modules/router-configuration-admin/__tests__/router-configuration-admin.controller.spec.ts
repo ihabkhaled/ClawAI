@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import 'reflect-metadata';
 import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
@@ -33,20 +34,20 @@ describe('RouterConfigurationAdminController authorization', () => {
 
 describe('RouterConfigurationAdminController delegation', () => {
   const service = {
-    list: jest.fn(),
-    getById: jest.fn(),
-    createDraft: jest.fn(),
-    updateEntries: jest.fn(),
-    updateFields: jest.fn(),
-    publish: jest.fn(),
-    setEnabled: jest.fn(),
+    list: vi.fn(),
+    getById: vi.fn(),
+    createDraft: vi.fn(),
+    updateEntries: vi.fn(),
+    updateFields: vi.fn(),
+    publish: vi.fn(),
+    setEnabled: vi.fn(),
   };
 
   const controller = new RouterConfigurationAdminController(
     service as unknown as RouterConfigurationAdminService,
   );
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('list forwards the validated query', async () => {
     service.list.mockResolvedValue({

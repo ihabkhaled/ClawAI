@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { CreditChargeResolverService } from '../credit-charge-resolver.service';
@@ -18,13 +19,13 @@ const USD_PACKAGE = {
 };
 
 describe('CreditChargeResolverService', () => {
-  let catalog: { requireActiveCreditPackage: jest.Mock; listCreditPackages: jest.Mock };
-  let fx: { quote: jest.Mock };
+  let catalog: { requireActiveCreditPackage: Mock; listCreditPackages: Mock };
+  let fx: { quote: Mock };
   let service: CreditChargeResolverService;
 
   beforeEach(() => {
-    catalog = { requireActiveCreditPackage: jest.fn(), listCreditPackages: jest.fn() };
-    fx = { quote: jest.fn() };
+    catalog = { requireActiveCreditPackage: vi.fn(), listCreditPackages: vi.fn() };
+    fx = { quote: vi.fn() };
     service = new CreditChargeResolverService(
       catalog as unknown as PlanCatalogClient,
       fx as unknown as FxService,

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import {
   BillingGateway,
   BillingInterval,
@@ -59,47 +60,47 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
 }
 
 type SessionRepoMock = {
-  create: jest.Mock;
-  findById: jest.Mock;
-  findByIdempotencyKey: jest.Mock;
-  attachProviderOrder: jest.Mock;
-  markFailed: jest.Mock;
+  create: Mock;
+  findById: Mock;
+  findByIdempotencyKey: Mock;
+  attachProviderOrder: Mock;
+  markFailed: Mock;
 };
 
 describe('CheckoutService', () => {
   let sessions: SessionRepoMock;
-  let charges: { resolve: jest.Mock };
-  let paypal: { createOrder: jest.Mock };
-  let paymob: { createIntention: jest.Mock };
+  let charges: { resolve: Mock };
+  let paypal: { createOrder: Mock };
+  let paymob: { createIntention: Mock };
   let service: CheckoutService;
 
   beforeEach(() => {
     sessions = {
-      create: jest.fn(),
-      findById: jest.fn(),
-      findByIdempotencyKey: jest.fn(),
-      attachProviderOrder: jest.fn(),
-      markFailed: jest.fn(),
+      create: vi.fn(),
+      findById: vi.fn(),
+      findByIdempotencyKey: vi.fn(),
+      attachProviderOrder: vi.fn(),
+      markFailed: vi.fn(),
     };
-    charges = { resolve: jest.fn().mockResolvedValue({ ...CHARGE, planSlug: 'pro' }) };
+    charges = { resolve: vi.fn().mockResolvedValue({ ...CHARGE, planSlug: 'pro' }) };
     paypal = {
-      createOrder: jest.fn().mockResolvedValue({
+      createOrder: vi.fn().mockResolvedValue({
         orderId: 'PP-1',
         status: 'CREATED',
         approvalUrl: 'https://pp/approve',
       }),
     };
     paymob = {
-      createIntention: jest.fn().mockResolvedValue({
+      createIntention: vi.fn().mockResolvedValue({
         intentionId: 'PM-1',
         providerOrderId: 'PM-ORDER-1',
         clientSecret: 'cs_secret',
       }),
     };
     const runtimeConfig = {
-      getPaymobCheckout: jest.fn().mockResolvedValue({ publicKey: 'pk_test' }),
+      getPaymobCheckout: vi.fn().mockResolvedValue({ publicKey: 'pk_test' }),
     };
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       FRONTEND_URL: 'https://claw.local',
       PAYMOB_PUBLIC_KEY: 'pk_test',
     } as ReturnType<typeof AppConfig.get>);
@@ -114,7 +115,7 @@ describe('CheckoutService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('replays an existing session for a reused idempotency key', async () => {
@@ -197,7 +198,7 @@ describe('CheckoutService', () => {
   });
 
   it('records a stable failure code when the gateway call fails', async () => {
-    const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const errorLog = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     sessions.findByIdempotencyKey.mockResolvedValue(null);
     sessions.create.mockResolvedValue(makeSession());
     paypal.createOrder.mockRejectedValue(new Error('paypal down: payer bob@example.com'));

@@ -1,14 +1,15 @@
+import { vi } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
 import { UserRole } from '@claw/shared-types';
 import { verifyUserAccessToken } from '@claw/shared-utilities';
 import { AuthGuard } from '../auth.guard';
 
-jest.mock('@claw/shared-utilities', () => ({
-  verifyUserAccessToken: jest.fn(),
+vi.mock('@claw/shared-utilities', () => ({
+  verifyUserAccessToken: vi.fn(),
 }));
 
-const mockedVerifyUserAccessToken = jest.mocked(verifyUserAccessToken);
+const mockedVerifyUserAccessToken = vi.mocked(verifyUserAccessToken);
 
 function createContext(authorization?: string): {
   context: Parameters<AuthGuard['canActivate']>[0];
@@ -21,10 +22,10 @@ function createContext(authorization?: string): {
     headers: authorization ? { authorization } : {},
   };
   const context = {
-    getClass: jest.fn(),
-    getHandler: jest.fn(),
-    switchToHttp: jest.fn().mockReturnValue({
-      getRequest: jest.fn().mockReturnValue(request),
+    getClass: vi.fn(),
+    getHandler: vi.fn(),
+    switchToHttp: vi.fn().mockReturnValue({
+      getRequest: vi.fn().mockReturnValue(request),
     }),
   };
 
@@ -41,13 +42,13 @@ describe('AuthGuard', () => {
   beforeEach(() => {
     process.env['JWT_SECRET'] = 'test-secret-key-that-is-long-enough';
     const reflector = {
-      getAllAndOverride: jest.fn().mockReturnValue(false),
+      getAllAndOverride: vi.fn().mockReturnValue(false),
     };
     guard = new AuthGuard(reflector as unknown as Reflector);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     if (originalSecret) {
       process.env['JWT_SECRET'] = originalSecret;
     } else {

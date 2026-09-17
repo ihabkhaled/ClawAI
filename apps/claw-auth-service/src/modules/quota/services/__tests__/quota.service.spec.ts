@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { QuotaWindow } from '@claw/shared-types';
 import { QuotaService } from '../quota.service';
 import { type RedisService } from '../../../../infrastructure/redis/redis.service';
@@ -6,10 +7,10 @@ import { type WeightedUsageRepository } from '../../repositories/weighted-usage.
 import { type QuotaLimits, type WeightedReservationInput } from '../../types/quota.types';
 
 const makeRedisClient = () => ({
-  incrby: jest.fn(),
-  decrby: jest.fn(),
-  expire: jest.fn(),
-  eval: jest.fn(),
+  incrby: vi.fn(),
+  decrby: vi.fn(),
+  expire: vi.fn(),
+  eval: vi.fn(),
 });
 
 const makeReservationInput = (
@@ -64,24 +65,24 @@ function adjustArgv(call: unknown[]): string[] {
 describe('QuotaService', () => {
   let service: QuotaService;
   let client: ReturnType<typeof makeRedisClient>;
-  let redis: { get: jest.Mock; getClient: jest.Mock };
-  let ledger: { addUsage: jest.Mock; findForDay: jest.Mock };
+  let redis: { get: Mock; getClient: Mock };
+  let ledger: { addUsage: Mock; findForDay: Mock };
   let weighted: {
-    createReservation: jest.Mock;
-    findByReservationId: jest.Mock;
-    finalize: jest.Mock;
-    markReleased: jest.Mock;
+    createReservation: Mock;
+    findByReservationId: Mock;
+    finalize: Mock;
+    markReleased: Mock;
   };
 
   beforeEach(() => {
     client = makeRedisClient();
-    redis = { get: jest.fn(), getClient: jest.fn().mockReturnValue(client) };
-    ledger = { addUsage: jest.fn(), findForDay: jest.fn() };
+    redis = { get: vi.fn(), getClient: vi.fn().mockReturnValue(client) };
+    ledger = { addUsage: vi.fn(), findForDay: vi.fn() };
     weighted = {
-      createReservation: jest.fn(),
-      findByReservationId: jest.fn(),
-      finalize: jest.fn(),
-      markReleased: jest.fn(),
+      createReservation: vi.fn(),
+      findByReservationId: vi.fn(),
+      finalize: vi.fn(),
+      markReleased: vi.fn(),
     };
     service = new QuotaService(
       redis as unknown as RedisService,

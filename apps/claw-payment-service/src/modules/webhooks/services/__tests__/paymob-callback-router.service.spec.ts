@@ -1,17 +1,18 @@
+import { vi } from 'vitest';
 import { PaymobCallbackRouterService } from '../paymob-callback-router.service';
 import type { PaymobCardTokenService } from '../paymob-card-token.service';
 import type { PaymobWebhookService } from '../paymob-webhook.service';
 
 describe('PaymobCallbackRouterService', () => {
-  const transactions = { handle: jest.fn().mockResolvedValue({ outcome: 'PROCESSED' }) };
-  const cardTokens = { handle: jest.fn().mockResolvedValue({ outcome: 'PROCESSED' }) };
+  const transactions = { handle: vi.fn().mockResolvedValue({ outcome: 'PROCESSED' }) };
+  const cardTokens = { handle: vi.fn().mockResolvedValue({ outcome: 'PROCESSED' }) };
   const service = new PaymobCallbackRouterService(
     transactions as unknown as PaymobWebhookService,
     cardTokens as unknown as PaymobCardTokenService,
   );
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('routes card-token notification payloads to the HMAC-verifying token handler', async () => {

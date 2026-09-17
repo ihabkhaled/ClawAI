@@ -50,7 +50,15 @@ export function UserMenu(): React.ReactElement | null {
               aria-label={t('accessibility.userStatusOnline')}
             />
           </span>
-          <span className="hidden max-w-[120px] truncate font-medium sm:inline">
+          {/* `@2xl:` (42rem of the TOPBAR, not of the window) rather than
+              `sm:`. This label is the widest optional thing in the bar — up to
+              120px plus its gap — and it was revealed on a 640px VIEWPORT,
+              which on a tablet is a 537px bar once the sidenav rail has taken
+              its 256px. The cluster then ran 27px past the bar and the browser
+              clipped the account button at the screen edge. Nothing is lost
+              when it hides: the username and the email are both in the menu
+              this button opens. */}
+          <span className="@2xl:inline hidden max-w-[120px] truncate font-medium">
             {user.username}
           </span>
         </Button>

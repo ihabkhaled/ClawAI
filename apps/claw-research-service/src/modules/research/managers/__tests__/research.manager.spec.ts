@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
@@ -19,34 +20,34 @@ function mentionsUrl(text: string, url: string): boolean {
 
 describe('ResearchManager', () => {
   let runs: {
-    create: jest.Mock;
-    update: jest.Mock;
-    findById: jest.Mock;
-    listByUser: jest.Mock;
+    create: Mock;
+    update: Mock;
+    findById: Mock;
+    listByUser: Mock;
   };
   let search: {
-    execute: jest.Mock;
+    execute: Mock;
   };
   let fetchService: {
-    fetchPage: jest.Mock;
+    fetchPage: Mock;
   };
   let scrapeService: {
-    extract: jest.Mock;
+    extract: Mock;
   };
   let manager: ResearchManager;
-  let researchUsage: { record: jest.Mock };
-  let siteCrawlManager: { crawl: jest.Mock };
-  let siteAuditManager: { analyze: jest.Mock };
+  let researchUsage: { record: Mock };
+  let siteCrawlManager: { crawl: Mock };
+  let siteAuditManager: { analyze: Mock };
 
   beforeEach(() => {
     runs = {
-      create: jest.fn(async () => ({ id: 'run-1' })),
-      update: jest.fn(async (id, data) => ({ id, ...(data as object) })),
-      findById: jest.fn(),
-      listByUser: jest.fn(),
+      create: vi.fn(async () => ({ id: 'run-1' })),
+      update: vi.fn(async (id, data) => ({ id, ...(data as object) })),
+      findById: vi.fn(),
+      listByUser: vi.fn(),
     };
     search = {
-      execute: jest.fn(async () => ({
+      execute: vi.fn(async () => ({
         providerId: 'provider-1',
         providerName: 'Ollama Web Search',
         providerKind: SearchProviderKind.OLLAMA_WEB,
@@ -69,7 +70,7 @@ describe('ResearchManager', () => {
       })),
     };
     fetchService = {
-      fetchPage: jest.fn(async () => ({
+      fetchPage: vi.fn(async () => ({
         url: 'https://example.com/1',
         finalUrl: 'https://example.com/1',
         httpStatus: 200,
@@ -83,7 +84,7 @@ describe('ResearchManager', () => {
       })),
     };
     scrapeService = {
-      extract: jest.fn(() => ({
+      extract: vi.fn(() => ({
         profile: 'ARTICLE',
         title: 'Extracted',
         text: 'Extracted text',
@@ -91,9 +92,9 @@ describe('ResearchManager', () => {
         warnings: [],
       })),
     };
-    researchUsage = { record: jest.fn(async () => {}) };
-    siteCrawlManager = { crawl: jest.fn(async () => []) };
-    siteAuditManager = { analyze: jest.fn(() => []) };
+    researchUsage = { record: vi.fn(async () => {}) };
+    siteCrawlManager = { crawl: vi.fn(async () => []) };
+    siteAuditManager = { analyze: vi.fn(() => []) };
 
     manager = new ResearchManager(
       runs as unknown as ResearchRunRepository,

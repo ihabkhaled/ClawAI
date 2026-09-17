@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ReplayManager } from '../managers/replay.manager';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { type ReplayRunsRepository } from '../repositories/replay-runs.repository';
@@ -53,36 +54,36 @@ const mockRun = {
 
 describe('ReplayManager', () => {
   let manager: ReplayManager;
-  let decisionsRepo: { findRecent: jest.Mock };
-  let runsRepo: { create: jest.Mock; findAll: jest.Mock; findById: jest.Mock; countAll: jest.Mock };
+  let decisionsRepo: { findRecent: Mock };
+  let runsRepo: { create: Mock; findAll: Mock; findById: Mock; countAll: Mock };
   let casesRepo: {
-    createMany: jest.Mock;
-    findByRunId: jest.Mock;
-    findSuspiciousByRunId: jest.Mock;
-    findById: jest.Mock;
-    review: jest.Mock;
-    promote: jest.Mock;
-    findConfirmedRegressionsByRunId: jest.Mock;
+    createMany: Mock;
+    findByRunId: Mock;
+    findSuspiciousByRunId: Mock;
+    findById: Mock;
+    review: Mock;
+    promote: Mock;
+    findConfirmedRegressionsByRunId: Mock;
   };
-  let routingManager: { evaluateRoute: jest.Mock };
+  let routingManager: { evaluateRoute: Mock };
 
   beforeEach(() => {
     decisionsRepo = {
-      findRecent: jest.fn().mockResolvedValue([mockDecision]),
+      findRecent: vi.fn().mockResolvedValue([mockDecision]),
     };
     runsRepo = {
-      create: jest.fn().mockResolvedValue(mockRun),
-      findAll: jest.fn().mockResolvedValue([]),
-      findById: jest.fn().mockResolvedValue(null),
-      countAll: jest.fn().mockResolvedValue(0),
+      create: vi.fn().mockResolvedValue(mockRun),
+      findAll: vi.fn().mockResolvedValue([]),
+      findById: vi.fn().mockResolvedValue(null),
+      countAll: vi.fn().mockResolvedValue(0),
     };
     casesRepo = {
-      createMany: jest.fn().mockImplementation(() => Promise.resolve()),
-      findByRunId: jest.fn().mockResolvedValue([]),
-      findSuspiciousByRunId: jest.fn().mockResolvedValue([]),
-      findById: jest.fn().mockResolvedValue(null),
-      review: jest.fn(),
-      promote: jest.fn().mockResolvedValue({
+      createMany: vi.fn().mockImplementation(() => Promise.resolve()),
+      findByRunId: vi.fn().mockResolvedValue([]),
+      findSuspiciousByRunId: vi.fn().mockResolvedValue([]),
+      findById: vi.fn().mockResolvedValue(null),
+      review: vi.fn(),
+      promote: vi.fn().mockResolvedValue({
         id: 'case-1',
         runId: 'run-1',
         decisionId: null,
@@ -108,10 +109,10 @@ describe('ReplayManager', () => {
         reviewedAt: null,
         createdAt: new Date(),
       }),
-      findConfirmedRegressionsByRunId: jest.fn().mockResolvedValue([]),
+      findConfirmedRegressionsByRunId: vi.fn().mockResolvedValue([]),
     };
     routingManager = {
-      evaluateRoute: jest.fn().mockResolvedValue(mockNewDecisionResult),
+      evaluateRoute: vi.fn().mockResolvedValue(mockNewDecisionResult),
     };
     manager = new ReplayManager(
       decisionsRepo as unknown as RoutingDecisionsRepository,

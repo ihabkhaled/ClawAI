@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../../../app/config/app.config';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 
@@ -6,17 +7,17 @@ describe('PromptBuilderManager', () => {
 
   beforeEach(() => {
     manager = new PromptBuilderManager();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       ROUTER_COMPACT_PROMPT: true,
     } as ReturnType<typeof AppConfig.get>);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('adds local model intelligence and routing signals to the prompt', async () => {
-    jest.spyOn(manager, 'fetchInstalledModels').mockResolvedValue([
+    vi.spyOn(manager, 'fetchInstalledModels').mockResolvedValue([
       {
         name: 'qwen3',
         tag: '1.7b',
@@ -69,7 +70,7 @@ describe('PromptBuilderManager', () => {
   });
 
   it('keeps the no-model fallback explicit', async () => {
-    jest.spyOn(manager, 'fetchInstalledModels').mockResolvedValue([]);
+    vi.spyOn(manager, 'fetchInstalledModels').mockResolvedValue([]);
 
     const prompt = await manager.buildRouterPrompt(['OPENAI']);
 
@@ -108,12 +109,12 @@ describe('PromptBuilderManager', () => {
     };
 
     const adaptiveLearningManager = {
-      computeInsights: jest.fn().mockResolvedValue(adaptiveInsights),
+      computeInsights: vi.fn().mockResolvedValue(adaptiveInsights),
     };
 
     const managerWithInsights = new PromptBuilderManager(adaptiveLearningManager as never);
 
-    jest.spyOn(managerWithInsights, 'fetchInstalledModels').mockResolvedValue([]);
+    vi.spyOn(managerWithInsights, 'fetchInstalledModels').mockResolvedValue([]);
 
     const prompt = await managerWithInsights.buildRouterPrompt(['OPENAI']);
 
@@ -131,7 +132,7 @@ describe('PromptBuilderManager', () => {
 
   it('adds router education snapshot hints when available', async () => {
     const routerEducationManager = {
-      getLatestSnapshot: jest.fn().mockResolvedValue({
+      getLatestSnapshot: vi.fn().mockResolvedValue({
         version: 'calibration-1',
         summary: {
           windowDays: 30,
@@ -174,7 +175,7 @@ describe('PromptBuilderManager', () => {
       undefined,
       routerEducationManager as never,
     );
-    jest.spyOn(managerWithEducation, 'fetchInstalledModels').mockResolvedValue([]);
+    vi.spyOn(managerWithEducation, 'fetchInstalledModels').mockResolvedValue([]);
 
     const prompt = await managerWithEducation.buildRouterPrompt(['ANTHROPIC']);
 

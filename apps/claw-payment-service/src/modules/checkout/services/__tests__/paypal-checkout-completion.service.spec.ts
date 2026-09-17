@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BillingGateway, CheckoutPurpose, CheckoutSessionStatus } from '@claw/shared-types';
 
 import { PaypalCheckoutCompletionService } from '../paypal-checkout-completion.service';
@@ -41,25 +42,25 @@ function session(overrides: Record<string, unknown> = {}): Record<string, unknow
 
 describe('PaypalCheckoutCompletionService', () => {
   const sessions = {
-    findById: jest.fn(),
-    claimForCapture: jest.fn(),
-    markStatus: jest.fn(),
-    markFailed: jest.fn(),
+    findById: vi.fn(),
+    claimForCapture: vi.fn(),
+    markStatus: vi.fn(),
+    markFailed: vi.fn(),
   };
   const paypal = {
-    captureOrder: jest.fn(),
-    getOrder: jest.fn(),
+    captureOrder: vi.fn(),
+    getOrder: vi.fn(),
   };
   const activation = {
-    activate: jest.fn(),
+    activate: vi.fn(),
   };
   const compensation = {
-    compensate: jest.fn(),
+    compensate: vi.fn(),
   };
   let service: PaypalCheckoutCompletionService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     sessions.findById.mockResolvedValue(session());
     sessions.claimForCapture.mockResolvedValue(true);
     sessions.markStatus.mockImplementation(() => Promise.resolve());

@@ -1,3 +1,4 @@
+import { vi, type Mocked, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { AuditsRepository } from '../audits.repository';
@@ -5,34 +6,34 @@ import { AuditLog } from '../../schemas/audit-log.schema';
 
 describe('AuditsRepository', () => {
   let repository: AuditsRepository;
-  let modelMock: jest.Mocked<{
-    find: jest.Mock;
-    countDocuments: jest.Mock;
-    aggregate: jest.Mock;
+  let modelMock: Mocked<{
+    find: Mock;
+    countDocuments: Mock;
+    aggregate: Mock;
   }>;
 
   const buildQueryChain = (): {
-    sort: jest.Mock;
-    skip: jest.Mock;
-    limit: jest.Mock;
-    exec: jest.Mock;
+    sort: Mock;
+    skip: Mock;
+    limit: Mock;
+    exec: Mock;
   } => ({
-    sort: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([{ _id: 'a1' }]),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([{ _id: 'a1' }]),
   });
 
   beforeEach(async () => {
     const queryChain = buildQueryChain();
-    const docMock = { save: jest.fn().mockResolvedValue({ _id: 'audit-1' }) };
+    const docMock = { save: vi.fn().mockResolvedValue({ _id: 'audit-1' }) };
     function modelFactory(): typeof docMock {
       return docMock;
     }
     Object.assign(modelFactory, {
-      find: jest.fn().mockReturnValue(queryChain),
-      countDocuments: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(7) }),
-      aggregate: jest.fn().mockResolvedValue([{ _id: 'create', count: 5 }]),
+      find: vi.fn().mockReturnValue(queryChain),
+      countDocuments: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(7) }),
+      aggregate: vi.fn().mockResolvedValue([{ _id: 'create', count: 5 }]),
     });
     modelMock = modelFactory as never;
 

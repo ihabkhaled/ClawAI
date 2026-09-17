@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { BillingErrorCode, PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 import { PaygCreditExhaustedError, type PaygHold, type PaygMeter } from '@claw/shared-entitlements';
@@ -8,17 +9,24 @@ import {
   PAYG_SURFACE_BY_TOKEN_CONTEXT,
 } from '../../constants/payg.constants';
 
-jest.mock('../../clients/model-exposure.client', () => ({
-  ModelExposureClient: jest.fn().mockImplementation(() => ({
-    isExposed: jest.fn().mockResolvedValue(true),
-  })),
+vi.mock('../../clients/model-exposure.client', () => ({
+  ModelExposureClient: vi.fn(function () {
+    return {
+      isExposed: vi.fn().mockResolvedValue(true),
+    };
+  }),
 }));
-jest.mock('@claw/shared-entitlements', () => {
-  const actual = jest.requireActual('@claw/shared-entitlements');
-  return { ...actual, EntitlementsAdapter: jest.fn().mockImplementation(() => ({})) };
+vi.mock('@claw/shared-entitlements', async () => {
+  const actual = await vi.importActual('@claw/shared-entitlements');
+  return {
+    ...actual,
+    EntitlementsAdapter: vi.fn(function () {
+      return {};
+    }),
+  };
 });
-jest.mock('../../../../app/config/app.config', () => ({
-  AppConfig: { get: jest.fn().mockReturnValue({ AUTH_SERVICE_URL: 'http://auth:4001' }) },
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn().mockReturnValue({ AUTH_SERVICE_URL: 'http://auth:4001' }) },
 }));
 
 const hold: PaygHold = {
@@ -32,15 +40,15 @@ const hold: PaygHold = {
 };
 
 describe('AccessControlService — the PAYG gate', () => {
-  let meter: { reserve: jest.Mock; finalize: jest.Mock; release: jest.Mock };
+  let meter: { reserve: Mock; finalize: Mock; release: Mock };
   let service: AccessControlService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     meter = {
-      reserve: jest.fn().mockResolvedValue(hold),
-      finalize: jest.fn().mockResolvedValue(undefined),
-      release: jest.fn().mockResolvedValue(undefined),
+      reserve: vi.fn().mockResolvedValue(hold),
+      finalize: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn().mockResolvedValue(undefined),
     };
     service = new AccessControlService(meter as unknown as PaygMeter);
   });
@@ -95,7 +103,7 @@ describe('AccessControlService — the PAYG gate', () => {
 
   describe('meterOrchestrationCall', () => {
     it('reserves, runs with the held ceiling, then finalizes the measured usage', async () => {
-      const run = jest.fn().mockResolvedValue({ tokens: 1 });
+      const run = vi.fn().mockResolvedValue({ tokens: 1 });
 
       await service.meterOrchestrationCall(
         {

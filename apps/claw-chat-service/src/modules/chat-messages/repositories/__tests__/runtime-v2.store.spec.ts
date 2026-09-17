@@ -1,5 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
-
+import { describe, expect, it } from 'vitest';
 import { RuntimeV2RedisOperation } from '../../../../infrastructure/redis/enums/runtime-v2-redis-operation.enum';
 import type {
   RuntimeV2RedisCommand,

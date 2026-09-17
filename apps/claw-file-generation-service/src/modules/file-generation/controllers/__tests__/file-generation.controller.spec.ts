@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FileGenerationController } from '../file-generation.controller';
 import { InternalFileGenerationController } from '../internal-file-generation.controller';
@@ -6,20 +7,20 @@ import { FileGenerationEventsService } from '../../services/file-generation-even
 
 describe('FileGenerationController', () => {
   let controller: FileGenerationController;
-  let serviceMock: jest.Mocked<{
-    listByUser: jest.Mock;
-    getByIdForUser: jest.Mock;
-    retryGeneration: jest.Mock;
-  }>;
-  let eventsMock: jest.Mocked<{ subscribe: jest.Mock }>;
+  let serviceMock: {
+    listByUser: Mock;
+    getByIdForUser: Mock;
+    retryGeneration: Mock;
+  };
+  let eventsMock: { subscribe: Mock };
 
   beforeEach(async () => {
     serviceMock = {
-      listByUser: jest.fn(),
-      getByIdForUser: jest.fn(),
-      retryGeneration: jest.fn(),
+      listByUser: vi.fn(),
+      getByIdForUser: vi.fn(),
+      retryGeneration: vi.fn(),
     };
-    eventsMock = { subscribe: jest.fn() };
+    eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FileGenerationController],
       providers: [
@@ -51,7 +52,7 @@ describe('FileGenerationController', () => {
   });
 
   it('events subscribes to events service for a generation', () => {
-    const obs = { subscribe: jest.fn() };
+    const obs = { subscribe: vi.fn() };
     eventsMock.subscribe.mockReturnValue(obs);
     const result = controller.events('gen-1');
     expect(eventsMock.subscribe).toHaveBeenCalledWith('gen-1');
@@ -61,20 +62,20 @@ describe('FileGenerationController', () => {
 
 describe('InternalFileGenerationController', () => {
   let controller: InternalFileGenerationController;
-  let serviceMock: jest.Mocked<{
-    enqueueGeneration: jest.Mock;
-    getById: jest.Mock;
-    retryGeneration: jest.Mock;
-  }>;
-  let eventsMock: jest.Mocked<{ subscribe: jest.Mock }>;
+  let serviceMock: {
+    enqueueGeneration: Mock;
+    getById: Mock;
+    retryGeneration: Mock;
+  };
+  let eventsMock: { subscribe: Mock };
 
   beforeEach(async () => {
     serviceMock = {
-      enqueueGeneration: jest.fn(),
-      getById: jest.fn(),
-      retryGeneration: jest.fn(),
+      enqueueGeneration: vi.fn(),
+      getById: vi.fn(),
+      retryGeneration: vi.fn(),
     };
-    eventsMock = { subscribe: jest.fn() };
+    eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [InternalFileGenerationController],
       providers: [
@@ -107,7 +108,7 @@ describe('InternalFileGenerationController', () => {
   });
 
   it('events subscribes via eventsService', () => {
-    eventsMock.subscribe.mockReturnValue({ subscribe: jest.fn() });
+    eventsMock.subscribe.mockReturnValue({ subscribe: vi.fn() });
     controller.events('g1');
     expect(eventsMock.subscribe).toHaveBeenCalledWith('g1');
   });

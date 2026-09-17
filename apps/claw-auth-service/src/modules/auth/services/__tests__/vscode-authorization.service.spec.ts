@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
@@ -11,12 +12,12 @@ import { VscodeAuthorizationService } from '../vscode-authorization.service';
 describe('VscodeAuthorizationService', () => {
   const values = new Map<string, string>();
   const redis = {
-    set: jest.fn(async (key: string, value: string) => {
+    set: vi.fn(async (key: string, value: string) => {
       values.set(key, value);
     }),
-    get: jest.fn(async (key: string) => values.get(key) ?? null),
-    getClient: jest.fn(() => ({
-      getdel: jest.fn(async (key: string) => {
+    get: vi.fn(async (key: string) => values.get(key) ?? null),
+    getClient: vi.fn(() => ({
+      getdel: vi.fn(async (key: string) => {
         const value = values.get(key) ?? null;
         values.delete(key);
         return value;
@@ -24,7 +25,7 @@ describe('VscodeAuthorizationService', () => {
     })),
   };
   const repository = {
-    findUserById: jest.fn(async () => ({
+    findUserById: vi.fn(async () => ({
       id: 'user-1',
       email: 'user@example.com',
       username: 'user',
@@ -46,13 +47,13 @@ describe('VscodeAuthorizationService', () => {
     tokenType: 'Bearer' as const,
   };
   const tokenSessionManager = {
-    issue: jest.fn(async () => tokens),
+    issue: vi.fn(async () => tokens),
   };
   let service: VscodeAuthorizationService;
 
   beforeEach(async () => {
     values.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const module = await Test.createTestingModule({
       providers: [
         VscodeAuthorizationService,

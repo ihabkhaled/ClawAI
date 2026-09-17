@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RouterModelRegistryRepository } from '../repositories/router-model-registry.repository';
@@ -74,13 +75,13 @@ function fakeRow(overrides: Record<string, unknown> = {}): Record<string, unknow
 
 describe('ModelIntelligenceService', () => {
   let service: ModelIntelligenceService;
-  let registryRepo: jest.Mocked<RouterModelRegistryRepository>;
+  let registryRepo: Mocked<RouterModelRegistryRepository>;
 
   beforeEach(async () => {
     registryRepo = {
-      findByProviderAndModelKey: jest.fn(),
-      patchIntelligence: jest.fn(),
-    } as unknown as jest.Mocked<RouterModelRegistryRepository>;
+      findByProviderAndModelKey: vi.fn(),
+      patchIntelligence: vi.fn(),
+    } as unknown as Mocked<RouterModelRegistryRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

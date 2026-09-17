@@ -1,22 +1,24 @@
+import { vi } from 'vitest';
 import { PassThrough } from 'node:stream';
 import { OllamaRuntimeAdapter } from './ollama-runtime.adapter';
 
-jest.mock('@common/utilities', () => {
-  const mockClient = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-  };
+// vi.hoisted runs before the hoisted vi.mock factories, so the spec and the
+// adapter share one client object without a top-level await inside describe.
+const { mockClient } = vi.hoisted(() => ({
+  mockClient: {
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
 
-  return {
-    __mockClient: mockClient,
-    createHttpClient: jest.fn(() => mockClient),
-  };
-});
+vi.mock('@common/utilities', () => ({
+  createHttpClient: vi.fn(() => mockClient),
+}));
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_BASE_URL: 'http://localhost:11434',
       OLLAMA_GENERATE_TIMEOUT_MS: 30_000,
     }),
@@ -24,14 +26,8 @@ jest.mock('../../../../app/config/app.config', () => ({
 }));
 
 describe('OllamaRuntimeAdapter', () => {
-  const mockClient = jest.requireMock('@common/utilities').__mockClient as {
-    get: jest.Mock;
-    post: jest.Mock;
-    delete: jest.Mock;
-  };
-
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('rejects a pull when the runtime emits an error frame', async () => {
@@ -39,7 +35,7 @@ describe('OllamaRuntimeAdapter', () => {
     mockClient.post.mockResolvedValue({ data: stream });
 
     const adapter = new OllamaRuntimeAdapter();
-    const onProgress = jest.fn();
+    const onProgress = vi.fn();
     const pullPromise = adapter.pullModelWithProgress('glm5.1:latest', onProgress);
 
     setImmediate(() => {

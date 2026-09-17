@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FileChunksRepository } from '../file-chunks.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -6,18 +7,18 @@ describe('FileChunksRepository', () => {
   let repository: FileChunksRepository;
   let prismaMock: {
     fileChunk: {
-      createMany: jest.Mock;
-      findMany: jest.Mock;
-      deleteMany: jest.Mock;
+      createMany: Mock;
+      findMany: Mock;
+      deleteMany: Mock;
     };
   };
 
   beforeEach(async () => {
     prismaMock = {
       fileChunk: {
-        createMany: jest.fn().mockResolvedValue({ count: 5 }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]),
-        deleteMany: jest.fn().mockResolvedValue({ count: 5 }),
+        createMany: vi.fn().mockResolvedValue({ count: 5 }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
       },
     };
 

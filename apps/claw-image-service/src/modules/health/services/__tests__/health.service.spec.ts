@@ -1,10 +1,11 @@
+import { vi, type Mock } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HealthService } from '../health.service';
 import { RedisService } from '../../../../infrastructure/redis/redis.service';
 import { HealthCheckStatus, ServiceStatus } from '../../../../common/enums';
 
 describe('HealthService', () => {
-  let redisMock: { getClient: jest.Mock };
+  let redisMock: { getClient: Mock };
 
   const buildService = async (): Promise<HealthService> => {
     const module: TestingModule = await Test.createTestingModule({
@@ -15,8 +16,8 @@ describe('HealthService', () => {
 
   beforeEach(() => {
     redisMock = {
-      getClient: jest.fn().mockReturnValue({
-        ping: jest.fn().mockResolvedValue('PONG'),
+      getClient: vi.fn().mockReturnValue({
+        ping: vi.fn().mockResolvedValue('PONG'),
       }),
     };
   });
@@ -27,8 +28,8 @@ describe('HealthService', () => {
   });
 
   it('returns DEGRADED when redis returns wrong reply', async () => {
-    redisMock.getClient = jest.fn().mockReturnValue({
-      ping: jest.fn().mockResolvedValue('not-pong'),
+    redisMock.getClient = vi.fn().mockReturnValue({
+      ping: vi.fn().mockResolvedValue('not-pong'),
     });
     const service = await buildService();
     const result = await service.check();
@@ -37,8 +38,8 @@ describe('HealthService', () => {
   });
 
   it('returns DEGRADED when redis throws', async () => {
-    redisMock.getClient = jest.fn().mockReturnValue({
-      ping: jest.fn().mockRejectedValue(new Error('off')),
+    redisMock.getClient = vi.fn().mockReturnValue({
+      ping: vi.fn().mockRejectedValue(new Error('off')),
     });
     const service = await buildService();
     expect((await service.check()).status).toBe(HealthCheckStatus.DEGRADED);

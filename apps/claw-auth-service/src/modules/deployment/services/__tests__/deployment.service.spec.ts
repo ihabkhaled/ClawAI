@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   DeploymentCredentialSource,
   DeploymentPhase,
@@ -35,19 +36,19 @@ const STATUS: DeploymentStatusDocument = {
 };
 
 describe('DeploymentService', () => {
-  const assertSuperAdminActor = jest.fn();
-  const read = jest.fn();
-  const write = jest.fn();
-  const readAutomation = jest.fn();
-  const writeAutomation = jest.fn();
-  const sendDeploymentNotification = jest.fn();
-  const dispatch = jest.fn();
-  const resolve = jest.fn();
-  const latestRun = jest.fn();
-  const workflowUrl = jest.fn();
-  const findCredential = jest.fn();
-  const upsertCredential = jest.fn();
-  const deleteCredential = jest.fn();
+  const assertSuperAdminActor = vi.fn();
+  const read = vi.fn();
+  const write = vi.fn();
+  const readAutomation = vi.fn();
+  const writeAutomation = vi.fn();
+  const sendDeploymentNotification = vi.fn();
+  const dispatch = vi.fn();
+  const resolve = vi.fn();
+  const latestRun = vi.fn();
+  const workflowUrl = vi.fn();
+  const findCredential = vi.fn();
+  const upsertCredential = vi.fn();
+  const deleteCredential = vi.fn();
   const service = new DeploymentService(
     { assertSuperAdminActor } as unknown as UsersService,
     { read, write, readAutomation, writeAutomation } as unknown as DeploymentStatusFileAdapter,
@@ -70,8 +71,8 @@ describe('DeploymentService', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest
+    vi.clearAllMocks();
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) } as unknown as AppConfigType);
     resolve.mockResolvedValue(RESOLVED);

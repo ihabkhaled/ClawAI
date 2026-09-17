@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import {
   AiActionKind,
   AiActionMode,
@@ -21,9 +22,9 @@ describe('AutoRouterManager', () => {
   const makeResolver = (
     primary: ModelChoice | null,
     fallbackChain: ModelChoice[] = [],
-  ): { resolveDefaults: jest.Mock; invalidate: jest.Mock } => ({
-    resolveDefaults: jest.fn().mockResolvedValue({ primary, fallbackChain }),
-    invalidate: jest.fn(),
+  ): { resolveDefaults: Mock; invalidate: Mock } => ({
+    resolveDefaults: vi.fn().mockResolvedValue({ primary, fallbackChain }),
+    invalidate: vi.fn(),
   });
 
   it('returns MANUAL mode when a preferred model is provided', async () => {

@@ -1,15 +1,16 @@
+import { vi, type Mock } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { FxService } from '../services/fx.service';
 import { type FxQuoteRepository } from '../repositories/fx-quote.repository';
 
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const mockHttp = httpRequest as unknown as jest.Mock;
+const mockHttp = httpRequest as unknown as Mock;
 const NOW = 1_800_000_000_000;
 const RATE_SCALE = 10_000_000;
 
@@ -29,20 +30,20 @@ const storedQuote = (overrides: Record<string, unknown> = {}) => ({
 
 describe('FxService', () => {
   let service: FxService;
-  let repository: { findFresh: jest.Mock; findById: jest.Mock; create: jest.Mock };
+  let repository: { findFresh: Mock; findById: Mock; create: Mock };
 
   beforeEach(() => {
     mockHttp.mockReset();
     repository = {
-      findFresh: jest.fn().mockResolvedValue(null),
-      findById: jest.fn(),
-      create: jest
+      findFresh: vi.fn().mockResolvedValue(null),
+      findById: vi.fn(),
+      create: vi
         .fn()
         .mockImplementation((data: Record<string, unknown>) =>
           Promise.resolve({ id: 'fx-new', createdAt: new Date(NOW), ...data }),
         ),
     };
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       EXCHANGE_RATE_API_BASE_URL: 'https://rates.example/v1',
       FX_QUOTE_TTL_MS: 600_000,
       FX_SAFETY_MARGIN_BPS: 100,
@@ -53,7 +54,7 @@ describe('FxService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('short-circuits when base and quote currency are the same', async () => {
@@ -90,7 +91,7 @@ describe('FxService', () => {
   });
 
   it('falls back to the configured rate when the upstream is unreachable', async () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       EXCHANGE_RATE_API_BASE_URL: 'https://rates.example/v1',
       FX_QUOTE_TTL_MS: 600_000,
       FX_SAFETY_MARGIN_BPS: 0,
@@ -122,7 +123,7 @@ describe('FxService', () => {
   });
 
   it('never uses a fallback for a currency it was not configured for', async () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       EXCHANGE_RATE_API_BASE_URL: 'https://rates.example/v1',
       FX_QUOTE_TTL_MS: 600_000,
       FX_SAFETY_MARGIN_BPS: 0,

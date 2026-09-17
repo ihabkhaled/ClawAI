@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS } from '../../constants/email-verification.constants';
 import { EmailVerificationService } from '../email-verification.service';
@@ -10,16 +11,16 @@ import type { EmailDispatchCooldownService } from '../email-dispatch-cooldown.se
 
 function build(): {
   service: EmailVerificationService;
-  repository: { replaceForUser: jest.Mock; consumeAndActivate: jest.Mock };
-  authRepository: { findUserByEmail: jest.Mock };
-  emailAdapter: { sendVerification: jest.Mock };
-  cooldown: { claim: jest.Mock };
+  repository: { replaceForUser: Mock; consumeAndActivate: Mock };
+  authRepository: { findUserByEmail: Mock };
+  emailAdapter: { sendVerification: Mock };
+  cooldown: { claim: Mock };
 } {
-  const repository = { replaceForUser: jest.fn(), consumeAndActivate: jest.fn() };
-  const authRepository = { findUserByEmail: jest.fn() };
-  const emailAdapter = { sendVerification: jest.fn().mockResolvedValue(undefined) };
-  const recipients = { forUserId: jest.fn().mockResolvedValue({ email: 'a@b.c' }) };
-  const cooldown = { claim: jest.fn() };
+  const repository = { replaceForUser: vi.fn(), consumeAndActivate: vi.fn() };
+  const authRepository = { findUserByEmail: vi.fn() };
+  const emailAdapter = { sendVerification: vi.fn().mockResolvedValue(undefined) };
+  const recipients = { forUserId: vi.fn().mockResolvedValue({ email: 'a@b.c' }) };
+  const cooldown = { claim: vi.fn() };
   return {
     service: new EmailVerificationService(
       repository as unknown as EmailVerificationRepository,
@@ -37,12 +38,12 @@ function build(): {
 
 describe('EmailVerificationService.resend', () => {
   beforeEach(() => {
-    jest
+    vi
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ JWT_SECRET: 'x'.repeat(32) } as ReturnType<typeof AppConfig.get>);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('sends and reports the full cooldown when the window was free', async () => {
     const ctx = build();

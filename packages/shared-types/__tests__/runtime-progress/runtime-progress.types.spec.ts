@@ -17,7 +17,10 @@ describe('runtime-progress shared types', () => {
   it('exports every enum with the expected member counts', () => {
     expect(Object.keys(RuntimeProvider)).toHaveLength(4);
     expect(Object.keys(RuntimeModality)).toHaveLength(3);
-    expect(Object.keys(RuntimeProgressStage)).toHaveLength(25);
+    // 29, not 25: the four CRAWL_* stages split site-crawling out of the
+    // RESEARCH_* family. This package carried no Jest config, so this guard
+    // never ran and never caught the addition.
+    expect(Object.keys(RuntimeProgressStage)).toHaveLength(29);
     expect(Object.keys(RuntimeProgressEventType)).toHaveLength(11);
     expect(Object.keys(RuntimeProgressConfidence)).toHaveLength(5);
     expect(Object.keys(RuntimeExecutionProfile)).toHaveLength(7);
@@ -41,6 +44,13 @@ describe('runtime-progress shared types', () => {
     expect(RuntimeProgressStage.RESEARCH_FETCHING).toBe('RESEARCH_FETCHING');
     expect(RuntimeProgressStage.RESEARCH_COMPLETED).toBe('RESEARCH_COMPLETED');
     expect(RuntimeProgressStage.RESEARCH_FAILED).toBe('RESEARCH_FAILED');
+  });
+
+  it('exposes the CRAWL_* lifecycle stages with stable string values', () => {
+    expect(RuntimeProgressStage.CRAWL_STARTED).toBe('CRAWL_STARTED');
+    expect(RuntimeProgressStage.CRAWL_DISCOVERING).toBe('CRAWL_DISCOVERING');
+    expect(RuntimeProgressStage.CRAWL_READING_PAGE).toBe('CRAWL_READING_PAGE');
+    expect(RuntimeProgressStage.CRAWL_COMPLETED).toBe('CRAWL_COMPLETED');
   });
 
   it('accepts a minimal ClawRuntimeProgressEvent shape', () => {

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { BillingGateway, CheckoutSessionStatus } from '@claw/shared-types';
 
 import {
@@ -53,25 +54,25 @@ function checkout(id: string, overrides: Partial<CheckoutSession> = {}): Checkou
 
 describe('GatewayReconciliationService', () => {
   let sessions: {
-    countExpiredPending: jest.Mock;
-    listExpiredPending: jest.Mock;
-    markFailed: jest.Mock;
+    countExpiredPending: Mock;
+    listExpiredPending: Mock;
+    markFailed: Mock;
   };
-  let paypal: { getOrder: jest.Mock };
-  let paymob: { fetchTransactionByReference: jest.Mock };
-  let activation: { activate: jest.Mock };
-  let compensation: { compensate: jest.Mock };
-  let reconciliation: { recordFinding: jest.Mock };
+  let paypal: { getOrder: Mock };
+  let paymob: { fetchTransactionByReference: Mock };
+  let activation: { activate: Mock };
+  let compensation: { compensate: Mock };
+  let reconciliation: { recordFinding: Mock };
   let service: GatewayReconciliationService;
 
   beforeEach(() => {
     sessions = {
-      countExpiredPending: jest.fn().mockResolvedValue(1),
-      listExpiredPending: jest.fn().mockResolvedValue([checkout('checkout-1')]),
-      markFailed: jest.fn(),
+      countExpiredPending: vi.fn().mockResolvedValue(1),
+      listExpiredPending: vi.fn().mockResolvedValue([checkout('checkout-1')]),
+      markFailed: vi.fn(),
     };
     paypal = {
-      getOrder: jest.fn().mockResolvedValue({
+      getOrder: vi.fn().mockResolvedValue({
         verified: true,
         captureId: 'capture-1',
         status: 'COMPLETED',
@@ -81,10 +82,10 @@ describe('GatewayReconciliationService', () => {
         mismatchReason: null,
       }),
     };
-    paymob = { fetchTransactionByReference: jest.fn() };
-    activation = { activate: jest.fn().mockResolvedValue('subscription-1') };
-    compensation = { compensate: jest.fn() };
-    reconciliation = { recordFinding: jest.fn() };
+    paymob = { fetchTransactionByReference: vi.fn() };
+    activation = { activate: vi.fn().mockResolvedValue('subscription-1') };
+    compensation = { compensate: vi.fn() };
+    reconciliation = { recordFinding: vi.fn() };
     service = new GatewayReconciliationService(
       sessions as unknown as CheckoutSessionRepository,
       paypal as unknown as PaypalAdapter,

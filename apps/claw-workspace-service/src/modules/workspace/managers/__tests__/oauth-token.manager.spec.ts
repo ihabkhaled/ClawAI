@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { OAuthTokenManager } from '../oauth-token.manager';
 import { AppConfig } from '../../../../app/config/app.config';
 import type { RedisService } from '../../../../infrastructure/redis/redis.service';
@@ -5,13 +6,13 @@ import type { RedisService } from '../../../../infrastructure/redis/redis.servic
 const TEST_KEY = 'a'.repeat(64);
 
 const mockRedis = {
-  get: jest.fn(),
-  set: jest.fn(),
-  setNxEx: jest.fn(),
-  del: jest.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
+  setNxEx: vi.fn(),
+  del: vi.fn(),
 } as unknown as RedisService;
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   WORKSPACE_DATABASE_URL: 'postgres://localhost/test',
   REDIS_URL: 'redis://localhost:6379',
   RABBITMQ_URL: 'amqp://localhost:5672',
@@ -84,7 +85,7 @@ describe('OAuthTokenManager', () => {
   let manager: OAuthTokenManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     manager = new OAuthTokenManager(mockRedis);
   });
 
@@ -127,7 +128,7 @@ describe('OAuthTokenManager', () => {
 
   describe('initOAuthFlow', () => {
     it('should store state in Redis and return authorizationUrl with PKCE challenge by default', async () => {
-      (mockRedis.set as jest.Mock).mockImplementation(() => Promise.resolve());
+      (mockRedis.set as Mock).mockImplementation(() => Promise.resolve());
       const result = await manager.initOAuthFlow(
         'user1',
         'GITHUB',
@@ -149,7 +150,7 @@ describe('OAuthTokenManager', () => {
     });
 
     it('should NOT include code_challenge when pkce=false (e.g. Bitbucket)', async () => {
-      (mockRedis.set as jest.Mock).mockImplementation(() => Promise.resolve());
+      (mockRedis.set as Mock).mockImplementation(() => Promise.resolve());
       const result = await manager.initOAuthFlow(
         'user1',
         'BITBUCKET',
@@ -166,7 +167,7 @@ describe('OAuthTokenManager', () => {
     });
 
     it('should store verifier=undefined in state when pkce=false', async () => {
-      (mockRedis.set as jest.Mock).mockImplementation(() => Promise.resolve());
+      (mockRedis.set as Mock).mockImplementation(() => Promise.resolve());
       await manager.initOAuthFlow(
         'user1',
         'BITBUCKET',
@@ -177,7 +178,9 @@ describe('OAuthTokenManager', () => {
         ['repository'],
         { pkce: false },
       );
-      const storedJson = (mockRedis.set as jest.Mock).mock.calls[0][1] as string;
+      const storedJsonCall = (mockRedis.set as Mock).mock.calls[0];
+      expect(storedJsonCall).toBeDefined();
+      const storedJson = storedJsonCall?.[1] as string;
       const stored = JSON.parse(storedJson);
       expect(stored.verifier).toBeUndefined();
     });
@@ -185,7 +188,7 @@ describe('OAuthTokenManager', () => {
 
   describe('resolveOAuthState', () => {
     it('should return null when state not found in Redis', async () => {
-      (mockRedis.get as jest.Mock).mockResolvedValue(null);
+      (mockRedis.get as Mock).mockResolvedValue(null);
       const result = await manager.resolveOAuthState('invalid-state');
       expect(result).toBeNull();
     });
@@ -197,8 +200,8 @@ describe('OAuthTokenManager', () => {
         redirectUri: 'https://cb',
         verifier: 'abc',
       };
-      (mockRedis.get as jest.Mock).mockResolvedValue(JSON.stringify(stateData));
-      (mockRedis.del as jest.Mock).mockImplementation(() => Promise.resolve());
+      (mockRedis.get as Mock).mockResolvedValue(JSON.stringify(stateData));
+      (mockRedis.del as Mock).mockImplementation(() => Promise.resolve());
       const result = await manager.resolveOAuthState('valid-state');
       expect(result).toEqual(stateData);
       expect(mockRedis.del).toHaveBeenCalledWith('oauth:state:valid-state');
@@ -207,12 +210,12 @@ describe('OAuthTokenManager', () => {
 
   describe('acquireRefreshLock', () => {
     it('should return true when lock acquired (Redis returns OK)', async () => {
-      (mockRedis.setNxEx as jest.Mock).mockResolvedValue(true);
+      (mockRedis.setNxEx as Mock).mockResolvedValue(true);
       await expect(manager.acquireRefreshLock('connector-1')).resolves.toBe(true);
     });
 
     it('should return false when lock already held', async () => {
-      (mockRedis.setNxEx as jest.Mock).mockResolvedValue(false);
+      (mockRedis.setNxEx as Mock).mockResolvedValue(false);
       await expect(manager.acquireRefreshLock('connector-1')).resolves.toBe(false);
     });
   });

@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { BusinessException } from '../common/errors/business.exception';
 import { CostEnsembleManager } from '../modules/chat-messages/managers/cost-ensemble.manager';
@@ -11,16 +12,16 @@ import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
-jest.mock('../app/config/app.config', () => ({
+vi.mock('../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://localhost:11434',
     }),
   },
 }));
 
-jest.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: jest.fn().mockResolvedValue({
+vi.mock('../common/utilities/http-client.utility', () => ({
+  httpRequest: vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     data: {
@@ -90,27 +91,27 @@ const mockAssistantMessage = {
   createdAt: new Date(),
 };
 
-const makeMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
-  create: jest.fn(),
+const makeMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
+  create: vi.fn(),
 });
 
-const makeThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
+const makeThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, Mock>> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
 });
 
-const makeStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
-  emitCompletion: jest.fn(),
-  emitError: jest.fn(),
+const makeStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
+  emitCompletion: vi.fn(),
+  emitError: vi.fn(),
 });
 
-const makeQualityManager = (): Partial<Record<keyof QualityCheckManager, jest.Mock>> => ({
-  checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
+const makeQualityManager = (): Partial<Record<keyof QualityCheckManager, Mock>> => ({
+  checkResponseQuality: vi.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
 });
 
 // Universal-research PR2: research-enricher dependency.
 const mockResearchEnricherManager = {
-  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
 describe('CostEnsembleManager', () => {
@@ -139,9 +140,9 @@ describe('CostEnsembleManager', () => {
       createFakePaygAccessControl() as any,
     );
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (httpClientModule.httpRequest as jest.Mock).mockResolvedValue({
+    (httpClientModule.httpRequest as Mock).mockResolvedValue({
       ok: true,
       status: 200,
       data: {
@@ -197,7 +198,7 @@ describe('CostEnsembleManager', () => {
   describe('executeInBackground', () => {
     it('should store ASSISTANT message with costEnsemble:true metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as jest.Mock)
+      (httpClientModule.httpRequest as Mock)
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -228,7 +229,7 @@ describe('CostEnsembleManager', () => {
 
     it('should store tier in metadata based on classification score', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as jest.Mock)
+      (httpClientModule.httpRequest as Mock)
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -249,7 +250,9 @@ describe('CostEnsembleManager', () => {
 
       await manager.executeInBackground('thread-ce-1', 'complex task', 'user-1');
 
-      const callArg = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<
+      const callArgCall = (messagesRepo.create as Mock).mock.calls[0];
+      expect(callArgCall).toBeDefined();
+      const callArg = callArgCall?.[0] as Record<
         string,
         unknown
       >;
@@ -259,7 +262,7 @@ describe('CostEnsembleManager', () => {
 
     it('should emit SSE completion on success', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as jest.Mock)
+      (httpClientModule.httpRequest as Mock)
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -288,7 +291,7 @@ describe('CostEnsembleManager', () => {
     });
 
     it('should emit SSE error and store error when Ollama fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Ollama down'));
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Ollama down'));
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
       await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
@@ -302,7 +305,7 @@ describe('CostEnsembleManager', () => {
     });
 
     it('should resolve (fire-and-forget) even when everything fails', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Fatal'));
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -311,7 +314,7 @@ describe('CostEnsembleManager', () => {
     });
 
     it('should not throw when storeErrorMessage itself fails (nested try-catch)', async () => {
-      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Ollama down'));
+      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Ollama down'));
       messagesRepo.create!.mockRejectedValue(new Error('DB also down'));
 
       await expect(
@@ -353,9 +356,9 @@ describe('CostEnsembleManager', () => {
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
       const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+        Record<keyof AdvancedModuleModelSelectionService, Mock>
       > = {
-        resolveSelection: jest
+        resolveSelection: vi
           .fn()
           .mockRejectedValue(
             new BusinessException(

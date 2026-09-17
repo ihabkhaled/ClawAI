@@ -1,3 +1,4 @@
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ConnectorModelsRepository } from '../connector-models.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -34,25 +35,25 @@ describe('ConnectorModelsRepository', () => {
   let repository: ConnectorModelsRepository;
   let prismaMock: {
     connectorModel: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
-      deleteMany: jest.Mock;
-      updateMany: jest.Mock;
-      count: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
+      deleteMany: Mock;
+      updateMany: Mock;
+      count: Mock;
     };
-    $transaction: jest.Mock;
+    $transaction: Mock;
   };
 
   beforeEach(async () => {
     prismaMock = {
       connectorModel: {
-        upsert: jest.fn().mockResolvedValue({ id: 'm1' }),
-        findMany: jest.fn().mockResolvedValue([{ id: 'm1' }]),
-        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-        count: jest.fn().mockResolvedValue(3),
+        upsert: vi.fn().mockResolvedValue({ id: 'm1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'm1' }]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        count: vi.fn().mockResolvedValue(3),
       },
-      $transaction: jest
+      $transaction: vi
         .fn()
         .mockImplementation((ops: unknown[]) => Promise.resolve(ops.map(() => ({})))),
     };
@@ -77,7 +78,7 @@ describe('ConnectorModelsRepository', () => {
 
   describe('replaceMany', () => {
     it('marks models missing from the sync as REMOVED instead of deleting them', async () => {
-      prismaMock.$transaction = jest
+      prismaMock.$transaction = vi
         .fn()
         .mockResolvedValue([{ count: 5 }, { id: 'm1' }, { id: 'm2' }]);
       const result = await repository.replaceMany('c1', 'OPENAI' as never, [
@@ -97,7 +98,7 @@ describe('ConnectorModelsRepository', () => {
     });
 
     it('deduplicates models by modelKey', async () => {
-      prismaMock.$transaction = jest.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
+      prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
       const result = await repository.replaceMany('c1', 'OPENAI' as never, [
         buildModel('gpt-4') as never,
         buildModel('gpt-4') as never,
@@ -107,7 +108,7 @@ describe('ConnectorModelsRepository', () => {
     });
 
     it('still marks removals when the provider returns no models', async () => {
-      prismaMock.$transaction = jest.fn().mockResolvedValue([{ count: 7 }]);
+      prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 7 }]);
       const result = await repository.replaceMany('c1', 'OPENAI' as never, []);
       expect(result).toEqual({ upserted: 0, deleted: 7 });
       expect(prismaMock.connectorModel.updateMany).toHaveBeenCalledWith({
@@ -117,9 +118,11 @@ describe('ConnectorModelsRepository', () => {
         },
         data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED' },
       });
+      const updateManyCall = prismaMock.connectorModel.updateMany.mock.calls[0];
+      expect(updateManyCall).toBeDefined();
       expect(
         (
-          prismaMock.connectorModel.updateMany.mock.calls[0][0] as {
+          updateManyCall?.[0] as {
             where: Record<string, unknown>;
           }
         ).where,
@@ -127,9 +130,11 @@ describe('ConnectorModelsRepository', () => {
     });
 
     it('records lastSeenAt on both the update and create branches of the upsert', async () => {
-      prismaMock.$transaction = jest.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
+      prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
       await repository.replaceMany('c1', 'OPENAI' as never, [buildModel('gpt-4') as never]);
-      const upsertArgs = prismaMock.connectorModel.upsert.mock.calls[0][0] as {
+      const upsertArgsCall = prismaMock.connectorModel.upsert.mock.calls[0];
+      expect(upsertArgsCall).toBeDefined();
+      const upsertArgs = upsertArgsCall?.[0] as {
         update: Record<string, unknown>;
         create: Record<string, unknown>;
       };
@@ -149,7 +154,7 @@ describe('ConnectorModelsRepository', () => {
   });
 
   it('deleteByConnectorId returns prisma count', async () => {
-    prismaMock.connectorModel.deleteMany = jest.fn().mockResolvedValue({ count: 4 });
+    prismaMock.connectorModel.deleteMany = vi.fn().mockResolvedValue({ count: 4 });
     const result = await repository.deleteByConnectorId('c1');
     expect(result).toBe(4);
   });

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { StaleDetectorManager } from '../stale-detector.manager';
@@ -5,7 +6,7 @@ import type { WorkspaceSyncSchedulerManager } from '../workspace-sync-scheduler.
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnectorRepository } from '../../repositories/workspace-connector.repository';
 
-jest.spyOn(AppConfig, 'get').mockReturnValue({
+vi.spyOn(AppConfig, 'get').mockReturnValue({
   WORKSPACE_DATABASE_URL: 'x',
   REDIS_URL: 'x',
   RABBITMQ_URL: 'x',
@@ -77,29 +78,29 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
 describe('StaleDetectorManager', () => {
   let manager: StaleDetectorManager;
   const connectorRepo = {
-    findStaleCandidates: jest.fn(),
-    markDegraded: jest.fn().mockResolvedValue({}),
+    findStaleCandidates: vi.fn(),
+    markDegraded: vi.fn().mockResolvedValue({}),
   } as unknown as WorkspaceConnectorRepository;
   const scheduler = {
-    getCadenceForProvider: jest.fn().mockImplementation((p: WorkspaceProvider) => {
+    getCadenceForProvider: vi.fn().mockImplementation((p: WorkspaceProvider) => {
       if (p === WorkspaceProvider.GMAIL) return 120;
       if (p === WorkspaceProvider.JIRA) return 300;
       return 600;
     }),
   } as unknown as WorkspaceSyncSchedulerManager;
   const rabbitmq = {
-    publish: jest.fn().mockImplementation(() => Promise.resolve()),
+    publish: vi.fn().mockImplementation(() => Promise.resolve()),
   } as unknown as RabbitMQService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     manager = new StaleDetectorManager(connectorRepo, scheduler, rabbitmq);
   });
 
   it('flips connectors past 3× cadence to DEGRADED', async () => {
     const now = new Date('2026-04-24T12:00:00Z');
     const staleLast = new Date(now.getTime() - 8 * 60 * 1000);
-    (connectorRepo.findStaleCandidates as jest.Mock).mockResolvedValueOnce([
+    (connectorRepo.findStaleCandidates as Mock).mockResolvedValueOnce([
       {
         id: 'c1',
         userId: 'u1',
@@ -118,7 +119,7 @@ describe('StaleDetectorManager', () => {
   it('skips connectors within 3× cadence', async () => {
     const now = new Date('2026-04-24T12:00:00Z');
     const fresh = new Date(now.getTime() - 90 * 1000);
-    (connectorRepo.findStaleCandidates as jest.Mock).mockResolvedValueOnce([
+    (connectorRepo.findStaleCandidates as Mock).mockResolvedValueOnce([
       {
         id: 'c1',
         userId: 'u1',
@@ -136,7 +137,7 @@ describe('StaleDetectorManager', () => {
   it('skips connectors already DEGRADED (idempotency)', async () => {
     const now = new Date('2026-04-24T12:00:00Z');
     const staleLast = new Date(now.getTime() - 60 * 60 * 1000);
-    (connectorRepo.findStaleCandidates as jest.Mock).mockResolvedValueOnce([
+    (connectorRepo.findStaleCandidates as Mock).mockResolvedValueOnce([
       {
         id: 'c1',
         userId: 'u1',
@@ -153,7 +154,7 @@ describe('StaleDetectorManager', () => {
   it('uses per-connector cadence override when set', async () => {
     const now = new Date('2026-04-24T12:00:00Z');
     const lastSync = new Date(now.getTime() - 35 * 60 * 1000);
-    (connectorRepo.findStaleCandidates as jest.Mock).mockResolvedValueOnce([
+    (connectorRepo.findStaleCandidates as Mock).mockResolvedValueOnce([
       {
         id: 'c1',
         userId: 'u1',
@@ -169,7 +170,7 @@ describe('StaleDetectorManager', () => {
 
   it('treats null lastSyncAt as infinitely stale', async () => {
     const now = new Date();
-    (connectorRepo.findStaleCandidates as jest.Mock).mockResolvedValueOnce([
+    (connectorRepo.findStaleCandidates as Mock).mockResolvedValueOnce([
       {
         id: 'c1',
         userId: 'u1',

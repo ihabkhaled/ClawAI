@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { AnswerRepairManager } from '../managers/answer-repair.manager';
 import { BestOfNManager } from '../managers/best-of-n.manager';
 import { CostEnsembleManager } from '../managers/cost-ensemble.manager';
@@ -25,15 +26,21 @@ import {
 } from '../constants/payg.constants';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
-jest.mock('../../../common/utilities/http-client.utility', () => ({ httpRequest: jest.fn() }));
-jest.mock('../../../app/config/app.config');
+vi.mock('../../../common/utilities/http-client.utility', () => ({ httpRequest: vi.fn() }));
 
-const { httpRequest } = jest.requireMock('../../../common/utilities/http-client.utility') as {
-  httpRequest: jest.Mock;
+const { httpRequest } = await vi.importMock('../../../common/utilities/http-client.utility') as {
+  httpRequest: Mock;
 };
-const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
-  AppConfig: { get: jest.Mock };
-};
+// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
+// hands that same static back, so the spec configured one object while the code
+// under test read another. A hoisted vi.fn keeps both on one mock.
+const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
+
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: { get: appConfigGet },
+}));
+
+const AppConfig = { get: appConfigGet };
 
 const OLLAMA_OK = {
   ok: true,
@@ -49,12 +56,12 @@ const OLLAMA_OK = {
 
 const stub = <T>(shape: Record<string, unknown>): T => shape as unknown as T;
 
-const stream = (): Record<string, jest.Mock> => ({
-  emitOrchestrationStage: jest.fn(),
-  emitProgressStage: jest.fn(),
-  emitRequestAccepted: jest.fn(),
-  emitCompletion: jest.fn(),
-  emitError: jest.fn(),
+const stream = (): Record<string, Mock> => ({
+  emitOrchestrationStage: vi.fn(),
+  emitProgressStage: vi.fn(),
+  emitRequestAccepted: vi.fn(),
+  emitCompletion: vi.fn(),
+  emitError: vi.fn(),
 });
 
 const selection = { actualModel: 'qwen3:1.7b', requestedModel: 'AUTO' };
@@ -80,16 +87,16 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_BEST_OF_N,
     run: async (access) => {
       const manager = new BestOfNManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
         stub<QualityCheckManager>({
-          checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [] }),
+          checkResponseQuality: vi.fn().mockReturnValue({ score: 0.8, reasons: [] }),
         }),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
-        stub<LocalModelSelectionService>({ resolveModelList: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
+        stub<LocalModelSelectionService>({ resolveModelList: vi.fn() }),
       );
       return (
         manager as unknown as {
@@ -110,16 +117,16 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_COST_ENSEMBLE,
     run: async (access) => {
       const manager = new CostEnsembleManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
         stub<QualityCheckManager>({
-          checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [] }),
+          checkResponseQuality: vi.fn().mockReturnValue({ score: 0.8, reasons: [] }),
         }),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
-        stub<LocalModelSelectionService>({ resolveModelList: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
+        stub<LocalModelSelectionService>({ resolveModelList: vi.fn() }),
       );
       return (
         manager as unknown as {
@@ -139,14 +146,14 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_ROLE_PACK,
     run: async (access) => {
       const manager = new RolePackManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
         stub<LocalModelSelectionService>({
-          resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+          resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
         }),
       );
       return (
@@ -173,14 +180,14 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_PIPELINE,
     run: async (access) => {
       const manager = new PipelineManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
         stub<LocalModelSelectionService>({
-          resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+          resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
         }),
       );
       return (
@@ -207,14 +214,14 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_TASK_DECOMPOSITION,
     run: async (access) => {
       const manager = new TaskDecompositionManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
         stub<LocalModelSelectionService>({
-          resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+          resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
         }),
       );
       return (
@@ -239,14 +246,14 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_VERIFIER,
     run: async (access) => {
       const manager = new VerifierManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
         stub<LocalModelSelectionService>({
-          resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+          resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
         }),
       );
       return (
@@ -266,14 +273,14 @@ const CASES: ModeCase[] = [
     workflow: PAYG_WORKFLOW_ANSWER_REPAIR,
     run: async (access) => {
       const manager = new AnswerRepairManager(
-        stub<ChatMessagesRepository>({ create: jest.fn() }),
-        stub<ChatThreadsRepository>({ findById: jest.fn() }),
+        stub<ChatMessagesRepository>({ create: vi.fn() }),
+        stub<ChatThreadsRepository>({ findById: vi.fn() }),
         stub<ChatStreamService>(stream()),
-        stub<ResearchEnricherManager>({ enrich: jest.fn() }),
+        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
         access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: jest.fn() }),
+        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
         stub<LocalModelSelectionService>({
-          resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+          resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
         }),
       );
       return (
@@ -293,7 +300,7 @@ const CASES: ModeCase[] = [
 
 describe('PAYG credit — every orchestration lab is metered', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     AppConfig.get.mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
       OLLAMA_GENERATE_TIMEOUT_MS: 10_000,

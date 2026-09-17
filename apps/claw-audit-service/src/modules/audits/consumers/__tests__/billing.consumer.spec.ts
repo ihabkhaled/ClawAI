@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { EntitlementGrantType, EventPattern } from '@claw/shared-types';
 
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
@@ -27,13 +28,13 @@ function event(): Record<string, unknown> {
 }
 
 describe('BillingAuditConsumer', () => {
-  let rabbit: { subscribe: jest.Mock };
-  let audits: { createAuditLog: jest.Mock };
+  let rabbit: { subscribe: Mock };
+  let audits: { createAuditLog: Mock };
   let consumer: BillingAuditConsumer;
 
   beforeEach(() => {
-    rabbit = { subscribe: jest.fn() };
-    audits = { createAuditLog: jest.fn() };
+    rabbit = { subscribe: vi.fn() };
+    audits = { createAuditLog: vi.fn() };
     consumer = new BillingAuditConsumer(
       rabbit as unknown as RabbitMQService,
       audits as unknown as AuditsService,

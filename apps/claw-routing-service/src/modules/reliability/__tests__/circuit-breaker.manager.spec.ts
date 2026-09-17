@@ -1,3 +1,4 @@
+import { vi, type Mocked } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { CircuitBreakerState } from '../../../common/enums';
 import { CB_OPEN_DURATION_MS } from '../constants/reliability.constants';
@@ -21,14 +22,14 @@ function makeRecord(overrides: Partial<CircuitBreakerRecord> = {}): CircuitBreak
 
 describe('CircuitBreakerManager', () => {
   let manager: CircuitBreakerManager;
-  let repo: jest.Mocked<CircuitBreakerRepository>;
+  let repo: Mocked<CircuitBreakerRepository>;
 
   beforeEach(async () => {
     repo = {
-      findByScope: jest.fn(),
-      listAll: jest.fn(),
-      upsert: jest.fn(),
-    } as unknown as jest.Mocked<CircuitBreakerRepository>;
+      findByScope: vi.fn(),
+      listAll: vi.fn(),
+      upsert: vi.fn(),
+    } as unknown as Mocked<CircuitBreakerRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [CircuitBreakerManager, { provide: CircuitBreakerRepository, useValue: repo }],

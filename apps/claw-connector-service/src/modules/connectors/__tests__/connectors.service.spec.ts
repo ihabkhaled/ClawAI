@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { ConnectorsService } from '../services/connectors.service';
 import { type ConnectorsRepository } from '../repositories/connectors.repository';
 import { type ConnectorModelsRepository } from '../repositories/connector-models.repository';
@@ -7,18 +8,18 @@ import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException } from '../../../common/errors';
 import { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '../../../generated/prisma';
 
-jest.mock('../../../app/config/app.config', () => ({
+vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       ENCRYPTION_KEY: 'a'.repeat(64),
     }),
   },
 }));
 
-jest.mock('../../../common/utilities', () => ({
-  encrypt: jest.fn().mockReturnValue('encrypted-api-key'),
-  decrypt: jest.fn().mockReturnValue('sk-test-key'),
-  verifyAccessToken: jest.fn(),
+vi.mock('../../../common/utilities', () => ({
+  encrypt: vi.fn().mockReturnValue('encrypted-api-key'),
+  decrypt: vi.fn().mockReturnValue('sk-test-key'),
+  verifyAccessToken: vi.fn(),
 }));
 
 const mockConnector = {
@@ -43,35 +44,35 @@ const mockConnectorWithModels = {
   _count: { models: 3 },
 };
 
-const mockConnectorsRepository = (): Record<keyof ConnectorsRepository, jest.Mock> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
-  findByProvider: jest.fn(),
-  findEnabled: jest.fn(),
-  findAll: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  countAll: jest.fn(),
-  findPaygPolicyRows: jest.fn(),
+const mockConnectorsRepository = (): Record<keyof ConnectorsRepository, Mock> => ({
+  create: vi.fn(),
+  findById: vi.fn(),
+  findByProvider: vi.fn(),
+  findEnabled: vi.fn(),
+  findAll: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+  countAll: vi.fn(),
+  findPaygPolicyRows: vi.fn(),
 });
 
 const mockConnectorModelsRepository = (): Partial<
-  Record<keyof ConnectorModelsRepository, jest.Mock>
+  Record<keyof ConnectorModelsRepository, Mock>
 > => ({
-  findByConnectorId: jest.fn(),
-  deleteByConnectorId: jest.fn(),
-  upsertMany: jest.fn(),
-  countByConnectorId: jest.fn(),
+  findByConnectorId: vi.fn(),
+  deleteByConnectorId: vi.fn(),
+  upsertMany: vi.fn(),
+  countByConnectorId: vi.fn(),
 });
 
-const mockManager = (): Partial<Record<keyof ConnectorsManager, jest.Mock>> => ({
-  testConnector: jest.fn(),
-  syncModels: jest.fn(),
-  getDecryptedConfig: jest.fn(),
+const mockManager = (): Partial<Record<keyof ConnectorsManager, Mock>> => ({
+  testConnector: vi.fn(),
+  syncModels: vi.fn(),
+  getDecryptedConfig: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn().mockResolvedValue(void 0),
 });
 
 describe('ConnectorsService', () => {

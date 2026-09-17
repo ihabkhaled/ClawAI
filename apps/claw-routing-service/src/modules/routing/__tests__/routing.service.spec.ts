@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { RoutingService } from '../services/routing.service';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
@@ -6,16 +7,15 @@ import { type ReplayManager } from '../managers/replay.manager';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException } from '../../../common/errors';
+import { httpRequest } from '../../../common/utilities';
 import { RoutingMode } from '../../../generated/prisma';
 
-jest.mock('../../../common/utilities', () => ({
-  ...jest.requireActual('../../../common/utilities'),
-  httpRequest: jest.fn(),
+vi.mock('../../../common/utilities', async () => ({
+  ...await vi.importActual('../../../common/utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const { httpRequest } = jest.requireMock('../../../common/utilities') as {
-  httpRequest: jest.Mock;
-};
+const httpRequestMock = vi.mocked(httpRequest);
 
 // Connector-health hydration reads AppConfig for the connector service URL, and
 // AppConfig validates the whole environment on first access. Jest runs with no
@@ -55,32 +55,32 @@ const mockDecision = {
 };
 
 const mockPoliciesRepo = (): {
-  create: jest.Mock;
-  findById: jest.Mock;
-  findAll: jest.Mock;
-  countAll: jest.Mock;
-  findActivePolicies: jest.Mock;
-  update: jest.Mock;
-  delete: jest.Mock;
+  create: Mock;
+  findById: Mock;
+  findAll: Mock;
+  countAll: Mock;
+  findActivePolicies: Mock;
+  update: Mock;
+  delete: Mock;
 } => ({
-  create: jest.fn().mockResolvedValue(mockPolicy),
-  findById: jest.fn().mockResolvedValue(mockPolicy),
-  findAll: jest.fn().mockResolvedValue([mockPolicy]),
-  countAll: jest.fn().mockResolvedValue(1),
-  findActivePolicies: jest.fn().mockResolvedValue([mockPolicy]),
-  update: jest.fn().mockResolvedValue({ ...mockPolicy, name: 'Updated' }),
-  delete: jest.fn().mockResolvedValue(mockPolicy),
+  create: vi.fn().mockResolvedValue(mockPolicy),
+  findById: vi.fn().mockResolvedValue(mockPolicy),
+  findAll: vi.fn().mockResolvedValue([mockPolicy]),
+  countAll: vi.fn().mockResolvedValue(1),
+  findActivePolicies: vi.fn().mockResolvedValue([mockPolicy]),
+  update: vi.fn().mockResolvedValue({ ...mockPolicy, name: 'Updated' }),
+  delete: vi.fn().mockResolvedValue(mockPolicy),
 });
 
-const mockDecisionsRepo = (): Record<string, jest.Mock> => ({
-  create: jest.fn().mockResolvedValue(mockDecision),
-  findById: jest.fn().mockResolvedValue(mockDecision),
-  findByThreadId: jest.fn().mockResolvedValue([mockDecision]),
-  countByThreadId: jest.fn().mockResolvedValue(1),
+const mockDecisionsRepo = (): Record<string, Mock> => ({
+  create: vi.fn().mockResolvedValue(mockDecision),
+  findById: vi.fn().mockResolvedValue(mockDecision),
+  findByThreadId: vi.fn().mockResolvedValue([mockDecision]),
+  countByThreadId: vi.fn().mockResolvedValue(1),
 });
 
-const mockRoutingManager = (): Partial<Record<keyof RoutingManager, jest.Mock>> => ({
-  evaluateRoute: jest.fn().mockResolvedValue({
+const mockRoutingManager = (): Partial<Record<keyof RoutingManager, Mock>> => ({
+  evaluateRoute: vi.fn().mockResolvedValue({
     selectedProvider: 'anthropic',
     selectedModel: 'claude-sonnet-4',
     routingMode: RoutingMode.AUTO,
@@ -90,11 +90,11 @@ const mockRoutingManager = (): Partial<Record<keyof RoutingManager, jest.Mock>> 
     costClass: 'medium',
     fallbackChain: [],
   }),
-  buildFallbackChain: jest.fn().mockReturnValue([]),
+  buildFallbackChain: vi.fn().mockReturnValue([]),
 });
 
-const mockReplayManager = (): Partial<Record<keyof ReplayManager, jest.Mock>> => ({
-  replayDecisions: jest.fn().mockResolvedValue({
+const mockReplayManager = (): Partial<Record<keyof ReplayManager, Mock>> => ({
+  replayDecisions: vi.fn().mockResolvedValue({
     totalReplayed: 1,
     changed: 1,
     unchanged: 0,
@@ -126,20 +126,20 @@ const mockReplayManager = (): Partial<Record<keyof ReplayManager, jest.Mock>> =>
   }),
 });
 
-const mockRabbitMQ = (): { publish: jest.Mock; subscribe: jest.Mock } => ({
-  publish: jest.fn().mockResolvedValue(void 0),
-  subscribe: jest.fn().mockResolvedValue(void 0),
+const mockRabbitMQ = (): { publish: Mock; subscribe: Mock } => ({
+  publish: vi.fn().mockResolvedValue(void 0),
+  subscribe: vi.fn().mockResolvedValue(void 0),
 });
 
-const mockRouterEducationManager = (): Record<string, jest.Mock> => ({
-  calibrateDecision: jest
+const mockRouterEducationManager = (): Record<string, Mock> => ({
+  calibrateDecision: vi
     .fn()
     .mockImplementation(async (decision) => ({ decision, changed: false })),
-  ingestExecutionOutcome: jest.fn().mockResolvedValue(void 0),
-  ingestFeedbackSignal: jest.fn().mockResolvedValue(void 0),
-  getLatestSnapshot: jest.fn().mockResolvedValue(null),
-  listModelProfiles: jest.fn().mockResolvedValue([]),
-  listTopicProfiles: jest.fn().mockResolvedValue([]),
+  ingestExecutionOutcome: vi.fn().mockResolvedValue(void 0),
+  ingestFeedbackSignal: vi.fn().mockResolvedValue(void 0),
+  getLatestSnapshot: vi.fn().mockResolvedValue(null),
+  listModelProfiles: vi.fn().mockResolvedValue([]),
+  listTopicProfiles: vi.fn().mockResolvedValue([]),
 });
 
 describe('RoutingService', () => {
@@ -150,10 +150,10 @@ describe('RoutingService', () => {
   let replayMgr: ReturnType<typeof mockReplayManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
   let routerEducationManager: ReturnType<typeof mockRouterEducationManager>;
-  let liveWorkflowSelector: { selectWorkflow: jest.Mock };
+  let liveWorkflowSelector: { selectWorkflow: Mock };
 
   beforeEach(() => {
-    httpRequest.mockResolvedValue({ ok: true, status: 200, data: { connectors: [] } });
+    httpRequestMock.mockResolvedValue({ ok: true, status: 200, data: { connectors: [] } });
     policiesRepo = mockPoliciesRepo();
     decisionsRepo = mockDecisionsRepo();
     routingManager = mockRoutingManager();
@@ -161,16 +161,16 @@ describe('RoutingService', () => {
     rabbitMQ = mockRabbitMQ();
     routerEducationManager = mockRouterEducationManager();
     liveWorkflowSelector = {
-      selectWorkflow: jest.fn().mockReturnValue({
+      selectWorkflow: vi.fn().mockReturnValue({
         kind: 'DIRECT_LLM',
         reason: 'default_direct',
         alternatives: [],
       }),
     };
     const promptBuilder = {
-      invalidateCache: jest.fn(),
-      fetchInstalledModels: jest.fn().mockResolvedValue([]),
-      getInstalledModels: jest.fn().mockResolvedValue([]),
+      invalidateCache: vi.fn(),
+      fetchInstalledModels: vi.fn().mockResolvedValue([]),
+      getInstalledModels: vi.fn().mockResolvedValue([]),
     };
     service = new RoutingService(
       policiesRepo as unknown as RoutingPoliciesRepository,
@@ -185,9 +185,9 @@ describe('RoutingService', () => {
       promptBuilder as any,
       { isFrontierAvailable: () => false } as any,
       // Phase 2 — SemanticIntentAnalyzerManager; not exercised here.
-      { analyze: jest.fn() } as any,
+      { analyze: vi.fn() } as any,
       // Phase 4 — AIRoutePlannerManager; not exercised here.
-      { plan: jest.fn() } as any,
+      { plan: vi.fn() } as any,
       // Phase 6 — LiveWorkflowSelectorManager. selectWorkflow returns the
       // canonical DIRECT_LLM selection so any downstream code that checks
       // the workflow gets a sane default in tests that don't care.
@@ -195,12 +195,12 @@ describe('RoutingService', () => {
       // RouterModelRegistryRepository — the execution catalog the planner now
       // reasons over. Empty here: these tests do not exercise the AI planner, and
       // an empty catalog exercises the documented degraded path.
-      { findExecutionCandidates: jest.fn().mockResolvedValue([]) } as never,
+      { findExecutionCandidates: vi.fn().mockResolvedValue([]) } as never,
     );
   });
 
   it('hydrates cloud connector health after subscribing on startup', async () => {
-    httpRequest.mockResolvedValue({
+    httpRequestMock.mockResolvedValue({
       ok: true,
       status: 200,
       data: {

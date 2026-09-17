@@ -1,3 +1,4 @@
+import { vi, type MockedFunction, type Mock } from 'vitest';
 // Slice C backend 2 — ZIP expansion manager unit tests.
 //
 // Mocks every collaborator so the manager runs without any real filesystem,
@@ -21,9 +22,9 @@ import { BusinessException } from '../../../../common/errors/business.exception'
 import { validateAndExtractZip } from '../../../../common/utilities/zip-extraction.utility';
 import type { ExtractedEntry, ZipExtractionResult } from '../../types/zip-expansion.types';
 
-jest.mock('../../../../app/config/app.config', () => ({
+vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: jest.fn(() => ({
+    get: vi.fn(() => ({
       ZIP_MAX_EXTRACTED_SIZE_MB: 500,
       ZIP_MAX_ENTRY_COUNT: 10_000,
       ZIP_MAX_NESTING_DEPTH: 5,
@@ -33,21 +34,21 @@ jest.mock('../../../../app/config/app.config', () => ({
   },
 }));
 
-jest.mock('../../../../common/utilities/zip-extraction.utility', () => ({
-  validateAndExtractZip: jest.fn(),
+vi.mock('../../../../common/utilities/zip-extraction.utility', () => ({
+  validateAndExtractZip: vi.fn(),
 }));
 
-jest.mock('node:fs', () => {
-  const actual = jest.requireActual<typeof import('node:fs')>('node:fs');
+vi.mock('node:fs', async () => {
+  const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
   return {
     ...actual,
-    readFileSync: jest.fn(() => Buffer.from('extracted-content')),
-    existsSync: jest.fn(() => true),
-    mkdirSync: jest.fn(),
+    readFileSync: vi.fn(() => Buffer.from('extracted-content')),
+    existsSync: vi.fn(() => true),
+    mkdirSync: vi.fn(),
   };
 });
 
-const mockedValidateAndExtractZip = validateAndExtractZip as jest.MockedFunction<
+const mockedValidateAndExtractZip = validateAndExtractZip as MockedFunction<
   typeof validateAndExtractZip
 >;
 
@@ -88,31 +89,31 @@ const buildChild = (id: string, name: string, parentId: string): File =>
     updatedAt: new Date('2026-01-01T00:00:00Z'),
   }) as unknown as File;
 
-// jest.fn() awaits to undefined by default, matching Promise<void> returns.
+// vi.fn() awaits to undefined by default, matching Promise<void> returns.
 // Using .mockResolvedValue(undefined) trips unicorn/no-useless-undefined,
 // using .mockResolvedValue() trips tsgo's strict arity check — so we use
-// plain jest.fn() for Promise<void> mocks.
-const mockFilesRepository = (): Partial<Record<keyof FilesRepository, jest.Mock>> => ({
-  create: jest.fn(),
-  markAsExtractedChild: jest.fn(),
-  recordExtractionMetadata: jest.fn(),
+// plain vi.fn() for Promise<void> mocks.
+const mockFilesRepository = (): Partial<Record<keyof FilesRepository, Mock>> => ({
+  create: vi.fn(),
+  markAsExtractedChild: vi.fn(),
+  recordExtractionMetadata: vi.fn(),
 });
 
-const mockFileChunksRepository = (): Partial<Record<keyof FileChunksRepository, jest.Mock>> => ({
-  deleteByFileId: jest.fn().mockResolvedValue(0),
+const mockFileChunksRepository = (): Partial<Record<keyof FileChunksRepository, Mock>> => ({
+  deleteByFileId: vi.fn().mockResolvedValue(0),
 });
 
-const mockFileSecurityManager = (): Partial<Record<keyof FileSecurityManager, jest.Mock>> => ({
-  runAllChecks: jest.fn().mockResolvedValue({ passed: true, checks: [] }),
+const mockFileSecurityManager = (): Partial<Record<keyof FileSecurityManager, Mock>> => ({
+  runAllChecks: vi.fn().mockResolvedValue({ passed: true, checks: [] }),
 });
 
-const mockFileProcessingManager = (): Partial<Record<keyof FileProcessingManager, jest.Mock>> => ({
-  processFile: jest.fn(),
-  updateIngestionStatus: jest.fn(),
+const mockFileProcessingManager = (): Partial<Record<keyof FileProcessingManager, Mock>> => ({
+  processFile: vi.fn(),
+  updateIngestionStatus: vi.fn(),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn(),
+const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
+  publish: vi.fn(),
 });
 
 describe('ZipExpansionManager', () => {
@@ -124,7 +125,7 @@ describe('ZipExpansionManager', () => {
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     security = mockFileSecurityManager();
     filesRepo = mockFilesRepository();
     chunksRepo = mockFileChunksRepository();
@@ -281,7 +282,7 @@ describe('ZipExpansionManager', () => {
       expect(filesRepo.create).toHaveBeenCalledTimes(2);
       expect(filesRepo.markAsExtractedChild).toHaveBeenCalledTimes(2);
       expect(processing.processFile).toHaveBeenCalledTimes(2);
-      const createCalls = (filesRepo.create as jest.Mock).mock.calls.map(
+      const createCalls = (filesRepo.create as Mock).mock.calls.map(
         (c) => (c[0] as { filename: string }).filename,
       );
       expect(createCalls).toEqual(['clean1.txt', 'clean2.txt']);

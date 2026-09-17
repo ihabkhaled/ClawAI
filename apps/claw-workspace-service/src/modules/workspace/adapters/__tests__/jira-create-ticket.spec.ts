@@ -1,6 +1,7 @@
+import { type Mock, vi } from 'vitest';
 import { JiraAdapter } from '../jira.adapter';
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const RESOURCES_RESPONSE = [{ id: 'site-1', url: 'https://claw.atlassian.net' }];
 
@@ -8,12 +9,12 @@ describe('JiraAdapter.executeWriteAction — CREATE_TICKET and its aliases', () 
   let adapter: JiraAdapter;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     adapter = new JiraAdapter();
   });
 
   const mockSiteLookupThen = (issueResponse: unknown, ok = true, status = 200): void => {
-    (global.fetch as jest.Mock)
+    (global.fetch as Mock)
       .mockResolvedValueOnce({ ok: true, json: async () => RESOURCES_RESPONSE })
       .mockResolvedValueOnce({ ok, status, json: async () => issueResponse });
   };
@@ -33,8 +34,9 @@ describe('JiraAdapter.executeWriteAction — CREATE_TICKET and its aliases', () 
       expect(result.externalId).toBe('CLAW-1');
       expect(result.url).toBe('https://claw.atlassian.net/browse/CLAW-1');
 
-      const issueCall = (global.fetch as jest.Mock).mock.calls[1];
-      const body = JSON.parse(issueCall[1].body) as {
+      const issueCall = (global.fetch as Mock).mock.calls[1];
+      expect(issueCall).toBeDefined();
+      const body = JSON.parse(issueCall?.[1].body) as {
         fields: { issuetype: { name: string } };
       };
       expect(body.fields.issuetype.name).toBe('Story');

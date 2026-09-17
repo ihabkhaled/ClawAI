@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { STREAM_CANCEL_CHANNEL } from '../../constants/stream-cancellation.constants';
 import { StreamCancellationService } from '../stream-cancellation.service';
 
@@ -8,22 +9,22 @@ function build(
 ) {
   let messageHandler: MessageHandler | null = null;
   const redis = {
-    del: jest.fn(() =>
+    del: vi.fn(() =>
       overrides.delRejects === true
         ? Promise.reject(new Error('redis down'))
         : Promise.resolve(overrides.delResult ?? 1),
     ),
-    set: jest.fn(() => Promise.resolve('OK')),
-    eval: jest.fn(() =>
+    set: vi.fn(() => Promise.resolve('OK')),
+    eval: vi.fn(() =>
       overrides.evalRejects === true ? Promise.reject(new Error('redis down')) : Promise.resolve(1),
     ),
   };
   const subscriber = {
-    subscribe: jest.fn(() => Promise.resolve()),
-    onMessage: jest.fn((handler: MessageHandler) => {
+    subscribe: vi.fn(() => Promise.resolve()),
+    onMessage: vi.fn((handler: MessageHandler) => {
       messageHandler = handler;
     }),
-    onReady: jest.fn(),
+    onReady: vi.fn(),
   };
   const service = new StreamCancellationService(redis as never, subscriber as never);
   return {

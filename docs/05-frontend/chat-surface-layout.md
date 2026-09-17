@@ -17,7 +17,8 @@ The chain, top to bottom, is:
 | `div.flex-1.flex-col`                       | same                                       | The content column beside the sidebar. Carries the bottom-nav margin on phones.                   |
 | `main.flex-1.overflow-y-auto`               | same                                       | Definite height from flex. Its padding is what insets the chat page.                              |
 | `div.flex.h-full.min-h-0.flex-col`          | `components/chat/chat-thread-shell.tsx`    | The chat page column.                                                                             |
-| header `shrink-0` · column `flex-1 min-h-0` | same                                       | The split. Only the column grows.                                                                 |
+| header `shrink-0` · body row `flex-1 min-h-0` | same                                     | The split. Only the body row grows.                                                               |
+| `div.chat-thread-row` (flex row)            | same                                       | Reading column + action rail. The rail is `self-start`, so it never stretches.                    |
 | `div.min-h-0.flex-1.overflow-hidden`        | same                                       | The transcript frame.                                                                             |
 | `Virtuoso style={{height:'100%'}}`          | `components/chat/virtualized-messages.tsx` | The scroller.                                                                                     |
 
@@ -123,17 +124,72 @@ stretch against, so the box sized to its content and had its footer clipped.
 
 ## The header
 
-One row, `shrink-0`, sticky, frosted. Left to right: back, thread drawer, title
-block, direct actions, overflow menu.
+One row, `shrink-0`, sticky, frosted — and, since the action rail, a title strip
+rather than a band. Inline-start to inline-end: back, thread drawer, title
+block, and the overflow menu **only below `sm`**.
 
-- **Direct** (`sm` and up only): Compare, Judge & Referee, Find, Share.
-  Icon-only up to `lg`, where the label appears; `aria-label` and `title` carry
-  the name either way. Below `sm` they are not rendered at all — the row becomes
-  Back | drawer | title | `…`.
+It used to carry five more controls and a second line. Both were spending
+height, which is the one resource a conversation page cannot get back (rule 40
+§1): a header pixel is taken at every scroll position, forever. What moved, and
+where:
+
+- **Compare, Judge & Referee, Find, Share, `…`** → `chat-thread-action-rail.tsx`,
+  beside the conversation. See "The action rail" below.
+- **The routing subtitle** (`AUTO · models/gemini-2.5-flash-lite`) → the same
+  line as the title from `sm` up (`flex-col sm:flex-row sm:items-baseline`).
+  Below `sm` it stays stacked, because every control on that row is floored at
+  44px by the global touch rule and the second line fits inside the floor for
+  free. On a mouse there is no floor, the row is exactly as tall as the title
+  block, and the second line is ~14px of pure cost.
+- **`--safe-top-base` for the header** went from `1.25rem`/`1.75rem` to
+  `0.375rem`/`0.5rem`. The old value put 28px of empty band directly under the
+  portal's own `sm:p-6`; breathing room the ancestor already supplies is not
+  breathing room, it is a second copy of it.
+- **The title** dropped `sm:text-lg` for a flat `text-base`. It is the tallest
+  thing on a row of 32px buttons, so on a mouse it was setting the row height by
+  itself. Mobile keeps `text-base` — the 44px floor sets the height there and
+  shrinking the title would buy nothing.
+
 - **Overflow** (`components/chat/chat-thread-header-menu.tsx`): Export, Thread
-  Settings, Delete — plus the four above when the row is too narrow for them.
-  Radix owns the keyboard contract — arrows move, Escape closes and restores
-  focus to the trigger.
+  Settings, Delete — plus the four primary actions when
+  `collapsePrimaryActions` is true, which is exactly below `sm`. One bag, built
+  once in `useThreadDetailPage` and handed to both hosts: the header below `sm`,
+  the rail above it. Radix owns the keyboard contract — arrows move, Escape
+  closes and restores focus to the trigger.
+
+## The action rail
+
+`components/chat/chat-thread-action-rail.tsx`, rendered by the shell as the
+**last child of the body flex row** when `showInlineActions` is true. Compare,
+Judge & Referee, Find, Share, a hairline, then the `…`. Icon-only at every
+width, with `aria-label` and `title` — a rail wide enough for "Judge & Referee"
+is a sidebar, and a sidebar is the horizontal cost the move exists to avoid.
+
+**RTL is document order, not a `dir` check.** Last child of a flex row is the
+right in LTR and the left in RTL, for free. A `right-*` or `ms-auto` placement
+would need an `rtl:` twin, and the twin is what gets forgotten.
+
+**Its strip is reserved outside the reading column.** `.chat-thread-row` is
+`calc(var(--chat-content-max) + var(--chat-rail-reserve))`, and both the header
+and the body row take it. Two consequences, both deliberate:
+
+- The transcript keeps its full `--chat-content-max` on any screen with the
+  gutter to spare — moving controls sideways must not make the conversation
+  narrower.
+- The title starts at the x the first message starts at. Binding the header to
+  `.chat-content-column` while the body centred that column inside the row would
+  have offset them by half a rail: invisible in review, obvious on a 2560px
+  monitor.
+
+Where the row binds before the reserve does — a 1280px laptop leaves about
+976px, and the row wants 1196px — the rail and the column share what there is,
+and the transcript is about 40px narrower than before. That is the trade, taken
+knowingly: a conversation can scroll sideways past 40px of width, and cannot
+scroll back the ~30px of header height it gets in return at every scroll
+position.
+
+Below `sm` the rail is not rendered at all and every action is in the header's
+`…`, exactly as before. A 360px screen has no gutter to put a rail in.
 - **Title**: `components/chat/editable-title.tsx`. One line on desktop, clamped
   to two on a phone, full text in `title`. It carries **both** `truncate` and
   `clamp-title`: `globals.css` deliberately neutralises `.truncate` under the
@@ -150,10 +206,13 @@ prefix would keep both mounted.
 ## The reading column
 
 `.chat-content-column` in `app/globals.css` reads `--chat-content-max`
-(68rem). Both the transcript frame and the composer take it, so they stay
+(72rem, raised from 68rem when the rail landed: the gutter it now sits in was
+otherwise doing nothing, and a 1920px monitor reads 1152px of transcript instead
+of 1088px). Both the transcript frame and the composer take it, so they stay
 aligned and cannot drift. It is wide enough not to bind on a 1366 px laptop,
 where the portal leaves roughly 1060 px between the sidebar and the page
-padding.
+padding. `.chat-thread-row` wraps it with `--chat-rail-reserve` for the action
+rail — see "The action rail".
 
 Message bubbles keep their own `max-w-[88%]`/`sm:max-w-[85%]` inside that
 column. Code blocks, tables and long URLs are handled in

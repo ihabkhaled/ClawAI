@@ -1,21 +1,22 @@
+import { vi, type Mock } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaymobTokenManager } from '../managers/paymob-token.manager';
 
-jest.mock('@claw/shared-utilities', () => ({
-  ...jest.requireActual('@claw/shared-utilities'),
-  httpRequest: jest.fn(),
+vi.mock('@claw/shared-utilities', async () => ({
+  ...await vi.importActual('@claw/shared-utilities'),
+  httpRequest: vi.fn(),
 }));
 
-const mockHttp = httpRequest as unknown as jest.Mock;
+const mockHttp = httpRequest as unknown as Mock;
 
 describe('PaymobTokenManager', () => {
-  const runtimeConfig = { getPaymobOperations: jest.fn() };
+  const runtimeConfig = { getPaymobOperations: vi.fn() };
 
   beforeEach(() => {
     mockHttp.mockReset();
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_API_KEY: 'api-key',
       PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
     } as unknown as ReturnType<typeof AppConfig.get>);
@@ -23,7 +24,7 @@ describe('PaymobTokenManager', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('exchanges the API key for an access token without logging the token', async () => {

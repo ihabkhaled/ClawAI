@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 import { BillingGateway, Permission } from '@claw/shared-types';
 
@@ -6,12 +7,12 @@ import { CheckoutGatewaysController } from '../checkout-gateways.controller';
 
 describe('Gateway configuration controllers', () => {
   const service = {
-    listAdmin: jest.fn(),
-    listCheckout: jest.fn(),
-    update: jest.fn(),
+    listAdmin: vi.fn(),
+    listCheckout: vi.fn(),
+    update: vi.fn(),
   };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('keeps the checkout projection public and delegates to the service', async () => {
     service.listCheckout.mockResolvedValue([{ gateway: BillingGateway.PAYPAL }]);
