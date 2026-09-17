@@ -530,7 +530,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 94,
+      "testFiles": 96,
       "testRunner": "jest"
     }
   ]

@@ -1,3 +1,4 @@
+import { WorkspaceMentionService } from './services/workspace-mention.service';
 import { Module } from '@nestjs/common';
 import { BitbucketAdapter } from './adapters/bitbucket.adapter';
 import { ClickUpAdapter } from './adapters/clickup.adapter';
@@ -71,6 +72,7 @@ import { WorkspaceEntitlementService } from './services/workspace-entitlement.se
     FigmaDesignController,
   ],
   providers: [
+    WorkspaceMentionService,
     WorkspaceConnectorRepository,
     WorkspaceObjectRepository,
     ProviderDefinitionRepository,
@@ -122,6 +124,7 @@ import { WorkspaceEntitlementService } from './services/workspace-entitlement.se
     OutlookCalendarAdapter,
   ],
   exports: [
+    WorkspaceMentionService,
     WorkspaceConnectorService,
     WorkspaceObjectService,
     WorkspaceSearchService,

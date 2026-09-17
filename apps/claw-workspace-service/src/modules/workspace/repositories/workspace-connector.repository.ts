@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { type WorkspaceProvider } from '@claw/shared-types';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { WorkspaceConnectorStatus as WorkspaceConnectorStatusEnum } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceSyncStatus as WorkspaceSyncStatusEnum } from '../../../common/enums/workspace-sync-status.enum';
@@ -61,6 +62,35 @@ export class WorkspaceConnectorRepository {
         },
       },
     }) as Promise<WorkspaceConnectorWithStats | null>;
+  }
+
+  /**
+   * The user's usable connectors for these providers.
+   *
+   * Scoped to userId in the query itself — a mention resolver must never be
+   * able to reach another user's connector, and the safest place to guarantee
+   * that is the same WHERE clause that selects the rows.
+   *
+   * CONNECTED and enabled only. A connector that is PENDING_AUTH, PAUSED or
+   * DISCONNECTED cannot perform work, and offering it would produce a failure
+   * at execution time instead of an honest "not connected" now.
+   */
+  async findUsableByUserAndProviders(
+    userId: string,
+    providers: readonly WorkspaceProvider[],
+  ): Promise<WorkspaceConnector[]> {
+    if (providers.length === 0) {
+      return [];
+    }
+    return this.prisma.workspaceConnector.findMany({
+      where: {
+        userId,
+        provider: { in: [...providers] },
+        status: WorkspaceConnectorStatusEnum.CONNECTED,
+        isEnabled: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findAllByUser(
