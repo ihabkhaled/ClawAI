@@ -277,16 +277,25 @@ async function upsertSystemRole(def) {
       isAssignable: true,
     },
   });
-  // System roles (ADMIN/USER) are code-owned: their grants are reconciled to
-  // the seed definition on every run (add missing, remove extras). Admins who
-  // need different grants create CUSTOM roles via the matrix — those are never
-  // touched here. This keeps the platform's baseline access policy
-  // deterministic across deploys.
+  // ADD-ONLY by default, like seed-permissions.cjs and PermissionsSeederService.
+  //
+  // This used to remove every grant not in the seed definition on EVERY boot,
+  // regardless of SEED_RECONCILE_PERMISSIONS. The admin roles matrix edits the
+  // system User role and saves successfully - and the next restart silently
+  // took those grants back. Measured 2026-09-19: an admin grant of MEMORY_USE
+  // on User (53 grants) was logged "Reconciled role USER: +0 -9 (now 44)" by a
+  // plain `docker restart`, so users lost memory and context packs again on
+  // every deploy. Missing baseline grants are still added; removing an admin's
+  // extras is the explicit, opt-in SEED_RECONCILE_PERMISSIONS=true.
+  const reconcileEnabled =
+    (process.env.SEED_RECONCILE_PERMISSIONS ?? 'false').toLowerCase() === 'true';
   const wanted = new Set(def.permissions);
   const existing = await prisma.rolePermission.findMany({ where: { roleId: role.id } });
   const existingSet = new Set(existing.map((g) => g.permission));
   const toAdd = def.permissions.filter((permission) => !existingSet.has(permission));
-  const toRemove = existing.filter((g) => !wanted.has(g.permission)).map((g) => g.permission);
+  const toRemove = reconcileEnabled
+    ? existing.filter((g) => !wanted.has(g.permission)).map((g) => g.permission)
+    : [];
   if (toAdd.length > 0) {
     await prisma.rolePermission.createMany({
       data: toAdd.map((permission) => ({ roleId: role.id, permission })),
@@ -300,7 +309,7 @@ async function upsertSystemRole(def) {
   }
   if (toAdd.length > 0 || toRemove.length > 0) {
     console.warn(
-      `Reconciled role ${def.slug}: +${toAdd.length} -${toRemove.length} (now ${def.permissions.length} grants)`,
+      `Reconciled role ${def.slug}: +${toAdd.length} -${toRemove.length} (now ${existing.length + toAdd.length - toRemove.length} grants)`,
     );
   }
   return role;

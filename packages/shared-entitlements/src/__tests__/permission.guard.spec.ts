@@ -133,4 +133,15 @@ describe('PermissionGuard', () => {
       },
     );
   });
+
+  // Permissions are role state, not billing state. The trial-enforcing lookup
+  // threw PLAN_TRIAL_EXPIRED for every trial-expired user and every guarded
+  // route failed closed - memory and context packs included.
+  it('checks permissions without enforcing the free-trial expiry', async () => {
+    reflector.getAllAndOverride.mockReturnValue([Permission.MEMORY_USE]);
+    adapter.getEntitlements.mockResolvedValue(makeEnt({ permissions: [Permission.MEMORY_USE] }));
+
+    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).resolves.toBe(true);
+    expect(adapter.getEntitlements).toHaveBeenCalledWith('u1', { enforceTrial: false });
+  });
 });

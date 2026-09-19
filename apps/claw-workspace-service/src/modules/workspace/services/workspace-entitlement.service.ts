@@ -11,7 +11,9 @@ export class WorkspaceEntitlementService {
 
   async resolve(userId: string): Promise<UserEntitlements> {
     try {
-      return await this.adapter.getEntitlements(userId);
+      // Feature gates, not AI spend: an expired trial falls back to its plan,
+      // whose own workspace gate then decides.
+      return await this.adapter.getEntitlements(userId, { enforceTrial: false });
     } catch {
       throw new BusinessException(
         'Entitlements are temporarily unavailable',

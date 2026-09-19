@@ -47,3 +47,4 @@ export type {
   PaygReserveInput,
   PaygUnmeteredReason,
 } from './payg-meter.types';
+export type { EntitlementsLookupOptions } from './entitlements-lookup.types';

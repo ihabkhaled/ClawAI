@@ -87,7 +87,7 @@ describe('FilesController @RequirePermissions(Permission.FILES_USE) gate', () =>
         requiredPermissions: [Permission.FILES_USE],
       },
     });
-    expect(adapter.getEntitlements).toHaveBeenCalledWith('user-no-files');
+    expect(adapter.getEntitlements).toHaveBeenCalledWith('user-no-files', { enforceTrial: false });
   });
 
   it('USER with FILES_USE → guard allows; controller forwards to service', async () => {
@@ -151,14 +151,18 @@ describe('FilesController @RequirePermissions(Permission.FILES_USE) gate', () =>
     });
   });
 
-  it('entitlements adapter throws → fails CLOSED (still INSUFFICIENT_PERMISSIONS)', async () => {
+  // Still fails CLOSED, but reported as an outage (503), not as a missing
+  // permission: a 403 here made "auth-service is unreachable" indistinguishable
+  // from "your role lacks FILES_USE".
+  it('entitlements adapter throws → fails CLOSED as a 503 outage', async () => {
     reflector.getAllAndOverride.mockReturnValue([Permission.FILES_USE]);
     adapter.getEntitlements.mockRejectedValue(new Error('auth-service unreachable'));
 
     await expect(
       guard.canActivate(makeContext({ sub: 'user-outage', role: UserRole.USER })),
     ).rejects.toMatchObject({
-      response: { errorCode: 'INSUFFICIENT_PERMISSIONS' },
+      status: 503,
+      response: { errorCode: 'ENTITLEMENTS_UNAVAILABLE' },
     });
   });
 });

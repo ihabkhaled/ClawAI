@@ -76,6 +76,23 @@ describe('EntitlementsAdapter transport retry', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  // Production 2026-09-19: eight trial-expired users lost memory and context
+  // packs, which their role and the Free plan both grant, because every
+  // PermissionGuard used the trial-ENFORCING lookup and failed closed.
+  it('asks auth-service not to enforce the trial when told to', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({ userId: 'u1' }) });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const adapter = new EntitlementsAdapter({ authServiceUrl: url });
+
+    await adapter.getEntitlements('u1', { enforceTrial: false });
+    await adapter.getEntitlements('u1');
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toMatch(/\/entitlements\?enforceTrial=false$/);
+    expect(String(fetchMock.mock.calls[1]?.[0])).toMatch(/\/entitlements$/);
+  });
+
   it('gives up after one retry rather than hammering a dead upstream', async () => {
     const fetchMock = vi.fn().mockRejectedValue(transportError());
     global.fetch = fetchMock as unknown as typeof fetch;

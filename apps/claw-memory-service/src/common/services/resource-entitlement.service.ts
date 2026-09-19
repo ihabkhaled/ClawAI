@@ -19,7 +19,9 @@ export class ResourceEntitlementService {
 
   async resolve(userId: string): Promise<UserEntitlements> {
     try {
-      return await this.adapter.getEntitlements(userId);
+      // Plan limits and feature gates, not AI spend: after a trial ends the
+      // user keeps the plan they fall back to (Free includes memory).
+      return await this.adapter.getEntitlements(userId, { enforceTrial: false });
     } catch (error: unknown) {
       // The reason used to be discarded here, which made an intermittent 503
       // impossible to tell apart from a timeout, a refused connection or a 500

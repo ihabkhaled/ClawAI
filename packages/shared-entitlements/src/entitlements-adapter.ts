@@ -1,3 +1,4 @@
+import type { EntitlementsLookupOptions } from './entitlements-lookup.types';
 import type { UserEntitlements } from './types';
 
 export class EntitlementsRequestError extends Error {
@@ -83,10 +84,28 @@ export class EntitlementsAdapter {
     this.timeoutMs = options.timeoutMs ?? 5000;
   }
 
-  async getEntitlements(userId: string): Promise<UserEntitlements> {
+  /**
+   * The user's entitlements.
+   *
+   * By default an expired free trial THROWS (`PLAN_TRIAL_EXPIRED`) - that is
+   * how chat refuses AI use after a trial and shows the "trial ended" notice.
+   *
+   * `enforceTrial: false` returns the entitlements of the plan the user has
+   * fallen back to instead. Role permissions and the plan's own feature gates
+   * are not billing state: with the throw, every PermissionGuard in every
+   * service failed closed for a trial-expired user, so memory and context
+   * packs - which the Free plan includes - returned 403 to eight production
+   * users whose role granted them. Use it anywhere the question is "what may
+   * this user do", not "may this user spend AI now".
+   */
+  async getEntitlements(
+    userId: string,
+    options: EntitlementsLookupOptions = {},
+  ): Promise<UserEntitlements> {
+    const query = options.enforceTrial === false ? '?enforceTrial=false' : '';
     return this.requestWithTransportRetry<UserEntitlements>(
       'GET',
-      `/api/v1/internal/users/${encodeURIComponent(userId)}/entitlements`,
+      `/api/v1/internal/users/${encodeURIComponent(userId)}/entitlements${query}`,
     );
   }
 

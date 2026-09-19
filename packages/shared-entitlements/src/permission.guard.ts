@@ -87,7 +87,9 @@ export class PermissionGuard implements CanActivate {
   private async resolveMissing(userId: string, required: Permission[]): Promise<Permission[]> {
     let ent;
     try {
-      ent = await this.adapter.getEntitlements(userId);
+      // Permissions are role state, not billing state: an expired trial must
+      // not strip a user of what their role grants. See getEntitlements.
+      ent = await this.adapter.getEntitlements(userId, { enforceTrial: false });
     } catch (error) {
       this.logger.warn(
         `resolveMissing: entitlements unavailable for user=${userId} — failing closed: ${(error as Error).message}`,
