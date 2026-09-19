@@ -7,6 +7,11 @@ on:
     paths:
       - 'wiki/**'
       - '.github/workflows/publish-wiki.yml'
+  # Daily, so the wiki fills in by itself once its first page exists (GitHub
+  # creates the wiki repository only then) instead of waiting for the next
+  # wiki/ change. A no-op run takes seconds.
+  schedule:
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -61,4 +66,5 @@ jobs:
           fi
 
           git commit -m "docs: sync ClawAI wiki"
-          git push origin HEAD:master
+          # The wiki's own default branch (master for wikis created in the UI).
+          git push origin HEAD
