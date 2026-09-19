@@ -23,9 +23,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # One workflow publishes the wiki. `wiki-sync.yml` did the same job and
+      # failed alongside this one; it was removed on 2026-09-19.
       - name: Publish wiki sources
         env:
-          GH_TOKEN: ${{ github.token }}
+          # A WIKI_TOKEN secret (a PAT with contents:write) is used when set,
+          # in case the default token cannot push to the wiki repository.
+          GH_TOKEN: ${{ secrets.WIKI_TOKEN || github.token }}
           REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
@@ -34,13 +38,15 @@ jobs:
           remote="https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.wiki.git"
           workdir="$(mktemp -d)"
 
-          if git clone "${remote}" "${workdir}/wiki-repo"; then
-            :
-          else
-            mkdir -p "${workdir}/wiki-repo"
-            git -C "${workdir}/wiki-repo" init
-            git -C "${workdir}/wiki-repo" remote add origin "${remote}"
+          # GitHub creates <repo>.wiki.git only after the FIRST wiki page is
+          # saved in the web UI; no API can do it. Until then there is nothing
+          # to push to, so say what to do once and pass instead of failing
+          # every push to main (it failed with "Repository not found").
+          if ! git ls-remote "${remote}" >/dev/null 2>&1; then
+            echo "::warning title=GitHub Wiki not initialized::Open https://github.com/${REPOSITORY}/wiki, click 'Create the first page', save it, then re-run this workflow. The wiki/ sources were not published."
+            exit 0
           fi
+          git clone "${remote}" "${workdir}/wiki-repo"
 
           rsync -a --delete --exclude='.git/' wiki/ "${workdir}/wiki-repo/"
 
