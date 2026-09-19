@@ -64,9 +64,10 @@ metered feature could refuse a request.
   daily token pace usually ends before 15 large files do.
 - The admin UI cannot edit feature rules yet; a change is one row in
   `plan_feature_rules`.
-- `internal/quota/*` is still unauthenticated and relies on nginx not routing
-  it (a public probe gets 404). Recorded as
-  [TD-035](../14-risk-debt/technical-debt.md).
+- `internal/quota/*` required no credential when this shipped, relying on
+  nginx not routing it. Since 2026-09-20 it requires the shared service token
+  ([TD-035](../14-risk-debt/technical-debt.md)), as does
+  `internal/users/:id/entitlements`.
 
 ## Verified
 

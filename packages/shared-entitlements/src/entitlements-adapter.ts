@@ -16,6 +16,14 @@ export type EntitlementsAdapterOptions = {
   authServiceUrl: string;
   // Per-resolve timeout (ms).
   timeoutMs?: number;
+  /**
+   * The shared INTER_SERVICE_AUTH_TOKEN, sent as `Authorization: Service …`.
+   *
+   * auth-service's internal quota and entitlement endpoints require it
+   * (TD-035). Optional only so a test can build an adapter without one; a
+   * service that leaves it out is refused with 401.
+   */
+  serviceToken?: string;
 };
 
 export type QuotaReserveResult =
@@ -97,6 +105,7 @@ function isTransportFailure(error: unknown): boolean {
 export class EntitlementsAdapter {
   private readonly authServiceUrl: string;
   private readonly timeoutMs: number;
+  private readonly serviceToken: string;
 
   constructor(options: EntitlementsAdapterOptions) {
     // Strip trailing slashes with a linear scan instead of a backtracking regex.
@@ -108,6 +117,7 @@ export class EntitlementsAdapter {
     }
     this.authServiceUrl = options.authServiceUrl.slice(0, end);
     this.timeoutMs = options.timeoutMs ?? 5000;
+    this.serviceToken = options.serviceToken ?? '';
   }
 
   /**
@@ -209,7 +219,10 @@ export class EntitlementsAdapter {
     try {
       const response = await fetch(`${this.authServiceUrl}${path}`, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.serviceToken === '' ? {} : { Authorization: `Service ${this.serviceToken}` }),
+        },
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: controller.signal,
       });

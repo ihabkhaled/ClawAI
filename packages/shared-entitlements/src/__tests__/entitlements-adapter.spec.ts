@@ -192,3 +192,61 @@ describe('EntitlementsAdapter feature reservations', () => {
     );
   });
 });
+
+// TD-035: auth-service's internal quota and entitlement endpoints answer only
+// a caller holding the shared INTER_SERVICE_AUTH_TOKEN. Without this header a
+// service gets 401, so every call must carry it.
+describe('EntitlementsAdapter service token', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const headersOf = (request: ReturnType<typeof vi.spyOn>): Record<string, string> =>
+    (request.mock.calls[0]?.[1] as { headers: Record<string, string> }).headers;
+
+  it('sends the token on a read', async () => {
+    const request = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ planId: 'p1' }), { status: 200 }));
+    const adapter = new EntitlementsAdapter({
+      authServiceUrl: 'http://auth:4001',
+      serviceToken: 's3cret-token',
+    });
+
+    await adapter.getEntitlements('user-1');
+
+    expect(headersOf(request)['Authorization']).toBe('Service s3cret-token');
+  });
+
+  it('sends the token when it reserves and settles a feature', async () => {
+    const request = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({ allowed: true, reservationId: 'r1' }), { status: 200 }),
+      );
+    const adapter = new EntitlementsAdapter({
+      authServiceUrl: 'http://auth:4001',
+      serviceToken: 's3cret-token',
+    });
+
+    await adapter.reserveFeatureUsage({
+      userId: 'user-1',
+      feature: 'FILE_GENERATION',
+      requestId: 'req-1',
+    });
+
+    expect(headersOf(request)['Authorization']).toBe('Service s3cret-token');
+    expect(headersOf(request)['Content-Type']).toBe('application/json');
+  });
+
+  it('sends no Authorization header when no token was given', async () => {
+    const request = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ planId: 'p1' }), { status: 200 }));
+    const adapter = new EntitlementsAdapter({ authServiceUrl: 'http://auth:4001' });
+
+    await adapter.getEntitlements('user-1');
+
+    expect(headersOf(request)['Authorization']).toBeUndefined();
+  });
+});

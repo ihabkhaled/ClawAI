@@ -74,6 +74,10 @@ async compare(@Body() dto: CompareDto, @CurrentUser() user: AuthUser) {
 ## Enforcement
 
 - **Architecture test** — every non-`@Public` route resolves a guard.
+- **Root test** — `tools/__tests__/auth-internal-controllers-guarded.test.mjs`:
+  every `*-internal.controller.ts` in auth-service carries
+  `@UseGuards(ServiceTokenGuard)`. Two of them once had no credential at all
+  and relied on nginx not routing `/api/v1/internal` (TD-035).
 - **Unit test** — permission/entitlement/ownership branches (401/403) asserted.
 - **Knowledge check** — `.ai/manifests/permissions.json` mirrors the enum.
 

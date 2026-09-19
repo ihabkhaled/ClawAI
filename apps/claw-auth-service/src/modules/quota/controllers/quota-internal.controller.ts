@@ -1,5 +1,6 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { EntitlementsService } from '../../entitlements/services/entitlements.service';
 import { QuotaService } from '../services/quota.service';
@@ -21,10 +22,14 @@ import {
 import { type FeatureReservationDecision, type ReserveResult } from '../types/quota.types';
 
 // Internal service-to-service endpoints (chat-service calls these around model
-// execution). Not exposed via nginx; @Public because the caller holds no
-// per-request user JWT — it acts on behalf of an already-authenticated user.
+// execution). @Public because the caller holds no per-request user JWT — it
+// acts on behalf of an already-authenticated user — and ServiceTokenGuard then
+// requires the shared INTER_SERVICE_AUTH_TOKEN. These endpoints spend a user's
+// allowance and decide whether a feature is refused, so "nginx does not route
+// it" was never an authorisation (TD-035).
 @Controller('internal/quota')
 @Public()
+@UseGuards(ServiceTokenGuard)
 export class QuotaInternalController {
   constructor(
     private readonly quotaService: QuotaService,

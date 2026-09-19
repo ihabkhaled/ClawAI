@@ -55,6 +55,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **Internal plan and usage APIs now require the service credential**, not
+  just being on the internal network.
 - **A new version now reaches you on the next load.** The app used to be able
   to keep running the previous version's code until the browser's stored copy
   was cleared by hand.

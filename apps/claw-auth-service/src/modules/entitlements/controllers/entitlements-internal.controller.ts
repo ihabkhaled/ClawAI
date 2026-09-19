@@ -1,12 +1,17 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { EntitlementsService } from '../services/entitlements.service';
 import { type UserEntitlements } from '../types/entitlements.types';
 
 // Internal read contract consumed by the shared EntitlementsAdapter (chat /
-// routing). Not exposed via nginx; @Public for service-to-service calls.
+// routing). @Public for service-to-service calls, then ServiceTokenGuard
+// requires the shared INTER_SERVICE_AUTH_TOKEN: this answers what any user may
+// do and what their plan is, so it is not for anything that merely reaches the
+// service network (TD-035).
 @Controller('internal/users')
 @Public()
+@UseGuards(ServiceTokenGuard)
 export class EntitlementsInternalController {
   constructor(private readonly entitlementsService: EntitlementsService) {}
 

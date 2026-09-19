@@ -8,6 +8,7 @@ export class DailyLimitService {
   private readonly logger = new Logger(DailyLimitService.name);
   private readonly adapter = new EntitlementsAdapter({
     authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+    serviceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
   });
 
   async resolve(userId: string): Promise<UserEntitlements> {

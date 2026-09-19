@@ -14,6 +14,7 @@ export class ResourceEntitlementService {
   private readonly timeoutMs = ENTITLEMENTS_TIMEOUT_MS;
   private readonly adapter = new EntitlementsAdapter({
     authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+    serviceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
     timeoutMs: ENTITLEMENTS_TIMEOUT_MS,
   });
 

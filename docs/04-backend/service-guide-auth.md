@@ -504,4 +504,7 @@ work. `POST internal/quota/features/settle` takes `{reservationId,
 outcome: CONSUME|RELEASE}` afterwards. The first user is `FILE_GENERATION`
 (daily per plan; see `docs/business/plan-allowances.md`). `features/consume`
 still only counts, after the fact. Admins and plan-less users are never
-refused. These endpoints trust the network, not a token (TD-035).
+refused. Both these and `internal/users/:id/entitlements` require
+`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` (ServiceTokenGuard) since
+2026-09-20; `EntitlementsAdapter` sends it. A caller that does not is 401
+(TD-035). Deploy auth-service and its callers together.

@@ -31,8 +31,22 @@ Last updated: 2026-09-10
 - **Why not now**: every service's guard changes, plus a Redis dependency in
   `shared-auth`. That is its own batch.
 
-### TD-035: Internal quota endpoints trust the network, not a token (2026-09-19)
+### TD-035: Internal quota endpoints trust the network, not a token (2026-09-19) — FIXED (2026-09-20)
 
+- **Fixed**: `ServiceTokenGuard` now guards **both** unguarded internal
+  controllers — `internal/quota/*` and `internal/users/:id/entitlements` —
+  and `EntitlementsAdapter` sends `Authorization: Service
+<INTER_SERVICE_AUTH_TOKEN>` on every call. Its four construction sites
+  (chat ×2, memory, workspace) pass the token from their own config; no new
+  environment variable.
+  - `tools/__tests__/auth-internal-controllers-guarded.test.mjs` fails if any
+    `*-internal.controller.ts` in auth-service loses the guard.
+  - Verified live from inside the service network: no token → 401, wrong
+    token → 401, correct token → 200, and a chat file request still works.
+- **Deploy order**: auth-service and the four callers ship together. An
+  auth-service that starts first answers 401 to a caller that has not been
+  updated; a reserve fails open, and a usage record would be lost for that
+  window.
 - **Severity**: Medium · **Effort**: Medium · **Priority**: Planned
 - **Detail**: `auth-service` `internal/quota/*` is `@Public()`, and
   `EntitlementsAdapter` sends no credentials. Isolation is nginx not proxying
