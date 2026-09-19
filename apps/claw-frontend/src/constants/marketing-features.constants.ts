@@ -209,11 +209,14 @@ export const FEATURES_GENERATION_ITEMS: ReadonlyArray<MarketingFeatureItem> = [
 export const FEATURES_GENERATION_FORMATS: readonly string[] = [
   'PDF',
   'DOCX',
+  'XLSX',
+  'PPTX',
   'CSV',
   'HTML',
   'Markdown',
   'TXT',
   'JSON',
+  'ZIP',
 ];
 
 export const FEATURES_OBSERVABILITY_ITEMS: ReadonlyArray<MarketingFeatureItem> = [

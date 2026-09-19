@@ -5,4 +5,7 @@ export enum AnswerExportFormat {
   HTML = 'HTML',
   DOCX = 'DOCX',
   PDF = 'PDF',
+  XLSX = 'XLSX',
+  PPTX = 'PPTX',
+  ZIP = 'ZIP',
 }

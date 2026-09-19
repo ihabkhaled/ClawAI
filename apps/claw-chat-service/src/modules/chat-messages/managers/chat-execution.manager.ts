@@ -205,6 +205,11 @@ import {
 import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
 import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
 import type { FileContentCandidate } from '../types/file-writer.types';
+import {
+  detectRequestedFileFormat,
+  fileWriterSystemPrompt,
+  unwrapWholeCodeFence,
+} from '../utilities/file-format.utility';
 import { toFileContentCandidates } from '../utilities/file-writer.utility';
 import type { PaygCallOptions } from '../types/payg.types';
 
@@ -4587,7 +4592,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log('callFileGenerationService: starting file generation');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
     const prompt = lastUserMsg?.content ?? 'generate a file';
-    const format = this.detectFileFormat(prompt);
+    const format = detectRequestedFileFormat(prompt);
     this.logger.debug(
       `callFileGenerationService: prompt length=${String(prompt.length)} format=${format}`,
     );
@@ -4598,7 +4603,7 @@ export class ChatExecutionManager implements OnModuleInit {
       usedFallback,
       threadSettings,
     );
-    const fileContent = this.stripCodeBlockWrapper(contentResponse.content);
+    const fileContent = unwrapWholeCodeFence(contentResponse.content, format);
     const generationId = await this.dispatchFileGeneration(
       prompt,
       fileContent,
@@ -4631,7 +4636,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const fileExecutionOptions = this.buildFileGenerationExecutionOptions(threadSettings);
     const fileContext: AssembledContext = {
       ...context,
-      systemPrompt: `You are a file content generator. The user wants to create a ${format} file. Generate ONLY the raw content for the file — no explanations, no markdown code blocks, no "here is your file" preamble. Output the actual content that should go inside the file. For PDF/DOCX, use markdown formatting (headers, bullets, paragraphs). For CSV, output header row + data rows. For JSON, output valid JSON. For TXT, output plain text. For HTML, output HTML. For MD, output markdown.`,
+      systemPrompt: fileWriterSystemPrompt(format),
     };
     const contentCandidates = await this.buildFileContentProviderCandidates();
     let contentResponse: LlmResponse | null = null;
@@ -4683,15 +4688,6 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     return { contentResponse, contentFallbackUsed };
-  }
-
-  private stripCodeBlockWrapper(content: string): string {
-    const codeBlockMatch = /^```\w*\n([\s\S]*?)```$/m.exec(content.trim());
-    if (codeBlockMatch?.[1]) {
-      this.logger.debug('stripCodeBlockWrapper: stripped markdown code block wrapper');
-      return codeBlockMatch[1].trim();
-    }
-    return content;
   }
 
   private async dispatchFileGeneration(
@@ -4761,37 +4757,6 @@ export class ChatExecutionManager implements OnModuleInit {
       return model;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
-  }
-
-  private detectFileFormat(prompt: string): string {
-    this.logger.debug('detectFileFormat: scanning prompt for format keywords');
-    const lower = prompt.toLowerCase();
-    if (lower.includes('pdf')) {
-      this.logger.debug('detectFileFormat: matched PDF');
-      return 'PDF';
-    }
-    if (lower.includes('docx') || lower.includes('word')) {
-      this.logger.debug('detectFileFormat: matched DOCX');
-      return 'DOCX';
-    }
-    if (lower.includes('csv')) {
-      this.logger.debug('detectFileFormat: matched CSV');
-      return 'CSV';
-    }
-    if (lower.includes('json')) {
-      this.logger.debug('detectFileFormat: matched JSON');
-      return 'JSON';
-    }
-    if (lower.includes('html')) {
-      this.logger.debug('detectFileFormat: matched HTML');
-      return 'HTML';
-    }
-    if (lower.includes('markdown') || lower.includes('.md')) {
-      this.logger.debug('detectFileFormat: matched MD');
-      return 'MD';
-    }
-    this.logger.debug('detectFileFormat: no specific format matched — defaulting to TXT');
-    return 'TXT';
   }
 
   private async buildImagePromptFromVision(

@@ -8,6 +8,7 @@ import {
   FileText,
   FileVideo,
   type LucideIcon,
+  Presentation,
 } from 'lucide-react';
 
 type FileTypeDescriptor = {
@@ -78,6 +79,29 @@ export function getFileTypeDescriptor(mimeType: string, filename: string): FileT
       tone: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     };
   }
+  // Office types before the code check: every Office MIME type contains
+  // "xml" (…openxmlformats…), so Word and PowerPoint files got the code icon.
+  if (
+    lowerMime.includes('presentation') ||
+    lowerName.endsWith('.pptx') ||
+    lowerName.endsWith('.ppt')
+  ) {
+    return {
+      Icon: Presentation,
+      tone: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    };
+  }
+  if (
+    lowerMime.includes('wordprocessing') ||
+    lowerMime === 'application/msword' ||
+    lowerName.endsWith('.docx') ||
+    lowerName.endsWith('.doc')
+  ) {
+    return {
+      Icon: FileText,
+      tone: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+    };
+  }
   if (
     lowerMime.includes('json') ||
     lowerMime.includes('xml') ||
@@ -98,11 +122,7 @@ export function getFileTypeDescriptor(mimeType: string, filename: string): FileT
       tone: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     };
   }
-  if (
-    lowerMime.startsWith('text/') ||
-    lowerName.endsWith('.md') ||
-    lowerName.endsWith('.txt')
-  ) {
+  if (lowerMime.startsWith('text/') || lowerName.endsWith('.md') || lowerName.endsWith('.txt')) {
     return {
       Icon: FileText,
       tone: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',

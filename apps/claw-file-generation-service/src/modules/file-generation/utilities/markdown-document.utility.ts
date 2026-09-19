@@ -85,6 +85,19 @@ export function blockText(block: DocumentBlock): string {
   }
 }
 
+/** Blocks with lists and quotes opened up, in reading order. */
+export function flattenBlocks(blocks: DocumentBlock[]): DocumentBlock[] {
+  return blocks.flatMap((block) => {
+    if (block.kind === BlockKind.QUOTE) {
+      return flattenBlocks(block.blocks);
+    }
+    if (block.kind === BlockKind.LIST) {
+      return flattenBlocks(block.items.flat());
+    }
+    return [block];
+  });
+}
+
 /** A link target a document may keep, or null to show the text only. */
 export function safeHref(href: string): string | null {
   try {

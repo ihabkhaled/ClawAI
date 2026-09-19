@@ -3,7 +3,7 @@ import type { AnswerExportOption } from '@/types/answer-export.types';
 
 /**
  * The "Download as" menu. MD and TXT are built in the browser (the answer is
- * already here); HTML, DOCX and PDF are converted by the file service and
+ * already here); HTML, DOCX, PDF, XLSX, PPTX and ZIP are converted by the file service and
  * downloaded through the owner-only link (ADR-104).
  */
 export const ANSWER_EXPORT_OPTIONS: readonly AnswerExportOption[] = [
@@ -35,6 +35,26 @@ export const ANSWER_EXPORT_OPTIONS: readonly AnswerExportOption[] = [
     format: AnswerExportFormat.PDF,
     extension: 'pdf',
     labelKey: 'chat.exportFormats.pdf',
+    inBrowser: false,
+  },
+  // F3b (ADR-108): the answer's tables as sheets, its sections as slides, and
+  // its code blocks and tables as files in a zip.
+  {
+    format: AnswerExportFormat.XLSX,
+    extension: 'xlsx',
+    labelKey: 'chat.exportFormats.xlsx',
+    inBrowser: false,
+  },
+  {
+    format: AnswerExportFormat.PPTX,
+    extension: 'pptx',
+    labelKey: 'chat.exportFormats.pptx',
+    inBrowser: false,
+  },
+  {
+    format: AnswerExportFormat.ZIP,
+    extension: 'zip',
+    labelKey: 'chat.exportFormats.zip',
     inBrowser: false,
   },
 ];

@@ -141,6 +141,9 @@ After implementing any change to this service:
   other way is an injection hole; `document-render.spec.ts` compiles hostile
   input for real.
 - New scripts need a font in the image (`fonts-noto-*` in both Dockerfiles).
+- **CSV cells always pass `csvSafeCell`** (formula injection), and XLSX cells are
+  inline strings, never formulas. Zip paths from the model always pass
+  `safeBundlePath` (zip-slip). ADR-108.
 
 ## Access (ADR-103)
 

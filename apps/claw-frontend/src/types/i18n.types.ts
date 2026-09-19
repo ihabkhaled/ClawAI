@@ -604,6 +604,9 @@ export type TranslationDictionary = {
       html: string;
       docx: string;
       pdf: string;
+      xlsx: string;
+      pptx: string;
+      zip: string;
     };
     regenerate: string;
     // Phase 4 (UI/UX refactor): per-message hover actions on assistant

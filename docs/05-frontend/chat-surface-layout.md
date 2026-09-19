@@ -279,7 +279,8 @@ image-generation bubble, which already have their own card.
   (`MarkdownRenderer`) and **Raw markdown** tabs, each with a copy button.
 - **Download as**: `answer-export-menu.tsx` plus `use-answer-export.ts`.
   - `.md` and `.txt` are saved in the browser, with no request.
-  - `.html`, `.docx` and `.pdf` call `POST /file-generations/export`, poll
+  - `.html`, `.docx`, `.pdf`, `.xlsx`, `.pptx` and `.zip` (ADR-108) call
+    `POST /file-generations/export`, poll
     (1 s × 30), then download through the owner-only link.
   - While an export runs the icon spins; on failure it turns red and its label
     says so.

@@ -16,3 +16,6 @@ export interface CachedFileWriterCandidates {
   candidates: readonly FileWriterCandidate[];
   expiresAt: number;
 }
+
+/** A file format named in a request, and whether it was named as the target ("as a pdf"). */
+export type FormatMention = { format: string; index: number; targeted: boolean };

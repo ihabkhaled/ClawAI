@@ -11,6 +11,9 @@ import { convertToCsv } from '../adapters/csv.adapter';
 import { convertToHtml } from '../adapters/html.adapter';
 import { PdfRenderer } from '../adapters/pdf.adapter';
 import { convertToDocx } from '../adapters/docx.adapter';
+import { convertToPptx } from '../adapters/pptx.adapter';
+import { convertToXlsx } from '../adapters/xlsx.adapter';
+import { convertToZip } from '../adapters/zip.adapter';
 
 @Injectable()
 export class FileExecutionManager {
@@ -45,6 +48,15 @@ export class FileExecutionManager {
         break;
       case 'DOCX':
         result = await convertToDocx(content, title);
+        break;
+      case 'XLSX':
+        result = await convertToXlsx(content, title);
+        break;
+      case 'PPTX':
+        result = await convertToPptx(content, title);
+        break;
+      case 'ZIP':
+        result = await convertToZip(content);
         break;
       default:
         this.logger.debug(`convert: unknown format "${format}" — falling back to TXT`);

@@ -27,6 +27,9 @@ enum FileFormat {
   CSV
   JSON
   HTML
+  XLSX
+  PPTX
+  ZIP
 }
 
 model FileGeneration {

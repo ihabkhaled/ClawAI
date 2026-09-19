@@ -6,6 +6,9 @@ export const FORMAT_TO_MIME_TYPE: Record<string, string> = {
   CSV: 'text/csv',
   JSON: 'application/json',
   HTML: 'text/html',
+  XLSX: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  PPTX: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ZIP: 'application/zip',
 };
 
 export const FORMAT_TO_EXTENSION: Record<string, string> = {
@@ -16,4 +19,7 @@ export const FORMAT_TO_EXTENSION: Record<string, string> = {
   CSV: 'csv',
   JSON: 'json',
   HTML: 'html',
+  XLSX: 'xlsx',
+  PPTX: 'pptx',
+  ZIP: 'zip',
 };

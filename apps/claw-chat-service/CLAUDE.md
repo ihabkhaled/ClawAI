@@ -648,6 +648,18 @@ chain drafting and implementation handoff all spend real provider money through
 the callers that most need it. The response carries `clamped` so the calling
 service can tell its own user why the answer is short.
 
+## AI-written files: format and writer prompt (ADR-108, 2026-09-19)
+
+- `detectRequestedFileFormat` (utilities/file-format.utility.ts) decides the
+  file format by whole words; a format after "as/to/into/in" wins. Never go
+  back to substring checks: "password" became a Word file.
+- The file writer's system prompt is `fileWriterSystemPrompt(format)`. Rich
+  formats are Markdown, which file-generation renders (ADR-107). Never ask the
+  writer for raw HTML, because it is escaped there.
+- `unwrapWholeCodeFence` removes a fence only when the whole answer is one
+  fence, and never for ZIP. The old regex kept only the first code block of
+  any file.
+
 ## ThreadOrigin
 
 `ChatThread.origin` separates the VS Code coding agent's runs from the user's
