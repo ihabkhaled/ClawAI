@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
+import axios from 'axios';
 import { buildInterServiceAuthHeader, httpPost } from '@common/utilities';
 import { FORMAT_TO_EXTENSION, FORMAT_TO_MIME_TYPE } from '../../../common/constants';
 import { type StoreFileResponse } from '../types/file-generation.types';
@@ -92,5 +93,37 @@ export class FileExecutionManager {
     const filename = `generated-${String(timestamp)}.${extension}`;
     this.logger.debug(`generateFilename: generated "${filename}" for format=${format}`);
     return filename;
+  }
+
+  /**
+   * The stored bytes, streamed from file-service over the service token. The
+   * browser never learns the file-service id or where the bytes live.
+   */
+  async openStoredFile(fileId: string): Promise<NodeJS.ReadableStream> {
+    const config = AppConfig.get();
+    const response = await axios.get<NodeJS.ReadableStream>(
+      `${config.FILE_SERVICE_URL}/api/v1/internal/files/download-internal/${encodeURIComponent(fileId)}`,
+      {
+        responseType: 'stream',
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeout: 30_000,
+      },
+    );
+    return response.data;
+  }
+
+  /** Deletes stored bytes; the owner is checked by file-service. */
+  async deleteStoredFile(fileId: string, userId: string): Promise<void> {
+    const config = AppConfig.get();
+    await axios.delete(
+      `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}`,
+      {
+        params: { userId },
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeout: 15_000,
+        // Already gone counts as deleted, or the sweep would retry it forever.
+        validateStatus: (status) => status < 300 || status === 404,
+      },
+    );
   }
 }

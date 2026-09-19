@@ -586,6 +586,12 @@ export type TranslationDictionary = {
     oneMemory: string;
     open: string;
     preparingDownload: string;
+    // Generated files expire after 1 hour; rebuild or regenerate (F1).
+    fileAvailableFor: string;
+    fileExpired: string;
+    fileRebuild: string;
+    fileRegenerateAi: string;
+    fileDownloadFailed: string;
     regenerate: string;
     // Phase 4 (UI/UX refactor): per-message hover actions on assistant
     // bubbles. `copyMessage` labels the copy-to-clipboard button; the

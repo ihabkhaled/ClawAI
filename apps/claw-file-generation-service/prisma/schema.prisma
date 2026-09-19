@@ -68,11 +68,17 @@ model FileGenerationAsset {
   downloadUrl  String   @map("download_url")
   mimeType     String   @map("mime_type")
   sizeBytes    Int?     @map("size_bytes")
+  /// The bytes live this long; a sweep deletes them afterwards (F1, ADR-104).
+  expiresAt    DateTime? @map("expires_at")
+  /// Set when the sweep has deleted the bytes. The row, and the content it was
+  /// built from, stay so the user can rebuild the file from chat.
+  expiredAt    DateTime? @map("expired_at")
   createdAt    DateTime @default(now()) @map("created_at")
 
   generation FileGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
 
   @@index([generationId])
+  @@index([expiresAt, expiredAt])
   @@map("file_generation_assets")
 }
 

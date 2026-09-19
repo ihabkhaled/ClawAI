@@ -1419,6 +1419,16 @@
         "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/file-generations/:id/assets/:assetId/download",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/file-generations/:id/rebuild",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/file-generations/:id/retry",
         "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
@@ -1479,6 +1489,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-file-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/internal/files/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -3383,5 +3398,5 @@
     ]
   },
   "generated": true,
-  "total": 669
+  "total": 672
 }

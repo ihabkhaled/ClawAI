@@ -7,7 +7,7 @@ import type { FileGeneration, FileGenerationEventPayload } from '@/types/file-ge
 import { isTerminalFileStatus, logger } from '@/utilities';
 import { connectSse } from '@/utilities/sse.utility';
 
-export function useFileGenerationListener(generationId: string | undefined) {
+export function useFileGenerationListener(generationId: string | undefined, refreshKey = 0) {
   const [generation, setGeneration] = useState<FileGeneration | null>(null);
   const eventSourceRef = useRef<SseConnection | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -132,7 +132,7 @@ export function useFileGenerationListener(generationId: string | undefined) {
       });
 
     return cleanup;
-  }, [generationId, cleanup, startPolling]);
+  }, [generationId, refreshKey, cleanup, startPolling]);
 
   return generation;
 }

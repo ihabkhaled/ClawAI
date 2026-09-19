@@ -77,14 +77,36 @@ export class FileGenerationRepository {
     await this.prisma.fileGenerationEvent.create({ data });
   }
 
-  async createAsset(data: {
-    generationId: string;
-    storageKey: string;
-    url: string;
-    downloadUrl: string;
-    mimeType: string;
-    sizeBytes?: number;
-  }): Promise<FileGenerationAssetRecord> {
+  async createAsset(
+    data: Prisma.FileGenerationAssetUncheckedCreateInput,
+  ): Promise<FileGenerationAssetRecord> {
     return this.prisma.fileGenerationAsset.create({ data });
+  }
+
+  async setAssetUrls(id: string, url: string): Promise<FileGenerationAssetRecord> {
+    return this.prisma.fileGenerationAsset.update({
+      where: { id },
+      data: { url, downloadUrl: url },
+    });
+  }
+
+  async findAsset(
+    generationId: string,
+    assetId: string,
+  ): Promise<FileGenerationAssetRecord | null> {
+    return this.prisma.fileGenerationAsset.findFirst({ where: { id: assetId, generationId } });
+  }
+
+  /** Assets whose time is up and whose bytes are still stored. */
+  async findExpiredAssets(now: Date, take: number): Promise<FileGenerationAssetRecord[]> {
+    return this.prisma.fileGenerationAsset.findMany({
+      where: { expiresAt: { lte: now }, expiredAt: null },
+      take,
+      orderBy: { expiresAt: 'asc' },
+    });
+  }
+
+  async markAssetExpired(id: string, now: Date): Promise<void> {
+    await this.prisma.fileGenerationAsset.update({ where: { id }, data: { expiredAt: now } });
   }
 }

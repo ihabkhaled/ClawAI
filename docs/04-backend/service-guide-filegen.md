@@ -123,3 +123,13 @@ Each format adapter includes a content extraction strategy for parsing LLM outpu
 - `/internal/file-generations/*` needs `Authorization: Service <token>`.
 - The content is written by the admin's FILE_WRITER models (Smart Router,
   Assistant models).
+
+## Downloads, expiry and rebuild (ADR-104, 2026-09-19)
+
+| Method | Route                                                   | Auth  | Notes                                                                              |
+| ------ | ------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
+| GET    | `/api/v1/file-generations/:id/assets/:assetId/download` | owner | streamed; attachment, `private, no-store`, `nosniff`; 410 `FILE_EXPIRED` after 1 h |
+| POST   | `/api/v1/file-generations/:id/rebuild`                  | owner | rebuilds from the saved text; the new asset gets a new hour                        |
+
+The expiry sweep runs every 5 min and deletes bytes via file-service
+`DELETE /api/v1/internal/files/:id?userId=` (service token, owner-checked).

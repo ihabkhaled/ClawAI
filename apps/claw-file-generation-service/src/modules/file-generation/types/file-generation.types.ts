@@ -31,8 +31,20 @@ export type FileGenerationAssetRecord = {
   downloadUrl: string;
   mimeType: string;
   sizeBytes: number | null;
+  expiresAt: Date | null;
+  expiredAt: Date | null;
   createdAt: Date;
 };
+
+/** What a download needs to send: the bytes and how to name them. */
+export type FileAssetDownload = {
+  stream: NodeJS.ReadableStream;
+  mimeType: string;
+  filename: string;
+  sizeBytes: number | null;
+};
+
+export type AssetExpiryFields = Pick<FileGenerationAssetRecord, 'expiresAt' | 'expiredAt'>;
 
 export type GenerateFileParams = {
   prompt: string;
@@ -69,3 +81,11 @@ export type FileGenerationEventPayload = {
 };
 
 export const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELLED'] as const;
+
+/** An asset as a user sees it: no storage key, so no file-service id leaks. */
+export type FileGenerationAssetView = Omit<FileGenerationAssetRecord, 'storageKey'>;
+
+/** A generation as a user sees it. */
+export type FileGenerationView = Omit<FileGenerationRecord, 'assets'> & {
+  assets: FileGenerationAssetView[];
+};

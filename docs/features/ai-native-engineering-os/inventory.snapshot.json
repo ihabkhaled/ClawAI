@@ -1474,6 +1474,16 @@
           "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/file-generations/:id/assets/:assetId/download",
+          "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/file-generations/:id/rebuild",
+          "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/file-generations/:id/retry",
           "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
@@ -1534,6 +1544,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-file-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/internal/files/:id",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -7271,7 +7286,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 25924,
+          "bytes": 26317,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7517,6 +7532,10 @@
         {
           "bytes": 2194,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
+        },
+        {
+          "bytes": 1043,
+          "file": "rules/52-every-schema-ships-a-migration.md"
         },
         {
           "bytes": 6156,
@@ -7843,7 +7862,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5200
+        "value": 5205
       },
       "localeCount": 13,
       "locales": [
@@ -9811,7 +9830,7 @@
       },
       "claw-file-generation-service": {
         "runner": "vitest",
-        "testFiles": 9
+        "testFiles": 10
       },
       "claw-file-service": {
         "runner": "vitest",
@@ -9819,7 +9838,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 476
+        "testFiles": 479
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10569,7 +10588,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 42,
-    "endpointCount": 669,
+    "endpointCount": 672,
     "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 155,
@@ -10581,7 +10600,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1292,
+    "totalTestFiles": 1296,
     "workspaceCount": 25
   }
 }

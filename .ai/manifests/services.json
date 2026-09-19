@@ -187,7 +187,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-generation-service",
-      "endpointCount": 7,
+      "endpointCount": 9,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -203,13 +203,13 @@
         "FileGenerationAsset",
         "FileGenerationEvent"
       ],
-      "testFiles": 9,
+      "testFiles": 10,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 17,
+      "endpointCount": 18,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",

@@ -201,7 +201,11 @@ function MessageBubbleBase({
             />
           ) : null}
           {!isUser && isFileGeneration && fileGenerationId ? (
-            <FileGenerationBubble generationId={fileGenerationId} prompt={message.content} />
+            <FileGenerationBubble
+              generationId={fileGenerationId}
+              prompt={message.content}
+              onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
+            />
           ) : null}
           {!isUser && !isImageGeneration && !isFileGeneration ? assistantContent : null}
           {/* Below the answer, not above it: the reasoning is how the reply was

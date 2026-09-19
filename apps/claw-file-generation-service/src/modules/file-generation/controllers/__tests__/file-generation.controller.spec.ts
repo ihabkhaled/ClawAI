@@ -11,8 +11,11 @@ describe('FileGenerationController', () => {
   let serviceMock: {
     listByUser: Mock;
     getByIdForUser: Mock;
+    getViewForUser: Mock;
     retryGeneration: Mock;
     retryGenerationForUser: Mock;
+    openAssetForUser: Mock;
+    rebuildForUser: Mock;
   };
   let eventsMock: { subscribe: Mock };
 
@@ -20,8 +23,11 @@ describe('FileGenerationController', () => {
     serviceMock = {
       listByUser: vi.fn(),
       getByIdForUser: vi.fn(),
+      getViewForUser: vi.fn(),
       retryGeneration: vi.fn(),
       retryGenerationForUser: vi.fn(),
+      openAssetForUser: vi.fn(),
+      rebuildForUser: vi.fn(),
     };
     eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
@@ -44,7 +50,8 @@ describe('FileGenerationController', () => {
 
   it('getById forwards id and user.id', async () => {
     await controller.getById('gen-1', user as never);
-    expect(serviceMock.getByIdForUser).toHaveBeenCalledWith('gen-1', 'u1');
+    // The user-facing read is the view without storage keys.
+    expect(serviceMock.getViewForUser).toHaveBeenCalledWith('gen-1', 'u1');
   });
 
   // Owner-scoped: retry used to take any id (IDOR).
@@ -54,6 +61,40 @@ describe('FileGenerationController', () => {
     expect(serviceMock.retryGenerationForUser).toHaveBeenCalledWith('gen-1', 'u1');
     expect(serviceMock.retryGeneration).not.toHaveBeenCalled();
     expect(result).toEqual({ generationId: 'gen-1', status: 'QUEUED' });
+  });
+
+  // The browser sees an asset path, never a storage id; the response must not
+  // be cached by anything shared and must not be sniffed into another type.
+  it('download streams the file with attachment, no-store and nosniff headers', async () => {
+    const pipe = vi.fn();
+    serviceMock.openAssetForUser.mockResolvedValue({
+      stream: { pipe },
+      mimeType: 'application/pdf',
+      filename: 'Report.pdf',
+      sizeBytes: 10,
+    });
+    const headers: Record<string, string> = {};
+    const res = { setHeader: (k: string, v: string) => (headers[k] = v) };
+
+    await controller.download('gen-1', 'asset-1', user as never, res as never);
+
+    expect(serviceMock.openAssetForUser).toHaveBeenCalledWith('gen-1', 'asset-1', 'u1');
+    expect(headers).toEqual({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="Report.pdf"',
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    expect(pipe).toHaveBeenCalledWith(res);
+  });
+
+  it('rebuild is scoped to the calling user', async () => {
+    serviceMock.rebuildForUser.mockResolvedValue({ id: 'gen-1', status: 'QUEUED' });
+    await expect(controller.rebuild('gen-1', user as never)).resolves.toEqual({
+      generationId: 'gen-1',
+      status: 'QUEUED',
+    });
+    expect(serviceMock.rebuildForUser).toHaveBeenCalledWith('gen-1', 'u1');
   });
 
   // Ownership is enforced by FileGenerationOwnerGuard before the stream opens.

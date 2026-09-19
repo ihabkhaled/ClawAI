@@ -377,6 +377,8 @@ export type {
   FileLoadingStateProps,
   FileErrorStateProps,
   FileCompletedStateProps,
+  FileExpiredStateProps,
+  FileGenerationBubbleProps,
   AttachmentThumbnailProps,
   VirtualizedMessagesProps,
   VirtualizedMessageItemProps,

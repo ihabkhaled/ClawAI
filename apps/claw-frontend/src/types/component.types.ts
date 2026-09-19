@@ -1112,10 +1112,27 @@ export type FileErrorStateProps = {
 };
 
 export type FileCompletedStateProps = {
-  blobUrl: string;
   filename: string;
   format: string;
   sizeBytes: number | null;
+  minutesLeft: number | null;
+  isDownloading: boolean;
+  downloadFailed: boolean;
+  onDownload: () => void;
+};
+
+export type FileExpiredStateProps = {
+  filename: string;
+  format: string;
+  isRebuilding: boolean;
+  onRebuild: () => void;
+  onRegenerate?: () => void;
+};
+
+export type FileGenerationBubbleProps = {
+  generationId: string;
+  prompt: string;
+  onRegenerate?: () => void;
 };
 
 export type AttachmentThumbnailProps = {

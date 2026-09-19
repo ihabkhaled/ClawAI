@@ -13,6 +13,7 @@ describe('FilesInternalController', () => {
     downloadFilePublic: Mock;
     getFileContent: Mock;
     storeImage: Mock;
+    deleteFile: Mock;
   };
 
   beforeEach(async () => {
@@ -22,6 +23,7 @@ describe('FilesInternalController', () => {
       downloadFilePublic: vi.fn(),
       getFileContent: vi.fn(),
       storeImage: vi.fn(),
+      deleteFile: vi.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FilesInternalController],
@@ -32,6 +34,24 @@ describe('FilesInternalController', () => {
       ],
     }).compile();
     controller = module.get<FilesInternalController>(FilesInternalController);
+  });
+
+  // file-generation expires generated files after an hour through this; the
+  // owner check stays in FilesService.deleteFile, so a service can only
+  // delete a file for the user it names.
+  it('deleteInternal deletes as the named owner', async () => {
+    serviceMock.deleteFile.mockResolvedValue({ id: 'f1' });
+    await expect(
+      controller.deleteInternal('f1', { userId: 'u1' } as never),
+    ).resolves.toBeUndefined();
+    expect(serviceMock.deleteFile).toHaveBeenCalledWith('f1', 'u1');
+  });
+
+  it("deleteInternal surfaces the service's ownership refusal", async () => {
+    serviceMock.deleteFile.mockRejectedValue(new Error('Forbidden'));
+    await expect(controller.deleteInternal('f1', { userId: 'u2' } as never)).rejects.toThrow(
+      'Forbidden',
+    );
   });
 
   it('getChunks delegates to FileChunksRepository.findByFileId', async () => {

@@ -150,6 +150,24 @@ export class FilesInternalController {
     return this.filesService.deletePublishedCopy(id);
   }
 
+  /**
+   * Deletes a user's stored file on behalf of a sibling service. The owner is
+   * still checked (deleteFile validates it), so a service can only remove a
+   * file for the user it names. file-generation uses this to expire generated
+   * files after an hour (ADR-104).
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteInternal(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(internalFileContentQuerySchema))
+    query: InternalFileContentQueryDto,
+  ): Promise<void> {
+    await this.filesService.deleteFile(id, query.userId);
+  }
+
   @Public()
   @UseGuards(ServiceTokenGuard)
   @Get('metadata-internal/:id')

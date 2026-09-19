@@ -1,12 +1,32 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  type OnModuleDestroy,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { type FileFormat, FileGenerationStatus } from '../../../generated/prisma';
 import { FileGenerationRepository } from '../repositories/file-generation.repository';
 import { FileExecutionManager } from '../managers/file-execution.manager';
 import { FileGenerationEventsService } from './file-generation-events.service';
-import { FORMAT_TO_MIME_TYPE } from '../../../common/constants';
+import { FORMAT_TO_EXTENSION, FORMAT_TO_MIME_TYPE } from '../../../common/constants';
 import {
+  FILE_ASSET_SWEEP_BATCH,
+  FILE_ASSET_SWEEP_INTERVAL_MS,
+  FILE_ASSET_TTL_MS,
+} from '../constants/file-asset.constants';
+import {
+  fileAssetDownloadPath,
+  isAssetExpired,
+  safeDownloadFilename,
+  toGenerationView,
+} from '../utilities/file-asset.utility';
+import {
+  type FileAssetDownload,
+  type FileGenerationAssetRecord,
   type FileGenerationRecord,
+  type FileGenerationView,
   type GenerateFileParams,
   TERMINAL_STATUSES,
 } from '../types/file-generation.types';
@@ -14,7 +34,7 @@ import { type ListFileGenerationsQueryDto } from '../dto/generate-file.dto';
 import { BusinessException } from '../../../common/errors';
 
 @Injectable()
-export class FileGenerationService {
+export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(FileGenerationService.name);
 
   constructor(
@@ -23,6 +43,96 @@ export class FileGenerationService {
     private readonly eventsService: FileGenerationEventsService,
     private readonly rabbitMQ: RabbitMQService,
   ) {}
+
+  private sweepTimer: ReturnType<typeof setInterval> | null = null;
+
+  onModuleInit(): void {
+    this.sweepTimer = setInterval(() => {
+      void this.sweepExpiredAssets();
+    }, FILE_ASSET_SWEEP_INTERVAL_MS);
+  }
+
+  onModuleDestroy(): void {
+    if (this.sweepTimer !== null) {
+      clearInterval(this.sweepTimer);
+    }
+  }
+
+  /**
+   * The owner's file, streamed through this service. The id in the URL is the
+   * asset's, never file-service's, and an expired asset answers 410 so the chat
+   * can offer a rebuild instead of a broken download.
+   */
+  async openAssetForUser(
+    generationId: string,
+    assetId: string,
+    userId: string,
+    now = new Date(),
+  ): Promise<FileAssetDownload> {
+    const generation = await this.getByIdForUser(generationId, userId);
+    const asset = await this.repository.findAsset(generationId, assetId);
+    if (asset === null) {
+      throw new BusinessException('File not found', 'FILE_ASSET_NOT_FOUND');
+    }
+    if (isAssetExpired(asset, now)) {
+      throw new BusinessException(
+        'This file has expired; rebuild it from the chat',
+        'FILE_EXPIRED',
+        HttpStatus.GONE,
+      );
+    }
+    const extension = FORMAT_TO_EXTENSION[generation.format] ?? 'txt';
+    return {
+      stream: await this.executionManager.openStoredFile(asset.storageKey),
+      mimeType: asset.mimeType,
+      filename: safeDownloadFilename(generation.filename, extension),
+      sizeBytes: asset.sizeBytes,
+    };
+  }
+
+  /**
+   * Builds the file again from the text it was made from: free, instant and
+   * identical. "Ask the AI again" is the chat's regenerate, not this.
+   */
+  async rebuildForUser(generationId: string, userId: string): Promise<FileGenerationRecord> {
+    const generation = await this.getByIdForUser(generationId, userId);
+    if ((generation.content ?? '').length === 0) {
+      throw new BusinessException(
+        'Nothing to rebuild this file from',
+        'FILE_CONTENT_UNAVAILABLE',
+        HttpStatus.CONFLICT,
+      );
+    }
+    this.logger.log(`rebuildForUser: rebuilding ${generationId}`);
+    await this.repository.updateStatus(generationId, FileGenerationStatus.QUEUED, {
+      errorCode: undefined,
+      errorMessage: undefined,
+    });
+    void this.processJob(generationId);
+    return this.getById(generationId);
+  }
+
+  /** Deletes the bytes of every asset whose hour is up; keeps the rows. */
+  async sweepExpiredAssets(now = new Date()): Promise<number> {
+    const expired = await this.repository.findExpiredAssets(now, FILE_ASSET_SWEEP_BATCH);
+    let swept = 0;
+    for (const asset of expired) {
+      const generation = await this.repository.findById(asset.generationId);
+      try {
+        if (generation !== null) {
+          await this.executionManager.deleteStoredFile(asset.storageKey, generation.userId);
+        }
+        await this.repository.markAssetExpired(asset.id, now);
+        swept += 1;
+      } catch (error: unknown) {
+        this.logger.warn(`sweepExpiredAssets: asset ${asset.id} - ${(error as Error).message}`);
+      }
+    }
+    if (swept > 0) {
+      this.logger.log(`sweepExpiredAssets: expired ${String(swept)} file(s)`);
+    }
+    return swept;
+  }
 
   async enqueueGeneration(params: GenerateFileParams): Promise<FileGenerationRecord> {
     const filename = params.filename ?? this.executionManager.generateFilename(params.format);
@@ -76,11 +186,16 @@ export class FileGenerationService {
     return record;
   }
 
+  /** The owner's generation as a user may see it (no storage keys). */
+  async getViewForUser(id: string, userId: string): Promise<FileGenerationView> {
+    return toGenerationView(await this.getByIdForUser(id, userId));
+  }
+
   async listByUser(
     userId: string,
     query: ListFileGenerationsQueryDto,
   ): Promise<{
-    data: FileGenerationRecord[];
+    data: FileGenerationView[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const [data, total] = await Promise.all([
@@ -88,7 +203,7 @@ export class FileGenerationService {
       this.repository.countByUserId(userId),
     ]);
     return {
-      data,
+      data: data.map((record) => toGenerationView(record)),
       meta: {
         total,
         page: query.page,
@@ -174,36 +289,30 @@ export class FileGenerationService {
     generation: FileGenerationRecord,
     fileId: string,
     sizeBytes: number,
-  ): Promise<{
-    id: string;
-    url: string;
-    downloadUrl: string;
-    mimeType: string;
-    sizeBytes: number | null;
-  }> {
-    const downloadUrl = `/api/v1/files/download/${fileId}`;
+  ): Promise<FileGenerationAssetRecord> {
     const mimeType = FORMAT_TO_MIME_TYPE[generation.format] ?? 'application/octet-stream';
-    return this.repository.createAsset({
+    const created = await this.repository.createAsset({
       generationId,
       storageKey: fileId,
-      url: downloadUrl,
-      downloadUrl,
+      url: '',
+      downloadUrl: '',
       mimeType,
       sizeBytes,
+      expiresAt: new Date(Date.now() + FILE_ASSET_TTL_MS),
     });
+    // The browser only ever sees this path: it names the asset, not the
+    // stored file, and the controller checks the owner on every download.
+    return this.repository.setAssetUrls(
+      created.id,
+      fileAssetDownloadPath(generationId, created.id),
+    );
   }
 
   private async publishCompletionEvents(
     generationId: string,
     generation: FileGenerationRecord,
     fileId: string,
-    asset: {
-      id: string;
-      url: string;
-      downloadUrl: string;
-      mimeType: string;
-      sizeBytes: number | null;
-    },
+    asset: FileGenerationAssetRecord,
   ): Promise<void> {
     const assetSummary = {
       id: asset.id,
@@ -211,6 +320,10 @@ export class FileGenerationService {
       downloadUrl: asset.downloadUrl,
       mimeType: asset.mimeType,
       sizeBytes: asset.sizeBytes,
+      // The chat shows "available for N min" from these the moment the file lands.
+      expiresAt: asset.expiresAt?.toISOString() ?? null,
+      expiredAt: null,
+      createdAt: asset.createdAt.toISOString(),
     };
 
     await this.repository.createEvent({

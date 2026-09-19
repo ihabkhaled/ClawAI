@@ -641,6 +641,12 @@ export const ja: TranslationDictionary = {
     oneMemory: '1メモリ',
     open: '開く',
     preparingDownload: 'ダウンロードを準備しています...',
+    fileAvailableFor: 'あと {minutes} 分利用可能',
+    fileExpired: '1 時間後に削除されました',
+    fileRebuild: 'ファイルを再構築（無料）',
+    fileRegenerateAi: 'AI で再生成',
+    fileDownloadFailed:
+      'ダウンロードに失敗しました。もう一度試すか、ファイルを再構築してください。',
     regenerate: '再生成',
     copyMessage: 'メッセージをコピー',
     feedbackPositive: '良い反応',

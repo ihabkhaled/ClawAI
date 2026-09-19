@@ -234,3 +234,8 @@ Failure modes:
 - Worker timeout → emit `OCR_FAILED` on the FileDelivery; the FE renders the i18n key `compare.delivery.ocrFailed`.
 - Zero-confidence output → treated as failure, same path as timeout.
 - Worker pool exhausted → enqueue and serve in FIFO order; the FE renders `compare.delivery.ocrProcessing` until the worker frees up.
+
+## Internal delete (ADR-104, 2026-09-19)
+
+`DELETE /api/v1/internal/files/:id?userId=`: service token, owner-checked via
+`FilesService.deleteFile`. file-generation uses it to expire generated files.

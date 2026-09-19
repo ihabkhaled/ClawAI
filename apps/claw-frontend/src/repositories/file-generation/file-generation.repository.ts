@@ -10,4 +10,9 @@ export const fileGenerationRepository = {
   async retry(generationId: string): Promise<void> {
     await apiClient.post(`/file-generations/${generationId}/retry`);
   },
+
+  /** Rebuilds an expired file from its saved text: free and identical. */
+  async rebuild(generationId: string): Promise<void> {
+    await apiClient.post(`/file-generations/${generationId}/rebuild`);
+  },
 };

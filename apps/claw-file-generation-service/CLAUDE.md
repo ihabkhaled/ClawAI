@@ -111,6 +111,16 @@ After implementing any change to this service:
 - [ ] All fire-and-forget error paths: `emitError` → `storeErrorMessage` in nested try-catch
 - [ ] All poll-detected flows store metadata `{ error: true }` on failure
 
+## Downloads and expiry (ADR-104)
+
+- Users download only through `GET /file-generations/:id/assets/:assetId/download`
+  (owner guard, streamed). Never return `storageKey` to a user; use
+  `toGenerationView`.
+- Assets expire after `FILE_ASSET_TTL_MS` (1 h). The 5-minute sweep deletes
+  the bytes and keeps the row and text. `POST :id/rebuild` rebuilds them.
+- **Schema changes need a migration.** This service ran without migrations
+  until 2026-09-19, and production had no tables at all.
+
 ## Access (ADR-103)
 
 - Every user route is owner-scoped:

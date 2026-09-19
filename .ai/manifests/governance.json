@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 25924,
+      "bytes": 26317,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -300,6 +300,10 @@
     {
       "bytes": 2194,
       "file": "rules/51-router-candidates-and-model-window-fit.md"
+    },
+    {
+      "bytes": 1043,
+      "file": "rules/52-every-schema-ships-a-migration.md"
     },
     {
       "bytes": 6156,
