@@ -105,6 +105,8 @@ apps/claw-frontend/scripts/*
 !apps/claw-frontend/scripts/run-vitest.cjs
 !apps/claw-frontend/scripts/clear-cache.mjs
 !apps/claw-frontend/scripts/typecheck-ts7.mjs
+# Lighthouse CI's pricing catalog stand-in (docs/09-testing/lighthouse-ci.md).
+!apps/claw-frontend/scripts/lighthouse-pricing-fixture.mjs
 # ESLint cache
 .eslintcache
 

@@ -87,8 +87,26 @@ jobs:
             echo "file=lighthouserc.json" >> "$GITHUB_OUTPUT"
           fi
 
+      # No backend runs here, so /en and /en/pricing rendered "pricing
+      # unavailable" and logged /api/pricing's 503 as a console error. That
+      # cost best-practices, and it audited an error state instead of the page.
+      # A fixture stands in for auth-service's plan catalog (test data only).
+      - name: Start pricing catalog fixture
+        working-directory: apps/claw-frontend
+        run: |
+          PORT=4901 SERVICE_TOKEN=lighthouse-fixture node scripts/lighthouse-pricing-fixture.mjs &
+          for attempt in $(seq 1 20); do
+            curl -sf -H 'Authorization: Service lighthouse-fixture' \
+              http://127.0.0.1:4901/api/v1/internal/plans/catalog >/dev/null && exit 0
+            sleep 1
+          done
+          echo "pricing fixture did not start" && exit 1
+
       - name: Run Lighthouse CI
         working-directory: apps/claw-frontend
+        env:
+          AUTH_SERVICE_URL: http://127.0.0.1:4901
+          INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture
         run: npx --yes @lhci/cli@0.15.x autorun --config=${{ steps.lhci-config.outputs.file }}
 
       - name: Upload Lighthouse reports

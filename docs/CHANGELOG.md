@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **Lighthouse CI is green again.** It audited the home and pricing pages with no backend, so they showed "pricing unavailable" and logged an error. A labelled test catalog now stands in for the backend in that job only.
 - **No more random sign-outs with several tabs open.** Two tabs, or two VS
   Code windows, refreshing at the same moment used to look like a stolen
   session and signed you out everywhere. So did coming back to an old tab, and

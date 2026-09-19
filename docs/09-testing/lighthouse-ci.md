@@ -39,7 +39,39 @@ canonical https origin (localhost is rejected). The workflow sets
 `SITE_URL=https://claw.example` so the pages render indexable and the SEO audit
 is meaningful; Lighthouse still browses `http://localhost:3000`.
 
+## Why a pricing fixture runs in the job
+
+The job has no backend. Without one, `/en` and `/en/pricing` render the honest
+"pricing unavailable" state. The browser then logs `/api/pricing`'s 503 as a
+console error, `errors-in-console` fails, and best-practices drops to 0.96.
+That kept the gate red on main from at least 2026-09-17 to 2026-09-19, and it
+audited an error state instead of the page users see.
+
+`apps/claw-frontend/scripts/lighthouse-pricing-fixture.mjs` stands in for
+auth-service's `/api/v1/internal/plans/catalog`. It listens on 127.0.0.1:4901
+and requires the service token, like the real route. The audit step points
+`AUTH_SERVICE_URL` and `INTER_SERVICE_AUTH_TOKEN` at it. The plans are labelled
+test data. `tools/__tests__/lighthouse-pricing-fixture.test.mjs` fails if the
+workflow stops wiring the fixture, or if a plan loses a field the page renders.
+
+**If a page fails `errors-in-console`, find the failing request first**
+(`audits['errors-in-console'].details.items[].sourceLocation.url` in the JSON
+report). A page that depends on the backend needs a fixture here, not a
+weaker assertion.
+
 ## Running locally
+
+To reproduce the job's pricing pages, start the fixture and pass the same two
+variables to `next start`:
+
+```bash
+cd apps/claw-frontend
+PORT=4901 SERVICE_TOKEN=lighthouse-fixture node scripts/lighthouse-pricing-fixture.mjs &
+AUTH_SERVICE_URL=http://127.0.0.1:4901 INTER_SERVICE_AUTH_TOKEN=lighthouse-fixture \
+  SITE_URL=https://claw.example npx next start -p 3100
+```
+
+The whole run:
 
 ```bash
 npm run build:frontend          # produce the production build first
