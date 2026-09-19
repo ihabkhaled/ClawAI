@@ -107,6 +107,8 @@ apps/claw-frontend/scripts/*
 !apps/claw-frontend/scripts/typecheck-ts7.mjs
 # Lighthouse CI's pricing catalog stand-in (docs/09-testing/lighthouse-ci.md).
 !apps/claw-frontend/scripts/lighthouse-pricing-fixture.mjs
+# Written per job by tools/lighthouse/shard-config.mjs.
+apps/claw-frontend/lighthouserc.shard.json
 # ESLint cache
 .eslintcache
 

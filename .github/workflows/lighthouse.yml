@@ -23,6 +23,8 @@ permissions:
 
 # The run is LINEAR in audited URL count: measured at ~13.9 s per audit
 # (28 URLs x numberOfRuns 2 = 56 audits = ~13 min), so minutes ~= URLs x 0.46.
+# 115 URLs on main took ~53 min in one job, so the frontend is built once and
+# audited in LIGHTHOUSE_SHARDS parallel jobs (tools/lighthouse/shard-config.mjs).
 # As the marketing surface grows this becomes the longest job in the repo, and
 # without cancellation a series of pushes stacks unbounded hour-long runs
 # against the account's job budget. ci.yml has had this guard; this one did not.
@@ -31,12 +33,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lighthouse:
-    name: Lighthouse budgets (marketing)
+  build:
+    name: Lighthouse build
     runs-on: ubuntu-latest
-    # Generous enough for the full marketing surface at the measured rate, and
-    # far below the 6-hour default a hung Chrome would otherwise burn.
-    timeout-minutes: 90
+    timeout-minutes: 30
     env:
       NODE_OPTIONS: --max-old-space-size=8192
       # A valid, canonical SITE_URL so the pages render indexable (localhost
@@ -70,28 +70,72 @@ jobs:
       - name: Build frontend
         run: npm run build --workspace=claw-frontend
 
+      # Every shard serves this exact build. The cache and the standalone copy
+      # are not needed by `next start` and would triple the artifact.
+      - name: Pack the build
+        run: |
+          tar -czf lighthouse-build.tgz \
+            --exclude='apps/claw-frontend/.next/cache' \
+            --exclude='apps/claw-frontend/.next/standalone' \
+            apps/claw-frontend/.next packages/*/dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-build
+          path: lighthouse-build.tgz
+          retention-days: 1
+
+  audit:
+    name: Lighthouse shard ${{ matrix.shard }}
+    needs: build
+    runs-on: ubuntu-latest
+    # A shard audits ~1/10 of the URLs; a hung Chrome still cannot burn hours.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # Must match LIGHTHOUSE_SHARDS below and the tools test.
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    env:
+      LIGHTHOUSE_SHARDS: 10
+      SITE_URL: https://claw.example
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: lighthouse-build
+
+      - name: Unpack the build
+        run: tar -xzf lighthouse-build.tgz
+
       # Pull requests audit a representative sample (the hub plus one child of
-      # every cluster); main audits everything. The run is linear in URL count at
-      # ~13.9 s per audit, and `minScore: 1` means one bad audit fails the whole
-      # run — so auditing every URL on every PR multiplies both the wall clock
-      # and the flake exposure for no extra signal. The sample is DERIVED from
-      # the full config by tools/lighthouse/build-pr-config.mjs, and a test
-      # asserts it is current, so the two cannot drift.
-      - name: Choose Lighthouse config
+      # every cluster); main audits everything. The sample is DERIVED from the
+      # full config by tools/lighthouse/build-pr-config.mjs, and a test asserts
+      # it is current, so the two cannot drift. Either one is then sharded.
+      - name: Choose this shard's URLs
         id: lhci-config
         working-directory: apps/claw-frontend
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "file=lighthouserc.pr.json" >> "$GITHUB_OUTPUT"
-          else
-            echo "file=lighthouserc.json" >> "$GITHUB_OUTPUT"
-          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then source=lighthouserc.pr.json; else source=lighthouserc.json; fi
+          count=$(node tools/lighthouse/shard-config.mjs "$source" "${{ matrix.shard }}" "$LIGHTHOUSE_SHARDS" lighthouserc.shard.json)
+          echo "Shard ${{ matrix.shard }}/$LIGHTHOUSE_SHARDS audits $count URL(s) of $source"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
 
       # No backend runs here, so /en and /en/pricing rendered "pricing
       # unavailable" and logged /api/pricing's 503 as a console error. That
       # cost best-practices, and it audited an error state instead of the page.
       # A fixture stands in for auth-service's plan catalog (test data only).
       - name: Start pricing catalog fixture
+        if: steps.lhci-config.outputs.count != '0'
         working-directory: apps/claw-frontend
         run: |
           PORT=4901 SERVICE_TOKEN=lighthouse-fixture node scripts/lighthouse-pricing-fixture.mjs &
@@ -103,16 +147,31 @@ jobs:
           echo "pricing fixture did not start" && exit 1
 
       - name: Run Lighthouse CI
+        if: steps.lhci-config.outputs.count != '0'
         working-directory: apps/claw-frontend
         env:
           AUTH_SERVICE_URL: http://127.0.0.1:4901
           INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture
-        run: npx --yes @lhci/cli@0.15.x autorun --config=${{ steps.lhci-config.outputs.file }}
+        run: npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.shard.json
 
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: lighthouse-reports
+          name: lighthouse-reports-${{ matrix.shard }}
           path: apps/claw-frontend/.lighthouseci
           if-no-files-found: ignore
+
+  # One result under the check name the gate has always had, so a required
+  # status check keeps working: green only when every shard is green.
+  lighthouse:
+    name: Lighthouse budgets (marketing)
+    needs: audit
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All shards passed
+        run: |
+          echo "audit shards: ${{ needs.audit.result }}"
+          test "${{ needs.audit.result }}" = "success"

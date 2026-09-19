@@ -5,17 +5,29 @@ performance, accessibility, best-practices, and SEO cannot silently regress.
 
 ## What runs
 
-`.github/workflows/lighthouse.yml` builds the frontend and runs
-`@lhci/cli autorun` against every published public page — 108 URLs as of the
-`/learn`, `/integrations`, `/model-providers`, `/model-fit`, `/use-cases`,
-`/features` and `/prompts` clusters, 2 runs each, desktop preset. It triggers
-only when the frontend or the Lighthouse config changes, so backend PRs are
+`.github/workflows/lighthouse.yml` audits every published public page (115
+URLs on 2026-09-19), 2 runs each, with the desktop preset. It triggers only
+when the frontend or the Lighthouse config changes, so backend PRs are
 unaffected.
 
-The workflow runs one of two configs depending on the trigger: pushes to `main`
-run `lighthouserc.json` (all 108 URLs); pull requests run `lighthouserc.pr.json`,
-a **derived sample** — see "Pull-request sampling" below. Never edit
-`lighthouserc.pr.json` by hand; it is generated.
+It is three stages (2026-09-19). In one job, 115 URLs took about 53 minutes.
+
+1. **`Lighthouse build`**: builds the frontend once and uploads `.next`
+   (without cache and standalone) plus the shared packages' `dist`.
+2. **`Lighthouse shard 0…9`**: 10 parallel jobs. Each downloads that build,
+   takes every tenth URL (`tools/lighthouse/shard-config.mjs`, round-robin so
+   heavy clusters spread out), and runs `lhci autorun` with the same
+   assertions. Reports upload as `lighthouse-reports-<shard>`.
+3. **`Lighthouse budgets (marketing)`**: the check name the gate always had.
+   It is green only when every shard is.
+
+`tools/__tests__/lighthouse-shards.test.mjs` fails if a URL would fall out of
+every shard, if shards are unbalanced, or if the workflow's matrix and
+`LIGHTHOUSE_SHARDS` disagree.
+
+Pushes to `main` shard `lighthouserc.json`; pull requests shard
+`lighthouserc.pr.json`, a **derived sample**. See "Pull-request sampling"
+below, and never edit `lighthouserc.pr.json` by hand: it is generated.
 
 ## Budgets (`lighthouserc.json`)
 
