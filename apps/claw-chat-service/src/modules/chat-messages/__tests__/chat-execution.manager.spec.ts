@@ -16,6 +16,7 @@ import {
   FAST_PATH_MAX_OUTPUT_TOKENS,
   HARD_MAX_OUTPUT_TOKENS,
 } from '../constants/execution-fast-path.constants';
+import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
 import {
   asAccessControlService,
   createFakePaygAccessControl,
@@ -32,6 +33,7 @@ vi.mock('../clients/model-exposure.client', () => ({
 }));
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
+  buildInterServiceAuthHeader: vi.fn(() => 'Service test-token'),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     if (!record) return undefined;
     return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
@@ -780,7 +782,35 @@ describe('ChatExecutionManager', () => {
     expect(httpRequest).toHaveBeenCalledTimes(1);
   });
 
-  it('prefers local file-generation models before cloud providers', async () => {
+  // The admin's FILE_WRITER list comes first; it replaced three hard-coded
+  // cloud models that failed the exposure gate when not exposed.
+  it("asks the admin's FILE_WRITER model before any local model", async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([
+      {
+        provider: 'OLLAMA_CLOUD',
+        modelAlias: 'gpt-oss:120b',
+        timeoutMs: 120_000,
+        maxTokens: 8_192,
+      },
+    ]);
+    const callProvider = vi.spyOn(manager, 'callProvider');
+    httpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
+
+    await manager
+      .callProvider(
+        'FILE_GENERATION',
+        'auto',
+        makeContext('Generate a PDF report'),
+        Date.now(),
+        false,
+      )
+      .catch(() => {});
+
+    expect(callProvider.mock.calls[1]?.slice(0, 2)).toEqual(['OLLAMA', 'gpt-oss:120b']);
+  });
+
+  it('uses local file models when no admin FILE_WRITER is configured', async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
     const context = makeContext(
       'Generate a DOCX board brief for an enterprise SOC 2 launch with risks and owners.',
     );
@@ -854,6 +884,7 @@ describe('ChatExecutionManager', () => {
   });
 
   it('falls back to the next file content provider when the first local model fails', async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
     const context = makeContext(
       'Generate a PDF project status report with milestones and blockers.',
     );

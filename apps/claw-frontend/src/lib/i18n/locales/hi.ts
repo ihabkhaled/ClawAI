@@ -698,6 +698,7 @@ export const hi: TranslationDictionary = {
       title: 'उत्तर काट दिया गया',
       body: 'उत्तर अपनी लंबाई की सीमा तक पहुँच गया और बीच में कट गया। पूरा उत्तर पाने के लिए फिर से जनरेट करें।',
     },
+    routedBy: '{router} ({routerProvider}) ने रूट किया → {model} ने उत्तर दिया',
     toolTranscript: {
       summary: '{count} वेब टूल का उपयोग किया गया',
       capReached: 'टूल लूप सुरक्षा सीमा तक पहुँच गया',

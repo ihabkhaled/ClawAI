@@ -20,7 +20,7 @@ import {
   withObservedSpeed,
 } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest, recordGet } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
@@ -203,10 +203,17 @@ import {
   PAYG_WORKFLOW_VISION_PROMPT,
 } from '../constants/payg.constants';
 import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
+import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
+import type { FileContentCandidate } from '../types/file-writer.types';
+import { toFileContentCandidates } from '../utilities/file-writer.utility';
 import type { PaygCallOptions } from '../types/payg.types';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
+  // Admin-managed FILE_WRITER models (F0). A plain instance, like the other
+  // per-request clients, so the manager's constructor stays unchanged.
+  private readonly fileWriterCandidates = new FileWriterCandidatesClient();
+
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
   private readonly authorizationMetrics = new ModelAuthorizationMetricsService();
@@ -4698,6 +4705,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const response = await httpRequest<FileGenerateResponse>({
       url: `${config.FILE_GENERATION_SERVICE_URL}/api/v1/internal/file-generations/generate`,
       method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: {
         prompt,
         content: fileContent,
@@ -4734,38 +4742,18 @@ export class ChatExecutionManager implements OnModuleInit {
     };
   }
 
-  private async buildFileContentProviderCandidates(): Promise<
-    Array<{ provider: string; model: string }>
-  > {
-    const candidates: Array<{ provider: string; model: string }> = [];
-    const localCandidates =
-      (await this.localModelSelection?.resolveModelList(3, LocalModelRole.LOCAL_FILE_GENERATION)) ??
-      [];
-
-    for (const model of localCandidates) {
-      if (model === 'AUTO') {
-        continue;
-      }
-      this.pushUniqueProviderCandidate(candidates, OLLAMA_PROVIDER, model);
-    }
-
-    this.pushUniqueProviderCandidate(candidates, 'ANTHROPIC', 'claude-sonnet-4');
-    this.pushUniqueProviderCandidate(candidates, 'OPENAI', 'gpt-4o-mini');
-    this.pushUniqueProviderCandidate(candidates, 'GEMINI', 'gemini-2.5-flash');
-
-    return candidates;
-  }
-
-  private pushUniqueProviderCandidate(
-    candidates: Array<{ provider: string; model: string }>,
-    provider: string,
-    model: string,
-  ): void {
-    if (
-      !candidates.some((candidate) => candidate.provider === provider && candidate.model === model)
-    ) {
-      candidates.push({ provider, model });
-    }
+  /**
+   * Who writes the file: the admin's FILE_WRITER models first (Smart Router,
+   * Assistant models), then any local file model. No hard-coded providers:
+   * those failed the exposure gate whenever the admin had not exposed them.
+   */
+  private async buildFileContentProviderCandidates(): Promise<FileContentCandidate[]> {
+    const [admin, local] = await Promise.all([
+      this.fileWriterCandidates.resolve(),
+      this.localModelSelection?.resolveModelList(3, LocalModelRole.LOCAL_FILE_GENERATION) ??
+        Promise.resolve([]),
+    ]);
+    return toFileContentCandidates(admin, local);
   }
 
   private async resolveModel(model: string): Promise<string> {

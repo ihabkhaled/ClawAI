@@ -1,3 +1,4 @@
+import { of } from 'rxjs';
 import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FileGenerationController } from '../file-generation.controller';
@@ -11,6 +12,7 @@ describe('FileGenerationController', () => {
     listByUser: Mock;
     getByIdForUser: Mock;
     retryGeneration: Mock;
+    retryGenerationForUser: Mock;
   };
   let eventsMock: { subscribe: Mock };
 
@@ -19,6 +21,7 @@ describe('FileGenerationController', () => {
       listByUser: vi.fn(),
       getByIdForUser: vi.fn(),
       retryGeneration: vi.fn(),
+      retryGenerationForUser: vi.fn(),
     };
     eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
@@ -44,19 +47,21 @@ describe('FileGenerationController', () => {
     expect(serviceMock.getByIdForUser).toHaveBeenCalledWith('gen-1', 'u1');
   });
 
-  it('retry returns generationId and status from service result', async () => {
-    serviceMock.retryGeneration.mockResolvedValue({ id: 'gen-1', status: 'QUEUED' });
+  // Owner-scoped: retry used to take any id (IDOR).
+  it('retry is scoped to the calling user', async () => {
+    serviceMock.retryGenerationForUser.mockResolvedValue({ id: 'gen-1', status: 'QUEUED' });
     const result = await controller.retry('gen-1', user as never);
-    expect(serviceMock.retryGeneration).toHaveBeenCalledWith('gen-1');
+    expect(serviceMock.retryGenerationForUser).toHaveBeenCalledWith('gen-1', 'u1');
+    expect(serviceMock.retryGeneration).not.toHaveBeenCalled();
     expect(result).toEqual({ generationId: 'gen-1', status: 'QUEUED' });
   });
 
-  it('events subscribes to events service for a generation', () => {
-    const obs = { subscribe: vi.fn() };
+  // Ownership is enforced by FileGenerationOwnerGuard before the stream opens.
+  it('events streams the generation once the guard has admitted the owner', () => {
+    const obs = of({ data: { status: 'DONE' } });
     eventsMock.subscribe.mockReturnValue(obs);
-    const result = controller.events('gen-1');
+    expect(controller.events('gen-1')).toBe(obs);
     expect(eventsMock.subscribe).toHaveBeenCalledWith('gen-1');
-    expect(result).toBe(obs);
   });
 });
 

@@ -710,6 +710,7 @@ export const de: TranslationDictionary = {
       title: 'Antwort abgeschnitten',
       body: 'Die Antwort hat ihre Längengrenze erreicht und wurde abgeschnitten. Generiere sie neu, um die vollständige Antwort zu erhalten.',
     },
+    routedBy: 'Weitergeleitet von {router} ({routerProvider}) → beantwortet von {model}',
     toolTranscript: {
       summary: '{count} Web-Werkzeug(e) verwendet',
       capReached: 'Sicherheitsgrenze der Werkzeug-Schleife erreicht',

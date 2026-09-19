@@ -687,6 +687,7 @@ export const th: TranslationDictionary = {
       title: 'การตอบกลับถูกตัดทอน',
       body: 'คำตอบถึงขีดจำกัดความยาวจึงถูกตัดออก สร้างใหม่อีกครั้งเพื่อรับคำตอบฉบับเต็ม',
     },
+    routedBy: 'จัดเส้นทางโดย {router} ({routerProvider}) → ตอบโดย {model}',
     toolTranscript: {
       summary: 'ใช้เครื่องมือเว็บ {count} รายการ',
       capReached: 'ถึงฝานิรภัยห่วงเครื่องมือแล้ว',

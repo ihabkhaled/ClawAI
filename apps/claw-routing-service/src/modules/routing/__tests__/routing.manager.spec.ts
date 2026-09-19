@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { RoutingManager } from '../managers/routing.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
@@ -177,7 +177,10 @@ describe('RoutingManager', () => {
       expect(result.complexityClass).toBe(ComplexityClass.SIMPLE);
     });
 
-    it('should route file-transform prompts to FILE_GENERATION even when phrased conversationally', async () => {
+    // F0 (2026-09-19): a formatting request without a file word is answered in
+    // the chat; any answer can be exported as a file. The old keyword rule sent
+    // "re-write ... for google docs, not in markdown" to file generation.
+    it('answers a formatting request without a file word in the chat', async () => {
       const context: RoutingContext = {
         ...baseContext,
         message:
@@ -187,9 +190,20 @@ describe('RoutingManager', () => {
 
       const result = await manager.evaluateRoute(context);
 
+      expect(result.selectedProvider).not.toBe('FILE_GENERATION');
+    });
+
+    it('routes an explicit file request to FILE_GENERATION with the intent reason', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        message: 'Turn these notes into a PDF report with headings and tables.',
+        userMode: RoutingMode.AUTO,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
       expect(result.selectedProvider).toBe('FILE_GENERATION');
-      expect(result.selectedModel).toBe('auto');
-      expect(result.reasonTags).toContain('file_generation');
+      expect(result.reasonTags).toContain('file_intent_strong_word_with_verb');
     });
 
     it('should route SIMPLE messages to local when a lightweight chat model exists', async () => {

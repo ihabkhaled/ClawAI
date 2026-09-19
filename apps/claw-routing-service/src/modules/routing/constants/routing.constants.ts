@@ -109,67 +109,7 @@ export const IMAGE_KEYWORDS = [
 // File generation provider
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
 
-// Regex-based file generation detection:
-// Matches any combination of action verb + file format keyword
-// e.g., "generate dummy pdf", "create a text file", "make me a csv report"
-export const FILE_GENERATION_VERBS = [
-  'generate',
-  'create',
-  'make',
-  'write',
-  'export',
-  'save',
-  'output',
-  'produce',
-  'build',
-  'turn',
-  'convert',
-  'transform',
-  'compile',
-  'package',
-  'assemble',
-];
-export const FILE_GENERATION_FORMAT_WORDS = [
-  'file',
-  'pdf',
-  'document',
-  'csv',
-  'docx',
-  'word',
-  'txt',
-  'text file',
-  'markdown',
-  'json',
-  'html',
-  'report',
-  'brief',
-  'spreadsheet',
-  'worksheet',
-  'deck',
-  'presentation',
-  'slides',
-  'one-pager',
-  'memo',
-  'proposal',
-  '.md',
-  '.pdf',
-  '.csv',
-  '.docx',
-  '.txt',
-  '.json',
-  '.html',
-];
-
-// Also keep exact phrases for high-confidence matches
-export const FILE_GENERATION_KEYWORDS = [
-  'export as',
-  'export to',
-  'save as',
-  'download as',
-  'save to file',
-  'write to file',
-  'output as file',
-];
+// File-generation intent lives in file-intent.constants.ts (F0, 2026-09-19).
 
 export const VALID_PROVIDERS = new Set([
   LOCAL_PROVIDER,

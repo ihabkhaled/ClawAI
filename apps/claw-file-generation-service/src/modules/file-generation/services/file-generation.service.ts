@@ -98,6 +98,15 @@ export class FileGenerationService {
     };
   }
 
+  /** Retry for the job's owner; anyone else gets the same not-found as a missing job. */
+  async retryGenerationForUser(
+    generationId: string,
+    userId: string,
+  ): Promise<FileGenerationRecord> {
+    await this.getByIdForUser(generationId, userId);
+    return this.retryGeneration(generationId);
+  }
+
   async retryGeneration(generationId: string): Promise<FileGenerationRecord> {
     this.logger.log(`retryGeneration: retrying file generation ${generationId}`);
     await this.repository.updateStatus(generationId, FileGenerationStatus.QUEUED, {

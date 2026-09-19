@@ -65,7 +65,11 @@ export class AssistantModelRepository {
   }
 
   /**
-   * Seeds a role once, and only when it has no rows at all.
+   * Seeds EACH role once, and only while that role has no rows at all.
+   *
+   * Per role, not per batch: counting every role together meant a role added
+   * later (FILE_WRITER) never seeded, because RESEARCH_GATE already had rows.
+   * Returns true when any role was seeded.
    *
    * Under an advisory lock because every replica runs this on boot, and two
    * of them seeding the same role would collide on the (role, order) unique.
@@ -76,19 +80,26 @@ export class AssistantModelRepository {
     return this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ASSISTANT_MODEL_SEED_LOCK_ID})`;
       const roles = [...new Set(entries.map((entry) => entry.role))];
-      const existing = await tx.assistantModel.count({ where: { role: { in: roles } } });
-      if (existing > 0) {
+      const empty: AssistantModelRole[] = [];
+      for (const role of roles) {
+        if ((await tx.assistantModel.count({ where: { role } })) === 0) {
+          empty.push(role);
+        }
+      }
+      if (empty.length === 0) {
         return false;
       }
       await tx.assistantModel.createMany({
-        data: entries.map((entry) => ({
-          role: entry.role,
-          order: entry.order,
-          provider: entry.provider,
-          modelAlias: entry.modelAlias,
-          timeoutMs: entry.timeoutMs,
-          maxTokens: entry.maxTokens,
-        })),
+        data: entries
+          .filter((entry) => empty.includes(entry.role))
+          .map((entry) => ({
+            role: entry.role,
+            order: entry.order,
+            provider: entry.provider,
+            modelAlias: entry.modelAlias,
+            timeoutMs: entry.timeoutMs,
+            maxTokens: entry.maxTokens,
+          })),
       });
       return true;
     });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseEnumPipe, Put } from '@nestjs/common';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
 
@@ -28,16 +28,18 @@ export class AssistantModelsController {
   constructor(private readonly service: AssistantModelService) {}
 
   @Get(':role')
-  async list(@Param('role') role: string): Promise<AssistantModelRecord[]> {
-    return this.service.listByRole(role as AssistantModelRole);
+  async list(
+    @Param('role', new ParseEnumPipe(AssistantModelRole)) role: AssistantModelRole,
+  ): Promise<AssistantModelRecord[]> {
+    return this.service.listByRole(role);
   }
 
   /** Declarative replace: the body is the whole desired list, in order. */
   @Put(':role')
   async replace(
-    @Param('role') role: string,
+    @Param('role', new ParseEnumPipe(AssistantModelRole)) role: AssistantModelRole,
     @Body(new ZodValidationPipe(replaceAssistantModelsSchema)) dto: ReplaceAssistantModelsDto,
   ): Promise<AssistantModelRecord[]> {
-    return this.service.replaceRole(role as AssistantModelRole, dto.entries);
+    return this.service.replaceRole(role, dto.entries);
   }
 }

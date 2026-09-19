@@ -1,11 +1,11 @@
-import { Controller, Get, MessageEvent, Param, Post, Query, Sse } from '@nestjs/common';
+import { Controller, Get, MessageEvent, Param, Post, Query, Sse, UseGuards } from '@nestjs/common';
 import { type Observable } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
-import { Public } from '../../../app/decorators/public.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { FileGenerationService } from '../services/file-generation.service';
 import { FileGenerationEventsService } from '../services/file-generation-events.service';
+import { FileGenerationOwnerGuard } from '../guards/file-generation-owner.guard';
 import {
   type ListFileGenerationsQueryDto,
   listFileGenerationsQuerySchema,
@@ -32,16 +32,19 @@ export class FileGenerationController {
     return this.fileGenService.getByIdForUser(id, user.id);
   }
 
+  // Owner only: retry used to accept any id, so user A could re-run user B's job.
   @Post(':id/retry')
   async retry(
     @Param('id') id: string,
-    @CurrentUser() _user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ generationId: string; status: string }> {
-    const record = await this.fileGenService.retryGeneration(id);
+    const record = await this.fileGenService.retryGenerationForUser(id, user.id);
     return { generationId: record.id, status: record.status };
   }
 
-  @Public()
+  // Owner only: this stream was public, so anyone holding an id could watch
+  // the job's status and asset links. The guard refuses before a stream opens.
+  @UseGuards(FileGenerationOwnerGuard)
   @Sse(':id/events')
   events(@Param('id') id: string): Observable<MessageEvent> {
     return this.eventsService.subscribe(id);

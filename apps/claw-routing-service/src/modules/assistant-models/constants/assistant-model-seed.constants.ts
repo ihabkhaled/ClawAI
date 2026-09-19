@@ -49,4 +49,33 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
     timeoutMs: 6_000,
     maxTokens: 64,
   },
+  // FILE_WRITER: writes the content of an AI-generated file. These used to
+  // be hard-coded (claude-sonnet-4, gpt-4o-mini, gemini-2.5-flash), and when
+  // none of them was exposed every file request failed with "The selected
+  // model is not available". Hosted Ollama models that production's catalog
+  // holds; a large output budget because a file is a whole document.
+  {
+    role: AssistantModelRole.FILE_WRITER,
+    order: 1,
+    provider: RouterProvider.OLLAMA_CLOUD,
+    modelAlias: 'gpt-oss:120b',
+    timeoutMs: 120_000,
+    maxTokens: 8_192,
+  },
+  {
+    role: AssistantModelRole.FILE_WRITER,
+    order: 2,
+    provider: RouterProvider.OLLAMA_CLOUD,
+    modelAlias: 'glm-5.3',
+    timeoutMs: 120_000,
+    maxTokens: 8_192,
+  },
+  {
+    role: AssistantModelRole.FILE_WRITER,
+    order: 3,
+    provider: RouterProvider.OLLAMA_CLOUD,
+    modelAlias: 'gemma4:31b',
+    timeoutMs: 120_000,
+    maxTokens: 8_192,
+  },
 ]);

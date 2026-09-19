@@ -111,6 +111,15 @@ After implementing any change to this service:
 - [ ] All fire-and-forget error paths: `emitError` → `storeErrorMessage` in nested try-catch
 - [ ] All poll-detected flows store metadata `{ error: true }` on failure
 
+## Access (ADR-103)
+
+- Every user route is owner-scoped:
+  - `retryGenerationForUser` for retry;
+  - `FileGenerationOwnerGuard` on `:id/events`, which refuses before a stream
+    opens.
+- `internal/file-generations/*` needs the service token (`ServiceTokenGuard`).
+- Never make a route `@Public()` here.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

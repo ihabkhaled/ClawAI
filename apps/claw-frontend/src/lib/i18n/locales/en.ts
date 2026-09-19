@@ -696,6 +696,7 @@ export const en: TranslationDictionary = {
       title: 'Response truncated',
       body: 'The answer hit its length limit and was cut off. Regenerate to get the full answer.',
     },
+    routedBy: 'Routed by {router} ({routerProvider}) → answered by {model}',
     toolTranscript: {
       summary: 'Used {count} web tool(s)',
       capReached: 'Tool loop safety cap reached',

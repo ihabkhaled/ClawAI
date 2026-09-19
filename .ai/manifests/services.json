@@ -137,7 +137,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 153,
+      "testFiles": 155,
       "testRunner": "vitest"
     },
     {
@@ -203,7 +203,7 @@
         "FileGenerationAsset",
         "FileGenerationEvent"
       ],
-      "testFiles": 7,
+      "testFiles": 9,
       "testRunner": "vitest"
     },
     {
@@ -462,7 +462,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 101,
+      "testFiles": 104,
       "testRunner": "vitest"
     },
     {

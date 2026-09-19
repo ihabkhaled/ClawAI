@@ -250,6 +250,8 @@ enum RouterConfigurationStatus {
 /// is how a chain full of retired aliases went unnoticed for a month.
 enum AssistantModelRole {
   RESEARCH_GATE
+  /// Writes the content of an AI-generated file (F0, 2026-09-19).
+  FILE_WRITER
 }
 
 enum RouterChainEntryRole {

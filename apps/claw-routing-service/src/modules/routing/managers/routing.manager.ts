@@ -46,10 +46,7 @@ import {
   EDUCATION_KEYWORDS,
   ENGINEERING_KEYWORDS,
   EXECUTIVE_KEYWORDS,
-  FILE_GENERATION_FORMAT_WORDS,
-  FILE_GENERATION_KEYWORDS,
   FILE_GENERATION_PROVIDER,
-  FILE_GENERATION_VERBS,
   FINANCE_KEYWORDS,
   GOVERNMENT_KEYWORDS,
   HOSPITALITY_KEYWORDS,
@@ -86,6 +83,8 @@ import {
   VIDEO_AUDIO_KEYWORDS,
 } from '../constants/routing.constants';
 import type { InstalledModelInfo } from '../types/installed-model.types';
+import { detectFileIntent } from '../utilities/file-intent.utility';
+import { routerModelFromAttempts } from '../utilities/router-model-label.utility';
 import {
   type FallbackEntry,
   type HeuristicState,
@@ -597,7 +596,12 @@ export class RoutingManager {
       this.logger.log(
         `handleAuto: cloud router selected ${selected.provider}/${selected.providerModelId} (confidence=${String(outcome.decision.confidence)})`,
       );
-      return this.buildCloudRoutingDecision(selected, outcome.decision, context);
+      return this.buildCloudRoutingDecision(
+        selected,
+        outcome.decision,
+        context,
+        routerModelFromAttempts(outcome.attempts),
+      );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'unknown error';
       this.logger.warn(`handleAuto: cloud router threw - ${message} — falling back to v1`);
@@ -609,6 +613,7 @@ export class RoutingManager {
     selected: EligibleDeploymentRecord,
     decision: RouterDecisionPayload,
     context: RoutingContext,
+    routerModel: string | null,
   ): RoutingDecisionResult {
     const isLocal = selected.provider === RouterProvider.OLLAMA;
     const primary = { provider: selected.provider, model: selected.providerModelId };
@@ -622,6 +627,7 @@ export class RoutingManager {
       costClass: isLocal ? 'free' : 'medium',
       fallbackChain: this.buildFallbackChain(primary, context),
       estimatedCostPer1M: isLocal ? 0 : this.estimateProviderCost(selected.provider),
+      ...(routerModel === null ? {} : { routerModel }),
     };
   }
 
@@ -911,33 +917,11 @@ export class RoutingManager {
 
   private detectFileGenerationRequest(context: RoutingContext): RoutingDecisionResult | null {
     this.logger.debug('detectFileGenerationRequest: scanning message for file-gen keywords');
-    const lower = context.message.toLowerCase();
-    const hasConversationalResponseIntent = /\b(response|reply|answer|respond)\b/.test(lower);
-    const hasStrongArtifactIntent =
-      /\b(file|pdf|csv|docx|spreadsheet|slides|deck|memo|report|brief|checklist|printable|formatted|export|download|save as)\b/.test(
-        lower,
-      );
-
-    if (hasConversationalResponseIntent && !hasStrongArtifactIntent) {
-      this.logger.debug(
-        'detectFileGenerationRequest: conversational response intent without explicit artifact - skipping file generation',
-      );
-      return null;
-    }
-
-    // Check exact phrase matches first
-    const exactMatch = FILE_GENERATION_KEYWORDS.some((kw) => lower.includes(kw));
-
-    // Then check verb + format word combo (handles "generate dummy pdf", "create text file", etc.)
-    const hasVerb = FILE_GENERATION_VERBS.some((v) => lower.includes(v));
-    const hasFormat = FILE_GENERATION_FORMAT_WORDS.some((f) => lower.includes(f));
-    const comboMatch = hasVerb && hasFormat;
-
+    const intent = detectFileIntent(context.message);
     this.logger.debug(
-      `detectFileGenerationRequest: exactMatch=${String(exactMatch)} comboMatch=${String(comboMatch)} (hasVerb=${String(hasVerb)} hasFormat=${String(hasFormat)})`,
+      `detectFileGenerationRequest: file=${String(intent.isFileRequest)} reason=${intent.reason}`,
     );
-    if (!exactMatch && !comboMatch) {
-      this.logger.debug('detectFileGenerationRequest: no file generation request detected');
+    if (!intent.isFileRequest) {
       return null;
     }
 
@@ -951,7 +935,7 @@ export class RoutingManager {
       selectedModel: 'auto',
       routingMode: RoutingMode.AUTO,
       confidence: 0.95,
-      reasonTags: ['auto', 'file_generation', 'keyword_detected'],
+      reasonTags: ['auto', 'file_generation', `file_intent_${intent.reason}`],
       privacyClass: 'cloud',
       costClass: 'medium',
       fallbackChain: this.buildFallbackChain(primary, context),

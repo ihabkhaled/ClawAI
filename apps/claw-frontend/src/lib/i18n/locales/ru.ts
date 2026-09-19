@@ -704,6 +704,7 @@ export const ru: TranslationDictionary = {
       title: 'Ответ обрезан',
       body: 'Ответ достиг предела длины и был обрезан. Сгенерируйте его заново, чтобы получить полный ответ.',
     },
+    routedBy: 'Маршрутизировал {router} ({routerProvider}) → ответил {model}',
     toolTranscript: {
       summary: 'Использовано веб-инструментов: {count}',
       capReached: 'Достигнут предел безопасности цикла инструментов',

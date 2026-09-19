@@ -657,6 +657,8 @@ export type TranslationDictionary = {
       title: string;
       body: string;
     };
+    // "Routed by X (provider) -> answered by Y" under every AUTO answer.
+    routedBy: string;
     // Ollama Cloud agentic tool-call transcript shown under the assistant
     // message bubble when the model used web_search / web_fetch.
     toolTranscript: {
@@ -5799,6 +5801,9 @@ export type SmartRouterAdminLocaleTranslation = {
     validationError: string;
   };
   assistant: {
+    fileWriterTitle: string;
+    fileWriterDescription: string;
+    fileWriterEmpty: string;
     researchGateTitle: string;
     researchGateDescription: string;
     emptyMeansDisabled: string;

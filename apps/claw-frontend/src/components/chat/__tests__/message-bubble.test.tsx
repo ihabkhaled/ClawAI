@@ -119,7 +119,8 @@ describe('MessageBubble', () => {
     render(<MessageBubble message={message} />);
 
     expect(screen.getByText('local-ollama / glm-5.1:cloud')).toBeInTheDocument();
-    expect(screen.getByText('Route: qwen3:1.7b -> glm-5.1:cloud')).toBeInTheDocument();
+    // The route line is translated and names the router (F0).
+    expect(screen.getByText('chat.routedBy')).toBeInTheDocument();
     expect(screen.getByText('Research: SEARCH_FETCH_EXTRACT (3 items)')).toBeInTheDocument();
     expect(screen.getByText('provenance')).toBeInTheDocument();
   });

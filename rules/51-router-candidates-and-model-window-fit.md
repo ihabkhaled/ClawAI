@@ -28,3 +28,16 @@ model was sent a 16.7k-token prompt.
   should show `eligible=30 providers=` naming more than one provider.
 - **Planner in production:** `grep "Ollama Cloud"` in the chat-service logs.
   There must be no `ollama-service ... fetch failed` from `ResearchGateService`.
+
+## Added 2026-09-19 (ADR-103)
+
+6. **Every AUTO answer names its router.** The cloud router sets
+   `routerModel` from the attempt whose decision was used
+   (`routerModelFromAttempts`). A new routing path that returns a decision
+   without it hides who routed.
+7. **Never hard-code a model that writes for the user.** File writers are the
+   `FILE_WRITER` assistant role. A new helper model gets a role, not a
+   constant.
+8. **File intent needs a file word.** Change `detectFileIntent` only together
+   with its case table (`file-intent.utility.spec.ts`), and add any new false
+   positive to it first.

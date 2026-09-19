@@ -700,6 +700,7 @@ export const ja: TranslationDictionary = {
       title: '応答が切り詰められました',
       body: '回答が長さの上限に達したため途中で切れました。完全な回答を得るには再生成してください。',
     },
+    routedBy: '{router}（{routerProvider}）がルーティング → {model} が回答',
     toolTranscript: {
       summary: '使用した {count} Web ツール',
       capReached: 'ツールループの安全キャップに達しました',

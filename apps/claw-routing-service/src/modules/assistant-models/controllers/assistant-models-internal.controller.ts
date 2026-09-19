@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseEnumPipe, UseGuards } from '@nestjs/common';
 
 import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
@@ -23,7 +23,9 @@ export class AssistantModelsInternalController {
   constructor(private readonly service: AssistantModelService) {}
 
   @Get(':role/candidates')
-  async candidates(@Param('role') role: string): Promise<readonly AssistantModelCandidate[]> {
-    return this.service.listCandidates(role as AssistantModelRole);
+  async candidates(
+    @Param('role', new ParseEnumPipe(AssistantModelRole)) role: AssistantModelRole,
+  ): Promise<readonly AssistantModelCandidate[]> {
+    return this.service.listCandidates(role);
   }
 }

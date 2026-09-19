@@ -704,6 +704,7 @@ export const es: TranslationDictionary = {
       title: 'Respuesta truncada',
       body: 'La respuesta alcanzó su límite de longitud y se cortó. Vuelve a generarla para obtener la respuesta completa.',
     },
+    routedBy: 'Enrutado por {router} ({routerProvider}) → respondido por {model}',
     toolTranscript: {
       summary: 'Se usaron {count} herramientas web',
       capReached: 'Se alcanzó el límite de seguridad del bucle de herramientas',

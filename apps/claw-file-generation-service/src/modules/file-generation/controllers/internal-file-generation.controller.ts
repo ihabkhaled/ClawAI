@@ -1,4 +1,5 @@
-import { Body, Controller, Get, MessageEvent, Param, Post, Sse } from '@nestjs/common';
+import { Body, Controller, Get, MessageEvent, Param, Post, Sse, UseGuards } from '@nestjs/common';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { type Observable } from 'rxjs';
 import { Public } from '../../../app/decorators/public.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -7,6 +8,7 @@ import { FileGenerationEventsService } from '../services/file-generation-events.
 import { type GenerateFileDto, generateFileSchema } from '../dto/generate-file.dto';
 
 @Controller('internal/file-generations')
+@UseGuards(ServiceTokenGuard)
 export class InternalFileGenerationController {
   constructor(
     private readonly fileGenService: FileGenerationService,

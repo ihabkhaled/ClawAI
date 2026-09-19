@@ -2,13 +2,13 @@
 
 ## Overview
 
-| Property       | Value                                  |
-| -------------- | -------------------------------------- |
-| Port           | 4013                                   |
-| Database       | PostgreSQL (`claw_file_generations`)   |
-| ORM            | Prisma 5.22                            |
-| Env prefix     | `FILE_GENERATION_`                     |
-| Nginx route    | `/api/v1/file-generations`             |
+| Property    | Value                                |
+| ----------- | ------------------------------------ |
+| Port        | 4013                                 |
+| Database    | PostgreSQL (`claw_file_generations`) |
+| ORM         | Prisma 5.22                          |
+| Env prefix  | `FILE_GENERATION_`                   |
+| Nginx route | `/api/v1/file-generations`           |
 
 The file generation service converts AI-generated content into downloadable files in 7 formats: PDF, DOCX, CSV, HTML, Markdown, plain text, and JSON. It uses a two-phase approach: first generating structured content via an LLM, then converting it to the requested format.
 
@@ -16,32 +16,32 @@ The file generation service converts AI-generated content into downloadable file
 
 ### FileGeneration
 
-| Column             | Type                   | Notes                          |
-| ------------------ | ---------------------- | ------------------------------ |
-| id                 | String                 | CUID primary key               |
-| userId             | String                 | Requesting user                |
-| threadId           | String?                | Associated chat thread         |
-| userMessageId      | String?                | Triggering user message        |
-| assistantMessageId | String?                | Response message ID            |
-| prompt             | String                 | User's file generation prompt  |
-| content            | String? (Text)         | Generated content before conversion |
-| format             | FileFormat             | TXT, MD, PDF, DOCX, CSV, JSON, HTML |
-| filename           | String?                | Output filename                |
-| provider           | String                 | LLM provider used              |
-| model              | String                 | LLM model used                 |
-| status             | FileGenerationStatus   | QUEUED through COMPLETED/FAILED|
-| latencyMs          | Int?                   | Total generation time          |
+| Column             | Type                 | Notes                               |
+| ------------------ | -------------------- | ----------------------------------- |
+| id                 | String               | CUID primary key                    |
+| userId             | String               | Requesting user                     |
+| threadId           | String?              | Associated chat thread              |
+| userMessageId      | String?              | Triggering user message             |
+| assistantMessageId | String?              | Response message ID                 |
+| prompt             | String               | User's file generation prompt       |
+| content            | String? (Text)       | Generated content before conversion |
+| format             | FileFormat           | TXT, MD, PDF, DOCX, CSV, JSON, HTML |
+| filename           | String?              | Output filename                     |
+| provider           | String               | LLM provider used                   |
+| model              | String               | LLM model used                      |
+| status             | FileGenerationStatus | QUEUED through COMPLETED/FAILED     |
+| latencyMs          | Int?                 | Total generation time               |
 
 ### FileGenerationAsset
 
-| Column      | Type   | Notes                          |
-| ----------- | ------ | ------------------------------ |
-| generationId| String | FK to FileGeneration           |
-| storageKey  | String | Local storage path             |
-| url         | String | Serve URL                      |
-| downloadUrl | String | Direct download URL            |
-| mimeType    | String | application/pdf, etc.          |
-| sizeBytes   | Int?   | File size                      |
+| Column       | Type   | Notes                 |
+| ------------ | ------ | --------------------- |
+| generationId | String | FK to FileGeneration  |
+| storageKey   | String | Local storage path    |
+| url          | String | Serve URL             |
+| downloadUrl  | String | Direct download URL   |
+| mimeType     | String | application/pdf, etc. |
+| sizeBytes    | Int?   | File size             |
 
 ### FileGenerationEvent
 
@@ -71,15 +71,15 @@ QUEUED -> STARTING -> GENERATING_CONTENT -> CONVERTING -> FINALIZING -> COMPLETE
 
 The raw content is converted to the target format using dedicated adapters:
 
-| Format | Library      | Notes                              |
-| ------ | ------------ | ---------------------------------- |
-| PDF    | pdfkit 0.15  | Text layout, headings, paragraphs  |
-| DOCX   | docx 9.0     | Paragraphs, headings, tables       |
-| CSV    | csv-stringify 6.5 | Structured data to CSV         |
-| HTML   | markdown-it 14.1 | Markdown-to-HTML conversion      |
-| MD     | Direct write | Content is already Markdown        |
-| TXT    | Direct write | Plain text, no conversion needed   |
-| JSON   | JSON.parse   | Validate and pretty-print          |
+| Format | Library           | Notes                             |
+| ------ | ----------------- | --------------------------------- |
+| PDF    | pdfkit 0.15       | Text layout, headings, paragraphs |
+| DOCX   | docx 9.0          | Paragraphs, headings, tables      |
+| CSV    | csv-stringify 6.5 | Structured data to CSV            |
+| HTML   | markdown-it 14.1  | Markdown-to-HTML conversion       |
+| MD     | Direct write      | Content is already Markdown       |
+| TXT    | Direct write      | Plain text, no conversion needed  |
+| JSON   | JSON.parse        | Validate and pretty-print         |
 
 ## Content Extraction
 
@@ -92,14 +92,14 @@ Each format adapter includes a content extraction strategy for parsing LLM outpu
 
 ## API Endpoints
 
-| Method | Path                    | Auth   | Description                       |
-| ------ | ----------------------- | ------ | --------------------------------- |
-| POST   | /                       | Bearer | Create file generation request    |
-| GET    | /                       | Bearer | List user's file generations      |
-| GET    | /:id                    | Bearer | Get generation details + assets   |
-| GET    | /:id/status             | Bearer | Poll generation status            |
-| GET    | /:id/download           | Bearer | Download generated file           |
-| DELETE | /:id                    | Bearer | Cancel/delete generation          |
+| Method | Path          | Auth   | Description                     |
+| ------ | ------------- | ------ | ------------------------------- |
+| POST   | /             | Bearer | Create file generation request  |
+| GET    | /             | Bearer | List user's file generations    |
+| GET    | /:id          | Bearer | Get generation details + assets |
+| GET    | /:id/status   | Bearer | Poll generation status          |
+| GET    | /:id/download | Bearer | Download generated file         |
+| DELETE | /:id          | Bearer | Cancel/delete generation        |
 
 ## Events
 
@@ -114,3 +114,12 @@ Each format adapter includes a content extraction strategy for parsing LLM outpu
 - `docx` -- Microsoft Word DOCX generation
 - `csv-stringify` -- CSV formatting from structured data
 - `markdown-it` -- Markdown to HTML conversion
+
+## Access and writers (ADR-103, 2026-09-19)
+
+- `POST /file-generations/:id/retry` and `GET /file-generations/:id/events`
+  are owner-only. The events stream is guarded before it opens, and the
+  frontend uses the authenticated `connectSse`.
+- `/internal/file-generations/*` needs `Authorization: Service <token>`.
+- The content is written by the admin's FILE_WRITER models (Smart Router,
+  Assistant models).

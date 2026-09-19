@@ -30,10 +30,25 @@ describe('assistant model seed', () => {
 
   // It runs before EVERY reply, including the ones that need nothing, so its
   // budget is paid on messages that gain nothing from it.
-  it('keeps every candidate cheap', () => {
-    for (const entry of ASSISTANT_MODEL_SEED_ENTRIES) {
+  it('keeps every research-gate candidate cheap', () => {
+    for (const entry of ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (candidate) => candidate.role === AssistantModelRole.RESEARCH_GATE,
+    )) {
       expect(entry.maxTokens).toBeLessThanOrEqual(128);
       expect(entry.timeoutMs).toBeLessThanOrEqual(10_000);
+    }
+  });
+
+  // A file is a whole document: a gate-sized budget would cut every file off.
+  // Hosted first, because production runs no local Ollama.
+  it('gives file writers a document-sized budget, hosted models first', () => {
+    const writers = ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (candidate) => candidate.role === AssistantModelRole.FILE_WRITER,
+    );
+    expect(writers.length).toBeGreaterThanOrEqual(2);
+    expect(writers[0]?.provider).toBe(RouterProvider.OLLAMA_CLOUD);
+    for (const entry of writers) {
+      expect(entry.maxTokens).toBeGreaterThanOrEqual(4_096);
     }
   });
 });

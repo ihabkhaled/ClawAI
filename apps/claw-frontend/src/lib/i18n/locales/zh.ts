@@ -672,6 +672,7 @@ export const zh: TranslationDictionary = {
       title: '响应被截断',
       body: '回答已达到长度上限而被截断。请重新生成以获取完整回答。',
     },
+    routedBy: '由 {router}（{routerProvider}）路由 → 由 {model} 回答',
     toolTranscript: {
       summary: '使用了 {count} 个网络工具',
       capReached: '达到工具环安全上限',

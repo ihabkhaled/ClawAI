@@ -7515,7 +7515,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 1589,
+          "bytes": 2194,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -7843,7 +7843,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5199
+        "value": 5200
       },
       "localeCount": 13,
       "locales": [
@@ -9799,7 +9799,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 153
+        "testFiles": 155
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -9811,7 +9811,7 @@
       },
       "claw-file-generation-service": {
         "runner": "vitest",
-        "testFiles": 7
+        "testFiles": 9
       },
       "claw-file-service": {
         "runner": "vitest",
@@ -9819,7 +9819,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 474
+        "testFiles": 476
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -9851,7 +9851,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 101
+        "testFiles": 104
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -10581,7 +10581,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1283,
+    "totalTestFiles": 1292,
     "workspaceCount": 25
   }
 }

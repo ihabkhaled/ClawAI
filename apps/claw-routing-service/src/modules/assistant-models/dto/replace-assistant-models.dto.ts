@@ -10,7 +10,8 @@ const assistantModelInputSchema = z
     deploymentId: z.string().min(1).max(64).optional(),
     enabled: z.boolean().default(true),
     timeoutMs: z.number().int().min(100).max(120_000).default(6_000),
-    maxTokens: z.number().int().min(8).max(4_096).default(64),
+    // Up to 32k: a FILE_WRITER writes a whole document; the gate stays at 64.
+    maxTokens: z.number().int().min(8).max(32_768).default(64),
   })
   .strict();
 

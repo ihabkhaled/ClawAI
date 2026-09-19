@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
 import { formatShortDateTime, getJudgeReviewFromMessage, getStoredReasoning } from '@/utilities';
 import { getStoredNarration } from '@/utilities/narration.utility';
+import { describeRoute } from '@/utilities/route-label.utility';
 
 function MessageBubbleBase({
   message,
@@ -68,7 +69,7 @@ function MessageBubbleBase({
     typeof routeRoadmap?.routerModel === 'string' ? routeRoadmap.routerModel : null;
   const routeSummary =
     message.routingMode === RoutingMode.AUTO && routerModel
-      ? `Route: ${routerModel} -> ${displayedModel ?? 'unknown'}`
+      ? describeRoute(routerModel, displayedModel ?? 'unknown', t)
       : null;
   const researchSummary = routeRoadmap?.research;
   const researchBadgeLabel =

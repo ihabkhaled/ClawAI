@@ -688,6 +688,7 @@ export const ar: TranslationDictionary = {
       title: 'تم اقتطاع الرد',
       body: 'بلغت الإجابة حدّ الطول فانقطعت. أعد التوليد للحصول على الإجابة كاملة.',
     },
+    routedBy: 'وجّهه {router} ({routerProvider}) ← وأجاب {model}',
     toolTranscript: {
       summary: 'تم استخدام {count} أداة ويب',
       capReached: 'تم بلوغ حد أمان حلقة الأدوات',

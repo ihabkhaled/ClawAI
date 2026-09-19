@@ -69,6 +69,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Enter a provider and a model alias.',
     },
     assistant: {
+      fileWriterTitle: 'File writer',
+      fileWriterDescription:
+        'The models that write the content of a file the AI generates (PDF, DOCX, spreadsheet...). Tried in order; give them a large token budget, because a file is a whole document.',
+      fileWriterEmpty: 'No file writer configured: file requests will fail until you add one.',
       researchGateTitle: 'Research gate',
       researchGateDescription:
         'The model asked whether a turn needs the web, before any answering model runs. Candidates are tried in order.',
@@ -231,6 +235,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'أدخل مزوّدًا واسمًا مستعارًا للنموذج.',
     },
     assistant: {
+      fileWriterTitle: 'كاتب الملفات',
+      fileWriterDescription:
+        'النماذج التي تكتب محتوى الملف الذي يولّده الذكاء الاصطناعي (PDF وDOCX وجداول البيانات...). تُجرَّب بالترتيب؛ امنحها ميزانية رموز كبيرة لأن الملف مستند كامل.',
+      fileWriterEmpty: 'لا يوجد كاتب ملفات مُعدّ: ستفشل طلبات الملفات حتى تضيف واحدًا.',
       researchGateTitle: 'بوابة البحث',
       researchGateDescription:
         'النموذج الذي يُسأل إن كانت الرسالة تحتاج إلى الإنترنت، قبل تشغيل أي نموذج مُجيب. تُجرَّب المرشحات بالترتيب.',
@@ -389,6 +397,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Geben Sie einen Anbieter und einen Modell-Alias ein.',
     },
     assistant: {
+      fileWriterTitle: 'Dateischreiber',
+      fileWriterDescription:
+        'Die Modelle, die den Inhalt einer von der KI erzeugten Datei schreiben (PDF, DOCX, Tabelle...). Werden der Reihe nach versucht; gib ihnen ein großes Token-Budget, denn eine Datei ist ein ganzes Dokument.',
+      fileWriterEmpty:
+        'Kein Dateischreiber eingerichtet: Dateianfragen schlagen fehl, bis du einen hinzufügst.',
       researchGateTitle: 'Recherche-Gate',
       researchGateDescription:
         'Das Modell, das gefragt wird, ob eine Nachricht das Web braucht, bevor ein antwortendes Modell läuft. Kandidaten werden der Reihe nach versucht.',
@@ -556,6 +569,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Introduce un proveedor y un alias de modelo.',
     },
     assistant: {
+      fileWriterTitle: 'Redactor de archivos',
+      fileWriterDescription:
+        'Los modelos que escriben el contenido de un archivo que genera la IA (PDF, DOCX, hoja de cálculo...). Se prueban en orden; dales un presupuesto de tokens amplio, porque un archivo es un documento completo.',
+      fileWriterEmpty:
+        'No hay ningún redactor de archivos configurado: las solicitudes de archivos fallarán hasta que añadas uno.',
       researchGateTitle: 'Puerta de investigación',
       researchGateDescription:
         'El modelo al que se pregunta si un mensaje necesita la web, antes de que se ejecute cualquier modelo que responda. Los candidatos se prueban en orden.',
@@ -722,6 +740,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'یک ارائه‌دهنده و نام مستعار مدل وارد کنید.',
     },
     assistant: {
+      fileWriterTitle: 'نویسنده فایل',
+      fileWriterDescription:
+        'مدل‌هایی که محتوای فایلی را که هوش مصنوعی تولید می‌کند می‌نویسند (PDF، DOCX، صفحه‌گسترده...). به ترتیب امتحان می‌شوند؛ به آن‌ها بودجه توکن زیادی بدهید، چون فایل یک سند کامل است.',
+      fileWriterEmpty:
+        'هیچ نویسنده فایلی تنظیم نشده است: درخواست‌های فایل تا زمانی که یکی اضافه کنید ناموفق خواهند بود.',
       researchGateTitle: 'دروازه پژوهش',
       researchGateDescription:
         'مدلی که پرسیده می‌شود آیا این پیام به وب نیاز دارد، پیش از اجرای هر مدل پاسخ‌دهنده. نامزدها به ترتیب آزموده می‌شوند.',
@@ -886,6 +909,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Saisissez un fournisseur et un alias de modèle.',
     },
     assistant: {
+      fileWriterTitle: 'Rédacteur de fichiers',
+      fileWriterDescription:
+        "Les modèles qui rédigent le contenu d'un fichier généré par l'IA (PDF, DOCX, tableur...). Essayés dans l'ordre ; donnez-leur un large budget de jetons, car un fichier est un document entier.",
+      fileWriterEmpty:
+        "Aucun rédacteur de fichiers configuré : les demandes de fichiers échoueront tant que vous n'en ajoutez pas un.",
       researchGateTitle: 'Filtre de recherche',
       researchGateDescription:
         "Le modèle auquel on demande si un message nécessite le web, avant l'exécution de tout modèle de réponse. Les candidats sont essayés dans l'ordre.",
@@ -1053,6 +1081,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'एक प्रदाता और मॉडल उपनाम दर्ज करें।',
     },
     assistant: {
+      fileWriterTitle: 'फ़ाइल लेखक',
+      fileWriterDescription:
+        'वे मॉडल जो AI द्वारा बनाई गई फ़ाइल (PDF, DOCX, स्प्रेडशीट...) की सामग्री लिखते हैं। क्रम से आज़माए जाते हैं; इन्हें बड़ा टोकन बजट दें, क्योंकि फ़ाइल एक पूरा दस्तावेज़ होती है।',
+      fileWriterEmpty:
+        'कोई फ़ाइल लेखक सेट नहीं है: जब तक आप एक नहीं जोड़ते, फ़ाइल अनुरोध विफल होंगे।',
       researchGateTitle: 'शोध गेट',
       researchGateDescription:
         'वह मॉडल जिससे पूछा जाता है कि क्या किसी संदेश को वेब की आवश्यकता है, किसी भी उत्तर देने वाले मॉडल के चलने से पहले। उम्मीदवारों को क्रम में आज़माया जाता है।',
@@ -1216,6 +1249,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Inserisci un provider e un alias del modello.',
     },
     assistant: {
+      fileWriterTitle: 'Scrittore di file',
+      fileWriterDescription:
+        "I modelli che scrivono il contenuto di un file generato dall'IA (PDF, DOCX, foglio di calcolo...). Provati in ordine; assegna loro un ampio budget di token, perché un file è un documento intero.",
+      fileWriterEmpty:
+        'Nessuno scrittore di file configurato: le richieste di file falliranno finché non ne aggiungi uno.',
       researchGateTitle: 'Filtro di ricerca',
       researchGateDescription:
         'Il modello a cui si chiede se un messaggio richiede il web, prima che venga eseguito qualsiasi modello di risposta. I candidati vengono provati in ordine.',
@@ -1381,6 +1419,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'プロバイダーとモデルエイリアスを入力してください。',
     },
     assistant: {
+      fileWriterTitle: 'ファイル作成モデル',
+      fileWriterDescription:
+        'AI が生成するファイル（PDF、DOCX、スプレッドシートなど）の内容を書くモデルです。順番に試されます。ファイルは文書全体なので、大きなトークン予算を設定してください。',
+      fileWriterEmpty:
+        'ファイル作成モデルが設定されていません。追加するまでファイルの依頼は失敗します。',
       researchGateTitle: 'リサーチゲート',
       researchGateDescription:
         '回答するモデルを実行する前に、その発言がウェブを必要とするかを尋ねるモデルです。候補は順に試されます。',
@@ -1541,6 +1584,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Informe um provedor e um alias de modelo.',
     },
     assistant: {
+      fileWriterTitle: 'Redator de arquivos',
+      fileWriterDescription:
+        'Os modelos que escrevem o conteúdo de um arquivo gerado pela IA (PDF, DOCX, planilha...). Tentados em ordem; dê a eles um orçamento de tokens grande, pois um arquivo é um documento inteiro.',
+      fileWriterEmpty:
+        'Nenhum redator de arquivos configurado: os pedidos de arquivos falharão até você adicionar um.',
       researchGateTitle: 'Porta de pesquisa',
       researchGateDescription:
         'O modelo a que se pergunta se uma mensagem precisa da web, antes de qualquer modelo de resposta ser executado. Os candidatos são tentados por ordem.',
@@ -1707,6 +1755,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'Укажите провайдера и псевдоним модели.',
     },
     assistant: {
+      fileWriterTitle: 'Автор файлов',
+      fileWriterDescription:
+        'Модели, которые пишут содержимое файла, создаваемого ИИ (PDF, DOCX, таблица...). Пробуются по порядку; дайте им большой лимит токенов, ведь файл — это целый документ.',
+      fileWriterEmpty:
+        'Автор файлов не настроен: запросы файлов будут завершаться ошибкой, пока вы его не добавите.',
       researchGateTitle: 'Фильтр исследования',
       researchGateDescription:
         'Модель, у которой спрашивают, нужен ли сообщению интернет, прежде чем запустится отвечающая модель. Кандидаты пробуются по порядку.',
@@ -1870,6 +1923,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: 'กรอกผู้ให้บริการและชื่อเรียกโมเดล',
     },
     assistant: {
+      fileWriterTitle: 'ผู้เขียนไฟล์',
+      fileWriterDescription:
+        'โมเดลที่เขียนเนื้อหาของไฟล์ที่ AI สร้าง (PDF, DOCX, สเปรดชีต...) ลองตามลำดับ ให้งบโทเค็นจำนวนมากเพราะไฟล์คือเอกสารทั้งฉบับ',
+      fileWriterEmpty: 'ยังไม่ได้ตั้งค่าผู้เขียนไฟล์: คำขอไฟล์จะล้มเหลวจนกว่าคุณจะเพิ่ม',
       researchGateTitle: 'ประตูการค้นคว้า',
       researchGateDescription:
         'โมเดลที่ถูกถามว่าข้อความนี้ต้องใช้เว็บหรือไม่ ก่อนที่โมเดลผู้ตอบจะทำงาน ตัวเลือกจะถูกลองตามลำดับ',
@@ -2030,6 +2087,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       validationError: '请输入提供商和模型别名。',
     },
     assistant: {
+      fileWriterTitle: '文件撰写模型',
+      fileWriterDescription:
+        '撰写 AI 生成文件（PDF、DOCX、电子表格等）内容的模型。按顺序尝试；请给它们较大的令牌预算，因为文件是一整份文档。',
+      fileWriterEmpty: '尚未配置文件撰写模型：在添加之前，文件请求都会失败。',
       researchGateTitle: '研究门控',
       researchGateDescription:
         '在任何回答模型运行之前，用于判断该消息是否需要联网的模型。候选模型按顺序依次尝试。',

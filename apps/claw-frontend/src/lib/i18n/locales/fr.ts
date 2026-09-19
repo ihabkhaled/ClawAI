@@ -706,6 +706,7 @@ export const fr: TranslationDictionary = {
       title: 'Réponse tronquée',
       body: 'La réponse a atteint sa limite de longueur et a été coupée. Régénérez-la pour obtenir la réponse complète.',
     },
+    routedBy: 'Routé par {router} ({routerProvider}) → répondu par {model}',
     toolTranscript: {
       summary: '{count} outil(s) web utilisé(s)',
       capReached: 'Limite de sécurité de la boucle d’outils atteinte',

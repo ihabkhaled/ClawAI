@@ -380,6 +380,7 @@ export type UseSmartRouterSelectableDeploymentsResult = {
 
 /** A model job that runs beside routing rather than inside it. */
 export const ASSISTANT_MODEL_ROLE_RESEARCH_GATE = 'RESEARCH_GATE';
+export const ASSISTANT_MODEL_ROLE_FILE_WRITER = 'FILE_WRITER';
 
 /** One configured candidate for an assistant model role. */
 export type AssistantModelRecord = {
@@ -417,6 +418,14 @@ export type UseAssistantModelsResult = {
 };
 
 export type SmartRouterAssistantTabProps = {
+  t: TranslateFunction;
+};
+
+export type SmartRouterAssistantRoleSectionProps = {
+  role: string;
+  titleKey: string;
+  descriptionKey: string;
+  emptyKey: string;
   t: TranslateFunction;
 };
 

@@ -697,6 +697,7 @@ export const fa: TranslationDictionary = {
       title: 'پاسخ کوتاه شد',
       body: 'پاسخ به سقف طول خود رسید و قطع شد. برای دریافت پاسخ کامل، دوباره تولید کنید.',
     },
+    routedBy: 'مسیریابی توسط {router} ({routerProvider}) ← پاسخ توسط {model}',
     toolTranscript: {
       summary: '{count} ابزار وب استفاده شد',
       capReached: 'درپوش ایمنی حلقه ابزار رسید',
