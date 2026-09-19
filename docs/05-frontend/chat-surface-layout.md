@@ -11,16 +11,16 @@
 Percentage and `flex-1` heights only work if every ancestor has a definite one.
 The chain, top to bottom, is:
 
-| Element                                     | File                                       | What it contributes                                                                               |
-| ------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `div.h-dvh`                                 | `components/layout/portal-shell.tsx`       | The definite height everything else divides up. `dvh`, not `vh`, so a mobile keyboard shrinks it. |
-| `div.flex-1.flex-col`                       | same                                       | The content column beside the sidebar. Carries the bottom-nav margin on phones.                   |
-| `main.flex-1.overflow-y-auto`               | same                                       | Definite height from flex. Its padding is what insets the chat page.                              |
-| `div.flex.h-full.min-h-0.flex-col`          | `components/chat/chat-thread-shell.tsx`    | The chat page column.                                                                             |
-| header `shrink-0` · body row `flex-1 min-h-0` | same                                     | The split. Only the body row grows.                                                               |
-| `div.chat-thread-row` (flex row)            | same                                       | Reading column + action rail. The rail is `self-start`, so it never stretches.                    |
-| `div.min-h-0.flex-1.overflow-hidden`        | same                                       | The transcript frame.                                                                             |
-| `Virtuoso style={{height:'100%'}}`          | `components/chat/virtualized-messages.tsx` | The scroller.                                                                                     |
+| Element                                       | File                                       | What it contributes                                                                               |
+| --------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `div.h-dvh`                                   | `components/layout/portal-shell.tsx`       | The definite height everything else divides up. `dvh`, not `vh`, so a mobile keyboard shrinks it. |
+| `div.flex-1.flex-col`                         | same                                       | The content column beside the sidebar. Carries the bottom-nav margin on phones.                   |
+| `main.flex-1.overflow-y-auto`                 | same                                       | Definite height from flex. Its padding is what insets the chat page.                              |
+| `div.flex.h-full.min-h-0.flex-col`            | `components/chat/chat-thread-shell.tsx`    | The chat page column.                                                                             |
+| header `shrink-0` · body row `flex-1 min-h-0` | same                                       | The split. Only the body row grows.                                                               |
+| `div.chat-thread-row` (flex row)              | same                                       | Reading column + action rail. The rail is `self-start`, so it never stretches.                    |
+| `div.min-h-0.flex-1.overflow-hidden`          | same                                       | The transcript frame.                                                                             |
+| `Virtuoso style={{height:'100%'}}`            | `components/chat/virtualized-messages.tsx` | The scroller.                                                                                     |
 
 Break any `min-h-0` in that chain and the symptom is always the same: the
 transcript refuses to shrink below its content and pushes the composer off the
@@ -190,6 +190,7 @@ position.
 
 Below `sm` the rail is not rendered at all and every action is in the header's
 `…`, exactly as before. A 360px screen has no gutter to put a rail in.
+
 - **Title**: `components/chat/editable-title.tsx`. One line on desktop, clamped
   to two on a phone, full text in `title`. It carries **both** `truncate` and
   `clamp-title`: `globals.css` deliberately neutralises `.truncate` under the
@@ -267,6 +268,30 @@ future width guard added here by accident.
   in step (see [rule 36](../../rules/36-floating-ui-and-toast-clearance.md)).
 - No second autosize implementation.
 - No duplicated mobile/desktop control rows.
+
+## Answer actions: expand and "Download as" (ADR-105)
+
+Every assistant answer that has visible text shows two more icon buttons in
+`message-bubble.tsx`. Neither appears on a file-generation or
+image-generation bubble, which already have their own card.
+
+- **Expand**: `answer-expand-dialog.tsx`. A dialog with **Rendered**
+  (`MarkdownRenderer`) and **Raw markdown** tabs, each with a copy button.
+- **Download as**: `answer-export-menu.tsx` plus `use-answer-export.ts`.
+  - `.md` and `.txt` are saved in the browser, with no request.
+  - `.html`, `.docx` and `.pdf` call `POST /file-generations/export`, poll
+    (1 s × 30), then download through the owner-only link.
+  - While an export runs the icon spins; on failure it turns red and its label
+    says so.
+  - The options live in `ANSWER_EXPORT_OPTIONS`; adding one is
+    [`skills/add-an-answer-export-format.md`](../../skills/add-an-answer-export-format.md).
+- The filename comes from `answerTitle` and `safeFileBase` in
+  `utilities/answer-export.utility.ts`.
+- Test ids: `answer-expand-trigger`, `answer-rendered`, `answer-raw`,
+  `answer-export-trigger`, and `answer-export-<ext>` for each option.
+- **E2E pitfall:** the menu takes about 150 ms to close. A click on the trigger
+  inside that window is ignored, so wait for the menu to close before reopening
+  it.
 
 ## See also
 

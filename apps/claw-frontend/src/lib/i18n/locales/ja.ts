@@ -647,6 +647,18 @@ export const ja: TranslationDictionary = {
     fileRegenerateAi: 'AI で再生成',
     fileDownloadFailed:
       'ダウンロードに失敗しました。もう一度試すか、ファイルを再構築してください。',
+    exportAnswer: '形式を選んでダウンロード',
+    exportFailed: 'この回答をエクスポートできませんでした。もう一度お試しください。',
+    expandAnswer: '拡大',
+    answerRendered: 'レンダリング表示',
+    answerRaw: 'Markdown ソース',
+    exportFormats: {
+      md: 'Markdown ファイル (.md)',
+      txt: 'プレーンテキスト (.txt)',
+      html: 'Web ページ (.html)',
+      docx: 'Word 文書 (.docx)',
+      pdf: 'PDF ファイル (.pdf)',
+    },
     regenerate: '再生成',
     copyMessage: 'メッセージをコピー',
     feedbackPositive: '良い反応',

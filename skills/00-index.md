@@ -77,6 +77,7 @@
 | Run the Whole QA Team                    | `run-the-qa-team.md`                           | Before saying done on ANY change: every QA hat, the API/RBAC/browser/responsive lanes, and the evidence each one produces (rule 49)                                                 |
 | Verify the Research Loop Live            | `verify-the-research-loop-live.md`             | After touching the planner, crawl or narration: rebuild for shared packages, watch the SSE stream, defeat the service worker, prove the log survives refresh (rule 50)              |
 | Read Production Logs                     | `read-production-logs.md`                      | Every container (services, nginx, DBs) ships to `server_logs` via the read-only Vector shipper; query with filters, debug a silent shipper, never mount the Docker socket (ADR-101) |
+| Add an Answer Export Format              | `add-an-answer-export-format.md`               | A new "Download as" format on chat answers: browser vs server build, Prisma enum + migration, converter magic-byte spec, 13 locales, live download proof (ADR-105)                  |
 
 ---
 

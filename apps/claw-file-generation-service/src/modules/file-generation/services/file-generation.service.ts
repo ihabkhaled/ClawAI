@@ -6,12 +6,15 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { type FileFormat, FileGenerationStatus } from '../../../generated/prisma';
+import { FileGenerationStatus } from '../../../generated/prisma';
 import { FileGenerationRepository } from '../repositories/file-generation.repository';
 import { FileExecutionManager } from '../managers/file-execution.manager';
 import { FileGenerationEventsService } from './file-generation-events.service';
 import { FORMAT_TO_EXTENSION, FORMAT_TO_MIME_TYPE } from '../../../common/constants';
 import {
+  EXPORT_MODEL,
+  EXPORT_PROMPT,
+  EXPORT_PROVIDER,
   FILE_ASSET_SWEEP_BATCH,
   FILE_ASSET_SWEEP_INTERVAL_MS,
   FILE_ASSET_TTL_MS,
@@ -30,7 +33,7 @@ import {
   type GenerateFileParams,
   TERMINAL_STATUSES,
 } from '../types/file-generation.types';
-import { type ListFileGenerationsQueryDto } from '../dto/generate-file.dto';
+import { type ExportFileDto, type ListFileGenerationsQueryDto } from '../dto/generate-file.dto';
 import { BusinessException } from '../../../common/errors';
 
 @Injectable()
@@ -144,7 +147,7 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
       assistantMessageId: params.assistantMessageId,
       prompt: params.prompt,
       content: params.content,
-      format: params.format as FileFormat,
+      format: params.format,
       filename,
       provider: params.provider,
       model: params.model,
@@ -184,6 +187,22 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
       throw new BusinessException('File generation not found', 'FILE_GENERATION_NOT_FOUND');
     }
     return record;
+  }
+
+  /**
+   * Turns text the user already has into a file, with no model call: the same
+   * converters, owner-only download and one-hour life as a generated file.
+   */
+  async exportForUser(userId: string, dto: ExportFileDto): Promise<FileGenerationRecord> {
+    return this.enqueueGeneration({
+      userId,
+      prompt: EXPORT_PROMPT,
+      content: dto.content,
+      format: dto.format,
+      provider: EXPORT_PROVIDER,
+      model: EXPORT_MODEL,
+      ...(dto.title === undefined || dto.title.length === 0 ? {} : { filename: dto.title }),
+    });
   }
 
   /** The owner's generation as a user may see it (no storage keys). */

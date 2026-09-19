@@ -26,6 +26,19 @@ and silent shape drift between frontend and backend.
 6. **FE and BE field names match verbatim.** The FE schema mirrors the BE DTO;
    renames happen only in UI labels, never in the type.
 7. **Enums, not string unions**, for constrained values (`z.nativeEnum(...)`).
+8. **A DTO bound must fit the transport, and match its caller's bound.** Every
+   layer a request passes through has its own size limit: nginx
+   `client_max_body_size`, Express's JSON limit (**100 kB by default**), and
+   the DTO's `.max()`. The service's JSON limit must hold the largest request
+   any of its DTOs allows, at six bytes per character (a `\uXXXX` escape).
+   Tie the two together with a named constant and a spec.
+   An internal DTO must also accept everything its caller accepts: when
+   chat-service passes the user's message on, the receiving `.max()` must be
+   at least chat's own limit. Otherwise the request dies in body-parser, or
+   after work was done and paid for, which is worse. See
+   [ADR-105](../docs/13-adr/adr-105-answer-export-through-the-file-pipeline.md);
+   file-generation had a 100 kB transport under a 10M-character DTO, and a
+   4,000-character prompt limit under a 100k-character chat message.
 
 ## Prohibited patterns
 
@@ -33,6 +46,10 @@ and silent shape drift between frontend and backend.
 - A Zod schema declared inline inside a controller or service.
 - `z.enum(['a','b'])` where a shared enum exists — use `z.nativeEnum(Enum)`.
 - A `.strict()` BE schema paired with a superset FE filter type (guaranteed 400).
+- A `.max()` larger than the service's JSON body limit can carry, or smaller
+  than the bound of the service that calls it.
+- A free `z.string()` for a value that is written to a Prisma enum column: it
+  fails in Prisma as a 500 instead of at the DTO as a 400.
 
 ## Correct pattern
 

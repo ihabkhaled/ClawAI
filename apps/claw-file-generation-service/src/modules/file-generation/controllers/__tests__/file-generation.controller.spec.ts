@@ -16,6 +16,7 @@ describe('FileGenerationController', () => {
     retryGenerationForUser: Mock;
     openAssetForUser: Mock;
     rebuildForUser: Mock;
+    exportForUser: Mock;
   };
   let eventsMock: { subscribe: Mock };
 
@@ -28,6 +29,7 @@ describe('FileGenerationController', () => {
       retryGenerationForUser: vi.fn(),
       openAssetForUser: vi.fn(),
       rebuildForUser: vi.fn(),
+      exportForUser: vi.fn(),
     };
     eventsMock = { subscribe: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
@@ -86,6 +88,14 @@ describe('FileGenerationController', () => {
       'X-Content-Type-Options': 'nosniff',
     });
     expect(pipe).toHaveBeenCalledWith(res);
+  });
+
+  it('export queues the text for the calling user', async () => {
+    serviceMock.exportForUser.mockResolvedValue({ id: 'g9', status: 'QUEUED' });
+    await expect(
+      controller.export(user as never, { content: 'x', format: 'PDF' } as never),
+    ).resolves.toEqual({ generationId: 'g9', status: 'QUEUED' });
+    expect(serviceMock.exportForUser).toHaveBeenCalledWith('u1', { content: 'x', format: 'PDF' });
   });
 
   it('rebuild is scoped to the calling user', async () => {

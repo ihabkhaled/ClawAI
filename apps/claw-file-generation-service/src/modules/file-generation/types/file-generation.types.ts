@@ -49,7 +49,7 @@ export type AssetExpiryFields = Pick<FileGenerationAssetRecord, 'expiresAt' | 'e
 export type GenerateFileParams = {
   prompt: string;
   content: string;
-  format: string;
+  format: FileFormat;
   provider: string;
   model: string;
   userId: string;

@@ -16,6 +16,27 @@ Last updated: 2026-09-10
 
 ## Open programme
 
+### TD-032: 16 services report a bad request body as a 500 (2026-09-19)
+
+- **Severity**: Low · **Effort**: Low · **Priority**: Planned (one batch)
+- **Detail**: Every service's `GlobalExceptionFilter` maps anything that is not
+  an `HttpException` to 500. Body-parser throws plain `http-errors` for a
+  malformed JSON body (400), an oversized body (413) and a bad charset (415),
+  so the caller gets "Internal server error" for its own mistake. The server
+  also logs it as an unhandled exception, which is noise in the error
+  dashboards.
+- **Fixed in**: file-generation-service, where answer export exposed it
+  (`isClientHttpError`, [ADR-105](../13-adr/adr-105-answer-export-through-the-file-pipeline.md)).
+- **The fix elsewhere**: the same `isClientHttpError` branch in the other 16
+  filters (`apps/*/src/app/filters/global-exception.filter.ts`), plus the spec
+  from file-generation. Ideally it is one shared helper, because the 17 copies
+  have already drifted into 8 variants.
+- **Also check**: that each service's JSON body limit holds its largest DTO
+  ([rules/11 §8](../../rules/11-dtos-and-validation.md)). chat-service
+  (`chat-body-parser.utility.ts`), file-service, image-service,
+  workspace-service and file-generation-service set one. The other 13 use the
+  100 kB default, which is only safe while every DTO of theirs stays small.
+
 ### TD-031: Outbound fetch has no DNS-level SSRF guard (2026-09-11)
 
 - **Severity**: High · **Effort**: Medium · **Priority**: Next

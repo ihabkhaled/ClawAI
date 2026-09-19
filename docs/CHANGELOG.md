@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Download any answer as a file.** Every AI answer has a "Download as" menu:
+  Markdown and plain text save instantly, and HTML, Word and PDF are converted
+  on the server. None of them calls the AI or costs tokens. Links are owner-only
+  and last an hour, like generated files.
+- **Expand an answer.** A bigger view of any answer, rendered or as raw
+  Markdown, with a copy button on each.
+
 - **Workspace automations.** A new Automations page turns multi-step work across
   your connected tools into saved, repeatable chains — create a Jira ticket, post
   the result to Slack, update a document — with a starter template library and a
@@ -33,6 +40,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **Long file requests no longer fail.** A request to make a file whose message
+  was over 4,000 characters failed after the AI had already written the file,
+  and any file over about 100,000 characters failed as a server error. Both now
+  work, and a request that really is too big gets a clear "too large" answer
+  instead of a server error.
 - **Slack webhook replay vulnerability.** Slack request signatures never expire, so
   a captured, validly-signed webhook could previously be replayed indefinitely.
   Deliveries outside a five-minute window are now rejected.

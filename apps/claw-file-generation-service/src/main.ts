@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'node:fs';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
 import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
-
+import { JSON_BODY_LIMIT_BYTES } from './common/constants';
 
 // --- Inline HTTPS bootstrap (no-rebuild path; see scripts/_patch-main-ts-inline.cjs) ---
 function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
@@ -17,19 +18,27 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   try {
     return { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
   } catch (error) {
-    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`);
+    process.stderr.write(
+      `[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`,
+    );
     return undefined;
   }
 }
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true, httpsOptions: resolveHttpsOptions() });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    httpsOptions: resolveHttpsOptions(),
+  });
   app.useLogger(app.get(Logger));
   app.use(helmet());
+  // Express's default of 100kb refused every file or export over ~100k chars.
+  app.useBodyParser('json', { limit: JSON_BODY_LIMIT_BYTES });
   app.setGlobalPrefix('api/v1');
   const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
-    `https://${clawHost}`,`https://${clawHost}:3000`,
+    `https://${clawHost}`,
+    `https://${clawHost}:3000`,
   ];
   app.enableCors({
     origin: corsOrigins,

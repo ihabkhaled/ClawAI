@@ -138,7 +138,7 @@
       "file": "rules/10-repositories-and-persistence.md"
     },
     {
-      "bytes": 2851,
+      "bytes": 4050,
       "file": "rules/11-dtos-and-validation.md"
     },
     {
@@ -312,7 +312,7 @@
   ],
   "skills": [
     {
-      "bytes": 25834,
+      "bytes": 26110,
       "file": "skills/00-index.md"
     },
     {
@@ -366,6 +366,10 @@
     {
       "bytes": 4875,
       "file": "skills/add-a-shared-package-to-a-service.md"
+    },
+    {
+      "bytes": 2851,
+      "file": "skills/add-an-answer-export-format.md"
     },
     {
       "bytes": 3616,

@@ -1434,6 +1434,11 @@
         "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/file-generations/export",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-file-generation-service/src/modules/health/controllers/health.controller.ts"
@@ -3398,5 +3403,5 @@
     ]
   },
   "generated": true,
-  "total": 672
+  "total": 673
 }

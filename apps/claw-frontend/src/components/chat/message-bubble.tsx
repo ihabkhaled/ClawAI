@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { memo } from 'react';
 
+import { AnswerExpandDialog } from '@/components/chat/answer-expand-dialog';
+import { AnswerExportMenu } from '@/components/chat/answer-export-menu';
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
 import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
@@ -315,6 +317,12 @@ function MessageBubbleBase({
                 label={t('chat.copyMessage')}
                 className="text-muted-foreground h-7 w-7"
               />
+            ) : null}
+            {hasVisibleAssistantContent && !isFileGeneration && !isImageGeneration ? (
+              <>
+                <AnswerExpandDialog content={message.content} t={t} />
+                <AnswerExportMenu content={message.content} t={t} />
+              </>
             ) : null}
             {onRegenerate ? (
               <Button

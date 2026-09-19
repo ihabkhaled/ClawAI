@@ -592,6 +592,19 @@ export type TranslationDictionary = {
     fileRebuild: string;
     fileRegenerateAi: string;
     fileDownloadFailed: string;
+    // "Download as" and "Expand" on every AI answer (F2).
+    exportAnswer: string;
+    exportFailed: string;
+    expandAnswer: string;
+    answerRendered: string;
+    answerRaw: string;
+    exportFormats: {
+      md: string;
+      txt: string;
+      html: string;
+      docx: string;
+      pdf: string;
+    };
     regenerate: string;
     // Phase 4 (UI/UX refactor): per-message hover actions on assistant
     // bubbles. `copyMessage` labels the copy-to-clipboard button; the

@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   MessageEvent,
@@ -18,6 +19,8 @@ import { FileGenerationService } from '../services/file-generation.service';
 import { FileGenerationEventsService } from '../services/file-generation-events.service';
 import { FileGenerationOwnerGuard } from '../guards/file-generation-owner.guard';
 import {
+  type ExportFileDto,
+  exportFileSchema,
   type ListFileGenerationsQueryDto,
   listFileGenerationsQuerySchema,
 } from '../dto/generate-file.dto';
@@ -36,6 +39,16 @@ export class FileGenerationController {
     query: ListFileGenerationsQueryDto,
   ): Promise<unknown> {
     return this.fileGenService.listByUser(user.id, query);
+  }
+
+  /** Export text the user already has (an AI answer) as a file. No model call. */
+  @Post('export')
+  async export(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(exportFileSchema)) dto: ExportFileDto,
+  ): Promise<{ generationId: string; status: string }> {
+    const record = await this.fileGenService.exportForUser(user.id, dto);
+    return { generationId: record.id, status: record.status };
   }
 
   @Get(':id')

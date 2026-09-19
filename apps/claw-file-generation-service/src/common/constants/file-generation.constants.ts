@@ -17,5 +17,3 @@ export const FORMAT_TO_EXTENSION: Record<string, string> = {
   JSON: 'json',
   HTML: 'html',
 };
-
-export const MAX_CONTENT_SIZE = 10 * 1024 * 1024; // 10MB

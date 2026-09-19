@@ -92,14 +92,23 @@ Each format adapter includes a content extraction strategy for parsing LLM outpu
 
 ## API Endpoints
 
-| Method | Path          | Auth   | Description                     |
-| ------ | ------------- | ------ | ------------------------------- |
-| POST   | /             | Bearer | Create file generation request  |
-| GET    | /             | Bearer | List user's file generations    |
-| GET    | /:id          | Bearer | Get generation details + assets |
-| GET    | /:id/status   | Bearer | Poll generation status          |
-| GET    | /:id/download | Bearer | Download generated file         |
-| DELETE | /:id          | Bearer | Cancel/delete generation        |
+All under `/api/v1/file-generations` (checked against the controllers
+2026-09-19; the old table listed create, status, download and delete routes
+that do not exist). Users never create a generation directly: chat-service does,
+over the internal route.
+
+| Method | Path                          | Auth    | Description                                         |
+| ------ | ----------------------------- | ------- | --------------------------------------------------- |
+| GET    | /                             | Bearer  | List the caller's generations                       |
+| POST   | /export                       | Bearer  | Export an answer as a file, no model (ADR-105)      |
+| GET    | /:id                          | Bearer  | One generation with its assets (owner only)         |
+| POST   | /:id/retry                    | Bearer  | Retry a failed generation (owner only)              |
+| SSE    | /:id/events                   | owner   | Status stream; refused before it opens for others   |
+| GET    | /:id/assets/:assetId/download | owner   | Streamed download (ADR-104)                         |
+| POST   | /:id/rebuild                  | owner   | Rebuild expired bytes from the saved text (ADR-104) |
+| POST   | /internal/…/generate          | service | chat-service queues a model-written file            |
+| GET    | /internal/…/:id, …/:id/events | service | chat-service polls and streams                      |
+| POST   | /internal/…/:id/retry         | service | chat-service retries                                |
 
 ## Events
 
@@ -133,3 +142,24 @@ Each format adapter includes a content extraction strategy for parsing LLM outpu
 
 The expiry sweep runs every 5 min and deletes bytes via file-service
 `DELETE /api/v1/internal/files/:id?userId=` (service token, owner-checked).
+
+## Answer export and request bounds (ADR-105, 2026-09-19)
+
+| Method | Route                             | Auth   | Notes                                                                                            |
+| ------ | --------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| POST   | `/api/v1/file-generations/export` | Bearer | `{content ≤ 200k, format: FileFormat, title? ≤ 120}` → `{generationId, status}`; no model called |
+
+An export is a generation with `provider: 'EXPORT'`, `model: 'none'`. It costs
+no tokens and downloads through the ADR-104 link. The chat builds `.md` and
+`.txt` itself; only HTML, DOCX and PDF come here.
+
+| Bound                               | Value     | Why                                                                                              |
+| ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------ |
+| `GENERATE_MAX_PROMPT_CHARS`         | 100,000   | the prompt is the user's whole chat message; chat allows 100k (it was 4,000)                     |
+| `GENERATE_MAX_CONTENT_CHARS`        | 1,000,000 | model-written content; a file writer answers in at most 32k tokens                               |
+| `EXPORT_MAX_CONTENT_CHARS`          | 200,000   | one chat answer                                                                                  |
+| `JSON_BODY_LIMIT_BYTES` (`main.ts`) | 8 MB      | holds every bound above at 6 bytes per char; `http.constants.spec.ts` fails if it stops doing so |
+
+`GlobalExceptionFilter` passes body-parser's 400, 413 and 415 errors through
+(`isClientHttpError`: an `Error` with `expose: true` and a 4xx `status`).
+Everything else stays a 500 with a generic message.

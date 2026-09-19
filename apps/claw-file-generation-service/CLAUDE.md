@@ -121,6 +121,17 @@ After implementing any change to this service:
 - **Schema changes need a migration.** This service ran without migrations
   until 2026-09-19, and production had no tables at all.
 
+## Answer export and request bounds (ADR-105)
+
+- `POST /file-generations/export` turns an answer the user already has into
+  HTML, DOCX or PDF. It records `provider: 'EXPORT'` and calls no model.
+- **The JSON body limit is `JSON_BODY_LIMIT_BYTES` (8 MB), not Express's
+  100 kB.** Raising a DTO `.max()` means checking `http.constants.spec.ts`
+  still passes (rules/11 §8). Under the old default, every file over about
+  100k characters failed as a 500.
+- The internal `generate` prompt must accept chat's whole message (100k). A
+  `format` is `z.nativeEnum(FileFormat)` everywhere.
+
 ## Access (ADR-103)
 
 - Every user route is owner-scoped:
