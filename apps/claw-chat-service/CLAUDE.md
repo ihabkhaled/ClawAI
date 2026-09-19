@@ -671,6 +671,15 @@ service can tell its own user why the answer is short.
 - `reserveFeature` fails open when auth-service is unreachable. That is
   deliberate: a plan limit is a business rule, not security.
 
+## What a file writer sees (ADR-111)
+
+- CSV and JSON writers get no INSTRUCTION memories (`fileWriterMemories`,
+  `DATA_FILE_FORMATS`). A saved "end every reply with X" put X after the data
+  in 33 of 37 broken CSVs.
+- CSV is asked for as a Markdown table. file-generation quotes the cells.
+- Measure any change to `fileWriterSystemPrompt` with
+  `skills/run-the-file-model-matrix.md`.
+
 ## ThreadOrigin
 
 `ChatThread.origin` separates the VS Code coding agent's runs from the user's

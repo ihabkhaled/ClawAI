@@ -1,4 +1,6 @@
-import { vi, type Mock } from 'vitest';
+import { validateHeaderValue } from 'node:http';
+
+import { type Mock, vi } from 'vitest';
 // Slice D backend 3 — lifecycle event publisher unit tests.
 //
 // Verifies that FilesService and FileRetentionSweeperManager publish the
@@ -38,7 +40,7 @@ vi.mock('../../../../app/config/app.config', () => ({
   },
 }));
 
-const { deleteFile: mockedDeleteFile } = await vi.importMock('../../../../common/utilities') as {
+const { deleteFile: mockedDeleteFile } = (await vi.importMock('../../../../common/utilities')) as {
   deleteFile: Mock;
 };
 
@@ -213,6 +215,48 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
       };
       return res as Response;
     };
+
+    // The header res.set() was given; unknown first, because Express types
+    // set() as taking a field name, not the object this service passes.
+    const sentHeader = (res: Response, name: string): string => {
+      const first: unknown = vi.mocked(res.set).mock.calls[0]?.[0];
+      if (typeof first !== 'object' || first === null) return '';
+      const value: unknown = (first as Record<string, unknown>)[name];
+      return typeof value === 'string' ? value : '';
+    };
+
+    // A non-Latin title used to go raw into `filename="…"`; Node threw
+    // ERR_INVALID_CHAR and every such AI file downloaded as a 500 (F4 matrix).
+    it.each([
+      ['downloadFile', 'Home Wi‑Fi Guide.pdf'],
+      ['downloadFile', 'تقرير الربع.pdf'],
+      ['downloadFilePublic', '季度报告.pdf'],
+    ])('%s sends a legal Content-Disposition for %j', async (method, filename) => {
+      filesRepo.findById.mockResolvedValue(
+        buildFile({ id: 'file-u', userId: 'user-1', filename, mimeType: 'application/pdf' }),
+      );
+      const res = buildResponse();
+
+      await (method === 'downloadFile'
+        ? service.downloadFile('file-u', 'user-1', res)
+        : service.downloadFilePublic('file-u', res));
+
+      const header = sentHeader(res, 'Content-Disposition');
+      expect(() => validateHeaderValue('Content-Disposition', header)).not.toThrow();
+      expect(header).toContain(`filename*=UTF-8''${encodeURIComponent(filename)}`);
+      expect(header).toMatch(/^attachment; /);
+    });
+
+    it('shows an image inline', async () => {
+      filesRepo.findById.mockResolvedValue(
+        buildFile({ id: 'file-i', userId: 'user-1', filename: 'صورة.png', mimeType: 'image/png' }),
+      );
+      const res = buildResponse();
+
+      await service.downloadFile('file-i', 'user-1', res);
+
+      expect(sentHeader(res, 'Content-Disposition')).toMatch(/^inline; filename="download\.png"; /);
+    });
 
     it('publishes FILE_DOWNLOADED with downloadMethod=BROWSER and the authenticated userId', async () => {
       const file = buildFile({ id: 'file-dl', userId: 'user-1' });

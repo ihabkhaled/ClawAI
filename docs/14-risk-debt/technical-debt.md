@@ -55,6 +55,14 @@ Last updated: 2026-09-10
 
 ### TD-032: 16 services report a bad request body as a 500 (2026-09-19)
 
+- **Status**: the 500s are FIXED (2026-09-19). The body-limit check under
+  "Also check" is still open.
+  - All 17 filters now call `isClientHttpError` from `@claw/shared-utilities`,
+    and file-generation's local copy is gone.
+  - `tools/__tests__/exception-filter-client-errors.test.mjs` fails if any
+    filter drops the branch or goes back to a copy.
+  - Each service has `app/filters/__tests__/client-http-error.filter.spec.ts`.
+  - The rule is [rules/18 §8](../../rules/18-error-handling-and-reliability.md).
 - **Severity**: Low · **Effort**: Low · **Priority**: Planned (one batch)
 - **Detail**: Every service's `GlobalExceptionFilter` maps anything that is not
   an `HttpException` to 500. Body-parser throws plain `http-errors` for a

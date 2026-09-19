@@ -208,6 +208,7 @@ import type { FileContentCandidate } from '../types/file-writer.types';
 import {
   detectRequestedFileFormat,
   fileLimitResponse,
+  fileWriterMemories,
   fileWriterSystemPrompt,
   unwrapWholeCodeFence,
 } from '../utilities/file-format.utility';
@@ -4659,6 +4660,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const fileContext: AssembledContext = {
       ...context,
       systemPrompt: fileWriterSystemPrompt(format),
+      memories: fileWriterMemories(context.memories, format),
     };
     const contentCandidates = await this.buildFileContentProviderCandidates();
     let contentResponse: LlmResponse | null = null;

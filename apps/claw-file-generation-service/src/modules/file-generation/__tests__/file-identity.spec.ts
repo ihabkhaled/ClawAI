@@ -8,6 +8,25 @@ import {
   titleFromPrompt,
 } from '../utilities/file-identity.utility';
 
+// file-service refuses ".." and ".exe"-style segments anywhere in a name, so
+// such a title used to fail the whole file with a 422 (F5 pentest).
+describe('filenameBase: names file-service accepts', () => {
+  it.each([
+    ['Loading... please wait', 'Loading please wait'],
+    ['How to run setup.exe safely', 'How to run setup exe safely'],
+    ['Evil.EXE.txt', 'Evil EXE.txt'],
+    ['a ; filename=evil.exe X-Injected 1', 'a ; filename=evil exe X-Injected 1'],
+    ['Version 1.2 notes', 'Version 1.2 notes'],
+    ['Node.js guide', 'Node.js guide'],
+  ])('%j becomes %j', (title, base) => {
+    const name = filenameBase(title);
+    expect(name).toBe(base);
+    expect(`${name}.txt`).not.toMatch(
+      /\.\.|\.(exe|bat|cmd|com|scr|pif|vbs|vbe|wsf|wsh|msi|dll|sys)\.?/i,
+    );
+  });
+});
+
 describe('deriveFileIdentity', () => {
   it("names a file by the AI's own title and describes it by its first paragraph", () => {
     const identity = deriveFileIdentity(

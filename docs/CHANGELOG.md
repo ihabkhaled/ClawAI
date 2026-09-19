@@ -55,6 +55,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **An AI file with a non-Latin title could not be downloaded.** Arabic,
+  Chinese and Japanese titles, and even "Wi‑Fi" with its typographic hyphen,
+  came back as a server error. Every download now keeps the real name.
+- **A saved instruction such as "always end with …" was added to files**,
+  which broke CSV tables and JSON. CSV and JSON files no longer see such
+  instructions. Documents still do.
+- **AI-written CSV files had broken rows** when a cell contained a comma. The
+  file is now built from a table, and every cell is quoted properly.
+- **A file whose title contained a quote, "..." or ".exe" failed to save.**
+  Titles are now cleaned into a safe filename. Asking for someone else's file
+  now answers "not found" (404).
+- **Sending a malformed or oversized request body now gets a 400 or 413**,
+  not "Internal server error", from every service.
 - **"Make me a spreadsheet" made a text file**, and a request mentioning a
   password made a Word file. Formats are now recognised by whole words.
 - **An AI-written file with a code sample lost everything but the sample.**

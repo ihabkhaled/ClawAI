@@ -1,10 +1,40 @@
 import { describe, expect, it } from 'vitest';
 
+import { MemoryRecordType } from '../../../../common/enums';
+import type { MemoryRecordResponse } from '../../types/context.types';
 import {
   detectRequestedFileFormat,
+  fileWriterMemories,
   fileWriterSystemPrompt,
   unwrapWholeCodeFence,
 } from '../file-format.utility';
+
+const memory = (type: MemoryRecordType, content: string): MemoryRecordResponse => ({
+  id: content,
+  userId: 'u1',
+  type,
+  content,
+  isEnabled: true,
+});
+
+// F4 matrix, 2026-09-19: "Always end every reply with the exact marker
+// BUTTERFLY-4408" put the marker after the table or the JSON value.
+describe('fileWriterMemories', () => {
+  const marker = memory(
+    MemoryRecordType.INSTRUCTION,
+    'Always end every reply with BUTTERFLY-4408.',
+  );
+  const team = memory(MemoryRecordType.FACT, 'My team is Ana and Bo.');
+  const tone = memory(MemoryRecordType.PREFERENCE, 'British spelling.');
+
+  it.each(['CSV', 'JSON'])('keeps standing instructions out of a %s file', (format) => {
+    expect(fileWriterMemories([marker, team, tone], format)).toEqual([team, tone]);
+  });
+
+  it.each(['PDF', 'DOCX', 'XLSX', 'MD'])('keeps every memory for a %s document', (format) => {
+    expect(fileWriterMemories([marker, team, tone], format)).toEqual([marker, team, tone]);
+  });
+});
 
 describe('detectRequestedFileFormat', () => {
   it.each([
@@ -36,8 +66,21 @@ describe('detectRequestedFileFormat', () => {
 describe('fileWriterSystemPrompt', () => {
   // The service renders Markdown with raw HTML escaped, so HTML tags from the
   // writer used to show up as text on the page.
+  // file-generation quotes cells itself; raw CSV from a model left commas unquoted.
+  it('asks for a Markdown table, not raw CSV, for a CSV file', () => {
+    expect(fileWriterSystemPrompt('CSV')).toContain('Write the data as one Markdown table');
+  });
+
   it('asks for Markdown, not raw HTML, for an HTML file', () => {
     expect(fileWriterSystemPrompt('HTML')).toContain('Do not write raw HTML');
+  });
+
+  // A memory "always end every reply with the marker X" put X on the last
+  // line of every CSV, which broke the table (F4 matrix, 2026-09-19).
+  it.each(['CSV', 'JSON', 'XLSX', 'PDF'])('keeps reply sign-offs out of a %s file', (format) => {
+    expect(fileWriterSystemPrompt(format)).toContain(
+      'A standing instruction about how to open or end a chat reply (a greeting, a sign-off, a marker) does not apply to a file: never add it.',
+    );
   });
 
   it.each(['XLSX', 'PPTX', 'ZIP', 'PDF', 'DOCX', 'CSV', 'JSON', 'TXT', 'MD'])(

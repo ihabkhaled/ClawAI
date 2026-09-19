@@ -5,10 +5,11 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from "@nestjs/common";
-import { Response } from "express";
-import { BusinessException } from "../../common/errors";
-import { ErrorResponseBody } from "./types/error-response-body.type";
+} from '@nestjs/common';
+import { isClientHttpError } from '@claw/shared-utilities';
+import { Response } from 'express';
+import { BusinessException } from '../../common/errors';
+import { ErrorResponseBody } from './types/error-response-body.type';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -19,32 +20,37 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = "Internal server error";
+    let message = 'Internal server error';
     let code: string | undefined;
     let errors: unknown[] | undefined;
 
     if (exception instanceof BusinessException) {
       status = exception.getStatus();
       const exResponse = exception.getResponse();
-      if (typeof exResponse === "object" && exResponse !== null) {
+      if (typeof exResponse === 'object' && exResponse !== null) {
         const responseObj = exResponse as Record<string, unknown>;
-        message = (responseObj["message"] as string) ?? message;
-        code = responseObj["code"] as string | undefined;
+        message = (responseObj['message'] as string) ?? message;
+        code = responseObj['code'] as string | undefined;
       }
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exResponse = exception.getResponse();
-      if (typeof exResponse === "object" && exResponse !== null) {
+      if (typeof exResponse === 'object' && exResponse !== null) {
         const responseObj = exResponse as Record<string, unknown>;
-        message = (responseObj["message"] as string) ?? exception.message;
-        errors = responseObj["errors"] as unknown[] | undefined;
+        message = (responseObj['message'] as string) ?? exception.message;
+        errors = responseObj['errors'] as unknown[] | undefined;
       } else {
         message = exception.message;
       }
+    } else if (isClientHttpError(exception)) {
+      // Thrown by body-parser before the request reaches Nest: an oversized or
+      // malformed body is the caller's mistake, not a server fault (TD-032).
+      status = exception.status;
+      message = exception.message;
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {
-      this.logger.error("Unknown exception thrown", String(exception));
+      this.logger.error('Unknown exception thrown', String(exception));
     }
 
     const body: ErrorResponseBody = {

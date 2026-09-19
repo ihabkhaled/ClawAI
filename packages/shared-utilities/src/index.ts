@@ -14,3 +14,5 @@ export * from './speed';
 export * from './billing-period';
 export * from './url-detection';
 export * from './model-context-window';
+export * from './client-http-error';
+export * from './content-disposition';

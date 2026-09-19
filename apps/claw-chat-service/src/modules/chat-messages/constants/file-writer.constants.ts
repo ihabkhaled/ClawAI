@@ -45,7 +45,7 @@ export const DEFAULT_FILE_FORMAT = 'TXT';
 export const WHOLE_CODE_FENCE = /^```[\w+#.-]*\n([\s\S]*?)\n?```$/u;
 
 export const FILE_WRITER_BASE_PROMPT =
-  'You write the content of a {FORMAT} file the user asked for. Output only what goes inside the file: no preamble, no explanation, no "here is your file".';
+  'You write the content of a {FORMAT} file the user asked for. Output only what goes inside the file: no preamble, no explanation, no "here is your file". A standing instruction about how to open or end a chat reply (a greeting, a sign-off, a marker) does not apply to a file: never add it.';
 
 /**
  * How the file writer should shape its output for each format. Every rich
@@ -59,7 +59,10 @@ export const FILE_WRITER_FORMAT_INSTRUCTIONS: Readonly<Record<string, string>> =
   MD: 'Write GitHub-flavoured Markdown.',
   PPTX: 'Write Markdown: one ## heading per slide with at most 6 short bullets each. A table or code block gets its own slide.',
   XLSX: 'Write the data as Markdown tables. Put a ## heading naming each sheet directly above its table. Keep number cells plain: no thousands separators or currency symbols.',
-  CSV: 'Output CSV only: a header row, then data rows, comma-separated, quoted where needed. No Markdown.',
+  // A Markdown table, not raw CSV: file-generation quotes every cell itself.
+  // Asked for raw CSV, models left commas unquoted ("time,location,attire")
+  // and broke the row in 4 of 1,500 runs (F4 matrix, 2026-09-19).
+  CSV: 'Write the data as one Markdown table: a header row, then the data rows. No other text.',
   JSON: 'Output one valid JSON value only. No Markdown fences.',
   TXT: 'Output plain text without Markdown syntax.',
   ZIP: "Write Markdown. Put each file in its own fenced code block with a language, and write the file's relative path alone on the line directly above its block (for example `src/index.ts`). Tables become CSV files.",
@@ -82,6 +85,13 @@ export const NAMED_FILE_FORMATS: readonly string[] = [
   'XLSX',
   'ZIP',
 ];
+
+/**
+ * Formats that are pure data. Their writer gets no INSTRUCTION memories: a
+ * saved "always end every reply with X" put X after the table or the JSON in
+ * 33 of 37 broken CSVs and every broken JSON of the F4 matrix (2026-09-19).
+ */
+export const DATA_FILE_FORMATS: readonly string[] = ['CSV', 'JSON'];
 
 /** English text of the file-limit reply; the chat shows a translated notice (ADR-110). */
 export const FILE_LIMIT_FALLBACK_TEXT =

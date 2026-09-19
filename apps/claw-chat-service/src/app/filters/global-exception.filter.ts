@@ -6,10 +6,10 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { isClientHttpError } from '@claw/shared-utilities';
 import { Response } from 'express';
 import { BusinessException } from '../../common/errors';
 import { ErrorResponseBody } from './types/error-response-body.type';
-import type { MiddlewareHttpError } from './types/middleware-http-error.type';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -42,20 +42,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else {
         message = exception.message;
       }
+    } else if (isClientHttpError(exception)) {
+      // Thrown by body-parser before the request reaches Nest: an oversized or
+      // malformed body is the caller's mistake, not a server fault (TD-032).
+      status = exception.status;
+      message = exception.message;
     } else if (exception instanceof Error) {
-      const middlewareError = exception as MiddlewareHttpError;
-      const middlewareStatus = middlewareError.statusCode ?? middlewareError.status;
-      if (
-        typeof middlewareStatus === 'number' &&
-        middlewareStatus >= 400 &&
-        middlewareStatus < 600
-      ) {
-        status = middlewareStatus;
-        message = exception.message;
-        code = middlewareError.type;
-      } else {
-        this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
-      }
+      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {
       this.logger.error('Unknown exception thrown', String(exception));
     }

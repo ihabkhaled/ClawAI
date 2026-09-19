@@ -1,4 +1,5 @@
 import {
+  DATA_FILE_FORMATS,
   DEFAULT_FILE_FORMAT,
   FILE_FORMAT_KEYWORDS,
   FILE_FORMAT_TARGET_PREFIX,
@@ -10,6 +11,8 @@ import {
   WHOLE_CODE_FENCE,
 } from '../constants/file-writer.constants';
 import { FILE_GENERATION_PROVIDER } from '../../../common/constants';
+import { MemoryRecordType } from '../../../common/enums';
+import type { MemoryRecordResponse } from '../types/context.types';
 import type { LlmResponse } from '../types/execution.types';
 import type { FormatMention } from '../types/file-writer.types';
 
@@ -59,6 +62,22 @@ export function fileWriterSystemPrompt(format: string): string {
  * a code sample became just that sample. A zip keeps its fences: they are the
  * files.
  */
+/**
+ * The memories a file writer sees. A data file (CSV, JSON) drops standing
+ * INSTRUCTION memories: they are about chat replies, and a sign-off or marker
+ * written after a table or a JSON value breaks the file. Facts and
+ * preferences stay, so "my team is Ana and Bo" can still fill an owner column.
+ */
+export function fileWriterMemories(
+  memories: readonly MemoryRecordResponse[],
+  format: string,
+): MemoryRecordResponse[] {
+  if (!DATA_FILE_FORMATS.includes(format)) {
+    return [...memories];
+  }
+  return memories.filter((memory) => memory.type !== MemoryRecordType.INSTRUCTION);
+}
+
 export function unwrapWholeCodeFence(content: string, format: string): string {
   if (format === 'ZIP') {
     return content;

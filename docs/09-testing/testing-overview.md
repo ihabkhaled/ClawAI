@@ -443,3 +443,12 @@ Use before releases. Every item must be checked.
 - [ ] All new text uses i18n (no hardcoded English strings)
 - [ ] All form controls use shadcn/ui (no raw `<input>`, `<select>`, `<textarea>`)
 - [ ] Loading, empty, error, and success states all render correctly per page
+
+## Live quality labs (qa-lab)
+
+- **File-model matrix:** every model × format × N real files, checked as that
+  format. The last run is [file-model-matrix.md](file-model-matrix.md).
+- **File pentest:** 31 attacks on the file surfaces.
+
+Both runbooks are in
+[`skills/run-the-file-model-matrix.md`](../../skills/run-the-file-model-matrix.md).

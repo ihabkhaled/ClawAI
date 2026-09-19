@@ -19,7 +19,7 @@ import {
   FILE_ASSET_SWEEP_INTERVAL_MS,
   FILE_ASSET_TTL_MS,
 } from '../constants/file-asset.constants';
-import { deriveFileIdentity } from '../utilities/file-identity.utility';
+import { cleanTitle, deriveFileIdentity, filenameBase } from '../utilities/file-identity.utility';
 import {
   documentTitleFromFilename,
   fileAssetDownloadPath,
@@ -144,8 +144,13 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
   async enqueueGeneration(params: GenerateFileParams): Promise<FileGenerationRecord> {
     const identity = deriveFileIdentity(params.content, params.prompt, params.format);
     const extension = FORMAT_TO_EXTENSION[params.format] ?? 'txt';
-    const filename = params.filename ?? `${identity.filenameBase}.${extension}`;
-    const title = params.filename ?? identity.title;
+    // An export's title is the user's; it is cleaned like any other name.
+    const requested = params.filename === undefined ? '' : cleanTitle(params.filename);
+    const title = requested === '' ? identity.title : requested;
+    const filename =
+      requested === ''
+        ? `${identity.filenameBase}.${extension}`
+        : `${filenameBase(requested)}.${extension}`;
 
     const record = await this.repository.create({
       userId: params.userId,
@@ -185,7 +190,11 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
   async getById(id: string): Promise<FileGenerationRecord> {
     const record = await this.repository.findById(id);
     if (!record) {
-      throw new BusinessException('File generation not found', 'FILE_GENERATION_NOT_FOUND');
+      throw new BusinessException(
+        'File generation not found',
+        'FILE_GENERATION_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
     }
     return record;
   }
@@ -193,7 +202,11 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
   async getByIdForUser(id: string, userId: string): Promise<FileGenerationRecord> {
     const record = await this.getById(id);
     if (record.userId !== userId) {
-      throw new BusinessException('File generation not found', 'FILE_GENERATION_NOT_FOUND');
+      throw new BusinessException(
+        'File generation not found',
+        'FILE_GENERATION_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
     }
     return record;
   }

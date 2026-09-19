@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { isClientHttpError } from '@claw/shared-utilities';
 import { Response } from 'express';
 import { BusinessException } from '../../common/errors';
 import { ErrorResponseBody } from './types/error-response-body.type';
@@ -41,6 +42,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else {
         message = exception.message;
       }
+    } else if (isClientHttpError(exception)) {
+      // Thrown by body-parser before the request reaches Nest: an oversized or
+      // malformed body is the caller's mistake, not a server fault (TD-032).
+      status = exception.status;
+      message = exception.message;
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {

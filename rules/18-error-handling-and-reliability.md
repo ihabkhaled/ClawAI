@@ -30,6 +30,12 @@ poll/stream/mutation paths.
 6. **Poll hooks detect terminal error.** A poll hook stops when it sees
    `meta?.error === true`, not only on success.
 7. **Fallback chains degrade explicitly** and log a `warn` at each fallback hop.
+8. **A caller's mistake is never a 500.** Express middleware (body-parser)
+   throws plain `http-errors` for a malformed body (400), an oversized body
+   (413) and a bad charset (415), before Nest sees the request. Every
+   `GlobalExceptionFilter` returns those through the shared `isClientHttpError`
+   from `@claw/shared-utilities`, not a local copy. Enforced by
+   `tools/__tests__/exception-filter-client-errors.test.mjs` (TD-032).
 
 ## Prohibited patterns
 
@@ -37,6 +43,8 @@ poll/stream/mutation paths.
 - A background failure that emits SSE but stores no DB record (UI spins forever).
 - An unbounded retry/poll loop with no ceiling.
 - Throwing a plain `Error`/string for a domain condition instead of a typed exception.
+- An exception filter whose last branch turns every non-`HttpException` into a
+  500, including body-parser's 4xx.
 
 ## Correct pattern
 

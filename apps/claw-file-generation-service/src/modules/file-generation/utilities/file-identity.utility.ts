@@ -2,6 +2,8 @@ import {
   CONTROL_CHARS,
   DEFAULT_FILE_TITLE,
   DEFAULT_FILENAME_BASE,
+  DOT_RUN,
+  EXECUTABLE_SEGMENT,
   FILE_DESCRIPTION_MAX_CHARS,
   FILE_TITLE_MAX_CHARS,
   FILENAME_BASE_MAX_CHARS,
@@ -52,12 +54,25 @@ export function deriveFileIdentity(content: string, prompt: string, format: stri
 export function filenameBase(title: string): string {
   const base = title
     .replaceAll(UNSAFE_FILENAME_CHARS, ' ')
+    .replaceAll(DOT_RUN, ' ')
+    .replaceAll(EXECUTABLE_SEGMENT, ' $1')
     .replaceAll(/\s+/gu, ' ')
     .trim()
     .replaceAll(/^[. ]+|[. ]+$/gu, '')
     .slice(0, FILENAME_BASE_MAX_CHARS)
     .trim();
   return base.length > 0 ? base : DEFAULT_FILENAME_BASE;
+}
+
+/**
+ * A title a user typed (an export), made safe to store and show: control
+ * characters and line breaks become spaces, a trailing ".pdf" goes, and it is
+ * clipped. A raw title such as 'a"; filename=x
+X-Injected: 1' used to be
+ * stored as the filename and failed the upload with a 422 (F5 pentest).
+ */
+export function cleanTitle(text: string): string {
+  return clip(humanTitle(plain(text)), FILE_TITLE_MAX_CHARS);
 }
 
 /** The request's first meaningful words, as a title. */

@@ -39,7 +39,7 @@
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 13,
+      "testFiles": 14,
       "testRunner": "vitest"
     },
     {
@@ -63,7 +63,7 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 21,
+      "testFiles": 22,
       "testRunner": "vitest"
     },
     {
@@ -109,7 +109,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 99,
+      "testFiles": 100,
       "testRunner": "vitest"
     },
     {
@@ -137,7 +137,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 156,
+      "testFiles": 157,
       "testRunner": "vitest"
     },
     {
@@ -157,7 +157,7 @@
       "port": null,
       "portSource": "env-only (no constant)",
       "prismaModels": [],
-      "testFiles": 6,
+      "testFiles": 7,
       "testRunner": "vitest"
     },
     {
@@ -181,7 +181,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 26,
+      "testFiles": 27,
       "testRunner": "vitest"
     },
     {
@@ -225,7 +225,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 20,
+      "testFiles": 21,
       "testRunner": "vitest"
     },
     {
@@ -263,7 +263,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 12,
+      "testFiles": 13,
       "testRunner": "vitest"
     },
     {
@@ -290,7 +290,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 17,
+      "testFiles": 18,
       "testRunner": "vitest"
     },
     {
@@ -322,7 +322,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 14,
+      "testFiles": 15,
       "testRunner": "vitest"
     },
     {
@@ -350,7 +350,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 18,
+      "testFiles": 19,
       "testRunner": "vitest"
     },
     {
@@ -391,7 +391,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 110,
+      "testFiles": 111,
       "testRunner": "vitest"
     },
     {
@@ -417,7 +417,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 31,
+      "testFiles": 32,
       "testRunner": "vitest"
     },
     {
@@ -462,7 +462,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 104,
+      "testFiles": 105,
       "testRunner": "vitest"
     },
     {
@@ -483,7 +483,7 @@
       "port": null,
       "portSource": "env-only (no constant)",
       "prismaModels": [],
-      "testFiles": 10,
+      "testFiles": 11,
       "testRunner": "vitest"
     },
     {
@@ -532,7 +532,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 96,
+      "testFiles": 97,
       "testRunner": "vitest"
     }
   ]

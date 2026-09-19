@@ -259,12 +259,14 @@ Last updated: 2026-09-10
 
 ## 7. Error Handling
 
-### TD-032: 16 services report a bad request body as a 500
+### TD-032: 16 services report a bad request body as a 500 — FIXED (2026-09-19)
 
 - **Added**: 2026-09-19 · **Severity**: Low · **Effort**: Low
 - Body-parser's 400/413/415 errors are plain `http-errors`, not `HttpException`,
-  so every `GlobalExceptionFilter` except file-generation's returns 500.
-  The full entry is in [`technical-debt.md`](technical-debt.md) TD-032.
+  so every `GlobalExceptionFilter` except file-generation's returned 500.
+- **Fixed**: all 17 filters use the shared `isClientHttpError`. What remains
+  is the JSON body limit check. The full entry is in
+  [`technical-debt.md`](technical-debt.md) TD-032.
 
 ### TD-033: A revoked session's access token works until it expires
 
@@ -280,10 +282,10 @@ Last updated: 2026-09-10
 
 ## Priority Matrix
 
-| Priority          | Items                                                                                          | Action                                     |
-| ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Immediate**     | TD-030, TD-017                                                                                 | Chat pipeline programme; automated backups |
-| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                                 | Schedule for next iteration                |
-| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032, TD-033, TD-035 | Add to backlog                             |
-| **Conditional**   | TD-009                                                                                         | Implement with TD-008                      |
-| **Opportunistic** | TD-004, TD-018, TD-019                                                                         | Fix when touching related code             |
+| Priority          | Items                                                                                                             | Action                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Immediate**     | TD-030, TD-017                                                                                                    | Chat pipeline programme; automated backups |
+| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                                                    | Schedule for next iteration                |
+| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032 (body limits only), TD-033, TD-035 | Add to backlog                             |
+| **Conditional**   | TD-009                                                                                                            | Implement with TD-008                      |
+| **Opportunistic** | TD-004, TD-018, TD-019                                                                                            | Fix when touching related code             |

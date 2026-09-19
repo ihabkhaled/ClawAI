@@ -1,6 +1,7 @@
 import { forwardRef, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type Response } from 'express';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { contentDispositionHeader, ContentDispositionType } from '@claw/shared-utilities';
 import {
   EventPattern,
   type FileDeletedPayload,
@@ -416,11 +417,11 @@ export class FilesService {
 
     const buffer = readFile(file.storagePath);
     const isImage = file.mimeType.startsWith('image/');
-    const disposition = isImage ? 'inline' : 'attachment';
+    const disposition = isImage ? ContentDispositionType.INLINE : ContentDispositionType.ATTACHMENT;
 
     res.set({
       'Content-Type': file.mimeType,
-      'Content-Disposition': `${disposition}; filename="${file.filename}"`,
+      'Content-Disposition': contentDispositionHeader(disposition, file.filename),
       'Content-Length': String(buffer.length),
       'Cache-Control': 'private, max-age=3600',
     });
@@ -440,11 +441,11 @@ export class FilesService {
 
     const buffer = readFile(file.storagePath);
     const isImage = file.mimeType.startsWith('image/');
-    const disposition = isImage ? 'inline' : 'attachment';
+    const disposition = isImage ? ContentDispositionType.INLINE : ContentDispositionType.ATTACHMENT;
 
     res.set({
       'Content-Type': file.mimeType,
-      'Content-Disposition': `${disposition}; filename="${file.filename}"`,
+      'Content-Disposition': contentDispositionHeader(disposition, file.filename),
       'Content-Length': String(buffer.length),
       'Cache-Control': 'public, max-age=86400',
     });

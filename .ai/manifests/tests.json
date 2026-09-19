@@ -22,31 +22,31 @@
     },
     "@claw/shared-utilities": {
       "runner": "vitest",
-      "testFiles": 38
+      "testFiles": 40
     },
     "claw-agent-service": {
       "runner": "vitest",
-      "testFiles": 13
+      "testFiles": 14
     },
     "claw-audit-service": {
       "runner": "vitest",
-      "testFiles": 21
+      "testFiles": 22
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 99
+      "testFiles": 100
     },
     "claw-chat-service": {
       "runner": "vitest",
-      "testFiles": 156
+      "testFiles": 157
     },
     "claw-client-logs-service": {
       "runner": "vitest",
-      "testFiles": 6
+      "testFiles": 7
     },
     "claw-connector-service": {
       "runner": "vitest",
-      "testFiles": 26
+      "testFiles": 27
     },
     "claw-file-generation-service": {
       "runner": "vitest",
@@ -54,7 +54,7 @@
     },
     "claw-file-service": {
       "runner": "vitest",
-      "testFiles": 20
+      "testFiles": 21
     },
     "claw-frontend": {
       "runner": "vitest",
@@ -66,41 +66,41 @@
     },
     "claw-image-service": {
       "runner": "vitest",
-      "testFiles": 12
+      "testFiles": 13
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
-      "testFiles": 17
+      "testFiles": 18
     },
     "claw-memory-service": {
       "runner": "vitest",
-      "testFiles": 14
+      "testFiles": 15
     },
     "claw-ollama-service": {
       "runner": "vitest",
-      "testFiles": 18
+      "testFiles": 19
     },
     "claw-payment-service": {
       "runner": "vitest",
-      "testFiles": 110
+      "testFiles": 111
     },
     "claw-research-service": {
       "runner": "vitest",
-      "testFiles": 31
+      "testFiles": 32
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 104
+      "testFiles": 105
     },
     "claw-server-logs-service": {
       "runner": "vitest",
-      "testFiles": 10
+      "testFiles": 11
     },
     "claw-workspace-service": {
       "runner": "vitest",
-      "testFiles": 96
+      "testFiles": 97
     }
   },
   "generated": true,
-  "total": 1311
+  "total": 1329
 }

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { isClientHttpError } from '@claw/shared-utilities';
 import { type Response } from 'express';
 import { BusinessException } from '../../common/errors/business.exception';
 import type { ErrorResponseBody } from './types/error-response-body.type';
@@ -45,25 +46,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else {
         message = exception.message;
       }
+    } else if (isClientHttpError(exception)) {
+      // Thrown by body-parser before the request reaches Nest: an oversized or
+      // malformed body is the caller's mistake, not a server fault (TD-032).
+      status = exception.status;
+      message = exception.message;
     } else if (exception instanceof Error) {
-      // Express body-parser PayloadTooLargeError (and similar middleware
-      // errors) carry HTTP status info as a `status`/`statusCode` property.
-      // Without this branch they bubble up as 500 — masking real 413s.
-      const errLike = exception as Error & {
-        status?: number;
-        statusCode?: number;
-        type?: string;
-      };
-      const middlewareStatus = errLike.statusCode ?? errLike.status;
-      if (typeof middlewareStatus === 'number' && middlewareStatus >= 400 && middlewareStatus < 600) {
-        status = middlewareStatus;
-        message = exception.message;
-        if (typeof errLike.type === 'string') {
-          code = errLike.type;
-        }
-      } else {
-        this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
-      }
+      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {
       this.logger.error('Unknown exception thrown', String(exception));
     }

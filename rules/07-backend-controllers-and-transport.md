@@ -24,6 +24,13 @@ logic is testable without HTTP, and errors are handled in exactly one place.
    `@SkipThrottle()`, exclude from pino autoLogging, and require
    `proxy_buffering off` in nginx. Never use `EventSource` (it can't set auth headers).
 7. **API routes are prefixed `api/v1`** and mapped in `infra/nginx/nginx.conf`.
+8. **A filename goes into `Content-Disposition` only through
+   `contentDispositionHeader(type, filename)`** from `@claw/shared-utilities`.
+   It writes the real name as RFC 5987 `filename*` and a printable-ASCII
+   `filename=` fallback. Node refuses header bytes above U+00FF, so a raw
+   `filename="${name}"` made every Arabic, Chinese or "Wi‑Fi" titled download
+   a 500 (found by the F4 file matrix, 2026-09-19). Enforced by
+   `tools/__tests__/content-disposition-helper.test.mjs`.
 
 ## Prohibited patterns
 
@@ -31,6 +38,8 @@ logic is testable without HTTP, and errors are handled in exactly one place.
 - More than one service call per endpoint, or any logic between calls.
 - Returning a raw Prisma model (leaks internal fields) — services map to DTOs.
 - JWTs in URL query params (they leak to logs/history/Referer).
+- ``'Content-Disposition': `attachment; filename="${name}"` `` with a name that is
+  not ASCII by construction.
 
 ## Correct pattern
 

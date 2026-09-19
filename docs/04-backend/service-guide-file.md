@@ -239,3 +239,16 @@ Failure modes:
 
 `DELETE /api/v1/internal/files/:id?userId=`: service token, owner-checked via
 `FilesService.deleteFile`. file-generation uses it to expire generated files.
+
+## Download headers (2026-09-19)
+
+`downloadFile` and `downloadFilePublic` build `Content-Disposition` with
+`contentDispositionHeader` from `@claw/shared-utilities` (rules/07 §8):
+
+- `filename*=UTF-8''…` carries the real name.
+- `filename="…"` is a printable-ASCII fallback. Accents are dropped, and a
+  name with no ASCII letters becomes `download.<ext>`.
+
+The old `filename="${file.filename}"` threw ERR_INVALID_CHAR for any
+character above U+00FF, so every AI file with an Arabic, Chinese or "Wi‑Fi"
+title downloaded as a 500. The F4 file-model matrix found it.

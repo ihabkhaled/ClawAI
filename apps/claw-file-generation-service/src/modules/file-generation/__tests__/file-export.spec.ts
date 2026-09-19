@@ -87,8 +87,60 @@ describe('FileGenerationService.exportForUser', () => {
         format: 'DOCX',
         provider: 'EXPORT',
         model: 'none',
-        filename: 'Plan',
+        filename: 'Plan.docx',
+        title: 'Plan',
       }),
     );
+  });
+
+  // F5 pentest: the raw title was stored as the filename, and file-service
+  // refused the upload (422), so the export failed.
+  it.each([
+    [
+      'a"; filename=evil.exe\r\nX-Injected: 1',
+      'a"; filename=evil.exe X-Injected: 1',
+      'a ; filename=evil exe X-Injected 1.txt',
+    ],
+    ['../../etc/passwd', '../../etc/passwd', 'etc passwd.txt'],
+    ['Report.pdf', 'Report', 'Report.txt'],
+    ['تقرير الربع', 'تقرير الربع', 'تقرير الربع.txt'],
+    // Nothing left: the export's own name, as when no title is sent.
+    ['\r\n\t', 'Chat answer', 'Chat answer.txt'],
+  ])('stores the title %j as a clean title and filename', async (raw, title, filename) => {
+    const create = vi.fn().mockResolvedValue({ id: 'g1', status: 'QUEUED', format: 'TXT' });
+    const service = new FileGenerationService(
+      { create, createEvent: vi.fn(), findById: vi.fn().mockResolvedValue(null) } as never,
+      { generateFilename: vi.fn() } as never,
+      { publish: vi.fn() } as never,
+      { publish: vi.fn().mockResolvedValue(undefined) } as never,
+    );
+
+    await service.exportForUser('u1', {
+      content: 'plain words',
+      format: FileFormat.TXT,
+      title: raw,
+    });
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ title, filename }));
+  });
+});
+
+describe('FileGenerationService.getByIdForUser', () => {
+  // Someone else's generation must look exactly like a missing one.
+  it.each([
+    ['a missing id', null],
+    ["another user's generation", { id: 'g1', userId: 'owner' }],
+  ])('answers 404 FILE_GENERATION_NOT_FOUND for %s', async (_label, row) => {
+    const service = new FileGenerationService(
+      { findById: vi.fn().mockResolvedValue(row) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(service.getByIdForUser('g1', 'intruder')).rejects.toMatchObject({
+      code: 'FILE_GENERATION_NOT_FOUND',
+      status: 404,
+    });
   });
 });

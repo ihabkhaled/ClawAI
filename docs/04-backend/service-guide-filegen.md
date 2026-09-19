@@ -182,3 +182,18 @@ Everything else stays a 500 with a generic message.
 
 Both title and description are stored. Downloads send `filename=` (ASCII) plus
 `filename*=UTF-8''…` (RFC 5987).
+
+## Names that cannot fail a file (ADR-111, 2026-09-19)
+
+- `cleanTitle` turns an export title into plain text: no control characters,
+  no line breaks, no trailing `.pdf`.
+- `filenameBase` then removes what file-service refuses: path and reserved
+  characters, a run of dots (`Loading...`), and the dot before an executable
+  extension (`setup.exe` becomes `setup exe`).
+- Before this, such a title was stored raw, and the upload to file-service
+  failed with a 422.
+- Missing and foreign generations both answer 404 `FILE_GENERATION_NOT_FOUND`.
+
+Security pass: `scripts/qa-lab/file-pentest.mjs` (31 cases). Model × format
+quality: `scripts/qa-lab/file-model-matrix.mjs`. Both runbooks are in
+`skills/run-the-file-model-matrix.md`.

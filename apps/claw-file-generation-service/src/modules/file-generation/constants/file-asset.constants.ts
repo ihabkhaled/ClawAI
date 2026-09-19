@@ -137,3 +137,13 @@ export const CONTROL_CHARS = new RegExp(
 
 /** A file extension a model may leave on a title ("Plan.pdf"). */
 export const TITLE_FILE_EXTENSION = /\.(?:pdf|docx?|xlsx?|pptx?|csv|json|html?|md|txt|zip)$/iu;
+
+/**
+ * What file-service refuses in a name (file-validator.utility.ts), removed
+ * before upload so a title never fails a file: a run of dots reads as path
+ * traversal ("Loading..."), and a dot before an executable extension reads as
+ * a double-extension attack ("How to run setup.exe"). F5 pentest, 2026-09-19.
+ */
+export const DOT_RUN = /\.{2,}/gu;
+export const EXECUTABLE_SEGMENT =
+  /\.(exe|bat|cmd|com|scr|pif|vbs|vbe|wsf|wsh|msi|dll|sys)(?=\.|\s|$)/giu;

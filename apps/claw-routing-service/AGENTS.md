@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: AssistantModel, CapabilityEvidence, ModelCostVersion, ModelDeployment, ReplayCase, ReplayRun, RouterAdminOverride, RouterChainEntry, RouterCircuitBreaker, RouterConfiguration, RouterLearnedScore, RouterModelProfile, RouterModelRegistry, RouterProviderAttempt, RouterTopicProfile, RouterWorkflow, RouterWorkspacePrior, RoutingCalibrationSnapshot, RoutingCandidateScore, RoutingDecision, RoutingFeedbackRecord, RoutingOutcomeRecord, RoutingPolicy, SeedExecution, TaxonomyRole
 - API endpoints: 74 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 104 (vitest)
+- Test files: 105 (vitest)
 - Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

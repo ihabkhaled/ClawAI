@@ -6,9 +6,9 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { isClientHttpError } from '@claw/shared-utilities';
 import { Response } from 'express';
 import { BusinessException } from '../../common/errors';
-import { isClientHttpError } from '../../common/utilities/client-http-error.utility';
 import { ErrorResponseBody } from './types/error-response-body.type';
 
 @Catch()
