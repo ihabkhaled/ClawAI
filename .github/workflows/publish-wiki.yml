@@ -1,0 +1,58 @@
+name: Publish GitHub Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+      - '.github/workflows/publish-wiki.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-github-wiki
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Publish wiki sources
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.wiki.git"
+          workdir="$(mktemp -d)"
+
+          if git clone "${remote}" "${workdir}/wiki-repo"; then
+            :
+          else
+            mkdir -p "${workdir}/wiki-repo"
+            git -C "${workdir}/wiki-repo" init
+            git -C "${workdir}/wiki-repo" remote add origin "${remote}"
+          fi
+
+          rsync -a --delete --exclude='.git/' wiki/ "${workdir}/wiki-repo/"
+
+          cd "${workdir}/wiki-repo"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki is already up to date."
+            exit 0
+          fi
+
+          git commit -m "docs: sync ClawAI wiki"
+          git push origin HEAD:master
