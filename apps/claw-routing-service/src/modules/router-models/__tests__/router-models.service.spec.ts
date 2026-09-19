@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RouterModelsService } from '../services/router-models.service';
@@ -20,6 +20,7 @@ describe('RouterModelsService', () => {
     registryRepo = {
       list: vi.fn(),
       findById: vi.fn(),
+      findByProviderAndModelKey: vi.fn(),
     } as unknown as Mocked<RouterModelRegistryRepository>;
 
     manager = {
@@ -39,6 +40,52 @@ describe('RouterModelsService', () => {
     }).compile();
 
     service = module.get<RouterModelsService>(RouterModelsService);
+  });
+
+  // The catalog had no window for 156 of 175 production models, so chat
+  // budgeted a 1M-token Gemini as 32k. The published family window fills in.
+  describe('getContextWindowSnapshot', () => {
+    it('fills a missing catalog window from the published family window', async () => {
+      registryRepo.findByProviderAndModelKey.mockResolvedValue({
+        maxContextTokens: null,
+        contextWindowTokens: null,
+        maxOutputTokensIntel: null,
+        maxOutputTokens: null,
+      } as never);
+
+      const snapshot = await service.getContextWindowSnapshot('GEMINI', 'models/gemini-3.6-flash');
+
+      expect(snapshot).toMatchObject({ contextWindowTokens: 1_048_576, known: true });
+    });
+
+    it('prefers the catalog value over the table', async () => {
+      registryRepo.findByProviderAndModelKey.mockResolvedValue({
+        maxContextTokens: null,
+        contextWindowTokens: 65_536,
+        maxOutputTokensIntel: null,
+        maxOutputTokens: null,
+      } as never);
+
+      const snapshot = await service.getContextWindowSnapshot('GEMINI', 'models/gemini-3.6-flash');
+
+      expect(snapshot.contextWindowTokens).toBe(65_536);
+    });
+
+    it('answers from the table for a model the catalog does not hold', async () => {
+      registryRepo.findByProviderAndModelKey.mockResolvedValue(null);
+
+      const snapshot = await service.getContextWindowSnapshot('ANTHROPIC', 'claude-sonnet-5');
+
+      expect(snapshot).toMatchObject({ contextWindowTokens: 200_000, known: true });
+    });
+
+    it('stays unknown for an unknown family', async () => {
+      registryRepo.findByProviderAndModelKey.mockResolvedValue(null);
+
+      const snapshot = await service.getContextWindowSnapshot('OLLAMA', 'mystery:7b');
+
+      expect(snapshot).toMatchObject({ contextWindowTokens: null, known: false });
+    });
   });
 
   describe('list', () => {

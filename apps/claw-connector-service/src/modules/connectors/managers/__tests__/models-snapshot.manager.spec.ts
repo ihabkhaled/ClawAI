@@ -9,6 +9,8 @@ type Row = {
   supportsVision: boolean;
   supportsAudio: boolean;
   maxContextTokens: number | null;
+  exposure: string;
+  kind: string;
 };
 
 function makeRow(overrides: Partial<Row> = {}): Row {
@@ -19,6 +21,8 @@ function makeRow(overrides: Partial<Row> = {}): Row {
     supportsVision: false,
     supportsAudio: false,
     maxContextTokens: 128_000,
+    exposure: 'UNEXPOSED',
+    kind: 'CHAT',
     ...overrides,
   };
 }
@@ -71,5 +75,13 @@ describe('ModelsSnapshotManager', () => {
     const manager = buildManager([makeRow({ maxContextTokens: null })]);
     const result = await manager.build();
     expect(result.models[0]!.contextWindowTokens).toBeUndefined();
+  });
+
+  // The AUTO router picks from what an admin exposed; without these two fields
+  // routing-service could only see the models named in its own chain.
+  it('carries the admin exposure and the model kind', async () => {
+    const manager = buildManager([makeRow({ exposure: 'EXPOSED', kind: 'CHAT' })]);
+    const result = await manager.build();
+    expect(result.models[0]).toMatchObject({ exposure: 'EXPOSED', kind: 'CHAT' });
   });
 });

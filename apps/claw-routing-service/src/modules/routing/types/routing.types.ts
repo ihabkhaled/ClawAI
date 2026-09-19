@@ -24,6 +24,13 @@ export interface RoutingContext {
   localDegradeLatencyMs?: number;
   latencyPenaltyStepMs?: number;
   userMode?: RoutingMode;
+  /**
+   * The user's plan models as `PROVIDER/model`. Read by the AUTO router so it
+   * picks only from what the plan allows, instead of the plan gate replacing
+   * its pick afterwards. Ignored when `modelAccessAllowAll` is true.
+   */
+  allowedModels?: string[];
+  modelAccessAllowAll?: boolean;
   forcedModel?: string;
   forcedProvider?: string;
   complexity?: ComplexityClassification;

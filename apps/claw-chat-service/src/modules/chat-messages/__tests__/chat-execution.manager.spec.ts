@@ -84,6 +84,8 @@ const makeContext = (content: string): AssembledContext =>
     contextPackItems: [],
     fileContents: [],
     workspaceCitations: [],
+    researchEvidence: [],
+    researchRequested: false,
     tokenBudget: 4096,
   }) as unknown as AssembledContext;
 
@@ -231,6 +233,78 @@ describe('ChatExecutionManager', () => {
     expect(requestBody.think).toBe(false);
     expect(requestBody.options.num_predict).toBe(FAST_PATH_MAX_OUTPUT_TOKENS);
     expect(requestBody.prompt).toContain('Respond briefly in 2-4 sentences');
+  });
+
+  // The fast path trims context to 1k tokens and caps output at 512: a turn
+  // grounded in crawled pages lost the pages it was asked about.
+  it('never uses the fast path on a turn carrying research evidence', async () => {
+    const context: AssembledContext = {
+      ...makeContext('status?'),
+      researchEvidence: [
+        { id: 'e1', title: 'Docs', url: 'https://docs.example.com/', snippet: 'x' },
+      ] as never,
+    };
+    httpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { model: 'qwen3:1.7b', response: 'All good, per the docs.', done: true },
+    });
+
+    const result = await manager.execute(
+      {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'local-ollama',
+        selectedModel: 'AUTO',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      },
+      context,
+    );
+
+    expect(result.fastPathUsed).toBe(false);
+  });
+
+  // A reasoning model spent the 512-token cap thinking and stopped after 65
+  // characters (production, 2026-09-19). A cut-off answer is re-asked in full.
+  it('escalates a fast-path answer that stopped at the length limit', async () => {
+    const context = makeContext('status?');
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'qwen3:1.7b',
+          response: 'Based on the available models, the best one is',
+          done: true,
+          done_reason: 'length',
+        },
+      })
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'qwen3:1.7b',
+          response: 'Based on the available models, the best one is Gemini 3.6 Flash.',
+          done: true,
+          done_reason: 'stop',
+        },
+      });
+
+    const result = await manager.execute(
+      {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'local-ollama',
+        selectedModel: 'AUTO',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      },
+      context,
+    );
+
+    expect(httpRequest.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(result.content).toContain('Gemini 3.6 Flash.');
   });
 
   it('keeps normal path for complex prompts and still runs quality checks', async () => {

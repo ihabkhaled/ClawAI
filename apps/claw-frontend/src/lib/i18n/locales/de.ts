@@ -708,7 +708,7 @@ export const de: TranslationDictionary = {
     },
     truncated: {
       title: 'Antwort abgeschnitten',
-      body: 'Das Modell hat aufgehört, weil das Kontextfenster voll war. Versuche eine kürzere Eingabe, weniger Recherchequellen oder eine kleinere Frage.',
+      body: 'Die Antwort hat ihre Längengrenze erreicht und wurde abgeschnitten. Generiere sie neu, um die vollständige Antwort zu erhalten.',
     },
     toolTranscript: {
       summary: '{count} Web-Werkzeug(e) verwendet',

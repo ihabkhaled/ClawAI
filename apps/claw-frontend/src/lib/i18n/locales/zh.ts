@@ -670,7 +670,7 @@ export const zh: TranslationDictionary = {
     },
     truncated: {
       title: '响应被截断',
-      body: '由于上下文窗口已满，模型停止了。尝试更短的提示、更少的研究来源或更小的问题。',
+      body: '回答已达到长度上限而被截断。请重新生成以获取完整回答。',
     },
     toolTranscript: {
       summary: '使用了 {count} 个网络工具',

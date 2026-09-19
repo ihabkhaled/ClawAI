@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DeploymentActivationState } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { CLOUD_ROUTER_ELIGIBLE_PRIVACY_CLASSES } from '../constants/cloud-router-eligibility.constants';
+import {
+  CLOUD_ROUTER_ELIGIBLE_PRIVACY_CLASSES,
+  CLOUD_ROUTER_NON_ANSWERING_PROVIDERS,
+  CLOUD_ROUTER_SELECTABLE_STATES,
+} from '../constants/cloud-router-eligibility.constants';
 import type {
   EligibleDeploymentRecord,
+  RoutableDeploymentRecord,
   SelectableDeploymentRecord,
 } from '../types/model-deployment.types';
 
@@ -30,6 +35,22 @@ export class ModelDeploymentRepository {
     });
     this.logger.debug(`findEligibleForCloudRouting: ${String(rows.length)} eligible deployment(s)`);
     return rows;
+  }
+
+  /**
+   * Every deployment the AUTO router could answer with, before the exposure,
+   * health and plan filters. Router-only providers are excluded: they pick
+   * routes and cannot answer a chat turn.
+   */
+  async findRoutableForCloudRouting(): Promise<RoutableDeploymentRecord[]> {
+    return this.prisma.modelDeployment.findMany({
+      where: {
+        privacyClass: { in: [...CLOUD_ROUTER_ELIGIBLE_PRIVACY_CLASSES] },
+        activationState: { in: [...CLOUD_ROUTER_SELECTABLE_STATES] },
+        provider: { notIn: [...CLOUD_ROUTER_NON_ANSWERING_PROVIDERS] },
+      },
+      select: { id: true, provider: true, providerModelId: true, activationState: true },
+    });
   }
 
   /**

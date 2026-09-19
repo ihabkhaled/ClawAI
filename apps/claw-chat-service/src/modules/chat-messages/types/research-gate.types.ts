@@ -50,3 +50,8 @@ export type CrawlFollowUp = {
   narration: string;
   thinking: string;
 };
+
+/** Ollama's native /api/chat reply, the fields the planner reads. */
+export type OllamaCloudChatReply = {
+  message?: { content?: string };
+};

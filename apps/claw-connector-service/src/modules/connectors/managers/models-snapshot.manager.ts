@@ -39,6 +39,8 @@ export class ModelsSnapshotManager {
       modalitiesIn,
       modalitiesOut,
       contextWindowTokens: row.maxContextTokens ?? undefined,
+      exposure: row.exposure,
+      kind: row.kind,
     };
   }
 }

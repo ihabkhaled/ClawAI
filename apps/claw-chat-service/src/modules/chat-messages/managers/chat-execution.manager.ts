@@ -256,7 +256,13 @@ export class ChatExecutionManager implements OnModuleInit {
     const executionOptions = await this.applyQuotaCeiling(
       context.userId,
       userPrompt,
-      this.resolveExecutionOptions(payload, userPrompt, threadSettings, crawlRetrieval),
+      this.resolveExecutionOptions(
+        payload,
+        userPrompt,
+        threadSettings,
+        crawlRetrieval,
+        this.hasGroundingMaterial(context),
+      ),
     );
     const baseExecutionContext = this.buildExecutionContext(
       context,
@@ -1335,7 +1341,13 @@ export class ChatExecutionManager implements OnModuleInit {
     if (
       !executionOptions.fastPathEnabled ||
       this.isGenerationResponse(response) ||
-      !this.shouldEscalateFastPathResponse(response.content)
+      !(
+        this.shouldEscalateFastPathResponse(response.content) ||
+        // A reasoning model spends the 512-token fast-path cap thinking and
+        // stops mid-sentence ("finish_reason=length" after 65 characters,
+        // production 2026-09-19). A cut-off answer is the weakest answer.
+        response.finishReason === 'length'
+      )
     ) {
       return { response, escalated: false };
     }
@@ -1654,8 +1666,12 @@ export class ChatExecutionManager implements OnModuleInit {
     userPrompt: string,
     threadSettings?: ThreadSettings,
     crawlRetrieval?: CrawlRetrievalContext,
+    hasGroundingMaterial = false,
   ): ExecutionOptions {
-    const fastPathEnabled = this.shouldUseFastPath(payload, userPrompt);
+    // A turn carrying crawled pages, search results or attached files is never
+    // a fast path: that path trims context to 1k tokens and caps the answer at
+    // 512, which threw away the evidence the user asked about.
+    const fastPathEnabled = !hasGroundingMaterial && this.shouldUseFastPath(payload, userPrompt);
     return {
       fastPathEnabled,
       maxOutputTokens: this.resolveMaxOutputTokens(
@@ -1734,6 +1750,14 @@ export class ChatExecutionManager implements OnModuleInit {
     // which truncated substantive answers mid-word (visible in
     // parallel-compare where every model returned exactly 112 tokens).
     return undefined;
+  }
+
+  private hasGroundingMaterial(context: AssembledContext): boolean {
+    return (
+      context.researchEvidence.length > 0 ||
+      context.researchRequested ||
+      context.fileContents.length > 0
+    );
   }
 
   private shouldEscalateFastPathResponse(content: string): boolean {

@@ -702,7 +702,7 @@ export const pt: TranslationDictionary = {
     },
     truncated: {
       title: 'Resposta truncada',
-      body: 'O modelo parou porque a janela de contexto estava cheia. Tente um prompt mais curto, menos fontes de pesquisa ou uma pergunta menor.',
+      body: 'A resposta atingiu o limite de tamanho e foi cortada. Gere novamente para obter a resposta completa.',
     },
     toolTranscript: {
       summary: 'Usadas {count} ferramentas web',

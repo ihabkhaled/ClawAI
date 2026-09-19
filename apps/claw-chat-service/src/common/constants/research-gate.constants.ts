@@ -124,3 +124,24 @@ export const RESEARCH_PLANNER_MAX_PAGES = 200;
 
 /** A crawl summary handed back to the planner is capped, or the re-plan prompt grows without bound. */
 export const RESEARCH_REPLAN_SUMMARY_MAX_CHARS = 3_000;
+
+/**
+ * The registry provider for hosted Ollama. An assistant model with this
+ * provider is called on ollama.com with the admin's Ollama connector key, not
+ * through ollama-service. Production runs no ollama-service at all
+ * (CLAW_LOCAL_AI=false), so routing these through it failed every planner call
+ * there, and every crawl fell back to the 12-page default.
+ */
+export const OLLAMA_CLOUD_PROVIDER = 'OLLAMA_CLOUD';
+
+/** connector-service keeps the hosted Ollama key under this provider name. */
+export const OLLAMA_CONNECTOR_PROVIDER = 'OLLAMA';
+
+export const OLLAMA_CLOUD_DEFAULT_BASE_URL = 'https://ollama.com/api';
+
+export const CONNECTOR_CONFIG_PATH = '/api/v1/internal/connectors/config';
+
+export const CONNECTOR_CONFIG_TIMEOUT_MS = 3_000;
+
+/** A stored Ollama URL on one of these hosts is the local runtime, not the cloud. */
+export const OLLAMA_LOCAL_HOSTS: readonly string[] = ['localhost', '127.0.0.1', '0.0.0.0'];

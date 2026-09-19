@@ -652,7 +652,7 @@ export type TranslationDictionary = {
       imagesDropped: string;
     };
     // Banner shown on assistant messages where the model ran out of
-    // context window mid-generation (truncatedAtContextLimit metadata).
+    // length limit mid-generation, output cap or context window (truncatedAtContextLimit).
     truncated: {
       title: string;
       body: string;

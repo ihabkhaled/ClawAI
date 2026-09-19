@@ -20,8 +20,8 @@ const reply = (needsWeb: boolean): unknown => ({
 // The candidates are admin-managed rows served by routing-service, so the first
 // call the gate makes is a configuration lookup, not a classifier call.
 const CANDIDATES = [
-  { provider: 'OLLAMA_CLOUD', modelAlias: 'primary', timeoutMs: 6000, maxTokens: 64 },
-  { provider: 'OLLAMA_CLOUD', modelAlias: 'secondary', timeoutMs: 6000, maxTokens: 64 },
+  { provider: 'OLLAMA', modelAlias: 'primary', timeoutMs: 6000, maxTokens: 64 },
+  { provider: 'OLLAMA', modelAlias: 'secondary', timeoutMs: 6000, maxTokens: 64 },
 ];
 
 const candidatesReply = (entries: unknown = CANDIDATES): unknown => ({
@@ -257,5 +257,81 @@ describe('ResearchGateService.plan', () => {
       narration: 'Checking rivals.',
       thinking: '',
     });
+  });
+});
+
+// Production runs no ollama-service. A hosted model must be called on
+// ollama.com with the admin's connector key, or every plan fails there and the
+// crawl falls back to its 12-page default.
+describe('ResearchGateService on Ollama Cloud', () => {
+  const CLOUD = [
+    { provider: 'OLLAMA_CLOUD', modelAlias: 'gpt-oss:120b', timeoutMs: 6000, maxTokens: 64 },
+    { provider: 'OLLAMA_CLOUD', modelAlias: 'gemma4:31b', timeoutMs: 6000, maxTokens: 64 },
+  ];
+  const connector = (apiKey: string, baseUrl = 'http://localhost:11434'): unknown => ({
+    ok: true,
+    status: 200,
+    data: { provider: 'OLLAMA', apiKey, baseUrl },
+  });
+  const cloudReply = (needsWeb: boolean): unknown => ({
+    ok: true,
+    status: 200,
+    data: { message: { content: JSON.stringify({ needsWeb, reason: 'cloud' }) } },
+  });
+  let service: ResearchGateService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      OLLAMA_SERVICE_URL: 'http://ollama.test',
+      ROUTING_SERVICE_URL: 'http://routing.test',
+      CONNECTOR_SERVICE_URL: 'http://connector.test',
+    } as never);
+    service = new ResearchGateService();
+  });
+
+  it('calls ollama.com with the connector key, never ollama-service', async () => {
+    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: CLOUD } as never);
+    mockedHttpRequest.mockResolvedValueOnce(connector('sk-cloud') as never);
+    mockedHttpRequest.mockResolvedValueOnce(cloudReply(true) as never);
+
+    await expect(service.needsWeb('latest news')).resolves.toEqual({
+      needsWeb: true,
+      reason: 'cloud',
+    });
+    expect(mockedHttpRequest.mock.calls[1]?.[0]).toMatchObject({
+      url: 'http://connector.test/api/v1/internal/connectors/config?provider=OLLAMA',
+    });
+    // A localhost connector URL still means the hosted API.
+    expect(mockedHttpRequest.mock.calls[2]?.[0]).toMatchObject({
+      url: 'https://ollama.com/api/chat',
+      headers: { Authorization: 'Bearer sk-cloud' },
+      body: expect.objectContaining({ model: 'gpt-oss:120b', think: false }),
+    });
+    expect(
+      mockedHttpRequest.mock.calls.some(([request]) =>
+        (request as { url: string }).url.startsWith('http://ollama.test'),
+      ),
+    ).toBe(false);
+  });
+
+  it('moves to the next model when the first hosted call fails', async () => {
+    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: CLOUD } as never);
+    mockedHttpRequest.mockResolvedValueOnce(connector('sk-cloud') as never);
+    mockedHttpRequest.mockResolvedValueOnce({ ok: false, status: 503, data: {} } as never);
+    mockedHttpRequest.mockResolvedValueOnce(connector('sk-cloud') as never);
+    mockedHttpRequest.mockResolvedValueOnce(cloudReply(false) as never);
+
+    await expect(service.needsWeb('hello')).resolves.toMatchObject({ needsWeb: false });
+    expect(mockedHttpRequest.mock.calls[4]?.[0]).toMatchObject({
+      body: expect.objectContaining({ model: 'gemma4:31b' }),
+    });
+  });
+
+  it('fails closed when no Ollama connector key is saved', async () => {
+    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: CLOUD } as never);
+    mockedHttpRequest.mockResolvedValue(connector('') as never);
+
+    await expect(service.needsWeb('latest news')).resolves.toMatchObject({ needsWeb: false });
   });
 });

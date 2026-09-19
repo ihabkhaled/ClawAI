@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 33211,
+      "bytes": 33582,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 23735,
+      "bytes": 25924,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -296,6 +296,10 @@
     {
       "bytes": 5004,
       "file": "rules/50-agentic-research-loop-and-narration.md"
+    },
+    {
+      "bytes": 1589,
+      "file": "rules/51-router-candidates-and-model-window-fit.md"
     },
     {
       "bytes": 6156,

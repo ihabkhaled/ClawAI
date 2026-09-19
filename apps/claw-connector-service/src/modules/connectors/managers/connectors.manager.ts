@@ -11,6 +11,7 @@ import { ConnectorModelsRepository } from '../repositories/connector-models.repo
 import { HealthEventsRepository } from '../repositories/health-events.repository';
 import { SyncRunsRepository } from '../repositories/sync-runs.repository';
 import { ConnectorsRepository } from '../repositories/connectors.repository';
+import { withKnownContextWindows } from '../utilities/model-context-window.utility';
 import { getAdapter } from './adapters/adapter-factory';
 import { type ConnectorConfig } from './provider-adapter.interface';
 import { type HealthCheckResult, type SyncModelsResult } from '../types/connectors.types';
@@ -102,7 +103,7 @@ export class ConnectorsManager {
       this.logger.debug('syncModels: fetching models from provider');
       const existingModels = await this.connectorModelsRepository.findByConnectorId(connector.id);
       const existingKeys = new Set(existingModels.map((model) => model.modelKey));
-      const models = await adapter.syncModels(config);
+      const models = withKnownContextWindows(connector.provider, await adapter.syncModels(config));
       this.logger.debug(`syncModels: provider returned ${String(models.length)} models`);
       const nextKeys = new Set(models.map((model) => model.modelKey));
 

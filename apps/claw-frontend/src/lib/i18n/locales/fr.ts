@@ -704,7 +704,7 @@ export const fr: TranslationDictionary = {
     },
     truncated: {
       title: 'Réponse tronquée',
-      body: "Le modèle s'est arrêté car la fenêtre de contexte était pleine. Essayez une invite plus courte, moins de sources de recherche ou une question plus petite.",
+      body: 'La réponse a atteint sa limite de longueur et a été coupée. Régénérez-la pour obtenir la réponse complète.',
     },
     toolTranscript: {
       summary: '{count} outil(s) web utilisé(s)',

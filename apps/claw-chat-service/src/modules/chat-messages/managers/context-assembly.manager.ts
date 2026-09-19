@@ -1,5 +1,12 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
-import { EVIDENCE_FIT_BUDGET_SHARE } from '../constants/evidence-fit.constants';
+import {
+  CONTEXT_PACK_FIT_BUDGET_SHARE,
+  EVIDENCE_FIT_BUDGET_SHARE,
+  FILE_FIT_BUDGET_SHARE,
+  MEMORY_FIT_BUDGET_SHARE,
+} from '../constants/evidence-fit.constants';
+import { fitTextsToBudget } from '../utilities/text-budget.utility';
+import type { FixedContextSources } from '../types/evidence-fit.types';
 import { fitEvidenceToBudget } from '../utilities/evidence-fit.utility';
 import { type RetrievalBundle } from '@claw/shared-types';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
@@ -112,6 +119,7 @@ export class ContextAssemblyManager {
       userId,
     );
     const retrievalMs = Date.now() - retrievalStartedAt;
+    this.fitFixedContext(fetched, filteredFileContents, threadSettings);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const researchEvidence = this.fitResearchEvidence(
       fetched.researchRun,
@@ -1171,6 +1179,58 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       );
     }
     return fitted.items;
+  }
+
+  /**
+   * Fits memories, context packs and attached files to the answering model's
+   * input window, each to its own share, in place. Research is fitted
+   * separately (fitResearchEvidence). Whatever was left out is logged.
+   */
+  private fitFixedContext(
+    fetched: FixedContextSources,
+    files: FileContentResponse[],
+    threadSettings: ThreadSettings | undefined,
+  ): void {
+    const windowChars =
+      resolveModelTokenBudget({
+        contextWindowTokens: threadSettings?.contextWindowTokens ?? null,
+        provider: threadSettings?.provider ?? null,
+        requestedOutputTokens: threadSettings?.maxTokens ?? null,
+        systemOverheadTokens: 0,
+        toolOverheadTokens: 0,
+      }).availableInputTokens * APPROX_CHARS_PER_TOKEN;
+
+    const memories = fitTextsToBudget(
+      fetched.memories.map((memory) => memory.content),
+      Math.floor(windowChars * MEMORY_FIT_BUDGET_SHARE),
+    );
+    fetched.memories = fetched.memories
+      .slice(0, memories.texts.length)
+      .map((memory, index) => ({ ...memory, content: memories.texts[index] ?? '' }));
+
+    const packs = fitTextsToBudget(
+      fetched.contextPackItems.map((item) => item.content ?? ''),
+      Math.floor(windowChars * CONTEXT_PACK_FIT_BUDGET_SHARE),
+    );
+    fetched.contextPackItems = fetched.contextPackItems
+      .slice(0, packs.texts.length)
+      .map((item, index) => ({ ...item, content: packs.texts[index] ?? '' }));
+
+    const textFiles = files.filter((file) => (file.extractedText ?? '').length > 0);
+    const fileTexts = fitTextsToBudget(
+      textFiles.map((file) => file.extractedText ?? ''),
+      Math.floor(windowChars * FILE_FIT_BUDGET_SHARE),
+    );
+    for (const [index, file] of textFiles.entries()) {
+      file.extractedText = fileTexts.texts[index] ?? '';
+    }
+
+    if (memories.dropped + packs.dropped + fileTexts.dropped > 0) {
+      this.logger.log(
+        `fitFixedContext: window=${String(windowChars)} chars dropped memories=${String(memories.dropped)} ` +
+          `packItems=${String(packs.dropped)} files=${String(fileTexts.dropped)}`,
+      );
+    }
   }
 
   private formatResearchBlock(context: AssembledContext): string {

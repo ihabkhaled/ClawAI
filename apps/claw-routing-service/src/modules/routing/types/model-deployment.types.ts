@@ -26,3 +26,31 @@ export interface SelectableDeploymentRecord {
   providerModelId: string;
   isValidated: boolean;
 }
+
+/** A candidate before filtering, with the state ranking reads. */
+export interface RoutableDeploymentRecord extends EligibleDeploymentRecord {
+  activationState: string;
+}
+
+/** What the AUTO router may pick from for one request. */
+export interface CloudRouterCandidateFilter {
+  /** Normalised `PROVIDER/model` keys an admin exposed; null = snapshot unavailable. */
+  exposed: ReadonlySet<string> | null;
+  /** Plan restriction; null = unrestricted (ALLOW_ALL or admin). */
+  allowed: ReadonlySet<string> | null;
+  connectorHealth: Readonly<Record<string, boolean>>;
+  max: number;
+}
+
+/** One model row from connector-service's snapshot, the fields routing reads. */
+export interface ExposedModelSnapshotEntry {
+  provider: string;
+  modelKey: string;
+  exposure?: string;
+  kind?: string;
+}
+
+export interface CachedExposedModels {
+  keys: ReadonlySet<string>;
+  expiresAt: number;
+}

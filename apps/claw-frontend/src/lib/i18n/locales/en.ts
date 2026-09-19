@@ -694,7 +694,7 @@ export const en: TranslationDictionary = {
     },
     truncated: {
       title: 'Response truncated',
-      body: 'The model stopped because the context window was full. Try a shorter prompt, fewer research sources, or a smaller question.',
+      body: 'The answer hit its length limit and was cut off. Regenerate to get the full answer.',
     },
     toolTranscript: {
       summary: 'Used {count} web tool(s)',

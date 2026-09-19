@@ -163,6 +163,14 @@ export interface UpstreamModelSnapshotEntry {
   modalitiesOut?: string[];
   contextWindowTokens?: number;
   maxOutputTokens?: number;
+  /**
+   * EXPOSED when an admin offers this model to users. routing-service builds
+   * the AUTO router's candidates from these, so the router can pick any model
+   * an admin exposed, not only the handful named in its own chain.
+   */
+  exposure?: string;
+  /** CHAT, IMAGE, AUDIO... Only CHAT models can answer a chat turn. */
+  kind?: string;
 }
 
 export interface ConnectorModelsSnapshotResult {

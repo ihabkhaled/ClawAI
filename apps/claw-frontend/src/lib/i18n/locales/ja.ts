@@ -698,7 +698,7 @@ export const ja: TranslationDictionary = {
     },
     truncated: {
       title: '応答が切り詰められました',
-      body: 'コンテキスト ウィンドウがいっぱいだったため、モデルは停止しました。より短いプロンプト、より少ない調査ソース、またはより小さな質問を試してください。',
+      body: '回答が長さの上限に達したため途中で切れました。完全な回答を得るには再生成してください。',
     },
     toolTranscript: {
       summary: '使用した {count} Web ツール',

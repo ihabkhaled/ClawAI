@@ -455,14 +455,18 @@ export class RoutingService implements OnModuleInit {
 
     this.logMessageCreatedConsumed(messageId, threadId);
 
-    const context = this.buildRoutingContext(
-      content,
-      threadId,
-      routingMode,
-      forcedProvider,
-      forcedModel,
-      userId,
-    );
+    const context = {
+      ...this.buildRoutingContext(
+        content,
+        threadId,
+        routingMode,
+        forcedProvider,
+        forcedModel,
+        userId,
+      ),
+      allowedModels,
+      modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
+    };
     const rawDecision = await this.routingManager.evaluateRoute(context);
     const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
     const decisionWithWorkflow = this.attachWorkflowSelection(

@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CLOUD_ROUTER_MAX_CANDIDATES } from '../constants/cloud-router-eligibility.constants';
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
+import { ExposedModelsService } from '../services/exposed-models.service';
+import {
+  modelMatchKey,
+  selectCloudRouterCandidates,
+} from '../utilities/cloud-router-candidates.utility';
 import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
 import type { RoutingContext } from '../types/routing.types';
 
@@ -20,12 +26,36 @@ import type { RoutingContext } from '../types/routing.types';
 export class CloudRouterEligibilityManager {
   private readonly logger = new Logger(CloudRouterEligibilityManager.name);
 
-  constructor(private readonly deployments: ModelDeploymentRepository) {}
+  constructor(
+    private readonly deployments: ModelDeploymentRepository,
+    private readonly exposedModels: ExposedModelsService,
+  ) {}
 
   async resolveEligibleDeployments(context: RoutingContext): Promise<EligibleDeploymentRecord[]> {
-    const eligible = await this.deployments.findEligibleForCloudRouting();
+    const [routable, exposed] = await Promise.all([
+      this.deployments.findRoutableForCloudRouting(),
+      this.exposedModels.exposedChatModels(),
+    ]);
+    const allowed =
+      context.modelAccessAllowAll === true || context.allowedModels === undefined
+        ? null
+        : new Set(
+            context.allowedModels.map((entry) => {
+              const slash = entry.indexOf('/');
+              return modelMatchKey(entry.slice(0, slash), entry.slice(slash + 1));
+            }),
+          );
+    const eligible = selectCloudRouterCandidates(routable, {
+      exposed,
+      allowed,
+      connectorHealth: context.connectorHealth ?? {},
+      max: CLOUD_ROUTER_MAX_CANDIDATES,
+    });
     this.logger.debug(
-      `resolveEligibleDeployments: thread=${context.threadId ?? 'none'} found ${String(eligible.length)} eligible deployment(s)`,
+      `resolveEligibleDeployments: thread=${context.threadId ?? 'none'} routable=${String(routable.length)} ` +
+        `exposed=${exposed === null ? 'unavailable' : String(exposed.size)} ` +
+        `planRestricted=${String(allowed !== null)} eligible=${String(eligible.length)} ` +
+        `providers=${[...new Set(eligible.map((entry) => entry.provider))].join(',')}`,
     );
     return eligible;
   }

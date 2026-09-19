@@ -1,3 +1,4 @@
+import { knownContextWindow } from '@claw/shared-utilities';
 import { Injectable } from '@nestjs/common';
 import { EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
@@ -33,13 +34,23 @@ export class RouterModelsService {
     modelKey: string,
   ): Promise<ModelContextWindowSnapshot> {
     const record = await this.registryRepo.findByProviderAndModelKey(provider, modelKey);
+    // The catalog row wins; the published family window fills its gap. In
+    // production 156 of 175 rows had no window, so chat-service budgeted a
+    // 1M-token Gemini as a 32k model and could not tell a small model apart.
+    const known = knownContextWindow(provider, modelKey) ?? null;
     if (record === null) {
-      return { provider, modelKey, contextWindowTokens: null, maxOutputTokens: null, known: false };
+      return {
+        provider,
+        modelKey,
+        contextWindowTokens: known,
+        maxOutputTokens: null,
+        known: known !== null,
+      };
     }
     return {
       provider,
       modelKey,
-      contextWindowTokens: record.maxContextTokens ?? record.contextWindowTokens ?? null,
+      contextWindowTokens: record.maxContextTokens ?? record.contextWindowTokens ?? known,
       maxOutputTokens: record.maxOutputTokensIntel ?? record.maxOutputTokens ?? null,
       known: true,
     };

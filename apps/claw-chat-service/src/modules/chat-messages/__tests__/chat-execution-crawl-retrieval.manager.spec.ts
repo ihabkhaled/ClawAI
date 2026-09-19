@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 // Mid-generation crawl retrieval (ADR-093) at the ChatExecutionManager
 // boundary: an Ollama Cloud candidate offered a `get_crawled_page` tool for
 // this turn's SITE_CRAWL pages, resolved from memory rather than a second
@@ -66,6 +66,8 @@ const makeContext = (): AssembledContext =>
     contextPackItems: [],
     fileContents: [],
     workspaceCitations: [],
+    researchEvidence: [],
+    researchRequested: false,
     tokenBudget: 4096,
   }) as unknown as AssembledContext;
 

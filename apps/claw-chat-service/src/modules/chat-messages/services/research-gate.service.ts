@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import {
+  CONNECTOR_CONFIG_PATH,
+  CONNECTOR_CONFIG_TIMEOUT_MS,
+  OLLAMA_CLOUD_PROVIDER,
+  OLLAMA_CONNECTOR_PROVIDER,
   RESEARCH_GATE_CACHE_MAX_ENTRIES,
   RESEARCH_GATE_CACHE_TTL_MS,
   RESEARCH_GATE_CANDIDATES_PATH,
@@ -15,10 +19,13 @@ import {
   RESEARCH_REPLAN_SYSTEM_PROMPT,
 } from '../../../common/constants/research-gate.constants';
 import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
+import { resolveOllamaCloudBaseUrl } from '../../../common/utilities/ollama-cloud-base-url.utility';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
+import type { ConnectorConfigResponse } from '../types/execution.types';
 import type {
   CrawlFollowUp,
+  OllamaCloudChatReply,
   ResearchGateCacheEntry,
   ResearchGateCandidate,
   ResearchGateModelReply,
@@ -265,6 +272,9 @@ ${message}`,
     prompt: string,
     minOutputTokens: number,
   ): Promise<string | null> {
+    if (candidate.provider === OLLAMA_CLOUD_PROVIDER) {
+      return this.generateOnOllamaCloud(candidate, prompt, minOutputTokens);
+    }
     const config = AppConfig.get();
     try {
       const response = await httpRequest<ResearchGateModelReply>({
@@ -297,6 +307,67 @@ ${message}`,
       return response.data.response ?? '';
     } catch (error) {
       this.logger.debug(`ask: ${candidate.modelAlias} failed - ${(error as Error).message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Hosted Ollama, with the key an admin saved on the Ollama connector.
+   *
+   * Same contract as the local path: thinking off, JSON-only by decoder, and
+   * null on any failure so the walk moves to the next configured model.
+   */
+  private async generateOnOllamaCloud(
+    candidate: ResearchGateCandidate,
+    prompt: string,
+    minOutputTokens: number,
+  ): Promise<string | null> {
+    const credential = await this.fetchOllamaCredential();
+    if (credential === null) {
+      this.logger.warn('generate: no Ollama Cloud connector key; skipping this model');
+      return null;
+    }
+    try {
+      const response = await httpRequest<OllamaCloudChatReply>({
+        url: `${resolveOllamaCloudBaseUrl(credential.baseUrl)}/chat`,
+        method: 'POST',
+        headers: { Authorization: `Bearer ${credential.apiKey}` },
+        body: {
+          model: candidate.modelAlias,
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
+          format: 'json',
+          think: false,
+          options: { num_predict: Math.max(candidate.maxTokens, minOutputTokens), temperature: 0 },
+        },
+        timeoutMs: candidate.timeoutMs,
+      });
+      if (!response.ok) {
+        this.logger.warn(
+          `generate: ${candidate.modelAlias} on Ollama Cloud returned ${String(response.status)}`,
+        );
+        return null;
+      }
+      return response.data.message?.content ?? '';
+    } catch (error) {
+      this.logger.warn(
+        `generate: ${candidate.modelAlias} on Ollama Cloud failed - ${(error as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  private async fetchOllamaCredential(): Promise<ConnectorConfigResponse | null> {
+    const config = AppConfig.get();
+    try {
+      const response = await httpRequest<ConnectorConfigResponse>({
+        url: `${config.CONNECTOR_SERVICE_URL}${CONNECTOR_CONFIG_PATH}?provider=${OLLAMA_CONNECTOR_PROVIDER}`,
+        method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeoutMs: CONNECTOR_CONFIG_TIMEOUT_MS,
+      });
+      return response.ok && response.data.apiKey.length > 0 ? response.data : null;
+    } catch {
       return null;
     }
   }

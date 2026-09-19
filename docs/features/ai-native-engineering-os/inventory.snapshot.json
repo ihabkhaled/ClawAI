@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (33211 vs 6646 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (33582 vs 6646 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (33211 vs 28182 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (33582 vs 28182 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7172,7 +7172,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 33211,
+          "bytes": 33582,
           "file": "CLAUDE.md"
         },
         {
@@ -7224,7 +7224,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 23735,
+          "bytes": 25924,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7466,6 +7466,10 @@
         {
           "bytes": 5004,
           "file": "rules/50-agentic-research-loop-and-narration.md"
+        },
+        {
+          "bytes": 1589,
+          "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
           "bytes": 6156,
@@ -9717,7 +9721,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 37
+        "testFiles": 38
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -9733,7 +9737,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 151
+        "testFiles": 153
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -9741,7 +9745,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 25
+        "testFiles": 26
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -9785,7 +9789,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 99
+        "testFiles": 101
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -10515,7 +10519,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1273,
+    "totalTestFiles": 1279,
     "workspaceCount": 25
   }
 }

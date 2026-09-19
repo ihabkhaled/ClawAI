@@ -17,6 +17,7 @@ import {
 } from '../types/context-composer.types';
 import { flattenTurns, groupIntoTurns } from '../utilities/conversation-turns.utility';
 import { scoreTurnRelevance } from '../utilities/history-relevance.utility';
+import { shortenToBudget } from '../utilities/history-budget.utility';
 import { detectReferenceSignal } from '../utilities/reference-signal.utility';
 
 /**
@@ -62,7 +63,15 @@ export class ContextComposerManager {
     const scored = this.classify(turns, intent);
     const { kept, omittedTurns, spent } = this.fitToBudget(scored, budget, warnings);
 
-    const included = flattenTurns(kept.map((entry) => entry.turn));
+    // The turn floor can overspend the budget when single messages are huge.
+    // Those messages are shortened to fit rather than sent whole: a whole
+    // floor on an 8k model sent 12k tokens of history (and the window-fit
+    // test proved the prompt then overflowed). The newest message, the
+    // question being answered, keeps as much as the budget allows.
+    const included = shortenToBudget(
+      flattenTurns(kept.map((entry) => entry.turn)),
+      budget.availableInputTokens,
+    );
     const omitted = this.describeOmissions(omittedTurns);
 
     this.logger.debug(

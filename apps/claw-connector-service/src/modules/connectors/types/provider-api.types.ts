@@ -79,3 +79,8 @@ export interface OllamaProbeChatResponse {
     tool_calls?: Array<{ function?: { name?: string } }>;
   };
 }
+
+/** Google's native `GET /v1beta/models`, the one that carries token limits. */
+export type GeminiNativeModelsResponse = {
+  models?: Array<{ name: string; inputTokenLimit?: number; outputTokenLimit?: number }>;
+};
