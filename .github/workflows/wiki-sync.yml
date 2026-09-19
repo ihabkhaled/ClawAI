@@ -1,0 +1,37 @@
+name: Sync GitHub Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wiki/**'
+      - '.github/workflows/wiki-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Sync wiki source to GitHub Wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="${RUNNER_TEMP}/clawai-wiki"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" "${target}"
+          find "${target}" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R wiki/. "${target}/"
+          git -C "${target}" config user.name "github-actions[bot]"
+          git -C "${target}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${target}" add -A
+          if git -C "${target}" diff --cached --quiet; then
+            echo "Wiki already up to date."
+            exit 0
+          fi
+          git -C "${target}" commit -m "docs: sync wiki from ${GITHUB_SHA}"
+          git -C "${target}" push origin HEAD

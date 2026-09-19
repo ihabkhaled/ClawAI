@@ -1,0 +1,402 @@
+> **Wiki source:** [`docs/12-reference/api-reference-chat.md`](https://github.com/ihabkhaled/ClawAI/blob/main/docs/12-reference/api-reference-chat.md) on the current `main` branch.
+
+# API Reference — Chat Service
+
+Base URL: `http://localhost:4000/api/v1` (via nginx) or `http://localhost:4002/api/v1` (direct)
+
+---
+
+## Threads
+
+### POST /chat-threads
+
+Create a new chat thread.
+
+**Auth**: Bearer token
+**Request Body**:
+
+```json
+{
+  "title": "My Chat",
+  "routingMode": "AUTO",
+  "preferredProvider": "anthropic",
+  "preferredModel": "claude-sonnet-4",
+  "systemPrompt": "You are a helpful assistant.",
+  "temperature": 0.7,
+  "maxTokens": 4096,
+  "contextPackIds": ["clxyz..."]
+}
+```
+
+All fields are optional.
+
+**Response 201**:
+
+```json
+{
+  "id": "clxyz...",
+  "userId": "clxyz...",
+  "title": "My Chat",
+  "routingMode": "AUTO",
+  "lastProvider": null,
+  "lastModel": null,
+  "isPinned": false,
+  "isArchived": false,
+  "preferredProvider": "anthropic",
+  "preferredModel": "claude-sonnet-4",
+  "contextPackIds": ["clxyz..."],
+  "systemPrompt": "You are a helpful assistant.",
+  "temperature": 0.7,
+  "maxTokens": 4096,
+  "createdAt": "2026-04-11T10:00:00.000Z",
+  "updatedAt": "2026-04-11T10:00:00.000Z"
+}
+```
+
+**curl**:
+
+```bash
+curl -X POST http://localhost:4000/api/v1/chat-threads \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"My Chat","routingMode":"AUTO"}'
+```
+
+---
+
+### GET /chat-threads
+
+List the current user's threads with message counts.
+
+**Auth**: Bearer token
+**Query Parameters**:
+
+- `page` (int, default: 1)
+- `limit` (int, default: 20, max: 100)
+- `search` (string) — search by title
+
+**Response 200**:
+
+```json
+{
+  "data": [
+    {
+      "id": "clxyz...",
+      "title": "My Chat",
+      "routingMode": "AUTO",
+      "lastProvider": "anthropic",
+      "lastModel": "claude-sonnet-4",
+      "isPinned": false,
+      "isArchived": false,
+      "createdAt": "2026-04-11T10:00:00.000Z",
+      "_count": { "messages": 12 }
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 3, "totalPages": 1 }
+}
+```
+
+---
+
+### GET /chat-threads/:id
+
+Get a specific thread.
+
+**Auth**: Bearer token (must own thread)
+**Response 200**: ChatThread object
+**Errors**: `404 ENTITY_NOT_FOUND`, `403 FORBIDDEN`
+
+---
+
+### PATCH /chat-threads/:id
+
+Update a thread.
+
+**Auth**: Bearer token (must own thread)
+**Request Body**: Any combination of:
+
+```json
+{
+  "title": "New Title",
+  "routingMode": "LOCAL_ONLY",
+  "preferredProvider": null,
+  "preferredModel": null,
+  "systemPrompt": "Updated prompt",
+  "temperature": 0.5,
+  "maxTokens": 8192,
+  "contextPackIds": [],
+  "isPinned": true,
+  "isArchived": false
+}
+```
+
+**Response 200**: Updated ChatThread
+
+---
+
+### DELETE /chat-threads/:id
+
+Delete a thread and all its messages.
+
+**Auth**: Bearer token (must own thread)
+**Response 200**: Deleted ChatThread
+
+---
+
+## Messages
+
+### POST /chat-messages
+
+Send a user message. Triggers routing and AI response.
+
+**Auth**: Bearer token
+**Request Body**:
+
+```json
+{
+  "threadId": "clxyz...",
+  "content": "Hello, how are you?",
+  "fileIds": ["clfile1...", "clfile2..."]
+}
+```
+
+**Response 201**: The created USER message
+
+```json
+{
+  "id": "clmsg...",
+  "threadId": "clxyz...",
+  "role": "USER",
+  "content": "Hello, how are you?",
+  "provider": null,
+  "model": null,
+  "createdAt": "2026-04-11T10:00:00.000Z"
+}
+```
+
+**Side effects**: Publishes `message.created` event which triggers:
+
+1. Routing decision
+2. AI provider call
+3. ASSISTANT message creation
+4. SSE event emission
+
+---
+
+### GET /chat-messages/thread/:threadId
+
+List messages in a thread (cursor-paginated, newest first). Cursor rather than
+offset: an offset window shifts whenever a message is appended between two
+requests, duplicating or dropping rows in a client that merges pages — a
+cursor anchored to a specific message's id has no such window.
+
+**Auth**: Bearer token (must own thread)
+**Query Parameters**:
+
+- `before` (string, optional) — a message id already seen; fetches the page
+  older than it. Omitted, returns the newest messages.
+- `limit` (int, default: 50, max: 100)
+
+**Response 200**:
+
+```json
+{
+  "data": [
+    {
+      "id": "clmsg1...",
+      "role": "ASSISTANT",
+      "content": "I'm doing well! How can I help?",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4",
+      "routingMode": "AUTO",
+      "routerModel": "gemma3:4b",
+      "usedFallback": false,
+      "inputTokens": 150,
+      "outputTokens": 45,
+      "estimatedCost": "0.00023000",
+      "latencyMs": 1200,
+      "feedback": null,
+      "metadata": null,
+      "createdAt": "2026-04-11T10:00:01.000Z"
+    },
+    {
+      "id": "clmsg0...",
+      "role": "USER",
+      "content": "Hello, how are you?",
+      "provider": null,
+      "model": null,
+      "createdAt": "2026-04-11T10:00:00.000Z"
+    }
+  ],
+  "meta": { "limit": 20, "total": 2, "nextBefore": null }
+}
+```
+
+`nextBefore` is the id to pass back as `before` for the next older page;
+`null` means nothing older is left. A full page (`data.length === limit`)
+still might be the last one — the only way to know for certain is that the
+next fetch with that cursor comes back empty.
+
+---
+
+### GET /chat-messages/:id
+
+Get a specific message.
+
+**Auth**: Bearer token (must own thread)
+**Response 200**: ChatMessage object
+
+---
+
+### POST /chat-messages/:id/regenerate
+
+Regenerate an AI response for a message.
+
+**Auth**: Bearer token (must own thread)
+**Response 200**: New ASSISTANT ChatMessage
+
+---
+
+### PATCH /chat-messages/:id/feedback
+
+Set feedback on a message (thumbs up/down).
+
+**Auth**: Bearer token (must own thread)
+**Request Body**:
+
+```json
+{ "feedback": "positive" }
+```
+
+**Response 200**: Updated ChatMessage
+
+---
+
+## SSE Stream
+
+### GET /chat-messages/stream/:threadId (SSE)
+
+Server-Sent Events stream for real-time message updates.
+
+**Auth**: Bearer token
+**Response**: SSE event stream
+
+**Events emitted**:
+
+```
+data: {"threadId":"clxyz...","type":"completion","message":{...}}
+
+data: {"threadId":"clxyz...","type":"error","error":"All providers failed"}
+```
+
+**Important**: Do NOT use `EventSource` API (cannot set Authorization header). Use `fetch()` with `ReadableStream`:
+
+---
+
+## Parallel Compare
+
+### POST /chat-messages/parallel
+
+Send a single prompt to 2-5 models simultaneously. All models receive the same assembled context. Results are returned together once all models have responded (or failed).
+
+**Auth**: Bearer token (must own thread)
+**Request Body**:
+
+```json
+{
+  "threadId": "clxyz...",
+  "content": "Explain the difference between REST and GraphQL",
+  "models": [
+    { "provider": "anthropic", "model": "claude-sonnet-4" },
+    { "provider": "openai", "model": "gpt-4o-mini" },
+    { "provider": "gemini", "model": "gemini-2.5-flash" }
+  ],
+  "fileIds": []
+}
+```
+
+| Field      | Type                       | Required | Description                    |
+| ---------- | -------------------------- | -------- | ------------------------------ |
+| `threadId` | string                     | Yes      | Thread to attach messages to   |
+| `content`  | string                     | Yes      | User prompt (max 10,000 chars) |
+| `models`   | array of {provider, model} | Yes      | 2-5 provider/model pairs       |
+| `fileIds`  | string[]                   | No       | Optional file attachments      |
+
+**Response 200**:
+
+```json
+{
+  "threadId": "clxyz...",
+  "userMessageId": "clmsg0...",
+  "results": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4",
+      "status": "fulfilled",
+      "content": "REST is an architectural style...",
+      "messageId": "clmsg1...",
+      "inputTokens": 280,
+      "outputTokens": 350,
+      "latencyMs": 1450
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "status": "fulfilled",
+      "content": "The key differences between REST and GraphQL...",
+      "messageId": "clmsg2...",
+      "inputTokens": 280,
+      "outputTokens": 290,
+      "latencyMs": 980
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "status": "rejected",
+      "content": null,
+      "messageId": null,
+      "error": "Provider timeout after 30000ms",
+      "latencyMs": 30000
+    }
+  ],
+  "totalLatencyMs": 30000
+}
+```
+
+**Errors**:
+
+- `400 VALIDATION_ERROR` -- fewer than 2 or more than 5 models, empty content
+- `403 FORBIDDEN` -- user does not own the thread
+- `404 ENTITY_NOT_FOUND` -- thread not found
+
+**curl**:
+
+```bash
+curl -X POST http://localhost:4000/api/v1/chat-messages/parallel \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "threadId": "clxyz...",
+    "content": "Explain REST vs GraphQL",
+    "models": [
+      {"provider": "anthropic", "model": "claude-sonnet-4"},
+      {"provider": "openai", "model": "gpt-4o-mini"}
+    ]
+  }'
+```
+
+---
+
+```javascript
+const response = await fetch(url, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+const reader = response.body.getReader();
+```
+
+**curl**:
+
+```bash
+curl -N http://localhost:4000/api/v1/chat-messages/stream/clxyz... \
+  -H "Authorization: Bearer $TOKEN"
+```

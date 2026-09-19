@@ -1,0 +1,399 @@
+> **Wiki source:** [`docs/13-adr/adr-index.md`](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-index.md) on the current `main` branch.
+
+# Architecture Decision Records
+
+This document records the key architectural decisions made for the ClawAI platform, their context, rationale, and consequences. Each ADR follows the format: Context, Decision, Consequences, Status.
+
+See also: `docs/adrs/` for earlier ADRs written during initial development.
+
+---
+
+## ADR-001: Microservices Over Monolith
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+ClawAI integrates with multiple AI providers, manages user auth, stores conversation history, handles file processing, logs audit events, and runs local AI models. These domains have different scaling profiles, different data stores, and different failure modes. A monolithic NestJS application would become a maintenance burden as features grow.
+
+### Decision
+
+Split the backend into 13 independently deployable NestJS microservices, each owning a single bounded context:
+
+1. **auth** -- Authentication, authorization, user management
+2. **chat** -- Conversation threads, messages, context assembly, AI execution
+3. **connector** -- Cloud provider configuration, health, model sync
+4. **routing** -- Routing decisions, policies, Ollama-assisted routing
+5. **memory** -- Memory records, extraction, context packs
+6. **file** -- File upload, storage, chunking
+7. **audit** -- Audit events, usage tracking
+8. **ollama** -- Local model management, generation
+9. **health** -- Aggregated health monitoring
+10. **client-logs** -- Frontend log collection
+11. **server-logs** -- Backend log aggregation
+12. **image** -- Image generation
+13. **file-generation** -- AI-driven document generation
+
+### Consequences
+
+- **Positive**: Independent deployability; each service can be updated, scaled, or restarted without affecting others. Clear ownership boundaries. Different databases per service prevent coupling. Failure isolation -- a crash in the audit service does not affect chat.
+- **Positive**: Teams can work on different services in parallel without merge conflicts.
+- **Negative**: Operational complexity -- 17 services to monitor, deploy, and debug. Distributed tracing needed (X-Request-ID implemented).
+- **Negative**: Network overhead for inter-service communication. Context assembly requires HTTP calls to memory and file services.
+- **Negative**: Development environment requires Docker Compose with 22+ containers.
+
+---
+
+## ADR-002: PostgreSQL Per Service (Data Isolation)
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+Microservices that share a database are coupled at the data layer -- schema changes in one service can break another. We need strong data isolation between services while supporting relational queries, ACID transactions, and vector similarity search (for memory/embeddings).
+
+### Decision
+
+Each service that needs relational storage gets its own PostgreSQL database instance:
+
+- `claw_auth`, `claw_chat`, `claw_connectors`, `claw_routing`, `claw_memory` (with pgvector), `claw_files`, `claw_ollama`, `claw_image`, `claw_filegen`
+
+MongoDB is used for services with document-oriented workloads:
+
+- `claw_audit` (audit logs, usage ledger), `claw_client_logs`, `claw_server_logs`
+
+### Consequences
+
+- **Positive**: Complete schema independence. Each service evolves its schema via Prisma migrations without affecting others.
+- **Positive**: pgvector extension available per-database for services that need vector similarity (memory service).
+- **Positive**: MongoDB TTL indexes handle automatic log cleanup without affecting relational databases.
+- **Negative**: 8 PostgreSQL + 3 MongoDB instances consume significant resources (~2GB RAM minimum for databases alone).
+- **Negative**: No cross-database joins. Data that spans services requires HTTP or RabbitMQ communication.
+- **Negative**: Backup and monitoring complexity scales linearly with database count.
+
+---
+
+## ADR-003: RabbitMQ Over HTTP for Async Communication
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+Services need to communicate for workflows like: chat publishes a message, routing processes it, chat receives the decision and executes. Some communication must be synchronous (context assembly fetches from memory service), but most event flows are inherently async and benefit from decoupling, retry logic, and failure isolation.
+
+### Decision
+
+Use RabbitMQ with a topic exchange (`claw.events`, durable) for all asynchronous inter-service communication. Use HTTP for synchronous data fetching where a response is needed immediately.
+
+- **RabbitMQ**: `message.created`, `message.routed`, `message.completed`, `connector.synced`, `user.login`, etc.
+- **HTTP**: Chat service fetching memories, file chunks, and context packs during context assembly.
+
+Implement DLQ (Dead Letter Queue) with 3 retries and exponential backoff for all consumers.
+
+### Consequences
+
+- **Positive**: Temporal decoupling -- publisher and consumer do not need to be available simultaneously.
+- **Positive**: Retry with DLQ handles transient failures without losing messages.
+- **Positive**: Topic routing allows flexible event subscription (e.g., audit service subscribes to multiple event types).
+- **Positive**: Load leveling -- consumers process at their own pace.
+- **Negative**: Eventual consistency -- routing decisions are not instant (typically <100ms, but can be up to 10s with Ollama router).
+- **Negative**: Debugging distributed event flows is harder than tracing a single HTTP call. Requires correlation IDs and structured logging.
+- **Negative**: RabbitMQ is another infrastructure dependency to operate and monitor.
+
+---
+
+## ADR-004: Ollama for Local AI Runtime
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+ClawAI's core value proposition is intelligent routing with privacy guarantees. Some data must never leave the user's machine. Additionally, the routing engine needs a fast, local AI model to classify messages and select providers in AUTO mode. Using a cloud API for routing would add latency, cost, and a privacy paradox (sending data to the cloud to decide if it's safe to send to the cloud).
+
+### Decision
+
+Run Ollama locally as the AI runtime for:
+
+1. **Routing**: `gemma3:4b` classifies messages and selects optimal provider (temp=0, Zod-validated output).
+2. **Memory extraction**: `gemma3:4b` extracts facts, preferences, instructions, and summaries from completed messages.
+3. **Fallback chat**: Local models serve as the ultimate fallback when cloud providers are unavailable.
+4. **Privacy-sensitive requests**: LOCAL_ONLY and PRIVACY_FIRST modes route exclusively through Ollama.
+
+Auto-pull 5 models on startup: `gemma3:4b`, `llama3.2:3b`, `phi3:mini`, `gemma2:2b`, `tinyllama`.
+
+### Consequences
+
+- **Positive**: Zero data leaves the machine for local-only operations. True privacy guarantee.
+- **Positive**: No API cost for local operations. Routing decisions are free.
+- **Positive**: No internet dependency for core routing logic.
+- **Positive**: Configurable model roles allow swapping models without code changes.
+- **Negative**: Requires significant local resources (~10GB disk for models, 4-8GB RAM during inference).
+- **Negative**: Local model quality is lower than cloud models (4B params vs 100B+).
+- **Negative**: Cold start latency (10-30s to load a model into memory).
+- **Negative**: No GPU acceleration in Docker by default (requires nvidia-docker).
+
+---
+
+## ADR-005: Zod Over class-validator for Validation
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+NestJS traditionally uses `class-validator` with decorators for DTO validation. However, `class-validator` has limitations: no runtime type inference, verbose decorator syntax, no composability, and the validated output type must be manually synchronized with the class definition.
+
+### Decision
+
+Use Zod for all input validation across all services. Define schemas as `z.object()` declarations, infer TypeScript types from schemas using `z.infer<>`. Use a custom `ZodValidationPipe` in NestJS to integrate with the standard validation pipeline.
+
+```typescript
+// DTO pattern
+export const CreateThreadSchema = z.object({
+  title: z.string().min(1).max(200),
+  routingMode: z.nativeEnum(RoutingMode),
+});
+export type CreateThreadDto = z.infer<typeof CreateThreadSchema>;
+```
+
+### Consequences
+
+- **Positive**: Single source of truth -- schema defines both validation rules and TypeScript type.
+- **Positive**: Runtime validation matches compile-time types automatically.
+- **Positive**: Composable -- schemas can extend, merge, and pick from each other.
+- **Positive**: Used in both frontend (form validation) and backend (DTO validation) for consistency.
+- **Positive**: Better error messages out of the box.
+- **Negative**: Not the NestJS default -- requires custom pipe integration.
+- **Negative**: Team members familiar with class-validator need to learn Zod patterns.
+- **Negative**: Some NestJS Swagger/OpenAPI generators expect class-validator decorators.
+
+---
+
+## ADR-006: Event-Driven Routing (Decoupled, Async)
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+The message flow requires the chat service to send a message to the routing service for provider selection, then receive the result to execute the AI call. Two approaches were considered: (1) synchronous HTTP call from chat to routing, or (2) event-driven via RabbitMQ.
+
+### Decision
+
+Use event-driven routing:
+
+1. Chat publishes `message.created` event.
+2. Routing consumes event, makes decision, publishes `message.routed` event.
+3. Chat consumes `message.routed`, proceeds with execution.
+
+### Consequences
+
+- **Positive**: Chat and routing services are fully decoupled. Either can be restarted independently.
+- **Positive**: Routing decisions are recorded as events, creating an audit trail.
+- **Positive**: Multiple consumers can react to `message.created` (e.g., future analytics service).
+- **Positive**: Routing service can be replaced or upgraded without touching chat service.
+- **Negative**: Additional latency (RabbitMQ publish + consume + publish + consume adds ~10-50ms).
+- **Negative**: More complex error handling -- what if routing never responds? (Handled by timeout + heuristic fallback.)
+- **Negative**: Debugging requires following events across services via correlation IDs.
+
+---
+
+## ADR-007: SSE Over WebSocket for Streaming
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+AI model responses should stream to the frontend token-by-token for a responsive UX. Two options: WebSocket (bidirectional, persistent connection) or Server-Sent Events (unidirectional, HTTP-based).
+
+### Decision
+
+Use Server-Sent Events (SSE) for streaming AI responses from the chat service to the frontend.
+
+### Consequences
+
+- **Positive**: SSE works over standard HTTP -- compatible with Nginx reverse proxy without special configuration (beyond buffering disabled).
+- **Positive**: Automatic reconnection built into the SSE protocol.
+- **Positive**: Simpler server implementation (no WebSocket upgrade, no connection state management).
+- **Positive**: Works with standard HTTP authentication and CORS.
+- **Negative**: Unidirectional only (server to client). Client-to-server communication still uses HTTP POST.
+- **Negative**: HTTP/1.1 has a 6-connection-per-domain limit in browsers (not an issue with HTTP/2).
+- **Negative**: Less efficient than WebSocket for very high-frequency bidirectional messaging (not our use case).
+
+---
+
+## ADR-008: Nginx Reverse Proxy (Single Entry Point)
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+With 17 backend services on different ports, the frontend cannot manage connections to each individually. We need a single entry point that routes requests to the correct service based on URL path.
+
+### Decision
+
+Use Nginx as a reverse proxy on port 4000. All API requests go through Nginx, which routes based on URL prefix:
+
+- `/api/v1/auth/*` -> auth-service:4001
+- `/api/v1/chat-threads/*` -> chat-service:4002
+- `/api/v1/connectors/*` -> connector-service:4003
+- (20+ route mappings total)
+
+Configure Nginx with SSE support (proxy_buffering off, chunked transfer encoding).
+
+### Consequences
+
+- **Positive**: Frontend connects to a single URL (port 4000) for all API calls.
+- **Positive**: Nginx handles SSL termination, request buffering, and static file serving.
+- **Positive**: SSE support with proper buffering configuration.
+- **Positive**: Easy to add rate limiting, IP allowlisting, or caching at the proxy layer.
+- **Negative**: Nginx is an additional component to configure and maintain.
+- **Negative**: Route configuration is in nginx.conf, separate from application code -- must be updated when adding new endpoints.
+- **Negative**: Nginx becomes a single point of failure (mitigated by its high reliability and simple configuration).
+
+---
+
+## ADR-009: Monorepo with npm Workspaces
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+ClawAI has 17 backend services, 1 frontend, and 5 shared packages that all need to share enums, types, and utilities. Options: polyrepo (each service in its own repository), monorepo with Turborepo/Nx, or monorepo with npm workspaces.
+
+### Decision
+
+Use a monorepo with npm workspaces. All 18 packages live in a single repository under `apps/` and `packages/`.
+
+### Consequences
+
+- **Positive**: Single `npm install` installs all dependencies across all packages.
+- **Positive**: Shared packages (`shared-types`, `shared-constants`, `shared-rabbitmq`, `shared-auth`) are workspace dependencies -- changes are immediately available to all consumers.
+- **Positive**: Atomic commits -- a change to a shared type and all its consumers can be in one commit.
+- **Positive**: Unified CI/CD pipeline (lint, typecheck, test, build all at once).
+- **Positive**: No need for package publishing or version management for internal packages.
+- **Negative**: Large repository size; `npm install` is slower than single-package install.
+- **Negative**: CI runs all checks even when only one service changed (no incremental builds without Turborepo).
+- **Negative**: All developers need the full repo; cannot clone just one service.
+
+---
+
+## ADR-010: fetch-Based SSE Over EventSource API
+
+**Date**: 2025-Q1
+**Status**: Accepted
+
+### Context
+
+The browser `EventSource` API is the standard way to consume SSE streams. However, `EventSource` has a critical limitation: it does not support custom HTTP headers. ClawAI requires the `Authorization: Bearer <token>` header on all API requests, including SSE connections.
+
+### Decision
+
+Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the native `EventSource` API. Implement a custom SSE parser that reads the stream, splits on `\n\n` delimiters, and extracts `data:` fields.
+
+### Consequences
+
+- **Positive**: Full control over request headers -- `Authorization` header is sent with SSE requests.
+- **Positive**: Can include any custom headers (e.g., `X-Request-ID` for correlation).
+- **Positive**: Works identically across all modern browsers.
+- **Positive**: Can implement custom retry logic and connection management.
+- **Negative**: No automatic reconnection (must implement manually).
+- **Negative**: More code than `new EventSource(url)` -- requires stream reading, parsing, and error handling.
+- **Negative**: Must handle edge cases: partial chunks, multi-line data fields, keep-alive comments.
+
+---
+
+## ADR Summary Table
+
+| ID  | Decision                                                                                                                                   | Status                                    | Key Driver                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 001 | Microservices (17 services)                                                                                                                | Accepted                                  | Failure isolation, independent deployment                                                                                                                                                                                                                                                                                                                                                                                        |
+| 002 | PostgreSQL per service                                                                                                                     | Accepted                                  | Data isolation, independent schemas                                                                                                                                                                                                                                                                                                                                                                                              |
+| 003 | RabbitMQ for async                                                                                                                         | Accepted                                  | Reliability, retry/DLQ, decoupling                                                                                                                                                                                                                                                                                                                                                                                               |
+| 004 | Ollama local AI                                                                                                                            | Accepted                                  | Privacy, cost, routing independence                                                                                                                                                                                                                                                                                                                                                                                              |
+| 005 | Zod over class-validator                                                                                                                   | Accepted                                  | Type inference, composability                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 006 | Event-driven routing                                                                                                                       | Accepted                                  | Decoupling, auditability                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 007 | SSE over WebSocket                                                                                                                         | Accepted                                  | Simplicity, HTTP compatibility                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 008 | Nginx reverse proxy                                                                                                                        | Accepted                                  | Single entry point, SSE support                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 009 | npm workspaces monorepo                                                                                                                    | Accepted                                  | Shared code, atomic changes                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 010 | fetch-based SSE                                                                                                                            | Accepted                                  | Auth header support                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 018 | Universal webhook receiver                                                                                                                 | Accepted                                  | One signed entry-point per provider                                                                                                                                                                                                                                                                                                                                                                                              |
+| 019 | Auto-suggest scheduler                                                                                                                     | Accepted                                  | Cron + advisory locks across replicas                                                                                                                                                                                                                                                                                                                                                                                            |
+| 020 | Suggestion factory pipeline                                                                                                                | Accepted                                  | Single entry-point for events → queue                                                                                                                                                                                                                                                                                                                                                                                            |
+| 021 | Write-action adapter pattern                                                                                                               | Accepted                                  | Uniform `executeWriteAction` per adapter                                                                                                                                                                                                                                                                                                                                                                                         |
+| 022 | HTML email sanitisation                                                                                                                    | Accepted                                  | DOMPurify + iframe sandbox; service-token /upload-internal                                                                                                                                                                                                                                                                                                                                                                       |
+| 023 | Calendar providers                                                                                                                         | Accepted                                  | GoogleCalendar + OutlookCalendar adapters; MEETING object                                                                                                                                                                                                                                                                                                                                                                        |
+| 024 | Inbox + pgvector search                                                                                                                    | Accepted                                  | Cross-provider inbox + memory-service embeddings table                                                                                                                                                                                                                                                                                                                                                                           |
+| 025 | Digest dashboard                                                                                                                           | Accepted                                  | Hourly cron + advisory lock + Intl.DateTimeFormat tz match                                                                                                                                                                                                                                                                                                                                                                       |
+| 026 | User-pref intersection                                                                                                                     | Accepted                                  | Most-restrictive-wins (admin > user)                                                                                                                                                                                                                                                                                                                                                                                             |
+| 027 | Memory learning loop                                                                                                                       | Accepted                                  | Heuristic v1; LLM classifier v1.x                                                                                                                                                                                                                                                                                                                                                                                                |
+| 028 | IMPL_PROMPT handoff                                                                                                                        | Accepted                                  | Workspace ↔ chat/agent bridge with secret scanner                                                                                                                                                                                                                                                                                                                                                                                |
+| 029 | Capability framework                                                                                                                       | Accepted                                  | Generalises agent + workspace approvals                                                                                                                                                                                                                                                                                                                                                                                          |
+| 040 | Router model registry                                                                                                                      | Accepted                                  | Canonical model identity store (Phase 1)                                                                                                                                                                                                                                                                                                                                                                                         |
+| 041 | Cost confidence annotation                                                                                                                 | Accepted                                  | EXACT/ESTIMATED/UNKNOWN; uncertainty penalty                                                                                                                                                                                                                                                                                                                                                                                     |
+| 042 | RoutingDecisionV2 Zod schema                                                                                                               | Accepted                                  | Strict output contract for the router (Phase 7)                                                                                                                                                                                                                                                                                                                                                                                  |
+| 043 | Route-only contract                                                                                                                        | Accepted                                  | Filter router-only models before scoring                                                                                                                                                                                                                                                                                                                                                                                         |
+| 044 | Learned scores split table                                                                                                                 | Accepted                                  | Per-(profile, domain, taskFamily) bounded updates                                                                                                                                                                                                                                                                                                                                                                                |
+| 045 | Persisted circuit breakers                                                                                                                 | Accepted                                  | DB-backed; survives container restart                                                                                                                                                                                                                                                                                                                                                                                            |
+| 046 | Simulator same code path                                                                                                                   | Accepted                                  | Phase 13 dry-run uses production evaluator                                                                                                                                                                                                                                                                                                                                                                                       |
+| 047 | 14-dim scoring weights                                                                                                                     | Accepted                                  | Per-RoutingMode weight vectors sum to 1                                                                                                                                                                                                                                                                                                                                                                                          |
+| 048 | Workflow vs. model decision                                                                                                                | Accepted                                  | Workflow selection inside router (Phase 9)                                                                                                                                                                                                                                                                                                                                                                                       |
+| 049 | Local TLS everywhere (mkcert)                                                                                                              | Accepted                                  | One install command, end-to-end HTTPS incl. service-to-service                                                                                                                                                                                                                                                                                                                                                                   |
+| 050 | Critic as sibling plan feature of Judge                                                                                                    | Accepted                                  | `allowCriticReview` flag + user-selectable critic model + parse-failed marker                                                                                                                                                                                                                                                                                                                                                    |
+| 051 | Narrow workspace VIEW + CONNECT permissions for USER                                                                                       | Accepted                                  | `WORKSPACE_VIEW` + `WORKSPACE_APP_CONFIG_VIEW`; partial-relax over admin-only                                                                                                                                                                                                                                                                                                                                                    |
+| 052 | Shared `RichPromptTextarea` + `use-sticky-bottom-scroll` hook                                                                              | Accepted                                  | One autosize textarea everywhere; one auto-follow scroll behaviour everywhere                                                                                                                                                                                                                                                                                                                                                    |
+| 053 | File retention sweeper + ZIP archive guardrails                                                                                            | Accepted                                  | Nightly cron sweep + 4 ZIP bomb hard caps + tmpfs sandbox                                                                                                                                                                                                                                                                                                                                                                        |
+| 054 | `file_delivery_records` extracted from JSON                                                                                                | Accepted                                  | Per-model delivery records → typed table; 30-day dual-write window                                                                                                                                                                                                                                                                                                                                                               |
+| 055 | [Canonical AI authority hierarchy](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-055-canonical-ai-authority-hierarchy.md)                                                            | Accepted                                  | CLAUDE.md > rules/00 > context/arch+stack > rules > skills > context+memory > .ai > routers                                                                                                                                                                                                                                                                                                                                      |
+| 056 | [Generated `.ai/` knowledge layer](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-056-generated-ai-knowledge-layer.md)                                                                | Accepted                                  | 19 manifests + BOOTSTRAP + workspace AGENTS.md, all derived from source                                                                                                                                                                                                                                                                                                                                                          |
+| 057 | [Deterministic context resolver](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-057-deterministic-context-resolver.md)                                                                | Accepted                                  | Lexical/structural retrieval, no external AI dependency                                                                                                                                                                                                                                                                                                                                                                          |
+| 058 | [Compact AI routers, not mirrors](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-058-compact-ai-routers-not-mirrors.md)                                                               | Accepted                                  | ~90-line per-tool routers; canonical wins on conflict                                                                                                                                                                                                                                                                                                                                                                            |
+| 059 | [Split ESLint architecture + plugin](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-059-split-eslint-architecture-plugin.md)                                                          | Accepted (plugin) / Proposed (root split) | Tested custom rules now; root-config decomposition deferred to its own slice                                                                                                                                                                                                                                                                                                                                                     |
+| 060 | [Affected-workspace validation](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-060-affected-workspace-validation.md)                                                                  | Accepted                                  | Diff → owning workspace + dependents; root changes stay local-scoped                                                                                                                                                                                                                                                                                                                                                             |
+| 061 | [Git-hook policy — no `--no-verify`](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-061-git-hook-policy-no-bypass.md)                                                                 | Accepted                                  | Hooks call the affected lane; bypass recommendations removed + scanned                                                                                                                                                                                                                                                                                                                                                           |
+| 062 | [Testing-runner retention](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-062-testing-runner-retention.md)                                                                            | Superseded by ADR-099                     | Keep Jest (backend) + Vitest (frontend) + Playwright (E2E); no forced migration                                                                                                                                                                                                                                                                                                                                                  |
+| 063 | [Coverage targets](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-063-coverage-targets.md)                                                                                            | Accepted                                  | ≥95%/90% branches target, ratcheted in, 100% branch on pure critical logic                                                                                                                                                                                                                                                                                                                                                       |
+| 064 | [Refund ledger and entitlement policy](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-064-refund-ledger-and-entitlement-policy.md)                                                    | Accepted                                  | Partial preserves access; cumulative full refund revokes; DB-locked aggregate                                                                                                                                                                                                                                                                                                                                                    |
+| 065 | [Immutable invoice documents and durable delivery](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-065-immutable-invoice-documents-and-delivery.md)                                    | Accepted                                  | DB-immutable facts; transactional delivery intent; owned PDF download; shared SMTP adapter                                                                                                                                                                                                                                                                                                                                       |
+| 066 | [Purpose-constrained checkout sessions](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-066-purpose-constrained-checkout-sessions.md)                                                  | Accepted                                  | One callback path; DB-enforced subscription/setup purpose invariant                                                                                                                                                                                                                                                                                                                                                              |
+| 067 | [Owner-token Redis locks for scheduled jobs](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-067-owner-token-locks-for-scheduled-jobs.md)                                              | Accepted                                  | NX lease + atomic owner compare/delete; bounded idempotent work                                                                                                                                                                                                                                                                                                                                                                  |
+| 068 | [Session-bound user tokens](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-068-session-bound-user-tokens.md)                                                                          | Accepted                                  | Hashed refresh rotation, replay revocation, strict JWT claims, one-time sign-out                                                                                                                                                                                                                                                                                                                                                 |
+| 069 | [Router learned-score retirement](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-069-router-learned-score-retirement.md)                                                              | Accepted                                  | `RouterModelProfile`/`RouterTopicProfile` is the one production learning system; `RouterLearnedScore` retired dead-but-harmless                                                                                                                                                                                                                                                                                                  |
+| 070 | [Workspace-tier hierarchical priors](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-070-workspace-tier-hierarchical-priors.md)                                                        | Accepted                                  | Workspace tier only (user tier deferred, no `userId` concept exists); inert until chat-service threads a real workspace id                                                                                                                                                                                                                                                                                                       |
+| 071 | [Discovery stylesheet and feed content negotiation](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-071-discovery-feed-content-negotiation.md)                                         | Accepted                                  | `xml-stylesheet` on every discovery document; feeds pick their type from `Accept` with `Vary: Accept`                                                                                                                                                                                                                                                                                                                            |
+| 072 | [AI answer-engine crawler policy and the comparison cluster](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-072-ai-answer-engine-crawler-policy.md)                                   | Accepted                                  | Named crawler groups sharing one allow/disallow pair; `/llms.txt`; `/compare/*` on fixed axes, translated, no fabricated review markup                                                                                                                                                                                                                                                                                           |
+| 073 | [Super-administrator authority](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-073-super-administrator-authority.md)                                                                  | Accepted                                  | One pure scope predicate + one DB actor read; per-scope self-exemption; no JWT claim; three refusal codes                                                                                                                                                                                                                                                                                                                        |
+| 074 | [Plan signup flag and popular badge](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-074-plan-signup-flag-and-popular-badge.md)                                                        | Accepted                                  | `isPopular` + nullable unique `popularKey`; migration never writes `isDefault`; both flags stay behind their own endpoint                                                                                                                                                                                                                                                                                                        |
+| 075 | [Public share assets](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-075-public-share-assets.md)                                                                                      | Accepted                                  | A share owns copies of its images; unscanned images cost ad and index eligibility, never readability                                                                                                                                                                                                                                                                                                                             |
+| 076 | [Chat stream durability](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-076-chat-stream-durability.md)                                                                                | Accepted                                  | The chat SSE bus stays in-process; the database plus polling is the record, and chat-service runs exactly one replica                                                                                                                                                                                                                                                                                                            |
+| 077 | [chat-service horizontal scaling](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-077-chat-service-horizontal-scaling.md)                                                              | Accepted                                  | The stream bus and Stop move to Redis so chat-service runs 4 replicas; deploys roll one replica at a time                                                                                                                                                                                                                                                                                                                        |
+| 078 | [PAYG connector credit](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-078-payg-connector-credit.md)                                                                                  | Accepted                                  | Credit IS the promoted `monthlyProviderCostCeilingMicroUsd`; 1 weighted token == 1 micro-USD, so a third column would be a third name for one number                                                                                                                                                                                                                                                                             |
+| 079 | [Auth learns model prices over a cached internal call](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-079-auth-model-price-cache.md)                                                  | Accepted                                  | routing-service stays the price owner; auth caches 300 s, busted by `routing.model_cost.published`; fails closed                                                                                                                                                                                                                                                                                                                 |
+| 080 | [One reservation, not two](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-080-one-reservation-not-two.md)                                                                             | Accepted                                  | `RESERVE_QUOTA_LUA` 7 to 9 windows + 3 `WeightedUsageRecord` columns; no `CreditReservation` table, no second atomicity domain                                                                                                                                                                                                                                                                                                   |
+| 081 | [Retire the routing cost-budget scaffold](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-081-retire-routing-cost-budget.md)                                                           | Accepted (supersedes routing stream R.4)  | Never registered, no schema, `SCAFFOLD-R4` throw, 7 unguarded handlers; per-user spend capping is the auth wallet                                                                                                                                                                                                                                                                                                                |
+| 082 | [PAYG classification grain](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-082-payg-classification-grain.md)                                                                          | Accepted                                  | Server-side in auth only, at PROVIDER grain rolled up from `Connector.isPayAsYouGo`; never in `shared-entitlements`                                                                                                                                                                                                                                                                                                              |
+| 083 | [Credit top-up as a third checkout purpose](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-083-credit-topup-checkout-purpose.md)                                                      | Accepted (amends ADR-066)                 | Third CHECK branch; fixed server-priced packages; price-to-credit ratio a column seeded at 0.60, never 1:1                                                                                                                                                                                                                                                                                                                       |
+| 084 | [SEO clusters fan out from one dynamic route](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-084-seo-cluster-fan-out-shape.md)                                                        | Accepted                                  | One `[topic]` segment + order array per cluster; all five layers fan out; sitemap-coverage learns dynamic segments; Lighthouse samples on PR                                                                                                                                                                                                                                                                                     |
+| 086 | [The Context Composer, and why relevance may never remove a message](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-086-conversational-context-composer.md)                           | Accepted                                  | Relevance ranks, only the token budget removes; turns not messages; `maxTokens` is output-only; every generation emits a context manifest                                                                                                                                                                                                                                                                                        |
+| 087 | [Cross-thread retrieval, and why it is off by default](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-087-cross-thread-retrieval.md)                                                  | Accepted                                  | Opt-in per thread, never read when off; two stages; a coined identifier is the precision gate; ranks on message evidence, not the title                                                                                                                                                                                                                                                                                          |
+| 088 | [The chat composer sizes itself, and the drag handle is gone](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-088-composer-auto-height-replaces-drag-resize.md)                        | Accepted                                  | Row range replaces a fixed pixel height; reuses `RichPromptTextarea`; composer stays in normal flow so rule 36 clearance never applies                                                                                                                                                                                                                                                                                           |
+| 089 | [Client telemetry ships as batches to a second endpoint](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-089-client-telemetry-batch-endpoint.md)                                       | Accepted                                  | `POST /client-logs/batch` + `insertMany({ordered:false})`; collapse repeats to an `occurrences` count; DEBUG stops at the network in production; telemetry exempt from the auth-refresh flow                                                                                                                                                                                                                                     |
+| 090 | [The model picker opens at the current choice, and its trigger always names it](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md)       | Accepted                                  | cmdk's `value` is the highlight, so seeding it on open IS scroll-to-selection; item value becomes the id with the label in `keywords`; a narrow trigger shows a short label instead of nothing                                                                                                                                                                                                                                   |
+| 091 | [A URL the user writes is opened, not searched for](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-091-user-urls-are-opened-not-searched.md)                                          | Accepted                                  | Direct fetch before search in the research pipeline; pasted pages outrank discovered ones; the prompt now states what was ATTEMPTED and which tools ran                                                                                                                                                                                                                                                                          |
+| 092 | [Multi-page site crawl reuses FetchService, no new fetch path](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md)                | Accepted                                  | `SITE_CRAWL` workflow; robots.txt/sitemap.xml/pages all go through the same `FetchService`; sitemap first, homepage links only when it's thin; crawled pages are `source:'fetch'`, no new schema                                                                                                                                                                                                                                 |
+| 093 | [Mid-generation crawl retrieval bypasses the `callProvider` chokepoint](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-093-mid-generation-crawl-retrieval-bypasses-callprovider.md)   | Accepted                                  | `get_crawled_page` reuses the previously-unwired `runOllamaCloudToolLoop`, Ollama Cloud only; resolved from `metadata.research.bundle` in memory, no network call; bypasses `callProvider`'s single hold because the loop takes its own hold per turn                                                                                                                                                                            |
+| 094 | [Headless-browser rendering is a fallback INSIDE FetchService](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-094-headless-render-fallback-inside-fetchservice.md)                    | Accepted                                  | `HeadlessFetchAdapter` (Playwright/Chromium) retries a thin plain-fetch result, never a second fetch path; every in-page subrequest gets the same anti-SSRF check the top-level navigation gets, not just the initial URL                                                                                                                                                                                                        |
+| 095 | [Attachments are extracted to text, and the text is a column](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-095-attachment-text-extraction-pipeline.md)                              | Accepted                                  | `processFile` had no caller from upload; `extracted_text` is its own column, not a chunk rejoin; no bulk backfill (it would poll forever), legacy rows heal on use; OOXML read in-memory under ADR-053-equivalent bounds                                                                                                                                                                                                         |
+| 096 | [A login tells you why, only after you have proved the account is yours](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-096-login-failure-taxonomy-without-account-enumeration.md)    | Accepted                                  | Password verified FIRST, before any account-state branch, so unknown-address and wrong-password are identical in body AND cost (`burnPasswordVerification`); `EMAIL_NOT_VERIFIED`/`ACCOUNT_SUSPENDED` are safe to name only post-verification; registration lands on `/check-email`, never `/login`; every auth email localised to 13 languages                                                                                  |
+| 097 | [Display FX is a separate subsystem from settlement FX](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-097-display-fx-separate-from-settlement-fx.md)                                 | Accepted                                  | Three amounts named and never merged — CANONICAL (immutable USD price), DISPLAY (current rate, commercially rounded, fails OPEN to USD) and SETTLEMENT (frozen FxQuote, safety margin, fails CLOSED); `DisplayFxRate` carries no quoteId/expiresAt/safetyMarginBps so it cannot reach a gateway adapter; display currencies are a separate, wider allowlist than billing currencies                                              |
+| 098 | [AUTO research is an AI-driven, narrated loop that runs after the request returns](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-098-auto-research-is-an-ai-driven-narrated-loop.md) | Accepted                                  | A planner (admin's ordered models, next model on a bad reply) chooses answer/crawl/search/crawl-then-search and is asked again after a crawl; runs after the POST with `message.created` in `finally`; chat calls research over an internal service-token route (the user route 403'd every non-admin); one shared URL detector with bare domains; every step narrated to a deduped Redis log and stored as `metadata.narration` |
+| 099 | [Vitest in every workspace; Playwright stays for E2E](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-099-vitest-in-every-workspace.md)                                                | Accepted                                  | Supersedes ADR-062. All 20 apps + 6 packages run `vitest run` since 63e7f7806 (2026-09-17); backend configs use `unplugin-swc` for decorator metadata; coverage thresholds in `vitest.config.ts`; Playwright unchanged for E2E; gates stay runner-agnostic                                                                                                                                                                       |
+| 100 | [The AUTO router picks from exposed models; every prompt fits its window](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-100-router-candidates-and-per-model-context-fit.md)          | Accepted                                  | Candidates = admin-EXPOSED chat models (health + plan filtered, ACTIVE first, round-robin by provider, cap 30) instead of 4 ACTIVE Gemini-heavy rows; OLLAMA_CLOUD planner calls ollama.com with the connector key (prod has no ollama-service); one `knownContextWindow` table in shared-utilities; research/files/packs/memories get 45/25/10/5% of the window; fast path escalates on `length`                                |
+| 101 | [Every container log goes to one store, shipped read-only by Vector](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-101-every-container-log-in-one-store.md)                          | Accepted                                  | `x-claw-logging` anchor (json-file, 20m x5, `claw.service` label) on every service; Vector reads json-file logs READ-ONLY (never the Docker socket); `/server-logs/ingest/containers` parses pino/Nest/plain into real levels; the public log-write routes now need the service token                                                                                                                                            |

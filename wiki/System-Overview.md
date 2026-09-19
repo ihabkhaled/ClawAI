@@ -1,0 +1,215 @@
+> **Wiki source:** [`docs/03-architecture/system-overview.md`](https://github.com/ihabkhaled/ClawAI/blob/main/docs/03-architecture/system-overview.md) on the current `main` branch. This page mirrors the repository documentation so the Wiki stays grounded in the codebase.
+
+# System Overview
+
+## What ClawAI Is
+
+ClawAI is a local-first AI orchestration platform built as a distributed microservices system. It provides a single interface to multiple AI providers (OpenAI, Anthropic, Google Gemini, DeepSeek, xAI, and local Ollama), with intelligent routing that automatically selects the best model for each task based on content analysis, privacy requirements, cost constraints, and latency targets.
+
+---
+
+## Architecture at a Glance
+
+```mermaid
+graph TB
+    subgraph Frontend
+        FE[Next.js 16 / React 19<br/>Port 3000]
+    end
+
+    subgraph Proxy
+        NG[Nginx Reverse Proxy<br/>Port 4000]
+    end
+
+    subgraph Backend Services
+        AUTH[Auth<br/>4001]
+        CHAT[Chat<br/>4002]
+        CONN[Connector<br/>4003]
+        ROUTE[Routing<br/>4004]
+        MEM[Memory<br/>4005]
+        FILE[File<br/>4006]
+        AUDIT[Audit<br/>4007]
+        OLLAMA[Ollama Svc<br/>4008]
+        HEALTH[Health<br/>4009]
+        CLOG[Client Logs<br/>4010]
+        SLOG[Server Logs<br/>4011]
+        IMG[Image<br/>4012]
+        FGEN[File Gen<br/>4013]
+        WSPACE[Workspace<br/>4014]
+        AGENT[Agent<br/>4015]
+    end
+
+    subgraph Data Layer
+        PG[(11x PostgreSQL<br/>+ pgvector)]
+        MONGO[(3x MongoDB)]
+        REDIS[(Redis)]
+        RMQ[(RabbitMQ)]
+    end
+
+    subgraph Runtime
+        OLL[Ollama<br/>Port 11434<br/>Local LLMs]
+        CLAM[ClamAV<br/>Port 3310]
+    end
+
+    subgraph Cloud Providers
+        OAI[OpenAI]
+        ANT[Anthropic]
+        GEM[Google Gemini]
+        DS[DeepSeek]
+        XAI[xAI]
+    end
+
+    FE --> NG
+    NG --> AUTH & CHAT & CONN & ROUTE & MEM & FILE & AUDIT & OLLAMA & HEALTH & CLOG & SLOG & IMG & FGEN & WSPACE & AGENT
+
+    AUTH & CHAT & CONN & ROUTE & MEM & FILE & OLLAMA & IMG & FGEN & WSPACE & AGENT --> PG
+    AUDIT & CLOG & SLOG --> MONGO
+    AUTH & CHAT & ROUTE & WSPACE --> REDIS
+    AUTH & CHAT & CONN & ROUTE & MEM & AUDIT & SLOG & IMG & FGEN & AGENT --> RMQ
+
+    OLLAMA --> OLL
+    FILE --> CLAM
+    CONN --> OAI & ANT & GEM & DS & XAI
+```
+
+---
+
+## 15 Backend Services
+
+| #   | Service                 | Port | Database                    | Purpose                                                                  |
+| --- | ----------------------- | ---- | --------------------------- | ------------------------------------------------------------------------ |
+| 1   | auth-service            | 4001 | PG `claw_auth`              | JWT authentication, RBAC, user management, sessions                      |
+| 2   | chat-service            | 4002 | PG `claw_chat`              | Threads, messages, context assembly, LLM execution, SSE                  |
+| 3   | connector-service       | 4003 | PG `claw_connectors`        | Cloud provider management, API key encryption, health checks, model sync |
+| 4   | routing-service         | 4004 | PG `claw_routing`           | Intelligent routing (7 modes), policies, decision recording              |
+| 5   | memory-service          | 4005 | PG `claw_memory` (pgvector) | Memory extraction, CRUD, context packs, semantic retrieval               |
+| 6   | file-service            | 4006 | PG `claw_files`             | File upload, chunking, download, scanning                                |
+| 7   | audit-service           | 4007 | MongoDB `claw_audit`        | Audit events, usage ledger                                               |
+| 8   | ollama-service          | 4008 | PG `claw_ollama`            | Local model management, catalog, pull jobs, generation proxy             |
+| 9   | health-service          | 4009 | None                        | Aggregates health from downstream services                               |
+| 10  | client-logs-service     | 4010 | MongoDB `claw_client_logs`  | Frontend log ingestion (TTL 30d)                                         |
+| 11  | server-logs-service     | 4011 | MongoDB `claw_server_logs`  | Backend log aggregation (TTL 30d)                                        |
+| 12  | image-service           | 4012 | PG `claw_images`            | Image generation (DALL-E, Gemini, local runtimes)                        |
+| 13  | file-generation-service | 4013 | PG `claw_file_generations`  | File export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)                              |
+| 14  | workspace-service       | 4014 | PG `claw_workspace`         | Workspace connectors, sync, search, objects, actions                     |
+| 15  | agent-service           | 4015 | PG `claw_agent`             | Desktop agent sessions, command approvals, repos, file events            |
+
+---
+
+## Database Topology
+
+### PostgreSQL (11 Databases)
+
+Each service owns its database exclusively. No cross-database queries.
+
+| Database              | Service                 | Key Tables                                                                      | Extensions |
+| --------------------- | ----------------------- | ------------------------------------------------------------------------------- | ---------- |
+| claw_auth             | auth-service            | User, Session, SystemSetting                                                    | --         |
+| claw_chat             | chat-service            | ChatThread, ChatMessage, MessageAttachment                                      | --         |
+| claw_connectors       | connector-service       | Connector, ConnectorModel, ConnectorHealthEvent, ModelSyncRun                   | --         |
+| claw_routing          | routing-service         | RoutingDecision, RoutingPolicy                                                  | --         |
+| claw_memory           | memory-service          | MemoryRecord, ContextPack, ContextPackItem                                      | pgvector   |
+| claw_files            | file-service            | File, FileChunk                                                                 | --         |
+| claw_ollama           | ollama-service          | LocalModel, LocalModelRoleAssignment, PullJob, RuntimeConfig, ModelCatalogEntry | --         |
+| claw_images           | image-service           | ImageGeneration, ImageGenerationAsset, ImageGenerationEvent                     | --         |
+| claw_file_generations | file-generation-service | FileGeneration, FileGenerationAsset, FileGenerationEvent                        | --         |
+| claw_workspace        | workspace-service       | WorkspaceConnector, WorkspaceSyncRun, WorkspaceObject, WorkspaceAction          | --         |
+| claw_agent            | agent-service           | AgentSession, TerminalCommand, LocalRepo, FileWatchEvent                        | --         |
+
+### MongoDB (3 Databases)
+
+| Database         | Service             | Collections           | TTL     |
+| ---------------- | ------------------- | --------------------- | ------- |
+| claw_audit       | audit-service       | AuditLog, UsageLedger | None    |
+| claw_client_logs | client-logs-service | ClientLog             | 30 days |
+| claw_server_logs | server-logs-service | ServerLog             | 30 days |
+
+### Redis
+
+- Session caching
+- Rate limiting state
+- Ephemeral routing and workspace cache data
+
+### RabbitMQ
+
+- Single topic exchange: `claw.events` (durable)
+- Dead-letter exchange: `claw.events.dlx`
+- 3 retries with exponential backoff (1s, 5s, 30s)
+- Per-service DLQ queues
+
+---
+
+## Communication Patterns
+
+### Synchronous HTTP
+
+Used when the caller needs an immediate response:
+
+- chat-service -> memory-service (fetch memories for context)
+- chat-service -> file-service (fetch file chunks)
+- chat-service -> workspace-service (fetch workspace grounding)
+- chat-service -> connector-service (cloud provider API call setup)
+- routing-service -> ollama-service (router model inference)
+- health-service -> 14 downstream services (health aggregation)
+
+### Asynchronous RabbitMQ
+
+Used for fire-and-forget operations:
+
+- `message.created`: chat -> routing
+- `message.routed`: routing -> chat
+- `message.completed`: chat -> memory, audit
+- `user.login/logout`: auth -> audit
+- `connector.*`: connector -> audit, routing
+- `agent.session.connected` / `agent.session.disconnected`: agent -> consumers
+- `log.server`: all services -> server-logs
+
+### Server-Sent Events (SSE)
+
+Used for real-time streaming:
+
+- chat-service -> frontend (AI response delivery)
+- image-service -> frontend (generation progress)
+- file-generation-service -> frontend (generation progress)
+
+---
+
+## Technology Stack
+
+| Layer             | Technology                                                   | Version           |
+| ----------------- | ------------------------------------------------------------ | ----------------- |
+| Frontend          | Next.js, React, TanStack Query, Zustand, Tailwind, shadcn/ui | 16, 19, 5, 4, 3.4 |
+| Backend           | NestJS, TypeScript                                           | 11.x, 5.6+        |
+| ORM               | Prisma (SQL), Mongoose (MongoDB)                             | 5.22+             |
+| Validation        | Zod                                                          | 3.24              |
+| Message Broker    | RabbitMQ                                                     | 3.13+             |
+| SQL Database      | PostgreSQL + pgvector                                        | 16+               |
+| Document Database | MongoDB                                                      | 7+                |
+| Cache             | Redis                                                        | 7+                |
+| Local AI          | Ollama                                                       | Latest            |
+| File security     | ClamAV                                                       | Stable            |
+| Reverse Proxy     | Nginx                                                        | 1.25+             |
+| Containers        | Docker, Docker Compose                                       | 24+, 2.24+        |
+| CI/CD             | GitHub Actions                                               | --                |
+| Testing           | Vitest (all workspaces), Playwright (E2E)                    | --                |
+| Linting           | ESLint 9, Prettier                                           | 9, 3.8            |
+
+---
+
+## Deployment
+
+### Development
+
+Single Docker Compose file (`docker/docker-compose.dev.yml`): 33 containers including all services, databases, message broker, cache, local AI runtime, and file scanning support.
+
+```bash
+./scripts/claw.sh up -d
+```
+
+### Production
+
+Separate compose files for production optimization:
+
+- `docker/docker-compose.yml`
+- environment-specific overlays as needed
+
+All services use `env_file: .env` from root. A single `.env` file remains the source of truth for service URLs, secrets, and database connection strings.
