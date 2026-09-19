@@ -1,6 +1,9 @@
 import { RouterErrorCode, RoutingLabCaseCategory } from '../../../../common/enums';
 import type { RoutingLabManifestData } from '../types/routing-lab-manifest.types';
-import { renderRoutingLabManifest } from '../utilities/routing-lab-manifest.utility';
+import {
+  renderRoutingLabManifest,
+  routingLabManifestChanged,
+} from '../utilities/routing-lab-manifest.utility';
 
 const DATA: RoutingLabManifestData = {
   totalCases: 300,
@@ -68,5 +71,24 @@ describe('renderRoutingLabManifest', () => {
 
     expect(order.every((index) => index >= 0)).toBe(true);
     expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+});
+
+describe('routingLabManifestChanged', () => {
+  const base =
+    '# Batch 12\n\nGenerated: 2026-09-19T09:31:25.253Z\n\n| Category | Cases |\n| --- | --- |\n| BASELINE | 252 |\n';
+
+  it('ignores a new timestamp and prettier table padding', () => {
+    const rerun =
+      '# Batch 12\n\nGenerated: 2026-09-19T09:45:18.999Z\n\n| Category       | Cases |\n| -------------- | ----- |\n| BASELINE       | 252   |\n';
+    expect(routingLabManifestChanged(base, rerun)).toBe(false);
+  });
+
+  it('reports a real change in a result', () => {
+    expect(routingLabManifestChanged(base, base.replace('252', '251'))).toBe(true);
+  });
+
+  it('writes the first manifest', () => {
+    expect(routingLabManifestChanged(null, base)).toBe(true);
   });
 });

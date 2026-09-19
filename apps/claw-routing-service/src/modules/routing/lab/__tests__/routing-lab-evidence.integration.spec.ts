@@ -1,10 +1,13 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { RouterErrorCode } from '../../../../common/enums';
 import { RoutingLabRunnerManager } from '../managers/routing-lab-runner.manager';
 import { buildRoutingLabCorpus } from '../utilities/routing-lab-corpus.utility';
 import { computeRoutingLabManifestData } from '../utilities/routing-lab-breakdown.utility';
-import { renderRoutingLabManifest } from '../utilities/routing-lab-manifest.utility';
+import {
+  renderRoutingLabManifest,
+  routingLabManifestChanged,
+} from '../utilities/routing-lab-manifest.utility';
 
 /**
  * Runs the full 300-case corpus once through a real `CloudRouterManager` and
@@ -65,7 +68,14 @@ describe('routing lab evidence generation (full 300-case corpus)', () => {
     expect(markdown).toContain('Corpus size: 300 cases');
     expect(markdown).toContain('## 4. Error-taxonomy distribution');
 
-    mkdirSync(dirname(EVIDENCE_FILE_PATH), { recursive: true });
-    writeFileSync(EVIDENCE_FILE_PATH, markdown, 'utf8');
+    // Rewritten only when a result moved, so a routine test run leaves the
+    // committed evidence untouched.
+    const previous = existsSync(EVIDENCE_FILE_PATH)
+      ? readFileSync(EVIDENCE_FILE_PATH, 'utf8')
+      : null;
+    if (routingLabManifestChanged(previous, markdown)) {
+      mkdirSync(dirname(EVIDENCE_FILE_PATH), { recursive: true });
+      writeFileSync(EVIDENCE_FILE_PATH, markdown, 'utf8');
+    }
   });
 });

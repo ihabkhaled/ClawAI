@@ -106,3 +106,28 @@ export function renderRoutingLabManifest(data: RoutingLabManifestData): string {
     `## What this does not prove\n\n${renderList(ROUTING_LAB_MANIFEST_WHAT_THIS_DOES_NOT_PROVE)}\n`
   );
 }
+
+/**
+ * True when two manifests differ in substance.
+ *
+ * The evidence test rewrote the committed manifest on every routing test run:
+ * a fresh `Generated:` stamp each time, and table padding that prettier then
+ * reformatted on commit. The file showed as modified after every run with
+ * nothing real changed. The stamp line and table padding are ignored here, so
+ * the file is rewritten only when a result actually moved.
+ */
+export function routingLabManifestChanged(previous: string | null, next: string): boolean {
+  return previous === null || normalizeManifest(previous) !== normalizeManifest(next);
+}
+
+function normalizeManifest(markdown: string): string {
+  return markdown
+    .replaceAll('\r\n', '\n')
+    .split('\n')
+    .filter((line) => !line.startsWith('Generated: '))
+    .map((line) =>
+      line.startsWith('|') ? line.replaceAll(/\s+/gu, ' ').replaceAll(/-{2,}/gu, '-') : line.trimEnd(),
+    )
+    .join('\n')
+    .trim();
+}
