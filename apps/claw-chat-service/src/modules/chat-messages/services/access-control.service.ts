@@ -31,6 +31,7 @@ import { ModelAuthorizationMetricsService } from './model-authorization-metrics.
 import { AppConfig } from '../../../app/config/app.config';
 import { isGenerationProvider } from '../utilities/generation-provider.utility';
 import { ENTITLEMENTS_TIMEOUT_MS } from '../../../common/constants';
+import { toEntitlementsException } from '../../../common/utilities/entitlements-error.utility';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { BusinessException } from '../../../common/errors';
 import {
@@ -456,11 +457,7 @@ export class AccessControlService {
           ENTITLEMENTS_TIMEOUT_MS,
         )}`,
       );
-      throw new BusinessException(
-        'Entitlements are temporarily unavailable',
-        'ENTITLEMENTS_UNAVAILABLE',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      throw toEntitlementsException(error);
     }
   }
 }

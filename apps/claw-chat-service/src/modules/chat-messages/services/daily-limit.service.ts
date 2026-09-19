@@ -1,7 +1,7 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EntitlementsAdapter, type UserEntitlements } from '@claw/shared-entitlements';
 import { AppConfig } from '../../../app/config/app.config';
-import { BusinessException } from '../../../common/errors';
+import { toEntitlementsException } from '../../../common/utilities/entitlements-error.utility';
 
 @Injectable()
 export class DailyLimitService {
@@ -13,13 +13,9 @@ export class DailyLimitService {
   async resolve(userId: string): Promise<UserEntitlements> {
     try {
       return await this.adapter.getEntitlements(userId);
-    } catch {
+    } catch (error: unknown) {
       this.logger.error(`Daily-limit entitlement lookup failed for user=${userId}`);
-      throw new BusinessException(
-        'Entitlements are temporarily unavailable',
-        'ENTITLEMENTS_UNAVAILABLE',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      throw toEntitlementsException(error);
     }
   }
 }
