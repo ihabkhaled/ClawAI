@@ -1,0 +1,215 @@
+# Prisma Models
+
+## claw-agent-service
+
+- `AccessPolicy`
+- `ActivityMemoryEntry`
+- `AgentSession`
+- `AgentSuggestion`
+- `CapabilityInvocation`
+- `Device`
+- `DeviceCodeRequest`
+- `FileWatchEvent`
+- `LocalRepo`
+- `MarketplaceInstall`
+- `MarketplaceListing`
+- `Organization`
+- `OrganizationMember`
+- `OrganizationPolicy`
+- `PairingRequest`
+- `Recipe`
+- `RecipeRun`
+- `RecipeRunStep`
+- `RefreshToken`
+- `ScheduledCommand`
+- `TerminalCommand`
+
+## claw-auth-service
+
+- `CreditLedgerEntry`
+- `CreditPackage`
+- `CreditPackageVersion`
+- `DeploymentCredential`
+- `DeviceAuthorizationGrant`
+- `EmailChangeRequest`
+- `EmailVerificationToken`
+- `EntitlementInboxEvent`
+- `FeatureUsageRecord`
+- `PasswordResetToken`
+- `Plan`
+- `PlanFeatureRule`
+- `PlanModelAccess`
+- `PlanPriceVersion`
+- `PlanRetirementMigration`
+- `PlanTrialRedemption`
+- `Role`
+- `RolePermission`
+- `SeedExecution`
+- `Session`
+- `SystemSetting`
+- `TokenUsageLedger`
+- `User`
+- `UserCreditWallet`
+- `UserPlanAssignment`
+- `WeightedUsageRecord`
+
+## claw-chat-service
+
+- `ChatMessage`
+- `ChatMessageContextReceipt`
+- `ChatShare`
+- `ChatShareMessage`
+- `ChatShareMessageAsset`
+- `ChatThread`
+- `FileDeliveryRecord`
+- `MessageAttachment`
+
+## claw-connector-service
+
+- `Connector`
+- `ConnectorHealthEvent`
+- `ConnectorModel`
+- `ModelSyncRun`
+
+## claw-file-generation-service
+
+- `FileGeneration`
+- `FileGenerationAsset`
+- `FileGenerationEvent`
+
+## claw-file-service
+
+- `File`
+- `FileChunk`
+
+## claw-image-service
+
+- `ImageGeneration`
+- `ImageGenerationAsset`
+- `ImageGenerationEvent`
+
+## claw-llamacpp-service
+
+- `BinaryRelease`
+- `FrontierCatalogEntry`
+- `HardwareSnapshot`
+- `ModelLoadEvent`
+- `PreflightOverrideAudit`
+- `PullJob`
+- `RuntimeConfig`
+
+## claw-memory-service
+
+- `ContextPack`
+- `ContextPackAttachment`
+- `ContextPackItem`
+- `ContextPackTemplate`
+- `ContextPackUsage`
+- `ContextPackVersion`
+- `MemoryAuditLog`
+- `MemoryPreference`
+- `MemoryRecord`
+- `MemorySuggestion`
+- `MemoryUsage`
+- `WorkspaceObjectEmbedding`
+
+## claw-ollama-service
+
+- `DiscoverySource`
+- `LocalModel`
+- `LocalModelRoleAssignment`
+- `ModelCatalogEntry`
+- `ModelDiscoveryCandidate`
+- `ModelDiscoveryRun`
+- `PullJob`
+- `RuntimeConfig`
+
+## claw-payment-service
+
+- `BillingCustomer`
+- `CheckoutSession`
+- `FxQuote`
+- `GatewayConfiguration`
+- `GatewayPlanMapping`
+- `IdempotencyRecord`
+- `InboxEvent`
+- `Invoice`
+- `InvoiceDelivery`
+- `InvoiceLine`
+- `OutboxEvent`
+- `PaymentMethod`
+- `PaymentTransaction`
+- `ProrationQuote`
+- `ReconciliationDivergence`
+- `ReconciliationRun`
+- `Refund`
+- `SeedExecution`
+- `Subscription`
+- `WebhookEvent`
+
+## claw-research-service
+
+- `FetchJob`
+- `PageCache`
+- `ResearchRun`
+- `SearchProvider`
+- `SearchRun`
+
+## claw-routing-service
+
+- `AssistantModel`
+- `CapabilityEvidence`
+- `ModelCostVersion`
+- `ModelDeployment`
+- `ReplayCase`
+- `ReplayRun`
+- `RouterAdminOverride`
+- `RouterChainEntry`
+- `RouterCircuitBreaker`
+- `RouterConfiguration`
+- `RouterLearnedScore`
+- `RouterModelProfile`
+- `RouterModelRegistry`
+- `RouterProviderAttempt`
+- `RouterTopicProfile`
+- `RouterWorkflow`
+- `RouterWorkspacePrior`
+- `RoutingCalibrationSnapshot`
+- `RoutingCandidateScore`
+- `RoutingDecision`
+- `RoutingFeedbackRecord`
+- `RoutingOutcomeRecord`
+- `RoutingPolicy`
+- `SeedExecution`
+- `TaxonomyRole`
+
+## claw-workspace-service
+
+- `AiActionApprovalQueue`
+- `AiActionPolicy`
+- `AutoSuggestRun`
+- `DigestSnapshot`
+- `ImplPromptHandoff`
+- `SuggestionDeduplication`
+- `SuggestionTriggerRule`
+- `SyncCadenceDefault`
+- `UserAutomationPreference`
+- `UserDigestPreference`
+- `UserEmailSignature`
+- `UserEmailTemplate`
+- `WebhookDelivery`
+- `WorkspaceAction`
+- `WorkspaceChain`
+- `WorkspaceChainRun`
+- `WorkspaceChainRunStep`
+- `WorkspaceChainTemplate`
+- `WorkspaceConnector`
+- `WorkspaceConnectorGrant`
+- `WorkspaceConnectorGrantAuditLog`
+- `WorkspaceEvent`
+- `WorkspaceHealthEvent`
+- `WorkspaceObject`
+- `WorkspaceObjectLink`
+- `WorkspaceProviderAppConfig`
+- `WorkspaceProviderDefinition`
+- `WorkspaceSyncRun`
