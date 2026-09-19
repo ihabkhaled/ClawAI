@@ -1,6 +1,6 @@
 # ClawAI Wiki
 
-> Current-source Wiki for **ClawAI v1.100.0**, grounded in live repository structure and generated `.ai/manifests`. When older audits disagree with current generated facts, this Wiki calls out the drift instead of silently copying stale counts.
+> Current-source Wiki for **ClawAI v1.100.1**, grounded in live repository structure and generated `.ai/manifests`. When older audits disagree with current generated facts, this Wiki calls out the drift instead of silently copying stale counts.
 
 ClawAI is a local-first AI orchestration platform. The current repository has **8,639 tracked files**, **18 backend services**, **25 workspaces**, **6 shared packages**, **661 backend API endpoints**, **155 frontend routes**, **178 RabbitMQ events**, **355 environment variables**, **84 permissions**, **41 Docker services**, **59 Nginx routes**, **1,273 test files**, and **13 locales**.
 
