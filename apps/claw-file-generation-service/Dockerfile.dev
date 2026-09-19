@@ -1,7 +1,9 @@
 FROM node:26-bookworm-slim
 # Debian base (not Alpine) — the TypeScript 7 npm compiler ships glibc-linked
 # binaries with no musl variant. Alpine would fail to load the TypeScript 7 compiler.
+# Noto fonts for Typst PDFs in every app locale (ADR-107).
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  fonts-noto-core fonts-noto-cjk \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 

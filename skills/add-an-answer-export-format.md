@@ -23,9 +23,13 @@ Use when a new format goes into the "Download as" menu on chat answers
    once had no tables at all because this was skipped.
 2. Add it to `FORMAT_TO_MIME_TYPE` and `FORMAT_TO_EXTENSION` in
    `src/common/constants/file-generation.constants.ts`.
-3. Teach `FileExecutionManager.convert` to produce it, with a spec that checks
-   the output's **magic bytes** (`%PDF-`, `PK\x03\x04`, …), not only that it
-   ran.
+3. Teach `FileExecutionManager.convert` to produce it **from
+   `parseMarkdownDocument`'s blocks** (ADR-107), never from Markdown text.
+   Add cases to `document-render.spec.ts` that check the output's
+   **magic bytes** (`%PDF-`, `PK\x03\x04`, …) and its content: for zip
+   formats, read the XML with `jszip`. Include Arabic and CJK text. A format
+   that embeds text in another language (as Typst does) must escape it as a
+   literal.
 4. `exportFileSchema` takes `z.nativeEnum(FileFormat)`, so the DTO needs no
    change. If the new format's input can be bigger, raise the bound and keep
    `http.constants.spec.ts` green

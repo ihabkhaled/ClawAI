@@ -69,17 +69,23 @@ QUEUED -> STARTING -> GENERATING_CONTENT -> CONVERTING -> FINALIZING -> COMPLETE
 
 ### Phase 2: Format Conversion
 
-The raw content is converted to the target format using dedicated adapters:
+Every format except TXT and MD is rendered from the same parsed document:
+`parseMarkdownDocument` (markdown-it → typed blocks) in
+`utilities/markdown-document.utility.ts` (ADR-107).
 
-| Format | Library           | Notes                             |
-| ------ | ----------------- | --------------------------------- |
-| PDF    | pdfkit 0.15       | Text layout, headings, paragraphs |
-| DOCX   | docx 9.0          | Paragraphs, headings, tables      |
-| CSV    | csv-stringify 6.5 | Structured data to CSV            |
-| HTML   | markdown-it 14.1  | Markdown-to-HTML conversion       |
-| MD     | Direct write      | Content is already Markdown       |
-| TXT    | Direct write      | Plain text, no conversion needed  |
-| JSON   | JSON.parse        | Validate and pretty-print         |
+| Format | How                                                                                           |
+| ------ | --------------------------------------------------------------------------------------------- |
+| PDF    | Typst (`PdfRenderer`, `utilities/typst-document.utility.ts`): every script, RTL, tables, code |
+| DOCX   | docx 9 (`utilities/docx-document.utility.ts`): real runs, lists, tables, `bidi` paragraphs    |
+| HTML   | markdown-it with `html: false`; `<title>` and `dir` from the answer                           |
+| CSV    | the first Markdown table (csv-stringify); else pass-through / one column                      |
+| JSON   | valid JSON pretty-printed; else the first table as records; else `{ content }`                |
+| MD/TXT | written as received                                                                           |
+
+**Answer text enters Typst only as escaped string literals** (`typstString`),
+so Typst code written in an answer is printed, never run. The compiler's
+workspace is an empty temp directory. Fonts come from `fonts-noto-core` and
+`fonts-noto-cjk` in the image.
 
 ## Content Extraction
 
@@ -119,7 +125,7 @@ over the internal route.
 
 ## Key NPM Dependencies
 
-- `pdfkit` -- PDF generation with text layout and styling
+- `@myriaddreamin/typst-ts-node-compiler` -- Typst typesetting for PDF (ADR-107)
 - `docx` -- Microsoft Word DOCX generation
 - `csv-stringify` -- CSV formatting from structured data
 - `markdown-it` -- Markdown to HTML conversion

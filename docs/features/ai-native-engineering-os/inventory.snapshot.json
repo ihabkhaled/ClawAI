@@ -7605,7 +7605,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 2851,
+          "bytes": 3125,
           "file": "skills/add-an-answer-export-format.md"
         },
         {
@@ -9843,7 +9843,7 @@
       },
       "claw-file-generation-service": {
         "runner": "vitest",
-        "testFiles": 13
+        "testFiles": 14
       },
       "claw-file-service": {
         "runner": "vitest",
@@ -10613,7 +10613,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1303,
+    "totalTestFiles": 1304,
     "workspaceCount": 25
   }
 }

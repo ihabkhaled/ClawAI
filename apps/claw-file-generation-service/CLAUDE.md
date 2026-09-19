@@ -132,6 +132,16 @@ After implementing any change to this service:
 - The internal `generate` prompt must accept chat's whole message (100k). A
   `format` is `z.nativeEnum(FileFormat)` everywhere.
 
+## Rendering (ADR-107)
+
+- Every format is rendered from `parseMarkdownDocument`. Never add a converter
+  that reads Markdown syntax itself.
+- **PDF is Typst.** Answer text reaches the Typst source ONLY through
+  `typstString` (a string literal). A new block or mark that writes text any
+  other way is an injection hole; `document-render.spec.ts` compiles hostile
+  input for real.
+- New scripts need a font in the image (`fonts-noto-*` in both Dockerfiles).
+
 ## Access (ADR-103)
 
 - Every user route is owner-scoped:

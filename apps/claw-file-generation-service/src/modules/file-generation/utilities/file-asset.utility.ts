@@ -1,4 +1,5 @@
 import {
+  GENERATED_FILENAME_PATTERN,
   MAX_DOWNLOAD_FILENAME_LENGTH,
   SAFE_FILENAME_PATTERN,
 } from '../constants/file-asset.constants';
@@ -42,4 +43,13 @@ export function toGenerationView(record: FileGenerationRecord): FileGenerationVi
     ...record,
     assets: record.assets.map(({ storageKey: _storageKey, ...asset }) => asset),
   };
+}
+
+/** The document title a filename carries, or null for a made-up one. */
+export function documentTitleFromFilename(filename: string | null): string | null {
+  if (filename === null || GENERATED_FILENAME_PATTERN.test(filename)) {
+    return null;
+  }
+  const title = filename.replace(/\.[A-Za-z0-9]{1,5}$/u, '').trim();
+  return title.length > 0 ? title : null;
 }

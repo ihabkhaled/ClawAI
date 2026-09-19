@@ -1,40 +1,44 @@
-import PDFDocument from 'pdfkit';
+import { existsSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-export const convertToPdf = async (content: string): Promise<Buffer> => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      size: 'A4',
-      margins: { top: 50, bottom: 50, left: 50, right: 50 },
-    });
+import { NodeCompiler } from '@myriaddreamin/typst-ts-node-compiler';
 
-    const chunks: Buffer[] = [];
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+import { TYPST_FONT_DIRECTORIES } from '../constants/document-render.constants';
+import { documentMeta, parseMarkdownDocument } from '../utilities/markdown-document.utility';
+import { renderTypstDocument } from '../utilities/typst-document.utility';
 
-    // Parse markdown-like content into PDF
-    const lines = content.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trimStart();
+/**
+ * Markdown to PDF through Typst (F3, ADR-107).
+ *
+ * pdfkit drew each line in Helvetica, which has no Arabic, Hindi, Thai or CJK
+ * glyphs, and printed tables, code fences and `**bold**` as raw Markdown.
+ * Typst shapes every script with the fonts in the image, runs right to left
+ * where the text does, and lays out tables and code. It is a sandbox with no
+ * network or shell. Its workspace is an empty directory, so the one thing it
+ * can read, files under the workspace, is nothing.
+ */
+export class PdfRenderer {
+  private compiler: NodeCompiler | null = null;
 
-      if (trimmed.startsWith('# ')) {
-        doc.fontSize(22).font('Helvetica-Bold').text(trimmed.slice(2), { paragraphGap: 8 });
-      } else if (trimmed.startsWith('## ')) {
-        doc.fontSize(18).font('Helvetica-Bold').text(trimmed.slice(3), { paragraphGap: 6 });
-      } else if (trimmed.startsWith('### ')) {
-        doc.fontSize(14).font('Helvetica-Bold').text(trimmed.slice(4), { paragraphGap: 4 });
-      } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        doc
-          .fontSize(11)
-          .font('Helvetica')
-          .text(`  \u2022 ${trimmed.slice(2)}`, { paragraphGap: 2 });
-      } else if (trimmed.length === 0) {
-        doc.moveDown(0.5);
-      } else {
-        doc.fontSize(11).font('Helvetica').text(trimmed, { paragraphGap: 2 });
-      }
+  render(markdown: string, title: string | null): Buffer {
+    const blocks = parseMarkdownDocument(markdown);
+    const source = renderTypstDocument(blocks, documentMeta(blocks, title));
+    try {
+      return this.getCompiler().pdf({ mainFileContent: source });
+    } catch {
+      // Never echo the source: it is the user's answer.
+      throw new Error('PDF rendering failed');
     }
+  }
 
-    doc.end();
-  });
-};
+  private getCompiler(): NodeCompiler {
+    this.compiler ??= NodeCompiler.create({
+      workspace: mkdtempSync(join(tmpdir(), 'claw-typst-')),
+      fontArgs: [
+        { fontPaths: TYPST_FONT_DIRECTORIES.filter((directory) => existsSync(directory)) },
+      ],
+    });
+    return this.compiler;
+  }
+}

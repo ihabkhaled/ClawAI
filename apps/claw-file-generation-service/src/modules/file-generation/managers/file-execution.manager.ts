@@ -9,14 +9,16 @@ import { convertToMarkdown } from '../adapters/md.adapter';
 import { convertToJson } from '../adapters/json.adapter';
 import { convertToCsv } from '../adapters/csv.adapter';
 import { convertToHtml } from '../adapters/html.adapter';
-import { convertToPdf } from '../adapters/pdf.adapter';
+import { PdfRenderer } from '../adapters/pdf.adapter';
 import { convertToDocx } from '../adapters/docx.adapter';
 
 @Injectable()
 export class FileExecutionManager {
   private readonly logger = new Logger(FileExecutionManager.name);
+  private readonly pdfRenderer = new PdfRenderer();
 
-  async convert(content: string, format: string): Promise<Buffer> {
+  /** `title` names the document (PDF/DOCX metadata, HTML <title>); null uses its first heading. */
+  async convert(content: string, format: string, title: string | null = null): Promise<Buffer> {
     this.logger.log(`convert: converting content to ${format} (${String(content.length)} chars)`);
     const upperFormat = format.toUpperCase();
     this.logger.debug(`convert: dispatching to ${upperFormat} converter`);
@@ -36,13 +38,13 @@ export class FileExecutionManager {
         result = await convertToCsv(content);
         break;
       case 'HTML':
-        result = await convertToHtml(content);
+        result = convertToHtml(content, title);
         break;
       case 'PDF':
-        result = await convertToPdf(content);
+        result = this.pdfRenderer.render(content, title);
         break;
       case 'DOCX':
-        result = await convertToDocx(content);
+        result = await convertToDocx(content, title);
         break;
       default:
         this.logger.debug(`convert: unknown format "${format}" — falling back to TXT`);

@@ -20,6 +20,7 @@ import {
   FILE_ASSET_TTL_MS,
 } from '../constants/file-asset.constants';
 import {
+  documentTitleFromFilename,
   fileAssetDownloadPath,
   isAssetExpired,
   safeDownloadFilename,
@@ -272,7 +273,11 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
     generationId: string,
     generation: FileGenerationRecord,
   ): Promise<void> {
-    const buffer = await this.executionManager.convert(generation.content ?? '', generation.format);
+    const buffer = await this.executionManager.convert(
+      generation.content ?? '',
+      generation.format,
+      documentTitleFromFilename(generation.filename),
+    );
 
     await this.transitionStatus(generationId, 'FINALIZING', generation);
 

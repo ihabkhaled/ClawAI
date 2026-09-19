@@ -38,7 +38,11 @@ RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
 RUN cp -r src/generated dist/generated 2>/dev/null || true
 
 FROM node:26-bookworm-slim AS runner
+# Noto fonts: PDFs are typeset by Typst, which needs a font for every script
+# the 13 app locales use (Arabic, Persian, Hindi, Thai, Chinese, Japanese…).
+# Without them it falls back to a Latin font and prints empty boxes (ADR-107).
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  fonts-noto-core fonts-noto-cjk \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app

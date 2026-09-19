@@ -33,3 +33,6 @@ export const GENERATE_MAX_CONTENT_CHARS = 1_000_000;
 export const EXPORT_PROVIDER = 'EXPORT';
 export const EXPORT_MODEL = 'none';
 export const EXPORT_PROMPT = 'Export of a chat answer';
+
+/** A name the service made up (`generated-<ms>.<ext>`), which is no title. */
+export const GENERATED_FILENAME_PATTERN = /^generated-\d+\.?[A-Za-z0-9]*$/u;

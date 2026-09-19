@@ -1,51 +1,19 @@
-import type { DocxApi, DocxElement } from '../types/docx.types';
+import { Packer } from 'docx';
 
-export const convertToDocx = async (content: string): Promise<Buffer> => {
-  const docx: unknown = await import('docx');
-  const { Document, HeadingLevel, Packer, Paragraph, TextRun } = docx as DocxApi;
-  const lines = content.split('\n');
-  const paragraphs: DocxElement[] = [];
+import { renderDocxDocument } from '../utilities/docx-document.utility';
+import { documentMeta, parseMarkdownDocument } from '../utilities/markdown-document.utility';
 
-  for (const line of lines) {
-    const trimmed = line.trimStart();
-
-    if (trimmed.startsWith('# ')) {
-      paragraphs.push(
-        new Paragraph({
-          heading: HeadingLevel.HEADING_1,
-          children: [new TextRun({ text: trimmed.slice(2), bold: true, size: 32 })],
-        }),
-      );
-    } else if (trimmed.startsWith('## ')) {
-      paragraphs.push(
-        new Paragraph({
-          heading: HeadingLevel.HEADING_2,
-          children: [new TextRun({ text: trimmed.slice(3), bold: true, size: 26 })],
-        }),
-      );
-    } else if (trimmed.startsWith('### ')) {
-      paragraphs.push(
-        new Paragraph({
-          heading: HeadingLevel.HEADING_3,
-          children: [new TextRun({ text: trimmed.slice(4), bold: true, size: 22 })],
-        }),
-      );
-    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-      paragraphs.push(
-        new Paragraph({
-          children: [new TextRun({ text: `  \u2022 ${trimmed.slice(2)}` })],
-        }),
-      );
-    } else if (trimmed.length === 0) {
-      paragraphs.push(new Paragraph({ children: [] }));
-    } else {
-      paragraphs.push(new Paragraph({ children: [new TextRun({ text: trimmed })] }));
-    }
-  }
-
-  const doc = new Document({
-    sections: [{ children: paragraphs }],
-  });
-
-  return Buffer.from(await Packer.toBuffer(doc));
+/**
+ * Markdown to a Word document (F3, ADR-107). Headings, emphasis, links, lists,
+ * tables, code and quotes become real Word structures; it used to write every
+ * line as a plain paragraph with the Markdown syntax still in it.
+ */
+export const convertToDocx = async (
+  markdown: string,
+  title: string | null = null,
+): Promise<Buffer> => {
+  const blocks = parseMarkdownDocument(markdown);
+  return Buffer.from(
+    await Packer.toBuffer(renderDocxDocument(blocks, documentMeta(blocks, title))),
+  );
 };

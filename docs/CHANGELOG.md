@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Markdown and plain text save instantly, and HTML, Word and PDF are converted
   on the server. None of them calls the AI or costs tokens. Links are owner-only
   and last an hour, like generated files.
+- **PDF and Word files look right in every language.** Files now keep bold,
+  italics, links, lists, tables and code as real formatting instead of
+  printing Markdown symbols. Arabic, Persian, Hindi, Thai, Chinese and
+  Japanese render properly, and right-to-left text runs right to left. A
+  Markdown table exported as CSV or JSON becomes real rows.
 - **Expand an answer.** A bigger view of any answer, rendered or as raw
   Markdown, with a copy button on each.
 
