@@ -592,6 +592,8 @@ export type TranslationDictionary = {
     fileRebuild: string;
     fileRegenerateAi: string;
     fileDownloadFailed: string;
+    fileLimitTitle: string;
+    fileLimitBody: string;
     // "Download as" and "Expand" on every AI answer (F2).
     exportAnswer: string;
     exportFailed: string;
@@ -4509,6 +4511,7 @@ export type TranslationDictionary = {
       WORKSPACES: string;
       MEMORY: string;
       CONTEXT_PACKS: string;
+      FILE_GENERATION: string;
     };
     invoices: {
       title: string;

@@ -647,6 +647,9 @@ export const ja: TranslationDictionary = {
     fileRegenerateAi: 'AI で再生成',
     fileDownloadFailed:
       'ダウンロードに失敗しました。もう一度試すか、ファイルを再構築してください。',
+    fileLimitTitle: '本日の AI ファイル上限に達しました',
+    fileLimitBody:
+      '本日はプランの AI 作成ファイル {limit} 件のうち {used} 件を使用しました。上限は明日リセットされます。回答のダウンロードは引き続き利用でき、上位プランでは上限が上がります。',
     exportAnswer: '形式を選んでダウンロード',
     exportFailed: 'この回答をエクスポートできませんでした。もう一度お試しください。',
     expandAnswer: '拡大',
@@ -4553,6 +4556,7 @@ export const ja: TranslationDictionary = {
       WORKSPACES: 'ワークスペース',
       MEMORY: 'メモリ',
       CONTEXT_PACKS: 'コンテキスト パック',
+      FILE_GENERATION: 'AI が作成したファイル',
     },
     invoices: {
       title: '請求書',

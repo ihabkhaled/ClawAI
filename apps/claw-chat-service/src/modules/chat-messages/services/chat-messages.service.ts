@@ -1895,6 +1895,11 @@ export class ChatMessagesService implements OnModuleInit {
     if (llmResponse.fileGenerationId) {
       return { type: 'file_generation', generationId: llmResponse.fileGenerationId };
     }
+    // The plan's AI-file allowance was used: the chat shows a translated
+    // notice from these numbers (ADR-110).
+    if (llmResponse.fileLimit) {
+      return { type: 'file_limit', fileLimit: llmResponse.fileLimit };
+    }
     return {};
   }
 

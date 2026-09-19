@@ -69,7 +69,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 103,
+      "endpointCount": 105,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -109,7 +109,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 98,
+      "testFiles": 99,
       "testRunner": "vitest"
     },
     {

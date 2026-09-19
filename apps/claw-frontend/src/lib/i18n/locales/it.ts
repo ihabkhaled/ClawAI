@@ -655,6 +655,9 @@ export const it: TranslationDictionary = {
     fileRebuild: 'Ricostruisci il file (gratis)',
     fileRegenerateAi: "Rigenera con l'IA",
     fileDownloadFailed: 'Download non riuscito. Riprova o ricostruisci il file.',
+    fileLimitTitle: 'Limite giornaliero di file IA raggiunto',
+    fileLimitBody:
+      'Oggi hai creato {used} di {limit} file con IA del tuo piano. Il limite si azzera domani. Scarica come funziona ancora su ogni risposta, e un piano superiore alza il limite.',
     exportAnswer: 'Scarica come',
     exportFailed: 'Impossibile esportare questa risposta. Riprova.',
     expandAnswer: 'Espandi',
@@ -4596,6 +4599,7 @@ export const it: TranslationDictionary = {
       WORKSPACES: 'Spazi di lavoro',
       MEMORY: 'Memoria',
       CONTEXT_PACKS: 'Pacchetti di contesto',
+      FILE_GENERATION: 'File scritti dall’IA',
     },
     invoices: {
       title: 'Fatture',

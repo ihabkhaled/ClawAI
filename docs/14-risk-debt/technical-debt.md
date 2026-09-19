@@ -31,6 +31,18 @@ Last updated: 2026-09-10
 - **Why not now**: every service's guard changes, plus a Redis dependency in
   `shared-auth`. That is its own batch.
 
+### TD-035: Internal quota endpoints trust the network, not a token (2026-09-19)
+
+- **Severity**: Medium · **Effort**: Medium · **Priority**: Planned
+- **Detail**: `auth-service` `internal/quota/*` is `@Public()`, and
+  `EntitlementsAdapter` sends no credentials. Isolation is nginx not proxying
+  `/api/v1/internal/quota`: a public probe gets 404. Anything that reaches the
+  service network could reserve, settle or record usage for any user.
+  ADR-110 added `features/reserve` and `features/settle` to this surface.
+- **The fix**: `ServiceTokenGuard` on the controller, with
+  `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` from the adapter. Every
+  service that uses the adapter must ship in the same deploy.
+
 ### TD-034: The PWA service worker can serve the previous bundle after a deploy (2026-09-19)
 
 - **Severity**: Medium · **Effort**: Low–Medium · **Priority**: Next

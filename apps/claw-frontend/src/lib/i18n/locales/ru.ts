@@ -650,6 +650,9 @@ export const ru: TranslationDictionary = {
     fileRebuild: 'Пересобрать файл (бесплатно)',
     fileRegenerateAi: 'Сгенерировать заново с ИИ',
     fileDownloadFailed: 'Не удалось скачать. Попробуйте ещё раз или пересоберите файл.',
+    fileLimitTitle: 'Дневной лимит файлов ИИ исчерпан',
+    fileLimitBody:
+      'Сегодня вы создали {used} из {limit} файлов с ИИ по вашему тарифу. Лимит обновится завтра. Скачивание ответов по-прежнему работает, а более высокий тариф увеличивает лимит.',
     exportAnswer: 'Скачать как',
     exportFailed: 'Не удалось экспортировать этот ответ. Попробуйте ещё раз.',
     expandAnswer: 'Развернуть',
@@ -4576,6 +4579,7 @@ export const ru: TranslationDictionary = {
       WORKSPACES: 'Рабочие пространства',
       MEMORY: 'Память',
       CONTEXT_PACKS: 'Наборы контекста',
+      FILE_GENERATION: 'Файлы, созданные ИИ',
     },
     invoices: {
       title: 'Счета',

@@ -644,6 +644,9 @@ export const hi: TranslationDictionary = {
     fileRebuild: 'फ़ाइल फिर से बनाएँ (मुफ़्त)',
     fileRegenerateAi: 'AI से फिर से बनाएँ',
     fileDownloadFailed: 'डाउनलोड विफल रहा। फिर से कोशिश करें या फ़ाइल फिर से बनाएँ।',
+    fileLimitTitle: 'आज की AI फ़ाइल सीमा पूरी हो गई',
+    fileLimitBody:
+      'आज आपने अपनी योजना की {limit} में से {used} AI फ़ाइलें बनाई हैं। सीमा कल रीसेट होगी। किसी भी उत्तर को डाउनलोड करना अब भी काम करता है, और ऊँची योजना सीमा बढ़ाती है।',
     exportAnswer: 'इस रूप में डाउनलोड करें',
     exportFailed: 'यह उत्तर निर्यात नहीं हो सका। फिर से कोशिश करें।',
     expandAnswer: 'बड़ा करें',
@@ -4540,6 +4543,7 @@ export const hi: TranslationDictionary = {
       WORKSPACES: 'कार्यक्षेत्र',
       MEMORY: 'स्मृति',
       CONTEXT_PACKS: 'संदर्भ पैक',
+      FILE_GENERATION: 'AI द्वारा लिखी फ़ाइलें',
     },
     invoices: {
       title: 'चालान',

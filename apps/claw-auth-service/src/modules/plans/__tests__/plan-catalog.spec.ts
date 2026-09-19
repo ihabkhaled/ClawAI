@@ -191,6 +191,20 @@ describe('plan catalog', () => {
 });
 
 describe('catalog integrity', () => {
+  it('gives AI-written files the owner-approved daily limits (ADR-110)', () => {
+    const daily = { free: 15, starter: 30, plus: 75, pro: 200 };
+    for (const [slug, limit] of Object.entries(daily)) {
+      expect(bySlug(slug).features.FILE_GENERATION).toEqual({
+        accessMode: 'LIMITED',
+        limit,
+        window: 'DAY',
+      });
+    }
+    for (const slug of ['team', 'scale', 'unlimited']) {
+      expect(bySlug(slug).features.FILE_GENERATION).toMatchObject({ accessMode: 'ENABLED' });
+    }
+  });
+
   it('flags only Free as the fixed 30-day trial', () => {
     expect(bySlug('free')).toMatchObject({ isTrial: true, trialDurationDays: 30 });
     for (const plan of catalog.filter((entry) => entry.slug !== 'free')) {
@@ -209,6 +223,7 @@ describe('catalog integrity', () => {
       'WORKSPACES',
       'MEMORY',
       'CONTEXT_PACKS',
+      'FILE_GENERATION',
     ];
     for (const plan of catalog) {
       expect(Object.keys(plan.features).sort()).toEqual([...expected].sort());

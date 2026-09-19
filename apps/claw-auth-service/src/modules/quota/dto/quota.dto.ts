@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { PlanFeatureKey } from '../../../generated/prisma';
+import { FeatureSettlement } from '../enums/feature-settlement.enum';
 
 export const reserveQuotaSchema = z.object({
   userId: z.string().min(1).max(64),
@@ -31,3 +32,15 @@ export const consumeFeatureUsageSchema = z.object({
   requestId: z.string().min(1).max(200),
 });
 export type ConsumeFeatureUsageDto = z.infer<typeof consumeFeatureUsageSchema>;
+
+/** Hold one run of a metered feature before the work starts (F3d, ADR-110). */
+export const reserveFeatureUsageSchema = consumeFeatureUsageSchema;
+export type ReserveFeatureUsageDto = z.infer<typeof reserveFeatureUsageSchema>;
+
+export const settleFeatureUsageSchema = z
+  .object({
+    reservationId: z.string().min(1).max(64),
+    outcome: z.nativeEnum(FeatureSettlement),
+  })
+  .strict();
+export type SettleFeatureUsageDto = z.infer<typeof settleFeatureUsageSchema>;

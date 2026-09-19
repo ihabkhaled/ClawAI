@@ -274,12 +274,16 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-034.
 
+### TD-035: Internal quota endpoints trust the network, not a token
+
+- **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-035.
+
 ## Priority Matrix
 
-| Priority          | Items                                                                                  | Action                                     |
-| ----------------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Immediate**     | TD-030, TD-017                                                                         | Chat pipeline programme; automated backups |
-| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                         | Schedule for next iteration                |
-| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032, TD-033 | Add to backlog                             |
-| **Conditional**   | TD-009                                                                                 | Implement with TD-008                      |
-| **Opportunistic** | TD-004, TD-018, TD-019                                                                 | Fix when touching related code             |
+| Priority          | Items                                                                                          | Action                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Immediate**     | TD-030, TD-017                                                                                 | Chat pipeline programme; automated backups |
+| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                                 | Schedule for next iteration                |
+| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032, TD-033, TD-035 | Add to backlog                             |
+| **Conditional**   | TD-009                                                                                         | Implement with TD-008                      |
+| **Opportunistic** | TD-004, TD-018, TD-019                                                                         | Fix when touching related code             |

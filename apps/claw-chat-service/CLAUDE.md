@@ -660,6 +660,17 @@ service can tell its own user why the answer is short.
   fence, and never for ZIP. The old regex kept only the first code block of
   any file.
 
+## AI-file allowance (ADR-110)
+
+- `callFileGenerationService` reserves `FILE_GENERATION` before the model
+  writes anything. It consumes once the file is queued and releases on any
+  failure.
+- A refusal returns `fileLimitResponse`, which becomes
+  `metadata.type='file_limit'` on the message. Never throw it: the send
+  already returned 201.
+- `reserveFeature` fails open when auth-service is unreachable. That is
+  deliberate: a plan limit is a business rule, not security.
+
 ## ThreadOrigin
 
 `ChatThread.origin` separates the VS Code coding agent's runs from the user's

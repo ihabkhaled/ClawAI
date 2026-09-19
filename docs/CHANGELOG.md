@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Files have real names.** An AI-made file is named after its own title, in
   any language, and the chat shows that title with a one-line description,
   instead of "generated-1789839832198.pdf".
+- **Daily AI-file allowance per plan.** Free 15, Starter 30, Plus 75 and Pro
+  200 AI-written files a day; Team, Scale and Unlimited are uncapped. When the
+  day's allowance is used, the chat says so in your language, with the
+  numbers. "Download as" exports never count.
 - **Expand an answer.** A bigger view of any answer, rendered or as raw
   Markdown, with a copy button on each.
 

@@ -883,6 +883,85 @@ describe('ChatExecutionManager', () => {
     expect(result.usedFallback).toBe(false);
   });
 
+  // ADR-110: the plan's daily AI-file allowance, reserved before the model
+  // writes, consumed once the file is queued, released when it fails.
+  it('consumes one AI-file allowance once the file is queued', async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          model: 'qwen3:7b',
+          response: '# Brief',
+          done: true,
+          promptEvalCount: 1,
+          evalCount: 1,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: { generationId: 'file-gen-2', status: 'QUEUED', format: 'PDF' },
+      });
+
+    await manager.callProvider(
+      'FILE_GENERATION',
+      'auto',
+      makeContext('Generate a PDF brief'),
+      Date.now(),
+      false,
+    );
+
+    expect(accessControl.reserveFeature).toHaveBeenCalledWith(
+      expect.any(String),
+      'FILE_GENERATION',
+      expect.any(String),
+    );
+    expect(accessControl.settleFeature).toHaveBeenCalledWith('feature-res-1', 'CONSUME');
+  });
+
+  it('gives the allowance back when the file cannot be written', async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
+    httpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
+
+    await manager
+      .callProvider(
+        'FILE_GENERATION',
+        'auto',
+        makeContext('Generate a PDF brief'),
+        Date.now(),
+        false,
+      )
+      .catch(() => {});
+
+    expect(accessControl.settleFeature).toHaveBeenCalledWith('feature-res-1', 'RELEASE');
+    expect(accessControl.settleFeature).not.toHaveBeenCalledWith('feature-res-1', 'CONSUME');
+  });
+
+  it('refuses without calling any model once the allowance is used', async () => {
+    accessControl.reserveFeature.mockResolvedValueOnce({
+      allowed: false,
+      reason: 'FEATURE_TRIAL_EXHAUSTED',
+      used: 15,
+      limit: 15,
+      window: 'DAY',
+    });
+
+    const result = await manager.callProvider(
+      'FILE_GENERATION',
+      'auto',
+      makeContext('Generate a PDF brief'),
+      Date.now(),
+      false,
+    );
+
+    expect(httpRequest).not.toHaveBeenCalled();
+    expect(result.fileLimit).toEqual({ used: 15, limit: 15, window: 'DAY' });
+    expect(result.fileGenerationId).toBeUndefined();
+    expect(result.content).toContain('15 of 15');
+  });
+
   it('falls back to the next file content provider when the first local model fails', async () => {
     vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
     const context = makeContext(

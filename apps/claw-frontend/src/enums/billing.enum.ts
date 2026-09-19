@@ -34,6 +34,7 @@ export enum PlanFeature {
   WORKSPACES = 'WORKSPACES',
   MEMORY = 'MEMORY',
   CONTEXT_PACKS = 'CONTEXT_PACKS',
+  FILE_GENERATION = 'FILE_GENERATION',
 }
 
 export enum BillingGateway {

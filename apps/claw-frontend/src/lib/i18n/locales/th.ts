@@ -633,6 +633,9 @@ export const th: TranslationDictionary = {
     fileRebuild: 'สร้างไฟล์ใหม่ (ฟรี)',
     fileRegenerateAi: 'สร้างใหม่ด้วย AI',
     fileDownloadFailed: 'ดาวน์โหลดไม่สำเร็จ ลองอีกครั้งหรือสร้างไฟล์ใหม่',
+    fileLimitTitle: 'ถึงขีดจำกัดไฟล์ AI ของวันนี้แล้ว',
+    fileLimitBody:
+      'วันนี้คุณสร้างไฟล์ด้วย AI ไปแล้ว {used} จาก {limit} ไฟล์ตามแผนของคุณ ขีดจำกัดจะรีเซ็ตพรุ่งนี้ การดาวน์โหลดคำตอบยังใช้ได้ และแผนที่สูงกว่าจะเพิ่มขีดจำกัด',
     exportAnswer: 'ดาวน์โหลดเป็น',
     exportFailed: 'ไม่สามารถส่งออกคำตอบนี้ได้ ลองอีกครั้ง',
     expandAnswer: 'ขยาย',
@@ -4498,6 +4501,7 @@ export const th: TranslationDictionary = {
       WORKSPACES: 'พื้นที่ทำงาน',
       MEMORY: 'หน่วยความจำ',
       CONTEXT_PACKS: 'แพ็คบริบท',
+      FILE_GENERATION: 'ไฟล์ที่ AI เขียน',
     },
     invoices: {
       title: 'ใบแจ้งหนี้',

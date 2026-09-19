@@ -650,6 +650,9 @@ export const es: TranslationDictionary = {
     fileRebuild: 'Reconstruir archivo (gratis)',
     fileRegenerateAi: 'Regenerar con IA',
     fileDownloadFailed: 'La descarga falló. Inténtalo de nuevo o reconstruye el archivo.',
+    fileLimitTitle: 'Has alcanzado el límite diario de archivos con IA',
+    fileLimitBody:
+      'Hoy has creado {used} de {limit} archivos con IA de tu plan. El límite se restablece mañana. Descargar como sigue funcionando en cualquier respuesta, y un plan superior amplía el límite.',
     exportAnswer: 'Descargar como',
     exportFailed: 'No se pudo exportar esta respuesta. Inténtalo de nuevo.',
     expandAnswer: 'Ampliar',
@@ -4594,6 +4597,7 @@ export const es: TranslationDictionary = {
       WORKSPACES: 'Espacios de trabajo',
       MEMORY: 'Memoria',
       CONTEXT_PACKS: 'Paquetes de contexto',
+      FILE_GENERATION: 'Archivos creados por IA',
     },
     invoices: {
       title: 'Facturas',

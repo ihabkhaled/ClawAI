@@ -44,6 +44,32 @@ export type FeatureUsageInput = {
   requestId: string;
 };
 
+/** Features that are reserved before the work and settled after (F3d, ADR-110). */
+export type ReservedFeature = 'FILE_GENERATION';
+
+export type FeatureReservationInput = {
+  userId: string;
+  feature: ReservedFeature;
+  /** Idempotency key: a retry of the same request reuses its reservation. */
+  requestId: string;
+};
+
+/**
+ * auth-service's answer. A null `reservationId` means the caller is not metered
+ * (admin, no plan) and has nothing to settle.
+ */
+export type FeatureReservation =
+  | { allowed: true; reservationId: string | null }
+  | {
+      allowed: false;
+      reason: 'FEATURE_DISABLED' | 'FEATURE_TRIAL_EXHAUSTED';
+      used: number;
+      limit: number;
+      window: string | null;
+    };
+
+export type FeatureSettlementOutcome = 'CONSUME' | 'RELEASE';
+
 // Thin client over the auth-service internal entitlement + quota endpoints.
 // Fetches fresh per call (no stale cache) so a plan/role change applies on the
 // very next request — the user's stated requirement. Framework-agnostic; it
@@ -155,6 +181,26 @@ export class EntitlementsAdapter {
 
   async recordFeatureUsage(input: FeatureUsageInput): Promise<void> {
     await this.request<undefined>('POST', '/api/v1/internal/quota/features/consume', input);
+  }
+
+  /** Holds one run of a metered feature before the work starts. */
+  async reserveFeatureUsage(input: FeatureReservationInput): Promise<FeatureReservation> {
+    return this.request<FeatureReservation>(
+      'POST',
+      '/api/v1/internal/quota/features/reserve',
+      input,
+    );
+  }
+
+  /** Counts a delivered run, or gives back one whose work failed. */
+  async settleFeatureUsage(
+    reservationId: string,
+    outcome: FeatureSettlementOutcome,
+  ): Promise<void> {
+    await this.request<undefined>('POST', '/api/v1/internal/quota/features/settle', {
+      reservationId,
+      outcome,
+    });
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {

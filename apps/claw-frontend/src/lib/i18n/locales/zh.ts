@@ -618,6 +618,9 @@ export const zh: TranslationDictionary = {
     fileRebuild: '重新生成文件（免费）',
     fileRegenerateAi: '用 AI 重新生成',
     fileDownloadFailed: '下载失败。请重试，或重新生成文件。',
+    fileLimitTitle: '今日 AI 文件额度已用完',
+    fileLimitBody:
+      '今天您已使用套餐中 {limit} 个 AI 文件中的 {used} 个。额度将于明天重置。任何回答仍可下载，升级套餐可提高额度。',
     exportAnswer: '下载为',
     exportFailed: '无法导出此回答，请重试。',
     expandAnswer: '展开',
@@ -4385,6 +4388,7 @@ export const zh: TranslationDictionary = {
       WORKSPACES: '工作空间',
       MEMORY: '记忆',
       CONTEXT_PACKS: '上下文包',
+      FILE_GENERATION: 'AI 生成的文件',
     },
     invoices: {
       title: '发票',

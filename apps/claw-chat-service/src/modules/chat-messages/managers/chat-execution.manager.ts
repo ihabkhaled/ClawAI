@@ -207,6 +207,7 @@ import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.cl
 import type { FileContentCandidate } from '../types/file-writer.types';
 import {
   detectRequestedFileFormat,
+  fileLimitResponse,
   fileWriterSystemPrompt,
   unwrapWholeCodeFence,
 } from '../utilities/file-format.utility';
@@ -4596,21 +4597,42 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(
       `callFileGenerationService: prompt length=${String(prompt.length)} format=${format}`,
     );
-    const { contentResponse, contentFallbackUsed } = await this.runFileContentPhase(
-      context,
-      format,
-      startTime,
-      usedFallback,
-      threadSettings,
-    );
-    const fileContent = unwrapWholeCodeFence(contentResponse.content, format);
-    const generationId = await this.dispatchFileGeneration(
-      prompt,
-      fileContent,
-      format,
-      contentResponse,
+    // Checked before the model writes anything, so a refusal costs no tokens.
+    const reservation = await this.accessControlService.reserveFeature(
       context.userId,
+      'FILE_GENERATION',
+      randomUUID(),
     );
+    if (!reservation.allowed) {
+      this.logger.warn(
+        `callFileGenerationService: file allowance used user=${context.userId} used=${String(reservation.used)} limit=${String(reservation.limit)}`,
+      );
+      return fileLimitResponse(reservation, startTime, usedFallback);
+    }
+    let contentResponse: LlmResponse;
+    let contentFallbackUsed: boolean;
+    let generationId: string;
+    try {
+      ({ contentResponse, contentFallbackUsed } = await this.runFileContentPhase(
+        context,
+        format,
+        startTime,
+        usedFallback,
+        threadSettings,
+      ));
+      const fileContent = unwrapWholeCodeFence(contentResponse.content, format);
+      generationId = await this.dispatchFileGeneration(
+        prompt,
+        fileContent,
+        format,
+        contentResponse,
+        context.userId,
+      );
+    } catch (error) {
+      await this.accessControlService.settleFeature(reservation.reservationId, 'RELEASE');
+      throw error;
+    }
+    await this.accessControlService.settleFeature(reservation.reservationId, 'CONSUME');
     const latencyMs = Date.now() - startTime;
     this.logger.log(
       `callFileGenerationService: completed format=${format} generationId=${generationId} latencyMs=${String(latencyMs)}`,

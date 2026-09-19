@@ -537,6 +537,8 @@ enum PlanFeatureKey {
   WORKSPACES
   MEMORY
   CONTEXT_PACKS
+  /// AI-written files (F3d, ADR-110). Exports of existing answers never count.
+  FILE_GENERATION
 }
 
 enum PlanFeatureAccessMode {

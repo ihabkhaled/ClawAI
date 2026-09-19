@@ -7,7 +7,7 @@
     "monthlyMinor/yearlyMinor are integer MINOR units ($5.00 => 500).",
     "daily/weekly/monthlyTokens are cost-normalized weighted tokens:",
     "1,000,000 weighted tokens == $1.00 of estimated provider cost.",
-    "costCeilingMicroUsd is a STRING because it is converted to BigInt \u2014 an",
+    "costCeilingMicroUsd is a STRING because it is converted to BigInt — an",
     "internal profitability control that is never returned to a normal user.",
     "null means unlimited; 0 means disabled. They are never interchangeable.",
     "",
@@ -23,7 +23,7 @@
     "still holding the OLD value so an operator's tuned figure survives. Do NOT",
     "bump plan-catalog to v3 to apply them: on an install where v2 already ran,",
     "every plan takes the else-branch of run() and only modelAccessMode and a",
-    "null weeklyTokenQuota are written \u2014 the new allowances would land on ZERO",
+    "null weeklyTokenQuota are written — the new allowances would land on ZERO",
     "rows while the seeder reported success."
   ],
   "plans": [
@@ -99,6 +99,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "LIMITED",
+          "limit": 15,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -187,6 +192,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "LIMITED",
+          "limit": 30,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -275,6 +285,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "LIMITED",
+          "limit": 75,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -363,6 +378,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "LIMITED",
+          "limit": 200,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -451,6 +471,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -539,6 +564,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -627,6 +657,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "MONTH"
+        },
+        "FILE_GENERATION": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "DAY"
         }
       },
       "labs": {

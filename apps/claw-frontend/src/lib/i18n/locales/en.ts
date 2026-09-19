@@ -642,6 +642,9 @@ export const en: TranslationDictionary = {
     fileRebuild: 'Rebuild file (free)',
     fileRegenerateAi: 'Regenerate with AI',
     fileDownloadFailed: 'Download failed. Try again, or rebuild the file.',
+    fileLimitTitle: "Today's AI file limit is reached",
+    fileLimitBody:
+      'You have created {used} of {limit} AI-written files today on your plan. The limit resets tomorrow. Download as on any answer still works, and a higher plan raises the limit.',
     exportAnswer: 'Download as',
     exportFailed: 'Could not export this answer. Try again.',
     expandAnswer: 'Expand',
@@ -4517,6 +4520,7 @@ export const en: TranslationDictionary = {
       WORKSPACES: 'Workspaces',
       MEMORY: 'Memory',
       CONTEXT_PACKS: 'Context packs',
+      FILE_GENERATION: 'AI-written files',
     },
     invoices: {
       title: 'Invoices',

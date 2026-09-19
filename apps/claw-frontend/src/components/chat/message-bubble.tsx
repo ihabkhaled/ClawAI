@@ -15,6 +15,7 @@ import { AnswerExportMenu } from '@/components/chat/answer-export-menu';
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
 import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
+import { FileLimitNotice } from '@/components/chat/file-limit-notice';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
@@ -40,6 +41,7 @@ import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
 import { formatShortDateTime, getJudgeReviewFromMessage, getStoredReasoning } from '@/utilities';
+import { readFileLimit } from '@/utilities/file-limit.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
 import { describeRoute } from '@/utilities/route-label.utility';
 
@@ -88,6 +90,7 @@ function MessageBubbleBase({
   const imageGenerationId =
     typeof metadata?.['generationId'] === 'string' ? metadata['generationId'] : undefined;
   const isFileGeneration = metadata?.['type'] === 'file_generation';
+  const fileLimit = readFileLimit(metadata);
   const fileGenerationId =
     typeof metadata?.['generationId'] === 'string' && isFileGeneration
       ? metadata['generationId']
@@ -209,7 +212,12 @@ function MessageBubbleBase({
               onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
             />
           ) : null}
-          {!isUser && !isImageGeneration && !isFileGeneration ? assistantContent : null}
+          {!isUser && fileLimit !== null ? (
+            <FileLimitNotice used={fileLimit.used} limit={fileLimit.limit} />
+          ) : null}
+          {!isUser && !isImageGeneration && !isFileGeneration && fileLimit === null
+            ? assistantContent
+            : null}
           {/* Below the answer, not above it: the reasoning is how the reply was
               reached, and a reader wants the reply first. */}
           {storedReasoning === null ? null : <MessageReasoningPanel reasoning={storedReasoning} />}
@@ -318,7 +326,10 @@ function MessageBubbleBase({
                 className="text-muted-foreground h-7 w-7"
               />
             ) : null}
-            {hasVisibleAssistantContent && !isFileGeneration && !isImageGeneration ? (
+            {hasVisibleAssistantContent &&
+            !isFileGeneration &&
+            !isImageGeneration &&
+            fileLimit === null ? (
               <>
                 <AnswerExpandDialog content={message.content} t={t} />
                 <AnswerExportMenu content={message.content} t={t} />

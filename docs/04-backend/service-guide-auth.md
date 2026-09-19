@@ -495,3 +495,13 @@ Table `ops_access_tokens` (migration `20260919120000_add_ops_access_tokens`).
 
 `rememberMe` is optional and strictly boolean. VS Code and the device flow do
 not send it and keep the long session.
+
+## Metered features that refuse (ADR-110, 2026-09-19)
+
+`POST internal/quota/features/reserve` returns `{allowed, reservationId}` or
+`{allowed:false, reason, used, limit, window}`, and holds one run before the
+work. `POST internal/quota/features/settle` takes `{reservationId,
+outcome: CONSUME|RELEASE}` afterwards. The first user is `FILE_GENERATION`
+(daily per plan; see `docs/business/plan-allowances.md`). `features/consume`
+still only counts, after the fact. Admins and plan-less users are never
+refused. These endpoints trust the network, not a token (TD-035).

@@ -634,6 +634,9 @@ export const ar: TranslationDictionary = {
     fileRebuild: 'إعادة بناء الملف (مجانًا)',
     fileRegenerateAi: 'إعادة التوليد بالذكاء الاصطناعي',
     fileDownloadFailed: 'فشل التنزيل. حاول مرة أخرى، أو أعد بناء الملف.',
+    fileLimitTitle: 'تم بلوغ حد ملفات الذكاء الاصطناعي لليوم',
+    fileLimitBody:
+      'أنشأت {used} من {limit} ملفات بالذكاء الاصطناعي اليوم في خطتك. يُعاد ضبط الحد غدًا. لا يزال تنزيل أي إجابة متاحًا، والخطة الأعلى ترفع الحد.',
     exportAnswer: 'تنزيل بصيغة',
     exportFailed: 'تعذّر تصدير هذه الإجابة. حاول مرة أخرى.',
     expandAnswer: 'توسيع',
@@ -4480,6 +4483,7 @@ export const ar: TranslationDictionary = {
       WORKSPACES: 'مساحات العمل',
       MEMORY: 'الذاكرة',
       CONTEXT_PACKS: 'حزم السياق',
+      FILE_GENERATION: 'ملفات يكتبها الذكاء الاصطناعي',
     },
     invoices: {
       title: 'الفواتير',

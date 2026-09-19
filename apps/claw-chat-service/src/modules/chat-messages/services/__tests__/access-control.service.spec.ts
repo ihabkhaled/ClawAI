@@ -6,6 +6,8 @@ import { BillingErrorCode } from '@claw/shared-types';
 const getEntitlements = vi.fn();
 const finalizeQuota = vi.fn();
 const recordFeatureUsage = vi.fn();
+const reserveFeatureUsage = vi.fn();
+const settleFeatureUsage = vi.fn();
 // Exposure is a network call to connector-service; the harness stubs it so the
 // suite tests the gate's decision, not connectivity. Default: exposed.
 const isExposed = vi.fn().mockResolvedValue(true);
@@ -27,6 +29,8 @@ vi.mock('@claw/shared-entitlements', async () => {
         getEntitlements: (...args: unknown[]) => getEntitlements(...args),
         finalizeQuota: (...args: unknown[]) => finalizeQuota(...args),
         recordFeatureUsage: (...args: unknown[]) => recordFeatureUsage(...args),
+        reserveFeatureUsage: (...args: unknown[]) => reserveFeatureUsage(...args),
+        settleFeatureUsage: (...args: unknown[]) => settleFeatureUsage(...args),
       };
     }),
   };
@@ -375,6 +379,49 @@ describe('AccessControlService', () => {
           requireFeature: ['allowCompareMode', 'allowJudgeMode', 'allowResearchMode'],
         }),
       ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+  });
+
+  // ADR-110: the AI-file allowance. A limit is a business rule, so an
+  // unreachable auth-service lets the file through instead of blocking it.
+  describe('feature reservations', () => {
+    it('passes the auth-service decision through', async () => {
+      reserveFeatureUsage.mockResolvedValueOnce({
+        allowed: false,
+        reason: 'FEATURE_TRIAL_EXHAUSTED',
+        used: 15,
+        limit: 15,
+        window: 'DAY',
+      });
+      await expect(service.reserveFeature('u1', 'FILE_GENERATION', 'req-1')).resolves.toMatchObject(
+        { allowed: false, used: 15 },
+      );
+      expect(reserveFeatureUsage).toHaveBeenCalledWith({
+        userId: 'u1',
+        feature: 'FILE_GENERATION',
+        requestId: 'req-1',
+      });
+    });
+
+    it('allows the run, with nothing to settle, when auth-service is unreachable', async () => {
+      reserveFeatureUsage.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+      await expect(service.reserveFeature('u1', 'FILE_GENERATION', 'req-2')).resolves.toEqual({
+        allowed: true,
+        reservationId: null,
+      });
+    });
+
+    it('settles a reservation and skips an unmetered one', async () => {
+      settleFeatureUsage.mockResolvedValue(undefined);
+      await service.settleFeature('r1', 'CONSUME');
+      await service.settleFeature(null, 'CONSUME');
+      expect(settleFeatureUsage).toHaveBeenCalledTimes(1);
+      expect(settleFeatureUsage).toHaveBeenCalledWith('r1', 'CONSUME');
+    });
+
+    it('never throws when settling fails', async () => {
+      settleFeatureUsage.mockRejectedValueOnce(new Error('down'));
+      await expect(service.settleFeature('r1', 'RELEASE')).resolves.toBeUndefined();
     });
   });
 });

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import type { PaygHold } from '@claw/shared-entitlements';
 
 import type { AccessControlService } from '../../services/access-control.service';
@@ -11,6 +11,8 @@ export type FakePaygAccessControlOptions = {
   heldMicroUsd?: number;
   /** When set, `reserveCredit` throws this instead of returning a hold. */
   refuseWith?: unknown;
+  /** When set, the AI-file allowance is used up (ADR-110). */
+  fileLimit?: { used: number; limit: number };
 };
 
 /** The shape a PAYG test asserts against. */
@@ -22,6 +24,8 @@ export type FakePaygAccessControl = {
   meterOrchestrationCall: Mock;
   recordUsage: Mock;
   recordFeatureUsage: Mock;
+  reserveFeature: Mock;
+  settleFeature: Mock;
   assertCanUseCritic: Mock;
   assertResearchAccess: Mock;
   resolveOutputCeiling: Mock;
@@ -92,6 +96,17 @@ export function createFakePaygAccessControl(
     meterOrchestrationCall,
     recordUsage: vi.fn(),
     recordFeatureUsage: vi.fn(async () => {}),
+    reserveFeature: vi.fn(async () =>
+      options.fileLimit === undefined
+        ? { allowed: true, reservationId: 'feature-res-1' }
+        : {
+            allowed: false,
+            reason: 'FEATURE_TRIAL_EXHAUSTED',
+            ...options.fileLimit,
+            window: 'DAY',
+          },
+    ),
+    settleFeature: vi.fn(async () => {}),
     assertCanUseCritic: vi.fn(async () => {}),
     assertResearchAccess: vi.fn(async () => {}),
     // null = no quota ceiling, which is what an unlimited/admin entitlement

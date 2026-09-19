@@ -58,6 +58,27 @@ Every figure is integer micro-USD, and `monthlyTokenQuota` is **byte-identical**
 
 ---
 
+## AI-written files per day (ADR-110, 2026-09-19)
+
+Chosen by the owner: daily limits, generous, with Free at 15. Exports of an
+answer the user already has never count, because no model runs.
+
+| Plan      | AI-written files / day |
+| --------- | ---------------------: |
+| Free      |                     15 |
+| Starter   |                     30 |
+| Plus      |                     75 |
+| Pro       |                    200 |
+| Team      |                 no cap |
+| Scale     |                 no cap |
+| Unlimited |                 no cap |
+
+This is a count, and it sits on top of the token allowance above, not instead
+of it. A file writer call is typically 2–8k weighted tokens, so Free's daily
+token pace ($0.05, 50,000 tokens) usually binds before the 15th large file.
+Stored as `plan_feature_rules` rows (`FILE_GENERATION`, `DAY`); a change is
+one row, and it survives redeploys.
+
 ## Which limit binds first, and why that question exists
 
 A request can be refused by any of nine windows. Three of them are denominated in

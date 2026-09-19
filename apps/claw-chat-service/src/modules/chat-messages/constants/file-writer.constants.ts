@@ -82,3 +82,7 @@ export const NAMED_FILE_FORMATS: readonly string[] = [
   'XLSX',
   'ZIP',
 ];
+
+/** English text of the file-limit reply; the chat shows a translated notice (ADR-110). */
+export const FILE_LIMIT_FALLBACK_TEXT =
+  "You've used today's AI-written files on your plan ({used} of {limit}). It resets tomorrow; Download as on any answer still works.";

@@ -11,10 +11,14 @@ import {
   finalizeQuotaSchema,
   ReleaseQuotaDto,
   releaseQuotaSchema,
+  ReserveFeatureUsageDto,
+  reserveFeatureUsageSchema,
   ReserveQuotaDto,
   reserveQuotaSchema,
+  SettleFeatureUsageDto,
+  settleFeatureUsageSchema,
 } from '../dto/quota.dto';
-import { type ReserveResult } from '../types/quota.types';
+import { type FeatureReservationDecision, type ReserveResult } from '../types/quota.types';
 
 // Internal service-to-service endpoints (chat-service calls these around model
 // execution). Not exposed via nginx; @Public because the caller holds no
@@ -72,5 +76,22 @@ export class QuotaInternalController {
     @Body(new ZodValidationPipe(consumeFeatureUsageSchema)) dto: ConsumeFeatureUsageDto,
   ): Promise<void> {
     await this.featureUsage.record(dto);
+  }
+
+  /** Holds a run of a metered feature before the work (F3d, ADR-110). */
+  @Post('features/reserve')
+  @HttpCode(HttpStatus.OK)
+  async reserveFeature(
+    @Body(new ZodValidationPipe(reserveFeatureUsageSchema)) dto: ReserveFeatureUsageDto,
+  ): Promise<FeatureReservationDecision> {
+    return this.featureUsage.reserve(dto);
+  }
+
+  @Post('features/settle')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async settleFeature(
+    @Body(new ZodValidationPipe(settleFeatureUsageSchema)) dto: SettleFeatureUsageDto,
+  ): Promise<void> {
+    await this.featureUsage.settle(dto.reservationId, dto.outcome);
   }
 }

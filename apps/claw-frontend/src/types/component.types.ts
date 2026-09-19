@@ -1123,6 +1123,11 @@ export type FileCompletedStateProps = {
   onDownload: () => void;
 };
 
+/** The numbers a file-limit notice shows (ADR-110). */
+export type FileLimitNoticeData = { used: number; limit: number };
+
+export type FileLimitNoticeProps = FileLimitNoticeData;
+
 export type FileExpiredStateProps = {
   filename: string;
   format: string;

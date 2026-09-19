@@ -967,6 +967,16 @@
         },
         {
           "method": "POST",
+          "route": "/internal/quota/features/reserve",
+          "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/quota/features/settle",
+          "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/quota/finalize",
           "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
         },
@@ -7875,7 +7885,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5219
+        "value": 5222
       },
       "localeCount": 13,
       "locales": [
@@ -9827,7 +9837,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 98
+        "testFiles": 99
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -9851,7 +9861,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 484
+        "testFiles": 485
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10601,7 +10611,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 42,
-    "endpointCount": 673,
+    "endpointCount": 675,
     "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 155,
@@ -10613,7 +10623,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1309,
+    "totalTestFiles": 1311,
     "workspaceCount": 25
   }
 }

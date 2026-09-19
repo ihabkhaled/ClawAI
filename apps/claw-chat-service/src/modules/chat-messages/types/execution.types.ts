@@ -135,6 +135,8 @@ export type LlmResponse = {
   reasoning?: string;
   imageGenerationId?: string;
   fileGenerationId?: string;
+  /** Set instead of a file when the plan's AI-file allowance is used (ADR-110). */
+  fileLimit?: FileLimitNotice;
   reRouted?: boolean;
   originalProvider?: string;
   originalModel?: string;
@@ -456,3 +458,6 @@ export type GeminiNativeChatRequest = {
 
 export type CloudProviderRequestBody =
   OpenAiChatRequest | OllamaChatRequest | AnthropicMessagesRequest | GeminiNativeChatRequest;
+
+/** Why an AI-written file was refused, with the numbers the notice shows (ADR-110). */
+export type FileLimitNotice = { used: number; limit: number; window: string | null };

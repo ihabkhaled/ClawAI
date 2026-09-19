@@ -656,6 +656,9 @@ export const de: TranslationDictionary = {
     fileRebuild: 'Datei neu erstellen (kostenlos)',
     fileRegenerateAi: 'Mit KI neu generieren',
     fileDownloadFailed: 'Download fehlgeschlagen. Versuche es erneut oder erstelle die Datei neu.',
+    fileLimitTitle: 'Tageslimit für KI-Dateien erreicht',
+    fileLimitBody:
+      'Sie haben heute {used} von {limit} KI-erstellten Dateien Ihres Plans genutzt. Das Limit wird morgen zurückgesetzt. Herunterladen als funktioniert weiterhin für jede Antwort, und ein höherer Plan hebt das Limit an.',
     exportAnswer: 'Herunterladen als',
     exportFailed: 'Diese Antwort konnte nicht exportiert werden. Versuche es erneut.',
     expandAnswer: 'Vergrößern',
@@ -4609,6 +4612,7 @@ export const de: TranslationDictionary = {
       WORKSPACES: 'Arbeitsbereiche',
       MEMORY: 'Gedächtnis',
       CONTEXT_PACKS: 'Kontextpakete',
+      FILE_GENERATION: 'KI-erstellte Dateien',
     },
     invoices: {
       title: 'Rechnungen',

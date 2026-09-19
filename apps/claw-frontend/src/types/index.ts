@@ -378,6 +378,8 @@ export type {
   FileLoadingStateProps,
   FileErrorStateProps,
   FileCompletedStateProps,
+  FileLimitNoticeData,
+  FileLimitNoticeProps,
   FileExpiredStateProps,
   FileGenerationBubbleProps,
   AttachmentThumbnailProps,

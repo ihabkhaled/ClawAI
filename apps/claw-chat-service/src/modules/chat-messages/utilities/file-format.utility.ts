@@ -2,12 +2,15 @@ import {
   DEFAULT_FILE_FORMAT,
   FILE_FORMAT_KEYWORDS,
   FILE_FORMAT_TARGET_PREFIX,
+  FILE_LIMIT_FALLBACK_TEXT,
   FILE_WRITER_BASE_PROMPT,
   FILE_WRITER_FORMAT_INSTRUCTIONS,
   FILE_WRITER_NAMING_INSTRUCTION,
   NAMED_FILE_FORMATS,
   WHOLE_CODE_FENCE,
 } from '../constants/file-writer.constants';
+import { FILE_GENERATION_PROVIDER } from '../../../common/constants';
+import type { LlmResponse } from '../types/execution.types';
 import type { FormatMention } from '../types/file-writer.types';
 
 /**
@@ -66,4 +69,28 @@ export function unwrapWholeCodeFence(content: string, format: string): string {
     return content;
   }
   return inner.trim();
+}
+
+/**
+ * The reply when the plan's AI-file allowance is used (ADR-110). The chat
+ * shows a translated notice from `fileLimit`; `content` is the English
+ * fallback for anything that reads the message text.
+ */
+export function fileLimitResponse(
+  refusal: { used: number; limit: number; window: string | null },
+  startTime: number,
+  usedFallback: boolean,
+): LlmResponse {
+  return {
+    content: FILE_LIMIT_FALLBACK_TEXT.replace('{used}', String(refusal.used)).replace(
+      '{limit}',
+      String(refusal.limit),
+    ),
+    provider: FILE_GENERATION_PROVIDER,
+    model: 'auto',
+    latencyMs: Date.now() - startTime,
+    finishReason: 'stop',
+    usedFallback,
+    fileLimit: { used: refusal.used, limit: refusal.limit, window: refusal.window },
+  };
 }

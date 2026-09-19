@@ -105,9 +105,7 @@ describe('EntitlementsAdapter transport retry', () => {
   it('does not retry a response the server actually sent', async () => {
     // A 500 means auth-service answered. Its answer stands; repeating it would
     // just double the load on something already struggling.
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({ ok: false, status: 500, json: async () => null });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => null });
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const adapter = new EntitlementsAdapter({ authServiceUrl: url });
@@ -134,5 +132,63 @@ describe('EntitlementsAdapter transport retry', () => {
     const adapter = new EntitlementsAdapter({ authServiceUrl: url });
     await expect(adapter.reserveQuota('u1', 100)).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// F3d (ADR-110): reserve before an AI-written file, settle after it.
+describe('EntitlementsAdapter feature reservations', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('reserves a run and returns auth-service decision', async () => {
+    const request = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          allowed: false,
+          reason: 'FEATURE_TRIAL_EXHAUSTED',
+          used: 15,
+          limit: 15,
+          window: 'DAY',
+        }),
+        {
+          status: 200,
+        },
+      ),
+    );
+    const adapter = new EntitlementsAdapter({ authServiceUrl: 'http://auth:4001' });
+
+    await expect(
+      adapter.reserveFeatureUsage({ userId: 'u1', feature: 'FILE_GENERATION', requestId: 'msg-1' }),
+    ).resolves.toEqual({
+      allowed: false,
+      reason: 'FEATURE_TRIAL_EXHAUSTED',
+      used: 15,
+      limit: 15,
+      window: 'DAY',
+    });
+    expect(request).toHaveBeenCalledWith(
+      'http://auth:4001/api/v1/internal/quota/features/reserve',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ userId: 'u1', feature: 'FILE_GENERATION', requestId: 'msg-1' }),
+      }),
+    );
+  });
+
+  it('settles a reservation', async () => {
+    const request = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const adapter = new EntitlementsAdapter({ authServiceUrl: 'http://auth:4001' });
+
+    await adapter.settleFeatureUsage('r1', 'RELEASE');
+
+    expect(request).toHaveBeenCalledWith(
+      'http://auth:4001/api/v1/internal/quota/features/settle',
+      expect.objectContaining({
+        body: JSON.stringify({ reservationId: 'r1', outcome: 'RELEASE' }),
+      }),
+    );
   });
 });

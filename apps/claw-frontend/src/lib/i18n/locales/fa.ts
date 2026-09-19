@@ -643,6 +643,9 @@ export const fa: TranslationDictionary = {
     fileRebuild: 'بازسازی فایل (رایگان)',
     fileRegenerateAi: 'تولید دوباره با هوش مصنوعی',
     fileDownloadFailed: 'دانلود ناموفق بود. دوباره تلاش کنید یا فایل را بازسازی کنید.',
+    fileLimitTitle: 'به سقف روزانه فایل‌های هوش مصنوعی رسیدید',
+    fileLimitBody:
+      'امروز {used} از {limit} فایل هوش مصنوعی طرح خود را ساخته‌اید. این سقف فردا بازنشانی می‌شود. دانلود پاسخ‌ها همچنان کار می‌کند و طرح بالاتر سقف را افزایش می‌دهد.',
     exportAnswer: 'دانلود به‌صورت',
     exportFailed: 'صدور این پاسخ ممکن نشد. دوباره تلاش کنید.',
     expandAnswer: 'بزرگ‌نمایی',
@@ -4539,6 +4542,7 @@ export const fa: TranslationDictionary = {
       WORKSPACES: 'فضاهای کاری',
       MEMORY: 'حافظه',
       CONTEXT_PACKS: 'بسته های زمینه',
+      FILE_GENERATION: 'فایل‌های نوشته‌شده با هوش مصنوعی',
     },
     invoices: {
       title: 'فاکتورها',

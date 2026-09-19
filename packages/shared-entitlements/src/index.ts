@@ -4,7 +4,11 @@ export {
   type EntitlementsAdapterOptions,
   type QuotaReserveResult,
   type QuotaFinalizeInput,
+  type FeatureReservation,
+  type FeatureReservationInput,
+  type FeatureSettlementOutcome,
   type FeatureUsageInput,
+  type ReservedFeature,
   type ResearchUsageFeature,
 } from './entitlements-adapter';
 export { describeEntitlementsFailure } from './describe-failure';

@@ -8,6 +8,8 @@ import {
 import {
   describeEntitlementsFailure,
   EntitlementsAdapter,
+  type FeatureReservation,
+  type FeatureSettlementOutcome,
   hasPermission,
   hasPlanFeature,
   isModelAllowedForUsage,
@@ -21,6 +23,7 @@ import {
   type PaygReserveInput,
   type PlanFeature,
   type ResearchUsageFeature,
+  type ReservedFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
 import { PaygSurface, Permission, QuotaWindow } from '@claw/shared-types';
@@ -313,6 +316,43 @@ export class AccessControlService {
     } catch (error) {
       this.logger.warn(
         `recordUsage: failed for user=${params.userId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Holds one run of a metered feature before the work (F3d, ADR-110).
+   * A plan limit is a business rule, not a security boundary: if auth-service
+   * cannot be reached the run is allowed, and nothing is settled for it.
+   */
+  async reserveFeature(
+    userId: string,
+    feature: ReservedFeature,
+    requestId: string,
+  ): Promise<FeatureReservation> {
+    try {
+      return await this.adapter.reserveFeatureUsage({ userId, feature, requestId });
+    } catch (error) {
+      this.logger.warn(
+        `reserveFeature: feature=${feature} request=${requestId} unreachable, allowing - ${(error as Error).message}`,
+      );
+      return { allowed: true, reservationId: null };
+    }
+  }
+
+  /** Counts a delivered run or gives back a failed one; best effort. */
+  async settleFeature(
+    reservationId: string | null,
+    outcome: FeatureSettlementOutcome,
+  ): Promise<void> {
+    if (reservationId === null) {
+      return;
+    }
+    try {
+      await this.adapter.settleFeatureUsage(reservationId, outcome);
+    } catch (error) {
+      this.logger.warn(
+        `settleFeature: reservation=${reservationId} outcome=${outcome} failed - ${(error as Error).message}`,
       );
     }
   }
