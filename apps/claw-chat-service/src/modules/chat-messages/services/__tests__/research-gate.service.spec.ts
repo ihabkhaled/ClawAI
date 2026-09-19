@@ -162,3 +162,99 @@ describe('ResearchGateService', () => {
     expect(mockedHttpRequest).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('ResearchGateService.plan', () => {
+  let service: ResearchGateService;
+  const planReply = (plan: Record<string, unknown>): unknown => ({
+    ok: true,
+    status: 200,
+    data: { response: JSON.stringify(plan) },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      OLLAMA_SERVICE_URL: 'http://ollama.test',
+      ROUTING_SERVICE_URL: 'http://routing.test',
+    } as unknown as ReturnType<typeof AppConfig.get>);
+    service = new ResearchGateService();
+  });
+
+  // The old gate ended the walk on the first malformed reply, which made every
+  // fallback model after the first decorative.
+  it('moves on to the next model when a reply is unusable', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: 'hmm, maybe search?' },
+    } as never);
+    mockedHttpRequest.mockResolvedValueOnce(
+      planReply({
+        action: 'search',
+        urls: [],
+        query: 'ceasefire news',
+        maxPages: 5,
+        narration: 'Checking the news.',
+      }) as never,
+    );
+
+    const plan = await service.plan('latest ceasefire news');
+
+    expect(plan).toMatchObject({
+      action: 'search',
+      query: 'ceasefire news',
+      decidedBy: 'secondary',
+    });
+  });
+
+  it('asks for enough output for a whole plan, not the 64-token yes/no budget', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockResolvedValueOnce(
+      planReply({ action: 'answer', urls: [], narration: 'x' }) as never,
+    );
+
+    await service.plan('hello');
+
+    expect(mockedHttpRequest.mock.calls[1]?.[0]).toMatchObject({
+      body: expect.objectContaining({ options: expect.objectContaining({ num_predict: 320 }) }),
+    });
+  });
+
+  // A planner outage must never cost a pasted link its page.
+  it('still crawls a link the user wrote when no model answers', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockRejectedValue(new Error('unreachable'));
+
+    await expect(service.plan('summarise example.com/pricing')).resolves.toMatchObject({
+      action: 'crawl',
+      urls: ['https://example.com/pricing'],
+    });
+  });
+
+  it('answers directly when no model answers and there is no link', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockRejectedValue(new Error('unreachable'));
+
+    await expect(service.plan('hello')).resolves.toMatchObject({ action: 'answer' });
+  });
+
+  it('decides after a crawl whether a search is still needed', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: {
+        response: '{"needsSearch":true,"query":"acme competitors","narration":"Checking rivals."}',
+      },
+    } as never);
+
+    await expect(
+      service.followUpAfterCrawl('compare acme', 'Acme sells widgets.'),
+    ).resolves.toEqual({
+      needsSearch: true,
+      query: 'acme competitors',
+      narration: 'Checking rivals.',
+    });
+  });
+});

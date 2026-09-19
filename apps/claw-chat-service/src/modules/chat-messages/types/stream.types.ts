@@ -1,3 +1,4 @@
+import type { NarrationEntry } from './narration.types';
 import {
   type AiReasoningVisibility,
   type AiStreamProgressConfidence,
@@ -149,6 +150,8 @@ export type StreamEvent = {
   partialContentPreserved?: boolean;
   // RESEARCH_PROGRESS payload (compare-mode research-enricher lifecycle).
   researchDetails?: ResearchProgressDetails;
+  // NARRATION payload.
+  narration?: NarrationEntry;
 };
 
 // Shared identity for rich-stream emitters (one model run / lane).

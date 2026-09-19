@@ -173,6 +173,8 @@ export class ResearchManager {
           toolsUsed,
           warnings,
           dto.correlationId,
+          dto.maxPages,
+          dto.intent,
         );
         items.push(...crawled);
       }
@@ -228,7 +230,8 @@ export class ResearchManager {
     // verbatim used to 400 the whole run past 500 characters, which silently
     // disabled research for anyone who wrote a long message. URLs were already
     // detected from the FULL intent above, so nothing is lost by clamping here.
-    const clamped = clampSearchQuery(dto.intent);
+    // A planner-written query wins over the raw prompt when one was supplied.
+    const clamped = clampSearchQuery(dto.searchQuery ?? dto.intent);
     if (clamped.truncated) {
       warnings.push(
         `The search query was shortened to ${String(clamped.query.length)} characters; ` +
@@ -481,6 +484,7 @@ export class ResearchManager {
       items,
       warnings,
       mode: dto.mode,
+      maxItems: dto.maxPages,
     });
   }
 

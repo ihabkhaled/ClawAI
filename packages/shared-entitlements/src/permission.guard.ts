@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -64,31 +65,46 @@ export class PermissionGuard implements CanActivate {
     if (user.role === UserRole.ADMIN) {
       return true;
     }
-    const granted = await this.resolveAndCheck(userId, required);
-    if (!granted) {
+    const missing = await this.resolveMissing(userId, required);
+    if (missing.length > 0) {
       this.logDenied(userId, request, required);
+      // `message` is what every service's exception filter reads. Without it
+      // each filter fell back to the class name, and a user — or the admin who
+      // had just granted the permission — saw "Forbidden Exception" with no
+      // way to tell which permission was missing.
       throw new ForbiddenException({
+        message: `Missing permission: ${missing.join(', ')}`,
         errorCode: 'INSUFFICIENT_PERMISSIONS',
         messageKey: 'errors.permissions.insufficient',
         requiredPermissions: required,
+        missingPermissions: missing,
       });
     }
     return true;
   }
 
-  private async resolveAndCheck(userId: string, required: Permission[]): Promise<boolean> {
+  /** The required permissions the user does not hold; empty means allowed. */
+  private async resolveMissing(userId: string, required: Permission[]): Promise<Permission[]> {
+    let ent;
     try {
-      const ent = await this.adapter.getEntitlements(userId);
-      if (ent.isAdmin) {
-        return true;
-      }
-      return required.every((permission) => ent.permissions.includes(permission));
+      ent = await this.adapter.getEntitlements(userId);
     } catch (error) {
       this.logger.warn(
-        `resolveAndCheck: entitlements unavailable for user=${userId} — failing closed: ${(error as Error).message}`,
+        `resolveMissing: entitlements unavailable for user=${userId} — failing closed: ${(error as Error).message}`,
       );
-      return false;
+      // Still fails CLOSED, but as an outage. A 403 here was indistinguishable
+      // from a real missing permission, so "auth-service is unreachable" was
+      // debugged as "the role matrix did not save".
+      throw new ServiceUnavailableException({
+        message: 'Permissions could not be checked right now. Please try again.',
+        errorCode: 'ENTITLEMENTS_UNAVAILABLE',
+        messageKey: 'errors.permissions.unavailable',
+      });
     }
+    if (ent.isAdmin) {
+      return [];
+    }
+    return required.filter((permission) => !ent.permissions.includes(permission));
   }
 
   private logDenied(userId: string, request: GuardedRequest, required: Permission[]): void {

@@ -1,7 +1,9 @@
 'use client';
 
 import { ChatLimitNoticeCard } from '@/components/chat/chat-limit-notice-card';
+import { NarrationLog } from '@/components/chat/narration-log';
 import { RuntimeProgressPanel } from '@/components/chat/runtime-progress';
+import { useTranslation } from '@/lib/i18n';
 import type { VirtualizedMessagesFooterProps } from '@/types';
 
 // Pure-render footer mounted as Virtuoso's `components.Footer`. Wraps the
@@ -18,11 +20,13 @@ export function VirtualizedMessagesFooter({
   executingModel,
   judgeModel,
   progressStages,
+  narration,
   currentStageLabel,
   streamLive,
   onCancelStream,
   isCancellingStream,
 }: VirtualizedMessagesFooterProps): React.ReactElement | null {
+  const { t } = useTranslation();
   if (!isWaitingForResponse && !streamError && limitNotice === null) {
     return null;
   }
@@ -36,6 +40,12 @@ export function VirtualizedMessagesFooter({
           footer mounted, and the panel used to render underneath it regardless
           — so a refused message left "AI is thinking..." live forever, under a
           card explaining that nothing was going to happen. */}
+      {/* The live half of the work log. The same component renders the stored
+          log on the answer after it lands, so live and after-refresh are one
+          view with two data sources. */}
+      {isWaitingForResponse && narration !== undefined && narration.length > 0 ? (
+        <NarrationLog entries={narration} isLive t={t} />
+      ) : null}
       {!isWaitingForResponse && !streamError ? null : (
         <RuntimeProgressPanel
           fallbackAttempts={fallbackAttempts}

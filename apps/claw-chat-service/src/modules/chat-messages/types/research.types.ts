@@ -77,4 +77,11 @@ export type ResearchRequest = {
    * outside SITE_CRAWL.
    */
   correlationId?: string;
+  /** Pages a SITE_CRAWL may read, chosen by the planner. */
+  maxPages?: number;
+  /** A planner-written search query, used instead of the raw prompt. */
+  searchQuery?: string;
 };
+
+/** A research request minus what each step sets for itself (the intent and the workflow). */
+export type ResearchRequestBase = Omit<ResearchRequest, 'intent' | 'workflow'>;

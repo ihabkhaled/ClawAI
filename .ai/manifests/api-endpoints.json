@@ -2311,6 +2311,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/research/runs",
+        "source": "apps/claw-research-service/src/modules/research/controllers/research-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/research/fetch",
         "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
       },
@@ -3338,5 +3343,5 @@
     ]
   },
   "generated": true,
-  "total": 660
+  "total": 661
 }

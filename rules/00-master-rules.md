@@ -67,6 +67,7 @@
 | `47-client-bundle-weight-and-barrel-boundaries.md`       | A barrel imported by client components may only re-export leaf modules; server components resolve registry/content data and pass it down as props.                            |
 | `48-lint-and-test-only-what-changed.md`                  | Lint the FILES you changed, test the workspace you touched, and do not re-prove what the hooks are about to prove.                                                            |
 | `49-qa-team-discipline-and-test-evidence.md`             | Every change is walked through the whole QA team on the running stack, across the device matrix, and every claim ships with real, re-runnable evidence.                       |
+| `50-agentic-research-loop-and-narration.md`              | AUTO research: plan gate first, one URL detector, a link the user wrote is always opened, research runs after the POST, and every step is narrated AND stored.                |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

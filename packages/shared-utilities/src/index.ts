@@ -12,3 +12,4 @@ export * from './email';
 export * from './effort';
 export * from './speed';
 export * from './billing-period';
+export * from './url-detection';

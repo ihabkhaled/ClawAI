@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { RESEARCH_CRAWL_PROGRESS_CHANNEL } from '@claw/shared-constants';
 
@@ -5,6 +7,9 @@ import { RESEARCH_PROGRESS_SUBSCRIBER_CLIENT } from '../../../infrastructure/red
 import type { RedisSubscriberPort } from '../../../infrastructure/redis/types/redis-client.types';
 import { describeStreamError } from '../utilities/chat-stream-frame.utility';
 import { mapCrawlPhaseToResearchProgress } from '../utilities/research-progress-bridge.utility';
+import { NarrationKind } from '../../../common/enums/narration-kind.enum';
+import { NARRATED_CRAWL_PHASES } from '../constants/narration.constants';
+import { NarrationService } from './narration.service';
 import { ChatStreamService } from './chat-stream.service';
 import type { ResearchCrawlProgressMessage } from '@claw/shared-types';
 
@@ -27,6 +32,7 @@ export class ResearchProgressBridgeService implements OnModuleInit {
   constructor(
     @Inject(RESEARCH_PROGRESS_SUBSCRIBER_CLIENT) private readonly subscriber: RedisSubscriberPort,
     private readonly chatStreamService: ChatStreamService,
+    private readonly narration: NarrationService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -62,6 +68,26 @@ export class ResearchProgressBridgeService implements OnModuleInit {
       message.correlationId,
       mapCrawlPhaseToResearchProgress(message),
     );
+    // Also a line in the turn's narrated work log ("Discovered 42 sitemap
+    // URLs", "Reading /pricing"). The start and the finish are narrated by the
+    // orchestrator with what was actually READ, so only the steps between are
+    // taken from here. Every replica receives this tick; the payload itself is
+    // the dedupe key, so exactly one replica logs it.
+    if (NARRATED_CRAWL_PHASES.has(message.phase)) {
+      void this.narration.append(
+        message.correlationId,
+        {
+          kind: NarrationKind.CRAWL_PROGRESS,
+          params: {
+            phase: message.phase,
+            message: message.message,
+            pagesFetched: message.pagesFetched,
+            pagesDiscovered: message.pagesDiscovered,
+          },
+        },
+        createHash('sha1').update(rawPayload).digest('hex'),
+      );
+    }
   }
 
   private async subscribe(): Promise<void> {

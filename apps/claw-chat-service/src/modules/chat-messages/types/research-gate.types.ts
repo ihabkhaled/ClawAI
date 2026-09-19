@@ -1,3 +1,5 @@
+import type { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
+
 /** The classifier's decision about one user message. */
 export type ResearchGateVerdict = {
   /** True only when answering genuinely needs information from the internet. */
@@ -23,3 +25,25 @@ export interface ResearchGateCandidate {
   timeoutMs: number;
   maxTokens: number;
 }
+
+/** The planner's decision for one user message. */
+export type ResearchPlan = {
+  action: PlannedResearchAction;
+  /** Absolute URLs to crawl; always includes every URL the user wrote. */
+  urls: string[];
+  /** A search query the planner wrote, or null to search the prompt as-is. */
+  query: string | null;
+  /** Pages to read per crawled site, already bounded. */
+  maxPages: number;
+  /** One short first-person sentence shown to the user, e.g. "I'll read that site first." */
+  narration: string;
+  /** Which model decided, for the log and the stored narration. */
+  decidedBy: string | null;
+};
+
+/** The planner's second look, after a crawl, at whether a web search is still needed. */
+export type CrawlFollowUp = {
+  needsSearch: boolean;
+  query: string | null;
+  narration: string;
+};

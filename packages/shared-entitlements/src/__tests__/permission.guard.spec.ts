@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Permission } from '@claw/shared-types';
 import { PermissionGuard } from '../permission.guard';
 
@@ -86,12 +86,35 @@ describe('PermissionGuard', () => {
     );
   });
 
-  it('fails CLOSED (throws FORBIDDEN) when the entitlements lookup throws', async () => {
+  // Still fails CLOSED — access is denied either way. But an outage used to be
+  // reported as the same 403 as a genuinely missing permission, so "auth-service
+  // is unreachable" and "your role lacks MEMORY_USE" were indistinguishable in
+  // production: both read "Forbidden Exception", and an admin who had just
+  // granted the permission had no way to tell which one they were looking at.
+  it('fails CLOSED with a 503 outage, not a 403 denial, when the lookup throws', async () => {
     reflector.getAllAndOverride.mockReturnValue([Permission.ADMIN_LOGS_VIEW]);
     adapter.getEntitlements.mockRejectedValue(new Error('auth down'));
     await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).rejects.toMatchObject(
       {
-        response: { errorCode: 'INSUFFICIENT_PERMISSIONS' },
+        status: 503,
+        response: { errorCode: 'ENTITLEMENTS_UNAVAILABLE' },
+      },
+    );
+  });
+
+  // Every service's exception filter reads `message`. The guard set none, so
+  // each one fell back to the class name and the user saw "Forbidden
+  // Exception" with the missing permission thrown away.
+  it('names exactly the missing permissions in the message', async () => {
+    reflector.getAllAndOverride.mockReturnValue([Permission.MEMORY_USE, Permission.CHAT_USE]);
+    adapter.getEntitlements.mockResolvedValue(makeEnt({ permissions: [Permission.CHAT_USE] }));
+    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).rejects.toMatchObject(
+      {
+        status: 403,
+        response: {
+          message: 'Missing permission: MEMORY_USE',
+          missingPermissions: [Permission.MEMORY_USE],
+        },
       },
     );
   });

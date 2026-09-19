@@ -9,6 +9,7 @@ import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
 import type { AdminPlanGrantFormValues } from '@/lib/validation/admin-plan-grant.schema';
 import type { AdminUserEditFormValues } from '@/lib/validation/admin-user.schema';
+import type { ChangePasswordFormValues } from '@/lib/validation/change-password.schema';
 import type {
   ConfirmOtpFormValues,
   RequestEmailChangeFormValues,
@@ -57,6 +58,7 @@ import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemb
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { NarrationEntry } from './narration.types';
 import type { PasswordStrengthResult } from './password-strength.types';
 import type { CountryDialCode } from './phone.types';
 import type { PipelineResult } from './pipeline.types';
@@ -244,6 +246,16 @@ export type UseFeedbackLauncherCollapseReturn = {
 export type UsePasswordRotationGuardReturn = {
   /** True while the account is required to replace its current password. */
   mustRotate: boolean;
+};
+
+export type UseChangePasswordFormReturn = {
+  form: UseFormReturn<ChangePasswordFormValues>;
+  handleSubmit: (values: ChangePasswordFormValues) => void;
+  isPending: boolean;
+};
+
+export type UseChangePasswordPageReturn = UseChangePasswordFormReturn & {
+  t: TranslateFunction;
 };
 
 export type UseCreateUserDialogReturn = {
@@ -647,6 +659,8 @@ export type UseThreadDataControllerReturn = {
   executingModel: string | null;
   judgeModel: string | null;
   progressStages: VisibleProgressStage[];
+  /** The turn's narrated work log, live. */
+  narration?: readonly NarrationEntry[];
   currentStageLabel: string | null;
   streamLive: StreamLiveState;
   cancelStream: () => void;
@@ -1010,6 +1024,8 @@ export type UseVirtualizedMessagesControllerParams = {
   executingModel?: string | null;
   judgeModel?: string | null;
   progressStages: VisibleProgressStage[];
+  /** The turn's narrated work log, live. */
+  narration?: readonly NarrationEntry[];
   currentStageLabel: string | null;
   streamLive?: StreamLiveState;
   onCancelStream?: () => void;

@@ -17,6 +17,7 @@ import type {
   StreamLiveState,
   VisibleProgressStage,
 } from '@/types';
+import type { NarrationEntry } from '@/types/narration.types';
 import { connectSse, isSimpleProgressStreamEvent, logger } from '@/utilities';
 import { resolveChatStreamError } from '@/utilities/chat-stream-error.utility';
 
@@ -54,6 +55,9 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   const [executingModel, setExecutingModel] = useState<string | null>(null);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
   const [progressStages, setProgressStages] = useState<VisibleProgressStage[]>([]);
+  // The turn's narrated work log, in arrival order. Appended, never upserted:
+  // every crawl page is its own line.
+  const [narration, setNarration] = useState<NarrationEntry[]>([]);
   // The success path had no deterministic completion signal: the page waited
   // for a poll to happen to notice the assistant message, so a finished answer
   // could sit invisible until the user refreshed. DONE now stamps a value the
@@ -113,6 +117,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     setExecutingModel(null);
     setJudgeModel(null);
     setProgressStages([]);
+    setNarration([]);
     setCurrentStageLabel(null);
     contentRef.current = '';
     reasoningRef.current = '';
@@ -295,6 +300,16 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
             upsertStage(parsed, parsed.status ?? VisibleProgressStageStatus.ACTIVE);
           }
 
+          if (parsed.type === StreamEventType.NARRATION) {
+            const entry = parsed.narration;
+            if (entry !== undefined) {
+              setNarration((prev) =>
+                prev.some((line) => line.id === entry.id) ? prev : [...prev, entry],
+              );
+            }
+            return;
+          }
+
           if (parsed.type === StreamEventType.CONTENT_DELTA) {
             contentRef.current += parsed.delta ?? '';
             scheduleLiveFlush();
@@ -438,6 +453,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     executingModel,
     judgeModel,
     progressStages,
+    narration,
     currentStageLabel,
     streamLive,
     connectionHealth,

@@ -5,6 +5,12 @@ import {
 } from '../auto-research-mode.utility';
 
 describe('resolveAutoResearchMode', () => {
+  it('fetches the page when the link has no scheme', () => {
+    expect(resolveAutoResearchMode('what does example.com/pricing say')).toBe(
+      ResearchMode.SEARCH_FETCH,
+    );
+  });
+
   it('fetches the page when the prompt contains a link', () => {
     // The case the manual-only flow handled worst: the link was ignored unless
     // a fetch mode had been selected first.

@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { FetchModule } from '../fetch/fetch.module';
 import { ScrapeModule } from '../scrape/scrape.module';
 import { SearchModule } from '../search/search.module';
+import { ResearchInternalController } from './controllers/research-internal.controller';
 import { ResearchController } from './controllers/research.controller';
 import { ResearchManager } from './managers/research.manager';
 import { ResearchProgressPublisher } from './managers/research-progress-publisher.service';
@@ -13,7 +14,7 @@ import { ResearchService } from './services/research.service';
 
 @Module({
   imports: [SearchModule, FetchModule, ScrapeModule],
-  controllers: [ResearchController],
+  controllers: [ResearchController, ResearchInternalController],
   providers: [
     ResearchRunRepository,
     ResearchManager,

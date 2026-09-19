@@ -16,6 +16,8 @@ import type {
 import type { ModelRecencyTier } from '@/enums/model-recency-tier.enum';
 import type { ResearchMode } from '@/enums/research-mode.enum';
 
+import type { NarrationEntry } from './narration.types';
+
 export type ChatThread = {
   id: string;
   userId: string;
@@ -333,6 +335,11 @@ export type ContentDeltaStreamEvent = StreamEventEnvelope & {
   accumulatedChars?: number;
 };
 
+export type NarrationStreamEvent = StreamEventEnvelope & {
+  type: StreamEventType.NARRATION;
+  narration?: NarrationEntry;
+};
+
 export type ReasoningDeltaStreamEvent = StreamEventEnvelope & {
   type: StreamEventType.REASONING_DELTA;
   reasoningDelta?: string;
@@ -385,7 +392,8 @@ type HandledStreamEventType =
   | StreamEventType.REASONING_DELTA
   | StreamEventType.LIFECYCLE
   | StreamEventType.METRICS
-  | StreamEventType.USAGE;
+  | StreamEventType.USAGE
+  | StreamEventType.NARRATION;
 
 // Any StreamEventType not enumerated above (currently just
 // StreamEventType.CHUNK) — kept structurally assignable from the original
@@ -415,6 +423,7 @@ export type RouterStreamEvent =
   | LifecycleStreamEvent
   | MetricsStreamEvent
   | UsageStreamEvent
+  | NarrationStreamEvent
   | UnhandledStreamEvent;
 
 // The subset of RouterStreamEvent useChatStream actually feeds into

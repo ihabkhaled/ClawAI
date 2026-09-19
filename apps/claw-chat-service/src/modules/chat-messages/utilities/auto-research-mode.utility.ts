@@ -1,9 +1,9 @@
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
-  AUTO_RESEARCH_FETCH_URL_PATTERN,
   AUTO_RESEARCH_RECENCY_MARKERS,
   AUTO_RESEARCH_REQUEST_MARKERS,
 } from '../../../common/constants/auto-research.constants';
+import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 
 /**
  * What research this prompt needs, when the user has not said.
@@ -31,7 +31,7 @@ import {
 export function resolveAutoResearchMode(prompt: string): ResearchMode {
   const normalized = prompt.toLowerCase();
 
-  if (AUTO_RESEARCH_FETCH_URL_PATTERN.test(prompt)) {
+  if (detectPromptUrls(prompt).length > 0) {
     return ResearchMode.SEARCH_FETCH;
   }
   const wantsCurrentInfo = AUTO_RESEARCH_RECENCY_MARKERS.some((marker) =>

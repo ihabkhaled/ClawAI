@@ -1,6 +1,3 @@
-/** Absolute http(s) URLs, loosely matched then validated with `new URL`. */
-export const PROMPT_URL_PATTERN = /https?:\/\/[^\s<>"']+/giu;
-
 /**
  * Every URL in the message gets crawled — up to this bound.
  *

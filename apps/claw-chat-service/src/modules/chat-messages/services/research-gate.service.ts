@@ -8,15 +8,25 @@ import {
   RESEARCH_GATE_CANDIDATES_TIMEOUT_MS,
   RESEARCH_GATE_CANDIDATES_TTL_MS,
   RESEARCH_GATE_SYSTEM_PROMPT,
+  RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
+  RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
+  RESEARCH_PLANNER_SYSTEM_PROMPT,
+  RESEARCH_REPLAN_SUMMARY_MAX_CHARS,
+  RESEARCH_REPLAN_SYSTEM_PROMPT,
 } from '../../../common/constants/research-gate.constants';
+import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
+import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import type {
+  CrawlFollowUp,
   ResearchGateCacheEntry,
   ResearchGateCandidate,
   ResearchGateModelReply,
   ResearchGateVerdict,
+  ResearchPlan,
 } from '../types/research-gate.types';
 import { parseResearchGateVerdict } from '../utilities/research-gate.utility';
+import { parseCrawlFollowUp, parseResearchPlan } from '../utilities/research-plan.utility';
 
 /**
  * Asks a small model whether this turn needs the internet, before answering it.
@@ -155,11 +165,105 @@ export class ResearchGateService {
     }
   }
 
+  /**
+   * Decides how a turn should use the web, walking the admin's ordered
+   * candidates until one returns a usable plan.
+   *
+   * A reply that does not parse moves on to the next model rather than ending
+   * the walk — the old gate treated one malformed answer as "no web", which
+   * made every fallback after the first model decorative.
+   *
+   * Never throws. With no model reachable it falls back to what the user's own
+   * text proves: a URL they wrote is crawled, anything else is answered
+   * directly, so a planner outage never costs a pasted link its page.
+   */
+  async plan(message: string): Promise<ResearchPlan> {
+    const userUrls = detectPromptUrls(message);
+    const candidates = await this.resolveCandidates();
+    for (const candidate of candidates) {
+      const raw = await this.generate(
+        candidate,
+        `${RESEARCH_PLANNER_SYSTEM_PROMPT}
+
+User message:
+${message}`,
+        RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
+      );
+      const plan = raw === null ? null : parseResearchPlan(raw, userUrls);
+      if (plan !== null) {
+        this.logger.log(
+          `plan: action=${plan.action} urls=${String(plan.urls.length)} maxPages=${String(plan.maxPages)} model=${candidate.modelAlias}`,
+        );
+        return { ...plan, decidedBy: candidate.modelAlias };
+      }
+      this.logger.debug(`plan: ${candidate.modelAlias} gave no usable plan, trying the next model`);
+    }
+    this.logger.warn(
+      `plan: no planner answered (tried ${String(candidates.length)}) - falling back to the user's own URLs`,
+    );
+    return {
+      action: userUrls.length > 0 ? PlannedResearchAction.CRAWL : PlannedResearchAction.ANSWER,
+      urls: userUrls,
+      query: null,
+      maxPages: RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
+      narration: '',
+      decidedBy: null,
+    };
+  }
+
+  /**
+   * The second look, after a crawl: given what was read, is a web search still
+   * needed? Fails closed to "no" — the crawl already produced evidence, and an
+   * unnecessary search spends the user's allowance.
+   */
+  async followUpAfterCrawl(message: string, crawlSummary: string): Promise<CrawlFollowUp> {
+    const candidates = await this.resolveCandidates();
+    const summary = crawlSummary.slice(0, RESEARCH_REPLAN_SUMMARY_MAX_CHARS);
+    for (const candidate of candidates) {
+      const raw = await this.generate(
+        candidate,
+        `${RESEARCH_REPLAN_SYSTEM_PROMPT}
+
+User message:
+${message}
+
+What the pages said (summary):
+${summary}`,
+        RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
+      );
+      const followUp = raw === null ? null : parseCrawlFollowUp(raw);
+      if (followUp !== null) {
+        this.logger.log(
+          `followUpAfterCrawl: needsSearch=${String(followUp.needsSearch)} model=${candidate.modelAlias}`,
+        );
+        return followUp;
+      }
+    }
+    return { needsSearch: false, query: null, narration: '' };
+  }
+
   /** Null means "this model did not answer", so the caller tries the next. */
   private async ask(
     candidate: ResearchGateCandidate,
     message: string,
   ): Promise<ResearchGateVerdict | null> {
+    const raw = await this.generate(
+      candidate,
+      `${RESEARCH_GATE_SYSTEM_PROMPT}
+
+User message:
+${message}`,
+      candidate.maxTokens,
+    );
+    return raw === null ? null : parseResearchGateVerdict(raw);
+  }
+
+  /** One model call; the raw reply text, or null when the model did not answer. */
+  private async generate(
+    candidate: ResearchGateCandidate,
+    prompt: string,
+    minOutputTokens: number,
+  ): Promise<string | null> {
     const config = AppConfig.get();
     try {
       const response = await httpRequest<ResearchGateModelReply>({
@@ -167,10 +271,7 @@ export class ResearchGateService {
         method: 'POST',
         body: {
           model: candidate.modelAlias,
-          prompt: `${RESEARCH_GATE_SYSTEM_PROMPT}
-
-User message:
-${message}`,
+          prompt,
           stream: false,
           // Thinking OFF, and this is load-bearing. Every candidate here is a
           // reasoning model: left on, the whole num_predict budget is spent
@@ -181,7 +282,10 @@ ${message}`,
           // thinking and an empty answer. With it off the same model replies
           // with the JSON object on the first try.
           think: false,
-          options: { num_predict: candidate.maxTokens, temperature: 0 },
+          options: {
+            num_predict: Math.max(candidate.maxTokens, minOutputTokens),
+            temperature: 0,
+          },
         },
         timeoutMs: candidate.timeoutMs,
       });
@@ -189,7 +293,7 @@ ${message}`,
         this.logger.debug(`ask: ${candidate.modelAlias} returned ${String(response.status)}`);
         return null;
       }
-      return parseResearchGateVerdict(response.data.response ?? '');
+      return response.data.response ?? '';
     } catch (error) {
       this.logger.debug(`ask: ${candidate.modelAlias} failed - ${(error as Error).message}`);
       return null;

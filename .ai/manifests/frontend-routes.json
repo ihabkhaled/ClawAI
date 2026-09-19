@@ -622,6 +622,11 @@
       "route": "/routing/replay"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/settings/change-password/page.tsx",
+      "kind": "page",
+      "route": "/settings/change-password"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/settings/devices/[deviceId]/page.tsx",
       "kind": "page",
       "route": "/settings/devices/[deviceId]"

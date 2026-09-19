@@ -39,9 +39,11 @@ describe('detectUrlsInText', () => {
   });
 
   it('returns URLs in the order they were written', () => {
+    // Returned in canonical URL form (a bare host gains its trailing slash), so
+    // the same page written two ways dedupes against a search hit for it.
     expect(detectUrlsInText('compare https://b.example.com and https://a.example.com')).toEqual([
-      'https://b.example.com',
-      'https://a.example.com',
+      'https://b.example.com/',
+      'https://a.example.com/',
     ]);
   });
 
@@ -68,8 +70,14 @@ describe('detectUrlsInText', () => {
     expect(detectUrlsInText('ftp://example.com/x')).toEqual([]);
   });
 
-  it('ignores a bare domain, which is a search term rather than a link', () => {
-    expect(detectUrlsInText('what is example.com')).toEqual([]);
+  // Reversed 2026-09-18. A bare domain used to be treated as a search term,
+  // but that is not how people write links: "summarise example.com/pricing"
+  // was answered from training data with the page never opened. chat-service
+  // decides to crawl from the same text, so the two must agree.
+  it('detects a bare domain as a link to open', () => {
+    expect(detectUrlsInText('what is on example.com/pricing')).toEqual([
+      'https://example.com/pricing',
+    ]);
   });
 
   it('rejects a URL longer than the fetch DTO would accept', () => {

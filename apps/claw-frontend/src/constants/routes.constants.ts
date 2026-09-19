@@ -47,6 +47,9 @@ export const ROUTES = {
   LOGS: '/logs',
   OBSERVABILITY: '/observability',
   SETTINGS: '/settings',
+  // Where a forced password rotation lands. Under /settings so it inherits the
+  // private-route prefix (robots, auth) instead of adding a list entry to keep in sync.
+  CHANGE_PASSWORD: '/settings/change-password',
   PROFILE: '/profile',
   ADMIN: '/admin',
   RESEARCH_PROVIDERS: '/research/providers',

@@ -332,3 +332,19 @@ Documented in `.claude/Integrations/search-orchestration__MASTER_PLAN.md`. Summa
 - No evidence bundle — chat-service cannot yet consume research output in prompt assembly.
 - No frontend admin UI for providers; API is the only surface.
 - `GENERIC_HTTP` provider kind is declared but not implemented (returns 501).
+
+## Update 2026-09-19 — internal route, crawl budget, bare domains
+
+- `POST /api/v1/internal/research/runs` (`ResearchInternalController`):
+  `@Public()` + `ServiceTokenGuard`, body = the run DTO plus `userId`. This is
+  how chat-service runs research for ordinary users; the user route
+  `/research/runs` stays `ADMIN_SYSTEM_VIEW`, and research-service does not
+  enforce the plan, so the user route must not be widened. Not proxied by nginx.
+- `maxPages` (≤ `CRAWL_MAX_PAGES_CEILING` = 40) and `searchQuery` on the run DTO.
+  Crawl candidates are ranked by overlap with the intent before the budget is
+  applied; the evidence cap rises to `maxPages` for a crawl.
+- The crawl follows the homepage's final URL for its origin, so an
+  `example.com` → `www.example.com` redirect keeps its sitemap pages; other
+  hosts are still refused.
+- `detectUrlsInText` now delegates to `@claw/shared-utilities` and accepts bare
+  domains; `isFetchableUrl` is still the gate on what is returned.

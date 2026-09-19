@@ -20,7 +20,9 @@ from the missing capability statement, and neither knew about the other.**
 
 ## Mandatory rules
 
-1. **A URL the user wrote is OPENED, not searched for.** `detectUrlsInText`
+1. **A URL the user wrote is OPENED, not searched for.** (Since 2026-09-19 that
+   includes a link written without a scheme — `example.com/pricing` — via the
+   shared detector; see [rule 50](50-agentic-research-loop-and-narration.md).) `detectUrlsInText`
    runs over the intent before the search step, and the resulting pages are
    fetched directly through `FetchService`. Until 2026-09-10 there was no such
    step anywhere: `summarize https://example.com/post` became a keyword query

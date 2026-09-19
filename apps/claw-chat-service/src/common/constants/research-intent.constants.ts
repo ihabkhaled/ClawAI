@@ -13,6 +13,3 @@ export const CRAWL_INTENT_PATTERNS: readonly RegExp[] = [
   /\baudit (this|the) (site|website)\b/i,
   /\bmap (this|the) (site|website)\b/i,
 ];
-
-/** Cheap presence check, not full URL parsing — research-service's own `detectUrlsInText` is the actual validator once the request arrives there. */
-export const BARE_URL_PATTERN = /https?:\/\//i;

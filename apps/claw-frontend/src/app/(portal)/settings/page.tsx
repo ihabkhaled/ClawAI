@@ -3,6 +3,7 @@
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { PasswordInput } from '@/components/common/password-input';
+import { ChangePasswordCard } from '@/components/settings/change-password-card';
 import { CurrencyPreferenceCard } from '@/components/settings/currency-preference-card';
 import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { Button } from '@/components/ui/button';
@@ -103,73 +104,12 @@ export default function SettingsPage() {
 
         <Separator />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
-            <CardDescription>{t('settings.passwordRequirements')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
-              className="max-w-sm space-y-4"
-            >
-              <div className="space-y-2">
-                <label htmlFor="current-password" className="text-sm font-medium">
-                  {t('settings.currentPassword')}
-                </label>
-                <PasswordInput
-                  id="current-password"
-                  autoComplete="current-password"
-                  disabled={isPasswordPending}
-                  {...passwordForm.register('currentPassword')}
-                />
-                {passwordForm.formState.errors.currentPassword ? (
-                  <p className="text-destructive text-xs">
-                    {passwordForm.formState.errors.currentPassword.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="new-password" className="text-sm font-medium">
-                  {t('settings.newPassword')}
-                </label>
-                <PasswordInput
-                  id="new-password"
-                  autoComplete="new-password"
-                  disabled={isPasswordPending}
-                  {...passwordForm.register('newPassword')}
-                />
-                {passwordForm.formState.errors.newPassword ? (
-                  <p className="text-destructive text-xs">
-                    {passwordForm.formState.errors.newPassword.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="confirm-password" className="text-sm font-medium">
-                  {t('settings.confirmPassword')}
-                </label>
-                <PasswordInput
-                  id="confirm-password"
-                  autoComplete="new-password"
-                  disabled={isPasswordPending}
-                  {...passwordForm.register('confirmPassword')}
-                />
-                {passwordForm.formState.errors.confirmPassword ? (
-                  <p className="text-destructive text-xs">
-                    {passwordForm.formState.errors.confirmPassword.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <Button type="submit" disabled={isPasswordPending}>
-                {isPasswordPending ? t('common.loading') : t('settings.changePassword')}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <ChangePasswordCard
+          form={passwordForm}
+          onSubmit={handlePasswordSubmit}
+          isPending={isPasswordPending}
+          t={t}
+        />
 
         <Separator />
 

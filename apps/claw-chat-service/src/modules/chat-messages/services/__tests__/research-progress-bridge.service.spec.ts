@@ -18,11 +18,17 @@ function build() {
   };
   const emitResearchProgress = vi.fn();
   const chatStreamService = { emitResearchProgress } as unknown as ChatStreamService;
-  const service = new ResearchProgressBridgeService(subscriber as never, chatStreamService);
+  const append = vi.fn((_threadId: string, _entry: unknown, _dedupeKey?: string) =>
+    Promise.resolve(),
+  );
+  const service = new ResearchProgressBridgeService(subscriber as never, chatStreamService, {
+    append,
+  } as never);
   return {
     service,
     subscriber,
     emitResearchProgress,
+    append,
     deliver: (payload: string) => messageHandler?.(RESEARCH_CRAWL_PROGRESS_CHANNEL, payload),
     deliverOnOtherChannel: (payload: string) => messageHandler?.('some:other:channel', payload),
   };
@@ -95,5 +101,43 @@ describe('ResearchProgressBridgeService', () => {
     deliver(JSON.stringify({ phase: 'page', message: 'x' }));
 
     expect(emitResearchProgress).not.toHaveBeenCalled();
+  });
+
+  // Every chat replica receives each tick. The payload is the dedupe key, so
+  // all replicas propose the same entry and only the first one logs it.
+  it('logs a page tick into the narration, keyed so only one replica keeps it', async () => {
+    const harness = build();
+    await harness.service.onModuleInit();
+    const payload = JSON.stringify({
+      correlationId: 'thread-1',
+      phase: 'page',
+      message: 'Fetched https://example.com/pricing',
+      pagesFetched: 3,
+      pagesDiscovered: 12,
+      timestamp: '2026-09-19T10:00:00.000Z',
+    });
+
+    harness.deliver(payload);
+    harness.deliver(payload);
+
+    expect(harness.append).toHaveBeenCalledTimes(2);
+    const [first, second] = harness.append.mock.calls;
+    expect(first?.[1]).toMatchObject({ kind: 'crawl_progress', params: { pagesFetched: 3 } });
+    expect(first?.[2]).toBe(second?.[2]);
+  });
+
+  it('does not narrate the start and finish, which the orchestrator reports with what was read', async () => {
+    const harness = build();
+    await harness.service.onModuleInit();
+    harness.deliver(
+      JSON.stringify({
+        correlationId: 't',
+        phase: 'started',
+        message: 'x',
+        pagesFetched: 0,
+        pagesDiscovered: 0,
+      }),
+    );
+    expect(harness.append).not.toHaveBeenCalled();
   });
 });

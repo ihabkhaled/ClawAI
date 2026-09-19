@@ -7,11 +7,36 @@ vi.mock('../http-client.utility', () => ({
   httpRequest: vi.fn(),
 }));
 
+vi.mock('../inter-service-auth.utility', () => ({
+  buildInterServiceAuthHeader: () => 'Service test-token',
+}));
+
 const mockedHttpRequest = vi.mocked(httpRequest);
 
 describe('runResearch', () => {
   beforeEach(() => {
     mockedHttpRequest.mockReset();
+  });
+
+  // Forwarding the user's bearer to the user route got every non-admin a 403
+  // (that route is ADMIN_SYSTEM_VIEW), swallowed to null: research silently ran
+  // for admins only. The internal route names the user and carries the service
+  // token instead — the plan gate has already been applied in this service.
+  it('calls the internal service-token route and names the user', async () => {
+    mockedHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { id: 'run-0' } } as never);
+
+    await runResearch('http://localhost:4016', {
+      userToken: 'user-bearer-that-must-not-be-sent',
+      userId: 'u1',
+      intent: 'summarise example.com',
+      workflow: ResearchWorkflow.SEARCH_THEN_FETCH,
+    });
+
+    const call = mockedHttpRequest.mock.calls[0]?.[0];
+    expect(call?.url).toBe('http://localhost:4016/api/v1/internal/research/runs');
+    expect(call?.headers).toEqual({ Authorization: 'Service test-token' });
+    expect(call?.body).toMatchObject({ userId: 'u1', intent: 'summarise example.com' });
+    expect(JSON.stringify(call)).not.toContain('user-bearer-that-must-not-be-sent');
   });
 
   it('uses workflow-based maxResults defaults and timeout', async () => {

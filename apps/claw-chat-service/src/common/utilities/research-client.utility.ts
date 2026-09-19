@@ -1,7 +1,9 @@
 import { Logger } from '@nestjs/common';
 
 import { httpRequest } from './http-client.utility';
+import { buildInterServiceAuthHeader } from './inter-service-auth.utility';
 import {
+  RESEARCH_CRAWL_REQUEST_TIMEOUT_MS,
   RESEARCH_REQUEST_TIMEOUT_MS,
   SEARCH_FETCH_EXTRACT_DEFAULT_MAX_RESULTS,
   SEARCH_ONLY_DEFAULT_MAX_RESULTS,
@@ -17,8 +19,14 @@ const logger = new Logger('ResearchClient');
 
 /**
  * Call the research-service to produce an evidence bundle for a single chat
- * turn. The caller's bearer token is forwarded so the research-service's
- * AuthGuard sees the same user and the run is stored under their id.
+ * turn, on the INTERNAL service-token route, naming the user explicitly.
+ *
+ * This used to forward the user's bearer token to the user route, which is
+ * gated ADMIN_SYSTEM_VIEW. Every non-admin user got a 403 that was swallowed
+ * below to `null`, so research silently never ran for anyone but an admin —
+ * and testing as an admin showed it working. The plan gate is applied in this
+ * service before any call gets here, which is why the internal route may trust
+ * the stated user id.
  */
 export async function runResearch(
   baseUrl: string,
@@ -27,10 +35,11 @@ export async function runResearch(
   const start = Date.now();
   try {
     const response = await httpRequest<ResearchRunResponse>({
-      url: `${baseUrl}/api/v1/research/runs`,
+      url: `${baseUrl}/api/v1/internal/research/runs`,
       method: 'POST',
-      headers: { Authorization: `Bearer ${request.userToken}` },
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: {
+        userId: request.userId,
         intent: request.intent,
         workflow: request.workflow,
         searchProviderId: request.searchProviderId,
@@ -38,8 +47,13 @@ export async function runResearch(
         requestedProvider: request.requestedProvider,
         maxResults: request.maxResults ?? inferDefaultMaxResults(request.workflow),
         correlationId: request.correlationId,
+        maxPages: request.maxPages,
+        searchQuery: request.searchQuery,
       },
-      timeoutMs: RESEARCH_REQUEST_TIMEOUT_MS,
+      timeoutMs:
+        request.workflow === ResearchWorkflow.SITE_CRAWL
+          ? RESEARCH_CRAWL_REQUEST_TIMEOUT_MS
+          : RESEARCH_REQUEST_TIMEOUT_MS,
     });
     if (!response.ok) {
       logger.warn(

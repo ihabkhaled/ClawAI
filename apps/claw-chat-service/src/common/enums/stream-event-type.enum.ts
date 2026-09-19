@@ -25,6 +25,9 @@ export enum StreamEventType {
   // count / current URL / error) so the FE rich-progress panel can render
   // live web-research activity.
   RESEARCH_PROGRESS = 'research_progress',
+  // One line of the turn's narrated work log (plan, crawl, search, back to the
+  // AI, thinking). Also stored on the answer, so it survives a refresh.
+  NARRATION = 'narration',
   DONE = 'done',
   ERROR = 'error',
   FALLBACK_ATTEMPT = 'fallback_attempt',

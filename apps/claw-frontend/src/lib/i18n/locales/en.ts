@@ -2,6 +2,7 @@
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
@@ -3735,6 +3736,7 @@ export const en: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.en.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.en,
+  narration: NARRATION_TRANSLATIONS.en,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.en,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.en,
   adminBilling: {

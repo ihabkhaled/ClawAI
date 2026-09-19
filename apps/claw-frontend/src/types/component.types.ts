@@ -42,6 +42,7 @@ import type { Locale } from '@/enums/locale.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
+import type { ChangePasswordFormValues } from '@/lib/validation/change-password.schema';
 import type {
   ConfirmOtpFormValues,
   RequestEmailChangeFormValues,
@@ -133,6 +134,7 @@ import type {
   MemorySuggestion,
   RejectSuggestionRequest,
 } from './memory.types';
+import type { NarrationEntry } from './narration.types';
 import type {
   ParallelModelResponse,
   ParallelModelTarget,
@@ -650,6 +652,7 @@ export type RuntimeProgressPanelProps = {
   executingModel?: string | null;
   judgeModel?: string | null;
   progressStages?: VisibleProgressStage[];
+  narration?: readonly NarrationEntry[];
   currentStageLabel?: string | null;
   streamLive?: StreamLiveState;
   onCancel?: () => void;
@@ -1193,6 +1196,7 @@ export type VirtualizedMessagesFooterProps = {
   executingModel?: string | null;
   judgeModel?: string | null;
   progressStages: VisibleProgressStage[];
+  narration?: readonly NarrationEntry[];
   currentStageLabel: string | null;
   streamLive?: StreamLiveState;
   onCancelStream?: () => void;
@@ -2808,4 +2812,16 @@ export type StreamHealthNoticeProps = {
 export type AuthOnboardingStep = {
   titleKey: string;
   bodyKey: string;
+};
+
+/**
+ * The one change-password form, rendered on the settings page and on the
+ * dedicated forced-rotation page. One component so the password policy and
+ * its error copy live in exactly one place.
+ */
+export type ChangePasswordCardProps = {
+  form: UseFormReturn<ChangePasswordFormValues>;
+  onSubmit: (values: ChangePasswordFormValues) => void;
+  isPending: boolean;
+  t: TranslateFunction;
 };

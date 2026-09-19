@@ -44,4 +44,17 @@ describe('detectPromptUrls', () => {
   it('finds nothing in a message with no link', () => {
     expect(detectPromptUrls('explain how promises work')).toEqual([]);
   });
+
+  // The reported bug: a link typed the way people type links was invisible,
+  // so the page was never opened.
+  it('finds a link written without a scheme or www', () => {
+    expect(detectPromptUrls('summarise example.com/pricing')).toEqual([
+      'https://example.com/pricing',
+    ]);
+    expect(detectPromptUrls('check www.example.org')).toEqual(['https://www.example.org/']);
+  });
+
+  it('does not mistake a file name or a property for a link', () => {
+    expect(detectPromptUrls('edit main.py and read user.id')).toEqual([]);
+  });
 });

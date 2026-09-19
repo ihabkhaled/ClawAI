@@ -401,7 +401,11 @@ ${evidence.snippet}`);
     // first meant a link in a message with research off was silently ignored —
     // the model answered about a page it had never seen.
     const promptUrls = detectPromptUrls(intent);
-    const hasCrawlTarget = promptUrls.length > 0;
+    // "Regardless of research mode" is not "regardless of plan". A crawl is a
+    // paid web fetch, so a plan without the research unlock gets none here —
+    // the same rule resolveAutoResearchMode applies on the request path.
+    const hasCrawlTarget =
+      promptUrls.length > 0 && (await this.accessControl.hasResearchAccess(userId));
     // AUTO must be RESOLVED here, not merely compared against NONE.
     //
     // It is the default mode, and `AUTO !== NONE`, so an unresolved comparison

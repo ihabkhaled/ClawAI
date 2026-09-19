@@ -2,6 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { VirtualizedMessagesFooter } from '@/components/chat/virtualized-messages-footer';
+import { NarrationKind } from '@/enums/narration-kind.enum';
+
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 vi.mock('@/components/chat/runtime-progress', () => ({
   RuntimeProgressPanel: ({ streamError }: { streamError?: string | null }) => (
@@ -50,5 +53,23 @@ describe('VirtualizedMessagesFooter', () => {
       />,
     );
     expect(screen.getByText('Your trial ended')).toBeInTheDocument();
+  });
+
+  // The live half of the work log: crawl, search and back-to-the-AI lines as
+  // they happen, above the progress panel.
+  it('shows the live work log while a turn is running', () => {
+    render(
+      <VirtualizedMessagesFooter
+        isWaitingForResponse
+        fallbackAttempts={[]}
+        streamError={null}
+        limitNotice={null}
+        progressStages={[]}
+        currentStageLabel={null}
+        narration={[{ id: 'n1', kind: NarrationKind.BACK_TO_AI, at: '2026-09-19T10:00:00.000Z' }]}
+      />,
+    );
+    expect(screen.getByTestId('narration-log')).toHaveAttribute('open');
+    expect(screen.getByText('narration.backToAi')).toBeInTheDocument();
   });
 });

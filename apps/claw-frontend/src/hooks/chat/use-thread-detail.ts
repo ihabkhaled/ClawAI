@@ -63,6 +63,7 @@ export function useThreadDetail(threadId: string) {
     executingModel,
     judgeModel,
     progressStages,
+    narration,
     currentStageLabel,
     streamLive,
     connectionHealth,
@@ -276,6 +277,7 @@ export function useThreadDetail(threadId: string) {
     executingModel,
     judgeModel,
     progressStages,
+    narration,
     currentStageLabel,
     streamLive,
     // Only meaningful while something is expected to arrive. A degraded

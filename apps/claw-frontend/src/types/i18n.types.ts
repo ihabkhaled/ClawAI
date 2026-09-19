@@ -3603,6 +3603,7 @@ export type TranslationDictionary = {
     failed: string;
   };
   routerTrace: RouterTraceLocaleTranslation;
+  narration: NarrationLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
   adminDeployment: {
@@ -5625,6 +5626,26 @@ export type DeploymentLocaleTranslation = {
  * plain string and is not checked against the dictionary, so a missing key
  * renders the raw key path to a user instead of failing a build.
  */
+/** The narrated work log above an answer (see narration-translations.ts). */
+export type NarrationLocaleTranslation = {
+  title: string;
+  liveTitle: string;
+  stepCount: string;
+  crawlStarted: string;
+  crawlProgressPage: string;
+  crawlProgressSitemap: string;
+  crawlProgressRobots: string;
+  crawlProgressFeed: string;
+  crawlDone: string;
+  backToAi: string;
+  searchStarted: string;
+  searchStartedWithQuery: string;
+  searchDone: string;
+  researchFailed: string;
+  aiThinking: string;
+  aiThinkingWithModel: string;
+};
+
 export type RouterTraceLocaleTranslation = {
   analyzing: string;
   loadingRegistry: string;

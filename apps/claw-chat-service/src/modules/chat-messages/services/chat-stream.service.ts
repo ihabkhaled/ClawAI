@@ -1,3 +1,4 @@
+import type { NarrationEntry } from '../types/narration.types';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import {
   concat,
@@ -471,6 +472,10 @@ export class ChatStreamService implements OnModuleInit {
       delta: input.delta,
       accumulatedChars: input.accumulatedChars,
     });
+  }
+
+  emitNarration(threadId: string, narration: NarrationEntry): void {
+    this.emit({ threadId, type: StreamEventType.NARRATION, narration });
   }
 
   emitReasoningDelta(threadId: string, input: ReasoningDeltaEmitInput): void {

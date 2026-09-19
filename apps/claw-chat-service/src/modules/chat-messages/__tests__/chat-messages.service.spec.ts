@@ -172,9 +172,14 @@ describe('ChatMessagesService', () => {
       { tryHandleRouted: vi.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
         typeof ChatMessagesService
       >[19],
+      { run: vi.fn().mockResolvedValue(null) } as unknown as ConstructorParameters<
+        typeof ChatMessagesService
+      >[20],
       {
-        needsWeb: vi.fn().mockResolvedValue({ needsWeb: false, reason: 'test' }),
-      } as unknown as ConstructorParameters<typeof ChatMessagesService>[20],
+        reset: vi.fn().mockResolvedValue(undefined),
+        append: vi.fn().mockResolvedValue(undefined),
+        read: vi.fn().mockResolvedValue([]),
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[21],
     );
   });
 
@@ -468,9 +473,14 @@ describe('ChatMessagesService', () => {
         { tryHandleRouted: vi.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
           typeof ChatMessagesService
         >[19],
+        { run: vi.fn().mockResolvedValue(null) } as unknown as ConstructorParameters<
+          typeof ChatMessagesService
+        >[20],
         {
-          needsWeb: vi.fn().mockResolvedValue({ needsWeb: false, reason: 'test' }),
-        } as unknown as ConstructorParameters<typeof ChatMessagesService>[20],
+          reset: vi.fn().mockResolvedValue(undefined),
+          append: vi.fn().mockResolvedValue(undefined),
+          read: vi.fn().mockResolvedValue([]),
+        } as unknown as ConstructorParameters<typeof ChatMessagesService>[21],
       );
 
       const result = await localService.executeVerify(

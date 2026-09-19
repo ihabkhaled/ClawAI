@@ -2,6 +2,7 @@
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
@@ -3625,6 +3626,7 @@ export const zh: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
+  narration: NARRATION_TRANSLATIONS.zh,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.zh,
   adminBilling: {

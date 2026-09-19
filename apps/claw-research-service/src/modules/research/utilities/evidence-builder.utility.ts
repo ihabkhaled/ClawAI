@@ -18,7 +18,8 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
 
   const deduped = dedupeByUrl(input.items);
   const ranked = [...deduped].sort((a, b) => b.confidence - a.confidence);
-  const capped = ranked.slice(0, EVIDENCE_MAX_ITEMS);
+  const maxItems = Math.max(EVIDENCE_MAX_ITEMS, input.maxItems ?? 0);
+  const capped = ranked.slice(0, maxItems);
 
   const warnings = [...input.warnings];
   const trimmed = capped.map((item) => {
@@ -40,10 +41,8 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
     };
   });
 
-  if (ranked.length > EVIDENCE_MAX_ITEMS) {
-    warnings.push(
-      `Evidence truncated to ${String(EVIDENCE_MAX_ITEMS)} items (had ${String(ranked.length)})`,
-    );
+  if (ranked.length > maxItems) {
+    warnings.push(`Evidence truncated to ${String(maxItems)} items (had ${String(ranked.length)})`);
   }
 
   return {

@@ -10,6 +10,8 @@ import { ChatExecutionManager } from './managers/chat-execution.manager';
 import { GeminiFilesApiManager } from './managers/gemini-files-api.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ResearchGateService } from './services/research-gate.service';
+import { NarrationService } from './services/narration.service';
+import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
 import { CrossThreadRetrievalManager } from './managers/cross-thread-retrieval.manager';
@@ -61,6 +63,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
   ],
   providers: [
     ResearchGateService,
+    NarrationService,
+    ResearchOrchestratorManager,
     ChatMessagesService,
     AnswerRepairManager,
     BestOfNManager,

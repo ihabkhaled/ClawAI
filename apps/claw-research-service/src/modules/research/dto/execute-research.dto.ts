@@ -7,6 +7,7 @@ import {
   SEARCH_MIN_QUERY_LENGTH,
 } from '../../../common/constants/search.constants';
 import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
+import { CRAWL_MAX_PAGES_CEILING } from '../../../common/constants/crawl.constants';
 
 export const executeResearchSchema = z.object({
   /**
@@ -43,6 +44,18 @@ export const executeResearchSchema = z.object({
    * intermediate progress to matter.
    */
   correlationId: z.string().max(128).optional(),
+  /**
+   * How many pages a SITE_CRAWL may read. Chosen by chat-service's planner from
+   * the question ("summarise this page" vs "what does this whole site offer").
+   * Bounded by CRAWL_MAX_PAGES_CEILING; omitted means CRAWL_DEFAULT_MAX_PAGES.
+   */
+  maxPages: z.number().int().min(1).max(CRAWL_MAX_PAGES_CEILING).optional(),
+  /**
+   * A search query written by the planner, used instead of the clamped prompt.
+   * A prompt is not a query: "compare what example.com charges with its
+   * competitors" searches far better as "example.com competitors pricing".
+   */
+  searchQuery: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(500).optional(),
 });
 
 export type ExecuteResearchDto = z.infer<typeof executeResearchSchema>;

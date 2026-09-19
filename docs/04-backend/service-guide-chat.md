@@ -449,3 +449,24 @@ thread and a web thread all refuse identically, so the endpoint cannot be used
 to learn which thread ids exist.
 
 The daily chat ceiling still counts agent threads. They cost the same money.
+
+## AUTO research: the narrated planner loop (2026-09-19)
+
+AUTO research is no longer a yes/no gate inside the POST. See
+[ADR-098](../13-adr/adr-098-auto-research-is-an-ai-driven-narrated-loop.md) and
+[rules/50](../../rules/50-agentic-research-loop-and-narration.md).
+
+- `createMessage` stores the user row and returns; `runResearchIfRequested`
+  runs afterwards and `publishMessageCreated` is in `finally`.
+- `runAutoResearch` checks `hasResearchAccess` first, then hands the turn to
+  `ResearchOrchestratorManager`: `ResearchGateService.plan()` →
+  crawl (`SITE_CRAWL`, `maxPages`) → `followUpAfterCrawl()` → search
+  (`SEARCH_THEN_FETCH`, `searchQuery`) → one merged bundle.
+- `NarrationService` keeps the turn's work log in `claw:chat:narration:<threadId>`
+  and streams each line as a `narration` frame; `storeAssistantResponse` copies
+  it to `metadata.narration`. `ResearchProgressBridgeService` turns crawl ticks
+  into lines with a per-tick dedupe key (every replica receives them).
+- Research is called on `POST /api/v1/internal/research/runs` with the service
+  token and the user id — never the user's bearer.
+- URL detection is `detectPromptUrls` → `@claw/shared-utilities`
+  `detectUrlsInText`; bare domains count.

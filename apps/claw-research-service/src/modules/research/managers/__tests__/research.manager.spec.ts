@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
@@ -366,6 +366,8 @@ describe('ResearchManager', () => {
         expect.any(Array),
         expect.any(Array),
         undefined,
+        undefined,
+        expect.any(String),
       );
       expect(search.execute).not.toHaveBeenCalled();
       expect(lastBundle().items).toEqual([
@@ -389,6 +391,8 @@ describe('ResearchManager', () => {
         expect.any(Array),
         expect.any(Array),
         'thread-42',
+        undefined,
+        expect.any(String),
       );
     });
 

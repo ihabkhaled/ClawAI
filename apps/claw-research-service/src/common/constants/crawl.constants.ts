@@ -20,3 +20,17 @@ export const CRAWL_DEFAULT_SITEMAP_PATH = '/sitemap.xml';
  * on the wire.
  */
 export const CRAWL_USER_AGENT = 'ClawAI-ResearchBot';
+
+/**
+ * Hard ceiling on a caller-chosen crawl size.
+ *
+ * The planner may ask for more pages than the default when a question is about
+ * a whole site, but every page is an outbound fetch billed as WEB_FETCH and a
+ * request against someone else's server, and the whole crawl runs inside one
+ * chat turn. Forty keeps a large docs site useful without turning one message
+ * into a scrape.
+ */
+export const CRAWL_MAX_PAGES_CEILING = 40;
+
+/** Words shorter than this carry no signal when ranking pages against a question. */
+export const CRAWL_RANK_MIN_TERM_LENGTH = 4;

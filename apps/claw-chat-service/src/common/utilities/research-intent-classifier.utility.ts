@@ -1,4 +1,5 @@
-import { BARE_URL_PATTERN, CRAWL_INTENT_PATTERNS } from '../constants/research-intent.constants';
+import { CRAWL_INTENT_PATTERNS } from '../constants/research-intent.constants';
+import { detectPromptUrls } from './prompt-url.utility';
 import { ResearchWorkflow } from '../enums/research-workflow.enum';
 import { mapResearchModeToWorkflow } from './research-mode-mapping.utility';
 import type { ResearchMode } from '../enums/research-mode.enum';
@@ -22,7 +23,9 @@ export function classifyResearchWorkflow(mode: ResearchMode, message: string): R
   if (baseline === ResearchWorkflow.SEARCH_ONLY) {
     return baseline;
   }
-  if (!BARE_URL_PATTERN.test(message)) {
+  // One definition of "this message has a URL" across the service, so a bare
+  // `example.com` crawls here exactly as it is detected everywhere else.
+  if (detectPromptUrls(message).length === 0) {
     return baseline;
   }
   const hasCrawlIntent = CRAWL_INTENT_PATTERNS.some((pattern) => pattern.test(message));

@@ -80,4 +80,10 @@ describe('classifyResearchWorkflow', () => {
     );
     expect(result).toBe(ResearchWorkflow.SITE_CRAWL);
   });
+
+  it('crawls a bare domain exactly as it crawls a full URL', () => {
+    expect(
+      classifyResearchWorkflow(ResearchMode.SEARCH_FETCH, 'crawl example.com and summarise it'),
+    ).toBe(ResearchWorkflow.SITE_CRAWL);
+  });
 });

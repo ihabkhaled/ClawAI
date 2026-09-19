@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { rankCandidatesByIntent, stripWww } from '../utilities/crawl-ranking.utility';
 
 import {
   CRAWL_CONCURRENCY,
   CRAWL_DEFAULT_MAX_PAGES,
   CRAWL_DEFAULT_SITEMAP_PATH,
+  CRAWL_MAX_PAGES_CEILING,
   CRAWL_MAX_SITEMAP_FETCHES,
   CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK,
   CRAWL_ROBOTS_TXT_PATH,
@@ -51,6 +53,8 @@ export class SiteCrawlManager {
     toolsUsed: string[],
     warnings: string[],
     correlationId: string | undefined,
+    maxPages: number = CRAWL_DEFAULT_MAX_PAGES,
+    intent = '',
   ): Promise<EvidenceItem[]> {
     const origin = this.safeOrigin(startUrl);
     if (origin === null) {
@@ -71,9 +75,17 @@ export class SiteCrawlManager {
     }
     pushFetchToolMarker(toolsUsed, homepage);
 
+    // The site's REAL origin is wherever the homepage landed, not what the user
+    // typed. `example.com` routinely redirects to `https://www.example.com`, and
+    // every sitemap entry and link then carries the www origin; compared with
+    // the typed origin, all of them were dropped and the crawl returned the
+    // homepage alone. Bare-domain detection makes the typed form the common
+    // case, so this is no longer an edge.
+    const siteOrigin = this.safeOrigin(homepage.finalUrl) ?? origin;
+
     const discovery = await this.discoverCandidates(
       userId,
-      origin,
+      siteOrigin,
       homepage,
       robots,
       trace,
@@ -81,8 +93,12 @@ export class SiteCrawlManager {
       correlationId,
     );
 
-    const remainingBudget = Math.max(0, CRAWL_DEFAULT_MAX_PAGES - 1);
-    const toFetch = discovery.candidates.slice(0, remainingBudget);
+    const pageBudget = Math.min(Math.max(1, maxPages), CRAWL_MAX_PAGES_CEILING);
+    const remainingBudget = Math.max(0, pageBudget - 1);
+    // Ranked before slicing. Sitemaps list pages in document order, so on a
+    // large site "the pricing page" was simply never among the first nineteen
+    // and the question was answered from the blog index instead.
+    const toFetch = rankCandidatesByIntent(discovery.candidates, intent).slice(0, remainingBudget);
     const { items, skippedByRobots } = await this.fetchCandidates(
       userId,
       homepage,
@@ -409,7 +425,7 @@ export class SiteCrawlManager {
     rawUrl: string,
     discoveryMethod: CrawlDiscoveryMethod,
   ): void {
-    if (this.safeOrigin(rawUrl) !== origin) {
+    if (!this.isSameSite(rawUrl, origin)) {
       return;
     }
     const key = this.normalize(rawUrl);
@@ -435,6 +451,27 @@ export class SiteCrawlManager {
       confidence: discoveryMethod === CrawlDiscoveryMethod.USER ? 0.95 : 0.7,
       structured: { crawlDiscoveryMethod: discoveryMethod, metadata: result.metadata },
     };
+  }
+
+  /**
+   * Same site means same host, ignoring a leading `www.` and the scheme.
+   *
+   * A sitemap on `https://www.example.com` that lists `https://example.com/...`
+   * (or `http://`) pages is describing its own site, and the pages redirect to
+   * the canonical host when fetched. Anything on a DIFFERENT host is still
+   * refused: a crawl never leaves the site the user named.
+   */
+  private isSameSite(rawUrl: string, origin: string): boolean {
+    try {
+      const candidate = new URL(rawUrl);
+      const site = new URL(origin);
+      if (candidate.protocol !== 'http:' && candidate.protocol !== 'https:') {
+        return false;
+      }
+      return stripWww(candidate.hostname) === stripWww(site.hostname);
+    } catch {
+      return false;
+    }
   }
 
   private safeOrigin(rawUrl: string): string | null {

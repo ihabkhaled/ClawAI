@@ -78,4 +78,6 @@ export type BuildEvidenceInput = {
   items: EvidenceItem[];
   warnings: string[];
   mode?: 'detailed' | 'compressed';
+  /** Items kept; defaults to EVIDENCE_MAX_ITEMS. A crawl sized above it raises it, or pages that were fetched and billed would be thrown away. */
+  maxItems?: number;
 };

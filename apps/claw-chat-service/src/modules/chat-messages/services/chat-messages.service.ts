@@ -12,8 +12,9 @@ import {
 import { allowedModelKeys, type PlanFeature, resolvePlanLimit } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
-import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
-import { ResearchGateService } from './research-gate.service';
+import { NarrationKind } from '../../../common/enums/narration-kind.enum';
+import { NarrationService } from './narration.service';
+import { ResearchOrchestratorManager } from '../managers/research-orchestrator.manager';
 import { AppConfig } from '../../../app/config/app.config';
 import { classifyResearchWorkflow, recordGet, runResearch } from '../../../common/utilities';
 import {
@@ -138,7 +139,8 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly contextReceiptService: ContextReceiptService,
     private readonly accessControlService: AccessControlService,
     private readonly runtimeV2LoopManager: RuntimeV2LoopManager,
-    private readonly researchGate: ResearchGateService,
+    private readonly researchOrchestrator: ResearchOrchestratorManager,
+    private readonly narration: NarrationService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -186,15 +188,9 @@ export class ChatMessagesService implements OnModuleInit {
     const modelAccessMode = entitlements?.modelAccessMode;
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
-
-    const researchBundle = await this.runResearchIfRequested(
-      userId,
-      userToken,
-      dto,
-      dto.threadId,
-      forcedProvider,
-      forcedModel,
-    );
+    // A fresh work log for this turn; the previous turn's log is already stored
+    // on its answer.
+    await this.narration.reset(dto.threadId);
 
     const message = await this.chatMessagesRepository.createUserMessageWithinDailyLimit(
       userId,
@@ -203,7 +199,7 @@ export class ChatMessagesService implements OnModuleInit {
         role: 'USER',
         content: dto.content,
         routingMode: effectiveRoutingMode,
-        metadata: this.buildMessageMetadata(dto, researchBundle),
+        metadata: this.buildMessageMetadata(dto, null),
       },
       entitlements === null
         ? null
@@ -219,15 +215,58 @@ export class ChatMessagesService implements OnModuleInit {
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
     this.logMessageCreated(userId, dto.threadId, message.id);
-    this.publishMessageCreated(
-      message,
-      userId,
-      effectiveRoutingMode,
-      forcedProvider,
-      forcedModel,
-      allowedModels,
-      modelAccessMode,
-    );
+    const publish = (): void =>
+      this.publishMessageCreated(
+        message,
+        userId,
+        effectiveRoutingMode,
+        forcedProvider,
+        forcedModel,
+        allowedModels,
+        modelAccessMode,
+      );
+
+    if (dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE) {
+      publish();
+      return message;
+    }
+
+    // Research runs AFTER the request returns.
+    //
+    // It used to run inside this POST, which put the whole plan -> crawl ->
+    // re-plan -> search sequence under nginx's 60-second limit and a 30-second
+    // client timeout, so a real crawl could never finish. The user row is
+    // stored and returned at once; the work streams as narration meanwhile.
+    //
+    // The publish is in `finally`: whatever research does - fails, throws,
+    // times out - the turn still reaches the answering model, or the UI would
+    // wait for an answer that never comes.
+    void (async () => {
+      try {
+        const run = await this.runResearchIfRequested(
+          userId,
+          userToken,
+          dto,
+          dto.threadId,
+          forcedProvider,
+          forcedModel,
+        );
+        if (run !== null) {
+          const metadata = this.buildMessageMetadata(dto, run);
+          await this.chatMessagesRepository.updateMetadata(
+            message.id,
+            (metadata ?? {}) as Prisma.InputJsonValue,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `createMessage: research failed for ${message.id} - answering without it: ${(error as Error).message}`,
+        );
+        await this.narration.append(dto.threadId, { kind: NarrationKind.RESEARCH_FAILED });
+      } finally {
+        publish();
+      }
+    })();
 
     return message;
   }
@@ -328,34 +367,40 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   /**
-   * Turns AUTO into a concrete decision; every other mode is the user's own
-   * choice and passes through untouched.
+   * AUTO research: an AI decides whether and how to use the web, and the steps
+   * are narrated as they happen. See ResearchOrchestratorManager.
    *
-   * A URL in the message skips the classifier — a pasted link is an explicit
-   * instruction to read that page, and asking a model to confirm it would only
-   * add latency to a decision the URL already made.
+   * The plan is checked FIRST. AUTO deliberately skips the PLAN_FEATURE_DISABLED
+   * 403 an explicit mode raises, so this is the only place a plan without the
+   * research unlock is kept off the web - crawl included, since crawling and
+   * research are both behind that plan gate. It used to be checked after a URL
+   * shortcut, which was harmless only while research-service 403'd every
+   * non-admin anyway.
    */
-  private async resolveAutoResearchMode(
+  private async runAutoResearch(
     userId: string,
-    mode: ResearchMode | string,
+    userToken: string,
+    threadId: string,
     intent: string,
-  ): Promise<ResearchMode> {
-    if (mode !== ResearchMode.AUTO) {
-      return mode as ResearchMode;
-    }
-    if (detectPromptUrls(intent).length > 0) {
-      return ResearchMode.SEARCH_FETCH;
-    }
-    // Asked before the classifier, because a plan that does not unlock research
-    // makes the classifier's answer irrelevant and a model call is not free.
+    options: { providerId?: string; forcedProvider?: string; forcedModel?: string },
+  ): Promise<ResearchRunResponse | null> {
     if (!(await this.accessControlService.hasResearchAccess(userId))) {
-      return ResearchMode.NONE;
+      return null;
     }
-    const verdict = await this.researchGate.needsWeb(intent);
-    this.logger.log(
-      `research: AUTO -> ${verdict.needsWeb ? 'SEARCH' : 'NONE'} ("${verdict.reason}")`,
-    );
-    return verdict.needsWeb ? ResearchMode.SEARCH : ResearchMode.NONE;
+    const run = await this.researchOrchestrator.run({
+      userId,
+      userToken,
+      threadId,
+      intent,
+      providerId: options.providerId,
+      forcedProvider: options.forcedProvider,
+      forcedModel: options.forcedModel,
+    });
+    if (run !== null) {
+      const bundle = this.extractResearchBundle(run);
+      this.chatStreamService.emitResearchCompleted(threadId, bundle.itemCount, bundle.toolsUsed);
+    }
+    return run;
   }
 
   /**
@@ -378,17 +423,10 @@ export class ChatMessagesService implements OnModuleInit {
     if (options.mode === undefined || options.mode === ResearchMode.NONE) {
       return null;
     }
-    // AUTO is decided HERE, because this is where research actually starts.
-    //
-    // The bundle produced below is attached to the user message, and every
-    // later stage reads it from that metadata — so a gate placed downstream in
-    // context assembly was never consulted. AUTO is not NONE, so before this
-    // check existed every ordinary turn ran a web search: typing "test" went
-    // to the internet.
-    const resolvedMode = await this.resolveAutoResearchMode(userId, options.mode, intent);
-    if (resolvedMode === ResearchMode.NONE) {
-      return null;
+    if (options.mode === ResearchMode.AUTO) {
+      return this.runAutoResearch(userId, userToken, threadId, intent, options);
     }
+    const resolvedMode = options.mode as ResearchMode;
     if (userToken.length === 0) {
       this.logger.warn(`research: researchMode=${options.mode} but no bearer token; skipping`);
       return null;
@@ -1061,6 +1099,12 @@ export class ChatMessagesService implements OnModuleInit {
     );
     const startedAt = Date.now();
     this.chatStreamService.emitRequestAccepted(payload.threadId);
+    // Back to the model the user chose (or the router picked), which now writes
+    // the answer from whatever the research steps gathered.
+    await this.narration.append(payload.threadId, {
+      kind: NarrationKind.AI_THINKING,
+      params: { model: payload.selectedModel ?? '' },
+    });
 
     // The guarded region starts HERE, not at the model call.
     //
@@ -1478,6 +1522,14 @@ export class ChatMessagesService implements OnModuleInit {
       routeRoadmap,
       progressSummary,
     });
+    // The turn's narrated work log becomes part of the answer, so "crawling ...
+    // 14 pages read ... back to the AI" is still there after a refresh. Stored
+    // as its own key and rendered as its own collapsible block, so the answer
+    // stays a separate bubble.
+    const narration = await this.narration.read(payload.threadId);
+    if (narration.length > 0) {
+      metadata['narration'] = narration;
+    }
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',

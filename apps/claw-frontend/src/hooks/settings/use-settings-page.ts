@@ -1,24 +1,18 @@
 'use client';
 
 import { CurrencyPreferenceMode } from '@claw/shared-types';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
 
 import { DISPLAY_CURRENCY_AUTO } from '@/constants/display-currency.constants';
 import type { UserAppearancePreference, UserLanguagePreference } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useDisplayCurrency } from '@/hooks/display-currency/use-display-currency';
 import { useAccountManagement } from '@/hooks/settings/use-account-management';
-import { useChangePassword } from '@/hooks/settings/use-change-password';
+import { useChangePasswordForm } from '@/hooks/settings/use-change-password-form';
 import { useEmailChange } from '@/hooks/settings/use-email-change';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
 import { useLocale } from '@/hooks/use-locale';
 import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
 import { useAppTheme } from '@/hooks/use-theme';
-import {
-  changePasswordSchema,
-  type ChangePasswordFormValues,
-} from '@/lib/validation/change-password.schema';
 import { logger } from '@/utilities';
 import {
   languageToLocale,
@@ -41,18 +35,11 @@ export function useSettingsPage() {
     selectCurrency,
   } = useDisplayCurrency();
 
-  const passwordForm = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    },
-  });
-
-  const { changePassword, isPending: isPasswordPending } = useChangePassword(() => {
-    passwordForm.reset();
-  });
+  const {
+    form: passwordForm,
+    handleSubmit: handlePasswordSubmit,
+    isPending: isPasswordPending,
+  } = useChangePasswordForm();
 
   const currentLanguage = localeToLanguage(locale);
   const currentAppearance = themeToAppearance(theme);
@@ -112,18 +99,6 @@ export function useSettingsPage() {
     });
     selectCurrency(DISPLAY_CURRENCY_AUTO);
     updatePreferences({ currencyPreferenceMode: CurrencyPreferenceMode.AUTO });
-  }
-
-  function handlePasswordSubmit(data: ChangePasswordFormValues): void {
-    logger.info({
-      component: 'settings',
-      action: 'submit-password-change',
-      message: 'User submitting password change',
-    });
-    changePassword({
-      currentPassword: data.currentPassword,
-      newPassword: data.newPassword,
-    });
   }
 
   return {

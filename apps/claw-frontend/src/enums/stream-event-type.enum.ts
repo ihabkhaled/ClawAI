@@ -24,4 +24,6 @@ export enum StreamEventType {
   // truncated reply reads as the model being bad instead of the wallet
   // being nearly empty. Mirrors chat-service's StreamEventType.
   PAYG_CREDIT_CLAMPED = 'payg_credit_clamped',
+  // One line of the turn's narrated work log (plan, crawl, search, back to the AI).
+  NARRATION = 'narration',
 }

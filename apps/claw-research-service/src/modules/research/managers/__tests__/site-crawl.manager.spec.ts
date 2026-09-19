@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { SiteCrawlManager } from '../site-crawl.manager';
 import type { ResearchProgressPublisher } from '../research-progress-publisher.service';
 import type { FetchService } from '../../../fetch/services/fetch.service';
@@ -463,5 +463,152 @@ describe('SiteCrawlManager', () => {
 
     // 20 total (CRAWL_DEFAULT_MAX_PAGES), homepage included.
     expect(items).toHaveLength(20);
+  });
+
+  // `example.com` routinely redirects to `https://www.example.com`, and every
+  // sitemap entry then carries the www host. Compared with the TYPED origin,
+  // all of them were dropped and the crawl returned the homepage alone — which
+  // bare-domain detection turned from an edge into the common case.
+  it('follows a homepage redirect to www and still crawls the sitemap', async () => {
+    fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+      if (url === 'https://example.com/') {
+        return Promise.resolve(
+          buildFetchResult({ url, finalUrl: 'https://www.example.com/', links: [] }),
+        );
+      }
+      if (url === 'https://www.example.com/sitemap.xml') {
+        return Promise.resolve(
+          buildFetchResult({
+            mimeType: 'application/xml',
+            content: `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+              <url><loc>https://www.example.com/pricing</loc></url>
+              <url><loc>https://www.example.com/docs</loc></url>
+            </urlset>`,
+          }),
+        );
+      }
+      if (url.endsWith('/robots.txt')) {
+        return Promise.reject(new Error('not found'));
+      }
+      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+    });
+
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
+
+    expect(items.map((item) => item.url)).toEqual([
+      'https://www.example.com/',
+      'https://www.example.com/pricing',
+      'https://www.example.com/docs',
+    ]);
+  });
+
+  it('still never leaves the site the user named', async () => {
+    fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+      if (url === 'https://example.com/') {
+        return Promise.resolve(
+          buildFetchResult({
+            links: [
+              'https://example.com/about',
+              'https://evil.test/steal',
+              'https://sub.example.com/x',
+            ],
+          }),
+        );
+      }
+      if (url.endsWith('/robots.txt') || url.endsWith('/sitemap.xml')) {
+        return Promise.reject(new Error('not found'));
+      }
+      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+    });
+
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+    );
+
+    expect(items.map((item) => item.url)).toEqual([
+      'https://example.com/',
+      'https://example.com/about',
+    ]);
+  });
+
+  describe('page budget and ranking', () => {
+    function siteWith(paths: string[]): void {
+      fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+        if (url === 'https://example.com/sitemap.xml') {
+          return Promise.resolve(
+            buildFetchResult({
+              mimeType: 'application/xml',
+              content: `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths
+                .map((path) => `<url><loc>https://example.com${path}</loc></url>`)
+                .join('')}</urlset>`,
+            }),
+          );
+        }
+        if (url.endsWith('/robots.txt')) {
+          return Promise.reject(new Error('not found'));
+        }
+        return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      });
+    }
+
+    it('reads only as many pages as the caller asked for', async () => {
+      siteWith(['/a', '/b', '/c', '/d', '/e']);
+      const items = await manager.crawl(
+        'u1',
+        'https://example.com/',
+        trace,
+        toolsUsed,
+        warnings,
+        undefined,
+        3,
+      );
+      expect(items).toHaveLength(3);
+    });
+
+    it('never exceeds the ceiling whatever the caller asks for', async () => {
+      siteWith(Array.from({ length: 60 }, (_, i) => `/p${String(i)}`));
+      const items = await manager.crawl(
+        'u1',
+        'https://example.com/',
+        trace,
+        toolsUsed,
+        warnings,
+        undefined,
+        500,
+      );
+      expect(items.length).toBeLessThanOrEqual(40);
+    });
+
+    // Sitemaps are in document order, so on a big site the page the question
+    // was about used to fall outside the budget entirely.
+    it('reads the pages the question is about first', async () => {
+      siteWith(['/blog/one', '/blog/two', '/about', '/pricing']);
+      const items = await manager.crawl(
+        'u1',
+        'https://example.com/',
+        trace,
+        toolsUsed,
+        warnings,
+        undefined,
+        2,
+        'what is their pricing',
+      );
+      expect(items.map((item) => item.url)).toEqual([
+        'https://example.com/',
+        'https://example.com/pricing',
+      ]);
+    });
   });
 });

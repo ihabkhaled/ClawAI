@@ -136,7 +136,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 146,
+      "testFiles": 148,
       "testRunner": "vitest"
     },
     {
@@ -396,7 +396,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-research-service",
-      "endpointCount": 16,
+      "endpointCount": 17,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",

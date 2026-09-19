@@ -20,6 +20,7 @@ import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
+import { NarrationLog } from '@/components/chat/narration-log';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
@@ -37,6 +38,7 @@ import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
 import { formatShortDateTime, getJudgeReviewFromMessage, getStoredReasoning } from '@/utilities';
+import { getStoredNarration } from '@/utilities/narration.utility';
 
 function MessageBubbleBase({
   message,
@@ -94,6 +96,7 @@ function MessageBubbleBase({
     <p className="text-muted-foreground whitespace-pre-wrap">{t('chat.noVisibleAnswer')}</p>
   );
   const storedReasoning = getStoredReasoning(message);
+  const storedNarration = isUser ? [] : getStoredNarration(message.metadata);
   const judgeReview = getJudgeReviewFromMessage(message);
   const judgeDecision = judgeReview?.judgeDecision ?? null;
   const workflow = typeof metadata?.['workflow'] === 'string' ? metadata['workflow'] : null;
@@ -165,6 +168,15 @@ function MessageBubbleBase({
         ) : null}
 
         {!isUser && isPaygClamped ? <CreditClampedNotice t={t} /> : null}
+
+        {/* The work log that led to this answer, ABOVE it and outside it: the
+            answer stays its own bubble, and the log is collapsed so it never
+            stands between the reader and the reply. */}
+        {storedNarration.length > 0 ? (
+          <div className="w-full min-w-0">
+            <NarrationLog entries={storedNarration} isLive={false} t={t} />
+          </div>
+        ) : null}
 
         <div
           className={cn(

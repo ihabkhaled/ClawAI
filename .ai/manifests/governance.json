@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 32840,
+      "bytes": 33211,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 23498,
+      "bytes": 23735,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -258,7 +258,7 @@
       "file": "rules/40-chat-surface-layout-and-composer.md"
     },
     {
-      "bytes": 16517,
+      "bytes": 16697,
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
@@ -294,13 +294,17 @@
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
+      "bytes": 4630,
+      "file": "rules/50-agentic-research-loop-and-narration.md"
+    },
+    {
       "bytes": 6156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 23488,
+      "bytes": 24648,
       "file": "skills/00-index.md"
     },
     {
@@ -582,6 +586,10 @@
     {
       "bytes": 7332,
       "file": "skills/verify-responsive-layout-in-browser.md"
+    },
+    {
+      "bytes": 2655,
+      "file": "skills/verify-the-research-loop-live.md"
     },
     {
       "bytes": 3058,
