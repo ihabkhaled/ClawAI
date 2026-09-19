@@ -55,6 +55,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **CSV parsing library updated** (csv-parse 7.0.2), which includes an upstream
+  security fix. Values padded with no-break spaces are now trimmed.
 - **An AI file with a non-Latin title could not be downloaded.** Arabic,
   Chinese and Japanese titles, and even "Wi‑Fi" with its typographic hyphen,
   came back as a server error. Every download now keeps the real name.

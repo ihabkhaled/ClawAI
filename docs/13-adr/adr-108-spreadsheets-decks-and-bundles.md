@@ -80,6 +80,14 @@ in the model-generated file path:
   `20260919180000_add_xlsx_pptx_zip_formats`).
 - Dependencies added: `pptxgenjs`, `csv-parse`; `jszip` is now a runtime
   dependency of file-generation-service.
+- **2026-09-20: `csv-parse` 6.2.1 → 7.0.2** (Dependabot PRs #225/#226).
+  - 7.0.2 fixes prototype replacement reachable through `columns` (#497).
+    We never pass `columns`, but the fix is taken anyway.
+  - `trim` now strips all ECMAScript whitespace, including the no-break
+    space.
+  - The sync `parse` is typed `string[][]`, so `csvRows` has no cast.
+  - `csvRows` returns null only for a `CsvError`. Any other throw is a bug and
+    surfaces. Covered by `__tests__/csv-rows.spec.ts`.
 - A code file's name depends on the model writing the path above the block.
   The writer is told to, and the fallback name is still correct by language.
 

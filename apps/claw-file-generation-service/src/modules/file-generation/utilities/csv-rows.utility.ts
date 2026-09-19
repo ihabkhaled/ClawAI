@@ -1,6 +1,12 @@
-import { parse } from 'csv-parse/sync';
+import { CsvError, parse } from 'csv-parse/sync';
 
-/** Text that already is CSV, as rows, or null when it is not CSV. */
+/**
+ * Text that already is CSV, as rows, or null when it is not CSV.
+ *
+ * csv-parse 7 types a sync parse without `columns` as `string[][]`, so there
+ * is no cast, and it exports CsvError: only "this is not CSV" means null. Any
+ * other throw is a bug and is not mistaken for plain text.
+ */
 export function csvRows(content: string): string[][] | null {
   if (!content.includes(',') || !content.includes('\n')) {
     return null;
@@ -10,9 +16,12 @@ export function csvRows(content: string): string[][] | null {
       relax_column_count: true,
       skip_empty_lines: true,
       trim: true,
-    }) as string[][];
-  } catch {
-    return null;
+    });
+  } catch (error: unknown) {
+    if (error instanceof CsvError) {
+      return null;
+    }
+    throw error;
   }
 }
 
