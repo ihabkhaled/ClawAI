@@ -6,11 +6,25 @@
 
 name: claw
 
+# Every container logs through json-file with rotation, and tags each line
+# with its service so the log shipper can say where it came from. Without
+# rotation the default driver grew without bound; without the label the
+# shipped lines could not be attributed (json-file does not record names).
+x-claw-logging: &claw-logging
+  driver: json-file
+  options:
+    max-size: '20m'
+    max-file: '5'
+    labels: 'claw.service'
+
 services:
   # ---------------------------------------------------------------------------
   # PostgreSQL Instances (one per relational service)
   # ---------------------------------------------------------------------------
   pg-auth:
+    labels:
+      claw.service: pg-auth
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-auth
     restart: unless-stopped
@@ -31,6 +45,9 @@ services:
       - claw-network
 
   pg-chat:
+    labels:
+      claw.service: pg-chat
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-chat
     restart: unless-stopped
@@ -51,6 +68,9 @@ services:
       - claw-network
 
   pg-connector:
+    labels:
+      claw.service: pg-connector
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-connector
     restart: unless-stopped
@@ -75,6 +95,9 @@ services:
       - claw-network
 
   pg-routing:
+    labels:
+      claw.service: pg-routing
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-routing
     restart: unless-stopped
@@ -96,6 +119,9 @@ services:
       - claw-network
 
   pg-memory:
+    labels:
+      claw.service: pg-memory
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-memory
     restart: unless-stopped
@@ -116,6 +142,9 @@ services:
       - claw-network
 
   pg-files:
+    labels:
+      claw.service: pg-files
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-files
     restart: unless-stopped
@@ -136,6 +165,9 @@ services:
       - claw-network
 
   pg-ollama:
+    labels:
+      claw.service: pg-ollama
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']
@@ -162,6 +194,9 @@ services:
   # PostgreSQL (Image Service)
   # ---------------------------------------------------------------------------
   pg-images:
+    labels:
+      claw.service: pg-images
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-images
     restart: unless-stopped
@@ -185,6 +220,9 @@ services:
   # PostgreSQL (Workspace Service)
   # ---------------------------------------------------------------------------
   pg-workspace:
+    labels:
+      claw.service: pg-workspace
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-workspace
     restart: unless-stopped
@@ -212,6 +250,9 @@ services:
   # PostgreSQL (Research Service)
   # ---------------------------------------------------------------------------
   pg-research:
+    labels:
+      claw.service: pg-research
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-research
     restart: unless-stopped
@@ -242,6 +283,9 @@ services:
   # one database must not yield the other.
   # ---------------------------------------------------------------------------
   pg-payments:
+    labels:
+      claw.service: pg-payments
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-payments
     restart: unless-stopped
@@ -266,6 +310,9 @@ services:
   # PostgreSQL (Agent Service)
   # ---------------------------------------------------------------------------
   pg-agent:
+    labels:
+      claw.service: pg-agent
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-agent
     restart: unless-stopped
@@ -289,6 +336,9 @@ services:
   # PostgreSQL (Llamacpp Service - Local Frontier)
   # ---------------------------------------------------------------------------
   pg-llamacpp:
+    labels:
+      claw.service: pg-llamacpp
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']
@@ -316,6 +366,9 @@ services:
   # PostgreSQL (File Generation Service)
   # ---------------------------------------------------------------------------
   pg-file-generations:
+    labels:
+      claw.service: pg-file-generations
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-file-generations
     restart: unless-stopped
@@ -343,6 +396,9 @@ services:
   # MongoDB (audit/telemetry)
   # ---------------------------------------------------------------------------
   mongodb:
+    labels:
+      claw.service: mongodb
+    logging: *claw-logging
     image: mongo:7
     container_name: claw-mongodb
     restart: unless-stopped
@@ -366,6 +422,9 @@ services:
   # Redis (caching, sessions, rate limiting)
   # ---------------------------------------------------------------------------
   redis:
+    labels:
+      claw.service: redis
+    logging: *claw-logging
     image: redis:7-alpine
     container_name: claw-redis
     restart: unless-stopped
@@ -385,6 +444,9 @@ services:
   # RabbitMQ (async event bus)
   # ---------------------------------------------------------------------------
   rabbitmq:
+    labels:
+      claw.service: rabbitmq
+    logging: *claw-logging
     image: rabbitmq:3-management-alpine
     container_name: claw-rabbitmq
     restart: unless-stopped
@@ -408,6 +470,9 @@ services:
   # ClamAV (Antivirus file scanning)
   # ---------------------------------------------------------------------------
   clamav:
+    labels:
+      claw.service: clamav
+    logging: *claw-logging
     image: clamav/clamav-debian:stable
     container_name: claw-clamav
     restart: unless-stopped

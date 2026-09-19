@@ -467,7 +467,7 @@
     {
       "database": "mongodb",
       "dir": "apps/claw-server-logs-service",
-      "endpointCount": 7,
+      "endpointCount": 8,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -482,7 +482,7 @@
       "port": null,
       "portSource": "env-only (no constant)",
       "prismaModels": [],
-      "testFiles": 7,
+      "testFiles": 9,
       "testRunner": "vitest"
     },
     {

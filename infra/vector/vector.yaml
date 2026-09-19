@@ -1,0 +1,145 @@
+# ClawAI log shipper: every container's stdout/stderr -> server-logs-service.
+#
+# Source: Docker's json-file logs, mounted READ-ONLY. Every compose service
+# logs through the `x-claw-logging` anchor, which records the
+# `claw.service` label on each line (json-file keeps no container name).
+# The Docker socket is deliberately not used: read access to it is root on
+# the host.
+#
+# Sink: POST /api/v1/server-logs/ingest/containers with the inter-service
+# token. server-logs-service parses pino JSON, Nest's pretty format and plain
+# text (nginx, Postgres, Redis) into rows with real levels. See ADR-101.
+
+data_dir: /var/lib/vector
+
+sources:
+  docker_json:
+    type: file
+    include:
+      - /var/lib/docker/containers/*/*-json.log
+    # A fresh shipper starts at the end: history is already in `docker logs`,
+    # and re-sending it would duplicate everything on every recreate.
+    read_from: end
+    max_line_bytes: 262144
+
+transforms:
+  claw_lines:
+    type: remap
+    inputs: [docker_json]
+    source: |
+      entry, err = parse_json(.message)
+      if err != null { abort }
+      service = to_string(entry.attrs."claw.service") ?? ""
+      if service == "" { abort }
+      # End-trimmed only: leading whitespace is what marks a continuation line.
+      line = replace(strip_ansi_escape_codes(to_string(entry.log) ?? ""), r'\s+$', "")
+      if strip_whitespace(line) == "" { abort }
+      # Health probes run every 15 s in every container: pure noise.
+      if contains(line, "/api/v1/health") { abort }
+      # Debug and verbose lines stay in `docker logs`; shipping them would
+      # multiply the store's volume several times over for little value.
+      if match(line, r'^\[Nest\][^\[]*\s(DEBUG|VERBOSE)\s') { abort }
+      if match(line, r'"level":(10|20)[,}]') { abort }
+      if match(line, r'^\[\d{2}:\d{2}:\d{2}\.\d{3}\]\s+(TRACE|DEBUG)\s') { abort }
+      # No feedback loop: the log service and the shipper ship only lines whose
+      # LEVEL is warn or worse. Matching the word anywhere let "level=WARN"
+      # inside server-logs' own debug lines through, and every shipped batch
+      # produced more lines to ship.
+      if service == "server-logs-service" || service == "log-shipper" {
+        if !match(line, r'^(\[[^\]]*\]\s+(WARN|ERROR|FATAL)\s|\[Nest\][^\[]*\s(WARN|ERROR|FATAL)\s|\S+\s+(WARN|ERROR)\s|\{.*"level":(40|50|60)[,}])') { abort }
+      }
+      . = {
+        "message": line,
+        "container": "claw-" + service,
+        "stream": to_string(entry.stream) ?? "stdout",
+        "timestamp": to_string(entry.time) ?? ""
+      }
+
+  # A pretty-printed object (a request dump, a stack trace) spans many lines.
+  # Lines that begin with whitespace or a closing bracket continue the entry
+  # before them, so one log entry is one row, not one row per fragment.
+  claw_entries:
+    type: reduce
+    inputs: [claw_lines]
+    group_by: [container]
+    starts_when: 'match(string!(.message), r''^[^\s}\]]'')'
+    expire_after_ms: 1500
+    merge_strategies:
+      message: concat_newline
+      stream: retain
+      timestamp: retain
+
+sinks:
+  server_logs:
+    type: http
+    inputs: [claw_entries]
+    uri: https://server-logs-service:4011/api/v1/server-logs/ingest/containers
+    method: post
+    # The json codec already sends each batch as one JSON array, the shape
+    # the ingest endpoint validates. A prefix/suffix on top doubled it.
+    encoding:
+      codec: json
+    request:
+      headers:
+        Authorization: 'Service ${INTER_SERVICE_AUTH_TOKEN}'
+        Content-Type: application/json
+      retry_attempts: 10
+      timeout_secs: 15
+    # Under the service's 100 KB JSON body limit; above it Express refused the
+    # whole batch (PayloadTooLargeError) and every line in it was dropped.
+    batch:
+      max_events: 500
+      max_bytes: 90000
+      timeout_secs: 2
+    # Survives a server-logs restart without losing lines; bounded, and
+    # drops the newest when full rather than growing the disk.
+    buffer:
+      type: disk
+      max_size: 268435488
+      when_full: drop_newest
+    tls:
+      ca_file: /certs/rootCA.pem
+
+# `vector test /etc/vector/vector.yaml` runs these (see skills/read-production-logs.md).
+tests:
+  - name: ships a Nest warning with its service
+    inputs:
+      - insert_at: claw_lines
+        type: log
+        log_fields:
+          message: '{"log":"[Nest] 1  - 09/19/2026, 9:02:41 AM   WARN [ChatExecutionManager] finish_reason=length\n","stream":"stdout","time":"2026-09-19T09:02:41Z","attrs":{"claw.service":"chat-service"}}'
+    outputs:
+      - extract_from: claw_lines
+        conditions:
+          - type: vrl
+            source: '.container == "claw-chat-service" && contains(string!(.message), "finish_reason=length")'
+  - name: drops health probes, debug lines and server-logs' own chatter
+    inputs:
+      - insert_at: claw_lines
+        type: log
+        log_fields:
+          message: '{"log":"GET /api/v1/health 200\n","stream":"stdout","attrs":{"claw.service":"auth-service"}}'
+      - insert_at: claw_lines
+        type: log
+        log_fields:
+          message: '{"log":"[Nest] 1  - 09/19/2026, 9:02:41 AM   DEBUG [X] noisy\n","stream":"stdout","attrs":{"claw.service":"auth-service"}}'
+      - insert_at: claw_lines
+        type: log
+        log_fields:
+          message: '{"log":"[10:03:01.596] INFO (148): createLog: level=WARN serviceName=x\n","stream":"stdout","attrs":{"claw.service":"server-logs-service"}}'
+      - insert_at: claw_lines
+        type: log
+        log_fields:
+          message: '{"log":"no label here\n","stream":"stdout","attrs":{}}'
+    no_outputs_from: [claw_lines]
+  - name: keeps a real server-logs error
+    inputs:
+      - insert_at: claw_lines
+        type: log
+        log_fields:
+          message: '{"log":"[10:03:01.596] ERROR (148): Mongo write failed\n","stream":"stdout","attrs":{"claw.service":"server-logs-service"}}'
+    outputs:
+      - extract_from: claw_lines
+        conditions:
+          - type: vrl
+            source: 'contains(string!(.message), "Mongo write failed")'

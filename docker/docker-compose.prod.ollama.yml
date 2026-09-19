@@ -14,8 +14,22 @@
 
 name: claw
 
+# Every container logs through json-file with rotation, and tags each line
+# with its service so the log shipper can say where it came from. Without
+# rotation the default driver grew without bound; without the label the
+# shipped lines could not be attributed (json-file does not record names).
+x-claw-logging: &claw-logging
+  driver: json-file
+  options:
+    max-size: '20m'
+    max-file: '5'
+    labels: 'claw.service'
+
 services:
   ollama:
+    labels:
+      claw.service: ollama
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']
@@ -88,6 +102,9 @@ services:
   # Stable Diffusion (Local Image Generation)
   # ---------------------------------------------------------------------------
   stable-diffusion:
+    labels:
+      claw.service: stable-diffusion
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']
@@ -130,6 +147,9 @@ services:
   # so it can drop HuggingFace-downloaded weights into ComfyUI's models tree.
   # See claw-ollama-service entry in docker-compose.prod.services.yml.
   comfyui:
+    labels:
+      claw.service: comfyui
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']

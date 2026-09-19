@@ -21,8 +21,8 @@ npm run dev
 - Database: mongodb
 - Prisma models: none
 - Mongoose models: ServerLog
-- API endpoints: 7 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 7 (vitest)
+- API endpoints: 8 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 9 (vitest)
 - Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

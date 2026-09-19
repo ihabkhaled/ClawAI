@@ -1,7 +1,13 @@
-import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
+import {
+  type IngestContainerLogsDto,
+  ingestContainerLogsSchema,
+} from '../dtos/ingest-container-logs.dto';
+import { toServerLogInput } from '../utilities/container-log.utility';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ServerLogsService } from '../services/server-logs.service';
 import { type CreateServerLogDto, createServerLogSchema } from '../dtos/create-server-log.dto';
@@ -28,6 +34,7 @@ export class ServerLogsController {
   constructor(private readonly serverLogsService: ServerLogsService) {}
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Post()
   @UsePipes(new ZodValidationPipe(createServerLogSchema))
   async createLog(@Body() body: CreateServerLogDto): Promise<CreateServerLogResponse> {
@@ -36,6 +43,7 @@ export class ServerLogsController {
   }
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Post('batch')
   @UsePipes(new ZodValidationPipe(batchCreateServerLogsSchema))
   async createBatch(
@@ -43,6 +51,22 @@ export class ServerLogsController {
   ): Promise<BatchCreateServerLogsResponse> {
     const mapped = body.entries.map(({ model: modelName, ...rest }) => ({ ...rest, modelName }));
     return this.serverLogsService.createMany(mapped);
+  }
+
+  /**
+   * Every container's stdout/stderr, from the log shipper. Service token only.
+   * Blank lines are dropped; everything else is kept at its real level.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post('ingest/containers')
+  async ingestContainers(
+    @Body(new ZodValidationPipe(ingestContainerLogsSchema)) body: IngestContainerLogsDto,
+  ): Promise<BatchCreateServerLogsResponse> {
+    const rows = body
+      .map((line) => toServerLogInput(line))
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+    return rows.length === 0 ? { inserted: 0 } : this.serverLogsService.createMany(rows);
   }
 
   @Get()

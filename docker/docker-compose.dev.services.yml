@@ -14,11 +14,25 @@ x-development-watch-environment: &development-watch-environment
   TSC_WATCHFILE: DynamicPriorityPolling
   TSC_WATCHDIRECTORY: RecursiveDirectoryUsingDynamicPriorityPolling
 
+# Every container logs through json-file with rotation, and tags each line
+# with its service so the log shipper can say where it came from. Without
+# rotation the default driver grew without bound; without the label the
+# shipped lines could not be attributed (json-file does not record names).
+x-claw-logging: &claw-logging
+  driver: json-file
+  options:
+    max-size: '20m'
+    max-file: '5'
+    labels: 'claw.service'
+
 services:
   # ---------------------------------------------------------------------------
   # Nginx Reverse Proxy
   # ---------------------------------------------------------------------------
   nginx:
+    labels:
+      claw.service: nginx
+    logging: *claw-logging
     image: nginx:alpine
     container_name: claw-nginx
     restart: unless-stopped
@@ -80,6 +94,9 @@ services:
   # Backend Microservices (DEV mode — hot-reload via volume mounts)
   # ---------------------------------------------------------------------------
   auth-service:
+    labels:
+      claw.service: auth-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-auth-service/Dockerfile.dev
@@ -119,6 +136,9 @@ services:
       - claw-network
 
   chat-service:
+    labels:
+      claw.service: chat-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-chat-service/Dockerfile.dev
@@ -156,6 +176,9 @@ services:
       - claw-network
 
   connector-service:
+    labels:
+      claw.service: connector-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-connector-service/Dockerfile.dev
@@ -189,6 +212,9 @@ services:
       - claw-network
 
   routing-service:
+    labels:
+      claw.service: routing-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-routing-service/Dockerfile.dev
@@ -230,6 +256,9 @@ services:
       - claw-network
 
   memory-service:
+    labels:
+      claw.service: memory-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-memory-service/Dockerfile.dev
@@ -263,6 +292,9 @@ services:
       - claw-network
 
   file-service:
+    labels:
+      claw.service: file-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-file-service/Dockerfile.dev
@@ -308,6 +340,9 @@ services:
       - claw-network
 
   audit-service:
+    labels:
+      claw.service: audit-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-audit-service/Dockerfile.dev
@@ -340,6 +375,9 @@ services:
       - claw-network
 
   ollama-service:
+    labels:
+      claw.service: ollama-service
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']
@@ -381,6 +419,9 @@ services:
       - claw-network
 
   client-logs-service:
+    labels:
+      claw.service: client-logs-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-client-logs-service/Dockerfile.dev
@@ -413,6 +454,9 @@ services:
       - claw-network
 
   server-logs-service:
+    labels:
+      claw.service: server-logs-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-server-logs-service/Dockerfile.dev
@@ -445,6 +489,9 @@ services:
       - claw-network
 
   health-service:
+    labels:
+      claw.service: health-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-health-service/Dockerfile.dev
@@ -480,6 +527,9 @@ services:
   # Image Service (DEV mode)
   # ---------------------------------------------------------------------------
   image-service:
+    labels:
+      claw.service: image-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-image-service/Dockerfile.dev
@@ -516,6 +566,9 @@ services:
   # Workspace Service (DEV mode)
   # ---------------------------------------------------------------------------
   workspace-service:
+    labels:
+      claw.service: workspace-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-workspace-service/Dockerfile.dev
@@ -552,6 +605,9 @@ services:
   # Agent Service (DEV mode)
   # ---------------------------------------------------------------------------
   agent-service:
+    labels:
+      claw.service: agent-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-agent-service/Dockerfile.dev
@@ -588,6 +644,9 @@ services:
   # Research Service (DEV mode)
   # ---------------------------------------------------------------------------
   research-service:
+    labels:
+      claw.service: research-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-research-service/Dockerfile.dev
@@ -622,6 +681,9 @@ services:
 
   # ---------------------------------------------------------------------------
   payment-service:
+    labels:
+      claw.service: payment-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-payment-service/Dockerfile.dev
@@ -656,6 +718,9 @@ services:
 
   # ---------------------------------------------------------------------------
   llamacpp-service:
+    labels:
+      claw.service: llamacpp-service
+    logging: *claw-logging
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
     profiles: ['local-ai']
@@ -693,6 +758,9 @@ services:
 
   # ---------------------------------------------------------------------------
   file-generation-service:
+    labels:
+      claw.service: file-generation-service
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-file-generation-service/Dockerfile.dev
@@ -727,6 +795,9 @@ services:
 
   # ---------------------------------------------------------------------------
   frontend:
+    labels:
+      claw.service: frontend
+    logging: *claw-logging
     build:
       context: ..
       dockerfile: apps/claw-frontend/Dockerfile.dev
@@ -760,7 +831,34 @@ services:
     networks:
       - claw-network
 
+  # Ships every container's stdout/stderr to server-logs-service, so all
+  # logs (Nest Logger lines, stack traces, crashes, nginx, databases) are in
+  # one place and readable without SSH. Reads the json-file logs READ-ONLY;
+  # deliberately NOT the Docker socket, which is root on the host. See
+  # infra/vector/vector.yaml and ADR-101.
+  log-shipper:
+    image: timberio/vector:0.46.1-debian
+    container_name: claw-log-shipper
+    restart: unless-stopped
+    env_file: ../.env
+    command: ['--config', '/etc/vector/vector.yaml']
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ../infra/vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ../certs:/certs:ro
+      - log-shipper-data:/var/lib/vector
+    labels:
+      claw.service: log-shipper
+    logging: *claw-logging
+    depends_on:
+      server-logs-service:
+        condition: service_healthy
+    networks:
+      - claw-network
+
 volumes:
+  log-shipper-data:
+    driver: local
   file-storage-data:
   llamacpp-data:
   frontend-next-cache:

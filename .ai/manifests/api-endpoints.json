@@ -2789,6 +2789,11 @@
         "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/server-logs/ingest/containers",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/server-logs/stats",
         "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
@@ -3343,5 +3348,5 @@
     ]
   },
   "generated": true,
-  "total": 661
+  "total": 662
 }

@@ -18,7 +18,13 @@ Backend Services
     --> RabbitMQ (log.server event)
       --> server-logs-service (port 4011)
         --> MongoDB (claw_server_logs, TTL 30d)
-    --> stdout (Docker logs)
+    --> stdout (Docker logs, json-file 20m x5, label claw.service)
+      --> claw-log-shipper (Vector, reads json-file logs READ-ONLY)
+        --> POST /server-logs/ingest/containers (service token)
+          --> server_logs rows with action=container_log
+
+Every other container (nginx, Postgres, Redis, RabbitMQ...) takes the same
+shipper path. See ADR-101 and skills/read-production-logs.md.
 ```
 
 ---
@@ -47,12 +53,12 @@ All NestJS services use Pino for structured JSON logging via the `shared-rabbitm
 
 ### Log Levels
 
-| Level   | Usage                                          | Production |
-| ------- | ---------------------------------------------- | ---------- |
-| `debug` | Detailed diagnostic info                       | Disabled   |
-| `info`  | Normal operations (request received, etc.)     | Enabled    |
-| `warn`  | Unexpected but recoverable situations          | Enabled    |
-| `error` | Failures requiring attention                   | Enabled    |
+| Level   | Usage                                      | Production |
+| ------- | ------------------------------------------ | ---------- |
+| `debug` | Detailed diagnostic info                   | Disabled   |
+| `info`  | Normal operations (request received, etc.) | Enabled    |
+| `warn`  | Unexpected but recoverable situations      | Enabled    |
+| `error` | Failures requiring attention               | Enabled    |
 
 ### NestJS Logger Usage
 
@@ -71,7 +77,7 @@ this.logger.error('Database connection failed', error.stack);
 Pino is configured to redact sensitive fields:
 
 ```typescript
-redact: ['authorization', 'password', 'refreshToken', 'apiKey', 'token', 'secret']
+redact: ['authorization', 'password', 'refreshToken', 'apiKey', 'token', 'secret'];
 ```
 
 These fields are replaced with `[REDACTED]` in all log output.
@@ -79,6 +85,7 @@ These fields are replaced with `[REDACTED]` in all log output.
 ### pino-http Auto-Logging
 
 HTTP requests and responses are automatically logged with:
+
 - Method, URL, status code, response time
 - Request ID correlation
 - Excluded paths: SSE endpoints (to prevent "headers already sent" errors)
@@ -98,7 +105,12 @@ autoLogging: {
 The frontend uses a structured logger that batches and sends logs to the backend:
 
 ```typescript
-logger.debug({ component: 'chat', action: 'sse-connect', message: 'Connecting', details: { threadId } });
+logger.debug({
+  component: 'chat',
+  action: 'sse-connect',
+  message: 'Connecting',
+  details: { threadId },
+});
 logger.info({ component: 'chat', action: 'send-message', message: 'Message sent' });
 logger.warn({ component: 'chat', action: 'fallback', message: 'Provider failed' });
 logger.error({ component: 'chat', action: 'error', message: error.message });
@@ -228,6 +240,7 @@ Log filter state is managed by the `log.store.ts` Zustand store (not persisted):
 Requests are traced across the entire stack using `X-Request-ID`:
 
 1. **Frontend**: The HTTP client generates a UUID for each request:
+
    ```typescript
    config.headers['X-Request-ID'] = crypto.randomUUID();
    ```

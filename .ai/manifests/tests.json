@@ -94,7 +94,7 @@
     },
     "claw-server-logs-service": {
       "runner": "vitest",
-      "testFiles": 7
+      "testFiles": 9
     },
     "claw-workspace-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1279
+  "total": 1281
 }

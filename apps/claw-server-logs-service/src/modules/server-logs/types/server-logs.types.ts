@@ -96,3 +96,6 @@ export interface CreateServerLogResponse {
 export interface BatchCreateServerLogsResponse {
   inserted: number;
 }
+
+/** Fields every row shipped from a container carries, whatever its format. */
+export type ContainerLogBase = Pick<CreateServerLogInput, 'serviceName' | 'action' | 'metadata'>;

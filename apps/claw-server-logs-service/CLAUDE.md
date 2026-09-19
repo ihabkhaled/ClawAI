@@ -114,6 +114,18 @@ After implementing any change to this service:
 - [ ] All fire-and-forget error paths: `emitError` → `storeErrorMessage` in nested try-catch
 - [ ] All poll-detected flows store metadata `{ error: true }` on failure
 
+## Container log ingestion (ADR-101)
+
+- `POST /server-logs/ingest/containers` takes every container's stdout from
+  `claw-log-shipper` (Vector, `infra/vector/vector.yaml`). It needs the
+  service token.
+- `utilities/container-log.utility.ts` parses pino JSON, Nest's pretty
+  format, pino-pretty and plain text at their real level.
+- `POST /server-logs` and `/batch` need the service token too. They were
+  public and reachable from the internet.
+- Never log per-insert lines at info or above: the shipper skips this
+  service's info lines, and anything louder loops.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

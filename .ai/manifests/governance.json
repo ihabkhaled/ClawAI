@@ -308,7 +308,7 @@
   ],
   "skills": [
     {
-      "bytes": 24648,
+      "bytes": 25834,
       "file": "skills/00-index.md"
     },
     {
@@ -542,6 +542,10 @@
     {
       "bytes": 14444,
       "file": "skills/publish-a-public-marketing-page.md"
+    },
+    {
+      "bytes": 1840,
+      "file": "skills/read-production-logs.md"
     },
     {
       "bytes": 4619,

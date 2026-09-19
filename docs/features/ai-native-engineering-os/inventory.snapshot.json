@@ -2844,6 +2844,11 @@
           "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/server-logs/ingest/containers",
+          "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/server-logs/stats",
           "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
@@ -3505,6 +3510,13 @@
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "llamacpp-service"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "log-shipper"
       },
       {
         "files": [
@@ -7478,7 +7490,7 @@
       ],
       "skills": [
         {
-          "bytes": 24648,
+          "bytes": 25834,
           "file": "skills/00-index.md"
         },
         {
@@ -7712,6 +7724,10 @@
         {
           "bytes": 14444,
           "file": "skills/publish-a-public-marketing-page.md"
+        },
+        {
+          "bytes": 1840,
+          "file": "skills/read-production-logs.md"
         },
         {
           "bytes": 4619,
@@ -9793,7 +9809,7 @@
       },
       "claw-server-logs-service": {
         "runner": "vitest",
-        "testFiles": 7
+        "testFiles": 9
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -10506,8 +10522,8 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 41,
-    "endpointCount": 661,
+    "dockerServiceCount": 42,
+    "endpointCount": 662,
     "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 155,
@@ -10519,7 +10535,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1279,
+    "totalTestFiles": 1281,
     "workspaceCount": 25
   }
 }
