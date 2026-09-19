@@ -1,0 +1,353 @@
+> **Canonical source:** `docs/04-backend/service-guide-research.md`
+
+# Service Guide: Research Service
+
+## What It Is
+
+`claw-research-service` (port **4016**, DB `claw_research`) owns the dynamic search/fetch/scrape/clone/evidence layer described in `.claude/clawai_full_search_orchestration_prompt_pack/`. Phase 1 lands the **dynamic search provider registry** and **search execution**; later phases layer fetch, evidence bundles, workflows, and chat/router integration on top.
+
+## Why a new service
+
+The existing chat-service calls models directly. Search/fetch/scrape/clone are orthogonal to that — they are stateful (runs, cache), policy-gated (SSRF, domain rules, robots), and shared across workflows. Keeping them in chat-service would hard-wire research into one path. A dedicated service lets any other service (chat, agent, workspace) consume the same research primitives through a versioned API.
+
+## Phase 1 — what shipped
+
+### Data model
+
+- `SearchProvider` — kind (`TAVILY`/`OLLAMA_WEB`/`SEARXNG`/`GENERIC_HTTP`), name, baseUrl, `encryptedSecret` (AES-256-GCM), `publicConfig`, priority, allow/block domain lists, timeout, status.
+- `SearchRun` — per execution: user, query, status (`RUNNING`/`COMPLETED`/`FAILED`), result count, latency, error message, normalized results payload.
+
+Both tables plus enums are defined in `apps/claw-research-service/prisma/schema.prisma` and seeded via the initial migration in `prisma/migrations/20260420100000_init_search/`.
+
+### Adapters
+
+`SearchAdapter` interface: `kind`, `healthCheck(context)`, `search(request, context)`. Three implementations:
+
+| Kind         | Adapter                  | Notes                                                                                                    |
+| ------------ | ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `TAVILY`     | `TavilyAdapter`          | `apiKey` credential required. POST `/search`; honours `searchDepth`, `includeDomains`, `excludeDomains`. |
+| `OLLAMA_WEB` | `OllamaWebSearchAdapter` | Optional `apiKey` Bearer. POST `/api/web_search`. Scores by result index (no native score in response).  |
+| `SEARXNG`    | `SearxngAdapter`         | Optional basic auth. GET `/search?format=json`. Respects `language` + `timeRange` filters.               |
+
+Every adapter returns the same normalized `SearchResult` shape (`id`, `title`, `url`, `snippet`, `publishedAt`, `freshness`, `score`, `providerKind`) so the service layer can merge or re-rank results across providers.
+
+### Services
+
+- `SearchProviderService` — CRUD, secret encryption/decryption, `testConnection()` that runs the adapter's `healthCheck` and records `lastValidatedAt`/`validationError` on the provider row.
+- `SearchExecutionService` — resolves provider (explicit id or first enabled by priority), creates a `SearchRun`, invokes the adapter, applies domain allow/block policy, updates the run row with results and latency.
+
+### API
+
+All under `/api/v1/research/…`:
+
+- `search-providers` CRUD + `:id/test` (admin-only write).
+- `search` (POST) to execute.
+- `search/runs` (GET list, GET one) for the caller's history.
+
+Secrets are never echoed: `SanitizedSearchProvider` replaces `encryptedSecret` with `hasSecret: boolean`.
+
+### Security (Phase 1)
+
+- Auth enforced via the shared `AuthGuard`; admin-only writes via `RolesGuard` + `@Roles(UserRole.ADMIN)`.
+- SSRF/URL safety utility and pino redaction are scaffolded from the workspace-service pattern. `baseUrl` in provider creation is zod-validated as a URL; future phases will add per-request URL safety checks in the fetch layer.
+- Per-provider `allowlistDomains`/`blocklistDomains` filter results before they hit the response body.
+
+### Tests
+
+- `search-adapter.factory.spec.ts` — provider mapping + error codes (3 tests).
+- `tavily.adapter.spec.ts` — health + normalization + error paths (6 tests).
+- `ollama-web.adapter.spec.ts` — health + ranked results (3 tests).
+- `searxng.adapter.spec.ts` — normalization + error paths + missing baseUrl guard (3 tests).
+- Shared `search-adapter-contract.ts` enforces the minimum surface of every adapter.
+
+Total: **22/22 green** on the new service.
+
+## A URL in the intent is opened, not searched for
+
+`ResearchManager.run` calls `detectUrlsInText(dto.intent)` **before** the search
+step, and fetches what it finds directly.
+
+This closes the platform's largest capability gap. Until 2026-09-10 there was no
+code path anywhere that took a URL out of a prompt and fetched it. The fetcher,
+its SSRF guard, its domain policy and its cache were all real and all wired
+exclusively downstream of a keyword search, so `summarize
+https://example.com/post` reached the search engine as a query that happened to
+contain a URL. Measured that day, the prompt returned an Adobe product page, a
+Facebook group post and a Medium tutorial — and never opened the link.
+
+The pipeline is now:
+
+1. `fetch.direct` — the URLs the user wrote, at most `DIRECT_FETCH_MAX_URLS`
+   (3), through `FetchService`. Recorded as `web_fetch` **and**
+   `web_fetch:user_url`.
+2. `search` — unchanged. A prompt is rarely only a link, and the surrounding
+   question usually still needs search.
+3. `fetch` — the top search hits, **minus any URL already fetched in step 1**,
+   so no page is opened twice in one run.
+4. `extract` — over the union of both fetch sets.
+
+Three properties are load-bearing:
+
+- **A pasted page takes `DIRECT_FETCH_CONFIDENCE` (1).** The bundle sorts by
+  confidence and then caps at `EVIDENCE_MAX_ITEMS`, so a pasted link scoring
+  like an ordinary search hit could be trimmed out of the very bundle it was the
+  point of.
+- **`SEARCH_ONLY` fetches nothing and says so.** That workflow was chosen and
+  priced as a run that does not open pages. A pasted link there produces a
+  warning naming the URL and a `fetch.direct` trace entry marked `skipped`.
+  Quietly fetching would change what the user paid for.
+- **`FetchService` gained a caller, not a rival.** The SSRF guard, the domain
+  policy and the cache are untouched. A page the policy refuses becomes a
+  warning, never an exception to the policy.
+
+Detection is deliberately conservative, because anything it returns will be
+fetched: absolute `http`/`https` only, parsed by the platform's own `URL`;
+`javascript:`, `data:`, `file:` and `vbscript:` rejected explicitly rather than
+by accident; trailing sentence punctuation trimmed, because
+`https://example.com/post.` and `(https://example.com/a)` are what people type.
+A bare domain is left to search — it is a search term, not a link.
+
+Decision and costs:
+[ADR-091](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-091-user-urls-are-opened-not-searched.md).
+Constraint: [rules/41](https://github.com/ihabkhaled/ClawAI/blob/main/rules/41-web-evidence-truthfulness.md).
+
+## An intent is not a query
+
+`ExecuteResearchDto.intent` is capped at `RESEARCH_MAX_INTENT_LENGTH` (8,000).
+The **search query** derived from it is clamped separately to
+`SEARCH_MAX_QUERY_LENGTH` (500) by `clampSearchQuery`, on a word boundary, and a
+warning records that it happened.
+
+Both were the same constant until 2026-09-11, and the consequence was worse than
+it sounds: a prompt over 500 characters 400'd the entire run, chat-service
+swallowed that to `null`, no transcript and no warning were produced — and
+because the model is only told browsing happened when evidence or warnings
+exist, it was then told nothing at all and refused. **Research was silently
+disabled by writing a long message.**
+
+The order matters. URLs are detected from the FULL intent, before the clamp, so
+a link near the end of a long prompt is still opened.
+
+## The provider the user picks is the provider that runs
+
+`providerId` travels: DTO → `ParallelResearchOptions` / `ResearchEnrichInput` →
+`POST /research/search`. research-service reads the field's **presence** as an
+explicit choice, so it is omitted rather than sent as `undefined` when the user
+chose nothing — sending the key with no value would look like a choice.
+
+It was dropped in two independent places until 2026-09-11: the compare call site
+never read `dto.researchProviderId`, and `enrichForOrchestration` received it and
+did not pass it on. Meanwhile both transcripts recorded the requested provider,
+so the UI reported a provider that had never executed.
+
+Transcripts now record what **answered** — `providerId` and `providerName` come
+back from the search response — falling back to the request only when the run
+reported none. A fallback becomes a warning: it is not a failure, but it is a
+different answer than the one asked for.
+
+## The SSRF boundary
+
+`assertSafeOutboundUrl` guards every outbound fetch. It rejects:
+
+- any protocol that is not `http:`/`https:`
+- embedded credentials (`https://user:pass@host/`), a redirect-laundering trick
+- **every cloud metadata endpoint**, unconditionally — AWS/OpenStack/Azure
+  (`169.254.169.254`), GCP (`metadata.google.internal`), Alibaba
+  (`100.100.100.200`), Oracle (`192.0.0.192`)
+- private and loopback addresses in **every spelling a URL parser accepts**:
+  `127.0.0.1`, `2130706433`, `0x7f.0.0.1`, `0177.0.0.1`, `127.1`, `[::1]`,
+  `fd00::/8`, `fe80::/10`, `::ffff:127.0.0.1`
+- internal-only name suffixes (`.internal`, `.local`, `.lan`, `.home.arpa`) and
+  bare LAN labels with no dot (`http://router/`, `http://claw-auth-service/`)
+- carrier-grade NAT (`100.64/10`), which reaches other tenants on shared hosting
+- multicast and reserved space (`224/4` and above)
+
+**Private addresses are reachable only when the operator named the host in
+`RESEARCH_DOMAIN_ALLOWLIST`.** Until 2026-09-11 `HttpFetchAdapter` passed
+`allowPrivateHosts: true` unconditionally, reasoned as "self-hosted deployments
+may legitimately fetch internal resources". That was defensible while every URL
+came from a search provider. It stopped being defensible the moment a user's own
+URL reached the same code path — it accepted `http://127.0.0.1:4001/…` and
+service names on the internal Docker network, fetched them, and put the body
+into a model's prompt. The allowlist is deny-by-default and grants one host
+rather than the whole private network.
+
+**Redirects are re-checked.** `fetch` follows them, so the pre-flight check
+proves nothing about where the body actually came from: a public page that 302s
+to a metadata endpoint passes the first check and fails the second.
+
+**What this does not do.** It does not resolve DNS, so a hostname an attacker
+controls can resolve to loopback and pass. That is written down as TD-031 rather
+than left implied; the fix is a socket-level guard that checks resolved
+addresses and pins the connection against rebinding.
+
+## Head metadata extraction
+
+`extractHtml` (`common/utilities/html-extract.utility.ts`) reads, from the raw
+HTML bytes of a fetched page and with no JavaScript execution: meta
+description, meta robots directive, canonical URL (resolved against the
+page's own final URL when relative), every `hreflang` alternate, Open Graph
+properties, Twitter card properties, and parsed JSON-LD blocks (malformed
+blocks are skipped, not fatal). Surfaced on `FetchResult.metadata`, `undefined`
+for non-HTML responses.
+
+Every field is best-effort against the markup actually fetched — see rule 13
+in [rules/41](https://github.com/ihabkhaled/ClawAI/blob/main/rules/41-web-evidence-truthfulness.md): a tag a browser
+injects client-side is invisible here without a rendered-DOM fetch, which does
+not exist yet. Absence in this data means "not in this markup," not "the live
+page doesn't have it."
+
+## SITE_CRAWL: multi-page crawl of one site
+
+`ResearchWorkflowKind.SITE_CRAWL` (`SiteCrawlManager`,
+`modules/research/managers/site-crawl.manager.ts`) fetches `robots.txt`,
+resolves `sitemap.xml` (following a bounded nested-index chain via
+`common/utilities/sitemap.utility.ts`'s `parseSitemapXml`), and fetches up to
+`CRAWL_DEFAULT_MAX_PAGES` (20) same-origin pages, honoring
+`common/utilities/robots-txt.utility.ts`'s `isPathAllowed` before every one.
+When the sitemap yields fewer than `CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK`
+(3) URLs, it supplements from the homepage's own links instead of crawling
+blind. Full design and the tradeoffs accepted:
+[ADR-092](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
+
+Every network call — robots.txt, sitemap.xml, every page — goes through the
+same `FetchService.fetchPage` every other workflow uses: no second fetch
+path, so the SSRF guard, domain policy, cache and usage accounting apply
+identically. `EvidenceItem.source` stays `'fetch'` for crawled pages (the
+content genuinely reached the model, the same as a direct fetch); the
+discovery method (`user`/`sitemap`/`link`) rides in `EvidenceItem.structured`
+instead of adding a fourth `source` value every consumer would need to learn.
+
+Reachable via `POST /research/execute` with `workflow: 'SITE_CRAWL'` directly,
+and now also automatically from an ordinary chat message: chat-service's
+`classifyResearchWorkflow` upgrades an already-enabled research mode to
+`SITE_CRAWL` when the message contains a URL plus crawl-intent language
+("crawl", "audit this website", "map the site"). No frontend toggle exposes
+it as a distinct manual mode — it is reached only through that upgrade, on
+top of the existing SEARCH/SEARCH_FETCH/SEARCH_EXTRACT toggle. See
+[ADR-092](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md)'s
+amendments. Gzip-compressed sitemaps are not decompressed by `parseSitemapXml`
+or by `FetchService`, so a gzipped sitemap silently falls back to the
+homepage-link path.
+
+**Feed discovery.** `extractHtml`'s metadata now includes `feedUrls` — RSS/
+Atom links declared via `<link rel="alternate" type="application/{rss,atom}+xml">`
+autodiscovery on the homepage. When present, the crawl fetches the first one,
+parses it with `common/utilities/feed.utility.ts`'s `parseFeedXml` (RSS 2.0
+and Atom, same hand-rolled tag-matching as the sitemap parser), and adds its
+entries as crawl candidates. Checked unconditionally, not just when the
+sitemap is thin — a sitemap can be complete but stale, while a feed is
+usually a site's most recent content, a different signal rather than a
+fallback for a missing one. A site with no autodiscovery tag is not probed
+at conventional feed paths (`/feed`, `/rss.xml`, …) — only what the page
+itself advertised is checked.
+
+**Confidence-scored findings.** `SiteAuditManager` turns a completed crawl's
+pages into `AuditFinding[]` — claims about the site, not pages handed to the
+model. Four checks for v1: missing meta description, missing canonical, a
+self-canonical mismatch, and duplicate titles across crawled pages. Each
+finding carries a `FindingConfidence` (`common/enums/finding-confidence.enum.ts`)
+and the exact evidence item ids it was computed from. Attached to
+`EvidenceBundle.auditFindings`, computed from the bundle's own final,
+deduped/truncated `items` so a finding can never cite an id that was trimmed
+out. Full design: [ADR-092](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
+
+**Live progress.** `ExecuteResearchDto.correlationId` (optional, opaque —
+research-service never interprets it) flows into `ResearchProgressPublisher`
+(`modules/research/managers/research-progress-publisher.service.ts`), which
+publishes a `ResearchCrawlProgressMessage` (`@claw/shared-types`) on
+`RESEARCH_CRAWL_PROGRESS_CHANNEL` (`@claw/shared-constants`, a plain Redis
+`PUBLISH`, not a RabbitMQ event — see ADR-092's amendment) at six
+`SiteCrawlManager.crawl()` checkpoints: `started`, `robots`, `sitemap`,
+`feed`, one `page` tick per fetched candidate, and `completed`. No caller (no
+`correlationId`) means no publish at all — a v1-style direct
+`POST /research/execute` call with no `correlationId` crawls exactly as
+before. Fire-and-forget: a publish failure is logged and never affects the
+crawl. chat-service is the only consumer today
+(`ResearchProgressBridgeService`, see its own service guide).
+
+## Headless-browser rendering fallback
+
+`FetchService.fetchPage` tries `HttpFetchAdapter` (a plain HTTP GET) first,
+always. When the result is `text/html` and its extracted text is under
+`HEADLESS_RENDER_MIN_CONTENT_CHARS` — the signature of a page whose real
+content only exists after its own JavaScript runs — it retries with
+`HeadlessFetchAdapter` (`modules/fetch/adapters/headless-fetch.adapter.ts`,
+Playwright + a real headless Chromium) and keeps whichever result has more
+extracted text. Gated by `RESEARCH_HEADLESS_RENDER_ENABLED` (default
+`true`, a resource lever, not a safety one — see below). Full design:
+[ADR-094](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-094-headless-render-fallback-inside-fetchservice.md).
+
+**Still exactly one fetch entry point.** The fallback lives INSIDE
+`FetchService`, never reachable directly — rule 41 item 12's "no second
+fetch path" holds by construction. Extraction reuses the SAME `extractHtml`
+call the plain path uses, so canonical/hreflang/OG/JSON-LD parsing is
+identical regardless of which adapter produced the HTML.
+`FetchResult.renderedWithHeadlessBrowser` is `true` only when a render
+actually happened (never `false` — absent otherwise), and `toolsUsed` gets
+`web_fetch:headless` instead of plain `web_fetch` for that call
+(`pushFetchToolMarker`, shared by every fetch call site in
+`research.manager.ts` and `site-crawl.manager.ts`).
+
+**Every in-page request is re-checked against the anti-SSRF guard —
+not just the navigation URL.** A plain HTTP GET never executes remote code,
+so it never issues a subrequest; a rendered page's own JavaScript can, to
+any host it chooses. `HeadlessFetchAdapter` installs a
+`page.route('**/*', …)` handler that runs the SAME `assertSafeOutboundUrl`
+check (shared via `isHostExplicitlyAllowlisted`, extracted from
+`HttpFetchAdapter` for this) against every request the page makes, and
+aborts anything that fails — a page trying to reach
+`169.254.169.254` from inside its own script is blocked exactly like a
+top-level request to it would be. Image/media/font/stylesheet requests are
+aborted unconditionally: scraping needs text, not pixels.
+
+**One shared Chromium, one throwaway context per fetch.** A browser boot
+per request would be unusably slow; one `Browser` instance is launched
+lazily and reused (`onModuleDestroy` closes it), while each call gets its
+own `BrowserContext` so no cookies/storage survive between two different
+fetches. Both `Dockerfile` and `Dockerfile.dev` run
+`npx playwright install --with-deps chromium`; the prod image sets
+`PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` (world-readable) because the
+browser downloads as root during build but launches later as the
+unprivileged `nestjs` user.
+
+## Nginx + Health + Env
+
+- Nginx: `/api/v1/research/*` → `http://research-service:4016`.
+- `claw-health-service` aggregator now checks the research-service `/api/v1/health` endpoint.
+- All 7 Docker compose files (all-in-one dev, all-in-one prod, dev/prod split databases, dev/prod split services) register `pg-research` (port **5452**) and `research-service` (port **4016**).
+- `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1` seed `PG_RESEARCH_*`, `RESEARCH_PORT`, `RESEARCH_DATABASE_URL`, `RESEARCH_SERVICE_URL`, and `RESEARCH_HEADLESS_RENDER_ENABLED`.
+- `packages/shared-constants` exports `RESEARCH_SERVICE` and `RESEARCH_SERVICE_PORT`.
+
+## What's next (phases 2-5)
+
+Documented in `.claude/Integrations/search-orchestration__MASTER_PLAN.md`. Summary:
+
+- **Phase 2** — `FetchAdapter`, `PageCache`, `EvidenceBundle` schema + builder.
+- **Phase 3** — chat-service integration; router preserves the user-requested model while running helper tool chains first.
+- **Phase 4** — frontend: `/research/providers`, `/research/runs`, `/research/runs/[id]`; tool-trace viewer in the chat bubble.
+- **Phase 5** — scrape profiles, repo clone + analyze, workflow registry + presets, cross-workspace hybrid research, full QA + UAT pack.
+
+## Known gaps in Phase 1
+
+- No fetch layer yet — search returns URLs, not page content.
+- No evidence bundle — chat-service cannot yet consume research output in prompt assembly.
+- No frontend admin UI for providers; API is the only surface.
+- `GENERIC_HTTP` provider kind is declared but not implemented (returns 501).
+
+## Update 2026-09-19 — internal route, crawl budget, bare domains
+
+- `POST /api/v1/internal/research/runs` (`ResearchInternalController`):
+  `@Public()` + `ServiceTokenGuard`, body = the run DTO plus `userId`. This is
+  how chat-service runs research for ordinary users; the user route
+  `/research/runs` stays `ADMIN_SYSTEM_VIEW`, and research-service does not
+  enforce the plan, so the user route must not be widened. Not proxied by nginx.
+- `maxPages` (≤ `CRAWL_MAX_PAGES_CEILING` = 40) and `searchQuery` on the run DTO.
+  Crawl candidates are ranked by overlap with the intent before the budget is
+  applied; the evidence cap rises to `maxPages` for a crawl.
+- The crawl follows the homepage's final URL for its origin, so an
+  `example.com` → `www.example.com` redirect keeps its sitemap pages; other
+  hosts are still refused.
+- `detectUrlsInText` now delegates to `@claw/shared-utilities` and accepts bare
+  domains; `isFetchableUrl` is still the gate on what is returned.
+
