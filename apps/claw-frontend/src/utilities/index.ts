@@ -1,6 +1,17 @@
 export { passesSeverityGate } from './client-log-severity.utility';
 export { isAuthRefreshExemptPath } from './auth-refresh-exemption.utility';
-export { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './api.utility';
+export {
+  getAccessToken,
+  getRefreshToken,
+  readStoredSession,
+  setTokens,
+  clearAuthStorage,
+} from './api.utility';
+export {
+  clearBrowserSessionMarker,
+  hasBrowserSessionMarker,
+  markBrowserSession,
+} from './auth-session-cookie.utility';
 export {
   flagEmojiFromIso2,
   toE164,

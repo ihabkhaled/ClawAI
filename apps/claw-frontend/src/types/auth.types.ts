@@ -6,6 +6,8 @@ import type { UserProfile } from './user.types';
 export interface LoginRequest {
   email: string;
   password: string;
+  /** "Remember me". false ends the session when the browser closes (ADR-106). */
+  rememberMe?: boolean;
 }
 
 export interface RegisterRequest {

@@ -158,7 +158,7 @@
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 3087,
+      "bytes": 4624,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
@@ -312,7 +312,7 @@
   ],
   "skills": [
     {
-      "bytes": 26110,
+      "bytes": 26605,
       "file": "skills/00-index.md"
     },
     {
@@ -486,6 +486,10 @@
     {
       "bytes": 5007,
       "file": "skills/deadlock-recovery.md"
+    },
+    {
+      "bytes": 3802,
+      "file": "skills/debug-a-sign-out.md"
     },
     {
       "bytes": 3192,

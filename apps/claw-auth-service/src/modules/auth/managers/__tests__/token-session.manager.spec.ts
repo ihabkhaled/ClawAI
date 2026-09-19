@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { InvalidRefreshTokenException } from '../../../../common/errors';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
@@ -38,6 +38,7 @@ const sessionFixture = {
   familyId: 'family-1',
   clientKind: SessionClientKind.VSCODE,
   clientName: 'VS Code',
+  persistent: true,
   usedAt: null,
   revokedAt: null,
   replacedBySessionId: null,
@@ -50,6 +51,7 @@ describe('TokenSessionManager', () => {
   let repository: {
     createSession: Mock;
     findSessionByRefreshTokenHash: Mock;
+    findSessionById: Mock;
     findUserById: Mock;
     rotateSession: Mock;
     revokeSessionFamily: Mock;
@@ -61,6 +63,7 @@ describe('TokenSessionManager', () => {
     repository = {
       createSession: vi.fn().mockResolvedValue(sessionFixture),
       findSessionByRefreshTokenHash: vi.fn(),
+      findSessionById: vi.fn(),
       findUserById: vi.fn().mockResolvedValue(userFixture),
       rotateSession: vi.fn().mockResolvedValue({
         ...sessionFixture,
@@ -114,10 +117,10 @@ describe('TokenSessionManager', () => {
     expect(result.accessToken).toBe('access-token');
   });
 
-  it('revokes the token family when a used refresh token is replayed', async () => {
+  it('revokes the token family when a used refresh token is replayed after the grace window', async () => {
     repository.findSessionByRefreshTokenHash.mockResolvedValue({
       ...sessionFixture,
-      usedAt: new Date(),
+      usedAt: new Date(Date.now() - 31_000),
     });
 
     await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
@@ -134,12 +137,102 @@ describe('TokenSessionManager', () => {
     expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
   });
 
-  it('revokes the token family when concurrent rotation consumed the session first', async () => {
+  // Two tabs (or VS Code windows) refreshing together, or a client whose
+  // refresh response was lost, present the same token twice. That used to
+  // revoke the family and sign the user out everywhere.
+  it('gives a token reused within the grace window a sibling instead of revoking', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      usedAt: new Date(Date.now() - 2_000),
+    });
+
+    const result = await manager.rotate('raw-refresh-token');
+
+    expect(result.refreshToken).toBe('raw-refresh-token');
+    expect(repository.revokeSessionFamily).not.toHaveBeenCalled();
+    expect(repository.rotateSession).not.toHaveBeenCalled();
+    expect(repository.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ familyId: sessionFixture.familyId, persistent: true }),
+    );
+  });
+
+  it('recovers when a concurrent rotation of the same token won the race', async () => {
     repository.findSessionByRefreshTokenHash.mockResolvedValue(sessionFixture);
     repository.rotateSession.mockResolvedValue(null);
+    repository.findSessionById.mockResolvedValue({ ...sessionFixture, usedAt: new Date() });
+
+    await expect(manager.rotate('raw-refresh-token')).resolves.toMatchObject({
+      tokenType: 'Bearer',
+    });
+    expect(repository.revokeSessionFamily).not.toHaveBeenCalled();
+    expect(repository.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ familyId: sessionFixture.familyId }),
+    );
+  });
+
+  it('revokes when the race was lost to a logout, not to another rotation', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue(sessionFixture);
+    repository.rotateSession.mockResolvedValue(null);
+    repository.findSessionById.mockResolvedValue({ ...sessionFixture, revokedAt: new Date() });
 
     await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
     expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
+    expect(repository.createSession).not.toHaveBeenCalled();
+  });
+
+  it('never grants grace to a revoked token, however recently it was used', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      usedAt: new Date(),
+      revokedAt: new Date(),
+    });
+
+    await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
+    expect(repository.createSession).not.toHaveBeenCalled();
+  });
+
+  it('never grants grace to a suspended account', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      usedAt: new Date(),
+    });
+    repository.findUserById.mockResolvedValue({ ...userFixture, status: UserStatus.SUSPENDED });
+
+    await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
+    expect(repository.createSession).not.toHaveBeenCalled();
+  });
+
+  // "Remember me" off: 12 h, sliding, and kept through every rotation.
+  it('issues a short session when remember me is off and keeps it short on rotation', async () => {
+    const issued = await manager.issue(userFixture, {
+      kind: SessionClientKind.WEB,
+      persistent: false,
+    });
+    expect(issued.refreshExpiresIn).toBe(12 * 60 * 60);
+    expect(repository.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ persistent: false }),
+    );
+
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      persistent: false,
+    });
+    const rotated = await manager.rotate('raw-refresh-token');
+    expect(rotated.refreshExpiresIn).toBe(12 * 60 * 60);
+    expect(repository.rotateSession).toHaveBeenCalledWith(
+      expect.objectContaining({ replacement: expect.objectContaining({ persistent: false }) }),
+    );
+  });
+
+  it('keeps the long lifetime when remember me is on or not sent', async () => {
+    const remembered = await manager.issue(userFixture, {
+      kind: SessionClientKind.WEB,
+      persistent: true,
+    });
+    const legacy = await manager.issue(userFixture, { kind: SessionClientKind.VSCODE });
+
+    expect(remembered.refreshExpiresIn).toBe(604_800);
+    expect(legacy.refreshExpiresIn).toBe(604_800);
   });
 
   it('rejects a refresh token no session was ever issued for', async () => {
@@ -170,7 +263,7 @@ describe('TokenSessionManager', () => {
     const presented = 'presented-refresh-token-that-must-not-leak';
     repository.findSessionByRefreshTokenHash.mockResolvedValue({
       ...sessionFixture,
-      usedAt: new Date(),
+      usedAt: new Date(Date.now() - 60_000),
     });
 
     const failure = await manager.rotate(presented).catch((error: unknown) => error);

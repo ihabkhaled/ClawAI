@@ -284,6 +284,7 @@ export type {
 export type {
   AuthStoreState,
   AuthStoreActions,
+  StoredSession,
   SidebarStoreState,
   SidebarStoreActions,
 } from './store.types';

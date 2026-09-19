@@ -51,6 +51,7 @@ describe('useAuthGuard', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
         user: mockUser,
+        persistent: true,
       });
     });
 
@@ -75,6 +76,7 @@ describe('useAuthGuard', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
         user: mockUser,
+        persistent: true,
       });
     });
 

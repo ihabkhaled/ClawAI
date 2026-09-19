@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AuthManager } from '../auth.manager';
 import { type TokenSessionManager } from '../token-session.manager';
 import { type AuthRepository } from '../../repositories/auth.repository';
@@ -45,6 +45,7 @@ const mockRepository = (): Record<keyof AuthRepository, Mock> => ({
   createUser: vi.fn(),
   createSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
   findSessionByRefreshTokenHash: vi.fn(),
+  findSessionById: vi.fn(),
   rotateSession: vi.fn(),
   revokeSessionFamily: vi.fn(),
   revokeSessionForUser: vi.fn(),

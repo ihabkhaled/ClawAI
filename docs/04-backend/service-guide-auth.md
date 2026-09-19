@@ -127,8 +127,8 @@ allowance. They are never converted into invented token equivalents.
 2. Service verifies credentials with argon2
 3. Issues access token (short-lived, configured via `JWT_ACCESS_EXPIRY`) and refresh token (long-lived, `JWT_REFRESH_EXPIRY`)
 4. Refresh token is stored as a Session record in the database
-5. On `/auth/refresh`, the old session is deleted and a new one created (rotation)
-6. On `/auth/logout`, the session record is deleted, invalidating the refresh token
+5. On `/auth/refresh`, the old session is marked used (`usedAt`) and a replacement is created in the same family (rotation). Reuse within 30 s gets a sibling (two tabs, a lost response); reuse after that revokes the family (ADR-106)
+6. On `/auth/logout`, the current session is revoked (`revokedAt`), so its refresh token stops working at once; its access token lives until it expires (≤ 15 min, TD-033)
 
 ## JWT Payload
 
@@ -483,3 +483,15 @@ the table, never by reading the log.
 | POST   | `/api/v1/internal/ops-tokens/verify` | Service token; not proxied                              |
 
 Table `ops_access_tokens` (migration `20260919120000_add_ops_access_tokens`).
+
+## Sessions across tabs and "Remember me" (ADR-106, 2026-09-19)
+
+| Field / constant                   | Meaning                                                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Session.persistent`               | "Remember me". Default `true`; set from `rememberMe` on `POST /auth/login`, kept on rotation        |
+| `JWT_REFRESH_EXPIRY`               | refresh lifetime of a remembered session (7 d, sliding)                                             |
+| `SESSION_ONLY_REFRESH_TTL_SECONDS` | refresh lifetime with remember me off (12 h, sliding); the web client also ends it on browser close |
+| `REFRESH_REUSE_GRACE_MS`           | 30 s: a just-used token presented again gets a sibling instead of revoking the family               |
+
+`rememberMe` is optional and strictly boolean. VS Code and the device flow do
+not send it and keep the long session.

@@ -81,7 +81,7 @@ export function useLoginForm(): UseLoginFormReturn {
         // Same private-mode fallback — don't block the login.
       }
     }
-    login(data);
+    login({ ...data, rememberMe });
   };
 
   return {

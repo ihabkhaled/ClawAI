@@ -13,6 +13,7 @@ import type {
   ConfirmPasswordResetRequest,
   ConfirmPasswordResetResponse,
 } from '@/types';
+import { clearBrowserSessionMarker, markBrowserSession } from '@/utilities';
 
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
@@ -21,10 +22,9 @@ export const authService = {
       accessToken: response.tokens.accessToken,
       refreshToken: response.tokens.refreshToken,
       user: response.user,
+      persistent: data.rememberMe ?? true,
     });
-    if (typeof document !== 'undefined') {
-      document.cookie = 'claw-auth-token=1; path=/; SameSite=Lax';
-    }
+    markBrowserSession();
     return response;
   },
 
@@ -37,9 +37,7 @@ export const authService = {
       await authRepository.logout();
     } finally {
       useAuthStore.getState().clearAuth();
-      if (typeof document !== 'undefined') {
-        document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      }
+      clearBrowserSessionMarker();
     }
   },
 
@@ -47,19 +45,6 @@ export const authService = {
     const user = await authRepository.me();
     useAuthStore.getState().setUser(user);
     return user;
-  },
-
-  async refreshToken(): Promise<void> {
-    const { refreshToken } = useAuthStore.getState();
-    if (!refreshToken) {
-      useAuthStore.getState().clearAuth();
-      throw new Error('No refresh token available');
-    }
-    const response = await authRepository.refresh(refreshToken);
-    useAuthStore.getState().setTokens({
-      accessToken: response.tokens.accessToken,
-      refreshToken: response.tokens.refreshToken,
-    });
   },
 
   // The API keeps the calling session alive even when the username changes, so
@@ -72,9 +57,7 @@ export const authService = {
   async deleteOwnAccount(data: DeleteOwnAccountRequest): Promise<void> {
     await authRepository.deleteOwnAccount(data);
     useAuthStore.getState().clearAuth();
-    if (typeof document !== 'undefined') {
-      document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    }
+    clearBrowserSessionMarker();
   },
 
   async requestPasswordReset(

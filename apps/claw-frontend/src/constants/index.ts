@@ -3,7 +3,13 @@ export { COUNTRY_DIAL_CODES, DEFAULT_COUNTRY_ISO2 } from './country-dial-codes.c
 export { SUGGESTED_PROMPTS } from './suggested-prompts.constants';
 export { THREAD_DATE_GROUP_LABEL_KEYS } from './thread-date-group.constants';
 export { SEVERITY_COLORS, ALL_FILTER } from './audit.constants';
-export { AUTH_INITIAL_STATE } from './auth.constants';
+export {
+  AUTH_INITIAL_STATE,
+  AUTH_MARKER_COOKIE,
+  AUTH_REFRESH_LOCK,
+  AUTH_STORAGE_KEY,
+  SESSION_ENDING_REFRESH_STATUSES,
+} from './auth.constants';
 export { ROUTES, PUBLIC_ROUTES } from './routes.constants';
 export { MOBILE_BOTTOM_NAV_ITEMS } from './mobile-bottom-nav.constants';
 export { PROGRESS_EVENT_TYPES, PROCESSED_STREAM_EVENT_ID_CACHE_LIMIT } from './progress.constants';

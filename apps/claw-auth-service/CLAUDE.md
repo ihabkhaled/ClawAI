@@ -368,6 +368,22 @@ trial. The end user saw the correct thing throughout; only the admin panel lied.
 Rule: [28-billing-integrity-and-api-contracts](../../rules/28-billing-integrity-and-api-contracts.md)
 §9 and §10.
 
+## Sessions across tabs and "Remember me" (ADR-106, 2026-09-19)
+
+- **A refresh token may be reused for 30 s** (`REFRESH_REUSE_GRACE_MS`), and
+  gets a sibling in the same family. Two tabs, two VS Code windows or a lost
+  response do this; every one of them used to revoke the family and sign the
+  user out everywhere. Reuse after 30 s, or of a revoked or expired token,
+  still revokes the family.
+- A lost `rotateSession` race re-reads the session (`findSessionById`) before
+  deciding. A logout that won the race still revokes.
+- `Session.persistent` is "Remember me": `rememberMe` on login, kept on every
+  rotation. Off means 12 h (`SESSION_ONLY_REFRESH_TTL_SECONDS`); on means
+  `JWT_REFRESH_EXPIRY`. Absent means on, which covers VS Code, the device flow
+  and old clients.
+- Prove any change with `scripts/qa-lab/session-refresh-experiment.mjs`
+  ([skills/debug-a-sign-out.md](../../skills/debug-a-sign-out.md)).
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

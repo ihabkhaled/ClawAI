@@ -7,6 +7,7 @@ export interface CreateSessionInput {
   familyId: string;
   clientKind?: SessionClientKind;
   clientName?: string;
+  persistent?: boolean;
   expiresAt: Date;
 }
 

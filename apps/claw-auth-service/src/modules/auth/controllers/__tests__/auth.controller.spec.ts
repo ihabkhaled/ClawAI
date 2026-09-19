@@ -77,6 +77,7 @@ describe('AuthController', () => {
     expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
       kind: SessionClientKind.WEB,
       name: 'ClawAI Web',
+      persistent: true,
     });
     expect(result).toBe(expected);
   });
@@ -97,6 +98,7 @@ describe('AuthController', () => {
     expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
       kind: SessionClientKind.VSCODE,
       name: 'ClawAI for VS Code',
+      persistent: true,
     });
   });
 

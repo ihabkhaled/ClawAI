@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { USER_TOKEN_KIND } from '@claw/shared-constants';
 import { hashBearerToken } from '@claw/shared-utilities';
 import { signAccessToken, signRefreshToken } from '@common/utilities';
@@ -10,36 +10,36 @@ import {
   DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
   DEFAULT_REFRESH_TOKEN_TTL_SECONDS,
   EXPIRY_PATTERN,
+  REFRESH_REUSE_GRACE_MS,
   SECONDS_PER_DAY,
   SECONDS_PER_HOUR,
   SECONDS_PER_MINUTE,
+  SESSION_ONLY_REFRESH_TTL_SECONDS,
   TOKEN_TYPE,
 } from '../constants/token-session.constants';
 import { AuthRepository } from '../repositories/auth.repository';
-import type { SessionClient, TokenPair, TokenSessionUser } from '../types/token-session.types';
+import type {
+  SessionClient,
+  SessionSeed,
+  TokenPair,
+  TokenSessionUser,
+} from '../types/token-session.types';
+import { isWithinReuseGrace } from '../utilities/refresh-reuse.utility';
+import type { Session } from '../../../generated/prisma';
 
 @Injectable()
 export class TokenSessionManager {
+  private readonly logger = new Logger(TokenSessionManager.name);
+
   constructor(private readonly authRepository: AuthRepository) {}
 
   async issue(user: TokenSessionUser, client: SessionClient): Promise<TokenPair> {
-    const familyId = randomUUID();
-    const refreshToken = signRefreshToken();
-    const config = AppConfig.get();
-    const refreshExpiresIn = this.parseExpirySeconds(
-      config.JWT_REFRESH_EXPIRY,
-      DEFAULT_REFRESH_TOKEN_TTL_SECONDS,
-    );
-    const session = await this.authRepository.createSession({
-      userId: user.id,
-      refreshTokenHash: this.hashRefreshToken(refreshToken, config.JWT_SECRET),
-      familyId,
+    return this.createSessionTokens(user, {
+      familyId: randomUUID(),
       clientKind: client.kind,
       ...(client.name ? { clientName: client.name } : {}),
-      expiresAt: new Date(Date.now() + refreshExpiresIn * 1000),
+      persistent: client.persistent ?? true,
     });
-
-    return this.createTokenPair(user, session.id, refreshToken, refreshExpiresIn);
   }
 
   async rotate(rawRefreshToken: string): Promise<TokenPair> {
@@ -52,11 +52,14 @@ export class TokenSessionManager {
       throw new InvalidRefreshTokenException();
     }
 
-    if (
-      currentSession.usedAt ||
-      currentSession.revokedAt ||
-      currentSession.expiresAt <= new Date()
-    ) {
+    const now = new Date();
+    if (currentSession.revokedAt || currentSession.expiresAt <= now) {
+      await this.authRepository.revokeSessionFamily(currentSession.familyId);
+      throw new InvalidRefreshTokenException();
+    }
+
+    // A replay after the grace window is treated as theft.
+    if (currentSession.usedAt && !isWithinReuseGrace(currentSession.usedAt, now)) {
       await this.authRepository.revokeSessionFamily(currentSession.familyId);
       throw new InvalidRefreshTokenException();
     }
@@ -67,15 +70,16 @@ export class TokenSessionManager {
       throw new InvalidRefreshTokenException();
     }
 
+    if (currentSession.usedAt) {
+      return this.issueSibling(user, currentSession);
+    }
+
     const replacementRefreshToken = signRefreshToken();
-    const refreshExpiresIn = this.parseExpirySeconds(
-      config.JWT_REFRESH_EXPIRY,
-      DEFAULT_REFRESH_TOKEN_TTL_SECONDS,
-    );
+    const refreshExpiresIn = this.refreshTtlSeconds(currentSession.persistent);
     const replacementId = randomUUID();
     const replacementSession = await this.authRepository.rotateSession({
       currentSessionId: currentSession.id,
-      usedAt: new Date(),
+      usedAt: now,
       replacement: {
         id: replacementId,
         userId: user.id,
@@ -83,12 +87,12 @@ export class TokenSessionManager {
         familyId: currentSession.familyId,
         clientKind: currentSession.clientKind,
         ...(currentSession.clientName ? { clientName: currentSession.clientName } : {}),
-        expiresAt: new Date(Date.now() + refreshExpiresIn * 1000),
+        persistent: currentSession.persistent,
+        expiresAt: new Date(now.getTime() + refreshExpiresIn * 1000),
       },
     });
     if (!replacementSession) {
-      await this.authRepository.revokeSessionFamily(currentSession.familyId);
-      throw new InvalidRefreshTokenException();
+      return this.recoverLostRace(user, currentSession.id, currentSession.familyId);
     }
 
     return this.createTokenPair(
@@ -101,6 +105,63 @@ export class TokenSessionManager {
 
   async revokeCurrent(userId: string, sessionId: string): Promise<void> {
     await this.authRepository.revokeSessionForUser(sessionId, userId);
+  }
+
+  /**
+   * Another rotation of the same token won the race a moment ago. That is two
+   * tabs refreshing together, not theft, as long as the session is still live.
+   */
+  private async recoverLostRace(
+    user: TokenSessionUser,
+    sessionId: string,
+    familyId: string,
+  ): Promise<TokenPair> {
+    const latest = await this.authRepository.findSessionById(sessionId);
+    if (latest?.usedAt && !latest.revokedAt && isWithinReuseGrace(latest.usedAt, new Date())) {
+      return this.issueSibling(user, latest);
+    }
+    await this.authRepository.revokeSessionFamily(familyId);
+    throw new InvalidRefreshTokenException();
+  }
+
+  /** A new token in the same family; whoever holds the first replacement keeps it. */
+  private issueSibling(user: TokenSessionUser, session: Session): Promise<TokenPair> {
+    this.logger.log(
+      `rotate: refresh token reused within ${String(REFRESH_REUSE_GRACE_MS)}ms; issued a sibling in family ${session.familyId}`,
+    );
+    return this.createSessionTokens(user, {
+      familyId: session.familyId,
+      clientKind: session.clientKind,
+      ...(session.clientName ? { clientName: session.clientName } : {}),
+      persistent: session.persistent,
+    });
+  }
+
+  private async createSessionTokens(user: TokenSessionUser, seed: SessionSeed): Promise<TokenPair> {
+    const refreshToken = signRefreshToken();
+    const config = AppConfig.get();
+    const refreshExpiresIn = this.refreshTtlSeconds(seed.persistent);
+    const session = await this.authRepository.createSession({
+      userId: user.id,
+      refreshTokenHash: this.hashRefreshToken(refreshToken, config.JWT_SECRET),
+      familyId: seed.familyId,
+      clientKind: seed.clientKind,
+      ...(seed.clientName ? { clientName: seed.clientName } : {}),
+      persistent: seed.persistent,
+      expiresAt: new Date(Date.now() + refreshExpiresIn * 1000),
+    });
+
+    return this.createTokenPair(user, session.id, refreshToken, refreshExpiresIn);
+  }
+
+  private refreshTtlSeconds(persistent: boolean): number {
+    if (!persistent) {
+      return SESSION_ONLY_REFRESH_TTL_SECONDS;
+    }
+    return this.parseExpirySeconds(
+      AppConfig.get().JWT_REFRESH_EXPIRY,
+      DEFAULT_REFRESH_TOKEN_TTL_SECONDS,
+    );
   }
 
   private createTokenPair(

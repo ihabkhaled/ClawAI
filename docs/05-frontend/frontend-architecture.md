@@ -287,9 +287,11 @@ All API calls go through a shared axios instance with interceptors:
 
 1. **Request interceptor:** Attaches `Authorization: Bearer <accessToken>` header.
 2. **Response interceptor (401 handling):**
-   - On 401 response, attempts token refresh via `POST /auth/refresh` with the `refreshToken`.
-   - If refresh succeeds, updates tokens in store and retries the original request.
-   - If refresh fails, clears auth store and redirects to `/login`.
+   - On 401 response, calls `refreshSession` (`lib/session-refresh.ts`): one refresh per tab, one tab at a time (Web Locks), and a token another tab already got is used instead of refreshing again (ADR-106).
+   - If refresh succeeds, the tokens are written to storage and the original request is retried.
+   - Only a refusal (400, 401 or 403) clears auth and redirects to `/login`. Offline, 5xx and 429 fail the request and keep the session.
+   - Every tab shares `claw-auth-storage`. A `storage` event rehydrates the other tabs, and `setUser` reads the session fields from storage, so a background tab can never write old tokens back.
+   - "Remember me" off stores `persistent: false`, and the session ends when the browser closes: the `claw-auth-token` marker cookie has no expiry.
 
 ### Token Rotation
 

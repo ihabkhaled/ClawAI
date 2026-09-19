@@ -16,6 +16,31 @@ Last updated: 2026-09-10
 
 ## Open programme
 
+### TD-033: A revoked session's access token works until it expires (2026-09-19)
+
+- **Severity**: Medium · **Effort**: Medium · **Priority**: Planned
+- **Detail**: Guards verify the JWT signature locally
+  (`@claw/shared-auth`) and never ask whether its session was revoked. After a
+  logout, or a family revoked for theft, the access token keeps working for up
+  to `JWT_ACCESS_EXPIRY` (15 min). This was measured while building ADR-106:
+  `/auth/me` returned 200 with the winner's access token after the family was
+  revoked.
+- **The fix**: a Redis set of revoked `sessionId`s with a TTL equal to the
+  access lifetime. auth-service writes to it on revoke, and the shared guard
+  checks it. Alternatively, shorten the access lifetime.
+- **Why not now**: every service's guard changes, plus a Redis dependency in
+  `shared-auth`. That is its own batch.
+
+### TD-034: The PWA service worker can serve the previous bundle after a deploy (2026-09-19)
+
+- **Severity**: Medium · **Effort**: Low–Medium · **Priority**: Next
+- **Detail**: A browser with the worker installed kept running old JavaScript
+  after the frontend changed. Verifying ADR-106 locally, the login form sent no
+  `rememberMe` until the worker was unregistered. A security fix in the client
+  is only live for such users once their worker updates.
+- **The fix**: activate the new worker (`skipWaiting` + `clients.claim`) and
+  reload on `controllerchange`, or serve JS chunks network-first.
+
 ### TD-032: 16 services report a bad request body as a 500 (2026-09-19)
 
 - **Severity**: Low · **Effort**: Low · **Priority**: Planned (one batch)

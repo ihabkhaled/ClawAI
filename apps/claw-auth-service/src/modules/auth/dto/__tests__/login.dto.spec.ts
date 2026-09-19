@@ -1,4 +1,4 @@
-import { loginSchema } from '../login.dto';
+import { loginSchema, loginSessionClient } from '../login.dto';
 import { refreshTokenSchema } from '../refresh-token.dto';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 
@@ -82,6 +82,24 @@ describe('loginSchema', () => {
         clientName: 'x'.repeat(101),
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('rememberMe', () => {
+  const base = { email: 'user@example.com', password: 'MyPassword123' };
+
+  it.each([true, false])('accepts rememberMe=%s and maps it to the session', (rememberMe) => {
+    const parsed = loginSchema.parse({ ...base, rememberMe });
+    expect(loginSessionClient(parsed).persistent).toBe(rememberMe);
+  });
+
+  // VS Code and the device flow never send it and must keep their long session.
+  it('keeps the long session when rememberMe is absent', () => {
+    expect(loginSessionClient(loginSchema.parse(base)).persistent).toBe(true);
+  });
+
+  it.each(['true', 1, null, 'yes'])('rejects a non-boolean rememberMe (%j)', (rememberMe) => {
+    expect(loginSchema.safeParse({ ...base, rememberMe }).success).toBe(false);
   });
 });
 

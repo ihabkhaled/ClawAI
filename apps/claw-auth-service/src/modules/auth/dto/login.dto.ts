@@ -9,6 +9,8 @@ export const loginSchema = z
     password: z.string().min(1, 'Password is required').max(1_024),
     clientKind: z.nativeEnum(SessionClientKind).optional(),
     clientName: z.string().trim().min(1).max(100).optional(),
+    // "Remember me". Absent keeps the long session other clients always had.
+    rememberMe: z.boolean().optional(),
   })
   .strict();
 
@@ -20,5 +22,6 @@ export function loginSessionClient(dto: LoginDto): SessionClient {
   return {
     kind: dto.clientKind ?? fallback.kind,
     name: dto.clientName ?? fallback.name,
+    persistent: dto.rememberMe ?? true,
   };
 }

@@ -31,6 +31,10 @@ export class AuthRepository {
     return this.prisma.session.findUnique({ where: { refreshTokenHash } });
   }
 
+  async findSessionById(id: string): Promise<Session | null> {
+    return this.prisma.session.findUnique({ where: { id } });
+  }
+
   async rotateSession(input: RotateSessionInput): Promise<Session | null> {
     return this.prisma.$transaction(async (transaction) => {
       const updateResult = await transaction.session.updateMany({

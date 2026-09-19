@@ -266,12 +266,20 @@ Last updated: 2026-09-10
   so every `GlobalExceptionFilter` except file-generation's returns 500.
   The full entry is in [`technical-debt.md`](technical-debt.md) TD-032.
 
+### TD-033: A revoked session's access token works until it expires
+
+- **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-033.
+
+### TD-034: The PWA service worker can serve the previous bundle after a deploy
+
+- **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-034.
+
 ## Priority Matrix
 
-| Priority          | Items                                                                          | Action                                     |
-| ----------------- | ------------------------------------------------------------------------------ | ------------------------------------------ |
-| **Immediate**     | TD-030, TD-017                                                                 | Chat pipeline programme; automated backups |
-| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                 | Schedule for next iteration                |
-| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032 | Add to backlog                             |
-| **Conditional**   | TD-009                                                                         | Implement with TD-008                      |
-| **Opportunistic** | TD-004, TD-018, TD-019                                                         | Fix when touching related code             |
+| Priority          | Items                                                                                  | Action                                     |
+| ----------------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Immediate**     | TD-030, TD-017                                                                         | Chat pipeline programme; automated backups |
+| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                         | Schedule for next iteration                |
+| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032, TD-033 | Add to backlog                             |
+| **Conditional**   | TD-009                                                                                 | Implement with TD-008                      |
+| **Opportunistic** | TD-004, TD-018, TD-019                                                                 | Fix when touching related code             |

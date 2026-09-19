@@ -44,6 +44,7 @@ const setUser = (user: UserProfile): void => {
       accessToken: 'access',
       refreshToken: 'refresh',
       user,
+      persistent: true,
     });
   });
 };

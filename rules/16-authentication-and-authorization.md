@@ -31,6 +31,23 @@ and the frontend feature-gate hook.
    RBAC says "may call this endpoint," ownership says "may act on this row."
 7. **Internal service-to-service calls authenticate** with the service token /
    `ServiceTokenGuard`; do not leave internal endpoints open.
+8. **A session outlives many tabs, windows and flaky networks**
+   ([ADR-106](../docs/13-adr/adr-106-multi-tab-sessions-and-remember-me.md)).
+   - **Server:** a refresh token reused within `REFRESH_REUSE_GRACE_MS`
+     (30 s) gets a sibling. Reuse after that, or of a revoked or expired
+     token, revokes the family. Never widen the window without a threat
+     review, and never drop reuse detection.
+   - **Web client:** refresh only through `lib/session-refresh.ts`, which
+     refreshes once per tab and one tab at a time, and adopts a token another
+     tab already got.
+   - **Storage is the truth:** a store setter that does not change the session
+     reads the session fields from storage.
+   - **Sign out only on a refusal** (400, 401 or 403 from `/auth/refresh`),
+     never on offline, 5xx or 429.
+9. **"Remember me" is a server-side lifetime, not only a UI flag.** It is
+   `rememberMe` on login and `Session.persistent` in the database. Off means
+   12 h sliding and signed out on browser close; on means `JWT_REFRESH_EXPIRY`.
+   A client that does not send it keeps the long session.
 
 ## Prohibited patterns
 
@@ -38,6 +55,10 @@ and the frontend feature-gate hook.
 - `if (permission === 'chat:use')` — string comparison instead of the enum.
 - Gating a feature on the FE only (or BE only) — both are required.
 - Trusting the caller's claimed userId over the authenticated principal.
+- A second refresh path, or a refresh outside the cross-tab lock. Two
+  refreshes of one token signed every tab out.
+- Persisting a tab's in-memory tokens from a setter that did not change them.
+- Clearing auth storage because a refresh request failed to reach the server.
 
 ## Correct pattern
 
@@ -59,6 +80,8 @@ async compare(@Body() dto: CompareDto, @CurrentUser() user: AuthUser) {
 ## Related skills
 
 - [05-qa-toolkit](../skills/05-qa-toolkit.md) — 401/403 negative-path coverage.
+- [debug-a-sign-out](../skills/debug-a-sign-out.md) — reproduce random sign-outs
+  (two tabs, lost responses, offline, stale service worker) before touching code.
 
 ## Related context
 

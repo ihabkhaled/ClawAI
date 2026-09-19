@@ -392,6 +392,8 @@ model Session {
   familyId            String            @map("family_id")
   clientKind          SessionClientKind @default(WEB) @map("client_kind")
   clientName          String?           @map("client_name")
+  /// "Remember me". false = short, browser-session login (ADR-106).
+  persistent          Boolean           @default(true)
   usedAt              DateTime?         @map("used_at")
   revokedAt           DateTime?         @map("revoked_at")
   replacedBySessionId String?           @map("replaced_by_session_id")

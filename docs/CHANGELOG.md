@@ -40,6 +40,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **No more random sign-outs with several tabs open.** Two tabs, or two VS
+  Code windows, refreshing at the same moment used to look like a stolen
+  session and signed you out everywhere. So did coming back to an old tab, and
+  a refresh interrupted by sleep or a dropped connection. Tabs now take turns,
+  share the newest session, follow each other's sign-in and sign-out, and stay
+  signed in when the network blips. Theft detection still works: an old token
+  replayed later still ends the session.
+- **"Remember me" now does something.** Checked, you stay signed in for a
+  week of inactivity, across browser restarts. Unchecked, the session ends
+  when you close the browser, or after 12 hours of inactivity.
 - **Long file requests no longer fail.** A request to make a file whose message
   was over 4,000 characters failed after the AI had already written the file,
   and any file over about 100,000 characters failed as a server error. Both now

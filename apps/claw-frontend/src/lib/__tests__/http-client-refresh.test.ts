@@ -30,7 +30,11 @@ vi.mock('@/utilities', async (importOriginal) => {
  */
 function unauthorized(url: string): AxiosError {
   return {
-    config: { url, headers: {} } as InternalAxiosRequestConfig,
+    // Sent with the token storage still holds, so it really is the stale one.
+    config: {
+      url,
+      headers: { Authorization: 'Bearer expired-token' },
+    } as InternalAxiosRequestConfig,
     response: { status: 401 },
     isAxiosError: true,
   } as AxiosError;

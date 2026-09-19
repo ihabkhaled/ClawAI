@@ -2,32 +2,8 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { API_BASE_URL } from '@/constants';
-import {
-  clearAuthStorage,
-  getAccessToken,
-  getRefreshToken,
-  isAuthRefreshExemptPath,
-  setTokens,
-} from '@/utilities';
-
-type FailedRequest = {
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-};
-
-let isRefreshing = false;
-let failedQueue: FailedRequest[] = [];
-
-function processQueue(error: unknown, token: string | null): void {
-  for (const pending of failedQueue) {
-    if (token) {
-      pending.resolve(token);
-    } else {
-      pending.reject(error);
-    }
-  }
-  failedQueue = [];
-}
+import { bearerTokenOf, refreshSession } from '@/lib/session-refresh';
+import { clearAuthStorage, getAccessToken, isAuthRefreshExemptPath } from '@/utilities';
 
 function createHttpClient(): AxiosInstance {
   const client = axios.create({
@@ -66,53 +42,19 @@ function createHttpClient(): AxiosInstance {
         return Promise.reject(error);
       }
 
-      // If already refreshing, queue this request
-      if (isRefreshing) {
-        return new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return client(originalRequest);
-        });
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
-
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) {
-        isRefreshing = false;
-        processQueue(error, null);
+      // A refresh that could not even be attempted (offline, 5xx) rejects
+      // here with its own error: the request fails, the session stays.
+      const token = await refreshSession(bearerTokenOf(originalRequest.headers.Authorization));
+      if (token === null) {
         clearAuthStorage();
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
         return Promise.reject(error);
       }
-
-      try {
-        const response = await axios.post<{
-          tokens: { accessToken: string; refreshToken: string };
-        }>(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-
-        const newAccessToken = response.data.tokens.accessToken;
-        const newRefreshToken = response.data.tokens.refreshToken;
-
-        setTokens(newAccessToken, newRefreshToken);
-        processQueue(null, newAccessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return client(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        clearAuthStorage();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      return client(originalRequest);
     },
   );
 
