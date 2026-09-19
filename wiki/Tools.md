@@ -1,0 +1,77 @@
+# Repository Tools
+
+Tracked tool files: **69**.
+
+Tool families cover affected-workspace analysis, AI context resolution, audits, formatting ratchets, gate receipts, IndexNow, generated knowledge/manifests, migrations, release engineering, TypeScript execution and extensive self-tests.
+
+| Tool | Bytes |
+| --- | --- |
+| [tools/__tests__/affected-ci.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/affected-ci.test.mjs) | 4478 |
+| [tools/__tests__/ai-native-workflow.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/ai-native-workflow.test.mjs) | 706 |
+| [tools/__tests__/ai-runner.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/ai-runner.test.mjs) | 1391 |
+| [tools/__tests__/chat-service-replicas.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/chat-service-replicas.test.mjs) | 3889 |
+| [tools/__tests__/claw-service-commands.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/claw-service-commands.test.mjs) | 2919 |
+| [tools/__tests__/deploy-prod-e2e.sh](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/deploy-prod-e2e.sh) | 22192 |
+| [tools/__tests__/deploy-prod.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/deploy-prod.test.mjs) | 20516 |
+| [tools/__tests__/deploy-workflow.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/deploy-workflow.test.mjs) | 7505 |
+| [tools/__tests__/dev-compose-build-input-mounts.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/dev-compose-build-input-mounts.test.mjs) | 3916 |
+| [tools/__tests__/docker-dev-watch.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/docker-dev-watch.test.mjs) | 5954 |
+| [tools/__tests__/dockerfile-shared-package-completeness.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/dockerfile-shared-package-completeness.test.mjs) | 3215 |
+| [tools/__tests__/dockerfile-typescript-binary.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/dockerfile-typescript-binary.test.mjs) | 2452 |
+| [tools/__tests__/esm-namespace-import-bindings.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/esm-namespace-import-bindings.test.mjs) | 10129 |
+| [tools/__tests__/extractors.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/extractors.test.mjs) | 4782 |
+| [tools/__tests__/format-ratchet.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/format-ratchet.test.mjs) | 3265 |
+| [tools/__tests__/frontend-prepare.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/frontend-prepare.test.mjs) | 1707 |
+| [tools/__tests__/frontend-public-env.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/frontend-public-env.test.mjs) | 5143 |
+| [tools/__tests__/gate-receipt.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/gate-receipt.test.mjs) | 3589 |
+| [tools/__tests__/health-request-logging.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/health-request-logging.test.mjs) | 1757 |
+| [tools/__tests__/indexnow.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/indexnow.test.mjs) | 4637 |
+| [tools/__tests__/knowledge-coverage.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/knowledge-coverage.test.mjs) | 2749 |
+| [tools/__tests__/knowledge.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/knowledge.test.mjs) | 8421 |
+| [tools/__tests__/nginx-maintenance.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/nginx-maintenance.test.mjs) | 1551 |
+| [tools/__tests__/package-lifecycle.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/package-lifecycle.test.mjs) | 3313 |
+| [tools/__tests__/payg-surface-exhaustiveness.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/payg-surface-exhaustiveness.test.mjs) | 3565 |
+| [tools/__tests__/payment-internal-routing.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/payment-internal-routing.test.mjs) | 2449 |
+| [tools/__tests__/release-notes.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/release-notes.test.mjs) | 4049 |
+| [tools/__tests__/release-preflight.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/release-preflight.test.mjs) | 2376 |
+| [tools/__tests__/release-version.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/release-version.test.mjs) | 7562 |
+| [tools/__tests__/release-workflow.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/release-workflow.test.mjs) | 5695 |
+| [tools/__tests__/runtime-v2-workflow.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/runtime-v2-workflow.test.mjs) | 1860 |
+| [tools/__tests__/shared-package-build-order.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/shared-package-build-order.test.mjs) | 3637 |
+| [tools/__tests__/submodule-workspace-boundary.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/submodule-workspace-boundary.test.mjs) | 1014 |
+| [tools/__tests__/super-admin-seed.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/super-admin-seed.test.mjs) | 2990 |
+| [tools/__tests__/workspace-versions.test.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/__tests__/workspace-versions.test.mjs) | 3301 |
+| [tools/affected/index.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/affected/index.mjs) | 8984 |
+| [tools/ai/run.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/ai/run.mjs) | 1842 |
+| [tools/audit/index.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/audit/index.mjs) | 4263 |
+| [tools/format/baseline.json](https://github.com/ihabkhaled/ClawAI/blob/main/tools/format/baseline.json) | 171889 |
+| [tools/format/ratchet.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/format/ratchet.mjs) | 5666 |
+| [tools/format/README.md](https://github.com/ihabkhaled/ClawAI/blob/main/tools/format/README.md) | 936 |
+| [tools/gates/receipt.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/gates/receipt.mjs) | 3795 |
+| [tools/indexnow/index.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/indexnow/index.mjs) | 7763 |
+| [tools/knowledge/benchmark.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/benchmark.mjs) | 1607 |
+| [tools/knowledge/build.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/build.mjs) | 3352 |
+| [tools/knowledge/classify-task.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/classify-task.mjs) | 8490 |
+| [tools/knowledge/context-cache.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/context-cache.mjs) | 809 |
+| [tools/knowledge/context.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/context.mjs) | 11465 |
+| [tools/knowledge/coverage.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/coverage.mjs) | 903 |
+| [tools/knowledge/doctor.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/doctor.mjs) | 3399 |
+| [tools/knowledge/render-bootstrap.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/render-bootstrap.mjs) | 3685 |
+| [tools/knowledge/render-packs.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/render-packs.mjs) | 1483 |
+| [tools/knowledge/render-workspace-agents.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/render-workspace-agents.mjs) | 2964 |
+| [tools/knowledge/source-neighborhood.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/source-neighborhood.mjs) | 1933 |
+| [tools/knowledge/verify.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/knowledge/verify.mjs) | 7728 |
+| [tools/lib/analyzers.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/lib/analyzers.mjs) | 7414 |
+| [tools/lib/extractors.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/lib/extractors.mjs) | 13757 |
+| [tools/lib/fact.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/lib/fact.mjs) | 2881 |
+| [tools/lib/manifests.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/lib/manifests.mjs) | 6001 |
+| [tools/lib/repo.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/lib/repo.mjs) | 6436 |
+| [tools/migration/jest-to-vitest.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/migration/jest-to-vitest.mjs) | 6972 |
+| [tools/release/migrate-all.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release/migrate-all.mjs) | 2456 |
+| [tools/release/notes.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release/notes.mjs) | 5939 |
+| [tools/release/preflight.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release/preflight.mjs) | 2606 |
+| [tools/release/seed-versioned.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release/seed-versioned.mjs) | 2273 |
+| [tools/release/version.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release/version.mjs) | 8075 |
+| [tools/release/workspace-gate.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release/workspace-gate.mjs) | 1423 |
+| [tools/typescript/copy-generated-prisma.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/typescript/copy-generated-prisma.mjs) | 927 |
+| [tools/typescript/run-ts7.mjs](https://github.com/ihabkhaled/ClawAI/blob/main/tools/typescript/run-ts7.mjs) | 515 |
