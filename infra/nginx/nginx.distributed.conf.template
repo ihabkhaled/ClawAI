@@ -545,6 +545,12 @@ http {
             proxy_pass $backend;
         }
 
+        # --- Ops read channel (read-only ops tokens, ADR-102) -> server-logs ---
+        location /api/v1/ops/ {
+            set $backend https://$origin_server_logs;
+            proxy_pass $backend;
+        }
+
         # --- Server Logs Service ---
         location /api/v1/server-logs {
             set $backend https://$origin_server_logs;

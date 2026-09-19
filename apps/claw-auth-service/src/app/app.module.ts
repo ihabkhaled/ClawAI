@@ -23,6 +23,7 @@ import { UsersModule } from '../modules/users/users.module';
 import { HealthModule } from '../modules/health/health.module';
 import { DeploymentModule } from '../modules/deployment/deployment.module';
 import { SystemSettingsModule } from '../modules/system-settings/system-settings.module';
+import { OpsTokensModule } from '../modules/ops-tokens/ops-tokens.module';
 import { CreditModule } from '../modules/credit/credit.module';
 import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statistics.module';
 
@@ -87,6 +88,7 @@ import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statist
     HealthModule,
     DeploymentModule,
     SystemSettingsModule,
+    OpsTokensModule,
     CreditModule,
     AdminStatisticsModule,
     ThrottlerModule.forRoot([

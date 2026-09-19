@@ -260,6 +260,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/ops/",
+      "port": 4011,
+      "service": "server-logs-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/payments",
       "port": 4018,
       "service": "payment-service",

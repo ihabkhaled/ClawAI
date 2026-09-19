@@ -128,3 +128,11 @@ The `X-Request-ID` header flows through the entire request lifecycle:
 | POST   | `/api/v1/server-logs/batch`             | Service token | Same                                                                      |
 
 Shipped rows carry `action=container_log`. Runbook: [skills/read-production-logs.md](../../skills/read-production-logs.md).
+
+## Ops read channel (ADR-102)
+
+| Method | Route                         | Auth                    |
+| ------ | ----------------------------- | ----------------------- |
+| GET    | `/api/v1/ops/logs`            | `Ops <token>` LOGS_READ |
+| GET    | `/api/v1/ops/logs/stats`      | same                    |
+| GET    | `/api/v1/ops/logs/timeseries` | same                    |

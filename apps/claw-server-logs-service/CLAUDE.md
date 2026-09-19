@@ -126,6 +126,13 @@ After implementing any change to this service:
 - Never log per-insert lines at info or above: the shipper skips this
   service's info lines, and anything louder loops.
 
+## Ops read channel (ADR-102)
+
+- `modules/ops`: `GET /ops/logs*` behind `OpsTokenGuard`
+  (`Authorization: Ops <token>`). It verifies via auth-service, caches for
+  30 s and fails closed.
+- Read-only: never add a POST under `/ops`.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

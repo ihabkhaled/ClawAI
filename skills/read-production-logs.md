@@ -17,7 +17,27 @@ Every container's stdout/stderr lands in `server_logs` (MongoDB, 30-day TTL):
 `serviceName` is the compose service: `chat-service`, `nginx`, `pg-chat`, and
 so on.
 
-## 2. Query them
+## 2. Query them without SSH or a browser (ops token, ADR-102)
+
+An admin mints a read-only token once:
+
+```bash
+curl -sk -X POST https://claw-ai.co/api/v1/admin/ops-tokens -H "Authorization: Bearer $ADMIN"   -H 'Content-Type: application/json' -d '{"name":"agent channel","scopes":["LOGS_READ"],"ttlDays":30}'
+# -> {"token":"claw_ops_...","view":{...}}   the token is shown ONCE
+```
+
+Then anyone holding it can read (and nothing else):
+
+```bash
+curl -sk "https://claw-ai.co/api/v1/ops/logs?level=ERROR&limit=50" -H "Authorization: Ops $OPS"
+curl -sk "https://claw-ai.co/api/v1/ops/logs/stats" -H "Authorization: Ops $OPS"
+curl -sk "https://claw-ai.co/api/v1/ops/logs/timeseries?interval=5" -H "Authorization: Ops $OPS"
+curl -sk "https://claw-ai.co/api/v1/health"   # public, no token
+```
+
+Revoke: `DELETE /api/v1/admin/ops-tokens/<id>`. Takes effect within 30 s.
+
+## 3. Query them with an admin session
 
 ```bash
 TOK=<admin access token>
@@ -29,7 +49,7 @@ curl -sk "https://claw-ai.co/api/v1/server-logs?requestId=<id>" -H "Authorizatio
 Filters include `serviceName`, `level`, `search`, `messageContains`,
 `startDate`/`endDate`, `traceId` and `statusCode`.
 
-## 3. When nothing arrives
+## 4. When nothing arrives
 
 1. `docker logs claw-log-shipper`:
    - `400` means the payload shape is wrong;
@@ -41,7 +61,7 @@ Filters include `serviceName`, `level`, `search`, `messageContains`,
 3. Test the config itself:
    `docker run --rm -v "$PWD/infra/vector/vector.yaml:/etc/vector/vector.yaml:ro" timberio/vector:0.46.1-debian test /etc/vector/vector.yaml`
 
-## 4. Traps
+## 5. Traps
 
 - **Never** mount `/var/run/docker.sock` into the shipper. It is root on
   the host.

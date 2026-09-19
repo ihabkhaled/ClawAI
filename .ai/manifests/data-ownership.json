@@ -52,6 +52,7 @@
         "EmailVerificationToken",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
+        "OpsAccessToken",
         "PasswordResetToken",
         "Plan",
         "PlanFeatureRule",

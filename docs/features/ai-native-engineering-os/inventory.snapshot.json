@@ -632,6 +632,21 @@
         },
         {
           "method": "GET",
+          "route": "/admin/ops-tokens",
+          "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/ops-tokens",
+          "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/admin/ops-tokens/:id",
+          "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/plans",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
@@ -914,6 +929,11 @@
           "method": "POST",
           "route": "/internal/deployment/notify",
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/ops-tokens/verify",
+          "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/ops-token-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -2822,6 +2842,21 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-server-logs-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/ops/logs",
+          "source": "apps/claw-server-logs-service/src/modules/ops/controllers/ops-logs.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/ops/logs/stats",
+          "source": "apps/claw-server-logs-service/src/modules/ops/controllers/ops-logs.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/ops/logs/timeseries",
+          "source": "apps/claw-server-logs-service/src/modules/ops/controllers/ops-logs.controller.ts"
         },
         {
           "method": "GET",
@@ -7726,7 +7761,7 @@
           "file": "skills/publish-a-public-marketing-page.md"
         },
         {
-          "bytes": 1840,
+          "bytes": 2726,
           "file": "skills/read-production-logs.md"
         },
         {
@@ -8123,6 +8158,12 @@
         "location": "/api/v1/ollama",
         "port": 4008,
         "service": "ollama-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/ops/",
+        "port": 4011,
+        "service": "server-logs-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -8887,6 +8928,11 @@
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "FeatureUsageRecord"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "OpsAccessToken"
           },
           {
             "confidence": "verified",
@@ -9749,7 +9795,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 96
+        "testFiles": 97
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -9809,7 +9855,7 @@
       },
       "claw-server-logs-service": {
         "runner": "vitest",
-        "testFiles": 9
+        "testFiles": 10
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -10523,19 +10569,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 42,
-    "endpointCount": 662,
+    "endpointCount": 669,
     "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 155,
     "localeCount": 13,
-    "nginxRouteCount": 59,
+    "nginxRouteCount": 60,
     "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1281,
+    "totalTestFiles": 1283,
     "workspaceCount": 25
   }
 }

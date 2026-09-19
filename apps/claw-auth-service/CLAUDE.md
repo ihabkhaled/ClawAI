@@ -433,6 +433,15 @@ Persist only OTP and confirmation-token hashes. Enforce expiry, resend cooldown,
 
 **Batch deviation:** inline English SMTP templates intentionally follow the existing auth email adapter because this repository has no email-template or email-i18n layer. Do not invent a parallel template system as part of this batch.
 
+## Ops access tokens (ADR-102)
+
+- `modules/ops-tokens` mints read-only `claw_ops_` tokens. Only the SHA-256 is
+  stored, and the token is shown once.
+- Endpoints: `admin/ops-tokens` (list, create, revoke) and
+  `internal/ops-tokens/verify` (service token).
+- Never log a token or its hash.
+- Never add a write scope. A new read surface gets a new scope.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

@@ -577,6 +577,21 @@
       },
       {
         "method": "GET",
+        "route": "/admin/ops-tokens",
+        "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/ops-tokens",
+        "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/admin/ops-tokens/:id",
+        "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/plans",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
@@ -859,6 +874,11 @@
         "method": "POST",
         "route": "/internal/deployment/notify",
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/ops-tokens/verify",
+        "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/ops-token-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -2770,6 +2790,21 @@
       },
       {
         "method": "GET",
+        "route": "/ops/logs",
+        "source": "apps/claw-server-logs-service/src/modules/ops/controllers/ops-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ops/logs/stats",
+        "source": "apps/claw-server-logs-service/src/modules/ops/controllers/ops-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ops/logs/timeseries",
+        "source": "apps/claw-server-logs-service/src/modules/ops/controllers/ops-logs.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/server-logs",
         "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
       },
@@ -3348,5 +3383,5 @@
     ]
   },
   "generated": true,
-  "total": 662
+  "total": 669
 }

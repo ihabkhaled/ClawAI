@@ -16,6 +16,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { ServerLogsModule } from '../modules/server-logs/server-logs.module';
+import { OpsModule } from '../modules/ops/ops.module';
 import { HealthModule } from '../modules/health/health.module';
 
 @Module({
@@ -71,6 +72,7 @@ import { HealthModule } from '../modules/health/health.module';
     MongooseDatabaseModule,
     RedisModule,
     ServerLogsModule,
+    OpsModule,
     HealthModule,
     ThrottlerModule.forRoot([
       {

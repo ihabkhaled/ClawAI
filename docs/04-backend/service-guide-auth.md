@@ -472,3 +472,14 @@ dependency set with no build error. **auth-service must be healthy before
 payment-service starts** — see `docs/11-runbooks/runbook-payg-credit.md`. Both
 docker entrypoints swallow a seed failure, so verify the allowances by reading
 the table, never by reading the log.
+
+## Ops access tokens (ADR-102)
+
+| Method | Route                                | Auth                                                    |
+| ------ | ------------------------------------ | ------------------------------------------------------- |
+| GET    | `/api/v1/admin/ops-tokens`           | ADMIN + `ADMIN_SYSTEM_VIEW`                             |
+| POST   | `/api/v1/admin/ops-tokens`           | ADMIN + `ADMIN_PERMISSIONS_MANAGE`; token returned once |
+| DELETE | `/api/v1/admin/ops-tokens/:id`       | ADMIN + `ADMIN_PERMISSIONS_MANAGE`                      |
+| POST   | `/api/v1/internal/ops-tokens/verify` | Service token; not proxied                              |
+
+Table `ops_access_tokens` (migration `20260919120000_add_ops_access_tokens`).
