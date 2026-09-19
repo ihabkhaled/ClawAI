@@ -5,16 +5,16 @@ Next.js frontend + 6 shared packages). These documents say _what good testing is
 here; the _why_ (post-mortem lessons) lives in
 [`../memory/testing-strategy.md`](../memory/testing-strategy.md).
 
-## Runners (retained — no forced migration)
+## Runners
 
-| Layer                    | Runner             | Notes                                  |
-| ------------------------ | ------------------ | -------------------------------------- |
-| Backend unit/integration | **Jest** (ts-jest) | `*.spec.ts` co-located in `__tests__/` |
-| Frontend unit/component  | **Vitest**         | `*.test.ts` / `*.spec.ts`              |
-| End-to-end (browser)     | **Playwright**     | user journeys through the real UI      |
+| Layer                    | Runner           | Notes                                  |
+| ------------------------ | ---------------- | -------------------------------------- |
+| Backend unit/integration | **Vitest** (swc) | `*.spec.ts` co-located in `__tests__/` |
+| Frontend unit/component  | **Vitest**       | `*.test.ts` / `*.spec.ts`              |
+| End-to-end (browser)     | **Playwright**   | user journeys through the real UI      |
 
-Jest, Vitest, and Playwright are **retained**. We do not migrate to a single runner —
-each fits its layer, and migration is cost with no behavioral payoff (ADR-062).
+Every workspace runs **Vitest** (`vitest run`); Playwright stays for E2E. Jest was
+removed from all workspaces on 2026-09-17 (ADR-099, superseding ADR-062).
 
 ## Core principles
 

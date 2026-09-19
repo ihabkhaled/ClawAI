@@ -14,11 +14,11 @@
 | Frontend | Next.js **16.2**, React **19.2**, TanStack Query, Zustand, Tailwind, shadcn/ui                                                                              |
 | Language | TypeScript compiled by **tsgo** (`@typescript/native-preview`, the Go-native TS compiler) + **tsc-alias** for path rewriting — **NOT `tsc` / `nest build`** |
 | Lint     | ESLint **9** flat config, Prettier **3.8**                                                                                                                  |
-| Tests    | **jest** (backend, ts-jest), **vitest** (frontend), **playwright** (E2E)                                                                                    |
+| Tests    | **vitest** (every workspace, backend via `unplugin-swc`), **playwright** (E2E) — ADR-099                                                                    |
 | Packages | npm workspaces (`packages/*`, `apps/*`)                                                                                                                     |
 
 `typescript` is **aliased** to `@typescript/native-preview@beta`. Real `tsc` 6.x
-still resolves transitively (ts-jest uses it). CI links the native binary with
+still resolves transitively. CI links the native binary with
 `npm rebuild @typescript/native-preview`.
 
 ## Per-workspace scripts (the real ones)
@@ -32,7 +32,7 @@ uses Next + vitest.
 npm run typecheck   # tsgo --noEmit
 npm run lint        # eslint src/ --concurrency=4   (lint:strict adds --max-warnings 0)
 npm run build       # tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json
-npm test            # jest --passWithNoTests   (test:cov adds --coverage)
+npm test            # vitest run --passWithNoTests   (test:cov = vitest run --coverage)
 npm run dev         # tsgo build then concurrent tsgo --watch + tsc-alias --watch + nodemon dist/main.js
 npm start           # node dist/main.js
 ```

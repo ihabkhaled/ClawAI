@@ -5,6 +5,7 @@ import {
   CRAWL_CONCURRENCY,
   CRAWL_DEFAULT_MAX_PAGES,
   CRAWL_DEFAULT_SITEMAP_PATH,
+  CRAWL_MAX_LINK_DEPTH,
   CRAWL_MAX_PAGES_CEILING,
   CRAWL_MAX_SITEMAP_FETCHES,
   CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK,
@@ -24,7 +25,12 @@ import type { FeedEntry } from '../../../common/types/feed.types';
 import type { RobotsTxtResult } from '../../../common/types/robots-txt.types';
 import type { SitemapUrlEntry } from '../../../common/types/sitemap.types';
 import type { FetchResult } from '../../fetch/types/fetch.types';
-import type { CrawlCandidate, CrawlDiscoveryResult, CrawlFetchResult } from '../types/crawl.types';
+import type {
+  CrawlCandidate,
+  CrawlDiscoveryResult,
+  CrawlFetchResult,
+  CrawlLinkFollowContext,
+} from '../types/crawl.types';
 import type { EvidenceItem, ResearchTraceEntry } from '../types/evidence-bundle.types';
 
 /**
@@ -99,7 +105,7 @@ export class SiteCrawlManager {
     // large site "the pricing page" was simply never among the first nineteen
     // and the question was answered from the blog index instead.
     const toFetch = rankCandidatesByIntent(discovery.candidates, intent).slice(0, remainingBudget);
-    const { items, skippedByRobots } = await this.fetchCandidates(
+    const first = await this.fetchCandidates(
       userId,
       homepage,
       toFetch,
@@ -107,7 +113,18 @@ export class SiteCrawlManager {
       trace,
       warnings,
       correlationId,
+      { alreadyRead: 0, planned: pageBudget },
     );
+    const items = first.items;
+    const skippedByRobots =
+      first.skippedByRobots +
+      (await this.followLinks(
+        userId,
+        items,
+        [homepage.finalUrl, ...discovery.candidates.map((candidate) => candidate.url)],
+        [...homepage.links, ...first.links],
+        { siteOrigin, intent, pageBudget, robots, trace, warnings, correlationId },
+      ));
 
     if (skippedByRobots > 0) {
       warnings.push(`${String(skippedByRobots)} page(s) skipped: disallowed by robots.txt.`);
@@ -204,14 +221,17 @@ export class SiteCrawlManager {
    */
   private async fetchCandidates(
     userId: string,
-    homepage: FetchResult,
+    homepage: FetchResult | null,
     toFetch: CrawlCandidate[],
     robots: RobotsTxtResult,
     trace: ResearchTraceEntry[],
     warnings: string[],
     correlationId: string | undefined,
+    progress: { alreadyRead: number; planned: number } = { alreadyRead: 0, planned: 0 },
   ): Promise<CrawlFetchResult> {
-    const items: EvidenceItem[] = [this.toEvidence(homepage, CrawlDiscoveryMethod.USER)];
+    const items: EvidenceItem[] =
+      homepage === null ? [] : [this.toEvidence(homepage, CrawlDiscoveryMethod.USER)];
+    const links: string[] = [];
     let skippedByRobots = 0;
 
     await runWithConcurrencyLimit(toFetch, CRAWL_CONCURRENCY, async (candidate) => {
@@ -226,17 +246,21 @@ export class SiteCrawlManager {
       const result = await this.fetchOne(userId, candidate.url, trace, warnings, 'crawl.page');
       if (result !== null) {
         items.push(this.toEvidence(result, candidate.discoveryMethod));
+        links.push(...result.links);
       }
       this.progressPublisher.publish(
         correlationId,
         'page',
         `Fetched ${candidate.url}`,
-        items.length,
-        toFetch.length + 1,
+        progress.alreadyRead + items.length,
+        Math.max(
+          progress.planned,
+          progress.alreadyRead + toFetch.length + (homepage === null ? 0 : 1),
+        ),
       );
     });
 
-    return { items, skippedByRobots };
+    return { items, skippedByRobots, links };
   }
 
   private async fetchRobotsTxt(
@@ -416,6 +440,54 @@ export class SiteCrawlManager {
       trace.push(traceEntry(phase, 'warning', Date.now() - start, `${url}: ${message}`));
       return null;
     }
+  }
+
+  /**
+   * Breadth-first beyond the first hop, until the budget is met. Every page
+   * already queued or read goes into `seen`, so no page is fetched twice. Appends
+   * to `items` and returns how many links robots.txt refused.
+   */
+  private async followLinks(
+    userId: string,
+    items: EvidenceItem[],
+    alreadyQueued: string[],
+    firstFrontier: string[],
+    context: CrawlLinkFollowContext,
+  ): Promise<number> {
+    const seen = new Set<string>(alreadyQueued.map((url) => this.normalize(url)));
+    let skippedByRobots = 0;
+    let frontier = firstFrontier;
+    for (
+      let depth = 1;
+      depth <= CRAWL_MAX_LINK_DEPTH && items.length < context.pageBudget;
+      depth += 1
+    ) {
+      const next: CrawlCandidate[] = [];
+      for (const link of frontier) {
+        this.addCandidate(next, seen, context.siteOrigin, link, CrawlDiscoveryMethod.LINK);
+      }
+      if (next.length === 0) {
+        break;
+      }
+      const wave = rankCandidatesByIntent(next, context.intent).slice(
+        0,
+        context.pageBudget - items.length,
+      );
+      const fetched = await this.fetchCandidates(
+        userId,
+        null,
+        wave,
+        context.robots,
+        context.trace,
+        context.warnings,
+        context.correlationId,
+        { alreadyRead: items.length, planned: context.pageBudget },
+      );
+      items.push(...fetched.items);
+      skippedByRobots += fetched.skippedByRobots;
+      frontier = fetched.links;
+    }
+    return skippedByRobots;
   }
 
   private addCandidate(

@@ -1,6 +1,6 @@
 # Testing Strategy
 
-> Unit vs integration vs E2E, Jest (backend) vs Vitest (frontend), and test pyramid.
+> Unit vs integration vs E2E, Vitest (backend + frontend), and test pyramid.
 
 ---
 
@@ -10,41 +10,41 @@
            /  E2E Tests  \           Playwright (browser)
           / (Playwright)   \         Few, slow, high confidence
          /------------------\
-        /  Integration Tests  \      Jest (service-level)
+        /  Integration Tests  \      Vitest (service-level)
        / (service + mocks)     \     Moderate count, moderate speed
       /------------------------\
-     /      Unit Tests           \   Jest (backend) + Vitest (frontend)
+     /      Unit Tests           \   Vitest (backend + frontend)
     / (functions, DTOs, utilities) \ Many, fast, focused
    /--------------------------------\
 ```
 
-| Layer       | Tool        | Speed  | Count    | What It Tests                            |
-| ----------- | ----------- | ------ | -------- | ---------------------------------------- |
-| Unit        | Jest/Vitest | Fast   | Many     | Functions, DTOs, utilities, pure logic   |
-| Integration | Jest        | Medium | Moderate | Service methods with mocked dependencies |
-| E2E         | Playwright  | Slow   | Few      | Full user flows through the browser      |
+| Layer       | Tool       | Speed  | Count    | What It Tests                            |
+| ----------- | ---------- | ------ | -------- | ---------------------------------------- |
+| Unit        | Vitest     | Fast   | Many     | Functions, DTOs, utilities, pure logic   |
+| Integration | Vitest     | Medium | Moderate | Service methods with mocked dependencies |
+| E2E         | Playwright | Slow   | Few      | Full user flows through the browser      |
 
 ---
 
 ## 2. Test Framework Matrix
 
-| Aspect              | Backend (Jest)                  | Frontend (Vitest)               |
+| Aspect              | Backend (Vitest)                | Frontend (Vitest)               |
 | ------------------- | ------------------------------- | ------------------------------- |
-| Framework           | Jest                            | Vitest                          |
+| Framework           | Vitest                          | Vitest                          |
 | File extension      | `*.spec.ts`                     | `*.test.ts` / `*.test.tsx`      |
 | Location            | `__tests__/` adjacent to source | `__tests__/` adjacent to source |
 | Environment         | Node.js                         | jsdom                           |
-| Mocking             | `jest.fn()`, `jest.mock()`      | `vi.fn()`, `vi.mock()`          |
-| Coverage tool       | `jest --coverage`               | `vitest --coverage`             |
-| Watch mode          | `jest --watch`                  | `vitest` (watch by default)     |
-| Config file         | `jest.config.ts` per service    | `vitest.config.ts` in frontend  |
+| Mocking             | `vi.fn()`, `vi.mock()`          | `vi.fn()`, `vi.mock()`          |
+| Coverage tool       | `vitest run --coverage`         | `vitest --coverage`             |
+| Watch mode          | `vitest` (watch)                | `vitest` (watch by default)     |
+| Config file         | `vitest.config.ts` per service  | `vitest.config.ts` in frontend  |
 | ESLint restrictions | All OFF in test files           | All OFF in test files           |
 
 ---
 
 ## 3. Test Inventory
 
-### Backend Tests (Jest) -- 38+ test files across 17 services
+### Backend Tests (Vitest) -- 38+ test files across 17 services
 
 | Service                      | Files | Focus                                            |
 | ---------------------------- | ----- | ------------------------------------------------ |
@@ -159,20 +159,20 @@ npm run test --workspace=apps/claw-chat-service
 npm run test --workspace=apps/claw-frontend
 
 # Watch mode (backend)
-cd apps/claw-auth-service && npx jest --watch
+cd apps/claw-auth-service && npx vitest
 
 # Watch mode (frontend)
 cd apps/claw-frontend && npx vitest
 
 # Single test file (backend)
-cd apps/claw-auth-service && npx jest src/modules/auth/managers/__tests__/auth.manager.spec.ts
+cd apps/claw-auth-service && npx vitest run src/modules/auth/managers/__tests__/auth.manager.spec.ts
 
 # Single test file (frontend)
 cd apps/claw-frontend && npx vitest src/utilities/__tests__/string.utility.test.ts
 
 # Coverage
 cd apps/claw-frontend && npx vitest --coverage
-cd apps/claw-auth-service && npx jest --coverage
+cd apps/claw-auth-service && npx vitest run --coverage
 ```
 
 ---

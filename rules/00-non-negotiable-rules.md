@@ -18,7 +18,7 @@ Every workspace: all 17 `apps/claw-*` services, `apps/claw-frontend`, all six
 1. **Run knowledge context first.** Before any change, run
    `npm run knowledge:context -- --task="…"` and read `.ai/local/current-context.md`.
 2. **A test for every change.** New/changed behavior ships with a new/changed
-   Jest or Vitest test. Coverage may not drop below the per-workspace floor.
+   Vitest test. Coverage may not drop below the per-workspace floor.
 3. **i18n for all user-facing text.** Every string a user can see is rendered via
    `t('key')` and exists in all 13 locale files (`en, ar, de, es, fa, fr, hi, it, ja, pt, ru, th, zh`).
 4. **TSX = render only.** `.tsx` files contain component render composition and a

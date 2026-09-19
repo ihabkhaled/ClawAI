@@ -8,14 +8,14 @@
 
 ClawAI enforces quality at two levels:
 
-| Gate           | When            | Tool        | Threshold | Blocks      |
-| -------------- | --------------- | ----------- | --------- | ----------- |
-| Formatting     | Pre-commit      | Prettier    | Auto-fix  | Commit      |
-| Linting        | Pre-commit + CI | ESLint 9    | 0 errors  | Commit + PR |
-| Type checking  | Pre-commit + CI | TypeScript  | 0 errors  | Commit + PR |
-| Build          | Pre-commit + CI | tsc / Next  | 0 errors  | Commit + PR |
-| Tests          | Pre-commit + CI | Jest/Vitest | All pass  | Commit + PR |
-| Commit message | Commit          | commitlint  | Format    | Commit      |
+| Gate           | When            | Tool       | Threshold | Blocks      |
+| -------------- | --------------- | ---------- | --------- | ----------- |
+| Formatting     | Pre-commit      | Prettier   | Auto-fix  | Commit      |
+| Linting        | Pre-commit + CI | ESLint 9   | 0 errors  | Commit + PR |
+| Type checking  | Pre-commit + CI | TypeScript | 0 errors  | Commit + PR |
+| Build          | Pre-commit + CI | tsc / Next | 0 errors  | Commit + PR |
+| Tests          | Pre-commit + CI | Vitest     | All pass  | Commit + PR |
+| Commit message | Commit          | commitlint | Format    | Commit      |
 
 ---
 
@@ -87,7 +87,7 @@ Builds all workspaces for production.
 npm run test
 ```
 
-Runs the full test suite (Jest for backend, Vitest for frontend).
+Runs the full test suite (Vitest in every workspace).
 
 **What it catches**:
 
@@ -110,7 +110,7 @@ Push/PR to main or develop
     |
     +-- Job 2: Typecheck (TypeScript)
     |
-    +-- Job 3: Test (Jest + Vitest)
+    +-- Job 3: Test (Vitest)
     |
     +-------+-------+
             |
@@ -204,7 +204,7 @@ A PR cannot be merged unless ALL of the following pass in CI:
 
 1. **Lint job**: 0 ESLint errors across all workspaces
 2. **Typecheck job**: 0 TypeScript errors with strict mode
-3. **Test job**: All Jest and Vitest tests pass
+3. **Test job**: All Vitest tests pass
 4. **Build job**: Production build succeeds for all services and frontend
 5. **Code review**: At least one approval from a reviewer
 

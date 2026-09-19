@@ -2,7 +2,7 @@
 
 How ClawAI decides what to test and how much. Grounded in the monorepo's layering
 (controller→service→repository/manager; page→controller-hook→service→repository) and
-the retained runner matrix (Jest / Vitest / Playwright).
+the runner matrix (Vitest everywhere / Playwright for E2E — ADR-099).
 
 ## The test pyramid, applied here
 

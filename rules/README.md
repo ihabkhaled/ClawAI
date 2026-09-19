@@ -70,7 +70,7 @@ explicitly and falls back to review. The mechanism vocabulary:
 | --------------------- | ------------------------------------------------------------------------- |
 | **ESLint**            | Flat-config rule (`eslint.config.*`), often `no-restricted-syntax`.       |
 | **TS config**         | `tsconfig` strictness / `tsgo --noEmit` typecheck.                        |
-| **Unit test**         | Jest (backend) / Vitest (frontend) assertion.                             |
+| **Unit test**         | Vitest assertion (every workspace).                                       |
 | **Architecture test** | A test that asserts structure (layering, boundaries, no cross-DB import). |
 | **Knowledge check**   | `npm run knowledge:check` / `knowledge:verify` against `.ai/manifests/`.  |
 | **CI job**            | A `.github/workflows/ci.yml` job (lint / typecheck / test / build).       |

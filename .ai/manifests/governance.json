@@ -9,7 +9,7 @@
       "file": "CODEX.md"
     },
     {
-      "bytes": 28213,
+      "bytes": 28182,
       "file": "cursor.md"
     },
     {
@@ -58,7 +58,7 @@
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 6905,
+      "bytes": 6897,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
@@ -90,7 +90,7 @@
       "file": "rules/04-nextjs-app-router.md"
     },
     {
-      "bytes": 11446,
+      "bytes": 11482,
       "file": "rules/04-testing-rules.md"
     },
     {
@@ -130,7 +130,7 @@
       "file": "rules/09-backend-services.md"
     },
     {
-      "bytes": 11619,
+      "bytes": 11638,
       "file": "rules/09-refactor-rules.md"
     },
     {
@@ -146,7 +146,7 @@
       "file": "rules/12-types-enums-constants-and-declaration-ownership.md"
     },
     {
-      "bytes": 5535,
+      "bytes": 5714,
       "file": "rules/13-external-library-wrappers-and-adapters.md"
     },
     {
@@ -182,7 +182,7 @@
       "file": "rules/21-security-and-secrets.md"
     },
     {
-      "bytes": 3578,
+      "bytes": 3581,
       "file": "rules/22-testing-and-coverage.md"
     },
     {
@@ -202,7 +202,7 @@
       "file": "rules/26-prompt-pack-intake-protocol.md"
     },
     {
-      "bytes": 15803,
+      "bytes": 15798,
       "file": "rules/27-engineering-mindsets.md"
     },
     {
@@ -218,7 +218,7 @@
       "file": "rules/30-agent-self-regulation-and-loop-prevention.md"
     },
     {
-      "bytes": 9698,
+      "bytes": 9704,
       "file": "rules/31-anti-gaming-and-semantic-compliance.md"
     },
     {
@@ -286,7 +286,7 @@
       "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
     },
     {
-      "bytes": 2978,
+      "bytes": 2935,
       "file": "rules/48-lint-and-test-only-what-changed.md"
     },
     {
@@ -294,7 +294,7 @@
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
-      "bytes": 4630,
+      "bytes": 5004,
       "file": "rules/50-agentic-research-loop-and-narration.md"
     },
     {
@@ -372,7 +372,7 @@
       "file": "skills/add-event-consumer.md"
     },
     {
-      "bytes": 4179,
+      "bytes": 4181,
       "file": "skills/add-library-adapter.md"
     },
     {
@@ -404,7 +404,7 @@
       "file": "skills/audit-conversational-context.md"
     },
     {
-      "bytes": 5494,
+      "bytes": 5496,
       "file": "skills/backend-architecture-review.md"
     },
     {
@@ -412,7 +412,7 @@
       "file": "skills/blocker-validation.md"
     },
     {
-      "bytes": 5488,
+      "bytes": 5500,
       "file": "skills/change-a-transactional-email.md"
     },
     {
@@ -424,7 +424,7 @@
       "file": "skills/communicate-briefly.md"
     },
     {
-      "bytes": 4749,
+      "bytes": 4751,
       "file": "skills/create-backend-module.md"
     },
     {
@@ -444,11 +444,11 @@
       "file": "skills/create-frontend-module.md"
     },
     {
-      "bytes": 4206,
+      "bytes": 4208,
       "file": "skills/create-manager-or-use-case.md"
     },
     {
-      "bytes": 6443,
+      "bytes": 6445,
       "file": "skills/create-microservice.md"
     },
     {
@@ -460,11 +460,11 @@
       "file": "skills/create-query.md"
     },
     {
-      "bytes": 3719,
+      "bytes": 3721,
       "file": "skills/create-repository.md"
     },
     {
-      "bytes": 4058,
+      "bytes": 4060,
       "file": "skills/create-service.md"
     },
     {
@@ -484,7 +484,7 @@
       "file": "skills/debug-an-attachment-the-model-cannot-read.md"
     },
     {
-      "bytes": 3724,
+      "bytes": 3726,
       "file": "skills/debug-flaky-test.md"
     },
     {
@@ -492,7 +492,7 @@
       "file": "skills/deploy-payg-credit.md"
     },
     {
-      "bytes": 6173,
+      "bytes": 6197,
       "file": "skills/execute-prompt-pack.md"
     },
     {
@@ -588,7 +588,7 @@
       "file": "skills/verify-responsive-layout-in-browser.md"
     },
     {
-      "bytes": 2655,
+      "bytes": 3043,
       "file": "skills/verify-the-research-loop-live.md"
     },
     {
@@ -600,15 +600,15 @@
       "file": "skills/write-backend-e2e-tests.md"
     },
     {
-      "bytes": 5067,
+      "bytes": 5072,
       "file": "skills/write-integration-tests.md"
     },
     {
-      "bytes": 5135,
+      "bytes": 5142,
       "file": "skills/write-service-tests.md"
     },
     {
-      "bytes": 5096,
+      "bytes": 5134,
       "file": "skills/write-unit-tests.md"
     }
   ]

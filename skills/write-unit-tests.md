@@ -4,7 +4,6 @@ summary: Write pure unit tests for utilities, DTOs, and pure functions with DTO 
 task_keywords:
   [
     unit test,
-    jest,
     vitest,
     dto fuzz,
     zod schema test,
@@ -15,7 +14,7 @@ task_keywords:
     empty,
     overflow,
     coverage,
-    ts-jest,
+    unplugin-swc,
     spec.ts,
   ]
 applies_to:
@@ -30,7 +29,7 @@ validation_lane: cd <workspace> && npm run typecheck && npm run lint && npm test
 
 # Skill: Write Unit Tests
 
-Unit tests exercise a single unit — a utility, a Zod DTO, a pure function — in isolation with zero I/O. They are the TDD floor: write the failing test BEFORE the implementation. Backend uses Jest (ts-jest, `*.spec.ts` in `__tests__/`); frontend uses Vitest (`*.test.ts`/`*.spec.ts`). Test files have all ESLint restrictions OFF and `any` is allowed.
+Unit tests exercise a single unit — a utility, a Zod DTO, a pure function — in isolation with zero I/O. They are the TDD floor: write the failing test BEFORE the implementation. Every workspace uses Vitest (ADR-099): backend `*.spec.ts` in `__tests__/` (swc transform for decorator metadata), frontend `*.test.ts`/`*.spec.ts`. Test files have all ESLint restrictions OFF and `any` is allowed.
 
 ## When to use
 

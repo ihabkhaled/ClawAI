@@ -12,17 +12,15 @@
 
 Write failing tests BEFORE writing the implementation code.
 
-**Coverage target (updated 2026-04-26): ≥ 92 % on every microservice and the frontend, all four jest/vitest metrics (statements, branches, functions, lines).** The 95 %-on-new-code rule still applies for new code added in a feature commit; the 92 % flagship is the per-service global floor enforced via CI.
+**Coverage target (updated 2026-04-26): ≥ 92 % on every microservice and the frontend, all four Vitest coverage metrics (statements, branches, functions, lines).** The 95 %-on-new-code rule still applies for new code added in a feature commit; the 92 % flagship is the per-service global floor enforced via CI.
 
-Per-service `jest.config.ts` MUST contain:
+Per-service `vitest.config.ts` MUST contain:
 
 ```ts
-coverageThreshold: {
-  global: {
-    statements: 92,
-    branches: 92,
-    functions: 92,
-    lines: 92,
+test: {
+  coverage: {
+    provider: 'v8',
+    thresholds: { statements: 92, branches: 92, functions: 92, lines: 92 },
   },
 },
 ```
@@ -50,7 +48,7 @@ Test case types required per subject:
 6. Concurrent/idempotent (same call twice produces safe result)
 ```
 
-**Backend**: Jest (`apps/<service>/__tests__/`)
+**Backend**: Vitest (`apps/<service>/src/**/__tests__/*.spec.ts`)
 **Frontend**: Vitest (`apps/claw-frontend/src/__tests__/`)
 
 ---
@@ -347,10 +345,10 @@ Date: YYYY-MM-DD HH:MM
 
 ## Enforcement
 
-- **Unit test** — Jest (backend) / Vitest (frontend) via `npm run affected:test`.
+- **Unit test** — Vitest (every workspace) via `npm run affected:test`.
 - **CI job** — the per-package test matrix in `.github/workflows/ci.yml`.
-- **Coverage threshold** — `coverageThreshold` in each service's
-  `jest.config.ts`; a drop below the floor fails the run.
+- **Coverage threshold** — `test.coverage.thresholds` in each service's
+  `vitest.config.ts`; a drop below the floor fails the run.
 - **Review checklist** — a reviewer rejects tests that assert a mock's own
   return value, or that cover only the happy path.
 

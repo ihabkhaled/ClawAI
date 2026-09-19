@@ -61,6 +61,7 @@ describe('ResearchOrchestratorManager', () => {
       query: null,
       maxPages: 1,
       narration: 'No web needed.',
+      thinking: '',
       decidedBy: 'm1',
     });
 
@@ -76,6 +77,7 @@ describe('ResearchOrchestratorManager', () => {
       query: null,
       maxPages: 14,
       narration: 'Reading it.',
+      thinking: '',
       decidedBy: 'm1',
     });
     mockedRunResearch.mockResolvedValue(runWith('SITE_CRAWL', ['https://example.com/']) as never);
@@ -106,12 +108,14 @@ describe('ResearchOrchestratorManager', () => {
       query: 'example competitors',
       maxPages: 8,
       narration: 'Site first.',
+      thinking: 'They want the company explained, so the site comes first.',
       decidedBy: 'm1',
     });
     followUpAfterCrawl.mockResolvedValue({
       needsSearch: true,
       query: 'example vs rivals',
       narration: 'Checking rivals.',
+      thinking: 'The pages cover the product but not its rivals.',
     });
     mockedRunResearch
       .mockResolvedValueOnce(runWith('SITE_CRAWL', ['https://example.com/']) as never)
@@ -131,11 +135,14 @@ describe('ResearchOrchestratorManager', () => {
       'https://example.com/',
       'https://rival.com/',
     ]);
+    // The AI's own thinking is part of the stored log, not only the steps.
     expect(kinds()).toEqual([
+      NarrationKind.AI_THOUGHT,
       NarrationKind.PLANNED,
       NarrationKind.CRAWL_STARTED,
       NarrationKind.CRAWL_DONE,
       NarrationKind.BACK_TO_AI,
+      NarrationKind.AI_THOUGHT,
       NarrationKind.REPLANNED,
       NarrationKind.SEARCH_STARTED,
       NarrationKind.SEARCH_DONE,
@@ -149,9 +156,15 @@ describe('ResearchOrchestratorManager', () => {
       query: 'x',
       maxPages: 8,
       narration: '',
+      thinking: '',
       decidedBy: 'm1',
     });
-    followUpAfterCrawl.mockResolvedValue({ needsSearch: false, query: null, narration: '' });
+    followUpAfterCrawl.mockResolvedValue({
+      needsSearch: false,
+      query: null,
+      narration: '',
+      thinking: '',
+    });
     mockedRunResearch.mockResolvedValue(runWith('SITE_CRAWL', ['https://example.com/']) as never);
 
     await manager.run(input);
@@ -167,6 +180,7 @@ describe('ResearchOrchestratorManager', () => {
       query: 'q',
       maxPages: 1,
       narration: '',
+      thinking: '',
       decidedBy: 'm1',
     });
     mockedRunResearch.mockResolvedValue(null);

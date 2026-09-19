@@ -218,7 +218,10 @@ describe('SiteCrawlManager', () => {
     expect(urls).not.toContain('https://other-domain.com/ignored');
   });
 
-  it('does not fall back to homepage links when the sitemap already has enough URLs', async () => {
+  // Sitemap pages come first; links only fill budget the sitemap left over.
+  // (It used to be one hop only, so a site without a big sitemap could never
+  // yield more than a dozen pages however many were asked for.)
+  it('reads sitemap pages first and follows links only with budget left', async () => {
     fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
       if (url === 'https://example.com/robots.txt') {
         return Promise.reject(new Error('404'));
@@ -250,10 +253,27 @@ describe('SiteCrawlManager', () => {
       toolsUsed,
       warnings,
       undefined,
+      4,
     );
 
+    // homepage + the 3 sitemap pages fill a budget of 4: the link waits.
     expect(items.map((item) => item.url)).not.toContain(
       'https://example.com/should-not-be-fetched',
+    );
+
+    const more = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+      10,
+    );
+    const urls = more.map((item) => item.url);
+    expect(urls).toContain('https://example.com/should-not-be-fetched');
+    expect(urls.indexOf('https://example.com/should-not-be-fetched')).toBeGreaterThan(
+      urls.indexOf('https://example.com/c'),
     );
   });
 
@@ -588,7 +608,7 @@ describe('SiteCrawlManager', () => {
         undefined,
         500,
       );
-      expect(items.length).toBeLessThanOrEqual(40);
+      expect(items.length).toBeLessThanOrEqual(200);
     });
 
     // Sitemaps are in document order, so on a big site the page the question
@@ -610,5 +630,36 @@ describe('SiteCrawlManager', () => {
         'https://example.com/pricing',
       ]);
     });
+  });
+
+  // A site with no sitemap at all used to stop at its homepage's own links.
+  it('follows links hop by hop to fill a large budget on a site with no sitemap', async () => {
+    fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+      if (url.endsWith('/robots.txt') || url.endsWith('/sitemap.xml')) {
+        return Promise.reject(new Error('not found'));
+      }
+      // every page links to two deeper pages: /p -> /p0, /p1 -> /p00, /p01 ...
+      const path = new URL(url).pathname.replace(/\/$/u, '') || '/p';
+      return Promise.resolve(
+        buildFetchResult({
+          url,
+          finalUrl: url,
+          links: [`https://example.com${path}0`, `https://example.com${path}1`],
+        }),
+      );
+    });
+
+    const items = await manager.crawl(
+      'u1',
+      'https://example.com/',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+      12,
+    );
+
+    expect(items).toHaveLength(12);
+    expect(new Set(items.map((item) => item.url)).size).toBe(12);
   });
 });

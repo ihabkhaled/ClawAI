@@ -5,7 +5,7 @@ Ground truth: `.ai/manifests/tests.json` (**678 test files** total),
 
 ## Runners
 
-- **Backend services + shared packages → jest** (ts-jest). Test files are
+- **Every workspace → vitest** (`vitest run`; backend + shared packages via `unplugin-swc` for decorator metadata). Migrated from Jest on 2026-09-17 (ADR-099). Backend test files are
   `*.spec.ts`, colocated in `__tests__/`.
 - **Frontend → vitest** (`vitest run`). 211 test files. `*.test.ts` / `*.spec.ts`.
 - **E2E → playwright** (`npm run test:e2e` in the frontend).
@@ -15,34 +15,34 @@ Ground truth: `.ai/manifests/tests.json` (**678 test files** total),
 | Workspace                           | Runner | Files |
 | ----------------------------------- | ------ | ----- |
 | claw-frontend                       | vitest | 211   |
-| claw-workspace-service              | jest   | 66    |
-| claw-chat-service                   | jest   | 64    |
-| claw-routing-service                | jest   | 50    |
-| claw-payment-service                | jest   | 76    |
-| claw-auth-service                   | jest   | 36    |
-| @claw/shared-utilities              | jest   | 23    |
-| claw-ollama-service                 | jest   | 17    |
-| claw-connector-service              | jest   | 16    |
-| claw-llamacpp-service               | jest   | 16    |
-| claw-file-service                   | jest   | 15    |
-| claw-audit-service                  | jest   | 15    |
-| claw-research-service               | jest   | 14    |
-| claw-memory-service                 | jest   | 12    |
-| claw-agent-service                  | jest   | 9     |
-| claw-image-service                  | jest   | 9     |
-| claw-file-generation-service        | jest   | 7     |
-| claw-server-logs-service            | jest   | 7     |
-| claw-client-logs-service            | jest   | 6     |
-| claw-health-service                 | jest   | 4     |
-| @claw/shared-entitlements           | jest   | 2     |
-| @claw/shared-constants              | jest   | 2     |
-| @claw/shared-types                  | jest   | 1     |
-| @claw/shared-auth / shared-rabbitmq | jest   | 0     |
+| claw-workspace-service              | vitest | 66    |
+| claw-chat-service                   | vitest | 64    |
+| claw-routing-service                | vitest | 50    |
+| claw-payment-service                | vitest | 76    |
+| claw-auth-service                   | vitest | 36    |
+| @claw/shared-utilities              | vitest | 23    |
+| claw-ollama-service                 | vitest | 17    |
+| claw-connector-service              | vitest | 16    |
+| claw-llamacpp-service               | vitest | 16    |
+| claw-file-service                   | vitest | 15    |
+| claw-audit-service                  | vitest | 15    |
+| claw-research-service               | vitest | 14    |
+| claw-memory-service                 | vitest | 12    |
+| claw-agent-service                  | vitest | 9     |
+| claw-image-service                  | vitest | 9     |
+| claw-file-generation-service        | vitest | 7     |
+| claw-server-logs-service            | vitest | 7     |
+| claw-client-logs-service            | vitest | 6     |
+| claw-health-service                 | vitest | 4     |
+| @claw/shared-entitlements           | vitest | 2     |
+| @claw/shared-constants              | vitest | 2     |
+| @claw/shared-types                  | vitest | 1     |
+| @claw/shared-auth / shared-rabbitmq | vitest | 0     |
 
 ## Coverage bar
 
 **≥92%** on all four metrics (statements, branches, functions, lines), enforced
-via `coverageThreshold` in each `jest.config.ts` / `vitest.config.ts`. Ratcheted,
+via `test.coverage.thresholds` in each `vitest.config.ts`. Ratcheted,
 never lowered — if a change drops a service below its threshold, fix the test gap
 before merging.
 
@@ -78,7 +78,7 @@ Unit tests are the floor. A feature also needs, per `CLAUDE.md` QE lifecycle and
 
 ```bash
 # Per touched folder (the gate lane)
-cd apps/claw-<service> && npm test           # jest
+cd apps/claw-<service> && npm test           # vitest run
 cd apps/claw-frontend  && npm test           # vitest run
 cd apps/claw-frontend  && npm run test:e2e   # playwright
 

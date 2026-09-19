@@ -66,10 +66,20 @@ describe('parseResearchPlan', () => {
   it('bounds the page count', () => {
     expect(
       plan({ action: 'crawl', urls: ['https://a.com/'], maxPages: 9999, narration: 'x' })?.maxPages,
-    ).toBe(30);
+    ).toBe(200);
     expect(
       plan({ action: 'crawl', urls: ['https://a.com/'], maxPages: -3, narration: 'x' })?.maxPages,
     ).toBe(12);
+  });
+
+  // Shown to the user as the AI thinking, so it is kept, trimmed and bounded.
+  it('keeps the planner thinking, bounded, and defaults it to empty', () => {
+    const long = 'why '.repeat(400);
+    expect(
+      plan({ action: 'search', urls: [], query: 'abc', narration: 'x', thinking: long })?.thinking
+        .length,
+    ).toBe(800);
+    expect(plan({ action: 'search', urls: [], query: 'abc', narration: 'x' })?.thinking).toBe('');
   });
 
   it('caps an over-long narration', () => {
@@ -89,6 +99,7 @@ describe('parseCrawlFollowUp', () => {
       needsSearch: true,
       query: 'acme competitors',
       narration: 'Checking rivals.',
+      thinking: '',
     });
   });
 

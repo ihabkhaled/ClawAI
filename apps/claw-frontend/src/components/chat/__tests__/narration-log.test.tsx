@@ -37,6 +37,25 @@ describe('NarrationLog', () => {
     expect(screen.getByText('narration.backToAi')).toBeInTheDocument();
   });
 
+  // The planner's thinking is stored with the answer, so the AI's own words
+  // survive a refresh - not only a line saying it was thinking.
+  it("shows the planner's thinking in the AI's voice", () => {
+    render(
+      <NarrationLog
+        entries={[
+          entry(NarrationKind.AI_THOUGHT, {
+            text: 'They want the pricing explained, so the site comes first.',
+          }),
+        ]}
+        isLive={false}
+        t={t}
+      />,
+    );
+
+    const line = screen.getByText('They want the pricing explained, so the site comes first.');
+    expect(line).toHaveClass('italic');
+  });
+
   // Open while the turn runs; collapsed once the answer is there, so the log
   // never stands between the reader and the reply.
   it('is open while live and collapsed once the answer is stored', () => {

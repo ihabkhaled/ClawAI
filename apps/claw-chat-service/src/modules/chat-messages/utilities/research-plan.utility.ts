@@ -8,6 +8,7 @@ import { PlannedResearchAction } from '../../../common/enums/planned-research-ac
 import {
   PLANNER_NARRATION_MAX_CHARS,
   PLANNER_QUERY_MAX_CHARS,
+  PLANNER_THINKING_MAX_CHARS,
 } from '../constants/research-plan.constants';
 import type { CrawlFollowUp, ResearchPlan } from '../types/research-gate.types';
 
@@ -57,6 +58,7 @@ export function parseResearchPlan(raw: string, userUrls: readonly string[]): Res
     query: readQuery(parsed['query']),
     maxPages: readMaxPages(parsed['maxPages']),
     narration: readNarration(parsed['narration']),
+    thinking: readThinking(parsed['thinking']),
     decidedBy: null,
   };
 }
@@ -71,6 +73,7 @@ export function parseCrawlFollowUp(raw: string): CrawlFollowUp | null {
     needsSearch: parsed['needsSearch'],
     query: readQuery(parsed['query']),
     narration: readNarration(parsed['narration']),
+    thinking: readThinking(parsed['thinking']),
   };
 }
 
@@ -125,4 +128,8 @@ function readMaxPages(value: unknown): number {
 
 function readNarration(value: unknown): string {
   return typeof value === 'string' ? value.trim().slice(0, PLANNER_NARRATION_MAX_CHARS) : '';
+}
+
+function readThinking(value: unknown): string {
+  return typeof value === 'string' ? value.trim().slice(0, PLANNER_THINKING_MAX_CHARS) : '';
 }

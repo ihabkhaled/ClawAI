@@ -54,9 +54,23 @@ AUTO research was a yes/no gate followed by one research run, all inside
 ## Consequences
 
 - The POST returns in tens of milliseconds regardless of research.
-- Crawls may read up to `CRAWL_MAX_PAGES_CEILING` (40) pages, ranked by overlap
+- Crawls may read up to `CRAWL_MAX_PAGES_CEILING` (200) pages, ranked by overlap
   with the question; the evidence cap grows with the crawl so fetched pages are
-  not discarded.
+  not discarded. Sitemap pages come first; when they cannot fill the budget the
+  crawler follows same-site links breadth-first for up to `CRAWL_MAX_LINK_DEPTH`
+  (3) hops. Before 2026-09-19 it was 40 pages and one hop, so a site without a
+  big sitemap stopped at its homepage links. Live: docs.nestjs.com gave 91
+  pages, every page reachable by links, with no fetch failures.
+- A big crawl is fitted to the ANSWERING model at context assembly
+  (`fitEvidenceToBudget`, 60% of the model's input window): all snippets shrink
+  evenly first, then the lowest-ranked pages are dropped and the model is told
+  how many. It fits against the whole window, never `tokenBudget`. That field
+  is what history may spend AFTER the evidence is counted, and a 91-page crawl
+  drove it to 0 in the first live run.
+- The planner writes a `thinking` field (plan and re-plan), stored as
+  `ai_thought` narration. The AI's reasoning therefore survives a refresh as
+  its own words, not only as an "AI is thinking" line. The answering model's
+  reasoning was already stored as `metadata.reasoning`.
 - A crawl then search produces ONE merged bundle, crawl first (the page the
   user named outranks anything discovered).
 - Known gap: a brief blank between the live log closing (on `done`) and the

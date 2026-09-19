@@ -1,16 +1,16 @@
 # Backend Testing Guide
 
-> Jest patterns, mocking Prisma, mocking RabbitMQ, test file structure, and examples.
+> Vitest patterns, mocking Prisma, mocking RabbitMQ, test file structure, and examples.
 
 ---
 
 ## 1. Configuration
 
-Each backend service has its own Jest configuration. Tests use:
+Each backend service has its own `vitest.config.ts`. Tests use:
 
 - **Extension**: `*.spec.ts`
 - **Location**: `__tests__/` directories adjacent to source
-- **Runner**: Jest with ts-jest transformer
+- **Runner**: Vitest (`vitest run`) with the `unplugin-swc` transform (emits decorator metadata Nest DI needs; esbuild does not). `globals: true`, so `describe`/`it`/`expect`/`vi` need no import
 - **Module aliases**: Path aliases matching `tsconfig.json`
 
 ### File Structure
@@ -107,24 +107,24 @@ Create a mock that mirrors the Prisma client structure:
 function createMockPrisma() {
   return {
     chatThread: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
     chatMessage: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
     // Add other models as needed
-    $transaction: jest.fn((fn) => fn(createMockPrisma())),
+    $transaction: vi.fn((fn) => fn(createMockPrisma())),
   };
 }
 ```
@@ -175,8 +175,8 @@ mockPrisma.$transaction.mockImplementation(async (fn) => fn(mockPrisma));
 ```typescript
 function createMockRabbitMQ() {
   return {
-    publish: jest.fn().mockResolvedValue(undefined),
-    subscribe: jest.fn(),
+    publish: vi.fn().mockResolvedValue(undefined),
+    subscribe: vi.fn(),
   };
 }
 ```
@@ -206,13 +206,13 @@ it('should publish thread.created event', async () => {
 
 ```typescript
 const mockHttpService = {
-  get: jest.fn(),
-  post: jest.fn(),
+  get: vi.fn(),
+  post: vi.fn(),
 };
 
 // Mock a successful response
 mockHttpService.get.mockReturnValue({
-  pipe: jest.fn().mockReturnValue(of({ data: mockResponse })),
+  pipe: vi.fn().mockReturnValue(of({ data: mockResponse })),
 });
 ```
 
@@ -220,9 +220,9 @@ mockHttpService.get.mockReturnValue({
 
 ```typescript
 const mockCacheManager = {
-  get: jest.fn(),
-  set: jest.fn(),
-  del: jest.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
+  del: vi.fn(),
 };
 ```
 
@@ -230,10 +230,10 @@ const mockCacheManager = {
 
 ```typescript
 const mockLogger = {
-  log: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
+  log: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
 };
 ```
 
@@ -302,9 +302,7 @@ it('should create a memory record', async () => {
 it('should throw EntityNotFoundException when thread not found', async () => {
   mockPrisma.chatThread.findUnique.mockResolvedValue(null);
 
-  await expect(service.findOne('nonexistent-id', userId))
-    .rejects
-    .toThrow(EntityNotFoundException);
+  await expect(service.findOne('nonexistent-id', userId)).rejects.toThrow(EntityNotFoundException);
 });
 ```
 
@@ -317,9 +315,7 @@ it('should throw ForbiddenException when user does not own the thread', async ()
     userId: 'other-user',
   });
 
-  await expect(service.delete('thread-id', 'my-user-id'))
-    .rejects
-    .toThrow(BusinessException);
+  await expect(service.delete('thread-id', 'my-user-id')).rejects.toThrow(BusinessException);
 });
 ```
 
@@ -331,7 +327,10 @@ it('should throw ForbiddenException when user does not own the thread', async ()
 describe('RoutingManager', () => {
   describe('routeMessage', () => {
     it('should call Ollama for AUTO mode routing', async () => {
-      mockOllamaClient.generate.mockResolvedValue({ provider: 'anthropic', model: 'claude-sonnet-4' });
+      mockOllamaClient.generate.mockResolvedValue({
+        provider: 'anthropic',
+        model: 'claude-sonnet-4',
+      });
 
       const result = await manager.routeMessage(message, RoutingMode.AUTO);
 
@@ -373,6 +372,7 @@ describe('App Module', () => {
 ```
 
 This catches:
+
 - Missing provider registrations
 - Circular dependency injection errors
 - Invalid module configuration
@@ -389,14 +389,14 @@ npm run test
 npm run test --workspace=apps/claw-auth-service
 
 # Watch mode
-cd apps/claw-auth-service && npx jest --watch
+cd apps/claw-auth-service && npx vitest
 
 # Single file
-cd apps/claw-chat-service && npx jest src/modules/chat/services/__tests__/chat.service.spec.ts
+cd apps/claw-chat-service && npx vitest run src/modules/chat/services/__tests__/chat.service.spec.ts
 
 # With coverage
-cd apps/claw-auth-service && npx jest --coverage
+cd apps/claw-auth-service && npx vitest run --coverage
 
 # Run matching test names
-cd apps/claw-auth-service && npx jest -t "should create"
+cd apps/claw-auth-service && npx vitest run -t "should create"
 ```

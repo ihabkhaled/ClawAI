@@ -8,7 +8,7 @@ about the edge cases?" — and it is ratcheted, never lowered.
 
 ## Applies to
 
-Every workspace. Backend uses Jest (`*.spec.ts`), frontend uses Vitest
+Every workspace. Every workspace uses Vitest (ADR-099); backend `*.spec.ts`, frontend
 (`*.test.ts`/`*.spec.ts`), E2E uses Playwright. Tests co-locate in `__tests__/`.
 
 ## Mandatory rules
@@ -56,7 +56,7 @@ qa/test-memory-service.sh   # auth → endpoints → psql verify → log scan �
 ## Enforcement
 
 - **CI job** — `test` job runs per-workspace with `--coverage`; threshold gate.
-- **Unit test config** — `jest.config.ts` / `vitest.config.ts` `coverageThreshold`.
+- **Unit test config** — `vitest.config.ts` `test.coverage.thresholds`.
 - **Review checklist** — QA script existence + 0-failure evidence in
   `.claude/Integrations/<feature>__QA_output.md`.
 

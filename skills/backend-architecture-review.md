@@ -71,7 +71,7 @@ validation_lane: cd apps/claw-<service> && npm run typecheck && npm run lint && 
 
 **Tests-first plan**
 
-- Confirm every new/changed service method and DTO has a co-located `__tests__/*.spec.ts` (jest).
+- Confirm every new/changed service method and DTO has a co-located `__tests__/*.spec.ts` (vitest).
 - Confirm error-path and boundary tests exist (manager catch branches, DTO fuzz). No `.skip`/`xit`.
 - Confirm coverage did not drop below the 92% threshold.
 

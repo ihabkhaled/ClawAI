@@ -21,7 +21,7 @@ applies_to:
 required_rules: [02-backend-rules, 08-security-rules]
 required_context: [ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service]
-required_tests: [unit (jest *.spec.ts) with the SDK mocked at the wrapper boundary]
+required_tests: [unit (vitest *.spec.ts) with the SDK mocked at the wrapper boundary]
 required_docs: [docs/04-backend/adapters-reference.md, service CLAUDE.md]
 validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
 ---

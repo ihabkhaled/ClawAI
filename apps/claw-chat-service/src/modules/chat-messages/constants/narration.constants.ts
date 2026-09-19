@@ -11,7 +11,7 @@ export const NARRATION_TTL_SECONDS = 3600;
  * Lines kept per turn. A 40-page crawl emits a tick per page; beyond this the
  * log stops being readable and starts being a transcript of HTTP requests.
  */
-export const NARRATION_MAX_ENTRIES = 150;
+export const NARRATION_MAX_ENTRIES = 400;
 
 /**
  * Appends only if this replica is the first to claim the entry.

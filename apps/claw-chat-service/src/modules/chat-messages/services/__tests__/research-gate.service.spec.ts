@@ -217,7 +217,7 @@ describe('ResearchGateService.plan', () => {
     await service.plan('hello');
 
     expect(mockedHttpRequest.mock.calls[1]?.[0]).toMatchObject({
-      body: expect.objectContaining({ options: expect.objectContaining({ num_predict: 320 }) }),
+      body: expect.objectContaining({ options: expect.objectContaining({ num_predict: 600 }) }),
     });
   });
 
@@ -255,6 +255,7 @@ describe('ResearchGateService.plan', () => {
       needsSearch: true,
       query: 'acme competitors',
       narration: 'Checking rivals.',
+      thinking: '',
     });
   });
 });

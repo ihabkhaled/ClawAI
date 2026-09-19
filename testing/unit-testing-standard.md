@@ -1,6 +1,6 @@
 # Unit Testing Standard
 
-Fast, isolated tests of a single unit of behavior. Backend: **Jest** (`*.spec.ts`).
+Fast, isolated tests of a single unit of behavior. Backend: **Vitest** (`*.spec.ts`).
 Frontend: **Vitest** (`*.test.ts` / `*.spec.ts`). Tests co-located in `__tests__/`.
 
 ## Scope
@@ -26,7 +26,7 @@ helper, a DTO schema, a mapper, a utility, a hook, or a component — with its b
 - **Manager/service error paths:** every `catch` branch is covered; assert the log and
   the rethrow/fallback.
 
-## Backend example shape (Jest)
+## Backend example shape (Vitest)
 
 ```ts
 describe('ThreadService.rename', () => {

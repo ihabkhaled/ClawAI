@@ -55,6 +55,8 @@ the frontend `NarrationLog`.
 | Unit      | `research-plan.utility.spec.ts` — null on unusable replies, user URLs never dropped, bounds                                                                                |
 | Unit      | `research-gate.service.spec.ts` — the walk moves on after a bad reply; outage still crawls the user's link                                                                 |
 | Unit      | `research-orchestrator.manager.spec.ts` — crawl → back to AI → search only when asked; failures narrated                                                                   |
+| Unit      | `context-assembly-evidence-fit.spec.ts` — a 150-page crawl fits a 16k model, dropped pages are announced, history budget stays above 0                                     |
+| Unit      | `site-crawl.manager.spec.ts` — link hops fill a large budget on a site with no sitemap; ceiling 200                                                                        |
 | Unit      | `auto-research-resolution.spec.ts` — plan gate before everything, including a URL                                                                                          |
 | Unit      | `research-progress-bridge.service.spec.ts` — one dedupe key per tick across replicas                                                                                       |
 | Unit      | `research-client.utility.spec.ts` — internal route, service token, no user bearer                                                                                          |

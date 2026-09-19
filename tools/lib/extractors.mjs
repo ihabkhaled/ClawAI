@@ -276,15 +276,15 @@ export function extractI18n() {
 export function extractTests() {
   const out = {};
   for (const ws of discoverWorkspaces()) {
-    const type = classifyWorkspace(ws);
     const src = repoPath(ws.dir);
     const specs = walkFiles(src, (r) => /\.(spec|test)\.(ts|tsx)$/.test(r) && r.startsWith(ws.dir));
     const deps = { ...(ws.pkg.dependencies ?? {}), ...(ws.pkg.devDependencies ?? {}) };
+    // Read from the test script first: every workspace runs Vitest (ADR-099),
+    // and most get it hoisted from the root rather than declaring it.
+    const testScript = ws.pkg.scripts?.test ?? '';
     let runner = 'unknown';
-    if ('jest' in deps || 'ts-jest' in deps) runner = 'jest';
-    else if ('vitest' in deps) runner = 'vitest';
-    else if (type === 'frontend') runner = 'vitest';
-    else if (type === 'nestjs-service') runner = 'jest';
+    if (/vitest/.test(testScript) || 'vitest' in deps) runner = 'vitest';
+    else if (/jest/.test(testScript) || 'jest' in deps) runner = 'jest';
     out[ws.name] = { testFiles: specs.length, runner };
   }
   return out;

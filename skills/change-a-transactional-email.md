@@ -31,7 +31,7 @@ Send sites: `services/email-verification.service.ts`,
 1. Edit `en.copy.ts`. It is the source of truth.
 2. Edit the other 12 copy files to match. Keep the same number of `bodyLines`,
    the same `null` fields, and every `{value}` / `{expiry}` placeholder.
-3. `npx jest src/modules/auth/email` — the completeness suite checks all of the
+3. `npx vitest run src/modules/auth/email` — the completeness suite checks all of the
    above per locale, so a drifted file fails here rather than in someone's inbox.
 
 Do not "temporarily" leave 12 files in English. The type will accept it and
@@ -97,7 +97,7 @@ Work backwards along the only path a locale can travel:
 
 ```bash
 cd apps/claw-auth-service
-npm run typecheck && npx jest src/modules/auth && npm run lint
+npm run typecheck && npx vitest run src/modules/auth && npm run lint
 ```
 
 Then rule 43's knowledge delta: if you changed the contract rather than the

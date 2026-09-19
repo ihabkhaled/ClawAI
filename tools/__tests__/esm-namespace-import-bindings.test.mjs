@@ -10,8 +10,8 @@
 // On 2026-09-02 the second one took production down: `verifyAccessToken` threw
 // "jwt.verify is not a function" on every request, so every authenticated call
 // 401'd and login could not issue a token. It was invisible to CI because
-// ts-jest transpiles specs to CommonJS, where `import * as jwt` DOES give
-// module.exports — the unit tests passed against a module shape production
+// the specs ran under ts-jest (Vitest since ADR-099), which transpiled them to
+// CommonJS, where `import * as jwt` DOES give module.exports — the unit tests passed against a module shape production
 // never uses.
 //
 // So this test does not read the source and guess. For each namespace import of
@@ -52,9 +52,10 @@ function esmWorkspaces() {
     .filter((workspace) => statSync(workspace).isDirectory() && isEsmWorkspace(workspace));
 }
 
-// Specs are excluded on purpose: ts-jest transpiles them to CommonJS, so ESM
-// linking rules never apply to them, and they legitimately import test-only
-// packages (@jest/globals) that refuse to load outside a Jest run.
+// Specs are excluded on purpose: the test runner (Vitest, ADR-099) loads them
+// with its own interop, so ESM linking rules never apply to them the way they
+// do in production, and they legitimately import test-only packages that
+// refuse to load outside a test run.
 function isTestFile(path) {
   return /[\\/]__tests__[\\/]|\.spec\.|\.test\./u.test(path);
 }

@@ -27,7 +27,7 @@ affected_workspaces:
     apps/claw-health-service,
     apps/claw-frontend,
   ]
-required_tests: [unit (jest *.spec.ts), health endpoint smoke, qa/test-<service>.sh]
+required_tests: [unit (vitest *.spec.ts), health endpoint smoke, qa/test-<service>.sh]
 required_docs:
   [docs/04-backend/service-guide-<service>.md, docs/04-backend/services-index.md, CLAUDE.md]
 validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build

@@ -113,7 +113,7 @@ Password: ClawAdmin123!
 | `npm run lint`      | ESLint across all workspaces                  |
 | `npm run typecheck` | TypeScript strict check across all workspaces |
 | `npm run build`     | Production build all workspaces               |
-| `npm run test`      | Run all tests (Jest backend, Vitest frontend) |
+| `npm run test`      | Run all tests (Vitest, every workspace)       |
 
 ### Database
 
@@ -278,7 +278,7 @@ npm run test
 cd apps/claw-chat-service && npm run test
 
 # Single test file
-cd apps/claw-chat-service && npx jest src/modules/chat/chat.service.spec.ts
+cd apps/claw-chat-service && npx vitest run src/modules/chat/chat.service.spec.ts
 
 # Frontend tests
 cd apps/claw-frontend && npx vitest

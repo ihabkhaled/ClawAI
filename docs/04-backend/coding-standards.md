@@ -520,14 +520,14 @@ These rules apply to ALL files in ALL backend services. Zero tolerance for viola
 1. Every new function requires a corresponding test
 2. Tests go in `*.spec.ts` files co-located with the source or in a `__tests__/` directory
 3. All ESLint restrictions are OFF in test files -- `any` is allowed
-4. Use Jest as the testing framework for all backend services
+4. Use Vitest as the testing framework for all backend services (`vitest run`; ADR-099). `Mocked<T>` and `vi` come from `vitest`
 
 ### Test Structure
 
 ```typescript
 describe('MemoryService', () => {
   let service: MemoryService;
-  let repository: jest.Mocked<MemoryRepository>;
+  let repository: Mocked<MemoryRepository>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({

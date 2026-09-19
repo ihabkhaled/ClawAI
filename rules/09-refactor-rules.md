@@ -94,17 +94,15 @@ All logs ship automatically to MongoDB (`claw_server_logs`, TTL 30 days) via the
 
 ## R5 — Test-Coverage Discipline (≥92 % flagship)
 
-Every microservice and the frontend MUST report **≥92 %** on all four jest/vitest metrics: statements, branches, functions, lines.
+Every microservice and the frontend MUST report **≥92 %** on all four Vitest coverage metrics: statements, branches, functions, lines.
 
-Per-service `jest.config.ts`:
+Per-service `vitest.config.ts`:
 
 ```ts
-coverageThreshold: {
-  global: {
-    statements: 92,
-    branches: 92,
-    functions: 92,
-    lines: 92,
+test: {
+  coverage: {
+    provider: 'v8',
+    thresholds: { statements: 92, branches: 92, functions: 92, lines: 92 },
   },
 },
 ```

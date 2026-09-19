@@ -188,7 +188,7 @@ Used for real-time streaming:
 | Reverse Proxy     | Nginx                                                        | 1.25+             |
 | Containers        | Docker, Docker Compose                                       | 24+, 2.24+        |
 | CI/CD             | GitHub Actions                                               | --                |
-| Testing           | Jest (backend), Vitest (frontend), Playwright (E2E)          | --                |
+| Testing           | Vitest (all workspaces), Playwright (E2E)                    | --                |
 | Linting           | ESLint 9, Prettier                                           | 9, 3.8            |
 
 ---

@@ -97,7 +97,7 @@ Last updated: 2026-04-11
 
 | Package          | Version | License    | Used By                 | Purpose               |
 | ---------------- | ------- | ---------- | ----------------------- | --------------------- |
-| jest             | Latest  | MIT        | All 17 backend services | Backend test runner   |
+| vitest           | 5.0.1   | MIT        | All workspaces          | Test runner (ADR-099) |
 | @nestjs/testing  | 10.4.x  | MIT        | All 17 backend services | NestJS test utilities |
 | vitest           | Latest  | MIT        | Frontend                | Frontend test runner  |
 | @playwright/test | Latest  | Apache-2.0 | E2E tests               | Browser automation    |

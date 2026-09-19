@@ -123,10 +123,10 @@ File-size thresholds (warn at 500, hard error in Phase U):
 - Manager method ≤80 lines / complexity 15
 - All production files ≤500 lines
 
-Coverage threshold (per-service jest/vitest):
+Coverage threshold (per-workspace `vitest.config.ts`):
 
 ```ts
-coverageThreshold: { global: { statements: 92, branches: 92, functions: 92, lines: 92 } }
+test: { coverage: { thresholds: { statements: 92, branches: 92, functions: 92, lines: 92 } } }
 ```
 
 Cross-service utility location:
@@ -185,7 +185,7 @@ envelope.
 
 ## Build toolchain (tsgo) — see docs/08-runtime-devops/build-system.md
 
-The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest build`. After compile, **tsc-alias** rewrites path aliases (`@app/*`, `@common/*`, `@modules/*`) to relative paths. The `typescript` dependency is aliased to `@typescript/native-preview@beta`; ts-jest still pulls real `tsc` transitively. Per-workspace scripts: `build` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`; `typecheck` = `tsgo --noEmit`; `dev` runs tsgo + tsc-alias in `--watch` under `nodemon`. Docker images use `node:26-bookworm-slim` (glibc — tsgo binaries are not musl-compatible, so never Alpine). All 6 shared packages also build/lint/test/typecheck with tsgo and are first-class CI matrix entries.
+The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest build`. After compile, **tsc-alias** rewrites path aliases (`@app/*`, `@common/*`, `@modules/*`) to relative paths. The `typescript` dependency is aliased to `@typescript/native-preview@beta`. Per-workspace scripts: `build` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`; `typecheck` = `tsgo --noEmit`; `dev` runs tsgo + tsc-alias in `--watch` under `nodemon`. Docker images use `node:26-bookworm-slim` (glibc — tsgo binaries are not musl-compatible, so never Alpine). All 6 shared packages also build/lint/test/typecheck with tsgo and are first-class CI matrix entries.
 
 ## Cursor editing conventions
 

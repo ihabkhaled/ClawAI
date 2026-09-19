@@ -26,7 +26,11 @@ headcount, tell you when you're done.
 
 ---
 
-### Keep the runners we have — churn is not rigor (2026-07-24)
+### Keep the runners we have — churn is not rigor (2026-07-24) — SUPERSEDED
+
+> **Superseded 2026-09-17 by ADR-099.** Every workspace now runs Vitest; Jest is
+> gone. The lesson below is kept as history: the migration happened because gate
+> speed became a real cost, not for uniformity's sake. Playwright stays for E2E.
 
 **What happened.** Proposals to unify on a single test runner surfaced. Backend is
 Jest (ts-jest), frontend is Vitest, E2E is Playwright. Each fits its layer; a forced
@@ -36,7 +40,7 @@ migration would burn weeks and risk regressions for no behavioral gain.
 working, well-understood runner has real cost and near-zero payoff. Rigor comes from
 what the tests assert, not which harness runs them.
 
-**How to apply.** Backend → Jest, frontend → Vitest, E2E → Playwright. Retained. Put
+**How to apply (current).** Every workspace → Vitest, E2E → Playwright (ADR-099). Put
 effort into assertions, fixtures, and coverage of risk, not runner consolidation.
 
 **Related.** ADR-062 testing-runner-retention;

@@ -25,7 +25,7 @@ Every agent (human or AI) on every task in this repository, alongside
    if it does not match the rule's literal wording.
 2. **Strategy identity (anti strategy-laundering).** A retry's identity is its
    hypothesis, its expected evidence, its target failure, and its intended
-   outcome — not its command text. `npm test auth` and `npx jest auth`
+   outcome — not its command text. `npm test auth` and `npx vitest run auth`
    retrying the same unfalsified hypothesis are the same attempt under
    [rule 30](30-agent-self-regulation-and-loop-prevention.md) rule 2's retry
    budget, regardless of which one is typed.

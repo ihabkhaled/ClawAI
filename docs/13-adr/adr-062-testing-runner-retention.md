@@ -1,6 +1,6 @@
 # ADR-062: Testing-runner retention (Jest + Vitest + Playwright)
 
-**Status**: Accepted
+**Status**: Superseded by [ADR-099](adr-099-vitest-in-every-workspace.md) (2026-09-17: every workspace migrated to Vitest)
 **Date**: 2026-07-24
 **Deciders**: ClawAI core team
 **Slice**: AI-native engineering OS, Slice 1

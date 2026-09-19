@@ -7,7 +7,9 @@ const KINDS = new Set<string>(Object.values(NarrationKind));
 /** Kinds where the AI is speaking in its own words, rendered as the AI. */
 export function isAiVoice(entry: NarrationEntry): boolean {
   return (
-    (entry.kind === NarrationKind.PLANNED || entry.kind === NarrationKind.REPLANNED) &&
+    (entry.kind === NarrationKind.PLANNED ||
+      entry.kind === NarrationKind.REPLANNED ||
+      entry.kind === NarrationKind.AI_THOUGHT) &&
     typeof entry.text === 'string' &&
     entry.text.length > 0
   );
@@ -26,6 +28,7 @@ export function describeNarrationEntry(entry: NarrationEntry, t: TranslateFuncti
   switch (entry.kind) {
     case NarrationKind.PLANNED:
     case NarrationKind.REPLANNED:
+    case NarrationKind.AI_THOUGHT:
       return entry.text ?? '';
     case NarrationKind.CRAWL_STARTED:
       return t('narration.crawlStarted', { urls: String(params['urls'] ?? '') });

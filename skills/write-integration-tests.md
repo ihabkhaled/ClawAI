@@ -63,7 +63,7 @@ Integration tests wire real NestJS modules together (controller → service → 
 
 ## Implementation steps
 
-1. Build a testing module importing the real modules under test; provide jest-mocked Prisma, HTTP client, `RabbitMQService`, Ollama/ClamAV.
+1. Build a testing module importing the real modules under test; provide `vi.fn()`-mocked Prisma, HTTP client, `RabbitMQService`, Ollama/ClamAV.
 2. For a producer: invoke the controller/service entry and capture `publish` args.
 3. For a consumer: call the message handler directly with a realistic payload; assert repository/publish side effects by call args.
 4. Validate the payload against the shared-types type so a drift in either side fails the test.

@@ -178,7 +178,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 
 ## Testing Expectations
 
-- **Backend**: Jest. Tests in `apps/claw-<service>/src/__tests__/`. Unit tests for services and managers; integration tests for controllers.
+- **Backend**: Vitest (ADR-099). Tests in `apps/claw-<service>/src/__tests__/`. Unit tests for services and managers; integration tests for controllers.
 - **Frontend**: Vitest. Tests colocated or in `__tests__` directories.
 - **E2E**: Playwright. In `apps/claw-frontend/e2e/` or project root.
 - **Every new function needs a test.** No exceptions.

@@ -123,14 +123,14 @@ Required fields missing, wrong types, constraint violations.
 ```yaml
 ID: TC-THREAD-API-002
 Title: Create thread with missing title (required field)
-Payload: { "routingMode": "AUTO" }  # title missing
+Payload: { 'routingMode': 'AUTO' } # title missing
 Expected: 400 with messageKey "thread.title_required"
 Priority: P1
 Severity: S2
 
 ID: TC-THREAD-API-003
 Title: Create thread with title exceeding max length
-Payload: { "title": "<201 characters>", "routingMode": "AUTO" }
+Payload: { 'title': '<201 characters>', 'routingMode': 'AUTO' }
 Expected: 400 with messageKey "thread.title_too_long"
 Priority: P1
 Severity: S3
@@ -169,14 +169,14 @@ Testing at the exact limits of constraints.
 ```yaml
 ID: TC-THREAD-API-006
 Title: Create thread with title at exactly max length (200 chars)
-Payload: { "title": "<exactly 200 characters>" }
+Payload: { 'title': '<exactly 200 characters>' }
 Expected: 201, title stored correctly
 Priority: P2
 Severity: S3
 
 ID: TC-THREAD-API-007
 Title: Create thread with title at max+1 length (201 chars)
-Payload: { "title": "<exactly 201 characters>" }
+Payload: { 'title': '<exactly 201 characters>' }
 Expected: 400, validation error
 Priority: P2
 Severity: S3
@@ -258,8 +258,7 @@ Concurrent or rapid requests that may conflict.
 ```yaml
 ID: TC-THREAD-API-030
 Title: Rapid duplicate thread creation
-Steps:
-  1. Send 5 concurrent POST /api/v1/chat-threads with identical data
+Steps: 1. Send 5 concurrent POST /api/v1/chat-threads with identical data
   2. List all threads
 Expected: Either 5 threads created (if duplicates allowed) or 1 created + 4 rejected with appropriate error
 Priority: P2
@@ -267,8 +266,7 @@ Severity: S3
 
 ID: TC-MESSAGE-API-031
 Title: Send message while previous message is still processing
-Steps:
-  1. Send message A to thread
+Steps: 1. Send message A to thread
   2. Immediately send message B to same thread (before A completes)
 Expected: Both messages processed correctly, no data corruption, responses in correct order
 Priority: P1
@@ -351,7 +349,7 @@ Every test case must trace to either:
 
 ## Test Naming Conventions
 
-### Unit Tests (Jest / Vitest)
+### Unit Tests (Vitest)
 
 ```typescript
 describe('ChatService', () => {
@@ -428,14 +426,14 @@ export function buildThread(overrides: Partial<ChatThread> = {}): ChatThread {
 
 ## Test Layers Summary
 
-| Layer           | Tool                   | Location                               | Runs In          | What It Tests                                       |
-| --------------- | ---------------------- | -------------------------------------- | ---------------- | --------------------------------------------------- |
-| Unit (backend)  | Jest                   | `apps/claw-*-service/src/**/*.spec.ts` | CI + pre-commit  | Individual methods in isolation                     |
-| Unit (frontend) | Vitest                 | `apps/claw-frontend/src/**/*.test.ts`  | CI + pre-commit  | Hooks, utilities, component render                  |
-| API             | curl / Jest+supertest  | Manual or `test/api/`                  | Dev environment  | Endpoint contract, auth, validation                 |
-| Integration     | Jest                   | `test/integration/`                    | Dev environment  | Multi-layer (service -> repo -> DB)                 |
-| E2E             | Playwright             | `apps/claw-frontend/e2e/`              | Dev environment  | Full browser flow                                   |
-| System          | Shell scripts + curl   | `scripts/`                             | Dev/staging      | All services healthy, end-to-end flow               |
-| Regression      | All of above           | Tagged with regression tags            | Every test cycle | Previously broken functionality still works         |
-| UAT             | Manual                 | Test plan document                     | Pre-release      | Business acceptance criteria met                    |
-| Client          | Manual browser testing | Browser DevTools                       | Pre-release      | Console errors, network, responsive, dark mode, RTL |
+| Layer           | Tool                    | Location                               | Runs In          | What It Tests                                       |
+| --------------- | ----------------------- | -------------------------------------- | ---------------- | --------------------------------------------------- |
+| Unit (backend)  | Vitest                  | `apps/claw-*-service/src/**/*.spec.ts` | CI + pre-commit  | Individual methods in isolation                     |
+| Unit (frontend) | Vitest                  | `apps/claw-frontend/src/**/*.test.ts`  | CI + pre-commit  | Hooks, utilities, component render                  |
+| API             | curl / Vitest+supertest | Manual or `test/api/`                  | Dev environment  | Endpoint contract, auth, validation                 |
+| Integration     | Vitest                  | `test/integration/`                    | Dev environment  | Multi-layer (service -> repo -> DB)                 |
+| E2E             | Playwright              | `apps/claw-frontend/e2e/`              | Dev environment  | Full browser flow                                   |
+| System          | Shell scripts + curl    | `scripts/`                             | Dev/staging      | All services healthy, end-to-end flow               |
+| Regression      | All of above            | Tagged with regression tags            | Every test cycle | Previously broken functionality still works         |
+| UAT             | Manual                  | Test plan document                     | Pre-release      | Business acceptance criteria met                    |
+| Client          | Manual browser testing  | Browser DevTools                       | Pre-release      | Console errors, network, responsive, dark mode, RTL |

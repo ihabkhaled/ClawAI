@@ -8,13 +8,13 @@ This document defines the non-negotiable layers.
 
 | Layer                     | Target                                                              | Tool               | Bar                                       |
 | ------------------------- | ------------------------------------------------------------------- | ------------------ | ----------------------------------------- |
-| Unit — utilities          | Pure functions (crypto, PKCE, URL safety, webhook sig, classifiers) | Jest               | ≥98% branch on critical paths             |
-| Unit — repositories       | Prisma calls with mocked client                                     | Jest               | every method                              |
-| Unit — services           | Orchestration + validation with mocked repos/managers               | Jest               | happy + negative per branch               |
-| Unit — managers           | Sync/health/token logic                                             | Jest               | retry, backoff, error paths               |
-| Contract — adapters       | Every `WorkspaceAdapter` passes `runAdapterContract()`              | Jest               | ALL adapters must pass                    |
-| Integration — controllers | Full HTTP roundtrip via Nest test module                            | Jest               | happy + 400 + 401 + 403 + 404 + 409       |
-| Provider fake — adapters  | MSW-backed stub provider API                                        | Jest + MSW         | 1 full sync + 1 write action per provider |
+| Unit — utilities          | Pure functions (crypto, PKCE, URL safety, webhook sig, classifiers) | Vitest             | ≥98% branch on critical paths             |
+| Unit — repositories       | Prisma calls with mocked client                                     | Vitest             | every method                              |
+| Unit — services           | Orchestration + validation with mocked repos/managers               | Vitest             | happy + negative per branch               |
+| Unit — managers           | Sync/health/token logic                                             | Vitest             | retry, backoff, error paths               |
+| Contract — adapters       | Every `WorkspaceAdapter` passes `runAdapterContract()`              | Vitest             | ALL adapters must pass                    |
+| Integration — controllers | Full HTTP roundtrip via Nest test module                            | Vitest             | happy + 400 + 401 + 403 + 404 + 409       |
+| Provider fake — adapters  | MSW-backed stub provider API                                        | Vitest + MSW       | 1 full sync + 1 write action per provider |
 | Manual API                | curl against running service                                        | Bash QA scripts    | 0 failures, DB + log verified             |
 | Manual UI                 | Browser click-through                                               | Screenshots        | loading/empty/error/success + RTL + dark  |
 | E2E                       | Playwright                                                          | full user journey  | golden path per persona                   |

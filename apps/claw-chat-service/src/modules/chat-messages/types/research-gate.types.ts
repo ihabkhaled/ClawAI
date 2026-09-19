@@ -37,6 +37,8 @@ export type ResearchPlan = {
   maxPages: number;
   /** One short first-person sentence shown to the user, e.g. "I'll read that site first." */
   narration: string;
+  /** The planner's reasoning in its own words, shown as the AI thinking; '' when absent. */
+  thinking: string;
   /** Which model decided, for the log and the stored narration. */
   decidedBy: string | null;
 };
@@ -46,4 +48,5 @@ export type CrawlFollowUp = {
   needsSearch: boolean;
   query: string | null;
   narration: string;
+  thinking: string;
 };

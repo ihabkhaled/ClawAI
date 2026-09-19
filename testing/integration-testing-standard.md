@@ -2,7 +2,7 @@
 
 Tests that exercise a unit together with a real boundary a unit test mocks — a service
 plus its database, a controller plus its guards/pipes, or a consumer plus a real
-publish. Backend: **Jest**. Scope is one service (its DB, its module wiring); genuinely
+publish. Backend: **Vitest**. Scope is one service (its DB, its module wiring); genuinely
 external services stay mocked or are covered by [contract testing](contract-testing-standard.md).
 
 ## When to write one

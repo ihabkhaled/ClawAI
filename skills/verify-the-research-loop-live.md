@@ -31,7 +31,14 @@ curl -sk -X POST https://claw.local/api/v1/chat-messages -H "Authorization: Bear
 
 Expect: POST 201 in milliseconds; `narration:planned`, `crawl_started`,
 `crawl_progress` (each ONCE, not once per replica), `crawl_done`, then
-`ai_thinking`; and the answer's `metadata.narration` holding the same lines.
+`ai_thinking`; and the answer's `metadata.narration` holding the same lines,
+including `ai_thought` (the planner's own reasoning).
+
+Big-crawl check: ask it to "read the whole docs site https://docs.nestjs.com". Expect
+`maxPages:200` on `crawl_started`, about 90 pages read, and in the chat log
+`assemble: research evidence=N` followed by a `buildPromptString` budget that is
+NOT 0. A budget of 0 means the evidence was fitted against `tokenBudget`, which
+is wrong.
 
 ## 3. The browser lane — defeat the service worker FIRST
 

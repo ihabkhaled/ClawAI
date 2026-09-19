@@ -187,8 +187,8 @@ npm run dev              # tsgo --watch + tsc-alias --watch + nodemon
 npm run build            # production build
 npm run typecheck        # tsgo --noEmit
 npm run lint             # ESLint
-npm run test             # Jest
-npm run test:cov         # Jest + coverage (92% floor enforced)
+npm run test             # vitest run
+npm run test:cov         # vitest run --coverage (92% floor enforced)
 npm run migrate          # prisma migrate deploy
 npm run prisma:generate  # regenerate Prisma client
 ```

@@ -209,31 +209,31 @@ const mockPaginatedResponse = {
 ```typescript
 const mockPrismaService = {
   chatThread: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findFirst: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    count: jest.fn(),
-    updateMany: jest.fn(),
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+    updateMany: vi.fn(),
   },
   chatMessage: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    count: jest.fn(),
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
   },
   messageAttachment: {
-    create: jest.fn(),
-    findMany: jest.fn(),
-    deleteMany: jest.fn(),
+    create: vi.fn(),
+    findMany: vi.fn(),
+    deleteMany: vi.fn(),
   },
-  $transaction: jest.fn(async (fn) => fn(mockPrismaService)),
-  $connect: jest.fn(),
-  $disconnect: jest.fn(),
+  $transaction: vi.fn(async (fn) => fn(mockPrismaService)),
+  $connect: vi.fn(),
+  $disconnect: vi.fn(),
 };
 ```
 
@@ -241,7 +241,7 @@ const mockPrismaService = {
 
 ```typescript
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   // Reset to default return values
   mockPrismaService.chatThread.findMany.mockResolvedValue([]);
   mockPrismaService.chatThread.count.mockResolvedValue(0);
@@ -254,10 +254,10 @@ beforeEach(() => {
 
 ```typescript
 const mockRabbitMQService = {
-  publish: jest.fn().mockResolvedValue(undefined),
-  subscribe: jest.fn(),
-  setupExchange: jest.fn(),
-  setupQueue: jest.fn(),
+  publish: vi.fn().mockResolvedValue(undefined),
+  subscribe: vi.fn(),
+  setupExchange: vi.fn(),
+  setupQueue: vi.fn(),
 };
 ```
 
@@ -334,7 +334,7 @@ describe('MemoryService', () => {
 
   beforeEach(() => {
     // Fresh mocks for each test
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPrisma = createMockPrisma();
     service = new MemoryService(mockPrisma, mockRabbitMQ);
   });
@@ -353,6 +353,7 @@ describe('MemoryService', () => {
 ```
 
 Rules:
+
 - **Never share mutable state** between tests
 - **Always use `beforeEach`** to reset mocks (not `beforeAll`)
 - **Each test sets up its own data** via mock return values

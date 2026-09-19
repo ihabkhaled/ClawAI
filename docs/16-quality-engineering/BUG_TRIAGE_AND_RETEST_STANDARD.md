@@ -264,15 +264,15 @@ The fix must include at least one new test that:
 
 **Test location by bug type:**
 
-| Bug Found In           | Test Type                           | Location                                                 |
-| ---------------------- | ----------------------------------- | -------------------------------------------------------- |
-| Backend service logic  | Unit test (Jest)                    | `apps/<service>/src/modules/<domain>/__tests__/`         |
-| Backend DTO validation | Unit test (Jest)                    | `apps/<service>/src/modules/<domain>/__tests__/`         |
-| Backend controller     | Integration test (Jest + supertest) | `apps/<service>/src/modules/<domain>/__tests__/`         |
-| Frontend component     | Component test (Vitest)             | `apps/claw-frontend/src/components/<feature>/__tests__/` |
-| Frontend hook          | Hook test (Vitest)                  | `apps/claw-frontend/src/hooks/<domain>/__tests__/`       |
-| Frontend utility       | Unit test (Vitest)                  | `apps/claw-frontend/src/utilities/__tests__/`            |
-| End-to-end flow        | E2E test (Playwright)               | `apps/claw-frontend/e2e/`                                |
+| Bug Found In           | Test Type                             | Location                                                 |
+| ---------------------- | ------------------------------------- | -------------------------------------------------------- |
+| Backend service logic  | Unit test (Vitest)                    | `apps/<service>/src/modules/<domain>/__tests__/`         |
+| Backend DTO validation | Unit test (Vitest)                    | `apps/<service>/src/modules/<domain>/__tests__/`         |
+| Backend controller     | Integration test (Vitest + supertest) | `apps/<service>/src/modules/<domain>/__tests__/`         |
+| Frontend component     | Component test (Vitest)               | `apps/claw-frontend/src/components/<feature>/__tests__/` |
+| Frontend hook          | Hook test (Vitest)                    | `apps/claw-frontend/src/hooks/<domain>/__tests__/`       |
+| Frontend utility       | Unit test (Vitest)                    | `apps/claw-frontend/src/utilities/__tests__/`            |
+| End-to-end flow        | E2E test (Playwright)                 | `apps/claw-frontend/e2e/`                                |
 
 ### F2: Layer-Matched Verification
 

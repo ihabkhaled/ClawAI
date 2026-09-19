@@ -24,7 +24,7 @@ is a data leak, a broken cache, or a swallowed event). See
 
 ## Enforcement
 
-- Each `jest.config.ts` / `vitest.config.ts` sets `coverageThreshold` to the global bar.
+- Each `vitest.config.ts` sets `test.coverage.thresholds` to the global bar.
   CI runs `npm run test -- --coverage`; a metric below threshold fails the build.
 - Pure-critical modules that must hit 100% branch carry their own stricter per-path
   threshold (a scoped `coverageThreshold` entry) so a regression there fails locally.

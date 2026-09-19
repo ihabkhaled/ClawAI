@@ -17,7 +17,7 @@ applies_to: [backend, apps/claw-<service>-service/src/modules/<domain>]
 required_rules: [02-backend-rules, 08-security-rules, 04-testing-rules]
 required_context: [ai-context-pack, event-bus, data-ownership]
 affected_workspaces: [apps/claw-<service>-service]
-required_tests: [unit (jest *.spec.ts) per method incl. error path]
+required_tests: [unit (vitest *.spec.ts) per method incl. error path]
 required_docs: [docs/04-backend/service-guide-<service>.md]
 validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
 ---

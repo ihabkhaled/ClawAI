@@ -96,7 +96,7 @@ Know what will reject the code before writing it:
 ```bash
 cat apps/<workspace>/eslint.config.mjs        # banned syntax, size ceilings, per-file rules
 cat apps/<workspace>/CLAUDE.md                # service-local constraints
-grep -n "coverageThreshold" apps/<workspace>/jest.config.ts
+grep -n "thresholds" apps/<workspace>/vitest.config.ts   # test.coverage.thresholds
 ```
 
 Plus, from `CLAUDE.md`: the mandatory delivery checklist (`.env.example`, both

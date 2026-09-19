@@ -14,28 +14,28 @@ Every file is focused, cross-linked, and grounded in the generated manifests
 events, routes, permissions, and services are all derived from ground-truth
 sources and should be re-derived when they drift.
 
-| File                                                         | Purpose                                                                                                                              |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| [architecture-map.md](architecture-map.md) ***               | **Canonical.** Service topology, request flow, event bus model, data ownership, layering rules.                                      |
-| [stack-and-toolchain.md](stack-and-toolchain.md) ***         | **Canonical.** Exact commands: tsgo build, per-folder gate lane, jest/vitest/playwright, prisma, knowledge/affected/release, docker. |
-| [codebase-navigation.md](codebase-navigation.md)             | Where to look for any given kind of code.                                                                                            |
-| [task-router.md](task-router.md)                             | Maps a kind of task → rules + skills + reviewers + validation lane (mirrors `.ai/packs/`).                                           |
-| [prompt-pack-intake.md](prompt-pack-intake.md)               | The seven steps that must precede code when work arrives as a prompt pack or execution prompt.                                       |
-| [workspace-map.md](workspace-map.md)                         | The npm-workspace inventory (23 workspaces).                                                                                         |
-| [service-catalog.md](service-catalog.md)                     | One entry per service: path, port, DB, responsibility, deps, events, pitfalls.                                                       |
-| [service-dependency-map.md](service-dependency-map.md)       | Who calls whom (HTTP + events + shared packages).                                                                                    |
-| [frontend-architecture.md](frontend-architecture.md)         | Next.js layering, state, i18n, styling.                                                                                              |
-| [backend-architecture.md](backend-architecture.md)           | NestJS layering, module shape, error model.                                                                                          |
-| [package-boundaries.md](package-boundaries.md)               | The 6 shared packages and what each owns.                                                                                            |
-| [declaration-ownership-map.md](declaration-ownership-map.md) | Where types/enums/consts/DTOs/events/permissions live; over-extraction guard.                                                        |
-| [request-flow-map.md](request-flow-map.md)                   | End-to-end request paths through nginx → service → DB/events.                                                                        |
-| [event-flow-map.md](event-flow-map.md)                       | The RabbitMQ event graph (producers → consumers).                                                                                    |
-| [database-ownership-map.md](database-ownership-map.md)       | Which service owns which database and models.                                                                                        |
-| [permission-map.md](permission-map.md)                       | The 38 permissions and how they gate features.                                                                                       |
-| [environment-ownership-map.md](environment-ownership-map.md) | Env-var groups and the mandatory propagation checklist.                                                                              |
-| [port-and-service-map.md](port-and-service-map.md)           | The port table + the client-logs/server-logs env-only gap.                                                                           |
-| [testing-map.md](testing-map.md)                             | Test runners, layout, coverage bar, gate lane.                                                                                       |
-| [generated-file-map.md](generated-file-map.md)               | What under `.ai/` is generated vs local; never hand-edit.                                                                            |
+| File                                                         | Purpose                                                                                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| [architecture-map.md](architecture-map.md) ***               | **Canonical.** Service topology, request flow, event bus model, data ownership, layering rules.                                 |
+| [stack-and-toolchain.md](stack-and-toolchain.md) ***         | **Canonical.** Exact commands: tsgo build, per-folder gate lane, vitest/playwright, prisma, knowledge/affected/release, docker. |
+| [codebase-navigation.md](codebase-navigation.md)             | Where to look for any given kind of code.                                                                                       |
+| [task-router.md](task-router.md)                             | Maps a kind of task → rules + skills + reviewers + validation lane (mirrors `.ai/packs/`).                                      |
+| [prompt-pack-intake.md](prompt-pack-intake.md)               | The seven steps that must precede code when work arrives as a prompt pack or execution prompt.                                  |
+| [workspace-map.md](workspace-map.md)                         | The npm-workspace inventory (23 workspaces).                                                                                    |
+| [service-catalog.md](service-catalog.md)                     | One entry per service: path, port, DB, responsibility, deps, events, pitfalls.                                                  |
+| [service-dependency-map.md](service-dependency-map.md)       | Who calls whom (HTTP + events + shared packages).                                                                               |
+| [frontend-architecture.md](frontend-architecture.md)         | Next.js layering, state, i18n, styling.                                                                                         |
+| [backend-architecture.md](backend-architecture.md)           | NestJS layering, module shape, error model.                                                                                     |
+| [package-boundaries.md](package-boundaries.md)               | The 6 shared packages and what each owns.                                                                                       |
+| [declaration-ownership-map.md](declaration-ownership-map.md) | Where types/enums/consts/DTOs/events/permissions live; over-extraction guard.                                                   |
+| [request-flow-map.md](request-flow-map.md)                   | End-to-end request paths through nginx → service → DB/events.                                                                   |
+| [event-flow-map.md](event-flow-map.md)                       | The RabbitMQ event graph (producers → consumers).                                                                               |
+| [database-ownership-map.md](database-ownership-map.md)       | Which service owns which database and models.                                                                                   |
+| [permission-map.md](permission-map.md)                       | The 38 permissions and how they gate features.                                                                                  |
+| [environment-ownership-map.md](environment-ownership-map.md) | Env-var groups and the mandatory propagation checklist.                                                                         |
+| [port-and-service-map.md](port-and-service-map.md)           | The port table + the client-logs/server-logs env-only gap.                                                                      |
+| [testing-map.md](testing-map.md)                             | Test runners, layout, coverage bar, gate lane.                                                                                  |
+| [generated-file-map.md](generated-file-map.md)               | What under `.ai/` is generated vs local; never hand-edit.                                                                       |
 
 ## Authority hierarchy (higher wins on conflict)
 

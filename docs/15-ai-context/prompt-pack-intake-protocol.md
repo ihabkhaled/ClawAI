@@ -56,7 +56,7 @@ Known _before_ writing code, so the code is shaped by it rather than retrofitted
 | Banned syntax, inline-declaration bans, size ceilings, import order                            | `eslint.config.mjs` per workspace                     |
 | TypeScript strict — no `any`/`!`/`as unknown as`, explicit returns                             | `tsconfig*.json` + rule 12                            |
 | Formatting                                                                                     | Prettier — authoritative, never hand-formatted around |
-| Coverage floors and required test kinds                                                        | `jest.config.ts` / `vitest.config.ts`, rule 22        |
+| Coverage floors and required test kinds                                                        | `vitest.config.ts`, rule 22                           |
 | Secrets, authz/IDOR, validation, redaction, CSP                                                | rules 16, 19, 21                                      |
 | i18n × 9 locales + `i18n.types.ts` same commit                                                 | rule 20                                               |
 | Env, installers, compose ×N, nginx, shared packages, health service, CI matrix, TLS SANs, docs | the mandatory delivery checklist in `CLAUDE.md`       |

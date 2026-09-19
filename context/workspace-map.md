@@ -55,8 +55,8 @@ env-only-port note for client-logs/server-logs is expanded in
 
 ## Test totals
 
-678 test files across the monorepo (`.ai/manifests/tests.json`). All backend
-services + shared packages use **jest**; the frontend uses **vitest**. See
+678 test files across the monorepo (`.ai/manifests/tests.json`). Every backend
+service, shared package and the frontend uses **vitest** (ADR-099). See
 [testing-map.md](testing-map.md).
 
 ## Dependency directionality

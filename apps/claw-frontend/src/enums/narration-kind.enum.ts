@@ -15,4 +15,6 @@ export enum NarrationKind {
   SEARCH_DONE = 'search_done',
   RESEARCH_FAILED = 'research_failed',
   AI_THINKING = 'ai_thinking',
+  /** The planner's own reasoning, model-written text shown as the AI speaking. */
+  AI_THOUGHT = 'ai_thought',
 }

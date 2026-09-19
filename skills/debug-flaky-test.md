@@ -55,7 +55,7 @@ delay) — only then is your fix verifiable.
 2. Fix at the source: mock the clock, seed randomness, isolate fixtures per
    test, await all promises, use a stable comparator instead of
    locale-dependent sorting.
-3. Never paper over with `test.retry()`, `jest.retryTimes()`, or `.skip()` —
+3. Never paper over with `test.retry()`, Vitest `{ retry: n }`, or `.skip()` —
    these are explicitly banned in CI per
    [`../testing/flaky-test-policy.md`](../testing/flaky-test-policy.md).
 4. Re-run the previously-reproducing loop to confirm it's gone.

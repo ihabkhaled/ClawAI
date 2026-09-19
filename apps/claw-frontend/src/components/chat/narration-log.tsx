@@ -55,7 +55,7 @@ export function NarrationLog({ entries, isLive, t }: NarrationLogProps): React.R
               )}
               <span
                 className={cn(
-                  'min-w-0 break-words',
+                  'min-w-0 break-words whitespace-pre-wrap',
                   aiVoice ? 'text-foreground italic' : 'text-muted-foreground',
                 )}
               >

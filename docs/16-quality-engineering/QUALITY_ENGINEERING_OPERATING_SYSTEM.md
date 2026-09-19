@@ -291,11 +291,11 @@ Every layer must have tests:
 
 | Layer               | Test Type                                                             | Tool                     |
 | ------------------- | --------------------------------------------------------------------- | ------------------------ |
-| Zod DTOs            | Unit test: valid input passes, invalid input fails with correct error | Jest                     |
-| Repository          | Unit test: mock Prisma, verify correct query construction             | Jest                     |
-| Service             | Unit test: mock repository + manager, verify business logic           | Jest                     |
-| Manager             | Unit test: mock dependencies, verify orchestration logic              | Jest                     |
-| Controller          | Integration test: verify route, auth guard, response shape            | Jest + supertest         |
+| Zod DTOs            | Unit test: valid input passes, invalid input fails with correct error | Vitest                   |
+| Repository          | Unit test: mock Prisma, verify correct query construction             | Vitest                   |
+| Service             | Unit test: mock repository + manager, verify business logic           | Vitest                   |
+| Manager             | Unit test: mock dependencies, verify orchestration logic              | Vitest                   |
+| Controller          | Integration test: verify route, auth guard, response shape            | Vitest + supertest       |
 | Frontend hooks      | Unit test: mock repository, verify query/mutation behavior            | Vitest                   |
 | Frontend components | Render test: verify correct elements, states, interactions            | Vitest + Testing Library |
 | API endpoints       | API test: curl through Nginx (port 4000) and direct (service port)    | curl / Playwright        |
@@ -325,7 +325,7 @@ npm run test
 cd apps/claw-chat-service && npm test
 
 # Run a specific test file
-cd apps/claw-chat-service && npx jest --testPathPattern=chat.service.spec.ts
+cd apps/claw-chat-service && npx vitest run chat.service.spec.ts
 
 # Frontend tests
 cd apps/claw-frontend && npx vitest run

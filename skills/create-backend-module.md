@@ -16,7 +16,7 @@ applies_to: [backend, apps/claw-<service>-service/src/modules/<domain>]
 required_rules: [02-backend-rules, 04-testing-rules, 08-security-rules]
 required_context: [ai-context-pack, codebase-navigation]
 affected_workspaces: [apps/claw-<service>-service]
-required_tests: [unit (jest *.spec.ts) for service + dto, controller smoke]
+required_tests: [unit (vitest *.spec.ts) for service + dto, controller smoke]
 required_docs: [docs/04-backend/service-guide-<service>.md, service CLAUDE.md]
 validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
 ---

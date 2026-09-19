@@ -334,5 +334,5 @@ RabbitMQ supports clustering and federation. Consumer groups allow multiple inst
 | Reverse Proxy      | Nginx                                                        | 1.25+                     |
 | Containerization   | Docker, Docker Compose                                       | 24+, 2.24+                |
 | Package Management | npm workspaces                                               | 10+                       |
-| Testing            | Jest (backend), Vitest (frontend), Playwright (E2E)          | latest                    |
+| Testing            | Vitest (all workspaces), Playwright (E2E)                    | latest                    |
 | Linting            | ESLint 9 (flat config), Prettier                             | 9, 3.8                    |

@@ -162,13 +162,13 @@ procedure with explicit human sign-off (`docs/exceptions/README.md`).
 
 ## Quality Gates Summary
 
-| Gate          | Scope          | Tool        | Threshold | Blocks     |
-| ------------- | -------------- | ----------- | --------- | ---------- |
-| Formatting    | Staged files   | Prettier    | Auto-fix  | Commit     |
-| Linting       | All workspaces | ESLint 9    | 0 errors  | Commit, PR |
-| Type checking | All workspaces | TypeScript  | 0 errors  | Commit, PR |
-| Build         | All workspaces | tsc / Next  | 0 errors  | Commit, PR |
-| Tests         | All workspaces | Jest/Vitest | All pass  | Commit, PR |
+| Gate          | Scope          | Tool       | Threshold | Blocks     |
+| ------------- | -------------- | ---------- | --------- | ---------- |
+| Formatting    | Staged files   | Prettier   | Auto-fix  | Commit     |
+| Linting       | All workspaces | ESLint 9   | 0 errors  | Commit, PR |
+| Type checking | All workspaces | TypeScript | 0 errors  | Commit, PR |
+| Build         | All workspaces | tsc / Next | 0 errors  | Commit, PR |
+| Tests         | All workspaces | Vitest     | All pass  | Commit, PR |
 
 ---
 

@@ -201,8 +201,8 @@ GLM, Qwen, DeepSeek, Mistral, or any other).
 
 ### 22. Test-coverage flagship mindset (added 2026-04-26)
 
-- Every microservice and the frontend MUST report **≥92 %** coverage on all four jest/vitest metrics: statements, branches, functions, lines.
-- Threshold is enforced via `coverageThreshold` in each `jest.config.ts` / `vitest.config.ts` and verified in CI by running `npm run test -- --coverage`.
+- Every microservice and the frontend MUST report **≥92 %** coverage on all four Vitest coverage metrics: statements, branches, functions, lines.
+- Threshold is enforced via `test.coverage.thresholds` in each `vitest.config.ts` and verified in CI by running `npm run test -- --coverage`.
 - Coverage is ratcheted, never lowered: if your change drops a service below its existing threshold, you fix the test gap before merging.
 - Test quality bar:
   - No `.toBeDefined()`-only assertions (assert behaviour, not existence)
@@ -210,7 +210,7 @@ GLM, Qwen, DeepSeek, Mistral, or any other).
   - Mocks at boundaries only (DB, HTTP, RabbitMQ, ClamAV, Ollama). Never mock the unit under test.
   - DTO fuzz tests for every Zod schema (valid + boundary + invalid + null/empty/overflow)
   - Manager error-path tests required (every `catch` branch covered)
-- Tests live next to the code in `__tests__/`. Backend uses Jest (`.spec.ts`), frontend uses Vitest (`.test.ts` or `.spec.ts`).
+- Tests live next to the code in `__tests__/`. Every workspace uses Vitest: backend `.spec.ts`, frontend `.test.ts` or `.spec.ts`.
 
 ### 23. Shared-utilities-first mindset (added 2026-04-26)
 

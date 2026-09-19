@@ -43,7 +43,7 @@ Every behavior change must ship with tests. TDD-first for utilities. High covera
 - **MUST** include negative and boundary cases, not just happy paths.
 - **MUST NOT** suppress tests to land a PR.
 - **MUST NOT** skip tests for "time" — that's debt plus risk.
-- **MUST** use the framework appropriate to the workspace — Jest for backend, Vitest for frontend.
+- **MUST** use the framework appropriate to the workspace — Vitest in every workspace, Playwright for E2E.
 
 ## Anti-patterns
 

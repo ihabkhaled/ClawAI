@@ -36,7 +36,7 @@ of both — three times the work for one edit, most of it on files nobody touche
 ```bash
 # after editing
 npx eslint path/to/changed.ts path/to/other.ts --fix
-npx vitest run path/to/changed.spec.ts        # or: npx jest <path> pre-migration
+npx vitest run path/to/changed.spec.ts
 
 # once, before committing, in the touched workspace only
 npm run typecheck && npx vitest run

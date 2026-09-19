@@ -35,8 +35,10 @@ business logic.
    blanket truth: `argon2` exposes `hash`/`verify` fine, while `jsonwebtoken`
    exposes `decode` alone — so `jwt.verify` was `undefined` and every
    authenticated request in production 401'd on 2026-09-02 with
-   `jwt.verify is not a function`. **ts-jest transpiles specs to CommonJS, where
-   the namespace import works**, so unit tests pass against a module shape
+   `jwt.verify is not a function`. **Unit tests did not catch it**: under Jest, ts-jest transpiled specs to
+   CommonJS where the namespace import works; under Vitest (ADR-099),
+   `deps.interopDefault` (on by default) can likewise lift a CJS default's keys
+   onto the namespace. Either way unit tests can pass against a module shape
    production never uses. That is why this rule has a runtime test rather than a
    lint rule.
 7. **A NAMED import of a CommonJS export can fail at link time.**

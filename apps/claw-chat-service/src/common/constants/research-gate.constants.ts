@@ -79,7 +79,7 @@ export const RESEARCH_GATE_CANDIDATES_TIMEOUT_MS = 3_000;
 export const RESEARCH_PLANNER_SYSTEM_PROMPT = `You plan how to answer a user's message before another AI answers it. You do NOT answer the message.
 
 Reply with ONE JSON object and nothing else:
-{"action": "answer" | "crawl" | "search" | "crawl_then_search", "urls": string[], "query": string | null, "maxPages": number, "narration": string}
+{"action": "answer" | "crawl" | "search" | "crawl_then_search", "urls": string[], "query": string | null, "maxPages": number, "thinking": string, "narration": string}
 
 action:
 - "answer": no internet needed (greetings, writing, code, maths, stable knowledge, questions about the conversation).
@@ -89,7 +89,8 @@ action:
 
 urls: every website the user mentioned, as full https URLs. [] when none.
 query: a short web search query (under 12 words) when searching could be needed, else null. Never just copy the message.
-maxPages: pages to read per site. 1 for "this page" / a single article; 8-15 for "what does this site/company do"; up to 30 for "the whole site/all docs".
+maxPages: pages to read per site. 1 for "this page" / a single article; 8-15 for "what does this site/company do"; 30-60 for "most of the site"; up to 200 for "the whole site/all docs/every page".
+thinking: two to four short first-person sentences, in the user's language, saying what you understood the user wants and why you chose this action. It is shown to the user as your thinking.
 narration: ONE short first-person sentence telling the user what you are about to do, in the user's language. It MUST describe exactly the action you chose and nothing more: for "crawl" say you will read the site, and do not mention searching; for "search" say what you will look up; for "answer" say you can answer directly. Write it yourself; never copy these instructions.
 
 If the message contains a URL, action MUST be "crawl" or "crawl_then_search": a link the user wrote is opened, never just searched for.
@@ -100,10 +101,11 @@ Return ONLY the JSON object. No preamble. No code fence.`;
 export const RESEARCH_REPLAN_SYSTEM_PROMPT = `You already read some web pages to help answer a user's message. Decide whether a web SEARCH is still needed. You do NOT answer the message.
 
 Reply with ONE JSON object and nothing else:
-{"needsSearch": boolean, "query": string | null, "narration": string}
+{"needsSearch": boolean, "query": string | null, "thinking": string, "narration": string}
 
 needsSearch = true only when the pages read do not cover what the user asked (for example comparisons, reviews, news, competitors, anything beyond that site).
 query: a short web search query (under 12 words) when needsSearch is true, else null.
+thinking: two to four short first-person sentences, in the user's language, on what the pages covered and what, if anything, is still missing.
 narration: ONE short first-person sentence for the user, in their language, that matches your decision: if needsSearch is false, say the pages were enough; if true, say what you will search for.
 Return ONLY the JSON object.`;
 
@@ -112,13 +114,13 @@ Return ONLY the JSON object.`;
  * carries a query, URLs and a sentence of narration, and a truncated JSON
  * object is unparseable, which would silently fall back to "answer".
  */
-export const RESEARCH_PLANNER_MIN_OUTPUT_TOKENS = 320;
+export const RESEARCH_PLANNER_MIN_OUTPUT_TOKENS = 600;
 
 /** Used when the planner omits maxPages or returns nonsense. */
 export const RESEARCH_PLANNER_DEFAULT_MAX_PAGES = 12;
 
 /** Upper bound chat-service will request; research-service enforces its own ceiling too. */
-export const RESEARCH_PLANNER_MAX_PAGES = 30;
+export const RESEARCH_PLANNER_MAX_PAGES = 200;
 
 /** A crawl summary handed back to the planner is capped, or the re-plan prompt grows without bound. */
 export const RESEARCH_REPLAN_SUMMARY_MAX_CHARS = 3_000;

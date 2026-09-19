@@ -36,7 +36,7 @@ Manages the full lifecycle of frontier open-weight models that exceed Ollama's p
 - Mock `child_process` for launcher tests (verify argv only).
 - Mock HuggingFace via `undici.MockAgent` for pull-job tests.
 - Real binary integration test gated by `RUN_E2E_BINARY=1` env flag.
-- Coverage target ≥ 70% (Jest). Phase 12 raises to 92%.
+- Coverage target ≥ 70% (Vitest). Phase 12 raises to 92%.
 
 ## Common pitfalls
 

@@ -35,7 +35,7 @@ src/modules/<domain>/
   types/*.types.ts
   constants/*.constants.ts
   <domain>.module.ts    # registers providers/controllers
-  __tests__/*.spec.ts   # jest
+  __tests__/*.spec.ts   # vitest
 src/common/{enums,constants,utilities,errors,types}/
 src/app/{guards,filters,interceptors,pipes,decorators}/
 ```
@@ -94,9 +94,9 @@ Logs ship to MongoDB via Pino → `log.server` → server-logs-service (TTL 30d)
 cd apps/claw-<service>
 npm run typecheck   # tsgo --noEmit
 npm run lint
-npm test            # jest
+npm test            # vitest run
 npm run build       # tsgo + tsc-alias
 ```
 
-Coverage bar: **≥92%** on all four jest metrics (`coverageThreshold` in each
-`jest.config.ts`); ratcheted, never lowered. See [testing-map.md](testing-map.md).
+Coverage bar: **≥92%** on all four vitest coverage metrics (`test.coverage.thresholds` in each
+`vitest.config.ts`); ratcheted, never lowered. See [testing-map.md](testing-map.md).

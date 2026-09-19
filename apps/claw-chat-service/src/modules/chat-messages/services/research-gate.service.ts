@@ -207,6 +207,7 @@ ${message}`,
       query: null,
       maxPages: RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
       narration: '',
+      thinking: '',
       decidedBy: null,
     };
   }
@@ -239,7 +240,7 @@ ${summary}`,
         return followUp;
       }
     }
-    return { needsSearch: false, query: null, narration: '' };
+    return { needsSearch: false, query: null, narration: '', thinking: '' };
   }
 
   /** Null means "this model did not answer", so the caller tries the next. */

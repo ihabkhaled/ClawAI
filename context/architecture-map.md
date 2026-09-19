@@ -197,8 +197,8 @@ gates). Internal dependency edges are in
 
 ## Toolchain (pointer)
 
-Build is **tsgo + tsc-alias** (not `tsc`/`nest build`); tests are **jest**
-(backend) / **vitest** (frontend) / **playwright** (E2E); docker is orchestrated
+Build is **tsgo + tsc-alias** (not `tsc`/`nest build`); tests are **vitest**
+(every workspace) / **playwright** (E2E); docker is orchestrated
 by **`scripts/claw.sh`**. Exact commands are canonical in
 [stack-and-toolchain.md](stack-and-toolchain.md).
 

@@ -114,27 +114,27 @@ ClawAI is a local-first AI orchestration platform built as a monorepo of 17 Nest
 
 ## Tech Stack Summary
 
-| Layer              | Technology                                          | Version               |
-| ------------------ | --------------------------------------------------- | --------------------- |
-| Runtime            | Node.js                                             | >= 20                 |
-| Backend framework  | NestJS                                              | 11.x                  |
-| Frontend framework | Next.js                                             | 16                    |
-| UI library         | React                                               | 19                    |
-| ORM (SQL)          | Prisma                                              | 5.22+                 |
-| ODM (Mongo)        | Mongoose                                            | via NestJS            |
-| Validation         | Zod                                                 | 3.24                  |
-| Language           | TypeScript                                          | 5.6+                  |
-| Server state       | TanStack Query                                      | v5                    |
-| Client state       | Zustand                                             | v4                    |
-| Styling            | Tailwind CSS + shadcn/ui                            | v3 / latest           |
-| Auth               | JWT + argon2                                        | Custom implementation |
-| Message broker     | RabbitMQ                                            | 3.x                   |
-| Local AI           | Ollama                                              | Latest                |
-| Containerization   | Docker Compose                                      | v2                    |
-| Reverse proxy      | Nginx                                               | Latest                |
-| Security scanning  | ClamAV                                              | Stable                |
-| Linting            | ESLint 9 (flat config)                              | v9                    |
-| Testing            | Jest (backend), Vitest (frontend), Playwright (E2E) | Latest                |
+| Layer              | Technology                                | Version               |
+| ------------------ | ----------------------------------------- | --------------------- |
+| Runtime            | Node.js                                   | >= 20                 |
+| Backend framework  | NestJS                                    | 11.x                  |
+| Frontend framework | Next.js                                   | 16                    |
+| UI library         | React                                     | 19                    |
+| ORM (SQL)          | Prisma                                    | 5.22+                 |
+| ODM (Mongo)        | Mongoose                                  | via NestJS            |
+| Validation         | Zod                                       | 3.24                  |
+| Language           | TypeScript                                | 5.6+                  |
+| Server state       | TanStack Query                            | v5                    |
+| Client state       | Zustand                                   | v4                    |
+| Styling            | Tailwind CSS + shadcn/ui                  | v3 / latest           |
+| Auth               | JWT + argon2                              | Custom implementation |
+| Message broker     | RabbitMQ                                  | 3.x                   |
+| Local AI           | Ollama                                    | Latest                |
+| Containerization   | Docker Compose                            | v2                    |
+| Reverse proxy      | Nginx                                     | Latest                |
+| Security scanning  | ClamAV                                    | Stable                |
+| Linting            | ESLint 9 (flat config)                    | v9                    |
+| Testing            | Vitest (all workspaces), Playwright (E2E) | Latest                |
 
 ---
 

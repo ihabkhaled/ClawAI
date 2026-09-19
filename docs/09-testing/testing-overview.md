@@ -48,7 +48,7 @@ Before declaring a feature complete, ALL of the following must be done and evide
 - Test files co-located in `__tests__/` or alongside source
 - Required test cases per subject: happy path, boundary, null input, empty input, error input, duplicate input
 - ≥95% coverage on all new code
-- Coverage command: `npx jest --coverage` (backend) / `npx vitest --coverage` (frontend)
+- Coverage command: `npx vitest run --coverage` (backend) / `npx vitest --coverage` (frontend)
 
 ### T2 — QA Script (Mandatory Per Feature)
 
@@ -211,7 +211,7 @@ npm run test -w apps/claw-frontend
 
 ```bash
 # Backend service
-cd apps/claw-auth-service && npx jest --coverage
+cd apps/claw-auth-service && npx vitest run --coverage
 
 # Frontend
 cd apps/claw-frontend && npx vitest --coverage
@@ -220,13 +220,13 @@ cd apps/claw-frontend && npx vitest --coverage
 ### Watch Mode
 
 ```bash
-cd apps/claw-auth-service && npx jest --watch
+cd apps/claw-auth-service && npx vitest
 cd apps/claw-frontend && npx vitest
 ```
 
 ---
 
-## Backend Testing (NestJS / Jest)
+## Backend Testing (NestJS / Vitest)
 
 ### Unit Tests
 
@@ -265,7 +265,8 @@ cd apps/claw-frontend && npx vitest
 - Mock RabbitMQ to avoid cross-service dependencies
 
 ```bash
-cd apps/claw-auth-service && npx jest --config test/jest-e2e.json
+# No backend e2e-spec suites exist today; vitest.config.ts includes **/*.spec.ts only.
+cd apps/claw-auth-service && npx vitest run
 ```
 
 ---

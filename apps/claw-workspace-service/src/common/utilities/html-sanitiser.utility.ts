@@ -18,8 +18,7 @@ import {
 // CommonJS loader cannot parse them at import time. By requiring DOMPurify
 // inside the call site we avoid loading those modules in tests that never
 // invoke sanitiseHtml() (e.g. workspace-adapter.factory.spec, action-execution
-// spec). Tests that exercise the sanitiser directly use jest.config's
-// `moduleNameMapper` to swap the entire utility for a stub.
+// spec). The sanitiser's own spec loads the real DOMPurify under Vitest.
 let cachedDompurify: { sanitize: (input: string, opts: object) => string } | null = null;
 function getDompurify(): { sanitize: (input: string, opts: object) => string } {
   if (cachedDompurify) {

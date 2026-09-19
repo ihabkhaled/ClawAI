@@ -159,7 +159,7 @@ describe('ReplayManager', () => {
       // Verify it returns quickly (does not block)
       await expect(runPromise).resolves.toBeUndefined();
 
-      // Verify the background work was started (use jest.useFakeTimers or mock the function)
+      // Verify the background work was started (use vi.useFakeTimers or mock the function)
       expect(mockReplayService.runBatch).toHaveBeenCalledTimes(1);
     });
 
@@ -401,7 +401,7 @@ Every test must be fully independent. A test that passes only when run after ano
 ```typescript
 // MANDATORY in every backend test file
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 // MANDATORY in every frontend test file
@@ -418,16 +418,16 @@ Why `clearAllMocks()` in `beforeEach` is mandatory:
 
 ### 4.3 Isolated Mock Instances for Background Task Tests
 
-Tests for fire-and-forget patterns (e.g., `ReplayManager.executeInBackground`) must use `jest.useFakeTimers()` or explicit promise resolution to control timing. Never rely on setTimeout-based behavior resolving naturally in a test.
+Tests for fire-and-forget patterns (e.g., `ReplayManager.executeInBackground`) must use `vi.useFakeTimers()` or explicit promise resolution to control timing. Never rely on setTimeout-based behavior resolving naturally in a test.
 
 ```typescript
 describe('background task isolation', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 });
 ```
@@ -503,17 +503,15 @@ A 75% line coverage with 100% branch coverage and all AC scenarios tested is far
 
 ### Mandatory Coverage Floor (added 2026-04-26)
 
-Every microservice and the frontend MUST report **≥92 %** on all four jest/vitest metrics: statements, branches, functions, lines. This is the flagship floor — branch coverage above the floor is the quality target.
+Every microservice and the frontend MUST report **≥92 %** on all four Vitest coverage metrics: statements, branches, functions, lines. This is the flagship floor — branch coverage above the floor is the quality target.
 
-Per-service `jest.config.ts`:
+Per-service `vitest.config.ts`:
 
 ```ts
-coverageThreshold: {
-  global: {
-    statements: 92,
-    branches: 92,
-    functions: 92,
-    lines: 92,
+test: {
+  coverage: {
+    provider: 'v8',
+    thresholds: { statements: 92, branches: 92, functions: 92, lines: 92 },
   },
 },
 ```
@@ -600,8 +598,8 @@ const mockAppConfig = {
 } as AppConfig;
 
 // In test setup
-jest.mock('@/config/app.config', () => ({
-  AppConfig: jest.fn(() => mockAppConfig),
+vi.mock('@/config/app.config', () => ({
+  AppConfig: vi.fn(() => mockAppConfig),
 }));
 ```
 
@@ -654,7 +652,7 @@ it('should stop polling after 90 attempts (safety net)', () => {
 
 ```typescript
 const mockRabbitMQService = {
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: vi.fn().mockResolvedValue(undefined),
 } as unknown as RabbitMQService;
 
 // Verify event was published with correct pattern and payload
@@ -689,10 +687,10 @@ mockGet.mockResolvedValueOnce({ data: mockRunsList });
 
 ### 8.6 Prisma Mock Pattern (Backend)
 
-Use `jest-mock-extended` with `mockDeep` for Prisma:
+Use `vitest-mock-extended` with `mockDeep` for Prisma (not installed today — hand-built `vi.fn()` objects, as in `docs/09-testing/test-data-fixtures.md`, are the repo norm):
 
 ```typescript
-import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { mockDeep, DeepMockProxy } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
 
 let mockPrisma: DeepMockProxy<PrismaClient>;
@@ -701,7 +699,7 @@ beforeEach(() => {
   mockPrisma = mockDeep<PrismaClient>();
   // Inject into repository
   repo = new RoutingRepository(mockPrisma);
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 // Use in tests

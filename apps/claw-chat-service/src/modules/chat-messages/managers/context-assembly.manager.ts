@@ -1,4 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { EVIDENCE_FIT_BUDGET_SHARE } from '../constants/evidence-fit.constants';
+import { fitEvidenceToBudget } from '../utilities/evidence-fit.utility';
 import { type RetrievalBundle } from '@claw/shared-types';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
@@ -110,8 +112,12 @@ export class ContextAssemblyManager {
       userId,
     );
     const retrievalMs = Date.now() - retrievalStartedAt;
-    const researchEvidence = this.extractEvidenceCitations(fetched.researchRun);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
+    const researchEvidence = this.fitResearchEvidence(
+      fetched.researchRun,
+      threadSettings,
+      researchWarnings,
+    );
     const researchToolsUsed = this.extractResearchTools(fetched.researchRun);
     // Requested, not produced. A run that failed cleanly yields no evidence and
     // no warnings, and that used to mean the model heard nothing about the web
@@ -1131,6 +1137,40 @@ ${RESEARCH_GROUNDING_REMINDER}`;
 
     const summary = ran.length > 0 ? ran.join(', then ') : 'ran no web tool';
     return `Tools that ran on this turn: ${summary} (${unique.join(', ')}).`;
+  }
+
+  /**
+   * Fits the evidence to the answering model BEFORE anything is budgeted.
+   *
+   * Against the model's whole input window, not `tokenBudget`: that is what
+   * history may spend after the evidence is already counted, so a 91-page
+   * crawl drove it to 0 and fitting against it would have dropped every page.
+   * Fitting here also stops a big crawl from starving the conversation, since
+   * the overhead estimate then counts the fitted block, not the raw one.
+   */
+  private fitResearchEvidence(
+    run: ResearchRunResponse | null,
+    threadSettings: ThreadSettings | undefined,
+    warnings: string[],
+  ): ResearchEvidenceCitation[] {
+    const evidence = this.extractEvidenceCitations(run);
+    const window = resolveModelTokenBudget({
+      contextWindowTokens: threadSettings?.contextWindowTokens ?? null,
+      provider: threadSettings?.provider ?? null,
+      requestedOutputTokens: threadSettings?.maxTokens ?? null,
+      systemOverheadTokens: 0,
+      toolOverheadTokens: 0,
+    });
+    const fitted = fitEvidenceToBudget(
+      evidence,
+      Math.floor(window.availableInputTokens * APPROX_CHARS_PER_TOKEN * EVIDENCE_FIT_BUDGET_SHARE),
+    );
+    if (fitted.omitted > 0) {
+      warnings.push(
+        `${String(evidence.length)} pages were read; the ${String(fitted.omitted)} least relevant were left out to fit your context window. Say so if the answer might be on them.`,
+      );
+    }
+    return fitted.items;
   }
 
   private formatResearchBlock(context: AssembledContext): string {

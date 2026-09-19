@@ -299,7 +299,7 @@ file-generation-service
 
 Tag every test with its regression pack for selective execution.
 
-### Jest (Backend)
+### Vitest (Backend)
 
 ```typescript
 describe('[AUTH] Login flow', () => {
@@ -316,10 +316,10 @@ Run a specific pack:
 
 ```bash
 # Run only auth regression tests
-npx jest --testPathPattern=".*" --testNamePattern="\[AUTH\]"
+npx vitest run -t "\[AUTH\]"
 
 # Run only chat regression tests
-npx jest --testPathPattern=".*" --testNamePattern="\[CHAT\]"
+npx vitest run -t "\[CHAT\]"
 ```
 
 ### Vitest (Frontend)
@@ -381,7 +381,7 @@ npm run lint && npm run typecheck && npm run build
 npm run test
 
 # 3. Affected regression pack (example: chat + adjacency)
-npx jest --testNamePattern="\[CHAT\]|\[ROUTING\]|\[MEMORY\]|\[AUDIT\]"
+npx vitest run -t "\[CHAT\]|\[ROUTING\]|\[MEMORY\]|\[AUDIT\]"
 
 # 4. Smoke E2E
 npx playwright test --grep "@smoke"
@@ -396,7 +396,7 @@ Run before every release, after Docker/Nginx changes, or after shared package ch
 npm run lint && npm run typecheck && npm run build && npm run test
 
 # 2. All regression packs
-npx jest  # All backend tests
+npx vitest run  # All backend tests
 cd apps/claw-frontend && npx vitest run  # All frontend tests
 
 # 3. Full E2E suite

@@ -8,4 +8,4 @@ export const SEARCH_FETCH_EXTRACT_DEFAULT_MAX_RESULTS = 4;
  * a search. Affordable only because research now runs after the POST returns;
  * inside the request it would have met nginx's 60-second limit.
  */
-export const RESEARCH_CRAWL_REQUEST_TIMEOUT_MS = 90_000;
+export const RESEARCH_CRAWL_REQUEST_TIMEOUT_MS = 300_000;

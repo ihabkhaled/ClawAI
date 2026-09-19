@@ -7,9 +7,9 @@ scripts.
 written test-first, ≥92% coverage on all four metrics, error paths and boundary
 cases covered, and a runnable QA script with DB + log verification.
 
-**Inputs** — The diff; co-located `__tests__/` (Jest `.spec.ts` backend, Vitest
-frontend); `qa/test-<feature>.sh`; `jest.config.ts` / `vitest.config.ts`
-thresholds.
+**Inputs** — The diff; co-located `__tests__/` (Vitest everywhere: `.spec.ts` backend,
+`.test.ts`/`.spec.ts` frontend); `qa/test-<feature>.sh`; `vitest.config.ts`
+`test.coverage.thresholds`.
 
 **Canonical files** — `rules/04-testing-rules.md` (T1 unit/TDD, T2 API 20-25×,
 QA script anatomy), `CLAUDE.md` ("Test-coverage flagship mindset" #22; QA & UAT

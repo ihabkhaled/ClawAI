@@ -43,6 +43,7 @@ export class ResearchOrchestratorManager {
 
   async run(input: ResearchOrchestrationInput): Promise<ResearchRunResponse | null> {
     const plan = await this.planner.plan(input.intent);
+    await this.narrateThought(input.threadId, plan.thinking);
     if (plan.narration.length > 0) {
       await this.narration.append(input.threadId, {
         kind: NarrationKind.PLANNED,
@@ -68,6 +69,7 @@ export class ResearchOrchestratorManager {
     // keeps "read this site" from also spending a search.
     await this.narration.append(input.threadId, { kind: NarrationKind.BACK_TO_AI });
     const followUp = await this.planner.followUpAfterCrawl(input.intent, summariseCrawl(crawled));
+    await this.narrateThought(input.threadId, followUp.thinking);
     if (followUp.narration.length > 0) {
       await this.narration.append(input.threadId, {
         kind: NarrationKind.REPLANNED,
@@ -152,5 +154,11 @@ export class ResearchOrchestratorManager {
       requestedModel: input.forcedModel,
       correlationId: input.threadId,
     };
+  }
+
+  private async narrateThought(threadId: string, thinking: string): Promise<void> {
+    if (thinking.length > 0) {
+      await this.narration.append(threadId, { kind: NarrationKind.AI_THOUGHT, text: thinking });
+    }
   }
 }

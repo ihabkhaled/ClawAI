@@ -11,7 +11,7 @@ task_keywords:
     mock repository,
     error path,
     catch branch,
-    jest,
+    vitest,
     spec.ts,
     business logic test,
   ]
@@ -62,7 +62,7 @@ Service methods hold the business logic: ownership/permission validation, orches
 
 ## Implementation steps
 
-1. Build a testing module (`Test.createTestingModule`) providing the real service plus jest-mocked repository, `RabbitMQService`, and adapters.
+1. Build a testing module (`Test.createTestingModule`) providing the real service plus `vi.fn()`-mocked repository, `RabbitMQService`, and adapters.
 2. Never mock the service under test; mock only its collaborators.
 3. Assert behaviour: returned value, thrown exception `code`, and mock call args (`expect(repo.create).toHaveBeenCalledWith(...)`).
 4. Cover ownership: seed a fixture with a mismatched `userId`, expect the forbidden/not-found path.

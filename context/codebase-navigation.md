@@ -47,7 +47,7 @@ src/
     dto/*.dto.ts                  # Zod schemas + inferred types
     types/*.types.ts              # domain types
     constants/*.constants.ts
-    __tests__/*.spec.ts           # jest
+    __tests__/*.spec.ts           # vitest
 ```
 
 ## Inside the frontend (`apps/claw-frontend/src/`)
