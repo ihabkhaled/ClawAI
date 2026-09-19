@@ -94,6 +94,12 @@ export default defineConfig([
     'build/**',
     'dist/**',
     'node_modules/**',
+    // Served as-is to the browser, not built: `public/sw.js` is a service
+    // worker whose globals (`self`, `caches`) are none of this config's, and
+    // the TypeScript rules below do not apply to it. Its behaviour is covered
+    // by src/utilities/__tests__/service-worker.utility.test.ts, which runs
+    // the real file.
+    'public/**',
     '*.config.ts',
     '*.config.js',
     '*.config.mjs',

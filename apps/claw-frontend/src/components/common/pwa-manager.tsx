@@ -4,9 +4,11 @@ import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { PWA_INSTALL_DISMISSED_KEY } from '@/constants/pwa.constants';
+import { APP_VERSION } from '@/constants';
+import { PWA_CACHE_PREFIX, PWA_INSTALL_DISMISSED_KEY } from '@/constants/pwa.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { PwaInstallPromptEvent } from '@/types/pwa.types';
+import { serviceWorkerUrl, shouldRegisterServiceWorker } from '@/utilities/service-worker.utility';
 
 export function PwaManager(): React.ReactElement | null {
   const { t } = useTranslation();
@@ -30,9 +32,26 @@ export function PwaManager(): React.ReactElement | null {
     };
     window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && !shouldRegisterServiceWorker(process.env.NODE_ENV)) {
+      // A worker installed by an earlier build keeps answering with its cached
+      // chunks, so local verification measures the previous bundle until it is
+      // removed by hand. Remove it here instead (TD-034).
+      void navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          void registration.unregister();
+        }
+      });
+      // Its caches outlive it, and one of them holds the stale chunks.
+      void caches.keys().then((keys) => {
+        for (const key of keys.filter((name) => name.startsWith(PWA_CACHE_PREFIX))) {
+          void caches.delete(key);
+        }
+      });
+    }
+
+    if ('serviceWorker' in navigator && shouldRegisterServiceWorker(process.env.NODE_ENV)) {
       void navigator.serviceWorker
-        .register('/sw.js')
+        .register(serviceWorkerUrl(APP_VERSION))
         .then((registration) => {
           if (registration.waiting) {
             setWaitingWorker(registration.waiting);

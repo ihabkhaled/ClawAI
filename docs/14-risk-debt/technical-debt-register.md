@@ -272,7 +272,7 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-033.
 
-### TD-034: The PWA service worker can serve the previous bundle after a deploy
+### TD-034 (FIXED 2026-09-20): The PWA service worker can serve the previous bundle after a deploy
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-034.
 

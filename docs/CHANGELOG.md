@@ -55,6 +55,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A new version now reaches you on the next load.** The app used to be able
+  to keep running the previous version's code until the browser's stored copy
+  was cleared by hand.
 - **Files are written by the models that write them best.** The file writer
   now starts with the fastest model that produced a valid file every time in
   a 1,500-file test, and its fallbacks are models that are actually

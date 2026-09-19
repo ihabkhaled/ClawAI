@@ -43,8 +43,24 @@ Last updated: 2026-09-10
   `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` from the adapter. Every
   service that uses the adapter must ship in the same deploy.
 
-### TD-034: The PWA service worker can serve the previous bundle after a deploy (2026-09-19)
+### TD-034: The PWA service worker can serve the previous bundle after a deploy (2026-09-19) — FIXED (2026-09-20)
 
+- **Fixed**:
+  - Code (`/_next/static/**.js|css`) is **network-first**, with the cache only
+    as an offline fallback. An old worker can no longer answer with a
+    previous build's chunk.
+  - The cache is named after the app version. The page registers
+    `/sw.js?v=<APP_VERSION>`, so a release installs a new worker and its
+    `activate` deletes every older cache.
+  - **No worker outside production.** A dev build reuses chunk URLs, so a
+    cached chunk hid the code change. Any worker and cache left from an
+    earlier build is removed on the next load, which is what used to be a
+    manual browser step before verifying anything.
+  - Images and fonts stay cache-first, and offline still works.
+  - Covered by `src/utilities/__tests__/service-worker.utility.test.ts`,
+    which runs the real `public/sw.js`.
+- **Not yet proven in production**: the network-first path is proven by test
+  and by the dev lane; production has not been deployed since 2026-09-17.
 - **Severity**: Medium · **Effort**: Low–Medium · **Priority**: Next
 - **Detail**: A browser with the worker installed kept running old JavaScript
   after the frontend changed. Verifying ADR-106 locally, the login form sent no
