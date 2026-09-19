@@ -262,10 +262,13 @@ reset_docker_log
 out="$(deploy "$SHA_SHARED")"
 assert_contains "shared-package deployment succeeds" "$out" "Deployment successful"
 build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
-for consumer in payment-service workspace-service agent-service research-service; do
+for consumer in payment-service workspace-service agent-service research-service chat-service; do
   assert_contains "shared-auth change rebuilds $consumer" "$build_line" "$consumer"
 done
-assert_not_contains "shared-auth change spares chat-service" "$build_line" "chat-service"
+# health-service authenticates nothing, so it is the one service a shared-auth
+# change must not touch. chat-service moved to the other list on 2026-09-20,
+# when every service that authenticates took the revocation guard (ADR-112).
+assert_not_contains "shared-auth change spares health-service" "$build_line" "health-service"
 
 # ─── No-op (docs only) ───────────────────────────────────────────────────────
 # Deploy the docs commit on top of the payment commit by rewinding state.
