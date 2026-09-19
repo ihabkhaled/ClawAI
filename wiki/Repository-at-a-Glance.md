@@ -2,7 +2,7 @@
 
 | Metric | Current |
 | --- | --- |
-| Release | v1.100.0 |
+| Release | v1.100.1 |
 | Tracked files | 8639 |
 | Backend services | 18 |
 | Workspaces | 25 |
