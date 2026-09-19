@@ -1,0 +1,475 @@
+> **Canonical source:** `docs/04-backend/service-guide-chat.md`
+
+# Service Guide: claw-chat-service
+
+## Overview
+
+| Property     | Value                                               |
+| ------------ | --------------------------------------------------- |
+| Port         | 4002                                                |
+| Database     | PostgreSQL (`claw_chat`)                            |
+| ORM          | Prisma 5.20                                         |
+| Env prefix   | `CHAT_`                                             |
+| Nginx routes | `/api/v1/chat-threads/*`, `/api/v1/chat-messages/*` |
+
+The chat service is the central orchestrator for user conversations. It manages threads, stores messages, assembles context from multiple services, executes LLM calls with fallback chains, and streams responses via SSE.
+
+**Boot contract:** the package is `"type": "module"`, so `dist/main.js` runs as ESM.
+`main.ts` must not reference `__dirname` / `__filename` / `require` (banned by
+ESLint `no-restricted-globals`, pinned by `src/__tests__/main-esm-bootstrap.spec.ts`),
+and must not register `tsconfig-paths` at runtime — `tsc-alias -f` rewrites the
+`@app/*` aliases at build time. The 2026-09-02 rollout crash-looped on exactly
+this; see [build-system.md § Gotchas](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/build-system.md#7-gotchas--troubleshooting).
+
+## Database Schema
+
+### ChatThread
+
+| Column            | Type        | Notes                                |
+| ----------------- | ----------- | ------------------------------------ |
+| id                | String      | CUID primary key                     |
+| userId            | String      | Owner                                |
+| title             | String?     | Auto-generated or user-set           |
+| routingMode       | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc. |
+| lastProvider      | String?     | Last used provider                   |
+| lastModel         | String?     | Last used model                      |
+| isPinned          | Boolean     | User-pinned thread                   |
+| isArchived        | Boolean     | Soft archive                         |
+| preferredProvider | String?     | Thread-level override                |
+| preferredModel    | String?     | Thread-level override                |
+| contextPackIds    | String[]    | Attached context pack IDs            |
+| systemPrompt      | String?     | Custom system prompt                 |
+| temperature       | Float?      | Default 0.7                          |
+| maxTokens         | Int?        | Token limit override                 |
+
+### ChatMessage
+
+| Column        | Type         | Notes                              |
+| ------------- | ------------ | ---------------------------------- |
+| id            | String       | CUID primary key                   |
+| threadId      | String       | FK to ChatThread                   |
+| role          | MessageRole  | SYSTEM, USER, ASSISTANT, TOOL      |
+| content       | String       | Message text                       |
+| provider      | String?      | Which provider answered            |
+| model         | String?      | Which model answered               |
+| routingMode   | RoutingMode? | Mode used for this message         |
+| routerModel   | String?      | Which model made routing decision  |
+| usedFallback  | Boolean      | Whether fallback was triggered     |
+| inputTokens   | Int?         | Prompt token count                 |
+| outputTokens  | Int?         | Completion token count             |
+| estimatedCost | Decimal?     | Cost estimate (12,8 precision)     |
+| latencyMs     | Int?         | End-to-end latency                 |
+| feedback      | String?      | User feedback (thumbs up/down)     |
+| metadata      | Json?        | Error flags, routing details, etc. |
+
+### MessageAttachment
+
+Links messages to files via fileId. Types include `document`, `image`, etc.
+
+## API Endpoints
+
+### Threads (`/api/v1/chat-threads`)
+
+| Method | Path | Description                     |
+| ------ | ---- | ------------------------------- |
+| GET    | /    | List user's threads (paginated) |
+| POST   | /    | Create new thread               |
+| GET    | /:id | Get thread with recent messages |
+| PATCH  | /:id | Update title, settings, etc.    |
+| DELETE | /:id | Delete thread and all messages  |
+
+### Messages (`/api/v1/chat-messages`)
+
+| Method | Path              | Description                                   |
+| ------ | ----------------- | --------------------------------------------- |
+| GET    | /thread/:threadId | List messages (paginated)                     |
+| POST   | /                 | Send new message (triggers flow)              |
+| PATCH  | /:id/feedback     | Submit feedback on a message                  |
+| POST   | /:id/regenerate   | Regenerate an assistant response              |
+| POST   | /parallel         | Send prompt to 2-5 models simultaneously      |
+| POST   | /consensus        | Build a consensus answer from multiple models |
+| POST   | /escalation-chain | Escalate to stronger models if needed         |
+| POST   | /repair           | Repair or critique an answer                  |
+| POST   | /decompose        | Decompose a task into structured subtasks     |
+| POST   | /best-of-n        | Generate multiple candidates and choose one   |
+| POST   | /cost-ensemble    | Balance answer quality against spend          |
+| POST   | /verify           | Run verification checks on an answer          |
+| POST   | /role-pack        | Execute multi-role prompt pack workflows      |
+| POST   | /pipeline         | Execute staged prompt pipelines               |
+
+## Message Flow (End-to-End)
+
+1. **User sends message** -- POST creates a USER message record
+2. **Publish `message.created`** -- routing service picks it up
+3. **Routing decision arrives** -- via `message.routed` event with provider, model, fallback
+4. **Context assembly** -- `ContextAssemblyManager` gathers:
+   - User memories from memory-service (HTTP, limit 20)
+   - Context pack items from memory-service (HTTP)
+   - Workspace search results from workspace-service (HTTP)
+   - Attachment text from file-service (HTTP), via
+     `GET /internal/files/:id/content` — **never** `/chunks`, which performs no
+     ownership check. `extractedText` is used for every non-image file;
+     `content` (base64) only for an image going to a vision model. See
+     [ADR-095](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-095-attachment-text-extraction-pipeline.md).
+   - Thread message history
+     4b. **Attachment readiness wait** -- `waitForIngestion` polls
+     `GET /internal/files/:id/ingestion-state` until every attachment has
+     finished extracting, bounded by `FILE_INGESTION_WAIT_TIMEOUT_MS` (12s).
+     Extraction is asynchronous, so a message sent the instant an upload returns
+     would otherwise race it. Expiry degrades rather than throwing: the turn
+     proceeds and the model is told the file is still being read. **This is a
+     blocking step inside the turn and it affects latency.**
+5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
+6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
+7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
+8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)
+9. **Fallback chain** -- if primary fails or is weak, tries next candidate in chain
+10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable
+11. **SSE emission** -- `emitCompletion()` pushes to connected clients
+12. **Publish `message.completed`** -- memory service extracts facts; audit logs usage
+
+## SSE Streaming
+
+The chat service uses SSE for real-time message delivery. Key implementation details:
+
+- SSE controller uses `@SkipLogging()` to avoid pino-http header conflicts
+- SSE controller uses `@SkipThrottle()` to avoid rate limiting on long-lived connections
+- SSE routes are excluded from pino-http `autoLogging` in `app.module.ts`
+- Frontend uses `fetch()` with `ReadableStream` (not EventSource) to set Authorization headers
+- Nginx must have `proxy_buffering off` for SSE routes
+
+## Error Handling
+
+When all providers fail, the service stores an error message as an ASSISTANT record with `metadata: { error: true }`. This ensures the frontend's polling logic finds a terminal message and stops the "AI is thinking..." indicator.
+
+## Request Body Bounds
+
+Chat bootstrap installs an explicit 1 MiB JSON parser bound before Nest's
+default parser. The application DTOs remain the narrower semantic limits
+(`content` is at most 100,000 characters for the standard message contract);
+the larger transport envelope accounts for UTF-8 and JSON escaping when coding
+clients attach bounded workspace context. Requests above the transport bound
+return HTTP 413 with the middleware error code instead of being masked as a 500.
+
+## Limit refusals must carry the machine code, not a message key
+
+`AccessControlService.assertQuotaRemaining` threw
+`'quota.dailyLimitExceeded'` as its `BusinessException` code. The frontend error
+map keys on the stable billing value `QUOTA_DAILY_EXCEEDED`, so nothing matched
+and every user in every locale saw the service's English sentence.
+
+The rule that generalises: **the `code` on a `BusinessException` is a contract
+with the frontend, not a translation key.** Use the enum
+(`BillingErrorCode`, `Permission`, and the module's own `*-error-code.enum.ts`),
+never a dotted message path.
+
+Limit refusals are also not toasts any more. The frontend renders them as a line
+in the transcript, because a toast that fades leaves a composer that appears to
+have silently done nothing. The codes it recognises are the six quota/plan codes
+plus `PLAN_TRIAL_EXPIRED` — which is not a quota at all: the free plan is a
+30-day trial, so day 31 is a wall, and "you used your allowance" is the wrong
+sentence. Anything unrecognised stays a toast rather than being guessed at.
+
+## Events
+
+| Event             | Direction | Notes                          |
+| ----------------- | --------- | ------------------------------ |
+| message.created   | Publish   | After USER message stored      |
+| message.routed    | Subscribe | Receives routing decision      |
+| message.completed | Publish   | After ASSISTANT message stored |
+| thread.created    | Publish   | After new thread created       |
+
+## Inter-Service HTTP Calls
+
+| Target Service    | Purpose                                 |
+| ----------------- | --------------------------------------- |
+| memory-service    | Fetch user memories, pack items         |
+| workspace-service | Fetch grounded workspace search results |
+| file-service      | Fetch attachment text + ingestion state |
+| connector-service | Execute LLM calls                       |
+| ollama-service    | Execute local Ollama calls              |
+
+## Key Managers
+
+- **ContextAssemblyManager** -- assembles full prompt from multiple sources
+- **ChatExecutionManager** -- executes LLM calls with fallback chain, quality checking, and auto re-routing
+- **QualityCheckManager** -- scores response quality (5 signals), recommends re-routing for weak answers
+- **ParallelExecutionManager** -- executes the same prompt against 2-5 models simultaneously via `Promise.allSettled`
+- **JudgeRefereeManager** -- runs the Critic → Judge quality pipeline on top of a generator response (see [Judge + Critic Pipeline](#judge--critic-pipeline) below)
+
+---
+
+## Judge + Critic Pipeline
+
+### When the pipeline runs
+
+`JudgeRefereeManager.execute()` is invoked from `ChatExecutionManager.execute()`
+(step 8a of the message flow above) and from `ParallelExecutionManager` per
+lane. It activates when **(a)** the lane/thread carries `judgeEnabled=true`,
+or **(b)** the routing decision flagged an auto-trigger category (coding,
+security, medical, legal, finance, data-analysis). On success the manager
+returns a `JudgeRefereeResult` containing the original response, the critic
+evaluation, the judge verdict, and (optionally) a revised or escalated response.
+
+### Critic target resolution
+
+`resolveCriticTarget(generatorProvider, config)` picks the model for the
+critic LLM call in this order:
+
+1. **User-supplied wins**. If `config.criticEnabled === true` AND
+   `config.criticModel` is a non-empty string, the value is parsed via
+   `parseJudgeModel()` (the same `PROVIDER:model` parser the Judge uses).
+   A known provider (e.g. `anthropic:claude-sonnet-4`) routes through that
+   connector so token usage is captured natively; a plain model name routes
+   through Ollama with `resolveModel()` mapping `AUTO` to the configured
+   default local model.
+2. **Auto-pick fallback**. Otherwise `selectCriticModel()` returns the first
+   entry of `CRITIC_CLOUD_MODELS` whose provider differs from the generator
+   (avoids self-critique bias), or the local Ollama default when
+   `isLocalOnly`. This is the legacy v1 behaviour preserved unchanged.
+
+The DTO refinement (`apps/claw-chat-service/.../parallel-message.dto.ts`)
+enforces `criticEnabled ⇒ criticModel != ''` AND
+`criticEnabled ⇒ judgeEnabled` before the request reaches the manager, so the
+gate above only has to make a positive selection.
+
+### Critic output parsing
+
+`parseCriticOutput(content)` is fault-tolerant by design — critic models
+sometimes wrap JSON in prose or fenced code blocks. The parser:
+
+1. Strips a ` ```json ... ``` ` fence if present.
+2. Extracts the first `{ ... }` block via regex.
+3. JSON-parses and clamps `score` into `[0, 1]`, filters non-string feedback
+   entries, falls back to a derived summary when `summary` is missing.
+4. **On any failure**, returns
+   `{ feedback: [], score: 1.0, summary: CRITIC_PARSE_FAILURE_SUMMARY, parseFailed: true }`
+   and logs `parseCriticOutput: failed to parse critic output. Persisting
+parse-failure marker.` so the failure is observable without poisoning the
+   downstream Judge decision.
+
+### Persistence into ChatMessage.metadata
+
+`buildMetadata()` assembles a `JudgeRefereeMetadata` object stored under
+`ChatMessage.metadata` (JSON column). The critic-specific fields are
+`criticModel`, `criticFeedback`, `criticScore`, `criticSummary`,
+`criticRequested`, `criticParseFailed`, plus a `criticLatencyMs` rolled up
+into `judgeTotalLatencyMs` and (when the run had real token accounting)
+combined judge+critic token usage in the top-level
+`judgeInputTokens/judgeOutputTokens` for a single `TokenLedgerContext.JUDGE`
+ledger entry. The full payload also lands in `metadata.judgeReview`
+(`JudgeReviewPayload`) so the FE can render the Judge panel without
+recomputing anything.
+
+### Plan-feature gating
+
+`AccessControlService.assertCanSendMessage()` (chat-service) is called by
+`createParallelMessage()` BEFORE the manager fires. It pushes plan-feature
+checks into a single `requireFeature: PlanFeature[]` call:
+`allowCompareMode` (always), plus `allowJudgeMode` when `judgeEnabled`, plus
+`allowCriticReview` when `criticEnabled`, plus `allowResearchMode` when the
+research enricher is requested. A locked plan flag returns `403
+MODEL_NOT_ALLOWED_FOR_PLAN` before any LLM tokens are spent.
+
+### Research workflow selection: mapping vs. classifying
+
+`ChatMessagesService.runResearchForIntent` is the only single-message
+research call site (compare-mode's `ContextAssemblyManager` has its own,
+separate one). It picks which `ResearchWorkflow` to request from
+research-service via `classifyResearchWorkflow`
+(`common/utilities/research-intent-classifier.utility.ts`), not the plainer
+`mapResearchModeToWorkflow` compare-mode still uses.
+
+The difference: `mapResearchModeToWorkflow` is a pure lookup from the
+user-facing `ResearchMode` toggle (NONE/SEARCH/SEARCH_FETCH/SEARCH_EXTRACT).
+`classifyResearchWorkflow` calls that lookup first, then upgrades the result
+to `ResearchWorkflowKind.SITE_CRAWL` when the message itself contains a URL
+plus deterministic crawl-intent language ("crawl", "audit this website",
+"map the site") — see
+[ADR-092](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
+It never upgrades `SEARCH_ONLY` (chosen and priced as fetch-free) and never
+runs at all when research is off — research stays opt-in; this only makes
+the already-on state smarter about which workflow to request.
+
+Compare-mode is excluded on purpose: crawling once per parallel model lane
+would multiply the cost by the number of providers being compared.
+
+### Live SITE_CRAWL progress: a third dedicated Redis subscriber
+
+`runResearchForIntent` always sets `ResearchRequest.correlationId` to
+`threadId` (harmless to send for every workflow — research-service only acts
+on it during `SITE_CRAWL`). `ResearchProgressBridgeService`
+(`modules/chat-messages/services/research-progress-bridge.service.ts`)
+subscribes to `RESEARCH_CRAWL_PROGRESS_CHANNEL` (`@claw/shared-constants`) on
+its own `RESEARCH_PROGRESS_SUBSCRIBER_CLIENT` connection
+(`infrastructure/redis/constants/redis.constants.ts`) — a third dedicated
+subscriber alongside `CHAT_STREAM_SUBSCRIBER_CLIENT` and
+`STREAM_CANCEL_SUBSCRIBER_CLIENT`, not a share of either, because ioredis
+puts a subscribed connection into a mode that rejects ordinary commands and
+each existing subscriber already owns exactly one channel's handler slot.
+
+Every message it receives is parsed as a `ResearchCrawlProgressMessage`
+(`@claw/shared-types`) and mapped
+(`utilities/research-progress-bridge.utility.ts`'s
+`mapCrawlPhaseToResearchProgress`) onto the existing
+`ChatStreamService.emitResearchProgress(threadId, …)` lifecycle — the same
+method the search-then-fetch research enricher already uses, so the frontend
+needs no new event type to render a live crawl. A malformed payload (bad
+JSON, missing `correlationId`/`phase`) is logged and dropped, never thrown:
+one bad tick must not take down the subscriber loop every other thread's
+progress also flows through. Full design and why Redis pub/sub instead of a
+RabbitMQ `claw.events` topic:
+[ADR-092](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md)'s
+live-crawl-progress amendment.
+
+### Mid-generation crawl retrieval: `get_crawled_page` (Ollama Cloud only)
+
+A completed `SITE_CRAWL` run's pages are already fully in the initial
+prompt — real crawls have overflowed the context window this way, per
+ADR-095. `ChatMessagesService.extractCrawlRetrieval` reads the same
+`metadata.research.bundle.items` field `synthesizeTranscriptFromBundle`
+already uses for the FE transcript, and — only when the triggering
+message's research `mode` was literally `'SITE_CRAWL'` — passes a
+`CrawlRetrievalContext` (`modules/chat-messages/types/crawl-retrieval.types.ts`)
+as `execute()`'s new fourth parameter.
+
+When the resolved candidate is `OLLAMA_CONNECTOR_PROVIDER` and that context
+has at least one page, `ChatExecutionManager.tryRunCrawlRetrievalTurn`
+routes the turn through `runOllamaCloudRetrievalTurn` instead of the normal
+streaming/single-shot path: it builds the request the usual way
+(`buildOllamaChatRequestBody`), appends a `get_crawled_page` tool definition
+listing every crawled URL
+(`utilities/crawl-retrieval-tool.utility.ts`'s
+`buildGetCrawledPageToolDefinition`), and drives it through
+`runOllamaCloudToolLoop` — the same agentic loop `web_search`/`web_fetch`
+already use, reused here for the first time in production (see ADR-095 for
+why that loop had no production callers before this). A `get_crawled_page`
+call is answered from the in-memory pages, not the network
+(`executeGetCrawledPage`) — no PAYG hold, no feature-usage record, because
+the crawl that produced the content was already metered when it ran.
+
+**Billing note, because this path deliberately bypasses `callProvider`.**
+The loop takes its own PAYG hold per turn; going through `callProvider` too
+would double-bill. `runOllamaCloudRetrievalTurn` redoes only the two things
+that chokepoint would otherwise have done for it —
+`assertExposedForExecution` and `recordChokepointUsage` — see ADR-095 for the
+full reasoning and the test that proves exactly one hold per completion.
+
+Ollama Cloud only: OpenAI/Anthropic/Gemini candidates never see this tool,
+even with a populated `CrawlRetrievalContext` — extending it is real,
+separate scope (ADR-095's "Revisit when").
+
+---
+
+## Advanced Orchestration Modes
+
+The chat service now exposes a family of higher-order endpoints for structured response generation and comparison:
+
+- **`/consensus`** -- collect candidate answers and synthesize one consensus result
+- **`/escalation-chain`** -- try lower-cost or faster models first, then escalate when thresholds are not met
+- **`/repair`** -- critique and repair a candidate answer
+- **`/decompose`** -- split a complex prompt into ordered subtasks
+- **`/best-of-n`** -- generate multiple candidates and choose the strongest output
+- **`/cost-ensemble`** -- balance quality and cost across model choices
+- **`/verify`** -- run lightweight verification against explicit checks
+- **`/role-pack`** -- apply structured multi-role prompting
+- **`/pipeline`** -- execute staged prompt steps with a final aggregated result
+
+These flows live alongside the standard message path and the parallel compare path. They share the same service boundaries: context assembly stays in chat, provider configuration stays in connector-service, local model support stays in ollama-service, and external grounding stays in workspace-service.
+
+---
+
+## Parallel Multi-Model Response Mode
+
+The parallel compare feature lets users send a single prompt to multiple models at once and view responses side by side. This is useful for comparing model quality, latency, and cost across providers.
+
+### How It Works
+
+1. **User selects 2-5 models** -- frontend multi-select picker allows choosing provider/model pairs
+2. **POST /chat-messages/parallel** -- sends the prompt, threadId, and list of models
+3. **ParallelExecutionManager** -- fires all LLM calls via `Promise.allSettled()` so failures in one model do not block others
+4. **Store responses** -- each model's response is stored as a separate ASSISTANT message with its own token counts, latency, and provider metadata
+5. **Return all results** -- response includes an array of model responses with status (fulfilled/rejected), content, latency, and token usage
+
+### ParallelExecutionManager
+
+The `ParallelExecutionManager` handles:
+
+- Building the prompt once via `ContextAssemblyManager` (shared across all models)
+- Dispatching concurrent calls to each selected provider/model
+- Collecting results via `Promise.allSettled()` -- each call is independent
+- Recording per-model latency and token counts
+- Storing each response as a separate ASSISTANT message linked to the same thread
+- Publishing `message.completed` events for each successful response
+
+### Types
+
+| Type                  | Description                                                                                         |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| `ParallelRequest`     | threadId, content, models (array of {provider, model}), fileIds                                     |
+| `ParallelModelResult` | provider, model, status (fulfilled/rejected), content, inputTokens, outputTokens, latencyMs, error? |
+| `ParallelResponse`    | threadId, userMessageId, results (array of ParallelModelResult), totalLatencyMs                     |
+
+### Constraints
+
+- Minimum 2 models, maximum 5 models per request
+- Each model must belong to a healthy, active connector (or be a local Ollama model)
+- Thread ownership is validated before execution
+- All models share the same assembled context (system prompt, memories, files, history)
+
+## Coding agent conversations are a separate origin
+
+The VS Code coding agent talks to this service through the same endpoints as
+the web app, authenticated as the same user. Until `ThreadOrigin` existed, that
+meant every agent run appeared in the user's chat list beside conversations
+they had held themselves, and nothing in the data said which was which.
+
+`ChatThread.origin` is `WEB` or `CODING_AGENT`, defaulting to `WEB`. Three
+things follow, and the first is the one that surprises people:
+
+- **`listThreadsQuerySchema` defaults `origin` to `WEB`, not to "any".** A list
+  that returned every origin would put the agent's runs straight back where
+  they were. The repository's `buildWhereClause` applies the same default
+  again, so a caller that bypasses the DTO still gets one origin rather than
+  all of them.
+- **The migration made every existing row `WEB`.** Nothing moved out of
+  anyone's chat list; only threads created from here on separate.
+- **`coding-agent-chats` is read-only by construction.** The module has a
+  controller with two `@Get` routes and a service with no create, update or
+  delete method, so a later change cannot add a write by accident. nginx also
+  refuses anything but `GET`, `HEAD` and `OPTIONS` on that path, in both
+  `locations.conf` and the distributed template.
+
+The web app shows what the agent did. It does not join in: a reply typed into a
+finished run has no agent listening for it.
+
+Each read in `CodingAgentChatsService` pins `origin` as well as `userId`. The
+origin filter is what keeps agent runs out of the web list; pinning it again on
+the agent endpoint is what stops that endpoint becoming a second, unfiltered
+way to read the user's ordinary conversations. A missing thread, another user's
+thread and a web thread all refuse identically, so the endpoint cannot be used
+to learn which thread ids exist.
+
+The daily chat ceiling still counts agent threads. They cost the same money.
+
+## AUTO research: the narrated planner loop (2026-09-19)
+
+AUTO research is no longer a yes/no gate inside the POST. See
+[ADR-098](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-098-auto-research-is-an-ai-driven-narrated-loop.md) and
+[rules/50](https://github.com/ihabkhaled/ClawAI/blob/main/rules/50-agentic-research-loop-and-narration.md).
+
+- `createMessage` stores the user row and returns; `runResearchIfRequested`
+  runs afterwards and `publishMessageCreated` is in `finally`.
+- `runAutoResearch` checks `hasResearchAccess` first, then hands the turn to
+  `ResearchOrchestratorManager`: `ResearchGateService.plan()` →
+  crawl (`SITE_CRAWL`, `maxPages`) → `followUpAfterCrawl()` → search
+  (`SEARCH_THEN_FETCH`, `searchQuery`) → one merged bundle.
+- `NarrationService` keeps the turn's work log in `claw:chat:narration:<threadId>`
+  and streams each line as a `narration` frame; `storeAssistantResponse` copies
+  it to `metadata.narration`. `ResearchProgressBridgeService` turns crawl ticks
+  into lines with a per-tick dedupe key (every replica receives them).
+- Research is called on `POST /api/v1/internal/research/runs` with the service
+  token and the user id — never the user's bearer.
+- URL detection is `detectPromptUrls` → `@claw/shared-utilities`
+  `detectUrlsInText`; bare domains count.
+
