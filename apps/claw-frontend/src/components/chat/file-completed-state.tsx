@@ -7,6 +7,8 @@ import { formatFileSizeLabel } from '@/utilities';
 
 export function FileCompletedState({
   filename,
+  title,
+  description,
   format,
   sizeBytes,
   minutesLeft,
@@ -24,8 +26,20 @@ export function FileCompletedState({
           <FileText className="text-primary h-5 w-5" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{filename}</div>
-          <div className="text-muted-foreground text-xs">
+          <div className="truncate text-sm font-medium" dir="auto" title={title ?? filename}>
+            {title ?? filename}
+          </div>
+          {description ? (
+            <p
+              className="text-muted-foreground line-clamp-2 text-xs"
+              dir="auto"
+              data-testid="file-description"
+            >
+              {description}
+            </p>
+          ) : null}
+          <div className="text-muted-foreground text-xs" dir="auto">
+            {title ? `${filename} \u00b7 ` : ''}
             {format.toUpperCase()}
             {sizeLabel ? ` \u00b7 ${sizeLabel}` : ''}
           </div>

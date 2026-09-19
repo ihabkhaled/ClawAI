@@ -52,6 +52,8 @@ export function FileGenerationBubble({
       {isCompleted && asset && !view.expired ? (
         <FileCompletedState
           filename={filename}
+          title={generation.title ?? null}
+          description={generation.description ?? null}
           format={generation.format}
           sizeBytes={asset.sizeBytes}
           minutesLeft={view.minutesLeft}

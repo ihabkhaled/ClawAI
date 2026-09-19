@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Excel, PowerPoint and Zip.** Download any answer, or ask the AI for one:
   tables become Excel sheets, sections become slides, and code blocks become
   real files in a zip. Spreadsheet cells can never run as formulas.
+- **Files have real names.** An AI-made file is named after its own title, in
+  any language, and the chat shows that title with a one-line description,
+  instead of "generated-1789839832198.pdf".
 - **Expand an answer.** A bigger view of any answer, rendered or as raw
   Markdown, with a copy button on each.
 

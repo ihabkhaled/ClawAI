@@ -49,6 +49,18 @@ describe('fileWriterSystemPrompt', () => {
     },
   );
 
+  // The title becomes the file's name, title and description (ADR-109).
+  it.each(['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP'])(
+    'asks a %s writer for a naming title',
+    (format) => {
+      expect(fileWriterSystemPrompt(format)).toContain("becomes the file's name");
+    },
+  );
+
+  it.each(['CSV', 'JSON', 'TXT'])('never asks a %s writer for Markdown headings', (format) => {
+    expect(fileWriterSystemPrompt(format)).not.toContain('# title');
+  });
+
   it('asks a zip writer to put each path above its block', () => {
     expect(fileWriterSystemPrompt('ZIP')).toContain(
       'relative path alone on the line directly above',

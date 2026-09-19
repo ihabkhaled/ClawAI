@@ -57,10 +57,28 @@ export const FILE_WRITER_FORMAT_INSTRUCTIONS: Readonly<Record<string, string>> =
   DOCX: 'Write GitHub-flavoured Markdown: headings, lists, tables, fenced code with a language. Do not write raw HTML.',
   HTML: 'Write GitHub-flavoured Markdown; the page is built from it. Do not write raw HTML tags.',
   MD: 'Write GitHub-flavoured Markdown.',
-  PPTX: 'Write Markdown: a # title first, then one ## heading per slide with at most 6 short bullets each. A table or code block gets its own slide.',
+  PPTX: 'Write Markdown: one ## heading per slide with at most 6 short bullets each. A table or code block gets its own slide.',
   XLSX: 'Write the data as Markdown tables. Put a ## heading naming each sheet directly above its table. Keep number cells plain: no thousands separators or currency symbols.',
   CSV: 'Output CSV only: a header row, then data rows, comma-separated, quoted where needed. No Markdown.',
   JSON: 'Output one valid JSON value only. No Markdown fences.',
   TXT: 'Output plain text without Markdown syntax.',
   ZIP: "Write Markdown. Put each file in its own fenced code block with a language, and write the file's relative path alone on the line directly above its block (for example `src/index.ts`). Tables become CSV files.",
 };
+
+/**
+ * Markdown formats open with a title that names the file: file-generation turns
+ * it into the file's name, title and description (F3c, ADR-109). Files used to
+ * be called `generated-<ms>.<ext>`.
+ */
+export const FILE_WRITER_NAMING_INSTRUCTION =
+  "Start with one # title in plain words that names the document (it becomes the file's name; write a title, not a filename: no extension, no underscores), then a one-sentence summary paragraph.";
+
+export const NAMED_FILE_FORMATS: readonly string[] = [
+  'PDF',
+  'DOCX',
+  'HTML',
+  'MD',
+  'PPTX',
+  'XLSX',
+  'ZIP',
+];

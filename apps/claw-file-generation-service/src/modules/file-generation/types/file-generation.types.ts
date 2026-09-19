@@ -10,6 +10,8 @@ export type FileGenerationRecord = {
   content: string | null;
   format: FileFormat;
   filename: string | null;
+  title: string | null;
+  description: string | null;
   provider: string;
   model: string;
   status: FileGenerationStatus;
@@ -40,7 +42,10 @@ export type FileGenerationAssetRecord = {
 export type FileAssetDownload = {
   stream: NodeJS.ReadableStream;
   mimeType: string;
+  /** ASCII-only, for the plain `filename=` parameter. */
   filename: string;
+  /** The real name in any script, for `filename*=` (RFC 5987). */
+  unicodeFilename: string;
   sizeBytes: number | null;
 };
 
@@ -89,3 +94,6 @@ export type FileGenerationAssetView = Omit<FileGenerationAssetRecord, 'storageKe
 export type FileGenerationView = Omit<FileGenerationRecord, 'assets'> & {
   assets: FileGenerationAssetView[];
 };
+
+/** What a generated file is called and what it holds (F3c, ADR-109). */
+export type FileIdentity = { title: string; description: string | null; filenameBase: string };

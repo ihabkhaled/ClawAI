@@ -1113,6 +1113,8 @@ export type FileErrorStateProps = {
 
 export type FileCompletedStateProps = {
   filename: string;
+  title: string | null;
+  description: string | null;
   format: string;
   sizeBytes: number | null;
   minutesLeft: number | null;

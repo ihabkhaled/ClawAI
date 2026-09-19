@@ -20,6 +20,9 @@ export type FileGeneration = {
   prompt: string;
   format: string;
   filename: string | null;
+  /** The AI's own title and first sentence (ADR-109); absent on older files. */
+  title?: string | null;
+  description?: string | null;
   errorCode?: string | null;
   errorMessage?: string | null;
   assets: FileGenerationAsset[];

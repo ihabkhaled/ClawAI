@@ -19,6 +19,8 @@ export class FileGenerationRepository {
     content: string;
     format: FileFormat;
     filename?: string;
+    title?: string;
+    description?: string;
     provider: string;
     model: string;
   }): Promise<FileGenerationRecord> {

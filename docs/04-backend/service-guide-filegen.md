@@ -169,3 +169,16 @@ no tokens and downloads through the ADR-104 link. The chat builds `.md` and
 `GlobalExceptionFilter` passes body-parser's 400, 413 and 415 errors through
 (`isClientHttpError`: an `Error` with `expose: true` and a 4xx `status`).
 Everything else stays a 500 with a generic message.
+
+## File names, titles and descriptions (ADR-109, 2026-09-19)
+
+`enqueueGeneration` calls `deriveFileIdentity(content, prompt, format)`:
+
+- the title is the writer's first heading, cleaned by `humanTitle`; without
+  one, the request minus its filler;
+- the description is the first paragraph, at most 240 characters;
+- the filename is the title with only file-system-unsafe characters removed,
+  in any script.
+
+Both title and description are stored. Downloads send `filename=` (ASCII) plus
+`filename*=UTF-8''…` (RFC 5987).

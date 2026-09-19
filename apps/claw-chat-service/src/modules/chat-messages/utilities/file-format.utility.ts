@@ -4,6 +4,8 @@ import {
   FILE_FORMAT_TARGET_PREFIX,
   FILE_WRITER_BASE_PROMPT,
   FILE_WRITER_FORMAT_INSTRUCTIONS,
+  FILE_WRITER_NAMING_INSTRUCTION,
+  NAMED_FILE_FORMATS,
   WHOLE_CODE_FENCE,
 } from '../constants/file-writer.constants';
 import type { FormatMention } from '../types/file-writer.types';
@@ -43,7 +45,8 @@ export function fileWriterSystemPrompt(format: string): string {
     FILE_WRITER_FORMAT_INSTRUCTIONS[format] ??
     FILE_WRITER_FORMAT_INSTRUCTIONS[DEFAULT_FILE_FORMAT] ??
     '';
-  return `${FILE_WRITER_BASE_PROMPT.replace('{FORMAT}', format)} ${instruction}`;
+  const naming = NAMED_FILE_FORMATS.includes(format) ? ` ${FILE_WRITER_NAMING_INSTRUCTION}` : '';
+  return `${FILE_WRITER_BASE_PROMPT.replace('{FORMAT}', format)}${naming} ${instruction}`;
 }
 
 /**

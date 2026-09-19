@@ -42,6 +42,9 @@ model FileGeneration {
   content            String?              @db.Text
   format             FileFormat
   filename           String?
+  /// Named by the AI's own title, else the request (F3c, ADR-109).
+  title              String?
+  description        String?
   provider           String
   model              String
   status             FileGenerationStatus @default(QUEUED)

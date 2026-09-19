@@ -18,6 +18,7 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { FileGenerationService } from '../services/file-generation.service';
 import { FileGenerationEventsService } from '../services/file-generation-events.service';
 import { FileGenerationOwnerGuard } from '../guards/file-generation-owner.guard';
+import { contentDisposition } from '../utilities/file-asset.utility';
 import {
   type ExportFileDto,
   exportFileSchema,
@@ -88,7 +89,7 @@ export class FileGenerationController {
   ): Promise<void> {
     const file = await this.fileGenService.openAssetForUser(id, assetId, user.id);
     res.setHeader('Content-Type', file.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+    res.setHeader('Content-Disposition', contentDisposition(file.filename, file.unicodeFilename));
     res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     file.stream.pipe(res);

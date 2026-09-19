@@ -19,12 +19,14 @@ import {
   FILE_ASSET_SWEEP_INTERVAL_MS,
   FILE_ASSET_TTL_MS,
 } from '../constants/file-asset.constants';
+import { deriveFileIdentity } from '../utilities/file-identity.utility';
 import {
   documentTitleFromFilename,
   fileAssetDownloadPath,
   isAssetExpired,
   safeDownloadFilename,
   toGenerationView,
+  unicodeDownloadFilename,
 } from '../utilities/file-asset.utility';
 import {
   type FileAssetDownload,
@@ -90,6 +92,7 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
       stream: await this.executionManager.openStoredFile(asset.storageKey),
       mimeType: asset.mimeType,
       filename: safeDownloadFilename(generation.filename, extension),
+      unicodeFilename: unicodeDownloadFilename(generation.filename, extension),
       sizeBytes: asset.sizeBytes,
     };
   }
@@ -139,7 +142,10 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
   }
 
   async enqueueGeneration(params: GenerateFileParams): Promise<FileGenerationRecord> {
-    const filename = params.filename ?? this.executionManager.generateFilename(params.format);
+    const identity = deriveFileIdentity(params.content, params.prompt, params.format);
+    const extension = FORMAT_TO_EXTENSION[params.format] ?? 'txt';
+    const filename = params.filename ?? `${identity.filenameBase}.${extension}`;
+    const title = params.filename ?? identity.title;
 
     const record = await this.repository.create({
       userId: params.userId,
@@ -150,6 +156,8 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
       content: params.content,
       format: params.format,
       filename,
+      title,
+      ...(identity.description === null ? {} : { description: identity.description }),
       provider: params.provider,
       model: params.model,
     });
@@ -276,7 +284,7 @@ export class FileGenerationService implements OnModuleInit, OnModuleDestroy {
     const buffer = await this.executionManager.convert(
       generation.content ?? '',
       generation.format,
-      documentTitleFromFilename(generation.filename),
+      generation.title ?? documentTitleFromFilename(generation.filename),
     );
 
     await this.transitionStatus(generationId, 'FINALIZING', generation);

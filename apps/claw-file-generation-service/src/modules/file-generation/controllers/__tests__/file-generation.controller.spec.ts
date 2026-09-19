@@ -73,6 +73,7 @@ describe('FileGenerationController', () => {
       stream: { pipe },
       mimeType: 'application/pdf',
       filename: 'Report.pdf',
+      unicodeFilename: 'تقرير الربع.pdf',
       sizeBytes: 10,
     });
     const headers: Record<string, string> = {};
@@ -83,7 +84,9 @@ describe('FileGenerationController', () => {
     expect(serviceMock.openAssetForUser).toHaveBeenCalledWith('gen-1', 'asset-1', 'u1');
     expect(headers).toEqual({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="Report.pdf"',
+      // RFC 5987: the Arabic name survives, beside an ASCII fallback.
+      'Content-Disposition':
+        'attachment; filename="Report.pdf"; filename*=UTF-8\'\'%D8%AA%D9%82%D8%B1%D9%8A%D8%B1%20%D8%A7%D9%84%D8%B1%D8%A8%D8%B9.pdf',
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
     });
