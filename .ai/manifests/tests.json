@@ -2,7 +2,7 @@
   "byWorkspace": {
     "@claw/shared-auth": {
       "runner": "vitest",
-      "testFiles": 1
+      "testFiles": 3
     },
     "@claw/shared-constants": {
       "runner": "vitest",
@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 100
+      "testFiles": 102
     },
     "claw-chat-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1331
+  "total": 1335
 }

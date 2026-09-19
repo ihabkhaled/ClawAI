@@ -7405,7 +7405,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 4903,
+          "bytes": 5175,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -9809,7 +9809,7 @@
     "tests": {
       "@claw/shared-auth": {
         "runner": "vitest",
-        "testFiles": 1
+        "testFiles": 3
       },
       "@claw/shared-constants": {
         "runner": "vitest",
@@ -9841,7 +9841,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 100
+        "testFiles": 102
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -9945,6 +9945,7 @@
       {
         "dir": "apps/claw-audit-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -9974,6 +9975,7 @@
       {
         "dir": "apps/claw-auth-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-rabbitmq",
           "@claw/shared-types",
@@ -10007,6 +10009,7 @@
       {
         "dir": "apps/claw-chat-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10041,6 +10044,7 @@
       {
         "dir": "apps/claw-client-logs-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-rabbitmq",
           "@claw/shared-types",
@@ -10069,6 +10073,7 @@
       {
         "dir": "apps/claw-connector-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10102,6 +10107,7 @@
       {
         "dir": "apps/claw-file-generation-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-rabbitmq",
           "@claw/shared-types",
@@ -10132,6 +10138,7 @@
       {
         "dir": "apps/claw-file-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10219,6 +10226,7 @@
       {
         "dir": "apps/claw-image-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10250,6 +10258,7 @@
       {
         "dir": "apps/claw-llamacpp-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10281,6 +10290,7 @@
       {
         "dir": "apps/claw-memory-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10313,6 +10323,7 @@
       {
         "dir": "apps/claw-ollama-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10412,6 +10423,7 @@
       {
         "dir": "apps/claw-routing-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10446,6 +10458,7 @@
       {
         "dir": "apps/claw-server-logs-service",
         "internalDeps": [
+          "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
           "@claw/shared-rabbitmq",
@@ -10509,6 +10522,7 @@
       {
         "dir": "packages/shared-auth",
         "internalDeps": [
+          "@claw/shared-constants",
           "@claw/shared-types",
           "@claw/shared-utilities"
         ],
@@ -10627,7 +10641,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1331,
+    "totalTestFiles": 1335,
     "workspaceCount": 25
   }
 }

@@ -13,8 +13,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@claw/shared-constants": "*",
     "@claw/shared-types": "*",
-    "@claw/shared-utilities": "*"
+    "@claw/shared-utilities": "*",
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

@@ -23,7 +23,7 @@ npm run dev
 - Mongoose models: ServerLog
 - API endpoints: 11 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 11 (vitest)
-- Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
+- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=server-logs-service`

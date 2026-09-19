@@ -268,7 +268,7 @@ Last updated: 2026-09-10
   is the JSON body limit check. The full entry is in
   [`technical-debt.md`](technical-debt.md) TD-032.
 
-### TD-033: A revoked session's access token works until it expires
+### TD-033 (FIXED 2026-09-20): A revoked session's access token works until it expires
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-033.
 

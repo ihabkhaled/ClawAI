@@ -6,6 +6,7 @@ import { AuthService } from './services/auth.service';
 import { VscodeAuthorizationService } from './services/vscode-authorization.service';
 import { AuthManager } from './managers/auth.manager';
 import { TokenSessionManager } from './managers/token-session.manager';
+import { SessionRevocationCacheService } from './services/session-revocation-cache.service';
 import { AuthRepository } from './repositories/auth.repository';
 import { PasswordResetService } from './services/password-reset.service';
 import { PasswordResetManager } from './managers/password-reset.manager';
@@ -30,6 +31,7 @@ import { EmailChangeService } from './services/email-change.service';
     VscodeAuthorizationService,
     AuthManager,
     TokenSessionManager,
+    SessionRevocationCacheService,
     AuthRepository,
     PasswordResetService,
     PasswordResetManager,

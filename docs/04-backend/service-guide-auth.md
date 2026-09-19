@@ -508,3 +508,17 @@ refused. Both these and `internal/users/:id/entitlements` require
 `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` (ServiceTokenGuard) since
 2026-09-20; `EntitlementsAdapter` sends it. A caller that does not is 401
 (TD-035). Deploy auth-service and its callers together.
+
+## A revoked session is refused everywhere (ADR-112, 2026-09-20)
+
+Every revoke — logout, a family revoked for refresh-token theft, an admin
+action — goes through `TokenSessionManager`, which publishes the revoked
+session ids to Redis (`auth:revoked-session:<id>`) with `JWT_ACCESS_EXPIRY` as
+the TTL. `SessionRevocationGuard` from `@claw/shared-auth` is registered after
+each service's own `AuthGuard` and refuses those tokens.
+
+- `revokeSessionFamily` returns the ids it revoked, not a count: the ids are
+  what gets published.
+- The write is best-effort and the read fails open. Redis being down restores
+  the old behaviour (valid until expiry), never a sign-out storm.
+- Refresh was never affected: rotation reads the session row.

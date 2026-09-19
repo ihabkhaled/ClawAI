@@ -16,8 +16,15 @@ Last updated: 2026-09-10
 
 ## Open programme
 
-### TD-033: A revoked session's access token works until it expires (2026-09-19)
+### TD-033: A revoked session's access token works until it expires (2026-09-19) — FIXED (2026-09-20)
 
+- **Fixed**: [ADR-112](../13-adr/adr-112-revoked-sessions-stop-at-the-guard.md).
+  auth-service writes every revoked session to Redis with the access lifetime
+  as its TTL, and `SessionRevocationGuard` (a second global guard, in all 17
+  services that authenticate) refuses it. Verified live: after a logout the
+  same access token went from 200 to 401 in auth-service and chat-service.
+- **Still open**: staleness, which is a different thing — a role change or a
+  plan change is only picked up when the token refreshes.
 - **Severity**: Medium · **Effort**: Medium · **Priority**: Planned
 - **Detail**: Guards verify the JWT signature locally
   (`@claw/shared-auth`) and never ask whether its session was revoked. After a

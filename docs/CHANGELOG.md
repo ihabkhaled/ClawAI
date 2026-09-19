@@ -55,6 +55,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **Signing out now ends the session everywhere, at once.** A sign-out (or a
+  session ended for security) used to leave the previous token working for up
+  to 15 minutes.
 - **Internal plan and usage APIs now require the service credential**, not
   just being on the internal network.
 - **A new version now reaches you on the next load.** The app used to be able

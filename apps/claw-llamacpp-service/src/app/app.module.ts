@@ -1,6 +1,7 @@
 import { type IncomingMessage } from 'node:http';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { SessionRevocationGuard } from '@claw/shared-auth';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
@@ -106,6 +107,7 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: SessionRevocationGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useExisting: PermissionGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },

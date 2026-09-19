@@ -21,6 +21,7 @@
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {
+    "@claw/shared-auth": "*",
     "@claw/shared-constants": "*",
     "@claw/shared-rabbitmq": "*",
     "@claw/shared-types": "*",

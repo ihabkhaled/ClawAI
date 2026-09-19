@@ -21,8 +21,8 @@ npm run dev
 - Database: postgresql
 - Prisma models: CreditLedgerEntry, CreditPackage, CreditPackageVersion, DeploymentCredential, DeviceAuthorizationGrant, EmailChangeRequest, EmailVerificationToken, EntitlementInboxEvent, FeatureUsageRecord, OpsAccessToken, PasswordResetToken, Plan, PlanFeatureRule, PlanModelAccess, PlanPriceVersion, PlanRetirementMigration, PlanTrialRedemption, Role, RolePermission, SeedExecution, Session, SystemSetting, TokenUsageLedger, User, UserCreditWallet, UserPlanAssignment, WeightedUsageRecord
 - API endpoints: 105 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 100 (vitest)
-- Depends on: @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
+- Test files: 102 (vitest)
+- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=auth-service`

@@ -22,7 +22,7 @@ npm run dev
 - Prisma models: AssistantModel, CapabilityEvidence, ModelCostVersion, ModelDeployment, ReplayCase, ReplayRun, RouterAdminOverride, RouterChainEntry, RouterCircuitBreaker, RouterConfiguration, RouterLearnedScore, RouterModelProfile, RouterModelRegistry, RouterProviderAttempt, RouterTopicProfile, RouterWorkflow, RouterWorkspacePrior, RoutingCalibrationSnapshot, RoutingCandidateScore, RoutingDecision, RoutingFeedbackRecord, RoutingOutcomeRecord, RoutingPolicy, SeedExecution, TaxonomyRole
 - API endpoints: 74 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 105 (vitest)
-- Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
+- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=routing-service`

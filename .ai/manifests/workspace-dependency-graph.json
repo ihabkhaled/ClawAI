@@ -2,6 +2,10 @@
   "edges": [
     {
       "from": "@claw/shared-auth",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "@claw/shared-auth",
       "to": "@claw/shared-types"
     },
     {
@@ -54,6 +58,10 @@
     },
     {
       "from": "claw-audit-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-audit-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -74,6 +82,10 @@
     },
     {
       "from": "claw-auth-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-auth-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -87,6 +99,10 @@
     {
       "from": "claw-auth-service",
       "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-chat-service",
+      "to": "@claw/shared-auth"
     },
     {
       "from": "claw-chat-service",
@@ -110,6 +126,10 @@
     },
     {
       "from": "claw-client-logs-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-client-logs-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -123,6 +143,10 @@
     {
       "from": "claw-client-logs-service",
       "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-connector-service",
+      "to": "@claw/shared-auth"
     },
     {
       "from": "claw-connector-service",
@@ -146,6 +170,10 @@
     },
     {
       "from": "claw-file-generation-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-file-generation-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -159,6 +187,10 @@
     {
       "from": "claw-file-generation-service",
       "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-file-service",
+      "to": "@claw/shared-auth"
     },
     {
       "from": "claw-file-service",
@@ -198,6 +230,10 @@
     },
     {
       "from": "claw-image-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-image-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -218,6 +254,10 @@
     },
     {
       "from": "claw-llamacpp-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-llamacpp-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -238,6 +278,10 @@
     },
     {
       "from": "claw-memory-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-memory-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -255,6 +299,10 @@
     {
       "from": "claw-memory-service",
       "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-ollama-service",
+      "to": "@claw/shared-auth"
     },
     {
       "from": "claw-ollama-service",
@@ -326,6 +374,10 @@
     },
     {
       "from": "claw-routing-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-routing-service",
       "to": "@claw/shared-constants"
     },
     {
@@ -343,6 +395,10 @@
     {
       "from": "claw-routing-service",
       "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-server-logs-service",
+      "to": "@claw/shared-auth"
     },
     {
       "from": "claw-server-logs-service",

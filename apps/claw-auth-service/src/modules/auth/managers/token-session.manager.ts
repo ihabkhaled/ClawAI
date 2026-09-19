@@ -9,21 +9,19 @@ import { UserRole, UserStatus } from '../../../common/enums';
 import {
   DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
   DEFAULT_REFRESH_TOKEN_TTL_SECONDS,
-  EXPIRY_PATTERN,
   REFRESH_REUSE_GRACE_MS,
-  SECONDS_PER_DAY,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_MINUTE,
   SESSION_ONLY_REFRESH_TTL_SECONDS,
   TOKEN_TYPE,
 } from '../constants/token-session.constants';
 import { AuthRepository } from '../repositories/auth.repository';
+import { SessionRevocationCacheService } from '../services/session-revocation-cache.service';
 import type {
   SessionClient,
   SessionSeed,
   TokenPair,
   TokenSessionUser,
 } from '../types/token-session.types';
+import { expirySeconds } from '../utilities/expiry-seconds.utility';
 import { isWithinReuseGrace } from '../utilities/refresh-reuse.utility';
 import type { Session } from '../../../generated/prisma';
 
@@ -31,7 +29,18 @@ import type { Session } from '../../../generated/prisma';
 export class TokenSessionManager {
   private readonly logger = new Logger(TokenSessionManager.name);
 
-  constructor(private readonly authRepository: AuthRepository) {}
+  constructor(
+    private readonly authRepository: AuthRepository,
+    private readonly revocationCache: SessionRevocationCacheService,
+  ) {}
+
+  /**
+   * Revokes a family and tells every service, so an access token signed a
+   * moment ago stops working now instead of at its expiry (TD-033).
+   */
+  private async revokeFamily(familyId: string): Promise<void> {
+    await this.revocationCache.revoke(await this.authRepository.revokeSessionFamily(familyId));
+  }
 
   async issue(user: TokenSessionUser, client: SessionClient): Promise<TokenPair> {
     return this.createSessionTokens(user, {
@@ -54,19 +63,19 @@ export class TokenSessionManager {
 
     const now = new Date();
     if (currentSession.revokedAt || currentSession.expiresAt <= now) {
-      await this.authRepository.revokeSessionFamily(currentSession.familyId);
+      await this.revokeFamily(currentSession.familyId);
       throw new InvalidRefreshTokenException();
     }
 
     // A replay after the grace window is treated as theft.
     if (currentSession.usedAt && !isWithinReuseGrace(currentSession.usedAt, now)) {
-      await this.authRepository.revokeSessionFamily(currentSession.familyId);
+      await this.revokeFamily(currentSession.familyId);
       throw new InvalidRefreshTokenException();
     }
 
     const user = await this.authRepository.findUserById(currentSession.userId);
     if (user?.status !== UserStatus.ACTIVE) {
-      await this.authRepository.revokeSessionFamily(currentSession.familyId);
+      await this.revokeFamily(currentSession.familyId);
       throw new InvalidRefreshTokenException();
     }
 
@@ -104,7 +113,10 @@ export class TokenSessionManager {
   }
 
   async revokeCurrent(userId: string, sessionId: string): Promise<void> {
-    await this.authRepository.revokeSessionForUser(sessionId, userId);
+    const revoked = await this.authRepository.revokeSessionForUser(sessionId, userId);
+    if (revoked) {
+      await this.revocationCache.revoke([sessionId]);
+    }
   }
 
   /**
@@ -120,7 +132,7 @@ export class TokenSessionManager {
     if (latest?.usedAt && !latest.revokedAt && isWithinReuseGrace(latest.usedAt, new Date())) {
       return this.issueSibling(user, latest);
     }
-    await this.authRepository.revokeSessionFamily(familyId);
+    await this.revokeFamily(familyId);
     throw new InvalidRefreshTokenException();
   }
 
@@ -158,10 +170,7 @@ export class TokenSessionManager {
     if (!persistent) {
       return SESSION_ONLY_REFRESH_TTL_SECONDS;
     }
-    return this.parseExpirySeconds(
-      AppConfig.get().JWT_REFRESH_EXPIRY,
-      DEFAULT_REFRESH_TOKEN_TTL_SECONDS,
-    );
+    return expirySeconds(AppConfig.get().JWT_REFRESH_EXPIRY, DEFAULT_REFRESH_TOKEN_TTL_SECONDS);
   }
 
   private createTokenPair(
@@ -171,10 +180,7 @@ export class TokenSessionManager {
     refreshExpiresIn: number,
   ): TokenPair {
     const config = AppConfig.get();
-    const expiresIn = this.parseExpirySeconds(
-      config.JWT_ACCESS_EXPIRY,
-      DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
-    );
+    const expiresIn = expirySeconds(config.JWT_ACCESS_EXPIRY, DEFAULT_ACCESS_TOKEN_TTL_SECONDS);
     const accessToken = signAccessToken(
       {
         sub: user.id,
@@ -198,28 +204,6 @@ export class TokenSessionManager {
 
   private hashRefreshToken(token: string, secret: string): string {
     return hashBearerToken(token, `refresh-token:${secret}`);
-  }
-
-  private parseExpirySeconds(expiry: string, fallback: number): number {
-    const match = EXPIRY_PATTERN.exec(expiry);
-    if (!match) {
-      return fallback;
-    }
-
-    const value = Number.parseInt(match[1] ?? '', 10);
-    const unit = match[2];
-    switch (unit) {
-      case 'd':
-        return value * SECONDS_PER_DAY;
-      case 'h':
-        return value * SECONDS_PER_HOUR;
-      case 'm':
-        return value * SECONDS_PER_MINUTE;
-      case 's':
-        return value;
-      default:
-        return fallback;
-    }
   }
 
   private toUserRole(role: string): UserRole {

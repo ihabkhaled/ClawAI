@@ -23,6 +23,7 @@
     "seed:catalog": "npx tsx --tsconfig prisma/tsconfig.seed.json prisma/seed-catalog.ts"
   },
   "dependencies": {
+    "@claw/shared-auth": "*",
     "@claw/shared-constants": "*",
     "@claw/shared-entitlements": "*",
     "@claw/shared-rabbitmq": "*",

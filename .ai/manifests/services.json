@@ -47,6 +47,7 @@
       "dir": "apps/claw-audit-service",
       "endpointCount": 15,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -71,6 +72,7 @@
       "dir": "apps/claw-auth-service",
       "endpointCount": 105,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
         "@claw/shared-types",
@@ -109,7 +111,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 100,
+      "testFiles": 102,
       "testRunner": "vitest"
     },
     {
@@ -117,6 +119,7 @@
       "dir": "apps/claw-chat-service",
       "endpointCount": 49,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -145,6 +148,7 @@
       "dir": "apps/claw-client-logs-service",
       "endpointCount": 6,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
         "@claw/shared-types",
@@ -165,6 +169,7 @@
       "dir": "apps/claw-connector-service",
       "endpointCount": 19,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -189,6 +194,7 @@
       "dir": "apps/claw-file-generation-service",
       "endpointCount": 10,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
         "@claw/shared-types",
@@ -211,6 +217,7 @@
       "dir": "apps/claw-file-service",
       "endpointCount": 18,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -248,6 +255,7 @@
       "dir": "apps/claw-image-service",
       "endpointCount": 9,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -271,6 +279,7 @@
       "dir": "apps/claw-llamacpp-service",
       "endpointCount": 26,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -298,6 +307,7 @@
       "dir": "apps/claw-memory-service",
       "endpointCount": 46,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -330,6 +340,7 @@
       "dir": "apps/claw-ollama-service",
       "endpointCount": 35,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -425,6 +436,7 @@
       "dir": "apps/claw-routing-service",
       "endpointCount": 74,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
@@ -470,6 +482,7 @@
       "dir": "apps/claw-server-logs-service",
       "endpointCount": 11,
       "internalDeps": [
+        "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",

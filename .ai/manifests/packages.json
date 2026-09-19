@@ -4,6 +4,7 @@
     {
       "dir": "packages/shared-auth",
       "internalDeps": [
+        "@claw/shared-constants",
         "@claw/shared-types",
         "@claw/shared-utilities"
       ],

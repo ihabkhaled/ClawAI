@@ -59,23 +59,35 @@ export class AuthRepository {
     });
   }
 
-  async revokeSessionFamily(familyId: string, revokedAt = new Date()): Promise<number> {
-    const result = await this.prisma.session.updateMany({
-      where: {
-        familyId,
-        revokedAt: null,
-      },
+  /**
+   * Revokes the family and returns the ids it revoked.
+   *
+   * The ids are the point: every one of them may still have a signed access
+   * token in a browser, and those are what the revocation cache holds until
+   * they expire (TD-033). `updateMany` alone only counts them.
+   */
+  async revokeSessionFamily(familyId: string, revokedAt = new Date()): Promise<string[]> {
+    const open = await this.prisma.session.findMany({
+      where: { familyId, revokedAt: null },
+      select: { id: true },
+    });
+    if (open.length === 0) {
+      return [];
+    }
+    await this.prisma.session.updateMany({
+      where: { familyId, revokedAt: null },
       data: { revokedAt },
     });
 
-    return result.count;
+    return open.map((session) => session.id);
   }
 
+  /** Revokes one session of one user, and reports whether it was open. */
   async revokeSessionForUser(
     sessionId: string,
     userId: string,
     revokedAt = new Date(),
-  ): Promise<number> {
+  ): Promise<boolean> {
     const result = await this.prisma.session.updateMany({
       where: {
         id: sessionId,
@@ -85,7 +97,7 @@ export class AuthRepository {
       data: { revokedAt },
     });
 
-    return result.count;
+    return result.count > 0;
   }
 
   async deleteSession(id: string): Promise<void> {

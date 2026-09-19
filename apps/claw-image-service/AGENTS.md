@@ -22,7 +22,7 @@ npm run dev
 - Prisma models: ImageGeneration, ImageGenerationAsset, ImageGenerationEvent
 - API endpoints: 9 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 13 (vitest)
-- Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
+- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=image-service`

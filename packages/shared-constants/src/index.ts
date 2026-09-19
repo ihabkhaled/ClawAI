@@ -72,3 +72,4 @@ export * from './feedback.constants';
 export * from './display-currency.constants';
 export * from './country-currency.constants';
 export * from './timezone-country.constants';
+export * from './session-revocation.constants';

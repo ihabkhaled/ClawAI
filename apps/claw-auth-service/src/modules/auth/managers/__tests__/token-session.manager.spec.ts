@@ -4,6 +4,7 @@ import { UserRole, UserStatus } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { type AuthRepository } from '../../repositories/auth.repository';
 import { TokenSessionManager } from '../token-session.manager';
+import { type SessionRevocationCacheService } from '../../services/session-revocation-cache.service';
 
 vi.mock('@common/utilities', () => ({
   signAccessToken: vi.fn().mockReturnValue('access-token'),
@@ -58,6 +59,7 @@ describe('TokenSessionManager', () => {
     revokeSessionForUser: Mock;
   };
   let manager: TokenSessionManager;
+  let revocationCache: { revoke: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     repository = {
@@ -69,10 +71,14 @@ describe('TokenSessionManager', () => {
         ...sessionFixture,
         id: 'session-2',
       }),
-      revokeSessionFamily: vi.fn().mockResolvedValue(1),
-      revokeSessionForUser: vi.fn().mockResolvedValue(1),
+      revokeSessionFamily: vi.fn().mockResolvedValue(['session-1']),
+      revokeSessionForUser: vi.fn().mockResolvedValue(true),
     };
-    manager = new TokenSessionManager(repository as unknown as AuthRepository);
+    revocationCache = { revoke: vi.fn().mockResolvedValue(undefined) };
+    manager = new TokenSessionManager(
+      repository as unknown as AuthRepository,
+      revocationCache as unknown as SessionRevocationCacheService,
+    );
   });
 
   it('stores only the refresh-token digest and binds the access token to the session', async () => {

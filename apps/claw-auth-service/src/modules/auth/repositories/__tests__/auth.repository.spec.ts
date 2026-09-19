@@ -11,6 +11,7 @@ describe('AuthRepository', () => {
     session: {
       create: Mock;
       findUnique: Mock;
+      findMany: Mock;
       update: Mock;
       updateMany: Mock;
       delete: Mock;
@@ -25,6 +26,7 @@ describe('AuthRepository', () => {
       session: {
         create: vi.fn().mockResolvedValue({ id: 's1' }),
         findUnique: vi.fn().mockResolvedValue({ id: 's1' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 's1' }, { id: 's2' }]),
         update: vi.fn().mockResolvedValue({ id: 's1' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         delete: vi.fn().mockResolvedValue({ id: 's1' }),
@@ -136,11 +138,14 @@ describe('AuthRepository', () => {
     expect(prismaMock.session.create).not.toHaveBeenCalled();
   });
 
-  it('revokes every active session in a token family', async () => {
+  // The ids come back because each may still have a signed access token in a
+  // browser, and those are what the revocation cache holds (TD-033).
+  it('revokes every active session in a token family and returns their ids', async () => {
     const revokedAt = new Date('2026-07-27T00:00:00.000Z');
 
-    await repository.revokeSessionFamily('family-1', revokedAt);
+    const revoked = await repository.revokeSessionFamily('family-1', revokedAt);
 
+    expect(revoked).toEqual(['s1', 's2']);
     expect(prismaMock.session.deleteMany).not.toHaveBeenCalled();
     expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
       where: {

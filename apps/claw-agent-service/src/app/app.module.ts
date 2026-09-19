@@ -4,7 +4,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
-import { AuthGuard, RolesGuard } from '@claw/shared-auth';
+import { AuthGuard, RolesGuard, SessionRevocationGuard } from '@claw/shared-auth';
 import type { IncomingMessage } from 'node:http';
 
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
@@ -124,6 +124,7 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: SessionRevocationGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -74,6 +74,10 @@ async compare(@Body() dto: CompareDto, @CurrentUser() user: AuthUser) {
 ## Enforcement
 
 - **Architecture test** — every non-`@Public` route resolves a guard.
+- **Root test** — `tools/__tests__/session-revocation-guard-registered.test.mjs`:
+  every service with a global `AuthGuard` also registers
+  `SessionRevocationGuard` after it, so a revoked session is refused instead of
+  working until its token expires (TD-033, ADR-112).
 - **Root test** — `tools/__tests__/auth-internal-controllers-guarded.test.mjs`:
   every `*-internal.controller.ts` in auth-service carries
   `@UseGuards(ServiceTokenGuard)`. Two of them once had no credential at all

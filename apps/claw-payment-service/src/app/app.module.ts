@@ -4,7 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
-import { AuthGuard, RolesGuard } from '@claw/shared-auth';
+import { AuthGuard, RolesGuard, SessionRevocationGuard } from '@claw/shared-auth';
 import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import { PAYMENT_SERVICE } from '@claw/shared-constants';
 import type { IncomingMessage } from 'node:http';
@@ -107,6 +107,7 @@ import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.mo
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: SessionRevocationGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useExisting: PermissionGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
