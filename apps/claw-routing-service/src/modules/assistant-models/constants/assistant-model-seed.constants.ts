@@ -54,11 +54,17 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
   // none of them was exposed every file request failed with "The selected
   // model is not available". Hosted Ollama models that production's catalog
   // holds; a large output budget because a file is a whole document.
+  //
+  // The order is what the F4 matrix measured over 1,500 real files
+  // (docs/09-testing/file-model-matrix.md, ADR-111): gemma4:31b and
+  // qwen3.5:397b and glm-5.1 each wrote 100/100, and gemma4:31b was the
+  // fastest (3.1 s median). It replaced gpt-oss:120b (94/100) first and
+  // glm-5.3, which is not exposed and so could never run as a fallback.
   {
     role: AssistantModelRole.FILE_WRITER,
     order: 1,
     provider: RouterProvider.OLLAMA_CLOUD,
-    modelAlias: 'gpt-oss:120b',
+    modelAlias: 'gemma4:31b',
     timeoutMs: 120_000,
     maxTokens: 8_192,
   },
@@ -66,7 +72,7 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
     role: AssistantModelRole.FILE_WRITER,
     order: 2,
     provider: RouterProvider.OLLAMA_CLOUD,
-    modelAlias: 'glm-5.3',
+    modelAlias: 'qwen3.5:397b',
     timeoutMs: 120_000,
     maxTokens: 8_192,
   },
@@ -74,7 +80,7 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
     role: AssistantModelRole.FILE_WRITER,
     order: 3,
     provider: RouterProvider.OLLAMA_CLOUD,
-    modelAlias: 'gemma4:31b',
+    modelAlias: 'glm-5.1',
     timeoutMs: 120_000,
     maxTokens: 8_192,
   },

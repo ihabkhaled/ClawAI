@@ -51,4 +51,22 @@ describe('assistant model seed', () => {
       expect(entry.maxTokens).toBeGreaterThanOrEqual(4_096);
     }
   });
+
+  // The order is measured, not guessed: each of these wrote 100/100 files in
+  // the F4 matrix, fastest first (docs/09-testing/file-model-matrix.md,
+  // ADR-111). The previous list led with gpt-oss:120b (94/100) and had
+  // glm-5.3 second, which is not exposed and could never run as a fallback.
+  // Changing this list means re-running the matrix.
+  it('seeds the file writers the matrix measured at 100/100, fastest first', () => {
+    const writers = ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (candidate) => candidate.role === AssistantModelRole.FILE_WRITER,
+    );
+
+    expect(writers.map((entry) => entry.modelAlias)).toEqual([
+      'gemma4:31b',
+      'qwen3.5:397b',
+      'glm-5.1',
+    ]);
+    expect(writers.map((entry) => entry.order)).toEqual([1, 2, 3]);
+  });
 });

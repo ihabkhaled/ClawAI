@@ -58,12 +58,17 @@ systematic failure was in the plumbing around the model, not the model:
 
 ## Consequences
 
-- The FILE_WRITER list is an admin choice, and this ADR does not change it.
-  The matrix is the evidence for choosing it:
-  - gemma4:31b, glm-5.1 and qwen3.5:397b were 100/100.
-  - gemma4:31b was also the fastest (3.1 s median).
-  - The default list names `glm-5.3`, which is not exposed. As a fallback it
-    would be refused at the exposure gate.
+- **The FILE_WRITER list is now the measured one** (owner's decision,
+  2026-09-20): `gemma4:31b` → `qwen3.5:397b` → `glm-5.1`. Each wrote 100/100
+  files, and gemma4:31b was the fastest (3.1 s median).
+  - It replaced `gpt-oss:120b` (94/100) as first, and `glm-5.3`, which is not
+    exposed and so could never run as a fallback.
+  - The seed (`assistant-model-seed.constants.ts`) carries the same order for
+    a fresh install, pinned by a test. Changing the list means re-running the
+    matrix.
+  - The seed only fills an empty role, so an existing deployment keeps its
+    rows: production must be changed on the Smart Router page (or by
+    `PUT /routing/assistant-models/FILE_WRITER`), which is not done here.
 - A user who wants a marker in a CSV cannot get it from a saved instruction.
   They can still ask for it in the message.
 - `.com` and `.sys` lose their dot in a filename ("example com guide.pdf"),

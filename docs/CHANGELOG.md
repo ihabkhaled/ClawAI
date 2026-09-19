@@ -55,6 +55,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **Files are written by the models that write them best.** The file writer
+  now starts with the fastest model that produced a valid file every time in
+  a 1,500-file test, and its fallbacks are models that are actually
+  available.
 - **CSV parsing library updated** (csv-parse 7.0.2), which includes an upstream
   security fix. Values padded with no-break spaces are now trimmed.
 - **An AI file with a non-Latin title could not be downloaded.** Arabic,

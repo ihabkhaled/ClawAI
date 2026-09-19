@@ -111,15 +111,19 @@ The remaining 5 are the model's own mistakes:
 
 ## What it means for the FILE_WRITER list
 
-The list is an admin choice (Smart Router → Assistant models), and it was not
-changed. The evidence for choosing it:
+**Changed on 2026-09-20 to `gemma4:31b` → `qwen3.5:397b` → `glm-5.1`**, in
+the seed and on the local stack. Why:
 
-- **Best first choice: gemma4:31b.** It passed 100/100 and was the fastest.
-  glm-5.1 and qwen3.5:397b were also perfect.
-- **The current default is gpt-oss:120b → glm-5.3 → gemma4:31b.**
-  - gpt-oss:120b is now 100% on CSV and JSON after the fixes.
-  - **glm-5.3 is not exposed**, so as a fallback it is refused at the exposure
-    gate. Replace it with an exposed model.
+- Each of the three wrote 100/100 files, and gemma4:31b was the fastest
+  (3.1 s median).
+- It replaced `gpt-oss:120b` (94/100) as the first choice. gpt-oss:120b is
+  100% on CSV and JSON after the fixes, but it was never the strongest.
+- It replaced `glm-5.3`, which **is not exposed**: as a fallback it would be
+  refused at the exposure gate, so the list effectively had one fallback.
+- Verified live: a PDF request was written by `OLLAMA/gemma4:31b` and
+  downloaded (200).
+- **Production still has the old rows.** The seed only fills an empty role.
+  Change it on the Smart Router page.
 - **Avoid for data files:** kimi-k2.7-code, nemotron-3-super and
   nemotron-3-ultra. They were the weakest before the fixes, and the slowest
   tail belongs to nemotron-3-ultra.
