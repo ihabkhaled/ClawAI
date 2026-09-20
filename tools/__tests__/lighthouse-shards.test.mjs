@@ -11,7 +11,7 @@ import { shardConfig, shardUrls } from '../../apps/claw-frontend/tools/lighthous
 const ROOT = join(import.meta.dirname, '..', '..');
 const readJson = (path) => JSON.parse(readFileSync(join(ROOT, path), 'utf8'));
 const WORKFLOW = readFileSync(join(ROOT, '.github', 'workflows', 'lighthouse.yml'), 'utf8');
-const SHARDS = 10;
+const SHARDS = 20;
 
 for (const file of ['lighthouserc.json', 'lighthouserc.pr.json']) {
   test(`every URL of ${file} is audited by exactly one shard`, () => {
@@ -19,7 +19,10 @@ for (const file of ['lighthouserc.json', 'lighthouserc.pr.json']) {
     const shards = Array.from({ length: SHARDS }, (_, shard) => shardUrls(urls, shard, SHARDS));
     assert.deepEqual([...shards.flat()].sort(), [...urls].sort());
     const sizes = shards.map((shard) => shard.length);
-    assert.ok(Math.max(...sizes) - Math.min(...sizes) <= 1, `unbalanced shards: ${sizes.join(',')}`);
+    assert.ok(
+      Math.max(...sizes) - Math.min(...sizes) <= 1,
+      `unbalanced shards: ${sizes.join(',')}`,
+    );
   });
 }
 
@@ -32,15 +35,18 @@ test('a shard keeps every assertion and setting of the full config', () => {
 });
 
 test('an out-of-range shard is refused rather than auditing nothing', () => {
-  assert.throws(() => shardUrls(['a'], 10, 10));
-  assert.throws(() => shardUrls(['a'], -1, 10));
+  assert.throws(() => shardUrls(['a'], SHARDS, SHARDS));
+  assert.throws(() => shardUrls(['a'], -1, SHARDS));
   assert.throws(() => shardUrls(['a'], 0, 0));
 });
 
 test('the workflow runs as many shards as it divides the URLs into', () => {
   const matrix = /shard: \[([\d, ]+)\]/u.exec(WORKFLOW)?.[1] ?? '';
   const shards = matrix.split(',').map((value) => Number(value.trim()));
-  assert.deepEqual(shards, Array.from({ length: SHARDS }, (_, index) => index));
+  assert.deepEqual(
+    shards,
+    Array.from({ length: SHARDS }, (_, index) => index),
+  );
   assert.match(WORKFLOW, new RegExp(`LIGHTHOUSE_SHARDS: ${String(SHARDS)}`, 'u'));
   // The required check keeps its name and only goes green when every shard does.
   assert.match(WORKFLOW, /name: Lighthouse budgets \(marketing\)\r?\n\s+needs: audit/u);

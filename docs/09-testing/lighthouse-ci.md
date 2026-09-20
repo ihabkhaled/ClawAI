@@ -14,8 +14,8 @@ It is three stages (2026-09-19). In one job, 115 URLs took about 53 minutes.
 
 1. **`Lighthouse build`**: builds the frontend once and uploads `.next`
    (without cache and standalone) plus the shared packages' `dist`.
-2. **`Lighthouse shard 0…9`**: 10 parallel jobs. Each downloads that build,
-   takes every tenth URL (`tools/lighthouse/shard-config.mjs`, round-robin so
+2. **`Lighthouse shard 0…19`**: 20 parallel jobs. Each downloads that build,
+   takes every twentieth URL (`tools/lighthouse/shard-config.mjs`, round-robin so
    heavy clusters spread out), and runs `lhci autorun` with the same
    assertions. Reports upload as `lighthouse-reports-<shard>`.
 3. **`Lighthouse budgets (marketing)`**: the check name the gate always had.
@@ -159,3 +159,21 @@ node tools/lighthouse/build-pr-config.mjs
 `lighthouse-coverage.test.ts` asserts `lighthouserc.pr.json` is exactly what
 the generator would currently produce — a hand-edited or stale sample fails
 that test, so the two files cannot drift apart silently.
+
+## How long a shard takes, and why not less
+
+Measured on the 2026-09-19 run at **10** shards: a shard job took ~6m29s —
+~45 s of setup (checkout, `npm ci`, the build artifact, the pricing fixture)
+and ~5m38s of auditing, which is ~29 s per URL with `numberOfRuns: 2`.
+
+At **20** shards (2026-09-20) a shard audits ~6 URLs, so it lands near
+**3m30s**: the audit half is halved, the setup half is not.
+
+Two levers remain, both with a cost:
+
+- **Fewer runs per URL** (`numberOfRuns: 2` → `1`) halves the audit again, to
+  roughly 2 minutes a shard. Lighthouse numbers get noisier, so a borderline
+  budget assertion starts flapping. Not done.
+- **More shards** stops helping once the matrix exceeds the account's
+  concurrent-job cap: the extra shards queue, and a queued shard is wall-clock
+  time with none of the parallelism.

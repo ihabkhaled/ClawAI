@@ -3,11 +3,18 @@
 //
 // WHY THIS EXISTS
 // ---------------
-// The run is linear in URL count: about 13.9 s per audit with
-// `numberOfRuns: 2`. With 115 URLs on `main` that was about 53 minutes in one
-// job. The workflow now builds the frontend once and audits it in 10 jobs, each
-// taking every tenth URL. Same URLs, same assertions, same settings; only
-// the list is split.
+// The run is linear in URL count. With 115 URLs on `main` that was about 53
+// minutes in one job. The workflow builds the frontend once and audits it in
+// LIGHTHOUSE_SHARDS parallel jobs, each taking every Nth URL. Same URLs, same
+// assertions, same settings; only the list is split.
+//
+// Measured on 2026-09-20 at 10 shards: a shard job took ~6m29s, of which ~45 s
+// was setup (checkout, npm ci, artifact, the pricing fixture) and ~5m38s was
+// the audit itself — about 29 s per URL with `numberOfRuns: 2`. Doubling to 20
+// shards halves only the audit half, so a shard lands near 3m30s, not 2m. Going
+// below that means fewer runs per URL (noisier numbers) rather than more jobs:
+// GitHub queues jobs beyond the account's concurrency cap, and a queued shard
+// is wall-clock time with none of the parallelism.
 //
 // Round-robin rather than consecutive slices: the list is grouped by cluster,
 // and clusters differ in page weight, so slices would give one shard all the

@@ -89,15 +89,15 @@ jobs:
     name: Lighthouse shard ${{ matrix.shard }}
     needs: build
     runs-on: ubuntu-latest
-    # A shard audits ~1/10 of the URLs; a hung Chrome still cannot burn hours.
+    # A shard audits ~1/20 of the URLs; a hung Chrome still cannot burn hours.
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         # Must match LIGHTHOUSE_SHARDS below and the tools test.
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
     env:
-      LIGHTHOUSE_SHARDS: 10
+      LIGHTHOUSE_SHARDS: 20
       SITE_URL: https://claw.example
     steps:
       - uses: actions/checkout@v7
