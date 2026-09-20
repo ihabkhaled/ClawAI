@@ -2,6 +2,8 @@ import {
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
   RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS,
   RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE,
+  RUNTIME_V2_HOLLOW_COMPLETION_PATTERN,
+  RUNTIME_V2_HOLLOW_COMPLETION_REMAINDER_CHARACTERS,
   RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS,
   RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
   RUNTIME_V2_MODEL_INSTRUCTION,
@@ -78,6 +80,36 @@ export function isUnfulfilledIntent(content: string): boolean {
       ? normalized
       : normalized.slice(-RUNTIME_V2_UNFULFILLED_INTENT_TAIL_CHARACTERS);
   return RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS.some((pattern) => pattern.test(inspected));
+}
+
+/**
+ * Whether a reply claims the work is done while saying nothing about it.
+ *
+ * Separate from `isUnfulfilledIntent`, which catches the opposite shape: a
+ * model announcing what it is *about* to do. This catches a model asserting it
+ * has *already* done it. A live round asked for a file to be created and the
+ * model replied `DONE` having called no tool at all; the run recorded
+ * `run.completed` and the workspace was empty, which is the silent stop in its
+ * most convincing form — the answer looks like success.
+ *
+ * Only meaningful before any tool has run. After a tool call, "done" is an
+ * ordinary and usually true thing to say, so the caller gates on the first
+ * turn rather than this predicate trying to know.
+ *
+ * The remainder test is what keeps real answers out: a reply that explains
+ * itself — "Done. The file already contained the value." — has content after
+ * the claim and is left alone.
+ */
+export function isHollowCompletion(content: string): boolean {
+  const normalized = content.replaceAll(/\s+/gu, ' ').trim();
+  if (normalized.length === 0) return false;
+  const match = RUNTIME_V2_HOLLOW_COMPLETION_PATTERN.exec(normalized);
+  if (match === null) return false;
+  const remainder = normalized
+    .slice(match[0].length)
+    .replaceAll(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+  return remainder.length <= RUNTIME_V2_HOLLOW_COMPLETION_REMAINDER_CHARACTERS;
 }
 
 /**
