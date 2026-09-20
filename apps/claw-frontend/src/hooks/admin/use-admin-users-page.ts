@@ -24,7 +24,7 @@ export function useAdminUsersPage(): UseAdminUsersPageReturn {
 
   const userQuery = {
     page: filters.page,
-    limit: 20,
+    limit: filters.pageSize,
     search: filters.search || undefined,
     role: filters.roleFilter || undefined,
     status: filters.statusFilter || undefined,

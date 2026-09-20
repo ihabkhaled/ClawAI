@@ -7,6 +7,17 @@ import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const zh: TranslationDictionary = {
+  pagination: {
+    label: '分页',
+    showing: '显示第 {from}-{to} 条，共 {total} 条',
+    empty: '没有结果',
+    rowsPerPage: '每页行数',
+    previous: '上一页',
+    next: '下一页',
+    goToPage: '转到第 {page} 页',
+    jumpTo: '跳转到页',
+    ofPages: '/ 共 {total} 页',
+  },
   common: {
     save: '节省',
     cancel: '取消',

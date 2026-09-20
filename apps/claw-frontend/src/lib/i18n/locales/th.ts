@@ -7,6 +7,17 @@ import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const th: TranslationDictionary = {
+  pagination: {
+    label: 'การแบ่งหน้า',
+    showing: 'แสดง {from}-{to} จาก {total}',
+    empty: 'ไม่พบผลลัพธ์',
+    rowsPerPage: 'แถวต่อหน้า',
+    previous: 'หน้าก่อนหน้า',
+    next: 'หน้าถัดไป',
+    goToPage: 'ไปที่หน้า {page}',
+    jumpTo: 'ข้ามไปยังหน้า',
+    ofPages: 'จาก {total}',
+  },
   common: {
     save: 'บันทึก',
     cancel: 'ยกเลิก',

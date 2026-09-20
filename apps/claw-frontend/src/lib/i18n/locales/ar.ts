@@ -7,6 +7,17 @@ import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ar: TranslationDictionary = {
+  pagination: {
+    label: 'ترقيم الصفحات',
+    showing: 'عرض {from}-{to} من {total}',
+    empty: 'لا توجد نتائج',
+    rowsPerPage: 'صفوف لكل صفحة',
+    previous: 'الصفحة السابقة',
+    next: 'الصفحة التالية',
+    goToPage: 'الانتقال إلى الصفحة {page}',
+    jumpTo: 'الانتقال إلى صفحة',
+    ofPages: 'من {total}',
+  },
   common: {
     save: 'حفظ',
     cancel: 'إلغاء',

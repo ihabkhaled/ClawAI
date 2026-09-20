@@ -3,6 +3,21 @@ import type { Locale } from '@/enums/locale.enum';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 
 export type TranslationDictionary = {
+  /**
+   * The shared table pagination control. Used by every paged list, so a change
+   * here is a change everywhere — see `components/ui/pagination.tsx`.
+   */
+  pagination: {
+    label: string;
+    showing: string;
+    empty: string;
+    rowsPerPage: string;
+    previous: string;
+    next: string;
+    goToPage: string;
+    jumpTo: string;
+    ofPages: string;
+  };
   common: {
     save: string;
     cancel: string;

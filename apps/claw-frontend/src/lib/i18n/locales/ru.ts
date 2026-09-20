@@ -7,6 +7,17 @@ import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ru: TranslationDictionary = {
+  pagination: {
+    label: 'Постраничная навигация',
+    showing: 'Показаны {from}-{to} из {total}',
+    empty: 'Нет результатов',
+    rowsPerPage: 'Строк на странице',
+    previous: 'Предыдущая страница',
+    next: 'Следующая страница',
+    goToPage: 'Перейти на страницу {page}',
+    jumpTo: 'Перейти к странице',
+    ofPages: 'из {total}',
+  },
   common: {
     save: 'Сохранить',
     cancel: 'Отмена',

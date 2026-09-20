@@ -174,3 +174,4 @@ export { LoginFailureReason } from './login-failure-reason.enum';
 export { EmailVerificationTone } from './email-verification-tone.enum';
 export { ModelRecencyTier } from './model-recency-tier.enum';
 export { AnswerExportFormat } from './answer-export-format.enum';
+export { PageWindowGap } from './page-window-gap.enum';

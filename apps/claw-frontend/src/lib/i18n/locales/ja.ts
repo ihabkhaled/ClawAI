@@ -7,6 +7,17 @@ import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ja: TranslationDictionary = {
+  pagination: {
+    label: 'ページ送り',
+    showing: '{total} 件中 {from}-{to} 件を表示',
+    empty: '結果がありません',
+    rowsPerPage: '1 ページあたりの行数',
+    previous: '前のページ',
+    next: '次のページ',
+    goToPage: '{page} ページ目へ移動',
+    jumpTo: 'ページを指定',
+    ofPages: '/ {total}',
+  },
   common: {
     save: '保存',
     cancel: 'キャンセル',

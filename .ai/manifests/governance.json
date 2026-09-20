@@ -320,7 +320,7 @@
   ],
   "skills": [
     {
-      "bytes": 28000,
+      "bytes": 28279,
       "file": "skills/00-index.md"
     },
     {
@@ -402,6 +402,10 @@
     {
       "bytes": 3872,
       "file": "skills/add-migration.md"
+    },
+    {
+      "bytes": 4424,
+      "file": "skills/add-pagination-to-a-list.md"
     },
     {
       "bytes": 4112,

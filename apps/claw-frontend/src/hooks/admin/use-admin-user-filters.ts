@@ -1,9 +1,12 @@
 import { useState } from 'react';
 
+import { usePagination } from '@/hooks/use-pagination';
 import type { UseAdminUserFiltersReturn } from '@/types';
 
 export function useAdminUserFilters(): UseAdminUserFiltersReturn {
-  const [page, setPage] = useState(1);
+  // Page and page-size state is the shared control's, not this page's: every
+  // paged list here gets the same clamping and the same reset-on-resize.
+  const { page, pageSize, goToPage, setPageSize, reset } = usePagination();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -12,28 +15,30 @@ export function useAdminUserFilters(): UseAdminUserFiltersReturn {
 
   const updateSearch = (value: string) => {
     setSearch(value);
-    setPage(1);
+    reset();
   };
   const updateRole = (value: string) => {
     setRoleFilter(value);
-    setPage(1);
+    reset();
   };
   const updateStatus = (value: string) => {
     setStatusFilter(value);
-    setPage(1);
+    reset();
   };
   const updatePlan = (value: string) => {
     setPlanFilter(value);
-    setPage(1);
+    reset();
   };
   const updateVerification = (value: string) => {
     setVerificationFilter(value);
-    setPage(1);
+    reset();
   };
 
   return {
     page,
-    setPage,
+    pageSize,
+    setPage: goToPage,
+    setPageSize,
     search,
     setSearch: updateSearch,
     roleFilter,

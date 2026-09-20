@@ -329,7 +329,12 @@ export type UseRedirectIfAuthenticatedReturn = {
 
 export type UseAdminUserFiltersReturn = {
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  pageSize: number;
+  // A plain setter, not a state dispatch: the page number is clamped by
+  // `usePagination`, so callers must not hand it an updater function that
+  // would slip past that.
+  setPage: (page: number) => void;
+  setPageSize: (pageSize: number) => void;
   search: string;
   setSearch: (value: string) => void;
   roleFilter: string;

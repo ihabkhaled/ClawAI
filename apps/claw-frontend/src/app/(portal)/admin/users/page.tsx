@@ -9,6 +9,7 @@ import { UserFilters } from '@/components/admin/user-filters';
 import { UsersContent } from '@/components/admin/users-content';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { UserRole } from '@/enums';
 import { useAdminUsersPage } from '@/hooks/admin/use-admin-users-page';
 
@@ -58,25 +59,15 @@ export default function AdminUsersPage(): ReactElement {
           isTemporaryPasswordPending={admin.isTemporaryPasswordPending}
           t={admin.t}
         />
-        <div className="mt-4 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => admin.setPage(admin.page - 1)}
-            disabled={admin.page <= 1}
-          >
-            {admin.t('common.previous')}
-          </Button>
-          <span className="text-muted-foreground text-sm">
-            {admin.page} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => admin.setPage(admin.page + 1)}
-            disabled={admin.page >= totalPages}
-          >
-            {admin.t('common.next')}
-          </Button>
-        </div>
+        <Pagination
+          page={admin.page}
+          pageSize={admin.pageSize}
+          totalPages={totalPages}
+          totalItems={admin.usersMeta?.total ?? 0}
+          onPageChange={admin.setPage}
+          onPageSizeChange={admin.setPageSize}
+          t={admin.t}
+        />
       </>
     );
   }
