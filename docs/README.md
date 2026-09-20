@@ -62,6 +62,7 @@
 | [Agent Service Guide](04-backend/service-guide-agent.md)         | Local agent sessions, approvals, repos, file events            |
 | [Frontend Architecture](05-frontend/frontend-architecture.md)    | Page->Hook->Service->Repo pattern, state management, i18n      |
 | [Frontend Coding Standards](05-frontend/coding-standards.md)     | Component/hook/query patterns                                  |
+| [PWA Update Banner](05-frontend/pwa-update-banner.md)            | How a new version is offered, and why it asks only once        |
 
 ### Layer E: Data & Integrations
 

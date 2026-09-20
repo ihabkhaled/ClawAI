@@ -4,7 +4,12 @@ import vm from 'node:vm';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { serviceWorkerUrl, shouldRegisterServiceWorker } from '../service-worker.utility';
+import {
+  isUpdateAlreadySeen,
+  serviceWorkerUrl,
+  serviceWorkerVersion,
+  shouldRegisterServiceWorker,
+} from '../service-worker.utility';
 
 describe('serviceWorkerUrl', () => {
   it('carries the version, so a release installs a new worker', () => {
@@ -175,5 +180,42 @@ describe('public/sw.js', () => {
     await expect(
       answerFor(worker, requestFor('https://cdn.example.com/x.js')),
     ).resolves.toBeUndefined();
+  });
+});
+
+// The update banner used to ask "is a worker waiting", which stays true until
+// the update is applied — so it reappeared on every reload for an update the
+// person had already declined by reloading past it. These two answer "WHICH
+// update is waiting", which is what makes the question askable once.
+describe('serviceWorkerVersion', () => {
+  it('reads the version a worker script URL carries', () => {
+    expect(serviceWorkerVersion('https://claw.local/sw.js?v=1.109.3')).toBe('1.109.3');
+  });
+
+  it('is null for a worker with no version, rather than a guess', () => {
+    expect(serviceWorkerVersion('https://claw.local/sw.js')).toBeNull();
+  });
+
+  it('is null for a URL it cannot parse', () => {
+    expect(serviceWorkerVersion('::::')).toBeNull();
+  });
+});
+
+describe('isUpdateAlreadySeen', () => {
+  it('suppresses the update this person was already shown', () => {
+    expect(isUpdateAlreadySeen('1.109.3', '1.109.3')).toBe(true);
+  });
+
+  it('asks again for a different version', () => {
+    expect(isUpdateAlreadySeen('1.110.0', '1.109.3')).toBe(false);
+  });
+
+  it('asks when nothing has been seen yet', () => {
+    expect(isUpdateAlreadySeen('1.109.3', null)).toBe(false);
+  });
+
+  it('never suppresses an unversioned worker, which would hide every update', () => {
+    expect(isUpdateAlreadySeen(null, null)).toBe(false);
+    expect(isUpdateAlreadySeen(null, '1.109.3')).toBe(false);
   });
 });

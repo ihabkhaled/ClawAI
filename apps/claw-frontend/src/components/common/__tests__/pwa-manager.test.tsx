@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -194,5 +194,83 @@ describe('PwaManager', () => {
     window.dispatchEvent(installEvent);
 
     await waitFor(() => expect(screen.queryByText('pwa.installMessage')).toBeNull());
+  });
+});
+
+// Reported 2026-09-20: the update banner did not appear while a page sat open
+// (only after a reload), and once it appeared it came back on every reload
+// until Update was pressed. Both halves are covered here.
+describe('PwaManager update offer', () => {
+  const VERSION = '9.9.9';
+
+  function installServiceWorkerMock(waiting: { scriptURL: string } | null) {
+    const update = vi.fn().mockResolvedValue(undefined);
+    const registration = {
+      waiting,
+      update,
+      addEventListener: vi.fn(),
+    };
+    Object.defineProperty(window.navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        register: vi.fn().mockResolvedValue(registration),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        getRegistrations: vi.fn().mockResolvedValue([]),
+        controller: {},
+      },
+    });
+    return { update };
+  }
+
+  beforeEach(() => {
+    vi.stubEnv('NODE_ENV', 'production');
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    // Unmount BEFORE the mock is removed: React runs effect cleanups during
+    // Testing Library's own afterEach, and one of them calls
+    // navigator.serviceWorker.removeEventListener.
+    cleanup();
+    vi.unstubAllEnvs();
+    Reflect.deleteProperty(window.navigator, 'serviceWorker');
+  });
+
+  it('offers an update the person has not been shown yet', async () => {
+    installServiceWorkerMock({ scriptURL: `https://claw.local/sw.js?v=${VERSION}` });
+    render(<PwaManager />);
+    expect(await screen.findByText('pwa.updateAvailable')).toBeInTheDocument();
+  });
+
+  it('remembers that it asked, so a reload does not ask again', async () => {
+    installServiceWorkerMock({ scriptURL: `https://claw.local/sw.js?v=${VERSION}` });
+    const first = render(<PwaManager />);
+    await screen.findByText('pwa.updateAvailable');
+    expect(window.localStorage.getItem('claw.pwa.update.seen')).toBe(VERSION);
+    first.unmount();
+
+    // The reload: same waiting worker, same version, already answered.
+    installServiceWorkerMock({ scriptURL: `https://claw.local/sw.js?v=${VERSION}` });
+    const { container } = render(<PwaManager />);
+    await waitFor(() => {
+      expect(container.textContent).not.toContain('pwa.updateAvailable');
+    });
+  });
+
+  it('asks again when a different version arrives', async () => {
+    window.localStorage.setItem('claw.pwa.update.seen', VERSION);
+    installServiceWorkerMock({ scriptURL: 'https://claw.local/sw.js?v=10.0.0' });
+    render(<PwaManager />);
+    expect(await screen.findByText('pwa.updateAvailable')).toBeInTheDocument();
+  });
+
+  it('checks for a new version without waiting for a reload', async () => {
+    // The whole first half of the bug: a tab left open never asked.
+    const { update } = installServiceWorkerMock(null);
+    render(<PwaManager />);
+    await waitFor(() => {
+      expect(update).toHaveBeenCalled();
+    });
   });
 });
