@@ -97,15 +97,20 @@ export type ComfyUIWebSocketLike = {
 
 export type ComfyUIWebSocketFactory = (url: string) => ComfyUIWebSocketLike;
 
+// `allowedHosts` mirrors the shared HTTP client: a ComfyUI instance lives at a
+// base URL an operator configured, which no static allowlist can know, so each
+// call declares its own destination (alert #58).
 export type ComfyUIHttpGetFn = <T>(
   url: string,
   options?: { timeout?: number; responseType?: string },
+  allowedHosts?: ReadonlySet<string>,
 ) => Promise<T>;
 
 export type ComfyUIHttpPostFn = <T>(
   url: string,
   body?: unknown,
   options?: { timeout?: number; headers?: Record<string, string> },
+  allowedHosts?: ReadonlySet<string>,
 ) => Promise<T>;
 
 export type ComfyUIProgressAdapterDeps = {

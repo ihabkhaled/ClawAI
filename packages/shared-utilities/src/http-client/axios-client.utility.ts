@@ -13,10 +13,15 @@ export function createHttpClient(config: AxiosRequestConfig): AxiosInstance {
   return axios.create(config);
 }
 
-export async function httpGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  // Same SSRF chokepoint as the fetch client: a caller-supplied URL must not
-  // reach the network without a protocol/credential check.
-  assertSafeRequestUrl(url);
+export async function httpGet<T>(
+  url: string,
+  config?: AxiosRequestConfig,
+  allowedHosts?: ReadonlySet<string>,
+): Promise<T> {
+  // Same SSRF chokepoint as the fetch client, and enforced the same way: the
+  // host check is unconditional, so a caller with an admin-configured
+  // destination declares it with `declaredHost(baseUrl)`.
+  assertSafeRequestUrl(url, allowedHosts);
   logger.debug(`httpGet: GET ${url}`);
   const startTime = Date.now();
   try {
@@ -44,7 +49,11 @@ export async function httpPost<T>(
   url: string,
   data?: unknown,
   config?: AxiosRequestConfig,
+  allowedHosts?: ReadonlySet<string>,
 ): Promise<T> {
+  // This call had NO url guard at all until 2026-09-20, which is the unchecked
+  // path CodeQL kept pointing at even after the fetch client was hardened.
+  assertSafeRequestUrl(url, allowedHosts);
   logger.debug(`httpPost: POST ${url}`);
   const startTime = Date.now();
   try {

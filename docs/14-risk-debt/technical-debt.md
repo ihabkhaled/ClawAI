@@ -38,26 +38,54 @@ Last updated: 2026-09-10
 - **Why not now**: every service's guard changes, plus a Redis dependency in
   `shared-auth`. That is its own batch.
 
-### TD-037: The shared HTTP client has no host allowlist by default (2026-09-20)
+### TD-037 (FIXED 2026-09-20): The shared HTTP client had no host allowlist by default
 
-- **Severity**: Medium · **Effort**: Medium · **Priority**: Planned
-- **Detail**: `httpRequest` (`packages/shared-utilities/src/http-client`) hands
-  a caller-built URL to `fetch`, which is the SSRF shape CodeQL flags
-  (alert #58). It now refuses non-http(s) protocols, embedded credentials, the
-  cloud metadata addresses, and any redirect — but it does not restrict the
-  host unless a caller passes `allowedHosts`.
-- **Why not by default**: the same client carries three kinds of destination —
-  configured services (`*_SERVICE_URL`), constants
+- **Severity**: Medium · **Effort**: Medium · **Status**: Closed the same day it
+  was recorded, because CodeQL re-detected alert #58 on the very next commit.
+- **What it was**: `httpRequest` (`packages/shared-utilities/src/http-client`)
+  hands a caller-built URL to `fetch`, the SSRF shape CodeQL flags. It refused
+  non-http(s) protocols, embedded credentials, the cloud metadata addresses and
+  any redirect — but the host check only ran when a caller passed
+  `allowedHosts`, which no caller did. `httpPost` in the axios client had no URL
+  guard at all.
+- **Why it was deferred, and why that was wrong**: the client carries three
+  kinds of destination — configured services (`*_SERVICE_URL`), constants
   (`DISPLAY_FX_PRIMARY_BASE_URL`, `PAYMOB_BASE_URL`) and hosts an admin
-  configured in a connector (`baseUrl`). An environment-derived default would
-  have refused the last two and broken currency conversion and provider calls.
-- **The fix**: pass `allowedHosts` at each call site, starting with the ones
-  that only ever call configured services (`internalHostAllowlist()` already
-  builds that set from the environment), then give the connector path an
-  allowlist derived from the stored connector rows. When every caller declares
-  its hosts, the default can flip to deny.
-- **Note**: alert #58 may stay open until then; the risk is reduced, not
-  removed, and saying otherwise would be false.
+  configured in a connector — and an environment-only default would have refused
+  the last two. The answer was not to leave the check opt-in but to make the
+  allowlist the UNION of all three sources.
+- **The fix**: the host check is now unconditional. The allowlist is
+  `internalHostAllowlist()` ∪ `EXTERNAL_ENDPOINT_HOSTS` (the constants, derived
+  from the same values the callers use) ∪ any host the caller declares with
+  `declaredHost(baseUrl)` for an admin-configured destination. `httpPost` is
+  guarded. A payment-service test pins the two copies of the gateway hosts
+  together.
+- **What is still open**: eight services carry their OWN copy of the HTTP client
+  (`apps/claw-*/src/common/utilities/http-client.utility.ts`) that calls `fetch`
+  with no guard at all. Those are TD-038.
+
+### TD-038: Eight services carry an unguarded copy of the HTTP client (2026-09-20)
+
+- **Severity**: Medium · **Effort**: Medium · **Priority**: Next
+- **Detail**: chat, connector, file-generation, health, image, memory, ollama
+  and routing each have their own
+  `src/common/utilities/http-client.utility.ts` (or `http.utility.ts`) that
+  calls `fetch` directly with **no** URL guard — no protocol check, no
+  credential check, no metadata-address check, no host allowlist. They exist
+  because each needed something the shared client does not do: streaming,
+  binary reads, a non-JSON body parse.
+- **Why it matters**: TD-037 closed the shared chokepoint, which is the one
+  CodeQL proved a taint path into. These copies are the same sink with none of
+  the protections, and they are the ones that carry provider traffic.
+- **The fix**: route every one of them through `assertSafeRequestUrl` from
+  `@claw/shared-utilities`, passing `declaredHost(baseUrl)` where the host comes
+  from an admin-configured connector. Then add a repository test that fails when
+  a `fetch(` appears in a service without the guard above it, so a ninth copy
+  cannot appear quietly.
+- **Why not in the same batch**: it touches eight services' request paths,
+  including chat streaming and connector provider calls, so it needs its own
+  gates and its own live verification rather than riding along with a shared
+  package change.
 
 ### TD-036: No per-route metrics, and no backup of the metrics store (2026-09-20)
 

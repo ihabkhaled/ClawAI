@@ -1,4 +1,5 @@
-import { assertSafeRequestUrl } from '../request-url.utility';
+import { assertSafeRequestUrl, declaredHost } from '../request-url.utility';
+import { EXTERNAL_ENDPOINT_HOSTS } from '../request-url.constants';
 import { internalHostAllowlist, resetInternalHostAllowlist } from '../internal-hosts.utility';
 
 describe('assertSafeRequestUrl', () => {
@@ -94,5 +95,62 @@ describe('internalHostAllowlist', () => {
       internalHostAllowlist({ BROKEN_SERVICE_URL: 'not a url', FILE_SERVICE_URL: 'file:///etc' })
         .size,
     ).toBe(0);
+  });
+});
+
+// Until 2026-09-20 the host check only ran when a caller passed a set, so a
+// caller that passed nothing reached fetch unchecked — the path CodeQL kept
+// re-detecting after every other hardening. These cover the closed version.
+describe('assertSafeRequestUrl: the host check is not optional', () => {
+  const previous = process.env.PROOF_SERVICE_URL;
+
+  beforeEach(() => {
+    process.env.PROOF_SERVICE_URL = 'https://proof-service:4099';
+    resetInternalHostAllowlist();
+  });
+
+  afterEach(() => {
+    if (previous === undefined) {
+      delete process.env.PROOF_SERVICE_URL;
+    } else {
+      process.env.PROOF_SERVICE_URL = previous;
+    }
+    resetInternalHostAllowlist();
+  });
+
+  it('allows a host named by this process environment, with no caller opt-in', () => {
+    expect(assertSafeRequestUrl('https://proof-service:4099/api/v1/x').host).toBe(
+      'proof-service:4099',
+    );
+  });
+
+  it('refuses an unknown host even though the caller passed no allowlist', () => {
+    expect(() => assertSafeRequestUrl('https://evil.example/steal')).toThrow(/does not call/u);
+  });
+
+  it('allows the third-party endpoints written down in code', () => {
+    // These have no environment variable: the FX sources, the geo lookup and
+    // the payment gateways are constants. Making the check unconditional
+    // without them would refuse legitimate traffic.
+    for (const host of EXTERNAL_ENDPOINT_HOSTS) {
+      expect(assertSafeRequestUrl(`https://${host}/probe`).host).toBe(host);
+    }
+  });
+
+  it('allows a host the caller declares because an admin configured it', () => {
+    const base = 'http://comfyui.internal:8188';
+    expect(assertSafeRequestUrl(`${base}/system_stats`, declaredHost(base)).host).toBe(
+      'comfyui.internal:8188',
+    );
+  });
+});
+
+describe('declaredHost', () => {
+  it('is the single host of a configured base URL', () => {
+    expect([...declaredHost('https://comfy.example:8188/api')]).toEqual(['comfy.example:8188']);
+  });
+
+  it('is empty for a value that is not a URL, so a broken config refuses the call', () => {
+    expect(declaredHost('not a url').size).toBe(0);
   });
 });

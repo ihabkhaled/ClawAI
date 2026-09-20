@@ -1,4 +1,5 @@
-import { FORBIDDEN_REQUEST_HOSTS } from './request-url.constants';
+import { EXTERNAL_ENDPOINT_HOSTS, FORBIDDEN_REQUEST_HOSTS } from './request-url.constants';
+import { internalHostAllowlist } from './internal-hosts.utility';
 
 const ALLOWED_PROTOCOLS: ReadonlySet<string> = new Set(['http:', 'https:']);
 
@@ -21,13 +22,19 @@ const ALLOWED_PROTOCOLS: ReadonlySet<string> = new Set(['http:', 'https:']);
  *    every log line that prints the URL.
  *  - The cloud metadata endpoints, always, whatever the configuration says.
  *    They hand instance credentials to whoever asks.
- *  - Any host outside `allowedHosts`, when a caller passes one.
- *    `internalHostAllowlist()` builds that set from this process's own
- *    environment for callers that only ever talk to configured services. It is
- *    NOT the default: this client also carries calls to a constant host (the
- *    FX providers, Paymob) and to hosts an admin configured in a connector, so
- *    defaulting to the environment would refuse legitimate traffic. Closing
- *    that per caller is TD-037.
+ *  - **Any host that is not on the allowlist. This is unconditional.** The
+ *    allowlist is the union of three sources: the hosts named by this process's
+ *    own environment (`*_SERVICE_URL` and friends), the third-party endpoints
+ *    written down in `EXTERNAL_ENDPOINT_HOSTS`, and any host the caller
+ *    declares in `allowedHosts` because it comes from an admin-configured
+ *    connector. Until 2026-09-20 the host check only ran when a caller opted
+ *    in, which left an unguarded path to `fetch` and kept alert #58 open. There
+ *    is no opt-out now: a service that legitimately calls a new destination
+ *    adds it to one of those three sources.
+ *
+ * The one stand-down is a process with no environment at all — a unit test or a
+ * one-off tool — where every source is empty. Refusing everything there would
+ * turn the guard into an outage rather than a control.
  */
 export function assertSafeRequestUrl(url: string, allowedHosts?: ReadonlySet<string>): URL {
   let parsed: URL;
@@ -45,13 +52,41 @@ export function assertSafeRequestUrl(url: string, allowedHosts?: ReadonlySet<str
   if (FORBIDDEN_REQUEST_HOSTS.includes(parsed.hostname.toLowerCase())) {
     throw new Error('httpRequest: refusing a cloud metadata address');
   }
-  // Opt-in, and deliberately not defaulted to the environment: this client
-  // also carries calls whose host is a constant (the FX providers, Paymob) or
-  // comes from an admin-configured connector, so an environment-only default
-  // would refuse legitimate traffic. A caller that knows its destinations
-  // passes them; see TD-037 for closing that gap caller by caller.
-  if (allowedHosts !== undefined && allowedHosts.size > 0 && !allowedHosts.has(parsed.host)) {
+
+  const fromEnvironment = internalHostAllowlist();
+  if (fromEnvironment.size === 0 && (allowedHosts === undefined || allowedHosts.size === 0)) {
+    // Not a configured service: a unit test or a one-off tool, where every
+    // source is empty. The protocol, credential and metadata rejections above
+    // still stand; refusing every host as well would make the guard an outage
+    // rather than a control. A deployed service always has these variables.
+    return parsed;
+  }
+  const permitted = new Set<string>([
+    ...fromEnvironment,
+    ...EXTERNAL_ENDPOINT_HOSTS,
+    ...(allowedHosts ?? []),
+  ]);
+  if (!permitted.has(parsed.host)) {
     throw new Error(`httpRequest: refusing a host this service does not call: ${parsed.host}`);
   }
   return parsed;
+}
+
+/**
+ * The host of a base URL, for a caller declaring an admin-configured
+ * destination to `assertSafeRequestUrl`.
+ *
+ * A connector's base URL is set by an operator in the admin UI, so it cannot be
+ * on any static list. Passing it through here makes the destination an explicit
+ * argument at the call site rather than something the guard silently waves
+ * past, which is the difference between a checked path and an unchecked one.
+ * Returns an empty set for a value that is not a URL, so a broken config
+ * refuses the call instead of opening it.
+ */
+export function declaredHost(baseUrl: string): ReadonlySet<string> {
+  try {
+    return new Set([new URL(baseUrl).host]);
+  } catch {
+    return new Set();
+  }
 }

@@ -276,9 +276,13 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-034.
 
-### TD-037: The shared HTTP client has no host allowlist by default
+### TD-037 (FIXED 2026-09-20): The shared HTTP client had no host allowlist by default
 
 - **Added**: 2026-09-20 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-037.
+
+### TD-038: Eight services carry an unguarded copy of the HTTP client
+
+- **Added**: 2026-09-20 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-038.
 
 ### TD-036: No per-route metrics, and no backup of the metrics store
 

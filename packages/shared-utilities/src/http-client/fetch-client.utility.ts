@@ -6,11 +6,11 @@ import { assertSafeRequestUrl } from './request-url.utility';
 const logger = new Logger('FetchHttpClient');
 
 export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-  const { url, method, headers, body, timeoutMs = 120_000 } = options;
+  const { url, method, headers, body, timeoutMs = 120_000, allowedHosts } = options;
 
   // Validated before anything else: the URL is caller-supplied and goes
   // straight to fetch. See assertSafeRequestUrl.
-  const safeUrl = assertSafeRequestUrl(url);
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
 
   logger.debug(`httpRequest: ${method} ${url} (timeout=${String(timeoutMs)}ms)`);
   const controller = new AbortController();

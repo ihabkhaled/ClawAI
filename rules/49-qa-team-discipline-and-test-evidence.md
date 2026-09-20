@@ -15,6 +15,25 @@ until it has been seen running — this rule says _who you must be_ while you lo
 
 ---
 
+## 0. What the word "test" means here
+
+Standing instruction from the repository owner (2026-09-20). When the owner —
+or any prompt, pack or issue — says **"test"**, "do the testing", "test it", or
+"testing rounds", it always means **this whole rule**, never a unit suite alone:
+
+- backend unit + integration, per touched workspace
+- real API lane (`curl` against the running service: status, body, headers)
+- frontend component tests **and** the browser lane on the real URL
+- end-to-end flows through the UI, signed in as a real user
+- **every hat in §2** — product, business, analyst, manual tester, API tester,
+  UI/UX, responsive, accessibility, security, performance, regression, UAT
+- RBAC across roles **and** plan tiers (free included)
+- the device matrix in §3 (≥3 widths per platform, both orientations, RTL)
+
+Nobody has to re-state this. Asking for "tests" is asking for all of it, with
+the evidence §4 requires. A lane that could not be run is **reported as not
+run** — never assumed, never fabricated.
+
 ## 1. Unit tests are the floor, not the ceiling
 
 A green suite proves the code does what you thought. It does not prove the

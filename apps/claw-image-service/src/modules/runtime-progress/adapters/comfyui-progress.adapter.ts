@@ -1,7 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { buildRuntimeProgressEvent, httpGet, httpPost } from '@claw/shared-utilities';
+import { buildRuntimeProgressEvent, declaredHost, httpGet, httpPost } from '@claw/shared-utilities';
 import {
   type ClawRuntimeProgressEvent,
   RuntimeModality,
@@ -89,7 +89,11 @@ export class ComfyUIProgressAdapter {
     const normalized = this.normalizeBase(baseUrl);
     this.logger.debug(`probe: GET ${normalized}/system_stats`);
     try {
-      await this.httpGetImpl<unknown>(`${normalized}/system_stats`, { timeout: 5_000 });
+      await this.httpGetImpl<unknown>(
+        `${normalized}/system_stats`,
+        { timeout: 5_000 },
+        declaredHost(normalized),
+      );
       const latencyMs = Date.now() - startedAt;
       this.logger.log(`probe: comfyui reachable url=${normalized} latencyMs=${String(latencyMs)}`);
       return { reachable: true, latencyMs };
@@ -108,6 +112,7 @@ export class ComfyUIProgressAdapter {
         `${normalized}/interrupt`,
         {},
         { timeout: COMFYUI_INTERRUPT_TIMEOUT_MS },
+        declaredHost(normalized),
       );
       return true;
     } catch (error: unknown) {
@@ -117,9 +122,7 @@ export class ComfyUIProgressAdapter {
     }
   }
 
-  async streamGenerate(
-    options: ComfyUIStreamGenerateOptions,
-  ): Promise<ComfyUIGenerationResult> {
+  async streamGenerate(options: ComfyUIStreamGenerateOptions): Promise<ComfyUIGenerationResult> {
     const { runId, baseUrl, workflow, onEvent, signal } = options;
     const normalized = this.normalizeBase(baseUrl);
     const clientId = workflow.client_id;
@@ -387,17 +390,8 @@ export class ComfyUIProgressAdapter {
   }
 
   private attachWsHandlers(args: ComfyUIAttachWsHandlersArgs): void {
-    const {
-      ws,
-      runId,
-      baseUrl,
-      descriptors,
-      totalNodes,
-      state,
-      nextSeq,
-      startedAtMs,
-      onEvent,
-    } = args;
+    const { ws, runId, baseUrl, descriptors, totalNodes, state, nextSeq, startedAtMs, onEvent } =
+      args;
     ws.addEventListener('message', (event) => {
       try {
         this.handleWsMessage({
@@ -541,10 +535,7 @@ export class ComfyUIProgressAdapter {
     );
   }
 
-  private emitExecutionCached(
-    data: Record<string, unknown>,
-    ctx: ComfyUIEmitCtxWithState,
-  ): void {
+  private emitExecutionCached(data: Record<string, unknown>, ctx: ComfyUIEmitCtxWithState): void {
     const nodes = Array.isArray(data['nodes']) ? (data['nodes'] as Array<string | number>) : [];
     for (const n of nodes) {
       ctx.state.cachedNodes.add(String(n));
@@ -672,10 +663,7 @@ export class ComfyUIProgressAdapter {
     );
   }
 
-  private emitExecutionError(
-    data: Record<string, unknown>,
-    ctx: ComfyUIEmitCtxWithState,
-  ): void {
+  private emitExecutionError(data: Record<string, unknown>, ctx: ComfyUIEmitCtxWithState): void {
     const message =
       (data['exception_message'] as string | undefined) ??
       (data['error'] as string | undefined) ??
@@ -703,6 +691,7 @@ export class ComfyUIProgressAdapter {
       `${baseUrl}/prompt`,
       workflow,
       { timeout: COMFYUI_PROMPT_POST_TIMEOUT_MS },
+      declaredHost(baseUrl),
     );
     if (response?.node_errors && Object.keys(response.node_errors).length > 0) {
       throw new Error(
@@ -716,10 +705,7 @@ export class ComfyUIProgressAdapter {
     return promptId;
   }
 
-  private async waitForCompletion(
-    state: ComfyUIStreamState,
-    signal?: AbortSignal,
-  ): Promise<void> {
+  private async waitForCompletion(state: ComfyUIStreamState, signal?: AbortSignal): Promise<void> {
     const deadline = Date.now() + COMFYUI_MAX_EXECUTION_MS;
     while (!state.done && Date.now() < deadline) {
       if (signal?.aborted) {
@@ -734,9 +720,11 @@ export class ComfyUIProgressAdapter {
 
   private async fetchHistory(baseUrl: string, promptId: string): Promise<ComfyUIHistoryEntry> {
     const url = `${baseUrl}/history/${encodeURIComponent(promptId)}`;
-    const raw = await this.httpGetImpl<Record<string, ComfyUIHistoryEntry>>(url, {
-      timeout: COMFYUI_HISTORY_GET_TIMEOUT_MS,
-    });
+    const raw = await this.httpGetImpl<Record<string, ComfyUIHistoryEntry>>(
+      url,
+      { timeout: COMFYUI_HISTORY_GET_TIMEOUT_MS },
+      declaredHost(baseUrl),
+    );
     const entry = raw?.[promptId];
     if (!entry) {
       throw new Error(`GET /history/${promptId} returned no entry`);
@@ -771,10 +759,11 @@ export class ComfyUIProgressAdapter {
       params.set('type', type);
     }
     const url = `${baseUrl}/view?${params.toString()}`;
-    const buf = await this.httpGetImpl<ArrayBuffer>(url, {
-      responseType: 'arraybuffer',
-      timeout: COMFYUI_VIEW_GET_TIMEOUT_MS,
-    });
+    const buf = await this.httpGetImpl<ArrayBuffer>(
+      url,
+      { responseType: 'arraybuffer', timeout: COMFYUI_VIEW_GET_TIMEOUT_MS },
+      declaredHost(baseUrl),
+    );
     return Buffer.from(buf).toString('base64');
   }
 

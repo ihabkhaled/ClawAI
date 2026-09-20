@@ -7549,7 +7549,7 @@
           "file": "rules/48-lint-and-test-only-what-changed.md"
         },
         {
-          "bytes": 6206,
+          "bytes": 7222,
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
@@ -7579,7 +7579,7 @@
       ],
       "skills": [
         {
-          "bytes": 27442,
+          "bytes": 28000,
           "file": "skills/00-index.md"
         },
         {
@@ -7637,6 +7637,10 @@
         {
           "bytes": 3125,
           "file": "skills/add-an-answer-export-format.md"
+        },
+        {
+          "bytes": 4114,
+          "file": "skills/add-an-outbound-http-destination.md"
         },
         {
           "bytes": 3616,
@@ -9917,7 +9921,7 @@
       },
       "claw-payment-service": {
         "runner": "vitest",
-        "testFiles": 111
+        "testFiles": 112
       },
       "claw-research-service": {
         "runner": "vitest",
@@ -10669,7 +10673,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1337,
+    "totalTestFiles": 1338,
     "workspaceCount": 25
   }
 }

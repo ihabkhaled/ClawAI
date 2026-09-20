@@ -82,7 +82,7 @@
     },
     "claw-payment-service": {
       "runner": "vitest",
-      "testFiles": 111
+      "testFiles": 112
     },
     "claw-research-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1337
+  "total": 1338
 }
