@@ -9,6 +9,8 @@ import { type AuthenticatedUser, type PaginatedResult } from '../../../common/ty
 import { FilesService } from '../services/files.service';
 import { type UploadFileDto, uploadFileSchema } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto, listFilesQuerySchema } from '../dto/list-files-query.dto';
+import { type ExtractTextDto, extractTextSchema } from '../dto/extract-text.dto';
+import { type ExtractedTextResult } from '../types/files.types';
 
 // Slice C backend 3 — all user-facing file endpoints require FILES_USE.
 // Internal service-to-service routes live in FilesInternalController and stay
@@ -24,6 +26,21 @@ export class FilesController {
     @Body(new ZodValidationPipe(uploadFileSchema)) dto: UploadFileDto,
   ): Promise<File> {
     return this.filesService.uploadFile(user.id, dto);
+  }
+
+  /**
+   * Text from bytes the caller sends, without keeping them.
+   *
+   * Separate from `upload` because it is not one: the coding agent reads a PDF
+   * that is already in the user's workspace, and an upload would put a copy of
+   * a repository file in their file list and their storage. Nothing is
+   * persisted here.
+   */
+  @Post('extract-text')
+  async extractText(
+    @Body(new ZodValidationPipe(extractTextSchema)) dto: ExtractTextDto,
+  ): Promise<ExtractedTextResult> {
+    return this.filesService.extractText(dto);
   }
 
   @Get()

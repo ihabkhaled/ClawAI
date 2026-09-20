@@ -1,4 +1,11 @@
-import { forwardRef, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { type Response } from 'express';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { contentDispositionHeader, ContentDispositionType } from '@claw/shared-utilities';
@@ -32,7 +39,9 @@ import {
   type FileIngestionState,
   type InternalFileContentResponse,
 } from '../types/internal-file.types';
-import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
+import { ALLOWED_MIME_TYPES, type ExtractedTextResult, MAX_FILE_SIZE } from '../types/files.types';
+import { type ExtractTextDto } from '../dto/extract-text.dto';
+import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
 import { FileProcessingManager } from '../managers/file-processing.manager';
 import { type FileProcessingContract } from '../types/zip-expansion.types';
 
@@ -600,5 +609,37 @@ export class FilesService {
     }
     const millisPerDay = 24 * 60 * 60 * 1000;
     return new Date(Date.now() + days * millisPerDay);
+  }
+  /**
+   * Text from bytes the caller already has, without keeping them.
+   *
+   * The coding agent reads a PDF that is already in the user's workspace.
+   * Uploading it would put a copy of a repository file in their file list and
+   * their storage, which is not what "read this file" means — so nothing here
+   * is persisted, no row is written and no event is published.
+   *
+   * PDF only for now, and it says so rather than returning empty text for a
+   * format it cannot read: an agent that gets "" cannot tell an empty document
+   * from an unsupported one, and will try again.
+   */
+  async extractText(dto: ExtractTextDto): Promise<ExtractedTextResult> {
+    if (!dto.filename.toLowerCase().endsWith('.pdf')) {
+      throw new BadRequestException('extract-text reads PDF files only');
+    }
+    const buffer = Buffer.from(dto.contentBase64, 'base64');
+    if (buffer.length === 0) {
+      throw new BadRequestException('contentBase64 decoded to no bytes');
+    }
+    const cfg = AppConfig.get();
+    const extraction = await extractTextFromPdf(buffer, cfg.SCANNED_PDF_CHAR_THRESHOLD, dto.pages);
+    this.logger.debug(
+      `extractText: "${dto.filename}" ${String(extraction.pages.length)}/${String(extraction.totalPages)} pages, ${String(extraction.text.length)} chars`,
+    );
+    return {
+      text: extraction.text,
+      pages: extraction.pages.map((page) => ({ number: page.number, text: page.text })),
+      totalPages: extraction.totalPages,
+      isScanned: extraction.isScanned,
+    };
   }
 }

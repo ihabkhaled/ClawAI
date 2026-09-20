@@ -66,6 +66,7 @@ The file service handles file uploads, local storage, content extraction, and ch
 | GET    | /:id/download | Bearer | Download file content             |
 | GET    | /:id/chunks   | Bearer | Get file chunks                   |
 | DELETE | /:id          | Bearer | Delete file and chunks            |
+| POST   | /extract-text | Bearer | Text from bytes, kept nowhere     |
 
 ### Internal API (service-to-service)
 
@@ -234,6 +235,35 @@ Failure modes:
 - Worker timeout → emit `OCR_FAILED` on the FileDelivery; the FE renders the i18n key `compare.delivery.ocrFailed`.
 - Zero-confidence output → treated as failure, same path as timeout.
 - Worker pool exhausted → enqueue and serve in FIFO order; the FE renders `compare.delivery.ocrProcessing` until the worker frees up.
+
+## Reading a PDF that is not a file here (2026-09-20)
+
+`POST /files/extract-text` takes bytes and page numbers and returns text. It
+writes no row, publishes no event and keeps no bytes.
+
+**Why it is not `upload`.** The coding agent reads a PDF that is already in the
+user's workspace. Uploading it would put a copy of a repository file in their
+file list, their storage and their retention window — which is not what "read
+this file" means, and is not something a person asked for by opening a file.
+
+- **Page range** is inclusive, 1-based, both ends required, at most
+  `EXTRACT_TEXT_MAX_PAGE_SPAN` pages. Omit it for the whole document. It is
+  passed to `pdf-parse` as `partial: [n...]` rather than `first`/`last`,
+  because those two mean "the first N" and "the last N" on their own and an
+  inclusive range only when both are set.
+- **Pages come back with their own numbers**, and a page the parser returned
+  nothing for is absent rather than empty — so a caller can tell a blank page
+  from one that was not parsed.
+- **`isScanned` is reported**, because a scanned page carries no text however
+  many times it is parsed. An agent that receives `""` cannot tell that from a
+  blank page and will try again.
+- **PDF only**, and it says so by name. Returning empty text for a format it
+  cannot read would be indistinguishable from an empty document.
+- **Smaller payload cap than upload** (~15MB against 50MB): an upload is
+  something a person chose to keep, while this runs on every agent read.
+
+The whole-document path is unchanged — attachments are still extracted once at
+upload into `extractedText` (ADR-095), and that is still what chat reads.
 
 ## Internal delete (ADR-104, 2026-09-19)
 

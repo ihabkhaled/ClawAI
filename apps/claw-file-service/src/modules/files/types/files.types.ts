@@ -103,3 +103,20 @@ export const ALLOWED_MIME_TYPES = [
 ] as const;
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+/** What a stateless extraction returns. The bytes it read are not kept. */
+export type ExtractedTextResult = {
+  text: string;
+  /** The pages that were parsed, with their own 1-based numbers. */
+  pages: { number: number; text: string }[];
+  /** Pages in the document, whether or not they were parsed. */
+  totalPages: number;
+  /**
+   * The text layer was too short to be real content.
+   *
+   * A scanned page carries no text however many times it is parsed, so a
+   * caller that treats an empty result as "this page is blank" would be wrong
+   * about the one case that most needs saying out loud.
+   */
+  isScanned: boolean;
+};

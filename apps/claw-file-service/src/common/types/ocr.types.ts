@@ -24,4 +24,28 @@ export type OcrExtractionResult = {
 export type PdfExtractionResult = {
   text: string;
   isScanned: boolean;
+  /** Pages actually parsed, in the order returned, with their own text. */
+  pages: PdfPageText[];
+  /** Pages in the document, whether or not they were parsed. */
+  totalPages: number;
+};
+
+/** One parsed page. `number` is the 1-based page in the document, not the index. */
+export type PdfPageText = {
+  number: number;
+  text: string;
+};
+
+/**
+ * Which pages to parse.
+ *
+ * A range rather than a count, because a caller asking for a page range knows
+ * which pages it wants; `first: 10` meaning "the first ten" and `from: 10`
+ * meaning "starting at ten" are a pair of arguments nobody remembers apart.
+ * Inclusive on both ends, 1-based, like every page number a person reads off
+ * a document.
+ */
+export type PdfPageRange = {
+  from: number;
+  to: number;
 };

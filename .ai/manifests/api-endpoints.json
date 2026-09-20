@@ -1497,6 +1497,11 @@
       },
       {
         "method": "POST",
+        "route": "/files/extract-text",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/files/upload",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
@@ -3418,5 +3423,5 @@
     ]
   },
   "generated": true,
-  "total": 676
+  "total": 677
 }
