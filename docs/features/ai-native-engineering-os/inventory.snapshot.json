@@ -7313,7 +7313,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 26317,
+          "bytes": 26942,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7469,7 +7469,7 @@
           "file": "rules/28-billing-integrity-and-api-contracts.md"
         },
         {
-          "bytes": 3674,
+          "bytes": 4960,
           "file": "rules/29-communication-style.md"
         },
         {
@@ -7565,13 +7565,21 @@
           "file": "rules/52-every-schema-ships-a-migration.md"
         },
         {
+          "bytes": 5185,
+          "file": "rules/54-evidence-and-completion-honesty.md"
+        },
+        {
+          "bytes": 4863,
+          "file": "rules/55-akinator-station-discipline.md"
+        },
+        {
           "bytes": 6156,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 26884,
+          "bytes": 27442,
           "file": "skills/00-index.md"
         },
         {
@@ -7671,6 +7679,10 @@
           "file": "skills/add-workspace-connector.md"
         },
         {
+          "bytes": 7577,
+          "file": "skills/apply-akinator-without-the-plugin.md"
+        },
+        {
           "bytes": 8787,
           "file": "skills/audit-conversational-context.md"
         },
@@ -7691,7 +7703,7 @@
           "file": "skills/commit-and-push-each-change.md"
         },
         {
-          "bytes": 2476,
+          "bytes": 3355,
           "file": "skills/communicate-briefly.md"
         },
         {
@@ -7793,6 +7805,10 @@
         {
           "bytes": 3008,
           "file": "skills/inspect-affected-workspaces.md"
+        },
+        {
+          "bytes": 8478,
+          "file": "skills/keep-an-agent-honest.md"
         },
         {
           "bytes": 2167,
