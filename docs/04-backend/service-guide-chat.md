@@ -515,3 +515,20 @@ needed changing." — has content after the claim and is left alone. Only a bare
 assertion is hollow. The false-positive cases in
 `utilities/__tests__/hollow-completion.utility.spec.ts` are the important half
 of that suite: this predicate decides whether to spend another provider call.
+
+## Attachments on an agent run
+
+A coding-agent run posts to `/chat-messages/runtime/runs`, whose schema is
+`.strict()`. It had no `fileIds`, so there was no way to send an attachment
+with an agentic request — and the extension worked around that by routing any
+request carrying a file down the legacy chat path instead. The workaround was
+silent and expensive: attaching a file cost the user the agent's tools.
+
+`fileIds` is now part of the run start and is stored on the created user
+message as `metadata.fileIds`. Nothing downstream changed, because that is
+already where `ContextAssemblyManager` looks for attachments — the same field
+ordinary chat has always written.
+
+**If you add another way to start a run**, write the attachments to the same
+place. A second lookup path is how the coding agent and chat drifted apart the
+first time.

@@ -69,6 +69,14 @@ export class RuntimeV2RunService {
             clientRequestId: request.clientRequestId,
             publicationState: 'pending',
           },
+          // Stored where every other surface already looks for attachments.
+          // The context assembler reads `metadata.fileIds` off the latest user
+          // message, so putting them here is what makes an agent run see the
+          // file the user dropped in, with no second lookup path to keep in
+          // step with chat's.
+          ...(request.fileIds === undefined || request.fileIds.length === 0
+            ? {}
+            : { fileIds: request.fileIds }),
         },
       });
     } catch (error) {
