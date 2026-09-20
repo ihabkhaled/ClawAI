@@ -1,13 +1,42 @@
 import { assertSafeRequestUrl, declaredHost } from '../request-url.utility';
-import { EXTERNAL_ENDPOINT_HOSTS } from '../request-url.constants';
+import { EXTERNAL_ENDPOINT_HOSTS, INTERNAL_HOST_ENV_SUFFIXES } from '../request-url.constants';
 import { internalHostAllowlist, resetInternalHostAllowlist } from '../internal-hosts.utility';
+
+/**
+ * Runs `body` with every service-naming environment variable removed.
+ *
+ * The guard reads `process.env` directly, so a test about the unconfigured
+ * case has to make the process unconfigured rather than hope it is. A GitHub
+ * runner defines variables ending in `_ENDPOINT`, which is why assuming a bare
+ * environment passed locally and failed on CI.
+ */
+function withoutServiceEnvironment(body: () => void): void {
+  const removed = new Map<string, string>();
+  for (const [name, value] of Object.entries(process.env)) {
+    if (value !== undefined && INTERNAL_HOST_ENV_SUFFIXES.some((s) => name.endsWith(s))) {
+      removed.set(name, value);
+      Reflect.deleteProperty(process.env, name);
+    }
+  }
+  resetInternalHostAllowlist();
+  try {
+    body();
+  } finally {
+    for (const [name, value] of removed) {
+      process.env[name] = value;
+    }
+    resetInternalHostAllowlist();
+  }
+}
 
 describe('assertSafeRequestUrl', () => {
   it('allows the internal service calls this client exists for', () => {
-    expect(assertSafeRequestUrl('http://claw-auth-service:4001/internal/quota').protocol).toBe(
-      'http:',
-    );
-    expect(assertSafeRequestUrl('https://api.openai.com/v1/models').protocol).toBe('https:');
+    withoutServiceEnvironment(() => {
+      expect(assertSafeRequestUrl('http://claw-auth-service:4001/internal/quota').protocol).toBe(
+        'http:',
+      );
+      expect(assertSafeRequestUrl('https://api.openai.com/v1/models').protocol).toBe('https:');
+    });
   });
 
   it.each(['file:///etc/passwd', 'data:text/plain,hi', 'ftp://example.com/x', 'gopher://x/1'])(
@@ -61,10 +90,17 @@ describe('assertSafeRequestUrl: where a service may connect', () => {
 
   // A process with no service configuration (a unit test, a tool) must not be
   // bricked: this guards where CONFIGURED calls may go.
+  //
+  // The environment has to be cleared explicitly rather than assumed bare. A
+  // GitHub runner sets variables ending in `_ENDPOINT`, so on CI the allowlist
+  // was NOT empty and this case correctly enforced — which is how this test
+  // failed on CI while passing on a developer machine.
   it('stands down when nothing is configured', () => {
-    expect(assertSafeRequestUrl('https://anywhere.example/x', new Set()).host).toBe(
-      'anywhere.example',
-    );
+    withoutServiceEnvironment(() => {
+      expect(assertSafeRequestUrl('https://anywhere.example/x', new Set()).host).toBe(
+        'anywhere.example',
+      );
+    });
   });
 });
 
