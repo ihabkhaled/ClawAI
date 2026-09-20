@@ -51,6 +51,24 @@ Background only for genuinely long jobs, and announce it in one line first:
 `Running build (~2 min).`
 Never leave a silent gap — a one-line progress note beats silence.
 
+## On request — trigger phrases
+
+Source: [ihabkhaled/i-have-headache](https://github.com/ihabkhaled/i-have-headache).
+Canonical rule: [`rules/29-communication-style.md`](../rules/29-communication-style.md#trigger-phrases--compress-hard).
+
+If the user says any of `just get it done`, `hurry up`, `wrap this up`, `cut
+the crap`, `make it quick`, `I've got a headache`, or asks for shorter answers
+— mid-task, not just at the start — compress harder for the rest of the
+session:
+
+- Drop preamble, restating the request, and narrating the next step.
+- Answer in the shortest complete form; code over prose when code answers it.
+- Collapse a list to a sentence when a sentence carries the same information.
+
+Brevity never turns into silence about a failure. A blocker, a failed test, an
+unverified claim, or a decision the user must make still gets reported — in
+one line, not zero.
+
 ## Show every step
 
 Emit one short line per action, as it happens:

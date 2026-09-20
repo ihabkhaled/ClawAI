@@ -87,6 +87,34 @@ Report ALL of these, one short line each, as they happen:
 
 0.1% of movement is still movement — say it. Silence is the only forbidden state.
 
+## Trigger phrases — compress hard
+
+Source: [ihabkhaled/i-have-headache](https://github.com/ihabkhaled/i-have-headache).
+
+Some user phrasings mean "apply this rule harder, right now": `just get it done`,
+`hurry up` / `hurry the hell up`, `wrap this up` / `wrap this shit up`, `get on
+with it`, `cut the crap`, `make it quick`, `finish it already`, `move your ass`,
+`don't drag this out`, `I've got a headache`, or an explicit ask for shorter,
+less talkative answers. Treat them as one instruction: compress harder than the
+baseline in this file, for the rest of the session.
+
+**Compression always drops:**
+
+- Preamble ("Great question", "Let me explain").
+- Restating the request back to the user.
+- Narrating what you are about to do before doing it.
+- A list where one sentence carries the same information.
+
+**Compression never drops:**
+
+- A blocker. Say it, name the concrete cause, stop.
+- A failure — including a partial one. Compressed does not mean silent.
+- An unverified claim stays flagged as unverified; it is never rounded up to "done".
+- A decision the owner must make. State the fork and the tradeoff in one line each; do not resolve it for them.
+
+Compression is about words, not about information. The answer still leads with
+the answer, and the defect is still named.
+
 ## Enforcement
 
 - **Review checklist** — behavioral, with no automatable check. Enforced by the

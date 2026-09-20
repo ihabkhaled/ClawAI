@@ -36,6 +36,7 @@ sources and should be re-derived when they drift.
 | [port-and-service-map.md](port-and-service-map.md)           | The port table + the client-logs/server-logs env-only gap.                                                                      |
 | [testing-map.md](testing-map.md)                             | Test runners, layout, coverage bar, gate lane.                                                                                  |
 | [generated-file-map.md](generated-file-map.md)               | What under `.ai/` is generated vs local; never hand-edit.                                                                       |
+| [akinator-station-map.md](akinator-station-map.md)           | Ported Akinator method: station → what it asks → where its output lands in this repo.                                          |
 
 ## Authority hierarchy (higher wins on conflict)
 

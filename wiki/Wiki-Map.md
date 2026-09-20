@@ -2,10 +2,11 @@
 
 Complete navigation map for the generated ClawAI Wiki.
 
-## General and architecture pages (38)
+## General and architecture pages (39)
 - [[AI Manifests|AI-Manifests]]
 - [[AI Native Engineering System|AI-Native-Engineering-System]]
 - [[Agent CLI|Agent-CLI]]
+- [[Agent Discipline|Agent-Discipline]]
 - [[Architecture Overview|Architecture-Overview]]
 - [[Billing and Payments|Billing-and-Payments]]
 - [[CI CD and GitHub Actions|CI-CD-and-GitHub-Actions]]

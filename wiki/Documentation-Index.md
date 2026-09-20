@@ -2,6 +2,8 @@
 
 Complete tracked documentation index for `docs/` on the audited main tree. **582 files.**
 
+See also: [[Communication-Style]], [[Agent-Discipline]], [[Akinator-Method]] (wiki pages, not under `docs/`).
+
 - [docs/00-start-here/installation.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/00-start-here/installation.md)
 - [docs/00-start-here/onboarding-5-minutes.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/00-start-here/onboarding-5-minutes.md)
 - [docs/00-start-here/README.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/00-start-here/README.md)
