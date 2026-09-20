@@ -496,6 +496,38 @@ to `helpers/runtime-thread-context.helper.ts` as well, or the coding agent
 starts diverging from chat again, silently, in whatever the new argument
 controls.
 
+## Cross-thread retrieval: read the score before changing the score
+
+Retrieval across a user's other conversations was red for months and explained
+each time as "it is only lexical". It was not. Six separate defects, each
+hiding the next, all of them a bound, a ranking rule or a weight — never a
+missing embedding. ADR-087 D9–D14 has the full record with the measured
+numbers. What matters for anyone touching it again:
+
+- **Stage 1 reads, stage 2 ranks.** The candidate query takes one bounded slice
+  per term and returns them all. The manager scores and cuts. A repository that
+  also ranks decides which threads the scorer may consider, and it decided
+  wrongly.
+- **A thread is ranked by the rarest term it matched**, not by how many terms.
+  Term count measures how much of the _question_ a thread repeats, and the
+  conversation holding the answer repeats none of it. Every previous asking of
+  the same question repeats all of it.
+- **Rarity is measured against a corpus that contains the question.** A word
+  that occurs nowhere but in this question's own phrasing looks rare and is
+  worthless. This is why summing cannot be tuned into working.
+- **An answer does not resemble its question.** Scoring a message purely on
+  similarity to the prompt ranks the prompt itself top and the answer below
+  the threshold. Messages also score on the search terms directly, and a
+  near-verbatim restatement of the prompt is discarded.
+- **`entityOverlap` returning 0 can mean "no entities existed".** Weighting it
+  at 0.6 regardless cost every identifier-free prompt 60% of the scale. Use
+  `hasEntities` to tell the two apart.
+
+**Before changing any weight here, read the logs.** Stage 1 logs every
+candidate with its score, stage 2 logs what every message scored. Four of the
+six defects were diagnosed by rebuilding the ranking in SQL afterwards, because
+the log gave a count and no names.
+
 ## The silent stop has two shapes, and one of them looks like success
 
 `isUnfulfilledIntent` has always caught the model that announces work it never

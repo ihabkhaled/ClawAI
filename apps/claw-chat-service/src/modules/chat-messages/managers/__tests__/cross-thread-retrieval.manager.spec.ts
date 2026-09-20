@@ -38,16 +38,12 @@ function repositoryWith(options: {
   return { repo, calls };
 }
 
-function candidate(
-  threadId: string,
-  title: string | null,
-  matchingMessageCount = 3,
-): CrossThreadCandidate {
+function candidate(threadId: string, title: string | null, termRarity = 3): CrossThreadCandidate {
   return {
     threadId,
     title,
     updatedAt: new Date('2026-08-01T00:00:00Z'),
-    matchingMessageCount,
+    termRarity,
   };
 }
 
@@ -375,5 +371,224 @@ describe('CrossThreadRetrievalManager — recency and isolation', () => {
     const result = await manager.retrieve({ ...BASE, enabled: true, intent: INTENT });
 
     expect(result.selections.map((entry) => entry.messageId)).toEqual(['c', 'b', 'a']);
+  });
+});
+
+/**
+ * A fact stated once, minutes ago.
+ *
+ * `evidence` counts matching MESSAGES, so a thread that records a fact the way
+ * people actually record one — say it, get an acknowledgement, move on — has
+ * almost none, and scored below the threshold. A long, rambling, older thread
+ * on the same subject outranked it. A live round reproduced this every time:
+ * the model was told a codename in one conversation and, asked for it in the
+ * next, either said it did not have it or invented one.
+ */
+describe('CrossThreadRetrievalManager recency', () => {
+  const recent = (minutesAgo: number, termRarity = 1): CrossThreadCandidate => ({
+    threadId: 'thread-fact',
+    title: 'Round: remembers-another-thread',
+    updatedAt: new Date(Date.now() - minutesAgo * 60_000),
+    termRarity,
+  });
+
+  const retrieve = async (candidates: CrossThreadCandidate[]) => {
+    const { repo } = repositoryWith({
+      candidates,
+      messages: [
+        messageRow(
+          'message-1',
+          'thread-fact',
+          'the canary cohort codename is PEREGRINE-7742',
+          'Round: remembers-another-thread',
+          new Date(),
+        ),
+      ],
+    });
+    return new CrossThreadRetrievalManager(repo).retrieve({
+      ...BASE,
+      enabled: true,
+      intent: 'what is the canary cohort codename for releases',
+    });
+  };
+
+  it('finds a fact stated once in a conversation from minutes ago', async () => {
+    const result = await retrieve([recent(5)]);
+
+    expect(result.skippedReason).toBeNull();
+    expect(JSON.stringify(result)).toMatch(/PEREGRINE-7742/u);
+  });
+
+  it('still finds it when the same thread is a day old', async () => {
+    const result = await retrieve([recent(60 * 20)]);
+
+    expect(result.skippedReason).toBeNull();
+  });
+
+  it('does not make an unrelated thread relevant by being recent', async () => {
+    // The amplification multiplies existing relevance and never adds to it, so
+    // a thread nothing matched stays at zero however fresh it is. Otherwise
+    // every retrieval would return whatever the user happened to do last.
+    const { repo } = repositoryWith({ candidates: [], messages: [] });
+
+    const result = await new CrossThreadRetrievalManager(repo).retrieve({
+      ...BASE,
+      enabled: true,
+      intent: 'what is the canary cohort codename for releases',
+    });
+
+    expect(result.skippedReason).toBe(CrossThreadSkipReason.NO_CANDIDATES);
+  });
+
+  it('rejects the best candidate when its content does not match after all', async () => {
+    // The content look is a second chance, not a free pass. The thread is
+    // read, and the message scorer — which the cheap filter could not consult
+    // — still refuses text that has nothing to do with the question.
+    const { repo } = repositoryWith({
+      candidates: [recent(5)],
+      messages: [
+        messageRow(
+          'message-1',
+          'thread-fact',
+          'the office coffee machine needs descaling',
+          'Round: remembers-another-thread',
+          new Date(),
+        ),
+      ],
+    });
+
+    const result = await new CrossThreadRetrievalManager(repo).retrieve({
+      ...BASE,
+      enabled: true,
+      intent: 'what is the canary cohort codename for releases',
+    });
+
+    expect(result.selections).toEqual([]);
+  });
+});
+
+/**
+ * Message scoring ranks by similarity to the prompt, which makes the prompt
+ * itself the highest-scoring message retrieval can find — and the least useful
+ * one it can return.
+ *
+ * Measured live: a user who asks the same question in several conversations
+ * accumulates near-identical copies of their own question, and those copies
+ * outranked the one thread that held the answer. Retrieval was handing back its
+ * own past failures, at the top of the list, paid for out of the answer's
+ * budget.
+ */
+describe('CrossThreadRetrievalManager — a restatement of the prompt is not context', () => {
+  const question = 'In an earlier conversation I gave you the canary cohort codename for ClawAI.';
+
+  it('drops a previous conversation that only asked the same question', async () => {
+    const { repo } = repositoryWith({
+      candidates: [candidate('t-asked', 'Canary cohort')],
+      messages: [messageRow('m-asked', 't-asked', question, 'Canary cohort')],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    const result = await manager.retrieve({ ...BASE, enabled: true, intent: question });
+
+    expect(result.selections).toEqual([]);
+    expect(result.usedThreadIds).toEqual([]);
+  });
+
+  it('keeps a conversation that answers the question', async () => {
+    const { repo } = repositoryWith({
+      candidates: [candidate('t-answer', 'Canary cohort')],
+      messages: [
+        messageRow(
+          'm-answer',
+          't-answer',
+          'The canary cohort for ClawAI releases is PEREGRINE-7742.',
+          'Canary cohort',
+        ),
+      ],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    const result = await manager.retrieve({ ...BASE, enabled: true, intent: question });
+
+    expect(result.selections.map((selection) => selection.messageId)).toEqual(['m-answer']);
+  });
+});
+
+/**
+ * The candidate cut moved here from the repository, because it needs recency
+ * and recency lives with the scoring.
+ *
+ * A repository that also ranked was deciding which threads the scorer is
+ * allowed to consider, and it decided wrongly in the case that matters: a
+ * conversation stating a fact matches a few of a question's words, while every
+ * previous asking of that question matches all of them. Term overlap alone
+ * cannot separate them; minutes-versus-hours can.
+ */
+describe('CrossThreadRetrievalManager — recency breaks a near-tie on terms', () => {
+  const question = 'In an earlier conversation I gave you the canary cohort codename for ClawAI.';
+
+  function aged(threadId: string, minutesAgo: number, termRarity: number) {
+    return {
+      threadId,
+      title: null,
+      updatedAt: new Date(Date.now() - minutesAgo * 60 * 1000),
+      termRarity,
+    };
+  }
+
+  it('reads the recent thread that matched slightly less', async () => {
+    const { repo, calls } = repositoryWith({
+      // The past asking matches the same rare terms plus the question's filler.
+      candidates: [aged('t-asked', 240, 2.06), aged('t-answer', 2, 2)],
+      messages: [
+        messageRow(
+          'm-answer',
+          't-answer',
+          'The canary cohort for ClawAI releases is PEREGRINE-7742.',
+        ),
+      ],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    const result = await manager.retrieve({ ...BASE, enabled: true, intent: question });
+
+    expect(calls.at(-1)?.arg).toContain('t-answer');
+    expect(result.selections.map((selection) => selection.messageId)).toEqual(['m-answer']);
+  });
+});
+
+/**
+ * Entity overlap carries 60% of a message's resemblance score when the prompt
+ * contains a coined identifier, and it answers 0 when the prompt contains
+ * none — which is correct, and was being read as "nothing matched".
+ *
+ * So a question phrased in ordinary words could never score above 0.4 of the
+ * scale. Measured live: the message holding the answer scored 0.217 against a
+ * 0.22 threshold and was rejected by 0.003, while its thread had already been
+ * ranked first of ten.
+ */
+describe('CrossThreadRetrievalManager — a prompt with no identifier is not penalised', () => {
+  it('selects the answer to a question asked in ordinary words', async () => {
+    const { repo } = repositoryWith({
+      candidates: [candidate('t-answer', null, 1)],
+      messages: [
+        messageRow(
+          'm-answer',
+          't-answer',
+          'Remember this project fact for later conversations: the shazeka cohort for ClawAI releases is KAVO-7297. Acknowledge only, reply OK.',
+          'Shazeka cohort',
+        ),
+      ],
+    });
+    const manager = new CrossThreadRetrievalManager(repo);
+
+    const result = await manager.retrieve({
+      ...BASE,
+      enabled: true,
+      intent:
+        'In an earlier conversation I gave you the shazeka cohort codename for ClawAI releases. Create COHORT.txt with workspace.file operation "create" containing only that codename. If you genuinely do not have it, write UNKNOWN instead of inventing one. Reply DONE.',
+    });
+
+    expect(result.selections.map((selection) => selection.messageId)).toEqual(['m-answer']);
   });
 });

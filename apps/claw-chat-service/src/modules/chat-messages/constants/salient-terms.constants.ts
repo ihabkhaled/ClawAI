@@ -86,3 +86,21 @@ export const SALIENT_TERM_STOPWORDS: ReadonlySet<string> = new Set([
   'would',
   'your',
 ]);
+
+/**
+ * How many words a cross-thread search may use when there is no identifier.
+ *
+ * Words are ordered longest-first, which is a weak proxy for how discriminating
+ * a word is and was measured wrong on the case this feature exists for. A
+ * prompt asking for a canary cohort codename ranked `conversation`,
+ * `containing`, `genuinely`, `operation`, `workspace` and `inventing` above
+ * `cohort` and `canary` purely on length, so the six terms that reached the
+ * database were the six that said nothing about the subject.
+ *
+ * Twelve, because the scan now takes one bounded slice per term and weights a
+ * term that fills its own slice down to a floor. A common word costs one small
+ * query and earns almost nothing, so including it is cheap and excluding the
+ * rare word below it is not. Raising the cap is the fix; the proxy stays as the
+ * tie-breaker it is good enough to be.
+ */
+export const SALIENT_SEARCH_WORD_LIMIT = 12;
