@@ -149,6 +149,7 @@ ORPHAN_GUARD_PID=""
 # across a restart (docs/11-runbooks/runbook-nginx-stale-config.md).
 CONFIG_DIR_SERVICES=(
   'infra/vector|log-shipper'
+  'infra/prometheus|prometheus'
 )
 
 BROAD_IMPACT_PATHS=(

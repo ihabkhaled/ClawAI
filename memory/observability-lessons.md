@@ -40,7 +40,7 @@ jobs mint and log a correlation ID (e.g. retention sweep uses
 log fields.
 
 **Related.** [rabbitmq-lessons](rabbitmq-lessons.md);
-[testing/integration-testing-standard](../testing/integration-testing-standard.md).
+[docs/09-testing/testing-strategy](../docs/09-testing/testing-strategy.md).
 
 ---
 
@@ -74,4 +74,31 @@ path the code didn't actually handle.
 before "done." Treat any hit as a delivery blocker.
 
 **Related.** `CLAUDE.md` → What Claude Treats as Blockers;
-[testing/quality-gates](../testing/quality-gates.md).
+[docs/09-testing/quality-gates](../docs/09-testing/quality-gates.md).
+
+---
+
+### A scrape is a request: cache what it reads (2026-09-20)
+
+**What happened.** The Prometheus exporter was going to render
+`health-service`'s fan-out, which calls all 17 services on every call. At a
+15-second scrape that is ~98,000 outbound health requests a day, plus an INFO
+line each, shipped into the log store under a 30-day TTL — monitoring paying
+for itself in noise. Caught at plan review, before the code existed.
+
+**The durable lesson.** A metrics endpoint is pulled on a timer forever. Work
+behind it is multiplied by the scrape frequency and by the number of scrapers,
+and it never stops. An exporter renders what is already known; it does not go
+and find out.
+
+**How to apply.**
+
+- Cache a snapshot just under the scrape interval, and let concurrent scrapes
+  share one refresh.
+- Publish the snapshot's age as a metric, so a stuck cache is visible in the
+  same place as the data.
+- Anything that runs on a timer logs `info` only when its result changes
+  (rules/19 §9). A repeated state is not an event.
+
+**Related.** [ADR-113](../docs/13-adr/adr-113-prometheus-for-operational-metrics.md),
+`docs/08-runtime-devops/metrics-and-dashboards.md`.

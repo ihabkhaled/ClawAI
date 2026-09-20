@@ -38,6 +38,18 @@ Last updated: 2026-09-10
 - **Why not now**: every service's guard changes, plus a Redis dependency in
   `shared-auth`. That is its own batch.
 
+### TD-036: No per-route metrics, and no backup of the metrics store (2026-09-20)
+
+- **Severity**: Low · **Effort**: Medium · **Priority**: Planned
+- **Detail**: ADR-113 collects service up/down and health-check latency, which
+  answers "is it up". It does not answer "which route got slow": that needs an
+  exporter inside each service's request pipeline (`prom-client`), whose blast
+  radius is every service, so it was deferred rather than rushed.
+- **Also**: the Prometheus TSDB has no backup. Deliberate — metrics are
+  derived data with a 30-day life, so losing them costs history, not
+  correctness. Revisit if metrics ever back a customer-facing claim (an
+  uptime commitment, for example), because then the history is evidence.
+
 ### TD-035: Internal quota endpoints trust the network, not a token (2026-09-19) — FIXED (2026-09-20)
 
 - **Fixed**: `ServiceTokenGuard` now guards **both** unguarded internal

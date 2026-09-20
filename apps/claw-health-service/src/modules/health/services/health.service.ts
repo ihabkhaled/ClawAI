@@ -12,6 +12,8 @@ import { AggregatedHealthStatus } from '../enums/aggregated-health-status.enum';
 @Injectable()
 export class HealthService {
   private readonly logger = new Logger(HealthService.name);
+  /** The last status logged, so only a CHANGE is worth an INFO line. */
+  private lastStatus: AggregatedHealthStatus | null = null;
 
   async checkAll(): Promise<AggregatedHealth> {
     this.logger.debug(`checkAll: input services=${String(Object.keys(SERVICE_URLS).length)}`);
@@ -21,9 +23,18 @@ export class HealthService {
       const summary = this.summarise(results);
       const status = this.deriveStatus(summary);
 
-      this.logger.log(
-        `checkAll: completed status=${status} up=${String(summary.up)} down=${String(summary.down)}`,
-      );
+      // Every check used to log at INFO. The container healthcheck alone runs
+      // one every 15 s, and since the Prometheus exporter (ADR-113) scrapes on
+      // the same cadence that is ~11,500 identical lines a day shipped into
+      // the log store, where they bury the ones that mean something. A change
+      // of status is the event; a repeat of it is not.
+      const line = `checkAll: completed status=${status} up=${String(summary.up)} down=${String(summary.down)}`;
+      if (status === this.lastStatus) {
+        this.logger.debug(line);
+      } else {
+        this.logger.log(`${line} (was ${this.lastStatus ?? 'unknown'})`);
+        this.lastStatus = status;
+      }
 
       return {
         status,

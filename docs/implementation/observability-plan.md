@@ -1,6 +1,8 @@
 # O3 — Operational observability: plan
 
-**Status**: planned, 2026-09-20. Revised after the CTO and ops reviews.
+**Status**: B0 and B1 shipped 2026-09-20; B2 (Grafana behind the admin
+session) and B3 (the status page) are next, and are unordered with respect to
+each other. Revised after the CTO, ops, analyst and PM reviews.
 **Audit it came from**: this session's survey of the existing surface (§1).
 
 ## 1. What exists (audited, not assumed)
@@ -77,7 +79,7 @@ From the CTO and ops reviews, each verified in the repo before acceptance:
 
 ## 4. Batches
 
-### B0 — The deploy script learns image-only containers
+### B0 — The deploy script learns image-only containers — DONE (2026-09-20)
 
 Independent of everything else, and with a blast radius of **all 17 deployed
 services**, so it is gated on its own.
@@ -96,7 +98,7 @@ services**, so it is gated on its own.
   verified here** — prod has not been deployed since 2026-09-17 and no deploy
   is approved. That is reported as not run.
 
-### B1 — The metrics spine
+### B1 — The metrics spine — DONE (2026-09-20)
 
 Prometheus scrapes; health-service exports what its fan-out already knows; the
 deploy script learns to carry a container that has no build step.
@@ -163,11 +165,13 @@ Docs:     docs/08-runtime-devops/metrics-and-dashboards.md (new)
           docs/06-data/environment-variables.md, context/environment-ownership-map.md (only if a var is added)
 ADR:      docs/13-adr/adr-113-prometheus-for-operational-metrics.md + docs/13-adr/adr-index.md
 Rules:    rules/19-logging-observability-and-redaction.md (a metric carries no user id and no secret)
-Skills:   skills/watch-production-health.md (new) + skills/00-index.md
+Skills:   (deferred to B3, stated as a deviation — the runbook content lives in
+          docs/08-runtime-devops/metrics-and-dashboards.md until there is a page
+          to describe; skills/00-index.md was being edited by another session)
 Context:  context/port-and-service-map.md, context/architecture-map.md
-Memory:   memory/project_observability.md (+ MEMORY.md)
+Memory:   memory/observability-lessons.md (the repo's own memory layer)
 Debt:     docs/14-risk-debt/technical-debt.md + technical-debt-register.md
-          (B4 deferral; TSDB has no backup)
+          (TD-036: B4 deferral and the TSDB having no backup)
 Tests:    tools/__tests__/observability-stack.test.mjs (both containers in every compose file;
           Prometheus never published; config paths are deploy triggers)
           tools/__tests__/deploy-prod.test.mjs + deploy-prod-e2e.sh (image-only container)

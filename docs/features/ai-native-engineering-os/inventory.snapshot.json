@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (33582 vs 6646 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (33953 vs 6646 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (33582 vs 28182 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (33953 vs 28182 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -1621,6 +1621,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-health-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/metrics",
+          "source": "apps/claw-health-service/src/modules/health/controllers/metrics.controller.ts"
         }
       ],
       "claw-image-service": [
@@ -3724,6 +3729,13 @@
           "docker/docker-compose.prod.databases.yml"
         ],
         "name": "pg-workspace"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "prometheus"
       },
       {
         "files": [
@@ -7249,7 +7261,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 33582,
+          "bytes": 33953,
           "file": "CLAUDE.md"
         },
         {
@@ -7417,7 +7429,7 @@
           "file": "rules/18-error-handling-and-reliability.md"
         },
         {
-          "bytes": 6612,
+          "bytes": 7727,
           "file": "rules/19-logging-observability-and-redaction.md"
         },
         {
@@ -9869,7 +9881,7 @@
       },
       "claw-health-service": {
         "runner": "vitest",
-        "testFiles": 4
+        "testFiles": 6
       },
       "claw-image-service": {
         "runner": "vitest",
@@ -10628,8 +10640,8 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 42,
-    "endpointCount": 675,
+    "dockerServiceCount": 43,
+    "endpointCount": 676,
     "envVarCount": 355,
     "eventCount": 178,
     "frontendRouteCount": 155,
@@ -10641,7 +10653,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1335,
+    "totalTestFiles": 1337,
     "workspaceCount": 25
   }
 }

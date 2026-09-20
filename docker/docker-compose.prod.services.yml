@@ -733,7 +733,46 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # Prometheus — operational metrics (ADR-113)
+  # ---------------------------------------------------------------------------
+  # Scrapes health-service, which already checks every service. NEVER published:
+  # it has no authentication of its own, so it stays on the internal network and
+  # nginx does not proxy it. Retention matches the 30-day log TTL (ADR-101).
+  #
+  # Its config is bind-mounted: a change needs a recreate, not a restart, which
+  # scripts/deploy-prod.sh does through CONFIG_DIR_SERVICES.
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: claw-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.listen-address=:9090'
+    volumes:
+      - ../infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../certs:/certs:ro
+      - prometheus-data:/prometheus
+    labels:
+      claw.service: prometheus
+    logging: *claw-logging
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:9090/-/healthy || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      health-service:
+        condition: service_healthy
+    networks:
+      - claw-network
+
 volumes:
+  prometheus-data:
+    driver: local
   log-shipper-data:
     driver: local
   file-storage-data:

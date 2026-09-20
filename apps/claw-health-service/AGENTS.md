@@ -20,8 +20,8 @@ npm run dev
 - Port: 4009
 - Database: none
 - Prisma models: none
-- API endpoints: 1 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 4 (vitest)
+- API endpoints: 2 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 6 (vitest)
 - Depends on: @claw/shared-utilities
 
 ## Before editing

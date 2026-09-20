@@ -238,7 +238,7 @@
     {
       "database": "none",
       "dir": "apps/claw-health-service",
-      "endpointCount": 1,
+      "endpointCount": 2,
       "internalDeps": [
         "@claw/shared-utilities"
       ],
@@ -247,7 +247,7 @@
       "port": 4009,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 4,
+      "testFiles": 6,
       "testRunner": "vitest"
     },
     {

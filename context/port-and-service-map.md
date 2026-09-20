@@ -18,6 +18,7 @@ The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 16
 | audit           | 4007     | shared-constants                  | Mongo                  |
 | ollama          | 4008     | shared-constants                  | Postgres               |
 | health          | 4009     | shared-constants                  | none                   |
+| _prometheus_    | _9090_   | _image only, never published_     | _own TSDB volume_      |
 | **client-logs** | **4010** | **env-only (`CLIENT_LOGS_PORT`)** | Mongo                  |
 | **server-logs** | **4011** | **env-only (`SERVER_LOGS_PORT`)** | Mongo                  |
 | image           | 4012     | shared-constants                  | Postgres               |

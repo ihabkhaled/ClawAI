@@ -110,3 +110,14 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## The Prometheus exporter (ADR-113)
+
+- `GET /api/v1/metrics` is the health fan-out rendered as metrics. It adds no
+  new polling: the snapshot is cached just under the scrape interval.
+- A metric may carry only the labels in `ALLOWED_METRIC_LABELS`; the renderer
+  throws on anything else, because metrics outlive and out-read log lines.
+- `checkAll` logs INFO only on a status change. Do not put it back to logging
+  every tick: the healthcheck and the scraper run every 15 s each.
+- Prometheus scrapes this service over HTTPS with the stack CA and is never
+  published. Its config is bind-mounted, so a change is a RECREATE.

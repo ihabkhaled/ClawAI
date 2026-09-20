@@ -70,6 +70,7 @@
 | `50-agentic-research-loop-and-narration.md`              | AUTO research: plan gate first, one URL detector, a link the user wrote is always opened, research runs after the POST, and every step is narrated AND stored.                                                  |
 | `51-router-candidates-and-model-window-fit.md`           | AUTO router candidates = admin-exposed chat models (health + plan filtered); hosted planner models call ollama.com; one shared context-window table; every prompt source fitted to the model window (ADR-100)   |
 | `52-every-schema-ships-a-migration.md`                   | A Prisma schema change ships a migration in the same commit; a first migration is a full init; enforced by tools/**tests**/prisma-migrations-present.test.mjs (file-generation had none and prod had no tables) |
+| `53-coding-agent-release-rounds.md`                      | A coding-agent release is proven by live rounds against claw.local across every tool-capable connector model, not by gates; an assertion reads the workspace, never the run's own report (a run reported four tool calls and left an empty directory) |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

@@ -1566,6 +1566,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-health-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/metrics",
+        "source": "apps/claw-health-service/src/modules/health/controllers/metrics.controller.ts"
       }
     ],
     "claw-image-service": [
@@ -3413,5 +3418,5 @@
     ]
   },
   "generated": true,
-  "total": 675
+  "total": 676
 }

@@ -259,6 +259,13 @@
     },
     {
       "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "prometheus"
+    },
+    {
+      "files": [
         "docker/docker-compose.dev.databases.yml",
         "docker/docker-compose.prod.databases.yml"
       ],

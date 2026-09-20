@@ -276,6 +276,10 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-034.
 
+### TD-036: No per-route metrics, and no backup of the metrics store
+
+- **Added**: 2026-09-20 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-036.
+
 ### TD-035 (FIXED 2026-09-20): Internal quota endpoints trust the network, not a token
 
 - **Added**: 2026-09-19 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-035.

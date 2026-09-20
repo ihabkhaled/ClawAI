@@ -3,6 +3,7 @@
 ## Overview
 
 Claw has three dedicated observability services plus structured logging across all backend services:
+
 - **client-logs-service** (port 4010) — frontend log ingestion, MongoDB, TTL 30 days
 - **server-logs-service** (port 4011) — backend log aggregation, RabbitMQ-driven, Elasticsearch-ready schema
 - **audit-service** (port 4007) — business event audit trail + usage ledger, MongoDB
@@ -53,6 +54,7 @@ Claw has three dedicated observability services plus structured logging across a
 ## Audit Service
 
 ### Audit Log Schema
+
 ```typescript
 {
   userId: string;        // Who performed the action
@@ -67,6 +69,7 @@ Claw has three dedicated observability services plus structured logging across a
 ```
 
 ### Usage Ledger Schema
+
 ```typescript
 {
   userId: string;        // Who consumed the resource
@@ -83,34 +86,37 @@ Claw has three dedicated observability services plus structured logging across a
 
 ## Event Catalog — 10 Audited Event Types
 
-| # | Event Pattern | Action Logged | Severity | Usage Tracked |
-|---|---|---|---|---|
-| 1 | `user.login` | LOGIN | LOW | No |
-| 2 | `user.logout` | LOGOUT | LOW | No |
-| 3 | `connector.created` | CREATE | MEDIUM | No |
-| 4 | `connector.updated` | UPDATE | MEDIUM | No |
-| 5 | `connector.deleted` | DELETE | HIGH | No |
-| 6 | `connector.synced` | CONNECTOR_SYNC | LOW | No |
-| 7 | `connector.health_checked` | ACCESS | LOW/HIGH (based on status) | No |
-| 8 | `routing.decision_made` | ROUTING_DECISION | LOW | No |
-| 9 | `message.completed` | ACCESS | LOW | YES — llm_tokens usage |
-| 10 | `memory.extracted` | CREATE | LOW | No |
+| #   | Event Pattern              | Action Logged    | Severity                   | Usage Tracked          |
+| --- | -------------------------- | ---------------- | -------------------------- | ---------------------- |
+| 1   | `user.login`               | LOGIN            | LOW                        | No                     |
+| 2   | `user.logout`              | LOGOUT           | LOW                        | No                     |
+| 3   | `connector.created`        | CREATE           | MEDIUM                     | No                     |
+| 4   | `connector.updated`        | UPDATE           | MEDIUM                     | No                     |
+| 5   | `connector.deleted`        | DELETE           | HIGH                       | No                     |
+| 6   | `connector.synced`         | CONNECTOR_SYNC   | LOW                        | No                     |
+| 7   | `connector.health_checked` | ACCESS           | LOW/HIGH (based on status) | No                     |
+| 8   | `routing.decision_made`    | ROUTING_DECISION | LOW                        | No                     |
+| 9   | `message.completed`        | ACCESS           | LOW                        | YES — llm_tokens usage |
+| 10  | `memory.extracted`         | CREATE           | LOW                        | No                     |
 
 ---
 
 ## Structured Logging Across All Services
 
 ### LoggingInterceptor
+
 - Present in every service (`src/app/interceptors/logging.interceptor.ts`)
 - Logs request method, URL, response status, duration for every HTTP request
 - Applied globally via NestJS APP_INTERCEPTOR
 
 ### Pino Logger
+
 - Used in server-logs-service and potentially other services
 - Redaction paths configured to strip sensitive data (passwords, tokens, API keys)
 - Structured JSON output compatible with log aggregation tools
 
 ### Helmet Security Headers
+
 - Applied in every service's `main.ts`
 - Not directly observability, but relevant to security logging
 
@@ -136,8 +142,15 @@ Claw has three dedicated observability services plus structured logging across a
 3. **No alerting** — no threshold-based alerts (e.g., error rate spike, service down)
 4. **No log rotation config** — server logs in MongoDB grow unbounded (client logs have TTL, server logs do not)
 5. **No dashboard/visualization** — no Grafana, no Kibana, logs must be queried manually
-6. **No metrics collection** — no Prometheus, no service-level metrics (request rate, latency percentiles)
-7. **No health check history** — connector health events logged but no trend tracking
+6. ~~**No metrics collection**~~ — **partly closed 2026-09-20**
+   ([ADR-113](13-adr/adr-113-prometheus-for-operational-metrics.md)): Prometheus
+   scrapes health-service every 15 s and keeps 30 days of `claw_service_up` and
+   `claw_service_response_ms` per service. Per-route request rate and latency
+   percentiles are still missing — that needs an exporter inside each service's
+   request pipeline, which is its own batch.
+7. ~~**No health check history**~~ — **closed 2026-09-20**: the same series is
+   the history. What is missing is a page that shows it (see
+   [observability-plan](implementation/observability-plan.md)).
 8. **No log level runtime control** — cannot change log verbosity without redeployment
 9. **No error aggregation** — no Sentry or equivalent for error grouping and deduplication
 10. **No audit log tamper protection** — MongoDB documents can be modified/deleted by anyone with DB access
@@ -146,20 +159,21 @@ Claw has three dedicated observability services plus structured logging across a
 
 ## Signs Logging Is Noisy but Useless — Checklist
 
-| # | Check | Status | Notes |
-|---|---|---|---|
-| 1 | Can you trace a user request from frontend to final AI response? | NO | No correlation IDs across services |
-| 2 | Can you find all logs related to a specific conversation? | PARTIAL | threadId in audit events, but no unified query |
-| 3 | Do logs tell you WHY something failed, not just THAT it failed? | PARTIAL | Error messages logged, but no stack traces in audit |
-| 4 | Can you reconstruct the routing decision for any message? | YES | `routing.decision_made` event captures full decision context |
-| 5 | Can you calculate cost per user? | YES | Usage ledger tracks tokens per message with model info |
-| 6 | Are logs queryable without SSH-ing into the server? | NO | No log viewer UI, no dashboard |
-| 7 | Can you detect a service going down in real-time? | NO | No alerting, health checks are periodic |
-| 8 | Do client logs help debug frontend issues? | PARTIAL | Batched with metadata, but no source maps or stack traces |
-| 9 | Can you audit who changed what and when? | YES | Audit log captures user, action, entity, timestamp |
-| 10 | Is the logging infrastructure itself monitored? | NO | No monitoring of MongoDB/RabbitMQ health for log services |
+| #   | Check                                                            | Status  | Notes                                                        |
+| --- | ---------------------------------------------------------------- | ------- | ------------------------------------------------------------ |
+| 1   | Can you trace a user request from frontend to final AI response? | NO      | No correlation IDs across services                           |
+| 2   | Can you find all logs related to a specific conversation?        | PARTIAL | threadId in audit events, but no unified query               |
+| 3   | Do logs tell you WHY something failed, not just THAT it failed?  | PARTIAL | Error messages logged, but no stack traces in audit          |
+| 4   | Can you reconstruct the routing decision for any message?        | YES     | `routing.decision_made` event captures full decision context |
+| 5   | Can you calculate cost per user?                                 | YES     | Usage ledger tracks tokens per message with model info       |
+| 6   | Are logs queryable without SSH-ing into the server?              | NO      | No log viewer UI, no dashboard                               |
+| 7   | Can you detect a service going down in real-time?                | NO      | No alerting, health checks are periodic                      |
+| 8   | Do client logs help debug frontend issues?                       | PARTIAL | Batched with metadata, but no source maps or stack traces    |
+| 9   | Can you audit who changed what and when?                         | YES     | Audit log captures user, action, entity, timestamp           |
+| 10  | Is the logging infrastructure itself monitored?                  | NO      | No monitoring of MongoDB/RabbitMQ health for log services    |
 
 ### Verdict
+
 Logging is **comprehensive in coverage but operationally disconnected**. Every service logs, audit events are tracked, usage is metered. But without distributed tracing, correlation IDs, or alerting, the logs are forensic (good for post-incident investigation) rather than operational (good for real-time debugging and monitoring).
 
 ---

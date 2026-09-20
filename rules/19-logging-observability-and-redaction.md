@@ -33,6 +33,18 @@ All backend `*.service.ts`, `*.manager.ts`, `*.adapter.ts`, `*.utility.ts`,
    fields the `server-logs` viewer indexes.
 7. **SSE routes skip request logging** (`@SkipLogging()`, autoLogging ignore) to
    avoid "Cannot set headers after sent."
+8. **A metric carries infrastructure identity only.** Every label on a
+   Prometheus metric must be on the allowlist in
+   `apps/claw-health-service/src/modules/health/constants/metrics.constants.ts`
+   (`service` today). Never a user id, an email, a thread id, a token or a
+   path that contains one: a metric is kept for 30 days and is readable by
+   anyone who can see the dashboard, while a log line is redacted and scoped
+   (ADR-113).
+9. **A repeated state is not an event.** A check that runs on a timer — a
+   health fan-out, a poll, a scrape — logs at `info` when its result
+   _changes_ and at `debug` otherwise. Logging every tick put ~11,500
+   identical lines a day into the log store, where they buried the lines that
+   meant something.
 
 ## Prohibited patterns
 
@@ -40,6 +52,8 @@ All backend `*.service.ts`, `*.manager.ts`, `*.adapter.ts`, `*.utility.ts`,
 - `this.logger.debug(JSON.stringify(user))` where `user` may hold a token/hash.
 - A public method in a logic file with no log statements.
 - Disabling redaction to "see the full body."
+- A metric label carrying who did something rather than which service did it.
+- An `info` line emitted on every tick of a timer.
 
 ## Correct pattern
 
@@ -105,6 +119,9 @@ Background: [ADR-089](../docs/13-adr/adr-089-client-telemetry-batch-endpoint.md)
 - **ESLint** (`no-console`, `no-restricted-syntax`) — bans console methods.
 - **Unit test / review checklist** — presence of entry+catch logging on public methods.
 - **CI job** — logs flow to `claw_server_logs` (TTL 30d) via the existing pipeline.
+- **Unit test** — `apps/claw-health-service/src/modules/health/utilities/__tests__/prometheus-text.utility.spec.ts`
+  refuses a metric label that is not on the allowlist, and proves a label value
+  cannot inject a second sample line.
 - **Unit test** — `apps/claw-frontend/src/utilities/__tests__/logger-transport.utility.test.ts`
   proves the client sends one request for many entries, collapses repeats,
   splits at the ceiling and flushes on `pagehide`.

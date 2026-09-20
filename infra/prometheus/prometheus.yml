@@ -1,0 +1,42 @@
+# Operational metrics for ClawAI (ADR-113).
+#
+# Prometheus is never published: it has no authentication of its own, it is on
+# the internal Docker network only, and nginx does not proxy it. What people
+# look at is the app's own page and Grafana, both behind the admin session.
+#
+# Retention is set on the command line in the compose file
+# (--storage.tsdb.retention.time), at 30 days, to match how long logs are kept
+# (ADR-101) so an incident can be read across both.
+#
+# This file is bind-mounted. Editing it needs a RECREATE, not a restart — a
+# bind-mounted file keeps its old inode across a restart
+# (docs/11-runbooks/runbook-nginx-stale-config.md). `scripts/deploy-prod.sh`
+# does that automatically through CONFIG_DIR_SERVICES.
+global:
+  # Every 15 s. health-service serves a snapshot cached just under this, so a
+  # scrape never turns into a second fan-out across all 17 services.
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    stack: clawai
+
+scrape_configs:
+  # The platform: one target that reports every service's health, because
+  # health-service already checks all of them.
+  - job_name: claw-services
+    metrics_path: /api/v1/metrics
+    scheme: https
+    tls_config:
+      # The stack's own CA, the same one every service is issued from.
+      ca_file: /certs/rootCA.pem
+      server_name: health-service
+    static_configs:
+      - targets: ['health-service:4009']
+
+  # Prometheus watching itself. A minute rather than 15 s on purpose: its own
+  # ~1,200 series would otherwise dominate the disk this stack spends on
+  # metrics, and nothing here needs 15-second resolution of the scraper.
+  - job_name: prometheus
+    scrape_interval: 60s
+    static_configs:
+      - targets: ['localhost:9090']

@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 33582,
+      "bytes": 33953,
       "file": "CLAUDE.md"
     },
     {
@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 26317,
+      "bytes": 26626,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -170,7 +170,7 @@
       "file": "rules/18-error-handling-and-reliability.md"
     },
     {
-      "bytes": 6612,
+      "bytes": 7727,
       "file": "rules/19-logging-observability-and-redaction.md"
     },
     {
@@ -306,13 +306,17 @@
       "file": "rules/52-every-schema-ships-a-migration.md"
     },
     {
+      "bytes": 2512,
+      "file": "rules/53-coding-agent-release-rounds.md"
+    },
+    {
       "bytes": 6156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 26884,
+      "bytes": 27163,
       "file": "skills/00-index.md"
     },
     {
@@ -574,6 +578,10 @@
     {
       "bytes": 4741,
       "file": "skills/reuse-before-creating.md"
+    },
+    {
+      "bytes": 4129,
+      "file": "skills/run-coding-agent-release-rounds.md"
     },
     {
       "bytes": 3693,
