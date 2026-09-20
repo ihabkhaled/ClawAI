@@ -1,6 +1,6 @@
 {
   "name": "claw-memory-service",
-  "version": "1.108.6",
+  "version": "1.109.0",
   "private": true,
   "description": "Claw Memory Service - Memory records and context packs",
   "license": "UNLICENSED",
