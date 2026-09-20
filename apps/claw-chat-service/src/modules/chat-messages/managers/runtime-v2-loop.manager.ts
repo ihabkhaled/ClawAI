@@ -26,7 +26,6 @@ import {
   PAYG_WORKFLOW_CODING_AGENT,
   PAYG_WORKFLOW_CODING_AGENT_REPAIR,
 } from '../constants/payg.constants';
-import { RUNTIME_V2_CONTEXT_TOKEN_BUDGET } from '../constants/runtime-v2-transcript.constants';
 import { type RuntimeResultDto, toolInvocationSchema } from '../dto/runtime-v2.dto';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { RuntimeV2Store } from '../repositories/runtime-v2.store';
@@ -61,6 +60,8 @@ import {
 } from '../utilities/runtime-v2-model-output.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
+import type { RuntimeThreadContext } from '../types/runtime-thread-context.types';
+import { latestUserFileIds, runtimeThreadSettings } from '../helpers/runtime-thread-context.helper';
 
 @Injectable()
 export class RuntimeV2LoopManager {
@@ -136,7 +137,7 @@ export class RuntimeV2LoopManager {
   private async continueClaimedRun(
     binding: RuntimeV2BoundInput,
     command: RuntimeResultDto,
-    thread: { contextPackIds?: string[] | null },
+    thread: RuntimeThreadContext,
     claimId: string,
   ): Promise<void> {
     // Close the current request in chronological order before assembling the
@@ -230,15 +231,18 @@ export class RuntimeV2LoopManager {
   private async buildContinuationContext(
     binding: RuntimeV2BoundInput,
     command: RuntimeResultDto,
-    thread: { contextPackIds?: string[] | null },
+    thread: RuntimeThreadContext,
   ): Promise<Awaited<ReturnType<ContextAssemblyManager['assemble']>>> {
     const history = await this.continuationHistory(binding);
     const context = await this.contextAssembly.assemble(
       binding.ownerId,
       history,
-      { maxTokens: RUNTIME_V2_CONTEXT_TOKEN_BUDGET },
+      runtimeThreadSettings(thread),
       thread.contextPackIds ?? undefined,
-      undefined,
+      // The attachments the user dropped in. Passing undefined here is why an
+      // image or document handed to the agent was never analysed, while the
+      // same file in ordinary chat was.
+      latestUserFileIds(history),
       undefined,
       RoutingMode.MANUAL_MODEL,
     );
@@ -623,22 +627,20 @@ export class RuntimeV2LoopManager {
   private async buildFirstTurnContext(
     binding: RuntimeV2BoundInput,
     payload: MessageRoutedData,
-    thread: { contextPackIds?: string[] | null },
+    thread: RuntimeThreadContext,
   ): Promise<Awaited<ReturnType<ContextAssemblyManager['assemble']>>> {
     const recent = await this.messages.findRecentByThreadId(binding.threadId, 20);
+    const history = [...recent].reverse();
     const context = await this.contextAssembly.assemble(
       binding.ownerId,
-      [...recent].reverse(),
-      // The first turn carries the entire admitted tool catalog in its system
-      // prompt — around 17 KB on its own. On the default 4096-token budget the
-      // assembler spliced the middle out of that catalog, the model received a
-      // truncated instruction it could not act on, and the provider answered
-      // with nothing: CLOUD_PROVIDER_EMPTY_RESPONSE on the very first call.
-      // Continuations were given a runtime-sized budget; the turn that needs it
-      // most was not.
-      { maxTokens: RUNTIME_V2_CONTEXT_TOKEN_BUDGET },
+      history,
+      // The thread's own settings, not just a token number. Passing only
+      // `{ maxTokens }` left `useCrossThreadContext` undefined, and the
+      // assembler's `=== true` test then disabled cross-thread memory for
+      // every agent run regardless of what the user had chosen.
+      runtimeThreadSettings(thread),
       thread.contextPackIds ?? undefined,
-      undefined,
+      latestUserFileIds(history),
       undefined,
       payload.routingMode as RoutingMode,
     );

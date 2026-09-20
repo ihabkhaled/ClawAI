@@ -131,3 +131,16 @@ export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 96_000;
 // tells the model to write shorter and append — but a `create` that cannot fit
 // an ordinary source file is a limit set below the job.
 export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 32_768;
+
+/**
+ * How much of the window an agent turn reserves for its own answer.
+ *
+ * A coding-agent turn is a tool call and a sentence, not an essay. The loop
+ * used to hand the context budget (96,000) in as the *requested output*
+ * length, which `resolveModelTokenBudget` clamps to the ceiling — so every
+ * turn reserved 32,768 tokens for an answer of a few hundred, and on a
+ * 32k-window model that took half the window away from history, memories and
+ * attachments. The value is deliberately generous for a tool call and small
+ * against any window worth using.
+ */
+export const RUNTIME_V2_OUTPUT_RESERVE_TOKENS = 8_192;

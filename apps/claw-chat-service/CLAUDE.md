@@ -693,3 +693,27 @@ did not narrow by origin would show agent runs in the web app again.
 Reads for the agent's conversations live in `modules/coding-agent-chats`, which
 is read-only by construction — no create, update or delete exists to be called.
 Full rationale: `docs/04-backend/service-guide-chat.md`.
+
+## What a coding-agent run is allowed to know
+
+Runtime V2 runs assemble their context through the same `ContextAssemblyManager`
+as ordinary chat, but for a long time they passed it less. Three arguments were
+missing, and each was invisible rather than broken:
+
+- **`useCrossThreadContext`.** The loop passed `{ maxTokens }` as its whole
+  thread settings, so the flag arrived `undefined` and the assembler's
+  `=== true` test made it false. The same account got "use relevant previous
+  chats" in chat and silently not in the agent.
+- **`fileIds`.** Passed as `undefined`, so an image or document dropped into an
+  agent thread was never analysed, while the same file worked in chat.
+- **`maxTokens` was the wrong number entirely.** Since ADR-086 it is the ANSWER
+  length and feeds `reservedOutputTokens` alone. The loop passed the 96,000
+  context budget, which `resolveModelTokenBudget` clamps to its 32,768 ceiling
+  — so every turn reserved 32,768 tokens for what is usually a single tool
+  call, and on a 32k-window model took half the window from the history and
+  attachments the budget exists to protect.
+
+All three now come from `helpers/runtime-thread-context.helper.ts`. If you add
+an argument to `assemble`, add it here too: this file is the one place a
+coding-agent run differs from a chat turn, and a difference here is a feature
+that works in one surface and not the other.
