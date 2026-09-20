@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 26942,
+      "bytes": 27251,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -304,6 +304,10 @@
     {
       "bytes": 1043,
       "file": "rules/52-every-schema-ships-a-migration.md"
+    },
+    {
+      "bytes": 2512,
+      "file": "rules/53-coding-agent-release-rounds.md"
     },
     {
       "bytes": 5185,
@@ -598,6 +602,10 @@
     {
       "bytes": 4741,
       "file": "skills/reuse-before-creating.md"
+    },
+    {
+      "bytes": 4429,
+      "file": "skills/run-coding-agent-release-rounds.md"
     },
     {
       "bytes": 3693,

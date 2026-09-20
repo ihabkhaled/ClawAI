@@ -1,21 +1,27 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { BusinessException } from '../../../../common/errors';
 import { RUNTIME_V2_EMPTY_RESPONSE_RETRIES } from '../../constants/runtime-v2-failure.constants';
 import {
-  RUNTIME_V2_CONTEXT_TOKEN_BUDGET,
   RUNTIME_V2_MAX_OUTPUT_TOKENS,
+  RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
 } from '../../constants/runtime-v2-transcript.constants';
 import { RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS } from '../../utilities/runtime-v2-model-output.utility';
 import { RuntimeV2LoopManager } from '../runtime-v2-loop.manager';
 
 /**
- * The first turn of an agent run carries the whole admitted tool catalog in its
- * system prompt — around 17 KB. On the default 4096-token budget the assembler
- * splices the middle out of anything past 16 KB, so the model received a
- * truncated catalog it could not act on and the provider returned no content at
- * all. Continuations were given a runtime-sized budget; the turn that needs it
- * most was not, and every agent run died on its first call with
- * CLOUD_PROVIDER_EMPTY_RESPONSE.
+ * What an agent turn asks for, and what it reserves.
+ *
+ * These assertions used to require `maxTokens` to be the 96,000-token context
+ * budget, which was true before ADR-086 split the two numbers and false after
+ * it: `ThreadSettings.maxTokens` is now the ANSWER length, and it feeds
+ * `reservedOutputTokens` and nothing else. Passing the context budget there
+ * reserved the resolver's 32,768-token ceiling for an answer that is a tool
+ * call, and took that much away from the history, memories and attachments the
+ * budget existed to protect.
+ *
+ * The settings also carry the thread's own `useCrossThreadContext`. Passing a
+ * bare token number left it undefined, and the assembler's `=== true` test
+ * disabled cross-thread memory for every agent run whatever the user chose.
  */
 describe('RuntimeV2LoopManager context budget', () => {
   const binding = {
@@ -55,9 +61,18 @@ describe('RuntimeV2LoopManager context budget', () => {
           thread: unknown,
         ) => Promise<unknown>;
       }
-    ).buildFirstTurnContext(binding, { routingMode: 'MANUAL_MODEL' }, {});
+    ).buildFirstTurnContext(
+      binding,
+      { routingMode: 'MANUAL_MODEL' },
+      {
+        useCrossThreadContext: true,
+      },
+    );
 
-    expect(budgetOf(assemble)).toEqual({ maxTokens: RUNTIME_V2_CONTEXT_TOKEN_BUDGET });
+    expect(budgetOf(assemble)).toEqual({
+      maxTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+      useCrossThreadContext: true,
+    });
   });
 
   it('keeps the same budget on a continuation', async () => {
@@ -81,9 +96,12 @@ describe('RuntimeV2LoopManager context budget', () => {
           thread: unknown,
         ) => Promise<unknown>;
       }
-    ).buildContinuationContext(binding, command, {});
+    ).buildContinuationContext(binding, command, { useCrossThreadContext: false });
 
-    expect(budgetOf(assemble)).toEqual({ maxTokens: RUNTIME_V2_CONTEXT_TOKEN_BUDGET });
+    expect(budgetOf(assemble)).toEqual({
+      maxTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+      useCrossThreadContext: false,
+    });
   });
 });
 

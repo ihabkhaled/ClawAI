@@ -470,3 +470,28 @@ AUTO research is no longer a yes/no gate inside the POST. See
   token and the user id — never the user's bearer.
 - URL detection is `detectPromptUrls` → `@claw/shared-utilities`
   `detectUrlsInText`; bare domains count.
+
+## Agent runs assemble context like chat, or they should
+
+`RuntimeV2LoopManager` builds context twice — once for the first turn, once per
+continuation — and both calls go through `ContextAssemblyManager.assemble`, the
+same entry point ordinary chat uses. What differed was the arguments, and every
+difference was a feature quietly missing from the coding agent:
+
+| Argument            | Was                     | Now                             |
+| ------------------- | ----------------------- | ------------------------------- |
+| thread settings     | `{ maxTokens: 96_000 }` | `runtimeThreadSettings(thread)` |
+| `fileIds`           | `undefined`             | `latestUserFileIds(history)`    |
+| `maxTokens` meaning | assumed context budget  | answer length (ADR-086)         |
+
+**The token one is the subtle one.** `ThreadSettings.maxTokens` feeds
+`requestedOutputTokens`, which feeds `reservedOutputTokens`, and nothing else.
+Passing the context budget there did not enlarge the prompt; it reserved the
+resolver's 32,768-token ceiling for the answer and shrank the input by exactly
+that much. Two tests asserted the old value, so the mistake was frozen rather
+than caught — they now assert the reserve and say why.
+
+**The rule for changing this.** Any argument added to `assemble` must be added
+to `helpers/runtime-thread-context.helper.ts` as well, or the coding agent
+starts diverging from chat again, silently, in whatever the new argument
+controls.
