@@ -102,3 +102,25 @@ describe('detectUrlsInText', () => {
     expect(detectUrlsInText(many, { max: 5 })).toHaveLength(5);
   });
 });
+
+// CodeQL js/polynomial-redos, alert #59: the old `/[.,;:!?)\]}'"]+$/` retried
+// from every position, so a message of many `!` was quadratic. The reverse
+// scan is linear; this pins both the behaviour and the cost.
+describe('trailing punctuation is stripped without backtracking', () => {
+  it.each([
+    ['see https://example.com/pricing.', 'https://example.com/pricing'],
+    ['(https://example.com/a)', 'https://example.com/a'],
+    ['really https://example.com!!!!', 'https://example.com/'],
+    ['"https://example.com/x",', 'https://example.com/x'],
+  ])('%j → %j', (text, expected) => {
+    expect(detectUrlsInText(text)).toEqual([expected]);
+  });
+
+  it('stays fast on a long run of punctuation', () => {
+    const hostile = `https://example.com/a${'!'.repeat(50_000)}`;
+
+    const started = Date.now();
+    expect(detectUrlsInText(hostile)).toEqual(['https://example.com/a']);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+});

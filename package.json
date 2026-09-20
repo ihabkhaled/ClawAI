@@ -2,7 +2,7 @@
   "name": "claw",
   "version": "1.109.1",
   "private": true,
-  "description": "Claw \u2014 Local-first AI orchestration platform (microservices)",
+  "description": "Claw — Local-first AI orchestration platform (microservices)",
   "workspaces": [
     "packages/*",
     "apps/claw-*-service",
@@ -123,7 +123,8 @@
     "@hono/node-server": "^2.0.11",
     "hono": "^4.12.31",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7"
+    "@types/react-dom": "^19.2.7",
+    "image-size": "^2.0.4"
   },
   "allowScripts": {
     "argon2@0.45.1": true,

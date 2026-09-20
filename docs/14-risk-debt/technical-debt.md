@@ -38,6 +38,27 @@ Last updated: 2026-09-10
 - **Why not now**: every service's guard changes, plus a Redis dependency in
   `shared-auth`. That is its own batch.
 
+### TD-037: The shared HTTP client has no host allowlist by default (2026-09-20)
+
+- **Severity**: Medium · **Effort**: Medium · **Priority**: Planned
+- **Detail**: `httpRequest` (`packages/shared-utilities/src/http-client`) hands
+  a caller-built URL to `fetch`, which is the SSRF shape CodeQL flags
+  (alert #58). It now refuses non-http(s) protocols, embedded credentials, the
+  cloud metadata addresses, and any redirect — but it does not restrict the
+  host unless a caller passes `allowedHosts`.
+- **Why not by default**: the same client carries three kinds of destination —
+  configured services (`*_SERVICE_URL`), constants
+  (`DISPLAY_FX_PRIMARY_BASE_URL`, `PAYMOB_BASE_URL`) and hosts an admin
+  configured in a connector (`baseUrl`). An environment-derived default would
+  have refused the last two and broken currency conversion and provider calls.
+- **The fix**: pass `allowedHosts` at each call site, starting with the ones
+  that only ever call configured services (`internalHostAllowlist()` already
+  builds that set from the environment), then give the connector path an
+  allowlist derived from the stored connector rows. When every caller declares
+  its hosts, the default can flip to deny.
+- **Note**: alert #58 may stay open until then; the risk is reduced, not
+  removed, and saying otherwise would be false.
+
 ### TD-036: No per-route metrics, and no backup of the metrics store (2026-09-20)
 
 - **Severity**: Low · **Effort**: Medium · **Priority**: Planned

@@ -5,7 +5,7 @@ import {
   BARE_HOST_TLDS_NEEDING_PATH,
   DETECT_URLS_DEFAULT_MAX,
   EXPLICIT_URL_PATTERN,
-  TRAILING_URL_PUNCTUATION,
+  TRAILING_URL_PUNCTUATION_CHARS,
 } from './url-detection.constants';
 import type { DetectUrlsOptions } from './url-detection.types';
 
@@ -102,6 +102,20 @@ function normalizeHttpUrl(value: string): string | null {
   }
 }
 
+/**
+ * Drops the punctuation a sentence leaves on the end of a pasted URL.
+ *
+ * A reverse scan, not a regex. `/[.,;:!?)\]}'"]+$/` is a polynomial-ReDoS
+ * pattern on input nobody controls but the sender: a chat message of many
+ * repeated `!` makes the engine retry the match from every position, which is
+ * quadratic (CodeQL js/polynomial-redos, alert #59). Walking backwards once is
+ * linear and cannot backtrack. The same fix is already in the entitlements
+ * adapter for trailing slashes.
+ */
 function stripTrailingPunctuation(value: string): string {
-  return value.replace(TRAILING_URL_PUNCTUATION, '');
+  let end = value.length;
+  while (end > 0 && TRAILING_URL_PUNCTUATION_CHARS.has(value.charAt(end - 1))) {
+    end -= 1;
+  }
+  return value.slice(0, end);
 }

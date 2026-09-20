@@ -26,6 +26,11 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
+      // A service call is never legitimately redirected, and following one is
+      // how an allowlisted host becomes a hostile one: the check above sees
+      // the first URL, the redirect target is whatever the answer says
+      // (alert #58). Refusing is louder than silently going somewhere else.
+      redirect: 'error',
     });
 
     const data = (await response.json()) as T;

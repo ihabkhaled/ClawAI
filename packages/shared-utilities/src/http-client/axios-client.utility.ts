@@ -22,6 +22,9 @@ export async function httpGet<T>(url: string, config?: AxiosRequestConfig): Prom
   try {
     const response: AxiosResponse<T> = await axios.get(url, {
       timeout: DEFAULT_HTTP_TIMEOUT,
+      // Same reason as the fetch client: a service call that gets redirected
+      // is a call to a host nothing checked (alert #58).
+      maxRedirects: 0,
       ...config,
     });
     const durationMs = Date.now() - startTime;
@@ -47,6 +50,9 @@ export async function httpPost<T>(
   try {
     const response: AxiosResponse<T> = await axios.post(url, data, {
       timeout: DEFAULT_HTTP_TIMEOUT,
+      // Same reason as the fetch client: a service call that gets redirected
+      // is a call to a host nothing checked (alert #58).
+      maxRedirects: 0,
       ...config,
     });
     const durationMs = Date.now() - startTime;

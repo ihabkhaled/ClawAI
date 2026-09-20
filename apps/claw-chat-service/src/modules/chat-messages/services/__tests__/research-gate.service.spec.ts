@@ -308,9 +308,12 @@ describe('ResearchGateService on Ollama Cloud', () => {
       headers: { Authorization: 'Bearer sk-cloud' },
       body: expect.objectContaining({ model: 'gpt-oss:120b', think: false }),
     });
+    // Compared as an origin, not a prefix: `http://ollama.test.evil.example`
+    // starts with the same text and is a different host entirely (CodeQL
+    // js/incomplete-url-substring-sanitization, alert #60).
     expect(
-      mockedHttpRequest.mock.calls.some(([request]) =>
-        (request as { url: string }).url.startsWith('http://ollama.test'),
+      mockedHttpRequest.mock.calls.some(
+        ([request]) => new URL((request as { url: string }).url).origin === 'http://ollama.test',
       ),
     ).toBe(false);
   });

@@ -176,7 +176,25 @@ export const BARE_HOST_KNOWN_NON_URLS: ReadonlySet<string> = new Set([
 ]);
 
 /** Punctuation that ends a sentence rather than a path. */
-export const TRAILING_URL_PUNCTUATION = /[.,;:!?)\]}'"]+$/u;
+/**
+ * Punctuation a sentence leaves on the end of a pasted URL.
+ *
+ * A set, scanned backwards, rather than a `+$` regex: that shape is
+ * polynomial-ReDoS on attacker-influenced text (CodeQL js/polynomial-redos).
+ */
+export const TRAILING_URL_PUNCTUATION_CHARS: ReadonlySet<string> = new Set([
+  '.',
+  ',',
+  ';',
+  ':',
+  '!',
+  '?',
+  ')',
+  ']',
+  '}',
+  "'",
+  '"',
+]);
 
 /** Safety bound on untrusted input, not a product decision. */
 export const DETECT_URLS_DEFAULT_MAX = 10;
