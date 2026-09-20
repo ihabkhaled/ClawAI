@@ -717,3 +717,23 @@ All three now come from `helpers/runtime-thread-context.helper.ts`. If you add
 an argument to `assemble`, add it here too: this file is the one place a
 coding-agent run differs from a chat turn, and a difference here is a feature
 that works in one surface and not the other.
+
+## Two shapes of a silent stop
+
+A run that ends with work undone but reports success is the failure this
+service fights hardest, and it arrives in two opposite shapes:
+
+- **An announcement.** "I'll start by listing the workspace." The model says
+  what it is _about_ to do and stops. `isUnfulfilledIntent` catches it.
+- **A hollow completion.** `DONE`. The model says it has _already_ done it,
+  having called no tool. `isHollowCompletion` catches it, and only on the first
+  turn — after a tool has run, "done" is ordinary and usually true.
+
+Both route into `nudgeIntoActing`, which asks again and refuses to accept the
+same shape twice. The predicate that judged the original turn is passed in, so
+the correction loop rejects the shape it was called about rather than a fixed
+one.
+
+The hollow-completion test that matters is the false-positive set: "Done. The
+file already contained the value." explains itself and must pass through. Only
+a claim with nothing after it is hollow.

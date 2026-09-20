@@ -463,3 +463,23 @@ export const RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION = [
  * scan.
  */
 export const RUNTIME_V2_TOOL_OBJECT_SCAN_LIMIT = 32;
+
+/**
+ * A reply that claims the work is finished.
+ *
+ * Matched at the start, because a completion claim leads. The list is short on
+ * purpose: this only decides whether to ask the model once more, and a wide
+ * list would start catching real answers that happen to open with "done".
+ */
+export const RUNTIME_V2_HOLLOW_COMPLETION_PATTERN =
+  /^(?:ok[,.!\s]*)?(?:all\s+)?(?:done|complete|completed|finished|finished\s+the\s+task|task\s+complete|task\s+completed)\b/iu;
+
+/**
+ * How much may remain after the completion claim before it stops being hollow.
+ *
+ * "DONE" is a claim about work that never happened. "Done. The file already
+ * contained the value, so nothing needed changing." is an answer — it explains
+ * itself, and explaining is the difference. The threshold is what separates a
+ * bare assertion from a reply with content in it.
+ */
+export const RUNTIME_V2_HOLLOW_COMPLETION_REMAINDER_CHARACTERS = 24;

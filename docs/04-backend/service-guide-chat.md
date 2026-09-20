@@ -495,3 +495,23 @@ than caught — they now assert the reserve and say why.
 to `helpers/runtime-thread-context.helper.ts` as well, or the coding agent
 starts diverging from chat again, silently, in whatever the new argument
 controls.
+
+## The silent stop has two shapes, and one of them looks like success
+
+`isUnfulfilledIntent` has always caught the model that announces work it never
+does. A live round found the mirror image: the prompt asked for a file, the
+model replied `DONE`, the run recorded `run.completed`, and the workspace was
+empty. Nothing in the stream said otherwise — an announcement at least reads
+as unfinished, while a completion claim reads as success.
+
+`isHollowCompletion` catches that, gated to the **first turn**. Before any tool
+has run, a completion claim is a claim about work that cannot have happened.
+After one, "done" is ordinary, so continuations are exempt and the caller
+passes the flag rather than the predicate guessing.
+
+**What keeps it from firing on real answers** is the remainder test. A reply
+that explains itself — "Done. The file already contained the value, so nothing
+needed changing." — has content after the claim and is left alone. Only a bare
+assertion is hollow. The false-positive cases in
+`utilities/__tests__/hollow-completion.utility.spec.ts` are the important half
+of that suite: this predicate decides whether to spend another provider call.

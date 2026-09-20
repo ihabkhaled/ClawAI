@@ -52,6 +52,7 @@ import {
 import {
   buildRuntimeV2ModelInstruction,
   isCapabilityDenial,
+  isHollowCompletion,
   isUnfulfilledIntent,
   parseRuntimeV2ModelOutput,
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
@@ -554,6 +555,7 @@ export class RuntimeV2LoopManager {
     runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
     turn: RuntimeV2ModelTurn,
+    firstTurn = false,
   ): Promise<RuntimeV2ModelTurn> {
     if (turn.output.kind !== 'final' || binding.toolDefinitions.length === 0) {
       return turn;
@@ -562,7 +564,15 @@ export class RuntimeV2LoopManager {
       return this.correctCapabilityDrift(binding, runtimeContext, routingMode);
     }
     if (isUnfulfilledIntent(turn.output.content)) {
-      return this.nudgeIntoActing(binding, runtimeContext, routingMode, turn);
+      return this.nudgeIntoActing(binding, runtimeContext, routingMode, turn, isUnfulfilledIntent);
+    }
+    // A completion claim on the first turn is a claim about work that cannot
+    // have happened: no tool has run yet. A live round asked for a file and
+    // the model replied `DONE`, the run recorded `run.completed`, and the
+    // workspace was empty — the silent stop wearing the face of success.
+    // Continuations are exempt because by then "done" is usually true.
+    if (firstTurn && isHollowCompletion(turn.output.content)) {
+      return this.nudgeIntoActing(binding, runtimeContext, routingMode, turn, isHollowCompletion);
     }
     return turn;
   }
@@ -580,6 +590,7 @@ export class RuntimeV2LoopManager {
     runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
     turn: RuntimeV2ModelTurn,
+    stillUnfulfilled: (content: string) => boolean,
   ): Promise<RuntimeV2ModelTurn> {
     let announcement = turn.output.kind === 'final' ? turn.output.content : '';
     let lastFailure: string | undefined;
@@ -604,7 +615,7 @@ export class RuntimeV2LoopManager {
         );
         continue;
       }
-      if (corrected.output.kind !== 'final' || !isUnfulfilledIntent(corrected.output.content)) {
+      if (corrected.output.kind !== 'final' || !stillUnfulfilled(corrected.output.content)) {
         return corrected;
       }
       announcement = corrected.output.content;
@@ -831,6 +842,7 @@ export class RuntimeV2LoopManager {
         runtimeContext,
         payload.routingMode,
         await this.callWithRepair(binding, runtimeContext, payload.routingMode),
+        true,
       );
       if (output.kind === 'tool') {
         const invocation = toolInvocationSchema.parse({
