@@ -304,3 +304,21 @@ docker volume prune
 # Remove all ClawAI volumes (DESTRUCTIVE)
 ./scripts/claw.sh down -v
 ```
+
+## Image-only containers (2026-09-20)
+
+The production deploy plans two kinds of container:
+
+| Kind                         | Example                | How it deploys                                             |
+| ---------------------------- | ---------------------- | ---------------------------------------------------------- |
+| Built from a workspace       | `chat-service`         | image built, then `up -d --no-deps --no-build`             |
+| Built from a published image | `log-shipper` (Vector) | never built; `up -d --no-deps --no-build --force-recreate` |
+
+An image-only container is associated with its bind-mounted config through
+`CONFIG_DIR_SERVICES` in `scripts/deploy-prod.sh`. Editing a file under a
+mapped directory plans that container; a recreate is used rather than a restart
+so the bind mount re-resolves.
+
+Before 2026-09-20 such a container was filtered out of the plan entirely, so
+its config changes never reached production and the run still said
+"Deployment successful".

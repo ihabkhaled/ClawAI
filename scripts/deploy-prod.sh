@@ -140,6 +140,17 @@ ORPHAN_GUARD_PID=""
 # alter every image regardless of which workspace it sits next to.
 # Deliberately NOT here: eslint config (never runs inside an image) and
 # docs/ rules/ tools/ .github/ .ai/ (never copied into an image).
+# A container built from a published image reads its behaviour out of a
+# bind-mounted config file, and nothing else in the tree associates that file
+# with the container. This table is that association: `<directory>|<service>`,
+# where the service must exist in the production compose file with no
+# Dockerfile. Touching one of these directories recreates that container —
+# recreate, never restart, because a bind-mounted file keeps its old inode
+# across a restart (docs/11-runbooks/runbook-nginx-stale-config.md).
+CONFIG_DIR_SERVICES=(
+  'infra/vector|log-shipper'
+)
+
 BROAD_IMPACT_PATHS=(
   'package.json'
   'package-lock.json'
@@ -158,6 +169,10 @@ fi
 
 # Plan outputs, populated by compute_plan.
 PLAN_SERVICES=()
+# Image-only containers this deployment must (re)create. They have no `build:`,
+# so they never appear in PLAN_SERVICES, and before 2026-09-20 nothing could
+# deploy them at all: a change to their config was silently a no-op forever.
+PLAN_IMAGE_SERVICES=()
 PLAN_INFRA_MANUAL=()
 PLAN_NGINX_RELOAD=0
 PLAN_REASON=""
@@ -583,6 +598,7 @@ select_service() {
 #                    PLAN_REASON
 compute_plan() {
   PLAN_SERVICES=()
+  PLAN_IMAGE_SERVICES=()
   PLAN_INFRA_MANUAL=()
   PLAN_NGINX_RELOAD=0
   PLAN_REASON=""
@@ -596,15 +612,23 @@ compute_plan() {
   local nginx_present=0
   local dir_map="$TMP_DIR/dir-map"
   local buildable="$TMP_DIR/buildable"
+  local image_only="$TMP_DIR/image-only"
   : >"$dir_map"
   : >"$buildable"
+  : >"$image_only"
 
   while IFS='|' read -r svc dockerfile profiled; do
     [ -n "$svc" ] || continue
     if [ "$svc" = "nginx" ]; then
       nginx_present=1
     fi
-    [ -n "$dockerfile" ] || continue
+    if [ -z "$dockerfile" ]; then
+      # nginx is recreated by reload_nginx on its own terms; every other
+      # image-only container is deployable through CONFIG_DIR_SERVICES.
+      [ "$svc" = "nginx" ] || printf '%s
+' "$svc" >>"$image_only"
+      continue
+    fi
     if [ "$profiled" = "1" ] && [ "$LOCAL_AI" != "true" ]; then
       # Profiled service with local-AI disabled: that container does not exist
       # on this host and a deployment must never bring it into existence.
@@ -619,6 +643,11 @@ compute_plan() {
     while IFS= read -r svc; do
       [ -n "$svc" ] && select_service "$svc"
     done <"$buildable"
+    # A first deployment creates the whole stack, including the containers that
+    # only pull an image.
+    while IFS= read -r svc; do
+      [ -n "$svc" ] && select_service "$svc"
+    done <"$image_only"
     finalize_plan "$nginx_present"
     return 0
   fi
@@ -644,6 +673,22 @@ compute_plan() {
           ;;
       esac
     done <"$dir_map"
+    [ "$matched" = "1" ] && continue
+
+    for pattern in "${CONFIG_DIR_SERVICES[@]}"; do
+      map_dir="${pattern%%|*}"
+      map_svc="${pattern##*|}"
+      case "$file" in
+        "$map_dir"/*)
+          # Only if that container is actually declared in this compose file.
+          if grep -qx "$map_svc" "$image_only"; then
+            select_service "$map_svc"
+            matched=1
+          fi
+          break
+          ;;
+      esac
+    done
     [ "$matched" = "1" ] && continue
 
     case "$file" in
@@ -726,7 +771,12 @@ finalize_plan() {
   local svc dockerfile profiled
   while IFS='|' read -r svc dockerfile profiled; do
     [ -n "$svc" ] || continue
-    [ -n "$dockerfile" ] || continue
+    if [ -z "$dockerfile" ]; then
+      case "$PLAN_SELECTED" in
+        *"|$svc|"*) PLAN_IMAGE_SERVICES+=("$svc") ;;
+      esac
+      continue
+    fi
     case "$PLAN_SELECTED" in
       *"|$svc|"*) PLAN_SERVICES+=("$svc") ;;
     esac
@@ -1274,6 +1324,10 @@ run_plan_mode() {
   else
     printf '  %s\n' "${PLAN_SERVICES[@]}"
   fi
+  if [ "${#PLAN_IMAGE_SERVICES[@]}" -gt 0 ]; then
+    log "image-only services (recreated, never built):"
+    printf '  %s\n' "${PLAN_IMAGE_SERVICES[@]}"
+  fi
   log "nginx-reload: $PLAN_NGINX_RELOAD"
   if [ "${#PLAN_INFRA_MANUAL[@]}" -gt 0 ]; then
     log "infra-manual:"
@@ -1439,7 +1493,7 @@ main() {
   resolve_local_ai
   compute_plan
   warn_removed_services "$old_sha" "$new_sha"
-  DEPLOYMENT_SERVICES="${PLAN_SERVICES[*]}"
+  DEPLOYMENT_SERVICES="${PLAN_SERVICES[*]} ${PLAN_IMAGE_SERVICES[*]}"
   if [ "$PLAN_NGINX_RELOAD" = "1" ]; then
     DEPLOYMENT_SERVICES="${DEPLOYMENT_SERVICES:+$DEPLOYMENT_SERVICES }nginx"
   fi
@@ -1460,10 +1514,12 @@ main() {
   fi
 
   section "Affected services:"
-  if [ "${#PLAN_SERVICES[@]}" -eq 0 ]; then
+  if [ "${#PLAN_SERVICES[@]}" -eq 0 ] && [ "${#PLAN_IMAGE_SERVICES[@]}" -eq 0 ]; then
     log "  (none)"
   else
-    printf -- '- %s\n' "${PLAN_SERVICES[@]}"
+    [ "${#PLAN_SERVICES[@]}" -gt 0 ] && printf -- '- %s\n' "${PLAN_SERVICES[@]}"
+    [ "${#PLAN_IMAGE_SERVICES[@]}" -gt 0 ] &&
+      printf -- '- %s (image only)\n' "${PLAN_IMAGE_SERVICES[@]}"
   fi
   if [ -n "$PLAN_REASON" ]; then
     log "  ($PLAN_REASON)"
@@ -1504,7 +1560,7 @@ main() {
   fi
 
   local svc
-  if [ "${#PLAN_SERVICES[@]}" -eq 0 ]; then
+  if [ "${#PLAN_SERVICES[@]}" -eq 0 ] && [ "${#PLAN_IMAGE_SERVICES[@]}" -eq 0 ]; then
     if [ "$PLAN_NGINX_RELOAD" = "1" ]; then
       set_deployment_phase "reloading_nginx"
       reload_nginx
@@ -1571,6 +1627,21 @@ main() {
     fi
   fi
 
+  # An image-only container reads its behaviour out of a bind-mounted config
+  # file, and a restart keeps the old inode — the same trap nginx has. They are
+  # force-recreated instead. A named volume (a metrics TSDB, for example)
+  # survives a recreate; only `docker volume rm` destroys data, and this script
+  # never does that.
+  if [ "${#PLAN_IMAGE_SERVICES[@]}" -gt 0 ]; then
+    if ! compose up -d --no-deps --no-build --force-recreate "${PLAN_IMAGE_SERVICES[@]}"; then
+      err ""
+      for svc in "${PLAN_IMAGE_SERVICES[@]}"; do
+        dump_diagnostics "$svc"
+      done
+      die "docker compose up failed for an image-only service"
+    fi
+  fi
+
   if [ "$PLAN_NGINX_RELOAD" = "1" ]; then
     set_deployment_phase "reloading_nginx"
     reload_nginx
@@ -1580,7 +1651,7 @@ main() {
   section "Health:"
   set_deployment_phase "verifying"
   local failed=()
-  for svc in "${PLAN_SERVICES[@]}"; do
+  for svc in "${PLAN_SERVICES[@]}" "${PLAN_IMAGE_SERVICES[@]}"; do
     set_deployment_phase "verifying" "$svc"
     if ! wait_for_service_health "$svc"; then
       failed+=("$svc")
@@ -1600,7 +1671,7 @@ main() {
 
   set_deployment_phase "finalizing"
   cleanup_build_cache
-  record_deployment "$new_sha" "${PLAN_SERVICES[*]}"
+  record_deployment "$new_sha" "${PLAN_SERVICES[*]} ${PLAN_IMAGE_SERVICES[*]}"
 
   log ""
   log "Deployment successful."

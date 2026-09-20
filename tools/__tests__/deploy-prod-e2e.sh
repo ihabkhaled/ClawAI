@@ -144,7 +144,8 @@ git -C "$SRC" config user.name "deploy e2e"
 git -C "$SRC" config commit.gpgsign false
 
 mkdir -p "$SRC/docker" "$SRC/scripts" "$SRC/.ai/manifests" "$SRC/apps/claw-payment-service/src" \
-  "$SRC/apps/claw-frontend/src" "$SRC/packages/shared-auth/src" "$SRC/docs" "$SRC/infra/nginx"
+  "$SRC/apps/claw-frontend/src" "$SRC/packages/shared-auth/src" "$SRC/docs" "$SRC/infra/nginx" \
+  "$SRC/infra/vector"
 
 cp "$REPO_ROOT/docker/docker-compose.prod.services.yml" "$SRC/docker/"
 cp "$REPO_ROOT/.ai/manifests/workspace-dependency-graph.json" "$SRC/.ai/manifests/"
@@ -158,6 +159,7 @@ printf 'v1\n' >"$SRC/apps/claw-frontend/src/page.tsx"
 printf 'v1\n' >"$SRC/packages/shared-auth/src/index.ts"
 printf 'v1\n' >"$SRC/docs/notes.md"
 printf 'v1\n' >"$SRC/infra/nginx/locations.conf"
+printf 'v1\n' >"$SRC/infra/vector/vector.yaml"
 
 git -C "$SRC" add -A >/dev/null
 git -C "$SRC" commit --quiet --no-verify -m "base" >/dev/null
@@ -178,6 +180,7 @@ commit_change() {
 SHA_PAYMENT="$(commit_change apps/claw-payment-service/src/main.ts 'payment only')"
 SHA_DOCS="$(commit_change docs/notes.md 'docs only')"
 SHA_SHARED="$(commit_change packages/shared-auth/src/index.ts 'shared-auth change')"
+SHA_SHIPPER="$(commit_change infra/vector/vector.yaml 'log shipper config')"
 
 git clone --quiet "$ORIGIN" "$PROD" >/dev/null
 git -C "$PROD" config user.email "e2e@example.invalid"
@@ -269,6 +272,18 @@ done
 # change must not touch. chat-service moved to the other list on 2026-09-20,
 # when every service that authenticates took the revocation guard (ADR-112).
 assert_not_contains "shared-auth change spares health-service" "$build_line" "health-service"
+
+# ─── Image-only container ────────────────────────────────────────────────────
+# log-shipper has no `build:`, so it never reached PLAN_SERVICES: a change to
+# its config deployed nothing at all, silently, forever (fixed 2026-09-20).
+reset_docker_log
+out="$(deploy "$SHA_SHIPPER")"
+assert_contains "a config-only change to an image-only container deploys" "$out" "Deployment successful"
+assert_contains "the plan names it as image-only" "$out" "log-shipper (image only)"
+up_line="$(grep -m1 ' up -d .*log-shipper' "$CLAW_STUB_LOG" || true)"
+assert_contains "the container is recreated, not restarted" "$up_line" "--force-recreate"
+assert_not_contains "an image-only container is never built" "$(cat "$CLAW_STUB_LOG")" " build log-shipper"
+assert_equals "the deployment is recorded" "$(deployed_sha)" "$SHA_SHIPPER"
 
 # ─── No-op (docs only) ───────────────────────────────────────────────────────
 # Deploy the docs commit on top of the payment commit by rewinding state.

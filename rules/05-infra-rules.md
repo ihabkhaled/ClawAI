@@ -34,6 +34,26 @@ incidents.
 `./scripts/claw.sh up` is the only supported entry point: it stitches the split
 files and applies the right GPU overlay.
 
+### A container built from a published image is still deployed
+
+A service with no `build:` (Vector's `log-shipper`, and anything like it) is
+planned by `scripts/deploy-prod.sh` through the `CONFIG_DIR_SERVICES` table,
+which maps the directory holding its bind-mounted config to its service name.
+
+**Adding such a container MUST add its row.** Without one, the deployment plan
+cannot see it: the container is never created, and every later change to its
+config deploys nothing at all, while the run still reports success. That was
+true of `infra/vector/**` until 2026-09-20.
+
+It is brought up with `--force-recreate`, never restarted, because a
+bind-mounted file keeps its old inode across a restart
+([runbook-nginx-stale-config](../docs/11-runbooks/runbook-nginx-stale-config.md)).
+
+**Enforcement**: `tools/__tests__/deploy-prod-e2e.sh` deploys a config-only
+change to `log-shipper` and asserts it is recreated and never built.
+Background: [`docs/implementation/observability-plan.md`](../docs/implementation/observability-plan.md),
+which found this while planning the metrics stack.
+
 ## A dev service mounts its BUILD INPUTS, not only its source
 
 Every service block in `docker-compose.dev.services.yml` mounts, read-only:

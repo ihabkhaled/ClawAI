@@ -78,3 +78,35 @@ locale-independent comparison for machine ordering. Base images are glibc
 not musl-compatible — don't "optimize" to Alpine.
 
 **Related.** [known-pitfalls](known-pitfalls.md) (localeCompare); `CLAUDE.md` → build toolchain.
+
+---
+
+### A container with no build step was invisible to the deploy script (2026-09-20)
+
+**What happened.** `scripts/deploy-prod.sh` derives its plan from the production
+compose file, then drops every service without a `dockerfile:`
+(`compute_plan` and `finalize_plan`). `log-shipper` (Vector) is built from a
+published image, so it was never planned, never created and never recreated: a
+change to `infra/vector/vector.yaml` deployed **nothing**, silently, with a
+green "Deployment successful" on the run. Found while planning the metrics
+stack, which would have added two more containers of exactly that shape.
+
+**The durable lesson.** A plan built by filtering for "things we build" is not a
+plan for "things we run". Every container in the compose file is a deployable
+unit; the ones we do not build are the ones whose config lives in a bind mount,
+which is precisely the config a deploy is most likely to be carrying.
+
+**How to apply.**
+
+- An image-only container is planned through `CONFIG_DIR_SERVICES`, which maps
+  its config directory to its service name. Add a row when adding such a
+  container.
+- It is brought up with `--force-recreate`, never restarted: a bind-mounted
+  file keeps its old inode across a restart, the same trap as nginx
+  ([runbook-nginx-stale-config](../docs/11-runbooks/runbook-nginx-stale-config.md)).
+- It is never built, and it is health-verified like any other service.
+- Named volumes survive a recreate. Deleting a volume is never something the
+  deploy script does.
+
+**Related.** `tools/__tests__/deploy-prod-e2e.sh` (the rehearsal case);
+`docs/implementation/observability-plan.md` (why it surfaced).
