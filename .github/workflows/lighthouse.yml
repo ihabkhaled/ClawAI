@@ -146,13 +146,31 @@ jobs:
           done
           echo "pricing fixture did not start" && exit 1
 
+      # Each URL is audited once (numberOfRuns: 1), which halves the run. A
+      # single sample is noisier than the median of two, so the guarantee that
+      # "one flaky sample cannot gate a merge" is kept here instead: a shard
+      # that fails is audited a second time, and only a failure that repeats
+      # fails the build. The happy path still pays for one run.
       - name: Run Lighthouse CI
+        id: lhci
         if: steps.lhci-config.outputs.count != '0'
+        continue-on-error: true
         working-directory: apps/claw-frontend
         env:
           AUTH_SERVICE_URL: http://127.0.0.1:4901
           INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture
         run: npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.shard.json
+
+      - name: Run Lighthouse CI (retry the shard once)
+        if: steps.lhci-config.outputs.count != '0' && steps.lhci.outcome == 'failure'
+        working-directory: apps/claw-frontend
+        env:
+          AUTH_SERVICE_URL: http://127.0.0.1:4901
+          INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture
+        run: |
+          echo "The first pass failed. Auditing this shard again: a budget that"
+          echo "fails twice is a real regression, one that fails once is noise."
+          npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.shard.json
 
       - name: Upload Lighthouse reports
         if: always()

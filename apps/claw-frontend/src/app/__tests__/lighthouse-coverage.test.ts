@@ -54,8 +54,19 @@ describe('lighthouse coverage', () => {
     expect(auditedPaths.every((path) => parseLocaleFromPathname(path) !== null)).toBe(true);
   });
 
-  it('runs each URL more than once so a single flaky sample cannot gate a merge', () => {
-    expect(config.ci.collect.numberOfRuns).toBeGreaterThan(1);
+  // The guarantee is "one flaky sample cannot gate a merge", not "two runs".
+  // Since 2026-09-20 each URL is audited once, which halves the run, and the
+  // workflow audits a FAILING shard a second time instead — the cost is paid
+  // only when something actually fails. Either mechanism satisfies this; the
+  // absence of both does not.
+  it('never lets a single flaky sample gate a merge', () => {
+    const workflow = readFileSync(
+      resolve(__dirname, '../../../../../.github/workflows/lighthouse.yml'),
+      'utf8',
+    );
+    const retriesOnFailure = /steps\.lhci\.outcome == 'failure'/u.test(workflow);
+
+    expect(config.ci.collect.numberOfRuns > 1 || retriesOnFailure).toBe(true);
   });
 });
 

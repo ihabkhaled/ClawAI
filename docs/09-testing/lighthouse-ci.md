@@ -169,16 +169,26 @@ and ~5m38s of auditing, which is ~29 s per URL with `numberOfRuns: 2`.
 At **20** shards (2026-09-20) a shard audits ~6 URLs, so it lands near
 **3m30s**: the audit half is halved, the setup half is not.
 
-**One run per URL since 2026-09-20** (`numberOfRuns: 1`, owner's decision),
-which halves the audit again: a shard lands near **2 minutes**.
+**One run per URL since 2026-09-20** (`numberOfRuns: 1`, owner's decision).
+Measured on the first run with it: shards took **1.9 to 2.6 minutes** (median
+2.4), against ~6m29s before.
 
-The cost is honest: a single run is noisier than the median of two, so a page
-whose score sits right on a budget can flap between green and red. The
-assertions themselves did not change. If a budget starts flapping, raise that
-page's headroom or put `numberOfRuns` back to 2 — do not weaken the assertion.
+A single run is noisier than the median of two, so the guarantee that "one
+flaky sample cannot gate a merge" is kept by the workflow instead: **a shard
+that fails is audited again, and only a repeated failure fails the build.** The
+happy path pays for one run; the retry costs only when something is already
+red. `src/app/__tests__/lighthouse-coverage.test.ts` fails if neither
+mechanism is present — two runs, or the retry.
+
+If a budget flaps even so, give that page headroom or put `numberOfRuns` back
+to 2. Never weaken the assertion.
 
 **More shards is not a lever here.** This account runs at most 20 jobs at once
 across every workflow, and a push already starts ~80 CI jobs beside this one.
-Beyond 20 shards the extra ones queue and run in a second wave: at 30 shards
-the wall clock measured worse than at 20 (~5.3 min against ~3.6 min), for
-the same total work. The cap moves only with the GitHub plan.
+Beyond 20 shards the extra ones queue and run in a second wave, for the same
+total work. The cap moves only with the GitHub plan.
+
+That cap is also why the **workflow** still takes ~6 minutes end to end while a
+shard takes ~2.4: on a push the 20 shards compete with CI's ~80 jobs for the
+same 20 slots, so some of them start late. Shortening a shard shortens the
+workflow only while slots are free.
