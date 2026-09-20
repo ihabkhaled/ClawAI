@@ -169,11 +169,16 @@ and ~5m38s of auditing, which is ~29 s per URL with `numberOfRuns: 2`.
 At **20** shards (2026-09-20) a shard audits ~6 URLs, so it lands near
 **3m30s**: the audit half is halved, the setup half is not.
 
-Two levers remain, both with a cost:
+**One run per URL since 2026-09-20** (`numberOfRuns: 1`, owner's decision),
+which halves the audit again: a shard lands near **2 minutes**.
 
-- **Fewer runs per URL** (`numberOfRuns: 2` → `1`) halves the audit again, to
-  roughly 2 minutes a shard. Lighthouse numbers get noisier, so a borderline
-  budget assertion starts flapping. Not done.
-- **More shards** stops helping once the matrix exceeds the account's
-  concurrent-job cap: the extra shards queue, and a queued shard is wall-clock
-  time with none of the parallelism.
+The cost is honest: a single run is noisier than the median of two, so a page
+whose score sits right on a budget can flap between green and red. The
+assertions themselves did not change. If a budget starts flapping, raise that
+page's headroom or put `numberOfRuns` back to 2 — do not weaken the assertion.
+
+**More shards is not a lever here.** This account runs at most 20 jobs at once
+across every workflow, and a push already starts ~80 CI jobs beside this one.
+Beyond 20 shards the extra ones queue and run in a second wave: at 30 shards
+the wall clock measured worse than at 20 (~5.3 min against ~3.6 min), for
+the same total work. The cap moves only with the GitHub plan.

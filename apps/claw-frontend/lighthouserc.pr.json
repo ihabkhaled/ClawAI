@@ -38,7 +38,7 @@
         "http://localhost:3000/en/use-cases/coding-and-development",
         "http://localhost:3000/en/features/model-routing-and-orchestration"
       ],
-      "numberOfRuns": 2,
+      "numberOfRuns": 1,
       "settings": {
         "preset": "desktop"
       }
