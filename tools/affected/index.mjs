@@ -123,6 +123,40 @@ function serviceName(workspace) {
   return workspace.name.replace(/^claw-/, '').replace(/-service$/, '');
 }
 
+/**
+ * Workspaces whose test suite is split across parallel CI jobs.
+ *
+ * The frontend runs ~3,600 tests in one job, which made it the longest job in
+ * CI at about four minutes while every other workspace finished in under one.
+ * `vitest --shard=i/n` splits the files; each shard is a job of its own.
+ *
+ * Only the TEST matrix is sharded. Lint, typecheck and build stay one job per
+ * workspace: they are already short, and this account runs at most 20 jobs at
+ * once, so extra jobs are taken from a fixed budget.
+ */
+export const TEST_SHARDS = { 'claw-frontend': 4 };
+
+/**
+ * The matrix for the test job: one entry per workspace, except the workspaces
+ * in TEST_SHARDS, which get one entry per shard.
+ */
+export function createCiTestMatrix(result, workspaces, full = false) {
+  return {
+    include: createCiMatrix(result, workspaces, full).include.flatMap((entry) => {
+      const shards = TEST_SHARDS[entry.workspace] ?? 1;
+      if (shards === 1) {
+        return [{ ...entry, shard: 1, shards: 1 }];
+      }
+      return Array.from({ length: shards }, (_, index) => ({
+        ...entry,
+        service: `${entry.service} ${String(index + 1)}/${String(shards)}`,
+        shard: index + 1,
+        shards,
+      }));
+    }),
+  };
+}
+
 export function createCiMatrix(result, workspaces, full = false) {
   const selected = new Set(
     full || result.rootInvariant
@@ -212,6 +246,7 @@ function main() {
         hasAffected: matrix.include.length > 0,
         includesChat: matrix.include.some(({ workspace }) => workspace === 'claw-chat-service'),
         matrix,
+        testMatrix: createCiTestMatrix(result, workspaces, full),
       }),
     );
     return;

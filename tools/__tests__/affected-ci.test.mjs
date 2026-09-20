@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { computeAffectedFromFiles, createCiMatrix } from '../affected/index.mjs';
+import {
+  computeAffectedFromFiles,
+  createCiMatrix,
+  createCiTestMatrix,
+  TEST_SHARDS,
+} from '../affected/index.mjs';
 import { buildManifests } from '../lib/manifests.mjs';
 import { repoPath } from '../lib/repo.mjs';
 
@@ -82,6 +87,56 @@ test('matrix metadata is derived from workspace manifests', () => {
   assert.deepEqual(createCiMatrix(result, workspaces), {
     include: [{ prisma: true, service: 'auth', workspace: 'claw-auth-service' }],
   });
+});
+
+// The frontend's ~3,600 tests were the longest job in CI; vitest --shard
+// splits them. Only the test job shards — lint, typecheck and build stay one
+// job per workspace, because this account runs 20 jobs at once at most.
+test('the test matrix shards the workspaces that need it, and only those', () => {
+  const result = computeAffectedFromFiles(['package-lock.json'], workspaces);
+  const testMatrix = createCiTestMatrix(result, workspaces, true).include;
+  const plain = createCiMatrix(result, workspaces, true).include;
+
+  for (const [workspace, shards] of Object.entries(TEST_SHARDS)) {
+    const entries = testMatrix.filter((entry) => entry.workspace === workspace);
+    assert.equal(entries.length, shards, `${workspace} runs in ${String(shards)} jobs`);
+    // Every shard index exactly once: a test file cannot fall out of all of them.
+    assert.deepEqual(
+      entries.map((entry) => entry.shard).sort((a, b) => a - b),
+      Array.from({ length: shards }, (_, index) => index + 1),
+    );
+    assert.ok(entries.every((entry) => entry.shards === shards));
+    assert.deepEqual(
+      entries.map((entry) => entry.service),
+      Array.from(
+        { length: shards },
+        (_, index) =>
+          `${plain.find((e) => e.workspace === workspace).service} ${String(index + 1)}/${String(shards)}`,
+      ),
+    );
+  }
+
+  for (const entry of testMatrix.filter((e) => !(e.workspace in TEST_SHARDS))) {
+    assert.deepEqual([entry.shard, entry.shards], [1, 1], `${entry.workspace} is one job`);
+  }
+
+  // Every workspace is still tested, and the other jobs are untouched.
+  assert.deepEqual(
+    [...new Set(testMatrix.map((entry) => entry.workspace))].sort(),
+    plain.map((entry) => entry.workspace).sort(),
+  );
+});
+
+test('a sharded workspace declares vitest, which is what --shard needs', () => {
+  for (const workspace of Object.keys(TEST_SHARDS)) {
+    const manifest = workspaces.find(({ name }) => name === workspace);
+    assert.ok(manifest, `${workspace} exists`);
+    assert.match(
+      JSON.parse(readFileSync(repoPath(manifest.dir, 'package.json'), 'utf8')).scripts.test,
+      /vitest/u,
+      `${workspace} runs vitest`,
+    );
+  }
 });
 
 test('every Prisma workspace exposes the generation script used by CI', () => {

@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.affected.outputs.matrix }}
+      # The same workspaces, except the ones whose suite is split across shards
+      # (tools/affected/index.mjs, TEST_SHARDS). Only the test job uses it.
+      test_matrix: ${{ steps.affected.outputs.test_matrix }}
       has_affected: ${{ steps.affected.outputs.has_affected }}
       includes_chat: ${{ steps.affected.outputs.includes_chat }}
       full: ${{ steps.affected.outputs.full }}
@@ -58,6 +61,7 @@ jobs:
           fi
 
           echo "matrix=$(jq -c '.matrix' <<<"$result")" >> "$GITHUB_OUTPUT"
+          echo "test_matrix=$(jq -c '.testMatrix' <<<"$result")" >> "$GITHUB_OUTPUT"
           echo "has_affected=$(jq -r '.hasAffected' <<<"$result")" >> "$GITHUB_OUTPUT"
           echo "includes_chat=$(jq -r '.includesChat' <<<"$result")" >> "$GITHUB_OUTPUT"
           echo "full=$(jq -r '.full' <<<"$result")" >> "$GITHUB_OUTPUT"
@@ -131,7 +135,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
+      # Sharded for the workspaces that need it; one entry per workspace otherwise.
+      matrix: ${{ fromJSON(needs.changes.outputs.test_matrix) }}
     env:
       NODE_OPTIONS: --max-old-space-size=8192
       JWT_SECRET: this_is_a_test_secret_that_is_32chars_long
@@ -188,7 +193,9 @@ jobs:
       - name: Hoist vite to root (frontend hoisting fix)
         if: matrix.service == 'frontend'
         run: npm install --no-save vite
-      - run: npm run test --workspace=${{ matrix.workspace }}
+      # vitest splits the FILES across shards, so every test still runs exactly
+      # once across the matrix — a file cannot fall out of every shard.
+      - run: npm run test --workspace=${{ matrix.workspace }} -- --shard=${{ matrix.shard }}/${{ matrix.shards }}
 
   runtime-v2-coverage:
     name: Runtime V2 security coverage
