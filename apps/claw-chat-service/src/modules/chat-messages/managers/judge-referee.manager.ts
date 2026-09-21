@@ -746,10 +746,7 @@ export class JudgeRefereeManager {
   }
 
   private async resolveModel(model: string): Promise<string> {
-    if (model !== 'AUTO') {
-      return model;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   // Feature 1 — resolves a user-chosen judge/critic selection into a concrete
@@ -846,22 +843,14 @@ export class JudgeRefereeManager {
       'missing',
       'incomplete',
     ];
-    if (reviseHints.some((hint) => normalized.includes(hint))) {
-      return JudgeDecision.REVISE;
-    }
-
-    return JudgeDecision.ACCEPT;
+    return reviseHints.some((hint) => normalized.includes(hint)) ? JudgeDecision.REVISE : JudgeDecision.ACCEPT;
   }
 
   private buildJudgeSummary(content: string): string {
     const normalized = content.replaceAll(/\s+/g, ' ').trim();
     const firstSentence = normalized.split(/(?<=[.!?])\s+/u)[0]?.trim();
 
-    if (firstSentence && firstSentence.length > 0) {
-      return firstSentence.slice(0, 180);
-    }
-
-    return normalized.slice(0, 180);
+    return firstSentence && firstSentence.length > 0 ? firstSentence.slice(0, 180) : normalized.slice(0, 180);
   }
 
   parseJudgeOutput(content: string): ParsedJudgeVerdict {
@@ -874,10 +863,7 @@ export class JudgeRefereeManager {
       const msg = error instanceof Error ? error.message : 'Parse error';
       this.logger.warn(`parseJudgeOutput: failed to parse — ${msg}. Defaulting to ACCEPT.`);
       const plainVerdict = this.parseJudgePlainTextOutput(content);
-      if (plainVerdict) {
-        return plainVerdict;
-      }
-      return {
+      return plainVerdict ? plainVerdict : {
         decision: JudgeDecision.ACCEPT,
         summary: 'The judge completed a review of the answer.',
         reasoning: 'Could not parse judge output, accepting by default',
@@ -1014,10 +1000,7 @@ export class JudgeRefereeManager {
   }
 
   private deriveSummaryFallback(feedback: string[]): string {
-    if (feedback.length === 0) {
-      return 'No critical issues detected.';
-    }
-    return `Critic raised ${String(feedback.length)} note(s); see details for the full list.`;
+    return feedback.length === 0 ? 'No critical issues detected.' : `Critic raised ${String(feedback.length)} note(s); see details for the full list.`;
   }
 
   private extractUserPrompt(context: AssembledContext): string {

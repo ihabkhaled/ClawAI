@@ -444,10 +444,7 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
   private parseSynthesisJson(raw: string): Record<string, unknown> {
     try {
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        return {};
-      }
-      return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+      return !jsonMatch ? {} : (JSON.parse(jsonMatch[0]) as Record<string, unknown>);
     } catch {
       return {};
     }
@@ -630,28 +627,17 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
   }
 
   private parseConfidenceLevel(raw: unknown): ConsensusConfidenceLevel {
-    if (
-      raw === ConsensusConfidenceLevel.HIGH ||
+    return raw === ConsensusConfidenceLevel.HIGH ||
       raw === ConsensusConfidenceLevel.MEDIUM ||
-      raw === ConsensusConfidenceLevel.LOW
-    ) {
-      return raw;
-    }
-    return ConsensusConfidenceLevel.MEDIUM;
+      raw === ConsensusConfidenceLevel.LOW ? raw : ConsensusConfidenceLevel.MEDIUM;
   }
 
   private clampScore(score: unknown): number {
-    if (typeof score !== 'number' || Number.isNaN(score)) {
-      return 0.5;
-    }
-    return Math.min(1, Math.max(0, score));
+    return typeof score !== 'number' || Number.isNaN(score) ? 0.5 : Math.min(1, Math.max(0, score));
   }
 
   private toStringArray(raw: unknown): string[] {
-    if (!Array.isArray(raw)) {
-      return [];
-    }
-    return raw.filter((v): v is string => typeof v === 'string').slice(0, 3);
+    return !Array.isArray(raw) ? [] : raw.filter((v): v is string => typeof v === 'string').slice(0, 3);
   }
 
   private buildTimedOutResponse(provider: string, model: string): ParallelModelResponse {

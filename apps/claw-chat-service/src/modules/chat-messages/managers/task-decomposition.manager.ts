@@ -357,10 +357,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
         .replace(/\n?```$/, '')
         .trim();
       const parsed: unknown = JSON.parse(cleaned);
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        return this.buildFallbackSubTasks(originalContent);
-      }
-      return (parsed as SubTask[]).slice(0, MAX_SUB_TASKS_PARSE_LIMIT);
+      return !Array.isArray(parsed) || parsed.length === 0 ? this.buildFallbackSubTasks(originalContent) : (parsed as SubTask[]).slice(0, MAX_SUB_TASKS_PARSE_LIMIT);
     } catch {
       this.logger.warn('parseSubTasks: JSON parse failed, falling back to single task');
       return this.buildFallbackSubTasks(originalContent);
@@ -621,15 +618,11 @@ Provide a unified, coherent response that integrates all sub-task results into a
   }
 
   private async resolveModel(): Promise<string> {
-    if (DEFAULT_DECOMPOSITION_MODEL !== 'AUTO') {
-      return DEFAULT_DECOMPOSITION_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_DECOMPOSITION_MODEL !== 'AUTO' ? DEFAULT_DECOMPOSITION_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(dto: DecomposeTaskDto): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -638,10 +631,7 @@ Provide a unified, coherent response that integrates all sub-task results into a
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

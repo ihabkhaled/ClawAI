@@ -229,10 +229,7 @@ export class BestOfNManager {
     if (selection.modelSelectionMode === 'MANUAL_MODEL') {
       return Array.from({ length: n }, () => selection.actualModel);
     }
-    if (models && models.length > 0) {
-      return models;
-    }
-    return Array.from({ length: n }, () => DEFAULT_CANDIDATE_MODEL);
+    return models && models.length > 0 ? models : Array.from({ length: n }, () => DEFAULT_CANDIDATE_MODEL);
   }
 
   private async runCandidates(
@@ -403,8 +400,7 @@ export class BestOfNManager {
   private async resolveSelection(
     dto: BestOfNMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -413,10 +409,7 @@ export class BestOfNManager {
           selectedModelSource: dto.selectedModelSource,
         },
         (await this.localModelSelection?.resolveDefaultModel()) ?? DEFAULT_CANDIDATE_MODEL,
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

@@ -359,10 +359,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
   }
 
   private async resolveModel(model?: string): Promise<string> {
-    if (model && model !== 'AUTO') {
-      return model;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model && model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private safeEmitStage(
@@ -383,8 +380,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
   }
 
   private async resolveSelection(dto: RepairMessageDto): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider ?? dto.targetProvider,
@@ -393,10 +389,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? dto.targetProvider ?? 'local-ollama',
       requestedModel: dto.requestedModel ?? dto.targetModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

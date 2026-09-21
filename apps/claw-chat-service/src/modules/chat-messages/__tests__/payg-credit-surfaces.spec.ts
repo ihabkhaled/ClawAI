@@ -34,8 +34,7 @@ vi.mock('../clients/model-exposure.client', () => ({
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    if (!record) return undefined;
-    return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
+    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
   buildFileDeliveryEntries: vi.fn().mockReturnValue([]),
 }));

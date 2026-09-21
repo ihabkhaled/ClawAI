@@ -74,3 +74,12 @@ export const RUNTIME_V2_RESULT_STATUSES = [
   'cancelled',
   'timed-out',
 ] as const;
+
+/**
+ * How many attachments one agent run may carry.
+ *
+ * The same ceiling ordinary chat uses. It exists because every id is looked up
+ * and its extracted text assembled into the prompt, so an unbounded list is an
+ * unbounded context cost decided by the client.
+ */
+export const RUNTIME_V2_MAX_FILE_IDS = 10;

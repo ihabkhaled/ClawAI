@@ -246,10 +246,7 @@ export class PipelineManager {
     dto: PipelineMessageDto,
     selection: AdvancedModelSelectionResolution,
   ): Promise<PipelineStage[]> {
-    if (dto.template !== 'custom') {
-      return this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? [], selection);
-    }
-    return this.resolveStageModels(dto.customStages ?? [], selection);
+    return dto.template !== 'custom' ? this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? [], selection) : this.resolveStageModels(dto.customStages ?? [], selection);
   }
 
   /**
@@ -412,10 +409,7 @@ export class PipelineManager {
     stages: PipelineStage[],
     selection: AdvancedModelSelectionResolution,
   ): Promise<PipelineStage[]> {
-    if (selection.modelSelectionMode === 'MANUAL_MODEL') {
-      return stages.map((stage) => ({ ...stage, model: selection.actualModel }));
-    }
-    return Promise.all(
+    return selection.modelSelectionMode === 'MANUAL_MODEL' ? stages.map((stage) => ({ ...stage, model: selection.actualModel })) : Promise.all(
       stages.map(async (stage) => ({
         ...stage,
         model: await this.resolveModel(stage.model),
@@ -427,17 +421,13 @@ export class PipelineManager {
     if (model && model !== 'AUTO') {
       return model;
     }
-    if (DEFAULT_PIPELINE_MODEL !== 'AUTO') {
-      return DEFAULT_PIPELINE_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_PIPELINE_MODEL !== 'AUTO' ? DEFAULT_PIPELINE_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(
     dto: PipelineMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -446,10 +436,7 @@ export class PipelineManager {
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

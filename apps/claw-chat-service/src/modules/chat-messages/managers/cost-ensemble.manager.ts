@@ -332,20 +332,14 @@ export class CostEnsembleManager {
     if (avgScore >= COST_TIER_THRESHOLD_TRIO) {
       return 'trio';
     }
-    if (avgScore >= COST_TIER_THRESHOLD_DUO) {
-      return 'duo';
-    }
-    return 'single';
+    return avgScore >= COST_TIER_THRESHOLD_DUO ? 'duo' : 'single';
   }
 
   private tierToCount(tier: CostTier): number {
     if (tier === 'trio') {
       return 3;
     }
-    if (tier === 'duo') {
-      return 2;
-    }
-    return 1;
+    return tier === 'duo' ? 2 : 1;
   }
 
   private async runEnsemble(
@@ -519,17 +513,13 @@ export class CostEnsembleManager {
   }
 
   private async resolveModel(): Promise<string> {
-    if (DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO') {
-      return DEFAULT_COST_ENSEMBLE_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO' ? DEFAULT_COST_ENSEMBLE_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(
     dto: CostEnsembleMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -538,10 +528,7 @@ export class CostEnsembleManager {
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

@@ -738,6 +738,24 @@ The hollow-completion test that matters is the false-positive set: "Done. The
 file already contained the value." explains itself and must pass through. Only
 a claim with nothing after it is hollow.
 
+## An agent run can carry attachments
+
+`runtimeStartSchema` accepts an optional `fileIds`, and the run stores them on
+the user message it creates, under `metadata.fileIds` — the same place every
+other surface looks. That is deliberate: the context assembler already reads
+attachments off the latest user message, so there is one lookup path rather
+than a second one to keep in step with chat's.
+
+Before this the schema was `.strict()` with no such field, so the extension
+could not send attachments at all and fell back to the legacy chat path
+whenever a file was present. A user who attached a file silently lost the
+agent's tools; a user who asked about the same file conversationally did not,
+because that path posts an ordinary chat message.
+
+The ceiling is `RUNTIME_V2_MAX_FILE_IDS`. Each id is looked up and its
+extracted text assembled into the prompt, so an unbounded list is an unbounded
+context cost chosen by the client.
+
 ## One gateway decides what a model sees
 
 `ChatContextGatewayManager.build()` is the only supported way to assemble

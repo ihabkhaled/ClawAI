@@ -37,7 +37,9 @@ export function validateFilename(filename: string): FileValidationResult {
     return { valid: false, reason: `dangerous_extension: ${ext}` };
   }
 
-  return /\.(exe|bat|cmd|com|scr|pif|vbs|vbe|wsf|wsh|msi|dll|sys)\.?/i.test(filename) ? { valid: false, reason: 'double_extension_attack' } : { valid: true, reason: 'ok' };
+  return /\.(exe|bat|cmd|com|scr|pif|vbs|vbe|wsf|wsh|msi|dll|sys)\.?/i.test(filename)
+    ? { valid: false, reason: 'double_extension_attack' }
+    : { valid: true, reason: 'ok' };
 }
 
 export function sanitizeFilename(filename: string): string {
@@ -207,14 +209,16 @@ function isFlac(buffer: Buffer): boolean {
 // 'ftyp' at offset 4 with an audio-capable brand at offset 8 — the same
 // ISO base-media shape isIsoBaseMedia() checks for video.
 function isM4a(buffer: Buffer): boolean {
-  return buffer.length < 12 || buffer.toString('ascii', 4, 8) !== 'ftyp' ? false : M4A_MAJOR_BRANDS.has(buffer.toString('ascii', 8, 12).toLowerCase());
+  return buffer.length < 12 || buffer.toString('ascii', 4, 8) !== 'ftyp'
+    ? false
+    : M4A_MAJOR_BRANDS.has(buffer.toString('ascii', 8, 12).toLowerCase());
 }
 
 // Either an ID3 tag at offset 0 or a bare MPEG Layer III frame sync.
 function isMp3(buffer: Buffer): boolean {
-  return buffer.length >= 3 && buffer.toString('ascii', 0, 3) === 'ID3' ? true : (
-    buffer.length >= 2 && buffer[0] === 0xff && MP3_FRAME_SYNC_SECOND_BYTES.has(buffer[1] ?? 0)
-  );
+  return buffer.length >= 3 && buffer.toString('ascii', 0, 3) === 'ID3'
+    ? true
+    : buffer.length >= 2 && buffer[0] === 0xff && MP3_FRAME_SYNC_SECOND_BYTES.has(buffer[1] ?? 0);
 }
 
 function isAacAdts(buffer: Buffer): boolean {

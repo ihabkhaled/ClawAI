@@ -536,15 +536,11 @@ Return ONLY the improved response. Do not explain changes.`;
     if (model !== 'AUTO') {
       return model;
     }
-    if (DEFAULT_VERIFIER_MODEL !== 'AUTO') {
-      return DEFAULT_VERIFIER_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_VERIFIER_MODEL !== 'AUTO' ? DEFAULT_VERIFIER_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(dto: VerifyMessageDto): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -553,10 +549,7 @@ Return ONLY the improved response. Do not explain changes.`;
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(DEFAULT_VERIFIER_MODEL),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

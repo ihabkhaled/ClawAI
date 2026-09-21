@@ -133,10 +133,7 @@ export class ChatContextGatewayManager {
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
-    if (!thread) {
-      return undefined;
-    }
-    return {
+    return !thread ? undefined : {
       systemPrompt: thread.systemPrompt,
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,

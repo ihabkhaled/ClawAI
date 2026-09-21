@@ -12,6 +12,7 @@ import {
   RUNTIME_V2_JSON_KEY_CHARACTERS,
   RUNTIME_V2_JSON_STRING_CHARACTERS,
   RUNTIME_V2_MAX_CURSOR,
+  RUNTIME_V2_MAX_FILE_IDS,
   RUNTIME_V2_OPERATION_PATTERN,
   RUNTIME_V2_PROMPT_BYTES,
   RUNTIME_V2_RESULT_BYTES,
@@ -234,6 +235,11 @@ export const runtimeStartSchema = z
     clientRequestId: z.string().regex(RUNTIME_V2_ID_PATTERN),
     idempotencyKey: z.string().regex(RUNTIME_V2_ID_PATTERN),
     prompt: boundedText(RUNTIME_V2_PROMPT_BYTES),
+    // The files the user attached to this request. Absent until now, so an
+    // image or document dropped into an agent run was silently discarded —
+    // the same file asked about conversationally reached the model, because
+    // that path posts an ordinary chat message, which has always carried them.
+    fileIds: z.array(z.string().min(1).max(200)).max(RUNTIME_V2_MAX_FILE_IDS).optional(),
     manifestHash: z.string().regex(RUNTIME_V2_SHA256_PATTERN),
     toolCatalogHash: z.string().regex(RUNTIME_V2_SHA256_PATTERN),
     toolDefinitions: toolCatalogSchema,

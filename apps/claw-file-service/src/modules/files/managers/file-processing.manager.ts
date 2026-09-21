@@ -304,7 +304,9 @@ export class FileProcessingManager {
           JSON.stringify({ [key]: value }, null, 2),
         );
       }
-      return Array.isArray(parsed) ? parsed.map((item) => JSON.stringify(item, null, 2)) : [content];
+      return Array.isArray(parsed)
+        ? parsed.map((item) => JSON.stringify(item, null, 2))
+        : [content];
     } catch {
       return [content];
     }
