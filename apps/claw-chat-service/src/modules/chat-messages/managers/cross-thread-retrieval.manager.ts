@@ -4,10 +4,13 @@ import {
   CROSS_THREAD_IDENTIFIER_MATCH_SCORE,
   CROSS_THREAD_MESSAGE_SCORE_THRESHOLD,
   CROSS_THREAD_MIN_INTENT_TOKENS,
+  CROSS_THREAD_NEAR_DUPLICATE_OVERLAP,
   CROSS_THREAD_PROMPT_MESSAGE_LIMIT,
+  CROSS_THREAD_RECENCY_AMPLIFICATION,
   CROSS_THREAD_SELECTED_LIMIT,
-  CROSS_THREAD_THREAD_SCORE_THRESHOLD,
+  CROSS_THREAD_TERM_MATCH_WEIGHT,
 } from '../constants/cross-thread-retrieval.constants';
+import { recencyWeight, termMatchRatio } from '../utilities/cross-thread-scoring.utility';
 import { CrossThreadRetrievalRepository } from '../repositories/cross-thread-retrieval.repository';
 import {
   type CrossThreadCandidate,
@@ -16,7 +19,7 @@ import {
   type CrossThreadSelection,
   CrossThreadSkipReason,
 } from '../types/cross-thread-retrieval.types';
-import { entityOverlap, lexicalOverlap } from '../utilities/history-relevance.utility';
+import { entityOverlap, hasEntities, lexicalOverlap } from '../utilities/history-relevance.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { meaningfulTokenCount } from '../utilities/intent-tokens.utility';
 import { extractSalientTerms, searchTermsFor } from '../utilities/salient-terms.utility';
@@ -111,20 +114,18 @@ export class CrossThreadRetrievalManager {
       return this.emptyResult(CrossThreadSkipReason.NO_CANDIDATES);
     }
 
-    const scoredThreads = candidates
-      .map((candidate) => ({
-        candidate,
-        score: this.scoreThread(candidate, args.intent, salient.identifiers.length > 0),
-      }))
-      .filter((entry) => entry.score >= CROSS_THREAD_THREAD_SCORE_THRESHOLD)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, CROSS_THREAD_SELECTED_LIMIT);
+    const scoredThreads = this.selectThreads(
+      candidates,
+      args.intent,
+      salient.identifiers.length > 0,
+    );
 
     if (scoredThreads.length === 0) {
       return this.emptyResult(CrossThreadSkipReason.NO_RELEVANT_THREAD);
     }
 
     const searchedThreadIds = scoredThreads.map((entry) => entry.candidate.threadId);
+    this.logRanking(scoredThreads);
     const rows = await this.repository.findMessagesForThreads(args.userId, searchedThreadIds);
 
     // Relevance decides WHICH messages are eligible; recency decides which of
@@ -132,8 +133,9 @@ export class CrossThreadRetrievalManager {
     // could be spent entirely on old-but-wordy matches while last week's
     // conversation on the same subject was dropped — and "what did we decide
     // recently" is the question people actually ask across threads.
+    this.logMessageScores(rows, args.intent, terms);
     const scoredMessages = rows
-      .map((row) => this.scoreMessage(row, args.intent))
+      .map((row) => this.scoreMessage(row, args.intent, terms))
       .filter((entry): entry is CrossThreadSelection => entry !== null)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
@@ -186,9 +188,48 @@ export class CrossThreadRetrievalManager {
   }
 
   /**
+   * Which threads were ranked, and what they scored.
+   *
+   * Not just how many. Four rounds of one defect were diagnosed by re-deriving
+   * the ranking in SQL afterwards, because the log said "10 candidates" and
+   * nothing about WHICH ten. A ranking that cannot be read back is a ranking
+   * that gets guessed at.
+   */
+  private logRanking(scored: readonly { candidate: CrossThreadCandidate; score: number }[]): void {
+    this.logger.debug(
+      `retrieve: ranked ${scored
+        .map((entry) => `${entry.candidate.threadId}=${entry.score.toFixed(3)}`)
+        .join(' ')}`,
+    );
+  }
+
+  /**
+   * Which candidate threads get their messages read.
+   *
+   * When nothing clears the cheap filter, the best candidate still gets its
+   * content read. The filter judges without seeing a single message, and it
+   * was rejecting the case this feature exists for: a fact stated once, in a
+   * thread whose title says nothing about it. The message scorer is the
+   * precise one, and it can only decide about threads it is given.
+   */
+  private selectThreads(
+    candidates: readonly CrossThreadCandidate[],
+    intent: string,
+    searchedByIdentifier: boolean,
+  ): { candidate: CrossThreadCandidate; score: number }[] {
+    const ranked = candidates
+      .map((candidate) => ({
+        candidate,
+        score: this.scoreThread(candidate, intent, searchedByIdentifier),
+      }))
+      .sort((a, b) => b.score - a.score);
+    return ranked.slice(0, CROSS_THREAD_SELECTED_LIMIT);
+  }
+
+  /**
    * A thread's relevance.
    *
-   * Evidence first: `matchingMessageCount` is how many of the thread's messages
+   * Evidence first: `termRarity` is how many of the thread's messages
    * actually mention a salient term, and a thread that says the thing forty
    * times is about it in a way a thread that says it once is not. The count is
    * damped logarithmically so a very long thread cannot win on volume alone.
@@ -210,24 +251,89 @@ export class CrossThreadRetrievalManager {
         ? 0
         : 0.6 * entityOverlap(title, intent) + 0.4 * lexicalOverlap(title, intent);
     // Damped so a very long thread cannot win on volume alone.
-    const evidence = Math.min(1, Math.log2(1 + candidate.matchingMessageCount) / 3);
+    const evidence = Math.min(1, Math.log2(1 + candidate.termRarity) / 3);
     // Matching on a coined identifier is already strong evidence — the query
     // itself was the precision gate — so such a candidate starts above the
     // threshold. A word-only match has to earn its place from repetition or a
     // title that names the subject.
     const base = searchedByIdentifier ? CROSS_THREAD_IDENTIFIER_MATCH_SCORE : 0;
-    return Math.min(1, Math.max(base, 0) + 0.4 * evidence + 0.3 * titleScore);
+    const relevance = 0.4 * evidence + 0.3 * titleScore;
+    // Recency amplifies relevance; it never creates it. `evidence` counts
+    // matching MESSAGES, so a thread that states a fact once — which is how
+    // people actually record one — scored below the threshold while a long,
+    // rambling, older thread on the same subject outranked it. Multiplying
+    // means a thread with no lexical match stays at zero however recent it is,
+    // so "what did I do last" cannot crowd out "what did I say about this".
+    const amplified =
+      relevance * (1 + CROSS_THREAD_RECENCY_AMPLIFICATION * recencyWeight(candidate.updatedAt));
+    return Math.min(1, Math.max(base, 0) + amplified);
   }
 
-  private scoreMessage(row: CrossThreadMessageRow, intent: string): CrossThreadSelection | null {
+  /**
+   * How useful one message from another conversation is here.
+   *
+   * Resemblance to the prompt is the obvious measure and the wrong one on its
+   * own, because an answer does not resemble its question — it supplies the
+   * words the question lacked. Scoring the search terms directly is what lets
+   * an answer win: the terms that earned this thread its place are the terms
+   * that mark the messages worth reading inside it.
+   */
+  /** What every read message scored, so a near-miss is visible as a near-miss. */
+  private logMessageScores(
+    rows: readonly CrossThreadMessageRow[],
+    intent: string,
+    terms: readonly string[],
+  ): void {
+    this.logger.debug(
+      `retrieve: read ${String(rows.length)} messages; scores ${rows
+        .map((row) => `${row.threadId}:${this.messageScore(row, intent, terms).toFixed(3)}`)
+        .join(' ')}`,
+    );
+  }
+
+  /** The score alone, so the ranking can be logged without selecting anything. */
+  private messageScore(
+    row: CrossThreadMessageRow,
+    intent: string,
+    terms: readonly string[],
+  ): number {
+    // Entity overlap carries most of the weight when there are entities, and
+    // none of it when there are not. Splitting 0.6/0.4 regardless meant a
+    // prompt phrased in ordinary words could never score above 0.4 of the
+    // scale, and the message holding the answer missed a 0.22 threshold by
+    // 0.003 because of it.
+    const lexical = lexicalOverlap(row.content, intent);
+    const resemblance = hasEntities(intent)
+      ? 0.6 * entityOverlap(row.content, intent) + 0.4 * lexical
+      : lexical;
+    return Math.max(
+      resemblance,
+      CROSS_THREAD_TERM_MATCH_WEIGHT * termMatchRatio(row.content, terms) +
+        (1 - CROSS_THREAD_TERM_MATCH_WEIGHT) * resemblance,
+    );
+  }
+
+  private scoreMessage(
+    row: CrossThreadMessageRow,
+    intent: string,
+    terms: readonly string[],
+  ): CrossThreadSelection | null {
     if (row.content.trim().length === 0) return null;
     const entity = entityOverlap(row.content, intent);
     const lexical = lexicalOverlap(row.content, intent);
-    const score = 0.6 * entity + 0.4 * lexical;
+    const termHit = termMatchRatio(row.content, terms);
+    const score = this.messageScore(row, intent, terms);
     if (score < CROSS_THREAD_MESSAGE_SCORE_THRESHOLD) return null;
+    // A message that restates the prompt is the highest-scoring message this
+    // function can produce and the least useful one it can return: it tells
+    // the model what the model was just told, and spends budget an answer
+    // needed. Almost always it is the user's own question, asked before in
+    // another conversation and left unanswered there too.
+    if (lexical >= CROSS_THREAD_NEAR_DUPLICATE_OVERLAP) return null;
     const reasons: string[] = [];
     if (entity > 0) reasons.push(`entity:${entity.toFixed(2)}`);
     if (lexical > 0) reasons.push(`lexical:${lexical.toFixed(2)}`);
+    if (termHit > 0) reasons.push(`terms:${termHit.toFixed(2)}`);
     return {
       messageId: row.messageId,
       threadId: row.threadId,

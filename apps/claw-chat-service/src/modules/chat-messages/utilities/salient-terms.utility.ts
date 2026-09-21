@@ -2,7 +2,11 @@ import {
   MIN_MATCH_TOKEN_LENGTH,
   PLANTED_IDENTIFIER_PATTERN,
 } from '../constants/context-composer.constants';
-import { SALIENT_TERM_LIMIT, SALIENT_TERM_STOPWORDS } from '../constants/salient-terms.constants';
+import {
+  SALIENT_SEARCH_WORD_LIMIT,
+  SALIENT_TERM_LIMIT,
+  SALIENT_TERM_STOPWORDS,
+} from '../constants/salient-terms.constants';
 import { type SalientTerms } from '../types/salient-terms.types';
 
 /**
@@ -36,17 +40,17 @@ export function extractSalientTerms(intent: string): SalientTerms {
     .sort((a, b) => b.length - a.length);
 
   return {
-    identifiers: dedupe(identifiers),
-    words: dedupe(words),
+    identifiers: dedupe(identifiers, SALIENT_TERM_LIMIT),
+    words: dedupe(words, SALIENT_SEARCH_WORD_LIMIT),
   };
 }
 
-function dedupe(terms: readonly string[]): string[] {
+function dedupe(terms: readonly string[], limit: number): string[] {
   const out: string[] = [];
   for (const term of terms) {
     if (out.some((existing) => existing.toLowerCase() === term.toLowerCase())) continue;
     out.push(term);
-    if (out.length >= SALIENT_TERM_LIMIT) break;
+    if (out.length >= limit) break;
   }
   return out;
 }
@@ -63,5 +67,13 @@ function dedupe(terms: readonly string[]): string[] {
  * those prompts drag in half the account.
  */
 export function searchTermsFor(terms: SalientTerms): string[] {
-  return terms.identifiers.length > 0 ? terms.identifiers : terms.words;
+  // The word path is capped for the same reason identifiers win outright: an
+  // uncapped sentence searches on its filler as well as its subject, and the
+  // candidate query is ordered by recency, so a common word floods the scan
+  // with whatever the account did lately and evicts the thread that answers
+  // the question. Words arrive sorted longest-first, which is the cheapest
+  // available proxy for how discriminating each one is.
+  return terms.identifiers.length > 0
+    ? terms.identifiers
+    : terms.words.slice(0, SALIENT_SEARCH_WORD_LIMIT);
 }

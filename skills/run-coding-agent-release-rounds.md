@@ -79,6 +79,23 @@ certificate, and Node fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` without it.
 
 Flags: `--models=`, `--scenarios=`, `--repeat=`, `--json=`.
 
+**The default is the core eight, not all fifteen.** The full matrix took long
+enough that it stopped being run after every change, and a lane that is skipped
+proves nothing. The core set keeps one scenario per capability — edit, command,
+git, end-to-end delivery, a markdown plan, memory within a thread and across
+threads, research, and the workspace boundary — preferring the composite
+scenario wherever one covers several, and keeping every currently-red scenario
+so that dropping a scenario can never be how a gap disappears.
+
+```bash
+node scripts/live-rounds.mjs --scenarios=all        # the full fifteen
+node scripts/live-rounds.mjs --scenarios=git-commit # exactly these
+```
+
+Note the plural. `--scenario=` is not a flag; it is ignored in silence and the
+whole set runs, which reads as "my filter did nothing" only if you count the
+rows.
+
 ## 4. Triage what fails
 
 | Symptom                        | What it means                                                                           |
