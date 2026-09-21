@@ -1,5 +1,7 @@
 import { Sparkles } from 'lucide-react';
 
+import { ComposerDropzone } from '@/components/chat/composer-dropzone';
+import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { OrchestrationPageHeader } from '@/components/chat/orchestration/orchestration-page-header';
 import { OrchestrationSingleModelSelect } from '@/components/chat/orchestration/orchestration-single-model-select';
 import { OrchestrationStageTimeline } from '@/components/chat/orchestration/orchestration-stage-timeline';
@@ -38,6 +40,7 @@ export function OrchestrationPageShell({
   headerDescription,
   headerBadge,
   selectedModel,
+  composer,
   onModelChange,
   prompt,
   onPromptChange,
@@ -58,10 +61,7 @@ export function OrchestrationPageShell({
 }: OrchestrationPageShellProps): React.ReactElement {
   const trimmedPrompt = prompt.trim();
   const canSubmit =
-    !isPending &&
-    selectedModel !== null &&
-    trimmedPrompt.length > 0 &&
-    isSubmitDisabled !== true;
+    !isPending && selectedModel !== null && trimmedPrompt.length > 0 && isSubmitDisabled !== true;
 
   const hasError = errorMessage !== undefined && errorMessage !== null && errorMessage !== '';
   const hasResult = resultSlot !== undefined && resultSlot !== null && !isPending && !hasError;
@@ -70,8 +70,7 @@ export function OrchestrationPageShell({
   const showProgress = isPending && hasProgress;
 
   const resolvedPromptLabel = promptLabel ?? t('orchestrationShell.promptLabel');
-  const resolvedPromptPlaceholder =
-    promptPlaceholder ?? t('orchestrationShell.promptPlaceholder');
+  const resolvedPromptPlaceholder = promptPlaceholder ?? t('orchestrationShell.promptPlaceholder');
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col', className)}>
@@ -101,36 +100,59 @@ export function OrchestrationPageShell({
                 <div className="space-y-2">
                   <label
                     htmlFor="orchestration-prompt"
-                    className="block text-sm font-medium text-foreground"
+                    className="text-foreground block text-sm font-medium"
                   >
                     {resolvedPromptLabel}
                   </label>
-                  <Textarea
-                    id="orchestration-prompt"
-                    value={prompt}
-                    onChange={(event) => onPromptChange(event.target.value)}
-                    placeholder={resolvedPromptPlaceholder}
-                    disabled={isPending}
-                    rows={6}
-                    className="min-h-[8rem]"
-                  />
+                  {/* Attachments live in the shell, not in nine pages. Until
+                      now only Compare had them, so whether you could hand a
+                      model a document depended on which lab you opened. A page
+                      that passes no composer renders exactly as before. */}
+                  {composer === undefined ? (
+                    <Textarea
+                      id="orchestration-prompt"
+                      value={prompt}
+                      onChange={(event) => onPromptChange(event.target.value)}
+                      placeholder={resolvedPromptPlaceholder}
+                      disabled={isPending}
+                      rows={6}
+                      className="min-h-[8rem]"
+                    />
+                  ) : (
+                    <ComposerDropzone onFiles={composer.ingestFiles} disabled={isPending}>
+                      <Textarea
+                        id="orchestration-prompt"
+                        value={prompt}
+                        onChange={(event) => onPromptChange(event.target.value)}
+                        placeholder={resolvedPromptPlaceholder}
+                        disabled={isPending}
+                        rows={6}
+                        className="min-h-[8rem]"
+                      />
+                    </ComposerDropzone>
+                  )}
                 </div>
+
+                {composer === undefined ? null : (
+                  <div data-testid="orchestration-attachments">
+                    <FileAttachmentPicker
+                      selectedFileIds={composer.selectedFileIds}
+                      onChange={composer.setSelectedFileIds}
+                      disabled={isPending}
+                    />
+                  </div>
+                )}
 
                 {extraFieldsSlot !== undefined && extraFieldsSlot !== null ? (
                   <div className="space-y-3">{extraFieldsSlot}</div>
                 ) : null}
 
-                <Button
-                  type="button"
-                  onClick={onSubmit}
-                  disabled={!canSubmit}
-                  className="w-full"
-                >
+                <Button type="button" onClick={onSubmit} disabled={!canSubmit} className="w-full">
                   {submitLabel}
                 </Button>
 
                 {selectedModel === null ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {t('orchestrationShell.pickModelHint')}
                   </p>
                 ) : null}
@@ -153,7 +175,7 @@ export function OrchestrationPageShell({
                     rows={1}
                     label={t('orchestrationShell.runningLabel')}
                   />
-                  <p className="text-center text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-center text-xs">
                     {t('orchestrationShell.runningLabel')}
                   </p>
                 </CardContent>
@@ -163,7 +185,7 @@ export function OrchestrationPageShell({
             {showProgress ? (
               <Card>
                 <CardContent className="space-y-4 p-4 sm:p-5">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  <div className="text-primary flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase">
                     <Sparkles className="h-3.5 w-3.5" />
                     {t('orchestrationShell.progressTitle')}
                   </div>

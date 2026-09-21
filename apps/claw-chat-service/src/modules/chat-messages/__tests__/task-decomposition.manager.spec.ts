@@ -2,36 +2,49 @@ import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
-import * as httpClient from '../../../common/utilities/http-client.utility';
 import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
 import { type ResearchEnricherManager } from '../managers/research-enricher.manager';
+import { type ChatContextGatewayManager } from '../managers/chat-context-gateway.manager';
+import { type ModeExecutionGatewayManager } from '../managers/mode-execution-gateway.manager';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../services/chat-stream.service';
 import { type AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { decomposeTaskSchema } from '../dto/decompose-task.dto';
+import { PAYG_WORKFLOW_TASK_DECOMPOSITION } from '../constants/payg.constants';
+import { TokenLedgerContext } from '@claw/shared-types';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 
-vi.mock('../../../common/utilities/http-client.utility');
+// The original user turn. The whole point of the gateway migration is that a
+// sub-task run can still see this; before it, a sub-task was sent as its bare
+// instruction and the user's words never reached the model.
+const ORIGINAL_USER_MESSAGE = {
+  id: 'msg-user-original',
+  threadId: 'thread-1',
+  role: 'USER',
+  content: 'Audit the config file in the billing service',
+  metadata: null,
+};
 
-// vi.importMock hands back a FRESH automock rather than the instance the
-// manager imported, so nothing configured here reached the code under test.
-// Mocking the real imported binding is the handle the manager actually holds.
-const httpRequest = vi.mocked(httpClient.httpRequest);
-
-// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
-// hands that same static back, so the spec configured one object while the code
-// under test read another. A hoisted vi.fn keeps both on one mock.
-const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
-
-vi.mock('../../../app/config/app.config', () => ({
-  AppConfig: { get: appConfigGet },
-}));
-
-const AppConfig = { get: appConfigGet };
-
-AppConfig.get.mockReturnValue({ OLLAMA_SERVICE_URL: 'http://ollama:4008' });
+const makeBundle = (): ChatContextBundle =>
+  ({
+    context: {
+      userId: 'user-1',
+      systemPrompt: null,
+      threadMessages: [ORIGINAL_USER_MESSAGE],
+      memories: [],
+      contextPackItems: [],
+      fileContents: [],
+      workspaceCitations: [],
+      researchEvidence: [],
+    },
+    thread: { id: 'thread-1' },
+    threadSettings: undefined,
+    messages: [ORIGINAL_USER_MESSAGE],
+    fileIds: [],
+    latestUserMetadata: null,
+  }) as unknown as ChatContextBundle;
 
 const mockMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
   create: vi.fn(),
@@ -45,11 +58,10 @@ const mockThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, Mock>> =
 const mockStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
   emitRequestAccepted: vi.fn(),
   emitProgressStage: vi.fn(),
+  emitOrchestrationStage: vi.fn(),
   emitCompletion: vi.fn(),
   emitError: vi.fn(),
 });
-
-const makeOllamaSuccess = (text: string) => ({ ok: true, status: 200, data: { response: text } });
 
 type ResearchEnricherStub = {
   enrichForOrchestration: Mock;
@@ -57,12 +69,13 @@ type ResearchEnricherStub = {
 };
 
 function mockResearchEnricher(): ResearchEnricherStub {
-  const enrichForOrchestration = vi
-    .fn()
-    .mockResolvedValue({ transcript: null, systemPrompt: '' });
+  const enrichForOrchestration = vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' });
   const service = { enrichForOrchestration } as unknown as ResearchEnricherManager;
   return { enrichForOrchestration, service };
 }
+
+const subTasksJson = (...titles: Array<{ title: string; instruction: string }>): string =>
+  JSON.stringify(titles.map((t) => ({ ...t, category: 'general' })));
 
 describe('TaskDecompositionManager', () => {
   let manager: TaskDecompositionManager;
@@ -70,6 +83,22 @@ describe('TaskDecompositionManager', () => {
   let threadsRepo: ReturnType<typeof mockThreadsRepo>;
   let streamService: ReturnType<typeof mockStreamService>;
   let researchEnricher: ResearchEnricherStub;
+  let contextGateway: { build: Mock };
+  let executionGateway: { run: Mock };
+  let bundle: ChatContextBundle;
+
+  const build = (
+    selectionService?: AdvancedModuleModelSelectionService,
+  ): TaskDecompositionManager =>
+    new TaskDecompositionManager(
+      messagesRepo as unknown as ChatMessagesRepository,
+      threadsRepo as unknown as ChatThreadsRepository,
+      streamService as unknown as ChatStreamService,
+      contextGateway as unknown as ChatContextGatewayManager,
+      executionGateway as unknown as ModeExecutionGatewayManager,
+      researchEnricher.service,
+      selectionService,
+    );
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -77,13 +106,13 @@ describe('TaskDecompositionManager', () => {
     threadsRepo = mockThreadsRepo();
     streamService = mockStreamService();
     researchEnricher = mockResearchEnricher();
-    manager = new TaskDecompositionManager(
-      messagesRepo as unknown as ChatMessagesRepository,
-      threadsRepo as unknown as ChatThreadsRepository,
-      streamService as unknown as ChatStreamService,
-      researchEnricher.service,
-      createFakePaygAccessControl() as any,
-    );
+    bundle = makeBundle();
+    contextGateway = { build: vi.fn().mockResolvedValue(bundle) };
+    // Planner hop, then one hop per sub-task, then the merge — all through the
+    // one chokepoint chat uses, so the spec drives this instead of a hand-built
+    // Ollama request body.
+    executionGateway = { run: vi.fn().mockResolvedValue({ content: 'gateway answer' }) };
+    manager = build();
   });
 
   describe('executeDecomposition', () => {
@@ -198,20 +227,16 @@ describe('TaskDecompositionManager', () => {
 
   describe('executeInBackground', () => {
     it('should store ASSISTANT message with decomposed:true on success', async () => {
-      const subTasksJson = JSON.stringify([
-        { title: 'Research', instruction: 'Do research', category: 'research' },
-        { title: 'Write', instruction: 'Write report', category: 'writing' },
-      ]);
-
-      httpRequest
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: subTasksJson } })
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'Research result' } })
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'Writing result' } })
+      executionGateway.run
         .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: { response: 'Merged final answer' },
-        });
+          content: subTasksJson(
+            { title: 'Research', instruction: 'Do research' },
+            { title: 'Write', instruction: 'Write report' },
+          ),
+        })
+        .mockResolvedValueOnce({ content: 'Research result' })
+        .mockResolvedValueOnce({ content: 'Writing result' })
+        .mockResolvedValueOnce({ content: 'Merged final answer' });
 
       messagesRepo.create!.mockResolvedValue({ id: 'assist-1', threadId: 'thread-1' });
 
@@ -224,15 +249,16 @@ describe('TaskDecompositionManager', () => {
       expect(
         (assistantCall![0] as { metadata?: { decomposed?: boolean } }).metadata?.decomposed,
       ).toBe(true);
+      expect((assistantCall![0] as { content?: string }).content).toBe('Merged final answer');
     });
 
-    it('should emit SSE error and store error message on Ollama failure', async () => {
-      httpRequest.mockResolvedValueOnce({ ok: false, status: 500, data: { response: '' } });
+    it('should emit SSE error and store error message when the gateway call fails', async () => {
+      executionGateway.run.mockRejectedValueOnce(new Error('provider refused'));
       messagesRepo.create!.mockResolvedValue({ id: 'err-msg', threadId: 'thread-1' });
 
       await manager.executeInBackground('thread-1', 'Complex task', 2, 'user-1');
 
-      expect(streamService.emitError).toHaveBeenCalledWith('thread-1', expect.any(String));
+      expect(streamService.emitError).toHaveBeenCalledWith('thread-1', 'provider refused');
       const errorCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { metadata?: { error?: boolean } }).metadata?.error === true,
       );
@@ -240,18 +266,10 @@ describe('TaskDecompositionManager', () => {
     });
 
     it('should handle JSON parse failure and fall back to single task', async () => {
-      httpRequest
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: { response: 'not valid json at all' },
-        })
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'Single task result' } })
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: { response: 'Final merged answer' },
-        });
+      executionGateway.run
+        .mockResolvedValueOnce({ content: 'not valid json at all' })
+        .mockResolvedValueOnce({ content: 'Single task result' })
+        .mockResolvedValueOnce({ content: 'Final merged answer' });
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-fallback', threadId: 'thread-1' });
 
@@ -264,17 +282,15 @@ describe('TaskDecompositionManager', () => {
       expect(
         (assistantCall![0] as { metadata?: { decomposed?: boolean } }).metadata?.decomposed,
       ).toBe(true);
+      // Planner + one fallback sub-task + merge.
+      expect(executionGateway.run).toHaveBeenCalledTimes(3);
     });
 
     it('should emit SSE completion on success', async () => {
-      httpRequest
-        .mockResolvedValueOnce(
-          makeOllamaSuccess(
-            JSON.stringify([{ title: 'Task', instruction: 'Do it', category: 'general' }]),
-          ),
-        )
-        .mockResolvedValueOnce(makeOllamaSuccess('result'))
-        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'Task', instruction: 'Do it' }) })
+        .mockResolvedValueOnce({ content: 'result' })
+        .mockResolvedValueOnce({ content: 'merged' });
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-done', threadId: 'thread-1' });
 
@@ -284,11 +300,112 @@ describe('TaskDecompositionManager', () => {
     });
   });
 
+  describe('shared context bundle', () => {
+    it('builds ONE DECOMPOSE bundle and gives every sub-task the original conversation', async () => {
+      executionGateway.run
+        .mockResolvedValueOnce({
+          content: subTasksJson(
+            { title: 'Find it', instruction: 'check the config file' },
+            { title: 'Explain it', instruction: 'summarise the findings' },
+          ),
+        })
+        .mockResolvedValueOnce({ content: 'sub one' })
+        .mockResolvedValueOnce({ content: 'sub two' })
+        .mockResolvedValueOnce({ content: 'merged' });
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-bundle', threadId: 'thread-1' });
+
+      await manager.executeInBackground('thread-1', 'Complex task content here', 2, 'user-1');
+
+      // One bundle for planner + both sub-tasks + merge, not one per hop.
+      expect(contextGateway.build).toHaveBeenCalledTimes(1);
+      expect(contextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          threadId: 'thread-1',
+          surface: 'DECOMPOSE',
+          historyLimit: 20,
+        }),
+      );
+      expect(executionGateway.run).toHaveBeenCalledTimes(4);
+
+      // The defect this migration fixes: a sub-task used to be sent as its bare
+      // instruction, so "check the config file" reached a model that had never
+      // seen the user's question. It now rides on the shared bundle.
+      const subTaskCalls = executionGateway.run.mock.calls.slice(1, 3);
+      for (const [request] of subTaskCalls) {
+        const typed = request as { bundle: ChatContextBundle; prompt?: string };
+        expect(typed.bundle).toBe(bundle);
+        expect(typed.bundle.context.threadMessages).toContain(ORIGINAL_USER_MESSAGE);
+      }
+      expect((subTaskCalls[0]![0] as { prompt?: string }).prompt).toBe('check the config file');
+      expect((subTaskCalls[1]![0] as { prompt?: string }).prompt).toBe('summarise the findings');
+    });
+
+    it('sends the decomposition framing as a persona, not as prompt text', async () => {
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub' })
+        .mockResolvedValueOnce({ content: 'merged' });
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-persona', threadId: 'thread-1' });
+
+      await manager.executeInBackground('thread-1', 'Audit the billing config', 3, 'user-1');
+
+      const plannerRequest = executionGateway.run.mock.calls[0]![0] as {
+        bundle: ChatContextBundle;
+        prompt?: string;
+      };
+      expect(plannerRequest.bundle.context.systemPrompt).toContain(
+        'You are a task decomposition assistant',
+      );
+      // The user's own words are the prompt, not a string interpolated into a
+      // hardcoded template.
+      expect(plannerRequest.prompt).toBe('Audit the billing config');
+      // The persona is appended locally; the shared bundle is left untouched so
+      // the sub-tasks do not inherit the planner's rubric.
+      expect(bundle.context.systemPrompt).toBeNull();
+    });
+
+    it('passes the enricher transcript as a persona instruction on the bundle', async () => {
+      researchEnricher.enrichForOrchestration.mockResolvedValue({
+        transcript: null,
+        systemPrompt: '## Web research evidence',
+      });
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub' })
+        .mockResolvedValueOnce({ content: 'merged' });
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-evidence', threadId: 'thread-1' });
+
+      await manager.executeInBackground('thread-1', 'Some complex task', 2, 'user-1');
+
+      expect(contextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ personaInstruction: '## Web research evidence' }),
+      );
+    });
+
+    it('meters every hop on the task-decomposition ledger context', async () => {
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub' })
+        .mockResolvedValueOnce({ content: 'merged' });
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-ledger', threadId: 'thread-1' });
+
+      await manager.executeInBackground('thread-1', 'Some complex task', 2, 'user-1');
+
+      for (const [request] of executionGateway.run.mock.calls) {
+        const typed = request as {
+          ledgerContext: string;
+          paygCall?: { workflow: string; requestId: string };
+        };
+        expect(typed.ledgerContext).toBe(TokenLedgerContext.TASK_DECOMPOSITION);
+        expect(typed.paygCall?.workflow).toBe(PAYG_WORKFLOW_TASK_DECOMPOSITION);
+      }
+    });
+  });
+
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
-      const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, Mock>
-      > = {
+      const selectionService: Partial<Record<keyof AdvancedModuleModelSelectionService, Mock>> = {
         resolveSelection: vi
           .fn()
           .mockRejectedValue(
@@ -298,14 +415,7 @@ describe('TaskDecompositionManager', () => {
             ),
           ),
       };
-      const isolated = new TaskDecompositionManager(
-        messagesRepo as unknown as ChatMessagesRepository,
-        threadsRepo as unknown as ChatThreadsRepository,
-        streamService as unknown as ChatStreamService,
-        researchEnricher.service,
-        createFakePaygAccessControl() as any,
-        selectionService as unknown as AdvancedModuleModelSelectionService,
-      );
+      const isolated = build(selectionService as unknown as AdvancedModuleModelSelectionService);
 
       await expect(
         isolated.executeDecomposition(
@@ -334,14 +444,10 @@ describe('TaskDecompositionManager', () => {
         actualProvider: 'local-ollama',
         actualModel: 'qwen2.5:7b',
       };
-      httpRequest
-        .mockResolvedValueOnce(
-          makeOllamaSuccess(
-            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
-          ),
-        )
-        .mockResolvedValueOnce(makeOllamaSuccess('sub-result'))
-        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub-result' })
+        .mockResolvedValueOnce({ content: 'merged' });
       messagesRepo.create!.mockResolvedValue({ id: 'msg-manual', threadId: 'thread-m' });
 
       await manager.executeInBackground(
@@ -376,14 +482,10 @@ describe('TaskDecompositionManager', () => {
     });
 
     it('uses AUTO fallback resolution when no selection service is injected', async () => {
-      httpRequest
-        .mockResolvedValueOnce(
-          makeOllamaSuccess(
-            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
-          ),
-        )
-        .mockResolvedValueOnce(makeOllamaSuccess('sub-result'))
-        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub-result' })
+        .mockResolvedValueOnce({ content: 'merged' });
       messagesRepo.create!.mockResolvedValue({ id: 'msg-auto', threadId: 'thread-a' });
 
       await manager.executeInBackground('thread-a', 'Some complex task', 2, 'user-1');
@@ -404,14 +506,10 @@ describe('TaskDecompositionManager', () => {
 
   describe('research enrichment wiring', () => {
     it('does NOT thread researchTranscript into metadata when researchMode is undefined', async () => {
-      httpRequest
-        .mockResolvedValueOnce(
-          makeOllamaSuccess(
-            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
-          ),
-        )
-        .mockResolvedValueOnce(makeOllamaSuccess('sub'))
-        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub' })
+        .mockResolvedValueOnce({ content: 'merged' });
       messagesRepo.create!.mockResolvedValue({ id: 'msg-no-research', threadId: 'thread-n' });
 
       await manager.executeInBackground(
@@ -446,14 +544,10 @@ describe('TaskDecompositionManager', () => {
         systemPrompt:
           '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] Wiki — https://wiki.example.com\nsnippet\n',
       });
-      httpRequest
-        .mockResolvedValueOnce(
-          makeOllamaSuccess(
-            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
-          ),
-        )
-        .mockResolvedValueOnce(makeOllamaSuccess('sub'))
-        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      executionGateway.run
+        .mockResolvedValueOnce({ content: subTasksJson({ title: 'T', instruction: 'do' }) })
+        .mockResolvedValueOnce({ content: 'sub' })
+        .mockResolvedValueOnce({ content: 'merged' });
       messagesRepo.create!.mockResolvedValue({ id: 'msg-research', threadId: 'thread-r' });
 
       await manager.executeInBackground(

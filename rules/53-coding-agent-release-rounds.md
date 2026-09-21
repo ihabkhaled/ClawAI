@@ -22,7 +22,9 @@ that fails intermittently, differs per model, and cannot be unit tested.
    a command and acting on its output, a real `git` commit, delivering a
    feature end to end with a passing test, applying a plan written as markdown,
    repairing a failing test, building several files that work together, and
-   staying inside the workspace.
+   staying inside the workspace. The default run is the **core eight**, one per
+   capability; `--scenarios=all` runs the full fifteen and is what a release
+   sweep uses.
 3. Repeat rounds — a single pass proves nothing about reliability. The first
    sweep found a scenario that failed once and passed three times on retry.
 4. Every failure is triaged into: a product defect (fix it), a model
@@ -43,6 +45,10 @@ comes to look finished while delivering nothing.
   reported as not run.
 - Treating an intermittent failure as a pass because the retry succeeded. The
   intermittency is the finding; record the rate.
+- Dropping a failing scenario from the default set. The default is a shortlist
+  chosen for speed, so it is the obvious place a red row could quietly stop
+  being run: **every currently-red scenario stays in it**, and a scenario
+  leaves only once it is green and something else covers what it proved.
 
 ## Mechanism
 

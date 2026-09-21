@@ -1,29 +1,46 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { RepairType } from '../../../common/enums/repair-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
-import { httpRequest } from '../../../common/utilities/http-client.utility';
-import { REPAIR_GENERATION_TIMEOUT_MS } from '../constants/answer-repair.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
+import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { RepairMessageDto } from '../dto/repair-message.dto';
 import type { AnswerRepairResponse } from '../types/answer-repair.types';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
-import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import { type RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_ANSWER_REPAIR } from '../constants/payg.constants';
 
+/**
+ * Repairs an answer — with the conversation that produced it.
+ *
+ * This mode used to build one string, `buildRepairPrompt(originalContent,
+ * repairTypes)`, and post it at `/api/v1/ollama/generate`. That carried the
+ * same defect the judge had: the repairer saw the answer but not the question,
+ * so a COMPLETENESS or FACTUALITY pass was scoring text against nothing. "Is
+ * this complete?" has no answer without knowing what was asked, which files
+ * were attached, or what the thread's system prompt told the model to be — and
+ * the repairer was given none of it.
+ *
+ * Two further consequences nobody chose: the raw post pinned every repair to a
+ * local model (an account with only a cloud connector could not repair at all),
+ * and it metered through `meterOrchestrationCall` plus a hand-rolled
+ * `recordUsage` — a second path to the ledger that `callProvider` already owns.
+ */
 @Injectable()
 export class AnswerRepairManager {
   private readonly logger = new Logger(AnswerRepairManager.name);
@@ -32,8 +49,9 @@ export class AnswerRepairManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly chatContextGateway: ChatContextGatewayManager,
+    private readonly modeExecutionGateway: ModeExecutionGatewayManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
-    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -71,6 +89,12 @@ export class AnswerRepairManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      // The DTO DOES carry a message id: `repairMessageSchema.messageId` names
+      // the earlier message being repaired. It is forwarded so the bundle is
+      // the history AS IT WAS at that message — repairing turn 3 must not read
+      // turns 4 through 20, which is precisely what `windowAt` is for.
+      dto.messageId,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -85,6 +109,8 @@ export class AnswerRepairManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    routedMessageId?: string,
+    fileIds?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -102,6 +128,26 @@ export class AnswerRepairManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
+      // One bundle: the conversation, files, memories and thread system prompt
+      // the answer under repair was produced from. Without it a repair pass is
+      // rewriting text it cannot check against anything.
+      const bundle = await this.chatContextGateway.build({
+        userId,
+        threadId,
+        surface: ChatSurface.REPAIR,
+        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        // Cut the history at the message being repaired, so the pass does not
+        // read everything said after the answer it is fixing.
+        ...(routedMessageId === undefined ? {} : { routedMessageId }),
+        // The enricher's transcript used to be glued to the front of the repair
+        // prompt by `prependResearchEvidence`. It is an instruction about how to
+        // answer, so it belongs in the system prompt beside the user's own —
+        // appended, never replacing.
+        ...(enrichment.systemPrompt.length > 0
+          ? { personaInstruction: enrichment.systemPrompt }
+          : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+      });
       this.safeEmitStage(threadId, {
         label: 'Draft critique',
         status: OrchestrationStageStatus.ACTIVE,
@@ -109,11 +155,10 @@ export class AnswerRepairManager {
         stageId: 'repair:critique',
       });
       const repairedContent = await this.callRepairLlm(
+        bundle,
         originalContent,
         repairTypes,
         resolvedSelection,
-        enrichment.systemPrompt,
-        userId,
       );
 
       const provider = resolvedSelection.actualProvider;
@@ -171,83 +216,93 @@ export class AnswerRepairManager {
     }
   }
 
+  /**
+   * The repair hop, through the same chokepoint a chat turn uses.
+   *
+   * The repair instruction is a PERSONA, not prompt text. Gluing it in front of
+   * the answer made the rubric part of what the user appeared to have typed, so
+   * the model answered the concatenation instead of being told what job to do —
+   * the same mistake role-pack made with its role instructions. The answer being
+   * repaired is the `prompt`, appended as a user turn after the real
+   * conversation rather than replacing it.
+   */
   private async callRepairLlm(
+    bundle: ChatContextBundle,
     originalContent: string,
     repairTypes: RepairType[],
     selection: AdvancedModelSelectionResolution,
-    researchEvidence: string,
-    userId: string,
   ): Promise<string> {
-    const config = AppConfig.get();
-    const baseRepairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
-    const repairPrompt = prependResearchEvidence(baseRepairPrompt, researchEvidence);
     const model = selection.actualModel;
+    const parsed = parseJudgeModel(model);
+    const provider = parsed.provider ?? OLLAMA_PROVIDER;
 
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt: repairPrompt,
-      stream: false,
-      think: false,
-    };
-
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `answer-repair:repair:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
+    const response = await this.modeExecutionGateway.run({
+      bundle: this.withRepairPersona(bundle, this.buildRepairPersona(repairTypes)),
+      prompt: originalContent,
+      provider,
+      model: parsed.model.length > 0 ? parsed.model : model,
+      ledgerContext: TokenLedgerContext.REPAIR,
+      paygCall: {
         workflow: PAYG_WORKFLOW_ANSWER_REPAIR,
-        promptText: requestBody.prompt,
+        requestId: `answer-repair:repair:${randomUUID()}`,
       },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: REPAIR_GENERATION_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
-
-    if (!response.ok) {
-      throw new Error(`Ollama repair returned status ${String(response.status)}`);
-    }
-
-    // Universal token deduction: repair hop is a real LLM call.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
     });
 
-    const repaired = response.data.response.trim();
+    // No `recordUsage` here: `callProvider` is the universal token-deduction
+    // chokepoint and records every call that passes through it. The hand-rolled
+    // one this method used to make was a second path to the same ledger.
+    const repaired = (response.content ?? '').trim();
     if (repaired.length === 0) {
-      throw new Error('Ollama returned an empty repair response');
+      throw new Error('The repair model returned an empty response');
     }
 
     return repaired;
   }
 
-  buildRepairPrompt(content: string, repairTypes: RepairType[]): string {
+  /**
+   * The repair rubric as a persona, derived locally from the single bundle.
+   *
+   * Asking the context gateway again just to attach this string would re-run
+   * history, memory, attachment and cross-thread retrieval for a bundle that
+   * differs by one field. The gateway's own `personaInstruction` handling is
+   * exactly this append, so doing it here is the same result at one retrieval
+   * set.
+   *
+   * Appended, never replacing: the thread's system prompt and the research
+   * evidence already in the bundle are the user's instructions, and a repair
+   * rubric is an addition to them.
+   */
+  private withRepairPersona(bundle: ChatContextBundle, instruction: string): ChatContextBundle {
+    if (instruction.trim().length === 0) {
+      return bundle;
+    }
+    const existing = bundle.context.systemPrompt;
+    return {
+      ...bundle,
+      context: {
+        ...bundle.context,
+        systemPrompt:
+          existing === null || existing.trim().length === 0
+            ? instruction
+            : `${existing}\n\n${instruction}`,
+      },
+    };
+  }
+
+  /**
+   * The repair types, framed as who the model is for this call.
+   *
+   * This is `buildRepairPrompt` with the answer taken out of it: the answer now
+   * reaches the model as the prompt turn, so the rubric no longer has to carry
+   * a copy of it.
+   */
+  buildRepairPersona(repairTypes: RepairType[]): string {
     const instructions = repairTypes.map((type) => this.getRepairInstruction(type)).join('\n');
 
-    return `You are a precision answer repair assistant. Repair the following answer based on the requested repair types.
+    return `You are a precision answer repair assistant. Repair the answer in the user's last message based on the requested repair types.
 
 Repair types requested:
 ${instructions}
-
-Original answer to repair:
----
-${content}
----
 
 Return ONLY the repaired answer. Do not explain what you changed. Do not add preamble.`;
   }
@@ -304,10 +359,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
   }
 
   private async resolveModel(model?: string): Promise<string> {
-    if (model && model !== 'AUTO') {
-      return model;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model && model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private safeEmitStage(
@@ -328,8 +380,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
   }
 
   private async resolveSelection(dto: RepairMessageDto): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider ?? dto.targetProvider,
@@ -338,10 +389,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? dto.targetProvider ?? 'local-ollama',
       requestedModel: dto.requestedModel ?? dto.targetModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

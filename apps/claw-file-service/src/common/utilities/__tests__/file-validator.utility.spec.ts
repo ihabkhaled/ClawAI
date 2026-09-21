@@ -47,3 +47,66 @@ describe('validateMagicBytes video formats', () => {
     );
   });
 });
+
+// B6a — audio containers. Without a signature check, "audio/wav" was an
+// unchecked MIME: any bytes at all rode in under that name.
+const WAV_BYTES = Buffer.from('524946462400000057415645666d7420', 'hex');
+const OGG_BYTES = Buffer.from('4f6767530002000000000000', 'hex');
+const FLAC_BYTES = Buffer.from('664c614300000022', 'hex');
+const MP3_ID3_BYTES = Buffer.from('494433040000000000', 'hex');
+const MP3_SYNC_BYTES = Buffer.from('fffb906400000000', 'hex');
+const M4A_BYTES = Buffer.from('00000020667479704d34412000000000', 'hex');
+const AAC_ADTS_BYTES = Buffer.from('fff1508000000000', 'hex');
+
+describe('validateMagicBytes audio formats', () => {
+  it.each([
+    ['audio/wav', WAV_BYTES],
+    ['audio/x-wav', WAV_BYTES],
+    ['audio/ogg', OGG_BYTES],
+    ['audio/flac', FLAC_BYTES],
+    ['audio/mpeg', MP3_ID3_BYTES],
+    ['audio/mpeg', MP3_SYNC_BYTES],
+    ['audio/mp4', M4A_BYTES],
+    ['audio/x-m4a', M4A_BYTES],
+    ['audio/webm', WEBM_BYTES],
+    ['audio/aac', AAC_ADTS_BYTES],
+  ])('accepts a detected %s container', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: true,
+      reason: 'magic_bytes_match',
+    });
+  });
+
+  it.each([
+    ['audio/wav', MP3_SYNC_BYTES],
+    ['audio/mpeg', WAV_BYTES],
+    ['audio/ogg', FLAC_BYTES],
+    ['audio/flac', OGG_BYTES],
+    ['audio/mp4', WEBM_BYTES],
+    ['audio/webm', M4A_BYTES],
+  ])('rejects cross-declared %s container bytes', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: false,
+      reason: `mime_magic_mismatch: declared ${mimeType}`,
+    });
+  });
+
+  it.each(['audio/wav', 'audio/mpeg', 'audio/ogg', 'audio/flac'])(
+    'rejects an executable payload renamed to %s',
+    async (mimeType) => {
+      await expect(
+        validateMagicBytes(Buffer.from('MZ\u0090\u0000payload'), mimeType),
+      ).resolves.toEqual({
+        valid: false,
+        reason: `mime_magic_mismatch: declared ${mimeType}`,
+      });
+    },
+  );
+
+  it('rejects a RIFF container that is not WAVE', async () => {
+    await expect(validateMagicBytes(AVI_BYTES, 'audio/wav')).resolves.toEqual({
+      valid: false,
+      reason: 'mime_magic_mismatch: declared audio/wav',
+    });
+  });
+});

@@ -41,6 +41,7 @@ export default function EscalationPage(): React.ReactElement {
     isPolling,
     isSynthesisReady,
     handleViewInThread,
+    composer,
   } = useEscalationPage();
 
   const isRunning = isPending || isPolling;
@@ -93,6 +94,7 @@ export default function EscalationPage(): React.ReactElement {
       onPromptChange={setPrompt}
       promptLabel={t('escalation.contentLabel')}
       promptPlaceholder={t('escalation.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={extraFieldsSlot}
       onSubmit={handleSend}
       submitLabel={isRunning ? t('escalation.running') : t('escalation.sendPrompt')}

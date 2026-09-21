@@ -1,6 +1,6 @@
 {
   "name": "claw",
-  "version": "1.110.0",
+  "version": "1.110.1",
   "private": true,
   "description": "Claw — Local-first AI orchestration platform (microservices)",
   "workspaces": [
@@ -73,10 +73,10 @@
     "eslint": "^10.10.0",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-security": "^4.0.1",
-    "eslint-plugin-unicorn": "74.0.0",
+    "eslint-plugin-unicorn": "75.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "prisma": "^7.10.0",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.70.0",
@@ -85,15 +85,16 @@
     "vitest": "5.0.1"
   },
   "dependencies": {
-    "@nestjs/common": "^12.0.1",
+    "@nestjs/common": "^12.0.3",
     "@nestjs/core": "^12.0.1",
-    "@nestjs/platform-express": "^12.0.1",
+    "@nestjs/platform-express": "^12.0.3",
     "better-sqlite3": "^13.0.3",
     "mongoose": "^9.9.1",
     "rxjs": "^7.8.2",
-    "zod": "^4.6.2"
+    "zod": "^4.6.5"
   },
   "overrides": {
+    "jsdom": "30.0.1",
     "multer": "^2.4.0",
     "mysql2": "^3.24.4",
     "@xmldom/xmldom": "^0.8.13",

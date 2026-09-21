@@ -42,7 +42,14 @@ export function LocaleSwitcher(): React.ReactElement {
           aria-label={`${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
         >
           <Languages className="h-4 w-4" aria-hidden="true" />
-          <span>{currentLabel}</span>
+          {/* The full language name does not fit beside the search, currency
+              and avatar controls on a phone, which is why this control used to
+              be hidden below 640px altogether. The code is enough to identify
+              the current language; the full name stays in the aria-label, so
+              nothing is lost to a screen reader. Same treatment as the
+              marketing switcher. */}
+          <span className="hidden sm:inline">{currentLabel}</span>
+          <span className="sm:hidden">{locale.toUpperCase()}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>

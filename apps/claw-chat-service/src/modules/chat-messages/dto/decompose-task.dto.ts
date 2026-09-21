@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
+import { attachmentFields } from './attachment-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 export const decomposeTaskSchema = z.object({
@@ -8,6 +9,7 @@ export const decomposeTaskSchema = z.object({
   maxSubTasks: z.number().int().min(2).max(5).default(3),
   ...advancedModelSelectionFields,
   ...researchFields,
+  ...attachmentFields,
 });
 
 export type DecomposeTaskDto = z.infer<typeof decomposeTaskSchema>;

@@ -91,6 +91,19 @@ function wordSet(value: string): Set<string> {
   );
 }
 
+/**
+ * Whether a text carries any coined identifier or bare number at all.
+ *
+ * `entityOverlap` answers 0 for a text with nothing to overlap, which is
+ * correct and easily misread: a caller that weights entity overlap at 0.6 then
+ * silently discards 60% of its scale for every prompt phrased in ordinary
+ * words. Asking first is how a caller tells "no entities matched" apart from
+ * "there were no entities to match".
+ */
+export function hasEntities(value: string): boolean {
+  return entitySet(value).size > 0;
+}
+
 function entitySet(value: string): Set<string> {
   const out = new Set<string>();
   for (const match of value.matchAll(PLANTED_IDENTIFIER_PATTERN)) {

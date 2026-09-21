@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { JudgeRefereeManager } from '../judge-referee.manager';
 import { ChatExecutionManager } from '../chat-execution.manager';
 import { ChatStreamService } from '../../services/chat-stream.service';
@@ -78,6 +78,10 @@ const criticOkResponse = {
   usedFallback: false,
 };
 
+// The review question is now APPENDED to the conversation rather than replacing
+// it, so it is the LAST message, not the only one. That is the point of the
+// change: a judge that cannot see the conversation is judging an answer against
+// a fragment of the question.
 describe('JudgeRefereeManager — attachments injection', () => {
   let manager: JudgeRefereeManager;
   let chatStream: ChatStreamService;
@@ -129,7 +133,7 @@ describe('JudgeRefereeManager — attachments injection', () => {
 
     const criticCall = callProviderMock.mock.calls[0]!;
     const criticCtx = criticCall[2] as AssembledContext;
-    const criticUserMsg = criticCtx.threadMessages[0]!.content as string;
+    const criticUserMsg = criticCtx.threadMessages.at(-1)!.content as string;
 
     // Manifest, mime, snippet, and prompt-injection guard are all present.
     expect(criticUserMsg).toContain('<attached_files>');
@@ -170,7 +174,7 @@ describe('JudgeRefereeManager — attachments injection', () => {
     // Second call is the judge.
     const judgeCall = callProviderMock.mock.calls[1]!;
     const judgeCtx = judgeCall[2] as AssembledContext;
-    const judgeUserMsg = judgeCtx.threadMessages[0]!.content as string;
+    const judgeUserMsg = judgeCtx.threadMessages.at(-1)!.content as string;
 
     // Manifest is included in the judge user message.
     expect(judgeUserMsg).toContain('<attached_files>');
@@ -233,7 +237,7 @@ describe('JudgeRefereeManager — attachments injection', () => {
     );
 
     const visionCriticMsg = callProviderMock.mock.calls[0]![2] as AssembledContext;
-    expect(visionCriticMsg.threadMessages[0]!.content as string).toContain('1 NATIVE_IMAGE');
+    expect(visionCriticMsg.threadMessages.at(-1)!.content as string).toContain('1 NATIVE_IMAGE');
 
     // Now a provider NOT in the heuristic VISION_CAPABLE_PROVIDERS set
     // (MISTRAL) — must classify as OMITTED_NO_VISION.
@@ -252,7 +256,9 @@ describe('JudgeRefereeManager — attachments injection', () => {
     );
 
     const noVisionCriticMsg = callProviderMock.mock.calls[2]![2] as AssembledContext;
-    expect(noVisionCriticMsg.threadMessages[0]!.content as string).toContain('1 OMITTED_NO_VISION');
+    expect(noVisionCriticMsg.threadMessages.at(-1)!.content as string).toContain(
+      '1 OMITTED_NO_VISION',
+    );
   });
 
   it('preserves the legacy judge prompt shape (no manifest, no clause) when no files are attached', async () => {
@@ -278,7 +284,7 @@ describe('JudgeRefereeManager — attachments injection', () => {
 
     const judgeCall = callProviderMock.mock.calls[1]!;
     const judgeCtx = judgeCall[2] as AssembledContext;
-    const judgeUserMsg = judgeCtx.threadMessages[0]!.content as string;
+    const judgeUserMsg = judgeCtx.threadMessages.at(-1)!.content as string;
     const systemPrompt = judgeCtx.systemPrompt as string;
 
     expect(judgeUserMsg).not.toContain('<attached_files>');

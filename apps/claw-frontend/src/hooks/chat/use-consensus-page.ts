@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { MAX_CONSENSUS_MODELS, MIN_CONSENSUS_MODELS } from '@/constants';
 import { useConsensusPoll } from '@/hooks/chat/use-consensus-poll';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useSendConsensus } from '@/hooks/chat/use-send-consensus';
 import { useTranslation } from '@/lib/i18n';
@@ -30,6 +31,7 @@ export function useConsensusPage(): UseConsensusPageReturn {
     [],
   );
   const [prompt, setPrompt] = useState('');
+  const composer = useOrchestrationComposer();
   const { send, result, isPending, isError } = useSendConsensus();
 
   const threadId = result?.threadId ?? null;
@@ -110,8 +112,13 @@ export function useConsensusPage(): UseConsensusPageReturn {
       return;
     }
 
-    send({ content: trimmedPrompt, models: fleet });
-  }, [canSubmit, send, trimmedPrompt, selectedModel, selectedModels]);
+    send({
+      content: trimmedPrompt,
+      models: fleet,
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
+    });
+    composer.clear();
+  }, [canSubmit, send, trimmedPrompt, selectedModel, selectedModels, composer]);
 
   // Resolve a user-visible error message. Mutation failures surface
   // through `useSendConsensus.onError` (toast) but we also expose them
@@ -144,5 +151,6 @@ export function useConsensusPage(): UseConsensusPageReturn {
     stages,
     hasProgress,
     errorMessage,
+    composer,
   };
 }

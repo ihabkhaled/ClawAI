@@ -39,6 +39,21 @@ export const VIDEO_MIME_TYPES = [
   'video/mpeg',
 ] as const;
 
+// B6a — audio uploads. The bytes are stored and marked as audio; transcription
+// arrives in a later batch. Covers what browsers actually record (MediaRecorder
+// emits audio/webm on Chrome and audio/mp4 on Safari) plus what people upload.
+export const AUDIO_MIME_TYPES = [
+  'audio/webm',
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/x-m4a',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/flac',
+  'audio/aac',
+] as const;
+
 export const ALLOWED_MIME_TYPES = [
   // Text & documents
   'text/plain',
@@ -97,6 +112,7 @@ export const ALLOWED_MIME_TYPES = [
   'image/gif',
   'image/svg+xml',
   ...VIDEO_MIME_TYPES,
+  ...AUDIO_MIME_TYPES,
   // Archives (expanded server-side via ZipExpansionManager — Slice C backend 2)
   'application/zip',
   'application/x-zip-compressed',

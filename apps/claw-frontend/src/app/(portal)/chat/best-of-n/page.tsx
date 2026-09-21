@@ -28,6 +28,7 @@ export default function BestOfNPage(): React.ReactElement {
     isBestOfNReady,
     bestOfNResult,
     handleViewInThread,
+    composer,
   } = useBestOfNPage();
 
   const isRunning = isPending || isPolling;
@@ -47,6 +48,7 @@ export default function BestOfNPage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('bestOfN.contentLabel')}
       promptPlaceholder={t('bestOfN.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={
         <BestOfNCountSelector value={n} onChange={setN} disabled={isRunning} t={t} />
       }

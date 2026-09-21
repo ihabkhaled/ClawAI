@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-constants",
-  "version": "1.110.0",
+  "version": "1.110.1",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,8 +16,8 @@
     "@eslint/js": "^9.39.4",
     "@swc/core": "^1.16.2",
     "eslint": "^10.10.0",
-    "eslint-plugin-unicorn": "74.0.0",
-    "tsc-alias": "^1.9.4",
+    "eslint-plugin-unicorn": "75.0.0",
+    "tsc-alias": "^1.9.5",
     "typescript": "6.0.3",
     "unplugin-swc": "^1.6.0",
     "vitest": "5.0.1"

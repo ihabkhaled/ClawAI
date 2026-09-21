@@ -9,11 +9,12 @@ import {
   StreamEventType,
 } from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
-import { ContextAssemblyManager } from './context-assembly.manager';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { JudgeRefereeManager } from './judge-referee.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
-import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { FileDeliveryRecordService } from '../services/file-delivery-record.service';
 import { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
@@ -35,7 +36,7 @@ import {
 } from '../types/research-transcript.types';
 import { type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
-import { type ChatThread, type Prisma } from '../../../generated/prisma';
+import { type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { type JudgeRefereeResult, type JudgeReviewPayload } from '../types/judge-referee.types';
 import { buildFileDeliveryEntries } from '../../../common/utilities';
@@ -52,10 +53,9 @@ export class ParallelExecutionManager {
 
   constructor(
     private readonly chatExecutionManager: ChatExecutionManager,
-    private readonly contextAssemblyManager: ContextAssemblyManager,
+    private readonly chatContextGateway: ChatContextGatewayManager,
     private readonly judgeRefereeManager: JudgeRefereeManager,
     private readonly chatMessagesRepository: ChatMessagesRepository,
-    private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly fileDeliveryRecordService: FileDeliveryRecordService,
@@ -217,13 +217,8 @@ export class ParallelExecutionManager {
    * whole or how much short it was.
    */
   private toCompareCreditRefusal(error: unknown, index: number, total: number): unknown {
-    if (
-      !(error instanceof BusinessException) ||
-      error.getStatus() !== HttpStatus.PAYMENT_REQUIRED
-    ) {
-      return error;
-    }
-    return new BusinessException(
+    return !(error instanceof BusinessException) ||
+      error.getStatus() !== HttpStatus.PAYMENT_REQUIRED ? error : new BusinessException(
       `Not enough pay-as-you-go credit to compare ${String(total)} models: lane ${String(index + 1)} could not be funded. No model was run and nothing was charged. Add credit or compare fewer models.`,
       PAYG_COMPARE_ALL_OR_NOTHING_CODE,
       HttpStatus.PAYMENT_REQUIRED,
@@ -250,25 +245,27 @@ export class ParallelExecutionManager {
     });
   }
 
+  /**
+   * The same bundle a chat turn gets, from the one place that builds it.
+   *
+   * This method used to be eighteen lines, copied byte-for-byte into the
+   * consensus and escalation managers beside it. Three copies meant any fix to
+   * what a mode can see had to be made three times, and a fourth mode simply
+   * did without.
+   */
   private async buildContext(
     userId: string,
     threadId: string,
     fileIds?: string[],
   ): Promise<{ context: AssembledContext; threadSettings: ThreadSettings | undefined }> {
-    const thread = await this.chatThreadsRepository.findById(threadId);
-    const threadSettings = this.extractThreadSettings(thread);
-    const threadMessages = await this.chatMessagesRepository.findRecentByThreadId(threadId, 20);
-    const chronologicalMessages = [...threadMessages].reverse();
-
-    const context = await this.contextAssemblyManager.assemble(
+    const bundle = await this.chatContextGateway.build({
       userId,
-      chronologicalMessages,
-      threadSettings,
-      thread?.contextPackIds ?? undefined,
-      fileIds,
-    );
-
-    return { context, threadSettings };
+      threadId,
+      surface: ChatSurface.COMPARE,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      ...(fileIds !== undefined ? { fileIds } : {}),
+    });
+    return { context: bundle.context, threadSettings: bundle.threadSettings };
   }
 
   // Compare-mode research enricher. NONE / undefined / empty-token short-
@@ -412,10 +409,7 @@ export class ParallelExecutionManager {
     responses: ParallelModelResponse[],
     transcript: ResearchTranscript | null,
   ): ParallelModelResponse[] {
-    if (transcript === null) {
-      return responses;
-    }
-    return responses.map((response) => ({ ...response, researchTranscript: transcript }));
+    return transcript === null ? responses : responses.map((response) => ({ ...response, researchTranscript: transcript }));
   }
 
   // Extracted so buildParallelMessageMetadata stays under the complexity 15 cap.
@@ -426,10 +420,7 @@ export class ParallelExecutionManager {
   private buildResearchTranscriptMetaPart(
     response: ParallelModelResponse,
   ): Record<string, unknown> {
-    if (response.researchTranscript === undefined) {
-      return {};
-    }
-    return { researchTranscript: response.researchTranscript };
+    return response.researchTranscript === undefined ? {} : { researchTranscript: response.researchTranscript };
   }
 
   private async executeAllModels(
@@ -507,8 +498,7 @@ export class ParallelExecutionManager {
     const judgeThreadSettings = this.buildJudgeThreadSettings(threadSettings, judgeConfig);
     const judgedResponses = await Promise.all(
       responses.map(async (response) => {
-        if (response.status !== 'completed') {
-          return {
+        return response.status !== 'completed' ? {
             ...response,
             judgeEnabled: true,
             judgeModel: judgeConfig.model,
@@ -517,10 +507,7 @@ export class ParallelExecutionManager {
             judgeErrorState: CompareJudgeState.SKIPPED,
             judgeDialogAvailable: false,
             judgeReview: null,
-          };
-        }
-
-        return this.judgeSingleResponse(
+          } : this.judgeSingleResponse(
           userId,
           response,
           context,
@@ -641,10 +628,7 @@ export class ParallelExecutionManager {
     if (state === CompareJudgeState.ESCALATED) {
       return judgeResult.escalatedResponse?.content ?? response.content;
     }
-    if (state === CompareJudgeState.REVISED) {
-      return judgeResult.revisedResponse?.content ?? response.content;
-    }
-    return response.content;
+    return state === CompareJudgeState.REVISED ? judgeResult.revisedResponse?.content ?? response.content : response.content;
   }
 
   private resolveJudgeState(
@@ -681,22 +665,14 @@ export class ParallelExecutionManager {
       return CompareJudgeState.FAILED;
     }
 
-    if (fallbackState === 'unavailable') {
-      return CompareJudgeState.UNAVAILABLE;
-    }
-
-    return null;
+    return fallbackState === 'unavailable' ? CompareJudgeState.UNAVAILABLE : null;
   }
 
   private buildJudgeThreadSettings(
     threadSettings: ThreadSettings | undefined,
     judgeConfig: ParallelJudgeConfig,
   ): ThreadSettings | undefined {
-    if (!judgeConfig.enabled) {
-      return threadSettings;
-    }
-
-    return {
+    return !judgeConfig.enabled ? threadSettings : {
       ...threadSettings,
       judgeModel: judgeConfig.model,
     };
@@ -1056,17 +1032,6 @@ export class ParallelExecutionManager {
       outputTokens: null,
       status: 'failed',
       errorMessage,
-    };
-  }
-
-  private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
-    if (!thread) {
-      return undefined;
-    }
-    return {
-      systemPrompt: thread.systemPrompt,
-      temperature: thread.temperature,
-      maxTokens: thread.maxTokens,
     };
   }
 }

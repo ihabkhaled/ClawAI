@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
+import { attachmentFields } from './attachment-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 export const verifyMessageSchema = z.object({
@@ -8,6 +9,7 @@ export const verifyMessageSchema = z.object({
   maxRevisions: z.number().int().min(0).max(3).default(1),
   ...advancedModelSelectionFields,
   ...researchFields,
+  ...attachmentFields,
 });
 
 export type VerifyMessageDto = z.infer<typeof verifyMessageSchema>;

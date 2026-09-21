@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { PIPELINE_CONTENT_MIN_LENGTH } from '@/constants';
 import { useChatStream } from '@/hooks/chat/use-chat-stream';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { usePipelinePoll } from '@/hooks/chat/use-pipeline-poll';
 import { useSendPipeline } from '@/hooks/chat/use-send-pipeline';
 import { useTranslation } from '@/lib/i18n';
@@ -36,6 +37,7 @@ export function usePipelinePage(): UsePipelinePageReturn {
   const [content, setContent] = useState('');
   const [template, setTemplate] = useState('analyze-reason-format');
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
+  const composer = useOrchestrationComposer();
 
   const { mutate, data: sendResult, isPending, isError } = useSendPipeline();
 
@@ -77,8 +79,10 @@ export function usePipelinePage(): UsePipelinePageReturn {
       content: trimmedContent,
       template,
       ...buildAdvancedModelSelectionPayload(selectedModel),
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
     });
-  }, [canSubmit, mutate, trimmedContent, template, selectedModel]);
+    composer.clear();
+  }, [canSubmit, mutate, trimmedContent, template, selectedModel, composer]);
 
   return {
     t,
@@ -101,5 +105,6 @@ export function usePipelinePage(): UsePipelinePageReturn {
     hasProgress,
     errorMessage,
     handleViewInThread,
+    composer,
   };
 }

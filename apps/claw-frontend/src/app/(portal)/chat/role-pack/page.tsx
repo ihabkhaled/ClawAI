@@ -35,6 +35,7 @@ export default function RolePackPage(): React.ReactElement {
     handleViewInThread,
     stages,
     errorMessage,
+    composer,
   } = useRolePackPage();
 
   const isRunning = isPending || isPolling;
@@ -96,6 +97,7 @@ export default function RolePackPage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('rolePack.contentLabel')}
       promptPlaceholder={t('rolePack.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={packSelector}
       onSubmit={handleSend}
       submitLabel={submitLabel}

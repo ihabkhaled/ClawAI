@@ -15,7 +15,7 @@ import type { ChatStreamService } from '../services/chat-stream.service';
 import type { FileDeliveryRecordService } from '../services/file-delivery-record.service';
 import type { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { ChatMessagesRepository } from '../repositories/chat-messages.repository';
-import type { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import type { ChatContextGatewayManager } from '../managers/chat-context-gateway.manager';
 import type { AssembledContext } from '../types/context.types';
 import { BusinessException } from '../../../common/errors';
 import {
@@ -34,8 +34,7 @@ vi.mock('../clients/model-exposure.client', () => ({
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    if (!record) return undefined;
-    return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
+    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
   buildFileDeliveryEntries: vi.fn().mockReturnValue([]),
 }));
@@ -173,9 +172,7 @@ describe('PAYG credit — the Ollama Cloud tool loop bills every turn', () => {
     expect(accessControl.reserveCredit).toHaveBeenCalledTimes(2);
     expect(accessControl.finalizeCredit).toHaveBeenCalledTimes(2);
 
-    const ids = accessControl.reserveCredit.mock.calls.map(
-      (call) => call[0]['requestId'],
-    );
+    const ids = accessControl.reserveCredit.mock.calls.map((call) => call[0]['requestId']);
     // Distinct ids, or the second turn would reuse the first turn's hold and
     // the run would be billed once however long it ran.
     expect(new Set(ids).size).toBe(2);
@@ -226,16 +223,20 @@ describe('PAYG credit — compare is all-or-nothing (E2)', () => {
     parallel = new ParallelExecutionManager(
       execution,
       {
-        assemble: vi.fn().mockResolvedValue(makeContext()),
-      } as unknown as ContextAssemblyManager,
+        build: vi.fn().mockResolvedValue({
+          context: makeContext(),
+          thread: { id: 'thread-1' },
+          threadSettings: undefined,
+          messages: [],
+          fileIds: [],
+          latestUserMetadata: null,
+        }),
+      } as unknown as ChatContextGatewayManager,
       { shouldActivate: vi.fn().mockReturnValue(false) } as unknown as JudgeRefereeManager,
       {
         create: vi.fn().mockResolvedValue({ id: 'msg-1', threadId: 'thread-1' }),
         findRecentByThreadId: vi.fn().mockResolvedValue([]),
       } as unknown as ChatMessagesRepository,
-      {
-        findById: vi.fn().mockResolvedValue({ id: 'thread-1' }),
-      } as unknown as ChatThreadsRepository,
       {
         emitRequestAccepted: vi.fn(),
         emitProgressStage: vi.fn(),

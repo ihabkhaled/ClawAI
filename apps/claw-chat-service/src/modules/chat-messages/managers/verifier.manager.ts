@@ -1,34 +1,48 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
-import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { BusinessException } from '../../../common/errors/business.exception';
 import {
   DEFAULT_VERIFIER_MODEL,
   MAX_VERIFIER_REVISIONS,
   VERIFIER_PASS_THRESHOLD,
-  VERIFIER_TIMEOUT_MS,
 } from '../constants/verifier.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
+import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import type { VerifyMessageDto } from '../dto/verify-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
-import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_VERIFIER } from '../constants/payg.constants';
 
+/**
+ * Draft an answer, judge it, repair it.
+ *
+ * All three hops used to post a hand-built `OllamaGenerateRequest` at
+ * `/api/v1/ollama/generate`, which pinned the mode to a local model and metered
+ * it through `meterOrchestrationCall` plus a hand-rolled `recordUsage` — a
+ * second accounting path beside the one chat uses. Worse, the verify pass was
+ * handed nothing but its own rubric: no history, no files, no memories, and not
+ * even the research evidence the draft was written from. It judged an answer
+ * without being allowed to see the conversation that produced it, then scored
+ * it for "completeness".
+ */
 @Injectable()
 export class VerifierManager {
   private readonly logger = new Logger(VerifierManager.name);
@@ -37,8 +51,9 @@ export class VerifierManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly chatContextGateway: ChatContextGatewayManager,
+    private readonly modeExecutionGateway: ModeExecutionGatewayManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
-    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -69,6 +84,7 @@ export class VerifierManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -83,6 +99,7 @@ export class VerifierManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    fileIds?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -97,18 +114,32 @@ export class VerifierManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
+      // One bundle, shared by the draft pass, every verifier-check and every
+      // repair. Sharing it is the point: a judge that sees a different context
+      // from the writer is judging a different question, and the verify pass
+      // used to see no context at all. Building it once also means one set of
+      // retrievals rather than one per hop.
+      const bundle = await this.chatContextGateway.build({
+        userId,
+        threadId,
+        surface: ChatSurface.VERIFY,
+        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        // The enricher's transcript used to be glued to the front of the draft
+        // and repair prompts, and never reached the verifier at all. It is an
+        // instruction about how to answer, so it belongs in the system prompt
+        // beside the user's own — appended, never replacing.
+        ...(enrichment.systemPrompt.length > 0
+          ? { personaInstruction: enrichment.systemPrompt }
+          : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+      });
       this.safeEmitStage(threadId, {
         label: 'Generating',
         status: OrchestrationStageStatus.ACTIVE,
         detail: `${resolvedSelection.actualProvider}/${resolvedSelection.actualModel}`,
         stageId: 'verifier:draft',
       });
-      const draft = await this.generateDraft(
-        content,
-        resolvedSelection,
-        enrichment.systemPrompt,
-        userId,
-      );
+      const draft = await this.generateDraft(bundle, content, resolvedSelection);
       this.safeEmitStage(threadId, {
         label: 'Generating',
         status: OrchestrationStageStatus.COMPLETED,
@@ -121,7 +152,7 @@ export class VerifierManager {
         detail: 'Scoring factuality / completeness / safety / formatting',
         stageId: 'verifier:check:0',
       });
-      const checkResult = await this.runVerifierCheck(content, draft, resolvedSelection, userId);
+      const checkResult = await this.runVerifierCheck(bundle, content, draft, resolvedSelection);
       this.safeEmitStage(threadId, {
         label: 'Verifier judging',
         status: OrchestrationStageStatus.COMPLETED,
@@ -154,14 +185,13 @@ export class VerifierManager {
       }
 
       const { finalDraft, finalCheck, revisionCount } = await this.runRevisions(
+        bundle,
         threadId,
         content,
         draft,
         checkResult,
         maxRevisions,
         resolvedSelection,
-        enrichment.systemPrompt,
-        userId,
       );
 
       await this.storeVerifiedMessage(
@@ -204,14 +234,13 @@ export class VerifierManager {
   }
 
   private async runRevisions(
+    bundle: ChatContextBundle,
     threadId: string,
     content: string,
     initialDraft: string,
     initialCheck: VerifierCheckResult,
     maxRevisions: number,
     selection: AdvancedModelSelectionResolution,
-    researchEvidence: string,
-    userId: string,
   ): Promise<{ finalDraft: string; finalCheck: VerifierCheckResult; revisionCount: number }> {
     let currentDraft = initialDraft;
     let currentCheck = initialCheck;
@@ -226,15 +255,17 @@ export class VerifierManager {
         detail: `Applying ${String(currentCheck.suggestions.length)} suggestion(s)`,
         stageId,
       });
+      // Sequential by definition: round N repairs what round N-1 scored, and
+      // scores what round N repaired. This is a dependency chain, not a loop
+      // that could have been a Promise.all.
       const revised = await this.repairDraft(
+        bundle,
         content,
         currentDraft,
         currentCheck.suggestions,
         selection,
-        researchEvidence,
-        userId,
       );
-      const recheck = await this.runVerifierCheck(content, revised, selection, userId);
+      const recheck = await this.runVerifierCheck(bundle, content, revised, selection);
       revisionCount += 1;
       currentDraft = revised;
       currentCheck = recheck;
@@ -270,77 +301,58 @@ export class VerifierManager {
     }
   }
 
+  /**
+   * The draft pass, through the same chokepoint a chat turn uses.
+   *
+   * `callProvider` is the universal token-deduction point and records every
+   * call that passes through it, so the `meterOrchestrationCall` wrapper and
+   * the hand-rolled `recordUsage` that used to sit here are gone — they were a
+   * second path to the same ledger.
+   */
   private async generateDraft(
+    bundle: ChatContextBundle,
     content: string,
     selection: AdvancedModelSelectionResolution,
-    researchEvidence: string,
-    userId: string,
   ): Promise<string> {
-    const config = AppConfig.get();
-    const model = selection.actualModel;
+    const parsed = parseJudgeModel(selection.actualModel);
 
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt: prependResearchEvidence(content, researchEvidence),
-      stream: false,
-      think: false,
-    };
-
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `verifier:draft:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
+    const response = await this.modeExecutionGateway.run({
+      bundle,
+      prompt: content,
+      provider: parsed.provider ?? OLLAMA_PROVIDER,
+      model: parsed.model.length > 0 ? parsed.model : selection.actualModel,
+      ledgerContext: TokenLedgerContext.VERIFY,
+      paygCall: {
         workflow: PAYG_WORKFLOW_VERIFIER,
-        promptText: requestBody.prompt,
+        requestId: `verifier:draft:${randomUUID()}`,
       },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: VERIFIER_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
-
-    if (!response.ok) {
-      throw new Error(`Ollama draft generation returned status ${String(response.status)}`);
-    }
-
-    // Universal token deduction: draft hop.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
     });
 
-    const draft = response.data.response.trim();
+    const draft = (response.content ?? '').trim();
     if (draft.length === 0) {
-      throw new Error('Ollama returned an empty draft response');
+      throw new Error('Verifier draft generation returned an empty response');
     }
 
     return draft;
   }
 
+  /**
+   * The verify pass — now with sight of the conversation it is judging.
+   *
+   * The rubric below is the question being asked, so it goes in as the
+   * `prompt`: the gateway APPENDS it as a user turn on top of the shared
+   * bundle instead of replacing the conversation with it. That is the whole
+   * defect this fixes. The old template was the verifier's entire world — it
+   * scored "completeness" against a question it could only see through a
+   * one-line quotation, with no history, no attachments, no memories and not
+   * even the research evidence the draft had been written from.
+   */
   private async runVerifierCheck(
+    bundle: ChatContextBundle,
     content: string,
     draft: string,
     selection: AdvancedModelSelectionResolution,
-    userId: string,
   ): Promise<VerifierCheckResult> {
-    const config = AppConfig.get();
-    const model = selection.actualModel;
-
     const verifierPrompt = `You are a response quality verifier. Evaluate this response to the given question.
 
 Question: ${content}
@@ -350,55 +362,35 @@ Response: ${draft}
 Score the response on: factuality (0-1), completeness (0-1), safety (0-1), formatting (0-1).
 Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["..."] }`;
 
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt: verifierPrompt,
-      stream: false,
-      think: false,
-    };
+    const parsed = parseJudgeModel(selection.actualModel);
 
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `verifier:check:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
-        workflow: PAYG_WORKFLOW_VERIFIER,
-        promptText: requestBody.prompt,
-      },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: VERIFIER_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
+    try {
+      const response = await this.modeExecutionGateway.run({
+        bundle,
+        prompt: verifierPrompt,
+        provider: parsed.provider ?? OLLAMA_PROVIDER,
+        model: parsed.model.length > 0 ? parsed.model : selection.actualModel,
+        ledgerContext: TokenLedgerContext.VERIFY,
+        paygCall: {
+          workflow: PAYG_WORKFLOW_VERIFIER,
+          requestId: `verifier:check:${randomUUID()}`,
+        },
+      });
 
-    if (!response.ok) {
-      this.logger.warn(
-        `runVerifierCheck: verifier returned status ${String(response.status)}, using fallback`,
-      );
+      return this.parseVerifierResponse(response.content ?? '');
+    } catch (error: unknown) {
+      // A judge outage must not destroy a draft that is already written: the
+      // old code returned this same pass-through score when the verifier
+      // replied with a non-2xx status. A billing refusal is not an outage,
+      // though — swallowing it would silently score an uncharged run as
+      // "passed", so it keeps propagating.
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      const msg = error instanceof Error ? error.message : 'Unknown verifier error';
+      this.logger.warn(`runVerifierCheck: verifier call failed (${msg}), using fallback`);
       return { passed: true, score: 1, issues: [], suggestions: [] };
     }
-
-    // Universal token deduction: verifier-check hop.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
-    });
-
-    return this.parseVerifierResponse(response.data.response);
   }
 
   private parseVerifierResponse(raw: string): VerifierCheckResult {
@@ -421,23 +413,27 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
     }
   }
 
+  /**
+   * The repair pass, on the same bundle the draft and the judge saw.
+   *
+   * The research evidence used to be glued to the front of this prompt by
+   * `prependResearchEvidence`; it now reaches the model as part of the shared
+   * bundle's system prompt, which is where an instruction about how to answer
+   * belongs — and is why the judge can finally see it too.
+   */
   private async repairDraft(
+    bundle: ChatContextBundle,
     content: string,
     draft: string,
     suggestions: string[],
     selection: AdvancedModelSelectionResolution,
-    researchEvidence: string,
-    userId: string,
   ): Promise<string> {
-    const config = AppConfig.get();
-    const model = selection.actualModel;
-
     const suggestionText =
       suggestions.length > 0
         ? suggestions.map((s) => `- ${s}`).join('\n')
         : '- Improve overall quality';
 
-    const baseRepairPrompt = `You are a response improvement assistant. Revise the following response based on the suggestions.
+    const repairPrompt = `You are a response improvement assistant. Revise the following response based on the suggestions.
 
 Original question: ${content}
 
@@ -448,58 +444,35 @@ Suggestions for improvement:
 ${suggestionText}
 
 Return ONLY the improved response. Do not explain changes.`;
-    const repairPrompt = prependResearchEvidence(baseRepairPrompt, researchEvidence);
 
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt: repairPrompt,
-      stream: false,
-      think: false,
-    };
+    const parsed = parseJudgeModel(selection.actualModel);
 
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `verifier:repair:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
-        workflow: PAYG_WORKFLOW_VERIFIER,
-        promptText: requestBody.prompt,
-      },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: VERIFIER_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
+    try {
+      const response = await this.modeExecutionGateway.run({
+        bundle,
+        prompt: repairPrompt,
+        provider: parsed.provider ?? OLLAMA_PROVIDER,
+        model: parsed.model.length > 0 ? parsed.model : selection.actualModel,
+        ledgerContext: TokenLedgerContext.VERIFY,
+        paygCall: {
+          workflow: PAYG_WORKFLOW_VERIFIER,
+          requestId: `verifier:repair:${randomUUID()}`,
+        },
+      });
 
-    if (!response.ok) {
-      this.logger.warn(
-        `repairDraft: repair returned status ${String(response.status)}, using original draft`,
-      );
+      const repaired = (response.content ?? '').trim();
+      return repaired.length > 0 ? repaired : draft;
+    } catch (error: unknown) {
+      // Same contract as the old non-2xx branch: a failed repair falls back to
+      // the draft the user would otherwise lose. A billing refusal still
+      // propagates rather than being charged for and discarded.
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      const msg = error instanceof Error ? error.message : 'Unknown repair error';
+      this.logger.warn(`repairDraft: repair call failed (${msg}), using original draft`);
       return draft;
     }
-
-    // Universal token deduction: repair hop.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
-    });
-
-    const repaired = response.data.response.trim();
-    return repaired.length > 0 ? repaired : draft;
   }
 
   private async storeVerifiedMessage(
@@ -563,15 +536,11 @@ Return ONLY the improved response. Do not explain changes.`;
     if (model !== 'AUTO') {
       return model;
     }
-    if (DEFAULT_VERIFIER_MODEL !== 'AUTO') {
-      return DEFAULT_VERIFIER_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_VERIFIER_MODEL !== 'AUTO' ? DEFAULT_VERIFIER_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(dto: VerifyMessageDto): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -580,10 +549,7 @@ Return ONLY the improved response. Do not explain changes.`;
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(DEFAULT_VERIFIER_MODEL),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

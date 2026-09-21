@@ -3,8 +3,21 @@ export type CrossThreadCandidate = {
   threadId: string;
   title: string | null;
   updatedAt: Date;
-  /** How many of this thread's messages matched a salient search term. */
-  matchingMessageCount: number;
+  /**
+   * How distinctive this thread's best match was.
+   *
+   * Driven by the RAREST search term the thread matched, not by how many terms
+   * it matched. A count would measure how much of the question a thread
+   * repeats, and the conversation holding the answer repeats none of it — the
+   * previous askings of the question repeat all of it.
+   */
+  termRarity: number;
+};
+
+/** One row from a single term's slice of the candidate scan. */
+export type TermHit = {
+  threadId: string;
+  thread: { title: string | null; updatedAt: Date };
 };
 
 /** One message from another thread, with the thread it came from. */

@@ -7565,7 +7565,7 @@
           "file": "rules/52-every-schema-ships-a-migration.md"
         },
         {
-          "bytes": 2512,
+          "bytes": 2953,
           "file": "rules/53-coding-agent-release-rounds.md"
         },
         {
@@ -7583,7 +7583,7 @@
       ],
       "skills": [
         {
-          "bytes": 28279,
+          "bytes": 28558,
           "file": "skills/00-index.md"
         },
         {
@@ -7807,6 +7807,10 @@
           "file": "skills/frontend-architecture-review.md"
         },
         {
+          "bytes": 3887,
+          "file": "skills/give-a-surface-the-same-context-as-chat.md"
+        },
+        {
           "bytes": 4524,
           "file": "skills/grow-the-knowledge-layer.md"
         },
@@ -7863,7 +7867,7 @@
           "file": "skills/reuse-before-creating.md"
         },
         {
-          "bytes": 4429,
+          "bytes": 5275,
           "file": "skills/run-coding-agent-release-rounds.md"
         },
         {
@@ -9889,7 +9893,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 160
+        "testFiles": 163
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -9905,11 +9909,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 21
+        "testFiles": 22
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 489
+        "testFiles": 500
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10685,7 +10689,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1344,
+    "totalTestFiles": 1359,
     "workspaceCount": 25
   }
 }

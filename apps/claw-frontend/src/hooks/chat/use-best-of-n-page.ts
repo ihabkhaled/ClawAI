@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { BEST_OF_N_CONTENT_MIN_LENGTH, BEST_OF_N_DEFAULT_COUNT } from '@/constants';
 import { useBestOfNPoll } from '@/hooks/chat/use-best-of-n-poll';
 import { useBestOfNStream } from '@/hooks/chat/use-best-of-n-stream';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useSendBestOfN } from '@/hooks/chat/use-send-best-of-n';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, ModelSelection, UseBestOfNPageReturn } from '@/types';
@@ -13,6 +14,7 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
   const [content, setContent] = useState('');
   const [n, setN] = useState(BEST_OF_N_DEFAULT_COUNT);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
+  const composer = useOrchestrationComposer();
 
   const { send, result, isPending, isError } = useSendBestOfN();
 
@@ -53,8 +55,11 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
       content: content.trim(),
       n,
       ...buildAdvancedModelSelectionPayload(selectedModel),
+      // Omitted entirely when nothing is picked so the BE DTO stays clean.
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
     });
-  }, [canSubmit, isPending, isPolling, send, content, n, selectedModel]);
+    composer.clear();
+  }, [canSubmit, isPending, isPolling, send, content, n, selectedModel, composer]);
 
   // Adapter so the page's `setSelectedModel` matches the shell's
   // `(ModelSelection | null) => void` signature without exposing the
@@ -84,5 +89,6 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
     isBestOfNReady,
     isBestOfNError,
     handleViewInThread,
+    composer,
   };
 }

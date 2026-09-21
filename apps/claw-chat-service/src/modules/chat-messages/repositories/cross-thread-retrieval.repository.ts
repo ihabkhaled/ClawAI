@@ -1,13 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
-  CROSS_THREAD_CANDIDATE_LIMIT,
-  CROSS_THREAD_CANDIDATE_SCAN_LIMIT,
-  CROSS_THREAD_MESSAGES_PER_THREAD,
+  CROSS_THREAD_MESSAGE_SCAN_LIMIT,
+  CROSS_THREAD_MIN_MESSAGES_PER_THREAD,
+  CROSS_THREAD_SCAN_PER_TERM,
+  CROSS_THREAD_SECONDARY_TERM_WEIGHT,
 } from '../constants/cross-thread-retrieval.constants';
 import {
   type CrossThreadCandidate,
   type CrossThreadMessageRow,
+  type TermHit,
 } from '../types/cross-thread-retrieval.types';
 
 /**
@@ -47,43 +49,69 @@ export class CrossThreadRetrievalRepository {
     terms: readonly string[],
   ): Promise<CrossThreadCandidate[]> {
     if (terms.length === 0) return [];
-    const hits = await this.prisma.chatMessage.findMany({
-      where: {
-        thread: { userId, isArchived: false, id: { not: excludeThreadId } },
-        role: { in: ['USER', 'ASSISTANT'] },
-        OR: terms.map((term) => ({
-          content: { contains: term, mode: 'insensitive' as const },
-        })),
-      },
-      orderBy: { createdAt: 'desc' },
-      take: CROSS_THREAD_CANDIDATE_SCAN_LIMIT,
-      select: {
-        threadId: true,
-        createdAt: true,
-        thread: { select: { title: true, updatedAt: true } },
-      },
-    });
 
-    const byThread = new Map<string, CrossThreadCandidate>();
-    for (const hit of hits) {
-      const existing = byThread.get(hit.threadId);
-      if (existing === undefined) {
-        byThread.set(hit.threadId, {
-          threadId: hit.threadId,
-          title: hit.thread.title,
-          updatedAt: hit.thread.updatedAt,
-          matchingMessageCount: 1,
-        });
-        continue;
+    // One bounded slice per term, never a single shared window. A term that
+    // matches half the account used to fill that window on its own and evict
+    // the rare term that identifies the right thread, because the window is
+    // ordered by recency and recency has nothing to do with relevance.
+    const slices = await Promise.all(
+      terms.map(async (term) =>
+        this.prisma.chatMessage.findMany({
+          where: {
+            thread: { userId, isArchived: false, id: { not: excludeThreadId } },
+            role: { in: ['USER', 'ASSISTANT'] },
+            content: { contains: term, mode: 'insensitive' as const },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: CROSS_THREAD_SCAN_PER_TERM,
+          select: {
+            threadId: true,
+            thread: { select: { title: true, updatedAt: true } },
+          },
+        }),
+      ),
+    );
+
+    // Inverse frequency, continuously. A binary rare/common split cannot
+    // separate a word used twice in the account from one used thirty times,
+    // and that distinction is the whole signal: the first identifies one
+    // conversation, the second identifies this question's own phrasing.
+    const weightOf = (hits: number): number => 1 / Math.log2(2 + hits);
+
+    const byThread = new Map<string, { row: TermHit; best: number; total: number }>();
+    let scanned = 0;
+    for (const slice of slices) {
+      scanned += slice.length;
+      const weight = weightOf(slice.length);
+      for (const threadId of new Set(slice.map((hit) => hit.threadId))) {
+        const row = slice.find((hit) => hit.threadId === threadId);
+        if (row === undefined) continue;
+        const existing = byThread.get(threadId);
+        if (existing === undefined) {
+          byThread.set(threadId, { row, best: weight, total: weight });
+          continue;
+        }
+        existing.best = Math.max(existing.best, weight);
+        existing.total += weight;
       }
-      existing.matchingMessageCount += 1;
     }
 
-    const candidates = [...byThread.values()]
-      .sort((a, b) => b.matchingMessageCount - a.matchingMessageCount)
-      .slice(0, CROSS_THREAD_CANDIDATE_LIMIT);
+    // No cut and no ordering here. Ranking needs recency, and recency lives in
+    // the manager with the rest of the scoring — a repository that also ranked
+    // would decide which threads the scorer is allowed to consider, which is
+    // how the answering thread came to be dropped before anything read it.
+    // Ranked by the RAREST term a thread matched, with everything else only
+    // breaking ties. How MANY terms a thread matched measures how much of the
+    // question it repeats, and the conversation holding the answer repeats
+    // none of it.
+    const candidates: CrossThreadCandidate[] = [...byThread.values()].map((entry) => ({
+      threadId: entry.row.threadId,
+      title: entry.row.thread.title,
+      updatedAt: entry.row.thread.updatedAt,
+      termRarity: entry.best + CROSS_THREAD_SECONDARY_TERM_WEIGHT * entry.total,
+    }));
     this.logger.debug(
-      `findCandidateThreads: ${String(candidates.length)} candidates from ${String(hits.length)} hits for user=${userId}`,
+      `findCandidateThreads: ${String(candidates.length)} candidates from ${String(scanned)} hits across ${String(terms.length)} terms for user=${userId}`,
     );
     return candidates;
   }
@@ -101,24 +129,32 @@ export class CrossThreadRetrievalRepository {
     threadIds: readonly string[],
   ): Promise<CrossThreadMessageRow[]> {
     if (threadIds.length === 0) return [];
-    const rows = await this.prisma.chatMessage.findMany({
-      where: {
-        threadId: { in: [...threadIds] },
-        thread: { userId },
-        role: { in: ['USER', 'ASSISTANT'] },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: CROSS_THREAD_MESSAGES_PER_THREAD * threadIds.length,
-      select: {
-        id: true,
-        threadId: true,
-        role: true,
-        content: true,
-        createdAt: true,
-        thread: { select: { title: true } },
-      },
-    });
-    return rows.map((row) => ({
+    // Split evenly and read each thread separately. One `take` shared across
+    // threads and ordered by recency hands the whole window to whichever
+    // conversation was busiest — the same defect the candidate scan had, one
+    // stage later.
+    const perThread = Math.max(
+      CROSS_THREAD_MIN_MESSAGES_PER_THREAD,
+      Math.floor(CROSS_THREAD_MESSAGE_SCAN_LIMIT / threadIds.length),
+    );
+    const slices = await Promise.all(
+      threadIds.map(async (threadId) =>
+        this.prisma.chatMessage.findMany({
+          where: { threadId, thread: { userId }, role: { in: ['USER', 'ASSISTANT'] } },
+          orderBy: { createdAt: 'desc' },
+          take: perThread,
+          select: {
+            id: true,
+            threadId: true,
+            role: true,
+            content: true,
+            createdAt: true,
+            thread: { select: { title: true } },
+          },
+        }),
+      ),
+    );
+    return slices.flat().map((row) => ({
       messageId: row.id,
       threadId: row.threadId,
       threadTitle: row.thread.title,

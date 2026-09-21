@@ -143,6 +143,15 @@ export class FileProcessingManager {
       return `[Video file: ${filename}]`;
     }
 
+    // B6a — audio is stored, never decoded. UTF-8 decoding an MP3 produces
+    // garbage that a model would read as content. A transcript will be written
+    // here by the transcription batch; until then audio genuinely has no
+    // extractedText and must not pretend to.
+    if (mimeType.startsWith('audio/')) {
+      this.logger.debug(`extractText: audio "${filename}" — preserving binary payload`);
+      return `[Audio file: ${filename}]`;
+    }
+
     this.logger.debug(`extractText: text file "${filename}" (${mimeType}) — UTF-8 decode`);
     return buffer.toString('utf-8');
   }
@@ -158,10 +167,7 @@ export class FileProcessingManager {
     this.logger.debug(
       `extractPdfText: fileId=${file.id} chars=${String(text.length)} isScanned=${String(isScanned)} ocrEnabled=${String(cfg.OCR_ENABLED)}`,
     );
-    if (!isScanned || !cfg.OCR_ENABLED) {
-      return text;
-    }
-    return this.runOcrFallback(file, storagePath, true);
+    return !isScanned || !cfg.OCR_ENABLED ? text : this.runOcrFallback(file, storagePath, true);
   }
 
   // Slice D backend 3 — Image OCR branch.
@@ -282,10 +288,7 @@ export class FileProcessingManager {
     if (mimeType === 'text/csv' || mimeType === 'text/tab-separated-values') {
       return this.splitCsv(content);
     }
-    if (mimeType === 'text/markdown') {
-      return this.splitMarkdown(content);
-    }
-    return this.splitText(content);
+    return mimeType === 'text/markdown' ? this.splitMarkdown(content) : this.splitText(content);
   }
 
   private splitText(content: string): string[] {
@@ -301,10 +304,9 @@ export class FileProcessingManager {
           JSON.stringify({ [key]: value }, null, 2),
         );
       }
-      if (Array.isArray(parsed)) {
-        return parsed.map((item) => JSON.stringify(item, null, 2));
-      }
-      return [content];
+      return Array.isArray(parsed)
+        ? parsed.map((item) => JSON.stringify(item, null, 2))
+        : [content];
     } catch {
       return [content];
     }

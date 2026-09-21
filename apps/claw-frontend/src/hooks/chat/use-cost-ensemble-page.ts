@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { COST_ENSEMBLE_CONTENT_MIN_LENGTH } from '@/constants';
 import { useCostEnsemblePoll } from '@/hooks/chat/use-cost-ensemble-poll';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useSendCostEnsemble } from '@/hooks/chat/use-send-cost-ensemble';
 import { useTranslation } from '@/lib/i18n';
@@ -12,6 +13,7 @@ export function useCostEnsemblePage(): UseCostEnsemblePageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
+  const composer = useOrchestrationComposer();
 
   const { send, result, isPending, isError } = useSendCostEnsemble();
 
@@ -43,8 +45,13 @@ export function useCostEnsemblePage(): UseCostEnsemblePageReturn {
     if (!canSend) {
       return;
     }
-    send({ content: trimmedContent, ...buildAdvancedModelSelectionPayload(selectedModel) });
-  }, [canSend, send, trimmedContent, selectedModel]);
+    send({
+      content: trimmedContent,
+      ...buildAdvancedModelSelectionPayload(selectedModel),
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
+    });
+    composer.clear();
+  }, [canSend, send, trimmedContent, selectedModel, composer]);
 
   return {
     t,
@@ -65,5 +72,6 @@ export function useCostEnsemblePage(): UseCostEnsemblePageReturn {
     stages,
     hasProgress,
     isRunning,
+    composer,
   };
 }

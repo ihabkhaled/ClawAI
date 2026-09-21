@@ -1,28 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
-import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
-  COST_ENSEMBLE_TIMEOUT_MS,
   COST_TIER_THRESHOLD_DUO,
   COST_TIER_THRESHOLD_TRIO,
   DEFAULT_COST_ENSEMBLE_MODEL,
 } from '../constants/cost-ensemble.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
+import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { QualityCheckManager } from './quality-check.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { CostEnsembleMessageDto } from '../dto/cost-ensemble-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import type {
   CostClassification,
   CostEnsembleResponse,
@@ -30,7 +32,6 @@ import type {
   EnsembleCandidate,
   RawClassification,
 } from '../types/cost-ensemble.types';
-import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma, RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
@@ -63,8 +64,9 @@ export class CostEnsembleManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly chatContextGateway: ChatContextGatewayManager,
+    private readonly modeExecutionGateway: ModeExecutionGatewayManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
-    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -94,6 +96,7 @@ export class CostEnsembleManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -107,12 +110,12 @@ export class CostEnsembleManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    fileIds?: string[],
   ): Promise<void> {
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
-      // Enrich ONCE — classification step skips evidence (it just labels the
-      // task), every ensemble candidate sees the same evidence prepended to
-      // its prompt.
+      // Enrich ONCE — the classifier and every ensemble candidate work from the
+      // same evidence.
       const enrichment = await this.researchEnricherManager.enrichForOrchestration({
         threadId,
         mode: researchMode,
@@ -120,13 +123,33 @@ export class CostEnsembleManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
+      // One bundle, built before the fan-out and shared by the classifier and
+      // every candidate. The ensemble used to send the user's raw string to a
+      // model with no history, no attachments, no memories and no system
+      // prompt, so an ensemble answer could not be about a file the user had
+      // just uploaded. Building it once also means one set of retrievals, not
+      // one per tier member.
+      const bundle = await this.chatContextGateway.build({
+        userId,
+        threadId,
+        surface: ChatSurface.COST_ENSEMBLE,
+        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        // The enricher's transcript used to be glued to the front of each
+        // candidate's raw prompt. It is an instruction about how to answer, so
+        // it belongs in the system prompt beside the user's own — appended,
+        // never replacing.
+        ...(enrichment.systemPrompt.length > 0
+          ? { personaInstruction: enrichment.systemPrompt }
+          : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+      });
       this.safeEmitStage(threadId, {
         label: 'Classifying task',
         status: OrchestrationStageStatus.ACTIVE,
         detail: 'Scoring complexity, risk, ambiguity',
         stageId: 'cost-ensemble:classify',
       });
-      const rawClassification = await this.classifyTask(content, resolvedSelection, userId);
+      const rawClassification = await this.classifyTask(bundle, content, resolvedSelection);
       const tier = this.determineTier(rawClassification);
       const classification: CostClassification = { tier, ...rawClassification };
       this.safeEmitStage(threadId, {
@@ -136,14 +159,7 @@ export class CostEnsembleManager {
         stageId: 'cost-ensemble:classify',
       });
 
-      const candidates = await this.runEnsemble(
-        threadId,
-        content,
-        tier,
-        resolvedSelection,
-        enrichment.systemPrompt,
-        userId,
-      );
+      const candidates = await this.runEnsemble(threadId, bundle, content, tier, resolvedSelection);
       this.safeEmitStage(threadId, {
         label: 'Cost selection',
         status: OrchestrationStageStatus.ACTIVE,
@@ -252,12 +268,20 @@ export class CostEnsembleManager {
     };
   }
 
+  /**
+   * The classifier hop, through the same chokepoint a chat turn uses.
+   *
+   * This used to post an `OllamaGenerateRequest` straight at
+   * `/api/v1/ollama/generate`, which pinned the tier decision to a local
+   * model — an account with only a cloud connector classified nothing and fell
+   * back to the default every time — and metered it through a second, parallel
+   * accounting path on top of a hand-rolled `recordUsage`.
+   */
   private async classifyTask(
+    bundle: ChatContextBundle,
     content: string,
     selection: AdvancedModelSelectionResolution,
-    userId: string,
   ): Promise<RawClassification> {
-    const config = AppConfig.get();
     const classifyPrompt = [
       'You are a task complexity classifier. Analyze the following task and return ONLY a valid JSON object.',
       'The JSON must have exactly these fields: complexity (0.0-1.0), risk (0.0-1.0), ambiguity (0.0-1.0), reasoning (string).',
@@ -269,53 +293,27 @@ export class CostEnsembleManager {
       `Task: ${content}`,
     ].join('\n');
 
-    const requestBody: OllamaGenerateRequest = {
-      model: selection.actualModel,
-      prompt: classifyPrompt,
-      stream: false,
-      think: false,
-    };
+    const parsedModel = parseJudgeModel(selection.actualModel);
+    const provider = parsedModel.provider ?? OLLAMA_PROVIDER;
 
     try {
-      const response = await this.accessControlService.meterOrchestrationCall(
-        {
-          userId,
-          requestId: `cost-ensemble:classify:${randomUUID()}`,
-          provider: OLLAMA_PROVIDER,
-          model: selection.actualModel,
+      const response = await this.modeExecutionGateway.run({
+        bundle,
+        prompt: classifyPrompt,
+        provider,
+        model: parsedModel.model.length > 0 ? parsedModel.model : selection.actualModel,
+        ledgerContext: TokenLedgerContext.COST_ENSEMBLE,
+        paygCall: {
           workflow: PAYG_WORKFLOW_COST_ENSEMBLE_CLASSIFY,
-          promptText: requestBody.prompt,
+          requestId: `cost-ensemble:classify:${randomUUID()}`,
         },
-        async (hold) =>
-          httpRequest<OllamaGenerateResponse>({
-            url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-            method: 'POST',
-            body: hold.clamped
-              ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-              : requestBody,
-            timeoutMs: COST_ENSEMBLE_TIMEOUT_MS,
-          }),
-        (settled) => ({
-          promptTokens: settled.data.promptEvalCount ?? 0,
-          completionTokens: settled.data.evalCount ?? 0,
-        }),
-      );
-
-      if (!response.ok) {
-        return this.defaultClassification();
-      }
-
-      // Universal token deduction: the classifier hop is a real LLM call.
-      void this.accessControlService.recordUsage({
-        userId,
-        planId: null,
-        inputTokens: response.data.promptEvalCount ?? 0,
-        outputTokens: response.data.evalCount ?? 0,
-        provider: 'local-ollama',
-        model: selection.actualModel,
       });
 
-      const raw = response.data.response.trim();
+      // Quota is no longer recorded here: `callProvider` is the universal token
+      // deduction chokepoint and records every call that passes through it. The
+      // hand-rolled `recordUsage` this method used to make was a second path to
+      // the same ledger, which is exactly what this batch removes.
+      const raw = (response.content ?? '').trim();
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const complexity = typeof parsed['complexity'] === 'number' ? parsed['complexity'] : 0.3;
       const risk = typeof parsed['risk'] === 'number' ? parsed['risk'] : 0.2;
@@ -334,32 +332,24 @@ export class CostEnsembleManager {
     if (avgScore >= COST_TIER_THRESHOLD_TRIO) {
       return 'trio';
     }
-    if (avgScore >= COST_TIER_THRESHOLD_DUO) {
-      return 'duo';
-    }
-    return 'single';
+    return avgScore >= COST_TIER_THRESHOLD_DUO ? 'duo' : 'single';
   }
 
   private tierToCount(tier: CostTier): number {
     if (tier === 'trio') {
       return 3;
     }
-    if (tier === 'duo') {
-      return 2;
-    }
-    return 1;
+    return tier === 'duo' ? 2 : 1;
   }
 
   private async runEnsemble(
     threadId: string,
+    bundle: ChatContextBundle,
     content: string,
     tier: CostTier,
     selection: AdvancedModelSelectionResolution,
-    researchEvidence: string,
-    userId: string,
   ): Promise<EnsembleCandidate[]> {
     const count = this.tierToCount(tier);
-    const config = AppConfig.get();
     const model = selection.actualModel;
 
     const calls = Array.from({ length: count }, (_unused, index) => {
@@ -370,13 +360,7 @@ export class CostEnsembleManager {
         detail: model,
         stageId,
       });
-      return this.runOneCall(
-        config.OLLAMA_SERVICE_URL,
-        content,
-        model,
-        researchEvidence,
-        userId,
-      ).then(
+      return this.runOneCall(bundle, content, model).then(
         (value) => {
           this.safeEmitStage(threadId, {
             label: `Provider ${String(index + 1)}/${String(count)} returned`,
@@ -431,62 +415,43 @@ export class CostEnsembleManager {
     }
   }
 
+  /**
+   * One tier member, through the same chokepoint a chat turn uses.
+   *
+   * This used to post an `OllamaGenerateRequest` straight at
+   * `/api/v1/ollama/generate`, which pinned every candidate to a local model —
+   * an account with only a cloud connector could not run this mode at all —
+   * and metered through a second, parallel accounting path. It now carries the
+   * full context bundle and can name any connector the user has.
+   */
   private async runOneCall(
-    ollamaServiceUrl: string,
+    bundle: ChatContextBundle,
     content: string,
     model: string,
-    researchEvidence: string,
-    userId: string,
   ): Promise<EnsembleCandidate> {
     const start = Date.now();
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt: prependResearchEvidence(content, researchEvidence),
-      stream: false,
-      think: false,
-    };
+    const parsed = parseJudgeModel(model);
+    const provider = parsed.provider ?? OLLAMA_PROVIDER;
 
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `cost-ensemble:candidate:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
+    const response = await this.modeExecutionGateway.run({
+      bundle,
+      prompt: content,
+      provider,
+      model: parsed.model.length > 0 ? parsed.model : model,
+      ledgerContext: TokenLedgerContext.COST_ENSEMBLE,
+      paygCall: {
         workflow: PAYG_WORKFLOW_COST_ENSEMBLE,
-        promptText: requestBody.prompt,
+        requestId: `cost-ensemble:candidate:${randomUUID()}`,
       },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${ollamaServiceUrl}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: COST_ENSEMBLE_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
-
-    if (!response.ok) {
-      throw new Error(`Ollama returned status ${String(response.status)}`);
-    }
-
-    // Universal token deduction for every ensemble candidate.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
     });
 
+    // Quota is no longer recorded here: `callProvider` is the universal token
+    // deduction chokepoint and records every call that passes through it. The
+    // hand-rolled `recordUsage` this method used to make was a second path to
+    // the same ledger, which is exactly what this batch removes.
     return {
       model,
-      response: response.data.response.trim(),
+      response: (response.content ?? '').trim(),
       latencyMs: Date.now() - start,
     };
   }
@@ -548,17 +513,13 @@ export class CostEnsembleManager {
   }
 
   private async resolveModel(): Promise<string> {
-    if (DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO') {
-      return DEFAULT_COST_ENSEMBLE_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO' ? DEFAULT_COST_ENSEMBLE_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(
     dto: CostEnsembleMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -567,10 +528,7 @@ export class CostEnsembleManager {
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

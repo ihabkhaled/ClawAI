@@ -38,16 +38,12 @@ function repositoryWith(options: {
   return { repo, calls };
 }
 
-function candidate(
-  threadId: string,
-  title: string | null,
-  matchingMessageCount = 3,
-): CrossThreadCandidate {
+function candidate(threadId: string, title: string | null, termRarity = 3): CrossThreadCandidate {
   return {
     threadId,
     title,
     updatedAt: new Date('2026-08-01T00:00:00Z'),
-    matchingMessageCount,
+    termRarity,
   };
 }
 

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { MAX_CHAIN_STEPS, MIN_CHAIN_STEPS } from '@/constants';
 import { useEscalationPoll } from '@/hooks/chat/use-escalation-poll';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useSendEscalationChain } from '@/hooks/chat/use-send-escalation-chain';
 import { useTranslation } from '@/lib/i18n';
@@ -16,6 +17,7 @@ export function useEscalationPage(): UseEscalationPageReturn {
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
   const [additionalChainModels, setAdditionalChainModels] = useState<EscalationChainStep[]>([]);
   const [prompt, setPrompt] = useState('');
+  const composer = useOrchestrationComposer();
   const { send, result, isPending, isError } = useSendEscalationChain();
 
   const threadId = result?.threadId ?? null;
@@ -108,8 +110,13 @@ export function useEscalationPage(): UseEscalationPageReturn {
       { provider: selectedModel.provider, model: selectedModel.model },
       ...additionalChainModels,
     ];
-    send({ content: prompt.trim(), chain: fullChain });
-  }, [canSubmit, send, prompt, selectedModel, additionalChainModels]);
+    send({
+      content: prompt.trim(),
+      chain: fullChain,
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
+    });
+    composer.clear();
+  }, [canSubmit, send, prompt, selectedModel, additionalChainModels, composer]);
 
   return {
     t,
@@ -132,5 +139,6 @@ export function useEscalationPage(): UseEscalationPageReturn {
     isPolling,
     isSynthesisReady,
     handleViewInThread,
+    composer,
   };
 }

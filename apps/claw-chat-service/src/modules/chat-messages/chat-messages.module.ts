@@ -13,6 +13,9 @@ import { ResearchGateService } from './services/research-gate.service';
 import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
+import { ModelContextWindowClient } from './clients/model-context-window.client';
+import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
 import { CrossThreadRetrievalManager } from './managers/cross-thread-retrieval.manager';
 import { CrossThreadRetrievalRepository } from './repositories/cross-thread-retrieval.repository';
@@ -73,6 +76,14 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     GeminiFilesApiManager,
     ConsensusExecutionManager,
     ContextAssemblyManager,
+    // Registered because ChatContextGatewayManager injects it. Everywhere
+    // else in this service it is built with `new` — its cache is static, so an
+    // instance carries no state — and it had therefore never needed to be a
+    // provider. Injecting it keeps the gateway's spec able to hand it a fake
+    // rather than letting a unit test reach the network.
+    ModelContextWindowClient,
+    ChatContextGatewayManager,
+    ModeExecutionGatewayManager,
     ContextComposerManager,
     CrossThreadRetrievalManager,
     CrossThreadRetrievalRepository,

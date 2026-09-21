@@ -1,37 +1,20 @@
 import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
-import * as httpClient from '../../../common/utilities/http-client.utility';
 import { PipelineManager } from '../managers/pipeline.manager';
+import { type ChatContextGatewayManager } from '../managers/chat-context-gateway.manager';
+import { type ModeExecutionGatewayManager } from '../managers/mode-execution-gateway.manager';
 import { type ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../services/chat-stream.service';
 import { type AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { pipelineMessageSchema } from '../dto/pipeline-message.dto';
+import { PIPELINE_TEMPLATES } from '../constants/pipeline.constants';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
-
-vi.mock('../../../common/utilities/http-client.utility');
-
-// vi.importMock hands back a FRESH automock rather than the instance the
-// manager imported, so nothing configured here reached the code under test.
-// Mocking the real imported binding is the handle the manager actually holds.
-const httpRequest = vi.mocked(httpClient.httpRequest);
-
-// AppConfig exposes a STATIC get(); neither a bare automock nor importMock
-// hands that same static back, so the spec configured one object while the code
-// under test read another. A hoisted vi.fn keeps both on one mock.
-const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
-
-vi.mock('../../../app/config/app.config', () => ({
-  AppConfig: { get: appConfigGet },
-}));
-
-const AppConfig = { get: appConfigGet };
-
-AppConfig.get.mockReturnValue({ OLLAMA_SERVICE_URL: 'http://ollama:4008' });
 
 const mockMessagesRepo = (): Partial<Record<keyof ChatMessagesRepository, Mock>> => ({
   create: vi.fn(),
@@ -45,6 +28,7 @@ const mockThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, Mock>> =
 const mockStreamService = (): Partial<Record<keyof ChatStreamService, Mock>> => ({
   emitRequestAccepted: vi.fn(),
   emitProgressStage: vi.fn(),
+  emitOrchestrationStage: vi.fn(),
   emitCompletion: vi.fn(),
   emitError: vi.fn(),
 });
@@ -60,35 +44,81 @@ type ResearchEnricherStub = {
 };
 
 function mockResearchEnricher(): ResearchEnricherStub {
-  const enrichForOrchestration = vi
-    .fn()
-    .mockResolvedValue({ transcript: null, systemPrompt: '' });
+  const enrichForOrchestration = vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' });
   const service = { enrichForOrchestration } as unknown as ResearchEnricherManager;
   return { enrichForOrchestration, service };
 }
 
-const makeOllamaSuccess = (text: string) => ({ ok: true, status: 200, data: { response: text } });
+/** The bundle shape `ChatContextGatewayManager.build` hands back. */
+const makeBundle = (systemPrompt: string | null = null) => ({
+  context: {
+    userId: 'user-1',
+    systemPrompt,
+    threadMessages: [],
+    memories: [],
+    contextPackItems: [],
+    fileContents: [],
+    workspaceCitations: [],
+    researchEvidence: [],
+  },
+  thread: { id: 'thread-1' },
+  threadSettings: undefined,
+  messages: [],
+  fileIds: [],
+  latestUserMetadata: null,
+});
+
+type ContextGatewayStub = { build: Mock; service: ChatContextGatewayManager };
+
+function mockContextGateway(systemPrompt: string | null = null): ContextGatewayStub {
+  const build = vi.fn().mockResolvedValue(makeBundle(systemPrompt));
+  return { build, service: { build } as unknown as ChatContextGatewayManager };
+}
+
+// Every stage now goes through the same chokepoint a chat turn uses, so the
+// spec asserts on this rather than on a hand-built Ollama request body.
+type ModeGatewayStub = { run: Mock; service: ModeExecutionGatewayManager };
+
+function mockModeGateway(): ModeGatewayStub {
+  const run = vi.fn().mockResolvedValue({
+    content: 'stage output',
+    provider: 'local-ollama',
+    model: 'AUTO',
+    inputTokens: 10,
+    outputTokens: 20,
+  });
+  return { run, service: { run } as unknown as ModeExecutionGatewayManager };
+}
 
 describe('PipelineManager', () => {
   let manager: PipelineManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepo>;
   let threadsRepo: ReturnType<typeof mockThreadsRepo>;
   let streamService: ReturnType<typeof mockStreamService>;
+  let contextGateway: ContextGatewayStub;
+  let modeGateway: ModeGatewayStub;
   let researchEnricher: ResearchEnricherStub;
+
+  const buildManager = (selectionService?: AdvancedModuleModelSelectionService): PipelineManager =>
+    new PipelineManager(
+      messagesRepo as unknown as ChatMessagesRepository,
+      threadsRepo as unknown as ChatThreadsRepository,
+      streamService as unknown as ChatStreamService,
+      contextGateway.service,
+      modeGateway.service,
+      researchEnricher.service,
+      selectionService,
+    );
 
   beforeEach(() => {
     vi.clearAllMocks();
     messagesRepo = mockMessagesRepo();
     threadsRepo = mockThreadsRepo();
     streamService = mockStreamService();
+    contextGateway = mockContextGateway();
+    modeGateway = mockModeGateway();
     researchEnricher = mockResearchEnricher();
-    manager = new PipelineManager(
-      messagesRepo as unknown as ChatMessagesRepository,
-      threadsRepo as unknown as ChatThreadsRepository,
-      streamService as unknown as ChatStreamService,
-      researchEnricher.service,
-      createFakePaygAccessControl() as any,
-    );
+    manager = buildManager();
   });
 
   describe('executePipeline', () => {
@@ -144,11 +174,6 @@ describe('PipelineManager', () => {
 
   describe('executeInBackground', () => {
     it('should store ASSISTANT message with pipeline: true in metadata', async () => {
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('Analysis output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Reasoning output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Formatted output'));
-
       messagesRepo.create!.mockResolvedValue({ id: 'assist-1', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -171,11 +196,6 @@ describe('PipelineManager', () => {
     });
 
     it('should store metadata with correct stageCount', async () => {
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('Stage 1 output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Stage 2 output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Stage 3 output'));
-
       messagesRepo.create!.mockResolvedValue({ id: 'assist-2', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -197,11 +217,6 @@ describe('PipelineManager', () => {
     });
 
     it('should emit SSE completion on success', async () => {
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('Analysis'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Reasoning'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Formatted'));
-
       messagesRepo.create!.mockResolvedValue({ id: 'msg-done', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -217,8 +232,8 @@ describe('PipelineManager', () => {
       expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
     });
 
-    it('should emit SSE error and store error message when Ollama fails', async () => {
-      httpRequest.mockResolvedValueOnce({ ok: false, status: 500, data: { response: '' } });
+    it('should emit SSE error and store error message when a stage call fails', async () => {
+      modeGateway.run.mockRejectedValueOnce(new Error('Provider unreachable'));
       messagesRepo.create!.mockResolvedValue({ id: 'err-msg', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -239,7 +254,7 @@ describe('PipelineManager', () => {
     });
 
     it('should resolve even when everything fails (fire-and-forget safety)', async () => {
-      httpRequest.mockRejectedValueOnce(new Error('Network error'));
+      modeGateway.run.mockRejectedValue(new Error('Network error'));
       messagesRepo.create!.mockRejectedValue(new Error('DB error'));
 
       await expect(
@@ -256,11 +271,6 @@ describe('PipelineManager', () => {
     });
 
     it('should use analyze-reason-format template stages by default', async () => {
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('Analysis'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Reasoning'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Formatted'));
-
       messagesRepo.create!.mockResolvedValue({ id: 'msg-tmpl', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -273,14 +283,10 @@ describe('PipelineManager', () => {
         'user-1',
       );
 
-      expect(httpRequest).toHaveBeenCalledTimes(3);
+      expect(modeGateway.run).toHaveBeenCalledTimes(3);
     });
 
     it('should use customStages when template is custom', async () => {
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('Custom stage 1 output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Custom stage 2 output'));
-
       messagesRepo.create!.mockResolvedValue({ id: 'msg-custom', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -297,13 +303,91 @@ describe('PipelineManager', () => {
         'user-1',
       );
 
-      expect(httpRequest).toHaveBeenCalledTimes(2);
+      expect(modeGateway.run).toHaveBeenCalledTimes(2);
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
       );
       expect(
         (assistantCall![0] as { metadata?: { stageCount?: number } }).metadata?.stageCount,
       ).toBe(2);
+    });
+  });
+
+  describe('context and execution gateways', () => {
+    it('builds ONE bundle for the whole chain, on the PIPELINE surface', async () => {
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-bundle', threadId: 'thread-1' });
+
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        { content: 'My request content', template: 'analyze-reason-format' },
+        'user-1',
+      );
+
+      // Three stages ran, but retrieval happened once: a per-stage build would
+      // re-run history, memory, attachment and cross-thread lookups per stage.
+      expect(modeGateway.run).toHaveBeenCalledTimes(3);
+      expect(contextGateway.build).toHaveBeenCalledTimes(1);
+      expect(contextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          threadId: 'thread-1',
+          surface: ChatSurface.PIPELINE,
+          historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        }),
+      );
+    });
+
+    it("sends each stage's instruction as the system prompt and the stage input as the prompt", async () => {
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-chain', threadId: 'thread-1' });
+      modeGateway.run
+        .mockResolvedValueOnce({ content: 'analysis output' })
+        .mockResolvedValueOnce({ content: 'reasoning output' })
+        .mockResolvedValueOnce({ content: 'formatted output' });
+
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        { content: 'My request content', template: 'analyze-reason-format' },
+        'user-1',
+      );
+
+      const stages = PIPELINE_TEMPLATES['analyze-reason-format']!;
+      const calls = modeGateway.run.mock.calls.map(
+        (call) =>
+          call[0] as { prompt?: string; bundle: { context: { systemPrompt: string | null } } },
+      );
+      expect(calls).toHaveLength(3);
+      // The instruction is a PERSONA, not text glued in front of the input.
+      expect(calls[0]!.bundle.context.systemPrompt).toBe(stages[0]!.instruction);
+      expect(calls[1]!.bundle.context.systemPrompt).toBe(stages[1]!.instruction);
+      expect(calls[2]!.bundle.context.systemPrompt).toBe(stages[2]!.instruction);
+      // The prompt is the chain: stage 1 gets the user's content, stage N gets
+      // stage N-1's output.
+      expect(calls[0]!.prompt).toBe('My request content');
+      expect(calls[1]!.prompt).toBe('analysis output');
+      expect(calls[2]!.prompt).toBe('reasoning output');
+    });
+
+    it('appends the stage persona to an existing system prompt instead of replacing it', async () => {
+      contextGateway.build.mockResolvedValue(makeBundle('Always answer in French.'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-persona', threadId: 'thread-1' });
+
+      await manager.executeInBackground(
+        'thread-1',
+        'Content',
+        {
+          content: 'Content',
+          template: 'custom',
+          customStages: [{ name: 'Stage A', instruction: 'Do A:', model: 'AUTO' }],
+        },
+        'user-1',
+      );
+
+      const call = modeGateway.run.mock.calls[0]![0] as {
+        bundle: { context: { systemPrompt: string | null } };
+      };
+      expect(call.bundle.context.systemPrompt).toBe('Always answer in French.\n\nDo A:');
     });
   });
 
@@ -362,9 +446,7 @@ describe('PipelineManager', () => {
 
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
-      const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, Mock>
-      > = {
+      const selectionService: Partial<Record<keyof AdvancedModuleModelSelectionService, Mock>> = {
         resolveSelection: vi
           .fn()
           .mockRejectedValue(
@@ -374,12 +456,7 @@ describe('PipelineManager', () => {
             ),
           ),
       };
-      const isolated = new PipelineManager(
-        messagesRepo as unknown as ChatMessagesRepository,
-        threadsRepo as unknown as ChatThreadsRepository,
-        streamService as unknown as ChatStreamService,
-        researchEnricher.service,
-        createFakePaygAccessControl() as any,
+      const isolated = buildManager(
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -410,10 +487,6 @@ describe('PipelineManager', () => {
         actualProvider: 'local-ollama',
         actualModel: 'qwen2.5:7b',
       };
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('stage 1'))
-        .mockResolvedValueOnce(makeOllamaSuccess('stage 2'))
-        .mockResolvedValueOnce(makeOllamaSuccess('stage 3'));
       messagesRepo.create!.mockResolvedValue({ id: 'assist-manual', threadId: 'thread-m' });
 
       await manager.executeInBackground(
@@ -456,10 +529,6 @@ describe('PipelineManager', () => {
         actualProvider: 'local-ollama',
         actualModel: 'gemma3:4b',
       };
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('stage 1'))
-        .mockResolvedValueOnce(makeOllamaSuccess('stage 2'))
-        .mockResolvedValueOnce(makeOllamaSuccess('stage 3'));
       messagesRepo.create!.mockResolvedValue({ id: 'assist-auto', threadId: 'thread-a' });
 
       await manager.executeInBackground(
@@ -489,10 +558,6 @@ describe('PipelineManager', () => {
 
   describe('research enrichment wiring', () => {
     it('does NOT invoke enrichForOrchestration when researchMode is undefined/NONE', async () => {
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('s1'))
-        .mockResolvedValueOnce(makeOllamaSuccess('s2'))
-        .mockResolvedValueOnce(makeOllamaSuccess('s3'));
       messagesRepo.create!.mockResolvedValue({ id: 'msg-no-research', threadId: 'thread-1' });
 
       await manager.executeInBackground(
@@ -513,6 +578,9 @@ describe('PipelineManager', () => {
       const metadata = (assistantCall![0] as { metadata?: { researchTranscript?: unknown } })
         .metadata;
       expect(metadata?.researchTranscript).toBeUndefined();
+      expect(contextGateway.build).toHaveBeenCalledWith(
+        expect.not.objectContaining({ personaInstruction: expect.anything() }),
+      );
     });
 
     it('threads enricher transcript onto the ASSISTANT message when researchMode is SEARCH', async () => {
@@ -523,15 +591,12 @@ describe('PipelineManager', () => {
         latencyMs: 12,
         warnings: [],
       };
+      const evidence =
+        '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] src — https://example.com\nsnippet\n';
       researchEnricher.enrichForOrchestration.mockResolvedValue({
         transcript,
-        systemPrompt:
-          '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] src — https://example.com\nsnippet\n',
+        systemPrompt: evidence,
       });
-      httpRequest
-        .mockResolvedValueOnce(makeOllamaSuccess('Analysis output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Reasoning output'))
-        .mockResolvedValueOnce(makeOllamaSuccess('Formatted output'));
       messagesRepo.create!.mockResolvedValue({ id: 'msg-research', threadId: 'thread-r' });
 
       await manager.executeInBackground(
@@ -561,11 +626,11 @@ describe('PipelineManager', () => {
         assistantCall![0] as { metadata?: { researchTranscript?: { sources?: unknown[] } } }
       ).metadata;
       expect(metadata?.researchTranscript).toEqual(transcript);
-      // Every stage prompt got the evidence prepended.
-      for (const call of httpRequest.mock.calls) {
-        const body = (call[0] as { body?: { prompt?: string } }).body;
-        expect(body?.prompt).toContain('## Web research evidence');
-      }
+      // The evidence reaches the model as a persona on the ONE shared bundle,
+      // not glued in front of every stage's prompt text.
+      expect(contextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ personaInstruction: evidence }),
+      );
     });
   });
 });

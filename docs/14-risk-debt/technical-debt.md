@@ -486,3 +486,32 @@ Last updated: 2026-09-10
 | TD-004 | Low      | Low    | Opportunistic                   |
 | TD-018 | Low      | Low    | Opportunistic                   |
 | TD-019 | Low      | Low    | Opportunistic                   |
+
+### TD-039: jsdom is held at 30.0.1 because 30.1.0 breaks Radix overlays (2026-09-22)
+
+- **Severity**: Low · **Effort**: Low · **Priority**: Watch upstream
+- **Detail**: jsdom 30.1.0 landed via Dependabot and turned ten frontend tests
+  red across four files — `chat-thread-header-menu`, `answer-export`,
+  `phone-input`, `smart-router-add-entry-form`. Every failure reads "Unable to
+  find an accessible element with the role menuitem"; the tell is
+  `aria-expanded` stuck at `"false"`, meaning the menu never opened at all.
+- **The shape of it**: the FIRST Radix overlay in a test file opens; every
+  later one in the same file silently does not. Radix triggers call
+  `preventDefault()` on `pointerdown` deliberately, to keep focus off the
+  trigger. Under 30.1.0 that interacts with user-event's pointer state so the
+  suppression outlives the interaction. Verified by bisection: with jsdom
+  30.0.1 the same tests pass 8/8; with 30.1.0 they fail.
+- **Why a pin and not a fix**: `@testing-library/user-event` 14.6.7 is the
+  latest release, and jsdom 30.1.0 is itself the latest, so there is nothing to
+  bump forward to. Four harness fixes were tried and all failed: pointer-capture
+  polyfills, dismissing overlays with Escape between tests, resetting the
+  `pointer-events` lock on `<body>`, and `pretendToBeVisual`. Opening via
+  `fireEvent.pointerDown` fixed only the first overlay per file.
+- **This contradicts the standing "bump, never downgrade" rule**, and is
+  recorded here rather than applied quietly. It is an override in the root
+  `package.json`, so it also holds `vitest` and `isomorphic-dompurify` to the
+  same version — both only use jsdom for tests.
+- **Remove it when**: user-event or jsdom ships a release that handles a
+  prevented `pointerdown` without poisoning later interactions. Test by deleting
+  the `"jsdom"` override and running
+  `cd apps/claw-frontend && npx vitest run --shard=3/4`.

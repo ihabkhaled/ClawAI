@@ -32,6 +32,20 @@ describe('ConsensusExecutionManager', () => {
     callProvider: vi.fn(),
   };
 
+  // The gateway now owns what these managers used to assemble by hand. It
+  // delegates to the same assembler mock so existing context assertions still
+  // describe what the mode sends.
+  const mockChatContextGateway = {
+    build: vi.fn(async () => ({
+      context: await mockContextAssemblyManager.assemble(),
+      thread: await mockChatThreadsRepository.findById(),
+      threadSettings: undefined,
+      messages: [],
+      fileIds: [],
+      latestUserMetadata: null,
+    })),
+  };
+
   const mockContextAssemblyManager = {
     assemble: vi.fn(),
   };
@@ -102,9 +116,8 @@ describe('ConsensusExecutionManager', () => {
     });
     manager = new ConsensusExecutionManager(
       mockChatExecutionManager as any,
-      mockContextAssemblyManager as any,
+      mockChatContextGateway as any,
       mockChatMessagesRepository as any,
-      mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
       createFakePaygAccessControl() as any,
@@ -219,9 +232,8 @@ describe('ConsensusExecutionManager', () => {
 
       const isolatedManager = new ConsensusExecutionManager(
         isolatedExecManager as any,
-        mockContextAssemblyManager as any,
+        mockChatContextGateway as any,
         isolatedRepo as any,
-        mockChatThreadsRepository as any,
         mockChatStreamService as any,
         mockResearchEnricherManager as any,
         createFakePaygAccessControl() as any,
@@ -268,9 +280,8 @@ describe('ConsensusExecutionManager', () => {
 
       const isolatedManager = new ConsensusExecutionManager(
         isolatedExecManager as any,
-        mockContextAssemblyManager as any,
+        mockChatContextGateway as any,
         isolatedRepo as any,
-        mockChatThreadsRepository as any,
         mockChatStreamService as any,
         mockResearchEnricherManager as any,
         createFakePaygAccessControl() as any,

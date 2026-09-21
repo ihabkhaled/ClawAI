@@ -35,6 +35,7 @@ export default function PipelinePage(): React.ReactElement {
     hasProgress,
     errorMessage,
     handleViewInThread,
+    composer,
   } = usePipelinePage();
 
   const shellIsPending = isPending || (isPolling && !isPipelineReady);
@@ -91,6 +92,7 @@ export default function PipelinePage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('pipeline.contentLabel')}
       promptPlaceholder={t('pipeline.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={extraFieldsSlot}
       onSubmit={handleSend}
       submitLabel={submitLabel}

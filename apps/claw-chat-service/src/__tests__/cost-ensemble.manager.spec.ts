@@ -8,32 +8,7 @@ import { type ChatStreamService } from '../modules/chat-messages/services/chat-s
 import { type QualityCheckManager } from '../modules/chat-messages/managers/quality-check.manager';
 import { type AdvancedModuleModelSelectionService } from '../modules/chat-messages/services/advanced-module-model-selection.service';
 import { costEnsembleMessageSchema } from '../modules/chat-messages/dto/cost-ensemble-message.dto';
-import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
-
-vi.mock('../app/config/app.config', () => ({
-  AppConfig: {
-    get: vi.fn().mockReturnValue({
-      OLLAMA_SERVICE_URL: 'http://localhost:11434',
-    }),
-  },
-}));
-
-vi.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    data: {
-      response: JSON.stringify({
-        complexity: 0.3,
-        risk: 0.2,
-        ambiguity: 0.2,
-        reasoning: 'Simple task',
-      }),
-    },
-  }),
-}));
 
 const mockThread = {
   id: 'thread-ce-1',
@@ -114,6 +89,52 @@ const mockResearchEnricherManager = {
   enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
+const emptyBundle = () => ({
+  context: {
+    userId: 'user-1',
+    systemPrompt: null,
+    threadMessages: [],
+    memories: [],
+    contextPackItems: [],
+    fileContents: [],
+    workspaceCitations: [],
+    researchEvidence: [],
+  },
+  thread: { id: 'thread-ce-1' },
+  threadSettings: undefined,
+  messages: [],
+  fileIds: [],
+  latestUserMetadata: null,
+});
+
+const mockChatContextGateway = {
+  build: vi.fn(async () => emptyBundle()),
+};
+
+const classificationResponse = (complexity: number, risk: number, ambiguity: number) => ({
+  content: JSON.stringify({ complexity, risk, ambiguity, reasoning: 'Classified' }),
+  provider: 'local-ollama',
+  model: 'gemma3:4b',
+  inputTokens: 10,
+  outputTokens: 20,
+});
+
+// The classifier and every tier member now go through the same chokepoint a
+// chat turn uses, so the spec drives this rather than a hand-built Ollama
+// response body. `run` is called once to classify and once per candidate, in
+// that order.
+const mockModeExecutionGateway = {
+  run: vi.fn(async () => classificationResponse(0.3, 0.2, 0.2)),
+};
+
+const candidateResponse = (content: string) => ({
+  content,
+  provider: 'local-ollama',
+  model: 'gemma3:4b',
+  inputTokens: 10,
+  outputTokens: 20,
+});
+
 describe('CostEnsembleManager', () => {
   let manager: CostEnsembleManager;
   let messagesRepo: ReturnType<typeof makeMessagesRepo>;
@@ -136,24 +157,18 @@ describe('CostEnsembleManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
+      mockChatContextGateway as any,
+      mockModeExecutionGateway as any,
       mockResearchEnricherManager as any,
-      createFakePaygAccessControl() as any,
     );
 
     vi.clearAllMocks();
 
-    (httpClientModule.httpRequest as Mock).mockResolvedValue({
-      ok: true,
-      status: 200,
-      data: {
-        response: JSON.stringify({
-          complexity: 0.3,
-          risk: 0.2,
-          ambiguity: 0.2,
-          reasoning: 'Simple task',
-        }),
-      },
-    });
+    mockChatContextGateway.build.mockResolvedValue(emptyBundle());
+    // Default: a "single" tier classification, then plain candidate answers.
+    mockModeExecutionGateway.run
+      .mockResolvedValueOnce(classificationResponse(0.3, 0.2, 0.2))
+      .mockResolvedValue(candidateResponse('candidate answer'));
   });
 
   describe('executeCostEnsemble', () => {
@@ -198,24 +213,6 @@ describe('CostEnsembleManager', () => {
   describe('executeInBackground', () => {
     it('should store ASSISTANT message with costEnsemble:true metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as Mock)
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: {
-            response: JSON.stringify({
-              complexity: 0.3,
-              risk: 0.2,
-              ambiguity: 0.2,
-              reasoning: 'Simple',
-            }),
-          },
-        })
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          data: { response: 'candidate answer' },
-        });
 
       await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
 
@@ -229,57 +226,22 @@ describe('CostEnsembleManager', () => {
 
     it('should store tier in metadata based on classification score', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as Mock)
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: {
-            response: JSON.stringify({
-              complexity: 0.9,
-              risk: 0.9,
-              ambiguity: 0.9,
-              reasoning: 'Very complex',
-            }),
-          },
-        })
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          data: { response: 'some answer' },
-        });
+      mockModeExecutionGateway.run
+        .mockReset()
+        .mockResolvedValueOnce(classificationResponse(0.9, 0.9, 0.9))
+        .mockResolvedValue(candidateResponse('some answer'));
 
       await manager.executeInBackground('thread-ce-1', 'complex task', 'user-1');
 
       const callArgCall = (messagesRepo.create as Mock).mock.calls[0];
       expect(callArgCall).toBeDefined();
-      const callArg = callArgCall?.[0] as Record<
-        string,
-        unknown
-      >;
+      const callArg = callArgCall?.[0] as Record<string, unknown>;
       const meta = callArg['metadata'] as Record<string, unknown>;
       expect(meta['tier']).toBe('trio');
     });
 
     it('should emit SSE completion on success', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
-      (httpClientModule.httpRequest as Mock)
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: {
-            response: JSON.stringify({
-              complexity: 0.3,
-              risk: 0.2,
-              ambiguity: 0.2,
-              reasoning: 'Fine',
-            }),
-          },
-        })
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          data: { response: 'answer' },
-        });
 
       await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
 
@@ -290,8 +252,11 @@ describe('CostEnsembleManager', () => {
       );
     });
 
-    it('should emit SSE error and store error when Ollama fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Ollama down'));
+    it('should emit SSE error and store error when the provider fails', async () => {
+      // Classification survives a provider failure by design (it falls back to
+      // the default tier); the candidate call is what has nothing to select
+      // from, so this exercises the real failure seam.
+      mockModeExecutionGateway.run.mockReset().mockRejectedValue(new Error('Provider down'));
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
       await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
@@ -305,7 +270,7 @@ describe('CostEnsembleManager', () => {
     });
 
     it('should resolve (fire-and-forget) even when everything fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
+      mockModeExecutionGateway.run.mockReset().mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -314,7 +279,7 @@ describe('CostEnsembleManager', () => {
     });
 
     it('should not throw when storeErrorMessage itself fails (nested try-catch)', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Ollama down'));
+      mockModeExecutionGateway.run.mockReset().mockRejectedValue(new Error('Provider down'));
       messagesRepo.create!.mockRejectedValue(new Error('DB also down'));
 
       await expect(
@@ -355,9 +320,7 @@ describe('CostEnsembleManager', () => {
 
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
-      const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, Mock>
-      > = {
+      const selectionService: Partial<Record<keyof AdvancedModuleModelSelectionService, Mock>> = {
         resolveSelection: vi
           .fn()
           .mockRejectedValue(
@@ -372,8 +335,9 @@ describe('CostEnsembleManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockChatContextGateway as any,
+        mockModeExecutionGateway as any,
         mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -433,6 +397,48 @@ describe('CostEnsembleManager', () => {
       expect(metadata?.routeRoadmap?.finalProvider).toBe('local-ollama');
       expect(metadata?.routeRoadmap?.finalModel).toBe('qwen2.5:7b');
       expect(Array.isArray(metadata?.routeRoadmap?.steps)).toBe(true);
+      // The mode names its model to the shared chokepoint now, instead of
+      // hand-building an Ollama request body.
+      expect(mockModeExecutionGateway.run).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'qwen2.5:7b' }),
+      );
+    });
+
+    it('passes the attachment list to the context gateway', async () => {
+      messagesRepo.create!.mockResolvedValue({ id: 'ce-files', threadId: 'thread-ce-1' });
+
+      await manager.executeInBackground(
+        'thread-ce-1',
+        'test prompt',
+        'user-1',
+        undefined,
+        undefined,
+        undefined,
+        '',
+        ['file-1'],
+      );
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ fileIds: ['file-1'] }),
+      );
+    });
+
+    it('builds the context bundle once and shares it with every provider call', async () => {
+      messagesRepo.create!.mockResolvedValue({ id: 'ce-shared', threadId: 'thread-ce-1' });
+      // A trio: one classify call plus three candidates, all on one bundle.
+      mockModeExecutionGateway.run
+        .mockReset()
+        .mockResolvedValueOnce(classificationResponse(0.9, 0.9, 0.9))
+        .mockResolvedValue(candidateResponse('answer'));
+
+      await manager.executeInBackground('thread-ce-1', 'complex task', 'user-1');
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledTimes(1);
+      expect(mockModeExecutionGateway.run).toHaveBeenCalledTimes(4);
+      const bundles = (mockModeExecutionGateway.run as unknown as Mock).mock.calls.map(
+        (call: unknown[]) => (call[0] as { bundle: unknown }).bundle,
+      );
+      expect(new Set(bundles).size).toBe(1);
     });
 
     it('AUTO path: routeRoadmap surfaces the truthfully-resolved model', async () => {

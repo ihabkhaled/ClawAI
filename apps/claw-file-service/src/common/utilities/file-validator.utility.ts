@@ -1,9 +1,13 @@
 import { Logger } from '@nestjs/common';
 import type { FileValidationResult } from '../../modules/files/types/file-security.types';
 import {
+  AAC_ADTS_SECOND_BYTES,
+  AUDIO_MIME_DETECTION_ALIASES,
   DANGEROUS_EXTENSIONS,
+  M4A_MAJOR_BRANDS,
   MAX_FILENAME_LENGTH,
   MIME_TO_MAGIC_BYTES,
+  MP3_FRAME_SYNC_SECOND_BYTES,
   MP4_MAJOR_BRANDS,
   VIDEO_MIME_DETECTION_ALIASES,
 } from '../../modules/files/constants/file-security.constants';
@@ -33,11 +37,9 @@ export function validateFilename(filename: string): FileValidationResult {
     return { valid: false, reason: `dangerous_extension: ${ext}` };
   }
 
-  if (/\.(exe|bat|cmd|com|scr|pif|vbs|vbe|wsf|wsh|msi|dll|sys)\.?/i.test(filename)) {
-    return { valid: false, reason: 'double_extension_attack' };
-  }
-
-  return { valid: true, reason: 'ok' };
+  return /\.(exe|bat|cmd|com|scr|pif|vbs|vbe|wsf|wsh|msi|dll|sys)\.?/i.test(filename)
+    ? { valid: false, reason: 'double_extension_attack' }
+    : { valid: true, reason: 'ok' };
 }
 
 export function sanitizeFilename(filename: string): string {
@@ -53,6 +55,11 @@ export async function validateMagicBytes(
 ): Promise<FileValidationResult> {
   if (declaredMimeType.startsWith('video/')) {
     return validateDetectedVideoContainer(buffer, declaredMimeType);
+  }
+  // B6a — without this, "audio/wav" is an unchecked MIME and any bytes at all
+  // ride in under that name.
+  if (declaredMimeType.startsWith('audio/')) {
+    return validateDetectedAudioContainer(buffer, declaredMimeType);
   }
   const expectedSignatures = Object.entries(MIME_TO_MAGIC_BYTES).find(
     ([k]) => k === declaredMimeType,
@@ -103,10 +110,7 @@ function detectVideoMimeType(buffer: Buffer): string | undefined {
   if (isAvi(buffer)) {
     return 'video/vnd.avi';
   }
-  if (isMpeg(buffer)) {
-    return 'video/mpeg';
-  }
-  return undefined;
+  return isMpeg(buffer) ? 'video/mpeg' : undefined;
 }
 
 function isIsoBaseMedia(buffer: Buffer): boolean {
@@ -143,6 +147,82 @@ function isMpeg(buffer: Buffer): boolean {
     buffer[2] === 0x01 &&
     (buffer[3] === 0xb3 || buffer[3] === 0xba)
   );
+}
+
+async function validateDetectedAudioContainer(
+  buffer: Buffer,
+  declaredMimeType: string,
+): Promise<FileValidationResult> {
+  const acceptedDetectedMimes = Object.entries(AUDIO_MIME_DETECTION_ALIASES).find(
+    ([mimeType]) => mimeType === declaredMimeType,
+  )?.[1];
+  const detectedMime = detectAudioMimeType(buffer);
+  if (acceptedDetectedMimes?.includes(detectedMime ?? '') === true) {
+    return { valid: true, reason: 'magic_bytes_match' };
+  }
+  logger.warn(
+    `validateMagicBytes: MISMATCH — declared ${declaredMimeType} but magic bytes don't match`,
+  );
+  return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
+}
+
+function detectAudioMimeType(buffer: Buffer): string | undefined {
+  if (isRiffWave(buffer)) {
+    return 'audio/wav';
+  }
+  if (isOgg(buffer)) {
+    return 'audio/ogg';
+  }
+  if (isFlac(buffer)) {
+    return 'audio/flac';
+  }
+  if (isM4a(buffer)) {
+    return 'audio/mp4';
+  }
+  if (isWebm(buffer)) {
+    return 'audio/webm';
+  }
+  if (isMp3(buffer)) {
+    return 'audio/mpeg';
+  }
+  return isAacAdts(buffer) ? 'audio/aac' : undefined;
+}
+
+// 'RIFF' at 0 and 'WAVE' at 8. The 'WAVE' half is what separates a WAV from a
+// WebP or an AVI, which share the RIFF prefix.
+function isRiffWave(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WAVE'
+  );
+}
+
+function isOgg(buffer: Buffer): boolean {
+  return buffer.length >= 4 && buffer.toString('ascii', 0, 4) === 'OggS';
+}
+
+function isFlac(buffer: Buffer): boolean {
+  return buffer.length >= 4 && buffer.toString('ascii', 0, 4) === 'fLaC';
+}
+
+// 'ftyp' at offset 4 with an audio-capable brand at offset 8 — the same
+// ISO base-media shape isIsoBaseMedia() checks for video.
+function isM4a(buffer: Buffer): boolean {
+  return buffer.length < 12 || buffer.toString('ascii', 4, 8) !== 'ftyp'
+    ? false
+    : M4A_MAJOR_BRANDS.has(buffer.toString('ascii', 8, 12).toLowerCase());
+}
+
+// Either an ID3 tag at offset 0 or a bare MPEG Layer III frame sync.
+function isMp3(buffer: Buffer): boolean {
+  return buffer.length >= 3 && buffer.toString('ascii', 0, 3) === 'ID3'
+    ? true
+    : buffer.length >= 2 && buffer[0] === 0xff && MP3_FRAME_SYNC_SECOND_BYTES.has(buffer[1] ?? 0);
+}
+
+function isAacAdts(buffer: Buffer): boolean {
+  return buffer.length >= 2 && buffer[0] === 0xff && AAC_ADTS_SECOND_BYTES.has(buffer[1] ?? 0);
 }
 
 export function detectZipBomb(buffer: Buffer): FileValidationResult {

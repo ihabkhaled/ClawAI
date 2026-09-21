@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
+import { attachmentFields } from './attachment-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 export const bestOfNMessageSchema = z.object({
@@ -9,6 +10,7 @@ export const bestOfNMessageSchema = z.object({
   models: z.array(z.string().max(255)).max(5).optional(),
   ...advancedModelSelectionFields,
   ...researchFields,
+  ...attachmentFields,
 });
 
 export type BestOfNMessageDto = z.infer<typeof bestOfNMessageSchema>;

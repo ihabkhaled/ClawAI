@@ -2,6 +2,7 @@ import type {
   AdvancedModuleModelSelection,
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
+import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
 
@@ -27,6 +28,7 @@ export type PipelineResult = {
 export type SendPipelinePayload = AdvancedModelSelectionPayload & {
   content: string;
   template: string;
+  fileIds?: string[];
 };
 
 export type SendPipelineResult = {
@@ -71,4 +73,5 @@ export type UsePipelinePageReturn = {
   hasProgress: boolean;
   errorMessage: string | null;
   handleViewInThread: () => void;
+  composer: UseOrchestrationComposerReturn;
 };
