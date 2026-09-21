@@ -42,6 +42,16 @@ export enum EventPattern {
   FILE_OCR_STARTED = 'file.ocr_started',
   FILE_OCR_COMPLETED = 'file.ocr_completed',
   FILE_OCR_FAILED = 'file.ocr_failed',
+  // === B6b — audio transcription job ===
+  // ORDERING IS LOAD-BEARING (same trap as the PAYG credit events above): the
+  // topic exchange discards a routing key with no bound queue, and the queue is
+  // asserted by the CONSUMER at boot. Producer and consumer are BOTH
+  // file-service here, so TranscriptionManager subscribes in `onModuleInit` —
+  // before FileProcessingManager can ever publish a request — and a job
+  // published during startup is queued rather than dropped on the floor.
+  FILE_TRANSCRIBE_REQUESTED = 'file.transcribe_requested',
+  FILE_TRANSCRIBE_COMPLETED = 'file.transcribe_completed',
+  FILE_TRANSCRIBE_FAILED = 'file.transcribe_failed',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',

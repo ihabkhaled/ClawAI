@@ -6021,6 +6021,21 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "FILE_TRANSCRIBE_COMPLETED",
+        "pattern": "file.transcribe_completed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "FILE_TRANSCRIBE_FAILED",
+        "pattern": "file.transcribe_failed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "FILE_TRANSCRIBE_REQUESTED",
+        "pattern": "file.transcribe_requested",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "FILE_UPLOAD_COMPLETED",
         "pattern": "file.upload_completed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7583,7 +7598,7 @@
       ],
       "skills": [
         {
-          "bytes": 28558,
+          "bytes": 28837,
           "file": "skills/00-index.md"
         },
         {
@@ -7637,6 +7652,10 @@
         {
           "bytes": 4875,
           "file": "skills/add-a-shared-package-to-a-service.md"
+        },
+        {
+          "bytes": 4095,
+          "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
           "bytes": 3125,
@@ -9909,7 +9928,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 22
+        "testFiles": 25
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10679,7 +10698,7 @@
     "dockerServiceCount": 43,
     "endpointCount": 676,
     "envVarCount": 355,
-    "eventCount": 178,
+    "eventCount": 181,
     "frontendRouteCount": 155,
     "localeCount": 13,
     "nginxRouteCount": 60,
@@ -10689,7 +10708,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1359,
+    "totalTestFiles": 1362,
     "workspaceCount": 25
   }
 }

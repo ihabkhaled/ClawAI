@@ -107,7 +107,15 @@ export class OpenAIAdapter implements ProviderAdapter {
         supportsStreaming: true,
         supportsTools: true,
         supportsVision: model.id.includes('vision') || model.id.startsWith('gpt-4'),
-        supportsAudio: false,
+        // B6b — this said `false` while routing-service's
+        // CAPABILITY_PROVIDER_PRIORITY already listed OPENAI for AUDIO_INPUT,
+        // so the two halves of the platform disagreed about the same provider.
+        // OpenAI does accept audio: `/audio/transcriptions` (Whisper) is part
+        // of the same connector's credentials, which is what file-service's
+        // transcription adapter calls. The flag describes the PROVIDER's audio
+        // capability, which is what `modalitiesIn: ['AUDIO']` in the models
+        // snapshot is read for.
+        supportsAudio: true,
         supportsStructuredOutput: true,
       },
     }));

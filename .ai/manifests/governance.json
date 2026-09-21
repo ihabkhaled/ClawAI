@@ -324,7 +324,7 @@
   ],
   "skills": [
     {
-      "bytes": 28558,
+      "bytes": 28837,
       "file": "skills/00-index.md"
     },
     {
@@ -378,6 +378,10 @@
     {
       "bytes": 4875,
       "file": "skills/add-a-shared-package-to-a-service.md"
+    },
+    {
+      "bytes": 4095,
+      "file": "skills/add-a-voice-note-or-transcription-path.md"
     },
     {
       "bytes": 3125,

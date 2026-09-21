@@ -8,6 +8,8 @@ import { FileProcessingManager } from './managers/file-processing.manager';
 import { FileSecurityManager } from './managers/file-security.manager';
 import { FileRetentionSweeperManager } from './managers/file-retention-sweeper.manager';
 import { ZipExpansionManager } from './managers/zip-expansion.manager';
+import { TranscriptionManager } from './managers/transcription.manager';
+import { TranscriptionCapabilityClient } from './clients/transcription-capability.client';
 
 @Module({
   controllers: [FilesController, FilesInternalController],
@@ -19,6 +21,11 @@ import { ZipExpansionManager } from './managers/zip-expansion.manager';
     FileSecurityManager,
     FileRetentionSweeperManager,
     ZipExpansionManager,
+    // B6b - audio transcription. The manager subscribes to
+    // file.transcribe_requested in onModuleInit, which is what asserts the
+    // queue before FileProcessingManager can publish into it.
+    TranscriptionManager,
+    TranscriptionCapabilityClient,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],
 })

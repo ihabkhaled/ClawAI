@@ -33,7 +33,9 @@ import {
   RTF_MIME_TYPES,
 } from '../constants/file-processing.constants';
 import { ZIP_MIME_TYPES } from '../constants/zip-expansion.constants';
+import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
 import { ZipExpansionManager } from './zip-expansion.manager';
+import { TranscriptionManager } from './transcription.manager';
 
 @Injectable()
 export class FileProcessingManager {
@@ -82,6 +84,8 @@ export class FileProcessingManager {
       void this.rabbitMQService.publish(EventPattern.FILE_CHUNKED, chunkedPayload);
 
       this.logger.log(`File ${file.id} processed: ${String(chunks.length)} chunks created`);
+
+      await this.requestTranscription(file);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       this.logger.error(`File ${file.id} processing failed: ${errorMessage}`);
@@ -144,12 +148,16 @@ export class FileProcessingManager {
     }
 
     // B6a — audio is stored, never decoded. UTF-8 decoding an MP3 produces
-    // garbage that a model would read as content. A transcript will be written
-    // here by the transcription batch; until then audio genuinely has no
-    // extractedText and must not pretend to.
+    // garbage that a model would read as content.
+    //
+    // B6b — the placeholder is still what this returns, and that is deliberate:
+    // the row must be coherent the moment it reaches COMPLETED, before any
+    // transcript exists. `requestTranscription` queues the real work AFTER the
+    // row is written; queueing it from here would race the write and let a fast
+    // transcript be overwritten by the placeholder that requested it.
     if (mimeType.startsWith('audio/')) {
       this.logger.debug(`extractText: audio "${filename}" — preserving binary payload`);
-      return `[Audio file: ${filename}]`;
+      return `${AUDIO_PLACEHOLDER_PREFIX}${filename}]`;
     }
 
     this.logger.debug(`extractText: text file "${filename}" (${mimeType}) — UTF-8 decode`);
@@ -236,6 +244,31 @@ export class FileProcessingManager {
       void this.rabbitMQService.publish(EventPattern.FILE_OCR_FAILED, failedPayload);
       this.logger.error(`runOcrFallback: fileId=${file.id} stage=${stage} — ${errorMessage}`);
       return `[Image file: ${file.filename}]`;
+    }
+  }
+
+  // B6b — queue the transcription job for an audio upload.
+  //
+  // publishConfirmed, not publish: this is the only thing that will ever turn
+  // the placeholder into real text, and a fire-and-forget publish that lands in
+  // a closed channel loses it with no trace. A broker outage must surface as a
+  // recorded extractionError, not as a file that is quietly never transcribed.
+  private async requestTranscription(file: File): Promise<void> {
+    if (!file.mimeType.startsWith('audio/')) {
+      return;
+    }
+    const payload = TranscriptionManager.buildRequest(file);
+    try {
+      await this.rabbitMQService.publishConfirmed(EventPattern.FILE_TRANSCRIBE_REQUESTED, payload);
+      this.logger.log(`requestTranscription: queued transcription for fileId=${file.id}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'broker unavailable';
+      this.logger.error(`requestTranscription: fileId=${file.id} not queued — ${message}`);
+      await this.filesRepository.saveExtractionResult(file.id, {
+        extractedText: `${AUDIO_PLACEHOLDER_PREFIX}${file.filename}]`,
+        extractionError: `Audio transcription could not be queued: ${message}`,
+        status: FileIngestionStatus.COMPLETED,
+      });
     }
   }
 

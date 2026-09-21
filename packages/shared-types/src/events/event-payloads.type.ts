@@ -311,6 +311,52 @@ export interface FileOcrFailedPayload extends BaseEventPayload {
   failureStage: FileOcrFailureStage;
 }
 
+// ---- B6b — audio transcription (file-service, RabbitMQ job) ----
+
+/**
+ * Why the transcription of an audio upload did not produce a transcript.
+ *
+ * `NO_CAPABLE_CONNECTOR` is deliberately its own class rather than folded into
+ * `PROVIDER_ERROR`: it is not a fault, it is a configuration answer, and the
+ * agreed rule is that it becomes a clear refusal the user can read instead of a
+ * silent success with a placeholder that looks like content.
+ */
+export type FileTranscribeFailureReasonCode =
+  | 'NO_CAPABLE_CONNECTOR'
+  | 'PROVIDER_ERROR'
+  | 'EMPTY_TRANSCRIPT'
+  | 'FILE_NOT_FOUND'
+  | 'AUDIO_UNREADABLE';
+
+/** The job. Carries only identifiers — the bytes are read from the row. */
+export interface FileTranscribeRequestedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  mimeType: string;
+}
+
+export interface FileTranscribeCompletedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  provider: string;
+  model: string;
+  /** Length of the transcript actually written to `files.extracted_text`. */
+  characters: number;
+  durationMs: number;
+}
+
+export interface FileTranscribeFailedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  /** Human-readable; this is also what lands in `files.extraction_error`. */
+  reason: string;
+  reasonCode: FileTranscribeFailureReasonCode;
+  /** Absent when the failure happened before a provider was chosen. */
+  provider?: string;
+  model?: string;
+}
+
 // ---- Memory Events ----
 
 export interface MemoryExtractedPayload extends BaseEventPayload {
@@ -827,6 +873,9 @@ export type EventPayload =
   | FileOcrStartedPayload
   | FileOcrCompletedPayload
   | FileOcrFailedPayload
+  | FileTranscribeRequestedPayload
+  | FileTranscribeCompletedPayload
+  | FileTranscribeFailedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload

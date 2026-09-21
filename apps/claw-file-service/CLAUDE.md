@@ -159,3 +159,26 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## Audio is transcribed here, not elsewhere
+
+An audio upload is stored with `extractedText = "[Audio file: x.mp3]"`, then a
+`FILE_TRANSCRIBE_REQUESTED` job is published with `publishConfirmed` and
+consumed by this service's own `TranscriptionManager`.
+
+It stays in-service because `extractedText` has exactly one writer —
+`FilesRepository.saveExtractionResult` — and no endpoint writes it from
+outside. Two writers for one column is the thing being avoided.
+
+Three behaviours worth knowing before changing it:
+
+- **No capable connector is a refusal.** `FILE_TRANSCRIBE_FAILED` is published
+  and `extractionError` says why. A transcript is never invented.
+- **A failed transcription keeps the row `COMPLETED`.** The file was already
+  usable; losing the attachment because an optional enrichment failed is worse
+  than having no transcript.
+- **The publish happens after `saveExtractionResult`, not inside
+  `extractText`.** Publishing from inside races the write that follows it — a
+  fast transcript would be overwritten by the placeholder that asked for it.
+
+Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md).

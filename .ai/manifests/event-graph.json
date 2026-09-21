@@ -832,6 +832,30 @@
       ]
     },
     {
+      "consumers": [],
+      "key": "FILE_TRANSCRIBE_COMPLETED",
+      "pattern": "file.transcribe_completed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "FILE_TRANSCRIBE_FAILED",
+      "pattern": "file.transcribe_failed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "FILE_TRANSCRIBE_REQUESTED",
+      "pattern": "file.transcribe_requested",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
       "consumers": [
         "claw-audit-service"
       ],

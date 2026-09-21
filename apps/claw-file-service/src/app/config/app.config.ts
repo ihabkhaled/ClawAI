@@ -8,6 +8,15 @@ const appConfigSchema = z.object({
   // Slice C backend 3 — entitlements adapter calls auth-service to resolve the
   // caller's plan + permission set when @RequirePermissions decorators fire.
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
+  // B6b — audio transcription asks connector-service which providers have an
+  // audio-capable model configured, and for that provider's credentials. Both
+  // routes are @Public() internal endpoints on connector-service, so no
+  // Authorization header is sent (same as image-service's image adapters).
+  //
+  // Already present in the root `.env` / `.env.example` / install scripts, and
+  // every service loads the whole root .env via `env_file`, so this needs no
+  // new infrastructure entry — only that file-service now declares it.
+  CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   FILES_PORT: z.string().default('4006'),
   FILE_STORAGE_PATH: z.string().default('/data/uploads'),
   CLAMAV_HOST: z.string().default('clamav'),
@@ -80,9 +89,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    if (!cachedConfig) {
-      return AppConfig.validate();
-    }
-    return cachedConfig;
+    return !cachedConfig ? AppConfig.validate() : cachedConfig;
   }
 }
