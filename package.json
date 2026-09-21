@@ -94,6 +94,7 @@
     "zod": "^4.6.5"
   },
   "overrides": {
+    "jsdom": "30.0.1",
     "multer": "^2.4.0",
     "mysql2": "^3.24.4",
     "@xmldom/xmldom": "^0.8.13",

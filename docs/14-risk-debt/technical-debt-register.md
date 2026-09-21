@@ -280,6 +280,10 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-20 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-037.
 
+### TD-039: jsdom held at 30.0.1 — 30.1.0 breaks Radix overlays in tests
+
+- **Added**: 2026-09-22 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-039.
+
 ### TD-038: Eight services carry an unguarded copy of the HTTP client
 
 - **Added**: 2026-09-20 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-038.
