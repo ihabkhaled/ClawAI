@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { FileProcessingManager } from '../managers/file-processing.manager';
 import { type ZipExpansionManager } from '../managers/zip-expansion.manager';
 import { type FilesRepository } from '../repositories/files.repository';
@@ -14,7 +14,7 @@ vi.mock('../../../common/utilities', () => ({
   readFile: vi.fn().mockReturnValue(Buffer.from('default')),
 }));
 
-const { readFile } = await vi.importMock('../../../common/utilities') as {
+const { readFile } = (await vi.importMock('../../../common/utilities')) as {
   readFile: Mock;
 };
 
@@ -173,6 +173,35 @@ describe('FileProcessingManager', () => {
       ]);
       expect(chunksRepo.createMany).not.toHaveBeenCalledWith(
         expect.arrayContaining([expect.objectContaining({ content: 'secret-binary-payload' })]),
+      );
+    });
+
+    it('should never UTF-8 decode audio bytes into file chunks', async () => {
+      readFile.mockReturnValue(Buffer.from('secret-binary-payload'));
+      const audioFile = {
+        ...mockFile,
+        filename: 'note.mp3',
+        mimeType: 'audio/mpeg',
+      };
+
+      await manager.processFile(audioFile);
+
+      expect(chunksRepo.createMany).toHaveBeenCalledWith([
+        {
+          fileId: 'file-1',
+          chunkIndex: 0,
+          content: '[Audio file: note.mp3]',
+        },
+      ]);
+      // No transcript exists until the transcription batch lands, so the row
+      // must not carry decoded bytes pretending to be text.
+      expect(filesRepo.saveExtractionResult).toHaveBeenCalledWith(
+        'file-1',
+        expect.objectContaining({ extractedText: '[Audio file: note.mp3]' }),
+      );
+      expect(filesRepo.saveExtractionResult).not.toHaveBeenCalledWith(
+        'file-1',
+        expect.objectContaining({ extractedText: 'secret-binary-payload' }),
       );
     });
 
