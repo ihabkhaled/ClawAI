@@ -1,25 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
-import { httpRequest } from '../../../common/utilities/http-client.utility';
-import { CANDIDATE_TIMEOUT_MS, DEFAULT_CANDIDATE_MODEL } from '../constants/best-of-n.constants';
+import { DEFAULT_CANDIDATE_MODEL } from '../constants/best-of-n.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
+import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { QualityCheckManager } from './quality-check.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { BestOfNMessageDto } from '../dto/best-of-n-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { BestOfNResponse, CandidateResult } from '../types/best-of-n.types';
-import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_BEST_OF_N } from '../constants/payg.constants';
@@ -47,8 +49,9 @@ export class BestOfNManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly chatContextGateway: ChatContextGatewayManager,
+    private readonly modeExecutionGateway: ModeExecutionGatewayManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
-    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -115,6 +118,21 @@ export class BestOfNManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
+      // One bundle, shared by every candidate: N candidates answering the same
+      // question must see the same conversation, files and memories, and
+      // building it once also means one set of retrievals rather than N.
+      const bundle = await this.chatContextGateway.build({
+        userId,
+        threadId,
+        surface: ChatSurface.BEST_OF_N,
+        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        // The enricher's transcript used to be glued to the front of the raw
+        // prompt. It is an instruction about how to answer, so it belongs in
+        // the system prompt beside the user's own — appended, never replacing.
+        ...(enrichment.systemPrompt.length > 0
+          ? { personaInstruction: enrichment.systemPrompt }
+          : {}),
+      });
       const candidates = await this.runCandidates(
         threadId,
         content,
@@ -122,6 +140,7 @@ export class BestOfNManager {
         startTime,
         enrichment.systemPrompt,
         userId,
+        bundle,
       );
       this.safeEmitStage(threadId, {
         label: 'Scoring',
@@ -215,8 +234,8 @@ export class BestOfNManager {
     startTime: number,
     researchEvidence: string,
     userId: string,
+    bundle: ChatContextBundle,
   ): Promise<CandidateResult[]> {
-    const config = AppConfig.get();
     const resolvedModels = candidateModels.includes(DEFAULT_CANDIDATE_MODEL)
       ? ((await this.localModelSelection?.resolveModelList(candidateModels.length)) ??
         Array.from({ length: candidateModels.length }, () => 'AUTO'))
@@ -232,7 +251,7 @@ export class BestOfNManager {
           stageId,
         });
         return this.runOneCandidate(
-          config.OLLAMA_SERVICE_URL,
+          bundle,
           model,
           content,
           startTime,
@@ -291,81 +310,61 @@ export class BestOfNManager {
     }
   }
 
+  private rankCandidates(candidates: CandidateResult[], _content: string): CandidateResult[] {
+    const sorted = [...candidates].sort((a, b) => b.qualityScore - a.qualityScore);
+    return sorted.map((candidate, index) => ({ ...candidate, rank: index + 1 }));
+  }
+
+  /**
+   * One candidate, through the same chokepoint a chat turn uses.
+   *
+   * This used to post an `OllamaGenerateRequest` straight at
+   * `/api/v1/ollama/generate`, which pinned every candidate to a local model —
+   * an account with only a cloud connector could not run this mode at all —
+   * and metered through a second, parallel accounting path. It now carries the
+   * full context bundle and can name any connector the user has.
+   */
   private async runOneCandidate(
-    ollamaServiceUrl: string,
+    bundle: ChatContextBundle,
     model: string,
     content: string,
     _globalStartTime: number,
-    researchEvidence: string,
-    userId: string,
+    _researchEvidence: string,
+    _userId: string,
   ): Promise<CandidateResult> {
     const candidateStart = Date.now();
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt: prependResearchEvidence(content, researchEvidence),
-      stream: false,
-      think: false,
-    };
+    const parsed = parseJudgeModel(model);
+    const provider = parsed.provider ?? OLLAMA_PROVIDER;
 
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `best-of-n:candidate:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
+    const response = await this.modeExecutionGateway.run({
+      bundle,
+      prompt: content,
+      provider,
+      model: parsed.model.length > 0 ? parsed.model : model,
+      ledgerContext: TokenLedgerContext.BEST_OF_N,
+      paygCall: {
         workflow: PAYG_WORKFLOW_BEST_OF_N,
-        promptText: requestBody.prompt,
+        requestId: `best-of-n:candidate:${randomUUID()}`,
       },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${ollamaServiceUrl}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: CANDIDATE_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
-
-    if (!response.ok) {
-      throw new Error(`Ollama returned status ${String(response.status)} for model ${model}`);
-    }
-
-    const latencyMs = Date.now() - candidateStart;
-    const responseContent = response.data.response.trim();
-
-    // Universal token deduction: each best-of-N candidate is a real LLM
-    // call against ollama-service and MUST consume the user's daily quota.
-    // Without this, a 5-candidate best-of-N hop was 5 free LLM hits.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
     });
 
+    const latencyMs = Date.now() - candidateStart;
+    const responseContent = response.content ?? '';
+    // Quota is no longer recorded here: `callProvider` is the universal token
+    // deduction chokepoint and records every call that passes through it. The
+    // hand-rolled `recordUsage` this method used to make was a second path to
+    // the same ledger, which is exactly what this batch removes.
     const qualityResult = this.qualityCheckManager.checkResponseQuality(responseContent, content);
 
     return {
       content: responseContent,
-      provider: 'local-ollama',
+      provider,
       model,
       latencyMs,
       qualityScore: qualityResult.score,
       qualityReasons: qualityResult.reasons,
       rank: 0,
     };
-  }
-
-  private rankCandidates(candidates: CandidateResult[], _content: string): CandidateResult[] {
-    const sorted = [...candidates].sort((a, b) => b.qualityScore - a.qualityScore);
-    return sorted.map((candidate, index) => ({ ...candidate, rank: index + 1 }));
   }
 
   private async resolveThreadId(userId: string, dto: BestOfNMessageDto): Promise<string> {

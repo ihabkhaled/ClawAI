@@ -10,7 +10,6 @@ import { type AdvancedModuleModelSelectionService } from '../modules/chat-messag
 import { bestOfNMessageSchema } from '../modules/chat-messages/dto/best-of-n-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 vi.mock('../modules/chat-messages/managers/best-of-n.manager', async () => {
   const actual = await vi.importActual<{ BestOfNManager: typeof BestOfNManager }>(
@@ -114,6 +113,38 @@ const mockResearchEnricherManager = {
   enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
+const mockChatContextGateway = {
+  build: vi.fn(async () => ({
+    context: {
+      userId: 'user-1',
+      systemPrompt: null,
+      threadMessages: [],
+      memories: [],
+      contextPackItems: [],
+      fileContents: [],
+      workspaceCitations: [],
+      researchEvidence: [],
+    },
+    thread: { id: 'thread-1' },
+    threadSettings: undefined,
+    messages: [],
+    fileIds: [],
+    latestUserMetadata: null,
+  })),
+};
+
+// Every candidate now goes through the same chokepoint a chat turn uses, so
+// the spec asserts on this rather than on a hand-built Ollama request body.
+const mockModeExecutionGateway = {
+  run: vi.fn(async () => ({
+    content: 'candidate answer',
+    provider: 'local-ollama',
+    model: 'gemma3:4b',
+    inputTokens: 10,
+    outputTokens: 20,
+  })),
+};
+
 describe('BestOfNManager', () => {
   let manager: BestOfNManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
@@ -136,11 +167,36 @@ describe('BestOfNManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
+      mockChatContextGateway as any,
+      mockModeExecutionGateway as any,
       mockResearchEnricherManager as any,
-      createFakePaygAccessControl() as any,
     );
 
     vi.clearAllMocks();
+    mockChatContextGateway.build.mockResolvedValue({
+      context: {
+        userId: 'user-1',
+        systemPrompt: null,
+        threadMessages: [],
+        memories: [],
+        contextPackItems: [],
+        fileContents: [],
+        workspaceCitations: [],
+        researchEvidence: [],
+      },
+      thread: { id: 'thread-1' },
+      threadSettings: undefined,
+      messages: [],
+      fileIds: [],
+      latestUserMetadata: null,
+    });
+    mockModeExecutionGateway.run.mockResolvedValue({
+      content: 'candidate answer',
+      provider: 'local-ollama',
+      model: 'gemma3:4b',
+      inputTokens: 10,
+      outputTokens: 20,
+    });
     (httpClientModule.httpRequest as Mock).mockResolvedValue({
       ok: true,
       status: 200,
@@ -260,9 +316,7 @@ describe('BestOfNManager', () => {
     });
 
     it('should store error message and emit SSE error on failure', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(
-        new Error('Ollama unreachable'),
-      );
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Ollama unreachable'));
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
       await manager.executeInBackground('thread-best-1', 'test prompt', 2, 'user-1');
@@ -271,7 +325,7 @@ describe('BestOfNManager', () => {
     });
 
     it('should resolve (fire-and-forget) even if everything fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -280,7 +334,7 @@ describe('BestOfNManager', () => {
     });
 
     it('stores error message with error:true metadata when all candidates fail', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Network timeout'));
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Network timeout'));
       const createMock = vi.fn().mockResolvedValue({ id: 'error-msg-1' });
       const isolatedManager = new BestOfNManager(
         {
@@ -290,8 +344,9 @@ describe('BestOfNManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockChatContextGateway as any,
+        mockModeExecutionGateway as any,
         mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
       );
       await isolatedManager.executeInBackground('thread-err', 'prompt', 2, 'user-1');
       expect(createMock).toHaveBeenCalledWith(
@@ -324,15 +379,17 @@ describe('BestOfNManager', () => {
         'deepseek-coder-v2:16b',
       ]);
 
-      expect(httpClientModule.httpRequest).toHaveBeenCalledWith(
+      // The mode names its model to the shared chokepoint now, instead of
+      // hand-building an Ollama request body.
+      expect(mockModeExecutionGateway.run).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: expect.objectContaining({ model: 'qwen2.5-coder:7b' }),
+          model: 'qwen2.5-coder:7b',
         }),
       );
     });
 
     it('stores error message with { error: true } when storeErrorMessage itself fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Ollama down'));
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Ollama down'));
       const createMock = vi
         .fn()
         .mockRejectedValueOnce(new Error('DB write 1 failed'))
@@ -345,8 +402,9 @@ describe('BestOfNManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockChatContextGateway as any,
+        mockModeExecutionGateway as any,
         mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
       );
       await expect(
         isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2, 'user-1'),
@@ -387,9 +445,7 @@ describe('BestOfNManager', () => {
 
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
-      const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, Mock>
-      > = {
+      const selectionService: Partial<Record<keyof AdvancedModuleModelSelectionService, Mock>> = {
         resolveSelection: vi
           .fn()
           .mockRejectedValue(
@@ -404,8 +460,9 @@ describe('BestOfNManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockChatContextGateway as any,
+        mockModeExecutionGateway as any,
         mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 

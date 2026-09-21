@@ -1,6 +1,8 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AnswerRepairManager } from '../managers/answer-repair.manager';
 import { BestOfNManager } from '../managers/best-of-n.manager';
+import type { ChatContextGatewayManager } from '../managers/chat-context-gateway.manager';
+import type { ModeExecutionGatewayManager } from '../managers/mode-execution-gateway.manager';
 import { CostEnsembleManager } from '../managers/cost-ensemble.manager';
 import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
@@ -28,7 +30,7 @@ import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.
 
 vi.mock('../../../common/utilities/http-client.utility', () => ({ httpRequest: vi.fn() }));
 
-const { httpRequest } = await vi.importMock('../../../common/utilities/http-client.utility') as {
+const { httpRequest } = (await vi.importMock('../../../common/utilities/http-client.utility')) as {
   httpRequest: Mock;
 };
 // AppConfig exposes a STATIC get(); neither a bare automock nor importMock
@@ -82,36 +84,6 @@ type ModeCase = {
 };
 
 const CASES: ModeCase[] = [
-  {
-    name: 'best-of-n',
-    workflow: PAYG_WORKFLOW_BEST_OF_N,
-    run: async (access) => {
-      const manager = new BestOfNManager(
-        stub<ChatMessagesRepository>({ create: vi.fn() }),
-        stub<ChatThreadsRepository>({ findById: vi.fn() }),
-        stub<ChatStreamService>(stream()),
-        stub<QualityCheckManager>({
-          checkResponseQuality: vi.fn().mockReturnValue({ score: 0.8, reasons: [] }),
-        }),
-        stub<ResearchEnricherManager>({ enrich: vi.fn() }),
-        access as unknown as AccessControlService,
-        stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
-        stub<LocalModelSelectionService>({ resolveModelList: vi.fn() }),
-      );
-      return (
-        manager as unknown as {
-          runOneCandidate: (
-            url: string,
-            model: string,
-            content: string,
-            start: number,
-            evidence: string,
-            userId: string,
-          ) => Promise<unknown>;
-        }
-      ).runOneCandidate('http://ollama:4008', 'qwen3:1.7b', 'question', 0, '', 'user-1');
-    },
-  },
   {
     name: 'cost-ensemble',
     workflow: PAYG_WORKFLOW_COST_ENSEMBLE,
@@ -305,6 +277,62 @@ describe('PAYG credit — every orchestration lab is metered', () => {
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
       OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
       AUTH_SERVICE_URL: 'http://auth:4001',
+    });
+  });
+
+  // Best-of-N moved to the shared chokepoint in the unified-context batch: it
+  // calls ChatExecutionManager.callProvider through ModeExecutionGatewayManager,
+  // which reserves, settles and releases in one place for every surface. The
+  // hold itself is asserted in payg-credit-surfaces.spec.ts; what matters here
+  // is that the lab still names its own workflow, so its spend stays
+  // attributable.
+  it('best-of-n bills through the shared chokepoint, tagged as its own workflow', async () => {
+    const run = vi.fn().mockResolvedValue({
+      content: 'candidate',
+      provider: 'local-ollama',
+      model: 'qwen3:1.7b',
+      inputTokens: 1,
+      outputTokens: 2,
+    });
+    const manager = new BestOfNManager(
+      stub<ChatMessagesRepository>({ create: vi.fn() }),
+      stub<ChatThreadsRepository>({ findById: vi.fn() }),
+      stub<ChatStreamService>(stream()),
+      stub<QualityCheckManager>({
+        checkResponseQuality: vi.fn().mockReturnValue({ score: 0.8, reasons: [] }),
+      }),
+      stub<ChatContextGatewayManager>({ build: vi.fn() }),
+      { run } as unknown as ModeExecutionGatewayManager,
+      stub<ResearchEnricherManager>({ enrich: vi.fn() }),
+      stub<AdvancedModuleModelSelectionService>({ resolve: vi.fn() }),
+      stub<LocalModelSelectionService>({ resolveModelList: vi.fn() }),
+    );
+
+    await (
+      manager as unknown as {
+        runOneCandidate: (
+          bundle: unknown,
+          model: string,
+          content: string,
+          start: number,
+          evidence: string,
+          userId: string,
+        ) => Promise<unknown>;
+      }
+    ).runOneCandidate(
+      { context: {}, threadSettings: undefined },
+      'qwen3:1.7b',
+      'question',
+      0,
+      '',
+      'user-1',
+    );
+
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run.mock.calls[0]?.[0]).toMatchObject({
+      provider: 'local-ollama',
+      model: 'qwen3:1.7b',
+      paygCall: { workflow: PAYG_WORKFLOW_BEST_OF_N },
     });
   });
 
