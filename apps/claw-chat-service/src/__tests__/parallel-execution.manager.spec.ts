@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../app/config/app.config';
 import { ParallelExecutionManager } from '../modules/chat-messages/managers/parallel-execution.manager';
 import type {
@@ -53,6 +53,20 @@ describe('ParallelExecutionManager', () => {
   mockChatExecutionManager.streamModelForLane.mockImplementation((...args: unknown[]) =>
     mockChatExecutionManager.callProvider(...args),
   );
+
+  // The gateway now owns what these managers used to assemble by hand. It
+  // delegates to the same assembler mock so existing context assertions still
+  // describe what the mode sends.
+  const mockChatContextGateway = {
+    build: vi.fn(async () => ({
+      context: await mockContextAssemblyManager.assemble(),
+      thread: await mockChatThreadsRepository.findById(),
+      threadSettings: undefined,
+      messages: [],
+      fileIds: [],
+      latestUserMetadata: null,
+    })),
+  };
 
   const mockContextAssemblyManager = {
     assemble: vi.fn(),
@@ -161,10 +175,9 @@ describe('ParallelExecutionManager', () => {
 
     manager = new ParallelExecutionManager(
       mockChatExecutionManager as any,
-      mockContextAssemblyManager as any,
+      mockChatContextGateway as any,
       mockJudgeRefereeManager as any,
       mockChatMessagesRepository as any,
-      mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
       mockFileDeliveryRecordService as any,
@@ -734,42 +747,8 @@ describe('ParallelExecutionManager', () => {
     });
   });
 
-  describe('extractThreadSettings', () => {
-    it('should return undefined for null thread', () => {
-      const result = (manager as any).extractThreadSettings(null);
-      expect(result).toBeUndefined();
-    });
-
-    it('should extract settings from thread', () => {
-      const thread = {
-        systemPrompt: 'You are helpful',
-        temperature: 0.7,
-        maxTokens: 2048,
-      };
-
-      const result = (manager as any).extractThreadSettings(thread);
-
-      expect(result).toEqual({
-        systemPrompt: 'You are helpful',
-        temperature: 0.7,
-        maxTokens: 2048,
-      });
-    });
-
-    it('should handle thread with null settings', () => {
-      const thread = {
-        systemPrompt: null,
-        temperature: null,
-        maxTokens: null,
-      };
-
-      const result = (manager as any).extractThreadSettings(thread);
-
-      expect(result).toEqual({
-        systemPrompt: null,
-        temperature: null,
-        maxTokens: null,
-      });
-    });
-  });
+  // `extractThreadSettings` moved into ChatContextGatewayManager, which three
+  // managers now share instead of each carrying a copy. Its behaviour is
+  // asserted there, in chat-context-gateway.manager.spec.ts — including the
+  // fields this copy never checked, such as useCrossThreadContext.
 });

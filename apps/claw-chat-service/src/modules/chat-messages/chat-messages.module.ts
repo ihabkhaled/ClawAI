@@ -13,6 +13,7 @@ import { ResearchGateService } from './services/research-gate.service';
 import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
+import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
 import { CrossThreadRetrievalManager } from './managers/cross-thread-retrieval.manager';
 import { CrossThreadRetrievalRepository } from './repositories/cross-thread-retrieval.repository';
@@ -73,6 +74,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     GeminiFilesApiManager,
     ConsensusExecutionManager,
     ContextAssemblyManager,
+    ChatContextGatewayManager,
     ContextComposerManager,
     CrossThreadRetrievalManager,
     CrossThreadRetrievalRepository,

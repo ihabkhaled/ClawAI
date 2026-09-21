@@ -7,7 +7,6 @@ import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { DEFAULT_QUALITY_THRESHOLD } from '../constants/escalation-chain.constants';
 import { PAYG_WORKFLOW_ESCALATION_CHAIN } from '../constants/payg.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
-import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
 import type {
   EscalationChainResponse,
@@ -19,10 +18,11 @@ import type { AssembledContext } from '../types/context.types';
 import type { ThreadSettings } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { ChatExecutionManager } from './chat-execution.manager';
-import { ContextAssemblyManager } from './context-assembly.manager';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { QualityCheckManager } from './quality-check.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { type ChatThread } from '../../../generated/prisma';
 
 @Injectable()
 export class EscalationChainManager {
@@ -30,9 +30,8 @@ export class EscalationChainManager {
 
   constructor(
     private readonly chatExecutionManager: ChatExecutionManager,
-    private readonly contextAssemblyManager: ContextAssemblyManager,
+    private readonly chatContextGateway: ChatContextGatewayManager,
     private readonly chatMessagesRepository: ChatMessagesRepository,
-    private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
@@ -134,23 +133,27 @@ export class EscalationChainManager {
     return { ...context, systemPrompt: nextSystemPrompt };
   }
 
+  /**
+   * The same bundle a chat turn gets, from the one place that builds it.
+   *
+   * This method used to be eighteen lines, copied byte-for-byte into the
+   * consensus and escalation managers beside it. Three copies meant any fix to
+   * what a mode can see had to be made three times, and a fourth mode simply
+   * did without.
+   */
   private async buildContext(
     userId: string,
     threadId: string,
     fileIds?: string[],
   ): Promise<{ context: AssembledContext; threadSettings: ThreadSettings | undefined }> {
-    const thread = await this.chatThreadsRepository.findById(threadId);
-    const threadSettings = this.extractThreadSettings(thread);
-    const threadMessages = await this.chatMessagesRepository.findRecentByThreadId(threadId, 20);
-    const chronologicalMessages = [...threadMessages].reverse();
-    const context = await this.contextAssemblyManager.assemble(
+    const bundle = await this.chatContextGateway.build({
       userId,
-      chronologicalMessages,
-      threadSettings,
-      thread?.contextPackIds ?? undefined,
-      fileIds,
-    );
-    return { context, threadSettings };
+      threadId,
+      surface: ChatSurface.ESCALATION,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      ...(fileIds !== undefined ? { fileIds } : {}),
+    });
+    return { context: bundle.context, threadSettings: bundle.threadSettings };
   }
 
   private async runChain(
@@ -377,16 +380,5 @@ export class EscalationChainManager {
       const msg = error instanceof Error ? error.message : 'Unknown emit error';
       this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
     }
-  }
-
-  private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
-    if (!thread) {
-      return undefined;
-    }
-    return {
-      systemPrompt: thread.systemPrompt,
-      temperature: thread.temperature,
-      maxTokens: thread.maxTokens,
-    };
   }
 }

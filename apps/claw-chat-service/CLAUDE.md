@@ -737,3 +737,25 @@ one.
 The hollow-completion test that matters is the false-positive set: "Done. The
 file already contained the value." explains itself and must pass through. Only
 a claim with nothing after it is hollow.
+
+## One gateway decides what a model sees
+
+`ChatContextGatewayManager.build()` is the only supported way to assemble
+context. It takes an options object (`ChatContextRequest`) and returns the
+conversation, memories, attachments, cross-thread material, research evidence,
+the resolved context window and the thread settings.
+
+It exists because context was a thing each caller remembered to fetch: Compare,
+Consensus and Escalation carried a byte-for-byte copy of the same builder, the
+seven lab modes sent the user's raw string with no context at all, the judge
+replaced the conversation with one synthetic message, and the coding agent
+passed `undefined` for attachments because the arguments are positional.
+
+Two rules carry the weight:
+
+- **A persona is appended to the system prompt, never substituted for it.**
+  Substituting is how the judge lost the user's own instructions.
+- **Pass `provider` and `model`.** Without them the budget falls back to a
+  conservative window and throws away history a large model had room for.
+
+Runbook: [`skills/give-a-surface-the-same-context-as-chat.md`](../../skills/give-a-surface-the-same-context-as-chat.md).

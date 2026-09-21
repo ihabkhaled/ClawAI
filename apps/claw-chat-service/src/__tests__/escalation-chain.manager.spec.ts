@@ -32,6 +32,20 @@ describe('EscalationChainManager', () => {
     callProvider: vi.fn(),
   };
 
+  // The gateway now owns what these managers used to assemble by hand. It
+  // delegates to the same assembler mock so existing context assertions still
+  // describe what the mode sends.
+  const mockChatContextGateway = {
+    build: vi.fn(async () => ({
+      context: await mockContextAssemblyManager.assemble(),
+      thread: await mockChatThreadsRepository.findById(),
+      threadSettings: undefined,
+      messages: [],
+      fileIds: [],
+      latestUserMetadata: null,
+    })),
+  };
+
   const mockContextAssemblyManager = {
     assemble: vi.fn(),
   };
@@ -122,9 +136,8 @@ describe('EscalationChainManager', () => {
     });
     manager = new EscalationChainManager(
       mockChatExecutionManager as any,
-      mockContextAssemblyManager as any,
+      mockChatContextGateway as any,
       mockChatMessagesRepository as any,
-      mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockQualityCheckManager as any,
       mockResearchEnricherManager as any,
@@ -408,7 +421,9 @@ describe('EscalationChainManager', () => {
       );
       expect(resultCall).toBeDefined();
       // selectBestAnswer fallback message when no successful steps exist
-      expect(resultCall?.[0].content).toBe('All escalation steps failed to produce a valid response');
+      expect(resultCall?.[0].content).toBe(
+        'All escalation steps failed to produce a valid response',
+      );
       expect(resultCall?.[0].metadata.status).toBe(EscalationChainStatus.EXHAUSTED);
     });
 

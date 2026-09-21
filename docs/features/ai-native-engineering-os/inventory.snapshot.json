@@ -7583,7 +7583,7 @@
       ],
       "skills": [
         {
-          "bytes": 28279,
+          "bytes": 28558,
           "file": "skills/00-index.md"
         },
         {
@@ -7805,6 +7805,10 @@
         {
           "bytes": 4302,
           "file": "skills/frontend-architecture-review.md"
+        },
+        {
+          "bytes": 3887,
+          "file": "skills/give-a-surface-the-same-context-as-chat.md"
         },
         {
           "bytes": 4524,
@@ -9889,7 +9893,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 159
+        "testFiles": 160
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10685,7 +10689,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1345,
+    "totalTestFiles": 1346,
     "workspaceCount": 25
   }
 }
