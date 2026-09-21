@@ -1,29 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
-import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
-import {
-  DEFAULT_ROLE_PACK_MODEL,
-  ROLE_PACK_TIMEOUT_MS,
-  ROLE_PACKS,
-} from '../constants/role-pack.constants';
+import { DEFAULT_ROLE_PACK_MODEL, ROLE_PACKS } from '../constants/role-pack.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
+import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { RolePackMessageDto } from '../dto/role-pack-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import type { RoleMember, RoleMemberResult, RolePackResponse } from '../types/role-pack.types';
-import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_ROLE_PACK } from '../constants/payg.constants';
@@ -47,8 +45,9 @@ export class RolePackManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly chatContextGateway: ChatContextGatewayManager,
+    private readonly modeExecutionGateway: ModeExecutionGatewayManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
-    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -98,7 +97,6 @@ export class RolePackManager {
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
       const members = recordGet(ROLE_PACKS, pack) ?? [];
-      const config = AppConfig.get();
       const resolvedMembers = await this.resolveMembers(members, resolvedSelection);
       // Enrich ONCE — every role member sees the same evidence; the FE badge
       // is rendered on the single ASSISTANT row this manager writes.
@@ -109,14 +107,24 @@ export class RolePackManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
-      const results = await this.runAllMembers(
-        threadId,
-        resolvedMembers,
-        content,
-        config.OLLAMA_SERVICE_URL,
-        enrichment.systemPrompt,
+      // One bundle for the whole pack, built WITHOUT any member persona: the
+      // roles answer the same question about the same conversation, files and
+      // memories, so building it once means one set of retrievals for the run
+      // instead of one per role.
+      const bundle = await this.chatContextGateway.build({
         userId,
-      );
+        threadId,
+        surface: ChatSurface.ROLE_PACK,
+        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        // The enricher's transcript used to be glued to the front of each
+        // member's raw prompt by `prependResearchEvidence`. It is an
+        // instruction about how to answer, so it belongs in the system prompt
+        // beside the user's own — appended, never replacing.
+        ...(enrichment.systemPrompt.length > 0
+          ? { personaInstruction: enrichment.systemPrompt }
+          : {}),
+      });
+      const results = await this.runAllMembers(threadId, resolvedMembers, content, bundle);
       const allFailed = results.every((r) => r.output === 'Role failed');
       if (allFailed) {
         throw new Error('All role pack members failed to produce output');
@@ -188,9 +196,7 @@ export class RolePackManager {
     threadId: string,
     members: RoleMember[],
     content: string,
-    ollamaUrl: string,
-    researchEvidence: string,
-    userId: string,
+    bundle: ChatContextBundle,
   ): Promise<RoleMemberResult[]> {
     const fallbackModel = await this.resolveModel();
     const settled = await Promise.allSettled(
@@ -202,7 +208,7 @@ export class RolePackManager {
           detail: member.model ?? 'local-ollama',
           stageId,
         });
-        return this.runMember(member, content, ollamaUrl, researchEvidence, userId).then(
+        return this.runMember(member, content, bundle).then(
           (value) => {
             this.safeEmitStage(threadId, {
               label: `Role ${member.role} returned`,
@@ -259,68 +265,77 @@ export class RolePackManager {
     }
   }
 
+  /**
+   * One role, through the same chokepoint a chat turn uses.
+   *
+   * This used to build an `OllamaGenerateRequest` by hand and post it at
+   * `/api/v1/ollama/generate`, which pinned every role to a local model — an
+   * account with only a cloud connector could not run a pack at all — and
+   * metered through `meterOrchestrationCall` plus a hand-rolled `recordUsage`,
+   * a second path to the ledger that `callProvider` already owns.
+   *
+   * The role's instruction now reaches the model as a persona rather than as
+   * prompt text glued in front of the user's words. Gluing it on made the role
+   * part of what the user appeared to have typed, so the model answered the
+   * concatenation instead of being told who to be.
+   */
   private async runMember(
     member: RoleMember,
     content: string,
-    ollamaUrl: string,
-    researchEvidence: string,
-    userId: string,
+    bundle: ChatContextBundle,
   ): Promise<RoleMemberResult> {
     const startTime = Date.now();
-    const basePrompt = `${member.instruction}\n\n${content}`;
-    const prompt = prependResearchEvidence(basePrompt, researchEvidence);
     const model = await this.resolveModel(member.model);
+    const parsed = parseJudgeModel(model);
+    const provider = parsed.provider ?? OLLAMA_PROVIDER;
 
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt,
-      stream: false,
-      think: false,
-    };
-
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `role-pack:member:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
+    const response = await this.modeExecutionGateway.run({
+      bundle: this.withMemberPersona(bundle, member.instruction),
+      prompt: content,
+      provider,
+      model: parsed.model.length > 0 ? parsed.model : model,
+      ledgerContext: TokenLedgerContext.ROLE_PACK,
+      paygCall: {
         workflow: PAYG_WORKFLOW_ROLE_PACK,
-        promptText: requestBody.prompt,
+        requestId: `role-pack:member:${randomUUID()}`,
       },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${ollamaUrl}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: ROLE_PACK_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
-
-    if (!response.ok) {
-      throw new Error(`Ollama returned status ${String(response.status)} for role ${member.role}`);
-    }
-
-    // Universal token deduction: each role-pack member is a real LLM call.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
     });
 
     return {
       role: member.role,
       model,
-      output: response.data.response.trim(),
+      output: (response.content ?? '').trim(),
       latencyMs: Date.now() - startTime,
+    };
+  }
+
+  /**
+   * The member's persona, derived locally from the pack's single bundle.
+   *
+   * Asking the context gateway again per member would re-run history, memory,
+   * attachment and cross-thread retrieval N times to produce N bundles that
+   * differ by one string — a four-role pack would pay four times for identical
+   * retrievals. The gateway's own `personaInstruction` handling is exactly this
+   * append, so doing it here is the same result at one retrieval set.
+   *
+   * Appended, never replacing: the thread's system prompt and the research
+   * evidence already in the shared bundle are the user's instructions, and a
+   * role is an addition to them.
+   */
+  private withMemberPersona(bundle: ChatContextBundle, instruction: string): ChatContextBundle {
+    if (instruction.trim().length === 0) {
+      return bundle;
+    }
+    const existing = bundle.context.systemPrompt;
+    return {
+      ...bundle,
+      context: {
+        ...bundle.context,
+        systemPrompt:
+          existing === null || existing.trim().length === 0
+            ? instruction
+            : `${existing}\n\n${instruction}`,
+      },
     };
   }
 

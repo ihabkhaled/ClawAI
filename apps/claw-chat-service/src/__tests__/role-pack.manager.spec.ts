@@ -7,9 +7,7 @@ import { type ChatThreadsRepository } from '../modules/chat-threads/repositories
 import { type ChatStreamService } from '../modules/chat-messages/services/chat-stream.service';
 import { type AdvancedModuleModelSelectionService } from '../modules/chat-messages/services/advanced-module-model-selection.service';
 import { rolePackMessageSchema } from '../modules/chat-messages/dto/role-pack-message.dto';
-import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 vi.mock('../app/config/app.config', () => ({
   AppConfig: {
@@ -17,14 +15,6 @@ vi.mock('../app/config/app.config', () => ({
       OLLAMA_SERVICE_URL: 'http://localhost:11434',
     }),
   },
-}));
-
-vi.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    data: { response: 'mocked role output' },
-  }),
 }));
 
 const mockThread = {
@@ -102,6 +92,57 @@ const mockResearchEnricherManager = {
   enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
+const buildBundle = (): Record<string, unknown> => ({
+  context: {
+    userId: 'user-1',
+    systemPrompt: null,
+    threadMessages: [],
+    memories: [],
+    contextPackItems: [],
+    fileContents: [],
+    workspaceCitations: [],
+    researchEvidence: [],
+  },
+  thread: { id: 'thread-role-1' },
+  threadSettings: undefined,
+  messages: [],
+  fileIds: [],
+  latestUserMetadata: null,
+});
+
+// One bundle for the whole pack: the spec asserts the gateway is asked once,
+// because a per-member call would re-run every retrieval N times.
+const mockChatContextGateway = {
+  build: vi.fn(async (): Promise<Record<string, unknown>> => buildBundle()),
+};
+
+// Every role now goes through the same chokepoint a chat turn uses, so the
+// spec drives success and failure here rather than through a hand-built Ollama
+// request body.
+const mockModeExecutionGateway = {
+  run: vi.fn(async (): Promise<Record<string, unknown>> => ({
+    content: 'mocked role output',
+    provider: 'local-ollama',
+    model: 'gemma3:4b',
+    inputTokens: 10,
+    outputTokens: 20,
+  })),
+};
+
+/** What each role actually asked the shared chokepoint for. */
+const runRequests = (): Array<{
+  bundle: { context: { systemPrompt: string | null } };
+  prompt: string;
+}> =>
+  mockModeExecutionGateway.run.mock.calls.map(
+    (call) =>
+      (
+        call as unknown as [
+          { bundle: { context: { systemPrompt: string | null } }; prompt: string },
+        ]
+      )[0],
+  );
+
 describe('RolePackManager', () => {
   let manager: RolePackManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
@@ -121,15 +162,19 @@ describe('RolePackManager', () => {
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
+      mockChatContextGateway as any,
+      mockModeExecutionGateway as any,
       mockResearchEnricherManager as any,
-      createFakePaygAccessControl() as any,
     );
 
     vi.clearAllMocks();
-    (httpClientModule.httpRequest as Mock).mockResolvedValue({
-      ok: true,
-      status: 200,
-      data: { response: 'mocked role output' },
+    mockChatContextGateway.build.mockResolvedValue(buildBundle());
+    mockModeExecutionGateway.run.mockResolvedValue({
+      content: 'mocked role output',
+      provider: 'local-ollama',
+      model: 'gemma3:4b',
+      inputTokens: 10,
+      outputTokens: 20,
     });
   });
 
@@ -229,6 +274,62 @@ describe('RolePackManager', () => {
       expect(members).toHaveLength(3);
     });
 
+    it('builds ONE context bundle for the whole pack, not one per role', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledTimes(1);
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ surface: 'ROLE_PACK', threadId: 'thread-role-1' }),
+      );
+      // Three roles, three model calls — the retrievals are shared, the calls are not.
+      expect(mockModeExecutionGateway.run).toHaveBeenCalledTimes(3);
+    });
+
+    it('sends each role instruction as a persona, not glued in front of the user prompt', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
+
+      const requests = runRequests();
+      const systemPrompts = requests.map((request) => request.bundle.context.systemPrompt);
+      expect(systemPrompts).toContain('Write clean, efficient code to implement:');
+      expect(systemPrompts).toContain('Analyze for bugs, edge cases, and security issues:');
+      for (const request of requests) {
+        // The user's words stay the user's words.
+        expect(request.prompt).toBe('implement login');
+      }
+    });
+
+    it('meters every role through the shared chokepoint under the role-pack workflow', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
+
+      expect(mockModeExecutionGateway.run).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ledgerContext: 'ROLE_PACK',
+          paygCall: expect.objectContaining({ workflow: 'role-pack' }),
+        }),
+      );
+    });
+
     it('should emit SSE completion on success', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
@@ -246,10 +347,8 @@ describe('RolePackManager', () => {
       );
     });
 
-    it('should emit SSE error and store error message when Ollama fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(
-        new Error('Ollama unreachable'),
-      );
+    it('should emit SSE error and store error message when the execution gateway fails', async () => {
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Ollama unreachable'));
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
       await manager.executeInBackground(
@@ -266,7 +365,7 @@ describe('RolePackManager', () => {
     });
 
     it('should resolve (fire-and-forget) even when everything fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -275,10 +374,14 @@ describe('RolePackManager', () => {
     });
 
     it('should handle partial failures — some members succeed, some fail', async () => {
-      (httpClientModule.httpRequest as Mock)
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'coder output' } })
+      mockModeExecutionGateway.run
+        .mockResolvedValueOnce({ content: 'coder output', provider: 'local-ollama', model: 'm' })
         .mockRejectedValueOnce(new Error('Debugger failed'))
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'reviewer output' } });
+        .mockResolvedValueOnce({
+          content: 'reviewer output',
+          provider: 'local-ollama',
+          model: 'm',
+        });
 
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
@@ -341,9 +444,7 @@ describe('RolePackManager', () => {
 
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
-      const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, Mock>
-      > = {
+      const selectionService: Partial<Record<keyof AdvancedModuleModelSelectionService, Mock>> = {
         resolveSelection: vi
           .fn()
           .mockRejectedValue(
@@ -357,8 +458,9 @@ describe('RolePackManager', () => {
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
+        mockChatContextGateway as any,
+        mockModeExecutionGateway as any,
         mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 

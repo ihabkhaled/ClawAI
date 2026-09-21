@@ -5,8 +5,10 @@ import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { AnswerRepairManager } from '../modules/chat-messages/managers/answer-repair.manager';
 import { RepairType } from '../common/enums/repair-type.enum';
 import { repairMessageSchema } from '../modules/chat-messages/dto/repair-message.dto';
+import { ChatSurface } from '../common/enums/chat-surface.enum';
+import { TokenLedgerContext } from '@claw/shared-types';
+import { PAYG_WORKFLOW_ANSWER_REPAIR } from '../modules/chat-messages/constants/payg.constants';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -23,10 +25,46 @@ vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_PORT: 4002,
 } as any);
 
-const mockHttpRequest = vi.fn();
-vi.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: (...args: any[]) => mockHttpRequest(...args),
-}));
+// A real conversation, so the spec can prove the repair call receives it rather
+// than just the answer text — the defect this migration removes.
+const THREAD_MESSAGES = [
+  { id: 'q-1', threadId: 'thread-1', role: 'USER', content: 'What is our refund window?' },
+  { id: 'a-1', threadId: 'thread-1', role: 'ASSISTANT', content: 'Thirty days.' },
+];
+
+const buildBundle = () => ({
+  context: {
+    userId: 'user-1',
+    systemPrompt: null as string | null,
+    threadMessages: [...THREAD_MESSAGES],
+    memories: [],
+    contextPackItems: [],
+    fileContents: [],
+    workspaceCitations: [],
+    researchEvidence: [],
+  },
+  thread: { id: 'thread-1' },
+  threadSettings: undefined,
+  messages: [...THREAD_MESSAGES],
+  fileIds: [],
+  latestUserMetadata: null,
+});
+
+const mockChatContextGateway = {
+  build: vi.fn(async () => buildBundle()),
+};
+
+// The repair hop now goes through the same chokepoint a chat turn uses, so the
+// spec asserts on this rather than on a hand-built Ollama request body.
+const mockModeExecutionGateway = {
+  run: vi.fn(async () => ({
+    content: 'Repaired content',
+    provider: 'local-ollama',
+    model: 'AUTO',
+    inputTokens: 10,
+    outputTokens: 20,
+  })),
+};
 
 describe('AnswerRepairManager', () => {
   let manager: AnswerRepairManager;
@@ -53,29 +91,43 @@ describe('AnswerRepairManager', () => {
     enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
   };
 
+  const buildManager = (
+    overrides: {
+      messages?: typeof mockChatMessagesRepository;
+      stream?: typeof mockChatStreamService;
+      selectionService?: unknown;
+    } = {},
+  ): AnswerRepairManager =>
+    new AnswerRepairManager(
+      (overrides.messages ?? mockChatMessagesRepository) as any,
+      mockChatThreadsRepository as any,
+      (overrides.stream ?? mockChatStreamService) as any,
+      mockChatContextGateway as any,
+      mockModeExecutionGateway as any,
+      mockResearchEnricherManager as any,
+      overrides.selectionService as any,
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
       transcript: null,
       systemPrompt: '',
     });
-    manager = new AnswerRepairManager(
-      mockChatMessagesRepository as any,
-      mockChatThreadsRepository as any,
-      mockChatStreamService as any,
-      mockResearchEnricherManager as any,
-      createFakePaygAccessControl() as any,
-    );
+    mockChatContextGateway.build.mockResolvedValue(buildBundle());
+    mockModeExecutionGateway.run.mockResolvedValue({
+      content: 'Repaired content',
+      provider: 'local-ollama',
+      model: 'AUTO',
+      inputTokens: 10,
+      outputTokens: 20,
+    });
+    manager = buildManager();
   });
 
   describe('executeRepair', () => {
     it('happy path: repair with FORMAT type queues background task and returns messageId/threadId', async () => {
       mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-1' });
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Repaired content with proper **formatting**' },
-      });
 
       const result = await manager.executeRepair(
         'user-1',
@@ -94,13 +146,8 @@ describe('AnswerRepairManager', () => {
       );
     });
 
-    it('happy path: repair with multiple types passes all types to buildRepairPrompt', async () => {
+    it('happy path: repair with multiple types passes all types through', async () => {
       mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-2' });
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Repaired content' },
-      });
 
       const result = await manager.executeRepair(
         'user-1',
@@ -118,11 +165,6 @@ describe('AnswerRepairManager', () => {
     it('creates a new thread when no threadId is provided', async () => {
       mockChatThreadsRepository.create.mockResolvedValue({ id: 'new-thread-1' });
       mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-3' });
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Repaired' },
-      });
 
       const result = await manager.executeRepair(
         'user-1',
@@ -145,11 +187,6 @@ describe('AnswerRepairManager', () => {
         content: 'Original message content',
       });
       mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-4' });
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Repaired from messageId' },
-      });
 
       const result = await manager.executeRepair(
         'user-1',
@@ -166,48 +203,166 @@ describe('AnswerRepairManager', () => {
     });
   });
 
-  describe('buildRepairPrompt', () => {
+  describe('context bundle', () => {
+    it('repairs WITH the conversation: the gateway receives the bundle, not just the answer text', async () => {
+      const createMock = vi
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-ctx' })
+        .mockResolvedValueOnce({ id: 'a-ctx' });
+
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+      }).executeRepair(
+        'user-1',
+        {
+          content: 'Thirty days.',
+          threadId: 'thread-1',
+          repairTypes: [RepairType.COMPLETENESS],
+        },
+        '',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          threadId: 'thread-1',
+          surface: ChatSurface.REPAIR,
+          historyLimit: 20,
+        }),
+      );
+      const call = (mockModeExecutionGateway.run as any).mock.calls[0]?.[0];
+      // The whole point: the repairer sees the question the answer was answering.
+      expect(call.bundle.context.threadMessages).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ content: 'What is our refund window?' }),
+        ]),
+      );
+      // …and the content being repaired is the prompt, appended, not a
+      // concatenation glued in front of the rubric.
+      expect(call.prompt).toBe('Thirty days.');
+      expect(call.ledgerContext).toBe(TokenLedgerContext.REPAIR);
+      expect(call.paygCall.workflow).toBe(PAYG_WORKFLOW_ANSWER_REPAIR);
+    });
+
+    it('windows the history at the message being repaired', async () => {
+      mockChatMessagesRepository.findById.mockResolvedValue({
+        id: 'a-1',
+        content: 'Thirty days.',
+      });
+      mockChatMessagesRepository.create.mockResolvedValue({ id: 'u-win' });
+
+      await manager.executeRepair(
+        'user-1',
+        {
+          messageId: 'a-1',
+          threadId: 'thread-1',
+          repairTypes: [RepairType.FACTUALITY],
+        },
+        '',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ routedMessageId: 'a-1' }),
+      );
+    });
+
+    it('appends the repair rubric to the system prompt instead of replacing it', async () => {
+      mockChatContextGateway.build.mockResolvedValue({
+        ...buildBundle(),
+        context: { ...buildBundle().context, systemPrompt: 'You are terse.' },
+      });
+      mockChatMessagesRepository.create.mockResolvedValue({ id: 'u-persona' });
+
+      await manager.executeRepair(
+        'user-1',
+        {
+          content: 'Thirty days.',
+          threadId: 'thread-1',
+          repairTypes: [RepairType.FORMAT],
+        },
+        '',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const call = (mockModeExecutionGateway.run as any).mock.calls[0]?.[0];
+      expect(call.bundle.context.systemPrompt).toContain('You are terse.');
+      expect(call.bundle.context.systemPrompt).toContain('FORMAT');
+    });
+
+    it('passes the research transcript as a persona instruction, not glued to the prompt', async () => {
+      mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+        transcript: { steps: [] },
+        systemPrompt: 'Evidence: refunds are 45 days.',
+      });
+      mockChatMessagesRepository.create.mockResolvedValue({ id: 'u-res' });
+
+      await manager.executeRepair(
+        'user-1',
+        {
+          content: 'Thirty days.',
+          threadId: 'thread-1',
+          repairTypes: [RepairType.FACTUALITY],
+        },
+        '',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ personaInstruction: 'Evidence: refunds are 45 days.' }),
+      );
+      const call = (mockModeExecutionGateway.run as any).mock.calls[0]?.[0];
+      expect(call.prompt).toBe('Thirty days.');
+    });
+  });
+
+  describe('buildRepairPersona', () => {
     it('includes SCHEMA instruction when SCHEMA type is requested', () => {
-      const prompt = manager.buildRepairPrompt('test content', [RepairType.SCHEMA]);
-      expect(prompt).toContain('SCHEMA');
-      expect(prompt).toContain('JSON');
-      expect(prompt).toContain('test content');
+      const persona = manager.buildRepairPersona([RepairType.SCHEMA]);
+      expect(persona).toContain('SCHEMA');
+      expect(persona).toContain('JSON');
     });
 
     it('includes FORMAT instruction when FORMAT type is requested', () => {
-      const prompt = manager.buildRepairPrompt('test content', [RepairType.FORMAT]);
-      expect(prompt).toContain('FORMAT');
-      expect(prompt).toContain('markdown');
+      const persona = manager.buildRepairPersona([RepairType.FORMAT]);
+      expect(persona).toContain('FORMAT');
+      expect(persona).toContain('markdown');
     });
 
     it('includes COMPLETENESS instruction when COMPLETENESS type is requested', () => {
-      const prompt = manager.buildRepairPrompt('test content', [RepairType.COMPLETENESS]);
-      expect(prompt).toContain('COMPLETENESS');
-      expect(prompt).toContain('incomplete');
+      const persona = manager.buildRepairPersona([RepairType.COMPLETENESS]);
+      expect(persona).toContain('COMPLETENESS');
+      expect(persona).toContain('incomplete');
     });
 
     it('includes FACTUALITY instruction when FACTUALITY type is requested', () => {
-      const prompt = manager.buildRepairPrompt('test content', [RepairType.FACTUALITY]);
-      expect(prompt).toContain('FACTUALITY');
-      expect(prompt).toContain('factual');
+      const persona = manager.buildRepairPersona([RepairType.FACTUALITY]);
+      expect(persona).toContain('FACTUALITY');
+      expect(persona).toContain('factual');
     });
 
     it('includes all instructions when all repair types are requested', () => {
-      const prompt = manager.buildRepairPrompt('test content', [
+      const persona = manager.buildRepairPersona([
         RepairType.SCHEMA,
         RepairType.FORMAT,
         RepairType.COMPLETENESS,
         RepairType.FACTUALITY,
       ]);
-      expect(prompt).toContain('SCHEMA');
-      expect(prompt).toContain('FORMAT');
-      expect(prompt).toContain('COMPLETENESS');
-      expect(prompt).toContain('FACTUALITY');
+      expect(persona).toContain('SCHEMA');
+      expect(persona).toContain('FORMAT');
+      expect(persona).toContain('COMPLETENESS');
+      expect(persona).toContain('FACTUALITY');
     });
 
     it('ends with instruction to return only the repaired answer', () => {
-      const prompt = manager.buildRepairPrompt('content', [RepairType.FORMAT]);
-      expect(prompt).toContain('Return ONLY the repaired answer');
+      const persona = manager.buildRepairPersona([RepairType.FORMAT]);
+      expect(persona).toContain('Return ONLY the repaired answer');
+    });
+
+    it('no longer carries a copy of the answer — that is the prompt turn now', () => {
+      const persona = manager.buildRepairPersona([RepairType.FORMAT]);
+      expect(persona).not.toContain('Original answer to repair');
     });
   });
 
@@ -217,21 +372,10 @@ describe('AnswerRepairManager', () => {
         .fn()
         .mockResolvedValueOnce({ id: 'user-msg' })
         .mockResolvedValueOnce({ id: 'assistant-msg' });
-      const isolatedRepo = { ...mockChatMessagesRepository, create: createMock };
-      const isolatedManager = new AnswerRepairManager(
-        isolatedRepo as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Properly repaired content' },
-      });
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Original answer',
@@ -240,7 +384,6 @@ describe('AnswerRepairManager', () => {
         },
         '',
       );
-      // allow background to settle
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(createMock).toHaveBeenCalledTimes(2);
@@ -259,20 +402,11 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'u-1' })
         .mockResolvedValueOnce({ id: 'a-1' });
       const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Repaired' },
-      });
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+        stream: streamMock as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Answer',
@@ -295,20 +429,10 @@ describe('AnswerRepairManager', () => {
         .fn()
         .mockResolvedValueOnce({ id: 'u-2' })
         .mockResolvedValueOnce({ id: 'a-2' });
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Fixed' },
-      });
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Text',
@@ -329,22 +453,18 @@ describe('AnswerRepairManager', () => {
       );
     });
 
-    it('emits SSE error then stores error message when Ollama fails', async () => {
+    it('emits SSE error then stores error message when the execution gateway fails', async () => {
       const createMock = vi
         .fn()
         .mockResolvedValueOnce({ id: 'u-3' })
         .mockResolvedValueOnce({ id: 'err-msg' });
       const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({ ok: false, status: 503, data: {} });
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('provider unavailable'));
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+        stream: streamMock as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Content',
@@ -368,23 +488,17 @@ describe('AnswerRepairManager', () => {
       );
     });
 
-    it('executeRepair always resolves even when background Ollama fails (fire-and-forget)', async () => {
-      const createMock = vi
-        .fn()
-        .mockResolvedValueOnce({ id: 'u-4' })
-        .mockResolvedValue({ id: 'err-4' });
-      const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
+    it('executeRepair always resolves even when the background call fails (fire-and-forget)', async () => {
+      const createMock = vi.fn().mockResolvedValueOnce({ id: 'u-4' }).mockResolvedValue({
+        id: 'err-4',
+      });
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('provider unavailable'));
 
       await expect(
-        isolatedManager.executeRepair(
+        buildManager({
+          messages: { ...mockChatMessagesRepository, create: createMock } as any,
+          stream: { emitCompletion: vi.fn(), emitError: vi.fn() } as any,
+        }).executeRepair(
           'user-1',
           {
             content: 'test',
@@ -412,22 +526,21 @@ describe('AnswerRepairManager', () => {
       ).rejects.toThrow('Could not resolve original content to repair');
     });
 
-    it('throws when Ollama returns empty response string', async () => {
-      const createMock = vi
-        .fn()
-        .mockResolvedValueOnce({ id: 'u-5' })
-        .mockResolvedValue({ id: 'err-5' });
+    it('throws when the model returns an empty response string', async () => {
+      const createMock = vi.fn().mockResolvedValueOnce({ id: 'u-5' }).mockResolvedValue({
+        id: 'err-5',
+      });
       const streamMock = { emitCompletion: vi.fn(), emitError: vi.fn() };
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { response: '   ' } });
+      mockModeExecutionGateway.run.mockResolvedValue({
+        content: '   ',
+        provider: 'local-ollama',
+        model: 'AUTO',
+      } as any);
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+        stream: streamMock as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Something',
@@ -449,20 +562,10 @@ describe('AnswerRepairManager', () => {
         .fn()
         .mockResolvedValueOnce({ id: 'u-6' })
         .mockResolvedValueOnce({ id: 'a-6' });
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Repaired with custom model' },
-      });
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Text to fix',
@@ -499,17 +602,9 @@ describe('AnswerRepairManager', () => {
             ),
           ),
       };
-      const isolatedManager = new AnswerRepairManager(
-        mockChatMessagesRepository as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-        selectionService as any,
-      );
 
       await expect(
-        isolatedManager.executeRepair(
+        buildManager({ selectionService }).executeRepair(
           'user-1',
           {
             content: 'Text to fix',
@@ -535,17 +630,8 @@ describe('AnswerRepairManager', () => {
         actualModel: 'qwen2.5:7b',
       };
       const createMock = vi.fn().mockResolvedValue({ id: 'a-8' });
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Manual local repair' },
+      const isolatedManager = buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
       });
 
       await (isolatedManager as any).executeInBackground(
@@ -574,20 +660,10 @@ describe('AnswerRepairManager', () => {
         .fn()
         .mockResolvedValueOnce({ id: 'u-7' })
         .mockResolvedValueOnce({ id: 'a-7' });
-      const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
-      );
-      mockHttpRequest.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { response: 'Default model repair' },
-      });
 
-      await isolatedManager.executeRepair(
+      await buildManager({
+        messages: { ...mockChatMessagesRepository, create: createMock } as any,
+      }).executeRepair(
         'user-1',
         {
           content: 'Plain text',

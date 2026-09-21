@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { BusinessException } from '../common/errors/business.exception';
 import { VerifierManager } from '../modules/chat-messages/managers/verifier.manager';
@@ -7,9 +7,7 @@ import { type ChatThreadsRepository } from '../modules/chat-threads/repositories
 import { type ChatStreamService } from '../modules/chat-messages/services/chat-stream.service';
 import { type AdvancedModuleModelSelectionService } from '../modules/chat-messages/services/advanced-module-model-selection.service';
 import { verifyMessageSchema } from '../modules/chat-messages/dto/verify-message.dto';
-import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
-import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 vi.mock('../modules/chat-messages/managers/verifier.manager', async () => {
   const actual = await vi.importActual<{ VerifierManager: typeof VerifierManager }>(
@@ -17,22 +15,6 @@ vi.mock('../modules/chat-messages/managers/verifier.manager', async () => {
   );
   return actual;
 });
-
-vi.mock('../app/config/app.config', () => ({
-  AppConfig: {
-    get: vi.fn().mockReturnValue({
-      OLLAMA_SERVICE_URL: 'http://localhost:11434',
-    }),
-  },
-}));
-
-vi.mock('../common/utilities/http-client.utility', () => ({
-  httpRequest: vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    data: { response: 'mocked draft response' },
-  }),
-}));
 
 const mockThread = {
   id: 'thread-verify-1',
@@ -115,6 +97,36 @@ const mockResearchEnricherManager = {
   enrichForOrchestration: vi.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
 };
 
+const emptyBundle = () => ({
+  context: {
+    userId: 'user-1',
+    systemPrompt: null,
+    threadMessages: [],
+    memories: [],
+    contextPackItems: [],
+    fileContents: [],
+    workspaceCitations: [],
+    researchEvidence: [],
+  },
+  thread: { id: 'thread-verify-1' },
+  threadSettings: undefined,
+  messages: [],
+  fileIds: [],
+  latestUserMetadata: null,
+});
+
+// One bundle, built once and shared by the draft, the judge and every repair.
+const mockChatContextGateway = {
+  build: vi.fn(async () => emptyBundle()),
+};
+
+// Draft, verify and repair all go through the same chokepoint a chat turn
+// uses, so the spec drives them here instead of through a hand-built Ollama
+// request body. First call is the draft, every call after it is the judge.
+const mockModeExecutionGateway = {
+  run: vi.fn(async () => ({ content: 'mocked draft response' })),
+};
+
 describe('VerifierManager', () => {
   let manager: VerifierManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
@@ -134,14 +146,16 @@ describe('VerifierManager', () => {
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
+      mockChatContextGateway as any,
+      mockModeExecutionGateway as any,
       mockResearchEnricherManager as any,
-      createFakePaygAccessControl() as any,
     );
 
     vi.clearAllMocks();
-    (httpClientModule.httpRequest as Mock)
-      .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'mocked draft response' } })
-      .mockResolvedValue({ ok: true, status: 200, data: { response: verifierJsonResponse } });
+    mockChatContextGateway.build.mockResolvedValue(emptyBundle());
+    mockModeExecutionGateway.run
+      .mockResolvedValueOnce({ content: 'mocked draft response' })
+      .mockResolvedValue({ content: verifierJsonResponse });
   });
 
   describe('executeVerify', () => {
@@ -224,9 +238,8 @@ describe('VerifierManager', () => {
     });
 
     it('should emit SSE error and store error message when draft generation fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(
-        new Error('Ollama unreachable'),
-      );
+      mockModeExecutionGateway.run.mockReset();
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Ollama unreachable'));
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
       await manager.executeInBackground('thread-verify-1', 'test prompt', 1, 'user-1');
@@ -237,8 +250,32 @@ describe('VerifierManager', () => {
       );
     });
 
+    it('builds ONE bundle and gives the verify pass the same one the draft saw', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground('thread-verify-1', 'test prompt', 0, 'user-1');
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledTimes(1);
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ surface: 'VERIFY', threadId: 'thread-verify-1' }),
+      );
+      const runCalls = (mockModeExecutionGateway.run as Mock).mock.calls as Array<
+        [Record<string, unknown>]
+      >;
+      const draftRequest = runCalls[0]?.[0];
+      const verifyRequest = runCalls[1]?.[0];
+      expect(draftRequest).toBeDefined();
+      expect(verifyRequest).toBeDefined();
+      // The defect this replaces: the verifier used to judge an answer with no
+      // sight of the conversation that produced it.
+      expect(verifyRequest?.['bundle']).toBe(draftRequest?.['bundle']);
+      expect(String(verifyRequest?.['prompt'])).toContain('You are a response quality verifier');
+      expect(verifyRequest?.['ledgerContext']).toBe('VERIFY');
+    });
+
     it('should resolve (fire-and-forget) even when everything fails', async () => {
-      (httpClientModule.httpRequest as Mock).mockRejectedValue(new Error('Fatal'));
+      mockModeExecutionGateway.run.mockReset();
+      mockModeExecutionGateway.run.mockRejectedValue(new Error('Fatal'));
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
@@ -293,9 +330,7 @@ describe('VerifierManager', () => {
 
   describe('model selection', () => {
     it('rejects manual selection with unsupported provider before queuing', async () => {
-      const selectionService: Partial<
-        Record<keyof AdvancedModuleModelSelectionService, Mock>
-      > = {
+      const selectionService: Partial<Record<keyof AdvancedModuleModelSelectionService, Mock>> = {
         resolveSelection: vi
           .fn()
           .mockRejectedValue(
@@ -309,8 +344,9 @@ describe('VerifierManager', () => {
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
+        mockChatContextGateway as any,
+        mockModeExecutionGateway as any,
         mockResearchEnricherManager as any,
-        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 

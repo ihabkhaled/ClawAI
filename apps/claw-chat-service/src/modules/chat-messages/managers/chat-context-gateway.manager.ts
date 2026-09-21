@@ -123,9 +123,12 @@ export class ChatContextGatewayManager {
     if (routedMessageId === undefined) {
       return messages;
     }
-    const index = messages.findIndex(
-      (message) => message.id === routedMessageId && message.role === 'USER',
-    );
+    // Matched by id alone, not `id && role === 'USER'`. Chat windows at the
+    // routed user turn, but Repair windows at the ASSISTANT message it is
+    // rewriting — and a USER-only match silently fell through to the whole
+    // conversation, handing the repairer the very answers it was meant to be
+    // replacing.
+    const index = messages.findIndex((message) => message.id === routedMessageId);
     return index < 0 ? messages : messages.slice(0, index + 1);
   }
 

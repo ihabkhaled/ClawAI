@@ -4,25 +4,23 @@ import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 
-import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities/http-client.utility';
-import {
-  DEFAULT_PIPELINE_MODEL,
-  PIPELINE_STAGE_TIMEOUT_MS,
-  PIPELINE_TEMPLATES,
-} from '../constants/pipeline.constants';
+import { DEFAULT_PIPELINE_MODEL, PIPELINE_TEMPLATES } from '../constants/pipeline.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
+import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { ResearchEnricherManager } from './research-enricher.manager';
-import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { PipelineMessageDto } from '../dto/pipeline-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
+import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
-import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma, type RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
@@ -49,8 +47,9 @@ export class PipelineManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly chatContextGateway: ChatContextGatewayManager,
+    private readonly modeExecutionGateway: ModeExecutionGatewayManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
-    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -102,12 +101,11 @@ export class PipelineManager {
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Pipeline workflow',
       });
-      const config = AppConfig.get();
-      // Enrich ONCE before the pipeline runs — every stage gets the same
-      // evidence prepended to its prompt so a downstream stage (e.g.
-      // "format") sees the same web facts as an upstream stage (e.g.
-      // "research"). Pipeline templates are stage chains of varying
-      // specialization; one shared enrichment keeps the FE badge consistent.
+      // Enrich ONCE before the pipeline runs — every stage sees the same
+      // evidence, so a downstream stage (e.g. "format") works from the same web
+      // facts as an upstream stage (e.g. "research"). Pipeline templates are
+      // stage chains of varying specialization; one shared enrichment keeps the
+      // FE badge consistent.
       const enrichment = await this.researchEnricherManager.enrichForOrchestration({
         threadId,
         mode: dto.researchMode,
@@ -115,14 +113,24 @@ export class PipelineManager {
         userToken: userToken ?? '',
         providerId: dto.researchProviderId,
       });
-      const stageResults = await this.runAllStages(
-        threadId,
-        stages,
-        content,
-        config.OLLAMA_SERVICE_URL,
-        enrichment.systemPrompt,
+      // One bundle for the whole chain, built WITHOUT any stage persona: the
+      // stages work on one question about one conversation, so one set of
+      // history, memory, attachment and cross-thread retrievals serves the
+      // run. A five-stage template would otherwise pay for them five times.
+      // The enricher's transcript rides in as a persona rather than being
+      // glued to the front of every stage prompt by `prependResearchEvidence`:
+      // it says how to answer, so it belongs in the system prompt beside the
+      // user's own — appended, never replacing.
+      const bundle = await this.chatContextGateway.build({
         userId,
-      );
+        threadId,
+        surface: ChatSurface.PIPELINE,
+        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+        ...(enrichment.systemPrompt.length > 0
+          ? { personaInstruction: enrichment.systemPrompt }
+          : {}),
+      });
+      const stageResults = await this.runAllStages(threadId, stages, content, bundle);
       const finalOutput = stageResults.at(-1)?.output ?? content;
       const resolvedModel = resolvedSelection.actualModel;
 
@@ -243,13 +251,21 @@ export class PipelineManager {
     return this.resolveStageModels(dto.customStages ?? [], selection);
   }
 
+  /**
+   * The chain, in order, one stage at a time.
+   *
+   * The sequential `await` below is a REAL data dependency, not an
+   * un-parallelised loop: stage N is called with stage N-1's output as its
+   * input, so running two stages at once would feed the later one the user's
+   * raw text instead of the analysis it is supposed to reason over. Do not
+   * convert this to `Promise.all`; that would silently turn a pipeline into a
+   * fan-out of N independent one-shot answers.
+   */
   private async runAllStages(
     threadId: string,
     stages: PipelineStage[],
     content: string,
-    ollamaUrl: string,
-    researchEvidence: string,
-    userId: string,
+    bundle: ChatContextBundle,
   ): Promise<PipelineStageResult[]> {
     const results: PipelineStageResult[] = [];
     let previousOutput = content;
@@ -269,13 +285,8 @@ export class PipelineManager {
         stageId,
       });
       try {
-        const result = await this.runStage(
-          stage,
-          previousOutput,
-          ollamaUrl,
-          researchEvidence,
-          userId,
-        );
+        // Sequential on purpose: `previousOutput` is this stage's input.
+        const result = await this.runStage(stage, previousOutput, bundle);
         results.push(result);
         previousOutput = result.output;
         this.safeEmitStage(threadId, {
@@ -316,70 +327,83 @@ export class PipelineManager {
     }
   }
 
+  /**
+   * One stage, through the same chokepoint a chat turn uses.
+   *
+   * This used to build an `OllamaGenerateRequest` by hand and post it at
+   * `/api/v1/ollama/generate`, which pinned every stage to a local model — an
+   * account with only a cloud connector could not run a pipeline at all — and
+   * metered through `meterOrchestrationCall` plus a hand-rolled `recordUsage`,
+   * a second path to the ledger that `callProvider` already owns.
+   *
+   * The stage's instruction now reaches the model as a persona instead of as
+   * prompt text glued in front of the input. Gluing it on made the instruction
+   * part of what the user appeared to have typed, so a stage answered the
+   * concatenation — and, worse, stage N's input is stage N-1's OUTPUT, so
+   * every downstream stage was re-reading the previous stage's instruction
+   * text as if it were content to transform.
+   */
   private async runStage(
     stage: PipelineStage,
     input: string,
-    ollamaUrl: string,
-    researchEvidence: string,
-    userId: string,
+    bundle: ChatContextBundle,
   ): Promise<PipelineStageResult> {
     const startTime = Date.now();
-    const basePrompt = `${stage.instruction}\n\n${input}`;
-    const prompt = prependResearchEvidence(basePrompt, researchEvidence);
     const model = await this.resolveModel(stage.model);
+    const parsed = parseJudgeModel(model);
+    const provider = parsed.provider ?? OLLAMA_PROVIDER;
 
-    const requestBody: OllamaGenerateRequest = {
-      model,
-      prompt,
-      stream: false,
-      think: false,
-    };
-
-    const response = await this.accessControlService.meterOrchestrationCall(
-      {
-        userId,
-        requestId: `pipeline:stage:${randomUUID()}`,
-        provider: OLLAMA_PROVIDER,
-        model,
+    const response = await this.modeExecutionGateway.run({
+      bundle: this.withStagePersona(bundle, stage.instruction),
+      prompt: input,
+      provider,
+      model: parsed.model.length > 0 ? parsed.model : model,
+      ledgerContext: TokenLedgerContext.PIPELINE,
+      paygCall: {
         workflow: PAYG_WORKFLOW_PIPELINE,
-        promptText: requestBody.prompt,
+        requestId: `pipeline:stage:${randomUUID()}`,
       },
-      async (hold) =>
-        httpRequest<OllamaGenerateResponse>({
-          url: `${ollamaUrl}/api/v1/ollama/generate`,
-          method: 'POST',
-          body: hold.clamped
-            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
-            : requestBody,
-          timeoutMs: PIPELINE_STAGE_TIMEOUT_MS,
-        }),
-      (settled) => ({
-        promptTokens: settled.data.promptEvalCount ?? 0,
-        completionTokens: settled.data.evalCount ?? 0,
-      }),
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Pipeline stage "${stage.name}" failed with status ${String(response.status)}`,
-      );
-    }
-
-    // Universal token deduction: each pipeline stage is a real LLM call.
-    void this.accessControlService.recordUsage({
-      userId,
-      planId: null,
-      inputTokens: response.data.promptEvalCount ?? 0,
-      outputTokens: response.data.evalCount ?? 0,
-      provider: 'local-ollama',
-      model,
     });
 
+    // Quota is no longer recorded here: `callProvider` is the universal token
+    // deduction chokepoint and records every call that passes through it. The
+    // hand-rolled `recordUsage` this method used to make was a second path to
+    // the same ledger, which is exactly what this batch removes.
     return {
       stageName: stage.name,
       model,
-      output: response.data.response.trim(),
+      output: (response.content ?? '').trim(),
       latencyMs: Date.now() - startTime,
+    };
+  }
+
+  /**
+   * The stage's persona, derived locally from the run's single bundle.
+   *
+   * Asking the context gateway again per stage would re-run history, memory,
+   * attachment and cross-thread retrieval once per stage to produce bundles
+   * that differ by one string. The gateway's own `personaInstruction` handling
+   * is exactly this append, so doing it here is the same result at one
+   * retrieval set.
+   *
+   * Appended, never replacing: the thread's system prompt and the research
+   * evidence already in the shared bundle are the user's instructions, and a
+   * stage instruction is an addition to them.
+   */
+  private withStagePersona(bundle: ChatContextBundle, instruction: string): ChatContextBundle {
+    if (instruction.trim().length === 0) {
+      return bundle;
+    }
+    const existing = bundle.context.systemPrompt;
+    return {
+      ...bundle,
+      context: {
+        ...bundle.context,
+        systemPrompt:
+          existing === null || existing.trim().length === 0
+            ? instruction
+            : `${existing}\n\n${instruction}`,
+      },
     };
   }
 

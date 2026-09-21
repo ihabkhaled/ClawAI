@@ -189,6 +189,28 @@ describe('ChatContextGatewayManager', () => {
     expect(calls[0]?.messages.map((m) => m.id)).toEqual(['m1', 'm2', 'm3']);
   });
 
+  it('windows at an ASSISTANT message too, which is what Repair targets', async () => {
+    // A USER-only match fell through to the whole conversation, so the
+    // repairer was handed the very answers it was meant to be replacing.
+    const { manager, calls } = harness({
+      messages: [
+        message('m1', 'USER'),
+        message('m2', 'ASSISTANT'),
+        message('m3', 'USER'),
+        message('m4', 'ASSISTANT'),
+      ],
+    });
+
+    await manager.build({
+      userId: 'user-1',
+      threadId: 'thread-1',
+      surface: ChatSurface.REPAIR,
+      routedMessageId: 'm2',
+    });
+
+    expect(calls[0]?.messages.map((m) => m.id)).toEqual(['m1', 'm2']);
+  });
+
   it('adds a persona to the user system prompt instead of replacing it', async () => {
     // Replacing it is how the judge stopped knowing what the user had asked
     // the model to be.
