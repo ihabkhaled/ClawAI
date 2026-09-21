@@ -17,7 +17,7 @@
     "@swc/core": "^1.16.2",
     "eslint": "^10.10.0",
     "eslint-plugin-unicorn": "74.0.0",
-    "tsc-alias": "^1.9.4",
+    "tsc-alias": "^1.9.5",
     "typescript": "6.0.3",
     "unplugin-swc": "^1.6.0",
     "vitest": "5.0.1"
