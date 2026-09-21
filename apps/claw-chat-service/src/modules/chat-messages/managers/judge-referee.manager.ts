@@ -20,12 +20,14 @@ import {
 import {
   CRITIC_CLOUD_MODELS,
   CRITIC_LOCAL_MODEL,
+  CRITIC_PARSE_FAILURE_SCORE,
   CRITIC_PARSE_FAILURE_SUMMARY,
   JUDGE_CONFIDENCE_THRESHOLD,
   JUDGE_FILE_GROUNDING_CLAUSE,
   JUDGE_LOCAL_MODEL,
   JUDGE_REFEREE_AUTO_CATEGORIES,
   JUDGE_SYSTEM_PROMPT,
+  REVIEW_ORIGINAL_INSTRUCTIONS_FRAME,
 } from '../constants/judge-referee.constants';
 import { AccessControlService } from '../services/access-control.service';
 import { FileDeliveryRecordService } from '../services/file-delivery-record.service';
@@ -264,16 +266,11 @@ export class JudgeRefereeManager {
       response.model,
       deliveryRecords,
     );
-    const criticContext: AssembledContext = {
-      ...context,
-      systemPrompt: criticPrompt,
-      threadMessages: [
-        {
-          role: 'USER',
-          content: buildCriticUserPrompt(userPrompt, response.content, attachments),
-        } as AssembledContext['threadMessages'][0],
-      ],
-    };
+    const criticContext = this.buildReviewContext(
+      context,
+      criticPrompt,
+      buildCriticUserPrompt(userPrompt, response.content, attachments),
+    );
 
     try {
       if (!this.executionManager) {
@@ -322,7 +319,7 @@ export class JudgeRefereeManager {
       this.logger.warn(`callCritic: failed — ${msg}. Persisting parse-failure marker.`);
       return {
         feedback: [],
-        score: 1.0,
+        score: CRITIC_PARSE_FAILURE_SCORE,
         summary: CRITIC_PARSE_FAILURE_SUMMARY,
         requested: true,
         parseFailed: true,
@@ -461,11 +458,18 @@ export class JudgeRefereeManager {
     }
     sections.push(`User question: ${userPrompt}`);
     sections.push(`\nAI response:\n${response.content}`);
-    sections.push(`\nCritic evaluation:`);
-    sections.push(`Score: ${String(criticEval.score)}`);
-    sections.push(
-      `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
-    );
+    if (criticEval.parseFailed === true) {
+      // Showing the placeholder score here would present an absence of
+      // judgement as an opinion. The judge still has the answer and the whole
+      // conversation, so it can decide on the merits.
+      sections.push(`\nCritic evaluation: unavailable — it could not be parsed.`);
+    } else {
+      sections.push(`\nCritic evaluation:`);
+      sections.push(`Score: ${String(criticEval.score)}`);
+      sections.push(
+        `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
+      );
+    }
 
     // Records (durable) win over context.fileContents (legacy) when present.
     const hasFiles =
@@ -475,13 +479,48 @@ export class JudgeRefereeManager {
       ? `${JUDGE_SYSTEM_PROMPT}${JUDGE_FILE_GROUNDING_CLAUSE}`
       : JUDGE_SYSTEM_PROMPT;
 
-    return {
-      ...context,
-      systemPrompt,
-      threadMessages: [
-        { role: 'USER', content: sections.join('\n') } as AssembledContext['threadMessages'][0],
-      ],
-    };
+    return this.buildReviewContext(context, systemPrompt, sections.join('\n'));
+  }
+
+  /**
+   * The context a reviewer needs: the whole conversation, plus its own brief.
+   *
+   * Both the critic and the judge used to do
+   * `{ ...context, systemPrompt: reviewPrompt, threadMessages: [oneSynthetic] }`
+   * — deleting the conversation and replacing the user's own system prompt.
+   * Two things followed, neither intended:
+   *
+   *  - The judge's prompt promises it "the original user question", and it
+   *    received only the LAST user turn. Where the question was asked three
+   *    turns ago and refined since, it judged an answer against a fragment.
+   *  - Memories, cross-thread material and research evidence survived the
+   *    spread and were still rendered into the system message, so a reviewer
+   *    silently received context it was never told it had, while the
+   *    conversation it was explicitly promised had been removed.
+   *
+   * Now the conversation stays, the review question is APPENDED as a turn, and
+   * the assistant's own instructions are shown as DATA. A reviewer must know
+   * what the user asked the assistant to be in order to judge compliance, but
+   * must not obey it: unframed, a thread whose system prompt says "answer only
+   * in French" produces a judge verdict in French.
+   */
+  private buildReviewContext(
+    context: AssembledContext,
+    reviewSystemPrompt: string,
+    reviewQuestion: string,
+  ): AssembledContext {
+    const original = context.systemPrompt?.trim() ?? '';
+    const systemPrompt =
+      original.length > 0
+        ? [REVIEW_ORIGINAL_INSTRUCTIONS_FRAME, original, '---', reviewSystemPrompt].join('\n\n')
+        : reviewSystemPrompt;
+
+    const question = {
+      role: 'USER',
+      content: reviewQuestion,
+    } as AssembledContext['threadMessages'][0];
+
+    return { ...context, systemPrompt, threadMessages: [...context.threadMessages, question] };
   }
 
   // Builds the attachments block consumed by the judge + critic prompts.
@@ -967,7 +1006,7 @@ export class JudgeRefereeManager {
       );
       return {
         feedback: [],
-        score: 1.0,
+        score: CRITIC_PARSE_FAILURE_SCORE,
         summary: CRITIC_PARSE_FAILURE_SUMMARY,
         parseFailed: true,
       };
