@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { VERIFIER_CONTENT_MIN_LENGTH, VERIFIER_DEFAULT_MAX_REVISIONS } from '@/constants';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useSendVerify } from '@/hooks/chat/use-send-verify';
 import { useVerifyPoll } from '@/hooks/chat/use-verify-poll';
@@ -13,6 +14,7 @@ export function useVerifyPage(): UseVerifyPageReturn {
   const [content, setContent] = useState('');
   const [maxRevisions, setMaxRevisions] = useState(VERIFIER_DEFAULT_MAX_REVISIONS);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
+  const composer = useOrchestrationComposer();
 
   const { send, result, isPending, isError } = useSendVerify();
 
@@ -43,8 +45,10 @@ export function useVerifyPage(): UseVerifyPageReturn {
       content: trimmedContent,
       maxRevisions,
       ...buildAdvancedModelSelectionPayload(selectedModel),
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
     });
-  }, [canSend, send, trimmedContent, maxRevisions, selectedModel]);
+    composer.clear();
+  }, [canSend, send, trimmedContent, maxRevisions, selectedModel, composer]);
 
   return {
     t,
@@ -67,5 +71,6 @@ export function useVerifyPage(): UseVerifyPageReturn {
     stages,
     hasProgress,
     isRunning,
+    composer,
   };
 }

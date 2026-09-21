@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { REPAIR_CONTENT_MIN_LENGTH } from '@/constants';
 import type { RepairType } from '@/enums/repair-type.enum';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useRepairPoll } from '@/hooks/chat/use-repair-poll';
 import { useSendRepair } from '@/hooks/chat/use-send-repair';
@@ -14,6 +15,7 @@ export function useRepairPage(): UseRepairPageReturn {
   const [content, setContent] = useState('');
   const [selectedRepairTypes, setSelectedRepairTypes] = useState<RepairType[]>([]);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
+  const composer = useOrchestrationComposer();
 
   const { send, result, isPending, isError } = useSendRepair();
 
@@ -64,8 +66,10 @@ export function useRepairPage(): UseRepairPageReturn {
       targetProvider: selectedModel?.provider,
       targetModel: selectedModel?.model,
       ...buildAdvancedModelSelectionPayload(selectedModel),
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
     });
-  }, [canSubmit, send, resetStages, content, selectedRepairTypes, selectedModel]);
+    composer.clear();
+  }, [canSubmit, send, resetStages, content, selectedRepairTypes, selectedModel, composer]);
 
   const hasProgress = stages.length > 0;
   const isAnyError = isError || isRepairError;
@@ -92,5 +96,6 @@ export function useRepairPage(): UseRepairPageReturn {
     stages,
     hasProgress,
     errorMessage,
+    composer,
   };
 }

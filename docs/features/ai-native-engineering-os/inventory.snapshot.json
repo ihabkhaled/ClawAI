@@ -9913,7 +9913,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 491
+        "testFiles": 500
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10689,7 +10689,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1348,
+    "totalTestFiles": 1357,
     "workspaceCount": 25
   }
 }

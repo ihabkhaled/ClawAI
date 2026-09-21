@@ -4,6 +4,7 @@ import type { OrchestrationStageStatus } from '@/enums/orchestration-stage-statu
 import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { ModelSelection } from './component.types';
+import type { UseOrchestrationComposerReturn } from './hook.types';
 
 // One row in the OrchestrationStageTimeline. Per-page hooks (e.g.
 // useConsensusPoll, useEscalationPoll, useRepairPoll …) project their
@@ -122,6 +123,14 @@ export type OrchestrationPageShellProps = {
   headerBadge?: React.ReactNode;
 
   // ─── Single-model picker ───────────────────────────────────
+  /**
+   * Attachment state, when this lab accepts files.
+   *
+   * Optional so the shell stays usable without it, but every lab page passes
+   * one: the reason nine of the ten modes had no attachments was that adding
+   * them meant editing nine pages, so nobody did.
+   */
+  composer?: UseOrchestrationComposerReturn;
   selectedModel: ModelSelection | null;
   onModelChange: (selection: ModelSelection | null) => void;
 

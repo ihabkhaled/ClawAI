@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { DECOMPOSE_CONTENT_MIN_LENGTH, DECOMPOSE_DEFAULT_MAX_SUB_TASKS } from '@/constants';
 import { useDecomposePoll } from '@/hooks/chat/use-decompose-poll';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useSendDecompose } from '@/hooks/chat/use-send-decompose';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, UseDecomposePageReturn } from '@/types';
@@ -13,6 +14,7 @@ export function useDecomposePage(): UseDecomposePageReturn {
   const [maxSubTasks, setMaxSubTasks] = useState(DECOMPOSE_DEFAULT_MAX_SUB_TASKS);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const composer = useOrchestrationComposer();
 
   const { send, result, isPending, isError } = useSendDecompose();
 
@@ -41,8 +43,10 @@ export function useDecomposePage(): UseDecomposePageReturn {
       content: content.trim(),
       maxSubTasks,
       ...buildAdvancedModelSelectionPayload(selectedModel),
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
     });
-  }, [canSubmit, send, content, maxSubTasks, selectedModel]);
+    composer.clear();
+  }, [canSubmit, send, content, maxSubTasks, selectedModel, composer]);
 
   const isAnyError = isError || isDecompositionError;
   const errorMessage = isAnyError ? t('decompose.sendFailed') : null;
@@ -85,5 +89,6 @@ export function useDecomposePage(): UseDecomposePageReturn {
     stages,
     hasProgress,
     errorMessage,
+    composer,
   };
 }

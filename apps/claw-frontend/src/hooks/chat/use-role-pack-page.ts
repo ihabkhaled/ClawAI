@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { ROLE_PACK_CONTENT_MIN_LENGTH } from '@/constants';
 import { RolePackName } from '@/enums/role-pack.enum';
+import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
 import { useRolePackPoll } from '@/hooks/chat/use-role-pack-poll';
 import { useRolePackStages } from '@/hooks/chat/use-role-pack-stages';
 import { useSendRolePack } from '@/hooks/chat/use-send-role-pack';
@@ -14,6 +15,7 @@ export function useRolePackPage(): UseRolePackPageReturn {
   const [content, setContent] = useState('');
   const [pack, setPack] = useState<RolePack>(RolePackName.CodingTeam);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
+  const composer = useOrchestrationComposer();
 
   const { mutate, data: sendResult, isPending, isError, error: sendError } = useSendRolePack();
 
@@ -36,8 +38,10 @@ export function useRolePackPage(): UseRolePackPageReturn {
       content: content.trim(),
       pack,
       ...buildAdvancedModelSelectionPayload(selectedModel),
+      ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
     });
-  }, [canSubmit, mutate, content, pack, selectedModel]);
+    composer.clear();
+  }, [canSubmit, mutate, content, pack, selectedModel, composer]);
 
   const errorMessage = useMemo<string | null>(() => {
     if (isError) {
@@ -69,5 +73,6 @@ export function useRolePackPage(): UseRolePackPageReturn {
     handleViewInThread,
     stages,
     errorMessage,
+    composer,
   };
 }

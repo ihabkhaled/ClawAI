@@ -1,6 +1,7 @@
 import type { ConsensusConfidenceLevel, ConsensusModelStatus } from '@/enums';
 
 import type { ModelSelection } from './component.types';
+import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { OrchestrationStage } from './orchestration.types';
 
 export type ConsensusModelBreakdown = {
@@ -36,6 +37,7 @@ export type ConsensusRequest = {
   threadId?: string;
   content: string;
   models: Array<{ provider: string; model: string }>;
+  fileIds?: string[];
 };
 
 export type ConsensusResponse = {
@@ -84,4 +86,5 @@ export type UseConsensusPageReturn = {
   stages: OrchestrationStage[];
   hasProgress: boolean;
   errorMessage: string | null;
+  composer: UseOrchestrationComposerReturn;
 };

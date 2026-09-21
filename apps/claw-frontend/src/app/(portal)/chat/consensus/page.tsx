@@ -37,6 +37,7 @@ export default function ConsensusPage(): React.ReactElement {
     stages,
     hasProgress,
     errorMessage,
+    composer,
   } = useConsensusPage();
 
   return (
@@ -50,6 +51,7 @@ export default function ConsensusPage(): React.ReactElement {
       onPromptChange={setPrompt}
       promptLabel={t('consensus.promptLabel')}
       promptPlaceholder={t('consensus.promptPlaceholder')}
+      composer={composer}
       extraFieldsSlot={
         <ParallelModelSelector
           selectedModels={selectedModels}

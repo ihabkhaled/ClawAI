@@ -25,6 +25,7 @@ export default function CostEnsemblePage(): React.ReactElement {
     handleViewInThread,
     stages,
     hasProgress,
+    composer,
   } = useCostEnsemblePage();
 
   const hasAnyError = isError || isCostEnsembleError;
@@ -69,6 +70,7 @@ export default function CostEnsemblePage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('costEnsemble.contentLabel')}
       promptPlaceholder={t('costEnsemble.contentPlaceholder')}
+      composer={composer}
       onSubmit={handleSend}
       submitLabel={t('costEnsemble.sendPrompt')}
       isSubmitDisabled={!canSubmit}

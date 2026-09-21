@@ -28,6 +28,7 @@ export default function DecomposePage(): React.ReactElement {
     stages,
     hasProgress,
     errorMessage,
+    composer,
   } = useDecomposePage();
 
   const isRunning = isPending || isPolling;
@@ -68,6 +69,7 @@ export default function DecomposePage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('decompose.contentLabel')}
       promptPlaceholder={t('decompose.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={
         <DecomposeMaxSubTasksSelect
           value={maxSubTasks}

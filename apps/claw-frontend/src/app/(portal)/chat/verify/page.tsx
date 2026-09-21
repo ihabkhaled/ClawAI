@@ -35,6 +35,7 @@ export default function VerifyPage(): React.ReactElement {
     handleViewInThread,
     stages,
     hasProgress,
+    composer,
   } = useVerifyPage();
 
   const submitLabel = isRunning ? t('verify.running') : t('verify.sendPrompt');
@@ -97,6 +98,7 @@ export default function VerifyPage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('verify.contentLabel')}
       promptPlaceholder={t('verify.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={maxRevisionsField}
       onSubmit={handleSend}
       submitLabel={submitLabel}

@@ -4,6 +4,7 @@ import type {
   AdvancedModuleModelSelection,
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
+import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
 
@@ -36,6 +37,7 @@ export type CostEnsembleResult = {
 
 export type SendCostEnsemblePayload = AdvancedModelSelectionPayload & {
   content: string;
+  fileIds?: string[];
 };
 
 export type SendCostEnsembleResult = {
@@ -87,4 +89,5 @@ export type UseCostEnsemblePageReturn = {
   // True while either the mutation is in-flight OR a result is still being
   // polled / streamed. The shell wires this into its skeleton + button gate.
   isRunning: boolean;
+  composer: UseOrchestrationComposerReturn;
 };

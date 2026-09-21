@@ -1143,3 +1143,21 @@ export type UseModelFamilyCardReturn = {
   open: () => void;
   setIsOpen: (open: boolean) => void;
 };
+
+/**
+ * Attachment state shared by every orchestration lab page.
+ *
+ * The list lives here rather than in each page so a lab cannot quietly ship
+ * without it, which is how nine of the ten modes came to have no way of
+ * sending a file at all.
+ */
+export type UseOrchestrationComposerReturn = {
+  selectedFileIds: string[];
+  setSelectedFileIds: (fileIds: string[]) => void;
+  /** Paste and drag-drop, through the same upload pipeline as the paperclip. */
+  ingestFiles: (files: FileList | File[]) => void;
+  isUploading: boolean;
+  pendingCount: number;
+  /** Called after a successful send; a lab run is one question. */
+  clear: () => void;
+};

@@ -4,6 +4,7 @@ import type {
   AdvancedModuleModelSelection,
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
+import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
 
@@ -30,6 +31,7 @@ export type RolePackResult = {
 export type SendRolePackPayload = AdvancedModelSelectionPayload & {
   content: string;
   pack: RolePack;
+  fileIds?: string[];
 };
 
 export type SendRolePackResult = {
@@ -81,4 +83,5 @@ export type UseRolePackPageReturn = {
   // Human-readable error surface for the OrchestrationPageShell's Alert.
   // null when there is no error.
   errorMessage: string | null;
+  composer: UseOrchestrationComposerReturn;
 };

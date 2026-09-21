@@ -1,4 +1,5 @@
 import type { EscalationChainStatus } from '@/enums';
+import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { OrchestrationStage } from '@/types/orchestration.types';
 
@@ -41,6 +42,7 @@ export type EscalationChainRequest = {
   threadId?: string;
   content: string;
   chain: EscalationChainStep[];
+  fileIds?: string[];
 };
 
 export type EscalationChainResponse = {
@@ -95,4 +97,5 @@ export type UseEscalationPageReturn = {
   isPolling: boolean;
   isSynthesisReady: boolean;
   handleViewInThread: () => void;
+  composer: UseOrchestrationComposerReturn;
 };

@@ -28,6 +28,7 @@ export default function RepairPage(): React.ReactElement {
     stages,
     hasProgress,
     errorMessage,
+    composer,
   } = useRepairPage();
 
   // The orchestration shell handles model+prompt gating itself. We
@@ -49,6 +50,7 @@ export default function RepairPage(): React.ReactElement {
       onPromptChange={setContent}
       promptLabel={t('repair.contentLabel')}
       promptPlaceholder={t('repair.contentPlaceholder')}
+      composer={composer}
       extraFieldsSlot={
         <RepairTypeSelector
           selectedTypes={selectedRepairTypes}

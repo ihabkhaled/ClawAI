@@ -2,6 +2,7 @@ import type {
   AdvancedModuleModelSelection,
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
+import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
 
@@ -29,6 +30,7 @@ export type DecomposeRequest = AdvancedModelSelectionPayload & {
   content: string;
   threadId?: string;
   maxSubTasks?: number;
+  fileIds?: string[];
 };
 
 export type DecomposeResponse = {
@@ -79,4 +81,5 @@ export type UseDecomposePageReturn = {
   stages: OrchestrationStage[];
   hasProgress: boolean;
   errorMessage: string | null;
+  composer: UseOrchestrationComposerReturn;
 };

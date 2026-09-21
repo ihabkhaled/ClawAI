@@ -3,6 +3,7 @@ import type {
   AdvancedModuleModelSelection,
   AdvancedModelSelectionPayload,
 } from '@/types/advanced-model-selection.types';
+import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { OrchestrationStage } from '@/types/orchestration.types';
 
@@ -13,6 +14,7 @@ export type RepairRequest = AdvancedModelSelectionPayload & {
   repairTypes: RepairType[];
   targetProvider?: string;
   targetModel?: string;
+  fileIds?: string[];
 };
 
 export type RepairResponse = {
@@ -82,4 +84,5 @@ export type UseRepairPageReturn = {
   // Localised error string surfaced to the shell's Alert primitive.
   // `null` when no error is active.
   errorMessage: string | null;
+  composer: UseOrchestrationComposerReturn;
 };
