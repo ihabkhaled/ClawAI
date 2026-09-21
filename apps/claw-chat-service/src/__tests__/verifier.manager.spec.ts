@@ -250,6 +250,26 @@ describe('VerifierManager', () => {
       );
     });
 
+    it('passes the attachment list to the context gateway', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground(
+        'thread-verify-1',
+        'test prompt',
+        0,
+        'user-1',
+        undefined,
+        undefined,
+        undefined,
+        '',
+        ['file-1'],
+      );
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ fileIds: ['file-1'] }),
+      );
+    });
+
     it('builds ONE bundle and gives the verify pass the same one the draft saw', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 

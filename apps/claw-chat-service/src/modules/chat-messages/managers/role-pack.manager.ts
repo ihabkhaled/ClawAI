@@ -78,6 +78,7 @@ export class RolePackManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -92,6 +93,7 @@ export class RolePackManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    fileIds?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -123,6 +125,7 @@ export class RolePackManager {
         ...(enrichment.systemPrompt.length > 0
           ? { personaInstruction: enrichment.systemPrompt }
           : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
       const results = await this.runAllMembers(threadId, resolvedMembers, content, bundle);
       const allFailed = results.every((r) => r.output === 'Role failed');

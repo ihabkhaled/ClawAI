@@ -129,6 +129,7 @@ export class PipelineManager {
         ...(enrichment.systemPrompt.length > 0
           ? { personaInstruction: enrichment.systemPrompt }
           : {}),
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
       });
       const stageResults = await this.runAllStages(threadId, stages, content, bundle);
       const finalOutput = stageResults.at(-1)?.output ?? content;

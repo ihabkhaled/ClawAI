@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
+import { attachmentFields } from './attachment-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 import { RepairType } from '../../../common/enums/repair-type.enum';
@@ -14,6 +15,7 @@ export const repairMessageSchema = z
     targetModel: z.string().max(255).optional(),
     ...advancedModelSelectionFields,
     ...researchFields,
+    ...attachmentFields,
   })
   .refine((data) => data.messageId !== undefined || data.content !== undefined, {
     message: 'Either messageId or content must be provided',

@@ -404,6 +404,25 @@ describe('CostEnsembleManager', () => {
       );
     });
 
+    it('passes the attachment list to the context gateway', async () => {
+      messagesRepo.create!.mockResolvedValue({ id: 'ce-files', threadId: 'thread-ce-1' });
+
+      await manager.executeInBackground(
+        'thread-ce-1',
+        'test prompt',
+        'user-1',
+        undefined,
+        undefined,
+        undefined,
+        '',
+        ['file-1'],
+      );
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ fileIds: ['file-1'] }),
+      );
+    });
+
     it('builds the context bundle once and shares it with every provider call', async () => {
       messagesRepo.create!.mockResolvedValue({ id: 'ce-shared', threadId: 'thread-ce-1' });
       // A trio: one classify call plus three candidates, all on one bundle.

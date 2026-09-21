@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
+import { attachmentFields } from './attachment-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 const pipelineStageSchema = z.object({
@@ -18,6 +19,7 @@ export const pipelineMessageSchema = z.object({
   customStages: z.array(pipelineStageSchema).max(5).optional(),
   ...advancedModelSelectionFields,
   ...researchFields,
+  ...attachmentFields,
 });
 
 export type PipelineMessageDto = z.infer<typeof pipelineMessageSchema>;

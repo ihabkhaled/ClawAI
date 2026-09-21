@@ -223,6 +223,37 @@ describe('BestOfNManager', () => {
       expect(result).toHaveProperty('threadId', 'thread-best-1');
     });
 
+    it('forwards dto.fileIds to executeInBackground', async () => {
+      messagesRepo.create!.mockResolvedValue(mockUserMessage);
+      const backgroundSpy = vi.spyOn(manager, 'executeInBackground').mockResolvedValue(undefined);
+
+      await manager.executeBestOfN(
+        'user-1',
+        {
+          content: 'test prompt',
+          threadId: 'thread-best-1',
+          n: 2,
+          models: undefined,
+          fileIds: ['file-1'],
+        },
+        '',
+      );
+
+      expect(backgroundSpy).toHaveBeenCalledWith(
+        'thread-best-1',
+        'test prompt',
+        2,
+        'user-1',
+        expect.anything(),
+        undefined,
+        undefined,
+        undefined,
+        '',
+        ['file-1'],
+      );
+      backgroundSpy.mockRestore();
+    });
+
     it('should create a new thread when no threadId provided', async () => {
       threadsRepo.create!.mockResolvedValue(mockThread);
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
@@ -288,6 +319,27 @@ describe('BestOfNManager', () => {
           role: 'ASSISTANT',
           metadata: expect.objectContaining({ bestOfN: true }),
         }),
+      );
+    });
+
+    it('passes the attachment list to the context gateway', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground(
+        'thread-best-1',
+        'test prompt',
+        2,
+        'user-1',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        '',
+        ['file-1'],
+      );
+
+      expect(mockChatContextGateway.build).toHaveBeenCalledWith(
+        expect.objectContaining({ fileIds: ['file-1'] }),
       );
     });
 

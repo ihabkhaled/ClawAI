@@ -96,6 +96,7 @@ export class CostEnsembleManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -109,6 +110,7 @@ export class CostEnsembleManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    fileIds?: string[],
   ): Promise<void> {
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
@@ -139,6 +141,7 @@ export class CostEnsembleManager {
         ...(enrichment.systemPrompt.length > 0
           ? { personaInstruction: enrichment.systemPrompt }
           : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
       this.safeEmitStage(threadId, {
         label: 'Classifying task',

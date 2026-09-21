@@ -102,6 +102,7 @@ export class TaskDecompositionManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -116,6 +117,7 @@ export class TaskDecompositionManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    fileIds?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -159,6 +161,7 @@ export class TaskDecompositionManager {
         ...(enrichment.systemPrompt.length > 0
           ? { personaInstruction: enrichment.systemPrompt }
           : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
       const subTasks = await this.decomposeContent(content, maxSubTasks, resolvedSelection, bundle);
       this.safeEmitStage(threadId, {

@@ -94,6 +94,7 @@ export class AnswerRepairManager {
       // the history AS IT WAS at that message — repairing turn 3 must not read
       // turns 4 through 20, which is precisely what `windowAt` is for.
       dto.messageId,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -109,6 +110,7 @@ export class AnswerRepairManager {
     researchProviderId?: string,
     userToken?: string,
     routedMessageId?: string,
+    fileIds?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -144,6 +146,7 @@ export class AnswerRepairManager {
         ...(enrichment.systemPrompt.length > 0
           ? { personaInstruction: enrichment.systemPrompt }
           : {}),
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
       this.safeEmitStage(threadId, {
         label: 'Draft critique',

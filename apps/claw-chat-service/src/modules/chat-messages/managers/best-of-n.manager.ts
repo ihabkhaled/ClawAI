@@ -83,6 +83,7 @@ export class BestOfNManager {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.fileIds,
     );
 
     return { messageId: userMessage.id, threadId };
@@ -98,6 +99,7 @@ export class BestOfNManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    fileIds?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -132,6 +134,12 @@ export class BestOfNManager {
         ...(enrichment.systemPrompt.length > 0
           ? { personaInstruction: enrichment.systemPrompt }
           : {}),
+        // Attachments were not merely ignored by the orchestration modes: they
+        // were not expressible. The DTOs carried no file field at all, so a
+        // user could attach a document in Compare and not in Best-of-N. The
+        // list is spread only when it has entries, so an absent attachment
+        // stays absent rather than arriving as an empty array.
+        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
       const candidates = await this.runCandidates(
         threadId,
