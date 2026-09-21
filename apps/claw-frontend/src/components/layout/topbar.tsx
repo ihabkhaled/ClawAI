@@ -36,7 +36,7 @@ export function Topbar() {
       // The gap and the side padding are `@`-gated for the same reason as the
       // labels: at 768x1024 the bar is 512px and `sm:px-6` was spending 48px of
       // it on air, which is where the last 3px of overflow came from.
-      className="border-border/30 bg-card/85 @container @2xl:gap-2 @2xl:px-6 sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))]"
+      className="border-border/30 bg-card/85 @container sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))] @2xl:gap-2 @2xl:px-6"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <Button
@@ -72,9 +72,11 @@ export function Topbar() {
             it. A phone is exactly where someone notices the prices are in the
             wrong currency, and the portal has no other place to change it. */}
         <CurrencySwitcher />
-        <div className="hidden sm:block">
-          <LocaleSwitcher />
-        </div>
+        {/* Also visible at every width, for the same reason. The portal had no
+            language control at all below 640px: the topbar hid it and neither
+            the sidebar, the user menu nor the bottom navigation carries one,
+            so a phone user's only route was the Settings page. */}
+        <LocaleSwitcher />
         <div className="hidden sm:block">
           <ThemeSwitcher />
         </div>

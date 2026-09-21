@@ -62,15 +62,24 @@ export function MarketingHeader(): React.ReactElement {
           </Button>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 xl:hidden"
-          aria-label={t('marketing.header.menuOpen')}
-          onClick={() => setIsOpen(true)}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        {/* Below 1280px the whole cluster above collapses into the hamburger,
+            which put the language control two taps and one discovery away —
+            and the only always-visible copy was in the footer, at the bottom of
+            a long marketing page. Someone who cannot read the current language
+            is exactly the person who cannot find a menu labelled "Menu", so it
+            sits in the bar at every width, as it does in the portal. */}
+        <div className="flex items-center gap-1 xl:hidden">
+          <MarketingLocaleSwitcher />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            aria-label={t('marketing.header.menuOpen')}
+            onClick={() => setIsOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       <MarketingMobileMenu
