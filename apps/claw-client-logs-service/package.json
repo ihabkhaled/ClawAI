@@ -26,7 +26,7 @@
     "@claw/shared-rabbitmq": "*",
     "@claw/shared-types": "*",
     "@claw/shared-utilities": "*",
-    "@nestjs/common": "^12.0.1",
+    "@nestjs/common": "^12.0.3",
     "@nestjs/core": "^12.0.1",
     "@nestjs/jwt": "^12.0.2",
     "@nestjs/mongoose": "^12.0.0",
