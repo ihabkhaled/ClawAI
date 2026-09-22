@@ -61,8 +61,13 @@ import {
 } from '../utilities/runtime-v2-model-output.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
+import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
+import {
+  RUNTIME_V2_FIRST_TURN_HISTORY_MESSAGES,
+  RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+} from '../constants/runtime-v2-transcript.constants';
 import type { RuntimeThreadContext } from '../types/runtime-thread-context.types';
-import { latestUserFileIds, runtimeThreadSettings } from '../helpers/runtime-thread-context.helper';
 
 @Injectable()
 export class RuntimeV2LoopManager {
@@ -72,7 +77,7 @@ export class RuntimeV2LoopManager {
     private readonly messages: ChatMessagesRepository,
     private readonly threads: ChatThreadsRepository,
     private readonly store: RuntimeV2Store,
-    private readonly contextAssembly: ContextAssemblyManager,
+    private readonly chatContextGateway: ChatContextGatewayManager,
     private readonly execution: ChatExecutionManager,
   ) {}
 
@@ -218,8 +223,7 @@ export class RuntimeV2LoopManager {
     const origin =
       ordered.find((message) => message.id === binding.messageId) ??
       (await this.messages.findById(binding.messageId));
-    if (origin === null) return window;
-    return [origin, ...window.slice(-(THREAD_CONTEXT_LIMIT - 1))];
+    return origin === null ? window : [origin, ...window.slice(-(THREAD_CONTEXT_LIMIT - 1))];
   }
 
   /**
@@ -232,21 +236,24 @@ export class RuntimeV2LoopManager {
   private async buildContinuationContext(
     binding: RuntimeV2BoundInput,
     command: RuntimeResultDto,
-    thread: RuntimeThreadContext,
+    _thread: RuntimeThreadContext,
   ): Promise<Awaited<ReturnType<ContextAssemblyManager['assemble']>>> {
     const history = await this.continuationHistory(binding);
-    const context = await this.contextAssembly.assemble(
-      binding.ownerId,
-      history,
-      runtimeThreadSettings(thread),
-      thread.contextPackIds ?? undefined,
-      // The attachments the user dropped in. Passing undefined here is why an
-      // image or document handed to the agent was never analysed, while the
-      // same file in ordinary chat was.
-      latestUserFileIds(history),
-      undefined,
-      RoutingMode.MANUAL_MODEL,
-    );
+    // The same gateway a chat turn uses. It carries the two things this loop
+    // used to lose: the thread's own settings (so "use relevant previous
+    // chats" means the same here as in chat) and the model's REAL context
+    // window — without which a 200k-window model was budgeted at the
+    // conservative default and history was discarded there was room for.
+    const { context } = await this.chatContextGateway.build({
+      userId: binding.ownerId,
+      threadId: binding.threadId,
+      surface: ChatSurface.AGENT,
+      historyLimit: history.length,
+      provider: binding.provider,
+      model: binding.model,
+      maxOutputTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+      routingMode: RoutingMode.MANUAL_MODEL,
+    });
     const resultDocument = JSON.stringify({
       status: command.result.status,
       structured: command.result.structured ?? null,
@@ -571,10 +578,7 @@ export class RuntimeV2LoopManager {
     // the model replied `DONE`, the run recorded `run.completed`, and the
     // workspace was empty — the silent stop wearing the face of success.
     // Continuations are exempt because by then "done" is usually true.
-    if (firstTurn && isHollowCompletion(turn.output.content)) {
-      return this.nudgeIntoActing(binding, runtimeContext, routingMode, turn, isHollowCompletion);
-    }
-    return turn;
+    return firstTurn && isHollowCompletion(turn.output.content) ? this.nudgeIntoActing(binding, runtimeContext, routingMode, turn, isHollowCompletion) : turn;
   }
 
   /**
@@ -638,29 +642,23 @@ export class RuntimeV2LoopManager {
   private async buildFirstTurnContext(
     binding: RuntimeV2BoundInput,
     payload: MessageRoutedData,
-    thread: RuntimeThreadContext,
+    _thread: RuntimeThreadContext,
   ): Promise<Awaited<ReturnType<ContextAssemblyManager['assemble']>>> {
-    const recent = await this.messages.findRecentByThreadId(binding.threadId, 20);
-    const history = [...recent].reverse();
-    const context = await this.contextAssembly.assemble(
-      binding.ownerId,
-      history,
-      // The thread's own settings, not just a token number. Passing only
-      // `{ maxTokens }` left `useCrossThreadContext` undefined, and the
-      // assembler's `=== true` test then disabled cross-thread memory for
-      // every agent run regardless of what the user had chosen.
-      runtimeThreadSettings(thread),
-      thread.contextPackIds ?? undefined,
-      latestUserFileIds(history),
-      undefined,
-      payload.routingMode as RoutingMode,
-    );
-    return {
-      ...context,
-      systemPrompt: [context.systemPrompt, buildRuntimeV2ModelInstruction(binding.toolDefinitions)]
-        .filter((value): value is string => value !== null)
-        .join('\n\n'),
-    };
+    // Through the shared gateway, like every other surface. The tool catalogue
+    // is a PERSONA — appended to the user's system prompt, never substituted
+    // for it, so the agent still knows what the user asked it to be.
+    const { context } = await this.chatContextGateway.build({
+      userId: binding.ownerId,
+      threadId: binding.threadId,
+      surface: ChatSurface.AGENT,
+      historyLimit: RUNTIME_V2_FIRST_TURN_HISTORY_MESSAGES,
+      provider: binding.provider,
+      model: binding.model,
+      maxOutputTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+      personaInstruction: buildRuntimeV2ModelInstruction(binding.toolDefinitions),
+      routingMode: payload.routingMode as RoutingMode,
+    });
+    return context;
   }
 
   /**

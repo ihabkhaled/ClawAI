@@ -55,6 +55,17 @@ export type ChatContextRequest = {
 
   routingMode?: RoutingMode;
   research?: ResearchOptions;
+
+  /**
+   * Overrides the thread's answer-length reserve for this call.
+   *
+   * `ThreadSettings.maxTokens` is the ANSWER length (ADR-086), and a surface
+   * whose answers are not chat answers needs its own. A coding-agent turn is
+   * usually a single tool call, so reserving the user's chat setting would
+   * take that much away from the history and attachments the budget exists to
+   * protect.
+   */
+  maxOutputTokens?: number;
 };
 
 /**

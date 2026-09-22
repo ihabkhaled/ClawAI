@@ -53,8 +53,13 @@ export class ChatContextGatewayManager {
     const { messages, thread } = await this.loadThreadMaterial(request);
     const windowed = this.windowAt(messages, request.routedMessageId);
 
+    const baseSettings = this.extractThreadSettings(thread);
+    const withReserve =
+      request.maxOutputTokens === undefined
+        ? baseSettings
+        : { ...(baseSettings ?? {}), maxTokens: request.maxOutputTokens };
     const threadSettings = await this.withModelContextWindow(
-      this.extractThreadSettings(thread),
+      withReserve,
       request.provider,
       request.model,
     );
@@ -133,17 +138,19 @@ export class ChatContextGatewayManager {
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
-    return !thread ? undefined : {
-      systemPrompt: thread.systemPrompt,
-      temperature: thread.temperature,
-      maxTokens: thread.maxTokens,
-      judgeModel: thread.judgeModel,
-      useCrossThreadContext: thread.useCrossThreadContext,
-      criticEnabled: thread.criticEnabled,
-      criticModel: thread.criticModel,
-      qualityThreshold: thread.qualityThreshold,
-      maxReRouteAttempts: thread.maxReRouteAttempts,
-    };
+    return !thread
+      ? undefined
+      : {
+          systemPrompt: thread.systemPrompt,
+          temperature: thread.temperature,
+          maxTokens: thread.maxTokens,
+          judgeModel: thread.judgeModel,
+          useCrossThreadContext: thread.useCrossThreadContext,
+          criticEnabled: thread.criticEnabled,
+          criticModel: thread.criticModel,
+          qualityThreshold: thread.qualityThreshold,
+          maxReRouteAttempts: thread.maxReRouteAttempts,
+        };
   }
 
   /**

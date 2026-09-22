@@ -144,3 +144,13 @@ export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 32_768;
  * against any window worth using.
  */
 export const RUNTIME_V2_OUTPUT_RESERVE_TOKENS = 8_192;
+
+/**
+ * How much conversation the first turn of an agent run reads.
+ *
+ * Twenty, which is what the loop has always used. It is far short of chat's
+ * 400, and that difference is deliberate for now: raising it changes the token
+ * cost of every agent run and belongs to a batch that can measure it, not to
+ * the one that moved the loop onto the shared gateway.
+ */
+export const RUNTIME_V2_FIRST_TURN_HISTORY_MESSAGES = 20;

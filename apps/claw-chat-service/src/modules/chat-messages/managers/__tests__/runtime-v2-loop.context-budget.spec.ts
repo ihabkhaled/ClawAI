@@ -11,6 +11,12 @@ import { RuntimeV2LoopManager } from '../runtime-v2-loop.manager';
 /**
  * What an agent turn asks for, and what it reserves.
  *
+ * The loop now goes through ChatContextGatewayManager, like every other
+ * surface, so these assert on the REQUEST it builds rather than on a direct
+ * call to the assembler. Two of them cover ground the loop never had: the
+ * provider and model are named, which is what resolves the model's real
+ * context window instead of the conservative default.
+ *
  * These assertions used to require `maxTokens` to be the 96,000-token context
  * budget, which was true before ADR-086 split the two numbers and false after
  * it: `ThreadSettings.maxTokens` is now the ANSWER length, and it feeds
@@ -29,9 +35,11 @@ describe('RuntimeV2LoopManager context budget', () => {
     threadId: 'thread_1',
     messageId: 'message_1',
     toolDefinitions: [],
+    provider: 'ANTHROPIC',
+    model: 'claude-sonnet-4',
   };
 
-  function manager(assemble: Mock): RuntimeV2LoopManager {
+  function manager(build: Mock): RuntimeV2LoopManager {
     const messages = {
       findRecentByThreadId: vi.fn().mockResolvedValue([]),
       findById: vi.fn().mockResolvedValue(null),
@@ -40,18 +48,20 @@ describe('RuntimeV2LoopManager context budget', () => {
       messages as never,
       {} as never,
       {} as never,
-      { assemble } as never,
+      { build } as never,
       {} as never,
     );
   }
 
-  function budgetOf(assemble: Mock): unknown {
-    return assemble.mock.calls[0]?.[2];
+  function requestOf(build: Mock): Record<string, unknown> {
+    return (build.mock.calls[0]?.[0] ?? {}) as Record<string, unknown>;
   }
 
+  const gatewayResult = { context: { systemPrompt: 'base' } };
+
   it('gives the first turn a budget that fits the tool catalog', async () => {
-    const assemble = vi.fn().mockResolvedValue({ systemPrompt: 'base' });
-    const loop = manager(assemble);
+    const build = vi.fn().mockResolvedValue(gatewayResult);
+    const loop = manager(build);
 
     await (
       loop as unknown as {
@@ -69,15 +79,16 @@ describe('RuntimeV2LoopManager context budget', () => {
       },
     );
 
-    expect(budgetOf(assemble)).toEqual({
-      maxTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
-      useCrossThreadContext: true,
+    expect(requestOf(build)).toMatchObject({
+      maxOutputTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
     });
   });
 
   it('keeps the same budget on a continuation', async () => {
-    const assemble = vi.fn().mockResolvedValue({ systemPrompt: 'base' });
-    const loop = manager(assemble);
+    const build = vi.fn().mockResolvedValue(gatewayResult);
+    const loop = manager(build);
     const command = {
       result: {
         invocationId: 'invocation_1',
@@ -98,9 +109,10 @@ describe('RuntimeV2LoopManager context budget', () => {
       }
     ).buildContinuationContext(binding, command, { useCrossThreadContext: false });
 
-    expect(budgetOf(assemble)).toEqual({
-      maxTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
-      useCrossThreadContext: false,
+    expect(requestOf(build)).toMatchObject({
+      maxOutputTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
     });
   });
 });
@@ -123,11 +135,11 @@ describe('RuntimeV2LoopManager continuation ordering', () => {
         .mockImplementation(() => Promise.resolve([...stored].reverse())),
       findById: vi.fn().mockResolvedValue(origin),
     };
-    const assemble = vi
-      .fn()
-      .mockImplementation((_ownerId, history) =>
-        Promise.resolve({ systemPrompt: 'base', threadMessages: history }),
-      );
+    // The gateway now owns the history fetch, so the ordering this test is
+    // about is asserted on what it was asked to build from.
+    const build = vi.fn().mockImplementation(async () => ({
+      context: { systemPrompt: 'base', threadMessages: [...stored] },
+    }));
     const callProvider = vi.fn().mockResolvedValue({
       content: '{"kind":"final","content":"finished"}',
       provider: 'OLLAMA',
@@ -142,7 +154,7 @@ describe('RuntimeV2LoopManager continuation ordering', () => {
       messages as never,
       {} as never,
       store as never,
-      { assemble } as never,
+      { build } as never,
       { callProvider } as never,
     );
     const binding = {
