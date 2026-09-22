@@ -62,3 +62,26 @@ export const AUDIO_PLACEHOLDER_PREFIX = '[Audio file: ';
 
 export const TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE =
   'Audio transcription is unavailable: no connector with an audio-capable model is configured. Ask an administrator to enable one.';
+
+/**
+ * The most audio one job will send to a provider.
+ *
+ * Twelve megabytes, which is roughly 25 minutes of the Opus a browser records
+ * by default and about 12 minutes of a 128 kbps MP3.
+ *
+ * This is a COST limit, not a storage one. The upload cap is 50MB measured in
+ * bytes, and compressed speech is small: 50MB is something like four hours of
+ * voice, and four hours of audio is four hours of transcription billed to the
+ * account that dropped one file in. Nothing else in the pipeline would have
+ * noticed — the upload succeeds, the job succeeds, and the bill arrives later.
+ *
+ * A byte ceiling is an approximation of the duration ceiling we actually want.
+ * Measuring duration means decoding the container for every format we accept,
+ * which is a real dependency for a guard whose job is to refuse obvious abuse;
+ * bytes are the honest 80% until that is worth doing. The in-browser recorder
+ * already caps itself at five minutes, so this is about UPLOADED files.
+ */
+export const MAX_TRANSCRIBABLE_AUDIO_BYTES = 12 * 1024 * 1024;
+
+export const TRANSCRIPTION_TOO_LARGE_MESSAGE =
+  'This recording is too long to transcribe automatically. Upload a shorter clip, or split it into parts.';

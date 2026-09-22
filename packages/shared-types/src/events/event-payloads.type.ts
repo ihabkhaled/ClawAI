@@ -326,7 +326,9 @@ export type FileTranscribeFailureReasonCode =
   | 'PROVIDER_ERROR'
   | 'EMPTY_TRANSCRIPT'
   | 'FILE_NOT_FOUND'
-  | 'AUDIO_UNREADABLE';
+  | 'AUDIO_UNREADABLE'
+  /** Longer than `MAX_TRANSCRIBABLE_AUDIO_BYTES` — a cost ceiling, not a storage one. */
+  | 'AUDIO_TOO_LARGE';
 
 /** The job. Carries only identifiers — the bytes are read from the row. */
 export interface FileTranscribeRequestedPayload extends BaseEventPayload {

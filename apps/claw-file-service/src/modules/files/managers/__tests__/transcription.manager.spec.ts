@@ -17,7 +17,11 @@ import { type TranscriptionCapabilityClient } from '../../clients/transcription-
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
 import { transcribeWithGemini } from '../../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../../adapters/openai-transcription.adapter';
-import { TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE } from '../../constants/transcription.constants';
+import {
+  MAX_TRANSCRIBABLE_AUDIO_BYTES,
+  TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
+  TRANSCRIPTION_TOO_LARGE_MESSAGE,
+} from '../../constants/transcription.constants';
 
 vi.mock('../../adapters/gemini-transcription.adapter', () => ({
   transcribeWithGemini: vi.fn(),
@@ -185,6 +189,36 @@ describe('TranscriptionManager', () => {
     expect(payload.reason).toBe(TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE);
     expect(mockedGemini).not.toHaveBeenCalled();
     expect(publishedPatterns(harness.rabbit)).not.toContain(EventPattern.FILE_TRANSCRIBE_COMPLETED);
+  });
+
+  it('refuses an oversized recording before spending anything on it', async () => {
+    // The cost is the provider call, not the storage. The upload cap is 50MB of
+    // bytes, and compressed speech is small enough that 50MB is hours of audio
+    // — hours that would be transcribed and billed because one file was dropped
+    // in. Nothing else in the pipeline objects, so this guard has to.
+    const harness = buildHarness(buildFile({ sizeBytes: MAX_TRANSCRIBABLE_AUDIO_BYTES + 1 }));
+
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+    expect(mockedGemini).not.toHaveBeenCalled();
+    expect(harness.capability.fetchConnectorConfig).not.toHaveBeenCalled();
+
+    expect(harness.filesRepository.saveExtractionResult).toHaveBeenCalledWith('file-1', {
+      extractedText: AUDIO_PLACEHOLDER,
+      extractionError: TRANSCRIPTION_TOO_LARGE_MESSAGE,
+      status: FileIngestionStatus.COMPLETED,
+    });
+
+    const payload = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+    expect(payload.reasonCode).toBe('AUDIO_TOO_LARGE');
+  });
+
+  it('transcribes a recording that sits exactly on the ceiling', async () => {
+    const harness = buildHarness(buildFile({ sizeBytes: MAX_TRANSCRIBABLE_AUDIO_BYTES }));
+
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+    expect(mockedGemini).toHaveBeenCalled();
   });
 
   it('records a provider error without letting the row claim success', async () => {

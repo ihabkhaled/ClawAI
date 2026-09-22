@@ -16,9 +16,11 @@ import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
 import {
   AUDIO_PLACEHOLDER_PREFIX,
   GEMINI_TRANSCRIPTION_DEFAULT_BASE_URL,
+  MAX_TRANSCRIBABLE_AUDIO_BYTES,
   OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL,
   OPENAI_TRANSCRIPTION_MODEL,
   TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
+  TRANSCRIPTION_TOO_LARGE_MESSAGE,
 } from '../constants/transcription.constants';
 import { type TranscriptionCapability } from '../types/transcription.types';
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
@@ -119,6 +121,20 @@ export class TranscriptionManager implements OnModuleInit {
     const model = this.effectiveModel(capability);
     try {
       const base64 = this.readAudioBase64(file);
+      // Refused BEFORE a provider is contacted, because the cost is the call,
+      // not the storage. The upload cap is 50MB of bytes, and compressed speech
+      // is small enough that 50MB is hours of audio — hours that would be
+      // transcribed and billed because one file was dropped in. Nothing else in
+      // the pipeline would have objected.
+      if (!this.isTranscribableSize(file)) {
+        this.logger.warn(
+          `runTranscription: refusing ${file.id} — ${String(file.sizeBytes)} bytes exceeds ` +
+            `${String(MAX_TRANSCRIBABLE_AUDIO_BYTES)}`,
+        );
+        await this.recordFailure(file, TRANSCRIPTION_TOO_LARGE_MESSAGE);
+        this.publishFailed(file.id, userId, 'AUDIO_TOO_LARGE', TRANSCRIPTION_TOO_LARGE_MESSAGE);
+        return;
+      }
       const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
       const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
       // Trimmed HERE as well as in each adapter. Whitespace is what a provider
@@ -198,6 +214,18 @@ export class TranscriptionManager implements OnModuleInit {
    * upload — NOT extracted text — so it is used as-is; the on-disk copy is the
    * fallback for a row stored before the column existed.
    */
+  /**
+   * Whether this file is small enough to be worth sending to a provider.
+   *
+   * Byte count, not duration — measuring duration means decoding every
+   * container format we accept, which is a real dependency for a guard whose
+   * job is to refuse obvious abuse. Bytes are the honest approximation until
+   * that is worth doing, and they are the number we already have.
+   */
+  private isTranscribableSize(file: File): boolean {
+    return file.sizeBytes <= MAX_TRANSCRIBABLE_AUDIO_BYTES;
+  }
+
   private readAudioBase64(file: File): string {
     if (typeof file.content === 'string' && file.content.length > 0) {
       return file.content;
