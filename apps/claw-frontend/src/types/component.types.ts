@@ -888,6 +888,10 @@ export type ComposerToolbarProps = {
   showModelLabel: boolean;
   selectedFileIds: string[];
   onSelectedFileIdsChange: (ids: string[]) => void;
+  /** A finished voice/video note, on its way to the same upload pipeline. */
+  onRecorded: (file: File) => void;
+  canSendAudio: boolean;
+  canSendVideo: boolean;
   canResearch: boolean;
   research: ResearchOptions;
   onResearchChange: (value: ResearchOptions) => void;

@@ -7654,7 +7654,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 4095,
+          "bytes": 5880,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
@@ -7956,7 +7956,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5232
+        "value": 5246
       },
       "localeCount": 13,
       "locales": [
@@ -9932,7 +9932,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 500
+        "testFiles": 505
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10708,7 +10708,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1362,
+    "totalTestFiles": 1367,
     "workspaceCount": 25
   }
 }

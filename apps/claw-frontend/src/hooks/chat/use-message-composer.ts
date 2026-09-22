@@ -9,6 +9,7 @@ import { MEDIA_QUERY_LG_UP } from '@/constants/media-query.constants';
 import { ComposerControlVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
+import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import type { MessageComposerProps, UseMessageComposerReturn } from '@/types';
@@ -27,6 +28,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
   const { t } = useTranslation();
   const planFeatures = usePlanFeatures();
   const isWideViewport = useMediaQuery(MEDIA_QUERY_LG_UP);
+  const mediaCapabilities = useModelMediaCapabilities(props.selectedModel);
   const state = useMessageComposerState({
     onSend: props.onSend,
     isPending: props.isPending,
@@ -66,6 +68,11 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
       showModelLabel: isWideViewport,
       selectedFileIds: state.selectedFileIds,
       onSelectedFileIdsChange: state.setSelectedFileIds,
+      // A recorded note is an ordinary attachment: same upload pipeline
+      // (antivirus, magic bytes), same selected list, same delivery.
+      onRecorded: (file: File) => state.ingestFiles([file]),
+      canSendAudio: mediaCapabilities.canSendAudio,
+      canSendVideo: mediaCapabilities.canSendVideo,
       canResearch: planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE),
       research: state.research,
       onResearchChange: state.setResearch,

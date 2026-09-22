@@ -57,6 +57,38 @@ and runs concurrently with the service's prefetch, rather than blocking the uplo
   handing base64 audio to a text model is how "I can't read the attached file"
   happened the first time.
 
+## The recorder, and why a control is dimmed
+
+`VoiceVideoRecorder` sits in the composer — once, in `OrchestrationPageShell`
+and in chat's toolbar, so all nine lab pages and chat get it together. It hands
+the recorded `File` to the composer's `ingestFiles`, which is the same upload
+pipeline the paperclip uses: antivirus, magic bytes, chunking. There is no
+second upload path and there must not be one.
+
+Three decisions that will look arbitrary later:
+
+- **A model that cannot take audio gets a DIMMED button, not a hidden one.**
+  Hiding a control teaches nothing; a dimmed one with a reason in its
+  `title`/`aria-label` says why the model in front of you will not listen.
+- **Unknown capability means ENABLED.** A local Ollama model is not a connector
+  row at all, so its flags are absent rather than false. Dimming on absence
+  would disable the button for most local setups for no visible reason; a clear
+  server error beats a control that is greyed out and unexplained.
+- **`canSendVideo` comes from `supportsVision`.** There is no `supportsVideo`
+  anywhere in the stack — native video understanding rides on the vision flag,
+  which is already how routing treats it.
+
+**The recording length is capped** (`MEDIA_RECORDING_MAX_MS`, 5 minutes). That
+cap is the only thing standing between a voice-note button and a four-hour
+transcription bill, because the server's 50MB limit is measured in bytes and
+four hours of Opus fits inside it comfortably.
+
+**Every exit path releases the tracks.** Stop, cancel, hitting the cap, a
+recorder error, a failed constructor, unmount, and unmount while the permission
+prompt is still open. A leaked microphone or camera is the worst outcome this
+feature can produce, and it is the one a test will not notice unless it asserts
+on the tracks.
+
 ## What is NOT solved yet
 
 - **Duration is uncapped.** `MAX_FILE_SIZE` is 50MB, which is roughly four

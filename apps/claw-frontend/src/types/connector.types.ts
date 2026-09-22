@@ -27,6 +27,10 @@ export type ConnectorModel = {
   supportsStreaming: boolean;
   supportsTools: boolean;
   supportsVision: boolean;
+  // Already on the wire: `getAvailableModels` spreads the whole ConnectorModel
+  // row, and the column has existed since audio capability landed. It was
+  // simply never declared here, so the composer could not gate on it.
+  supportsAudio: boolean;
   maxContextTokens: number | null;
   syncedAt: string;
 };

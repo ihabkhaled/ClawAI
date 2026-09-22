@@ -3,6 +3,7 @@ import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { PreviewContextButton } from '@/components/chat/preview-context-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
+import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import type { ComposerToolbarProps } from '@/types';
 
 /**
@@ -38,6 +39,9 @@ export function ComposerToolbar({
   showModelLabel,
   selectedFileIds,
   onSelectedFileIdsChange,
+  onRecorded,
+  canSendAudio,
+  canSendVideo,
   canResearch,
   research,
   onResearchChange,
@@ -61,6 +65,12 @@ export function ComposerToolbar({
         onChange={onSelectedFileIdsChange}
         disabled={disabled}
         variant={controlVariant}
+      />
+      <VoiceVideoRecorder
+        canSendAudio={canSendAudio}
+        canSendVideo={canSendVideo}
+        onRecorded={onRecorded}
+        disabled={disabled}
       />
       {canResearch ? (
         <ResearchToggle

@@ -5,6 +5,7 @@ import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { OrchestrationPageHeader } from '@/components/chat/orchestration/orchestration-page-header';
 import { OrchestrationSingleModelSelect } from '@/components/chat/orchestration/orchestration-single-model-select';
 import { OrchestrationStageTimeline } from '@/components/chat/orchestration/orchestration-stage-timeline';
+import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { LoadingState } from '@/components/common/loading-state';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { LoadingStateVariant } from '@/enums/loading-state.enum';
+import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { cn } from '@/lib/utils';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
@@ -59,6 +61,7 @@ export function OrchestrationPageShell({
   t,
   className,
 }: OrchestrationPageShellProps): React.ReactElement {
+  const mediaCapabilities = useModelMediaCapabilities(selectedModel);
   const trimmedPrompt = prompt.trim();
   const canSubmit =
     !isPending && selectedModel !== null && trimmedPrompt.length > 0 && isSubmitDisabled !== true;
@@ -134,10 +137,21 @@ export function OrchestrationPageShell({
                 </div>
 
                 {composer === undefined ? null : (
-                  <div data-testid="orchestration-attachments">
+                  <div
+                    data-testid="orchestration-attachments"
+                    className="flex flex-wrap items-center gap-2"
+                  >
                     <FileAttachmentPicker
                       selectedFileIds={composer.selectedFileIds}
                       onChange={composer.setSelectedFileIds}
+                      disabled={isPending}
+                    />
+                    {/* One wiring here gives all nine lab pages voice and video
+                        notes, exactly as it did attachments. */}
+                    <VoiceVideoRecorder
+                      canSendAudio={mediaCapabilities.canSendAudio}
+                      canSendVideo={mediaCapabilities.canSendVideo}
+                      onRecorded={(file) => composer.ingestFiles([file])}
                       disabled={isPending}
                     />
                   </div>

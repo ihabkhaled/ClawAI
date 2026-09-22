@@ -18,6 +18,15 @@ vi.mock('@/hooks/auth/use-plan-features', () => ({
   usePlanFeatures: (): typeof planFeaturesMock => planFeaturesMock,
 }));
 
+// The recorder's capability gate hits the connector catalog query; this suite
+// is about layout, so the catalog is stubbed rather than wrapped in a provider.
+vi.mock('@/hooks/chat/use-model-media-capabilities', () => ({
+  useModelMediaCapabilities: (): { canSendAudio: boolean; canSendVideo: boolean } => ({
+    canSendAudio: true,
+    canSendVideo: true,
+  }),
+}));
+
 // The viewport answer this suite drives. useMessageComposer reads it once and
 // turns it into two props, so flipping it here is how we prove a phone and a
 // laptop get different controls from the same single render path.

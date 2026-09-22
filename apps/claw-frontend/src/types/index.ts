@@ -1139,3 +1139,9 @@ export type {
   FeedbackListQuery,
   FeedbackStatusCounts,
 } from './feedback.types';
+export type {
+  UseMediaRecorderParams,
+  UseMediaRecorderReturn,
+  ModelMediaCapabilities,
+  VoiceVideoRecorderProps,
+} from './media-recording.types';

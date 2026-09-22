@@ -522,6 +522,21 @@ export type TranslationDictionary = {
       uploading: string;
       dropToAttach: string;
     };
+    recorder: {
+      recordVoice: string;
+      recordVideo: string;
+      audioNotSupportedByModel: string;
+      videoNotSupportedByModel: string;
+      unsupportedBrowser: string;
+      recordingGroupLabel: string;
+      recordingElapsed: string;
+      stop: string;
+      cancel: string;
+      errorUnsupported: string;
+      errorPermissionDenied: string;
+      errorRecorderFailed: string;
+      errorEmptyRecording: string;
+    };
     noFiles: string;
     selectedFiles: string;
     contextPacks: string;
