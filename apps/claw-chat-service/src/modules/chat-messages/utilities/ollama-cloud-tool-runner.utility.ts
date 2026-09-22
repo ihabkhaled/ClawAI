@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 import { BusinessException } from '../../../common/errors';
 import { httpRequest } from '../../../common/utilities';
 import { OLLAMA_TOOL_RESULT_MAX_CHARS } from '../constants/agentic-loop.constants';
@@ -48,6 +49,10 @@ export async function executeOllamaCloudToolCall(
   try {
     response = await httpRequest<unknown>({
       url,
+      // The connector base URL is admin-configured, so it is on no static
+      // list. Declared from the BASE url the endpoint path was appended to —
+      // declaring the finished url would check nothing.
+      allowedHosts: declaredHost(options.baseUrl),
       method: 'POST',
       headers: { Authorization: `Bearer ${options.apiKey}` },
       body: payload,
@@ -83,10 +88,7 @@ export async function executeOllamaCloudToolCall(
 // Hard-truncates a stringified tool result to OLLAMA_TOOL_RESULT_MAX_CHARS.
 // Public for test coverage of the truncation contract.
 export function truncateResult(text: string): string {
-  if (text.length <= OLLAMA_TOOL_RESULT_MAX_CHARS) {
-    return text;
-  }
-  return `${text.slice(0, OLLAMA_TOOL_RESULT_MAX_CHARS)}\n[truncated: result exceeded ${String(OLLAMA_TOOL_RESULT_MAX_CHARS)} chars]`;
+  return text.length <= OLLAMA_TOOL_RESULT_MAX_CHARS ? text : `${text.slice(0, OLLAMA_TOOL_RESULT_MAX_CHARS)}\n[truncated: result exceeded ${String(OLLAMA_TOOL_RESULT_MAX_CHARS)} chars]`;
 }
 
 function resolveEndpointPath(toolName: string): string {

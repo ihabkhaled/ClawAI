@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RouterErrorCode } from '../../../common/enums';
+import { declaredHost } from '@claw/shared-utilities';
 import { httpRequest } from '../../../common/utilities';
 import { RouterProvider } from '../../../generated/prisma';
 import {
@@ -75,6 +76,10 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
     try {
       const response = await httpRequest<OllamaChatResponse>({
         url: `${baseUrl}${OLLAMA_CHAT_PATH}`,
+        // The base URL comes from the admin-configured connector row (after
+        // the cloud normalisation above), so it is on no static allowlist.
+        // Declaring it keeps this a checked destination (alert #58).
+        allowedHosts: declaredHost(baseUrl),
         method: 'POST',
         headers: { Authorization: `Bearer ${credential.apiKey}` },
         body: {
@@ -103,11 +108,7 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
       }
 
       const content = response.data.message?.content ?? '';
-      if (content.length === 0) {
-        return emptyContentFailure(latencyMs);
-      }
-
-      return {
+      return content.length === 0 ? emptyContentFailure(latencyMs) : {
         ok: true,
         raw: content,
         latencyMs,

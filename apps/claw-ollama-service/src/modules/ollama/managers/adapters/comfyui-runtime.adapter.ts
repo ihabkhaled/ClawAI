@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import { Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { ComfyUIModelType } from '../../../../common/enums';
 import { AppConfig } from '../../../../app/config/app.config';
@@ -13,7 +14,10 @@ import {
   COMFYUI_HEALTH_TIMEOUT_MS,
   COMFYUI_SYSTEM_STATS_PATH,
 } from '../../constants/comfyui.constants';
-import { getComfyUIDownloadDescriptor } from '../../constants/comfyui-downloads.constants';
+import {
+  COMFYUI_DOWNLOAD_HOSTS,
+  getComfyUIDownloadDescriptor,
+} from '../../constants/comfyui-downloads.constants';
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -46,10 +50,17 @@ export class ComfyUIRuntimeAdapter implements RuntimeAdapter {
     const config = AppConfig.get();
     this.baseUrl = config.COMFYUI_BASE_URL;
     this.modelsPath = config.COMFYUI_MODELS_PATH;
-    this.httpClient = createHttpClient({
-      baseURL: this.baseUrl,
-      timeout: COMFYUI_HEALTH_TIMEOUT_MS,
-    });
+    // COMFYUI_BASE_URL is an operator setting with a zod default, so the env
+    // allowlist does NOT cover a deployment that leaves it unset. Declared from
+    // the resolved config value — the documented pattern for an
+    // operator-configured destination.
+    this.httpClient = createHttpClient(
+      {
+        baseURL: this.baseUrl,
+        timeout: COMFYUI_HEALTH_TIMEOUT_MS,
+      },
+      declaredHost(this.baseUrl),
+    );
   }
 
   async listModels(): Promise<LocalModelInfo[]> {
@@ -158,8 +169,20 @@ export class ComfyUIRuntimeAdapter implements RuntimeAdapter {
     const timeout = setTimeout(() => {
       controller.abort();
     }, COMFYUI_DOWNLOAD_TIMEOUT_MS);
+    // `fetch` here bypasses every axios wrapper, so the guard is called
+    // explicitly. The allowlist is COMFYUI_DOWNLOAD_HOSTS — derived from the
+    // URL literals in comfyui-downloads.constants.ts — and NOT
+    // `declaredHost(descriptor.url)`, which would be tautological: declaring
+    // the very URL about to be fetched checks nothing. Because the descriptor
+    // is looked up in a hardcoded map, the host set is fixed at build time.
+    assertSafeRequestUrl(descriptor.url, COMFYUI_DOWNLOAD_HOSTS);
     try {
       const response = await fetch(descriptor.url, {
+        // Kept deliberately: HuggingFace answers /resolve/main/<file> with a
+        // 302 to its CDN, so `redirect: 'manual'` would break every weights
+        // download. The trade-off is that the CDN host the redirect lands on is
+        // not re-checked by the guard above; the initial URL is a build-time
+        // constant, so the redirect is HuggingFace's own, not an attacker's.
         redirect: 'follow',
         signal: controller.signal,
       });

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { declaredHost } from '@claw/shared-utilities';
+
 import { httpGet } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import {
@@ -31,6 +33,9 @@ export class LlamacppAdapter implements ProviderAdapter {
     try {
       const response = await httpGet<LlamacppHealthResponse>({
         url: `${baseUrl}${LLAMACPP_HEALTH_PATH}`,
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
       const latencyMs = Date.now() - start;
       if (!response.ok) {
@@ -40,14 +45,11 @@ export class LlamacppAdapter implements ProviderAdapter {
           errorMessage: `llamacpp returned status ${String(response.status)}`,
         };
       }
-      if (response.data.binary?.installed !== true) {
-        return {
+      return response.data.binary?.installed !== true ? {
           status: ConnectorStatus.DEGRADED,
           latencyMs,
           errorMessage: 'llamacpp binary not yet installed',
-        };
-      }
-      return { status: ConnectorStatus.HEALTHY, latencyMs };
+        } : { status: ConnectorStatus.HEALTHY, latencyMs };
     } catch (error) {
       const latencyMs = Date.now() - start;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -62,6 +64,9 @@ export class LlamacppAdapter implements ProviderAdapter {
     try {
       const response = await httpGet<LlamacppCatalogResponse>({
         url: `${baseUrl}${LLAMACPP_CATALOG_PATH}?limit=${String(LLAMACPP_SYNC_PAGE_LIMIT)}&downloadStatus=READY`,
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
       if (!response.ok) {
         this.logger.warn(`syncModels: status=${String(response.status)} — empty result`);
@@ -86,10 +91,7 @@ export class LlamacppAdapter implements ProviderAdapter {
 
   private resolveBaseUrl(configured: string | undefined): string {
     const trimmed = configured?.trim();
-    if (trimmed === undefined || trimmed.length === 0) {
-      return LLAMACPP_DEFAULT_BASE_URL;
-    }
-    return trimmed.replace(/\/+$/, '');
+    return trimmed === undefined || trimmed.length === 0 ? LLAMACPP_DEFAULT_BASE_URL : trimmed.replace(/\/+$/, '');
   }
 
   private toNormalizedModel(entry: LlamacppCatalogEntryDto): NormalizedModel {
@@ -98,7 +100,8 @@ export class LlamacppAdapter implements ProviderAdapter {
       (capability) => capability.toLowerCase() === 'vision',
     );
     const supportsTools = (entry.capabilities ?? []).some(
-      (capability) => capability.toLowerCase() === 'tool_use' || capability.toLowerCase() === 'tools',
+      (capability) =>
+        capability.toLowerCase() === 'tool_use' || capability.toLowerCase() === 'tools',
     );
     return {
       modelKey,

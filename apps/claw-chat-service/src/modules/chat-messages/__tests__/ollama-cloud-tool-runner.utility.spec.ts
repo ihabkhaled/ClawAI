@@ -11,7 +11,7 @@ vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
 }));
 
-const { httpRequest } = await vi.importMock('../../../common/utilities') as {
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as {
   httpRequest: Mock;
 };
 
@@ -51,6 +51,10 @@ describe('OllamaCloudToolRunner', () => {
     );
     expect(httpRequest).toHaveBeenCalledWith({
       url: 'https://ollama.com/api/web_search',
+      // Declared from the connector BASE url, so the unconditional host
+      // allowlist in assertSafeRequestUrl permits this admin-configured
+      // destination (TD-038).
+      allowedHosts: new Set(['ollama.com']),
       method: 'POST',
       headers: { Authorization: 'Bearer test-key' },
       body: { query: 'react server components' },

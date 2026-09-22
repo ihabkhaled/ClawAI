@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { type ModelCatalogEntry, RuntimeType } from '../../../generated/prisma';
 import {
@@ -32,14 +33,22 @@ export class CatalogRemoteMetadataService {
   private readonly cache = new Map<string, CatalogRemoteMetadataCacheEntry>();
 
   constructor() {
-    this.client = createHttpClient({
-      baseURL: OLLAMA_REGISTRY_BASE_URL,
-      timeout: 10_000,
-    });
-    this.libraryClient = createHttpClient({
-      baseURL: OLLAMA_PUBLIC_BASE_URL,
-      timeout: 10_000,
-    });
+    // Both hosts are hardcoded ollama.com endpoints, not env-configured service
+    // URLs, so each declares itself to the unconditional host allowlist.
+    this.client = createHttpClient(
+      {
+        baseURL: OLLAMA_REGISTRY_BASE_URL,
+        timeout: 10_000,
+      },
+      declaredHost(OLLAMA_REGISTRY_BASE_URL),
+    );
+    this.libraryClient = createHttpClient(
+      {
+        baseURL: OLLAMA_PUBLIC_BASE_URL,
+        timeout: 10_000,
+      },
+      declaredHost(OLLAMA_PUBLIC_BASE_URL),
+    );
   }
 
   async getMetadata(entry: ModelCatalogEntry): Promise<CatalogRemoteMetadata> {
@@ -220,11 +229,7 @@ export class CatalogRemoteMetadataService {
   }
 
   private sumLayerSizes(layers: Array<{ size: number }>): bigint | null {
-    if (layers.length === 0) {
-      return null;
-    }
-
-    return layers.reduce((total, layer) => total + BigInt(layer.size), BigInt(0));
+    return layers.length === 0 ? null : layers.reduce((total, layer) => total + BigInt(layer.size), BigInt(0));
   }
 
   private rankSourceSlugs(
@@ -258,10 +263,7 @@ export class CatalogRemoteMetadataService {
     if (normalizedSlug.startsWith(normalizedModelName)) {
       return 3;
     }
-    if (normalizedSlug.includes(normalizedModelName)) {
-      return 4;
-    }
-    return 5;
+    return normalizedSlug.includes(normalizedModelName) ? 4 : 5;
   }
 
   private normalizeSlug(slug: string): string {

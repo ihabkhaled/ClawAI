@@ -128,6 +128,9 @@ describe('StableDiffusionWebuiProgressAdapter', () => {
       expect(httpGetMock).toHaveBeenCalledWith(
         expect.stringContaining('skip_current_image=false'),
         expect.any(Object),
+        // The poll host is declared explicitly: STABLE_DIFFUSION_URL is not a
+        // name the shared guard harvests from the environment.
+        new Set(['sd:7860']),
       );
     });
 
@@ -151,6 +154,9 @@ describe('StableDiffusionWebuiProgressAdapter', () => {
       expect(httpGetMock).toHaveBeenCalledWith(
         expect.stringContaining('skip_current_image=true'),
         expect.any(Object),
+        // The poll host is declared explicitly: STABLE_DIFFUSION_URL is not a
+        // name the shared guard harvests from the environment.
+        new Set(['sd:7860']),
       );
     });
 
@@ -190,6 +196,7 @@ describe('StableDiffusionWebuiProgressAdapter', () => {
         'http://sd:7860/sdapi/v1/interrupt',
         {},
         expect.objectContaining({ timeout: expect.any(Number) }),
+        new Set(['sd:7860']),
       );
     });
 

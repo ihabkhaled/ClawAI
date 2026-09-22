@@ -209,7 +209,7 @@
         "FileGenerationAsset",
         "FileGenerationEvent"
       ],
-      "testFiles": 17,
+      "testFiles": 18,
       "testRunner": "vitest"
     },
     {
@@ -271,7 +271,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 13,
+      "testFiles": 15,
       "testRunner": "vitest"
     },
     {
@@ -332,7 +332,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 15,
+      "testFiles": 17,
       "testRunner": "vitest"
     },
     {
@@ -361,7 +361,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 19,
+      "testFiles": 20,
       "testRunner": "vitest"
     },
     {
@@ -474,7 +474,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 105,
+      "testFiles": 106,
       "testRunner": "vitest"
     },
     {

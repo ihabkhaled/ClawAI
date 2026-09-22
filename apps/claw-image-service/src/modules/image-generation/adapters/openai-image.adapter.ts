@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 import { httpPost } from '@common/utilities';
 import type { ImageProviderResponse } from '../types/image-generation.types';
 import type { OpenAIImageResponse } from '../types/openai-image.types';
@@ -48,10 +49,17 @@ export const generateWithOpenAI = async (
   logger.debug(`generateWithOpenAI: sending POST to ${baseUrl}/images/generations`);
   let response: OpenAIImageResponse;
   try {
-    response = await httpPost<OpenAIImageResponse>(`${baseUrl}/images/generations`, body, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 120_000,
-    });
+    // `baseUrl` is the admin-configured OpenAI connector base URL, so the
+    // shared guard cannot know it from the environment — declare it.
+    response = await httpPost<OpenAIImageResponse>(
+      `${baseUrl}/images/generations`,
+      body,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        timeout: 120_000,
+      },
+      declaredHost(baseUrl),
+    );
   } catch (error: unknown) {
     // OpenAI says exactly what it did not like — an unsupported size for this
     // model, an organisation that is not verified for image output, a

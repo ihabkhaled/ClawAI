@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { DownloadStatus, RuntimeType } from '../../../generated/prisma';
 import { OLLAMA_REGISTRY_BASE_URL } from '../constants/catalog.constants';
@@ -16,10 +17,16 @@ export class ModelEnrichmentManager {
   private readonly registryClient: AxiosInstance;
 
   constructor() {
-    this.registryClient = createHttpClient({
-      baseURL: OLLAMA_REGISTRY_BASE_URL,
-      timeout: DISCOVERY_DEFAULT_TIMEOUT_MS,
-    });
+    // registry.ollama.com is a hardcoded third-party host in this repo, not a
+    // `*_BASE_URL` env var, so the unconditional host allowlist would refuse it.
+    // Declared from the same constant the baseURL uses, so the two cannot drift.
+    this.registryClient = createHttpClient(
+      {
+        baseURL: OLLAMA_REGISTRY_BASE_URL,
+        timeout: DISCOVERY_DEFAULT_TIMEOUT_MS,
+      },
+      declaredHost(OLLAMA_REGISTRY_BASE_URL),
+    );
   }
 
   async enrich(model: DiscoveredModel): Promise<DiscoveredModel> {
@@ -60,10 +67,7 @@ export class ModelEnrichmentManager {
     if (layerCount === 0) {
       return DownloadStatus.CLOUD_ONLY;
     }
-    if (sizeBytes === null) {
-      return DownloadStatus.UNKNOWN;
-    }
-    return DownloadStatus.AVAILABLE;
+    return sizeBytes === null ? DownloadStatus.UNKNOWN : DownloadStatus.AVAILABLE;
   }
 
   private sumLayerSizes(layers: Array<{ size: number }>): bigint | null {

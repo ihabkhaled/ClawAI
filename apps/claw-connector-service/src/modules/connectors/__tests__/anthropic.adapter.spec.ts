@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
 import { AnthropicAdapter } from '../managers/adapters/anthropic.adapter';
 import { ANTHROPIC_DEFAULT_BASE_URL, ANTHROPIC_VERSION } from '../constants/anthropic.constants';
@@ -194,9 +194,14 @@ describe('AnthropicAdapter', () => {
       const result = await adapter.healthCheck(mockConfig);
 
       expect(result.status).toBe(ConnectorStatus.HEALTHY);
+      // The request-URL guard hands fetch the PARSED url, so the assertion
+      // compares its string form rather than the value passed in.
       expect(global.fetch).toHaveBeenCalledWith(
-        `${ANTHROPIC_DEFAULT_BASE_URL}/models`,
+        expect.any(URL),
         expect.objectContaining({ method: 'GET' }),
+      );
+      expect(String(vi.mocked(global.fetch).mock.calls[0]?.[0])).toBe(
+        `${ANTHROPIC_DEFAULT_BASE_URL}/models`,
       );
     });
 
@@ -246,9 +251,14 @@ describe('AnthropicAdapter', () => {
 
       await adapter.syncModels({ ...mockConfig, baseUrl: 'https://proxy.internal/v1' });
 
+      // The request-URL guard hands fetch the PARSED url, so the assertion
+      // compares its string form rather than the value passed in.
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://proxy.internal/v1/models',
+        expect.any(URL),
         expect.objectContaining({ method: 'GET' }),
+      );
+      expect(String(vi.mocked(global.fetch).mock.calls[0]?.[0])).toBe(
+        'https://proxy.internal/v1/models',
       );
     });
 

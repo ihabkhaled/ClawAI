@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
 import {
@@ -327,9 +328,14 @@ ${message}`,
       this.logger.warn('generate: no Ollama Cloud connector key; skipping this model');
       return null;
     }
+    const ollamaCloudBaseUrl = resolveOllamaCloudBaseUrl(credential.baseUrl);
     try {
       const response = await httpRequest<OllamaCloudChatReply>({
-        url: `${resolveOllamaCloudBaseUrl(credential.baseUrl)}/chat`,
+        url: `${ollamaCloudBaseUrl}/chat`,
+        // Admin-configured connector base URL: on no static allowlist, so the
+        // caller declares it. Taken from the resolved BASE url, not the
+        // finished one.
+        allowedHosts: declaredHost(ollamaCloudBaseUrl),
         method: 'POST',
         headers: { Authorization: `Bearer ${credential.apiKey}` },
         body: {

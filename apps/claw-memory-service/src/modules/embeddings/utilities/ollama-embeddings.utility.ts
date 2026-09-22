@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { EMBEDDING_HTTP_TIMEOUT_MS } from '../constants/embeddings.constants';
@@ -23,11 +24,19 @@ export async function fetchEmbedding(input: { content: string }): Promise<number
 async function requestEmbedding(input: { content: string }): Promise<number[]> {
   const config = AppConfig.get();
   const url = `${config.OLLAMA_BASE_URL}/api/embeddings`;
-  const response = await fetch(url, {
+  // This reaches fetch without going through the shared http client, so the
+  // guard is applied here instead (CodeQL js/request-forgery, alert #58).
+  // OLLAMA_BASE_URL ends in one of the recognised suffixes, so its host is
+  // already on the environment allowlist — nothing extra to declare.
+  const safeUrl = assertSafeRequestUrl(url);
+  const response = await fetch(safeUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ model: config.EMBEDDING_MODEL, prompt: input.content }),
     signal: AbortSignal.timeout(EMBEDDING_HTTP_TIMEOUT_MS),
+    // A service call is never legitimately redirected, and following one is
+    // how an allowlisted host becomes a hostile one (alert #58).
+    redirect: 'error',
   });
   if (!response.ok) {
     const text = await response.text().catch(() => '');

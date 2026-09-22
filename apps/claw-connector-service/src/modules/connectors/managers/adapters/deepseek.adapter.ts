@@ -1,23 +1,24 @@
-import { Logger } from "@nestjs/common";
-import { ConnectorStatus, ModelLifecycle } from "../../../../generated/prisma";
-import { type HealthCheckResult, type NormalizedModel } from "../../types/connectors.types";
-import { type OpenAIModelsResponse } from "../../types/provider-api.types";
-import { httpGet } from "../../../../common/utilities/http.utility";
+import { Logger } from '@nestjs/common';
+import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
+import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
+import { type OpenAIModelsResponse } from '../../types/provider-api.types';
+import { declaredHost } from '@claw/shared-utilities';
+import { httpGet } from '../../../../common/utilities/http.utility';
 import {
   type ConnectorConfig,
   type ProviderAdapter,
   type ProviderCapabilities,
-} from "../provider-adapter.interface";
-import { DEEPSEEK_DEFAULT_BASE_URL } from "../../constants/deepseek.constants";
+} from '../provider-adapter.interface';
+import { DEEPSEEK_DEFAULT_BASE_URL } from '../../constants/deepseek.constants';
 
-const logger = new Logger("DeepSeekAdapter");
+const logger = new Logger('DeepSeekAdapter');
 
 export class DeepSeekAdapter implements ProviderAdapter {
   private static formatDisplayName(modelId: string): string {
     return modelId
-      .split("-")
+      .split('-')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
+      .join(' ');
   }
 
   // DeepSeek-VL (vl, vl2, vl2-tiny, vl2-small) speak OpenAI-compatible
@@ -27,7 +28,7 @@ export class DeepSeekAdapter implements ProviderAdapter {
   // catch-all that misclassifies text-only models.
   private static supportsVision(modelId: string): boolean {
     const lower = modelId.toLowerCase();
-    return lower.includes("vl") || lower.includes("vision");
+    return lower.includes('vl') || lower.includes('vision');
   }
 
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
@@ -42,6 +43,9 @@ export class DeepSeekAdapter implements ProviderAdapter {
         headers: {
           Authorization: `Bearer ${config.apiKey}`,
         },
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
 
       const latencyMs = Date.now() - start;
@@ -51,7 +55,9 @@ export class DeepSeekAdapter implements ProviderAdapter {
         return { status: ConnectorStatus.HEALTHY, latencyMs };
       }
 
-      logger.debug(`healthCheck: DeepSeek returned error status=${String(response.status)} — latencyMs=${String(latencyMs)}`);
+      logger.debug(
+        `healthCheck: DeepSeek returned error status=${String(response.status)} — latencyMs=${String(latencyMs)}`,
+      );
       return {
         status: ConnectorStatus.DOWN,
         latencyMs,
@@ -59,8 +65,11 @@ export class DeepSeekAdapter implements ProviderAdapter {
       };
     } catch (error: unknown) {
       const latencyMs = Date.now() - start;
-      const errorMsg = error instanceof Error ? error.message : "Unknown error connecting to DeepSeek";
-      logger.debug(`healthCheck: DeepSeek connection failed — latencyMs=${String(latencyMs)} error=${errorMsg}`);
+      const errorMsg =
+        error instanceof Error ? error.message : 'Unknown error connecting to DeepSeek';
+      logger.debug(
+        `healthCheck: DeepSeek connection failed — latencyMs=${String(latencyMs)} error=${errorMsg}`,
+      );
       return {
         status: ConnectorStatus.DOWN,
         latencyMs,
@@ -79,10 +88,15 @@ export class DeepSeekAdapter implements ProviderAdapter {
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
       },
+      // The base URL comes from an operator-edited connector row, so it is on
+      // no static allowlist; the destination is declared explicitly here.
+      allowedHosts: declaredHost(baseUrl),
     });
 
     if (!response.ok) {
-      logger.error(`syncModels: failed to fetch DeepSeek models — status=${String(response.status)}`);
+      logger.error(
+        `syncModels: failed to fetch DeepSeek models — status=${String(response.status)}`,
+      );
       throw new Error(`Failed to fetch DeepSeek models: HTTP ${String(response.status)}`);
     }
 
@@ -95,10 +109,10 @@ export class DeepSeekAdapter implements ProviderAdapter {
       lifecycle: ModelLifecycle.ACTIVE,
       capabilities: {
         supportsStreaming: true,
-        supportsTools: !model.id.includes("reasoner"),
+        supportsTools: !model.id.includes('reasoner'),
         supportsVision: DeepSeekAdapter.supportsVision(model.id),
         supportsAudio: false,
-        supportsStructuredOutput: !model.id.includes("reasoner"),
+        supportsStructuredOutput: !model.id.includes('reasoner'),
       },
     }));
   }

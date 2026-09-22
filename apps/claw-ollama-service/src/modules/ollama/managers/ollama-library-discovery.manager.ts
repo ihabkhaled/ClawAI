@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { DownloadStatus, RuntimeType } from '../../../generated/prisma';
 import { OLLAMA_LIBRARY_BASE_URL } from '../constants/catalog.constants';
@@ -25,13 +26,31 @@ import {
 export class OllamaLibraryDiscoveryManager {
   private readonly logger = new Logger(OllamaLibraryDiscoveryManager.name);
 
-  private readonly libraryClient: AxiosInstance;
-
-  constructor() {
-    this.libraryClient = createHttpClient({
-      baseURL: OLLAMA_LIBRARY_BASE_URL,
-      timeout: DISCOVERY_DEFAULT_TIMEOUT_MS,
-    });
+  /**
+   * A discovery client bound to one source's base URL.
+   *
+   * This used to be a single instance built on OLLAMA_LIBRARY_BASE_URL whose
+   * `baseURL` every request then overrode with the discovery-source row's own
+   * value — so a construction-time host check would have checked a URL that is
+   * never called. The base URL is bound at build time instead, and declared to
+   * the guard from that same value.
+   *
+   * `baseUrl` comes from an operator-managed `DiscoverySource` row (admin UI),
+   * not from end-user input, which is the same case as a connector base URL:
+   * the documented `declaredHost(<configured base>)` pattern. It is an explicit
+   * declaration at the call site rather than something the guard waves past;
+   * it does NOT constrain an operator who deliberately points a source
+   * elsewhere, and it is not meant to.
+   */
+  private createClient(baseUrl: string): AxiosInstance {
+    const effectiveBaseUrl = baseUrl.length > 0 ? baseUrl : OLLAMA_LIBRARY_BASE_URL;
+    return createHttpClient(
+      {
+        baseURL: effectiveBaseUrl,
+        timeout: DISCOVERY_DEFAULT_TIMEOUT_MS,
+      },
+      declaredHost(effectiveBaseUrl),
+    );
   }
 
   async discover(
@@ -41,14 +60,15 @@ export class OllamaLibraryDiscoveryManager {
   ): Promise<DiscoveredModel[]> {
     const results = new Map<string, DiscoveredModel>();
     const queries = seedQueries.length > 0 ? seedQueries : DISCOVERY_SEED_FAMILIES;
+    const client = this.createClient(baseUrl);
 
     for (const query of queries) {
       if (results.size >= maxResults) break;
       try {
-        const listings = await this.fetchListings(baseUrl, query);
+        const listings = await this.fetchListings(client, query);
         for (const listing of listings) {
           if (results.size >= maxResults) break;
-          const tags = await this.fetchTags(baseUrl, listing.slug);
+          const tags = await this.fetchTags(client, listing.slug);
           for (const tag of tags) {
             if (results.size >= maxResults) break;
             const key = buildCanonicalKey(listing.slug, tag);
@@ -64,12 +84,11 @@ export class OllamaLibraryDiscoveryManager {
     return [...results.values()].slice(0, maxResults);
   }
 
-  private async fetchListings(baseUrl: string, query: string): Promise<LibraryListing[]> {
+  private async fetchListings(client: AxiosInstance, query: string): Promise<LibraryListing[]> {
     const path = '/search';
     try {
-      const response = await this.libraryClient.get<string>(path, {
+      const response = await client.get<string>(path, {
         params: { q: query },
-        baseURL: baseUrl,
       });
       return this.parseListings(response.data);
     } catch (error: unknown) {
@@ -101,11 +120,9 @@ export class OllamaLibraryDiscoveryManager {
     return matches.slice(0, LIBRARY_TOP_LISTINGS);
   }
 
-  private async fetchTags(baseUrl: string, slug: string): Promise<string[]> {
+  private async fetchTags(client: AxiosInstance, slug: string): Promise<string[]> {
     try {
-      const response = await this.libraryClient.get<string>(`/library/${slug}/tags`, {
-        baseURL: baseUrl,
-      });
+      const response = await client.get<string>(`/library/${slug}/tags`);
       return this.parseTags(response.data);
     } catch (error: unknown) {
       this.logger.debug(`tags fetch failed for ${slug}: ${this.errorMsg(error)}`);
@@ -167,10 +184,7 @@ export class OllamaLibraryDiscoveryManager {
 
   private extractParameterCount(tag: string): string | null {
     const match = tag.match(VALID_PARAM_TAG_REGEX);
-    if (match?.[1] === undefined) {
-      return null;
-    }
-    return match[1].toUpperCase();
+    return match?.[1] === undefined ? null : match[1].toUpperCase();
   }
 
   private errorMsg(error: unknown): string {

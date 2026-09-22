@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { declaredHost } from '@claw/shared-utilities';
+
 import { httpGet, httpGetText, httpPost } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { isOllamaMultimodalModel } from '../../constants/ollama-vision-heuristics.constants';
@@ -56,15 +58,14 @@ export class OllamaAdapter implements ProviderAdapter {
       const response = await httpGet<OllamaModelsResponse>({
         url: `${baseUrl}/tags`,
         headers: this.buildHeaders(config.apiKey),
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
 
       const latencyMs = Date.now() - start;
 
-      if (response.ok) {
-        return { status: ConnectorStatus.HEALTHY, latencyMs };
-      }
-
-      return {
+      return response.ok ? { status: ConnectorStatus.HEALTHY, latencyMs } : {
         status: ConnectorStatus.DOWN,
         latencyMs,
         errorMessage: `Ollama returned status ${String(response.status)}`,
@@ -108,6 +109,9 @@ export class OllamaAdapter implements ProviderAdapter {
       const response = await httpGet<OllamaModelsResponse>({
         url: `${baseUrl}/tags`,
         headers: this.buildHeaders(apiKey),
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
       if (!response.ok) {
         this.logger.warn(`fetchCloudModels: status=${String(response.status)} - skipping cloud`);
@@ -158,21 +162,14 @@ export class OllamaAdapter implements ProviderAdapter {
       if (normalized.endsWith('/api')) {
         return normalized;
       }
-      if (normalized.endsWith('/v1')) {
-        return normalized.replace(/\/v1$/, '/api');
-      }
-      return `${normalized}/api`;
+      return normalized.endsWith('/v1') ? normalized.replace(/\/v1$/, '/api') : `${normalized}/api`;
     }
 
     return normalized;
   }
 
   private buildHeaders(apiKey: string): Record<string, string> | undefined {
-    if (apiKey.trim().length === 0) {
-      return undefined;
-    }
-
-    return {
+    return apiKey.trim().length === 0 ? undefined : {
       Authorization: `Bearer ${apiKey}`,
     };
   }
@@ -201,6 +198,9 @@ export class OllamaAdapter implements ProviderAdapter {
       const response = await httpPost<OllamaProbeChatResponse>({
         url: `${baseUrl}/chat`,
         headers: this.buildHeaders(config.apiKey),
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
         timeoutMs: OLLAMA_TOOL_PROBE_TIMEOUT_MS,
         body: {
           model: modelKey,
@@ -297,6 +297,12 @@ export class OllamaAdapter implements ProviderAdapter {
       const response = await httpGetText({
         url,
         headers: { 'User-Agent': OLLAMA_CATALOG_USER_AGENT },
+        // `url` is always OLLAMA_CATALOG_CLOUD_URL or
+        // OLLAMA_CATALOG_POPULAR_URL, compile-time constants rather than
+        // operator input. Their host is in neither the environment nor
+        // EXTERNAL_ENDPOINT_HOSTS, so this call declares its own
+        // destination: the documented pattern for a constant destination.
+        allowedHosts: declaredHost(url),
       });
       if (!response.ok) {
         this.logger.warn(`fetchSlugs: ${url} returned status ${String(response.status)}`);

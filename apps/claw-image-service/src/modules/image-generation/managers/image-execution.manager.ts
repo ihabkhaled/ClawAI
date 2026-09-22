@@ -8,6 +8,7 @@ import {
   IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
   IMAGE_PAYG_PROMPT_TOKENS,
 } from '../constants/image-payg.constants';
+import { providerImageDownloadHosts } from '../utilities/provider-image-download.utility';
 import {
   type ConnectorConfigResponse,
   type ExecuteImageInput,
@@ -332,13 +333,36 @@ export class ImageExecutionManager {
     return storeResponse.fileId;
   }
 
+  /**
+   * The ONE call in this service whose host nobody configured.
+   *
+   * `url` is not configuration: it is whatever the provider put in its own
+   * response. Only the OpenAI adapter produces one (dall-e-2/dall-e-3 answer
+   * with a link rather than base64; gpt-image-1 never does), and that link is
+   * NOT served from the connector's configured `baseUrl` — a dall-e image lives
+   * on a blob host that changes per request. So there is no configured base URL
+   * whose host this download could be declared against, and a bare
+   * `declaredHost(url)` here would allowlist whatever the response said, which
+   * is no check at all.
+   *
+   * `providerImageDownloadHosts` is the honest version: it refuses every
+   * private, loopback and link-local host FIRST — the thing a provider image
+   * can never legitimately be — and only then hands the host to the guard, so
+   * the protocol, embedded-credential, cloud-metadata and no-redirect checks
+   * all still run instead of the guard standing down. See that utility for the
+   * residual DNS gap (TD-031).
+   */
   private async downloadImageAsBase64(url: string): Promise<string> {
     this.logger.debug('downloadImageAsBase64: downloading image from provider URL');
     const startTime = Date.now();
-    const imageBuffer = await httpGet<ArrayBuffer>(url, {
-      responseType: 'arraybuffer',
-      timeout: 60_000,
-    });
+    const imageBuffer = await httpGet<ArrayBuffer>(
+      url,
+      {
+        responseType: 'arraybuffer',
+        timeout: 60_000,
+      },
+      providerImageDownloadHosts(url),
+    );
     const durationMs = Date.now() - startTime;
     const base64 = Buffer.from(imageBuffer).toString('base64');
     this.logger.debug(
@@ -398,10 +422,7 @@ export class ImageExecutionManager {
     if (imageProvider === IMAGE_PROVIDER_OPENAI) {
       return 'OPENAI';
     }
-    if (imageProvider === IMAGE_PROVIDER_GEMINI) {
-      return 'GEMINI';
-    }
-    return imageProvider;
+    return imageProvider === IMAGE_PROVIDER_GEMINI ? 'GEMINI' : imageProvider;
   }
 
   private async fetchConnectorConfig(provider: string): Promise<ConnectorConfigResponse> {

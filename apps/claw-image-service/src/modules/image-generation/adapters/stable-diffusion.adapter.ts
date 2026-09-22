@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 import { httpPost } from '@common/utilities';
 import {
   SD_BATCH_SIZE,
@@ -48,9 +49,15 @@ export const generateWithStableDiffusion = async (
   }
 
   logger.debug(`${mode}: POST ${endpoint}`);
-  const response = await httpPost<SDTxt2ImgResponse | SDImg2ImgResponse>(endpoint, body, {
-    timeout: SD_TIMEOUT_MS,
-  });
+  // STABLE_DIFFUSION_URL does NOT end in one of the suffixes the shared guard
+  // harvests from the environment (`_SERVICE_URL`, `_BASE_URL`, `_API_URL`,
+  // `_ENDPOINT`), so its host is not on the allowlist automatically.
+  const response = await httpPost<SDTxt2ImgResponse | SDImg2ImgResponse>(
+    endpoint,
+    body,
+    { timeout: SD_TIMEOUT_MS },
+    declaredHost(sdUrl),
+  );
 
   logger.debug(`${mode}: response — imageCount=${String(response.images?.length ?? 0)}`);
   const firstImage = response.images?.[0];

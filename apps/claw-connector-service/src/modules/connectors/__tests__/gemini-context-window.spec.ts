@@ -34,8 +34,10 @@ describe('GeminiAdapter context windows', () => {
     const models = await new GeminiAdapter().syncModels(config);
 
     expect(models[0]?.capabilities.maxContextTokens).toBe(1_048_576);
-    const nativeCall = fetchMock.mock.calls[1] as [string, { headers: Record<string, string> }];
-    expect(nativeCall[0]).toBe(
+    // The request-URL guard hands fetch the PARSED url, so the assertion
+    // compares its string form rather than the value passed in.
+    const nativeCall = fetchMock.mock.calls[1] as [URL, { headers: Record<string, string> }];
+    expect(String(nativeCall[0])).toBe(
       'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
     );
     expect(nativeCall[1].headers['x-goog-api-key']).toBe('g-key');

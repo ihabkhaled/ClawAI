@@ -74,11 +74,16 @@ describe('GrokAdapter', () => {
 
       await adapter.healthCheck(mockConfig);
 
+      // The request-URL guard hands fetch the PARSED url, so the assertion
+      // compares its string form rather than the value passed in.
       expect(global.fetch).toHaveBeenCalledWith(
-        `${GROK_DEFAULT_BASE_URL}/models`,
+        expect.any(URL),
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer xai-test-key' }),
         }),
+      );
+      expect(String(vi.mocked(global.fetch).mock.calls[0]?.[0])).toBe(
+        `${GROK_DEFAULT_BASE_URL}/models`,
       );
     });
 
@@ -88,7 +93,8 @@ describe('GrokAdapter', () => {
 
       await adapter.healthCheck({ ...mockConfig, baseUrl: customBase });
 
-      expect(global.fetch).toHaveBeenCalledWith(`${customBase}/models`, expect.any(Object));
+      expect(global.fetch).toHaveBeenCalledWith(expect.any(URL), expect.any(Object));
+      expect(String(vi.mocked(global.fetch).mock.calls[0]?.[0])).toBe(`${customBase}/models`);
     });
 
     it('returns DOWN with errorMessage when API returns non-ok status', async () => {

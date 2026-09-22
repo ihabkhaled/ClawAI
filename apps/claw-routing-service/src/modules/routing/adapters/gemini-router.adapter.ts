@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RouterErrorCode } from '../../../common/enums';
+import { declaredHost } from '@claw/shared-utilities';
 import { httpRequest } from '../../../common/utilities';
 import { RouterProvider } from '../../../generated/prisma';
 import {
@@ -76,6 +77,11 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
     try {
       const response = await httpRequest<OpenAiCompatibleResponse>({
         url: `${baseUrl}${OPENAI_COMPATIBLE_CHAT_PATH}`,
+        // The base URL is admin-configured on the connector, so it is on no
+        // static allowlist; the guard refuses every host it was not told
+        // about. Declaring it keeps this a checked destination rather than an
+        // unchecked one (alert #58).
+        allowedHosts: declaredHost(baseUrl),
         method: 'POST',
         headers: { Authorization: `Bearer ${credential.apiKey}` },
         body: {
@@ -101,11 +107,7 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
       }
 
       const content = response.data.choices?.[0]?.message?.content ?? '';
-      if (content.length === 0) {
-        return emptyContentFailure(latencyMs);
-      }
-
-      return {
+      return content.length === 0 ? emptyContentFailure(latencyMs) : {
         ok: true,
         raw: content,
         latencyMs,

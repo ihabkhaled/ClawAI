@@ -13,6 +13,17 @@ export type StreamExecutionInput = {
   provider: string;
   model: string;
   url: string;
+  /**
+   * Hosts the request builder declares legitimate for `url`.
+   *
+   * `assertSafeRequestUrl` allows only the hosts this process's environment
+   * names plus what the caller declares, so a stream aimed at an
+   * admin-configured connector base URL carries that base URL's host here.
+   * Threaded from the builder rather than recomputed from `url`, which would
+   * be a tautology. Absent for a `*_SERVICE_URL` destination — those are
+   * already on the environment allowlist.
+   */
+  allowedHosts?: ReadonlySet<string>;
   headers?: Record<string, string>;
   body: unknown;
   protocol: AiStreamProtocol;

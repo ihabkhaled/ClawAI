@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
 import {
   type HttpBinaryReadOptions,
   type HttpBinaryStreamOptions,
@@ -11,7 +12,13 @@ import {
 const logger = new Logger('HttpClient');
 
 export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-  const { url, method, headers, body, timeoutMs = 120_000, signal } = options;
+  const { url, method, headers, body, timeoutMs = 120_000, signal, allowedHosts } = options;
+
+  // Validated before anything else: the URL is caller-supplied and goes
+  // straight to fetch (CodeQL js/request-forgery). See assertSafeRequestUrl —
+  // the host allowlist is unconditional, so a connector destination must be
+  // declared by its caller through `allowedHosts`.
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
 
   logger.debug(`httpRequest: ${method} ${url} (timeout=${String(timeoutMs)}ms)`);
   const controller = new AbortController();
@@ -26,7 +33,7 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
 
   try {
     logger.debug(`httpRequest: sending ${method} request to ${url}`);
-    const response = await fetch(url, {
+    const response = await fetch(safeUrl, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -34,6 +41,11 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
+      // A service or provider call is never legitimately redirected, and
+      // following one is how an allowlisted host becomes a hostile one: the
+      // check above sees the first URL, the redirect target is whatever the
+      // answer says. Refusing is louder than silently going somewhere else.
+      redirect: 'error',
     });
 
     logger.debug(`httpRequest: received response status=${String(response.status)} from ${url}`);
@@ -85,15 +97,22 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
  * an empty-but-valid payload.
  */
 export async function httpReadBinaryBase64(options: HttpBinaryReadOptions): Promise<string | null> {
-  const { url, headers, timeoutMs = 30_000 } = options;
+  const { url, headers, timeoutMs = 30_000, allowedHosts } = options;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, {
+    // Inside the try on purpose: this function's contract is "null on any
+    // failure", and a refused URL is a failure like any other. The refusal is
+    // still observable — no fetch is issued and the warn below names it.
+    const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+    const response = await fetch(safeUrl, {
       method: 'GET',
       headers: { ...headers },
       signal: controller.signal,
+      // Same reason as httpRequest: a redirect moves the call to a host the
+      // guard above never saw.
+      redirect: 'error',
     });
     if (!response.ok) {
       logger.warn(`httpReadBinaryBase64: GET ${url} failed — status ${String(response.status)}`);
@@ -111,15 +130,21 @@ export async function httpReadBinaryBase64(options: HttpBinaryReadOptions): Prom
 }
 
 export async function httpStreamBinary(options: HttpBinaryStreamOptions): Promise<boolean> {
-  const { url, headers, timeoutMs = 30_000, sink } = options;
+  const { url, headers, timeoutMs = 30_000, sink, allowedHosts } = options;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, {
+    // Inside the try for the same reason as httpReadBinaryBase64: the contract
+    // is "false without writing anything on failure", and a refused URL is one.
+    const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+    const response = await fetch(safeUrl, {
       method: 'GET',
       headers: { ...headers },
       signal: controller.signal,
+      // A byte stream that follows a redirect is a byte stream from an
+      // unchecked host; the pipe below never looks at where it came from.
+      redirect: 'error',
     });
     if (!response.ok || response.body === null) {
       logger.warn(`httpStreamBinary: GET ${url} failed — status ${String(response.status)}`);
@@ -151,7 +176,12 @@ export async function httpStreamBinary(options: HttpBinaryStreamOptions): Promis
 // long generations are not aborted while tokens are still flowing. The caller
 // may pass its own AbortSignal (composed) to cancel mid-stream.
 export async function httpStream(options: HttpStreamOptions): Promise<HttpStreamResult> {
-  const { url, method, headers, body, timeoutMs = 120_000, signal } = options;
+  const { url, method, headers, body, timeoutMs = 120_000, signal, allowedHosts } = options;
+
+  // Before any timer is armed or any listener attached, so a refused URL costs
+  // nothing and leaves nothing to clean up.
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+
   logger.debug(`httpStream: ${method} ${url} (idleTimeout=${String(timeoutMs)}ms)`);
 
   const controller = new AbortController();
@@ -184,11 +214,16 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
 
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetch(safeUrl, {
       method,
       headers: { 'Content-Type': 'application/json', ...headers },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
+      // `redirect: 'error'` is applied to the streaming path too: it only
+      // governs how the RESPONSE HEAD is resolved, never the body pump below,
+      // so it cannot truncate an SSE/NDJSON stream. A provider that answers a
+      // completion request with a 30x is a misconfiguration, not a stream.
+      redirect: 'error',
     });
   } catch (error: unknown) {
     cleanup();

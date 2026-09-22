@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import { type OpenAIModelsResponse } from '../../types/provider-api.types';
+import { declaredHost } from '@claw/shared-utilities';
 import { httpGet } from '../../../../common/utilities/http.utility';
 import {
   type ConnectorConfig,
@@ -40,6 +41,9 @@ export class OpenAIAdapter implements ProviderAdapter {
         headers: {
           Authorization: `Bearer ${config.apiKey}`,
         },
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
 
       const latencyMs = Date.now() - start;
@@ -82,6 +86,9 @@ export class OpenAIAdapter implements ProviderAdapter {
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
       },
+      // The base URL comes from an operator-edited connector row, so it is on
+      // no static allowlist; the destination is declared explicitly here.
+      allowedHosts: declaredHost(baseUrl),
     });
 
     if (!response.ok) {

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
@@ -51,6 +52,10 @@ export class CloudVisionClient {
         // The key travels as a query parameter because that is the only form
         // the annotate endpoint accepts for an API key. It is never logged.
         url: `${CLOUD_VISION_ANNOTATE_URL}?key=${encodeURIComponent(apiKey)}`,
+        // Cloud Vision is a hardcoded third-party constant, so it is on neither
+        // the environment allowlist nor EXTERNAL_ENDPOINT_HOSTS. Declared from
+        // the constant itself so the two cannot drift apart.
+        allowedHosts: declaredHost(CLOUD_VISION_ANNOTATE_URL),
         method: 'POST',
         body: {
           requests: [

@@ -63,6 +63,18 @@ const COMFYUI_DOWNLOAD_REGISTRY = new Map<string, ComfyUIDownloadDescriptor>([
   ],
 ]);
 
+/**
+ * Every host this registry can ever download weights from.
+ *
+ * An explicit compile-time declaration for the SSRF guard: the download URLs
+ * are literals in THIS file, so the set is fixed at build time and cannot be
+ * steered by a catalog row, a request or an operator setting. Derived from the
+ * registry itself so a new entry's host cannot drift from its allowlist entry.
+ */
+export const COMFYUI_DOWNLOAD_HOSTS: ReadonlySet<string> = new Set(
+  [...COMFYUI_DOWNLOAD_REGISTRY.values()].map((descriptor) => new URL(descriptor.url).host),
+);
+
 export function getComfyUIDownloadDescriptor(
   catalogName: string,
   catalogTag: string,

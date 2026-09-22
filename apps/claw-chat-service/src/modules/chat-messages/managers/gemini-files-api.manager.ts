@@ -5,6 +5,7 @@
 //   - Polling uploaded videos until Gemini reports them ACTIVE.
 
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { GeminiUploadPhase } from '../../../common/enums';
@@ -146,11 +147,18 @@ export class GeminiFilesApiManager {
       apiKey,
       signal,
     );
-    const response = await fetch(uploadUrl, {
+    // The resumable session URL comes back from Google in a response header,
+    // so it is attacker-adjacent data reaching fetch. `validateUploadSessionUrl`
+    // already pins it to the Files API host; this is the same guard the shared
+    // client applies to every other call, and it is not a tautology: the host
+    // declared here is the CONSTANT base URL's, not the returned url's.
+    const safeUploadUrl = assertSafeRequestUrl(uploadUrl, declaredHost(GEMINI_FILES_API_BASE_URL));
+    const response = await fetch(safeUploadUrl, {
       method: 'POST',
       headers: this.buildFinalizeHeaders(data.length, mimeType, apiKey),
       body: this.bufferToBodyInit(data),
       signal,
+      redirect: 'error',
     });
     const uploaded = await this.parseUploadResponse(response, data.length, mimeType, startTime);
     return this.waitForVideoProcessing(uploaded, apiKey, signal);
@@ -163,11 +171,18 @@ export class GeminiFilesApiManager {
     apiKey: string,
     signal: AbortSignal,
   ): Promise<string> {
-    const response = await fetch(GEMINI_FILES_API_BASE_URL, {
+    // A hardcoded third-party host, so it is on neither the environment
+    // allowlist nor EXTERNAL_ENDPOINT_HOSTS — declared from the constant.
+    const startUrl = assertSafeRequestUrl(
+      GEMINI_FILES_API_BASE_URL,
+      declaredHost(GEMINI_FILES_API_BASE_URL),
+    );
+    const response = await fetch(startUrl, {
       method: 'POST',
       headers: this.buildStartHeaders(sizeBytes, mimeType, apiKey),
       body: JSON.stringify({ file: { display_name: displayName } }),
       signal,
+      redirect: 'error',
     });
     if (!response.ok) {
       await this.throwUploadResponseError(response, GeminiUploadPhase.START);
@@ -328,10 +343,17 @@ export class GeminiFilesApiManager {
     apiKey: string,
     signal: AbortSignal,
   ): Promise<GeminiFileState> {
-    const response = await fetch(`${GEMINI_GENERATE_CONTENT_BASE_URL}/${fileName}`, {
+    // `fileName` comes back from Google; the host is declared from the
+    // CONSTANT base URL so a returned value cannot steer the call elsewhere.
+    const stateUrl = assertSafeRequestUrl(
+      `${GEMINI_GENERATE_CONTENT_BASE_URL}/${fileName}`,
+      declaredHost(GEMINI_GENERATE_CONTENT_BASE_URL),
+    );
+    const response = await fetch(stateUrl, {
       method: 'GET',
       headers: { 'x-goog-api-key': apiKey },
       signal,
+      redirect: 'error',
     });
     if (!response.ok) {
       throw new BusinessException(
@@ -372,10 +394,7 @@ export class GeminiFilesApiManager {
   }
 
   private buildUploadTimeout(mimeType: string): BusinessException {
-    if (mimeType.startsWith(GEMINI_VIDEO_MIME_PREFIX)) {
-      return this.buildVideoProcessingTimeout();
-    }
-    return new BusinessException(
+    return mimeType.startsWith(GEMINI_VIDEO_MIME_PREFIX) ? this.buildVideoProcessingTimeout() : new BusinessException(
       'Gemini Files API upload timed out',
       'GEMINI_FILES_API_UPLOAD_TIMEOUT',
     );

@@ -43,6 +43,9 @@ export class ProviderStreamExecutor {
     this.transitionStage(ctx, state, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
     const result = await httpStream({
       url: input.url,
+      // Declared by whoever built the request (a connector base URL for a
+      // cloud provider, absent for an env-named service).
+      allowedHosts: input.allowedHosts,
       method: 'POST',
       headers: input.headers,
       body: input.body,

@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { httpGet } from '../http.utility';
+import { httpGet, httpGetText, httpPost } from '../http.utility';
 
 function mockFetchBody(status: number, bodyText: string): void {
   global.fetch = vi.fn().mockResolvedValue({
@@ -56,5 +56,72 @@ describe('httpGet JSON handling', () => {
     await expect(httpGet({ url: 'https://x.test/models' })).rejects.toThrow(
       new RegExp(`non-JSON body: x{200}$`),
     );
+  });
+});
+
+// TD-038. Every URL these helpers open is built from a connector row an
+// operator edits, which is the shape CodeQL calls request forgery: whatever
+// steers that string steers where this service connects. `assertSafeRequestUrl`
+// is the chokepoint, and these cases prove all three helpers reach it BEFORE
+// fetch — the refusals below hold whatever the host allowlist says.
+describe('request URL guard', () => {
+  const REFUSED = [
+    {
+      label: 'a file:// url',
+      url: 'file:///etc/passwd',
+      reason: 'refusing protocol "file:"',
+    },
+    {
+      label: 'a url with embedded credentials',
+      url: 'https://user:pass@example.com/x',
+      reason: 'refusing a URL with embedded credentials',
+    },
+    {
+      label: 'the cloud metadata address',
+      url: 'http://169.254.169.254/latest/meta-data',
+      reason: 'refusing a cloud metadata address',
+    },
+  ];
+
+  beforeEach(() => {
+    mockFetchBody(200, '{}');
+  });
+
+  for (const { label, url, reason } of REFUSED) {
+    it(`httpGet refuses ${label}`, async () => {
+      await expect(httpGet({ url })).rejects.toThrow(reason);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it(`httpGetText refuses ${label}`, async () => {
+      await expect(httpGetText({ url })).rejects.toThrow(reason);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it(`httpPost refuses ${label}`, async () => {
+      await expect(httpPost({ url, body: { probe: true } })).rejects.toThrow(reason);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  }
+
+  // The refusal must arrive as a rejected promise, not a synchronous throw:
+  // every adapter wraps its call in `try { await ... }`, and a synchronous
+  // throw would sail straight past that and out of healthCheck as an
+  // unhandled failure instead of a DOWN status.
+  it('rejects rather than throwing synchronously', () => {
+    const pending = httpGet({ url: 'file:///etc/passwd' });
+
+    expect(pending).toBeInstanceOf(Promise);
+    return expect(pending).rejects.toThrow('refusing protocol');
+  });
+
+  // A redirect turns an allowed host into whatever the answer names, after the
+  // check has already run. None of these helpers stream, so refusing costs
+  // nothing.
+  it('never follows a redirect', async () => {
+    await httpGet({ url: 'https://x.test/models' });
+
+    const init = vi.mocked(global.fetch).mock.calls[0]?.[1];
+    expect(init?.redirect).toBe('error');
   });
 });

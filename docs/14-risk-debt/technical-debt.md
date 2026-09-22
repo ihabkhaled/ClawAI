@@ -60,12 +60,63 @@ Last updated: 2026-09-10
   `declaredHost(baseUrl)` for an admin-configured destination. `httpPost` is
   guarded. A payment-service test pins the two copies of the gateway hosts
   together.
-- **What is still open**: eight services carry their OWN copy of the HTTP client
-  (`apps/claw-*/src/common/utilities/http-client.utility.ts`) that calls `fetch`
-  with no guard at all. Those are TD-038.
+- **What was still open**: eight services carried their OWN copy of the HTTP
+  client (`apps/claw-*/src/common/utilities/http-client.utility.ts`) that called
+  `fetch` with no guard at all. That was TD-038, closed 2026-09-22. The
+  scattered single `fetch` calls in the remaining services are TD-040.
 
-### TD-038: Eight services carry an unguarded copy of the HTTP client (2026-09-20)
+### TD-040: The rest of the platform's direct `fetch` calls are still unguarded (2026-09-22)
 
+- **Severity**: Medium · **Effort**: Medium · **Priority**: Next
+- **Detail**: TD-038 closed the eight services that had grown a whole HTTP
+  client of their own. It did not close the single `fetch` calls scattered
+  through four other services: audit-service's feedback webhook,
+  auth-service's GitHub Actions dispatch, payment-service's PayPal token call,
+  research-service's seven search-provider adapters, and workspace-service —
+  nine internal callers plus the seventeen OAuth provider adapters
+  (GitHub, GitLab, Jira, Confluence, Gmail, Drive, Slack, …).
+- **Why it matters less than TD-038, but still matters**: none of these is a
+  reusable client, so a new caller does not inherit the hole. But each one is
+  the same `fetch(caller-built-url)` sink, and workspace-service's adapters are
+  the biggest group of operator-configured base URLs on the platform. Its
+  `common/utilities/url-safety.utility.ts` checks a baseUrl at CONFIG time, in
+  `provider-app-config.service.ts` — not at the call, so a value that changes
+  after configuration is never re-checked.
+- **The fix**: same as TD-038 — `assertSafeRequestUrl` before the fetch,
+  `declaredHost(baseUrl)` at every call site whose host an operator set. The
+  PayPal one is a pure wiring gap: both PayPal hosts are already in
+  `EXTERNAL_ENDPOINT_HOSTS`.
+- **Where the list lives**: `KNOWN_UNGUARDED` in
+  `tools/__tests__/service-fetch-url-guarded.test.mjs`, file by file. That test
+  also fails if one of them is fixed and left on the list, so the list can only
+  shrink.
+- **Also in scope: three copies of the same private-host check.** A URL that
+  arrives in a RESPONSE cannot be allowlisted, so it needs the opposite check —
+  any public host, never a private one. That check now exists three times:
+  `apps/claw-research-service/src/common/utilities/url-safety.utility.ts`,
+  `apps/claw-workspace-service/src/common/utilities/url-safety.utility.ts`, and
+  `apps/claw-image-service/src/modules/image-generation/utilities/provider-image-download.utility.ts`
+  (added 2026-09-22 so a dall-e download, whose blob host changes per request,
+  stays checked instead of being waved through). One of them belongs in
+  `@claw/shared-utilities` beside `assertSafeRequestUrl`; that move touches
+  every service, so it rides with this entry rather than ahead of it.
+- **Why not in the same batch**: workspace-service's adapters alone are
+  seventeen files of provider traffic across five OAuth vendors, and they need
+  their own live verification against real connectors.
+
+### TD-038: Eight services carry an unguarded copy of the HTTP client (2026-09-20) — FIXED (2026-09-22)
+
+- **Fixed**: all eight service-local clients now call `assertSafeRequestUrl`
+  from `@claw/shared-utilities` before their `fetch`, take an optional
+  `allowedHosts`, and pass `redirect: 'error'` where the call does not stream.
+  Every call site whose URL comes from an admin-configured connector `baseUrl`
+  declares it with `declaredHost(baseUrl)` — the provider adapters in
+  connector-service, the cloud-provider and tool-loop paths in chat-service,
+  the router adapters in routing-service, the image adapters in image-service.
+  `tools/__tests__/service-fetch-url-guarded.test.mjs` fails the build when a
+  `fetch(` appears in `apps/*/src` without the guard, so a ninth copy cannot
+  appear quietly. The remainder of the platform's scattered `fetch` calls are
+  TD-040.
 - **Severity**: Medium · **Effort**: Medium · **Priority**: Next
 - **Detail**: chat, connector, file-generation, health, image, memory, ollama
   and routing each have their own

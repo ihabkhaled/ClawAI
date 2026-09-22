@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { extractGeminiUsage } from '@claw/shared-utilities';
+import { declaredHost, extractGeminiUsage } from '@claw/shared-utilities';
 import { httpPost } from '@common/utilities';
 import { IMAGE_CAPABLE_MODELS } from '../constants/gemini-image.constants';
 import type { ImageProviderResponse } from '../types/image-generation.types';
@@ -84,9 +84,14 @@ export const generateWithGemini = async (
           requestBody.systemInstruction = { parts: [{ text: systemInstruction }] };
         }
 
-        const response = await httpPost<GeminiGenerateContentResponse>(url, requestBody, {
-          timeout: 120_000,
-        });
+        // `cleanBaseUrl` comes from the connector row an operator configures,
+        // so it can never be on a static allowlist — it is declared here.
+        const response = await httpPost<GeminiGenerateContentResponse>(
+          url,
+          requestBody,
+          { timeout: 120_000 },
+          declaredHost(cleanBaseUrl),
+        );
 
         const candidate = response.candidates?.[0];
         const parts = candidate?.content?.parts ?? [];

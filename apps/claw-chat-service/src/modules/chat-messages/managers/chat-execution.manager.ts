@@ -12,6 +12,7 @@ import {
 import type { PaygHold } from '@claw/shared-entitlements';
 import { randomUUID } from 'node:crypto';
 import {
+  declaredHost,
   extractGeminiUsage,
   extractOllamaUsage,
   extractOpenAiCompatibleUsage,
@@ -375,8 +376,7 @@ export class ChatExecutionManager implements OnModuleInit {
         qualityScore: null,
       };
     }
-    if (outcome.kind === 'reRoute') {
-      return {
+    return outcome.kind === 'reRoute' ? {
         attemptIndex: index,
         provider: candidate.provider,
         model: candidate.model,
@@ -385,9 +385,7 @@ export class ChatExecutionManager implements OnModuleInit {
         status: 'RE_ROUTE',
         qualityReasons: outcome.reasons,
         qualityScore: null,
-      };
-    }
-    return {
+      } : {
       attemptIndex: index,
       provider: candidate.provider,
       model: candidate.model,
@@ -518,10 +516,7 @@ export class ChatExecutionManager implements OnModuleInit {
       reRouteAttempt: args.reRouteAttempt,
       reRouteReasons: args.reRouteReasons,
     });
-    if (qualityOutcome.kind === 'reRoute') {
-      return qualityOutcome;
-    }
-    return this.finalizeWithJudge(
+    return qualityOutcome.kind === 'reRoute' ? qualityOutcome : this.finalizeWithJudge(
       qualityOutcome.response,
       args.context,
       args.payload,
@@ -749,8 +744,7 @@ export class ChatExecutionManager implements OnModuleInit {
     streamContext: StreamContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
-    if (!this.canStreamCandidate(provider)) {
-      return this.callProvider(
+    return !this.canStreamCandidate(provider) ? this.callProvider(
         provider,
         model,
         context,
@@ -761,9 +755,7 @@ export class ChatExecutionManager implements OnModuleInit {
         undefined,
         TokenLedgerContext.COMPARE,
         paygCall,
-      );
-    }
-    return this.streamCandidate(
+      ) : this.streamCandidate(
       { provider, model },
       context,
       startTime,
@@ -876,11 +868,8 @@ export class ChatExecutionManager implements OnModuleInit {
         streamContext,
       );
     }
-    if (
-      candidate.provider === LLAMACPP_PROVIDER ||
-      candidate.provider === LLAMACPP_CONNECTOR_PROVIDER
-    ) {
-      return this.streamLlamacpp(
+    return candidate.provider === LLAMACPP_PROVIDER ||
+      candidate.provider === LLAMACPP_CONNECTOR_PROVIDER ? this.streamLlamacpp(
         candidate.provider,
         candidate.model,
         context,
@@ -889,9 +878,7 @@ export class ChatExecutionManager implements OnModuleInit {
         threadSettings,
         executionOptions,
         streamContext,
-      );
-    }
-    return this.streamCloud(
+      ) : this.streamCloud(
       candidate.provider,
       candidate.model,
       context,
@@ -933,7 +920,7 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
     const effectiveModel = model;
-    const { url, body, protocol, headers } = await this.resolveStreamCloudRequest({
+    const { url, body, protocol, headers, allowedHosts } = await this.resolveStreamCloudRequest({
       provider,
       model,
       context,
@@ -952,6 +939,7 @@ export class ChatExecutionManager implements OnModuleInit {
         provider,
         model: effectiveModel,
         url,
+        allowedHosts,
         headers,
         body,
         protocol,
@@ -979,15 +967,21 @@ export class ChatExecutionManager implements OnModuleInit {
     body: unknown;
     protocol: AiStreamProtocol;
     headers: Record<string, string>;
+    allowedHosts: ReadonlySet<string>;
   }> {
     const config = AppConfig.get();
     const { provider, model, context, threadSettings, executionOptions, baseUrl, apiKey } = args;
+    // Every branch below builds its URL from the admin-configured connector
+    // baseUrl, which is on no static allowlist. Declared once, from the BASE
+    // url — declaring the finished url would check nothing.
+    const allowedHosts = declaredHost(baseUrl);
     if (args.isOllamaConnector) {
       // Native Ollama emits `message.tool_calls` complete in a single NDJSON
       // frame rather than fragmented, and the reader accumulates it the same
       // way it does OpenAI deltas.
       return {
         url: `${baseUrl}/chat`,
+        allowedHosts,
         body: {
           ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions),
           stream: true,
@@ -996,9 +990,9 @@ export class ChatExecutionManager implements OnModuleInit {
         headers: { Authorization: `Bearer ${apiKey}` },
       };
     }
-    if (provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF) {
-      return {
+    return provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF ? {
         url: `${baseUrl}/chat/completions`,
+        allowedHosts,
         body: this.buildAnthropicNativeStreamingBody(
           model,
           context,
@@ -1007,10 +1001,9 @@ export class ChatExecutionManager implements OnModuleInit {
         ),
         protocol: AiStreamProtocol.OPENAI_SSE,
         headers: { Authorization: `Bearer ${apiKey}` },
-      };
-    }
-    return {
+      } : {
       url: `${baseUrl}/chat/completions`,
+      allowedHosts,
       body: this.buildStreamingChatBody(provider, model, context, threadSettings, executionOptions),
       protocol: AiStreamProtocol.OPENAI_SSE,
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -1441,8 +1434,7 @@ export class ChatExecutionManager implements OnModuleInit {
       return { kind: 'reRoute', reasons: qualityResult.reasons };
     }
 
-    if (args.reRouteAttempt > 0) {
-      return {
+    return args.reRouteAttempt > 0 ? {
         kind: 'pass',
         response: this.addReRouteMetadata(
           args.response,
@@ -1451,9 +1443,7 @@ export class ChatExecutionManager implements OnModuleInit {
           args.reRouteAttempt,
           args.reRouteReasons,
         ),
-      };
-    }
-    return { kind: 'pass', response: args.finalProviderResponse };
+      } : { kind: 'pass', response: args.finalProviderResponse };
   }
 
   private async finalizeWithJudge(
@@ -1531,13 +1521,10 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     const message = lastError instanceof Error ? lastError.message : String(lastError);
-    if (isProviderErrorResponse(message)) {
-      return new BusinessException(
+    return isProviderErrorResponse(message) ? new BusinessException(
         this.describeChainFailure(attempts, lastError),
         'LLM_EXECUTION_FAILED',
-      );
-    }
-    return lastError;
+      ) : lastError;
   }
 
   /**
@@ -1731,11 +1718,7 @@ export class ChatExecutionManager implements OnModuleInit {
       return false;
     }
 
-    if (FAST_PATH_COMPLEXITY_PATTERN.test(normalizedPrompt)) {
-      return false;
-    }
-
-    return (
+    return FAST_PATH_COMPLEXITY_PATTERN.test(normalizedPrompt) ? false : (
       FAST_PATH_OPERATIONAL_PREFIX_PATTERN.test(normalizedPrompt.toLowerCase()) ||
       normalizedPrompt.length <= 80
     );
@@ -2028,10 +2011,7 @@ export class ChatExecutionManager implements OnModuleInit {
     // Widening ASSIGNMENT, not an assertion: `string` assigns freely to
     // `string | undefined`, so the runtime guard below is legal without a cast.
     const userId: string | undefined = args.context.userId;
-    if (userId === undefined || userId.length === 0) {
-      return this.paygHoldWithoutUser(args.provider, args.requestedMax);
-    }
-    return this.accessControlService.reserveCredit({
+    return userId === undefined || userId.length === 0 ? this.paygHoldWithoutUser(args.provider, args.requestedMax) : this.accessControlService.reserveCredit({
       userId,
       requestId: args.paygCall?.requestId ?? randomUUID(),
       provider: normalizePaygProvider(args.provider),
@@ -2099,10 +2079,7 @@ export class ChatExecutionManager implements OnModuleInit {
     requestedMax: number,
     executionOptions: ExecutionOptions | undefined,
   ): ExecutionOptions | undefined {
-    if (hold.maxOutputTokens >= requestedMax) {
-      return executionOptions;
-    }
-    return {
+    return hold.maxOutputTokens >= requestedMax ? executionOptions : {
       fastPathEnabled: false,
       applyShortResponseConstraint: false,
       ...executionOptions,
@@ -2366,6 +2343,8 @@ export class ChatExecutionManager implements OnModuleInit {
     const startTime = Date.now();
     const parsed = await this.postGenerateOnce({
       url,
+      // Connector baseUrl, declared from the base rather than from `url`.
+      allowedHosts: declaredHost(baseUrl),
       apiKey,
       body,
       provider,
@@ -2398,6 +2377,7 @@ export class ChatExecutionManager implements OnModuleInit {
    */
   private async postGenerateOnce(args: {
     url: string;
+    allowedHosts: ReadonlySet<string>;
     apiKey: string;
     body: OpenAiChatRequest | OllamaChatRequest;
     provider: string;
@@ -2411,6 +2391,7 @@ export class ChatExecutionManager implements OnModuleInit {
     try {
       const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
         url: args.url,
+        allowedHosts: args.allowedHosts,
         method: 'POST',
         headers: { Authorization: `Bearer ${args.apiKey}` },
         body: args.body,
@@ -2731,6 +2712,9 @@ export class ChatExecutionManager implements OnModuleInit {
     const responseData = await this.postCloudProviderRequest(
       provider,
       url,
+      // Connector baseUrl — the native-Gemini branch of resolveCloudProviderUrl
+      // only trims a path suffix, so the host is the baseUrl's either way.
+      declaredHost(baseUrl),
       apiKey,
       isNativeGemini,
       requestBody,
@@ -2781,6 +2765,7 @@ export class ChatExecutionManager implements OnModuleInit {
   private async postCloudProviderRequest(
     provider: string,
     url: string,
+    allowedHosts: ReadonlySet<string>,
     apiKey: string,
     isNativeGemini: boolean,
     requestBody: CloudProviderRequestBody,
@@ -2791,6 +2776,7 @@ export class ChatExecutionManager implements OnModuleInit {
       OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse
     >({
       url,
+      allowedHosts,
       method: 'POST',
       headers: isNativeGemini
         ? { 'x-goog-api-key': apiKey }
@@ -2832,8 +2818,7 @@ export class ChatExecutionManager implements OnModuleInit {
         promptText,
       );
     }
-    if (provider === OLLAMA_CONNECTOR_PROVIDER) {
-      return this.parseOllamaChatResponse(
+    return provider === OLLAMA_CONNECTOR_PROVIDER ? this.parseOllamaChatResponse(
         data as OllamaChatResponse,
         provider,
         model,
@@ -2841,9 +2826,7 @@ export class ChatExecutionManager implements OnModuleInit {
         usedFallback,
         promptText,
         executionOptions,
-      );
-    }
-    return this.parseCloudResponse(
+      ) : this.parseCloudResponse(
       data as OpenAiChatResponse,
       provider,
       model,
@@ -2892,12 +2875,16 @@ export class ChatExecutionManager implements OnModuleInit {
     const { provider, model, initialBody, baseUrl, apiKey, startTime, streamThreadId } = args;
     const config = AppConfig.get();
     const url = `${baseUrl}/chat`;
+    // Declared once from the connector BASE url and threaded through every
+    // turn of the loop, so no hop recomputes it from its own finished url.
+    const allowedHosts = declaredHost(baseUrl);
     const maxIterations = config.OLLAMA_TOOL_LOOP_MAX_ITERATIONS;
     const totalTimeoutMs = config.OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS;
     const promptText = this.buildPromptTextForEstimate(args.context);
     const usageRunId = `${streamThreadId ?? 'buffered'}:${String(startTime)}`;
     const loopResult = await this.driveToolLoopTurns({
       url,
+      allowedHosts,
       apiKey,
       baseUrl,
       provider,
@@ -2923,6 +2910,7 @@ export class ChatExecutionManager implements OnModuleInit {
     if (loopResult.capReached) {
       const wrapUp = await this.runToolLoopWrapUp({
         url,
+        allowedHosts,
         apiKey,
         initialBody,
         messages: loopResult.messages,
@@ -2966,6 +2954,7 @@ export class ChatExecutionManager implements OnModuleInit {
   // turns, the final response, and whether either cap fired.
   private async driveToolLoopTurns(args: {
     url: string;
+    allowedHosts: ReadonlySet<string>;
     apiKey: string;
     baseUrl: string;
     provider: string;
@@ -3000,6 +2989,7 @@ export class ChatExecutionManager implements OnModuleInit {
       }
       const turnResult = await this.postOneToolLoopTurn({
         url: args.url,
+        allowedHosts: args.allowedHosts,
         apiKey: args.apiKey,
         initialBody: args.initialBody,
         messages,
@@ -3047,6 +3037,7 @@ export class ChatExecutionManager implements OnModuleInit {
   // `gracefullyWrapped=false` in that case.
   private async runToolLoopWrapUp(args: {
     url: string;
+    allowedHosts: ReadonlySet<string>;
     apiKey: string;
     initialBody: OllamaChatRequest;
     messages: OllamaChatMessage[];
@@ -3090,6 +3081,7 @@ export class ChatExecutionManager implements OnModuleInit {
     try {
       const response = await httpRequest<OllamaChatResponse>({
         url,
+        allowedHosts: args.allowedHosts,
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}` },
         body,
@@ -3160,6 +3152,7 @@ export class ChatExecutionManager implements OnModuleInit {
   // the normal cloud-provider error path.
   private async postOneToolLoopTurn(args: {
     url: string;
+    allowedHosts: ReadonlySet<string>;
     apiKey: string;
     initialBody: OllamaChatRequest;
     messages: OllamaChatMessage[];
@@ -3186,6 +3179,7 @@ export class ChatExecutionManager implements OnModuleInit {
     try {
       response = await httpRequest<OllamaChatResponse>({
         url,
+        allowedHosts: args.allowedHosts,
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}` },
         body,
@@ -3566,18 +3560,12 @@ export class ChatExecutionManager implements OnModuleInit {
     if (toolName === TOOL_WEB_SEARCH && typeof toolArgs.query === 'string') {
       return `Query: ${toolArgs.query.slice(0, 120)}`;
     }
-    if (toolName === TOOL_WEB_FETCH && typeof toolArgs.url === 'string') {
-      return `URL: ${toolArgs.url.slice(0, 200)}`;
-    }
-    return undefined;
+    return toolName === TOOL_WEB_FETCH && typeof toolArgs.url === 'string' ? `URL: ${toolArgs.url.slice(0, 200)}` : undefined;
   }
 
   private buildWebFetchLabel(toolArgs: Record<string, unknown>): string {
     const url = typeof toolArgs.url === 'string' ? toolArgs.url : '';
-    if (url.length === 0) {
-      return 'Fetching page';
-    }
-    return `Fetching ${url.slice(0, 80)}`;
+    return url.length === 0 ? 'Fetching page' : `Fetching ${url.slice(0, 80)}`;
   }
 
   private async resolveProviderConfig(
@@ -3930,17 +3918,14 @@ export class ChatExecutionManager implements OnModuleInit {
     // `additionalProperties` and `maxLength` — which every Runtime V2
     // inputSchema carries. When tools are in play we must take the
     // OpenAI-compatible branch instead, which accepts the schemas verbatim.
-    if (!carriesTools && this.shouldUseGeminiNativeRequest(provider, context)) {
-      return this.buildGeminiNativeRequestBody(
+    return !carriesTools && this.shouldUseGeminiNativeRequest(provider, context) ? this.buildGeminiNativeRequestBody(
         model,
         context,
         apiKey,
         threadSettings,
         executionOptions,
         args.abortSignal,
-      );
-    }
-    return this.buildChatRequestBody(provider, model, context, threadSettings, executionOptions);
+      ) : this.buildChatRequestBody(provider, model, context, threadSettings, executionOptions);
   }
 
   // Slice D — Anthropic native Messages API body builder. Routes every
@@ -4055,10 +4040,7 @@ export class ChatExecutionManager implements OnModuleInit {
     messages: OpenAiChatMessage[],
     executionOptions: ExecutionOptions | undefined,
   ): OpenAiChatMessage[] {
-    if (executionOptions?.applyShortResponseConstraint !== true) {
-      return messages;
-    }
-    return [{ role: 'system', content: FAST_PATH_RESPONSE_CONSTRAINT }, ...messages];
+    return executionOptions?.applyShortResponseConstraint !== true ? messages : [{ role: 'system', content: FAST_PATH_RESPONSE_CONSTRAINT }, ...messages];
   }
 
   private resolveBoundedMaxTokens(
@@ -4068,10 +4050,7 @@ export class ChatExecutionManager implements OnModuleInit {
     if (executionOptions?.maxOutputTokens !== undefined) {
       return executionOptions.maxOutputTokens;
     }
-    if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
-      return Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS);
-    }
-    return undefined;
+    return threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined ? Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS) : undefined;
   }
 
   // Slice D — Gemini native generateContent body builder. Routes every
@@ -4777,10 +4756,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private async resolveModel(model: string): Promise<string> {
-    if (model !== 'AUTO') {
-      return model;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async buildImagePromptFromVision(

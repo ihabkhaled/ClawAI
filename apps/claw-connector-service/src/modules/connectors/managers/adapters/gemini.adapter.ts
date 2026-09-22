@@ -5,6 +5,7 @@ import {
   type GeminiModelsResponse,
   type GeminiNativeModelsResponse,
 } from '../../types/provider-api.types';
+import { declaredHost } from '@claw/shared-utilities';
 import { httpGet } from '../../../../common/utilities/http.utility';
 import {
   type ConnectorConfig,
@@ -31,6 +32,9 @@ export class GeminiAdapter implements ProviderAdapter {
         headers: {
           Authorization: `Bearer ${config.apiKey}`,
         },
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
       });
 
       const latencyMs = Date.now() - start;
@@ -73,6 +77,9 @@ export class GeminiAdapter implements ProviderAdapter {
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
       },
+      // The base URL comes from an operator-edited connector row, so it is on
+      // no static allowlist; the destination is declared explicitly here.
+      allowedHosts: declaredHost(baseUrl),
     });
 
     if (!response.ok) {
@@ -110,10 +117,15 @@ export class GeminiAdapter implements ProviderAdapter {
     apiKey: string,
   ): Promise<Map<string, number>> {
     const limits = new Map<string, number>();
+    // The same operator-configured host as the OpenAI-compatible base: this
+    // only strips the trailing `/openai` path segment. Declared from the
+    // exact base this call opens rather than from the stored one.
+    const nativeBaseUrl = geminiNativeBaseUrl(baseUrl);
     try {
       const response = await httpGet<GeminiNativeModelsResponse>({
-        url: `${geminiNativeBaseUrl(baseUrl)}/models?pageSize=${String(GEMINI_NATIVE_MODELS_PAGE_SIZE)}`,
+        url: `${nativeBaseUrl}/models?pageSize=${String(GEMINI_NATIVE_MODELS_PAGE_SIZE)}`,
         headers: { 'x-goog-api-key': apiKey },
+        allowedHosts: declaredHost(nativeBaseUrl),
       });
       if (!response.ok) {
         logger.warn(`fetchNativeContextWindows: HTTP ${String(response.status)}`);

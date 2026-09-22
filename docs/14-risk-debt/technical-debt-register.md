@@ -284,7 +284,11 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-22 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-039.
 
-### TD-038: Eight services carry an unguarded copy of the HTTP client
+### TD-040: The rest of the platform's direct `fetch` calls are still unguarded
+
+- **Added**: 2026-09-22 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-040.
+
+### TD-038 (FIXED 2026-09-22): Eight services carry an unguarded copy of the HTTP client
 
 - **Added**: 2026-09-20 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-038.
 

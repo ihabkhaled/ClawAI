@@ -1,4 +1,4 @@
-import { vi, type MockedFunction } from 'vitest';
+import { type MockedFunction, vi } from 'vitest';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
 import { OllamaAdapter } from '../managers/adapters/ollama.adapter';
 import { httpGet, httpGetText } from '../../../common/utilities/http.utility';
@@ -119,18 +119,23 @@ describe('OllamaAdapter', () => {
     expect(mockedHttpGet).toHaveBeenCalledWith({
       url: 'https://ollama.com/api/tags',
       headers: { Authorization: 'Bearer ollama-cloud-key' },
+      // The operator-configured base is declared to the request-URL guard;
+      // without it the shared allowlist refuses every provider sync.
+      allowedHosts: new Set(['ollama.com']),
     });
     expect(mockedHttpGetText).toHaveBeenNthCalledWith(1, {
       url: 'https://ollama.com/search?c=cloud',
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ClawAI-ConnectorService/1.0; +https://ollama.com)',
       },
+      allowedHosts: new Set(['ollama.com']),
     });
     expect(mockedHttpGetText).toHaveBeenNthCalledWith(2, {
       url: 'https://ollama.com/library?sort=popular',
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ClawAI-ConnectorService/1.0; +https://ollama.com)',
       },
+      allowedHosts: new Set(['ollama.com']),
     });
     expect(result).toHaveLength(5);
     expect(result.map((model) => model.modelKey)).toEqual([

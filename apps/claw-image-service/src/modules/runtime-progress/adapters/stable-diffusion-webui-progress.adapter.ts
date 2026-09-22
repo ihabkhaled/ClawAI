@@ -7,7 +7,7 @@ import {
   RuntimeProgressStage,
   RuntimeProvider,
 } from '@claw/shared-types';
-import { buildRuntimeProgressEvent } from '@claw/shared-utilities';
+import { buildRuntimeProgressEvent, declaredHost } from '@claw/shared-utilities';
 import { httpGet, httpPost } from '@common/utilities';
 import {
   SD_INTERRUPT_HTTP_TIMEOUT_MS,
@@ -94,10 +94,14 @@ export class StableDiffusionWebuiProgressAdapter implements SdWebuiProgressAdapt
   async cancel(sdUrl: string): Promise<void> {
     this.logger.log(`cancel: POST ${sdUrl}/sdapi/v1/interrupt`);
     try {
+      // `sdUrl` reaches this adapter from AppConfig's STABLE_DIFFUSION_URL (or
+      // the caller's own runtime URL). Neither name ends in a suffix the shared
+      // guard harvests from the environment, so the host is declared here.
       await httpPost<unknown>(
         `${sdUrl}/sdapi/v1/interrupt`,
         {},
         { timeout: SD_INTERRUPT_HTTP_TIMEOUT_MS },
+        declaredHost(sdUrl),
       );
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'interrupt failed';
@@ -136,9 +140,13 @@ export class StableDiffusionWebuiProgressAdapter implements SdWebuiProgressAdapt
 
     while (!sessionState.stopRequested) {
       try {
-        const json = await httpGet<SdWebuiProgressResponse>(progressUrl, {
-          timeout: SD_PROGRESS_HTTP_TIMEOUT_MS,
-        });
+        // Same reason as `cancel`: STABLE_DIFFUSION_URL is not an env name the
+        // shared allowlist harvests, so the poll host is declared explicitly.
+        const json = await httpGet<SdWebuiProgressResponse>(
+          progressUrl,
+          { timeout: SD_PROGRESS_HTTP_TIMEOUT_MS },
+          declaredHost(opts.sdUrl),
+        );
         consecutiveErrors = 0;
         const envelope = this.buildProgressEnvelope({
           opts,
@@ -154,9 +162,7 @@ export class StableDiffusionWebuiProgressAdapter implements SdWebuiProgressAdapt
         const msg = error instanceof Error ? error.message : 'progress poll failed';
         this.logger.warn(`runPollLoop: poll error #${String(consecutiveErrors)} — ${msg}`);
         if (consecutiveErrors >= SD_PROGRESS_MAX_CONSECUTIVE_ERRORS) {
-          this.logger.error(
-            `runPollLoop: giving up after ${String(consecutiveErrors)} errors`,
-          );
+          this.logger.error(`runPollLoop: giving up after ${String(consecutiveErrors)} errors`);
           return;
         }
       }
@@ -214,10 +220,7 @@ export class StableDiffusionWebuiProgressAdapter implements SdWebuiProgressAdapt
     if (progress <= 0) {
       return RuntimeProgressStage.QUEUED;
     }
-    if (progress < 1) {
-      return RuntimeProgressStage.GENERATING;
-    }
-    return RuntimeProgressStage.POST_PROCESSING;
+    return progress < 1 ? RuntimeProgressStage.GENERATING : RuntimeProgressStage.POST_PROCESSING;
   }
 
   private async sleep(ms: number): Promise<void> {

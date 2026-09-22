@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
 import { DEFAULT_HTTP_TIMEOUT_MS } from '../constants';
 import { type HttpRequestOptions, type HttpResponse } from '../types';
 
@@ -19,18 +20,29 @@ function parseJsonBody<T>(url: string, status: number, bodyText: string): T {
   }
 }
 
-export function httpGet<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-  const { url, headers, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS } = options;
+// `async` on all three of these is load-bearing: `assertSafeRequestUrl` throws
+// synchronously, and callers await the returned promise. Without it a refused
+// URL would escape past every `try`/`catch` around the await.
+export async function httpGet<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
+  const { url, headers, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS, allowedHosts } = options;
+
+  // Validated before anything else: the URL is caller-supplied and goes
+  // straight to fetch. See assertSafeRequestUrl.
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+
   logger.debug(`httpGet: requesting ${url} (timeout=${String(timeoutMs)}ms)`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const startTime = Date.now();
 
-  return fetch(url, {
+  return fetch(safeUrl, {
     method: 'GET',
     headers,
     signal: controller.signal,
+    // Nothing here streams, and a redirect would land on a host the check
+    // above never saw. Refusing is louder than silently going elsewhere.
+    redirect: 'error',
   })
     .then(async (response) => {
       const data = parseJsonBody<T>(url, response.status, await response.text());
@@ -49,18 +61,26 @@ export function httpGet<T>(options: HttpRequestOptions): Promise<HttpResponse<T>
     });
 }
 
-export function httpGetText(options: HttpRequestOptions): Promise<HttpResponse<string>> {
-  const { url, headers, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS } = options;
+export async function httpGetText(options: HttpRequestOptions): Promise<HttpResponse<string>> {
+  const { url, headers, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS, allowedHosts } = options;
+
+  // Validated before anything else: the URL is caller-supplied and goes
+  // straight to fetch. See assertSafeRequestUrl.
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+
   logger.debug(`httpGetText: requesting ${url} (timeout=${String(timeoutMs)}ms)`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const startTime = Date.now();
 
-  return fetch(url, {
+  return fetch(safeUrl, {
     method: 'GET',
     headers,
     signal: controller.signal,
+    // Nothing here streams, and a redirect would land on a host the check
+    // above never saw. Refusing is louder than silently going elsewhere.
+    redirect: 'error',
   })
     .then(async (response) => {
       const data = await response.text();
@@ -79,19 +99,27 @@ export function httpGetText(options: HttpRequestOptions): Promise<HttpResponse<s
     });
 }
 
-export function httpPost<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-  const { url, headers, body, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS } = options;
+export async function httpPost<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
+  const { url, headers, body, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS, allowedHosts } = options;
+
+  // Validated before anything else: the URL is caller-supplied and goes
+  // straight to fetch. See assertSafeRequestUrl.
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+
   logger.debug(`httpPost: requesting ${url} (timeout=${String(timeoutMs)}ms)`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const startTime = Date.now();
 
-  return fetch(url, {
+  return fetch(safeUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(body),
     signal: controller.signal,
+    // Nothing here streams, and a redirect would land on a host the check
+    // above never saw. Refusing is louder than silently going elsewhere.
+    redirect: 'error',
   })
     .then(async (response) => {
       const data = parseJsonBody<T>(url, response.status, await response.text());

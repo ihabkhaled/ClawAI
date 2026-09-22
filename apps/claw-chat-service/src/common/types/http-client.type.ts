@@ -1,4 +1,20 @@
-export type HttpRequestOptions = {
+/**
+ * Hosts the caller declares as legitimate destinations for THIS call.
+ *
+ * `assertSafeRequestUrl` allows the union of the hosts this process's own
+ * environment names (`*_SERVICE_URL` and friends), the third-party endpoints
+ * written down in `EXTERNAL_ENDPOINT_HOSTS`, and whatever a caller declares
+ * here. A URL built from a `*_SERVICE_URL` config value needs nothing; a URL
+ * built from an admin-configured connector `baseUrl`, or from a hardcoded
+ * third-party constant, MUST pass `declaredHost(<that base url>)` or the call
+ * is refused. Declare the BASE url's host, never the finished url's — the
+ * latter is a tautology that checks nothing.
+ */
+type AllowedHostsOption = {
+  allowedHosts?: ReadonlySet<string>;
+};
+
+export type HttpRequestOptions = AllowedHostsOption & {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
@@ -13,7 +29,7 @@ export type HttpResponse<T> = {
   ok: boolean;
 };
 
-export type HttpStreamOptions = {
+export type HttpStreamOptions = AllowedHostsOption & {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
@@ -40,13 +56,13 @@ export type HttpStreamResult = {
  * utility stays framework-agnostic and testable with a plain object.
  */
 /** Options for reading a binary response fully into memory. */
-export type HttpBinaryReadOptions = {
+export type HttpBinaryReadOptions = AllowedHostsOption & {
   url: string;
   headers?: Record<string, string>;
   timeoutMs?: number;
 };
 
-export type HttpBinaryStreamOptions = {
+export type HttpBinaryStreamOptions = AllowedHostsOption & {
   url: string;
   headers?: Record<string, string>;
   timeoutMs?: number;
