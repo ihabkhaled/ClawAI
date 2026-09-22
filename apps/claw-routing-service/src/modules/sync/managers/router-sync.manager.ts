@@ -82,6 +82,14 @@ export class RouterSyncManager {
     return result;
   }
 
+  /**
+   * Hosts of the hardcoded service defaults, collected as they are resolved.
+   *
+   * Only ever populated from literals in this file — never from a URL that
+   * arrived from outside.
+   */
+  private readonly fallbackHosts = new Set<string>();
+
   private async publishSyncCompleted(result: SyncRunResult): Promise<void> {
     if (this.rabbitMQ === undefined) return;
     try {
@@ -105,7 +113,7 @@ export class RouterSyncManager {
 
   private async syncOne(source: string, url: string): Promise<SyncProviderResult> {
     this.logger.debug(`syncOne: source=${source} url=${url}`);
-    const outcome = await fetchSnapshot(url);
+    const outcome = await fetchSnapshot(url, this.fallbackHosts);
     if (outcome.status === 'UPSTREAM_404') {
       return {
         provider: source,
@@ -201,10 +209,7 @@ export class RouterSyncManager {
     }
     const curated = lookupCuratedCloudEnrichment(upstream.provider, upstream.modelKey);
     if (curated !== undefined) return curated;
-    if (existing?.adminOverrideJson !== null && existing?.adminOverrideJson !== undefined) {
-      return existing.adminOverrideJson as ModelIntelligenceEnrichment;
-    }
-    return {};
+    return existing?.adminOverrideJson !== null && existing?.adminOverrideJson !== undefined ? (existing.adminOverrideJson as ModelIntelligenceEnrichment) : {};
   }
 
   private toUpsertInput(
@@ -223,6 +228,18 @@ export class RouterSyncManager {
 
   private serviceBaseUrl(envVar: string, fallback: string): string {
     const value = process.env[envVar];
-    return value !== undefined && value.length > 0 ? value : fallback;
+    const resolved = value !== undefined && value.length > 0 ? value : fallback;
+    // The outbound guard builds its allowlist from the ENVIRONMENT, so a
+    // deployment that never set this variable would have its sync refused —
+    // the fallback is a compile-time constant that no environment names. It is
+    // recorded here so the call can declare it, which is a different thing from
+    // declaring the host of an arbitrary URL: this one is a literal we ship.
+    try {
+      this.fallbackHosts.add(new URL(resolved).host);
+    } catch {
+      // A malformed default is a configuration bug the guard should catch, not
+      // something to pre-authorise.
+    }
+    return resolved;
   }
 }

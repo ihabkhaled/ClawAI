@@ -8,10 +8,14 @@ const logger = new Logger('SnapshotFetcher');
 /// Calls an upstream snapshot endpoint. Treats 404 as "endpoint not yet
 /// implemented on upstream" (not an error) so Phase 6 can ship before the
 /// upstream services add the matching controllers.
-export async function fetchSnapshot(url: string): Promise<SnapshotFetchOutcome> {
+export async function fetchSnapshot(
+  url: string,
+  allowedHosts?: ReadonlySet<string>,
+): Promise<SnapshotFetchOutcome> {
   try {
     const response = await httpRequest<{ models: UpstreamModelSnapshot[] }>({
       url,
+      ...(allowedHosts === undefined ? {} : { allowedHosts }),
       method: 'GET',
       timeoutMs: SYNC_TIMEOUT_MS,
     });
