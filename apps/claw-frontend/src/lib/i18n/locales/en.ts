@@ -61,7 +61,6 @@ export const en: TranslationDictionary = {
     select: 'Select',
     download: 'Download',
     noDataAvailable: 'No data available',
-    showingPage: 'Showing page {page} of {total}',
     errorBoundaryTitle: 'Something went wrong',
     errorBoundaryDescription:
       'This page hit an unexpected error. Try again, or move to another page.',
@@ -6207,11 +6206,6 @@ export const en: TranslationDictionary = {
         reopen: 'Reopen',
         archive: 'Archive',
         confirmArchive: 'Archive this ticket?',
-      },
-      pagination: {
-        previous: 'Previous',
-        next: 'Next',
-        pageOf: 'Page {page} of {total}',
       },
     },
     screenshot: {

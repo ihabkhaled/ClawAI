@@ -60,7 +60,6 @@ export const zh: TranslationDictionary = {
     select: '选择',
     download: '下载',
     noDataAvailable: '无可用数据',
-    showingPage: '显示 {total} 的页面 {page}',
     errorBoundaryTitle: '出了点问题',
     errorBoundaryDescription: '此页面遇到意外错误。请重试，或移至其他页面。',
     phoneCountryLabel: '国家或地区',
@@ -5898,11 +5897,6 @@ export const zh: TranslationDictionary = {
         reopen: '重新打开',
         archive: '归档',
         confirmArchive: '要归档此工单吗？',
-      },
-      pagination: {
-        previous: '上一页',
-        next: '下一页',
-        pageOf: '第 {page} 页，共 {total} 页',
       },
     },
     screenshot: {

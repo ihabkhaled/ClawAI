@@ -1,5 +1,6 @@
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,8 @@ export function SmartRouterRevisionsTab({
   onStatusFilterChange,
   page,
   onPageChange,
+  pageSize,
+  onPageSizeChange,
   isLoading,
   isError,
   error,
@@ -106,34 +109,15 @@ export function SmartRouterRevisionsTab({
               ))}
             </TableBody>
           </Table>
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-xs">
-              {t('smartRouterAdmin.revisions.pageOf', {
-                current: meta.page,
-                total: Math.max(meta.totalPages, 1),
-              })}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => onPageChange(page - 1)}
-              >
-                {t('common.previous')}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= meta.totalPages}
-                onClick={() => onPageChange(page + 1)}
-              >
-                {t('common.next')}
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={Math.max(meta.totalPages, 1)}
+            totalItems={meta.total}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            t={t}
+          />
         </>
       ) : null}
     </div>

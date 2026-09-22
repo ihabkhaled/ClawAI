@@ -61,7 +61,6 @@ export const th: TranslationDictionary = {
     select: 'เลือก',
     download: 'ดาวน์โหลด',
     noDataAvailable: 'ไม่มีข้อมูล',
-    showingPage: 'กำลังแสดงหน้า {page} ของ {total}',
     errorBoundaryTitle: 'มีบางอย่างผิดพลาด',
     errorBoundaryDescription: 'หน้านี้เกิดข้อผิดพลาดที่ไม่คาดคิดลองอีกครั้งหรือย้ายไปยังหน้าอื่น',
     phoneCountryLabel: 'ประเทศ',
@@ -6164,11 +6163,6 @@ export const th: TranslationDictionary = {
         reopen: 'เปิดใหม่',
         archive: 'เก็บถาวร',
         confirmArchive: 'เก็บถาวรทิกเก็ตนี้หรือไม่?',
-      },
-      pagination: {
-        previous: 'ก่อนหน้า',
-        next: 'ถัดไป',
-        pageOf: 'หน้า {page} จาก {total}',
       },
     },
     screenshot: {

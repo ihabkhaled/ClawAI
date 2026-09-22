@@ -459,7 +459,9 @@ export type UseRecentAuditEventsReturn = {
 export type UseAuditsPageReturn = {
   t: TranslateFunction;
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   action: string | undefined;
   setAction: (value: string | undefined) => void;
   severity: string | undefined;

@@ -61,7 +61,6 @@ export const ja: TranslationDictionary = {
     select: '選択してください',
     download: 'ダウンロード',
     noDataAvailable: '利用可能なデータがありません',
-    showingPage: '{total} の {page} ページを表示中',
     errorBoundaryTitle: '問題が発生しました',
     errorBoundaryDescription:
       'このページで予期しないエラーが発生しました。もう一度試すか、別のページに移動してください。',
@@ -6240,11 +6239,6 @@ export const ja: TranslationDictionary = {
         reopen: '再オープン',
         archive: 'アーカイブ',
         confirmArchive: 'このチケットをアーカイブしますか？',
-      },
-      pagination: {
-        previous: '前へ',
-        next: '次へ',
-        pageOf: '{total} ページ中 {page} ページ',
       },
     },
     screenshot: {

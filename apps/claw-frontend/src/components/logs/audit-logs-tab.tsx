@@ -20,6 +20,8 @@ export function AuditLogsTab({
   meta,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   isLoading,
   isError,
   action,
@@ -109,6 +111,8 @@ export function AuditLogsTab({
         meta={meta}
         page={page}
         setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
         isLoading={isLoading}
         isError={isError}
       />

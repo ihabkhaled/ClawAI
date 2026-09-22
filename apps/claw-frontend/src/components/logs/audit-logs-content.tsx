@@ -4,7 +4,7 @@ import { DataTable } from '@/components/common/data-table';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { SEVERITY_COLORS } from '@/constants';
 import type { AuditSeverity } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
@@ -17,6 +17,8 @@ export function AuditLogsContent({
   meta,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   isLoading,
   isError,
 }: AuditLogsContentProps): React.ReactElement {
@@ -35,7 +37,7 @@ export function AuditLogsContent({
       renderMobileTitle: (row) => (
         <div className="flex flex-col">
           <span>{row.action}</span>
-          <span className="text-xs font-normal text-muted-foreground">
+          <span className="text-muted-foreground text-xs font-normal">
             {new Date(row.createdAt).toLocaleString()}
           </span>
         </div>
@@ -53,7 +55,7 @@ export function AuditLogsContent({
         <span className="text-sm">
           {row.entityType ? `${row.entityType}` : '-'}
           {row.entityId ? (
-            <span className="ms-1 font-mono text-xs text-muted-foreground">
+            <span className="text-muted-foreground ms-1 font-mono text-xs">
               {row.entityId.slice(0, 8)}...
             </span>
           ) : null}
@@ -73,7 +75,7 @@ export function AuditLogsContent({
       key: 'ipAddress',
       header: t('audits.ipAddress'),
       render: (row) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.ipAddress ?? '-'}</span>
+        <span className="text-muted-foreground font-mono text-xs">{row.ipAddress ?? '-'}</span>
       ),
     },
     {
@@ -117,33 +119,15 @@ export function AuditLogsContent({
         mobileTitleKey="action"
       />
 
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {t('common.showingPage', {
-            page: String(meta.page),
-            totalPages: String(meta.totalPages),
-            total: String(meta.total),
-          })}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            {t('common.previous')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= meta.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {t('common.next')}
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        totalPages={Math.max(meta.totalPages, 1)}
+        totalItems={meta.total}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        t={t}
+      />
     </>
   );
 }

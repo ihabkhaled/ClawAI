@@ -6,8 +6,8 @@ import { AdminFeedbackCards } from '@/components/admin/feedback/admin-feedback-c
 import { AdminFeedbackDetailDialog } from '@/components/admin/feedback/admin-feedback-detail-dialog';
 import { AdminFeedbackFilters } from '@/components/admin/feedback/admin-feedback-filters';
 import { AdminFeedbackTable } from '@/components/admin/feedback/admin-feedback-table';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
 import { useAdminFeedbackList } from '@/hooks/admin/feedback/use-admin-feedback-list';
 import { useTranslation } from '@/lib/i18n';
 
@@ -17,9 +17,11 @@ export default function AdminFeedbackPage(): React.ReactElement {
   const {
     items,
     total,
+    totalPages,
     page,
-    limit,
+    pageSize,
     setPage,
+    setPageSize,
     status,
     setStatus,
     type,
@@ -28,8 +30,6 @@ export default function AdminFeedbackPage(): React.ReactElement {
     setSearch,
     counts,
   } = useAdminFeedbackList();
-
-  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <div className="space-y-6">
@@ -59,19 +59,15 @@ export default function AdminFeedbackPage(): React.ReactElement {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between">
-        <Button variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-          {t('feedback.admin.pagination.previous')}
-        </Button>
-        <span className="text-muted-foreground text-sm">
-          {t('feedback.admin.pagination.pageOf')
-            .replace('{page}', String(page))
-            .replace('{total}', String(totalPages))}
-        </span>
-        <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-          {t('feedback.admin.pagination.next')}
-        </Button>
-      </div>
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        totalItems={total}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        t={t}
+      />
 
       {selectedTicketId === null ? null : (
         <AdminFeedbackDetailDialog

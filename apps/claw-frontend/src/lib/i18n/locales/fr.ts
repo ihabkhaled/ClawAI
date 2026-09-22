@@ -61,7 +61,6 @@ export const fr: TranslationDictionary = {
     select: 'Sélectionner',
     download: 'Télécharger',
     noDataAvailable: 'Aucune donnée disponible',
-    showingPage: 'Affichage de la page {page} sur {total}',
     errorBoundaryTitle: 'Une erreur est survenue',
     errorBoundaryDescription:
       'Cette page a rencontré une erreur inattendue. Réessayez ou accédez à une autre page.',
@@ -6334,11 +6333,6 @@ export const fr: TranslationDictionary = {
         reopen: 'Rouvrir',
         archive: 'Archiver',
         confirmArchive: 'Archiver ce ticket ?',
-      },
-      pagination: {
-        previous: 'Précédent',
-        next: 'Suivant',
-        pageOf: 'Page {page} sur {total}',
       },
     },
     screenshot: {

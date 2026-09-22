@@ -48,4 +48,22 @@ describe('useSmartRouterRevisionsList', () => {
     expect(result.current.page).toBe(1);
     expect(result.current.statusFilter).toBe(RouterConfigurationStatus.DRAFT);
   });
+
+  it('sends the chosen page size as the limit and returns to page 1', async () => {
+    mockList.mockResolvedValue({ data: [], meta: { total: 0, page: 1, limit: 20, totalPages: 0 } });
+    const { result } = renderHook(() => useSmartRouterRevisionsList(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(mockList).toHaveBeenCalled());
+    const limitOf = (): unknown =>
+      (mockList.mock.calls.at(-1)?.[0] as { limit?: number } | undefined)?.limit;
+    // The page size was a constant here before, so the size control would have
+    // changed nothing.
+    expect(limitOf()).toBe(20);
+
+    act(() => result.current.setPage(3));
+    expect(result.current.page).toBe(3);
+
+    act(() => result.current.setPageSize(50));
+    expect(result.current.page).toBe(1);
+    await waitFor(() => expect(limitOf()).toBe(50));
+  });
 });

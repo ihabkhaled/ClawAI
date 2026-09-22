@@ -119,6 +119,8 @@ export function useSmartRouterAdminPage(): UseSmartRouterAdminPageResult {
       onStatusFilterChange: revisionsList.setStatusFilter,
       page: revisionsList.page,
       onPageChange: revisionsList.setPage,
+      pageSize: revisionsList.pageSize,
+      onPageSizeChange: revisionsList.setPageSize,
       isLoading: revisionsList.isLoading,
       isError: revisionsList.isError,
       error: revisionsList.error,

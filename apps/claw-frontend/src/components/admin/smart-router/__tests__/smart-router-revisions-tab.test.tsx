@@ -9,7 +9,8 @@ import {
 } from '@/enums/router-configuration.enum';
 import type { RouterConfigurationSummary } from '@/types/smart-router-admin.types';
 
-const t = (key: string): string => key;
+const t = (key: string, params?: Record<string, string | number>): string =>
+  params === undefined ? key : `${key}:${JSON.stringify(params)}`;
 
 function makeRevision(id: string, revision: number): RouterConfigurationSummary {
   return {
@@ -46,6 +47,8 @@ function baseProps(overrides: Partial<React.ComponentProps<typeof SmartRouterRev
     onStatusFilterChange: vi.fn(),
     page: 1,
     onPageChange: vi.fn(),
+    pageSize: 20,
+    onPageSizeChange: vi.fn(),
     isLoading: false,
     isError: false,
     error: null,
@@ -76,7 +79,7 @@ describe('SmartRouterRevisionsTab', () => {
     expect(onCreateDraft).toHaveBeenCalled();
   });
 
-  it('disables Previous on the first page and calls onPageChange on Next', () => {
+  it('renders the shared pagination control instead of a hand-rolled row', () => {
     const onPageChange = vi.fn();
     render(
       <SmartRouterRevisionsTab
@@ -86,8 +89,16 @@ describe('SmartRouterRevisionsTab', () => {
         })}
       />,
     );
-    expect(screen.getByRole('button', { name: 'common.previous' })).toBeDisabled();
-    screen.getByRole('button', { name: 'common.next' }).click();
+    expect(screen.getByTestId('pagination')).toBeInTheDocument();
+    expect(screen.getByTestId('pagination-summary')).toHaveTextContent('"total":40');
+    expect(screen.getByTestId('pagination-previous')).toBeDisabled();
+    screen.getByTestId('pagination-next').click();
     expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it('offers a rows-per-page control wired to onPageSizeChange', () => {
+    const onPageSizeChange = vi.fn();
+    render(<SmartRouterRevisionsTab {...baseProps({ onPageSizeChange })} />);
+    expect(screen.getByTestId('pagination-rows-per-page')).toBeInTheDocument();
   });
 });

@@ -5,13 +5,19 @@ import { LogsTab } from '@/enums';
 import { useAuditLogs } from '@/hooks/audit/use-audit-logs';
 import { useClientLogs } from '@/hooks/logs/use-client-logs';
 import { useServerLogs } from '@/hooks/logs/use-server-logs';
+import { usePagination } from '@/hooks/use-pagination';
 import type { UseLogsPageReturn } from '@/types';
 
 export function useLogsPage(): UseLogsPageReturn {
   const [activeTab, setActiveTab] = useState<LogsTab>(LogsTab.CLIENT);
 
+  // Each tab keeps its own page and page size: switching tabs must not drag the
+  // reader to page 9 of a list they were not reading.
+  const clientPagination = usePagination();
+  const serverPagination = usePagination();
+  const auditPagination = usePagination();
+
   // Client logs state
-  const [clientLogsPage, setClientLogsPage] = useState(1);
   const [clientLevelFilter, setClientLevelFilter] = useState<string | undefined>(undefined);
   const [clientComponentFilter, setClientComponentFilter] = useState('');
   const [clientActionFilter, setClientActionFilter] = useState('');
@@ -28,8 +34,8 @@ export function useLogsPage(): UseLogsPageReturn {
     isLoading: isClientLogsLoading,
     isError: isClientLogsError,
   } = useClientLogs({
-    page: clientLogsPage,
-    limit: 25,
+    page: clientPagination.page,
+    limit: clientPagination.pageSize,
     level: clientLevelFilter,
     component: clientComponentFilter || undefined,
     action: clientActionFilter || undefined,
@@ -42,7 +48,6 @@ export function useLogsPage(): UseLogsPageReturn {
   });
 
   // Server logs state
-  const [serverLogsPage, setServerLogsPage] = useState(1);
   const [serverLevelFilter, setServerLevelFilter] = useState<string | undefined>(undefined);
   const [serverServiceFilter, setServerServiceFilter] = useState('');
   const [serverControllerFilter, setServerControllerFilter] = useState('');
@@ -60,8 +65,8 @@ export function useLogsPage(): UseLogsPageReturn {
     isLoading: isServerLogsLoading,
     isError: isServerLogsError,
   } = useServerLogs({
-    page: serverLogsPage,
-    limit: 25,
+    page: serverPagination.page,
+    limit: serverPagination.pageSize,
     level: serverLevelFilter,
     serviceName: serverServiceFilter || undefined,
     controller: serverControllerFilter || undefined,
@@ -75,7 +80,6 @@ export function useLogsPage(): UseLogsPageReturn {
   });
 
   // Audit logs state
-  const [auditPage, setAuditPage] = useState(1);
   const [auditAction, setAuditAction] = useState<string | undefined>(undefined);
   const [auditSeverity, setAuditSeverity] = useState<string | undefined>(undefined);
   const [auditSearch, setAuditSearch] = useState('');
@@ -89,8 +93,8 @@ export function useLogsPage(): UseLogsPageReturn {
     isLoading: isAuditLoading,
     isError: isAuditError,
   } = useAuditLogs({
-    page: auditPage,
-    limit: 25,
+    page: auditPagination.page,
+    limit: auditPagination.pageSize,
     action: auditAction as AuditAction | undefined,
     severity: auditSeverity as AuditSeverity | undefined,
     entityType: auditEntityType || undefined,
@@ -105,134 +109,156 @@ export function useLogsPage(): UseLogsPageReturn {
 
     clientLogs,
     clientLogsMeta,
-    clientLogsPage,
-    setClientLogsPage: (page: number) => {
-      setClientLogsPage(page);
-    },
+    clientLogsPage: clientPagination.page,
+    setClientLogsPage: clientPagination.goToPage,
+    clientLogsPageSize: clientPagination.pageSize,
+    setClientLogsPageSize: clientPagination.setPageSize,
     isClientLogsLoading,
     isClientLogsError,
     clientLevelFilter,
     setClientLevelFilter: (level: string | undefined) => {
       setClientLevelFilter(level);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientComponentFilter,
     setClientComponentFilter: (component: string) => {
       setClientComponentFilter(component);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientActionFilter,
     setClientActionFilter: (action: string) => {
       setClientActionFilter(action);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientRouteFilter,
     setClientRouteFilter: (route: string) => {
       setClientRouteFilter(route);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientUserIdFilter,
     setClientUserIdFilter: (userId: string) => {
       setClientUserIdFilter(userId);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientMessageContainsFilter,
     setClientMessageContainsFilter: (contains: string) => {
       setClientMessageContainsFilter(contains);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientSearch,
     setClientSearch: (search: string) => {
       setClientSearch(search);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientStartDate,
     setClientStartDate: (date: string) => {
       setClientStartDate(date);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
     clientEndDate,
     setClientEndDate: (date: string) => {
       setClientEndDate(date);
-      setClientLogsPage(1);
+      clientPagination.reset();
     },
 
     serverLogs,
     serverLogsMeta,
-    serverLogsPage,
-    setServerLogsPage: (page: number) => {
-      setServerLogsPage(page);
-    },
+    serverLogsPage: serverPagination.page,
+    setServerLogsPage: serverPagination.goToPage,
+    serverLogsPageSize: serverPagination.pageSize,
+    setServerLogsPageSize: serverPagination.setPageSize,
     isServerLogsLoading,
     isServerLogsError,
     serverLevelFilter,
     setServerLevelFilter: (level: string | undefined) => {
       setServerLevelFilter(level);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverServiceFilter,
     setServerServiceFilter: (service: string) => {
       setServerServiceFilter(service);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverControllerFilter,
     setServerControllerFilter: (controller: string) => {
       setServerControllerFilter(controller);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverActionFilter,
     setServerActionFilter: (action: string) => {
       setServerActionFilter(action);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverMethodFilter,
     setServerMethodFilter: (method: string) => {
       setServerMethodFilter(method);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverRouteFilter,
     setServerRouteFilter: (route: string) => {
       setServerRouteFilter(route);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverMessageContainsFilter,
     setServerMessageContainsFilter: (contains: string) => {
       setServerMessageContainsFilter(contains);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverSearch,
     setServerSearch: (search: string) => {
       setServerSearch(search);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverStartDate,
     setServerStartDate: (date: string) => {
       setServerStartDate(date);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
     serverEndDate,
     setServerEndDate: (date: string) => {
       setServerEndDate(date);
-      setServerLogsPage(1);
+      serverPagination.reset();
     },
 
     auditLogs,
     auditMeta,
-    auditPage,
-    setAuditPage,
+    auditPage: auditPagination.page,
+    setAuditPage: auditPagination.goToPage,
+    auditPageSize: auditPagination.pageSize,
+    setAuditPageSize: auditPagination.setPageSize,
     isAuditLoading,
     isAuditError,
     auditAction,
-    setAuditAction,
+    // The audit filters reset here rather than at the page, so the rule holds
+    // wherever they are called from — the page used to do it by hand.
+    setAuditAction: (action: string | undefined) => {
+      setAuditAction(action);
+      auditPagination.reset();
+    },
     auditSeverity,
-    setAuditSeverity,
+    setAuditSeverity: (severity: string | undefined) => {
+      setAuditSeverity(severity);
+      auditPagination.reset();
+    },
     auditSearch,
-    setAuditSearch,
+    setAuditSearch: (search: string) => {
+      setAuditSearch(search);
+      auditPagination.reset();
+    },
     auditEntityType,
-    setAuditEntityType,
+    setAuditEntityType: (entityType: string) => {
+      setAuditEntityType(entityType);
+      auditPagination.reset();
+    },
     auditStartDate,
-    setAuditStartDate,
+    setAuditStartDate: (date: string) => {
+      setAuditStartDate(date);
+      auditPagination.reset();
+    },
     auditEndDate,
-    setAuditEndDate,
+    setAuditEndDate: (date: string) => {
+      setAuditEndDate(date);
+      auditPagination.reset();
+    },
   };
 }

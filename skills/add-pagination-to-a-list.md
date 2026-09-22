@@ -7,6 +7,12 @@ Before 2026-09-20 every paged table here hand-rolled its own `Previous` /
 `1 / 3` / `Next` row — eight copies, none of which offered a page number, a
 page size, or a way to jump. There is now one control. Do not write a ninth.
 
+All eight are migrated: admin users, admin feedback, audits, the three logs
+tabs (client / server / audit) and the smart-router revisions tab. Every one of
+them also hard-coded its `limit` (20, 25, or a constant), so the size control
+would have changed nothing — that is the defect to look for first when you find
+a ninth list.
+
 **Related**: [`rules/03-frontend-rules.md`](../rules/03-frontend-rules.md) ·
 [`rules/20-i18n-and-user-facing-messages.md`](../rules/20-i18n-and-user-facing-messages.md) ·
 [`rules/49`](../rules/49-qa-team-discipline-and-test-evidence.md)

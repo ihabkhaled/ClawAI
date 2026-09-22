@@ -61,7 +61,6 @@ export const pt: TranslationDictionary = {
     select: 'Selecionar',
     download: 'Baixar',
     noDataAvailable: 'Nenhum dado disponível',
-    showingPage: 'Exibindo página {page} de {total}',
     errorBoundaryTitle: 'Algo deu errado',
     errorBoundaryDescription:
       'Esta página encontrou um erro inesperado. Tente novamente ou vá para outra página.',
@@ -6275,11 +6274,6 @@ export const pt: TranslationDictionary = {
         reopen: 'Reabrir',
         archive: 'Arquivar',
         confirmArchive: 'Arquivar este ticket?',
-      },
-      pagination: {
-        previous: 'Anterior',
-        next: 'Seguinte',
-        pageOf: 'Página {page} de {total}',
       },
     },
     screenshot: {

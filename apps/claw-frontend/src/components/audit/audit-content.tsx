@@ -4,7 +4,7 @@ import { DataTable } from '@/components/common/data-table';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { SEVERITY_COLORS } from '@/constants';
 import type { AuditSeverity } from '@/enums';
 import type { AuditContentProps, AuditLog, DataTableColumn } from '@/types';
@@ -16,6 +16,8 @@ export function AuditContent({
   meta,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   t,
 }: AuditContentProps): React.ReactElement {
   const columns: DataTableColumn<AuditLog>[] = [
@@ -32,7 +34,7 @@ export function AuditContent({
       renderMobileTitle: (row) => (
         <div className="flex flex-col">
           <span>{row.action}</span>
-          <span className="text-xs font-normal text-muted-foreground">
+          <span className="text-muted-foreground text-xs font-normal">
             {new Date(row.createdAt).toLocaleString()}
           </span>
         </div>
@@ -50,7 +52,7 @@ export function AuditContent({
         <span className="text-sm">
           {row.entityType ? `${row.entityType}` : '-'}
           {row.entityId ? (
-            <span className="ms-1 font-mono text-xs text-muted-foreground">
+            <span className="text-muted-foreground ms-1 font-mono text-xs">
               {row.entityId.slice(0, 8)}...
             </span>
           ) : null}
@@ -71,7 +73,7 @@ export function AuditContent({
       header: t('audits.details'),
       render: (row) =>
         row.details ? (
-          <span className="block max-w-[200px] truncate text-xs text-muted-foreground">
+          <span className="text-muted-foreground block max-w-[200px] truncate text-xs">
             {JSON.stringify(row.details).slice(0, 80)}
             {JSON.stringify(row.details).length > 80 ? '...' : ''}
           </span>
@@ -115,33 +117,15 @@ export function AuditContent({
         mobileTitleKey="action"
       />
 
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {t('common.showingPage', {
-            page: String(meta.page),
-            totalPages: String(meta.totalPages),
-            total: String(meta.total),
-          })}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            {t('common.previous')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= meta.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {t('common.next')}
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        totalPages={Math.max(meta.totalPages, 1)}
+        totalItems={meta.total}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        t={t}
+      />
     </>
   );
 }

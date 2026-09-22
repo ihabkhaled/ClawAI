@@ -60,7 +60,6 @@ export type TranslationDictionary = {
     select: string;
     download: string;
     noDataAvailable: string;
-    showingPage: string;
     errorBoundaryTitle: string;
     errorBoundaryDescription: string;
     phoneCountryLabel: string;
@@ -5884,7 +5883,6 @@ export type SmartRouterAdminLocaleTranslation = {
     columnEntries: string;
     columnPublished: string;
     view: string;
-    pageOf: string;
   };
   revisionDetail: {
     emptySelection: string;

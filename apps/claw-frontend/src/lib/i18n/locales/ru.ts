@@ -61,7 +61,6 @@ export const ru: TranslationDictionary = {
     select: 'Выбрать',
     download: 'Скачать',
     noDataAvailable: 'Данные недоступны',
-    showingPage: 'Страница {page} из {total}',
     errorBoundaryTitle: 'Что-то пошло не так',
     errorBoundaryDescription:
       'На этой странице произошла непредвиденная ошибка. Повторите попытку или перейдите на другую страницу.',
@@ -6277,11 +6276,6 @@ export const ru: TranslationDictionary = {
         reopen: 'Открыть заново',
         archive: 'В архив',
         confirmArchive: 'Архивировать этот тикет?',
-      },
-      pagination: {
-        previous: 'Назад',
-        next: 'Вперёд',
-        pageOf: 'Страница {page} из {total}',
       },
     },
     screenshot: {

@@ -47,6 +47,8 @@ export default function LogsPage() {
           meta={controller.clientLogsMeta}
           page={controller.clientLogsPage}
           setPage={controller.setClientLogsPage}
+          pageSize={controller.clientLogsPageSize}
+          setPageSize={controller.setClientLogsPageSize}
           isLoading={controller.isClientLogsLoading}
           isError={controller.isClientLogsError}
           levelFilter={controller.clientLevelFilter}
@@ -76,6 +78,8 @@ export default function LogsPage() {
           meta={controller.serverLogsMeta}
           page={controller.serverLogsPage}
           setPage={controller.setServerLogsPage}
+          pageSize={controller.serverLogsPageSize}
+          setPageSize={controller.setServerLogsPageSize}
           isLoading={controller.isServerLogsLoading}
           isError={controller.isServerLogsError}
           levelFilter={controller.serverLevelFilter}
@@ -107,38 +111,22 @@ export default function LogsPage() {
           meta={controller.auditMeta}
           page={controller.auditPage}
           setPage={controller.setAuditPage}
+          pageSize={controller.auditPageSize}
+          setPageSize={controller.setAuditPageSize}
           isLoading={controller.isAuditLoading}
           isError={controller.isAuditError}
           action={controller.auditAction}
-          setAction={(v) => {
-            controller.setAuditAction(v);
-            controller.setAuditPage(1);
-          }}
+          setAction={controller.setAuditAction}
           severity={controller.auditSeverity}
-          setSeverity={(v) => {
-            controller.setAuditSeverity(v);
-            controller.setAuditPage(1);
-          }}
+          setSeverity={controller.setAuditSeverity}
           search={controller.auditSearch}
-          setSearch={(v) => {
-            controller.setAuditSearch(v);
-            controller.setAuditPage(1);
-          }}
+          setSearch={controller.setAuditSearch}
           entityType={controller.auditEntityType}
-          setEntityType={(v) => {
-            controller.setAuditEntityType(v);
-            controller.setAuditPage(1);
-          }}
+          setEntityType={controller.setAuditEntityType}
           startDate={controller.auditStartDate}
-          setStartDate={(v) => {
-            controller.setAuditStartDate(v);
-            controller.setAuditPage(1);
-          }}
+          setStartDate={controller.setAuditStartDate}
           endDate={controller.auditEndDate}
-          setEndDate={(v) => {
-            controller.setAuditEndDate(v);
-            controller.setAuditPage(1);
-          }}
+          setEndDate={controller.setAuditEndDate}
         />
       )}
     </div>

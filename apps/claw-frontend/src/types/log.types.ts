@@ -176,7 +176,9 @@ export type AuditLogsTabProps = {
   auditLogs: AuditLog[];
   meta: { page: number; totalPages: number; total: number };
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
   action: string | undefined;
@@ -198,6 +200,8 @@ export type ClientLogsTabProps = {
   meta: PaginationMeta;
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
   levelFilter: string | undefined;
@@ -225,6 +229,8 @@ export type ServerLogsTabProps = {
   meta: PaginationMeta;
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
   levelFilter: string | undefined;
@@ -256,6 +262,8 @@ export type UseLogsPageReturn = {
   clientLogsMeta: PaginationMeta;
   clientLogsPage: number;
   setClientLogsPage: (page: number) => void;
+  clientLogsPageSize: number;
+  setClientLogsPageSize: (size: number) => void;
   isClientLogsLoading: boolean;
   isClientLogsError: boolean;
   clientLevelFilter: string | undefined;
@@ -280,6 +288,8 @@ export type UseLogsPageReturn = {
   serverLogsMeta: PaginationMeta;
   serverLogsPage: number;
   setServerLogsPage: (page: number) => void;
+  serverLogsPageSize: number;
+  setServerLogsPageSize: (size: number) => void;
   isServerLogsLoading: boolean;
   isServerLogsError: boolean;
   serverLevelFilter: string | undefined;
@@ -305,7 +315,9 @@ export type UseLogsPageReturn = {
   auditLogs: AuditLog[];
   auditMeta: { page: number; totalPages: number; total: number };
   auditPage: number;
-  setAuditPage: React.Dispatch<React.SetStateAction<number>>;
+  setAuditPage: (page: number) => void;
+  auditPageSize: number;
+  setAuditPageSize: (size: number) => void;
   isAuditLoading: boolean;
   isAuditError: boolean;
   auditAction: string | undefined;

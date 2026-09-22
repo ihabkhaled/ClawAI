@@ -61,7 +61,6 @@ export const hi: TranslationDictionary = {
     select: 'चुनें',
     download: 'डाउनलोड',
     noDataAvailable: 'कोई डेटा उपलब्ध नहीं',
-    showingPage: 'पृष्ठ {page} / {total} दिखाया जा रहा है',
     errorBoundaryTitle: 'कुछ गलत हो गया',
     errorBoundaryDescription:
       'इस पृष्ठ पर एक अप्रत्याशित त्रुटि हुई। पुनः प्रयास करें या किसी अन्य पृष्ठ पर जाएँ।',
@@ -6220,11 +6219,6 @@ export const hi: TranslationDictionary = {
         reopen: 'फिर से खोलें',
         archive: 'संग्रह करें',
         confirmArchive: 'इस टिकट को संग्रहीत करें?',
-      },
-      pagination: {
-        previous: 'पिछला',
-        next: 'अगला',
-        pageOf: 'पृष्ठ {page} / {total}',
       },
     },
     screenshot: {

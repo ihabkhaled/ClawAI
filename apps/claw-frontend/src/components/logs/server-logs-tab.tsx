@@ -20,6 +20,8 @@ export function ServerLogsTab({
   meta,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   isLoading,
   isError,
   levelFilter,
@@ -143,6 +145,8 @@ export function ServerLogsTab({
         meta={meta}
         page={page}
         setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
         isLoading={isLoading}
         isError={isError}
       />

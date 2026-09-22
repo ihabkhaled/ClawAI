@@ -1603,7 +1603,9 @@ export type AuditContentProps = {
   auditLogs: AuditLog[];
   meta: { page: number; totalPages: number; total: number };
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   t: TranslateFunction;
 };
 
@@ -1625,7 +1627,9 @@ export type AuditLogsContentProps = {
   auditLogs: AuditLog[];
   meta: { page: number; totalPages: number; total: number };
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
 };
@@ -1639,6 +1643,8 @@ export type ClientLogsContentProps = {
   meta: ClientLogsTabProps['meta'];
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
 };
@@ -1652,6 +1658,8 @@ export type ServerLogsContentProps = {
   meta: ServerLogsTabProps['meta'];
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
 };

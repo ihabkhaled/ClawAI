@@ -20,6 +20,8 @@ export function ClientLogsTab({
   meta,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   isLoading,
   isError,
   levelFilter,
@@ -126,6 +128,8 @@ export function ClientLogsTab({
         meta={meta}
         page={page}
         setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
         isLoading={isLoading}
         isError={isError}
       />

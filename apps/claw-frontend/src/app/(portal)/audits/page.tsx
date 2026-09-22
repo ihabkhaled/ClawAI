@@ -19,6 +19,8 @@ export default function AuditsPage() {
     t,
     page,
     setPage,
+    pageSize,
+    setPageSize,
     action,
     severity,
     search,
@@ -85,6 +87,8 @@ export default function AuditsPage() {
         meta={meta}
         page={page}
         setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
         t={t}
       />
     </div>

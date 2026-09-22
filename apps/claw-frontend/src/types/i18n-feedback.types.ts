@@ -88,12 +88,6 @@ export type FeedbackAdminActionsTranslation = {
   confirmArchive: string;
 };
 
-export type FeedbackAdminPaginationTranslation = {
-  previous: string;
-  next: string;
-  pageOf: string;
-};
-
 export type FeedbackAdminDetailTranslation = {
   imageDimensions: string;
   imageUnavailable: string;
@@ -130,7 +124,6 @@ export type FeedbackAdminTranslation = {
   detail: FeedbackAdminDetailTranslation;
   table: FeedbackAdminTableTranslation;
   actions: FeedbackAdminActionsTranslation;
-  pagination: FeedbackAdminPaginationTranslation;
 };
 
 export type FeedbackScreenshotTranslation = {

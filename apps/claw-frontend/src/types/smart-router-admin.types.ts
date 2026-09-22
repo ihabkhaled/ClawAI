@@ -137,6 +137,8 @@ export type UseSmartRouterRevisionsListResult = {
   setStatusFilter: (status: RouterConfigurationStatus | undefined) => void;
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -225,6 +227,8 @@ export type SmartRouterRevisionsSection = {
   onStatusFilterChange: (status: RouterConfigurationStatus | undefined) => void;
   page: number;
   onPageChange: (page: number) => void;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;

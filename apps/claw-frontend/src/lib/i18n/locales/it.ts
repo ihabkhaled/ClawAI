@@ -61,7 +61,6 @@ export const it: TranslationDictionary = {
     select: 'Seleziona',
     download: 'Scarica',
     noDataAvailable: 'Nessun dato disponibile',
-    showingPage: 'Pagina {page} di {total}',
     errorBoundaryTitle: 'Qualcosa è andato storto',
     errorBoundaryDescription:
       "Questa pagina ha riscontrato un errore imprevisto. Riprova o passa a un'altra pagina.",
@@ -6309,11 +6308,6 @@ export const it: TranslationDictionary = {
         reopen: 'Riapri',
         archive: 'Archivia',
         confirmArchive: 'Archiviare questo ticket?',
-      },
-      pagination: {
-        previous: 'Precedente',
-        next: 'Successivo',
-        pageOf: 'Pagina {page} di {total}',
       },
     },
     screenshot: {

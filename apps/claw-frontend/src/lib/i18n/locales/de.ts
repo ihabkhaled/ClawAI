@@ -61,7 +61,6 @@ export const de: TranslationDictionary = {
     select: 'Auswählen',
     download: 'Herunterladen',
     noDataAvailable: 'Keine Daten verfügbar',
-    showingPage: 'Seite {page} von {total} wird angezeigt',
     errorBoundaryTitle: 'Etwas ist schiefgelaufen',
     errorBoundaryDescription:
       'Auf dieser Seite ist ein unerwarteter Fehler aufgetreten. Versuchen Sie es erneut oder wechseln Sie zu einer anderen Seite.',
@@ -6327,11 +6326,6 @@ export const de: TranslationDictionary = {
         reopen: 'Wieder öffnen',
         archive: 'Archivieren',
         confirmArchive: 'Dieses Ticket archivieren?',
-      },
-      pagination: {
-        previous: 'Zurück',
-        next: 'Weiter',
-        pageOf: 'Seite {page} von {total}',
       },
     },
     screenshot: {

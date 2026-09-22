@@ -100,7 +100,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Entries',
       columnPublished: 'Published',
       view: 'View',
-      pageOf: 'Page {current} of {total}',
     },
     revisionDetail: {
       emptySelection: 'Select a revision from the Revisions tab to see its detail.',
@@ -266,7 +265,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'العناصر',
       columnPublished: 'تاريخ النشر',
       view: 'عرض',
-      pageOf: 'الصفحة {current} من {total}',
     },
     revisionDetail: {
       emptySelection: 'اختر إصدارًا من تبويب الإصدارات لعرض تفاصيله.',
@@ -430,7 +428,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Einträge',
       columnPublished: 'Veröffentlicht',
       view: 'Anzeigen',
-      pageOf: 'Seite {current} von {total}',
     },
     revisionDetail: {
       emptySelection:
@@ -602,7 +599,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Elementos',
       columnPublished: 'Publicado',
       view: 'Ver',
-      pageOf: 'Página {current} de {total}',
     },
     revisionDetail: {
       emptySelection: 'Selecciona una revisión en la pestaña Revisiones para ver su detalle.',
@@ -773,7 +769,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'ورودی‌ها',
       columnPublished: 'تاریخ انتشار',
       view: 'مشاهده',
-      pageOf: 'صفحهٔ {current} از {total}',
     },
     revisionDetail: {
       emptySelection: 'برای مشاهدهٔ جزئیات، یک نسخه را از تب نسخه‌ها انتخاب کنید.',
@@ -942,7 +937,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Éléments',
       columnPublished: 'Publiée',
       view: 'Afficher',
-      pageOf: 'Page {current} sur {total}',
     },
     revisionDetail: {
       emptySelection: "Sélectionnez une révision dans l'onglet Révisions pour voir son détail.",
@@ -1113,7 +1107,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'प्रविष्टियाँ',
       columnPublished: 'प्रकाशित',
       view: 'देखें',
-      pageOf: 'पृष्ठ {current}, कुल {total} में से',
     },
     revisionDetail: {
       emptySelection: 'विवरण देखने के लिए संशोधन टैब से एक संशोधन चुनें।',
@@ -1282,7 +1275,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Elementi',
       columnPublished: 'Pubblicata',
       view: 'Visualizza',
-      pageOf: 'Pagina {current} di {total}',
     },
     revisionDetail: {
       emptySelection: 'Seleziona una revisione dalla scheda Revisioni per vederne il dettaglio.',
@@ -1452,7 +1444,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: '項目数',
       columnPublished: '公開日',
       view: '表示',
-      pageOf: '{current} / {total} ページ',
     },
     revisionDetail: {
       emptySelection: 'リビジョンタブでリビジョンを選択すると詳細が表示されます。',
@@ -1617,7 +1608,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Itens',
       columnPublished: 'Publicada',
       view: 'Ver',
-      pageOf: 'Página {current} de {total}',
     },
     revisionDetail: {
       emptySelection: 'Selecione uma revisão na aba Revisões para ver seus detalhes.',
@@ -1787,7 +1777,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'Элементы',
       columnPublished: 'Опубликовано',
       view: 'Просмотр',
-      pageOf: 'Страница {current} из {total}',
     },
     revisionDetail: {
       emptySelection: 'Выберите ревизию на вкладке «Ревизии», чтобы увидеть её детали.',
@@ -1953,7 +1942,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: 'รายการ',
       columnPublished: 'เผยแพร่เมื่อ',
       view: 'ดู',
-      pageOf: 'หน้า {current} จาก {total}',
     },
     revisionDetail: {
       emptySelection: 'เลือกรีวิชันจากแท็บรีวิชันเพื่อดูรายละเอียด',
@@ -2117,7 +2105,6 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       columnEntries: '条目数',
       columnPublished: '发布时间',
       view: '查看',
-      pageOf: '第 {current} 页,共 {total} 页',
     },
     revisionDetail: {
       emptySelection: '请在修订版本标签页中选择一个修订版本以查看详情。',

@@ -61,7 +61,6 @@ export const fa: TranslationDictionary = {
     select: 'انتخاب کنید',
     download: 'دانلود کنید',
     noDataAvailable: 'هیچ داده ای در دسترس نیست',
-    showingPage: 'نمایش صفحه {page} از {total}',
     errorBoundaryTitle: 'مشکلی پیش آمد',
     errorBoundaryDescription:
       'این صفحه با یک خطای غیرمنتظره مواجه شد.دوباره امتحان کنید یا به صفحه دیگری بروید.',
@@ -6207,11 +6206,6 @@ export const fa: TranslationDictionary = {
         reopen: 'بازگشایی',
         archive: 'بایگانی',
         confirmArchive: 'این تیکت بایگانی شود؟',
-      },
-      pagination: {
-        previous: 'قبلی',
-        next: 'بعدی',
-        pageOf: 'صفحه {page} از {total}',
       },
     },
     screenshot: {

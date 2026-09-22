@@ -2,7 +2,7 @@ import { Server } from 'lucide-react';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
-import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { useServerLogStats } from '@/hooks/logs/use-server-log-stats';
 import { useTranslation } from '@/lib/i18n';
 import type { ServerLogsContentProps } from '@/types';
@@ -15,6 +15,8 @@ export function ServerLogsContent({
   meta,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   isLoading,
   isError,
 }: ServerLogsContentProps): React.ReactElement {
@@ -55,33 +57,15 @@ export function ServerLogsContent({
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {t('common.showingPage', {
-            page: String(meta.page),
-            totalPages: String(meta.totalPages),
-            total: String(meta.total),
-          })}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            {t('common.previous')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= meta.totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            {t('common.next')}
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        totalPages={Math.max(meta.totalPages, 1)}
+        totalItems={meta.total}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        t={t}
+      />
     </>
   );
 }

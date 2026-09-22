@@ -61,7 +61,6 @@ export const ar: TranslationDictionary = {
     select: 'اختيار',
     download: 'تنزيل',
     noDataAvailable: 'لا توجد بيانات متاحة',
-    showingPage: 'عرض الصفحة {page} من {total}',
     errorBoundaryTitle: 'حدث خطأ ما',
     errorBoundaryDescription:
       'واجهت هذه الصفحة خطأً غير متوقع. حاول مرة أخرى أو انتقل إلى صفحة أخرى.',
@@ -6112,11 +6111,6 @@ export const ar: TranslationDictionary = {
         reopen: 'إعادة فتح',
         archive: 'أرشفة',
         confirmArchive: 'أرشفة هذه التذكرة؟',
-      },
-      pagination: {
-        previous: 'السابق',
-        next: 'التالي',
-        pageOf: 'صفحة {page} من {total}',
       },
     },
     screenshot: {
