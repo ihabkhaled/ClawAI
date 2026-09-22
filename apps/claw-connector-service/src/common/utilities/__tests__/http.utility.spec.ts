@@ -9,12 +9,22 @@ function mockFetchBody(status: number, bodyText: string): void {
   });
 }
 
+/**
+ * The host check is unconditional, so a test using a fake host must declare it
+ * exactly as a real adapter declares its connector's base URL. Relying on the
+ * allowlist being empty only works on a machine whose environment happens to
+ * name no services — a CI runner defines variables ending in `_ENDPOINT`, so
+ * these six refused there and passed here.
+ */
+const TEST_HOST: ReadonlySet<string> = new Set(['x.test', 'api.anthropic.com']);
+
 describe('httpGet JSON handling', () => {
   it('parses a JSON body', async () => {
     mockFetchBody(200, '{"data":[{"id":"a"}]}');
 
     const response = await httpGet<{ data: Array<{ id: string }> }>({
       url: 'https://x.test/models',
+      allowedHosts: TEST_HOST,
     });
 
     expect(response.ok).toBe(true);
@@ -27,6 +37,7 @@ describe('httpGet JSON handling', () => {
 
     const response = await httpGet<{ error: { message: string } }>({
       url: 'https://x.test/models',
+      allowedHosts: TEST_HOST,
     });
 
     expect(response.ok).toBe(false);
@@ -39,7 +50,9 @@ describe('httpGet JSON handling', () => {
   it('names the url and status when the body is not JSON', async () => {
     mockFetchBody(404, '<html><body>Not Found</body></html>');
 
-    await expect(httpGet({ url: 'https://api.anthropic.com/models' })).rejects.toThrow(
+    await expect(
+      httpGet({ url: 'https://api.anthropic.com/models', allowedHosts: TEST_HOST }),
+    ).rejects.toThrow(
       'https://api.anthropic.com/models returned HTTP 404 with a non-JSON body: <html><body>Not Found</body></html>',
     );
   });
@@ -47,15 +60,17 @@ describe('httpGet JSON handling', () => {
   it('says so explicitly when the body is empty', async () => {
     mockFetchBody(404, '');
 
-    await expect(httpGet({ url: 'https://x.test/models' })).rejects.toThrow('(empty body)');
+    await expect(
+      httpGet({ url: 'https://x.test/models', allowedHosts: TEST_HOST }),
+    ).rejects.toThrow('(empty body)');
   });
 
   it('truncates a long non-JSON body rather than echoing a whole page', async () => {
     mockFetchBody(500, 'x'.repeat(5000));
 
-    await expect(httpGet({ url: 'https://x.test/models' })).rejects.toThrow(
-      new RegExp(`non-JSON body: x{200}$`),
-    );
+    await expect(
+      httpGet({ url: 'https://x.test/models', allowedHosts: TEST_HOST }),
+    ).rejects.toThrow(new RegExp(`non-JSON body: x{200}$`));
   });
 });
 
@@ -119,7 +134,7 @@ describe('request URL guard', () => {
   // check has already run. None of these helpers stream, so refusing costs
   // nothing.
   it('never follows a redirect', async () => {
-    await httpGet({ url: 'https://x.test/models' });
+    await httpGet({ url: 'https://x.test/models', allowedHosts: TEST_HOST });
 
     const init = vi.mocked(global.fetch).mock.calls[0]?.[1];
     expect(init?.redirect).toBe('error');
