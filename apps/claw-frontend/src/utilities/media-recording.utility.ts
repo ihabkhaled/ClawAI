@@ -4,6 +4,7 @@ import {
   MEDIA_RECORDING_FALLBACK_AUDIO_MIME,
   MEDIA_RECORDING_FALLBACK_EXTENSION,
   MEDIA_RECORDING_FALLBACK_VIDEO_MIME,
+  MEDIA_RECORDING_MAX_MS,
   MEDIA_RECORDING_VIDEO_FILENAME_STEM,
 } from '@/constants/media-recording.constants';
 import { MediaRecordingKind } from '@/enums/media-recording-kind.enum';
@@ -90,4 +91,15 @@ export function resolveRecorderBlockedKey(
     return modelBlockedKey;
   }
   return null;
+}
+
+/**
+ * The recording cap, in whole minutes, for the consent dialog copy.
+ *
+ * Derived from `MEDIA_RECORDING_MAX_MS` rather than written into the 13
+ * locale files: a change to the cap must not leave thirteen translations
+ * quietly promising the old number.
+ */
+export function resolveRecordingMaxMinutes(maxMs: number = MEDIA_RECORDING_MAX_MS): number {
+  return Math.max(1, Math.round(maxMs / 60_000));
 }

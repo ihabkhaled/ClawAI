@@ -7,6 +7,7 @@ import type {
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type CostClassification = {
   tier: CostTier;
@@ -35,10 +36,11 @@ export type CostEnsembleResult = {
   metadata: CostEnsembleMetadata;
 };
 
-export type SendCostEnsemblePayload = AdvancedModelSelectionPayload & {
-  content: string;
-  fileIds?: string[];
-};
+export type SendCostEnsemblePayload = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    content: string;
+    fileIds?: string[];
+  };
 
 export type SendCostEnsembleResult = {
   messageId: string;

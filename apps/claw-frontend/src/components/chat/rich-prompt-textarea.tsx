@@ -24,6 +24,7 @@ import type { RichPromptTextareaProps } from '@/types';
 export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptTextareaProps>(
   function RichPromptTextarea(props, forwardedRef): React.ReactElement {
     const {
+      id,
       value,
       onChange,
       onSubmit,
@@ -65,6 +66,7 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
     return (
       <Textarea
         ref={textareaRef}
+        id={id}
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}

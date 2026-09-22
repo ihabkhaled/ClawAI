@@ -7,6 +7,7 @@ import type {
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type RolePack = RolePackName;
 
@@ -28,11 +29,12 @@ export type RolePackResult = {
   metadata: RolePackMetadata;
 };
 
-export type SendRolePackPayload = AdvancedModelSelectionPayload & {
-  content: string;
-  pack: RolePack;
-  fileIds?: string[];
-};
+export type SendRolePackPayload = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    content: string;
+    pack: RolePack;
+    fileIds?: string[];
+  };
 
 export type SendRolePackResult = {
   messageId: string;

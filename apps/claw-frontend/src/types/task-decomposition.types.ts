@@ -5,6 +5,7 @@ import type {
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type SubTaskResult = {
   title: string;
@@ -26,12 +27,13 @@ export type DecompositionResultState = {
   metadata: DecompositionMetadata;
 };
 
-export type DecomposeRequest = AdvancedModelSelectionPayload & {
-  content: string;
-  threadId?: string;
-  maxSubTasks?: number;
-  fileIds?: string[];
-};
+export type DecomposeRequest = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    content: string;
+    threadId?: string;
+    maxSubTasks?: number;
+    fileIds?: string[];
+  };
 
 export type DecomposeResponse = {
   messageId: string;

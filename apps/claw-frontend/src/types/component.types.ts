@@ -986,6 +986,12 @@ export type MessageComposerProps = {
 // the in-thread compare panel. Wraps shadcn <Textarea> with auto-resize,
 // Enter-to-submit (Shift+Enter for newline), and IME-safe composition handling.
 export type RichPromptTextareaProps = {
+  /**
+   * DOM id, so a visible `<label htmlFor>` can point at the textarea. The
+   * orchestration shell has such a label; without an id it could only fall
+   * back to `ariaLabel`, which loses the click-the-label-to-focus behaviour.
+   */
+  id?: string;
   value: string;
   onChange: (next: string) => void;
   onSubmit?: () => void;

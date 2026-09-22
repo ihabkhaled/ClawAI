@@ -45,6 +45,7 @@ export class EscalationChainManager {
     fileIds?: string[],
     researchMode?: ResearchMode,
     userToken?: string,
+    researchProviderId?: string,
   ): Promise<EscalationChainResponse> {
     this.logger.log(
       `executeEscalationChain: queuing ${String(chain.length)}-step chain in thread ${threadId}`,
@@ -60,6 +61,7 @@ export class EscalationChainManager {
       fileIds,
       researchMode,
       userToken,
+      researchProviderId,
     );
 
     return { messageId: userMessage.id, threadId, prompt: content };
@@ -73,6 +75,7 @@ export class EscalationChainManager {
     fileIds?: string[],
     researchMode?: ResearchMode,
     userToken?: string,
+    researchProviderId?: string,
   ): Promise<void> {
     try {
       const { context: rawContext, threadSettings } = await this.buildContext(
@@ -87,6 +90,10 @@ export class EscalationChainManager {
         mode: researchMode,
         query: content,
         userToken: userToken ?? '',
+        // Escalation used to stop here without it, so the user's chosen
+        // provider was ignored in this lab alone while the transcript still
+        // named it. Every other orchestration manager passes it.
+        providerId: researchProviderId,
       });
       const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
       const result = await this.runChain(threadId, content, chain, context, threadSettings);

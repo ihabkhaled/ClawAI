@@ -66,7 +66,11 @@ import type { PlanView } from './plan.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
-import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
+import type {
+  OrchestrationResearchPayload,
+  ResearchOptions,
+  SanitizedResearchProvider,
+} from './research.types';
 import type {
   WorkspaceConnector,
   WorkspaceHealthEvent,
@@ -1160,6 +1164,17 @@ export type UseOrchestrationComposerReturn = {
   ingestFiles: (files: FileList | File[]) => void;
   isUploading: boolean;
   pendingCount: number;
+  /** Selected research mode + provider, defaulted to AUTO exactly like chat. */
+  research: ResearchOptions;
+  setResearch: (next: ResearchOptions) => void;
+  researchProviders: SanitizedResearchProvider[];
+  isResearchProvidersLoading: boolean;
+  /**
+   * Ready-to-spread payload fragment. Empty object when the mode is NONE, so
+   * the nine lab hooks stay a one-line `...composer.researchPayload` and the
+   * "omit, never send NONE" rule lives in exactly one place.
+   */
+  researchPayload: OrchestrationResearchPayload;
   /** Called after a successful send; a lab run is one question. */
   clear: () => void;
 };

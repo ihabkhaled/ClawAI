@@ -106,10 +106,17 @@ export function useEscalationPage(): UseEscalationPageReturn {
     if (!canSubmit || selectedModel === null) {
       return;
     }
+    // Escalation is the one lab whose DTO carries research PER STEP rather
+    // than at the top level, so the single chosen mode is fanned into every
+    // tier. That is what the backend already reads: chat-messages.service.ts
+    // scans `chain` for the first non-NONE `researchMode`, gates on it once,
+    // and hands it to the manager, which enriches once for the whole chain.
+    // Spreading an empty object when the mode is NONE keeps every step
+    // exactly as it was before.
     const fullChain: EscalationChainStep[] = [
       { provider: selectedModel.provider, model: selectedModel.model },
       ...additionalChainModels,
-    ];
+    ].map((step) => ({ ...step, ...composer.researchPayload }));
     send({
       content: prompt.trim(),
       chain: fullChain,

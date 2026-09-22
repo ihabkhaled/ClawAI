@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
+import { MEDIA_RECORDING_MAX_MS } from '@/constants/media-recording.constants';
+import { resolveRecordingMaxMinutes } from '@/utilities/media-recording.utility';
 
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({
@@ -97,6 +99,7 @@ describe('VoiceVideoRecorder', () => {
     render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={onRecorded} />);
 
     fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
 
     await waitFor(() => {
       expect(screen.getByTestId('voice-video-recorder-elapsed')).toBeInTheDocument();
@@ -117,6 +120,7 @@ describe('VoiceVideoRecorder', () => {
     render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={onRecorded} />);
 
     fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
     await waitFor(() => {
       expect(screen.getByTestId('voice-video-recorder-cancel')).toBeInTheDocument();
     });
@@ -138,5 +142,131 @@ describe('VoiceVideoRecorder', () => {
       'chat.recorder.unsupportedBrowser',
     );
     expect(screen.getByTestId('voice-video-recorder-video')).toBeDisabled();
+  });
+});
+
+describe('VoiceVideoRecorder — consent before the browser prompt', () => {
+  it('opens the dialog and does NOT touch getUserMedia when the microphone is pressed', async () => {
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+
+    expect(await screen.findByTestId('media-recording-consent-dialog')).toBeInTheDocument();
+    // The whole point: the browser's own permission prompt has not happened yet.
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(MockMediaRecorder.instances).toHaveLength(0);
+  });
+
+  it('names the microphone for an audio note and both devices for a video note', async () => {
+    const { unmount } = render(
+      <VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    expect(await screen.findByTestId('media-recording-consent-dialog')).toHaveAttribute(
+      'data-kind',
+      'audio',
+    );
+    expect(screen.getByTestId('media-recording-consent-devices')).toHaveTextContent(
+      'chat.recorder.consentAudioDevices',
+    );
+    unmount();
+
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('voice-video-recorder-video'));
+    expect(await screen.findByTestId('media-recording-consent-dialog')).toHaveAttribute(
+      'data-kind',
+      'video',
+    );
+    expect(screen.getByTestId('media-recording-consent-devices')).toHaveTextContent(
+      'chat.recorder.consentVideoDevices',
+    );
+  });
+
+  it('states the upload, the coming permission prompt, and the cap taken from the constant', async () => {
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    await screen.findByTestId('media-recording-consent-dialog');
+
+    expect(screen.getByTestId('media-recording-consent-permission')).toHaveTextContent(
+      'chat.recorder.consentPermission',
+    );
+    expect(screen.getByTestId('media-recording-consent-upload')).toHaveTextContent(
+      'chat.recorder.consentUpload',
+    );
+    // The mocked t() appends the first param, so the minutes are visible here —
+    // and they are derived from MEDIA_RECORDING_MAX_MS, not written into copy.
+    expect(screen.getByTestId('media-recording-consent-max-length')).toHaveTextContent(
+      `chat.recorder.consentMaxLength:${String(resolveRecordingMaxMinutes(MEDIA_RECORDING_MAX_MS))}`,
+    );
+  });
+
+  it('starts recording only once the dialog is confirmed', async () => {
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-video'));
+    fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('voice-video-recorder-elapsed')).toBeInTheDocument();
+    });
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+    // A video note asks for the camera AND the microphone.
+    expect(vi.mocked(navigator.mediaDevices.getUserMedia).mock.calls[0]?.[0]).toMatchObject({
+      audio: true,
+    });
+  });
+
+  it('starts nothing when the dialog is cancelled', async () => {
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    fireEvent.click(await screen.findByTestId('media-recording-consent-cancel'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('media-recording-consent-dialog')).not.toBeInTheDocument();
+    });
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('voice-video-recorder-elapsed')).not.toBeInTheDocument();
+  });
+
+  it('starts nothing when the dialog is dismissed with Escape', async () => {
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    await screen.findByTestId('media-recording-consent-dialog');
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape', code: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('media-recording-consent-dialog')).not.toBeInTheDocument();
+    });
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it('puts the initial focus on the confirm button', async () => {
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    const confirm = await screen.findByTestId('media-recording-consent-confirm');
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(confirm);
+    });
+  });
+
+  it('still surfaces the denial message when permission is refused after confirming', async () => {
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValueOnce(
+      new Error('Permission denied'),
+    );
+    render(<VoiceVideoRecorder canSendAudio canSendVideo onRecorded={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
+
+    expect(await screen.findByTestId('voice-video-recorder-error')).toHaveTextContent(
+      'chat.recorder.errorPermissionDenied',
+    );
   });
 });

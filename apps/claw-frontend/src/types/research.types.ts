@@ -8,6 +8,23 @@ export type ResearchOptions = {
   providerId?: string;
 };
 
+/**
+ * The two wire fields every chat and orchestration request carries when the
+ * user asked for web research.
+ *
+ * Every lab DTO in chat-service already spreads `researchFields`, and every
+ * lab manager already calls `enrichForOrchestration` — the whole path was
+ * dead only because no lab frontend ever put these two keys on a payload.
+ *
+ * Both are optional on purpose: the object is spread into a request and is
+ * EMPTY when the mode is NONE, so "no research" reaches the backend as an
+ * absent field rather than as an explicit NONE, exactly like `fileIds`.
+ */
+export type OrchestrationResearchPayload = {
+  researchMode?: ResearchMode;
+  researchProviderId?: string;
+};
+
 export type SanitizedResearchProvider = {
   id: string;
   kind: ResearchProviderKind;

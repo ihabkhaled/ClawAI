@@ -5,6 +5,7 @@ import type {
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type PipelineStageResult = {
   stageName: string;
@@ -25,11 +26,12 @@ export type PipelineResult = {
   metadata: PipelineMetadata;
 };
 
-export type SendPipelinePayload = AdvancedModelSelectionPayload & {
-  content: string;
-  template: string;
-  fileIds?: string[];
-};
+export type SendPipelinePayload = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    content: string;
+    template: string;
+    fileIds?: string[];
+  };
 
 export type SendPipelineResult = {
   messageId: string;

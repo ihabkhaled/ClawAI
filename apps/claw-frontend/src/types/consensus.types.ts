@@ -3,6 +3,7 @@ import type { ConsensusConfidenceLevel, ConsensusModelStatus } from '@/enums';
 import type { ModelSelection } from './component.types';
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type ConsensusModelBreakdown = {
   provider: string;
@@ -33,7 +34,7 @@ export type ConsensusMetadata = {
   finalAnswer?: string;
 };
 
-export type ConsensusRequest = {
+export type ConsensusRequest = OrchestrationResearchPayload & {
   threadId?: string;
   content: string;
   models: Array<{ provider: string; model: string }>;

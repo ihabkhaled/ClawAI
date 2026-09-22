@@ -2,10 +2,20 @@ import type { EscalationChainStatus } from '@/enums';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { OrchestrationStage } from '@/types/orchestration.types';
+import type { OrchestrationResearchPayload } from '@/types/research.types';
 
 import type { AdvancedModuleModelSelection } from './advanced-model-selection.types';
 
-export type EscalationChainStep = {
+/**
+ * One tier of an escalation chain.
+ *
+ * Research lives HERE, per step, not on the request — `escalationStepSchema`
+ * in chat-service is the one lab DTO that never spread `researchFields` at the
+ * top level. The frontend therefore fans the single chosen mode into every
+ * step; chat-messages.service.ts then picks the first non-NONE step mode back
+ * out as the chain-level mode it gates and enriches with.
+ */
+export type EscalationChainStep = OrchestrationResearchPayload & {
   provider: string;
   model: string;
   qualityThreshold?: number;

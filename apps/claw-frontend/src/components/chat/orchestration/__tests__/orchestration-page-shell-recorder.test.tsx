@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
+import { ResearchMode } from '@/enums/research-mode.enum';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
 // The shell's other children pull react-query and the file catalog; this test is
@@ -18,6 +19,11 @@ vi.mock('@/components/chat/orchestration/orchestration-single-model-select', () 
 }));
 vi.mock('@/hooks/chat/use-model-media-capabilities', () => ({
   useModelMediaCapabilities: () => ({ canSendAudio: true, canSendVideo: true }),
+}));
+// The shell gates its research control on the plan; this test is about the
+// recorder, so keep research off and out of the tree.
+vi.mock('@/hooks/auth/use-plan-features', () => ({
+  usePlanFeatures: () => ({ has: () => false, isAdmin: false, isLoading: false }),
 }));
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -65,6 +71,11 @@ function renderShell(ingestFiles: (files: File[] | FileList) => void): void {
       ingestFiles,
       isUploading: false,
       pendingCount: 0,
+      research: { mode: ResearchMode.AUTO },
+      setResearch: vi.fn(),
+      researchProviders: [],
+      isResearchProvidersLoading: false,
+      researchPayload: { researchMode: ResearchMode.AUTO },
       clear: vi.fn(),
     },
     prompt: '',
@@ -92,6 +103,8 @@ describe('OrchestrationPageShell — voice/video notes', () => {
     renderShell(ingestFiles);
 
     fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    // Recording is consent-gated now: the dialog comes first, getUserMedia second.
+    fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
     await waitFor(() => {
       expect(screen.getByTestId('voice-video-recorder-stop')).toBeInTheDocument();
     });

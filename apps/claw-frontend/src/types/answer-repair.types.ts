@@ -6,16 +6,18 @@ import type {
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { OrchestrationStage } from '@/types/orchestration.types';
+import type { OrchestrationResearchPayload } from '@/types/research.types';
 
-export type RepairRequest = AdvancedModelSelectionPayload & {
-  messageId?: string;
-  content?: string;
-  threadId?: string;
-  repairTypes: RepairType[];
-  targetProvider?: string;
-  targetModel?: string;
-  fileIds?: string[];
-};
+export type RepairRequest = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    messageId?: string;
+    content?: string;
+    threadId?: string;
+    repairTypes: RepairType[];
+    targetProvider?: string;
+    targetModel?: string;
+    fileIds?: string[];
+  };
 
 export type RepairResponse = {
   messageId: string;

@@ -535,6 +535,15 @@ export type TranslationDictionary = {
       errorPermissionDenied: string;
       errorRecorderFailed: string;
       errorEmptyRecording: string;
+      consentAudioTitle: string;
+      consentVideoTitle: string;
+      consentAudioDevices: string;
+      consentVideoDevices: string;
+      consentPermission: string;
+      consentUpload: string;
+      consentMaxLength: string;
+      consentConfirm: string;
+      consentCancel: string;
     };
     noFiles: string;
     selectedFiles: string;

@@ -67,6 +67,9 @@ export function useRepairPage(): UseRepairPageReturn {
       targetModel: selectedModel?.model,
       ...buildAdvancedModelSelectionPayload(selectedModel),
       ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
+      // Web research. Empty object when the mode is NONE, so "no research"
+      // reaches the DTO as an absent field, exactly like `fileIds`.
+      ...composer.researchPayload,
     });
     composer.clear();
   }, [canSubmit, send, resetStages, content, selectedRepairTypes, selectedModel, composer]);

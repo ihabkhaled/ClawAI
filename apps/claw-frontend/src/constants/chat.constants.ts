@@ -56,6 +56,18 @@ export const THREADS_PAGE_SIZE = 30;
  */
 export const COMPOSER_MIN_ROWS = 1;
 export const COMPOSER_MAX_ROWS = 10;
+
+/**
+ * Orchestration-lab prompt box.
+ *
+ * Taller floor than the chat composer: a lab prompt is the whole page's
+ * subject, not one turn in a running conversation, and the shell previously
+ * hard-coded `rows={6}` for exactly that reason. The ceiling is higher too —
+ * a decomposition or repair prompt is routinely long, and the old box just
+ * scrolled inside six rows.
+ */
+export const ORCHESTRATION_PROMPT_MIN_ROWS = 6;
+export const ORCHESTRATION_PROMPT_MAX_ROWS = 18;
 export const VIRTUOSO_START_INDEX = 1_000_000;
 
 // Thread-settings bounds. These MUST stay in step with the Zod schema in

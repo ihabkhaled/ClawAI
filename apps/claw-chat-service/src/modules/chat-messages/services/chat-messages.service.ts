@@ -549,10 +549,7 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private async resolveCompareThread(userId: string, dto: ParallelMessageDto): Promise<ChatThread> {
-    if (dto.threadId && dto.threadId.length > 0) {
-      return this.getThreadForMessage(dto.threadId, userId);
-    }
-    return this.chatThreadsRepository.create({
+    return dto.threadId && dto.threadId.length > 0 ? this.getThreadForMessage(dto.threadId, userId) : this.chatThreadsRepository.create({
       userId,
       title: `Compare: ${dto.content.slice(0, 50)}`,
       routingMode: RoutingMode.MANUAL_MODEL,
@@ -598,9 +595,10 @@ export class ChatMessagesService implements OnModuleInit {
     // Gate research at the chain level — the per-step DTO field is forwarded
     // verbatim to each escalation step; the user-facing gate fires once at
     // the entry point regardless of how many steps request research.
-    const chainResearchMode = dto.chain.find(
+    const researchStep = dto.chain.find(
       (step) => step.researchMode !== undefined && step.researchMode !== ResearchMode.NONE,
-    )?.researchMode;
+    );
+    const chainResearchMode = researchStep?.researchMode;
     await this.accessControlService.assertCanSendMessage(userId, {
       requirePermission: Permission.ESCALATION_CHAIN_USE,
       requireFeature: 'allowEscalationChain',
@@ -623,6 +621,7 @@ export class ChatMessagesService implements OnModuleInit {
       dto.fileIds,
       chainResearchMode,
       userToken,
+      researchStep?.researchProviderId,
     );
   }
 
@@ -1432,10 +1431,7 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
-    if (!thread) {
-      return undefined;
-    }
-    return {
+    return !thread ? undefined : {
       systemPrompt: thread.systemPrompt,
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,
@@ -1589,8 +1585,7 @@ export class ChatMessagesService implements OnModuleInit {
       model: llmResponse.model,
       displayName: llmResponse.model,
     };
-    if (payload.routingMode === 'AUTO' && payload.routerModel) {
-      return [
+    return payload.routingMode === 'AUTO' && payload.routerModel ? [
         {
           stage: 'router' as const,
           provider: 'local-ollama',
@@ -1604,9 +1599,7 @@ export class ChatMessagesService implements OnModuleInit {
         },
         ...researchStep,
         executionStep,
-      ];
-    }
-    return [...researchStep, executionStep];
+      ] : [...researchStep, executionStep];
   }
 
   /**
@@ -1623,10 +1616,7 @@ export class ChatMessagesService implements OnModuleInit {
    */
   private buildReasoningMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
     const reasoning = llmResponse.reasoning?.trim();
-    if (reasoning === undefined || reasoning.length === 0) {
-      return {};
-    }
-    return {
+    return reasoning === undefined || reasoning.length === 0 ? {} : {
       reasoning:
         reasoning.length <= MAX_STORED_REASONING_CHARS
           ? reasoning
@@ -1699,10 +1689,7 @@ export class ChatMessagesService implements OnModuleInit {
   // message after a page refresh. Empty when the model did not call any
   // tools (the common path for non-agentic models).
   private buildToolTranscriptMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    if (llmResponse.toolTranscript === undefined) {
-      return {};
-    }
-    return { toolTranscript: llmResponse.toolTranscript };
+    return llmResponse.toolTranscript === undefined ? {} : { toolTranscript: llmResponse.toolTranscript };
   }
 
   // Persists the lightweight ResearchEnricherManager transcript so the FE can
@@ -1821,10 +1808,7 @@ export class ChatMessagesService implements OnModuleInit {
     if (raw === ResearchMode.NONE || raw === ResearchMode.SEARCH) {
       return raw;
     }
-    if (raw === ResearchMode.SEARCH_FETCH || raw === ResearchMode.SEARCH_EXTRACT) {
-      return raw;
-    }
-    return ResearchMode.SEARCH;
+    return raw === ResearchMode.SEARCH_FETCH || raw === ResearchMode.SEARCH_EXTRACT ? raw : ResearchMode.SEARCH;
   }
 
   // Bug-hunt 2026-05-31, Fix 2 — surface mid-sentence truncation in the
@@ -1833,20 +1817,14 @@ export class ChatMessagesService implements OnModuleInit {
   // showing the cut-off reply. The flag is additive; existing consumers
   // that don't know about it ignore unknown metadata keys.
   private buildTruncationMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    if (llmResponse.finishReason !== 'length') {
-      return {};
-    }
-    return { truncatedAtContextLimit: true };
+    return llmResponse.finishReason !== 'length' ? {} : { truncatedAtContextLimit: true };
   }
 
   // Feature 2 — persists token usage transparency on the assistant message so
   // the FE can show whether counts were native or estimated and which context
   // produced them, surviving a page refresh.
   private buildTokenUsageMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    if (llmResponse.imageGenerationId || llmResponse.fileGenerationId) {
-      return {};
-    }
-    return {
+    return llmResponse.imageGenerationId || llmResponse.fileGenerationId ? {} : {
       tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.CHAT,
       ...(llmResponse.tokenEstimated === undefined
         ? {}
@@ -1864,10 +1842,7 @@ export class ChatMessagesService implements OnModuleInit {
   ): Record<string, unknown> {
     const workflow = llmResponse.workflow ?? payload.selectedWorkflow ?? null;
     const workflowReason = llmResponse.workflowReason ?? payload.workflowReason ?? null;
-    if (workflow === null && llmResponse.searchFirst === undefined) {
-      return {};
-    }
-    return {
+    return workflow === null && llmResponse.searchFirst === undefined ? {} : {
       ...(workflow === null ? {} : { workflow }),
       ...(workflowReason === null ? {} : { workflowReason }),
       ...(llmResponse.searchFirst === undefined ? {} : { searchFirst: llmResponse.searchFirst }),
@@ -1877,8 +1852,7 @@ export class ChatMessagesService implements OnModuleInit {
   private buildContextMetaPart(
     contextMetadata: { memoryCount: number; fileIds: string[] } | undefined,
   ): Record<string, unknown> {
-    if (!contextMetadata) return {};
-    return { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
+    return !contextMetadata ? {} : { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
   }
 
   private buildResearchMetaPart(
@@ -1897,15 +1871,11 @@ export class ChatMessagesService implements OnModuleInit {
     }
     // The plan's AI-file allowance was used: the chat shows a translated
     // notice from these numbers (ADR-110).
-    if (llmResponse.fileLimit) {
-      return { type: 'file_limit', fileLimit: llmResponse.fileLimit };
-    }
-    return {};
+    return llmResponse.fileLimit ? { type: 'file_limit', fileLimit: llmResponse.fileLimit } : {};
   }
 
   private buildReRouteMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    if (!llmResponse.reRouted) return {};
-    return {
+    return !llmResponse.reRouted ? {} : {
       reRouted: true,
       originalProvider: llmResponse.originalProvider,
       originalModel: llmResponse.originalModel,
@@ -2027,10 +1997,7 @@ export class ChatMessagesService implements OnModuleInit {
       return null;
     }
     const bundleRecord = this.readNestedObject(researchRecord, 'bundle');
-    if (bundleRecord === null) {
-      return null;
-    }
-    return {
+    return bundleRecord === null ? null : {
       runId: this.readMetaString(researchRecord, 'runId') ?? 'unknown',
       workflow: this.readMetaString(researchRecord, 'mode') ?? 'unknown',
       toolsUsed: this.readStringArray(bundleRecord, 'toolsUsed'),
@@ -2054,10 +2021,7 @@ export class ChatMessagesService implements OnModuleInit {
     latestUserMetadata?: Record<string, unknown> | null,
   ): Record<string, unknown> | null {
     const research = latestUserMetadata?.['research'];
-    if (research === null || typeof research !== 'object') {
-      return null;
-    }
-    return research as Record<string, unknown>;
+    return research === null || typeof research !== 'object' ? null : (research as Record<string, unknown>);
   }
 
   private extractResearchBundle(run: ResearchRunResponse): ResearchExecutionSummary {
@@ -2115,11 +2079,7 @@ export class ChatMessagesService implements OnModuleInit {
     // The first row is usually the user's, but a thread can open with a system
     // row and a research run writes a placeholder before the answer.
     const firstUserMessage = opening.find((message) => message.role === MessageRole.USER);
-    if (firstUserMessage === undefined) {
-      return null;
-    }
-
-    return deriveThreadTitle(firstUserMessage.content);
+    return firstUserMessage === undefined ? null : deriveThreadTitle(firstUserMessage.content);
   }
 
   private logAssistantResponse(payload: MessageRoutedData, llmResponse: LlmResponse): void {
@@ -2209,8 +2169,7 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {
-    if (!llmResponse.reRouted) return {};
-    return {
+    return !llmResponse.reRouted ? {} : {
       reRouted: true,
       originalProvider: llmResponse.originalProvider,
       originalModel: llmResponse.originalModel,
@@ -2220,8 +2179,7 @@ export class ChatMessagesService implements OnModuleInit {
 
   private buildPublishJudgePart(llmResponse: LlmResponse): Record<string, unknown> {
     const judge = llmResponse.judgeRefereeMetadata;
-    if (judge === undefined) return {};
-    return {
+    return judge === undefined ? {} : {
       judgeDecision: judge.judgeDecision,
       criticModel: judge.criticModel,
       judgeModel: judge.judgeModel,
@@ -2363,8 +2321,7 @@ export class ChatMessagesService implements OnModuleInit {
 
   private matchesFollowUp(lower: string, prefixes: ReadonlyArray<string>): boolean {
     if (lower.length >= SHORT_FOLLOW_UP_MAX_LENGTH) return false;
-    if (SHORT_FOLLOW_UP_EXACT_MATCHES.includes(lower)) return true;
-    return prefixes.some((prefix) => lower.startsWith(prefix));
+    return SHORT_FOLLOW_UP_EXACT_MATCHES.includes(lower) ? true : prefixes.some((prefix) => lower.startsWith(prefix));
   }
 
   private detectImageFollowUp(
@@ -2404,10 +2361,7 @@ export class ChatMessagesService implements OnModuleInit {
     const lastProvider = thread?.lastProvider;
     if (!lastProvider?.startsWith('IMAGE_')) return null;
     const lower = this.extractLatestUserText(messages);
-    if (lower === null || !this.matchesFollowUp(lower, IMAGE_FOLLOW_UP_PREFIXES)) {
-      return null;
-    }
-    return lastProvider;
+    return lower === null || !this.matchesFollowUp(lower, IMAGE_FOLLOW_UP_PREFIXES) ? null : lastProvider;
   }
 
   private detectFileGenerationFollowUp(

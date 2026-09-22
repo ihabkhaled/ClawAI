@@ -5,6 +5,7 @@ import type {
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type VerifyMetadata = {
   verified: boolean;
@@ -18,11 +19,12 @@ export type VerifyResult = {
   metadata: VerifyMetadata;
 };
 
-export type SendVerifyPayload = AdvancedModelSelectionPayload & {
-  content: string;
-  maxRevisions?: number;
-  fileIds?: string[];
-};
+export type SendVerifyPayload = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    content: string;
+    maxRevisions?: number;
+    fileIds?: string[];
+  };
 
 export type SendVerifyResult = {
   messageId: string;

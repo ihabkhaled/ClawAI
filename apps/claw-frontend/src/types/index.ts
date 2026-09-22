@@ -904,6 +904,7 @@ export type {
 } from './discovery.types';
 export type {
   ResearchOptions,
+  OrchestrationResearchPayload,
   SanitizedResearchProvider,
   ResearchEvidenceItem,
   ResearchEvidenceBundle,
@@ -1144,4 +1145,7 @@ export type {
   UseMediaRecorderReturn,
   ModelMediaCapabilities,
   VoiceVideoRecorderProps,
+  UseMediaRecordingConsentParams,
+  UseMediaRecordingConsentReturn,
+  MediaRecordingConsentDialogProps,
 } from './media-recording.types';

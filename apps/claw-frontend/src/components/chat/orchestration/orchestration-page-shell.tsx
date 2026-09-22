@@ -5,14 +5,18 @@ import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { OrchestrationPageHeader } from '@/components/chat/orchestration/orchestration-page-header';
 import { OrchestrationSingleModelSelect } from '@/components/chat/orchestration/orchestration-single-model-select';
 import { OrchestrationStageTimeline } from '@/components/chat/orchestration/orchestration-stage-timeline';
+import { ResearchToggle } from '@/components/chat/research-toggle';
+import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { LoadingState } from '@/components/common/loading-state';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { ORCHESTRATION_PROMPT_MAX_ROWS, ORCHESTRATION_PROMPT_MIN_ROWS } from '@/constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { LoadingStateVariant } from '@/enums/loading-state.enum';
+import { PlanFeature } from '@/enums/plan-feature.enum';
+import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { cn } from '@/lib/utils';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
@@ -62,6 +66,10 @@ export function OrchestrationPageShell({
   className,
 }: OrchestrationPageShellProps): React.ReactElement {
   const mediaCapabilities = useModelMediaCapabilities(selectedModel);
+  // Same gate as the chat composer (use-message-composer.ts): research is a
+  // paid feature, and a lab is not an exception to that.
+  const planFeatures = usePlanFeatures();
+  const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
   const trimmedPrompt = prompt.trim();
   const canSubmit =
     !isPending && selectedModel !== null && trimmedPrompt.length > 0 && isSubmitDisabled !== true;
@@ -111,25 +119,34 @@ export function OrchestrationPageShell({
                       now only Compare had them, so whether you could hand a
                       model a document depended on which lab you opened. A page
                       that passes no composer renders exactly as before. */}
+                  {/* RichPromptTextarea, not a bare Textarea: the labs used a
+                      fixed `rows={6}` box with no Enter-to-send and no IME
+                      guard, so typing a long prompt scrolled inside six rows
+                      and a CJK composition could not be confirmed safely. It
+                      is the same component chat and compare already use. */}
                   {composer === undefined ? (
-                    <Textarea
+                    <RichPromptTextarea
                       id="orchestration-prompt"
                       value={prompt}
-                      onChange={(event) => onPromptChange(event.target.value)}
+                      onChange={onPromptChange}
+                      onSubmit={canSubmit ? onSubmit : undefined}
                       placeholder={resolvedPromptPlaceholder}
                       disabled={isPending}
-                      rows={6}
+                      minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
+                      maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
                       className="min-h-[8rem]"
                     />
                   ) : (
                     <ComposerDropzone onFiles={composer.ingestFiles} disabled={isPending}>
-                      <Textarea
+                      <RichPromptTextarea
                         id="orchestration-prompt"
                         value={prompt}
-                        onChange={(event) => onPromptChange(event.target.value)}
+                        onChange={onPromptChange}
+                        onSubmit={canSubmit ? onSubmit : undefined}
                         placeholder={resolvedPromptPlaceholder}
                         disabled={isPending}
-                        rows={6}
+                        minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
+                        maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
                         className="min-h-[8rem]"
                       />
                     </ComposerDropzone>
@@ -154,8 +171,39 @@ export function OrchestrationPageShell({
                       onRecorded={(file) => composer.ingestFiles([file])}
                       disabled={isPending}
                     />
+                    {/* The whole web-research path existed on the backend for
+                        every lab — DTO field, manager enrichment, plan gate —
+                        and never ran once, because no lab page ever put
+                        `researchMode` on a payload. This control is the
+                        missing link, and it is the same component the chat
+                        composer renders. */}
+                    {canResearch ? (
+                      <ResearchToggle
+                        value={composer.research}
+                        providers={composer.researchProviders}
+                        isProvidersLoading={composer.isResearchProvidersLoading}
+                        onChange={composer.setResearch}
+                        disabled={isPending}
+                      />
+                    ) : null}
                   </div>
                 )}
+
+                {/* An upload runs in the background after a paste or a drop,
+                    and until now the labs said nothing while it did — a large
+                    file looked like nothing had happened, so people dropped it
+                    again. The count is a bare number on purpose: it needs no
+                    translation and avoids a 14th copy of the same sentence. */}
+                {composer !== undefined && composer.isUploading ? (
+                  <p
+                    data-testid="orchestration-upload-status"
+                    aria-live="polite"
+                    className="text-muted-foreground text-xs"
+                  >
+                    {t('chat.attachment.uploading')}
+                    {composer.pendingCount > 0 ? ` (${String(composer.pendingCount)})` : ''}
+                  </p>
+                ) : null}
 
                 {extraFieldsSlot !== undefined && extraFieldsSlot !== null ? (
                   <div className="space-y-3">{extraFieldsSlot}</div>

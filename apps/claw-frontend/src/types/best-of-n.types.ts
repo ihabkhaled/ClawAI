@@ -6,6 +6,7 @@ import type { ModelSelection } from './component.types';
 import type { UseOrchestrationComposerReturn } from './hook.types';
 import type { TranslateFunction } from './i18n.types';
 import type { OrchestrationStage } from './orchestration.types';
+import type { OrchestrationResearchPayload } from './research.types';
 
 export type CandidateResult = {
   content: string;
@@ -28,19 +29,20 @@ export type BestOfNResultState = {
   metadata: BestOfNMetadata;
 };
 
-export type BestOfNRequest = AdvancedModelSelectionPayload & {
-  content: string;
-  threadId?: string;
-  n: number;
-  models?: string[];
-  /**
-   * Attachments the run should see. Every orchestration payload carries this
-   * field the same way: present only when the user picked something, never
-   * sent as `[]`, so an empty selection reads on the backend as "no
-   * attachments" rather than as an explicit empty list.
-   */
-  fileIds?: string[];
-};
+export type BestOfNRequest = AdvancedModelSelectionPayload &
+  OrchestrationResearchPayload & {
+    content: string;
+    threadId?: string;
+    n: number;
+    models?: string[];
+    /**
+     * Attachments the run should see. Every orchestration payload carries this
+     * field the same way: present only when the user picked something, never
+     * sent as `[]`, so an empty selection reads on the backend as "no
+     * attachments" rather than as an explicit empty list.
+     */
+    fileIds?: string[];
+  };
 
 export type BestOfNResponse = {
   messageId: string;
