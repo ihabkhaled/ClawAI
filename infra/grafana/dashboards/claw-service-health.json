@@ -1,0 +1,216 @@
+{
+  "uid": "claw-service-health",
+  "title": "ClawAI — Service health",
+  "description": "Every service's health check over time, from health-service's exporter (ADR-113). Provisioned from infra/grafana/dashboards; edit the file, not the UI.",
+  "tags": ["clawai", "health"],
+  "timezone": "utc",
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["15s", "30s", "1m", "5m", "15m"] },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Services up",
+      "description": "How many services answered their health check in the latest snapshot, out of how many are checked.",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+          "expr": "claw_services_up",
+          "legendFormat": "up",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+          "expr": "claw_services_total",
+          "legendFormat": "checked",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "auto",
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "text" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Down right now",
+      "description": "Services whose latest health check failed. Empty is good.",
+      "gridPos": { "h": 5, "w": 12, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+          "expr": "claw_service_up == 0",
+          "legendFormat": "{{service}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "name",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "All services up",
+          "color": { "mode": "fixed", "fixedColor": "red" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Snapshot age",
+      "description": "Age of the health snapshot the last scrape was served from. Near 15 s is normal; growing means the exporter is not refreshing.",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+          "expr": "claw_health_snapshot_age_ms",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 30000 },
+              { "color": "red", "value": 60000 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "state-timeline",
+      "title": "Up / down per service",
+      "description": "claw_service_up for every service. A red band is a period the service did not answer its health check.",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+          "expr": "claw_service_up",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "options": {
+        "showValue": "never",
+        "mergeValues": true,
+        "rowHeight": 0.8,
+        "alignValue": "left",
+        "legend": { "showLegend": false, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "Down", "color": "red", "index": 0 },
+                "1": { "text": "Up", "color": "green", "index": 1 }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Health-check response time",
+      "description": "claw_service_response_ms per service. A gap is a period the service was down.",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "claw-prometheus" },
+          "expr": "claw_service_response_ms",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

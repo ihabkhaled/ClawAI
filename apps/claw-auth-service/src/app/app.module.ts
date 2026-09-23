@@ -7,6 +7,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
 import type { IncomingMessage } from 'node:http';
 
+import { isRoutineRoute } from '../common/utilities/routine-route.utility';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 
@@ -27,6 +28,7 @@ import { SystemSettingsModule } from '../modules/system-settings/system-settings
 import { OpsTokensModule } from '../modules/ops-tokens/ops-tokens.module';
 import { CreditModule } from '../modules/credit/credit.module';
 import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statistics.module';
+import { GrafanaAccessModule } from '../modules/grafana-access/grafana-access.module';
 
 @Module({
   imports: [
@@ -38,17 +40,13 @@ import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statist
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
         customLogLevel: (req, res, error) => {
-          const isRoutineHealth = (req.url ?? '').split('?')[0] === '/api/v1/health';
-          if (isRoutineHealth && res.statusCode < 400 && error === undefined) {
+          if (isRoutineRoute(req.url) && res.statusCode < 400 && error === undefined) {
             return 'silent';
           }
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -92,6 +90,7 @@ import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statist
     OpsTokensModule,
     CreditModule,
     AdminStatisticsModule,
+    GrafanaAccessModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

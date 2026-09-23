@@ -1,0 +1,16 @@
+# Dashboards are code: every JSON file in infra/grafana/dashboards is loaded
+# into the "ClawAI" folder, and the UI cannot overwrite or delete them. To
+# change one, edit the JSON and recreate the container
+# (skills/add-a-grafana-dashboard.md).
+apiVersion: 1
+
+providers:
+  - name: claw
+    folder: ClawAI
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: false

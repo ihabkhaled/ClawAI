@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 102
+      "testFiles": 107
     },
     "claw-chat-service": {
       "runner": "vitest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 518
+      "testFiles": 522
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1407
+  "total": 1416
 }

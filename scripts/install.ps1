@@ -716,6 +716,10 @@ $slackSigningSecret = New-SecretHex
 $jiraWebhookSecret = New-SecretHex
 $bitbucketWebhookSecret = New-SecretHex
 $figmaWebhookSecret = New-SecretHex
+# Grafana's own encryption key (ADR-115). Reused across re-runs: changing it
+# would orphan anything Grafana encrypted. Grafana has no password to generate.
+$grafanaSecretKey = Get-EnvValue -Path $envFile -Key 'GRAFANA_SECRET_KEY'
+if ([string]::IsNullOrWhiteSpace($grafanaSecretKey)) { $grafanaSecretKey = New-SecretHex }
 
 Write-Ok "JWT secret generated ($($jwtSecret.Length) chars)"
 Write-Ok "Encryption key generated ($($encryptionKey.Length) hex chars)"
@@ -1501,6 +1505,10 @@ FIGMA_WEBHOOK_SECRET=$figmaWebhookSecret
 
 # Stream 22 - service-to-service auth (file-service /upload-internal + /download-internal)
 INTER_SERVICE_AUTH_TOKEN=$interServiceToken
+
+# Grafana (ADR-115) - its own encryption key. Behind the admin session, so there
+# is no Grafana password anywhere.
+GRAFANA_SECRET_KEY=$grafanaSecretKey
 
 # Stream 22 - Gmail HTML rendering + attachments
 WORKSPACE_GMAIL_FETCH_ATTACHMENTS=true

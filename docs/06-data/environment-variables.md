@@ -212,6 +212,21 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 
 ---
 
+## Grafana (ADR-115)
+
+| Variable             | Required | Default               | Description                                                                                                                                     |
+| -------------------- | -------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GRAFANA_SECRET_KEY` | No       | Grafana's own default | Grafana's internal secret-storage encryption key. Blank keeps Grafana's default, acceptable because nothing stored in Grafana is encrypted yet. |
+
+**Notes:**
+
+- There is no Grafana admin password variable — Grafana has no built-in admin
+  and no login of its own. Access is the admin's own session, proxied through
+  a short-lived cookie auth-service mints; see ADR-115.
+- Generate with: `openssl rand -hex 32`
+
+---
+
 ## Encryption
 
 | Variable         | Required | Default | Description                                            |

@@ -807,6 +807,16 @@
         },
         {
           "method": "POST",
+          "route": "/auth/grafana-access",
+          "source": "apps/claw-auth-service/src/modules/grafana-access/controllers/grafana-access.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/auth/grafana-access/verify",
+          "source": "apps/claw-auth-service/src/modules/grafana-access/controllers/grafana-access.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/auth/login",
           "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
         },
@@ -3564,6 +3574,13 @@
           "docker/docker-compose.dev.services.yml",
           "docker/docker-compose.prod.services.yml"
         ],
+        "name": "grafana"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
         "name": "health-service"
       },
       {
@@ -4362,6 +4379,11 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "GOOGLE_CLOUD_VISION_API_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "GRAFANA_SECRET_KEY"
       },
       {
         "confidence": "verified",
@@ -7437,7 +7459,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 5175,
+          "bytes": 5731,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -7603,7 +7625,7 @@
       ],
       "skills": [
         {
-          "bytes": 29395,
+          "bytes": 29674,
           "file": "skills/00-index.md"
         },
         {
@@ -7645,6 +7667,10 @@
         {
           "bytes": 7410,
           "file": "skills/README.md"
+        },
+        {
+          "bytes": 3703,
+          "file": "skills/add-a-grafana-dashboard.md"
         },
         {
           "bytes": 4925,
@@ -7969,7 +7995,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5287
+        "value": 5292
       },
       "localeCount": 13,
       "locales": [
@@ -8368,6 +8394,18 @@
         "location": "/api/v1/workspace/ai-actions/run",
         "port": 4014,
         "service": "workspace-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/grafana/",
+        "port": 3000,
+        "service": "grafana",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "=",
+        "port": 4001,
+        "service": "auth-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -9921,7 +9959,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 102
+        "testFiles": 107
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -9945,7 +9983,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 518
+        "testFiles": 522
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10710,20 +10748,20 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 43,
-    "endpointCount": 677,
-    "envVarCount": 355,
+    "dockerServiceCount": 44,
+    "endpointCount": 679,
+    "envVarCount": 356,
     "eventCount": 181,
     "frontendRouteCount": 155,
     "localeCount": 13,
-    "nginxRouteCount": 60,
+    "nginxRouteCount": 62,
     "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1407,
+    "totalTestFiles": 1416,
     "workspaceCount": 25
   }
 }

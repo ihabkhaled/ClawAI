@@ -56,8 +56,32 @@ docker exec claw-prometheus sh -c \
   'wget -qO- "http://localhost:9090/api/v1/query?query=claw_service_up==0"'
 ```
 
-A browser view (Grafana, behind the admin session) and the in-app status page
-are separate batches; see
+## Looking at it in Grafana
+
+Grafana is served at `/grafana/` on the app's own host, behind the admin
+session — no second login, no Grafana password anywhere
+([ADR-115](../13-adr/adr-115-grafana-behind-the-admin-session.md)). An admin
+opens it from the "Open Grafana" button on `/observability`, which mints a
+15-minute cookie (`POST /api/v1/auth/grafana-access`) before opening the tab.
+The cookie dies with the session: signing out, or an admin revoking the
+session, closes Grafana on its next request.
+
+nginx asks auth-service on every request (`auth_request`), and always
+overwrites the identity header Grafana trusts — a browser cannot set it
+itself. Grafana is never published; the cookie is the only way in.
+
+Dashboards and the datasource are code, not UI state:
+
+- `infra/grafana/provisioning/datasources/prometheus.yml` — the one
+  datasource, the platform's own Prometheus, over the internal network.
+- `infra/grafana/provisioning/dashboards/claw.yml` +
+  `infra/grafana/dashboards/*.json` — every file here loads into the "ClawAI"
+  folder and cannot be edited from the UI. See
+  [`skills/add-a-grafana-dashboard.md`](../../skills/add-a-grafana-dashboard.md).
+- `infra/grafana/grafana.ini` — bind-mounted; a change needs a **recreate**,
+  the same trap as `prometheus.yml` and nginx's config.
+
+The in-app status page is a separate batch (B3); see
 [observability-plan](../implementation/observability-plan.md).
 
 ## Reading it back: the status page (B3)

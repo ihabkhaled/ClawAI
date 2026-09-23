@@ -86,6 +86,13 @@
         "docker/docker-compose.dev.services.yml",
         "docker/docker-compose.prod.services.yml"
       ],
+      "name": "grafana"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
       "name": "health-service"
     },
     {

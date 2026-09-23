@@ -10,3 +10,4 @@ export {
   SYSTEM_ROLE_SEED,
 } from './rbac.constants';
 export { USER_NOT_PENDING_CODE } from './user-status.constants';
+export { ROUTINE_SUCCESS_PATHS } from './routine-routes.constants';

@@ -1271,6 +1271,12 @@ export type TranslationDictionary = {
     requests: string;
     tokens: string;
     noData: string;
+    grafana: {
+      open: string;
+      opening: string;
+      failed: string;
+      hint: string;
+    };
   };
   audits: {
     title: string;

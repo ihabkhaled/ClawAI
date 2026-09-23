@@ -94,6 +94,12 @@ All routes are prefixed with `/api/v1/`. Nginx uses dynamic variables for upstre
 | ---------------- | ---------------------------- | ----------------- |
 | `/api/v1/health` | `http://health-service:4009` | Aggregated health |
 
+### Grafana (port 3000, never published directly)
+
+| Frontend Path | Backend Destination   | Notes                                                                                          |
+| ------------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| `/grafana/*`  | `http://grafana:3000` | Behind `auth_request` → `POST /api/v1/auth/grafana-access/verify` (auth-service). See ADR-115. |
+
 ### Client Logs Service (port 4010)
 
 | Frontend Path           | Backend Destination               | Notes                  |

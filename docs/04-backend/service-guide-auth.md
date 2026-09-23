@@ -522,3 +522,26 @@ each service's own `AuthGuard` and refuses those tokens.
 - The write is best-effort and the read fails open. Redis being down restores
   the old behaviour (valid until expiry), never a sign-out storm.
 - Refresh was never affected: rotation reads the session row.
+
+## Grafana behind the admin session (ADR-115, 2026-09-23)
+
+`modules/grafana-access` is the only way into Grafana; Grafana itself has no
+login. `POST /api/v1/auth/grafana-access` (ADMIN + `ADMIN_SYSTEM_VIEW`) sets a
+cookie — `claw_grafana`, httpOnly, Secure, `SameSite=Lax`, `Path=/grafana` —
+signed with a key **derived** from `JWT_SECRET` under its own audience
+(`deriveScopedKey`/`signScopedToken` in `common/utilities/scoped-token.utility.ts`),
+so it can never be confused with a user access token in either direction.
+Nginx's `auth_request` calls `GET /api/v1/auth/grafana-access/verify` — public
+because the caller is nginx forwarding the browser's cookie, not a Bearer
+token — which checks the signature and then the SAME revocation key
+`SessionRevocationGuard` reads, failing open on a Redis error like every other
+revocation check. On success it names the admin in `X-Grafana-User`, which
+nginx copies into the header Grafana's `auth.proxy` trusts, always
+overwriting whatever the browser sent.
+
+The cookie's life is `min(15 min, JWT_ACCESS_EXPIRY)` — never just 15 minutes:
+a longer access-token lifetime does not widen it, because Redis forgets a
+revoked session after one access-token lifetime and the cookie must never
+outlive that. `GET /grafana-access/verify`'s successful calls are excluded
+from the request log (`ROUTINE_SUCCESS_PATHS`) — one call per Grafana asset or
+panel query would otherwise fill the 30-day log store with the same line.

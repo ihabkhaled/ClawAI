@@ -458,6 +458,28 @@ Persist only OTP and confirmation-token hashes. Enforce expiry, resend cooldown,
 - Never log a token or its hash.
 - Never add a write scope. A new read surface gets a new scope.
 
+## Grafana access cookie (ADR-115)
+
+- `modules/grafana-access` mints and checks the cookie nginx's `auth_request`
+  asks about for every `/grafana/*` request. `POST /auth/grafana-access`
+  (ADMIN + `ADMIN_SYSTEM_VIEW`) sets `claw_grafana` — httpOnly, Secure, Lax,
+  `Path=/grafana`. `GET /auth/grafana-access/verify` is `@Public` (nginx is
+  the caller, carrying the cookie, not a Bearer token) and answers 204 or
+  401, with the admin's email in `X-Grafana-User`.
+- The cookie is signed with a key **derived** from `JWT_SECRET`
+  (`deriveScopedKey`, `common/utilities/scoped-token.utility.ts`) under its
+  own audience — never `JWT_SECRET` directly, so an access token and a
+  Grafana cookie can never verify as each other.
+- Its lifetime is `min(15 min, JWT_ACCESS_EXPIRY)` — never widen past that
+  without checking `REVOCATION_CHECK_TIMEOUT_MS`'s TTL assumption in
+  `@claw/shared-auth`: a longer cookie could outlive its own revocation entry.
+- `verify` checks the session id against the SAME Redis revocation key every
+  service's `SessionRevocationGuard` reads, and fails OPEN on a Redis error
+  like every other revocation check here — Grafana is what an operator opens
+  during an incident.
+- Never add a second cookie or reuse this one for another purpose. A new
+  narrow surface gets its own `deriveScopedKey` context string.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

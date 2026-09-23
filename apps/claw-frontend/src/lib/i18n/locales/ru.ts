@@ -1323,6 +1323,12 @@ export const ru: TranslationDictionary = {
     requests: 'запросов',
     tokens: 'токенов',
     noData: 'Нет данных',
+    grafana: {
+      open: 'Открыть Grafana',
+      opening: 'Открываем Grafana…',
+      failed: 'Не удалось открыть Grafana. Попробуйте ещё раз.',
+      hint: 'Открывает операционные дашборды в новой вкладке под вашей текущей учётной записью.',
+    },
   },
   audits: {
     title: 'Журналы аудита',

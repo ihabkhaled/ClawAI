@@ -1,0 +1,17 @@
+# The only datasource: the platform's own Prometheus (ADR-113), over the
+# internal Docker network. Prometheus is never published, so Grafana's
+# server-side proxy is the only browser-facing path to it.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: claw-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      # Matches the scrape interval in infra/prometheus/prometheus.yml.
+      timeInterval: 15s
+      httpMethod: POST

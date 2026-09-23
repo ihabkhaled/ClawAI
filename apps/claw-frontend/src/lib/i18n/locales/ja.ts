@@ -1312,6 +1312,12 @@ export const ja: TranslationDictionary = {
     requests: 'リクエスト',
     tokens: 'トークン',
     noData: 'データなし',
+    grafana: {
+      open: 'Grafana を開く',
+      opening: 'Grafana を開いています…',
+      failed: 'Grafana を開けませんでした。もう一度お試しください。',
+      hint: '運用ダッシュボードを現在のアカウントで新しいタブに開きます。',
+    },
   },
   audits: {
     title: '監査ログ',

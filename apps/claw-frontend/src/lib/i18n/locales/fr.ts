@@ -1328,6 +1328,12 @@ export const fr: TranslationDictionary = {
     requests: 'requêtes',
     tokens: 'jetons',
     noData: 'Aucune donnée',
+    grafana: {
+      open: 'Ouvrir Grafana',
+      opening: 'Ouverture de Grafana…',
+      failed: "Impossible d'ouvrir Grafana. Veuillez réessayer.",
+      hint: 'Ouvre les tableaux de bord opérationnels dans un nouvel onglet, avec votre session actuelle.',
+    },
   },
   audits: {
     title: "Journaux d'audit",

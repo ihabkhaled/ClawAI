@@ -1,8 +1,9 @@
 # O3 — Operational observability: plan
 
-**Status**: B0 and B1 shipped 2026-09-20; B3 (the status page) shipped
-2026-09-23; B2 (Grafana behind the admin session) is independent of it.
-Revised after the CTO, ops, analyst and PM reviews.
+**Status**: B0 and B1 shipped 2026-09-20; B2 (Grafana behind the admin
+session) and B3 (the status page) both shipped 2026-09-23, independently of
+each other ([ADR-115](../13-adr/adr-115-grafana-behind-the-admin-session.md)
+for B2). Revised after the CTO, ops, analyst and PM reviews.
 **Audit it came from**: this session's survey of the existing surface (§1).
 
 ## 1. What exists (audited, not assumed)
@@ -119,7 +120,30 @@ deploy script learns to carry a container that has no build step.
   `up`; a stopped service visible as down within one scrape; the fan-out rate
   measured against the cache.
 
-### B2 — Grafana behind the admin session
+### B2 — Grafana behind the admin session — DONE (2026-09-23)
+
+**Shipped** as [ADR-115](../13-adr/adr-115-grafana-behind-the-admin-session.md):
+`apps/claw-auth-service/src/modules/grafana-access/`, `infra/grafana/`
+(grafana.ini, provisioned Prometheus datasource, one dashboard),
+`grafana` in both split compose files, nginx `/grafana/` behind
+`auth_request`, "Open Grafana" on `/observability` (13 locales).
+**Deviations from the text below, all stated**:
+
+- The code lives in its own module (`modules/grafana-access/`), not in
+  `modules/auth/`: it is neither a login nor a session.
+- The cookie's life is `min(15 min, JWT_ACCESS_EXPIRY)`. The second bound was
+  not in the plan and is load-bearing: revocation is remembered for one
+  access-token lifetime only.
+- **No Grafana admin password exists at all** (`disable_initial_admin_creation`),
+  stronger than "a password in an env var". The one new variable is
+  `GRAFANA_SECRET_KEY`, Grafana's own encryption key (blank = Grafana default).
+- The verify route is refused from outside (404) and throttle-exempt; its
+  successful calls are not logged (`ROUTINE_SUCCESS_PATHS`).
+- New debt: **TD-041** — Grafana shares the app's origin.
+- **Not run**: the browser lane against the real stack (the stack was not
+  restarted, by instruction) and anything in production. The nginx + Grafana
+  wiring was proven in a throwaway Docker network with a stub verify route; see
+  ADR-115 "Verified".
 
 - **Code**: auth-service mints a short-lived cookie for an admin
   (`POST /auth/grafana-access`), scoped to `/grafana`, httpOnly, Secure,

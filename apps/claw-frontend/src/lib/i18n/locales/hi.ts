@@ -1311,6 +1311,12 @@ export const hi: TranslationDictionary = {
     requests: 'अनुरोध',
     tokens: 'टोकन',
     noData: 'कोई डेटा नहीं',
+    grafana: {
+      open: 'Grafana खोलें',
+      opening: 'Grafana खुल रहा है…',
+      failed: 'Grafana नहीं खुल सका। कृपया पुनः प्रयास करें।',
+      hint: 'ऑपरेशनल डैशबोर्ड आपके मौजूदा खाते से एक नए टैब में खोलता है।',
+    },
   },
   audits: {
     title: 'ऑडिट लॉग',

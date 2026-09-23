@@ -65,6 +65,21 @@ Last updated: 2026-09-10
   `fetch` with no guard at all. That was TD-038, closed 2026-09-22. The
   scattered single `fetch` calls in the remaining services are TD-040.
 
+### TD-042: Grafana is served from the app's own origin (2026-09-23)
+
+- **Severity**: Low · **Effort**: Medium · **Priority**: Planned
+- **Detail**: ADR-115 serves Grafana at `/grafana/` on the app's host. The
+  cookie is scoped to that path, but the browser's origin is the same, so
+  script running on a Grafana page could read the app's page storage —
+  including the access token. Grafana's code is trusted (official image, no
+  third-party plugins), so this is exposure to a Grafana XSS, not a hole
+  today. Only admins ever load Grafana, which is who such an XSS would reach.
+- **Fix**: serve Grafana from its own hostname (`grafana.<site>`), which needs
+  a second certificate (mkcert SAN + Let's Encrypt), the `install-tls` HOSTS
+  arrays, and a cookie on a sibling host (`Domain=` or a mint redirect).
+- **Until then**: never install a third-party Grafana plugin; keep the image
+  pinned and upgrade on Grafana security advisories.
+
 ### TD-041: Three copies of the private-host check (2026-09-23)
 
 - **Severity**: Low · **Effort**: Medium · **Priority**: Opportunistic

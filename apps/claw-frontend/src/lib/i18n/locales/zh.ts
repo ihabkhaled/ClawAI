@@ -1274,6 +1274,12 @@ export const zh: TranslationDictionary = {
     requests: '要求',
     tokens: '代币',
     noData: '无数据',
+    grafana: {
+      open: '打开 Grafana',
+      opening: '正在打开 Grafana…',
+      failed: '无法打开 Grafana，请重试。',
+      hint: '在新标签页中以当前账号打开运维仪表板。',
+    },
   },
   audits: {
     title: '审核日志',

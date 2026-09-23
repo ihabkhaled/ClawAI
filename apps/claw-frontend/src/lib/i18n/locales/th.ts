@@ -1293,6 +1293,12 @@ export const th: TranslationDictionary = {
     requests: 'คำขอ',
     tokens: 'โทเค็น',
     noData: 'ไม่มีข้อมูล',
+    grafana: {
+      open: 'เปิด Grafana',
+      opening: 'กำลังเปิด Grafana…',
+      failed: 'เปิด Grafana ไม่สำเร็จ โปรดลองอีกครั้ง',
+      hint: 'เปิดแดชบอร์ดการปฏิบัติงานในแท็บใหม่ด้วยบัญชีปัจจุบันของคุณ',
+    },
   },
   audits: {
     title: 'บันทึกการตรวจสอบ',

@@ -1325,6 +1325,12 @@ export const it: TranslationDictionary = {
     requests: 'richieste',
     tokens: 'token',
     noData: 'Nessun dato',
+    grafana: {
+      open: 'Apri Grafana',
+      opening: 'Apertura di Grafana…',
+      failed: 'Impossibile aprire Grafana. Riprova.',
+      hint: 'Apre le dashboard operative in una nuova scheda, con la tua sessione attuale.',
+    },
   },
   audits: {
     title: 'Log di audit',

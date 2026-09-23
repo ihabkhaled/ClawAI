@@ -14,6 +14,7 @@ single root `.env` (copy from `.env.example`) drives everything; all services us
 | MongoDB                   | `MONGO_USER/PASSWORD/DB/PORT`, `AUDIT_MONGODB_URI`, `CLIENT_LOGS_MONGODB_URI`, `SERVER_LOGS_MONGODB_URI`                   |
 | Redis / RabbitMQ          | `REDIS_URL/PORT`, `RABBITMQ_USER/PASSWORD/URL/PORT/MANAGEMENT_PORT`                                                        |
 | JWT / crypto              | `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `ENCRYPTION_KEY`, `INTER_SERVICE_AUTH_TOKEN`                      |
+| Grafana (ADR-115)         | `GRAFANA_SECRET_KEY` (Grafana's own encryption key; blank = Grafana default; no Grafana password exists)                   |
 | Admin seed                | `ADMIN_EMAIL/USERNAME/PASSWORD`                                                                                            |
 | Frontend                  | `NEXT_PUBLIC_API_URL/APP_NAME/APP_URL`, `FRONTEND_PORT`                                                                    |
 | Outbound email            | `CONTACT_EMAIL_ENABLED/PROVIDER/FROM`, `CONTACT_SMTP_HOST/PORT/SECURE/USER/PASS`                                           |

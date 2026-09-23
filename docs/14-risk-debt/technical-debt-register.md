@@ -301,6 +301,10 @@ Last updated: 2026-09-10
   holes closed on the way: `test-pat` blind SSRF and GitLab write
   `payload.baseUrl` token exfiltration.
 
+### TD-042: Grafana is served from the app's own origin
+
+- **Added**: 2026-09-23 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-042.
+
 ### TD-038 (FIXED 2026-09-22): Eight services carry an unguarded copy of the HTTP client
 
 - **Added**: 2026-09-20 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-038.
@@ -315,10 +319,10 @@ Last updated: 2026-09-10
 
 ## Priority Matrix
 
-| Priority          | Items                                                                                                             | Action                                     |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Immediate**     | TD-030, TD-017                                                                                                    | Chat pipeline programme; automated backups |
-| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                                                    | Schedule for next iteration                |
-| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032 (body limits only), TD-033, TD-035 | Add to backlog                             |
-| **Conditional**   | TD-009                                                                                                            | Implement with TD-008                      |
-| **Opportunistic** | TD-004, TD-018, TD-019, TD-041                                                                                    | Fix when touching related code             |
+| Priority          | Items                                                                                                                     | Action                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Immediate**     | TD-030, TD-017                                                                                                            | Chat pipeline programme; automated backups |
+| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                                                            | Schedule for next iteration                |
+| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032 (body limits only), TD-033, TD-035, TD-042 | Add to backlog                             |
+| **Conditional**   | TD-009                                                                                                                    | Implement with TD-008                      |
+| **Opportunistic** | TD-004, TD-018, TD-019, TD-041                                                                                            | Fix when touching related code             |

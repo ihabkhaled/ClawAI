@@ -158,7 +158,7 @@
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 5175,
+      "bytes": 5731,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
@@ -324,7 +324,7 @@
   ],
   "skills": [
     {
-      "bytes": 29395,
+      "bytes": 29674,
       "file": "skills/00-index.md"
     },
     {
@@ -366,6 +366,10 @@
     {
       "bytes": 7410,
       "file": "skills/README.md"
+    },
+    {
+      "bytes": 3703,
+      "file": "skills/add-a-grafana-dashboard.md"
     },
     {
       "bytes": 4925,

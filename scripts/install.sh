@@ -771,6 +771,9 @@ SLACK_SIGNING_SECRET=$(gen_secret_hex)
 JIRA_WEBHOOK_SECRET=$(gen_secret_hex)
 BITBUCKET_WEBHOOK_SECRET=$(gen_secret_hex)
 FIGMA_WEBHOOK_SECRET=$(gen_secret_hex)
+# Grafana's own encryption key (ADR-115). Grafana has no password to generate:
+# it has no login of its own and no built-in admin.
+GRAFANA_SECRET_KEY=$(gen_secret_hex)
 
 ok "JWT secret generated (${#JWT_SECRET} chars)"
 ok "Encryption key generated (${#ENCRYPTION_KEY} hex chars)"
@@ -814,6 +817,11 @@ if [ -f "$ENV_FILE" ]; then
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
+  PREV_GRAFANA_SECRET_KEY="$(get_env_value "GRAFANA_SECRET_KEY" "$ENV_FILE")"
+  if [ -n "$PREV_GRAFANA_SECRET_KEY" ]; then
+    GRAFANA_SECRET_KEY="$PREV_GRAFANA_SECRET_KEY"
+    ok "Preserved GRAFANA_SECRET_KEY from existing .env (changing it would orphan anything Grafana encrypted)"
+  fi
   if [ "$PG_PRESERVED_COUNT" -gt 0 ]; then
     ok "Preserved $PG_PRESERVED_COUNT PG_*_PASSWORD value(s) from existing .env (those volumes already use them)"
   fi
@@ -1662,6 +1670,10 @@ FIGMA_WEBHOOK_SECRET=${FIGMA_WEBHOOK_SECRET}
 
 # Stream 22 — service-to-service auth (file-service /upload-internal + /download-internal)
 INTER_SERVICE_AUTH_TOKEN=${INTER_SERVICE_AUTH_TOKEN}
+
+# Grafana (ADR-115) — its own encryption key. Behind the admin session, so there
+# is no Grafana password anywhere.
+GRAFANA_SECRET_KEY=${GRAFANA_SECRET_KEY}
 
 # Stream 22 — Gmail HTML rendering + attachments
 WORKSPACE_GMAIL_FETCH_ATTACHMENTS=true

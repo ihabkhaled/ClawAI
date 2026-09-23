@@ -48,6 +48,14 @@ and the frontend feature-gate hook.
    `rememberMe` on login and `Session.persistent` in the database. Off means
    12 h sliding and signed out on browser close; on means `JWT_REFRESH_EXPIRY`.
    A client that does not send it keeps the long session.
+10. **A narrow, purpose-scoped cookie (Grafana, ADR-115) is signed with a key
+    DERIVED from `JWT_SECRET`, never `JWT_SECRET` itself**, under its own
+    audience — so it can never verify as a user access token or vice versa.
+    Its lifetime is capped at the session revocation cache's TTL (one
+    access-token lifetime): a longer-lived cookie could outlive its own
+    revocation entry. It is checked against the SAME revocation key every
+    service's `SessionRevocationGuard` reads, and fails open on a Redis error
+    exactly like that guard does.
 
 ## Prohibited patterns
 

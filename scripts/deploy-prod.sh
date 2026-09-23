@@ -150,6 +150,7 @@ ORPHAN_GUARD_PID=""
 CONFIG_DIR_SERVICES=(
   'infra/vector|log-shipper'
   'infra/prometheus|prometheus'
+  'infra/grafana|grafana'
 )
 
 BROAD_IMPACT_PATHS=(

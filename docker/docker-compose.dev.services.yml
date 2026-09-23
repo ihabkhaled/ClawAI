@@ -893,7 +893,47 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # Grafana — dashboards over Prometheus, behind the admin session (ADR-115)
+  # ---------------------------------------------------------------------------
+  # NEVER published. nginx serves it at /grafana/ only after auth-service
+  # confirms the admin cookie (auth_request), and names the admin in the header
+  # Grafana's auth.proxy trusts. No built-in admin user, so no password exists.
+  #
+  # grafana.ini is a bind-mounted file: a change needs a recreate, not a
+  # restart, which scripts/deploy-prod.sh does through CONFIG_DIR_SERVICES.
+  grafana:
+    image: grafana/grafana-oss:12.1.1
+    container_name: claw-grafana
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: ${PUBLIC_SITE_URL:-https://claw.local}/grafana/
+      # Blank keeps Grafana's built-in default; nothing stores an encrypted
+      # secret yet. install.sh / install.ps1 generate one.
+      GF_SECURITY_SECRET_KEY: ${GRAFANA_SECRET_KEY:-}
+    volumes:
+      - ../infra/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ../infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../infra/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    labels:
+      claw.service: grafana
+    logging: *claw-logging
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000/grafana/api/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    networks:
+      - claw-network
+
 volumes:
+  grafana-data:
+    driver: local
   prometheus-data:
     driver: local
   log-shipper-data:

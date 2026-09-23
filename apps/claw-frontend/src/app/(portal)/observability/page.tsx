@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/common/page-header';
+import { OpenGrafanaButton } from '@/components/observability/open-grafana-button';
 import { ServiceStatusSection } from '@/components/observability/service-status-section';
 import { UsageOverview } from '@/components/observability/usage-overview';
 import { useObservabilityPage } from '@/hooks/observability/use-observability-page';
@@ -17,6 +18,7 @@ export default function ObservabilityPage() {
       <PageHeader
         title={t('observability.title')}
         description={t('observability.fullDescription')}
+        actions={<OpenGrafanaButton />}
       />
       <ServiceStatusSection {...serviceStatus} />
       <UsageOverview {...usage} />

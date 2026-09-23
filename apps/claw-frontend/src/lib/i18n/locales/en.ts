@@ -1305,6 +1305,12 @@ export const en: TranslationDictionary = {
     requests: 'requests',
     tokens: 'tokens',
     noData: 'No data',
+    grafana: {
+      open: 'Open Grafana',
+      opening: 'Opening Grafana…',
+      failed: 'Could not open Grafana. Please try again.',
+      hint: 'Opens the operational dashboards in a new tab, signed in as you.',
+    },
   },
   audits: {
     title: 'Audit Logs',

@@ -344,6 +344,18 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/grafana/",
+      "port": 3000,
+      "service": "grafana",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
+      "location": "=",
+      "port": 4001,
+      "service": "auth-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "~",
       "port": 4008,
       "service": "ollama-service",

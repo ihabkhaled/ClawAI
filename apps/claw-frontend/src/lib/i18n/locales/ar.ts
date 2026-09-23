@@ -1293,6 +1293,12 @@ export const ar: TranslationDictionary = {
     requests: 'طلبات',
     tokens: 'رموز',
     noData: 'لا توجد بيانات',
+    grafana: {
+      open: 'فتح Grafana',
+      opening: 'جارٍ فتح Grafana…',
+      failed: 'تعذّر فتح Grafana. حاول مرة أخرى.',
+      hint: 'يفتح لوحات المراقبة التشغيلية في علامة تبويب جديدة بحسابك الحالي.',
+    },
   },
   audits: {
     title: 'سجلات التدقيق',

@@ -752,6 +752,16 @@
       },
       {
         "method": "POST",
+        "route": "/auth/grafana-access",
+        "source": "apps/claw-auth-service/src/modules/grafana-access/controllers/grafana-access.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/auth/grafana-access/verify",
+        "source": "apps/claw-auth-service/src/modules/grafana-access/controllers/grafana-access.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/auth/login",
         "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
       },
@@ -3423,5 +3433,5 @@
     ]
   },
   "generated": true,
-  "total": 677
+  "total": 679
 }

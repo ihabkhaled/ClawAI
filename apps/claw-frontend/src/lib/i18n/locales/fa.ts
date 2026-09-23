@@ -1307,6 +1307,12 @@ export const fa: TranslationDictionary = {
     requests: 'درخواست ها',
     tokens: 'توکن ها',
     noData: 'داده ای وجود ندارد',
+    grafana: {
+      open: 'باز کردن Grafana',
+      opening: 'در حال باز کردن Grafana…',
+      failed: 'Grafana باز نشد. لطفاً دوباره امتحان کنید.',
+      hint: 'داشبوردهای عملیاتی را در یک زبانه جدید با حساب فعلی شما باز می‌کند.',
+    },
   },
   audits: {
     title: 'گزارش های حسابرسی',

@@ -1162,3 +1162,9 @@ export type {
   UseMediaRecordingConsentReturn,
   MediaRecordingConsentDialogProps,
 } from './media-recording.types';
+export type {
+  GrafanaAccessGrant,
+  GrafanaTab,
+  GrafanaTabOpener,
+  UseOpenGrafanaResult,
+} from './grafana-access.types';
