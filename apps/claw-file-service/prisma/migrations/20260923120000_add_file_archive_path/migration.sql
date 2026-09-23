@@ -1,0 +1,12 @@
+-- Relative path of an extracted file inside its parent archive.
+--
+-- A child row's `filename` is the basename only, so "src/index.ts" and
+-- "test/index.ts" from the same archive were indistinguishable and the archive's
+-- folder structure was lost. The archive manifest written on the parent row
+-- (see docs/13-adr/adr-053-file-retention-and-zip-guardrails.md) lists entries by
+-- this path.
+--
+-- Nullable, no backfill: every file that was not extracted from an archive has
+-- no archive path, and pre-existing children cannot be re-derived without
+-- re-expanding their parent.
+ALTER TABLE "files" ADD COLUMN "archive_path" TEXT;

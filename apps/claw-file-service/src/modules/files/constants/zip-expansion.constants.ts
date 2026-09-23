@@ -1,3 +1,4 @@
+import { MAX_FILE_SIZE } from '../types/files.types';
 import type { ZipExtractionThresholds } from '../types/zip-expansion.types';
 
 /**
@@ -63,3 +64,31 @@ export const EXTENSION_TO_MIME: Readonly<Record<string, string>> = {
 };
 
 export const DEFAULT_EXTRACTED_MIME_TYPE = 'application/octet-stream';
+
+export const BYTES_PER_MEGABYTE = 1024 * 1024;
+
+/** Depth of the archive the user uploaded; an archive inside it is depth 2. */
+export const ARCHIVE_ROOT_DEPTH = 1;
+
+/**
+ * Largest single entry the extractor writes. Matches the upload cap: an archive
+ * must not be a way to smuggle in a file no direct upload would accept. Larger
+ * entries are skipped (reported `skipped-too-large`), not fatal.
+ */
+export const ZIP_MAX_ENTRY_BYTES = MAX_FILE_SIZE;
+
+/** File extension that marks an entry as a nested archive. */
+export const NESTED_ARCHIVE_EXTENSION = '.zip';
+
+// Error codes. `ZIP_BOMB_RATIO` doubles as the per-archive size-cap code — that
+// is what it has always reported, and consumers match on it.
+export const ZIP_SIZE_CAP_ERROR_CODE = 'ZIP_BOMB_RATIO';
+export const ZIP_CUMULATIVE_SIZE_EXCEEDED_ERROR_CODE = 'ZIP_CUMULATIVE_SIZE_EXCEEDED';
+export const ZIP_EXPANSION_FAILED_ERROR_CODE = 'ZIP_EXPANSION_FAILED';
+
+/**
+ * Some or all entries are password-protected. Encrypted entries are skipped and
+ * the rest still delivered; only an archive whose EVERY file is encrypted ends
+ * FAILED. Password support is a later batch.
+ */
+export const ARCHIVE_ENCRYPTED_ERROR_CODE = 'ARCHIVE_ENCRYPTED';

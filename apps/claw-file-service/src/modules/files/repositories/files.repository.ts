@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { type File, type FileIngestionStatus, Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type CreateFileData, type FileFilters, type FileWithChunks } from '../types/files.types';
+import { type ChildExtractionState } from '../types/archive-manifest.types';
+import { type ArchiveExtractionMetadata } from '../types/zip-expansion.types';
 
 @Injectable()
 export class FilesRepository {
@@ -89,21 +91,45 @@ export class FilesRepository {
   // Stamps the parent linkage on a child file after it has been onboarded
   // from an extracted entry. Kept as a focused update so the repository
   // contract stays narrow (CreateFileData remains the upload-only shape).
-  async markAsExtractedChild(id: string, parentFileId: string): Promise<File> {
+  // `archivePath` is the entry's path inside the archive; `filename` is only
+  // its basename.
+  async markAsExtractedChild(id: string, parentFileId: string, archivePath: string): Promise<File> {
     this.logger.debug(`markAsExtractedChild: id=${id} parentFileId=${parentFileId}`);
     return this.prisma.file.update({
       where: { id },
-      data: { parentFileId, isExtracted: true },
+      data: { parentFileId, isExtracted: true, archivePath },
     });
+  }
+
+  /**
+   * The extraction outcome of one row, without its chunks or original bytes.
+   * The archive manifest reads this once per child to classify it.
+   */
+  async findExtractionState(id: string): Promise<ChildExtractionState | null> {
+    return this.prisma.file.findUnique({
+      where: { id },
+      select: {
+        mimeType: true,
+        extractedText: true,
+        extractionError: true,
+        ingestionStatus: true,
+      },
+    });
+  }
+
+  /** Only the extracted text of one row — what the archive manifest packs. */
+  async findExtractedText(id: string): Promise<string | null> {
+    const row = await this.prisma.file.findUnique({
+      where: { id },
+      select: { extractedText: true },
+    });
+    return row?.extractedText ?? null;
   }
 
   // Slice C backend 2 — ZIP archive expansion.
   // Records the aggregate extraction outcome on the PARENT archive row
-  // (child count, total uncompressed bytes, expansion timestamp).
-  async recordExtractionMetadata(
-    id: string,
-    metadata: { childFileCount: number; totalExtractedBytes: number; expandedAt: string },
-  ): Promise<File> {
+  // (child count, total uncompressed bytes, expansion timestamp, skip counts).
+  async recordExtractionMetadata(id: string, metadata: ArchiveExtractionMetadata): Promise<File> {
     this.logger.debug(
       `recordExtractionMetadata: id=${id} children=${String(metadata.childFileCount)} bytes=${String(metadata.totalExtractedBytes)}`,
     );

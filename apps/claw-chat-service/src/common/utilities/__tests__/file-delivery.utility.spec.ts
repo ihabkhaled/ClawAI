@@ -95,8 +95,17 @@ describe('buildFileDeliveryEntries', () => {
   // OMITTED_UNSUPPORTED is now reserved for formats with no extraction path at
   // all. Widening it back to cover documents would re-assert that the platform
   // cannot read a PDF.
+  // A ZIP left this list on 2026-09-23: file-service now writes its tree and
+  // member text into the parent's extractedText, so it is delivered as text.
+  it.each(['application/zip', 'application/x-zip-compressed'])(
+    'records %s as EXTRACTED_TEXT now that its manifest is delivered',
+    (mimeType) => {
+      expect(modeOf(file({ mimeType }))).toBe(FileDeliveryMode.EXTRACTED_TEXT);
+    },
+  );
+
   describe('formats with no extraction path', () => {
-    it.each(['application/zip', 'application/x-7z-compressed', 'font/woff2'])(
+    it.each(['application/x-7z-compressed', 'font/woff2'])(
       'records %s as OMITTED_UNSUPPORTED',
       (mimeType) => {
         expect(modeOf(file({ mimeType }))).toBe(FileDeliveryMode.OMITTED_UNSUPPORTED);
@@ -105,7 +114,7 @@ describe('buildFileDeliveryEntries', () => {
 
     it('carries a reason so the UI can explain the omission', () => {
       const [entry] = buildFileDeliveryEntries(
-        [file({ mimeType: 'application/zip' })],
+        [file({ mimeType: 'application/x-7z-compressed' })],
         'OLLAMA',
         'model-1',
       );

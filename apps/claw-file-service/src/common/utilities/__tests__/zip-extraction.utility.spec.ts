@@ -5,13 +5,22 @@
 // requires a file path), run the utility, and assert on the result OR the
 // BusinessException code that fired.
 
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import JSZip from 'jszip';
-import { validateAndExtractZip } from '../zip-extraction.utility';
+import {
+  prepareExtractionDir,
+  removeExtractionDir,
+  validateAndExtractZip,
+} from '../zip-extraction.utility';
 import { BusinessException } from '../../errors/business.exception';
-import type { ZipExtractionThresholds } from '../../../modules/files/types/zip-expansion.types';
+import { ArchiveEntryStatus } from '../../enums/archive-entry-status.enum';
+import type {
+  ZipExtractionContext,
+  ZipExtractionThresholds,
+} from '../../../modules/files/types/zip-expansion.types';
 
 const TEST_THRESHOLDS: ZipExtractionThresholds = {
   maxExtractedSizeMb: 50,
@@ -19,6 +28,16 @@ const TEST_THRESHOLDS: ZipExtractionThresholds = {
   maxNestingDepth: 1,
   compressionRatioThreshold: 1000,
 };
+
+const MB = 1024 * 1024;
+
+// A fresh root context per call: depth 1, the whole per-archive cap as budget.
+const rootContext = (
+  thresholds: ZipExtractionThresholds = TEST_THRESHOLDS,
+): ZipExtractionContext => ({
+  depth: 1,
+  budget: { remainingBytes: thresholds.maxExtractedSizeMb * MB },
+});
 
 const writeZipToDisk = async (zip: JSZip, name: string): Promise<string> => {
   const buffer = await zip.generateAsync({
@@ -82,7 +101,7 @@ describe('validateAndExtractZip', () => {
     const destDir = makeDestDir('happy');
     createdPaths.push(zipPath, destDir);
 
-    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS);
+    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
 
     expect(result.entries).toHaveLength(3);
     expect(result.totalExtractedBytes).toBeGreaterThan(0);
@@ -114,7 +133,7 @@ describe('validateAndExtractZip', () => {
     };
 
     try {
-      await validateAndExtractZip(zipPath, destDir, thresholds);
+      await validateAndExtractZip(zipPath, destDir, thresholds, rootContext(thresholds));
       throw new Error('Expected ZIP_BOMB_RATIO to be thrown');
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(BusinessException);
@@ -137,7 +156,7 @@ describe('validateAndExtractZip', () => {
     };
 
     try {
-      await validateAndExtractZip(zipPath, destDir, thresholds);
+      await validateAndExtractZip(zipPath, destDir, thresholds, rootContext(thresholds));
       throw new Error('Expected ZIP_TOO_MANY_ENTRIES to be thrown');
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(BusinessException);
@@ -145,8 +164,7 @@ describe('validateAndExtractZip', () => {
     }
   });
 
-  it('throws ZIP_NESTING_TOO_DEEP when an inner .zip entry exceeds the depth limit', async () => {
-    // Slice C policy: any inner .zip when maxNestingDepth <= 1 is rejected.
+  it('skips (does not fail on) a nested archive at the depth limit and extracts the rest', async () => {
     const inner = new JSZip();
     inner.file('inside.txt', 'inner payload');
     const innerBuffer = await inner.generateAsync({ type: 'nodebuffer' });
@@ -158,13 +176,183 @@ describe('validateAndExtractZip', () => {
     const destDir = makeDestDir('nested');
     createdPaths.push(zipPath, destDir);
 
+    // maxNestingDepth 1 and depth 1: this archive is AT the limit.
+    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
+
+    expect(result.entries.map((e) => e.archivePath)).toEqual(['peer.txt']);
+    expect(result.skippedEntries).toEqual([
+      expect.objectContaining({
+        archivePath: 'child.zip',
+        status: ArchiveEntryStatus.SKIPPED_NESTING_DEPTH,
+      }),
+    ]);
+    expect(fs.existsSync(path.join(destDir, 'child.zip'))).toBe(false);
+  });
+
+  it('extracts a nested archive while depth is below ZIP_MAX_NESTING_DEPTH', async () => {
+    const inner = new JSZip();
+    inner.file('inside.txt', 'inner payload');
+    const innerBuffer = await inner.generateAsync({ type: 'nodebuffer' });
+    const outer = new JSZip();
+    outer.file('child.zip', innerBuffer);
+    const zipPath = await writeZipToDisk(outer, 'nested-ok');
+    const destDir = makeDestDir('nested-ok');
+    const destDirAtLimit = makeDestDir('nested-3');
+    createdPaths.push(zipPath, destDir, destDirAtLimit);
+    const thresholds = { ...TEST_THRESHOLDS, maxNestingDepth: 3 };
+
+    const atTwo = await validateAndExtractZip(zipPath, destDir, thresholds, {
+      depth: 2,
+      budget: { remainingBytes: 50 * MB },
+    });
+    expect(atTwo.entries.map((e) => e.archivePath)).toEqual(['child.zip']);
+
+    const atThree = await validateAndExtractZip(zipPath, destDirAtLimit, thresholds, {
+      depth: 3,
+      budget: { remainingBytes: 50 * MB },
+    });
+    expect(atThree.entries).toHaveLength(0);
+    expect(atThree.skippedEntries[0]?.status).toBe(ArchiveEntryStatus.SKIPPED_NESTING_DEPTH);
+  });
+
+  it('keeps the folder path of each entry as archivePath', async () => {
+    const zip = new JSZip();
+    zip.file('src/index.ts', 'export {};');
+    zip.file('test/index.ts', 'it();');
+    const zipPath = await writeZipToDisk(zip, 'paths');
+    const destDir = makeDestDir('paths');
+    createdPaths.push(zipPath, destDir);
+
+    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
+
+    expect(result.entries.map((e) => e.archivePath).sort()).toEqual([
+      'src/index.ts',
+      'test/index.ts',
+    ]);
+    expect(result.fileEntryCount).toBe(2);
+  });
+
+  it('spends the shared budget and throws ZIP_CUMULATIVE_SIZE_EXCEEDED once it runs out', async () => {
+    const zip = new JSZip();
+    zip.file('a.txt', 'a'.repeat(600));
+    zip.file('b.txt', 'b'.repeat(600));
+    const zipPath = await writeZipToDisk(zip, 'budget');
+    const firstDir = makeDestDir('budget-1');
+    const secondDir = makeDestDir('budget-2');
+    createdPaths.push(zipPath, firstDir, secondDir);
+
+    // Enough budget for the first archive: it is spent, not just checked.
+    const budget = { remainingBytes: 2_000 };
+    const first = await validateAndExtractZip(zipPath, firstDir, TEST_THRESHOLDS, {
+      depth: 2,
+      budget,
+    });
+    expect(first.totalExtractedBytes).toBe(1_200);
+    expect(budget.remainingBytes).toBe(800);
+
+    // An archive at another level shares what is left: 1,200 > 800.
     try {
-      await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS);
-      throw new Error('Expected ZIP_NESTING_TOO_DEEP to be thrown');
+      await validateAndExtractZip(zipPath, secondDir, TEST_THRESHOLDS, { depth: 3, budget });
+      throw new Error('Expected ZIP_CUMULATIVE_SIZE_EXCEEDED to be thrown');
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(BusinessException);
-      expect((error as BusinessException).code).toBe('ZIP_NESTING_TOO_DEEP');
+      expect((error as BusinessException).code).toBe('ZIP_CUMULATIVE_SIZE_EXCEEDED');
     }
+    expect(fs.readdirSync(secondDir)).toEqual([]);
+  });
+
+  it('rejects on the declared total before writing anything (per-archive cap keeps ZIP_BOMB_RATIO)', async () => {
+    const zip = new JSZip();
+    // Random bytes do not compress, so the ratio check cannot be what fires.
+    zip.file('big.bin', crypto.randomBytes(3 * MB));
+    const zipPath = await writeZipToDisk(zip, 'declared');
+    const destDir = makeDestDir('declared');
+    createdPaths.push(zipPath, destDir);
+    const thresholds = { ...TEST_THRESHOLDS, maxExtractedSizeMb: 1 };
+
+    try {
+      await validateAndExtractZip(zipPath, destDir, thresholds, rootContext(thresholds));
+      throw new Error('Expected ZIP_BOMB_RATIO to be thrown');
+    } catch (error: unknown) {
+      expect((error as BusinessException).code).toBe('ZIP_BOMB_RATIO');
+    }
+    expect(fs.existsSync(path.join(destDir, 'big.bin'))).toBe(false);
+  });
+
+  it('skips encrypted entries up front and extracts the rest', async () => {
+    const zipPath = writeRawZipToDisk(
+      buildStoredZip([
+        { name: 'open.txt', data: Buffer.from('plain text') },
+        { name: 'secret.txt', data: Buffer.from('ciphertext'), encrypted: true },
+      ]),
+      'encrypted-partial',
+    );
+    const destDir = makeDestDir('encrypted-partial');
+    createdPaths.push(zipPath, destDir);
+
+    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
+
+    expect(result.entries.map((e) => e.archivePath)).toEqual(['open.txt']);
+    expect(fs.readFileSync(result.entries[0]?.path ?? '', 'utf8')).toBe('plain text');
+    expect(result.skippedEntries).toEqual([
+      { archivePath: 'secret.txt', sizeBytes: 10, status: ArchiveEntryStatus.SKIPPED_ENCRYPTED },
+    ]);
+    expect(result.encryptedEntryCount).toBe(1);
+    expect(result.fileEntryCount).toBe(2);
+  });
+
+  it('reports an all-encrypted archive without throwing', async () => {
+    const zipPath = writeRawZipToDisk(
+      buildStoredZip([
+        { name: 'a.txt', data: Buffer.from('aaa'), encrypted: true },
+        { name: 'b.txt', data: Buffer.from('bbb'), encrypted: true },
+      ]),
+      'encrypted-all',
+    );
+    const destDir = makeDestDir('encrypted-all');
+    createdPaths.push(zipPath, destDir);
+
+    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
+
+    expect(result.entries).toHaveLength(0);
+    expect(result.encryptedEntryCount).toBe(2);
+    expect(result.fileEntryCount).toBe(2);
+  });
+
+  it('skips an entry larger than a single upload may be, as skipped-too-large', async () => {
+    // Declared 60 MB (above the 50 MB upload cap), stored as 100 KB, so the
+    // ratio (~600:1) passes and only the per-entry cap can catch it.
+    const zipPath = writeRawZipToDisk(
+      buildStoredZip([
+        { name: 'huge.log', data: Buffer.alloc(100 * 1024, 7), declaredSize: 60 * MB },
+        { name: 'small.txt', data: Buffer.from('small') },
+      ]),
+      'too-large',
+    );
+    const destDir = makeDestDir('too-large');
+    createdPaths.push(zipPath, destDir);
+    const thresholds = { ...TEST_THRESHOLDS, maxExtractedSizeMb: 500 };
+
+    const result = await validateAndExtractZip(
+      zipPath,
+      destDir,
+      thresholds,
+      rootContext(thresholds),
+    );
+
+    expect(result.entries.map((e) => e.archivePath)).toEqual(['small.txt']);
+    expect(result.skippedEntries).toEqual([
+      { archivePath: 'huge.log', sizeBytes: 60 * MB, status: ArchiveEntryStatus.SKIPPED_TOO_LARGE },
+    ]);
+  });
+
+  it('removeExtractionDir deletes the staging dir and never throws', () => {
+    const dir = prepareExtractionDir(os.tmpdir(), `claw-zip-rm-${String(Date.now())}`);
+    fs.writeFileSync(path.join(dir, 'left.txt'), 'x');
+
+    removeExtractionDir(dir);
+    expect(fs.existsSync(dir)).toBe(false);
+    expect(() => removeExtractionDir(dir)).not.toThrow();
   });
 
   it("throws ZIP_PATH_TRAVERSAL when an entry path contains '..'", async () => {
@@ -235,7 +423,7 @@ describe('validateAndExtractZip', () => {
     createdPaths.push(zipPath, destDir);
 
     try {
-      await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS);
+      await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
       throw new Error('Expected ZIP_PATH_TRAVERSAL to be thrown');
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(BusinessException);
@@ -307,7 +495,7 @@ describe('validateAndExtractZip', () => {
     createdPaths.push(zipPath, destDir);
 
     try {
-      await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS);
+      await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
       throw new Error('Expected ZIP_PATH_TRAVERSAL to be thrown');
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(BusinessException);
@@ -315,6 +503,59 @@ describe('validateAndExtractZip', () => {
     }
   });
 });
+
+// ---- Stored-method zip builder ----------------------------------------------
+// JSZip cannot write encrypted entries or lie about sizes, so these fixtures are
+// assembled by hand. Bit 0 of the general-purpose flags marks an entry
+// encrypted; node-stream-zip reads it from the central directory.
+
+type RawEntry = { name: string; data: Buffer; encrypted?: boolean; declaredSize?: number };
+
+function buildStoredZip(entries: RawEntry[]): Buffer {
+  const locals: Buffer[] = [];
+  const centrals: Buffer[] = [];
+  let offset = 0;
+  for (const entry of entries) {
+    const nameBuffer = Buffer.from(entry.name, 'utf8');
+    const crc = computeCrc32(entry.data);
+    const flags = entry.encrypted === true ? 1 : 0;
+    const size = entry.declaredSize ?? entry.data.length;
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(flags, 6);
+    local.writeUInt16LE(0, 8);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(entry.data.length, 18);
+    local.writeUInt32LE(size, 22);
+    local.writeUInt16LE(nameBuffer.length, 26);
+    locals.push(local, nameBuffer, entry.data);
+
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(flags, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(entry.data.length, 20);
+    central.writeUInt32LE(size, 24);
+    central.writeUInt16LE(nameBuffer.length, 28);
+    central.writeUInt32LE(offset, 42);
+    centrals.push(central, nameBuffer);
+
+    offset += local.length + nameBuffer.length + entry.data.length;
+  }
+  const centralSize = centrals.reduce((sum, b) => sum + b.length, 0);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralSize, 12);
+  eocd.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locals, ...centrals, eocd]);
+}
 
 // ---- CRC-32 helper (zip spec) ---------------------------------------------
 

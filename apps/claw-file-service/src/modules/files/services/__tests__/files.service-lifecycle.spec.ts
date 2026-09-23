@@ -76,6 +76,8 @@ const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
   deleteById: vi.fn(),
   markAsExtractedChild: vi.fn(),
   recordExtractionMetadata: vi.fn(),
+  findExtractionState: vi.fn(),
+  findExtractedText: vi.fn(),
 });
 
 const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({

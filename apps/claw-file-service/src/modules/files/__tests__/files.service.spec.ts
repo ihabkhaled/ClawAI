@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { FilesService } from '../services/files.service';
 import { type FilesRepository } from '../repositories/files.repository';
 import { type FileChunksRepository } from '../repositories/file-chunks.repository';
@@ -75,6 +75,8 @@ const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
   deleteById: vi.fn(),
   markAsExtractedChild: vi.fn(),
   recordExtractionMetadata: vi.fn(),
+  findExtractionState: vi.fn(),
+  findExtractedText: vi.fn(),
 });
 
 const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({

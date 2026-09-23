@@ -51,6 +51,29 @@ the expand-to-disk path; `ooxml-parser.utility.ts` guards the in-memory XLSX and
 PPTX path. An `.xlsx` is a ZIP and is user input. Do not add a third way to open
 one without bounds of its own.
 
+## An archive's text is its manifest (2026-09-23)
+
+An attached `.zip` reaches the model through its own `extractedText`, which
+`ZipExpansionManager` fills with the **archive manifest**
+(`utilities/archive-manifest.utility.ts`): an untrusted-content guard, the file
+tree with a status per entry, and the children's text packed into
+`ARCHIVE_MANIFEST_MAX_CHARS` (= chat-service `MAX_FILE_CONTENT_LENGTH`; change
+both together). chat-service has no zip special case and needs none.
+
+- **Children live in `FILE_STORAGE_PATH`**, never in `ZIP_TEMP_EXTRACTION_PATH`
+  (tmpfs staging, removed in a `finally`). A path outside the storage root is
+  refused by `readFile`, and tmpfs does not survive a restart.
+- **Children have `content = null`.** Read `extractedText`; `archivePath` holds
+  the path inside the archive, `filename` only the basename.
+- **Recurse through `ZipExpansionManager`, not `processFile`.** `processFile`
+  starts a fresh depth-1 context with a fresh byte budget, which is how nesting
+  limits used to be unenforced.
+- **Encrypted entries are skipped, not fatal** (`ARCHIVE_ENCRYPTED`). All
+  encrypted → FAILED, but the manifest still says why.
+
+Details: `docs/04-backend/service-guide-file.md` → "ZIP archive expansion",
+ADR-053 amendment.
+
 ## All Standard Backend Rules Apply
 
 See the root CLAUDE.md for the full set of architecture rules, naming conventions, and code quality requirements. Key points:

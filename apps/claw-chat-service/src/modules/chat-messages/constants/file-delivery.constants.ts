@@ -61,6 +61,11 @@ export const EXTRACTABLE_DOCUMENT_MIME_EXACT = new Set([
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'application/rtf',
   'text/rtf',
+  // A ZIP is delivered as the manifest file-service writes into its
+  // extractedText — the file tree plus the members' text — since 2026-09-23.
+  // Before that it genuinely reached the model as nothing.
+  'application/zip',
+  'application/x-zip-compressed',
 ]);
 
 export const IMAGE_MIME_PREFIX = 'image/';

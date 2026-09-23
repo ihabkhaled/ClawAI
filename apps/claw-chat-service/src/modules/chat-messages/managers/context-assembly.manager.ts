@@ -301,18 +301,12 @@ ${evidence.snippet}`);
   /** Tool names the run reported, so the model can be told how it got this. */
   private extractResearchTools(run: ResearchRunResponse | null): string[] {
     const bundle = run?.bundle;
-    if (bundle === undefined || bundle === null || !('toolsUsed' in bundle)) {
-      return [];
-    }
-    return (bundle.toolsUsed as string[] | undefined) ?? [];
+    return bundle === undefined || bundle === null || !('toolsUsed' in bundle) ? [] : (bundle.toolsUsed as string[] | undefined) ?? [];
   }
 
   private extractResearchWarnings(run: ResearchRunResponse | null): string[] {
     const bundle = run?.bundle;
-    if (bundle === undefined || bundle === null || !('warnings' in bundle)) {
-      return [];
-    }
-    return (bundle.warnings as string[] | undefined) ?? [];
+    return bundle === undefined || bundle === null || !('warnings' in bundle) ? [] : (bundle.warnings as string[] | undefined) ?? [];
   }
 
   private async fetchAssembledInputs(args: {
@@ -491,10 +485,7 @@ ${evidence.snippet}`);
       research?: { runId?: string; bundle?: unknown };
     };
     const research = metadata.research;
-    if (research?.runId === undefined || research.bundle === undefined) {
-      return null;
-    }
-    return {
+    return research?.runId === undefined || research.bundle === undefined ? null : {
       id: research.runId,
       userId: '',
       requestedModel: null,
@@ -704,10 +695,7 @@ ${evidence.snippet}`);
    * `research-grounding.constants.ts` for the measurement that forced this.
    */
   private withResearchGrounding(content: string): string {
-    if (content.includes(RESEARCH_GROUNDING_MARKER)) {
-      return content;
-    }
-    return `${content}
+    return content.includes(RESEARCH_GROUNDING_MARKER) ? content : `${content}
 ${RESEARCH_GROUNDING_REMINDER}`;
   }
 
@@ -974,9 +962,13 @@ ${RESEARCH_GROUNDING_REMINDER}`;
           timeoutMs: 10_000,
         });
 
-        if (response.ok && response.data.content) {
+        // A file extracted from an archive has `content = null` (only direct
+        // uploads carry the base64 bytes) but a full `extractedText`. Requiring
+        // `content` here silently dropped every such file, so a directly
+        // attached archive member reached the model as nothing at all.
+        if (response.ok && this.hasDeliverableContent(response.data)) {
           this.logger.debug(
-            `fetchFileContents: file ${fileId} received — filename=${response.data.filename} mimeType=${response.data.mimeType} contentLen=${String(response.data.content.length)}`,
+            `fetchFileContents: file ${fileId} received — filename=${response.data.filename} mimeType=${response.data.mimeType} contentLen=${String(response.data.content?.length ?? 0)} extractedTextLen=${String(response.data.extractedText?.length ?? 0)}`,
           );
           results.push(response.data);
         } else {
@@ -993,6 +985,10 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       this.logger.warn(`fetchFileContents: failed (non-blocking): ${msg}`);
       return [];
     }
+  }
+
+  private hasDeliverableContent(file: FileContentResponse): boolean {
+    return Boolean(file.content) || Boolean(file.extractedText);
   }
 
   /**
@@ -1278,10 +1274,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     this.logger.debug(
       `truncateToTokenBudget: truncating from ${String(text.length)} to ${String(maxChars)} chars (budget=${String(tokenBudget)} tokens)`,
     );
-    if (headChars === 0) {
-      return text.slice(-maxChars);
-    }
-    return `${text.slice(0, headChars)}\n\n[...truncated older context...]\n\n${text.slice(-tailChars)}`;
+    return headChars === 0 ? text.slice(-maxChars) : `${text.slice(0, headChars)}\n\n[...truncated older context...]\n\n${text.slice(-tailChars)}`;
   }
 
   /**
@@ -1327,11 +1320,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       return this.decodeAsText(file);
     }
 
-    if (!file.content) {
-      return `[File "${file.filename}" has no content]`;
-    }
-
-    return `[File "${file.filename}" (${file.mimeType}) produced no readable text. Tell the user the format could not be read; do not guess at the contents.]`;
+    return !file.content ? `[File "${file.filename}" has no content]` : `[File "${file.filename}" (${file.mimeType}) produced no readable text. Tell the user the format could not be read; do not guess at the contents.]`;
   }
 
   /**
@@ -1344,10 +1333,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    */
   private describeImage(file: FileContentResponse): string {
     const extracted = file.extractedText?.trim();
-    if (extracted !== undefined && extracted.length > 0 && !extracted.startsWith('[Image file:')) {
-      return `Text read from the image "${file.filename}":\n${this.truncateFileText(extracted, file.filename)}`;
-    }
-    return `[Image file "${file.filename}" — passed via multimodal images field]`;
+    return extracted !== undefined && extracted.length > 0 && !extracted.startsWith('[Image file:') ? `Text read from the image "${file.filename}":\n${this.truncateFileText(extracted, file.filename)}` : `[Image file "${file.filename}" — passed via multimodal images field]`;
   }
 
   private truncateFileText(text: string, filename: string): string {
@@ -1393,10 +1379,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
 
   private getFileExtension(filename: string): string | null {
     const dotIndex = filename.lastIndexOf('.');
-    if (dotIndex < 0) {
-      return null;
-    }
-    return filename.slice(dotIndex).toLowerCase();
+    return dotIndex < 0 ? null : filename.slice(dotIndex).toLowerCase();
   }
 
   private mapRole(message: ChatMessage): string {
@@ -1408,10 +1391,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     if (message.role === 'USER') {
       return 'user';
     }
-    if (message.role === 'ASSISTANT') {
-      return 'assistant';
-    }
-    return 'system';
+    return message.role === 'ASSISTANT' ? 'assistant' : 'system';
   }
 
   private runtimeV2TranscriptKind(metadata: ChatMessage['metadata']): string | null {
@@ -1497,21 +1477,14 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     ) {
       return true;
     }
-    if (memory.pinned === true) {
-      return true;
-    }
-    return this.isPreferenceLikeMemory(memory);
+    return memory.pinned === true ? true : this.isPreferenceLikeMemory(memory);
   }
 
   private filterWorkspaceCitationsForIntent(
     citations: WorkspaceCitation[],
     currentIntent: string,
   ): WorkspaceCitation[] {
-    if (citations.length === 0) {
-      return citations;
-    }
-
-    return citations
+    return citations.length === 0 ? citations : citations
       .filter((citation) => {
         const combined = `${citation.title}\n${citation.snippet ?? ''}`;
         return this.calculateTokenOverlap(combined, currentIntent) >= 0.12;
@@ -1582,10 +1555,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
   private normalizeIntentText(value: string): string {
     const trimmed = value.trim();
     const commaIndex = trimmed.indexOf(',');
-    if (trimmed.startsWith('As ') && commaIndex > 0) {
-      return trimmed.slice(commaIndex + 1).trim();
-    }
-    return trimmed;
+    return trimmed.startsWith('As ') && commaIndex > 0 ? trimmed.slice(commaIndex + 1).trim() : trimmed;
   }
 
   private shouldSkipExpensiveContext(query: string, fileIds: string[]): boolean {

@@ -38,6 +38,7 @@ const mockFile = {
   retentionExpiresAt: null,
   parentFileId: null,
   isExtracted: false,
+  archivePath: null,
   extractionMetadata: null,
   createdAt: new Date(),
   updatedAt: new Date(),

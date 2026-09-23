@@ -13,6 +13,15 @@
 > and a total text budget. Auditing every way this service opens an archive
 > means reading both.
 
+> **Amended 2026-09-23 (archive batch A1).** Parts of this ADR described a design
+> that was never built: the ZIP checks do not run in `FileSecurityManager` before
+> storage, nothing is rejected with HTTP 422, nesting depth was not enforced, the
+> total size was not checked from the central directory, and the staging tmpfs
+> was never cleaned. The sections below now describe the code as it stands; the
+> **Amendment 2026-09-23** section at the end says what changed and why.
+> Operational detail: `docs/04-backend/service-guide-file.md` → "ZIP archive
+> expansion".
+
 ## Context
 
 `claw-file-service` currently stores every uploaded file forever and accepts
@@ -38,9 +47,10 @@ already observable on long-lived installs:
    file-service container, taking out the whole upload pipeline for
    ~6 minutes until the orchestrator restarted it.
 
-The existing `FileSecurityManager` is the natural enforcement point for
-ZIP guards because it already runs BEFORE any storage write. The
-retention sweep is a new concern and lives next to the file lifecycle —
+The original plan put the ZIP guards in `FileSecurityManager`, because it
+runs before any storage write. That is not where they ended up: archives are
+expanded during text extraction, after the upload is stored (see Decision §2).
+The retention sweep is a new concern and lives next to the file lifecycle —
 file-service is the only service that owns the `File`/`FileChunk` blob
 and DB row, so it owns deletion.
 
@@ -51,8 +61,12 @@ and DB row, so it owns deletion.
 - Add a NestJS `@Cron` task to `claw-file-service` driven by
   `FILE_RETENTION_SWEEP_CRON` (default `'0 2 * * *'` — 02:00 daily,
   server local time).
-- Each tick: query up to `FILE_RETENTION_SWEEP_BATCH_LIMIT` (default 100)
-  `File` rows where `createdAt < now() - FILE_RETENTION_DAYS days` (default 30) and `ingestionStatus IN (COMPLETED, FAILED)`.
+- Every upload is stamped `retentionExpiresAt = now + FILE_RETENTION_DAYS`
+  (default 30) at creation (published share copies are kept, `null`); files extracted from an archive inherit the
+  archive's value. Each tick queries up to `FILE_RETENTION_SWEEP_BATCH_LIMIT`
+  (default 100) `File` rows with `retentionExpiresAt < now()`. (The original
+  text said `createdAt` and a status filter; the code has always keyed on
+  `retentionExpiresAt` and does not filter by status.)
 - For each row: delete blob at `storagePath` (warn-and-continue if
   missing), cascade-delete `FileChunk` rows via Prisma, then delete the
   `File` row.
@@ -63,28 +77,45 @@ and DB row, so it owns deletion.
 
 ### 2. ZIP archive expansion guardrails
 
-Add four hard caps enforced by `FileSecurityManager` BEFORE any
-extraction to disk:
+Archives are expanded by `ZipExpansionManager` during text extraction, which
+starts after the upload has been stored and its row created. The upload request
+runs only the ordinary upload checks on the ZIP bytes and returns 201; a
+violation found during expansion marks the archive row `FAILED` with
+`extractionError = "<CODE>: <reason>"` and publishes `FILE_FAILED`. There is no
+HTTP 422, and the i18n key `files.zip.bombRejected` exists in every locale but
+is not rendered by any component today.
 
-| Env var                           | Default | Purpose                                                              |
-| --------------------------------- | ------: | -------------------------------------------------------------------- |
-| `ZIP_MAX_NESTING_DEPTH`           |       5 | Max archive-inside-archive recursion depth.                          |
-| `ZIP_MAX_ENTRY_COUNT`             |   10000 | Max entries (files + directories) per archive.                       |
-| `ZIP_COMPRESSION_RATIO_THRESHOLD` |    1000 | Per-entry `uncompressedSize / compressedSize` cap. Above = ZIP bomb. |
-| `ZIP_MAX_EXTRACTED_SIZE_MB`       |     500 | Sum-of-uncompressed-bytes cap across the whole archive.              |
+Four caps, all configurable:
 
-Validation order is fixed: nesting → entry count → ratio → total size →
-path traversal. The first violation aborts the upload with HTTP 422
-and surfaces the i18n key `files.zip.bombRejected` to the user. All
-checks use the central directory header (i.e. metadata only), so a
-malicious archive never streams to disk before it is rejected.
+| Env var                           | Default | Purpose                                                                                    |
+| --------------------------------- | ------: | ------------------------------------------------------------------------------------------ |
+| `ZIP_MAX_NESTING_DEPTH`           |       5 | Deepest archive level that is opened (the upload is depth 1). Deeper archives are skipped. |
+| `ZIP_MAX_ENTRY_COUNT`             |   10000 | Max entries (files + directories) per archive.                                             |
+| `ZIP_COMPRESSION_RATIO_THRESHOLD` |    1000 | Per-entry `uncompressedSize / compressedSize` cap. Above = ZIP bomb.                       |
+| `ZIP_MAX_EXTRACTED_SIZE_MB`       |     500 | Uncompressed-bytes cap per archive AND the budget shared by the whole nested archive tree. |
 
-Extraction happens inside `ZIP_TEMP_EXTRACTION_PATH` (default
-`/tmp/claw-zip-extraction`), which is mounted as a 1 GB `tmpfs` in
-both `docker-compose.dev.services.yml` and
-`docker-compose.prod.services.yml`. This means even if all four
-metadata checks somehow miss a novel bomb pattern, the kernel-enforced
-tmpfs size cap is a backstop that protects the host disk.
+Whole-archive rejections, in this order, all from central-directory metadata
+before any byte is written: entry count (`ZIP_TOO_MANY_ENTRIES`) → per-entry
+path safety (`ZIP_PATH_TRAVERSAL`) → per-entry ratio (`ZIP_BOMB_RATIO`) →
+declared total size of the entries to extract against
+`min(ZIP_MAX_EXTRACTED_SIZE_MB, remaining shared budget)` (`ZIP_BOMB_RATIO`, or
+`ZIP_CUMULATIVE_SIZE_EXCEEDED` when the shared budget is the binding limit).
+Declared sizes can lie, so the bytes actually inflated are counted against the
+same cap during extraction.
+
+Per-entry skips, which do not fail the archive: password-protected entries
+(`ARCHIVE_ENCRYPTED`, detected up front from the entry flags), a nested archive
+already at the depth limit, and an entry larger than a single upload may be
+(50 MB). Entries that fail the ordinary upload security checks (ClamAV, magic
+bytes, extension blocklist) are skipped too.
+
+Extraction stages bytes in `ZIP_TEMP_EXTRACTION_PATH` (default
+`/tmp/claw-zip-extraction`), a 1 GB `tmpfs` in `docker-compose.dev.services.yml`
+and `docker-compose.prod.services.yml`, so a novel bomb pattern that slips past
+the metadata checks is still stopped by a kernel-enforced size cap. Each
+archive's staging directory is removed in a `finally` after its expansion,
+success or failure. Extracted files are then stored under `FILE_STORAGE_PATH`
+like any upload — the staging area is never their home.
 
 ## Why these specific thresholds
 
@@ -161,9 +192,35 @@ tmpfs size cap is a backstop that protects the host disk.
   archive guardrails (Slice C foundation 3)").
 - `apps/claw-file-service/src/app/config/app.config.ts` — Zod schema
   fields with defaults.
-- i18n key `files.zip.bombRejected` — surfaced by the FE when an
-  upload is rejected at any of the four ZIP-guard stages.
+- i18n key `files.zip.bombRejected` — defined in all 13 locales but not
+  rendered by any component; a rejected archive currently shows as a FAILED
+  file.
 - i18n key `files.retention.expired` — surfaced when a thread later
   references a file that has been removed by the sweeper.
 - i18n key `files.permissions.denied` — surfaced when a viewer hits
   the file list/detail endpoints without `FILES.VIEW` permission.
+
+## Amendment 2026-09-23 — archive batch A1
+
+What the audit found, and what changed:
+
+| Claimed                                            | Was                                                                                                    | Now                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Checks run in `FileSecurityManager` before storage | Checks run during extraction, after storage                                                            | Unchanged; documented as such.                                                                                            |
+| Violations return HTTP 422                         | The archive row ends FAILED; no HTTP error                                                             | Unchanged; `extractionError` now carries `<CODE>: <reason>` so a model can tell the user why.                             |
+| Total size checked from the central directory      | Only the running total during extraction                                                               | Declared total checked before writing, running total still checked during.                                                |
+| Nesting depth enforced                             | Depth reset at every level; `ZIP_MAX_NESTING_DEPTH` only mattered when set to 1                        | Depth passed through the recursion; archives at the limit are skipped; one byte budget shared across all levels.          |
+| Sandbox cleaned after every upload                 | Never cleaned; children's `storagePath` pointed into the tmpfs, so their bytes died with the container | Children stored under `FILE_STORAGE_PATH` with the archive's `retentionExpiresAt`; staging removed in a `finally`.        |
+| (unstated) an attached archive reaches the model   | The archive row had no `extractedText`; the model was told the ZIP "produced no readable text"         | The archive's `extractedText` is a manifest: file tree, per-entry status, and the children's text within 100k characters. |
+| (unstated) encrypted archives                      | `Entry encrypted` failed the whole archive as `ZIP_EXPANSION_FAILED`                                   | Encrypted entries skipped as `ARCHIVE_ENCRYPTED`; the rest delivered. Password support is a later batch.                  |
+
+The manifest is written through `FilesRepository.saveExtractionResult`, which
+stays the only writer of `extractedText` (ADR-095), and carries the same
+untrusted-content guard chat-service already puts in front of attachments.
+A new nullable column, `files.archive_path` (migration
+`20260923120000_add_file_archive_path`), keeps each child's path inside its
+archive; `filename` alone lost the folder structure.
+
+Known limits left for later batches: password-protected archives, formats other
+than ZIP, and archives expanded before this amendment, which have no manifest
+and are not re-expanded on use (re-expanding would duplicate their children).

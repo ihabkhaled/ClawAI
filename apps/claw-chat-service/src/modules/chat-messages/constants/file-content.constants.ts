@@ -206,6 +206,9 @@ export const DOCUMENT_MIME_DOCX =
 
 export const IMAGE_MIME_PREFIX = 'image/';
 
+// file-service packs an attached archive's manifest to exactly this length
+// (ARCHIVE_MANIFEST_MAX_CHARS) so it is cut at an entry boundary with the
+// omissions stated, not sliced here mid-file. Change the two together.
 export const MAX_FILE_CONTENT_LENGTH = 100_000;
 
 // Bounded wait for file-service extraction, used before a turn is assembled.

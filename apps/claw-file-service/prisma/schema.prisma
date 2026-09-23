@@ -28,6 +28,10 @@ model File {
   retentionExpiresAt  DateTime?           @map("retention_expires_at")
   parentFileId        String?             @map("parent_file_id")
   isExtracted         Boolean             @default(false) @map("is_extracted")
+  // Relative path of this file INSIDE its parent archive (e.g. "docs/intro.md").
+  // Null for every file that was not extracted from an archive. `filename` is the
+  // basename only, so without this the folder structure is lost.
+  archivePath         String?             @map("archive_path")
   extractionMetadata  Json?               @map("extraction_metadata")
   createdAt           DateTime            @default(now()) @map("created_at")
   updatedAt           DateTime            @updatedAt @map("updated_at")
