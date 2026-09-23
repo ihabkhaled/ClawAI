@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import {
   CLAW_USER_AGENT,
@@ -25,13 +26,12 @@ export class GitHubWriteActionsHelper {
   ): Promise<WriteActionResult> {
     const handlers = this.handlerMap();
     const handler = handlers.get(actionType);
-    if (handler === undefined) {
-      return {
-        success: false,
-        errorMessage: `GitHub adapter: unsupported action type ${actionType}`,
-      };
-    }
-    return handler(accessToken, payload);
+    return handler === undefined
+      ? {
+          success: false,
+          errorMessage: `GitHub adapter: unsupported action type ${actionType}`,
+        }
+      : handler(accessToken, payload);
   }
 
   private handlerMap(): Map<
@@ -57,16 +57,20 @@ export class GitHubWriteActionsHelper {
   ): Promise<WriteActionResult> {
     const owner = payload['owner'] as string;
     const repo = payload['repo'] as string;
-    const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/issues`, {
-      method: 'POST',
-      headers: this.buildHeaders(accessToken),
-      signal: AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS),
-      body: JSON.stringify({
-        title: payload['title'],
-        body: payload['body'],
-        labels: payload['labels'] ?? [],
-      }),
-    });
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues`,
+      {
+        method: 'POST',
+        headers: this.buildHeaders(accessToken),
+        signal: AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS),
+        body: JSON.stringify({
+          title: payload['title'],
+          body: payload['body'],
+          labels: payload['labels'] ?? [],
+        }),
+      },
+    );
     if (!response.ok) {
       return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
     }
@@ -81,7 +85,8 @@ export class GitHubWriteActionsHelper {
     const owner = payload['owner'] as string;
     const repo = payload['repo'] as string;
     const issueNumber = payload['issueNumber'] as number;
-    const response = await fetch(
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
       {
         method: 'POST',
@@ -104,12 +109,16 @@ export class GitHubWriteActionsHelper {
     const owner = payload['owner'] as string;
     const repo = payload['repo'] as string;
     const pullNumber = payload['pullNumber'] as number;
-    const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`, {
-      method: 'PATCH',
-      headers: this.buildHeaders(accessToken),
-      signal: AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS),
-      body: JSON.stringify({ body: payload['body'] }),
-    });
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`,
+      {
+        method: 'PATCH',
+        headers: this.buildHeaders(accessToken),
+        signal: AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS),
+        body: JSON.stringify({ body: payload['body'] }),
+      },
+    );
     if (!response.ok) {
       return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
     }
@@ -124,7 +133,8 @@ export class GitHubWriteActionsHelper {
     const owner = payload['owner'] as string;
     const repo = payload['repo'] as string;
     const pullNumber = payload['pullNumber'] as number;
-    const response = await fetch(
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${pullNumber}/comments`,
       {
         method: 'POST',
@@ -147,7 +157,8 @@ export class GitHubWriteActionsHelper {
     const owner = payload['owner'] as string;
     const repo = payload['repo'] as string;
     const pullNumber = payload['pullNumber'] as number;
-    const response = await fetch(
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`,
       {
         method: 'POST',
@@ -199,7 +210,8 @@ export class GitHubWriteActionsHelper {
     };
     if (startLine !== undefined) requestBody['start_line'] = startLine;
     if (startSide !== undefined) requestBody['start_side'] = startSide;
-    const response = await fetch(
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/comments`,
       {
         method: 'POST',

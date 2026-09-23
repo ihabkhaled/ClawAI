@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
@@ -39,7 +40,7 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(CONFLUENCE_API_RESOURCES, {
+      const response = await guardedFetch(CONFLUENCE_API_RESOURCES, CONFLUENCE_API_RESOURCES, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -47,18 +48,17 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Confluence health check failed: ${message}`);
@@ -101,7 +101,7 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('Confluence OAuth requires clientId and clientSecret');
     }
-    const response = await fetch(CONFLUENCE_TOKEN_URL, {
+    const response = await guardedFetch(CONFLUENCE_TOKEN_URL, CONFLUENCE_TOKEN_URL, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -126,7 +126,7 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('Confluence refresh requires clientId and clientSecret');
     }
-    const response = await fetch(CONFLUENCE_TOKEN_URL, {
+    const response = await guardedFetch(CONFLUENCE_TOKEN_URL, CONFLUENCE_TOKEN_URL, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -148,6 +148,7 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
       throw new Error('Confluence OAuth probe requires clientId and clientSecret');
     }
     return probeOAuthAppCredentials({
+      declaredBase: CONFLUENCE_TOKEN_URL,
       tokenUrl: CONFLUENCE_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -166,10 +167,9 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'invalid_request') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || error === 'unauthorized_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || error === 'unauthorized_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -212,7 +212,8 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
       this.logger.warn(`Confluence refresh skipped for ${externalId}: missing cloudId metadata`);
       return null;
     }
-    const response = await fetch(
+    const response = await guardedFetch(
+      CONFLUENCE_API_RESOURCES,
       `https://api.atlassian.com/ex/confluence/${cloudId}/wiki/rest/api/content/${externalId}?expand=body.storage,history,version,space`,
       {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
@@ -244,7 +245,7 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
   }
 
   private async pickConfluenceResource(accessToken: string): Promise<ConfluenceResource | null> {
-    const response = await fetch(CONFLUENCE_API_RESOURCES, {
+    const response = await guardedFetch(CONFLUENCE_API_RESOURCES, CONFLUENCE_API_RESOURCES, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
     });
     if (!response.ok) {
@@ -255,7 +256,8 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
   }
 
   private async fetchPages(accessToken: string, cloudId: string): Promise<ConfluencePage[]> {
-    const response = await fetch(
+    const response = await guardedFetch(
+      CONFLUENCE_API_RESOURCES,
       `https://api.atlassian.com/ex/confluence/${cloudId}/wiki/rest/api/content?limit=${String(CONFLUENCE_SYNC_PAGE_LIMIT)}&expand=history,version,space`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
@@ -329,7 +331,11 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
       'Content-Type': 'application/json',
     };
 
-    const resourcesResponse = await fetch(CONFLUENCE_API_RESOURCES, { headers });
+    const resourcesResponse = await guardedFetch(
+      CONFLUENCE_API_RESOURCES,
+      CONFLUENCE_API_RESOURCES,
+      { headers },
+    );
     if (!resourcesResponse.ok) {
       return {
         success: false,
@@ -344,7 +350,7 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
     const baseUrl = `https://api.atlassian.com/ex/confluence/${site.id}/wiki/rest/api`;
 
     if (actionType === 'CREATE_CONFLUENCE') {
-      const response = await fetch(`${baseUrl}/content`, {
+      const response = await guardedFetch(CONFLUENCE_API_RESOURCES, `${baseUrl}/content`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -376,22 +382,26 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
     if (actionType === 'EDIT_CONFLUENCE') {
       const pageId = payload['pageId'] as string;
       const expectedVersion = payload['expectedVersion'] as number;
-      const response = await fetch(`${baseUrl}/content/${pageId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          id: pageId,
-          type: 'page',
-          title: payload['title'],
-          version: { number: expectedVersion + 1 },
-          body: {
-            storage: {
-              value: payload['storage'] ?? payload['body'],
-              representation: 'storage',
+      const response = await guardedFetch(
+        CONFLUENCE_API_RESOURCES,
+        `${baseUrl}/content/${pageId}`,
+        {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            id: pageId,
+            type: 'page',
+            title: payload['title'],
+            version: { number: expectedVersion + 1 },
+            body: {
+              storage: {
+                value: payload['storage'] ?? payload['body'],
+                representation: 'storage',
+              },
             },
-          },
-        }),
-      });
+          }),
+        },
+      );
       if (!response.ok) {
         return { success: false, errorMessage: `Confluence API error: HTTP ${response.status}` };
       }

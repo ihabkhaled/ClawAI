@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import {
+  guardedDownloadFetch,
+  guardedFetch,
+} from '../../../common/utilities/guarded-fetch.utility';
 
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -41,26 +45,29 @@ export class SharePointAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${MICROSOFT_GRAPH_API_BASE}/me`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-      });
+      const response = await guardedFetch(
+        MICROSOFT_GRAPH_API_BASE,
+        `${MICROSOFT_GRAPH_API_BASE}/me`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        },
+      );
       const latencyMs = Date.now() - start;
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`SharePoint health check failed: ${message}`);
@@ -101,7 +108,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
       redirect_uri: redirectUri,
       ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
     });
-    const response = await fetch(MICROSOFT_TOKEN_URL, {
+    const response = await guardedFetch(MICROSOFT_TOKEN_URL, MICROSOFT_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -126,7 +133,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(MICROSOFT_TOKEN_URL, {
+    const response = await guardedFetch(MICROSOFT_TOKEN_URL, MICROSOFT_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -153,6 +160,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: MICROSOFT_TOKEN_URL,
       tokenUrl,
       requestBuilder: () => ({
         method: 'POST',
@@ -172,15 +180,12 @@ export class SharePointAdapter implements WorkspaceAdapter {
         ) {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (
-          error === 'invalid_client' ||
+        return error === 'invalid_client' ||
           error === 'unauthorized_client' ||
           /AADSTS7000215|AADSTS700016|AADSTS90002/.test(description) ||
           status === 401
-        ) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -216,10 +221,14 @@ export class SharePointAdapter implements WorkspaceAdapter {
     if (objectType !== WorkspaceObjectType.DOCUMENT) {
       return null;
     }
-    const response = await fetch(`${MICROSOFT_GRAPH_API_BASE}/sites/${externalId}`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-    });
+    const response = await guardedFetch(
+      MICROSOFT_GRAPH_API_BASE,
+      `${MICROSOFT_GRAPH_API_BASE}/sites/${externalId}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
     if (response.status === 404) {
       return null;
     }
@@ -246,7 +255,8 @@ export class SharePointAdapter implements WorkspaceAdapter {
       return null;
     }
     const name = typeof metadata?.['name'] === 'string' ? metadata['name'] : externalId;
-    const response = await fetch(
+    const response = await guardedDownloadFetch(
+      MICROSOFT_GRAPH_API_BASE,
       `${MICROSOFT_GRAPH_API_BASE}/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(externalId)}/content`,
       { headers: { Authorization: `Bearer ${accessToken}` } },
     );
@@ -276,7 +286,8 @@ export class SharePointAdapter implements WorkspaceAdapter {
   }
 
   private async searchSites(accessToken: string): Promise<GraphSite[]> {
-    const response = await fetch(
+    const response = await guardedFetch(
+      MICROSOFT_GRAPH_API_BASE,
       `${MICROSOFT_GRAPH_API_BASE}/sites?search=*&$top=${String(MICROSOFT_SHAREPOINT_SYNC_LIMIT)}`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
@@ -372,7 +383,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
     }
     const fullPath = encodeGraphPath(`${parentFolderPath}/${fileName}`);
     const url = `${MICROSOFT_GRAPH_API_BASE}/sites/${encodeURIComponent(siteId)}/drives/${encodeURIComponent(driveId)}/root:${fullPath}:/content`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(MICROSOFT_GRAPH_API_BASE, url, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -392,7 +403,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
     const listId = String(payload['listId'] ?? '');
     const fields = (payload['fields'] as Record<string, unknown> | undefined) ?? {};
     const url = `${MICROSOFT_GRAPH_API_BASE}/sites/${encodeURIComponent(siteId)}/lists/${encodeURIComponent(listId)}/items`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(MICROSOFT_GRAPH_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -413,7 +424,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
     const itemId = String(payload['itemId'] ?? '');
     const fields = (payload['fields'] as Record<string, unknown> | undefined) ?? {};
     const url = `${MICROSOFT_GRAPH_API_BASE}/sites/${encodeURIComponent(siteId)}/lists/${encodeURIComponent(listId)}/items/${encodeURIComponent(itemId)}/fields`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(MICROSOFT_GRAPH_API_BASE, url, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import {
   BITBUCKET_API_BASE,
@@ -40,7 +41,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${BITBUCKET_API_BASE}/user`, {
+      const response = await guardedFetch(BITBUCKET_API_BASE, `${BITBUCKET_API_BASE}/user`, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -48,18 +49,17 @@ export class BitbucketAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized — invalid token',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized — invalid token',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Bitbucket health check failed: ${message}`);
@@ -107,7 +107,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     const basic = Buffer.from(`${appCredentials.clientId}:${appCredentials.clientSecret}`).toString(
       'base64',
     );
-    const response = await fetch(BITBUCKET_TOKEN_URL, {
+    const response = await guardedFetch(BITBUCKET_TOKEN_URL, BITBUCKET_TOKEN_URL, {
       method: 'POST',
       headers: {
         Authorization: `Basic ${basic}`,
@@ -134,7 +134,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     const basic = Buffer.from(`${appCredentials.clientId}:${appCredentials.clientSecret}`).toString(
       'base64',
     );
-    const response = await fetch(BITBUCKET_TOKEN_URL, {
+    const response = await guardedFetch(BITBUCKET_TOKEN_URL, BITBUCKET_TOKEN_URL, {
       method: 'POST',
       headers: {
         Authorization: `Basic ${basic}`,
@@ -163,6 +163,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: BITBUCKET_TOKEN_URL,
       tokenUrl: BITBUCKET_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -179,10 +180,9 @@ export class BitbucketAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'invalid_request') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || error === 'unauthorized_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || error === 'unauthorized_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -227,10 +227,14 @@ export class BitbucketAdapter implements WorkspaceAdapter {
         );
         return null;
       }
-      const response = await fetch(`${BITBUCKET_API_BASE}/repositories/${fullName}`, {
-        headers,
-        signal,
-      });
+      const response = await guardedFetch(
+        BITBUCKET_API_BASE,
+        `${BITBUCKET_API_BASE}/repositories/${fullName}`,
+        {
+          headers,
+          signal,
+        },
+      );
       if (response.status === 404) {
         return null;
       }
@@ -250,7 +254,8 @@ export class BitbucketAdapter implements WorkspaceAdapter {
         );
         return null;
       }
-      const response = await fetch(
+      const response = await guardedFetch(
+        BITBUCKET_API_BASE,
         `${BITBUCKET_API_BASE}/repositories/${fullName}/pullrequests/${String(prId)}`,
         { headers, signal },
       );
@@ -291,9 +296,13 @@ export class BitbucketAdapter implements WorkspaceAdapter {
   private async fetchUserRepositories(accessToken: string): Promise<BitbucketRepository[]> {
     // GET /repositories?role=member is deprecated (410 Gone).
     // Fetch workspaces first, then list repos per workspace.
-    const wsResponse = await fetch(`${BITBUCKET_API_BASE}/workspaces?pagelen=50`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-    });
+    const wsResponse = await guardedFetch(
+      BITBUCKET_API_BASE,
+      `${BITBUCKET_API_BASE}/workspaces?pagelen=50`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      },
+    );
     // 410 = account has no workspaces yet (new or unmigrated account)
     if (wsResponse.status === 410) {
       this.logger.warn(`Bitbucket account has no workspaces (410). Returning empty repo list.`);
@@ -309,7 +318,8 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     }
     const allRepos: BitbucketRepository[] = [];
     for (const slug of workspaceSlugs) {
-      const response = await fetch(
+      const response = await guardedFetch(
+        BITBUCKET_API_BASE,
         `${BITBUCKET_API_BASE}/repositories/${encodeURIComponent(slug)}?pagelen=${String(BITBUCKET_SYNC_REPO_LIMIT)}&sort=-updated_on`,
         { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
       );
@@ -369,7 +379,8 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     fullName: string,
   ): Promise<SyncedObject[]> {
     try {
-      const response = await fetch(
+      const response = await guardedFetch(
+        BITBUCKET_API_BASE,
         `${BITBUCKET_API_BASE}/repositories/${fullName}/pullrequests?pagelen=${String(BITBUCKET_SYNC_PRS_PER_REPO)}&sort=-updated_on`,
         { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
       );
@@ -444,7 +455,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     const prId = String(payload['prId'] ?? '');
     const body = String(payload['body'] ?? '');
     const url = `https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repo)}/pullrequests/${encodeURIComponent(prId)}/comments`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(BITBUCKET_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -464,7 +475,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     const repo = String(payload['repo'] ?? '');
     const prId = String(payload['prId'] ?? '');
     const url = `https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repo)}/pullrequests/${encodeURIComponent(prId)}/approve`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(BITBUCKET_API_BASE, url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
@@ -480,7 +491,7 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     const title = String(payload['title'] ?? '');
     const description = (payload['description'] as string | undefined) ?? '';
     const url = `https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repo)}/issues`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(BITBUCKET_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

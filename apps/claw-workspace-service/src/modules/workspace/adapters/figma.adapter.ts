@@ -1,4 +1,5 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
@@ -51,10 +52,14 @@ export class FigmaAdapter implements WorkspaceAdapter {
   // Figma file tree and flattens it into an AI-ready summary a
   // design-to-story action can turn into user stories.
   async analyzeDesign(accessToken: string, fileKey: string): Promise<FigmaDesignAnalysis> {
-    const response = await fetch(`${FIGMA_API_BASE}/files/${encodeURIComponent(fileKey)}`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-    });
+    const response = await guardedFetch(
+      FIGMA_API_BASE,
+      `${FIGMA_API_BASE}/files/${encodeURIComponent(fileKey)}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
     if (!response.ok) {
       throw new Error(`Figma analyzeDesign failed: HTTP ${String(response.status)}`);
     }
@@ -66,7 +71,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${FIGMA_API_BASE}/me`, {
+      const response = await guardedFetch(FIGMA_API_BASE, `${FIGMA_API_BASE}/me`, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -74,18 +79,17 @@ export class FigmaAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401 || response.status === 403) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401 || response.status === 403
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Figma health check failed: ${message}`);
@@ -153,7 +157,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
 
   private async discoverTeamId(accessToken: string): Promise<string | null> {
     try {
-      const response = await fetch(`${FIGMA_API_BASE}/me`, {
+      const response = await guardedFetch(FIGMA_API_BASE, `${FIGMA_API_BASE}/me`, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -165,10 +169,9 @@ export class FigmaAdapter implements WorkspaceAdapter {
         teams?: Array<{ id: string; name: string }>;
       };
       // Enterprise accounts return teams; free accounts may not
-      if (Array.isArray(data.teams) && data.teams.length > 0 && data.teams[0] !== undefined) {
-        return data.teams[0].id;
-      }
-      return null;
+      return Array.isArray(data.teams) && data.teams.length > 0 && data.teams[0] !== undefined
+        ? data.teams[0].id
+        : null;
     } catch {
       return null;
     }
@@ -190,7 +193,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
       code,
       grant_type: 'authorization_code',
     });
-    const response = await fetch(FIGMA_TOKEN_URL, {
+    const response = await guardedFetch(FIGMA_TOKEN_URL, FIGMA_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -214,7 +217,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(`${FIGMA_API_BASE}/oauth/refresh`, {
+    const response = await guardedFetch(FIGMA_API_BASE, `${FIGMA_API_BASE}/oauth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -238,6 +241,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: FIGMA_TOKEN_URL,
       tokenUrl: FIGMA_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -253,10 +257,9 @@ export class FigmaAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'invalid_request') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || status === 401 || status === 403) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || status === 401 || status === 403
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -287,10 +290,14 @@ export class FigmaAdapter implements WorkspaceAdapter {
     if (objectType !== WorkspaceObjectType.FILE) {
       return null;
     }
-    const response = await fetch(`${FIGMA_API_BASE}/files/${externalId}?depth=1`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-    });
+    const response = await guardedFetch(
+      FIGMA_API_BASE,
+      `${FIGMA_API_BASE}/files/${externalId}?depth=1`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
     if (response.status === 404) {
       return null;
     }
@@ -327,9 +334,13 @@ export class FigmaAdapter implements WorkspaceAdapter {
   }
 
   private async listTeamProjects(accessToken: string, teamId: string): Promise<FigmaTeamProject[]> {
-    const response = await fetch(`${FIGMA_API_BASE}/teams/${teamId}/projects`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-    });
+    const response = await guardedFetch(
+      FIGMA_API_BASE,
+      `${FIGMA_API_BASE}/teams/${teamId}/projects`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      },
+    );
     if (!response.ok) {
       throw new Error(`Figma projects failed: HTTP ${response.status}`);
     }
@@ -342,9 +353,13 @@ export class FigmaAdapter implements WorkspaceAdapter {
     projectId: string,
   ): Promise<FigmaFile[]> {
     try {
-      const response = await fetch(`${FIGMA_API_BASE}/projects/${projectId}/files`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      });
+      const response = await guardedFetch(
+        FIGMA_API_BASE,
+        `${FIGMA_API_BASE}/projects/${projectId}/files`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        },
+      );
       if (!response.ok) {
         this.logger.warn(`Figma files fetch failed for ${projectId}: HTTP ${response.status}`);
         return [];
@@ -394,14 +409,18 @@ export class FigmaAdapter implements WorkspaceAdapter {
       const fileKey = payload['fileKey'] as string;
       const message = payload['message'] as string;
       const clientMeta = payload['clientMeta'] ?? { x: 0, y: 0 };
-      const response = await fetch(`https://api.figma.com/v1/files/${fileKey}/comments`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+      const response = await guardedFetch(
+        FIGMA_API_BASE,
+        `https://api.figma.com/v1/files/${fileKey}/comments`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message, client_meta: clientMeta }),
         },
-        body: JSON.stringify({ message, client_meta: clientMeta }),
-      });
+      );
       if (!response.ok) {
         return { success: false, errorMessage: `Figma API error: HTTP ${response.status}` };
       }

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import {
   CALENDAR_SYNC_LOOKAHEAD_DAYS,
@@ -36,7 +37,8 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(
+      const response = await guardedFetch(
+        GOOGLE_CALENDAR_API_BASE,
         `${GOOGLE_CALENDAR_API_BASE}/users/me/calendarList?maxResults=1`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -45,18 +47,17 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       );
       const latencyMs = Date.now() - start;
       if (response.ok) return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Google Calendar health check failed: ${message}`);
@@ -80,7 +81,8 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       maxResults: String(CALENDAR_SYNC_MAX_EVENTS_PER_TICK),
       ...(deltaToken !== undefined ? { syncToken: deltaToken } : {}),
     });
-    const response = await fetch(
+    const response = await guardedFetch(
+      GOOGLE_CALENDAR_API_BASE,
       `${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events?${params.toString()}`,
       {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
@@ -122,7 +124,7 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       grant_type: 'authorization_code',
     };
     if (codeVerifier !== undefined) body['code_verifier'] = codeVerifier;
-    const response = await fetch(GOOGLE_TOKEN_URL, {
+    const response = await guardedFetch(GOOGLE_TOKEN_URL, GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(body).toString(),
@@ -158,7 +160,7 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(GOOGLE_TOKEN_URL, {
+    const response = await guardedFetch(GOOGLE_TOKEN_URL, GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
@@ -188,6 +190,7 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: GOOGLE_TOKEN_URL,
       tokenUrl: GOOGLE_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -202,10 +205,9 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
         if (data?.error === 'invalid_grant' || data?.error === 'redirect_uri_mismatch') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (data?.error === 'invalid_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return data?.error === 'invalid_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -243,7 +245,8 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
     objectType: string,
   ): Promise<LiveObjectDetails | null> {
     if (objectType !== WorkspaceObjectType.MEETING) return null;
-    const response = await fetch(
+    const response = await guardedFetch(
+      GOOGLE_CALENDAR_API_BASE,
       `${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events/${encodeURIComponent(externalId)}`,
       {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
@@ -338,20 +341,24 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
         ? (payload['attendeeEmails'] as unknown[]).filter((e): e is string => typeof e === 'string')
         : [];
       const timeZone = typeof payload['timeZone'] === 'string' ? payload['timeZone'] : 'UTC';
-      const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+      const response = await guardedFetch(
+        GOOGLE_CALENDAR_API_BASE,
+        `${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            summary,
+            description,
+            start: { dateTime: startDateTime, timeZone },
+            end: { dateTime: endDateTime, timeZone },
+            attendees: attendeeEmails.map((email) => ({ email })),
+          }),
         },
-        body: JSON.stringify({
-          summary,
-          description,
-          start: { dateTime: startDateTime, timeZone },
-          end: { dateTime: endDateTime, timeZone },
-          attendees: attendeeEmails.map((email) => ({ email })),
-        }),
-      });
+      );
       if (!response.ok) {
         const text = await response.text().catch(() => '');
         return {

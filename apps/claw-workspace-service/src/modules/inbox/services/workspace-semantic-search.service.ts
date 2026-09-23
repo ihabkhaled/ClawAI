@@ -4,6 +4,7 @@ import { AppConfig } from '../../../app/config/app.config';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { SEARCH_HTTP_TIMEOUT_MS } from '../constants/inbox.constants';
 import type { SearchInput, SearchResponse, SearchResultItem } from '../types/inbox.types';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 @Injectable()
 export class WorkspaceSemanticSearchService {
@@ -14,7 +15,7 @@ export class WorkspaceSemanticSearchService {
   async search(input: SearchInput): Promise<SearchResponse> {
     this.logger.debug(`search: userId=${input.userId} queryHashLen=${String(input.query.length)}`);
     const memoryUrl = `${AppConfig.get().MEMORY_SERVICE_URL}/api/v1/internal/embeddings/search-workspace-objects`;
-    const response = await fetch(memoryUrl, {
+    const response = await guardedFetch(AppConfig.get().MEMORY_SERVICE_URL, memoryUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({

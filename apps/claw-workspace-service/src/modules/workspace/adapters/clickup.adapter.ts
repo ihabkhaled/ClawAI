@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import {
   CLICKUP_API_BASE,
@@ -41,7 +42,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${CLICKUP_API_BASE}/user`, {
+      const response = await guardedFetch(CLICKUP_API_BASE, `${CLICKUP_API_BASE}/user`, {
         headers: { Authorization: accessToken, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -49,18 +50,17 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`ClickUp health check failed: ${message}`);
@@ -108,7 +108,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       code,
     });
-    const response = await fetch(CLICKUP_TOKEN_URL, {
+    const response = await guardedFetch(CLICKUP_TOKEN_URL, CLICKUP_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -143,6 +143,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       code: OAUTH_PROBE_INVALID_CODE,
     });
     return probeOAuthAppCredentials({
+      declaredBase: CLICKUP_TOKEN_URL,
       tokenUrl: `${CLICKUP_TOKEN_URL}?${params.toString()}`,
       requestBuilder: () => ({
         method: 'POST',
@@ -159,15 +160,12 @@ export class ClickUpAdapter implements WorkspaceAdapter {
         ) {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (
-          code === 'OAUTH_024' ||
+        return code === 'OAUTH_024' ||
           code === 'OAUTH_026' ||
           code === 'OAUTH_027' ||
           status === 401
-        ) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -203,10 +201,14 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     if (objectType !== WorkspaceObjectType.TICKET) {
       return null;
     }
-    const response = await fetch(`${CLICKUP_API_BASE}/task/${externalId}`, {
-      headers: { Authorization: accessToken, Accept: 'application/json' },
-      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-    });
+    const response = await guardedFetch(
+      CLICKUP_API_BASE,
+      `${CLICKUP_API_BASE}/task/${externalId}`,
+      {
+        headers: { Authorization: accessToken, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
     if (response.status === 404) {
       return null;
     }
@@ -231,7 +233,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
   }
 
   private async listTeams(accessToken: string): Promise<Array<{ id: string; name: string }>> {
-    const response = await fetch(`${CLICKUP_API_BASE}/team`, {
+    const response = await guardedFetch(CLICKUP_API_BASE, `${CLICKUP_API_BASE}/team`, {
       headers: { Authorization: accessToken, Accept: 'application/json' },
     });
     if (!response.ok) {
@@ -246,9 +248,13 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     teamId: string,
   ): Promise<Array<{ id: string; name: string }>> {
     try {
-      const response = await fetch(`${CLICKUP_API_BASE}/team/${teamId}/space?archived=false`, {
-        headers: { Authorization: accessToken, Accept: 'application/json' },
-      });
+      const response = await guardedFetch(
+        CLICKUP_API_BASE,
+        `${CLICKUP_API_BASE}/team/${teamId}/space?archived=false`,
+        {
+          headers: { Authorization: accessToken, Accept: 'application/json' },
+        },
+      );
       if (!response.ok) {
         return [];
       }
@@ -261,9 +267,13 @@ export class ClickUpAdapter implements WorkspaceAdapter {
 
   private async safeListLists(accessToken: string, spaceId: string): Promise<ClickUpList[]> {
     try {
-      const response = await fetch(`${CLICKUP_API_BASE}/space/${spaceId}/list?archived=false`, {
-        headers: { Authorization: accessToken, Accept: 'application/json' },
-      });
+      const response = await guardedFetch(
+        CLICKUP_API_BASE,
+        `${CLICKUP_API_BASE}/space/${spaceId}/list?archived=false`,
+        {
+          headers: { Authorization: accessToken, Accept: 'application/json' },
+        },
+      );
       if (!response.ok) {
         return [];
       }
@@ -285,7 +295,8 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     teamName: string,
   ): Promise<SyncedObject[]> {
     try {
-      const response = await fetch(
+      const response = await guardedFetch(
+        CLICKUP_API_BASE,
         `${CLICKUP_API_BASE}/list/${list.id}/task?page=0&archived=false&order_by=updated&reverse=true`,
         { headers: { Authorization: accessToken, Accept: 'application/json' } },
       );
@@ -370,7 +381,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     const name = String(payload['name'] ?? '');
     const description = (payload['description'] as string | undefined) ?? '';
     const url = `${CLICKUP_API_BASE}/list/${encodeURIComponent(listId)}/task`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(CLICKUP_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: token,
@@ -398,7 +409,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       update['status'] = payload['status'];
     }
     const url = `${CLICKUP_API_BASE}/task/${encodeURIComponent(taskId)}`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(CLICKUP_API_BASE, url, {
       method: 'PUT',
       headers: {
         Authorization: token,
@@ -417,7 +428,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     const taskId = String(payload['taskId'] ?? '');
     const commentText = String(payload['commentText'] ?? '');
     const url = `${CLICKUP_API_BASE}/task/${encodeURIComponent(taskId)}/comment`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(CLICKUP_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: token,

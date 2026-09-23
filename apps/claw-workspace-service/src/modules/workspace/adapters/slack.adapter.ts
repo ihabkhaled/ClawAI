@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
@@ -30,7 +31,7 @@ export class SlackAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string, _baseUrl?: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${SLACK_API_BASE}/auth.test`, {
+      const response = await guardedFetch(SLACK_API_BASE, `${SLACK_API_BASE}/auth.test`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -39,14 +40,13 @@ export class SlackAdapter implements WorkspaceAdapter {
       if (data['ok']) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (data['error'] === 'invalid_auth' || data['error'] === 'token_revoked') {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: data['error'],
-        };
-      }
-      return { status: WorkspaceConnectorStatus.DEGRADED, latencyMs, errorMessage: data['error'] };
+      return data['error'] === 'invalid_auth' || data['error'] === 'token_revoked'
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: data['error'],
+          }
+        : { status: WorkspaceConnectorStatus.DEGRADED, latencyMs, errorMessage: data['error'] };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Slack health check failed: ${message}`);
@@ -59,7 +59,8 @@ export class SlackAdapter implements WorkspaceAdapter {
   }
 
   async syncObjects(accessToken: string, _deltaToken?: string): Promise<SyncResult> {
-    const response = await fetch(
+    const response = await guardedFetch(
+      SLACK_API_BASE,
       `${SLACK_API_BASE}/conversations.list?limit=200&types=public_channel,private_channel`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -104,7 +105,7 @@ export class SlackAdapter implements WorkspaceAdapter {
       code,
       redirect_uri: redirectUri,
     });
-    const response = await fetch(SLACK_TOKEN_URL, {
+    const response = await guardedFetch(SLACK_TOKEN_URL, SLACK_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
@@ -141,6 +142,7 @@ export class SlackAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: SLACK_TOKEN_URL,
       tokenUrl: SLACK_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -160,14 +162,11 @@ export class SlackAdapter implements WorkspaceAdapter {
         ) {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (
-          error === 'invalid_client_id' ||
+        return error === 'invalid_client_id' ||
           error === 'bad_client_secret' ||
           error === 'invalid_client_secret'
-        ) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -224,7 +223,7 @@ export class SlackAdapter implements WorkspaceAdapter {
       if (actionType === 'REPLY_SLACK' && typeof payload['threadTs'] === 'string') {
         postBody['thread_ts'] = payload['threadTs'];
       }
-      const response = await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
+      const response = await guardedFetch(SLACK_API_BASE, `${SLACK_API_BASE}/chat.postMessage`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -234,10 +233,9 @@ export class SlackAdapter implements WorkspaceAdapter {
         body: JSON.stringify(postBody),
       });
       const data = (await response.json()) as { ok: boolean; ts?: string; error?: string };
-      if (!data.ok) {
-        return { success: false, errorMessage: `Slack API error: ${data['error'] ?? 'unknown'}` };
-      }
-      return { success: true, externalId: data['ts'] };
+      return !data.ok
+        ? { success: false, errorMessage: `Slack API error: ${data['error'] ?? 'unknown'}` }
+        : { success: true, externalId: data['ts'] };
     }
 
     return { success: false, errorMessage: `Slack adapter: unsupported action type ${actionType}` };

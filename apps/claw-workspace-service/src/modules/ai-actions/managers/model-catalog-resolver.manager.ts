@@ -16,6 +16,7 @@ import type {
   ResolvedModelCatalog,
 } from '../types/model-catalog.types';
 import type { ModelChoice } from '../types/ai-action.types';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 @Injectable()
 export class ModelCatalogResolverManager {
@@ -26,10 +27,9 @@ export class ModelCatalogResolverManager {
     const catalog = await this.getCatalog();
     const local = this.bestLocal(catalog.installedLocalModels, input.capabilityHints);
     const cloudChain = this.cloudChain(catalog.connectedProviders, input.capabilityHints);
-    if (input.preferLocal === true) {
-      return this.prependLocal(local, cloudChain);
-    }
-    return this.prependCloud(local, cloudChain);
+    return input.preferLocal === true
+      ? this.prependLocal(local, cloudChain)
+      : this.prependCloud(local, cloudChain);
   }
 
   invalidate(): void {
@@ -59,7 +59,7 @@ export class ModelCatalogResolverManager {
   private async fetchInstalledModels(): Promise<InstalledLocalModel[]> {
     const url = `${AppConfig.get().OLLAMA_SERVICE_URL}/api/v1/internal/ollama/installed-models`;
     try {
-      const response = await this.fetchWithTimeout(url);
+      const response = await this.fetchWithTimeout(AppConfig.get().OLLAMA_SERVICE_URL, url);
       if (!response.ok) return [];
       const body = (await response.json()) as InstalledLocalModelsResponse;
       return body.models;
@@ -80,7 +80,10 @@ export class ModelCatalogResolverManager {
     await Promise.all(
       probeProviders.map(async (provider) => {
         try {
-          const response = await this.fetchWithTimeout(`${base}?provider=${provider}`);
+          const response = await this.fetchWithTimeout(
+            AppConfig.get().CONNECTOR_SERVICE_URL,
+            `${base}?provider=${provider}`,
+          );
           if (!response.ok) return;
           const config = (await response.json()) as {
             models?: { modelKey: string; displayName: string; capabilities?: string[] }[];
@@ -114,12 +117,13 @@ export class ModelCatalogResolverManager {
       .map((m) => ({ model: m, score: this.scoreInstalled(m, hints) }))
       .sort((a, b) => b.score - a.score);
     const winner = scored[0]?.model;
-    if (winner === undefined) return null;
-    return {
-      provider: 'local-ollama',
-      model: `${winner.name}:${winner.tag}`,
-      displayName: this.localDisplayName(winner),
-    };
+    return winner === undefined
+      ? null
+      : {
+          provider: 'local-ollama',
+          model: `${winner.name}:${winner.tag}`,
+          displayName: this.localDisplayName(winner),
+        };
   }
 
   private scoreInstalled(model: InstalledLocalModel, hints: string[]): number {
@@ -161,12 +165,13 @@ export class ModelCatalogResolverManager {
       .map((m) => ({ model: m, score: hints.filter((h) => m.capabilities.includes(h)).length }))
       .sort((a, b) => b.score - a.score);
     const winner = scored[0]?.model;
-    if (winner === undefined) return null;
-    return {
-      provider: provider.provider,
-      model: winner.modelKey,
-      displayName: winner.displayName,
-    };
+    return winner === undefined
+      ? null
+      : {
+          provider: provider.provider,
+          model: winner.modelKey,
+          displayName: winner.displayName,
+        };
   }
 
   private prependLocal(local: ModelChoice | null, cloudChain: ModelChoice[]): ResolvedDefaults {
@@ -174,10 +179,9 @@ export class ModelCatalogResolverManager {
       return { primary: local, fallbackChain: cloudChain };
     }
     const cloudHead = cloudChain[0];
-    if (cloudHead !== undefined) {
-      return { primary: cloudHead, fallbackChain: cloudChain.slice(1) };
-    }
-    return { primary: LOCAL_LAST_RESORT_MODEL, fallbackChain: [] };
+    return cloudHead !== undefined
+      ? { primary: cloudHead, fallbackChain: cloudChain.slice(1) }
+      : { primary: LOCAL_LAST_RESORT_MODEL, fallbackChain: [] };
   }
 
   private prependCloud(local: ModelChoice | null, cloudChain: ModelChoice[]): ResolvedDefaults {
@@ -186,17 +190,16 @@ export class ModelCatalogResolverManager {
       const tail = local === null ? cloudChain.slice(1) : [...cloudChain.slice(1), local];
       return { primary: cloudHead, fallbackChain: tail };
     }
-    if (local !== null) {
-      return { primary: local, fallbackChain: [] };
-    }
-    return { primary: CONNECTOR_FALLBACK_MODEL, fallbackChain: [] };
+    return local !== null
+      ? { primary: local, fallbackChain: [] }
+      : { primary: CONNECTOR_FALLBACK_MODEL, fallbackChain: [] };
   }
 
-  private async fetchWithTimeout(url: string): Promise<Response> {
+  private async fetchWithTimeout(declaredBase: string, url: string): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), MODEL_CATALOG_FETCH_TIMEOUT_MS);
     try {
-      return await fetch(url, { signal: controller.signal });
+      return await guardedFetch(declaredBase, url, { signal: controller.signal });
     } finally {
       clearTimeout(timer);
     }

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
@@ -33,7 +34,7 @@ export class JiraAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string, _baseUrl?: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(JIRA_API_RESOURCES, {
+      const response = await guardedFetch(JIRA_API_BASE, JIRA_API_RESOURCES, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -41,18 +42,17 @@ export class JiraAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Jira health check failed: ${message}`);
@@ -65,7 +65,7 @@ export class JiraAdapter implements WorkspaceAdapter {
   }
 
   async syncObjects(accessToken: string, deltaToken?: string): Promise<SyncResult> {
-    const resourcesResponse = await fetch(JIRA_API_RESOURCES, {
+    const resourcesResponse = await guardedFetch(JIRA_API_BASE, JIRA_API_RESOURCES, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
     });
     if (!resourcesResponse.ok) {
@@ -94,7 +94,7 @@ export class JiraAdapter implements WorkspaceAdapter {
       fields: 'summary,assignee,created,updated,description,issuetype,priority,status,labels',
     });
     const searchUrl = `${apiBaseUrl}/search/jql?${searchParams.toString()}`;
-    const issueResponse = await fetch(searchUrl, {
+    const issueResponse = await guardedFetch(JIRA_API_BASE, searchUrl, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
     });
     this.logger.debug(`Jira search: ${searchUrl}`);
@@ -190,7 +190,7 @@ export class JiraAdapter implements WorkspaceAdapter {
     if (codeVerifier !== undefined) {
       body['code_verifier'] = codeVerifier;
     }
-    const response = await fetch(JIRA_TOKEN_URL, {
+    const response = await guardedFetch(JIRA_TOKEN_URL, JIRA_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -230,7 +230,7 @@ export class JiraAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     };
-    const response = await fetch(JIRA_TOKEN_URL, {
+    const response = await guardedFetch(JIRA_TOKEN_URL, JIRA_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -259,6 +259,7 @@ export class JiraAdapter implements WorkspaceAdapter {
       throw new Error('Jira OAuth probe requires clientId and clientSecret');
     }
     return probeOAuthAppCredentials({
+      declaredBase: JIRA_TOKEN_URL,
       tokenUrl: JIRA_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -277,10 +278,9 @@ export class JiraAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'invalid_request') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || error === 'unauthorized_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || error === 'unauthorized_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -305,7 +305,7 @@ export class JiraAdapter implements WorkspaceAdapter {
     objectType: string,
   ): Promise<LiveObjectDetails | null> {
     if (objectType !== WorkspaceObjectType.TICKET) return null;
-    const resourcesResponse = await fetch(JIRA_API_RESOURCES, {
+    const resourcesResponse = await guardedFetch(JIRA_API_BASE, JIRA_API_RESOURCES, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
       signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
     });
@@ -315,7 +315,8 @@ export class JiraAdapter implements WorkspaceAdapter {
     if (site === undefined) return null;
     const baseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
 
-    const issueResponse = await fetch(
+    const issueResponse = await guardedFetch(
+      JIRA_API_BASE,
       `${baseUrl}/issue/${externalId}?fields=summary,description,issuetype,priority,status,labels,assignee,created,updated`,
       {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
@@ -342,10 +343,14 @@ export class JiraAdapter implements WorkspaceAdapter {
       };
     };
 
-    const commentsResponse = await fetch(`${baseUrl}/issue/${externalId}/comment?maxResults=5`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-    });
+    const commentsResponse = await guardedFetch(
+      JIRA_API_BASE,
+      `${baseUrl}/issue/${externalId}/comment?maxResults=5`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
     const commentsData = commentsResponse.ok
       ? ((await commentsResponse.json()) as {
           comments: Array<{
@@ -433,7 +438,10 @@ export class JiraAdapter implements WorkspaceAdapter {
     };
 
     // Resolve cloud ID (site) to build API URL
-    const resourcesResponse = await fetch(JIRA_API_RESOURCES, { headers, signal });
+    const resourcesResponse = await guardedFetch(JIRA_API_BASE, JIRA_API_RESOURCES, {
+      headers,
+      signal,
+    });
     if (!resourcesResponse.ok) {
       return {
         success: false,
@@ -452,7 +460,7 @@ export class JiraAdapter implements WorkspaceAdapter {
       actionType === 'CREATE_JIRA_FROM_FIGMA' ||
       actionType === 'CREATE_USER_STORY_FROM_FIGMA'
     ) {
-      const response = await fetch(`${baseUrl}/issue`, {
+      const response = await guardedFetch(JIRA_API_BASE, `${baseUrl}/issue`, {
         method: 'POST',
         headers,
         signal,
@@ -479,25 +487,24 @@ export class JiraAdapter implements WorkspaceAdapter {
 
     if (actionType === 'UPDATE_JIRA_ISSUE') {
       const issueKey = payload['issueKey'] as string;
-      const response = await fetch(`${baseUrl}/issue/${issueKey}`, {
+      const response = await guardedFetch(JIRA_API_BASE, `${baseUrl}/issue/${issueKey}`, {
         method: 'PUT',
         headers,
         signal,
         body: JSON.stringify({ fields: payload['fields'] ?? {} }),
       });
-      if (!response.ok) {
-        return { success: false, errorMessage: `Jira API error: HTTP ${response.status}` };
-      }
-      return {
-        success: true,
-        externalId: issueKey,
-        url: `${site.url}/browse/${issueKey}`,
-      };
+      return !response.ok
+        ? { success: false, errorMessage: `Jira API error: HTTP ${response.status}` }
+        : {
+            success: true,
+            externalId: issueKey,
+            url: `${site.url}/browse/${issueKey}`,
+          };
     }
 
     if (actionType === 'ADD_TICKET_COMMENT' || actionType === 'COMMENT_JIRA') {
       const issueKey = payload['issueKey'] as string;
-      const response = await fetch(`${baseUrl}/issue/${issueKey}/comment`, {
+      const response = await guardedFetch(JIRA_API_BASE, `${baseUrl}/issue/${issueKey}/comment`, {
         method: 'POST',
         headers,
         signal,

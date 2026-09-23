@@ -12,7 +12,12 @@ import {
 import { ImplHandoffRepository } from '../repositories/impl-handoff.repository';
 import { scanForSecrets } from '../utilities/secret-scanner.utility';
 import type { HandoffPayload } from '../types/impl-handoff.types';
-import type { ImplPromptHandoff, ImplPromptHandoffMode, ImplPromptHandoffStatus } from '../../../generated/prisma';
+import type {
+  ImplPromptHandoff,
+  ImplPromptHandoffMode,
+  ImplPromptHandoffStatus,
+} from '../../../generated/prisma';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 @Injectable()
 export class ImplHandoffManager {
@@ -101,7 +106,7 @@ export class ImplHandoffManager {
   private async dispatchToChat(userId: string, brief: string): Promise<string> {
     const config = AppConfig.get();
     const url = `${config.CHAT_SERVICE_URL}/api/v1/internal/chat/threads/seeded`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(config.CHAT_SERVICE_URL, url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -131,7 +136,7 @@ export class ImplHandoffManager {
   private async dispatchToAgent(userId: string, brief: string): Promise<string> {
     const config = AppConfig.get();
     const url = `${config.AGENT_SERVICE_URL}/api/v1/internal/agent/terminal/seed-command`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(config.AGENT_SERVICE_URL, url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -150,7 +155,9 @@ export class ImplHandoffManager {
     }
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`agent-service seed-command ${String(response.status)}: ${text.slice(0, 200)}`);
+      throw new Error(
+        `agent-service seed-command ${String(response.status)}: ${text.slice(0, 200)}`,
+      );
     }
     const data = (await response.json()) as { terminalCommandId?: string };
     if (data.terminalCommandId === undefined) {

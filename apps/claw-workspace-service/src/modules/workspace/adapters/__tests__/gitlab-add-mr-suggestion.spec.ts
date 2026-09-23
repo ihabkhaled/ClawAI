@@ -25,7 +25,10 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
   it('posts to /discussions with a ```suggestion fenced body + position object', async () => {
     (global.fetch as Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({ id: 'disc-1', web_url: 'https://gitlab.com/x/y/-/merge_requests/7#note_1' }),
+      json: async () => ({
+        id: 'disc-1',
+        web_url: 'https://gitlab.com/x/y/-/merge_requests/7#note_1',
+      }),
     });
 
     const result = await helper.execute('token', 'ADD_MR_SUGGESTION', validPayload);
@@ -97,20 +100,30 @@ describe('GitLabWriteActionsHelper — ADD_MR_SUGGESTION', () => {
     expect(result.errorMessage).toContain('unprocessable');
   });
 
-  it('resolves self-hosted baseUrl to the GitLab v4 API root', async () => {
+  // TD-040. A write payload is proposed by a user or a model, so a `baseUrl`
+  // inside it must never decide where the GitLab token goes. It used to be
+  // honoured, which let a prompt-injected proposal send the token anywhere.
+  it('refuses a payload baseUrl that is not gitlab.com, before any request', async () => {
+    const result = await helper.execute('token', 'ADD_MR_SUGGESTION', {
+      ...validPayload,
+      baseUrl: 'https://gitlab.acme.example',
+    });
+    expect(result.success).toBe(false);
+    expect(result.errorMessage).toContain('gitlab.acme.example');
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('still reaches gitlab.com when the payload names it, with redirects refused', async () => {
     (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'd' }),
     });
     await helper.execute('token', 'ADD_MR_SUGGESTION', {
       ...validPayload,
-      baseUrl: 'https://gitlab.acme.example',
+      baseUrl: 'https://gitlab.com',
     });
-    const urlCall = (global.fetch as Mock).mock.calls[0];
-    expect(urlCall).toBeDefined();
-    const url = urlCall?.[0] as string;
-    expect(url).toBe(
-      'https://gitlab.acme.example/api/v4/projects/42/merge_requests/7/discussions',
-    );
+    const [url, init] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://gitlab.com/api/v4/projects/42/merge_requests/7/discussions');
+    expect(init.redirect).toBe('error');
   });
 });

@@ -284,12 +284,22 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-22 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-039.
 
-### TD-040 (PARTIALLY FIXED 2026-09-23): The rest of the platform's direct `fetch` calls are still unguarded
+### TD-041: Three copies of the private-host check
+
+- **Added**: 2026-09-23 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-041.
+  Carried out of TD-040: research, workspace and image each check "public host,
+  never private" for response-supplied URLs; one belongs in `@claw/shared-utilities`.
+
+### TD-040 (FIXED 2026-09-23): The rest of the platform's direct `fetch` calls are still unguarded
 
 - **Added**: 2026-09-22 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-040.
-- **Remaining**: the 27 workspace-service files in `KNOWN_UNGUARDED` (9 internal
-  callers + 18 OAuth adapters, helpers and the app probe). audit, auth, payment and the 7 research
-  search adapters were closed 2026-09-23; no research file was newly exempted.
+- **Closed**: audit, auth, payment and the 7 research search adapters in the
+  first batch; all 27 workspace-service files in the second, through one door
+  (`common/utilities/guarded-fetch.utility.ts`: declared host only, no
+  redirects, one checked no-header hop for Graph downloads). `KNOWN_UNGUARDED`
+  is deleted; the only exemption left is the research crawler. Two reachable
+  holes closed on the way: `test-pat` blind SSRF and GitLab write
+  `payload.baseUrl` token exfiltration.
 
 ### TD-038 (FIXED 2026-09-22): Eight services carry an unguarded copy of the HTTP client
 
@@ -311,4 +321,4 @@ Last updated: 2026-09-10
 | **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                                                                    | Schedule for next iteration                |
 | **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007, TD-032 (body limits only), TD-033, TD-035 | Add to backlog                             |
 | **Conditional**   | TD-009                                                                                                            | Implement with TD-008                      |
-| **Opportunistic** | TD-004, TD-018, TD-019                                                                                            | Fix when touching related code             |
+| **Opportunistic** | TD-004, TD-018, TD-019, TD-041                                                                                    | Fix when touching related code             |

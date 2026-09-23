@@ -6,6 +6,7 @@ import { AppConfig } from '../../../app/config/app.config';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 import { SEARCH_HTTP_TIMEOUT_MS } from '../constants/inbox.constants';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 const EMBED_BATCH_SIZE = 25;
 const EMBED_MAX_CONTENT_CHARS = 8_000;
@@ -93,7 +94,7 @@ export class WorkspaceObjectEmbedConsumer implements OnModuleInit {
     content: string;
   }): Promise<void> {
     const url = `${AppConfig.get().MEMORY_SERVICE_URL}/api/v1/internal/embeddings/upsert-workspace-object`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(AppConfig.get().MEMORY_SERVICE_URL, url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

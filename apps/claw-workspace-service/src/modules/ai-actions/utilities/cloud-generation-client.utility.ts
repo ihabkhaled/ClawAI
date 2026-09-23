@@ -5,6 +5,7 @@ import type {
   CloudGenerateInput,
   CloudGenerateOutput,
 } from '../types/ai-action.types';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 const logger = new Logger('CloudGenerationClient');
 
@@ -31,7 +32,7 @@ export async function callCloudGenerate(input: CloudGenerateInput): Promise<Clou
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), input.timeoutMs);
   try {
-    const response = await fetch(url, {
+    const response = await guardedFetch(input.chatServiceUrl, url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
@@ -38,7 +39,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string, _baseUrl?: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${GITHUB_API_BASE}/user`, {
+      const response = await guardedFetch(GITHUB_API_BASE, `${GITHUB_API_BASE}/user`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: 'application/vnd.github+json',
@@ -50,18 +51,17 @@ export class GitHubAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized — invalid token',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized — invalid token',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`GitHub health check failed: ${message}`);
@@ -110,13 +110,17 @@ export class GitHubAdapter implements WorkspaceAdapter {
       per_page: '100',
       ...(deltaToken ? { since: deltaToken } : {}),
     });
-    const response = await fetch(`${GITHUB_API_BASE}/user/repos?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': CLAW_USER_AGENT,
+    const response = await guardedFetch(
+      GITHUB_API_BASE,
+      `${GITHUB_API_BASE}/user/repos?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': CLAW_USER_AGENT,
+        },
       },
-    });
+    );
     if (!response.ok) {
       throw new Error(`GitHub sync failed: HTTP ${response.status}`);
     }
@@ -148,13 +152,17 @@ export class GitHubAdapter implements WorkspaceAdapter {
         per_page: String(GITHUB_SYNC_ISSUES_PER_REPO),
         ...(since ? { since } : {}),
       });
-      const response = await fetch(`${GITHUB_API_BASE}/repos/${fullName}/issues?${qs.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github+json',
-          'User-Agent': CLAW_USER_AGENT,
+      const response = await guardedFetch(
+        GITHUB_API_BASE,
+        `${GITHUB_API_BASE}/repos/${fullName}/issues?${qs.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/vnd.github+json',
+            'User-Agent': CLAW_USER_AGENT,
+          },
         },
-      });
+      );
       if (!response.ok) {
         this.logger.warn(`issues fetch failed for ${fullName}: HTTP ${response.status}`);
         return [];
@@ -190,7 +198,8 @@ export class GitHubAdapter implements WorkspaceAdapter {
   ): Promise<SyncedObject[]> {
     try {
       // GitHub PRs API does not have `since`, but we can client-filter by updated_at.
-      const response = await fetch(
+      const response = await guardedFetch(
+        GITHUB_API_BASE,
         `${GITHUB_API_BASE}/repos/${fullName}/pulls?state=all&sort=updated&direction=desc&per_page=${String(GITHUB_SYNC_PRS_PER_REPO)}`,
         {
           headers: {
@@ -248,7 +257,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
     if (codeVerifier !== undefined) {
       tokenBody['code_verifier'] = codeVerifier;
     }
-    const response = await fetch(GITHUB_TOKEN_URL, {
+    const response = await guardedFetch(GITHUB_TOKEN_URL, GITHUB_TOKEN_URL, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -293,6 +302,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
       throw new Error('GitHub OAuth probe requires clientId and clientSecret');
     }
     return probeOAuthAppCredentials({
+      declaredBase: GITHUB_TOKEN_URL,
       tokenUrl: GITHUB_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -310,10 +320,9 @@ export class GitHubAdapter implements WorkspaceAdapter {
         if (error === 'bad_verification_code' || error === 'redirect_uri_mismatch') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'incorrect_client_credentials' || error === 'invalid_client') {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'incorrect_client_credentials' || error === 'invalid_client'
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -373,10 +382,14 @@ export class GitHubAdapter implements WorkspaceAdapter {
     const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
 
     if (objectType === WorkspaceObjectType.REPOSITORY) {
-      const response = await fetch(`${GITHUB_API_BASE}/repositories/${externalId}`, {
-        headers,
-        signal,
-      });
+      const response = await guardedFetch(
+        GITHUB_API_BASE,
+        `${GITHUB_API_BASE}/repositories/${externalId}`,
+        {
+          headers,
+          signal,
+        },
+      );
       if (response.status === 404) {
         return null;
       }
@@ -415,7 +428,8 @@ export class GitHubAdapter implements WorkspaceAdapter {
         return null;
       }
       const segment = objectType === WorkspaceObjectType.ISSUE ? 'issues' : 'pulls';
-      const response = await fetch(
+      const response = await guardedFetch(
+        GITHUB_API_BASE,
         `${GITHUB_API_BASE}/repos/${fullName}/${segment}/${String(number)}`,
         { headers, signal },
       );

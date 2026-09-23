@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
@@ -32,10 +33,14 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string, _baseUrl?: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/about?fields=user`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-      });
+      const response = await guardedFetch(
+        GOOGLE_DRIVE_API_BASE,
+        `${GOOGLE_DRIVE_API_BASE}/about?fields=user`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        },
+      );
       const latencyMs = Date.now() - start;
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
@@ -71,9 +76,13 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       fields: 'files(id,name,mimeType,webViewLink,owners,createdTime,modifiedTime)',
       ...(deltaToken ? { pageToken: deltaToken } : {}),
     });
-    const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/files?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const response = await guardedFetch(
+      GOOGLE_DRIVE_API_BASE,
+      `${GOOGLE_DRIVE_API_BASE}/files?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
     if (!response.ok) {
       const body = await response.text().catch(() => '');
       this.logger.warn(`Google Drive sync HTTP ${response.status}: ${body.slice(0, 500)}`);
@@ -114,10 +123,9 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     if (mimeType === 'application/vnd.google-apps.spreadsheet') {
       return WorkspaceObjectType.SPREADSHEET;
     }
-    if (mimeType === 'application/vnd.google-apps.folder') {
-      return WorkspaceObjectType.PROJECT;
-    }
-    return WorkspaceObjectType.DOCUMENT;
+    return mimeType === 'application/vnd.google-apps.folder'
+      ? WorkspaceObjectType.PROJECT
+      : WorkspaceObjectType.DOCUMENT;
   }
 
   async exchangeCodeForTokens(
@@ -141,7 +149,7 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     if (codeVerifier !== undefined) {
       body['code_verifier'] = codeVerifier;
     }
-    const response = await fetch(GOOGLE_TOKEN_URL, {
+    const response = await guardedFetch(GOOGLE_TOKEN_URL, GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(body).toString(),
@@ -181,7 +189,7 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(GOOGLE_TOKEN_URL, {
+    const response = await guardedFetch(GOOGLE_TOKEN_URL, GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
@@ -208,6 +216,7 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: GOOGLE_TOKEN_URL,
       tokenUrl: GOOGLE_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -223,10 +232,9 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'redirect_uri_mismatch') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -262,7 +270,8 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     _objectType: string,
   ): Promise<LiveObjectDetails | null> {
     const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' };
-    const metaResponse = await fetch(
+    const metaResponse = await guardedFetch(
+      GOOGLE_DRIVE_API_BASE,
       `${GOOGLE_DRIVE_API_BASE}/files/${externalId}?fields=id,name,mimeType,webViewLink,webContentLink,owners,createdTime,modifiedTime,size,description`,
       { headers, signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS) },
     );
@@ -310,28 +319,31 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
     try {
       if (mimeType === 'application/vnd.google-apps.document') {
-        const response = await fetch(
+        const response = await guardedFetch(
+          GOOGLE_DRIVE_API_BASE,
           `${GOOGLE_DRIVE_API_BASE}/files/${fileId}/export?mimeType=text/plain`,
           { headers, signal },
         );
-        if (!response.ok) return null;
-        return (await response.text()).slice(0, 50_000);
+        return !response.ok ? null : (await response.text()).slice(0, 50_000);
       }
       if (mimeType === 'application/vnd.google-apps.spreadsheet') {
-        const response = await fetch(
+        const response = await guardedFetch(
+          GOOGLE_DRIVE_API_BASE,
           `${GOOGLE_DRIVE_API_BASE}/files/${fileId}/export?mimeType=text/csv`,
           { headers, signal },
         );
-        if (!response.ok) return null;
-        return (await response.text()).slice(0, 50_000);
+        return !response.ok ? null : (await response.text()).slice(0, 50_000);
       }
       if (mimeType === 'text/plain') {
-        const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/files/${fileId}?alt=media`, {
-          headers,
-          signal,
-        });
-        if (!response.ok) return null;
-        return (await response.text()).slice(0, 50_000);
+        const response = await guardedFetch(
+          GOOGLE_DRIVE_API_BASE,
+          `${GOOGLE_DRIVE_API_BASE}/files/${fileId}?alt=media`,
+          {
+            headers,
+            signal,
+          },
+        );
+        return !response.ok ? null : (await response.text()).slice(0, 50_000);
       }
       return null;
     } catch {
@@ -369,7 +381,7 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
         ? `${GOOGLE_DRIVE_API_BASE}/files/${encodeURIComponent(externalId)}/export?mimeType=${encodeURIComponent(exportTarget.mime)}`
         : `${GOOGLE_DRIVE_API_BASE}/files/${encodeURIComponent(externalId)}?alt=media`;
 
-    const response = await fetch(url, { headers });
+    const response = await guardedFetch(GOOGLE_DRIVE_API_BASE, url, { headers });
     if (response.status === 404) return null;
     if (!response.ok || response.body === null) {
       throw new Error(`Google Drive downloadFileContent failed: HTTP ${String(response.status)}`);
@@ -424,7 +436,8 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
         content,
         `--${boundary}--`,
       ].join('\r\n');
-      const response = await fetch(
+      const response = await guardedFetch(
+        GOOGLE_DRIVE_API_BASE,
         'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
         {
           method: 'POST',
@@ -457,14 +470,18 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       if (removeParents !== undefined) {
         qs.set('removeParents', removeParents);
       }
-      const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/files/${fileId}?${qs.toString()}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+      const response = await guardedFetch(
+        GOOGLE_DRIVE_API_BASE,
+        `${GOOGLE_DRIVE_API_BASE}/files/${fileId}?${qs.toString()}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      });
+      );
       if (!response.ok) {
         return { success: false, errorMessage: `Drive move failed: HTTP ${response.status}` };
       }

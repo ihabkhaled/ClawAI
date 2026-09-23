@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { SharePointAdapter } from '../sharepoint.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
@@ -209,6 +209,36 @@ describe('SharePointAdapter', () => {
   });
 
   describe('downloadFileContent', () => {
+    // TD-040. Same Graph /content 302 as OneDrive: one hop, public https
+    // only, and our bearer token never goes to the CDN.
+    it('follows the Graph 302 to the CDN without the bearer token', async () => {
+      const cdn = 'https://contoso.sharepoint.com/_layouts/15/download.aspx?tempauth=signed';
+      (global.fetch as Mock)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 302,
+          headers: new Map([['location', cdn]]),
+        })
+        .mockResolvedValueOnce({ ok: true, status: 200, body: {}, headers: new Map() });
+      await adapter.downloadFileContent('token', 'item1', { driveId: 'drive1' });
+      const [hop, hopInit] = (global.fetch as Mock).mock.calls[1] as [string, RequestInit];
+      expect(hop).toBe(cdn);
+      expect(hopInit.headers).toBeUndefined();
+      expect(hopInit.redirect).toBe('error');
+    });
+
+    it('refuses a Graph redirect to plain http', async () => {
+      (global.fetch as Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 302,
+        headers: new Map([['location', 'http://contoso.sharepoint.com/f']]),
+      });
+      await expect(
+        adapter.downloadFileContent('token', 'item1', { driveId: 'drive1' }),
+      ).rejects.toThrow(/download redirect refused/);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
     it('streams file bytes when driveId metadata is present', async () => {
       (global.fetch as Mock).mockResolvedValue({
         ok: true,

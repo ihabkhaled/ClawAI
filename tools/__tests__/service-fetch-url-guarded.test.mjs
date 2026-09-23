@@ -113,57 +113,20 @@ const EXEMPT_FILES = new Map([
 ]);
 
 /**
- * Files that SHOULD have the guard and do not yet: the remainder of the same
- * defect, outside TD-038's blast radius.
+ * There is no "not yet" list any more.
  *
- * TD-038 covered the eight services that had grown their own HTTP client.
- * TD-040 is the scattered single call sites. Its first batch (2026-09-23)
- * closed audit, auth, payment and the seven research search adapters; what is
- * left is all in workspace-service, mostly OAuth adapters for third-party
- * providers that need live connector verification before their redirect and
- * host behaviour can be tightened. They are tracked as TD-040 in
- * docs/14-risk-debt/technical-debt.md, and they are listed here one by one
- * rather than behind a directory wildcard so that the list can only ever
- * shrink: a new file in `workspace/adapters/` fails this test.
+ * TD-038 closed the eight services that had grown their own HTTP client, and
+ * TD-040 closed the scattered single call sites: audit, auth, payment and the
+ * research search adapters on 2026-09-23, then all of workspace-service — its
+ * nine internal callers, the OAuth provider adapters and helpers, and the OAuth
+ * app probe — which now go through one door,
+ * `apps/claw-workspace-service/src/common/utilities/guarded-fetch.utility.ts`.
  *
- * Do not add to this list. Add the guard.
+ * A file that needs to call out adds the guard. It does not get an entry here:
+ * the only way past this test is EXEMPT_FILES, which needs a STRONGER control
+ * of its own and a written reason.
  */
-const KNOWN_UNGUARDED = [
-  // workspace-service — internal service calls that simply predate the guard.
-  'apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts',
-  'apps/claw-workspace-service/src/modules/ai-actions/managers/model-catalog-resolver.manager.ts',
-  'apps/claw-workspace-service/src/modules/ai-actions/services/automation-preference.service.ts',
-  'apps/claw-workspace-service/src/modules/ai-actions/utilities/cloud-generation-client.utility.ts',
-  'apps/claw-workspace-service/src/modules/ai-actions/utilities/ollama-generation-client.utility.ts',
-  'apps/claw-workspace-service/src/modules/inbox/consumers/workspace-object-embed.consumer.ts',
-  'apps/claw-workspace-service/src/modules/inbox/services/workspace-semantic-search.service.ts',
-  'apps/claw-workspace-service/src/modules/learning/services/preference-upsert.service.ts',
-  'apps/claw-workspace-service/src/modules/ticket-planning/managers/impl-handoff.manager.ts',
-  // workspace-service — the OAuth provider adapters. These have their own
-  // anti-SSRF utility for the baseUrl an operator configures
-  // (common/utilities/url-safety.utility.ts) but it is applied at CONFIG time,
-  // in provider-app-config.service.ts, not at the call.
-  'apps/claw-workspace-service/src/modules/workspace/adapters/bitbucket.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/clickup.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/confluence.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/figma.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/github-write-actions.helper.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/github.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/gitlab-write-actions.helper.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/gitlab.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/gmail-attachment.helper.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/gmail.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/google-calendar.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/google-drive.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/jira.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/onedrive.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/outlook-calendar.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/sharepoint.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/adapters/slack.adapter.ts',
-  'apps/claw-workspace-service/src/modules/workspace/utilities/oauth-app-probe.utility.ts',
-];
-
-const ALLOWED = new Set([...EXEMPT_FILES.keys(), ...KNOWN_UNGUARDED]);
+const ALLOWED = new Set(EXEMPT_FILES.keys());
 
 function serviceSources() {
   return walkFiles(

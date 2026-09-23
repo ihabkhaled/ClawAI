@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { AppConfig } from '../../app/config/app.config';
 import { FILE_SERVICE_HTTP_TIMEOUT_MS } from '../constants/file-service-client.constants';
 import type { FileServiceMetadata, UploadInternalInput } from '../types/file-service-client.types';
+import { guardedFetch } from './guarded-fetch.utility';
 
 export type { FileServiceMetadata, UploadInternalInput } from '../types/file-service-client.types';
 
@@ -23,7 +24,7 @@ export async function uploadInternal(input: UploadInternalInput): Promise<string
     contentBase64: input.content.toString('base64'),
     sourceWorkspaceObjectId: input.sourceWorkspaceObjectId,
   };
-  const response = await fetch(url, {
+  const response = await guardedFetch(config.FILE_SERVICE_URL, url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,7 +50,7 @@ export async function uploadInternal(input: UploadInternalInput): Promise<string
 export async function getMetadata(fileId: string): Promise<FileServiceMetadata | null> {
   const config = AppConfig.get();
   const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/metadata-internal/${encodeURIComponent(fileId)}`;
-  const response = await fetch(url, {
+  const response = await guardedFetch(config.FILE_SERVICE_URL, url, {
     headers: { Authorization: `Service ${config.INTER_SERVICE_AUTH_TOKEN}` },
     signal: AbortSignal.timeout(FILE_SERVICE_HTTP_TIMEOUT_MS),
   });

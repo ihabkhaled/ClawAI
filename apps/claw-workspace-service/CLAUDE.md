@@ -23,6 +23,15 @@ Controller → Service → Repository (data access)
                      → Adapter (provider-specific API calls)
 ```
 
+**Outbound HTTP has one door (TD-040).** Never call `fetch` here. Use
+`guardedFetch(declaredBase, url, init)` from `common/utilities/guarded-fetch.utility.ts`
+— `declaredBase` is the constant / admin-configured base / `*_SERVICE_URL` the URL
+was built from, never user or payload input. It enforces the shared
+`assertSafeRequestUrl`, host === declared host, and `redirect: 'error'`. Graph
+`/content` downloads use `guardedDownloadFetch` (one checked hop, no headers).
+A bare `fetch(` fails `tools/__tests__/service-fetch-url-guarded.test.mjs`.
+Details: [`docs/04-backend/service-guide-workspace-security.md`](../../docs/04-backend/service-guide-workspace-security.md) §1a.
+
 ## Owned Tables
 
 Core connector/sync: `WorkspaceConnector`, `WorkspaceSyncRun`, `SyncCadenceDefault`,

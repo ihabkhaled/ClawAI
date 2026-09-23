@@ -7666,7 +7666,7 @@
           "file": "skills/add-an-archive-format.md"
         },
         {
-          "bytes": 6927,
+          "bytes": 9807,
           "file": "skills/add-an-outbound-http-destination.md"
         },
         {
@@ -9976,7 +9976,7 @@
       },
       "claw-workspace-service": {
         "runner": "vitest",
-        "testFiles": 97
+        "testFiles": 102
       }
     },
     "workspaces": [
@@ -10712,7 +10712,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1393,
+    "totalTestFiles": 1398,
     "workspaceCount": 25
   }
 }

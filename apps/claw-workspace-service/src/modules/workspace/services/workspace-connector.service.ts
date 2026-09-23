@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { resolvePlanLimit } from '@claw/shared-entitlements';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { declaredHost } from '@claw/shared-utilities';
 import {
   EventPattern,
   type WorkspaceSyncManualTriggeredPayload,
@@ -443,19 +444,16 @@ export class WorkspaceConnectorService {
     if (creds.personalAccessToken !== undefined && adapter.validatePat !== undefined) {
       return adapter.validatePat(creds.personalAccessToken, creds.baseUrl);
     }
-    if (
-      creds.clientId !== undefined &&
+    return creds.clientId !== undefined &&
       creds.clientSecret !== undefined &&
       adapter.validateOAuthAppConfig !== undefined
-    ) {
-      return adapter.validateOAuthAppConfig(creds);
-    }
-    return {
-      status: WorkspaceConnectorStatus.UNKNOWN,
-      latencyMs: 0,
-      errorMessage:
-        'No credentials available to probe. Set either a personalAccessToken (PAT) or clientId+clientSecret (OAuth) for this provider app config.',
-    };
+      ? adapter.validateOAuthAppConfig(creds)
+      : {
+          status: WorkspaceConnectorStatus.UNKNOWN,
+          latencyMs: 0,
+          errorMessage:
+            'No credentials available to probe. Set either a personalAccessToken (PAT) or clientId+clientSecret (OAuth) for this provider app config.',
+        };
   }
 
   /**
@@ -484,8 +482,45 @@ export class WorkspaceConnectorService {
         const message = error instanceof Error ? error.message : 'Unsafe URL';
         throw new BusinessException(message, 'UNSAFE_BASE_URL', HttpStatus.BAD_REQUEST);
       }
+      await this.assertAdminConfiguredBaseUrl(input.provider, input.baseUrl);
     }
     return adapter.validatePat(input.personalAccessToken, input.baseUrl);
+  }
+
+  /**
+   * `test-pat` is open to every user who may connect their own tools
+   * (WORKSPACE_CONNECT_OWN), and the adapter sends the PAT to the base URL it
+   * is given. A base URL typed into this request is therefore NOT an admin
+   * setting, and the outbound guard (TD-040) may only be declared an
+   * admin-configured destination: otherwise any user could point the server at
+   * an internal host, or at their own, and read the answer back as a status.
+   *
+   * So the typed value is accepted only when its host is one an admin already
+   * configured for this provider (`apiBaseUrl` / `siteUrl` in a provider app
+   * config). Leave it out to test against the provider's public default.
+   */
+  private async assertAdminConfiguredBaseUrl(
+    provider: WorkspaceProvider,
+    baseUrl: string,
+  ): Promise<void> {
+    const configs = await this.providerAppConfigs.list(provider);
+    const configuredHosts = new Set(
+      configs.flatMap((config) => {
+        // Same read as buildAdapterCredentials: publicConfig is a JSON object.
+        const publicConfig = (config.publicConfig ?? {}) as Record<string, unknown>;
+        return [publicConfig['apiBaseUrl'], publicConfig['siteUrl']]
+          .filter((value): value is string => typeof value === 'string' && value.length > 0)
+          .flatMap((value) => [...declaredHost(value)]);
+      }),
+    );
+    const requested = declaredHost(baseUrl);
+    if (![...requested].some((host) => configuredHosts.has(host))) {
+      throw new BusinessException(
+        'baseUrl must be a base URL an admin configured for this provider',
+        'UNSAFE_BASE_URL',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   /**

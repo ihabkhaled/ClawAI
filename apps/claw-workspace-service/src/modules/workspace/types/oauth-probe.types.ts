@@ -7,6 +7,12 @@ export type OAuthProbeRequest = {
 };
 
 export type OAuthProbeInput = {
+  /**
+   * Where `tokenUrl` is declared to go (TD-040): the provider's token-URL
+   * literal, or the admin-configured base for a self-hosted provider. Never
+   * `tokenUrl` itself read back as its own authorisation.
+   */
+  declaredBase: string;
   tokenUrl: string;
   requestBuilder: () => OAuthProbeRequest;
   interpret: (payload: unknown, status: number) => OAuthProbeOutcome;

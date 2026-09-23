@@ -10,6 +10,7 @@ import type {
   UpsertAutomationPreferenceInput,
 } from '../types/automation-preference.types';
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 @Injectable()
 export class AutomationPreferenceService {
@@ -40,14 +41,11 @@ export class AutomationPreferenceService {
     }
     const url = `${AppConfig.get().MEMORY_SERVICE_URL}/api/v1/internal/memories/learned-preferences?${params.toString()}`;
     try {
-      const response = await fetch(url, {
+      const response = await guardedFetch(AppConfig.get().MEMORY_SERVICE_URL, url, {
         headers: { Accept: 'application/json', Authorization: buildAuthHeader() },
         signal: AbortSignal.timeout(LEARNED_PREFERENCES_FETCH_TIMEOUT_MS),
       });
-      if (!response.ok) {
-        return [];
-      }
-      return (await response.json()) as LearnedPreferenceItem[];
+      return !response.ok ? [] : ((await response.json()) as LearnedPreferenceItem[]);
     } catch (error: unknown) {
       this.logger.warn(
         `fetchLearned: request failed for userId=${userId} — ${error instanceof Error ? error.message : 'unknown'}`,
@@ -63,22 +61,21 @@ export class AutomationPreferenceService {
     const allKinds = Object.values(AiActionKind);
     return allKinds.map((kind) => {
       const row = map.get(kind);
-      if (row === undefined) {
-        return {
-          actionKind: kind,
-          isEnabled: true,
-          autoApproveBelowRiskScore: null,
-          perDayBudget: null,
-          providers: [],
-        };
-      }
-      return {
-        actionKind: row.actionKind,
-        isEnabled: row.isEnabled,
-        autoApproveBelowRiskScore: row.autoApproveBelowRiskScore,
-        perDayBudget: row.perDayBudget,
-        providers: this.normalizeProviders(row.providers),
-      };
+      return row === undefined
+        ? {
+            actionKind: kind,
+            isEnabled: true,
+            autoApproveBelowRiskScore: null,
+            perDayBudget: null,
+            providers: [],
+          }
+        : {
+            actionKind: row.actionKind,
+            isEnabled: row.isEnabled,
+            autoApproveBelowRiskScore: row.autoApproveBelowRiskScore,
+            perDayBudget: row.perDayBudget,
+            providers: this.normalizeProviders(row.providers),
+          };
     });
   }
 
@@ -108,9 +105,6 @@ export class AutomationPreferenceService {
   }
 
   private normalizeProviders(raw: unknown): string[] {
-    if (Array.isArray(raw)) {
-      return raw.filter((v): v is string => typeof v === 'string');
-    }
-    return [];
+    return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === 'string') : [];
   }
 }

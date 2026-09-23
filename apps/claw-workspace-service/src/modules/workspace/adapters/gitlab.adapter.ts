@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
@@ -42,11 +43,18 @@ export class GitLabAdapter implements WorkspaceAdapter {
 
   constructor(private readonly writeActions: GitLabWriteActionsHelper) {}
 
+  /**
+   * `baseUrl` is declared as this call's destination (TD-040), so it must be an
+   * ADMIN-configured GitLab base — the provider app config's `apiBaseUrl` — or
+   * absent (gitlab.com). Callers guarantee that: `testAppConfigConnection`
+   * passes the app config's value, and `testPat` refuses a base URL no admin
+   * configured before it gets here.
+   */
   async healthCheck(accessToken: string, baseUrl?: string): Promise<HealthCheckResult> {
     const api = this.resolveApiBase(baseUrl);
     const start = Date.now();
     try {
-      const response = await fetch(`${api}/user`, {
+      const response = await guardedFetch(api, `${api}/user`, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
@@ -54,18 +62,17 @@ export class GitLabAdapter implements WorkspaceAdapter {
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized — invalid token',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized — invalid token',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`GitLab health check failed: ${message}`);
@@ -107,7 +114,8 @@ export class GitLabAdapter implements WorkspaceAdapter {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('GitLab OAuth requires clientId and clientSecret');
     }
-    const tokenUrl = this.resolveHost(appCredentials.baseUrl) + GITLAB_TOKEN_PATH;
+    const host = this.resolveHost(appCredentials.baseUrl);
+    const tokenUrl = host + GITLAB_TOKEN_PATH;
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: appCredentials.clientId,
@@ -116,7 +124,7 @@ export class GitLabAdapter implements WorkspaceAdapter {
       redirect_uri: redirectUri,
       ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
     });
-    const response = await fetch(tokenUrl, {
+    const response = await guardedFetch(host, tokenUrl, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
@@ -135,14 +143,15 @@ export class GitLabAdapter implements WorkspaceAdapter {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('GitLab refresh requires clientId and clientSecret');
     }
-    const tokenUrl = this.resolveHost(appCredentials.baseUrl) + GITLAB_TOKEN_PATH;
+    const host = this.resolveHost(appCredentials.baseUrl);
+    const tokenUrl = host + GITLAB_TOKEN_PATH;
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
       client_id: appCredentials.clientId,
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(tokenUrl, {
+    const response = await guardedFetch(host, tokenUrl, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
@@ -162,7 +171,8 @@ export class GitLabAdapter implements WorkspaceAdapter {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('GitLab OAuth probe requires clientId and clientSecret');
     }
-    const tokenUrl = this.resolveHost(appCredentials.baseUrl) + GITLAB_TOKEN_PATH;
+    const host = this.resolveHost(appCredentials.baseUrl);
+    const tokenUrl = host + GITLAB_TOKEN_PATH;
     const form = new URLSearchParams({
       client_id: appCredentials.clientId,
       client_secret: appCredentials.clientSecret,
@@ -171,6 +181,7 @@ export class GitLabAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: host,
       tokenUrl,
       requestBuilder: () => ({
         method: 'POST',
@@ -186,10 +197,9 @@ export class GitLabAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'invalid_request') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -218,6 +228,9 @@ export class GitLabAdapter implements WorkspaceAdapter {
     objectType: string,
     metadata?: Record<string, unknown>,
   ): Promise<LiveObjectDetails | null> {
+    // Object metadata is not an admin setting, so it can never declare where
+    // the token goes (TD-040): every call below declares gitlab.com, and an
+    // `apiBaseUrl` pointing anywhere else is refused before the request.
     const api = this.resolveApiBase(
       typeof metadata?.['apiBaseUrl'] === 'string' ? (metadata['apiBaseUrl'] as string) : undefined,
     );
@@ -225,7 +238,11 @@ export class GitLabAdapter implements WorkspaceAdapter {
     const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
 
     if (objectType === WorkspaceObjectType.REPOSITORY) {
-      const response = await fetch(`${api}/projects/${externalId}`, { headers, signal });
+      const response = await guardedFetch(
+        GITLAB_DEFAULT_API_BASE,
+        `${api}/projects/${externalId}`,
+        { headers, signal },
+      );
       if (response.status === 404) {
         return null;
       }
@@ -247,7 +264,8 @@ export class GitLabAdapter implements WorkspaceAdapter {
         return null;
       }
       const segment = objectType === WorkspaceObjectType.ISSUE ? 'issues' : 'merge_requests';
-      const response = await fetch(
+      const response = await guardedFetch(
+        GITLAB_DEFAULT_API_BASE,
         `${api}/projects/${String(projectId)}/${segment}/${String(iid)}`,
         { headers, signal },
       );
@@ -289,10 +307,9 @@ export class GitLabAdapter implements WorkspaceAdapter {
   }
 
   private resolveHost(baseUrl?: string): string {
-    if (baseUrl === undefined || baseUrl.length === 0) {
-      return GITLAB_DEFAULT_HOST;
-    }
-    return baseUrl.replace(/\/+$/, '').replace(/\/api\/v4$/, '');
+    return baseUrl === undefined || baseUrl.length === 0
+      ? GITLAB_DEFAULT_HOST
+      : baseUrl.replace(/\/+$/, '').replace(/\/api\/v4$/, '');
   }
 
   private normalizeTokenResponse(data: GitLabTokenResponse): OAuthTokenSet {
@@ -308,7 +325,8 @@ export class GitLabAdapter implements WorkspaceAdapter {
   }
 
   private async fetchProjects(accessToken: string): Promise<GitLabProject[]> {
-    const response = await fetch(
+    const response = await guardedFetch(
+      GITLAB_DEFAULT_API_BASE,
       `${GITLAB_DEFAULT_API_BASE}/projects?membership=true&order_by=last_activity_at&per_page=100`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
@@ -353,7 +371,8 @@ export class GitLabAdapter implements WorkspaceAdapter {
 
   private async safeFetchIssues(accessToken: string, projectId: number): Promise<SyncedObject[]> {
     try {
-      const response = await fetch(
+      const response = await guardedFetch(
+        GITLAB_DEFAULT_API_BASE,
         `${GITLAB_DEFAULT_API_BASE}/projects/${String(projectId)}/issues?per_page=${String(GITLAB_SYNC_ISSUES_PER_PROJECT)}&order_by=updated_at`,
         { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
       );
@@ -386,7 +405,8 @@ export class GitLabAdapter implements WorkspaceAdapter {
     projectId: number,
   ): Promise<SyncedObject[]> {
     try {
-      const response = await fetch(
+      const response = await guardedFetch(
+        GITLAB_DEFAULT_API_BASE,
         `${GITLAB_DEFAULT_API_BASE}/projects/${String(projectId)}/merge_requests?per_page=${String(GITLAB_SYNC_MRS_PER_PROJECT)}&order_by=updated_at`,
         { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
       );

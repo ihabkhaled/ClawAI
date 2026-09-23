@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import {
   CALENDAR_SYNC_LOOKAHEAD_DAYS,
@@ -37,24 +38,27 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${MICROSOFT_GRAPH_API_BASE}/me/calendar`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-      });
+      const response = await guardedFetch(
+        MICROSOFT_GRAPH_API_BASE,
+        `${MICROSOFT_GRAPH_API_BASE}/me/calendar`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        },
+      );
       const latencyMs = Date.now() - start;
       if (response.ok) return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Outlook Calendar health check failed: ${message}`);
@@ -74,7 +78,7 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
       `${MICROSOFT_GRAPH_API_BASE}/me/calendarView?` +
       `startDateTime=${encodeURIComponent(startISO)}&endDateTime=${encodeURIComponent(endISO)}&` +
       `$top=${String(CALENDAR_SYNC_MAX_EVENTS_PER_TICK)}&$orderby=start/dateTime`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(MICROSOFT_GRAPH_API_BASE, url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: 'application/json',
@@ -117,7 +121,7 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
       redirect_uri: redirectUri,
       ...(codeVerifier !== undefined ? { code_verifier: codeVerifier } : {}),
     });
-    const response = await fetch(MICROSOFT_TOKEN_URL, {
+    const response = await guardedFetch(MICROSOFT_TOKEN_URL, MICROSOFT_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -142,7 +146,7 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(MICROSOFT_TOKEN_URL, {
+    const response = await guardedFetch(MICROSOFT_TOKEN_URL, MICROSOFT_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -169,6 +173,7 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: MICROSOFT_TOKEN_URL,
       tokenUrl,
       requestBuilder: () => ({
         method: 'POST',
@@ -188,14 +193,11 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
         ) {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (
-          error === 'invalid_client' ||
+        return error === 'invalid_client' ||
           /AADSTS7000215|AADSTS700016/.test(description) ||
           status === 401
-        ) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -226,7 +228,8 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
     objectType: string,
   ): Promise<LiveObjectDetails | null> {
     if (objectType !== WorkspaceObjectType.MEETING) return null;
-    const response = await fetch(
+    const response = await guardedFetch(
+      MICROSOFT_GRAPH_API_BASE,
       `${MICROSOFT_GRAPH_API_BASE}/me/events/${encodeURIComponent(externalId)}`,
       {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
@@ -337,24 +340,28 @@ export class OutlookCalendarAdapter implements WorkspaceAdapter {
         ? (payload['attendeeEmails'] as unknown[]).filter((e): e is string => typeof e === 'string')
         : [];
       const timeZone = typeof payload['timeZone'] === 'string' ? payload['timeZone'] : 'UTC';
-      const response = await fetch(`${MICROSOFT_GRAPH_API_BASE}/me/events`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+      const response = await guardedFetch(
+        MICROSOFT_GRAPH_API_BASE,
+        `${MICROSOFT_GRAPH_API_BASE}/me/events`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            subject,
+            ...(body !== undefined ? { body: { contentType: 'text', content: body } } : {}),
+            start: { dateTime: startDateTime, timeZone },
+            end: { dateTime: endDateTime, timeZone },
+            attendees: attendeeEmails.map((email) => ({
+              emailAddress: { address: email },
+              type: 'required',
+            })),
+          }),
         },
-        body: JSON.stringify({
-          subject,
-          ...(body !== undefined ? { body: { contentType: 'text', content: body } } : {}),
-          start: { dateTime: startDateTime, timeZone },
-          end: { dateTime: endDateTime, timeZone },
-          attendees: attendeeEmails.map((email) => ({
-            emailAddress: { address: email },
-            type: 'required',
-          })),
-        }),
-      });
+      );
       if (!response.ok) {
         const text = await response.text().catch(() => '');
         return {

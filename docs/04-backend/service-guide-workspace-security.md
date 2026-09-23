@@ -24,6 +24,55 @@ Wired into:
 - `WorkspaceConnectorService.testPat(input.baseUrl)` — rejects with `UNSAFE_BASE_URL` (400)
 - `ProviderAppConfigService.validateField` — rejects any `type: 'url'` field that fails safety check with `UNSAFE_URL_FIELD` (400)
 
+That is a CONFIG-time check. The CALL-time check is 1a.
+
+### 1a. Every outbound call — `common/utilities/guarded-fetch.utility.ts` (TD-040, 2026-09-23)
+
+Nothing in this service calls `fetch` directly. Provider adapters and helpers,
+the OAuth app probe and the internal service clients call
+`guardedFetch(declaredBase, url, init)`; the repo test
+`tools/__tests__/service-fetch-url-guarded.test.mjs` fails the build on a bare
+`fetch(` anywhere else.
+
+- `declaredBase` is the base the URL was built from: a literal from
+  `workspace.constants.ts` (`GITHUB_API_BASE`, `MICROSOFT_TOKEN_URL`, …), the
+  admin-configured GitLab base, or a `*_SERVICE_URL` from AppConfig. Never the
+  URL itself, never user or payload input.
+- Two checks, both required: the shared `assertSafeRequestUrl` (http(s), no
+  embedded credentials, never cloud metadata, host on the platform allowlist),
+  then **host === the declared base's host**. The platform allowlist also holds
+  every internal service, so without the second check a mis-built provider URL
+  could carry a user's token to `claw-auth-service`.
+- `redirect: 'error'` always. A renamed GitHub repo (301) now fails as
+  unreachable until re-synced.
+- **Graph file downloads** (`/content` on OneDrive and SharePoint) answer 302
+  to a pre-authenticated CDN URL whose host changes per tenant.
+  `guardedDownloadFetch` follows that ONE hop only to a public https DNS name
+  (no IP literal, no private host, no credentials), sends it with **no
+  headers** (our bearer never reaches the CDN), and refuses a second redirect.
+  Errors name the host, never the signed URL.
+
+Where a base URL comes from decides whether it may be declared:
+
+| Source                                                                                  | Declared?                                                                                                                 |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| provider app config `apiBaseUrl` / `siteUrl` (admin)                                    | yes — GitLab token exchange, refresh, probe, app-config health                                                            |
+| `POST /workspace/oauth/test-pat` body `baseUrl` (any user with `WORKSPACE_CONNECT_OWN`) | only if its host equals an admin-configured one for that provider; otherwise 400 `UNSAFE_BASE_URL` before the PAT is sent |
+| GitLab write-action `payload.baseUrl` (user / model proposal)                           | no — every write declares gitlab.com; any other host is refused                                                           |
+| GitLab object `metadata.apiBaseUrl`                                                     | no — declares gitlab.com                                                                                                  |
+
+Consequence: GitLab **writes and object refresh** only reach gitlab.com. Sync
+already only read gitlab.com, so no self-hosted object existed for them to act
+on; threading the connector's admin base into writes is the follow-up if
+self-hosted GitLab is ever finished.
+
+Tests: `common/utilities/__tests__/guarded-fetch.utility.spec.ts`,
+`common/utilities/__tests__/internal-service-url-guard.spec.ts`,
+`modules/workspace/adapters/__tests__/adapter-url-guard.spec.ts` (every adapter's
+real host + `redirect: 'error'`, CI-shaped env),
+`adapter-url-guard-hostile.spec.ts` (every base swapped for `169.254.169.254` →
+`fetch` never called), `services/__tests__/workspace-connector-test-pat.spec.ts`.
+
 ### 2. Webhook signature framework — `common/utilities/webhook-signature.utility.ts` + guard
 
 - `verifyHmacSignature(body, hex, secret, 'sha256'|'sha1')` — constant-time HMAC check

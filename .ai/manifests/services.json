@@ -545,7 +545,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 97,
+      "testFiles": 102,
       "testRunner": "vitest"
     }
   ]

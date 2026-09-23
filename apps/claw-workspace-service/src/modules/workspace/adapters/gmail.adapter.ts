@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
@@ -45,26 +46,29 @@ export class GmailAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/profile`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-      });
+      const response = await guardedFetch(
+        GMAIL_API_BASE,
+        `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/profile`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        },
+      );
       const latencyMs = Date.now() - start;
       if (response.ok) {
         return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       }
-      if (response.status === 401) {
-        return {
-          status: WorkspaceConnectorStatus.DISCONNECTED,
-          latencyMs,
-          errorMessage: 'Unauthorized',
-        };
-      }
-      return {
-        status: WorkspaceConnectorStatus.DEGRADED,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.status === 401
+        ? {
+            status: WorkspaceConnectorStatus.DISCONNECTED,
+            latencyMs,
+            errorMessage: 'Unauthorized',
+          }
+        : {
+            status: WorkspaceConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Gmail health check failed: ${message}`);
@@ -113,7 +117,8 @@ export class GmailAdapter implements WorkspaceAdapter {
     startHistoryId: string,
   ): Promise<SyncResult | null> {
     try {
-      const response = await fetch(
+      const response = await guardedFetch(
+        GMAIL_API_BASE,
         `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/history?startHistoryId=${encodeURIComponent(startHistoryId)}&historyTypes=messageAdded&historyTypes=labelAdded`,
         { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
       );
@@ -168,9 +173,13 @@ export class GmailAdapter implements WorkspaceAdapter {
 
   private async fetchCurrentHistoryId(accessToken: string): Promise<string | undefined> {
     try {
-      const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/profile`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      });
+      const response = await guardedFetch(
+        GMAIL_API_BASE,
+        `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/profile`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        },
+      );
       if (!response.ok) {
         return undefined;
       }
@@ -198,7 +207,7 @@ export class GmailAdapter implements WorkspaceAdapter {
       redirect_uri: redirectUri,
       ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
     });
-    const response = await fetch(GOOGLE_TOKEN_URL, {
+    const response = await guardedFetch(GOOGLE_TOKEN_URL, GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -223,7 +232,7 @@ export class GmailAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
-    const response = await fetch(GOOGLE_TOKEN_URL, {
+    const response = await guardedFetch(GOOGLE_TOKEN_URL, GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: body.toString(),
@@ -247,6 +256,7 @@ export class GmailAdapter implements WorkspaceAdapter {
       redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
+      declaredBase: GOOGLE_TOKEN_URL,
       tokenUrl: GOOGLE_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
@@ -262,10 +272,9 @@ export class GmailAdapter implements WorkspaceAdapter {
         if (error === 'invalid_grant' || error === 'redirect_uri_mismatch') {
           return OAuthProbeOutcome.CREDENTIALS_OK;
         }
-        if (error === 'invalid_client' || status === 401) {
-          return OAuthProbeOutcome.CREDENTIALS_BAD;
-        }
-        return OAuthProbeOutcome.UNKNOWN;
+        return error === 'invalid_client' || status === 401
+          ? OAuthProbeOutcome.CREDENTIALS_BAD
+          : OAuthProbeOutcome.UNKNOWN;
       },
     });
   }
@@ -337,7 +346,8 @@ export class GmailAdapter implements WorkspaceAdapter {
     // NOTE: intentionally NOT using `q=newer_than:30d` — that query is
     // forbidden under gmail.metadata scope (returns 403). Use labelIds
     // instead, which works under both metadata and readonly.
-    const response = await fetch(
+    const response = await guardedFetch(
+      GMAIL_API_BASE,
       `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages?maxResults=${String(GMAIL_SYNC_MESSAGE_LIMIT)}&labelIds=INBOX`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
@@ -352,7 +362,8 @@ export class GmailAdapter implements WorkspaceAdapter {
   }
 
   private async fetchMessage(accessToken: string, id: string): Promise<GmailMessage> {
-    const response = await fetch(
+    const response = await guardedFetch(
+      GMAIL_API_BASE,
       `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages/${id}?format=full`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
@@ -443,13 +454,12 @@ export class GmailAdapter implements WorkspaceAdapter {
     if (actionType === 'SEND_EMAIL' || actionType === 'REPLY_EMAIL') {
       return this.sendEmail(accessToken, payload, actionType === 'REPLY_EMAIL');
     }
-    if (actionType === 'CREATE_DRAFT') {
-      return this.createDraft(accessToken, payload);
-    }
-    return {
-      success: false,
-      errorMessage: `Gmail adapter: unsupported action type ${actionType}`,
-    };
+    return actionType === 'CREATE_DRAFT'
+      ? this.createDraft(accessToken, payload)
+      : {
+          success: false,
+          errorMessage: `Gmail adapter: unsupported action type ${actionType}`,
+        };
   }
 
   private async createDraft(
@@ -484,16 +494,20 @@ export class GmailAdapter implements WorkspaceAdapter {
     ].join('\r\n');
     const raw = Buffer.from(rfc822, 'utf-8').toString('base64url');
 
-    const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/drafts`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+    const response = await guardedFetch(
+      GMAIL_API_BASE,
+      `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/drafts`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: { raw, ...(threadId !== undefined ? { threadId } : {}) },
+        }),
       },
-      body: JSON.stringify({
-        message: { raw, ...(threadId !== undefined ? { threadId } : {}) },
-      }),
-    });
+    );
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       return {
@@ -559,14 +573,18 @@ export class GmailAdapter implements WorkspaceAdapter {
     ].join('\r\n');
     const raw = Buffer.from(rfc822, 'utf-8').toString('base64url');
 
-    const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages/send`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+    const response = await guardedFetch(
+      GMAIL_API_BASE,
+      `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages/send`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ raw, ...(threadId !== undefined ? { threadId } : {}) }),
       },
-      body: JSON.stringify({ raw, ...(threadId !== undefined ? { threadId } : {}) }),
-    });
+    );
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       return {

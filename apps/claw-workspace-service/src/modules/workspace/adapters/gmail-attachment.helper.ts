@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import { AppConfig } from '../../../app/config/app.config';
 import {
@@ -147,7 +148,7 @@ export class GmailAttachmentHelper {
     attachmentId: string,
   ): Promise<Buffer> {
     const url = `${GMAIL_API_BASE}/users/me/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GMAIL_API_BASE, url, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
       signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS * 6),
     });

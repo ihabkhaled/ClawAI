@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 import { GITLAB_DEFAULT_API_BASE } from '../../../common/constants/workspace.constants';
 import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
@@ -13,6 +14,10 @@ export class GitLabWriteActionsHelper {
     actionType: string,
     payload: Record<string, unknown>,
   ): Promise<WriteActionResult> {
+    // A write payload is proposed by a user or a model, so it can never decide
+    // where the user's GitLab token is sent (TD-040). Every call below declares
+    // gitlab.com; a `baseUrl` in the payload pointing anywhere else is refused
+    // before the request, with the token still on this side.
     const api = this.resolveApiBase(payload['baseUrl'] as string | undefined);
     try {
       switch (actionType) {
@@ -60,7 +65,7 @@ export class GitLabWriteActionsHelper {
     const iid = String(payload['iid'] ?? '');
     const body = String(payload['body'] ?? '');
     const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/notes`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -80,7 +85,7 @@ export class GitLabWriteActionsHelper {
     const projectId = String(payload['projectId'] ?? '');
     const iid = String(payload['iid'] ?? '');
     const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/approve`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
@@ -96,7 +101,7 @@ export class GitLabWriteActionsHelper {
     const title = String(payload['title'] ?? '');
     const description = (payload['description'] as string | undefined) ?? '';
     const url = `${api}/projects/${encodeURIComponent(projectId)}/issues`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -117,7 +122,7 @@ export class GitLabWriteActionsHelper {
     const iid = String(payload['iid'] ?? '');
     const body = String(payload['body'] ?? '');
     const url = `${api}/projects/${encodeURIComponent(projectId)}/issues/${encodeURIComponent(iid)}/notes`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -138,7 +143,7 @@ export class GitLabWriteActionsHelper {
     const iid = String(payload['iid'] ?? '');
     const description = String(payload['description'] ?? '');
     const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -171,8 +176,7 @@ export class GitLabWriteActionsHelper {
     const newPath = String(payload['newPath'] ?? '');
     const newLine = Number(payload['newLine'] ?? 0);
     const oldPath = String(payload['oldPath'] ?? newPath);
-    const oldLine =
-      payload['oldLine'] !== undefined ? Number(payload['oldLine']) : undefined;
+    const oldLine = payload['oldLine'] !== undefined ? Number(payload['oldLine']) : undefined;
     const suggestion = String(payload['suggestion'] ?? '');
     if (
       projectId.length === 0 ||
@@ -202,7 +206,7 @@ export class GitLabWriteActionsHelper {
       ...(oldLine !== undefined ? { old_line: oldLine } : {}),
     };
     const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/discussions`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -273,7 +277,7 @@ export class GitLabWriteActionsHelper {
       height,
     };
     const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/discussions`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(GITLAB_DEFAULT_API_BASE, url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

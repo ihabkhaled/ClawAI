@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { OneDriveAdapter } from '../onedrive.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 
@@ -222,6 +222,45 @@ describe('OneDriveAdapter', () => {
   });
 
   describe('downloadFileContent', () => {
+    // TD-040. Graph /content answers 302 to a pre-authenticated CDN URL. The
+    // hop is followed once, to a public https host, WITHOUT our bearer token.
+    it('follows the Graph 302 to the CDN without the bearer token', async () => {
+      const cdn = 'https://contoso-my.sharepoint.com/download.aspx?tempauth=signed';
+      (global.fetch as Mock)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 302,
+          headers: new Map([['location', cdn]]),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          body: {},
+          headers: new Map([['content-type', 'application/pdf']]),
+        });
+      const stream = await adapter.downloadFileContent('token', 'item1', { name: 'a.pdf' });
+      expect(stream?.mimeType).toBe('application/pdf');
+      const [first, firstInit] = (global.fetch as Mock).mock.calls[0] as [string, RequestInit];
+      expect(new URL(first).host).toBe('graph.microsoft.com');
+      expect(firstInit.redirect).toBe('manual');
+      const [hop, hopInit] = (global.fetch as Mock).mock.calls[1] as [string, RequestInit];
+      expect(hop).toBe(cdn);
+      expect(hopInit.headers).toBeUndefined();
+      expect(hopInit.redirect).toBe('error');
+    });
+
+    it('refuses a Graph redirect to a private host', async () => {
+      (global.fetch as Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 302,
+        headers: new Map([['location', 'https://192.168.1.10/steal']]),
+      });
+      await expect(adapter.downloadFileContent('token', 'item1')).rejects.toThrow(
+        /download redirect refused/,
+      );
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
     it('streams file bytes with metadata from headers', async () => {
       (global.fetch as Mock).mockResolvedValue({
         ok: true,

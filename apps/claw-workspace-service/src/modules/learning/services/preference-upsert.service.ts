@@ -4,6 +4,7 @@ import { AppConfig } from '../../../app/config/app.config';
 import { LEARNING_HTTP_TIMEOUT_MS } from '../constants/learning.constants';
 import type { PreferenceUpsertResult, ProposedPreference } from '../types/learning.types';
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 @Injectable()
 export class PreferenceUpsertService {
@@ -35,7 +36,7 @@ export class PreferenceUpsertService {
   private async callMemoryService(userId: string, pref: ProposedPreference): Promise<void> {
     const baseUrl = AppConfig.get().MEMORY_SERVICE_URL;
     const url = `${baseUrl}/api/v1/internal/memories/automation-preference`;
-    const response = await fetch(url, {
+    const response = await guardedFetch(baseUrl, url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

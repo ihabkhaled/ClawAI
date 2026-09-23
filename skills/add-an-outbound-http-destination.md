@@ -21,6 +21,14 @@ calls `assertSafeRequestUrl` before its `fetch`, and
 [`tools/__tests__/service-fetch-url-guarded.test.mjs`](../tools/__tests__/service-fetch-url-guarded.test.mjs)
 fails the build if a ninth appears.
 
+Since 2026-09-23 (TD-040, closed) **every** direct `fetch` in `apps/*/src` is
+guarded; the test's old "not yet" list is gone. The only way past it is its
+`EXEMPT_FILES` map, which needs a stronger control of its own and a written
+reason (today: the research crawler). workspace-service routes all of its calls
+through one door — `guardedFetch` in
+`apps/claw-workspace-service/src/common/utilities/guarded-fetch.utility.ts` —
+see "A service with many callers" below.
+
 **Related**: [`rules/21-security-and-secrets.md`](../rules/21-security-and-secrets.md) ·
 [`rules/08-security-rules.md`](../rules/08-security-rules.md) ·
 TD-037 / TD-038 / TD-040 in [`docs/14-risk-debt/technical-debt.md`](../docs/14-risk-debt/technical-debt.md)
@@ -63,6 +71,42 @@ value and the fetched value cannot diverge. Then audit every caller: a URL built
 from an admin-configured `baseUrl` must arrive with `declaredHost(baseUrl)` or
 that call starts being refused the moment the guard lands. That audit is the
 work; adding the guard is five lines.
+
+## A service with many callers: one door, not N guards
+
+When a service has dozens of call sites (workspace-service had 146 across 27
+files), do not paste the guard into each. Give the service one function that
+takes the declared base and does both checks, and make every caller use it:
+
+```ts
+// apps/claw-workspace-service/src/common/utilities/guarded-fetch.utility.ts
+await guardedFetch(GITHUB_API_BASE, `${GITHUB_API_BASE}/user`, { headers });
+await guardedFetch(config.MEMORY_SERVICE_URL, url, { method: 'POST', body });
+```
+
+It runs `assertSafeRequestUrl(url, declaredHost(declaredBase))` AND requires
+`url`'s host to EQUAL the declared host — the platform allowlist also holds every
+internal service, so on its own it would let a provider token land on one — then
+fetches with `redirect: 'error'`. Callers call `guardedFetch(`, not `fetch(`, so
+the repo test sees no bare fetch outside the one door.
+
+**Provenance decides what may be declared.** An admin setting (a provider app
+config's base URL) may be declared. A value in a request body that any user can
+send, a write-action payload a model proposed, or object metadata may NOT —
+validate it against the admin settings first (workspace `testPat`), or ignore it
+and declare the literal default (GitLab writes).
+
+## A redirect you cannot refuse
+
+Some endpoints redirect by design: Microsoft Graph `/content` answers 302 to a
+pre-authenticated CDN URL whose host changes per tenant, so no allowlist can
+name it. Do not turn redirects back on. Follow exactly one hop, by hand
+(`guardedDownloadFetch` in the same file): first request with
+`redirect: 'manual'`, then the `Location` only if it is https, a DNS name (no IP
+literal), not private/loopback, no embedded credentials — sent with **no
+headers**, because the bearer token must never reach a host the provider chose
+at runtime — and with `redirect: 'error'` on the hop. Error messages name the
+host only; a signed URL is a credential.
 
 ## The rules that do not bend
 
@@ -110,7 +154,14 @@ resetInternalHostAllowlist(); // the allowlist is cached; re-read the stubbed en
 Pair it with refusal cases (`file:`, `https://user:pass@…`, `169.254.169.254`)
 asserting `fetch` was never called. Worked examples (TD-040):
 `apps/claw-research-service/src/modules/search/adapters/__tests__/search-adapter-url-guard.spec.ts`,
-`apps/claw-payment-service/src/modules/gateways/paypal/__tests__/paypal-token.manager.spec.ts`.
+`apps/claw-payment-service/src/modules/gateways/paypal/__tests__/paypal-token.manager.spec.ts`,
+`apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/adapter-url-guard.spec.ts`.
+
+For fixed-host adapters, whose URLs never come from input, prove the refusal by
+swapping the constants module (`vi.mock(..., importOriginal)`) for the metadata
+address and asserting `fetch` is never called —
+`adapter-url-guard-hostile.spec.ts` beside the one above. Then disable the guard
+once and watch those specs go red (41 did), so you know they test the guard.
 
 ## Verify
 

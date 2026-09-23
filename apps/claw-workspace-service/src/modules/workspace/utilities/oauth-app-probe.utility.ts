@@ -1,4 +1,5 @@
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
+import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { HEALTH_CHECK_TIMEOUT_MS } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import type { HealthCheckResult } from '../types/workspace.types';
@@ -8,7 +9,8 @@ export async function probeOAuthAppCredentials(input: OAuthProbeInput): Promise<
   const start = Date.now();
   try {
     const { method = 'POST', headers, body } = input.requestBuilder();
-    const response = await fetch(input.tokenUrl, {
+    // A refusal throws inside this try and reads as UNKNOWN, like an unreachable provider.
+    const response = await guardedFetch(input.declaredBase, input.tokenUrl, {
       method,
       headers,
       body,
@@ -25,18 +27,17 @@ export async function probeOAuthAppCredentials(input: OAuthProbeInput): Promise<
     if (outcome === OAuthProbeOutcome.CREDENTIALS_OK) {
       return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
     }
-    if (outcome === OAuthProbeOutcome.CREDENTIALS_BAD) {
-      return {
-        status: WorkspaceConnectorStatus.DISCONNECTED,
-        latencyMs,
-        errorMessage: 'clientId or clientSecret rejected by provider',
-      };
-    }
-    return {
-      status: WorkspaceConnectorStatus.UNKNOWN,
-      latencyMs,
-      errorMessage: `Provider returned unexpected response (HTTP ${String(response.status)})`,
-    };
+    return outcome === OAuthProbeOutcome.CREDENTIALS_BAD
+      ? {
+          status: WorkspaceConnectorStatus.DISCONNECTED,
+          latencyMs,
+          errorMessage: 'clientId or clientSecret rejected by provider',
+        }
+      : {
+          status: WorkspaceConnectorStatus.UNKNOWN,
+          latencyMs,
+          errorMessage: `Provider returned unexpected response (HTTP ${String(response.status)})`,
+        };
   } catch (error: unknown) {
     return {
       status: WorkspaceConnectorStatus.UNKNOWN,

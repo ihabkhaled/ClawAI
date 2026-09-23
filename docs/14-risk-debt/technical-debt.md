@@ -65,10 +65,70 @@ Last updated: 2026-09-10
   `fetch` with no guard at all. That was TD-038, closed 2026-09-22. The
   scattered single `fetch` calls in the remaining services are TD-040.
 
-### TD-040: The rest of the platform's direct `fetch` calls are still unguarded (2026-09-22) — PARTIALLY FIXED (2026-09-23)
+### TD-041: Three copies of the private-host check (2026-09-23)
 
-- **Severity**: Medium · **Effort**: Medium · **Priority**: Next
-- **Status**: 10 of 37 files closed on 2026-09-23. **What remains is the 27
+- **Severity**: Low · **Effort**: Medium · **Priority**: Opportunistic
+- **Detail**: carried out of TD-040 when it closed. A URL that arrives in a
+  RESPONSE (a redirect target, an image blob URL) cannot be allowlisted, so it
+  needs the opposite check — any public host, never a private one. That check
+  exists three times: `apps/claw-research-service/src/common/utilities/url-safety.utility.ts`,
+  `apps/claw-workspace-service/src/common/utilities/url-safety.utility.ts` (now
+  also used by `guardedDownloadFetch` for the Graph CDN hop), and
+  `apps/claw-image-service/src/modules/image-generation/utilities/provider-image-download.utility.ts`.
+  None resolves DNS, and the workspace copy misses bracketed IPv6 (the Graph hop
+  refuses every IP literal itself to cover that).
+- **The fix**: one `assertPublicResponseUrl` in `@claw/shared-utilities`
+  beside `assertSafeRequestUrl`, with IPv6 handling, and the three callers moved
+  onto it. It touches three services, so it is its own batch.
+
+### TD-040: The rest of the platform's direct `fetch` calls are still unguarded (2026-09-22) — FIXED (2026-09-23)
+
+- **Fixed (second batch, 2026-09-23)**: all 27 workspace-service files. Nothing
+  calls `fetch` directly there any more; every call goes through
+  `apps/claw-workspace-service/src/common/utilities/guarded-fetch.utility.ts`:
+  - `guardedFetch(declaredBase, url, init)` — the shared `assertSafeRequestUrl`
+    with `declaredHost(declaredBase)`, then host === declared host (the platform
+    allowlist also holds every internal service, so on its own it would let a
+    mis-built provider URL carry a user's token to one), then
+    `redirect: 'error'`. `declaredBase` is a `workspace.constants.ts` literal,
+    the admin-configured GitLab base, or a `*_SERVICE_URL` — never the URL.
+  - `guardedDownloadFetch` — Graph `/content` (OneDrive, SharePoint) answers
+    302 to a per-tenant pre-authenticated CDN URL. One hop is followed, only to
+    a public https DNS name, with **no headers** (before, `fetch` followed
+    the redirect to any host at all, and the bearer's fate was left to the
+    runtime's cross-origin rules), and a second redirect is refused. Errors never echo the signed URL.
+  - The OAuth app probe takes a required `declaredBase` (the adapter's token-URL
+    literal, or the admin GitLab base).
+  - `KNOWN_UNGUARDED` is deleted from
+    `tools/__tests__/service-fetch-url-guarded.test.mjs`; the only exemption
+    left platform-wide is the research crawler.
+- **Two real holes found and closed on the way** (both reachable before this):
+  - `POST /workspace/oauth/test-pat` (any user with `WORKSPACE_CONNECT_OWN`)
+    sent the PAT to a `baseUrl` from the request body, checked only with
+    private hosts ALLOWED — a blind SSRF that reported internal hosts back as
+    CONNECTED / DEGRADED. The base URL is now accepted only if its host is one
+    an admin configured for that provider (`apiBaseUrl` / `siteUrl`); otherwise
+    400 `UNSAFE_BASE_URL` before any request.
+  - GitLab write actions honoured `payload.baseUrl`, which a user or a
+    prompt-injected model proposal controls, and sent the user's GitLab token
+    there. Writes and object refresh now declare gitlab.com; another host is
+    refused. Nothing in the product ever set that field, and sync only read
+    gitlab.com, so no working flow changed.
+- **Behaviour changes**: a provider answering with a redirect now fails the
+  call instead of being followed (a renamed GitHub repo, a self-hosted GitLab
+  base that redirects http→https). Graph downloads still work through the
+  checked hop. Google Drive `alt=media` / `export` are assumed direct (Google
+  documents them as direct responses); if one ever redirects, the download fails
+  loudly rather than following — move it to `guardedDownloadFetch`.
+- **Not verified live**: no OAuth connector is configured in the dev stack for
+  this batch, so the provider lane was proven by unit tests under a CI-shaped
+  environment, not against the real providers. First real sync per provider
+  after deploy is the live check.
+- **Carried out**: the three private-host-check copies are TD-041.
+
+#### First batch (2026-09-23)
+
+- **Status**: 10 of 37 files closed on 2026-09-23. **What remained was the 27
   workspace-service files** listed below; nothing outside workspace-service is
   left. No new exemption was added — the only exempt service file is still the
   research crawler (`fetch/adapters/http-fetch.adapter.ts`), whose URL is typed
