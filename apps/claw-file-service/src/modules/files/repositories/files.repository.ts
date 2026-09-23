@@ -4,6 +4,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import { type CreateFileData, type FileFilters, type FileWithChunks } from '../types/files.types';
 import { type ChildExtractionState } from '../types/archive-manifest.types';
 import { type ArchiveExtractionMetadata } from '../types/zip-expansion.types';
+import { type ArchiveChildRow, type ArchiveParentRow } from '../types/archive-entries.types';
 
 @Injectable()
 export class FilesRepository {
@@ -144,6 +145,64 @@ export class FilesRepository {
     return this.prisma.file.count({ where });
   }
 
+  /**
+   * How many files were extracted from each of `parentIds`. The file list uses
+   * it to mark archive rows; ids with no children are absent from the map.
+   */
+  async countChildrenByParent(parentIds: ReadonlyArray<string>): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    if (parentIds.length === 0) {
+      return counts;
+    }
+    const groups = await this.prisma.file.groupBy({
+      by: ['parentFileId'],
+      where: { parentFileId: { in: [...parentIds] } },
+      _count: { _all: true },
+    });
+    for (const group of groups) {
+      if (group.parentFileId !== null) {
+        counts.set(group.parentFileId, group._count._all);
+      }
+    }
+    return counts;
+  }
+
+  /** An archive's own row, without its original bytes or chunks. */
+  async findArchiveParent(id: string): Promise<ArchiveParentRow | null> {
+    return this.prisma.file.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        userId: true,
+        filename: true,
+        extractedText: true,
+        extractionError: true,
+        ingestionStatus: true,
+      },
+    });
+  }
+
+  /** The files extracted from one archive, in path order, capped at `limit`. */
+  async findArchiveChildren(parentFileId: string, limit: number): Promise<ArchiveChildRow[]> {
+    return this.prisma.file.findMany({
+      where: { parentFileId },
+      select: {
+        id: true,
+        archivePath: true,
+        filename: true,
+        sizeBytes: true,
+        mimeType: true,
+        ingestionStatus: true,
+      },
+      orderBy: { archivePath: 'asc' },
+      take: limit,
+    });
+  }
+
+  async countArchiveChildren(parentFileId: string): Promise<number> {
+    return this.prisma.file.count({ where: { parentFileId } });
+  }
+
   // Slice C foundation 3 — file retention sweeper.
   // Returns files whose retentionExpiresAt is strictly older than the cutoff. The
   // limit keeps each sweep tick bounded (so DB row locks stay short and the cron
@@ -178,8 +237,12 @@ export class FilesRepository {
   }
 
   private buildWhereClause(filters: FileFilters): Prisma.FileWhereInput {
+    // Top-level rows unless a parent is named: an archive's children are listed
+    // under it, not on the page beside it, where 500 of them would fill every
+    // page of the list.
     const where: Prisma.FileWhereInput = {
       userId: filters.userId,
+      parentFileId: filters.parentFileId ?? null,
     };
 
     if (filters.ingestionStatus !== undefined) {

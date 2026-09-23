@@ -8,28 +8,23 @@ import type {
 } from '@/types';
 import { logger } from '@/utilities';
 
+// Selection itself lives in useArchiveSelection, which keeps a whole archive
+// and a file picked from inside it from both being attached.
 export const useFileAttachmentPickerState = ({
   selectedFileIds,
-  onChange,
   uploadFile,
 }: UseFileAttachmentPickerStateParams): UseFileAttachmentPickerStateReturn => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const handleToggle = useCallback(
-    (fileId: string, checked: boolean): void => {
-      if (checked) {
-        onChange([...selectedFileIds, fileId]);
-      } else {
-        onChange(selectedFileIds.filter((id) => id !== fileId));
-      }
-    },
-    [selectedFileIds, onChange],
-  );
-
   const handleFileUpload = useCallback(
     (file: File): void => {
-      logger.info({ component: 'chat', action: 'file-attach-upload', message: 'Uploading file attachment', details: { filename: file.name, sizeBytes: file.size } });
+      logger.info({
+        component: 'chat',
+        action: 'file-attach-upload',
+        message: 'Uploading file attachment',
+        details: { filename: file.name, sizeBytes: file.size },
+      });
       const metadata = {
         filename: file.name,
         mimeType: file.type || 'application/octet-stream',
@@ -96,7 +91,6 @@ export const useFileAttachmentPickerState = ({
   return {
     dragOver,
     fileInputRef,
-    handleToggle,
     handleFileUpload,
     handleInputChange,
     handleDrop,

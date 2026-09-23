@@ -997,10 +997,50 @@ export const fr: TranslationDictionary = {
     statusProcessing: 'Traitement',
     statusCompleted: 'Terminé',
     statusFailed: 'Échec',
-    zip: {
-      bombRejected: 'Archive rejetée : taux de compression suspect détecté',
-      extractedFromLabel: 'Extrait de {filename}',
-      childCountLabel: '{count} fichiers',
+    archive: {
+      badge: 'Archive',
+      fileCount: '{count} fichiers',
+      showContents: 'Afficher le contenu',
+      hideContents: 'Masquer le contenu',
+      contentsOf: 'Contenu de {filename}',
+      loading: 'Chargement du contenu de l’archive…',
+      loadFailed: 'Impossible de charger le contenu de l’archive.',
+      empty: 'Cette archive ne contient aucun fichier.',
+      unlisted: '{count} autres fichiers ne sont pas listés ici.',
+      attachWhole: 'Joindre toute l’archive',
+      attachWholeHint: 'Envoie la liste des fichiers et le texte de chaque fichier lisible.',
+      chooseFiles: 'Choisir des fichiers à l’intérieur…',
+      chooseFilesTitle: 'Choisir des fichiers dans {filename}',
+      chooseFilesDescription:
+        'Joignez toute l’archive, ou choisissez seulement les fichiers utiles. Choisir un fichier remplace l’archive entière, pour que rien ne soit envoyé deux fois.',
+      membersSelected: '{count} choisis à l’intérieur',
+      done: 'Terminé',
+      status: {
+        extracted: 'Extrait',
+        partial: 'Inclus en partie',
+        pending: 'Extraction en cours',
+        encrypted: 'Protégé par mot de passe',
+        tooLarge: 'Trop volumineux',
+        unsupported: 'Aucun texte lisible',
+        blocked: 'Bloqué',
+        tooDeep: 'Imbrication trop profonde',
+      },
+      rejected: {
+        title: 'Archive refusée',
+        warningTitle: 'Certains fichiers ont été ignorés',
+        bomb: 'Elle se décompresse en bien plus de données qu’elle n’en contient, comme une bombe zip ; elle n’a donc pas été ouverte.',
+        tooLarge: 'Son contenu dépasse la taille totale autorisée pour un seul envoi.',
+        tooManyEntries: 'Elle contient plus de fichiers qu’un seul envoi ne peut en contenir.',
+        traversal:
+          'Elle contient des chemins qui pointent hors de l’archive ; elle n’a donc pas été ouverte.',
+        tooDeep: 'Elle imbrique des archives plus profondément que permis.',
+        encrypted:
+          'Elle est protégée par mot de passe. Les archives protégées par mot de passe ne sont pas encore prises en charge.',
+        partlyEncrypted:
+          'Certains fichiers sont protégés par mot de passe et ont été ignorés. Les autres sont disponibles.',
+        unsupported: 'Ce fichier n’est pas dans un format d’archive que nous savons ouvrir.',
+        generic: 'Impossible de l’ouvrir. Recréez l’archive et envoyez-la à nouveau.',
+      },
     },
     retention: {
       expired: 'Le fichier a expiré et a été supprimé par la politique de rétention',
@@ -1868,15 +1908,6 @@ export const fr: TranslationDictionary = {
     close: 'Fermer',
     fullOutput: 'Sortie complète',
     copyFailed: 'Échec de la copie',
-    research: {
-      label: 'Recherche web',
-      hint: 'Fournit à chaque modèle les mêmes preuves web fraîches avant l’exécution.',
-      none: 'Aucune recherche',
-      search: 'Recherche web',
-      searchFetch: 'Recherche + Récupération',
-      searchExtract: 'Recherche + Extraction',
-      sources: 'Sources des preuves web',
-    },
     critic: {
       enabled: 'Revue du critique',
       enabledHint:

@@ -61,14 +61,29 @@ The file service handles file uploads, local storage, content extraction, and ch
 
 ## API Endpoints
 
-| Method | Path          | Auth   | Description                       |
-| ------ | ------------- | ------ | --------------------------------- |
-| POST   | /             | Bearer | Upload file (multipart/form-data) |
-| GET    | /             | Bearer | List user's files (paginated)     |
-| GET    | /:id          | Bearer | Get file metadata                 |
-| GET    | /:id/download | Bearer | Download file content             |
-| GET    | /:id/chunks   | Bearer | Get file chunks                   |
-| DELETE | /:id          | Bearer | Delete file and chunks            |
+| Method | Path                 | Auth   | Description                                                                    |
+| ------ | -------------------- | ------ | ------------------------------------------------------------------------------ |
+| POST   | /                    | Bearer | Upload file (multipart/form-data)                                              |
+| GET    | /                    | Bearer | List user's files (paginated) — top-level rows only unless `parentId` is given |
+| GET    | /:id                 | Bearer | Get file metadata                                                              |
+| GET    | /:id/download        | Bearer | Download file content                                                          |
+| GET    | /:id/chunks          | Bearer | Get file chunks                                                                |
+| GET    | /:id/archive-entries | Bearer | Every entry of an uploaded archive, extracted or skipped, with its status      |
+| DELETE | /:id                 | Bearer | Delete file and chunks                                                         |
+
+`GET /` answers with `{ data, meta }` as usual; every row also carries
+`childCount` (files extracted from it — above 0 marks an archive) and, when it
+came from one, `parentFileId` / `archivePath`. Passing `?parentId=<archiveId>`
+lists that archive's children instead of top-level files, so a 500-file ZIP
+never floods page 1 of the list — the page/limit/meta pagination contract is
+unchanged either way.
+
+`GET /:id/archive-entries` is response mapping only: it parses the archive
+manifest's file tree back into rows (`archive-entry-listing.utility.ts`, with a
+round-trip spec against the real manifest writer) and joins them to the
+extracted child rows by path. It decides nothing — every status comes from what
+`ZipExpansionManager` already wrote — and 404s (never 403s) a file that is not
+the caller's own, the same rule `FilesService.getFile` uses.
 
 ### Internal API (service-to-service)
 
@@ -365,6 +380,52 @@ content is rewritten to `<\/archive_…` so a file cannot end its own block.
 **Legacy archives** expanded before 2026-09-23 have no manifest and still reach
 the model as "produced no readable text". They are not healed on use:
 re-expanding would duplicate their child rows.
+
+### Frontend: how an archive is shown (Archives A4)
+
+Everything below is generic over the parent/child relation (`childCount`,
+`parentFileId`, `archivePath`) — never over the zip MIME, so it works
+unchanged once A2's other archive formats reach production.
+
+- **Files page** (`file-list-item.tsx` + `use-file-list-item.ts`) — an archive
+  row carries an "Archive" badge and its total entry count. A collapsible
+  "Show contents" reveals its tree. The page itself stays pagination-safe:
+  `GET /files` lists top-level rows only, so an archive's hundreds of children
+  never push the page-size/page-number/jump controls off by filling page 1;
+  `use-files-page.ts` wires the shared `usePagination` hook to it.
+- **Composer attachment picker** (`file-attachment-picker.tsx`) — an archive is
+  one row: its checkbox attaches the WHOLE archive (the manifest already
+  carries every readable file's text), and a "Choose files inside…" item opens
+  `ArchiveMemberDialog` to pick individual members instead.
+  `useArchiveSelection` / `applyArchiveSelection`
+  (`archive-selection.utility.ts`) make the two mutually exclusive: picking a
+  member drops the whole-archive selection (and any archive further out that
+  contains it), and picking the archive drops every member already picked from
+  it — so nothing is ever sent to the model twice.
+- **Message attachments** (`message-attachment-item.tsx`) — asks
+  `GET /:id/archive-entries` once (cached, `useArchiveEntries`) before
+  deciding: an archive renders as `ArchiveAttachmentCard` with its tree on
+  demand, anything else falls back to the plain thumbnail. This avoids
+  downloading a file's bytes just to learn it is not an archive.
+- **The tree** (`components/files/archive/`, `buildArchiveTree` in
+  `archive-tree.utility.ts`) — entry paths become real folders, sorted
+  folders-first then numeric-aware by name. One shared component
+  (`ArchiveEntryTree`) serves all three surfaces above, read-only unless given
+  a `selection`.
+- **Per-entry status** — eleven backend `ArchiveEntryStatus` values collapse to
+  eight display buckets (`ArchiveEntryDisplayStatus`,
+  `archive-status.utility.ts`); every one renders an icon **and** a text label
+  via `ArchiveEntryStatusBadge`, never colour alone. A status this build does
+  not know (e.g. A2's `skipped-link` before this UI added it, or a status a
+  later batch adds) degrades to "Unsupported" rather than a raw enum string.
+- **Rejection display** — `getArchiveRejection` reads the `CODE:` prefix off
+  `extractionError` (`ZIP_BOMB_RATIO`, `ZIP_PATH_TRAVERSAL`,
+  `ARCHIVE_ENCRYPTED`, …), maps it through a known-code table then a keyword
+  fallback (`BOMB`, `TRAVERSAL`, `ENCRYPT`, `SIZE`, …) so an unrecognised new
+  code from a future batch still gets a specific message, and renders it with
+  the shared `Alert` — an error tone when the archive was fully rejected
+  (FAILED), a warning tone when only some entries were skipped (e.g. partial
+  encryption) but the rest still arrived.
 
 ## OCR pipeline (Slice D foundation 3)
 

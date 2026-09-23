@@ -999,10 +999,50 @@ export const it: TranslationDictionary = {
     statusProcessing: 'Elaborazione',
     statusCompleted: 'Completato',
     statusFailed: 'Fallito',
-    zip: {
-      bombRejected: 'Archivio rifiutato: rilevato rapporto di compressione sospetto',
-      extractedFromLabel: 'Estratto da {filename}',
-      childCountLabel: '{count} file',
+    archive: {
+      badge: 'Archivio',
+      fileCount: '{count} file',
+      showContents: 'Mostra contenuto',
+      hideContents: 'Nascondi contenuto',
+      contentsOf: 'Contenuto di {filename}',
+      loading: 'Caricamento del contenuto dell’archivio…',
+      loadFailed: 'Impossibile caricare il contenuto dell’archivio.',
+      empty: 'Questo archivio non contiene file.',
+      unlisted: 'Altri {count} file non sono elencati qui.',
+      attachWhole: 'Allega l’intero archivio',
+      attachWholeHint: 'Invia l’elenco dei file e il testo di ogni file leggibile.',
+      chooseFiles: 'Scegli i file all’interno…',
+      chooseFilesTitle: 'Scegli i file da {filename}',
+      chooseFilesDescription:
+        'Allega l’intero archivio o scegli solo i file che ti servono. Scegliere un file sostituisce l’intero archivio, così nulla viene inviato due volte.',
+      membersSelected: '{count} scelti all’interno',
+      done: 'Fatto',
+      status: {
+        extracted: 'Estratto',
+        partial: 'Incluso in parte',
+        pending: 'Estrazione in corso',
+        encrypted: 'Protetto da password',
+        tooLarge: 'Troppo grande',
+        unsupported: 'Nessun testo leggibile',
+        blocked: 'Bloccato',
+        tooDeep: 'Annidato troppo in profondità',
+      },
+      rejected: {
+        title: 'Archivio rifiutato',
+        warningTitle: 'Alcuni file sono stati saltati',
+        bomb: 'Si espande in molti più dati di quanti ne contenga, come fanno le zip bomb, quindi non è stato aperto.',
+        tooLarge:
+          'Il suo contenuto supera la dimensione totale consentita per un singolo caricamento.',
+        tooManyEntries: 'Contiene più file di quanti ne consenta un singolo caricamento.',
+        traversal: 'Contiene percorsi che puntano fuori dall’archivio, quindi non è stato aperto.',
+        tooDeep: 'Annida archivi più in profondità di quanto consentito.',
+        encrypted:
+          'È protetto da password. Gli archivi protetti da password non sono ancora supportati.',
+        partlyEncrypted:
+          'Alcuni file sono protetti da password e sono stati saltati. Gli altri sono disponibili.',
+        unsupported: 'Questo file non è in un formato di archivio che possiamo aprire.',
+        generic: 'Impossibile aprirlo. Ricrea l’archivio e caricalo di nuovo.',
+      },
     },
     retention: {
       expired: 'Il file è scaduto ed è stato rimosso dalla politica di conservazione',
@@ -1863,15 +1903,6 @@ export const it: TranslationDictionary = {
     close: 'Chiudi',
     fullOutput: 'Output completo',
     copyFailed: 'Copia non riuscita',
-    research: {
-      label: 'Ricerca web',
-      hint: 'Basa ogni modello sulle stesse prove web aggiornate prima dell’esecuzione.',
-      none: 'Nessuna ricerca',
-      search: 'Ricerca web',
-      searchFetch: 'Ricerca + Scarica',
-      searchExtract: 'Ricerca + Estrai',
-      sources: 'Fonti delle prove web',
-    },
     critic: {
       enabled: 'Revisione del critico',
       enabledHint:

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Paperclip, Plus } from 'lucide-react';
+import { Paperclip, Plus } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ComposerControlVariant } from '@/enums';
-import { useFileAttachmentPickerState } from '@/hooks/chat/use-file-attachment-picker-state';
-import { useFileAttachmentGrouping } from '@/hooks/files/use-file-attachment-grouping';
-import { useFiles } from '@/hooks/files/use-files';
-import { useUploadFile } from '@/hooks/files/use-upload-file';
-import { useTranslation } from '@/lib/i18n/use-translation';
+import { useFileAttachmentPicker } from '@/hooks/chat/use-file-attachment-picker';
 import { cn } from '@/lib/utils';
 import type { FileAttachmentPickerProps } from '@/types';
 
+import { ArchiveMemberDialog } from './archive-member-dialog';
+import { FileAttachmentArchiveRow } from './file-attachment-archive-row';
 import { FileAttachmentRow } from './file-attachment-row';
 
 export function FileAttachmentPicker({
@@ -27,22 +25,8 @@ export function FileAttachmentPicker({
   variant = ComposerControlVariant.Default,
   showLabel,
 }: FileAttachmentPickerProps): React.ReactElement {
-  const { t } = useTranslation();
-  const { files, isLoading } = useFiles();
-  const { uploadFile, isPending: isUploading } = useUploadFile();
-  const {
-    dragOver,
-    fileInputRef,
-    handleToggle,
-    handleInputChange,
-    handleDrop,
-    handleDragOver,
-    handleDragLeave,
-    selectedCount,
-  } = useFileAttachmentPickerState({ selectedFileIds, onChange, uploadFile });
-
-  const { groups, standalone, hasGroups, isParentExpanded, toggleParentExpansion } =
-    useFileAttachmentGrouping(files);
+  const ctrl = useFileAttachmentPicker({ selectedFileIds, onChange });
+  const { t, selection } = ctrl;
 
   // Phase 2 mobile composer redesign — `compact` shrinks the trigger to a
   // Square icon button with optional inline label. `default` keeps the
@@ -64,7 +48,7 @@ export function FileAttachmentPicker({
             variant="outline"
             size="sm"
             className={triggerClass}
-            disabled={disabled || isLoading}
+            disabled={disabled || ctrl.isLoading}
             aria-label={isCompact && !showLabel ? t('chat.attachFiles') : undefined}
           >
             <Paperclip className={cn('shrink-0', isCompact ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
@@ -73,7 +57,7 @@ export function FileAttachmentPicker({
                 {t('chat.attachFiles')}
               </span>
             ) : null}
-            {selectedCount > 0 ? (
+            {ctrl.selectedCount > 0 ? (
               <Badge
                 variant="secondary"
                 className={cn(
@@ -81,17 +65,17 @@ export function FileAttachmentPicker({
                   isCompact && !showLabel ? 'absolute -top-1 -right-1 ml-0' : 'ml-1',
                 )}
               >
-                {selectedCount}
+                {ctrl.selectedCount}
               </Badge>
             ) : null}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          className="max-h-80 w-72 overflow-y-auto"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          className="max-h-80 w-72 max-w-[calc(100vw-1rem)] overflow-y-auto"
+          onDragOver={ctrl.handleDragOver}
+          onDragLeave={ctrl.handleDragLeave}
+          onDrop={ctrl.handleDrop}
         >
           <DropdownMenuLabel>{t('chat.attachFiles')}</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -100,96 +84,60 @@ export function FileAttachmentPicker({
               variant="outline"
               size="sm"
               className="w-full gap-1.5 text-xs"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
+              onClick={() => ctrl.fileInputRef.current?.click()}
+              disabled={ctrl.isUploading}
             >
               <Plus className="h-3.5 w-3.5" />
-              {isUploading ? t('files.uploading') : t('files.uploadNewFile')}
+              {ctrl.isUploading ? t('files.uploading') : t('files.uploadNewFile')}
             </Button>
-            {dragOver ? (
+            {ctrl.dragOver ? (
               <div className="border-primary bg-primary/5 text-muted-foreground mt-2 rounded border-2 border-dashed p-3 text-center text-xs">
                 {t('files.dropFileHere')}
               </div>
             ) : null}
           </div>
           <DropdownMenuSeparator />
-          {files.length === 0 ? (
+          {ctrl.files.length === 0 ? (
             <div className="text-muted-foreground px-2 py-3 text-center text-xs">
               {t('chat.noFiles')}
             </div>
           ) : (
-            <>
-              {hasGroups
-                ? groups.map((group) => {
-                    const expanded = isParentExpanded(group.parent.id);
-                    return (
-                      <div key={group.parent.id} className="flex flex-col">
-                        <FileAttachmentRow
-                          file={group.parent}
-                          checked={selectedFileIds.includes(group.parent.id)}
-                          indented={false}
-                          onToggle={handleToggle}
-                        />
-                        <Button
-                          variant="unstyled"
-                          size="unstyled"
-                          type="button"
-                          className="text-muted-foreground hover:bg-accent/40 touch:text-xs flex items-center gap-1.5 px-2 py-1 text-left text-[11px]"
-                          onClick={() => toggleParentExpansion(group.parent.id)}
-                          aria-expanded={expanded}
-                        >
-                          {expanded ? (
-                            <ChevronDown className="h-3 w-3" />
-                          ) : (
-                            <ChevronRight className="h-3 w-3" />
-                          )}
-                          <span className="truncate">
-                            {t('files.zip.extractedFromLabel', {
-                              filename: group.parent.filename,
-                            })}
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="touch:text-xs ml-auto h-4 px-1 text-[10px]"
-                          >
-                            {t('files.zip.childCountLabel', { count: group.children.length })}
-                          </Badge>
-                        </Button>
-                        {expanded
-                          ? group.children.map((child) => (
-                              <FileAttachmentRow
-                                key={child.id}
-                                file={child}
-                                checked={selectedFileIds.includes(child.id)}
-                                indented
-                                onToggle={handleToggle}
-                              />
-                            ))
-                          : null}
-                      </div>
-                    );
-                  })
-                : null}
-              {standalone.map((file) => (
+            ctrl.files.map((file) =>
+              ctrl.isArchive(file) ? (
+                <FileAttachmentArchiveRow
+                  key={file.id}
+                  file={file}
+                  checked={selection.isSelected(file.id)}
+                  selectedMemberCount={selection.selectedMemberCount(file.id)}
+                  onToggle={selection.onToggle}
+                  onBrowse={ctrl.openArchive}
+                  t={t}
+                />
+              ) : (
                 <FileAttachmentRow
                   key={file.id}
                   file={file}
-                  checked={selectedFileIds.includes(file.id)}
+                  checked={selection.isSelected(file.id)}
                   indented={false}
-                  onToggle={handleToggle}
+                  onToggle={selection.onToggle}
                 />
-              ))}
-            </>
+              ),
+            )
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+      <ArchiveMemberDialog
+        archive={ctrl.browsingArchive}
+        selection={selection}
+        onOpenChange={ctrl.handleArchiveDialogOpenChange}
+      />
       <input
-        ref={fileInputRef}
+        ref={ctrl.fileInputRef}
         type="file"
         accept="*/*"
         className="hidden"
-        onChange={handleInputChange}
-        disabled={isUploading}
+        onChange={ctrl.handleInputChange}
+        disabled={ctrl.isUploading}
       />
     </>
   );

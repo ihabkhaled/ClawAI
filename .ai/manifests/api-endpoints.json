@@ -1497,6 +1497,11 @@
       },
       {
         "method": "GET",
+        "route": "/files/:id/archive-entries",
+        "source": "apps/claw-file-service/src/modules/files/controllers/file-archive.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/files/:id/chunks",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
@@ -3433,5 +3438,5 @@
     ]
   },
   "generated": true,
-  "total": 679
+  "total": 680
 }

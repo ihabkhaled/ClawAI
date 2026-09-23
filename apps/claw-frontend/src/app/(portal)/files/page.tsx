@@ -8,12 +8,18 @@ import { PageHeader } from '@/components/common/page-header';
 import { FileChunksDialog } from '@/components/files/file-chunks-dialog';
 import { FileListItem } from '@/components/files/file-list-item';
 import { FileUploadZone } from '@/components/files/file-upload-zone';
+import { Pagination } from '@/components/ui/pagination';
 import { useFilesPage } from '@/hooks/files/use-files-page';
-import { useTranslation } from '@/lib/i18n';
 
 export default function FilesPage() {
   const {
+    t,
     files,
+    meta,
+    page,
+    pageSize,
+    goToPage,
+    setPageSize,
     isLoading,
     isError,
     error,
@@ -29,17 +35,12 @@ export default function FilesPage() {
     handleCloseChunks,
   } = useFilesPage();
 
-  const { t } = useTranslation();
-
   if (isError) {
     return (
       <div>
-        <PageHeader
-          title={t('files.title')}
-          description={t('files.description')}
-        />
+        <PageHeader title={t('files.title')} description={t('files.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{error?.message ?? t('files.loadFailed')}</p>
+          <p className="text-destructive text-sm">{error?.message ?? t('files.loadFailed')}</p>
         </div>
       </div>
     );
@@ -47,10 +48,7 @@ export default function FilesPage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('files.title')}
-        description={t('files.description')}
-      />
+      <PageHeader title={t('files.title')} description={t('files.description')} />
 
       <div className="mb-6">
         <FileUploadZone
@@ -85,6 +83,18 @@ export default function FilesPage() {
           ))}
         </div>
       )}
+
+      {meta !== undefined && meta.total > 0 ? (
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          totalPages={Math.max(meta.totalPages, 1)}
+          totalItems={meta.total}
+          onPageChange={goToPage}
+          onPageSizeChange={setPageSize}
+          t={t}
+        />
+      ) : null}
 
       <FileChunksDialog fileId={viewingChunksId} onClose={handleCloseChunks} />
     </div>

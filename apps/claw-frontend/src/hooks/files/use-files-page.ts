@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 
+import { usePagination } from '@/hooks/use-pagination';
+import { useTranslation } from '@/lib/i18n';
 import { uploadFileSchema } from '@/lib/validation/file.schema';
 import type { UploadFileRequest } from '@/types';
 import { logger } from '@/utilities';
@@ -14,7 +16,11 @@ export function useFilesPage() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadingFilename, setUploadingFilename] = useState<string | null>(null);
 
-  const { files, isLoading, isError, error } = useFiles();
+  const { t } = useTranslation();
+  // Top-level files only, one page at a time: an archive's extracted files are
+  // shown inside its row, so they no longer push everything else off page 1.
+  const { page, pageSize, goToPage, setPageSize } = usePagination();
+  const { files, meta, isLoading, isError, error } = useFiles({ page, limit: pageSize });
   const { uploadFile, isPending: isUploadPending } = useUploadFile();
   const { deleteFile, isPending: isDeletePending } = useDeleteFile();
 
@@ -97,7 +103,13 @@ export function useFilesPage() {
   }, []);
 
   return {
+    t,
     files,
+    meta,
+    page,
+    pageSize,
+    goToPage,
+    setPageSize,
     isLoading,
     isError,
     error,

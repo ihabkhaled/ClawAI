@@ -1,8 +1,8 @@
-import { FileText } from 'lucide-react';
-
 import { useAuthenticatedImage } from '@/hooks/chat/use-authenticated-image';
 import { useTranslation } from '@/lib/i18n';
 import type { AttachmentThumbnailProps } from '@/types';
+
+import { AttachmentPlaceholder } from './attachment-placeholder';
 
 export function AttachmentThumbnail({ fileId }: AttachmentThumbnailProps): React.ReactElement {
   const { t } = useTranslation();
@@ -11,7 +11,7 @@ export function AttachmentThumbnail({ fileId }: AttachmentThumbnailProps): React
   if (blobUrl) {
     return (
       <a
-        className="block overflow-hidden rounded-lg border border-border"
+        className="border-border block overflow-hidden rounded-lg border"
         href={blobUrl}
         rel="noreferrer"
         target="_blank"
@@ -21,9 +21,5 @@ export function AttachmentThumbnail({ fileId }: AttachmentThumbnailProps): React
     );
   }
 
-  return (
-    <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-border bg-muted">
-      <FileText className="h-6 w-6 text-muted-foreground" />
-    </div>
-  );
+  return <AttachmentPlaceholder />;
 }

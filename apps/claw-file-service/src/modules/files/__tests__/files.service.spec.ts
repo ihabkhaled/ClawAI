@@ -77,6 +77,10 @@ const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
   recordExtractionMetadata: vi.fn(),
   findExtractionState: vi.fn(),
   findExtractedText: vi.fn(),
+  countChildrenByParent: vi.fn().mockResolvedValue(new Map()),
+  findArchiveParent: vi.fn(),
+  findArchiveChildren: vi.fn(),
+  countArchiveChildren: vi.fn(),
 });
 
 const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({
@@ -280,10 +284,39 @@ describe('FilesService', () => {
       });
 
       expect(filesRepo.findAll).toHaveBeenCalledWith(
-        { userId: 'user-1', ingestionStatus: FileIngestionStatus.COMPLETED, search: 'test' },
+        {
+          userId: 'user-1',
+          ingestionStatus: FileIngestionStatus.COMPLETED,
+          search: 'test',
+          parentFileId: null,
+        },
         1,
         20,
       );
+    });
+
+    it("lists an archive's children when a parent is named", async () => {
+      filesRepo.findAll.mockResolvedValue([]);
+      filesRepo.countAll.mockResolvedValue(0);
+
+      await service.getFiles('user-1', { page: 1, limit: 20, parentId: 'zip-1' });
+
+      expect(filesRepo.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'user-1', parentFileId: 'zip-1' }),
+        1,
+        20,
+      );
+    });
+
+    it('marks each row with how many files were extracted from it', async () => {
+      filesRepo.findAll.mockResolvedValue([mockFile, { ...mockFile, id: 'file-2' }]);
+      filesRepo.countAll.mockResolvedValue(2);
+      filesRepo.countChildrenByParent.mockResolvedValue(new Map([['file-2', 7]]));
+
+      const result = await service.getFiles('user-1', { page: 1, limit: 20 });
+
+      expect(filesRepo.countChildrenByParent).toHaveBeenCalledWith(['file-1', 'file-2']);
+      expect(result.data.map((row) => row.childCount)).toEqual([0, 7]);
     });
   });
 

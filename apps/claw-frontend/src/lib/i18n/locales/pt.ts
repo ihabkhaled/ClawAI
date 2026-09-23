@@ -994,10 +994,51 @@ export const pt: TranslationDictionary = {
     statusProcessing: 'Processando',
     statusCompleted: 'Concluído',
     statusFailed: 'Falhou',
-    zip: {
-      bombRejected: 'Arquivo rejeitado: proporção de compressão suspeita detectada',
-      extractedFromLabel: 'Extraído de {filename}',
-      childCountLabel: '{count} arquivos',
+    archive: {
+      badge: 'Arquivo compactado',
+      fileCount: '{count} arquivos',
+      showContents: 'Mostrar conteúdo',
+      hideContents: 'Ocultar conteúdo',
+      contentsOf: 'Conteúdo de {filename}',
+      loading: 'Carregando o conteúdo do arquivo compactado…',
+      loadFailed: 'Não foi possível carregar o conteúdo do arquivo compactado.',
+      empty: 'Este arquivo compactado não contém arquivos.',
+      unlisted: 'Mais {count} arquivos não estão listados aqui.',
+      attachWhole: 'Anexar o arquivo compactado inteiro',
+      attachWholeHint: 'Envia a lista de arquivos e o texto de cada arquivo legível.',
+      chooseFiles: 'Escolher arquivos dentro dele…',
+      chooseFilesTitle: 'Escolher arquivos de {filename}',
+      chooseFilesDescription:
+        'Anexe o arquivo compactado inteiro ou escolha só os arquivos de que precisa. Escolher um arquivo substitui o arquivo compactado inteiro, para que nada seja enviado duas vezes.',
+      membersSelected: '{count} escolhidos dentro',
+      done: 'Concluído',
+      status: {
+        extracted: 'Extraído',
+        partial: 'Incluído em parte',
+        pending: 'Extraindo',
+        encrypted: 'Protegido por senha',
+        tooLarge: 'Grande demais',
+        unsupported: 'Sem texto legível',
+        blocked: 'Bloqueado',
+        tooDeep: 'Aninhado demais',
+      },
+      rejected: {
+        title: 'Arquivo compactado rejeitado',
+        warningTitle: 'Alguns arquivos foram ignorados',
+        bomb: 'Ele se expande para muito mais dados do que contém, como fazem as bombas zip, por isso não foi aberto.',
+        tooLarge: 'O conteúdo é maior do que o tamanho total permitido para um único envio.',
+        tooManyEntries: 'Contém mais arquivos do que um único envio permite.',
+        traversal:
+          'Contém caminhos que apontam para fora do arquivo compactado, por isso não foi aberto.',
+        tooDeep: 'Aninha arquivos compactados mais fundo do que o permitido.',
+        encrypted:
+          'Está protegido por senha. Arquivos compactados com senha ainda não são suportados.',
+        partlyEncrypted:
+          'Alguns arquivos estão protegidos por senha e foram ignorados. Os demais estão disponíveis.',
+        unsupported:
+          'Este arquivo não está em um formato de arquivo compactado que possamos abrir.',
+        generic: 'Não foi possível abri-lo. Crie o arquivo compactado de novo e envie outra vez.',
+      },
     },
     retention: {
       expired: 'O arquivo expirou e foi removido pela política de retenção',
@@ -1859,15 +1900,6 @@ export const pt: TranslationDictionary = {
     close: 'Fechar',
     fullOutput: 'Saída completa',
     copyFailed: 'Falha ao copiar',
-    research: {
-      label: 'Pesquisa na web',
-      hint: 'Fundamenta cada modelo nas mesmas evidências da web atualizadas antes da execução.',
-      none: 'Sem pesquisa',
-      search: 'Pesquisa na web',
-      searchFetch: 'Pesquisa + Buscar',
-      searchExtract: 'Pesquisa + Extrair',
-      sources: 'Fontes de evidência da web',
-    },
     critic: {
       enabled: 'Revisão do crítico',
       enabledHint:

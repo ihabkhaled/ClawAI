@@ -1,14 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { QUERY_POLL_LIVE_SLOW_MS } from '@/constants/query-policy.constants';
 import { FileIngestionStatus } from '@/enums';
 import { filesRepository } from '@/repositories/files/files.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { UploadedFile } from '@/types';
+import type { FilesQueryFilters, PaginatedFiles } from '@/types/archive.types';
 import { logger } from '@/utilities';
+import { toFilesQueryParams } from '@/utilities/files-query.utility';
 
 /**
- * The file list, polled only while something is actually being ingested.
+ * One page of the file list, polled only while something is being ingested.
  *
  * Ingestion finishes server-side after the upload mutation has returned, so the
  * `PENDING → PROCESSING → COMPLETED` transition has no event to ride on and the
@@ -19,35 +20,30 @@ import { logger } from '@/utilities';
  *
  * So the interval is conditional on the answer, the way `use-discovery-runs`
  * and `use-deployment-page` already do it: poll while a file is in flight, stop
- * the moment none is. On the overwhelmingly common case — every file already
- * ingested — this costs nothing at all.
+ * the moment none is.
  *
- * The 4.2 MB itself is a separate, backend problem: the files endpoint applies
- * no projection, so a list view downloads every column of every row. Fixing
- * that belongs with the endpoint, not here.
+ * The list holds top-level files only: an archive's extracted files are listed
+ * under it (`GET /files/:id/archive-entries`), not beside it, so a 500-file ZIP
+ * no longer fills every page. `meta` is the server's paging answer.
  */
-export function useFiles(filters: Record<string, unknown> = {}) {
-  const params: Record<string, string> = {};
-  if (filters['ingestionStatus'] !== undefined) {
-    params['ingestionStatus'] = String(filters['ingestionStatus']);
-  }
-
+export function useFiles(filters: FilesQueryFilters = {}) {
   const query = useQuery({
     queryKey: queryKeys.files.list(filters),
-    queryFn: () => {
+    queryFn: (): Promise<PaginatedFiles> => {
       logger.debug({
         component: 'files',
         action: 'fetch-files',
         message: 'Fetching files list',
       });
-      return filesRepository.getFiles(params);
+      return filesRepository.getFilesPage(toFilesQueryParams(filters));
     },
+    placeholderData: keepPreviousData,
     refetchInterval: (currentQuery) => {
-      const files = currentQuery.state.data as UploadedFile[] | undefined;
-      if (files === undefined) {
+      const page = currentQuery.state.data;
+      if (page === undefined) {
         return false;
       }
-      const isIngesting = files.some(
+      const isIngesting = page.data.some(
         (file) =>
           file.ingestionStatus === FileIngestionStatus.PENDING ||
           file.ingestionStatus === FileIngestionStatus.PROCESSING,
@@ -57,7 +53,8 @@ export function useFiles(filters: Record<string, unknown> = {}) {
   });
 
   return {
-    files: query.data ?? [],
+    files: query.data?.data ?? [],
+    meta: query.data?.meta,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

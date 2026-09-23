@@ -954,10 +954,46 @@ export type TranslationDictionary = {
     statusProcessing: string;
     statusCompleted: string;
     statusFailed: string;
-    zip: {
-      bombRejected: string;
-      extractedFromLabel: string;
-      childCountLabel: string;
+    archive: {
+      badge: string;
+      fileCount: string;
+      showContents: string;
+      hideContents: string;
+      contentsOf: string;
+      loading: string;
+      loadFailed: string;
+      empty: string;
+      unlisted: string;
+      attachWhole: string;
+      attachWholeHint: string;
+      chooseFiles: string;
+      chooseFilesTitle: string;
+      chooseFilesDescription: string;
+      membersSelected: string;
+      done: string;
+      status: {
+        extracted: string;
+        partial: string;
+        pending: string;
+        encrypted: string;
+        tooLarge: string;
+        unsupported: string;
+        blocked: string;
+        tooDeep: string;
+      };
+      rejected: {
+        title: string;
+        warningTitle: string;
+        bomb: string;
+        tooLarge: string;
+        tooManyEntries: string;
+        traversal: string;
+        tooDeep: string;
+        encrypted: string;
+        partlyEncrypted: string;
+        unsupported: string;
+        generic: string;
+      };
     };
     retention: {
       expired: string;
@@ -1782,15 +1818,6 @@ export type TranslationDictionary = {
     close: string;
     fullOutput: string;
     copyFailed: string;
-    research: {
-      label: string;
-      hint: string;
-      none: string;
-      search: string;
-      searchFetch: string;
-      searchExtract: string;
-      sources: string;
-    };
     critic: {
       enabled: string;
       enabledHint: string;

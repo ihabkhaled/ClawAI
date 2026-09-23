@@ -1001,10 +1001,51 @@ export const de: TranslationDictionary = {
     statusProcessing: 'Wird verarbeitet',
     statusCompleted: 'Abgeschlossen',
     statusFailed: 'Fehlgeschlagen',
-    zip: {
-      bombRejected: 'Archiv abgelehnt: verdächtiges Komprimierungsverhältnis erkannt',
-      extractedFromLabel: 'Extrahiert aus {filename}',
-      childCountLabel: '{count} Dateien',
+    archive: {
+      badge: 'Archiv',
+      fileCount: '{count} Dateien',
+      showContents: 'Inhalt anzeigen',
+      hideContents: 'Inhalt ausblenden',
+      contentsOf: 'Inhalt von {filename}',
+      loading: 'Archivinhalt wird geladen…',
+      loadFailed: 'Der Archivinhalt konnte nicht geladen werden.',
+      empty: 'Dieses Archiv enthält keine Dateien.',
+      unlisted: '{count} weitere Dateien sind hier nicht aufgeführt.',
+      attachWhole: 'Ganzes Archiv anhängen',
+      attachWholeHint: 'Sendet die Dateiliste und den Text jeder lesbaren Datei.',
+      chooseFiles: 'Dateien darin auswählen…',
+      chooseFilesTitle: 'Dateien aus {filename} auswählen',
+      chooseFilesDescription:
+        'Hängen Sie das ganze Archiv an oder wählen Sie nur die Dateien, die Sie brauchen. Eine ausgewählte Datei ersetzt das ganze Archiv, damit nichts doppelt gesendet wird.',
+      membersSelected: '{count} darin ausgewählt',
+      done: 'Fertig',
+      status: {
+        extracted: 'Extrahiert',
+        partial: 'Teilweise enthalten',
+        pending: 'Wird extrahiert',
+        encrypted: 'Passwortgeschützt',
+        tooLarge: 'Zu groß',
+        unsupported: 'Kein lesbarer Text',
+        blocked: 'Blockiert',
+        tooDeep: 'Zu tief verschachtelt',
+      },
+      rejected: {
+        title: 'Archiv abgelehnt',
+        warningTitle: 'Einige Dateien wurden übersprungen',
+        bomb: 'Es entpackt sich zu weit mehr Daten, als es enthält – so funktionieren Zip-Bomben –, daher wurde es nicht geöffnet.',
+        tooLarge: 'Sein Inhalt ist größer als die für einen Upload erlaubte Gesamtgröße.',
+        tooManyEntries: 'Es enthält mehr Dateien, als ein Upload enthalten darf.',
+        traversal:
+          'Es enthält Pfade, die aus dem Archiv herausführen, daher wurde es nicht geöffnet.',
+        tooDeep: 'Es verschachtelt Archive tiefer als erlaubt.',
+        encrypted:
+          'Es ist passwortgeschützt. Passwortgeschützte Archive werden noch nicht unterstützt.',
+        partlyEncrypted:
+          'Einige Dateien sind passwortgeschützt und wurden übersprungen. Die übrigen sind verfügbar.',
+        unsupported: 'Diese Datei hat kein Archivformat, das wir öffnen können.',
+        generic:
+          'Es konnte nicht geöffnet werden. Erstellen Sie das Archiv neu und laden Sie es erneut hoch.',
+      },
     },
     retention: {
       expired: 'Datei ist abgelaufen und wurde durch die Aufbewahrungsrichtlinie entfernt',
@@ -1872,15 +1913,6 @@ export const de: TranslationDictionary = {
     close: 'Schließen',
     fullOutput: 'Vollständige Ausgabe',
     copyFailed: 'Kopieren fehlgeschlagen',
-    research: {
-      label: 'Web-Recherche',
-      hint: 'Versorgt jedes Modell vor dem Lauf mit denselben aktuellen Web-Belegen.',
-      none: 'Keine Recherche',
-      search: 'Web-Suche',
-      searchFetch: 'Suche + Abruf',
-      searchExtract: 'Suche + Extraktion',
-      sources: 'Web-Belegquellen',
-    },
     critic: {
       enabled: 'Kritiker-Prüfung',
       enabledHint:

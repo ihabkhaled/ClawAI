@@ -485,14 +485,12 @@ export type UseAuditsPageReturn = {
 
 export type UseFileAttachmentPickerStateParams = {
   selectedFileIds: string[];
-  onChange: (fileIds: string[]) => void;
   uploadFile: (data: UploadFileRequest) => void;
 };
 
 export type UseFileAttachmentPickerStateReturn = {
   dragOver: boolean;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  handleToggle: (fileId: string, checked: boolean) => void;
   handleFileUpload: (file: File) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDrop: (e: React.DragEvent) => void;

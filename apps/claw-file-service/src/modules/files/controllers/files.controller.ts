@@ -9,6 +9,7 @@ import { type AuthenticatedUser, type PaginatedResult } from '../../../common/ty
 import { FilesService } from '../services/files.service';
 import { type UploadFileDto, uploadFileSchema } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto, listFilesQuerySchema } from '../dto/list-files-query.dto';
+import { type FileListRow } from '../types/archive-entries.types';
 
 // Slice C backend 3 — all user-facing file endpoints require FILES_USE.
 // Internal service-to-service routes live in FilesInternalController and stay
@@ -30,7 +31,7 @@ export class FilesController {
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query(new ZodValidationPipe(listFilesQuerySchema)) query: ListFilesQueryDto,
-  ): Promise<PaginatedResult<File>> {
+  ): Promise<PaginatedResult<FileListRow>> {
     return this.filesService.getFiles(user.id, query);
   }
 

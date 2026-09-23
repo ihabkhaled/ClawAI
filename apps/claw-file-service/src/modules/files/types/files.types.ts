@@ -17,6 +17,8 @@ export interface FileFilters {
   userId: string;
   ingestionStatus?: FileIngestionStatus;
   search?: string;
+  /** List this archive's children. Omitted or null lists top-level files only. */
+  parentFileId?: string | null;
 }
 
 export interface ChunkData {

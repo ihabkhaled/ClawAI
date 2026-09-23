@@ -36,6 +36,7 @@ import {
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
 import { FileProcessingManager } from '../managers/file-processing.manager';
 import { type FileProcessingContract } from '../types/zip-expansion.types';
+import { type FileListRow } from '../types/archive-entries.types';
 
 @Injectable()
 export class FilesService {
@@ -211,26 +212,30 @@ export class FilesService {
     }
   }
 
-  async getFiles(userId: string, query: ListFilesQueryDto): Promise<PaginatedResult<File>> {
+  async getFiles(userId: string, query: ListFilesQueryDto): Promise<PaginatedResult<FileListRow>> {
     this.logger.debug(
-      `getFiles: listing files for user ${userId} — page=${String(query.page)}, limit=${String(query.limit)}, search=${query.search ?? 'none'}`,
+      `getFiles: listing files for user ${userId} — page=${String(query.page)}, limit=${String(query.limit)}, search=${query.search ?? 'none'}, parentId=${query.parentId ?? 'none'}`,
     );
     const filters = {
       userId,
       ingestionStatus: query.ingestionStatus,
       search: query.search,
+      parentFileId: query.parentId ?? null,
     };
 
     const [files, total] = await Promise.all([
       this.filesRepository.findAll(filters, query.page, query.limit),
       this.filesRepository.countAll(filters),
     ]);
+    const childCounts = await this.filesRepository.countChildrenByParent(
+      files.map((file) => file.id),
+    );
 
     this.logger.debug(
       `getFiles: returned ${String(files.length)} of ${String(total)} files for user ${userId}`,
     );
     return {
-      data: files,
+      data: files.map((file) => ({ ...file, childCount: childCounts.get(file.id) ?? 0 })),
       meta: {
         total,
         page: query.page,

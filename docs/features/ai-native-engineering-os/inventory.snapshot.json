@@ -1552,6 +1552,11 @@
         },
         {
           "method": "GET",
+          "route": "/files/:id/archive-entries",
+          "source": "apps/claw-file-service/src/modules/files/controllers/file-archive.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/files/:id/chunks",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
         },
@@ -7995,7 +8000,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5292
+        "value": 5318
       },
       "localeCount": 13,
       "locales": [
@@ -9979,11 +9984,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 31
+        "testFiles": 34
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 522
+        "testFiles": 529
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10749,7 +10754,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 44,
-    "endpointCount": 679,
+    "endpointCount": 680,
     "envVarCount": 356,
     "eventCount": 181,
     "frontendRouteCount": 155,
@@ -10761,7 +10766,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1421,
+    "totalTestFiles": 1431,
     "workspaceCount": 25
   }
 }

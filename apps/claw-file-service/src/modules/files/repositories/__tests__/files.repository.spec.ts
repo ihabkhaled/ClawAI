@@ -13,6 +13,7 @@ describe('FilesRepository', () => {
       update: Mock;
       delete: Mock;
       count: Mock;
+      groupBy: Mock;
     };
   };
 
@@ -25,6 +26,7 @@ describe('FilesRepository', () => {
         update: vi.fn().mockResolvedValue({ id: 'f1' }),
         delete: vi.fn().mockResolvedValue({ id: 'f1' }),
         count: vi.fn().mockResolvedValue(3),
+        groupBy: vi.fn().mockResolvedValue([]),
       },
     };
 
@@ -82,6 +84,18 @@ describe('FilesRepository', () => {
       expect(args.where.filename).toEqual({ contains: 'doc', mode: 'insensitive' });
     });
 
+    it('lists top-level rows only by default, so children do not fill the page', async () => {
+      await repository.findAll({ userId: 'u1' } as never, 1, 20);
+      const args = prismaMock.file.findMany.mock.calls[0]?.[0];
+      expect(args.where.parentFileId).toBeNull();
+    });
+
+    it("lists one archive's children when a parent is named", async () => {
+      await repository.findAll({ userId: 'u1', parentFileId: 'zip-1' } as never, 1, 20);
+      const args = prismaMock.file.findMany.mock.calls[0]?.[0];
+      expect(args.where).toMatchObject({ userId: 'u1', parentFileId: 'zip-1' });
+    });
+
     it('always scopes by userId', async () => {
       await repository.findAll({ userId: 'u1' } as never, 1, 20);
       const argsCall = prismaMock.file.findMany.mock.calls[0];
@@ -102,6 +116,48 @@ describe('FilesRepository', () => {
   it('delete delegates to prisma', async () => {
     await repository.delete('f1');
     expect(prismaMock.file.delete).toHaveBeenCalledWith({ where: { id: 'f1' } });
+  });
+
+  describe('archive reads', () => {
+    it('countChildrenByParent groups by parent and skips the query for no ids', async () => {
+      expect((await repository.countChildrenByParent([])).size).toBe(0);
+      expect(prismaMock.file.groupBy).not.toHaveBeenCalled();
+
+      prismaMock.file.groupBy.mockResolvedValue([
+        { parentFileId: 'zip-1', _count: { _all: 4 } },
+        { parentFileId: null, _count: { _all: 9 } },
+      ]);
+      const counts = await repository.countChildrenByParent(['zip-1', 'f2']);
+
+      expect(prismaMock.file.groupBy).toHaveBeenCalledWith({
+        by: ['parentFileId'],
+        where: { parentFileId: { in: ['zip-1', 'f2'] } },
+        _count: { _all: true },
+      });
+      expect([...counts.entries()]).toEqual([['zip-1', 4]]);
+    });
+
+    it('findArchiveParent never selects the original bytes', async () => {
+      await repository.findArchiveParent('zip-1');
+      const args = prismaMock.file.findUnique.mock.calls[0]?.[0];
+      expect(args.where).toEqual({ id: 'zip-1' });
+      expect(args.select.content).toBeUndefined();
+      expect(args.select.extractedText).toBe(true);
+    });
+
+    it('findArchiveChildren is path-ordered and capped', async () => {
+      await repository.findArchiveChildren('zip-1', 50);
+      const args = prismaMock.file.findMany.mock.calls[0]?.[0];
+      expect(args.where).toEqual({ parentFileId: 'zip-1' });
+      expect(args.orderBy).toEqual({ archivePath: 'asc' });
+      expect(args.take).toBe(50);
+      expect(args.select.content).toBeUndefined();
+    });
+
+    it('countArchiveChildren counts one parent', async () => {
+      await repository.countArchiveChildren('zip-1');
+      expect(prismaMock.file.count).toHaveBeenCalledWith({ where: { parentFileId: 'zip-1' } });
+    });
   });
 
   it('countAll returns count from prisma', async () => {

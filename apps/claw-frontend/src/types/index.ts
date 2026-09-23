@@ -256,15 +256,7 @@ export type {
   RetrievalReasonValue,
   PreviewContextRequest,
 } from './context-receipt.types';
-export type {
-  UploadedFile,
-  FileChunk,
-  FileWithChunks,
-  UploadFileRequest,
-  FileAttachmentGroup,
-  FileAttachmentGrouping,
-  UseFileAttachmentGroupingReturn,
-} from './file.types';
+export type { UploadedFile, FileChunk, FileWithChunks, UploadFileRequest } from './file.types';
 export type {
   DashboardStats,
   DashboardStatCard,
