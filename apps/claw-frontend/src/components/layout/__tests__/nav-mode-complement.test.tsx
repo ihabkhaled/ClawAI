@@ -44,7 +44,12 @@ vi.mock('@/hooks/layout/use-sidebar-controller', () => ({
   }),
 }));
 vi.mock('@/hooks/layout/use-mobile-bottom-nav', () => ({
-  useMobileBottomNav: () => ({ pathname: '/chat', openSidebar: vi.fn(), isActive: () => false }),
+  useMobileBottomNav: () => ({
+    items: [],
+    pathname: '/chat',
+    openSidebar: vi.fn(),
+    isActive: () => false,
+  }),
 }));
 vi.mock('@/stores/sidebar.store', () => ({ useSidebarStore: () => ({ toggle: vi.fn() }) }));
 vi.mock('@/hooks/layout/use-topbar-title', () => ({ useTopbarTitle: () => 'Dashboard' }));
@@ -145,13 +150,8 @@ describe('portal navigation mode — the rail and the drawer are complements', (
 
 describe('nav-mode media condition — CSS and JS say the same thing', () => {
   it('declares the variant in globals.css with exactly MEDIA_QUERY_NAV_RAIL', () => {
-    const css = readFileSync(
-      path.resolve(__dirname, '../../../app/globals.css'),
-      'utf8',
-    );
-    const declaration = css.match(
-      /@custom-variant\s+nav-rail\s*\{\s*@media([\s\S]*?)\{\s*@slot;/,
-    );
+    const css = readFileSync(path.resolve(__dirname, '../../../app/globals.css'), 'utf8');
+    const declaration = css.match(/@custom-variant\s+nav-rail\s*\{\s*@media([\s\S]*?)\{\s*@slot;/);
     expect(declaration).not.toBeNull();
 
     const normalize = (value: string): string => value.replaceAll(/\s+/g, ' ').trim();

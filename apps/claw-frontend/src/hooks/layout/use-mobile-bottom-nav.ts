@@ -1,8 +1,12 @@
 import { usePathname } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import { MOBILE_BOTTOM_NAV_ITEMS } from '@/constants/mobile-bottom-nav.constants';
+import { usePermissions } from '@/hooks/auth/use-permissions';
+import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useSidebarStore } from '@/stores/sidebar.store';
-import type { UseMobileBottomNavReturn } from '@/types';
+import type { MobileBottomNavItem, UseMobileBottomNavReturn } from '@/types';
+import { filterMobileBottomNavItems } from '@/utilities/sidebar-visibility.utility';
 
 /**
  * Controller hook for the mobile bottom navigation bar.
@@ -20,6 +24,13 @@ import type { UseMobileBottomNavReturn } from '@/types';
 export function useMobileBottomNav(): UseMobileBottomNavReturn {
   const pathname = usePathname();
   const openSidebar = useSidebarStore((state) => state.open);
+  const { can } = usePermissions();
+  const { has } = usePlanFeatures();
+
+  const items = useMemo<MobileBottomNavItem[]>(
+    () => filterMobileBottomNavItems(MOBILE_BOTTOM_NAV_ITEMS, can, has),
+    [can, has],
+  );
 
   const isActive = useCallback(
     (href: string): boolean => pathname === href || pathname.startsWith(`${href}/`),
@@ -30,5 +41,5 @@ export function useMobileBottomNav(): UseMobileBottomNavReturn {
     openSidebar();
   }, [openSidebar]);
 
-  return { pathname, openSidebar: handleOpenSidebar, isActive };
+  return { items, pathname, openSidebar: handleOpenSidebar, isActive };
 }

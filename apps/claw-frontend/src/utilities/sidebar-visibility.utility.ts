@@ -29,6 +29,27 @@ function canAccessItem(
   return true;
 }
 
+// Filters the flat mobile bottom-nav tabs with the SAME route requirements the
+// sidebar uses. The bottom nav used to render its four tabs unconditionally,
+// so a Free user saw "Models" on a phone although the sidebar hid it and the
+// page itself refused them.
+export function filterMobileBottomNavItems<T extends { href: string }>(
+  items: readonly T[],
+  canPermission: (permission: Permission) => boolean,
+  canFeature: (feature: PlanFeature) => boolean,
+): T[] {
+  return items.filter((item) => {
+    const required = requiredRequirementForPath(item.href);
+    if (required === null) {
+      return true;
+    }
+    if (required.permission !== undefined && !canPermission(required.permission)) {
+      return false;
+    }
+    return required.feature === undefined || canFeature(required.feature);
+  });
+}
+
 // Filters the sidebar tree down to the items the user may see.
 //
 // Leaf items: kept when their own route is accessible (open or the user

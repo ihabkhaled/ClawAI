@@ -22,6 +22,8 @@ export type MobileBottomNavItem = {
  * Return shape for the mobile bottom-nav controller hook.
  */
 export type UseMobileBottomNavReturn = {
+  /** The tabs this user may open — filtered by route permission and plan feature. */
+  items: readonly MobileBottomNavItem[];
   /** The current route, used by the renderer to compute active state. */
   pathname: string;
   /** Opens the full sidebar (used by the "More" button). */

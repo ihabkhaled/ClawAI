@@ -4,14 +4,13 @@ import { Menu } from 'lucide-react';
 
 import { MobileBottomNavItem } from '@/components/layout/mobile-bottom-nav-item';
 import { Button } from '@/components/ui/button';
-import { MOBILE_BOTTOM_NAV_ITEMS } from '@/constants';
 import { useMobileBottomNav } from '@/hooks/layout/use-mobile-bottom-nav';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export function MobileBottomNav(): React.ReactElement {
   const { t } = useTranslation();
-  const { openSidebar, isActive } = useMobileBottomNav();
+  const { items, openSidebar, isActive } = useMobileBottomNav();
 
   return (
     <nav
@@ -26,7 +25,7 @@ export function MobileBottomNav(): React.ReactElement {
       style={{ height: 'calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom))' }}
     >
       <ul className="flex h-[var(--mobile-bottom-nav-height)] items-stretch">
-        {MOBILE_BOTTOM_NAV_ITEMS.map((item) => (
+        {items.map((item) => (
           <li key={item.id} className="flex min-w-0 flex-1">
             <MobileBottomNavItem item={item} isActive={isActive(item.href)} />
           </li>

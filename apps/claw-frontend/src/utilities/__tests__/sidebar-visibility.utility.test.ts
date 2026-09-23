@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { SIDEBAR_NAV_ITEMS } from '@/constants';
+import { MOBILE_BOTTOM_NAV_ITEMS, SIDEBAR_NAV_ITEMS } from '@/constants';
 import { Permission, PlanFeature } from '@/enums';
 
-import { filterSidebarItems } from '../sidebar-visibility.utility';
+import { filterMobileBottomNavItems, filterSidebarItems } from '../sidebar-visibility.utility';
 
 // Default normal-USER permission grant (mirrors the backend USER role).
 const USER_PERMISSIONS: Permission[] = [
@@ -234,5 +234,29 @@ describe('sidebar-visibility.utility', () => {
       expect(childLabels).not.toContain('nav.consensusMode');
       expect(childLabels).not.toContain('nav.verifierLab');
     });
+  });
+});
+
+describe('filterMobileBottomNavItems', () => {
+  // A Free user on a phone saw "Models" and "Context" in the bottom bar while
+  // the sidebar hid them and the pages refused them (2026-09-23).
+  const freeUserPermissions = new Set<Permission>([Permission.CHAT_USE, Permission.FILES_USE]);
+  const canFree = (permission: Permission): boolean => freeUserPermissions.has(permission);
+  const anyFeature = (): boolean => true;
+
+  it('drops the tabs a Free user may not open', () => {
+    const ids = filterMobileBottomNavItems(MOBILE_BOTTOM_NAV_ITEMS, canFree, anyFeature).map(
+      (item) => item.id,
+    );
+
+    expect(ids).toEqual(['chat', 'files']);
+  });
+
+  it('keeps every tab for a user holding every permission', () => {
+    const ids = filterMobileBottomNavItems(MOBILE_BOTTOM_NAV_ITEMS, () => true, anyFeature).map(
+      (item) => item.id,
+    );
+
+    expect(ids).toEqual(['chat', 'models', 'files', 'context']);
   });
 });
