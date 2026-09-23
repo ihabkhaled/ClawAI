@@ -28,6 +28,7 @@ vi.mock('@/hooks/chat/use-parallel-poll', () => ({
     pollingMessages: [],
     isPolling: false,
     allResponded: false,
+    isParallelError: false,
     handleViewInThread: () => undefined,
   }),
 }));

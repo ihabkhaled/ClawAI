@@ -111,6 +111,10 @@ export type UseParallelComparePageReturn = {
   pollingMessages: ChatMessage[];
   isPolling: boolean;
   allResponded: boolean;
+  // True once the poll backstop trips with no lane ever reaching
+  // `allResponded` (every lane errored, or the run never completed).
+  isParallelError: boolean;
+  errorMessage: string | null;
   laneStreams: LaneStreamMap;
   handleViewInThread: () => void;
   judgeEnabled: boolean;

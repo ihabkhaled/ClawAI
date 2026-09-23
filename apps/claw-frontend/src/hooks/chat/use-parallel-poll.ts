@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { PARALLEL_POLL_INTERVAL_MS, PARALLEL_POLL_MESSAGES_LIMIT, ROUTES } from '@/constants';
+import {
+  MAX_PARALLEL_POLL_COUNT,
+  PARALLEL_POLL_INTERVAL_MS,
+  PARALLEL_POLL_MESSAGES_LIMIT,
+  ROUTES,
+} from '@/constants';
 import { MessageRole } from '@/enums';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -15,22 +20,41 @@ export function useParallelPoll(
   pollingMessages: ChatMessage[];
   isPolling: boolean;
   allResponded: boolean;
+  isParallelError: boolean;
   handleViewInThread: () => void;
 } {
   const router = useRouter();
   const [pollingEnabled, setPollingEnabled] = useState(false);
+  const [isParallelError, setIsParallelError] = useState(false);
   const autoNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollCountRef = useRef(0);
 
   useEffect(() => {
+    pollCountRef.current = 0;
+    setIsParallelError(false);
     setPollingEnabled(!!threadId && expectedModelCount > 0);
   }, [threadId, expectedModelCount]);
 
   const { data } = useQuery({
     queryKey: queryKeys.threads.messages(threadId ?? '', 1),
-    queryFn: () =>
-      chatRepository.getMessagesPaginated(threadId ?? '', undefined, PARALLEL_POLL_MESSAGES_LIMIT),
+    queryFn: () => {
+      pollCountRef.current += 1;
+      // Backstop: a compare run where every lane fails before writing any
+      // parallelExecution-tagged message never reaches `expectedModelCount`
+      // and would otherwise poll forever, leaving the submit button
+      // disabled forever. Matches the cap the other orchestration labs use.
+      if (pollCountRef.current >= MAX_PARALLEL_POLL_COUNT) {
+        setPollingEnabled(false);
+        setIsParallelError(true);
+      }
+      return chatRepository.getMessagesPaginated(
+        threadId ?? '',
+        undefined,
+        PARALLEL_POLL_MESSAGES_LIMIT,
+      );
+    },
     enabled: pollingEnabled,
-    refetchInterval: PARALLEL_POLL_INTERVAL_MS,
+    refetchInterval: pollingEnabled ? PARALLEL_POLL_INTERVAL_MS : false,
   });
 
   const pollingMessages = (data?.data ?? []).filter((msg) => {
@@ -59,6 +83,7 @@ export function useParallelPoll(
     pollingMessages,
     isPolling: pollingEnabled,
     allResponded,
+    isParallelError,
     handleViewInThread,
   };
 }

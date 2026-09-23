@@ -57,6 +57,7 @@ vi.mock('@/hooks/chat/use-escalation-poll', () => ({
     synthesisMessage: null,
     isPolling: false,
     isSynthesisReady: false,
+    isEscalationError: false,
     handleViewInThread: () => undefined,
   }),
 }));

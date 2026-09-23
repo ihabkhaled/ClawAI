@@ -36,16 +36,21 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     useParallelCompare();
 
   const threadId = result?.threadId ?? null;
-  const { pollingMessages, isPolling, allResponded, handleViewInThread } = useParallelPoll(
-    threadId,
-    selectedModels.length,
-  );
+  const { pollingMessages, isPolling, allResponded, isParallelError, handleViewInThread } =
+    useParallelPoll(threadId, selectedModels.length);
   const { lanes: laneStreams } = useParallelStream(threadId ?? undefined, isPending || isPolling);
 
   const selectionError =
     selectedModels.length > 0 && selectedModels.length < MIN_PARALLEL_MODELS
       ? t('compare.minModels', { min: MIN_PARALLEL_MODELS })
       : null;
+
+  // Resolve a user-visible error for the poll-detected failure path (every
+  // lane errored, or none ever came back before the poll backstop tripped).
+  // The initial-send failure already renders through `isError` below /
+  // upgradeFeature; this covers the run that WAS accepted but never
+  // completed.
+  const errorMessage = isParallelError ? t('compare.compareFailed') : null;
 
   const canSend =
     selectedModels.length >= MIN_PARALLEL_MODELS &&
@@ -123,6 +128,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     pollingMessages,
     isPolling,
     allResponded,
+    isParallelError,
+    errorMessage,
     laneStreams,
     handleViewInThread,
     judgeEnabled,

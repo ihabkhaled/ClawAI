@@ -522,6 +522,97 @@ Carried over from the audit synthesis. Tracked, not resolved in PR1:
 
 ---
 
+## 11. Stage inventory + the retry-after-failure contract (2026-09-23)
+
+### 11.1 Stage inventory audit
+
+The requested "queued → thinking → crawling → researching → generating →
+failed" lifecycle was audited against the code, not re-derived:
+
+| Stage                            | Backend event                                                                                  | Status                                                                                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Request queued/sent              | `ChatStreamService.emitRequestAccepted`                                                        | Wired — `StreamEventType.REQUEST_ACCEPTED`.                                                                                                         |
+| Routing decision                 | `emitRouterStarted` / `emitProviderSelected`                                                   | Wired.                                                                                                                                              |
+| AI is thinking / reasoning       | `AiStreamStage.THINKING`, `emitReasoningDelta`                                                 | Wired — visible-reasoning delta channel (§5, §10.6).                                                                                                |
+| Crawling a specific page         | `AiStreamStage.CRAWL_STARTED` / `CRAWL_DISCOVERING` / `CRAWL_READING_PAGE` / `CRAWL_COMPLETED` | **Declared** in `ai-stream-stage.enum.ts`. Emission site is `SearchFirstManager` — owned by the parallel research/crawl workstream, not this batch. |
+| Researching / gathering evidence | `emitResearchStarted` / `emitResearchProgress` (5 sub-stages) / `emitResearchCompleted`        | Wired.                                                                                                                                              |
+| Generating/streaming the answer  | `emitResponseStreaming`, `emitContentDelta`                                                    | Wired.                                                                                                                                              |
+| Failed, with a specific reason   | `emitError` / `emitStreamError`                                                                | Wired — carries `code` / `messageKey`, not swallowed into a generic string.                                                                         |
+
+No new backend SSE stage or frontend rendering component was added by this
+batch: the stage set was already a superset of what the user report asked
+for. What was missing was not a stage — it was the retry contract below.
+
+### 11.2 The retry-after-failure contract
+
+**Rule: a control gated on "a run is in flight" must be driven by a flag that
+a terminal ERROR unconditionally clears — the same flag success clears.**
+Two different shapes of this bug existed in the nine orchestration lab pages
+(consensus, escalation, verify, repair, decompose, pipeline, cost-ensemble,
+role-pack, best-of-n) and the standalone Compare page, all of which gate
+their submit button on `!isPending && !isPolling`:
+
+- `isPending` is a `@tanstack/react-query` mutation flag. It already resets
+  on error automatically — this half of the gate was never the bug.
+- `isPolling` is a hand-rolled `useState` in each `use-<lab>-poll.ts` hook,
+  flipped to `false` only when the SUCCESS row (a `*Synthesis` /
+  `bestOfN` / `parallelExecution`-tagged message) showed up. A run that
+  failed server-side **before writing that row** left `isPolling` `true`
+  forever: the submit button stayed disabled forever, with no way to retry,
+  because nothing ever told the poll to stop.
+
+Seven of the nine poll hooks (`use-best-of-n-poll.ts`,
+`use-cost-ensemble-poll.ts`, `use-decompose-poll.ts`, `use-pipeline-poll.ts`,
+`use-repair-poll.ts`, `use-role-pack-poll.ts`, `use-verify-poll.ts`) already
+carried the fix: a `pollCountRef` max-count backstop
+(`MAX_<LAB>_POLL_COUNT`, 60 polls) plus a fast path that stops polling the
+moment a message tagged `metadata.error === true` shows up.
+`use-consensus-poll.ts` and `use-escalation-poll.ts` (escalation had the
+count backstop but not the fast error path) and `use-parallel-poll.ts` (the
+Compare lab; no backstop, no fast path) did not. This batch brought all
+three up to the same contract:
+
+- `use-consensus-poll.ts` / `use-escalation-poll.ts`: added
+  `MAX_CONSENSUS_POLL_COUNT` / (existing) `MAX_ESCALATION_POLL_COUNT` +
+  the error-tagged-message fast path, returning `isConsensusError` /
+  `isEscalationError`.
+- `use-parallel-poll.ts`: added `MAX_PARALLEL_POLL_COUNT` (60 polls). No
+  separate fast-error-path was needed here — a failed LANE already writes
+  its own `parallelExecution`-tagged message (counted toward
+  `allResponded`); only a run where **no** lane ever writes anything (the
+  whole run failed before any lane started) needed the backstop.
+- `use-escalation-page.ts` additionally regained an `errorMessage` return
+  (previously computed only from the initial mutation's `isError`, silently
+  dropping both the live SSE `ERROR` event and the poll-detected failure —
+  same swallowed-reason bug rules/44 warns about). The standalone Compare
+  page (`(portal)/chat/compare/page.tsx`) gained an `Alert` for the same
+  poll-detected-failure case, reusing `orchestrationShell.errorTitle`.
+
+The in-thread Compare panel (`use-in-thread-compare.ts`) was audited and
+found NOT to have this bug: it never polls — it fires the mutation, closes
+the panel on success, and the thread page (not this hook) renders the
+streaming lanes. Its `canSend` gate is `!mutation.isPending` only, which
+already resets on error.
+
+The MAIN chat composer (`message-composer.tsx` /
+`use-message-composer.ts`) was also audited and found NOT to have this bug:
+`composer.isPending` is wired straight to `useSendMessage`'s
+`mutation.isPending` (the initial POST only), not to the full streaming
+lifecycle, so it was never capable of getting stuck on a stream-side error.
+Regenerate-on-failure already works for the main chat without new code: the
+error path stores an ASSISTANT message like any other, and
+`message-bubble.tsx`'s Regenerate button renders for any assistant message
+`onRegenerate` is supplied for — it is not conditioned on
+`hasVisibleAssistantContent`.
+
+Regression coverage:
+`apps/claw-frontend/src/hooks/chat/__tests__/use-orchestration-poll-error-recovery.test.tsx`
+reproduces the stuck-`isPolling` failure directly against
+`useConsensusPoll` / `useEscalationPoll` / `useParallelPoll` (error-tagged
+message → poll stops; no lane ever responds → max-count backstop trips).
+
+---
+
 ## See also
 
 - `STREAMING_AUDIT.md` — Phase 0 audit of the cloud rich-progress system.

@@ -72,6 +72,7 @@ export type UseEscalationPollResult = {
   synthesisMessage: EscalationChainSynthesisState | null;
   isPolling: boolean;
   isSynthesisReady: boolean;
+  isEscalationError: boolean;
   handleViewInThread: () => void;
 };
 
@@ -107,5 +108,6 @@ export type UseEscalationPageReturn = {
   isPolling: boolean;
   isSynthesisReady: boolean;
   handleViewInThread: () => void;
+  errorMessage: string | null;
   composer: UseOrchestrationComposerReturn;
 };

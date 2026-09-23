@@ -63,6 +63,7 @@ export type UseConsensusPollResult = {
   synthesisMessage: ConsensusSynthesisState | null;
   isPolling: boolean;
   isSynthesisReady: boolean;
+  isConsensusError: boolean;
   handleViewInThread: () => void;
 };
 

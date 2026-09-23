@@ -33,7 +33,6 @@ export default function EscalationPage(): React.ReactElement {
     handleMoveDown,
     handleSend,
     isPending,
-    isError,
     canSubmit,
     selectionError,
     stages,
@@ -41,13 +40,13 @@ export default function EscalationPage(): React.ReactElement {
     isPolling,
     isSynthesisReady,
     handleViewInThread,
+    errorMessage,
     composer,
   } = useEscalationPage();
 
   const isRunning = isPending || isPolling;
   const hasProgress = stages.length > 0;
   const showResults = isSynthesisReady && synthesisMessage !== null;
-  const errorMessage = isError ? t('escalation.sendFailed') : null;
 
   const extraFieldsSlot = (
     <EscalationChainBuilder

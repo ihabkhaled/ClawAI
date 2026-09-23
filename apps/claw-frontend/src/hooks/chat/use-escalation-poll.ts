@@ -19,11 +19,13 @@ import type {
 export function useEscalationPoll(threadId: string | null): UseEscalationPollResult {
   const router = useRouter();
   const [pollingEnabled, setPollingEnabled] = useState(false);
+  const [isEscalationError, setIsEscalationError] = useState(false);
   const autoNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollCountRef = useRef(0);
 
   useEffect(() => {
     pollCountRef.current = 0;
+    setIsEscalationError(false);
     setPollingEnabled(!!threadId);
   }, [threadId]);
 
@@ -61,6 +63,23 @@ export function useEscalationPoll(threadId: string | null): UseEscalationPollRes
 
   const isSynthesisReady = synthesisMessage !== null;
 
+  // Fast path: stop polling — and unblock the submit button — the moment
+  // the backend writes an error-tagged ASSISTANT message, instead of
+  // waiting out the full MAX_ESCALATION_POLL_COUNT backstop above. Matches
+  // the pattern already used by best-of-n / cost-ensemble / decompose /
+  // pipeline / repair / role-pack / verify.
+  useEffect(() => {
+    const messages = data?.data ?? [];
+    const errorMsg = messages.find((msg) => {
+      const meta = msg.metadata as Record<string, unknown> | null;
+      return meta?.['error'] === true;
+    });
+    if (errorMsg) {
+      setIsEscalationError(true);
+      setPollingEnabled(false);
+    }
+  }, [data]);
+
   useEffect(() => {
     if (isSynthesisReady) {
       setPollingEnabled(false);
@@ -80,6 +99,7 @@ export function useEscalationPoll(threadId: string | null): UseEscalationPollRes
     synthesisMessage,
     isPolling: pollingEnabled,
     isSynthesisReady,
+    isEscalationError,
     handleViewInThread,
   };
 }

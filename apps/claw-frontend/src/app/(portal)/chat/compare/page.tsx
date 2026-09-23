@@ -16,11 +16,12 @@ import { UpgradeCtaBanner } from '@/components/chat/upgrade-cta-banner';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { PlanFeature } from '@/enums';
+import { AlertVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useCompareMediaCapabilities } from '@/hooks/chat/use-compare-media-capabilities';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
@@ -39,6 +40,7 @@ export default function ComparePage() {
     pollingMessages,
     isPolling,
     allResponded,
+    errorMessage,
     laneStreams,
     handleViewInThread,
     judgeEnabled,
@@ -72,7 +74,8 @@ export default function ComparePage() {
 
   const showLoading = isPending || (isPolling && pollingMessages.length === 0);
   const showResults = pollingMessages.length > 0;
-  const showEmpty = !isPending && !isPolling && pollingMessages.length === 0;
+  const showEmpty =
+    !isPending && !isPolling && pollingMessages.length === 0 && errorMessage === null;
 
   return (
     <div className="space-y-6">
@@ -171,6 +174,14 @@ export default function ComparePage() {
 
       {upgradeFeature !== null ? (
         <UpgradeCtaBanner feature={upgradeFeature} onDismiss={clearUpgradeFeature} t={t} />
+      ) : null}
+
+      {errorMessage !== null ? (
+        <Alert
+          variant={AlertVariant.Error}
+          title={t('orchestrationShell.errorTitle')}
+          description={errorMessage}
+        />
       ) : null}
 
       {showLoading ? (

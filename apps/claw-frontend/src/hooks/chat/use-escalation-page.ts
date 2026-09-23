@@ -21,7 +21,7 @@ export function useEscalationPage(): UseEscalationPageReturn {
   const { send, result, isPending, isError } = useSendEscalationChain();
 
   const threadId = result?.threadId ?? null;
-  const { synthesisMessage, isPolling, isSynthesisReady, handleViewInThread } =
+  const { synthesisMessage, isPolling, isSynthesisReady, isEscalationError, handleViewInThread } =
     useEscalationPoll(threadId);
 
   // Subscribe to chat-service SSE for the current thread and project
@@ -29,7 +29,27 @@ export function useEscalationPage(): UseEscalationPageReturn {
   // consumed by <OrchestrationPageShell>. Active while the mutation is
   // in flight OR the poll has not yet seen the synthesis row.
   const isStreamActive = isPending || (isPolling && !isSynthesisReady);
-  const { stages } = useOrchestrationStages(threadId, isStreamActive);
+  const { stages, errorMessage: streamErrorMessage } = useOrchestrationStages(
+    threadId,
+    isStreamActive,
+  );
+
+  // Resolve a user-visible error message, same precedence as the other
+  // orchestration labs: a live SSE ERROR event first (most specific), then
+  // the initial mutation failure, then a poll-detected terminal error
+  // (backend wrote an error-tagged message with no SSE frame reaching this
+  // page, e.g. after a reload). Previously this page dropped ALL of these —
+  // only a bare "failed" toast from the initial POST ever surfaced, and
+  // nothing here ever unblocked once `isPolling` got stuck (see
+  // use-escalation-poll.ts fix).
+  let errorMessage: string | null = null;
+  if (streamErrorMessage !== null) {
+    errorMessage = streamErrorMessage;
+  } else if (isError) {
+    errorMessage = t('escalation.sendFailed');
+  } else if (isEscalationError) {
+    errorMessage = t('escalation.sendFailed');
+  }
 
   // The PRIMARY model is step 1 of the chain (picked in the shell's
   // single-model select). additionalChainModels are subsequent escalation
@@ -146,6 +166,7 @@ export function useEscalationPage(): UseEscalationPageReturn {
     isPolling,
     isSynthesisReady,
     handleViewInThread,
+    errorMessage,
     composer,
   };
 }

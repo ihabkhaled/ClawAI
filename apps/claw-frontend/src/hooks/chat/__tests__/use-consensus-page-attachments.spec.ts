@@ -25,6 +25,7 @@ vi.mock('@/hooks/chat/use-consensus-poll', () => ({
     synthesisMessage: null,
     isPolling: false,
     isSynthesisReady: false,
+    isConsensusError: false,
     handleViewInThread: () => undefined,
   }),
 }));

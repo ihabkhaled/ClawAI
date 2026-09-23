@@ -35,7 +35,7 @@ export function useConsensusPage(): UseConsensusPageReturn {
   const { send, result, isPending, isError } = useSendConsensus();
 
   const threadId = result?.threadId ?? null;
-  const { synthesisMessage, isPolling, isSynthesisReady, handleViewInThread } =
+  const { synthesisMessage, isPolling, isSynthesisReady, isConsensusError, handleViewInThread } =
     useConsensusPoll(threadId);
 
   // Stream subscription stays open while the mutation is in-flight or
@@ -130,6 +130,8 @@ export function useConsensusPage(): UseConsensusPageReturn {
   if (streamErrorMessage !== null) {
     errorMessage = streamErrorMessage;
   } else if (isError) {
+    errorMessage = t('consensus.sendFailed');
+  } else if (isConsensusError) {
     errorMessage = t('consensus.sendFailed');
   }
 
