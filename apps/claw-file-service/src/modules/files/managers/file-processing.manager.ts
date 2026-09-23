@@ -169,6 +169,12 @@ export class FileProcessingManager {
   // the text layer is too short to be real content. When OCR is enabled we
   // route the same file through tesseract; otherwise we keep the original
   // (possibly empty) text so existing behaviour is preserved.
+  //
+  // tesseract.js/leptonica in this build has no PDF codec ("Pdf reading is not
+  // supported" — logged, not thrown; see ocr-parser.utility.ts), so this
+  // branch always falls back to the placeholder for a genuinely scanned PDF.
+  // Rasterising pages to images before OCR would make it work; that is a
+  // separate, larger feature, not covered here.
   private async extractPdfText(buffer: Buffer, file: File, storagePath: string): Promise<string> {
     const cfg = AppConfig.get();
     const { text, isScanned } = await extractTextFromPdf(buffer, cfg.SCANNED_PDF_CHAR_THRESHOLD);

@@ -36,7 +36,22 @@ async function getScheduler(workerCount: number, language: string): Promise<Sche
   );
   const scheduler = createScheduler();
   for (let i = 0; i < workerCount; i += 1) {
-    const worker = await createWorker(language);
+    // tesseract.js rejects the failing job's own promise AND, with no
+    // errorHandler, re-throws the same error from inside its worker message
+    // listener — outside any promise chain we await, so it reaches Node as an
+    // uncaught exception and crashes the whole process (`app crashed` in
+    // nodemon; every request in flight dropped). A worker asked to OCR a PDF
+    // it cannot decode ("Pdf reading is not supported") hits exactly this.
+    // An errorHandler here makes tesseract.js log-and-continue instead of
+    // re-throwing; extractTextFromImage's own catch below still sees the job
+    // rejection and reports it the normal way.
+    const worker = await createWorker(language, undefined, {
+      errorHandler: (workerError: unknown) => {
+        logger.error(
+          `getScheduler: tesseract worker reported an error outside its job promise — ${String(workerError)}`,
+        );
+      },
+    });
     scheduler.addWorker(worker);
   }
   cachedScheduler = scheduler;

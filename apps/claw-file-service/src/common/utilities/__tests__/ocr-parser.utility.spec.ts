@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 // Slice D — OCR parser utility unit tests.
 //
 // tesseract.js is mocked because (a) booting a real worker pool is slow in
@@ -53,7 +53,7 @@ vi.mock('tesseract.js', () => {
   };
 });
 
-const tesseract = await vi.importMock('tesseract.js') as {
+const tesseract = (await vi.importMock('tesseract.js')) as {
   createScheduler: Mock;
   createWorker: Mock;
 };
@@ -92,7 +92,11 @@ describe('extractTextFromImage', () => {
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
     expect(tesseract.createScheduler).toHaveBeenCalledTimes(1);
     expect(tesseract.createWorker).toHaveBeenCalledTimes(2);
-    expect(tesseract.createWorker).toHaveBeenCalledWith('eng');
+    expect(tesseract.createWorker).toHaveBeenCalledWith(
+      'eng',
+      undefined,
+      expect.objectContaining({ errorHandler: expect.any(Function) }),
+    );
   });
 
   it('reuses the cached scheduler across calls with the same worker count', async () => {
@@ -161,5 +165,24 @@ describe('extractTextFromImage', () => {
     expect(result.confidence).toBeLessThanOrEqual(1);
     expect(result.confidence).toBeGreaterThanOrEqual(0);
     expect(result.confidence).toBe(1);
+  });
+
+  // Regression (live QA, 2026-09-23): a worker asked to OCR a file it cannot
+  // decode — e.g. tesseract handed a PDF ("Pdf reading is not supported") —
+  // rejects the job's own promise as expected, but tesseract.js's message
+  // handler ALSO re-throws the same error synchronously when no errorHandler
+  // is configured. That throw happens outside any promise chain we await, so
+  // it reached Node as an uncaught exception and crashed the whole file
+  // service (every request in flight dropped, not just the OCR job). The
+  // worker must be built with an errorHandler that swallows it.
+  it('gives every tesseract worker an errorHandler that never throws', async () => {
+    addJob.mockImplementation(() => Promise.resolve(buildRecognizeResult('ok', [90])));
+
+    await extractTextFromImage(Buffer.from('img'), 'image/png', DEFAULT_OPTS);
+
+    const workerOptions = tesseract.createWorker.mock.calls[0]?.[2] as {
+      errorHandler: (error: unknown) => void;
+    };
+    expect(() => workerOptions.errorHandler('Pdf reading is not supported')).not.toThrow();
   });
 });
