@@ -17,6 +17,7 @@ export interface CreateConnectorData {
   baseUrl?: string;
   region?: string;
   workspaceId?: string;
+  accountId?: string;
   isPayAsYouGo?: boolean;
 }
 
@@ -28,6 +29,7 @@ export interface UpdateConnectorData {
   baseUrl?: string;
   region?: string;
   workspaceId?: string;
+  accountId?: string;
   isEnabled?: boolean;
   status?: ConnectorStatus;
   defaultModelId?: string;

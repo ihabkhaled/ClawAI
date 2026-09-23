@@ -23,6 +23,13 @@ import { MICRO_USD_PER_USD } from './billing.constants';
  * path reads the connector policy rather than this list. Compiling the decision
  * into six copies of a shared package would make the admin toggle unenforceable
  * without a six-container rebuild (ADR-082).
+ *
+ * Every OpenAI-compatible preset bills per token, so each one is listed here
+ * too (ADR-116). This also keeps auth-service's connector-outage fallback
+ * conservative: a preset provider is metered, never silently free. The list
+ * must include every preset whose `defaultIsPayAsYouGo` is true — enforced by
+ * `connector-presets.spec.ts` in `@claw/shared-utilities`, which cannot be
+ * derived here because shared-constants builds before the registry's types.
  */
 export const PAYG_DEFAULT_PROVIDERS: readonly string[] = Object.freeze([
   'OPENAI',
@@ -31,6 +38,21 @@ export const PAYG_DEFAULT_PROVIDERS: readonly string[] = Object.freeze([
   'DEEPSEEK',
   'GROK',
   'AWS_BEDROCK',
+  'OPENROUTER',
+  'GROQ',
+  'CEREBRAS',
+  'SAMBANOVA',
+  'DEEPINFRA',
+  'FIREWORKS',
+  'TOGETHER',
+  'MISTRAL',
+  'MOONSHOT',
+  'ZAI',
+  'QWEN',
+  'CLOUDFLARE',
+  'VERCEL_AI_GATEWAY',
+  'PERPLEXITY',
+  'COHERE',
 ]);
 
 /**

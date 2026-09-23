@@ -4,6 +4,7 @@ export type { UserAccessTokenPayload } from './user-access-token-payload.type';
 export type { PaginationParams, PaginatedResult } from './pagination.type';
 export type { ResearchCrawlProgressMessage } from './research-crawl-progress.type';
 export type { HttpRequestOptions, HttpResponse } from './http-client.type';
+export type { ConnectorPreset, ConnectorPresetLinks } from './connector-preset.type';
 export type {
   RetrievalBundle,
   RetrievalConversationSummary,

@@ -186,7 +186,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 27,
+      "testFiles": 29,
       "testRunner": "vitest"
     },
     {

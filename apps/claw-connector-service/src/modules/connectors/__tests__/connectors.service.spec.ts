@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ConnectorsService } from '../services/connectors.service';
 import { type ConnectorsRepository } from '../repositories/connectors.repository';
 import { type ConnectorModelsRepository } from '../repositories/connector-models.repository';
@@ -34,6 +34,7 @@ const mockConnector = {
   baseUrl: null,
   region: null,
   workspaceId: null,
+  accountId: null,
   isPayAsYouGo: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -69,6 +70,7 @@ const mockManager = (): Partial<Record<keyof ConnectorsManager, Mock>> => ({
   testConnector: vi.fn(),
   syncModels: vi.fn(),
   getDecryptedConfig: vi.fn(),
+  getExecutionConfig: vi.fn(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
@@ -211,6 +213,28 @@ describe('ConnectorsService', () => {
       );
     });
 
+    // A preset provider bills per token like OpenAI does, so it starts metered;
+    // an administrator with a free-tier key opts it out (ADR-116).
+    it('meters an OpenAI-compatible preset by default and stores its account id', async () => {
+      connectorsRepo.create.mockResolvedValue(mockConnector);
+
+      await service.createConnector({
+        name: 'Workers AI',
+        provider: ConnectorProvider.CLOUDFLARE,
+        authType: ConnectorAuthType.API_KEY,
+        apiKey: 'cf-token',
+        accountId: '0123456789abcdef0123456789abcdef',
+      });
+
+      expect(connectorsRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: ConnectorProvider.CLOUDFLARE,
+          accountId: '0123456789abcdef0123456789abcdef',
+          isPayAsYouGo: true,
+        }),
+      );
+    });
+
     it('should create connector without API key', async () => {
       const connectorNoKey = { ...mockConnector, encryptedConfig: null };
       connectorsRepo.create.mockResolvedValue(connectorNoKey);
@@ -225,6 +249,31 @@ describe('ConnectorsService', () => {
       expect(connectorsRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ encryptedConfig: undefined }),
       );
+    });
+  });
+
+  describe('getConnectorConfig', () => {
+    // chat-service executes against this, so it must be the RESOLVED config —
+    // a Cloudflare template URL would otherwise reach the chat request.
+    it('serves the execution config, not the raw row', async () => {
+      connectorsRepo.findByProvider.mockResolvedValue(mockConnector);
+      manager.getExecutionConfig?.mockReturnValue({
+        provider: 'GROQ',
+        apiKey: 'gsk',
+        baseUrl: 'https://api.groq.com/openai/v1',
+      });
+
+      const config = await service.getConnectorConfig('GROQ');
+
+      expect(manager.getExecutionConfig).toHaveBeenCalledWith(mockConnector);
+      expect(manager.getDecryptedConfig).not.toHaveBeenCalled();
+      expect(config.baseUrl).toBe('https://api.groq.com/openai/v1');
+    });
+
+    it('reports a provider with no connector as not found', async () => {
+      connectorsRepo.findByProvider.mockResolvedValue(null);
+
+      await expect(service.getConnectorConfig('GROQ')).rejects.toThrow(EntityNotFoundException);
     });
   });
 

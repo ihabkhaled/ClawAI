@@ -1,3 +1,4 @@
+import { CONNECTOR_PRESETS } from '@claw/shared-utilities';
 import { ConnectorProvider } from '../../../../generated/prisma';
 import { type ProviderAdapter } from '../provider-adapter.interface';
 import { OpenAIAdapter } from './openai.adapter';
@@ -8,8 +9,12 @@ import { DeepSeekAdapter } from './deepseek.adapter';
 import { GrokAdapter } from './grok.adapter';
 import { OllamaAdapter } from './ollama.adapter';
 import { LlamacppAdapter } from './llamacpp.adapter';
+import { OpenAICompatibleAdapter } from './openai-compatible.adapter';
 
-const adapters = new Map<ConnectorProvider, ProviderAdapter>([
+// Keyed by the provider STRING: the registry's keys are the shared-types enum
+// and the connector row's are the Prisma enum — the same values, two nominal
+// types. Every preset gets the one generic adapter (ADR-116).
+const adapters = new Map<string, ProviderAdapter>([
   [ConnectorProvider.OPENAI, new OpenAIAdapter()],
   [ConnectorProvider.ANTHROPIC, new AnthropicAdapter()],
   [ConnectorProvider.GEMINI, new GeminiAdapter()],
@@ -18,6 +23,10 @@ const adapters = new Map<ConnectorProvider, ProviderAdapter>([
   [ConnectorProvider.GROK, new GrokAdapter()],
   [ConnectorProvider.OLLAMA, new OllamaAdapter()],
   [ConnectorProvider.LLAMACPP, new LlamacppAdapter()],
+  ...CONNECTOR_PRESETS.map((preset): [string, ProviderAdapter] => [
+    preset.key,
+    new OpenAICompatibleAdapter(preset),
+  ]),
 ]);
 
 export function getAdapter(provider: ConnectorProvider): ProviderAdapter {

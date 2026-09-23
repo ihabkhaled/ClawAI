@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { ModelBehaviorProbeResult } from '@claw/shared-types';
+import { getConnectorPreset, resolvePresetBaseUrl } from '@claw/shared-utilities';
 import { type Connector, ModelSyncStatus } from '../../../generated/prisma';
 import {
   CAPABILITY_PROBE_UNSUPPORTED_CODE,
@@ -7,6 +8,7 @@ import {
 } from '../constants/ollama-tool-probe.constants';
 import { AppConfig } from '../../../app/config/app.config';
 import { decrypt } from '../../../common/utilities';
+import { BusinessException } from '../../../common/errors';
 import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
 import { HealthEventsRepository } from '../repositories/health-events.repository';
 import { SyncRunsRepository } from '../repositories/sync-runs.repository';
@@ -165,6 +167,31 @@ export class ConnectorsManager {
       baseUrl: connector.baseUrl ?? undefined,
       region: connector.region ?? undefined,
       workspaceId: connector.workspaceId ?? undefined,
+      accountId: connector.accountId ?? undefined,
     };
+  }
+
+  /**
+   * The config chat-service executes with. For an OpenAI-compatible preset the
+   * base URL is resolved HERE — the connector's own URL or the preset default,
+   * with `{ACCOUNT_ID}` filled — so no caller ever sees a template (ADR-116).
+   * Bespoke providers pass through unchanged; chat-service keeps its own
+   * defaults for those.
+   */
+  getExecutionConfig(connector: Connector): ConnectorConfig {
+    const config = this.getDecryptedConfig(connector);
+    const preset = getConnectorPreset(connector.provider);
+    if (preset === undefined) {
+      return config;
+    }
+    try {
+      return { ...config, baseUrl: resolvePresetBaseUrl(preset, config.baseUrl, config.accountId) };
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? error.message : 'unresolvable base URL';
+      throw new BusinessException(
+        `Connector ${connector.id} cannot build its ${preset.displayName} URL: ${reason}`,
+        'CONNECTOR_BASE_URL_UNRESOLVED',
+      );
+    }
   }
 }

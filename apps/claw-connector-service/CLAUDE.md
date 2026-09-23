@@ -176,3 +176,21 @@ toggle unenforceable without a six-container rebuild (ADR-082).
 infrastructure at all — no `prisma/seed.js`, no `SeedExecution` model, no
 `prisma.seed` package.json entry — and `tools/release/seed-versioned.mjs` skips
 it. A seeder here is a file nothing runs.
+
+## OpenAI-compatible connector presets (ADR-116)
+
+15 providers (OpenRouter, Groq, Cerebras, SambaNova, DeepInfra, Fireworks,
+Together, Mistral, Moonshot, Z.ai, Qwen, Cloudflare Workers AI, Vercel AI
+Gateway, Perplexity, Cohere) are served by one class,
+`OpenAICompatibleAdapter`, driven entirely by `CONNECTOR_PRESETS` in
+`@claw/shared-utilities` — **never** hard-code a preset's base URL or display
+name here; edit the registry instead. `tools/__tests__/
+connector-preset-single-source.test.mjs` fails the build on a re-typed copy.
+
+Adding provider #16: [`skills/add-an-openai-compatible-provider.md`](../../skills/add-an-openai-compatible-provider.md).
+
+`Connector.accountId` (nullable) holds Cloudflare's account id, substituted
+into the preset's `{ACCOUNT_ID}` URL placeholder by `ConnectorsManager.
+getExecutionConfig` — the method chat-service's `getConnectorConfig` call
+resolves through, so no caller ever sees a template URL. Validated as a
+32-character lowercase hex string in `create-connector.dto.ts`.

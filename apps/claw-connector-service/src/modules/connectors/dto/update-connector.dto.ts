@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ConnectorAuthType, ConnectorProvider } from '../../../generated/prisma';
+import { connectorAccountIdSchema } from './create-connector.dto';
 
 export const updateConnectorSchema = z.object({
   name: z.string().min(1).max(100, 'Name must be at most 100 characters').optional(),
@@ -9,6 +10,7 @@ export const updateConnectorSchema = z.object({
   baseUrl: z.string().max(500, 'Base URL must be at most 500 characters').optional(),
   region: z.string().max(50, 'Region must be at most 50 characters').optional(),
   workspaceId: z.string().max(100, 'Workspace ID must be at most 100 characters').optional(),
+  accountId: connectorAccountIdSchema.optional(),
   isEnabled: z.boolean().optional(),
   // The PAYG lever (ADR-082). Guarded by ADMIN_CONNECTORS_MANAGE on the route,
   // because flipping it decides whether every future request through this

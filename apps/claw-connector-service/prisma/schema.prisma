@@ -18,6 +18,23 @@ enum ConnectorProvider {
   OLLAMA
   GROK
   LLAMACPP
+  // OpenAI-compatible presets (ADR-116). Base URLs, links and model-list
+  // shapes live in CONNECTOR_PRESETS (@claw/shared-utilities), not here.
+  OPENROUTER
+  GROQ
+  CEREBRAS
+  SAMBANOVA
+  DEEPINFRA
+  FIREWORKS
+  TOGETHER
+  MISTRAL
+  MOONSHOT
+  ZAI
+  QWEN
+  CLOUDFLARE
+  VERCEL_AI_GATEWAY
+  PERPLEXITY
+  COHERE
 }
 
 enum ConnectorStatus {
@@ -75,6 +92,11 @@ model Connector {
   // the workspace it acts in. Kept out of `region` on purpose: that field means
   // an AWS region, and overloading it would make both unreadable.
   workspaceId     String?           @map("workspace_id")
+  // Cloudflare Workers AI scopes every URL to an account: the preset's base and
+  // models URLs carry `{ACCOUNT_ID}`, filled from this column. Its own column
+  // for the same reason `workspaceId` has one — `region` means an AWS region.
+  // Validated as 32 lowercase hex characters before it is written (ADR-116).
+  accountId       String?           @map("account_id")
   // Whether inference through this connector costs ClawAI real money and must
   // therefore debit the user's PAYG credit wallet.
   //

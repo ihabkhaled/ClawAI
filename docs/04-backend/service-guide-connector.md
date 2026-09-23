@@ -236,3 +236,29 @@ Each cloud provider has specific API patterns:
 - **Chat execution**: Uses the same `callCloudProvider()` path as OpenAI/DeepSeek (OpenAI-compatible endpoint)
 - **Routing integration**: GROK is included in the fallback chain and capability priority map
 - **Cost tier**: $3.00/$15.00 per 1M tokens (input/output) — same tier as Anthropic
+
+### OpenAI-compatible presets (ADR-116)
+
+15 more providers — OpenRouter, Groq, Cerebras, SambaNova, DeepInfra,
+Fireworks, Together, Mistral, Moonshot, Z.ai, Qwen, Cloudflare Workers AI,
+Vercel AI Gateway, Perplexity, Cohere — are served by ONE adapter class,
+`OpenAICompatibleAdapter`, constructed once per preset from `CONNECTOR_PRESETS`
+in `@claw/shared-utilities` (`connector-presets` subpath). Nothing
+provider-specific is hard-coded in the adapter; everything comes from the
+preset the registry defines: base URL, model-list endpoint and shape, health
+endpoint (or a one-token completion for providers with no key-scoped GET,
+e.g. Perplexity), a static model catalogue for providers with no usable list
+endpoint (Z.ai, Perplexity), tool/vision support, and PAYG default.
+
+`Connector.accountId` is a new nullable column, used only by Cloudflare
+Workers AI: its URLs are scoped to an account
+(`https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1`), filled
+from this column by `ConnectorsManager.getExecutionConfig` before chat-service
+ever sees the URL. Validated as 32 lowercase hex characters in
+`create-connector.dto.ts` before it is stored.
+
+Adding provider #16: see
+[`skills/add-an-openai-compatible-provider.md`](../../skills/add-an-openai-compatible-provider.md).
+Never re-type a preset's base URL or display name anywhere else —
+`tools/__tests__/connector-preset-single-source.test.mjs` fails the build if
+you do.

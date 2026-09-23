@@ -1,3 +1,4 @@
+import { connectorPresetDisplayNames } from '@claw/shared-utilities';
 import { ConnectorProvider } from '../../../generated/prisma';
 
 /**
@@ -8,10 +9,12 @@ import { ConnectorProvider } from '../../../generated/prisma';
  * unfinished, and lowercasing it mechanically gets "Openai" and "Xai" wrong —
  * so the mapping is written out once, here, rather than derived.
  *
- * A total Record: adding a provider to the enum breaks the build until it has a
- * public name, which is the point.
+ * The bespoke providers are written out here. Every OpenAI-compatible preset
+ * takes its name from the preset registry (ADR-116), whose own test proves each
+ * non-bespoke enum value has one — so the table stays complete without the
+ * names being typed twice. The service still falls back to the raw value.
  */
-export const PUBLIC_PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = {
+export const PUBLIC_PROVIDER_DISPLAY_NAMES: Readonly<Record<string, string>> = {
   [ConnectorProvider.OPENAI]: 'OpenAI',
   [ConnectorProvider.ANTHROPIC]: 'Anthropic',
   [ConnectorProvider.GEMINI]: 'Google Gemini',
@@ -20,6 +23,7 @@ export const PUBLIC_PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = 
   [ConnectorProvider.OLLAMA]: 'Ollama',
   [ConnectorProvider.GROK]: 'xAI Grok',
   [ConnectorProvider.LLAMACPP]: 'llama.cpp',
+  ...connectorPresetDisplayNames(),
 };
 
 /**

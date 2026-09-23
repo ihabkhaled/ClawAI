@@ -22,6 +22,9 @@ export type ConnectorConfig = {
   // Only some providers scope a key to a workspace. Anthropic's identity-linked
   // keys reject every request that does not name one.
   workspaceId?: string;
+  // Cloudflare Workers AI puts the account in every URL path. Filled into the
+  // preset's `{ACCOUNT_ID}` placeholder; never logged, though it is not secret.
+  accountId?: string;
 };
 
 export type ProviderCapabilities = {

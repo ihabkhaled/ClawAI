@@ -66,7 +66,7 @@ export class PublicModelCatalogService {
         const models = byProvider.get(provider) ?? [];
         return {
           provider,
-          displayName: PUBLIC_PROVIDER_DISPLAY_NAMES[provider],
+          displayName: PUBLIC_PROVIDER_DISPLAY_NAMES[provider] ?? provider,
           modelCount: models.length,
           models,
         };

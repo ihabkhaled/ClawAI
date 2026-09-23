@@ -80,6 +80,31 @@ export interface OllamaProbeChatResponse {
   };
 }
 
+/**
+ * One model from any OpenAI-compatible preset's list, flattened to the fields
+ * the generic adapter reads (ADR-116). Every field but `id` is optional
+ * because each provider reports a different subset: OpenRouter the
+ * architecture, Vercel `type`/`tags`/`modalities`, Mistral `capabilities`,
+ * DeepInfra `metadata.tags`, Cohere `endpoints`/`features`, Cloudflare a task.
+ */
+export type PresetModelListEntry = {
+  id: string;
+  name?: string;
+  type?: string;
+  tags: string[];
+  contextWindow?: number;
+  inputModalities: string[];
+  outputModalities: string[];
+  supportedParameters: string[];
+  completionChat?: boolean;
+  functionCalling?: boolean;
+  vision?: boolean;
+  endpoints?: string[];
+  taskName?: string;
+  active?: boolean;
+  isDeprecated?: boolean;
+};
+
 /** Google's native `GET /v1beta/models`, the one that carries token limits. */
 export type GeminiNativeModelsResponse = {
   models?: Array<{ name: string; inputTokenLimit?: number; outputTokenLimit?: number }>;

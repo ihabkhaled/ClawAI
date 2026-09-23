@@ -1,4 +1,5 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
+import { BusinessException } from '../../../common/errors';
 import { ConnectorsManager } from '../managers/connectors.manager';
 import { type ConnectorsRepository } from '../repositories/connectors.repository';
 import { type ConnectorModelsRepository } from '../repositories/connector-models.repository';
@@ -94,6 +95,7 @@ const mockConnector = {
   baseUrl: null,
   region: null,
   workspaceId: null,
+  accountId: null,
   isPayAsYouGo: false,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -272,6 +274,62 @@ describe('ConnectorsManager', () => {
 
       expect(config.baseUrl).toBeUndefined();
       expect(config.region).toBeUndefined();
+    });
+
+    it('should pass the account id through', () => {
+      const config = manager.getDecryptedConfig({
+        ...mockConnector,
+        accountId: '0123456789abcdef0123456789abcdef',
+      });
+
+      expect(config.accountId).toBe('0123456789abcdef0123456789abcdef');
+    });
+  });
+
+  describe('getExecutionConfig', () => {
+    const accountId = '0123456789abcdef0123456789abcdef';
+
+    it('leaves a bespoke provider untouched, so chat-service keeps its own default', () => {
+      const config = manager.getExecutionConfig(mockConnector);
+
+      expect(config.baseUrl).toBeUndefined();
+    });
+
+    it('fills a preset connector with the preset default base URL', () => {
+      const config = manager.getExecutionConfig({
+        ...mockConnector,
+        provider: ConnectorProvider.GROQ,
+      });
+
+      expect(config.baseUrl).toBe('https://api.groq.com/openai/v1');
+    });
+
+    it('keeps an administrator-edited preset base URL', () => {
+      const config = manager.getExecutionConfig({
+        ...mockConnector,
+        provider: ConnectorProvider.MOONSHOT,
+        baseUrl: 'https://api.moonshot.cn/v1/',
+      });
+
+      expect(config.baseUrl).toBe('https://api.moonshot.cn/v1');
+    });
+
+    it('substitutes the Cloudflare account id into the base URL', () => {
+      const config = manager.getExecutionConfig({
+        ...mockConnector,
+        provider: ConnectorProvider.CLOUDFLARE,
+        accountId,
+      });
+
+      expect(config.baseUrl).toBe(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`,
+      );
+    });
+
+    it('refuses a Cloudflare connector with no account id instead of leaking a template', () => {
+      expect(() =>
+        manager.getExecutionConfig({ ...mockConnector, provider: ConnectorProvider.CLOUDFLARE }),
+      ).toThrow(BusinessException);
     });
   });
 

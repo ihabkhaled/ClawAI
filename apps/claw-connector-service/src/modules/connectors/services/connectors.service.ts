@@ -93,6 +93,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
       baseUrl: dto.baseUrl,
       region: dto.region,
       workspaceId: dto.workspaceId,
+      accountId: dto.accountId,
       // The administrator's explicit answer wins; otherwise the provider
       // default decides. Without this, a connector added after the backfill
       // migration would arrive at the column default of `false` and serve paid
@@ -183,6 +184,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
       baseUrl: dto.baseUrl,
       region: dto.region,
       workspaceId: dto.workspaceId,
+      accountId: dto.accountId,
       isEnabled: dto.isEnabled,
       isPayAsYouGo: dto.isPayAsYouGo,
     });
@@ -355,7 +357,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
     if (!connector) {
       throw new EntityNotFoundException('Connector', provider);
     }
-    return this.connectorsManager.getDecryptedConfig(connector);
+    return this.connectorsManager.getExecutionConfig(connector);
   }
 
   async getModels(connectorId: string): Promise<ConnectorModel[]> {
@@ -470,9 +472,6 @@ export class ConnectorsService implements OnApplicationBootstrap {
   }
 
   private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {
-    if (connector.encryptedConfig) {
-      return { ...connector, encryptedConfig: '****' };
-    }
-    return connector;
+    return connector.encryptedConfig ? { ...connector, encryptedConfig: '****' } : connector;
   }
 }

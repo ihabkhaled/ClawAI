@@ -1,4 +1,5 @@
 import { createConnectorSchema } from '../create-connector.dto';
+import { updateConnectorSchema } from '../update-connector.dto';
 import { ConnectorAuthType, ConnectorProvider } from '../../../../generated/prisma';
 
 describe('createConnectorSchema', () => {
@@ -223,5 +224,75 @@ describe('createConnectorSchema', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  describe('OpenAI-compatible presets (ADR-116)', () => {
+    const accountId = '0123456789abcdef0123456789abcdef';
+
+    it.each([
+      ConnectorProvider.OPENROUTER,
+      ConnectorProvider.GROQ,
+      ConnectorProvider.MISTRAL,
+      ConnectorProvider.PERPLEXITY,
+      ConnectorProvider.COHERE,
+    ])('accepts a %s connector with only a key', (provider) => {
+      const result = createConnectorSchema.safeParse({
+        name: `${provider} connector`,
+        provider,
+        authType: ConnectorAuthType.API_KEY,
+        apiKey: 'test-key',
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('requires a Cloudflare account id', () => {
+      const result = createConnectorSchema.safeParse({
+        name: 'Workers AI',
+        provider: ConnectorProvider.CLOUDFLARE,
+        authType: ConnectorAuthType.API_KEY,
+        apiKey: 'cf-token',
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.path).toEqual(['accountId']);
+      }
+    });
+
+    it('normalises a Cloudflare account id to lower case', () => {
+      const result = createConnectorSchema.safeParse({
+        name: 'Workers AI',
+        provider: ConnectorProvider.CLOUDFLARE,
+        authType: ConnectorAuthType.API_KEY,
+        accountId: `  ${accountId.toUpperCase()} `,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.accountId).toBe(accountId);
+      }
+    });
+
+    it.each([
+      ['31 characters', accountId.slice(1)],
+      ['33 characters', `${accountId}a`],
+      ['a non-hex character', `${accountId.slice(0, 31)}z`],
+      ['a path segment', '../../zones/0123456789abcdef01234'],
+    ])('rejects an account id with %s', (_label, value) => {
+      const result = createConnectorSchema.safeParse({
+        name: 'Workers AI',
+        provider: ConnectorProvider.CLOUDFLARE,
+        authType: ConnectorAuthType.API_KEY,
+        accountId: value,
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it('validates the account id on update too', () => {
+      expect(updateConnectorSchema.safeParse({ accountId: 'nope' }).success).toBe(false);
+      expect(updateConnectorSchema.safeParse({ accountId }).success).toBe(true);
+    });
   });
 });

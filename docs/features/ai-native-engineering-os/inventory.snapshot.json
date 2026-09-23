@@ -7630,7 +7630,7 @@
       ],
       "skills": [
         {
-          "bytes": 29674,
+          "bytes": 29953,
           "file": "skills/00-index.md"
         },
         {
@@ -7700,6 +7700,10 @@
         {
           "bytes": 4700,
           "file": "skills/add-an-archive-format.md"
+        },
+        {
+          "bytes": 7411,
+          "file": "skills/add-an-openai-compatible-provider.md"
         },
         {
           "bytes": 9807,
@@ -9952,7 +9956,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 40
+        "testFiles": 41
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -9976,7 +9980,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 27
+        "testFiles": 29
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -10766,7 +10770,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1431,
+    "totalTestFiles": 1434,
     "workspaceCount": 25
   }
 }

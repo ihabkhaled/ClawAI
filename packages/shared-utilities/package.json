@@ -16,6 +16,10 @@
     "./money": {
       "types": "./dist/money/index.d.ts",
       "default": "./dist/money/index.js"
+    },
+    "./connector-presets": {
+      "types": "./dist/connector-presets/index.d.ts",
+      "default": "./dist/connector-presets/index.js"
     }
   },
   "scripts": {
