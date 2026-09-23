@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
-import { CompareResearchMode, PlanFeature } from '@/enums';
+import { PlanFeature, ResearchMode } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import type { ParallelRequest, UseParallelCompareReturn } from '@/types';
@@ -47,10 +47,7 @@ export function useParallelCompare(): UseParallelCompareReturn {
       if (variables.judgeEnabled === true) {
         requestedFeatures.push(PlanFeature.ALLOW_JUDGE_MODE);
       }
-      if (
-        variables.researchMode !== undefined &&
-        variables.researchMode !== CompareResearchMode.NONE
-      ) {
+      if (variables.researchMode !== undefined && variables.researchMode !== ResearchMode.NONE) {
         requestedFeatures.push(PlanFeature.ALLOW_RESEARCH_MODE);
       }
       requestedFeatures.push(PlanFeature.ALLOW_COMPARE_MODE);

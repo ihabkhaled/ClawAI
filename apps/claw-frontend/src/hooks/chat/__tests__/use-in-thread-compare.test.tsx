@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren, ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CompareResearchMode } from '@/enums';
+import { ResearchMode } from '@/enums';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
 import type { ParallelRequest } from '@/types';
 
@@ -21,6 +21,15 @@ vi.mock('@/lib/i18n', () => ({
 
 vi.mock('@/hooks/chat/use-judge-model-options', () => ({
   useJudgeModelOptions: () => ({ options: [], isLoading: false }),
+}));
+
+vi.mock('@/hooks/research/use-research-providers', () => ({
+  useResearchProviders: () => ({
+    providers: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/utilities', () => ({
@@ -49,7 +58,7 @@ describe('useInThreadCompare — researchMode round-trip', () => {
     });
   });
 
-  it('defaults researchMode to NONE and omits it from the compare payload', async () => {
+  it('defaults research to AUTO and forwards it — Compare used to default to NONE', async () => {
     const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
 
     act(() => {
@@ -57,7 +66,7 @@ describe('useInThreadCompare — researchMode round-trip', () => {
       result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
     });
 
-    expect(result.current.researchMode).toBe(CompareResearchMode.NONE);
+    expect(result.current.research.mode).toBe(ResearchMode.AUTO);
 
     act(() => {
       result.current.handleCompare('hello');
@@ -71,7 +80,8 @@ describe('useInThreadCompare — researchMode round-trip', () => {
       throw new Error('sendParallel was not called');
     }
     const payload = firstCall[0] as ParallelRequest;
-    expect(payload.researchMode).toBeUndefined();
+    expect(payload.researchMode).toBe(ResearchMode.AUTO);
+    expect(payload.researchProviderId).toBeUndefined();
     expect(payload.threadId).toBe('t1');
     expect(payload.content).toBe('hello');
   });
@@ -136,13 +146,13 @@ describe('useInThreadCompare — researchMode round-trip', () => {
     expect(payload.criticModel).toBeUndefined();
   });
 
-  it('forwards researchMode when set to SEARCH_EXTRACT', async () => {
+  it('forwards researchMode AND researchProviderId when both are set', async () => {
     const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
 
     act(() => {
       result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
       result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
-      result.current.setResearchMode(CompareResearchMode.SEARCH_EXTRACT);
+      result.current.setResearch({ mode: ResearchMode.SEARCH_EXTRACT, providerId: 'prov-1' });
     });
 
     act(() => {
@@ -157,7 +167,29 @@ describe('useInThreadCompare — researchMode round-trip', () => {
       throw new Error('sendParallel was not called');
     }
     const payload = firstCall[0] as ParallelRequest;
-    expect(payload.researchMode).toBe(CompareResearchMode.SEARCH_EXTRACT);
+    expect(payload.researchMode).toBe(ResearchMode.SEARCH_EXTRACT);
+    expect(payload.researchProviderId).toBe('prov-1');
+  });
+
+  it('omits BOTH research fields at NONE', async () => {
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setResearch({ mode: ResearchMode.NONE, providerId: 'prov-1' });
+    });
+
+    act(() => {
+      result.current.handleCompare('no web please');
+    });
+
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.researchMode).toBeUndefined();
+    expect(payload.researchProviderId).toBeUndefined();
   });
 });
 

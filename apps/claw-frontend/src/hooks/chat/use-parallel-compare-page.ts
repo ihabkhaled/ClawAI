@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react';
 
 import { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from '@/constants';
-import { CompareResearchMode } from '@/enums';
+import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
+import { ResearchMode } from '@/enums';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
 import { useParallelStream } from '@/hooks/chat/use-parallel-stream';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
+import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
-import type { ParallelModelTarget, UseParallelComparePageReturn } from '@/types';
+import type { ParallelModelTarget, ResearchOptions, UseParallelComparePageReturn } from '@/types';
 
 export function useParallelComparePage(): UseParallelComparePageReturn {
   const { t } = useTranslation();
@@ -20,7 +22,11 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
   const [criticEnabled, setCriticEnabled] = useState(false);
   const [criticModel, setCriticModel] = useState<string | null>(null);
-  const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
+  // AUTO, not NONE. Compare was the last surface still defaulting research
+  // off, so the same question answered from the web in chat was answered from
+  // training data here. AUTO lets a small model decide per turn.
+  const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
+  const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const { ingestFiles } = useComposerAttachments({
     selectedFileIds,
@@ -73,9 +79,17 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
       // rejects criticEnabled=true without judgeEnabled=true. The model is
       // optional from the FE's perspective; backend rejects it if missing.
       ...(judgeEnabled && criticEnabled ? { criticEnabled: true, criticModel } : {}),
-      // Only attach the field when the user picked a non-NONE mode so v1
-      // server-side defaults stay the source of truth for the OFF path.
-      ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
+      // Only attach the fields when the user picked a non-NONE mode so v1
+      // server-side defaults stay the source of truth for the OFF path. The
+      // provider rides along exactly the same way — the DTO already took it.
+      ...(research.mode === ResearchMode.NONE
+        ? {}
+        : {
+            researchMode: research.mode,
+            ...(research.providerId === undefined
+              ? {}
+              : { researchProviderId: research.providerId }),
+          }),
       // Only attach file IDs when the user picked at least one; omit
       // entirely on the empty path so the BE DTO stays clean.
       ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
@@ -90,7 +104,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     judgeModel,
     criticEnabled,
     criticModel,
-    researchMode,
+    research,
     selectedFileIds,
   ]);
 
@@ -121,8 +135,10 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     setCriticEnabled,
     criticModel,
     setCriticModel,
-    researchMode,
-    setResearchMode,
+    research,
+    setResearch,
+    researchProviders: researchProviderQuery.providers,
+    isResearchProvidersLoading: researchProviderQuery.isLoading,
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,

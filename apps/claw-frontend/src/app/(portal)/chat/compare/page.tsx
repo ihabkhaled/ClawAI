@@ -4,15 +4,16 @@ import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
-import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
+import { ResearchToggle } from '@/components/chat/research-toggle';
 import { ParallelLaneCard } from '@/components/chat/stream/parallel-lane-card';
 import { UpgradeCtaBanner } from '@/components/chat/upgrade-cta-banner';
+import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
+import { useCompareMediaCapabilities } from '@/hooks/chat/use-compare-media-capabilities';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
 
 export default function ComparePage() {
@@ -49,8 +51,10 @@ export default function ComparePage() {
     setCriticEnabled,
     criticModel,
     setCriticModel,
-    researchMode,
-    setResearchMode,
+    research,
+    setResearch,
+    researchProviders,
+    isResearchProvidersLoading,
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
@@ -58,6 +62,9 @@ export default function ComparePage() {
     clearUpgradeFeature,
   } = useParallelComparePage();
 
+  // Multi-model gating: see useCompareMediaCapabilities. The recording goes to
+  // every lane, so it stays enabled unless no selected model can read it.
+  const mediaCapabilities = useCompareMediaCapabilities(selectedModels);
   const planFeatures = usePlanFeatures();
   const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
@@ -104,9 +111,6 @@ export default function ComparePage() {
                 t={t}
               />
             ) : null}
-            {canResearch ? (
-              <CompareResearchModeControl value={researchMode} onChange={setResearchMode} t={t} />
-            ) : null}
           </div>
         </div>
 
@@ -122,15 +126,35 @@ export default function ComparePage() {
                 />
               </ComposerDropzone>
               <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
-                {selectedModels.length > 0 ? (
-                  <FileAttachmentPicker
-                    selectedFileIds={selectedFileIds}
-                    onChange={setSelectedFileIds}
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  {selectedModels.length > 0 ? (
+                    <FileAttachmentPicker
+                      selectedFileIds={selectedFileIds}
+                      onChange={setSelectedFileIds}
+                      disabled={isPending || isPolling}
+                    />
+                  ) : null}
+                  {/* Same recorder the chat composer and the nine labs render;
+                      the consent dialog ships inside it, so it comes along. */}
+                  <VoiceVideoRecorder
+                    canSendAudio={mediaCapabilities.canSendAudio}
+                    canSendVideo={mediaCapabilities.canSendVideo}
+                    onRecorded={(file) => ingestFiles([file])}
                     disabled={isPending || isPolling}
                   />
-                ) : (
-                  <span />
-                )}
+                  {/* The shared control, not Compare's mode-only one: Compare
+                      never had a provider picker, and it was the last surface
+                      still defaulting research to NONE instead of AUTO. */}
+                  {canResearch ? (
+                    <ResearchToggle
+                      value={research}
+                      providers={researchProviders}
+                      isProvidersLoading={isResearchProvidersLoading}
+                      onChange={setResearch}
+                      disabled={isPending || isPolling}
+                    />
+                  ) : null}
+                </div>
                 <Button onClick={handleSend} disabled={!canSend} className="w-full sm:w-auto">
                   {isPending || isPolling ? (
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />

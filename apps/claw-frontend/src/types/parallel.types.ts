@@ -1,12 +1,8 @@
-import type {
-  CompareJudgeState,
-  CompareResearchMode,
-  ParallelModelStatus,
-  PlanFeature,
-} from '@/enums';
+import type { CompareJudgeState, ParallelModelStatus, PlanFeature, ResearchMode } from '@/enums';
 
 import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
+import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
 
 export type ParallelModelResponse = {
   provider: string;
@@ -66,7 +62,12 @@ export type ParallelRequest = {
   criticEnabled?: boolean;
   criticModel?: string | null;
   /** Compare-mode research enricher. Omit / NONE preserves v1 behavior. */
-  researchMode?: CompareResearchMode;
+  researchMode?: ResearchMode;
+  /**
+   * Explicit research provider. Optional: absent means "let the backend pick",
+   * which is what every Compare run did before the provider dropdown existed.
+   */
+  researchProviderId?: string;
   /** Optional explicit query (defaults to `content` server-side). */
   researchQuery?: string;
   /**
@@ -117,8 +118,12 @@ export type UseParallelComparePageReturn = {
   setCriticEnabled: (value: boolean) => void;
   criticModel: string | null;
   setCriticModel: (value: string | null) => void;
-  researchMode: CompareResearchMode;
-  setResearchMode: (value: CompareResearchMode) => void;
+  // Research mode + provider, the same shape the chat composer and the nine
+  // orchestration labs use. Defaults to AUTO, not NONE.
+  research: ResearchOptions;
+  setResearch: (value: ResearchOptions) => void;
+  researchProviders: SanitizedResearchProvider[];
+  isResearchProvidersLoading: boolean;
   // File attachments selected for the compare run. Threaded into the
   // parallel send payload as `fileIds` and reset on successful send.
   selectedFileIds: string[];
@@ -172,8 +177,12 @@ export type UseInThreadCompareReturn = {
   setCriticEnabled: (value: boolean) => void;
   criticModel: string | null;
   setCriticModel: (value: string | null) => void;
-  researchMode: CompareResearchMode;
-  setResearchMode: (value: CompareResearchMode) => void;
+  // Research mode + provider, the same shape the chat composer and the nine
+  // orchestration labs use. Defaults to AUTO, not NONE.
+  research: ResearchOptions;
+  setResearch: (value: ResearchOptions) => void;
+  researchProviders: SanitizedResearchProvider[];
+  isResearchProvidersLoading: boolean;
   // File attachments selected for the in-thread compare run. Threaded into
   // the parallel send payload as `fileIds` and reset on successful send /
   // panel close.
@@ -181,13 +190,4 @@ export type UseInThreadCompareReturn = {
   setSelectedFileIds: (ids: string[]) => void;
   // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
   ingestFiles: (files: FileList | File[]) => void;
-};
-
-// Declarative option for CompareResearchModeControl. `labelKey` is an i18n
-// key into compare.research.* so the control body stays a pure render.
-// `tooltipKey` points to a research.toggle.tooltip* key explaining the mode.
-export type CompareResearchModeOption = {
-  value: CompareResearchMode;
-  labelKey: string;
-  tooltipKey: string;
 };

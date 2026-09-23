@@ -448,7 +448,6 @@ export type {
   CompareJudgeControlsProps,
   CompareCriticControlsProps,
   CompareResultActionsProps,
-  CompareResearchModeControlProps,
   ParallelResponseCardProps,
   ParallelResultsGridProps,
   UpgradeCtaBannerProps,
@@ -650,7 +649,6 @@ export type {
   UseParallelCompareReturn,
   UseInThreadCompareParams,
   UseInThreadCompareReturn,
-  CompareResearchModeOption,
 } from './parallel.types';
 export type {
   FileDeliveryEntry,

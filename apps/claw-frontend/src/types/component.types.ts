@@ -8,7 +8,6 @@ import type {
   AiStreamStage,
   ChatThreadListTab,
   CompareJudgeState,
-  CompareResearchMode,
   ComponentSize,
   ConnectorAuthType,
   ConnectorProvider,
@@ -1841,17 +1840,6 @@ export type CompareCriticControlsProps = {
   t: TranslateFunction;
 };
 
-export type CompareResearchModeControlProps = {
-  value: CompareResearchMode;
-  onChange: (value: CompareResearchMode) => void;
-  t: TranslateFunction;
-  // When true, dim the control. Useful for plan-gating ("Web research is
-  // locked on your plan"). The wrapper renders the `lockedTooltipKey`
-  // (e.g. `research.toggle.lockedUpgrade`) as a native `title` tooltip.
-  disabled?: boolean;
-  lockedTooltipKey?: string;
-};
-
 export type ParallelResponseCardProps = {
   response: ParallelModelResponse;
   isFastest: boolean;
@@ -1943,8 +1931,12 @@ export type InThreadComparePanelProps = {
   onCriticEnabledChange: (value: boolean) => void;
   criticModel: string | null;
   onCriticModelChange: (value: string | null) => void;
-  researchMode: CompareResearchMode;
-  onResearchModeChange: (value: CompareResearchMode) => void;
+  // Research mode + provider, the shared ResearchToggle shape. Compare used
+  // to carry a mode-only control with no provider picker and a NONE default.
+  research: ResearchOptions;
+  onResearchChange: (value: ResearchOptions) => void;
+  researchProviders: SanitizedResearchProvider[];
+  isResearchProvidersLoading: boolean;
   // Plan-feature gates: hide judge / critic / research controls when the
   // user's plan does not unlock them. ADMIN passes true via usePlanFeatures.
   allowJudgeMode: boolean;

@@ -2,9 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
 import { MAX_PARALLEL_MODELS, MIN_PARALLEL_MODELS } from '@/constants';
-import { CompareResearchMode } from '@/enums';
+import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
+import { ResearchMode } from '@/enums';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
+import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -12,6 +14,7 @@ import type {
   ParallelModelTarget,
   ParallelRequest,
   ParallelResponse,
+  ResearchOptions,
   UseInThreadCompareParams,
   UseInThreadCompareReturn,
 } from '@/types';
@@ -34,7 +37,9 @@ export function useInThreadCompare({
   const [judgeModel, setJudgeModel] = useState<string | null>(initialJudgeModel);
   const [criticEnabled, setCriticEnabled] = useState(false);
   const [criticModel, setCriticModel] = useState<string | null>(null);
-  const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
+  // AUTO, not NONE — the same default chat and the nine labs already use.
+  const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
+  const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const { ingestFiles } = useComposerAttachments({
     selectedFileIds,
@@ -111,7 +116,14 @@ export function useInThreadCompare({
         judgeEnabled,
         judgeModel,
         ...(judgeEnabled && criticEnabled ? { criticEnabled: true, criticModel } : {}),
-        ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
+        ...(research.mode === ResearchMode.NONE
+          ? {}
+          : {
+              researchMode: research.mode,
+              ...(research.providerId === undefined
+                ? {}
+                : { researchProviderId: research.providerId }),
+            }),
         ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
       });
     },
@@ -124,7 +136,7 @@ export function useInThreadCompare({
       judgeModel,
       criticEnabled,
       criticModel,
-      researchMode,
+      research,
       selectedFileIds,
     ],
   );
@@ -161,8 +173,10 @@ export function useInThreadCompare({
     setCriticEnabled,
     criticModel,
     setCriticModel,
-    researchMode,
-    setResearchMode,
+    research,
+    setResearch,
+    researchProviders: researchProviderQuery.providers,
+    isResearchProvidersLoading: researchProviderQuery.isLoading,
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,

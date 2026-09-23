@@ -2,14 +2,16 @@ import { CheckCircle, Loader2, Play } from 'lucide-react';
 
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
-import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
+import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
+import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useCompareMediaCapabilities } from '@/hooks/chat/use-compare-media-capabilities';
 import type { InThreadComparePanelProps } from '@/types';
 
 export function InThreadComparePanel({
@@ -33,8 +35,10 @@ export function InThreadComparePanel({
   onCriticEnabledChange,
   criticModel,
   onCriticModelChange,
-  researchMode,
-  onResearchModeChange,
+  research,
+  onResearchChange,
+  researchProviders,
+  isResearchProvidersLoading,
   allowJudgeMode,
   allowCriticReview,
   allowResearchMode,
@@ -43,6 +47,10 @@ export function InThreadComparePanel({
   onIngestFiles,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
+  // Multi-model gating: see useCompareMediaCapabilities. One recording goes to
+  // every lane, so the buttons stay live unless no selected model can read it.
+  const mediaCapabilities = useCompareMediaCapabilities(selectedModels);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -86,23 +94,35 @@ export function InThreadComparePanel({
                 t={t}
               />
             ) : null}
-
-            {allowResearchMode ? (
-              <CompareResearchModeControl
-                value={researchMode}
-                onChange={onResearchModeChange}
-                t={t}
-              />
-            ) : null}
           </div>
 
           <ComposerDropzone onFiles={onIngestFiles} disabled={isPending} className="space-y-4">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <FileAttachmentPicker
                 selectedFileIds={selectedFileIds}
                 onChange={onSelectedFileIdsChange}
                 disabled={isPending}
               />
+              {/* Same recorder the chat composer and the nine labs render; the
+                  consent dialog ships inside it, so it comes along. */}
+              <VoiceVideoRecorder
+                canSendAudio={mediaCapabilities.canSendAudio}
+                canSendVideo={mediaCapabilities.canSendVideo}
+                onRecorded={(file) => onIngestFiles([file])}
+                disabled={isPending}
+              />
+              {/* The shared control, not Compare's mode-only one: Compare
+                  never had a provider picker, and its default was NONE while
+                  every other surface defaulted to AUTO. */}
+              {allowResearchMode ? (
+                <ResearchToggle
+                  value={research}
+                  providers={researchProviders}
+                  isProvidersLoading={isResearchProvidersLoading}
+                  onChange={onResearchChange}
+                  disabled={isPending}
+                />
+              ) : null}
             </div>
 
             <form

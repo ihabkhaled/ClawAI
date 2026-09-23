@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren, ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CompareResearchMode } from '@/enums';
+import { ResearchMode } from '@/enums';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
 import type { ParallelRequest } from '@/types';
 
@@ -36,6 +36,15 @@ vi.mock('@/hooks/chat/use-parallel-stream', () => ({
   useParallelStream: () => ({ lanes: {} }),
 }));
 
+vi.mock('@/hooks/research/use-research-providers', () => ({
+  useResearchProviders: () => ({
+    providers: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/utilities', () => ({
   logger: { info: vi.fn(), error: vi.fn() },
   showToast: { apiError: vi.fn(), success: vi.fn() },
@@ -62,7 +71,7 @@ describe('useParallelComparePage — researchMode round-trip', () => {
     });
   });
 
-  it('defaults researchMode to NONE and omits it from the send payload', async () => {
+  it('defaults research to AUTO and forwards it — Compare used to default to NONE', async () => {
     const { result } = renderHook(() => useParallelComparePage(), { wrapper });
 
     act(() => {
@@ -71,7 +80,7 @@ describe('useParallelComparePage — researchMode round-trip', () => {
       result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
     });
 
-    expect(result.current.researchMode).toBe(CompareResearchMode.NONE);
+    expect(result.current.research.mode).toBe(ResearchMode.AUTO);
 
     act(() => {
       result.current.handleSend();
@@ -85,7 +94,8 @@ describe('useParallelComparePage — researchMode round-trip', () => {
       throw new Error('sendParallel was not called');
     }
     const payload = firstCall[0] as ParallelRequest;
-    expect(payload.researchMode).toBeUndefined();
+    expect(payload.researchMode).toBe(ResearchMode.AUTO);
+    expect(payload.researchProviderId).toBeUndefined();
     expect(payload.content).toBe('hello');
   });
 
@@ -136,17 +146,17 @@ describe('useParallelComparePage — researchMode round-trip', () => {
     expect(payload.criticModel).toBeUndefined();
   });
 
-  it('forwards researchMode when set to a non-NONE value', async () => {
+  it('forwards researchMode AND researchProviderId when both are set', async () => {
     const { result } = renderHook(() => useParallelComparePage(), { wrapper });
 
     act(() => {
       result.current.setPrompt('hello');
       result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
       result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
-      result.current.setResearchMode(CompareResearchMode.SEARCH_FETCH);
+      result.current.setResearch({ mode: ResearchMode.SEARCH_FETCH, providerId: 'prov-9' });
     });
 
-    expect(result.current.researchMode).toBe(CompareResearchMode.SEARCH_FETCH);
+    expect(result.current.research.mode).toBe(ResearchMode.SEARCH_FETCH);
 
     act(() => {
       result.current.handleSend();
@@ -160,6 +170,29 @@ describe('useParallelComparePage — researchMode round-trip', () => {
       throw new Error('sendParallel was not called');
     }
     const payload = firstCall[0] as ParallelRequest;
-    expect(payload.researchMode).toBe(CompareResearchMode.SEARCH_FETCH);
+    expect(payload.researchMode).toBe(ResearchMode.SEARCH_FETCH);
+    expect(payload.researchProviderId).toBe('prov-9');
+  });
+
+  it('omits BOTH research fields at NONE', async () => {
+    const { result } = renderHook(() => useParallelComparePage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('hello');
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setResearch({ mode: ResearchMode.NONE, providerId: 'prov-9' });
+    });
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.researchMode).toBeUndefined();
+    expect(payload.researchProviderId).toBeUndefined();
   });
 });

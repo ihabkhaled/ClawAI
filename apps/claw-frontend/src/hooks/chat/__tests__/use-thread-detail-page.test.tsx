@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CompareResearchMode, SseConnectionHealth } from '@/enums';
+import { ResearchMode, SseConnectionHealth } from '@/enums';
 import { useThreadDetailPage } from '@/hooks/chat/use-thread-detail-page';
 
 vi.mock('next/navigation', () => ({
@@ -138,8 +138,10 @@ const compareMock = {
   setCriticEnabled: vi.fn(),
   criticModel: null,
   setCriticModel: vi.fn(),
-  researchMode: CompareResearchMode.NONE,
-  setResearchMode: vi.fn(),
+  research: { mode: ResearchMode.AUTO },
+  setResearch: vi.fn(),
+  researchProviders: [],
+  isResearchProvidersLoading: false,
   selectedFileIds: [],
   setSelectedFileIds: vi.fn(),
 };

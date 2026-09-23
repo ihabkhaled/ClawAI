@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
-import { CompareResearchMode } from '@/enums';
+import { ResearchMode } from '@/enums';
 
 // The compare panel mounts FileAttachmentPicker, which transitively calls
 // useTranslation() (LocaleProvider-backed) plus useFiles()/useUploadFile().
@@ -19,6 +19,28 @@ vi.mock('@/hooks/files/use-files', () => ({
 
 vi.mock('@/hooks/files/use-upload-file', () => ({
   useUploadFile: () => ({ uploadFile: vi.fn(), isPending: false }),
+}));
+
+// The recorder's capability gate reads the connector catalog. Two rows: one
+// that can take neither medium, one that can take both.
+vi.mock('@/hooks/chat/use-available-connector-models', () => ({
+  useAvailableConnectorModels: () => ({
+    models: [
+      {
+        provider: 'OPENAI',
+        modelKey: 'text-only',
+        supportsAudio: false,
+        supportsVision: false,
+      },
+      {
+        provider: 'GEMINI',
+        modelKey: 'multimodal',
+        supportsAudio: true,
+        supportsVision: true,
+      },
+    ],
+    isLoading: false,
+  }),
 }));
 
 const t = (key: string): string => key;
@@ -45,8 +67,10 @@ const baseProps = {
   criticModel: null,
   onCriticModelChange: vi.fn(),
   allowCriticReview: false,
-  researchMode: CompareResearchMode.NONE,
-  onResearchModeChange: vi.fn(),
+  research: { mode: ResearchMode.AUTO },
+  onResearchChange: vi.fn(),
+  researchProviders: [],
+  isResearchProvidersLoading: false,
   selectedFileIds: [],
   onSelectedFileIdsChange: vi.fn(),
   onIngestFiles: vi.fn(),
@@ -76,7 +100,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
         <InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode={false} />,
       ),
     );
-    expect(screen.queryByText('compare.research.label')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('research.toggle.modeLabel')).not.toBeInTheDocument();
   });
 
   it('shows both judge + research controls when plan unlocks both', () => {
@@ -84,7 +108,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
       withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
     );
     expect(screen.getByText('chat.judgeReferee')).toBeInTheDocument();
-    expect(screen.getByText('compare.research.label')).toBeInTheDocument();
+    expect(screen.getByLabelText('research.toggle.modeLabel')).toBeInTheDocument();
   });
 
   it('hides BOTH judge + research controls when plan locks both', () => {
@@ -94,7 +118,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
       ),
     );
     expect(screen.queryByText('chat.judgeReferee')).not.toBeInTheDocument();
-    expect(screen.queryByText('compare.research.label')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('research.toggle.modeLabel')).not.toBeInTheDocument();
   });
 
   it('hides Critic controls when allowCriticReview is false even with judge enabled', () => {
@@ -210,5 +234,113 @@ describe('InThreadComparePanel — prompt textarea parity', () => {
     const textarea = screen.getByLabelText('compare.sendPrompt');
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
     expect(onSend).not.toHaveBeenCalled();
+  });
+});
+
+// The recorder dims itself when the BROWSER cannot record, which in jsdom is
+// always — stub MediaRecorder so the capability gate is the only thing under
+// test here. Same stub the orchestration shell recorder test uses.
+class MockMediaRecorder {
+  state = 'inactive';
+  mimeType = 'audio/webm';
+  ondataavailable: ((event: { data: Blob }) => void) | null = null;
+  onstop: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  constructor(public stream: unknown) {}
+  start(): void {
+    this.state = 'recording';
+  }
+  stop(): void {
+    this.state = 'inactive';
+    this.ondataavailable?.({ data: new Blob(['bytes'], { type: 'audio/webm' }) });
+    this.onstop?.();
+  }
+}
+
+describe('InThreadComparePanel — voice/video recorder', () => {
+  beforeEach(() => {
+    Object.defineProperty(globalThis.navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn(
+          async () => ({ getTracks: () => [{ stop: vi.fn() }] }) as unknown as MediaStream,
+        ),
+      },
+    });
+    (globalThis as unknown as { MediaRecorder: unknown }).MediaRecorder = MockMediaRecorder;
+  });
+
+  it('renders both recorder triggers', () => {
+    render(
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
+    );
+    expect(screen.getByTestId('voice-video-recorder-audio')).toBeInTheDocument();
+    expect(screen.getByTestId('voice-video-recorder-video')).toBeInTheDocument();
+  });
+
+  it('stays enabled when ONE of several selected models supports the medium', () => {
+    render(
+      withQueryClient(
+        <InThreadComparePanel
+          {...baseProps}
+          allowJudgeMode
+          allowResearchMode
+          selectedModels={[
+            { provider: 'OPENAI', model: 'text-only' },
+            { provider: 'GEMINI', model: 'multimodal' },
+          ]}
+        />,
+      ),
+    );
+    expect(screen.getByTestId('voice-video-recorder-audio')).toBeEnabled();
+    expect(screen.getByTestId('voice-video-recorder-video')).toBeEnabled();
+  });
+
+  it('dims the triggers only when EVERY selected model lacks the capability', () => {
+    render(
+      withQueryClient(
+        <InThreadComparePanel
+          {...baseProps}
+          allowJudgeMode
+          allowResearchMode
+          selectedModels={[{ provider: 'OPENAI', model: 'text-only' }]}
+        />,
+      ),
+    );
+    expect(screen.getByTestId('voice-video-recorder-audio')).toBeDisabled();
+    expect(screen.getByTestId('voice-video-recorder-video')).toBeDisabled();
+  });
+
+  it('opens the consent dialog — it ships inside the recorder, not the panel', async () => {
+    render(
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
+    );
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    expect(await screen.findByTestId('media-recording-consent-confirm')).toBeInTheDocument();
+  });
+
+  it('hands a finished recording to onIngestFiles', async () => {
+    const onIngestFiles = vi.fn();
+    render(
+      withQueryClient(
+        <InThreadComparePanel
+          {...baseProps}
+          allowJudgeMode
+          allowResearchMode
+          onIngestFiles={onIngestFiles}
+        />,
+      ),
+    );
+    fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
+    fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
+    await waitFor(() => {
+      expect(screen.getByTestId('voice-video-recorder-stop')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('voice-video-recorder-stop'));
+    await waitFor(() => {
+      expect(onIngestFiles).toHaveBeenCalledTimes(1);
+    });
+    const [files] = onIngestFiles.mock.calls[0] as [File[]];
+    expect(files[0]).toBeInstanceOf(File);
   });
 });
