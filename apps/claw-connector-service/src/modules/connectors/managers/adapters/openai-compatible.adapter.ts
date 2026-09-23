@@ -25,7 +25,7 @@ import {
 const logger = new Logger('OpenAICompatibleAdapter');
 
 /**
- * One adapter for every OpenAI-compatible preset (ADR-116).
+ * One adapter for every OpenAI-compatible preset (ADR-117).
  *
  * Everything provider-specific — base URL, model-list endpoint and shape,
  * health endpoint, static catalogue, tool and vision rules — comes from the

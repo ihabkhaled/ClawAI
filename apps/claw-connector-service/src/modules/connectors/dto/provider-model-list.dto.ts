@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Inbound contracts for OpenAI-compatible preset model lists (ADR-116).
+// Inbound contracts for OpenAI-compatible preset model lists (ADR-117).
 //
 // These validate a THIRD PARTY's response, so every field but the id is
 // optional and nullable, and unknown fields are dropped. Entries are parsed one

@@ -237,7 +237,7 @@ Each cloud provider has specific API patterns:
 - **Routing integration**: GROK is included in the fallback chain and capability priority map
 - **Cost tier**: $3.00/$15.00 per 1M tokens (input/output) — same tier as Anthropic
 
-### OpenAI-compatible presets (ADR-116)
+### OpenAI-compatible presets (ADR-117)
 
 15 more providers — OpenRouter, Groq, Cerebras, SambaNova, DeepInfra,
 Fireworks, Together, Mistral, Moonshot, Z.ai, Qwen, Cloudflare Workers AI,

@@ -27,13 +27,13 @@ affected_workspaces:
     apps/claw-frontend,
   ]
 required_tests: [connector-presets.spec.ts case, adapter spec case if the response shape is new]
-required_docs: [docs/13-adr/adr-116-connector-presets-one-registry-generic-adapter.md]
+required_docs: [docs/13-adr/adr-117-connector-presets-one-registry-generic-adapter.md]
 validation_lane: cd packages/shared-utilities && npm run typecheck && npm run lint && npm test && npm run build
 ---
 
 # Skill: Add an OpenAI-compatible provider
 
-Since ADR-116, an OpenAI-compatible provider (one whose API answers
+Since ADR-117, an OpenAI-compatible provider (one whose API answers
 `GET {baseUrl}/models` and takes `Authorization: Bearer <key>`, or close to
 it) is **one entry in `CONNECTOR_PRESETS`**, not a new adapter class. This
 covers the 15 presets: OpenRouter, Groq, Cerebras, SambaNova, DeepInfra,

@@ -15,7 +15,7 @@ export type ConnectorPresetLinks = {
 };
 
 /**
- * One provider an administrator can connect in a single step (ADR-116).
+ * One provider an administrator can connect in a single step (ADR-117).
  *
  * The registry of these (`CONNECTOR_PRESETS` in `@claw/shared-utilities`) is
  * the ONLY place a preset's base URL, display name and links are written. The

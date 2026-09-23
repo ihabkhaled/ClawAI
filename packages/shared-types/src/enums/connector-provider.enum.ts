@@ -4,7 +4,7 @@
  * The first eight have bespoke adapters. Everything after LLAMACPP is an
  * OpenAI-compatible preset: its base URL, links and model-list shape live in
  * one registry entry (`CONNECTOR_PRESETS` in `@claw/shared-utilities`), and
- * connector-service serves all of them through one generic adapter (ADR-116).
+ * connector-service serves all of them through one generic adapter (ADR-117).
  *
  * Three copies must stay in step: this enum, the `ConnectorProvider` Prisma
  * enum in claw-connector-service, and `RouterProvider` in claw-routing-service.

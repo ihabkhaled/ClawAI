@@ -52,7 +52,7 @@ export const COHERE_CHAT_ENDPOINT = 'chat';
  * Every OpenAI-compatible provider an administrator can connect in one step.
  *
  * THE ONLY place these base URLs, display names and links are written
- * (ADR-116). Consumers derive from it:
+ * (ADR-117). Consumers derive from it:
  * - the admin connector form prefills from it and renders the four links;
  * - connector-service's OpenAICompatibleAdapter health-checks and syncs from it;
  * - chat-service falls back to `defaultBaseUrl` when a connector row has none;

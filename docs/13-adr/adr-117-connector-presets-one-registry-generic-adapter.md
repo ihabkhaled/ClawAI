@@ -1,4 +1,4 @@
-# ADR-116: OpenAI-compatible connector presets are one registry and one adapter
+# ADR-117: OpenAI-compatible connector presets are one registry and one adapter
 
 **Status**: Accepted
 **Date**: 2026-09-23

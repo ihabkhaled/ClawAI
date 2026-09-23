@@ -25,7 +25,7 @@ import { MICRO_USD_PER_USD } from './billing.constants';
  * without a six-container rebuild (ADR-082).
  *
  * Every OpenAI-compatible preset bills per token, so each one is listed here
- * too (ADR-116). This also keeps auth-service's connector-outage fallback
+ * too (ADR-117). This also keeps auth-service's connector-outage fallback
  * conservative: a preset provider is metered, never silently free. The list
  * must include every preset whose `defaultIsPayAsYouGo` is true — enforced by
  * `connector-presets.spec.ts` in `@claw/shared-utilities`, which cannot be

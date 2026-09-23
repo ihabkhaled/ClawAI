@@ -10,7 +10,7 @@ import { ConnectorProvider } from '../../../generated/prisma';
  * so the mapping is written out once, here, rather than derived.
  *
  * The bespoke providers are written out here. Every OpenAI-compatible preset
- * takes its name from the preset registry (ADR-116), whose own test proves each
+ * takes its name from the preset registry (ADR-117), whose own test proves each
  * non-bespoke enum value has one — so the table stays complete without the
  * names being typed twice. The service still falls back to the raw value.
  */

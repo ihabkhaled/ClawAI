@@ -24,7 +24,7 @@ import { type PresetModelListEntry } from '../types/provider-api.types';
 import { formatModelDisplayName } from './model-display-name.utility';
 
 /**
- * Flattens any preset's model-list body into one entry shape (ADR-116).
+ * Flattens any preset's model-list body into one entry shape (ADR-117).
  *
  * Throws when the envelope itself is wrong — a provider that changed its
  * response shape must fail the sync loudly rather than "succeed" with zero

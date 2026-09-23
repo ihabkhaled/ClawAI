@@ -214,7 +214,7 @@ describe('ConnectorsService', () => {
     });
 
     // A preset provider bills per token like OpenAI does, so it starts metered;
-    // an administrator with a free-tier key opts it out (ADR-116).
+    // an administrator with a free-tier key opts it out (ADR-117).
     it('meters an OpenAI-compatible preset by default and stores its account id', async () => {
       connectorsRepo.create.mockResolvedValue(mockConnector);
 

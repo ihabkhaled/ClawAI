@@ -1,4 +1,4 @@
--- OpenAI-compatible connector presets (ADR-116).
+-- OpenAI-compatible connector presets (ADR-117).
 --
 -- Each preset is an explicit enum value so routing, cost rows, PAYG policy and
 -- judge parsing keep keying on the provider name. ADD VALUE is additive and

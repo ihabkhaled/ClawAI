@@ -82,7 +82,7 @@ export interface OllamaProbeChatResponse {
 
 /**
  * One model from any OpenAI-compatible preset's list, flattened to the fields
- * the generic adapter reads (ADR-116). Every field but `id` is optional
+ * the generic adapter reads (ADR-117). Every field but `id` is optional
  * because each provider reports a different subset: OpenRouter the
  * architecture, Vercel `type`/`tags`/`modalities`, Mistral `capabilities`,
  * DeepInfra `metadata.tags`, Cohere `endpoints`/`features`, Cloudflare a task.

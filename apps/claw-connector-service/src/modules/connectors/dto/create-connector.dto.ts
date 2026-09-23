@@ -7,7 +7,7 @@ import { ConnectorAuthType, ConnectorProvider } from '../../../generated/prisma'
 
 // Cloudflare's account id is spliced into the request PATH of every outbound
 // call, so it is normalised and then held to exactly 32 hex characters here —
-// before it is stored, not only when it is used (ADR-116).
+// before it is stored, not only when it is used (ADR-117).
 export const connectorAccountIdSchema = z
   .string()
   .trim()

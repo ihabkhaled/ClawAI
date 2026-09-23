@@ -13,7 +13,7 @@ import { OpenAICompatibleAdapter } from './openai-compatible.adapter';
 
 // Keyed by the provider STRING: the registry's keys are the shared-types enum
 // and the connector row's are the Prisma enum — the same values, two nominal
-// types. Every preset gets the one generic adapter (ADR-116).
+// types. Every preset gets the one generic adapter (ADR-117).
 const adapters = new Map<string, ProviderAdapter>([
   [ConnectorProvider.OPENAI, new OpenAIAdapter()],
   [ConnectorProvider.ANTHROPIC, new AnthropicAdapter()],

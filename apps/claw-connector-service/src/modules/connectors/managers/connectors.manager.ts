@@ -174,7 +174,7 @@ export class ConnectorsManager {
   /**
    * The config chat-service executes with. For an OpenAI-compatible preset the
    * base URL is resolved HERE — the connector's own URL or the preset default,
-   * with `{ACCOUNT_ID}` filled — so no caller ever sees a template (ADR-116).
+   * with `{ACCOUNT_ID}` filled — so no caller ever sees a template (ADR-117).
    * Bespoke providers pass through unchanged; chat-service keeps its own
    * defaults for those.
    */

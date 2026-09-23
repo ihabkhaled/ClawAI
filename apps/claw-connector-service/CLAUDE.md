@@ -177,7 +177,7 @@ infrastructure at all — no `prisma/seed.js`, no `SeedExecution` model, no
 `prisma.seed` package.json entry — and `tools/release/seed-versioned.mjs` skips
 it. A seeder here is a file nothing runs.
 
-## OpenAI-compatible connector presets (ADR-116)
+## OpenAI-compatible connector presets (ADR-117)
 
 15 providers (OpenRouter, Groq, Cerebras, SambaNova, DeepInfra, Fireworks,
 Together, Mistral, Moonshot, Z.ai, Qwen, Cloudflare Workers AI, Vercel AI

@@ -226,7 +226,7 @@ describe('createConnectorSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  describe('OpenAI-compatible presets (ADR-116)', () => {
+  describe('OpenAI-compatible presets (ADR-117)', () => {
     const accountId = '0123456789abcdef0123456789abcdef';
 
     it.each([

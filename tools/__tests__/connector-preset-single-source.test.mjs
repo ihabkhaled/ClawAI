@@ -4,7 +4,7 @@ import test from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
 
-// Enforcement for ADR-116: CONNECTOR_PRESETS is the ONLY place an
+// Enforcement for ADR-117: CONNECTOR_PRESETS is the ONLY place an
 // OpenAI-compatible preset's display name or default base URL is written.
 //
 // It lives HERE, not beside the registry, for the same reason
