@@ -520,6 +520,8 @@ export type TranslationDictionary = {
       added: string;
       uploading: string;
       dropToAttach: string;
+      voiceNote: string;
+      videoNote: string;
     };
     recorder: {
       recordVoice: string;

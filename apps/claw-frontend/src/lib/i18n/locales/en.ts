@@ -563,6 +563,8 @@ export const en: TranslationDictionary = {
       added: 'Attached {name}',
       uploading: 'Uploading attachment…',
       dropToAttach: 'Drop files to attach',
+      voiceNote: 'Voice note',
+      videoNote: 'Video note',
     },
     // B6c — composer voice / video notes.
     recorder: {
@@ -1904,7 +1906,7 @@ export const en: TranslationDictionary = {
       anthropicNativePdf: 'PDF sent natively to Anthropic',
     },
     ranking: {
-      title: 'Judge\'s ranking',
+      title: "Judge's ranking",
       judgedBy: 'Judged by {model}',
       method: 'Scored on a shared 0–{max} scale.',
       tie: 'Tied for first place.',
@@ -1913,9 +1915,9 @@ export const en: TranslationDictionary = {
       winner: 'Winner',
       score: '{score}/{max}',
       critic: 'Critic: {summary}',
-      answerTruncated: 'This answer was shortened to fit the judge\'s context window.',
+      answerTruncated: "This answer was shortened to fit the judge's context window.",
       rationale: 'Rationale',
-      truncatedNotice: 'Some answers were shortened to fit the judge\'s context window.',
+      truncatedNotice: "Some answers were shortened to fit the judge's context window.",
       callFailed: 'The judge could not be reached, so no ranking is available.',
       unavailable: 'The judge could not produce a ranking.',
       notEnough: 'Not enough completed answers to compare.',

@@ -190,6 +190,75 @@ describe('ContextAssemblyManager attachment decoding', () => {
     });
   });
 
+  // The defect this block exists to prevent from returning:
+  //
+  // An audio row reaches FileIngestionStatus.COMPLETED the instant the upload
+  // is stored, with extractedText set to the "[Audio file: x.mp3]" placeholder
+  // — transcription runs later, out of band. decodeFileContent used to treat
+  // that placeholder as real extracted text (non-empty, not an image) and hand
+  // it to the model verbatim: "ATTACHED FILE... [Audio file: memo.mp3]". A
+  // model reading that bracketed string sees nothing it can act on and answers
+  // as though no attachment exists at all — exactly the live bug report.
+  describe('voice notes', () => {
+    const buildAudioFile = (overrides: Partial<FileContentResponse> = {}): FileContentResponse =>
+      buildFile({
+        filename: 'memo.mp3',
+        mimeType: 'audio/mpeg',
+        content: 'ID3AAAAAA',
+        ...overrides,
+      });
+
+    it('never leaks the raw "[Audio file: ...]" placeholder into the prompt', () => {
+      const result = decode(
+        buildAudioFile({ extractedText: '[Audio file: memo.mp3]', ingestionStatus: 'COMPLETED' }),
+      );
+
+      expect(result).not.toContain('[Audio file:');
+    });
+
+    it('tells the model a voice note still carrying the placeholder is still being transcribed', () => {
+      const result = decode(
+        buildAudioFile({ extractedText: '[Audio file: memo.mp3]', ingestionStatus: 'COMPLETED' }),
+      );
+
+      expect(result).toContain('being transcribed');
+      expect(result).not.toContain('no content');
+    });
+
+    it('frames a real transcript as spoken words, not a typed document', () => {
+      const result = decode(
+        buildAudioFile({
+          extractedText: 'I need this by Friday, thanks.',
+          ingestionStatus: 'COMPLETED',
+        }),
+      );
+
+      expect(result).toContain('voice note');
+      expect(result).toContain('I need this by Friday, thanks.');
+    });
+
+    it('never frames the still-placeholder text as a finished transcript', () => {
+      const result = decode(
+        buildAudioFile({ extractedText: '[Audio file: memo.mp3]', ingestionStatus: 'COMPLETED' }),
+      );
+
+      expect(result).not.toContain('voice note sent');
+    });
+
+    it('passes the specific failure reason through when transcription failed', () => {
+      const result = decode(
+        buildAudioFile({
+          extractedText: '[Audio file: memo.mp3]',
+          ingestionStatus: 'COMPLETED',
+          extractionError: 'Audio transcription failed: provider timed out',
+        }),
+      );
+
+      expect(result).toContain('provider timed out');
+      expect(result).toContain('do not guess');
+    });
+  });
+
   // A file-service that predates ADR-095 does not send the new fields at all.
   describe('older file-service payloads', () => {
     it('falls back to decoding a text file when the new fields are absent', () => {

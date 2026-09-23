@@ -97,6 +97,16 @@ the caller's own, the same rule `FilesService.getFile` uses.
 ownership check, which is a second reason not to route attachment content
 through it.
 
+`/ingestion-state` does not always echo the persisted `File.ingestionStatus`
+column. An audio row reaches `COMPLETED` the instant the upload lands — see
+"Audio transcription" below — with `extractedText` still the `[Audio file: …]`
+placeholder; transcription runs later, out of band. `FilesService#effectiveIngestionStatus`
+reports `PROCESSING` (or `FAILED`, once `extractionError` is set) for exactly
+that row, WITHOUT touching the persisted column, so chat-service's bounded
+`waitForIngestion` poll actually waits for the transcript instead of seeing
+`COMPLETED` on the first poll and moving on. `getFileContent` and every other
+reader of the real column are unaffected.
+
 ## Upload and Chunking Flow
 
 1. **Upload** -- file is received and saved to `FILE_STORAGE_PATH`

@@ -91,17 +91,34 @@ Full reasoning:
     and degrades rather than throws.** An attempt count turns a slow dependency
     into an unbounded wait; a throw turns a degraded reply into no reply.
 
+12. **`COMPLETED` can mean "the row is coherent", not "the text is final" —
+    and a reader that assumes the second reading is how a voice note reaches
+    the model as nothing.** An audio upload reaches `FileIngestionStatus.COMPLETED`
+    the instant it is stored, with `extractedText` set to the
+    `[Audio file: …]` placeholder (`AUDIO_PLACEHOLDER_PREFIX` in file-service's
+    `transcription.constants.ts`, mirrored as `AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX`
+    in chat-service's `voice-note.constants.ts` — see that file for why it is a
+    deliberate two-copy literal, not a shared-package export) — the row is
+    downloadable and usable immediately,
+    and the real transcript lands later, out of band, over
+    `FILE_TRANSCRIBE_REQUESTED`. `getIngestionState` reports this case as
+    `PROCESSING` (never touching the persisted column) specifically so rule 5's
+    bounded wait applies to it too; `decodeFileContent` never hands the
+    placeholder string to the model as if it were the transcript. See
+    [`skills/add-a-voice-note-or-transcription-path.md`](../skills/add-a-voice-note-or-transcription-path.md#solved-a-voice-note-reaching-the-model-as-nothing-2026-09-23).
+
 ## How this is enforced
 
-| Rule    | Mechanism                                                                                                                                                                        |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1, 5, 6 | `context-assembly-attachments.spec.ts` — asserts extracted text is preferred, and that unfinished and failed states are distinguished                                            |
-| 2, 3, 4 | `files.service-extraction.spec.ts` — asserts both upload paths start extraction, that the upload does not wait, and that text and status land together                           |
-| 7       | `file-delivery.utility.spec.ts` — asserts the extractable documents record as `EXTRACTED_TEXT` and that `OMITTED_UNSUPPORTED` stays reserved for formats with no extraction path |
-| 8       | `ooxml-parser.utility.spec.ts`, `rtf-parser.utility.spec.ts` — real containers, not mocks                                                                                        |
-| 9       | `ooxml-parser.utility.spec.ts` "archive bounds" — entry count and inflation caps                                                                                                 |
-| 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                  |
-| 10      | The migration carries no backfill, and says why in its own comment                                                                                                               |
+| Rule    | Mechanism                                                                                                                                                                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1, 5, 6 | `context-assembly-attachments.spec.ts` — asserts extracted text is preferred, and that unfinished and failed states are distinguished                                                                                                                                                                         |
+| 2, 3, 4 | `files.service-extraction.spec.ts` — asserts both upload paths start extraction, that the upload does not wait, and that text and status land together                                                                                                                                                        |
+| 7       | `file-delivery.utility.spec.ts` — asserts the extractable documents record as `EXTRACTED_TEXT` and that `OMITTED_UNSUPPORTED` stays reserved for formats with no extraction path                                                                                                                              |
+| 8       | `ooxml-parser.utility.spec.ts`, `rtf-parser.utility.spec.ts` — real containers, not mocks                                                                                                                                                                                                                     |
+| 9       | `ooxml-parser.utility.spec.ts` "archive bounds" — entry count and inflation caps                                                                                                                                                                                                                              |
+| 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                                                                                                                                               |
+| 10      | The migration carries no backfill, and says why in its own comment                                                                                                                                                                                                                                            |
+| 12      | `files.service-extraction.spec.ts` "an audio row still carrying the transcription placeholder" — asserts `PROCESSING`/`FAILED` reporting without touching the row; `context-assembly-attachments.spec.ts` "voice notes" — asserts the placeholder never leaks and a real transcript is framed as spoken words |
 
 ## Runbook
 

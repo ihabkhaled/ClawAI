@@ -571,6 +571,8 @@ export const es: TranslationDictionary = {
       added: '{name} adjuntado',
       uploading: 'Subiendo adjunto…',
       dropToAttach: 'Suelta archivos para adjuntar',
+      voiceNote: 'Nota de voz',
+      videoNote: 'Nota de vídeo',
     },
     // B6c — composer voice / video notes.
     recorder: {
@@ -1946,7 +1948,8 @@ export const es: TranslationDictionary = {
       critic: 'Crítico: {summary}',
       answerTruncated: 'Esta respuesta se acortó para ajustarse a la ventana de contexto del juez.',
       rationale: 'Justificación',
-      truncatedNotice: 'Algunas respuestas se acortaron para ajustarse a la ventana de contexto del juez.',
+      truncatedNotice:
+        'Algunas respuestas se acortaron para ajustarse a la ventana de contexto del juez.',
       callFailed: 'No se pudo contactar al juez, por lo que no hay clasificación disponible.',
       unavailable: 'El juez no pudo generar una clasificación.',
       notEnough: 'No hay suficientes respuestas completadas para comparar.',

@@ -576,6 +576,8 @@ export const de: TranslationDictionary = {
       added: '{name} angehängt',
       uploading: 'Anhang wird hochgeladen…',
       dropToAttach: 'Dateien zum Anhängen ablegen',
+      voiceNote: 'Sprachnotiz',
+      videoNote: 'Videonotiz',
     },
     // B6c — composer voice / video notes.
     recorder: {
@@ -1953,9 +1955,11 @@ export const de: TranslationDictionary = {
       winner: 'Gewinner',
       score: '{score}/{max}',
       critic: 'Kritiker: {summary}',
-      answerTruncated: 'Diese Antwort wurde gekürzt, um in das Kontextfenster des Richters zu passen.',
+      answerTruncated:
+        'Diese Antwort wurde gekürzt, um in das Kontextfenster des Richters zu passen.',
       rationale: 'Begründung',
-      truncatedNotice: 'Einige Antworten wurden gekürzt, um in das Kontextfenster des Richters zu passen.',
+      truncatedNotice:
+        'Einige Antworten wurden gekürzt, um in das Kontextfenster des Richters zu passen.',
       callFailed: 'Der Richter konnte nicht erreicht werden, daher liegt keine Bewertung vor.',
       unavailable: 'Der Richter konnte keine Bewertung erstellen.',
       notEnough: 'Nicht genug abgeschlossene Antworten zum Vergleichen.',

@@ -57,6 +57,16 @@ export const TRANSCRIPTION_CAPABILITY_CACHE_TTL_MS = 60_000;
  * Prefix of the placeholder `FileProcessingManager` writes for an audio upload.
  * Used in two directions: to BUILD it there, and to RECOGNISE it here, so a row
  * still carrying the placeholder is not mistaken for an already-transcribed one.
+ *
+ * claw-chat-service needs this exact literal too (`ContextAssemblyManager`'s
+ * "still being transcribed" framing) and keeps its own copy — a shared-package
+ * export was tried and reverted: touching `@claw/shared-constants` marks EVERY
+ * service "affected" for the pre-commit gate, which then requires a generated
+ * Prisma client for all 18 of them. A one-line string literal is not worth
+ * that fan-out; the two copies are each covered by a test that pins the exact
+ * value (`transcription.manager.spec.ts` here,
+ * `context-assembly-attachments.spec.ts` in chat-service), so a future edit to
+ * either format breaks a test rather than silently drifting.
  */
 export const AUDIO_PLACEHOLDER_PREFIX = '[Audio file: ';
 

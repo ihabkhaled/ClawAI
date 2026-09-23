@@ -572,6 +572,8 @@ export const fr: TranslationDictionary = {
       added: '{name} joint',
       uploading: 'Téléversement de la pièce jointe…',
       dropToAttach: 'Déposez des fichiers à joindre',
+      voiceNote: 'Note vocale',
+      videoNote: 'Note vidéo',
     },
     // B6c — composer voice / video notes.
     recorder: {
@@ -1948,9 +1950,11 @@ export const fr: TranslationDictionary = {
       winner: 'Gagnant',
       score: '{score}/{max}',
       critic: 'Critique : {summary}',
-      answerTruncated: 'Cette réponse a été raccourcie pour tenir dans la fenêtre de contexte du juge.',
+      answerTruncated:
+        'Cette réponse a été raccourcie pour tenir dans la fenêtre de contexte du juge.',
       rationale: 'Justification',
-      truncatedNotice: 'Certaines réponses ont été raccourcies pour tenir dans la fenêtre de contexte du juge.',
+      truncatedNotice:
+        'Certaines réponses ont été raccourcies pour tenir dans la fenêtre de contexte du juge.',
       callFailed: 'Le juge était injoignable, aucun classement n’est disponible.',
       unavailable: 'Le juge n’a pas pu produire de classement.',
       notEnough: 'Pas assez de réponses terminées pour comparer.',

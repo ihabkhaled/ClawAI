@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 // The defect this file exists to prevent from returning:
 //
 // FileProcessingManager was complete and correct, and nothing on the upload path
@@ -261,6 +261,87 @@ describe('FilesService extraction wiring', () => {
       filesRepo['findById']?.mockResolvedValue(buildFile({ userId: 'someone-else' }));
 
       await expect(service.getIngestionState('file-1', USER_ID)).rejects.toThrow();
+    });
+
+    // The defect this block exists to prevent from returning:
+    //
+    // TranscriptionManager writes FileIngestionStatus.COMPLETED the instant an
+    // audio upload lands, with extractedText set to the "[Audio file: …]"
+    // placeholder — the real transcript arrives later, out of band. Reporting
+    // that COMPLETED verbatim told chat-service's bounded wait the text was
+    // final, so it stopped waiting immediately and the model was handed the
+    // literal placeholder string as if it were the transcript — the live bug
+    // report: a voice note that reached the model as nothing.
+    describe('an audio row still carrying the transcription placeholder', () => {
+      it('reports PROCESSING instead of the persisted COMPLETED, so chat-service keeps waiting', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          buildFile({
+            mimeType: 'audio/mpeg',
+            ingestionStatus: 'COMPLETED',
+            extractedText: '[Audio file: memo.mp3]',
+            extractionError: null,
+          }),
+        );
+
+        const state = await service.getIngestionState('file-1', USER_ID);
+
+        expect(state.ingestionStatus).toBe('PROCESSING');
+      });
+
+      it('reports FAILED, not PROCESSING, once transcription has actually failed', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          buildFile({
+            mimeType: 'audio/mpeg',
+            ingestionStatus: 'COMPLETED',
+            extractedText: '[Audio file: memo.mp3]',
+            extractionError: 'Audio transcription failed: provider timed out',
+          }),
+        );
+
+        const state = await service.getIngestionState('file-1', USER_ID);
+
+        expect(state.ingestionStatus).toBe('FAILED');
+      });
+
+      it('reports COMPLETED, unchanged, once a real transcript has landed', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          buildFile({
+            mimeType: 'audio/mpeg',
+            ingestionStatus: 'COMPLETED',
+            extractedText: 'I need this by Friday, thanks.',
+            extractionError: null,
+          }),
+        );
+
+        const state = await service.getIngestionState('file-1', USER_ID);
+
+        expect(state.ingestionStatus).toBe('COMPLETED');
+      });
+
+      it('never touches the persisted row, only what is reported', async () => {
+        const file = buildFile({
+          mimeType: 'audio/mpeg',
+          ingestionStatus: 'COMPLETED',
+          extractedText: '[Audio file: memo.mp3]',
+          extractionError: null,
+        });
+        filesRepo['findById']?.mockResolvedValue(file);
+
+        await service.getIngestionState('file-1', USER_ID);
+
+        expect(filesRepo['saveExtractionResult']).not.toHaveBeenCalled();
+        expect(filesRepo['updateIngestionStatus']).not.toHaveBeenCalled();
+      });
+
+      it('leaves a non-audio COMPLETED row alone', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          buildFile({ mimeType: PDF_MIME, ingestionStatus: 'COMPLETED', extractedText: 'body' }),
+        );
+
+        const state = await service.getIngestionState('file-1', USER_ID);
+
+        expect(state.ingestionStatus).toBe('COMPLETED');
+      });
     });
   });
 });

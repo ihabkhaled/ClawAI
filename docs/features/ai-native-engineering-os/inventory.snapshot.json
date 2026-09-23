@@ -7568,7 +7568,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 6784,
+          "bytes": 9415,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -7690,7 +7690,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 5880,
+          "bytes": 10438,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
@@ -8004,7 +8004,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5335
+        "value": 5337
       },
       "localeCount": 13,
       "locales": [

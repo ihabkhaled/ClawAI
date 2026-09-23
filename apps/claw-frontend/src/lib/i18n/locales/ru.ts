@@ -571,6 +571,8 @@ export const ru: TranslationDictionary = {
       added: '{name} прикреплён',
       uploading: 'Загрузка вложения…',
       dropToAttach: 'Перетащите файлы для прикрепления',
+      voiceNote: 'Голосовая заметка',
+      videoNote: 'Видеозаметка',
     },
     // B6c — composer voice / video notes.
     recorder: {
@@ -1940,7 +1942,8 @@ export const ru: TranslationDictionary = {
       critic: 'Критик: {summary}',
       answerTruncated: 'Этот ответ был сокращён, чтобы вместиться в контекстное окно судьи.',
       rationale: 'Обоснование',
-      truncatedNotice: 'Некоторые ответы были сокращены, чтобы вместиться в контекстное окно судьи.',
+      truncatedNotice:
+        'Некоторые ответы были сокращены, чтобы вместиться в контекстное окно судьи.',
       callFailed: 'Не удалось связаться с судьёй, поэтому рейтинг недоступен.',
       unavailable: 'Судья не смогла составить рейтинг.',
       notEnough: 'Недостаточно завершённых ответов для сравнения.',

@@ -18,11 +18,16 @@ vi.mock('@/lib/i18n/use-translation', () => ({
         'files.statusProcessing': 'Processing',
         'files.statusCompleted': 'Completed',
         'files.statusFailed': 'Failed',
+        'chat.attachment.voiceNote': 'Voice note',
+        'chat.attachment.videoNote': 'Video note',
       })[key] ?? `MISSING:${key}`,
   }),
 }));
 
-function makeFile(ingestionStatus: FileIngestionStatus): UploadedFile {
+function makeFile(
+  ingestionStatus: FileIngestionStatus,
+  overrides: Partial<UploadedFile> = {},
+): UploadedFile {
   return {
     id: 'file-1',
     filename: 'resume.pdf',
@@ -30,16 +35,17 @@ function makeFile(ingestionStatus: FileIngestionStatus): UploadedFile {
     sizeBytes: 2035,
     ingestionStatus,
     createdAt: '2026-09-12T00:00:00Z',
+    ...overrides,
   } as UploadedFile;
 }
 
 // The row is a Radix menu item, so it needs its menu context to mount at all.
-function renderRow(status: FileIngestionStatus): void {
+function renderRow(status: FileIngestionStatus, overrides: Partial<UploadedFile> = {}): void {
   render(
     <DropdownMenu open>
       <DropdownMenuContent>
         <FileAttachmentRow
-          file={makeFile(status)}
+          file={makeFile(status, overrides)}
           checked={false}
           indented={false}
           onToggle={vi.fn()}
@@ -82,5 +88,35 @@ describe('FileAttachmentRow', () => {
     renderRow(FileIngestionStatus.COMPLETED);
 
     expect(screen.getByText('resume.pdf')).toBeInTheDocument();
+  });
+
+  // A voice/video note must be visually distinct from an ordinary document —
+  // it is something the user said, not something they attached.
+  describe('voice and video notes', () => {
+    it('labels an audio attachment as a voice note', () => {
+      renderRow(FileIngestionStatus.COMPLETED, { mimeType: 'audio/mpeg', filename: 'memo.mp3' });
+
+      expect(screen.getByText('Voice note')).toBeInTheDocument();
+    });
+
+    it('labels a video attachment as a video note', () => {
+      renderRow(FileIngestionStatus.COMPLETED, { mimeType: 'video/webm', filename: 'clip.webm' });
+
+      expect(screen.getByText('Video note')).toBeInTheDocument();
+    });
+
+    it('never labels an ordinary document as a voice or video note', () => {
+      renderRow(FileIngestionStatus.COMPLETED);
+
+      expect(screen.queryByText('Voice note')).not.toBeInTheDocument();
+      expect(screen.queryByText('Video note')).not.toBeInTheDocument();
+    });
+
+    it('still shows the processing/failed status text for an in-flight voice note', () => {
+      renderRow(FileIngestionStatus.PROCESSING, { mimeType: 'audio/mpeg', filename: 'memo.mp3' });
+
+      expect(screen.getByText('Processing')).toBeInTheDocument();
+      expect(screen.getByText('Voice note')).toBeInTheDocument();
+    });
   });
 });

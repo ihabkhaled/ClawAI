@@ -565,6 +565,8 @@ export const fa: TranslationDictionary = {
       added: '{name} پیوست شده است',
       uploading: 'در حال بارگذاری پیوست…',
       dropToAttach: 'فایل ها را برای پیوست رها کنید',
+      voiceNote: 'یادداشت صوتی',
+      videoNote: 'یادداشت ویدیویی',
     },
     // B6c — composer voice / video notes.
     recorder: {

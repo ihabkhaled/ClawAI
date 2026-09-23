@@ -1,5 +1,7 @@
 import {
   Archive,
+  CheckCircle2,
+  Clock,
   File as FileIcon,
   FileAudio,
   FileCode,
@@ -7,9 +9,13 @@ import {
   FileSpreadsheet,
   FileText,
   FileVideo,
+  Loader2,
   type LucideIcon,
   Presentation,
+  XCircle,
 } from 'lucide-react';
+
+import { FileIngestionStatus } from '@/enums';
 
 type FileTypeDescriptor = {
   Icon: LucideIcon;
@@ -134,6 +140,35 @@ export function getFileTypeDescriptor(mimeType: string, filename: string): FileT
 
 export function isImageMime(mimeType: string): boolean {
   return (mimeType ?? '').toLowerCase().startsWith('image/');
+}
+
+export function isAudioMime(mimeType: string): boolean {
+  return (mimeType ?? '').toLowerCase().startsWith('audio/');
+}
+
+export function isVideoMime(mimeType: string): boolean {
+  return (mimeType ?? '').toLowerCase().startsWith('video/');
+}
+
+type IngestionStatusIcon = {
+  Icon: LucideIcon;
+  spin: boolean;
+};
+
+// Status must be told apart by more than color (rule: accessible, not color
+// alone) — every attachment row pairs this icon with the status TEXT already
+// served by `INGESTION_STATUS_LABELS`, matching the icon+text pattern used for
+// a generated file's own loading/completed/error states
+// (file-loading-state.tsx, file-completed-state.tsx, file-error-state.tsx).
+const INGESTION_STATUS_ICONS: Record<FileIngestionStatus, IngestionStatusIcon> = {
+  [FileIngestionStatus.PENDING]: { Icon: Clock, spin: false },
+  [FileIngestionStatus.PROCESSING]: { Icon: Loader2, spin: true },
+  [FileIngestionStatus.COMPLETED]: { Icon: CheckCircle2, spin: false },
+  [FileIngestionStatus.FAILED]: { Icon: XCircle, spin: false },
+};
+
+export function getIngestionStatusIcon(status: FileIngestionStatus): IngestionStatusIcon {
+  return INGESTION_STATUS_ICONS[status];
 }
 
 export function isTextLikeMime(mimeType: string, filename: string): boolean {

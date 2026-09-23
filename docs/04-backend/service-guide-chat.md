@@ -116,7 +116,15 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      Extraction is asynchronous, so a message sent the instant an upload returns
      would otherwise race it. Expiry degrades rather than throwing: the turn
      proceeds and the model is told the file is still being read. **This is a
-     blocking step inside the turn and it affects latency.**
+     blocking step inside the turn and it affects latency.** A voice note gets
+     the same wait: file-service reports it as `PROCESSING` for as long as
+     `extractedText` still holds the `[Audio file: …]` placeholder, even though
+     the row itself is `COMPLETED` from the moment the upload lands — see
+     [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md#solved-a-voice-note-reaching-the-model-as-nothing-2026-09-23).
+   - `decodeFileContent` frames a voice note's transcript as spoken words the
+     user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
+     document, and never leaks the transcription placeholder itself into the
+     prompt as if it were real content.
 5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
 6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)

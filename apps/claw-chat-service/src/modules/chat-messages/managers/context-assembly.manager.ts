@@ -69,6 +69,10 @@ import {
 } from '../constants/memory-retrieval.constants';
 import { type ModelTokenBudget } from '../types/context-composer.types';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import {
+  AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX,
+  VOICE_NOTE_TRANSCRIPT_FRAME,
+} from '../constants/voice-note.constants';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -301,12 +305,16 @@ ${evidence.snippet}`);
   /** Tool names the run reported, so the model can be told how it got this. */
   private extractResearchTools(run: ResearchRunResponse | null): string[] {
     const bundle = run?.bundle;
-    return bundle === undefined || bundle === null || !('toolsUsed' in bundle) ? [] : (bundle.toolsUsed as string[] | undefined) ?? [];
+    return bundle === undefined || bundle === null || !('toolsUsed' in bundle)
+      ? []
+      : ((bundle.toolsUsed as string[] | undefined) ?? []);
   }
 
   private extractResearchWarnings(run: ResearchRunResponse | null): string[] {
     const bundle = run?.bundle;
-    return bundle === undefined || bundle === null || !('warnings' in bundle) ? [] : (bundle.warnings as string[] | undefined) ?? [];
+    return bundle === undefined || bundle === null || !('warnings' in bundle)
+      ? []
+      : ((bundle.warnings as string[] | undefined) ?? []);
   }
 
   private async fetchAssembledInputs(args: {
@@ -485,20 +493,22 @@ ${evidence.snippet}`);
       research?: { runId?: string; bundle?: unknown };
     };
     const research = metadata.research;
-    return research?.runId === undefined || research.bundle === undefined ? null : {
-      id: research.runId,
-      userId: '',
-      requestedModel: null,
-      requestedProvider: null,
-      workflow: '',
-      intent: message.content ?? '',
-      status: 'COMPLETED',
-      bundle: research.bundle as ResearchRunResponse['bundle'],
-      trace: [],
-      errorMessage: null,
-      startedAt: '',
-      completedAt: null,
-    };
+    return research?.runId === undefined || research.bundle === undefined
+      ? null
+      : {
+          id: research.runId,
+          userId: '',
+          requestedModel: null,
+          requestedProvider: null,
+          workflow: '',
+          intent: message.content ?? '',
+          status: 'COMPLETED',
+          bundle: research.bundle as ResearchRunResponse['bundle'],
+          trace: [],
+          errorMessage: null,
+          startedAt: '',
+          completedAt: null,
+        };
   }
 
   private extractEvidenceCitations(run: ResearchRunResponse | null): ResearchEvidenceCitation[] {
@@ -561,9 +571,14 @@ ${evidence.snippet}`);
   }
 
   private formatFileBlocks(fileContents: AssembledContext['fileContents']): string[] {
-    return fileContents.map(
-      (file) =>
-        `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.decodeFileContent(file)}`,
+    // An audio file's decoded block is self-labelled ("VOICE NOTE …" or the
+    // still-transcribing / failed message) — wrapping it in the generic
+    // "ATTACHED FILE" prefix buried that label behind a wrapper that never
+    // says the word "voice" or "audio" at all.
+    return fileContents.map((file) =>
+      this.isAudioFile(file)
+        ? this.decodeFileContent(file)
+        : `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.decodeFileContent(file)}`,
     );
   }
 
@@ -695,7 +710,9 @@ ${evidence.snippet}`);
    * `research-grounding.constants.ts` for the measurement that forced this.
    */
   private withResearchGrounding(content: string): string {
-    return content.includes(RESEARCH_GROUNDING_MARKER) ? content : `${content}
+    return content.includes(RESEARCH_GROUNDING_MARKER)
+      ? content
+      : `${content}
 ${RESEARCH_GROUNDING_REMINDER}`;
   }
 
@@ -777,8 +794,13 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     }
     const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
     for (const file of textFiles) {
+      // Same reasoning as formatFileBlocks: an audio file's decoded block
+      // already carries its own voice-note framing (or the still-transcribing
+      // / failed message) — the generic "attached file" wrapper would bury it.
       parts.push(
-        `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.decodeFileContent(file)}`,
+        this.isAudioFile(file)
+          ? this.decodeFileContent(file)
+          : `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.decodeFileContent(file)}`,
       );
     }
     return parts;
@@ -806,6 +828,53 @@ ${RESEARCH_GROUNDING_REMINDER}`;
 
   private isVideoFile(file: FileContentResponse): boolean {
     return file.mimeType.startsWith('video/');
+  }
+
+  private isAudioFile(file: FileContentResponse): boolean {
+    return file.mimeType.startsWith('audio/');
+  }
+
+  private isAudioPlaceholder(text: string): boolean {
+    return text.startsWith(AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX);
+  }
+
+  /**
+   * What the model is told for a voice note.
+   *
+   * Three states, and they are told apart deliberately:
+   *
+   *   - A finished transcript is framed as SPOKEN words the user said, not a
+   *     document they typed (`VOICE_NOTE_TRANSCRIPT_FRAME`) — otherwise the
+   *     model has no reason to treat it any differently from a pasted file.
+   *   - A transcription failure states the reason, the same honesty
+   *     `decodeFileContent`'s FAILED branch already gives every other format.
+   *   - Still in flight (the row is COMPLETED but extractedText is still the
+   *     "[Audio file: …]" placeholder — see AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX)
+   *     is reported as unread, never silently dropped and never handed to the
+   *     model as if the placeholder string were the transcript.
+   *
+   * `ContextAssemblyManager#waitForIngestion` already gives an in-flight
+   * transcription up to FILE_INGESTION_WAIT_TIMEOUT_MS via
+   * `FilesService#effectiveIngestionStatus` reporting PROCESSING for exactly
+   * this case — the same bounded wait every other async-extracted format gets.
+   * This is what the model is told if that wait still was not enough: a long
+   * recording can legitimately take longer than the wait (up to
+   * TRANSCRIPTION_PROVIDER_TIMEOUT_MS on the file-service side), and the
+   * tradeoff taken here is the one already established for every other format
+   * — an honest "still being read" over either fabricating content or
+   * lengthening the wait for every message.
+   */
+  private decodeAudioContent(file: FileContentResponse): string {
+    const extracted = file.extractedText?.trim();
+    const stillPlaceholder = extracted !== undefined && this.isAudioPlaceholder(extracted);
+
+    if (extracted !== undefined && extracted.length > 0 && !stillPlaceholder) {
+      return `VOICE NOTE "${file.filename}": ${VOICE_NOTE_TRANSCRIPT_FRAME}\n\n${this.truncateFileText(extracted, file.filename)}`;
+    }
+
+    return file.extractionError !== null && file.extractionError !== undefined
+      ? `[Voice note "${file.filename}" could not be transcribed: ${file.extractionError}. Tell the user this specific reason; do not guess at what was said.]`
+      : `[Voice note "${file.filename}" is still being transcribed. Its spoken content was not available for this message — tell the user to send the message again in a moment rather than guessing at what was said.]`;
   }
 
   /**
@@ -1274,7 +1343,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     this.logger.debug(
       `truncateToTokenBudget: truncating from ${String(text.length)} to ${String(maxChars)} chars (budget=${String(tokenBudget)} tokens)`,
     );
-    return headChars === 0 ? text.slice(-maxChars) : `${text.slice(0, headChars)}\n\n[...truncated older context...]\n\n${text.slice(-tailChars)}`;
+    return headChars === 0
+      ? text.slice(-maxChars)
+      : `${text.slice(0, headChars)}\n\n[...truncated older context...]\n\n${text.slice(-tailChars)}`;
   }
 
   /**
@@ -1287,6 +1358,17 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    * paraphrased that sentence back to the user as a refusal. See ADR-095.
    */
   private decodeFileContent(file: FileContentResponse): string {
+    // Checked before the generic extracted-text branch below: an audio row's
+    // extractedText is the "[Audio file: …]" placeholder from the moment the
+    // upload lands, long before transcription has actually run. The generic
+    // branch cannot tell that string apart from real extracted text — it is
+    // non-empty and this is not an image — so it used to hand the literal
+    // placeholder to the model as if it were the transcript. See
+    // decodeAudioContent for what replaced that.
+    if (this.isAudioFile(file)) {
+      return this.decodeAudioContent(file);
+    }
+
     const extracted = file.extractedText?.trim();
     if (extracted !== undefined && extracted.length > 0 && !this.isImageFile(file)) {
       return this.truncateFileText(extracted, file.filename);
@@ -1320,7 +1402,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       return this.decodeAsText(file);
     }
 
-    return !file.content ? `[File "${file.filename}" has no content]` : `[File "${file.filename}" (${file.mimeType}) produced no readable text. Tell the user the format could not be read; do not guess at the contents.]`;
+    return !file.content
+      ? `[File "${file.filename}" has no content]`
+      : `[File "${file.filename}" (${file.mimeType}) produced no readable text. Tell the user the format could not be read; do not guess at the contents.]`;
   }
 
   /**
@@ -1333,7 +1417,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    */
   private describeImage(file: FileContentResponse): string {
     const extracted = file.extractedText?.trim();
-    return extracted !== undefined && extracted.length > 0 && !extracted.startsWith('[Image file:') ? `Text read from the image "${file.filename}":\n${this.truncateFileText(extracted, file.filename)}` : `[Image file "${file.filename}" — passed via multimodal images field]`;
+    return extracted !== undefined && extracted.length > 0 && !extracted.startsWith('[Image file:')
+      ? `Text read from the image "${file.filename}":\n${this.truncateFileText(extracted, file.filename)}`
+      : `[Image file "${file.filename}" — passed via multimodal images field]`;
   }
 
   private truncateFileText(text: string, filename: string): string {
@@ -1484,12 +1570,14 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     citations: WorkspaceCitation[],
     currentIntent: string,
   ): WorkspaceCitation[] {
-    return citations.length === 0 ? citations : citations
-      .filter((citation) => {
-        const combined = `${citation.title}\n${citation.snippet ?? ''}`;
-        return this.calculateTokenOverlap(combined, currentIntent) >= 0.12;
-      })
-      .slice(0, 4);
+    return citations.length === 0
+      ? citations
+      : citations
+          .filter((citation) => {
+            const combined = `${citation.title}\n${citation.snippet ?? ''}`;
+            return this.calculateTokenOverlap(combined, currentIntent) >= 0.12;
+          })
+          .slice(0, 4);
   }
 
   private isPreferenceLikeMemory(memory: MemoryRecordResponse): boolean {
@@ -1555,7 +1643,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
   private normalizeIntentText(value: string): string {
     const trimmed = value.trim();
     const commaIndex = trimmed.indexOf(',');
-    return trimmed.startsWith('As ') && commaIndex > 0 ? trimmed.slice(commaIndex + 1).trim() : trimmed;
+    return trimmed.startsWith('As ') && commaIndex > 0
+      ? trimmed.slice(commaIndex + 1).trim()
+      : trimmed;
   }
 
   private shouldSkipExpensiveContext(query: string, fileIds: string[]): boolean {

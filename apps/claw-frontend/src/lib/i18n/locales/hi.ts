@@ -565,6 +565,8 @@ export const hi: TranslationDictionary = {
       added: '{name} संलग्न किया गया',
       uploading: 'अनुलग्नक अपलोड हो रहा है…',
       dropToAttach: 'संलग्न करने के लिए फ़ाइलें छोड़ें',
+      voiceNote: 'वॉइस नोट',
+      videoNote: 'वीडियो नोट',
     },
     // B6c — composer voice / video notes.
     recorder: {

@@ -20,6 +20,7 @@ import {
   PUBLISHABLE_COPY_MIME_PREFIX,
 } from '../constants/published-copy.constants';
 import { EXTRACTION_REQUIRED_MIME_TYPES } from '../constants/file-processing.constants';
+import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
 import { type PublishedCopyResult } from '../types/published-copy.types';
 import { type PaginatedResult } from '../../../common/types';
 import { AppConfig } from '../../../app/config/app.config';
@@ -328,10 +329,49 @@ export class FilesService {
       id: file.id,
       filename: file.filename,
       mimeType: file.mimeType,
-      ingestionStatus: file.ingestionStatus,
+      ingestionStatus: this.effectiveIngestionStatus(file),
       extractionError: file.extractionError,
       extractedTextLength: file.extractedText?.length ?? 0,
     };
+  }
+
+  /**
+   * `file.ingestionStatus` alone lies for audio: `TranscriptionManager`
+   * deliberately writes `COMPLETED` the moment the upload lands, with
+   * `extractedText` set to the `[Audio file: …]` placeholder, because the row
+   * is a coherent, downloadable attachment before a single word has been
+   * transcribed (see transcription.constants.ts and the B6b comment on
+   * `TranscriptionManager`). The real transcript arrives later, out of band,
+   * over `FILE_TRANSCRIBE_REQUESTED`.
+   *
+   * chat-service's bounded wait before assembling a turn
+   * (`ContextAssemblyManager#waitForIngestion`) trusts this field to mean
+   * "the text is final". Reported `COMPLETED` verbatim, it stopped waiting
+   * immediately and handed the model the literal placeholder string as if it
+   * were the transcript — the model saw `[Audio file: memo.mp3]` and,
+   * reasonably, answered as though nothing had been attached. Reporting
+   * `PROCESSING` here instead — WITHOUT touching the persisted row — routes a
+   * voice note into the exact same bounded wait every other async-extracted
+   * format already gets, at no cost to what "COMPLETED" means anywhere else
+   * this field is read.
+   *
+   * A row with `extractionError` set has already failed and is not waited on
+   * again — the placeholder plus a reason is what a failed transcription looks
+   * like on disk, and is reported as `FAILED` for exactly this poll.
+   */
+  private effectiveIngestionStatus(file: File): FileIngestionStatus {
+    if (file.ingestionStatus !== FileIngestionStatus.COMPLETED) {
+      return file.ingestionStatus;
+    }
+    const stillPlaceholder =
+      file.mimeType.startsWith('audio/') &&
+      (file.extractedText ?? '').startsWith(AUDIO_PLACEHOLDER_PREFIX);
+    if (!stillPlaceholder) {
+      return file.ingestionStatus;
+    }
+    return file.extractionError !== null
+      ? FileIngestionStatus.FAILED
+      : FileIngestionStatus.PROCESSING;
   }
 
   async deleteFile(id: string, userId: string): Promise<File> {

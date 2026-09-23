@@ -543,6 +543,8 @@ export const zh: TranslationDictionary = {
       added: '附{name}',
       uploading: '正在上传附件...',
       dropToAttach: '拖放要附加的文件',
+      voiceNote: '语音留言',
+      videoNote: '视频留言',
     },
     // B6c — composer voice / video notes.
     recorder: {

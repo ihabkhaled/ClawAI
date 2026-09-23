@@ -557,6 +557,8 @@ export const ar: TranslationDictionary = {
       added: 'تم إرفاق {name}',
       uploading: 'جارٍ رفع المرفق…',
       dropToAttach: 'أفلِت الملفات للإرفاق',
+      voiceNote: 'ملاحظة صوتية',
+      videoNote: 'ملاحظة فيديو',
     },
     // B6c — composer voice / video notes.
     recorder: {
