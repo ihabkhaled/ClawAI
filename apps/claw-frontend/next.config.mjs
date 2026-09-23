@@ -82,8 +82,13 @@ const nextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
           {
+            // camera/microphone are `self`, not `()`: the chat recorder
+            // (voice and video notes) calls getUserMedia on our own origin, and
+            // `()` blocked it in every browser before the permission prompt
+            // could even appear. Third-party frames still get neither.
+            // nginx sends the same value — keep infra/nginx/*.conf in step.
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+            value: 'camera=(self), microphone=(self), geolocation=(), browsing-topics=()',
           },
           {
             key: 'Cross-Origin-Opener-Policy',

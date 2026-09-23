@@ -6,17 +6,17 @@ header is set, why, and how to change the policy safely.
 
 ## Where headers are set
 
-| Header                                    | Set in                            | Why there                                                                     |
-| ----------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------- |
-| `Content-Security-Policy`                 | `src/middleware.ts` (per request) | Carries a per-request nonce; must vary per response                           |
-| `Strict-Transport-Security`               | `next.config.mjs` `headers()`     | Static; whole stack is HTTPS (mkcert / real certs)                            |
-| `X-Content-Type-Options: nosniff`         | `next.config.mjs`                 | Static                                                                        |
-| `X-Frame-Options: DENY`                   | `next.config.mjs`                 | Static (CSP `frame-ancestors 'none'` is the modern equivalent; both are sent) |
-| `X-XSS-Protection: 0`                     | `next.config.mjs`                 | Legacy auditor disabled per OWASP; CSP is the real defence                    |
-| `Referrer-Policy`                         | `next.config.mjs`                 | Static                                                                        |
-| `Permissions-Policy`                      | `next.config.mjs`                 | Static; also disables `browsing-topics`                                       |
-| `Cross-Origin-Opener-Policy: same-origin` | `next.config.mjs`                 | Static                                                                        |
-| `X-Robots-Tag`                            | `src/middleware.ts`               | Non-public paths tagged `noindex`                                             |
+| Header                                    | Set in                                  | Why there                                                                                                                                                                                              |
+| ----------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Content-Security-Policy`                 | `src/middleware.ts` (per request)       | Carries a per-request nonce; must vary per response                                                                                                                                                    |
+| `Strict-Transport-Security`               | `next.config.mjs` `headers()`           | Static; whole stack is HTTPS (mkcert / real certs)                                                                                                                                                     |
+| `X-Content-Type-Options: nosniff`         | `next.config.mjs`                       | Static                                                                                                                                                                                                 |
+| `X-Frame-Options: DENY`                   | `next.config.mjs`                       | Static (CSP `frame-ancestors 'none'` is the modern equivalent; both are sent)                                                                                                                          |
+| `X-XSS-Protection: 0`                     | `next.config.mjs`                       | Legacy auditor disabled per OWASP; CSP is the real defence                                                                                                                                             |
+| `Referrer-Policy`                         | `next.config.mjs`                       | Static                                                                                                                                                                                                 |
+| `Permissions-Policy`                      | `next.config.mjs`, `infra/nginx/*.conf` | Static; `camera=(self), microphone=(self)` — the chat recorder needs same-origin `getUserMedia`; `()` blocked it outright (QA 2026-09-23). `browsing-topics` stays disabled. Keep both copies in step. |
+| `Cross-Origin-Opener-Policy: same-origin` | `next.config.mjs`                       | Static                                                                                                                                                                                                 |
+| `X-Robots-Tag`                            | `src/middleware.ts`                     | Non-public paths tagged `noindex`                                                                                                                                                                      |
 
 ## The CSP nonce flow
 

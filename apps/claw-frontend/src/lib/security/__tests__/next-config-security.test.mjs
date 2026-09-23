@@ -37,3 +37,20 @@ describe('development backend proxy', () => {
     delete process.env.CLAW_DEV_API_PROXY_TARGET;
   });
 });
+
+// Regression (QA 2026-09-23): `camera=(), microphone=()` made getUserMedia
+// throw a permissions-policy violation on our own origin, so the chat recorder
+// could never start in any browser. Same-origin only; no third-party frame.
+describe('permissions policy', () => {
+  it('lets our own pages use the microphone and camera, and nobody else', async () => {
+    const rules = await nextConfig.headers();
+    const policy = rules
+      .flatMap((rule) => rule.headers)
+      .find((header) => header.key === 'Permissions-Policy');
+
+    expect(policy?.value).toContain('microphone=(self)');
+    expect(policy?.value).toContain('camera=(self)');
+    expect(policy?.value).toContain('geolocation=()');
+    expect(policy?.value).not.toMatch(/(?:microphone|camera)=\*/u);
+  });
+});
