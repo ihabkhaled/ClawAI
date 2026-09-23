@@ -31,3 +31,18 @@ export function audioFilenameForMimeType(mimeType: string): string {
 export function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '');
 }
+
+/**
+ * connector-service's model catalog stores Gemini model keys WITH the
+ * `models/` prefix Google's API itself uses (`models/gemini-2.5-flash`), so
+ * `TranscriptionCapabilityClient` hands the adapter that exact string. The
+ * native `generateContent` URL already has a literal `/models/` segment
+ * (`{base}/models/{model}:generateContent`), so passing the prefixed key
+ * straight through produced `/models/models%2Fgemini-2.5-flash:generateContent`
+ * — a URL-encoded slash Gemini's REST API 400s on every single time. Strip one
+ * leading `models/` (never more; a model whose real name starts with it, if
+ * one ever exists, keeps the rest) before it goes in the URL.
+ */
+export function stripGeminiModelsPrefix(model: string): string {
+  return model.startsWith('models/') ? model.slice('models/'.length) : model;
+}

@@ -5,7 +5,10 @@ import {
   TRANSCRIPTION_PROVIDER_TIMEOUT_MS,
 } from '../constants/transcription.constants';
 import { type GeminiGenerateContentResponse } from '../types/transcription.types';
-import { toGeminiNativeBaseUrl } from '../utilities/transcription-format.utility';
+import {
+  stripGeminiModelsPrefix,
+  toGeminiNativeBaseUrl,
+} from '../utilities/transcription-format.utility';
 
 const logger = new Logger('GeminiTranscriptionAdapter');
 
@@ -25,7 +28,11 @@ export const transcribeWithGemini = async (
   model: string,
 ): Promise<string> => {
   const nativeBase = toGeminiNativeBaseUrl(baseUrl);
-  const url = `${nativeBase}/models/${encodeURIComponent(model)}:generateContent`;
+  // `model` is the connector catalog's key, which already carries a `models/`
+  // prefix — the URL below has its own literal `/models/` segment, so the
+  // prefix must come off here or the request 400s. See
+  // stripGeminiModelsPrefix's doc comment for the live repro.
+  const url = `${nativeBase}/models/${encodeURIComponent(stripGeminiModelsPrefix(model))}:generateContent`;
   logger.debug(`transcribeWithGemini: model=${model} mimeType=${mimeType}`);
 
   const body = {
