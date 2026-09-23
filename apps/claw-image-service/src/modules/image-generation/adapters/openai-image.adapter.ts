@@ -3,7 +3,12 @@ import { declaredHost } from '@claw/shared-utilities';
 import { httpPost } from '@common/utilities';
 import type { ImageProviderResponse } from '../types/image-generation.types';
 import type { OpenAIImageResponse } from '../types/openai-image.types';
-import { extractOpenAIErrorMessage } from '../adapter.utilities/openai-error.utility';
+import { ImageFailureCode } from '../../../common/enums';
+import {
+  extractProviderErrorMessage,
+  imageFailure,
+  toImageProviderException,
+} from '../adapter.utilities/provider-error.utility';
 
 const logger = new Logger('OpenAIImageAdapter');
 
@@ -66,9 +71,9 @@ export const generateWithOpenAI = async (
     // parameter the model does not accept. Swallowing that and reporting
     // "status code 400" leaves an operator with a failure and no way to tell
     // which of those it was, on a call that costs money to retry blindly.
-    const detail = extractOpenAIErrorMessage(error);
+    const detail = extractProviderErrorMessage(error);
     logger.error(`generateWithOpenAI: OpenAI refused model=${model} size=${size} — ${detail}`);
-    throw new Error(`OpenAI image generation failed: ${detail}`);
+    throw toImageProviderException(error, 'OpenAI');
   }
 
   logger.debug(
@@ -77,14 +82,14 @@ export const generateWithOpenAI = async (
   const firstImage = response.data[0];
   if (!firstImage) {
     logger.error('generateWithOpenAI: OpenAI returned no image data');
-    throw new Error('OpenAI returned no image data');
+    throw imageFailure(ImageFailureCode.NO_IMAGE_RETURNED, 'OpenAI returned no image data');
   }
 
   // gpt-image-1 returns ONLY base64 and never a URL, so reading `url` alone
   // would treat a perfectly good image as an empty response.
   if (!firstImage.url && !firstImage.b64_json) {
     logger.error('generateWithOpenAI: response carried neither a URL nor base64 data');
-    throw new Error('OpenAI returned no image payload');
+    throw imageFailure(ImageFailureCode.NO_IMAGE_RETURNED, 'OpenAI returned no image payload');
   }
 
   logger.log(

@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 164,
+      "testFiles": 165,
       "testRunner": "vitest"
     },
     {
@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 15,
+      "testFiles": 19,
       "testRunner": "vitest"
     },
     {

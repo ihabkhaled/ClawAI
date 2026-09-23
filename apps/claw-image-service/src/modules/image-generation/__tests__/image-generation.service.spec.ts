@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { type ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { type ImageExecutionManager } from '../managers/image-execution.manager';

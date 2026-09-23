@@ -274,3 +274,41 @@ per-million rate, so a model priced only per image is refused with
 `PAYG_MODEL_UNPRICED` rather than charged. Until both are fixed, a DALL-E image
 either costs $0 or is blocked; a Gemini image bills correctly off its real
 `usageMetadata`.
+
+## Cloud providers and the connector-borrowing pattern (2026-09-23)
+
+`IMAGE_OPENAI`, `IMAGE_GEMINI`, `IMAGE_GROK` are capabilities that borrow the
+OPENAI/GEMINI/GROK chat connector's credentials at call time
+(`IMAGE_PROVIDER_CONNECTORS` in `src/common/constants/image.constants.ts` →
+`ImageExecutionManager.fetchConnectorConfig`). There is no separate image
+connector row. Adding a fourth cloud provider means: an adapter under
+`adapters/`, an entry in `IMAGE_PROVIDER_CONNECTORS`, a branch in
+`dispatchCloudProvider`, and — separately, in chat-service — a pattern in
+`IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR` so the connector's image-output
+models get redirected here instead of hitting `/chat/completions`.
+
+Every provider error is classified into an `ImageFailureCode` before it is
+stored or streamed — see the failure-taxonomy table in
+`docs/04-backend/service-guide-image.md`. Never throw a bare `Error` or
+re-throw a provider's raw message from an adapter: use
+`toImageProviderException(error, providerLabel)` for a caught provider error,
+or `imageFailure(code, detail?)` for a failure this service decides on its own
+(no image in the payload, storage failed). The stored/streamed sentence always
+comes from `imageFailureMessage(code)`, never from the provider.
+
+**Gemini specifics learned fixing "picking any image model always fails"
+(2026-09-23):**
+
+- The API key MUST be a header (`x-goog-api-key`), never `?key=` in the URL —
+  the shared HTTP client logs request URLs.
+- A catalog model id carries `models/` (`models/gemini-3-pro-image`); strip it
+  with `normalizeGeminiModelId` before building the `:generateContent` path.
+- `imagen-*` catalog entries 404 on `:generateContent` — Imagen is shut down in
+  the Gemini API (Google's own docs: "Use Nano Banana for image generation").
+  The candidate-fallback loop silently upgrades these to a working
+  `gemini-*-image` model; it is not a bug if a user picks an Imagen model and
+  gets a Nano Banana image.
+- A safety block (`finishReason: 'IMAGE_SAFETY'`/`'SAFETY'`/… or
+  `promptFeedback.blockReason`) must NOT fall through to the next candidate —
+  every Gemini model refuses the same prompt, so retrying wastes 2 more calls
+  and 2 more provider round trips before finally reporting the same refusal.

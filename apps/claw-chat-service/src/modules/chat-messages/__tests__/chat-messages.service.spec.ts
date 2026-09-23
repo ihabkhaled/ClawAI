@@ -914,6 +914,84 @@ describe('ChatMessagesService', () => {
     });
   });
 
+  describe('handleMessageRouted — image-output model redirect', () => {
+    it.each([
+      ['GEMINI', 'models/gemini-3-pro-image', 'IMAGE_GEMINI'],
+      ['GROK', 'grok-imagine-image', 'IMAGE_GROK'],
+      ['OPENAI', 'chatgpt-image-latest', 'IMAGE_OPENAI'],
+    ])(
+      'redirects %s/%s to %s instead of dispatching a chat completion',
+      async (selectedProvider, selectedModel, expectedProvider) => {
+        const routedPayload = {
+          messageId: 'msg-1',
+          threadId: 'thread-1',
+          selectedProvider,
+          selectedModel,
+          routingMode: 'MANUAL_MODEL',
+          timestamp: new Date().toISOString(),
+        };
+        messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+        executionManager.execute!.mockResolvedValue({
+          content: 'Generating image…',
+          provider: expectedProvider,
+          model: selectedModel,
+          latencyMs: 500,
+          usedFallback: false,
+          imageGenerationId: 'gen-1',
+        });
+        messagesRepo.create.mockResolvedValue({
+          ...mockMessage,
+          role: 'ASSISTANT' as const,
+          content: 'Generating image…',
+        });
+
+        await service.handleMessageRouted(routedPayload);
+
+        expect(executionManager.execute).toHaveBeenCalledWith(
+          expect.objectContaining({ selectedProvider: expectedProvider, selectedModel }),
+          expect.anything(),
+          expect.anything(),
+          undefined,
+        );
+      },
+    );
+
+    it('leaves an ordinary chat model on its connector provider', async () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GROK',
+        selectedModel: 'grok-4.5',
+        routingMode: 'MANUAL_MODEL',
+        timestamp: new Date().toISOString(),
+      };
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockResolvedValue({
+        content: 'Hi',
+        provider: 'GROK',
+        model: 'grok-4.5',
+        latencyMs: 500,
+        usedFallback: false,
+      });
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        role: 'ASSISTANT' as const,
+        content: 'Hi',
+      });
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(executionManager.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ selectedProvider: 'GROK', selectedModel: 'grok-4.5' }),
+        expect.anything(),
+        expect.anything(),
+        undefined,
+      );
+    });
+  });
+
   describe('handleMessageRouted', () => {
     it('preserves localizable business error metadata on the stored assistant response', async () => {
       const routedPayload = {

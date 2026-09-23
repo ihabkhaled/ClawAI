@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { resolveImageCapabilityProvider } from '../utilities/image-generation-target.utility';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -549,11 +550,13 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private async resolveCompareThread(userId: string, dto: ParallelMessageDto): Promise<ChatThread> {
-    return dto.threadId && dto.threadId.length > 0 ? this.getThreadForMessage(dto.threadId, userId) : this.chatThreadsRepository.create({
-      userId,
-      title: `Compare: ${dto.content.slice(0, 50)}`,
-      routingMode: RoutingMode.MANUAL_MODEL,
-    });
+    return dto.threadId && dto.threadId.length > 0
+      ? this.getThreadForMessage(dto.threadId, userId)
+      : this.chatThreadsRepository.create({
+          userId,
+          title: `Compare: ${dto.content.slice(0, 50)}`,
+          routingMode: RoutingMode.MANUAL_MODEL,
+        });
   }
 
   async createConsensusMessage(
@@ -1206,7 +1209,8 @@ export class ChatMessagesService implements OnModuleInit {
     thread: ChatThread | null,
     chronologicalMessages: ChatMessage[],
   ): MessageRoutedData {
-    let effectivePayload = this.detectImageFollowUp(payload, thread, chronologicalMessages);
+    let effectivePayload = this.detectImageOutputModel(payload);
+    effectivePayload = this.detectImageFollowUp(effectivePayload, thread, chronologicalMessages);
     effectivePayload = this.detectFileGenerationFollowUp(
       effectivePayload,
       thread,
@@ -1431,17 +1435,19 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
-    return !thread ? undefined : {
-      systemPrompt: thread.systemPrompt,
-      temperature: thread.temperature,
-      maxTokens: thread.maxTokens,
-      judgeModel: thread.judgeModel,
-      useCrossThreadContext: thread.useCrossThreadContext,
-      criticEnabled: thread.criticEnabled,
-      criticModel: thread.criticModel,
-      qualityThreshold: thread.qualityThreshold,
-      maxReRouteAttempts: thread.maxReRouteAttempts,
-    };
+    return !thread
+      ? undefined
+      : {
+          systemPrompt: thread.systemPrompt,
+          temperature: thread.temperature,
+          maxTokens: thread.maxTokens,
+          judgeModel: thread.judgeModel,
+          useCrossThreadContext: thread.useCrossThreadContext,
+          criticEnabled: thread.criticEnabled,
+          criticModel: thread.criticModel,
+          qualityThreshold: thread.qualityThreshold,
+          maxReRouteAttempts: thread.maxReRouteAttempts,
+        };
   }
 
   private resolveRoutedMessageWindow(
@@ -1585,21 +1591,23 @@ export class ChatMessagesService implements OnModuleInit {
       model: llmResponse.model,
       displayName: llmResponse.model,
     };
-    return payload.routingMode === 'AUTO' && payload.routerModel ? [
-        {
-          stage: 'router' as const,
-          provider: 'local-ollama',
-          model: payload.routerModel,
-          displayName: payload.routerModel,
-        },
-        {
-          stage: 'decision' as const,
-          provider: payload.selectedProvider,
-          model: payload.selectedModel,
-        },
-        ...researchStep,
-        executionStep,
-      ] : [...researchStep, executionStep];
+    return payload.routingMode === 'AUTO' && payload.routerModel
+      ? [
+          {
+            stage: 'router' as const,
+            provider: 'local-ollama',
+            model: payload.routerModel,
+            displayName: payload.routerModel,
+          },
+          {
+            stage: 'decision' as const,
+            provider: payload.selectedProvider,
+            model: payload.selectedModel,
+          },
+          ...researchStep,
+          executionStep,
+        ]
+      : [...researchStep, executionStep];
   }
 
   /**
@@ -1616,14 +1624,16 @@ export class ChatMessagesService implements OnModuleInit {
    */
   private buildReasoningMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
     const reasoning = llmResponse.reasoning?.trim();
-    return reasoning === undefined || reasoning.length === 0 ? {} : {
-      reasoning:
-        reasoning.length <= MAX_STORED_REASONING_CHARS
-          ? reasoning
-          : `${reasoning.slice(0, MAX_STORED_REASONING_CHARS)}
+    return reasoning === undefined || reasoning.length === 0
+      ? {}
+      : {
+          reasoning:
+            reasoning.length <= MAX_STORED_REASONING_CHARS
+              ? reasoning
+              : `${reasoning.slice(0, MAX_STORED_REASONING_CHARS)}
 
 …`,
-    };
+        };
   }
 
   private buildAssistantMetadata(args: {
@@ -1689,7 +1699,9 @@ export class ChatMessagesService implements OnModuleInit {
   // message after a page refresh. Empty when the model did not call any
   // tools (the common path for non-agentic models).
   private buildToolTranscriptMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    return llmResponse.toolTranscript === undefined ? {} : { toolTranscript: llmResponse.toolTranscript };
+    return llmResponse.toolTranscript === undefined
+      ? {}
+      : { toolTranscript: llmResponse.toolTranscript };
   }
 
   // Persists the lightweight ResearchEnricherManager transcript so the FE can
@@ -1808,7 +1820,9 @@ export class ChatMessagesService implements OnModuleInit {
     if (raw === ResearchMode.NONE || raw === ResearchMode.SEARCH) {
       return raw;
     }
-    return raw === ResearchMode.SEARCH_FETCH || raw === ResearchMode.SEARCH_EXTRACT ? raw : ResearchMode.SEARCH;
+    return raw === ResearchMode.SEARCH_FETCH || raw === ResearchMode.SEARCH_EXTRACT
+      ? raw
+      : ResearchMode.SEARCH;
   }
 
   // Bug-hunt 2026-05-31, Fix 2 — surface mid-sentence truncation in the
@@ -1824,13 +1838,17 @@ export class ChatMessagesService implements OnModuleInit {
   // the FE can show whether counts were native or estimated and which context
   // produced them, surviving a page refresh.
   private buildTokenUsageMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    return llmResponse.imageGenerationId || llmResponse.fileGenerationId ? {} : {
-      tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.CHAT,
-      ...(llmResponse.tokenEstimated === undefined
-        ? {}
-        : { tokenEstimated: llmResponse.tokenEstimated }),
-      ...(llmResponse.tokenSource === undefined ? {} : { tokenSource: llmResponse.tokenSource }),
-    };
+    return llmResponse.imageGenerationId || llmResponse.fileGenerationId
+      ? {}
+      : {
+          tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.CHAT,
+          ...(llmResponse.tokenEstimated === undefined
+            ? {}
+            : { tokenEstimated: llmResponse.tokenEstimated }),
+          ...(llmResponse.tokenSource === undefined
+            ? {}
+            : { tokenSource: llmResponse.tokenSource }),
+        };
   }
 
   // Phase 6 — persists workflow + search-first outcome on the assistant
@@ -1842,17 +1860,23 @@ export class ChatMessagesService implements OnModuleInit {
   ): Record<string, unknown> {
     const workflow = llmResponse.workflow ?? payload.selectedWorkflow ?? null;
     const workflowReason = llmResponse.workflowReason ?? payload.workflowReason ?? null;
-    return workflow === null && llmResponse.searchFirst === undefined ? {} : {
-      ...(workflow === null ? {} : { workflow }),
-      ...(workflowReason === null ? {} : { workflowReason }),
-      ...(llmResponse.searchFirst === undefined ? {} : { searchFirst: llmResponse.searchFirst }),
-    };
+    return workflow === null && llmResponse.searchFirst === undefined
+      ? {}
+      : {
+          ...(workflow === null ? {} : { workflow }),
+          ...(workflowReason === null ? {} : { workflowReason }),
+          ...(llmResponse.searchFirst === undefined
+            ? {}
+            : { searchFirst: llmResponse.searchFirst }),
+        };
   }
 
   private buildContextMetaPart(
     contextMetadata: { memoryCount: number; fileIds: string[] } | undefined,
   ): Record<string, unknown> {
-    return !contextMetadata ? {} : { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
+    return !contextMetadata
+      ? {}
+      : { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
   }
 
   private buildResearchMetaPart(
@@ -1875,14 +1899,16 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private buildReRouteMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    return !llmResponse.reRouted ? {} : {
-      reRouted: true,
-      originalProvider: llmResponse.originalProvider,
-      originalModel: llmResponse.originalModel,
-      originalScore: llmResponse.originalScore,
-      reRouteAttempts: llmResponse.reRouteAttempts,
-      reRouteReasons: llmResponse.reRouteReasons,
-    };
+    return !llmResponse.reRouted
+      ? {}
+      : {
+          reRouted: true,
+          originalProvider: llmResponse.originalProvider,
+          originalModel: llmResponse.originalModel,
+          originalScore: llmResponse.originalScore,
+          reRouteAttempts: llmResponse.reRouteAttempts,
+          reRouteReasons: llmResponse.reRouteReasons,
+        };
   }
 
   private buildFastPathMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
@@ -1997,14 +2023,16 @@ export class ChatMessagesService implements OnModuleInit {
       return null;
     }
     const bundleRecord = this.readNestedObject(researchRecord, 'bundle');
-    return bundleRecord === null ? null : {
-      runId: this.readMetaString(researchRecord, 'runId') ?? 'unknown',
-      workflow: this.readMetaString(researchRecord, 'mode') ?? 'unknown',
-      toolsUsed: this.readStringArray(bundleRecord, 'toolsUsed'),
-      helperModels: this.readStringArray(bundleRecord, 'helperModels'),
-      itemCount: this.readArrayLength(bundleRecord, 'items'),
-      warningCount: this.readArrayLength(bundleRecord, 'warnings'),
-    };
+    return bundleRecord === null
+      ? null
+      : {
+          runId: this.readMetaString(researchRecord, 'runId') ?? 'unknown',
+          workflow: this.readMetaString(researchRecord, 'mode') ?? 'unknown',
+          toolsUsed: this.readStringArray(bundleRecord, 'toolsUsed'),
+          helperModels: this.readStringArray(bundleRecord, 'helperModels'),
+          itemCount: this.readArrayLength(bundleRecord, 'items'),
+          warningCount: this.readArrayLength(bundleRecord, 'warnings'),
+        };
   }
 
   private readStringArray(source: Record<string, unknown>, key: string): string[] {
@@ -2021,7 +2049,9 @@ export class ChatMessagesService implements OnModuleInit {
     latestUserMetadata?: Record<string, unknown> | null,
   ): Record<string, unknown> | null {
     const research = latestUserMetadata?.['research'];
-    return research === null || typeof research !== 'object' ? null : (research as Record<string, unknown>);
+    return research === null || typeof research !== 'object'
+      ? null
+      : (research as Record<string, unknown>);
   }
 
   private extractResearchBundle(run: ResearchRunResponse): ResearchExecutionSummary {
@@ -2169,23 +2199,27 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {
-    return !llmResponse.reRouted ? {} : {
-      reRouted: true,
-      originalProvider: llmResponse.originalProvider,
-      originalModel: llmResponse.originalModel,
-      reRouteAttempts: llmResponse.reRouteAttempts,
-    };
+    return !llmResponse.reRouted
+      ? {}
+      : {
+          reRouted: true,
+          originalProvider: llmResponse.originalProvider,
+          originalModel: llmResponse.originalModel,
+          reRouteAttempts: llmResponse.reRouteAttempts,
+        };
   }
 
   private buildPublishJudgePart(llmResponse: LlmResponse): Record<string, unknown> {
     const judge = llmResponse.judgeRefereeMetadata;
-    return judge === undefined ? {} : {
-      judgeDecision: judge.judgeDecision,
-      criticModel: judge.criticModel,
-      judgeModel: judge.judgeModel,
-      criticScore: judge.criticScore,
-      judgeConfidence: judge.judgeConfidence,
-    };
+    return judge === undefined
+      ? {}
+      : {
+          judgeDecision: judge.judgeDecision,
+          criticModel: judge.criticModel,
+          judgeModel: judge.judgeModel,
+          criticScore: judge.criticScore,
+          judgeConfidence: judge.judgeConfidence,
+        };
   }
 
   private async getThreadForMessage(threadId: string, userId: string): Promise<ChatThread> {
@@ -2321,7 +2355,9 @@ export class ChatMessagesService implements OnModuleInit {
 
   private matchesFollowUp(lower: string, prefixes: ReadonlyArray<string>): boolean {
     if (lower.length >= SHORT_FOLLOW_UP_MAX_LENGTH) return false;
-    return SHORT_FOLLOW_UP_EXACT_MATCHES.includes(lower) ? true : prefixes.some((prefix) => lower.startsWith(prefix));
+    return SHORT_FOLLOW_UP_EXACT_MATCHES.includes(lower)
+      ? true
+      : prefixes.some((prefix) => lower.startsWith(prefix));
   }
 
   private detectImageFollowUp(
@@ -2361,7 +2397,38 @@ export class ChatMessagesService implements OnModuleInit {
     const lastProvider = thread?.lastProvider;
     if (!lastProvider?.startsWith('IMAGE_')) return null;
     const lower = this.extractLatestUserText(messages);
-    return lower === null || !this.matchesFollowUp(lower, IMAGE_FOLLOW_UP_PREFIXES) ? null : lastProvider;
+    return lower === null || !this.matchesFollowUp(lower, IMAGE_FOLLOW_UP_PREFIXES)
+      ? null
+      : lastProvider;
+  }
+
+  /**
+   * Redirects a chat-connector image-output model (`models/gemini-3-pro-image`
+   * under GEMINI, `grok-imagine-image` under GROK, `chatgpt-image-latest` under
+   * OPENAI) to the `IMAGE_*` capability that actually generates a picture.
+   *
+   * The connector catalog has no model kind for "this is an image model" (see
+   * `IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR`), so the composer offers these
+   * under their ordinary chat connector and a manual pick reached
+   * `/chat/completions`, which every provider refuses for an image model —
+   * xAI answers `"grok-imagine-image is an image model and is therefore not
+   * available on this endpoint"`; Gemini and OpenAI answer with a completion
+   * that contains no picture, which chat-service could not distinguish from a
+   * slow response and reported as "Every available AI provider failed to
+   * respond".
+   *
+   * Applied before every other follow-up override so a redirected AUTO
+   * follow-up or file-generation check sees the real IMAGE_* provider.
+   */
+  private detectImageOutputModel(payload: MessageRoutedData): MessageRoutedData {
+    const target = resolveImageCapabilityProvider(payload.selectedProvider, payload.selectedModel);
+    if (target === undefined) {
+      return payload;
+    }
+    this.logger.log(
+      `Image-output model detected: ${payload.selectedProvider}/${payload.selectedModel} → ${target}`,
+    );
+    return { ...payload, selectedProvider: target };
   }
 
   private detectFileGenerationFollowUp(

@@ -11,7 +11,11 @@ import {
   type ImageGenerationRecord,
   TERMINAL_STATUSES,
 } from '../types/image-generation.types';
-import { describeImageFailure, isCreditFailureCode } from '../utilities/image-failure.utility';
+import {
+  describeImageFailure,
+  isChainTerminalFailureCode,
+  isCreditFailureCode,
+} from '../utilities/image-failure.utility';
 import { type ListImagesQueryDto } from '../dto/generate-image.dto';
 import { BusinessException } from '../../../common/errors';
 import { IMAGE_FALLBACK_CHAIN, IMAGE_LOCAL_PROVIDERS } from '../../../common/constants';
@@ -244,6 +248,12 @@ export class ImageGenerationService {
     if (result?.status !== 'FAILED') {
       return;
     }
+    if (isChainTerminalFailureCode(result.errorCode)) {
+      this.logger.warn(
+        `Auto-fallback skipped for ${generationId}: ${String(result.errorCode)} — another provider would fail the same way`,
+      );
+      return;
+    }
 
     await this.runAutoFallbackChain(generationId, result, isCreditFailureCode(result.errorCode));
   }
@@ -315,10 +325,7 @@ export class ImageGenerationService {
   ): { provider: string; model: string } | undefined {
     const idx = IMAGE_FALLBACK_CHAIN.findIndex((c) => `${c.provider}/${c.model}` === currentKey);
     const remaining = IMAGE_FALLBACK_CHAIN.slice(idx + 1);
-    if (!localOnly) {
-      return remaining[0];
-    }
-    return remaining.find((c) => IMAGE_LOCAL_PROVIDERS.includes(c.provider));
+    return !localOnly ? remaining[0] : remaining.find((c) => IMAGE_LOCAL_PROVIDERS.includes(c.provider));
   }
 
   private async createFallbackRecord(

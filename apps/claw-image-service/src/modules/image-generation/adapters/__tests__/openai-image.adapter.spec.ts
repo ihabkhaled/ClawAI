@@ -1,10 +1,10 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { httpPost } from '@common/utilities';
 
 import { generateWithOpenAI } from '../openai-image.adapter';
 
 vi.mock('@common/utilities', async () => ({
-  ...await vi.importActual('@common/utilities'),
+  ...(await vi.importActual('@common/utilities')),
   httpPost: vi.fn(),
 }));
 

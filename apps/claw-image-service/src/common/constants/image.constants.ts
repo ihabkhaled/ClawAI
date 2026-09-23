@@ -2,6 +2,21 @@ export const IMAGE_PROVIDER_OPENAI = 'IMAGE_OPENAI';
 export const IMAGE_PROVIDER_GEMINI = 'IMAGE_GEMINI';
 export const IMAGE_PROVIDER_LOCAL = 'IMAGE_LOCAL';
 export const IMAGE_PROVIDER_LOCAL_COMFYUI = 'IMAGE_LOCAL_COMFYUI';
+// xAI Grok Imagine. Borrows the GROK chat connector's key, like the two above
+// borrow OPENAI's and GEMINI's.
+export const IMAGE_PROVIDER_GROK = 'IMAGE_GROK';
+
+/**
+ * The chat connector whose credentials each cloud image provider borrows.
+ *
+ * Also the list of CLOUD image providers: anything absent here and absent from
+ * `IMAGE_LOCAL_PROVIDERS` is refused as unsupported.
+ */
+export const IMAGE_PROVIDER_CONNECTORS: ReadonlyMap<string, string> = new Map([
+  [IMAGE_PROVIDER_OPENAI, 'OPENAI'],
+  [IMAGE_PROVIDER_GEMINI, 'GEMINI'],
+  [IMAGE_PROVIDER_GROK, 'GROK'],
+]);
 
 // OpenAI's current image model. NOT dall-e-3: OpenAI has retired the DALL-E
 // models for new accounts, and an API key without them answers

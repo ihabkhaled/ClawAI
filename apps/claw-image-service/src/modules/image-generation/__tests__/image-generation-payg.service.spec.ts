@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { BillingErrorCode } from '@claw/shared-types';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';

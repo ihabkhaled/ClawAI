@@ -13,7 +13,14 @@ export type GeminiContent = {
 };
 
 export type GeminiCandidate = {
-  content: GeminiContent;
+  content?: GeminiContent;
+  /** `STOP` for a normal answer; `IMAGE_SAFETY`, `SAFETY`, `PROHIBITED_CONTENT`… for a block. */
+  finishReason?: string;
+};
+
+/** Present when the PROMPT itself was blocked — then there are no candidates at all. */
+export type GeminiPromptFeedback = {
+  blockReason?: string;
 };
 
 export type GeminiGenerateContentRequest = {
@@ -42,5 +49,6 @@ export type GeminiUsageMetadata = {
 
 export type GeminiGenerateContentResponse = {
   candidates?: GeminiCandidate[];
+  promptFeedback?: GeminiPromptFeedback;
   usageMetadata?: GeminiUsageMetadata;
 };

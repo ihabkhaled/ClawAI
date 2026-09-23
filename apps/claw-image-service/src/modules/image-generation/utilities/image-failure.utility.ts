@@ -3,7 +3,25 @@ import {
   IMAGE_CREDIT_FAILURE_CODES,
   IMAGE_CREDIT_FAILURE_MESSAGE,
 } from '../constants/image-payg.constants';
+import {
+  IMAGE_CHAIN_TERMINAL_FAILURE_CODES,
+  imageFailureMessage,
+} from '../constants/image-failure.constants';
+import { ImageFailureCode } from '../../../common/enums';
 import { type ImageFailureDescription } from '../types/image-generation.types';
+
+function isImageFailureCode(code: string): code is ImageFailureCode {
+  return Object.values<string>(ImageFailureCode).includes(code);
+}
+
+/**
+ * True when no other provider in the AUTO fallback chain could do better —
+ * storage is shared, so every further attempt would pay for an image and lose
+ * it the same way.
+ */
+export function isChainTerminalFailureCode(errorCode: string | null | undefined): boolean {
+  return typeof errorCode === 'string' && IMAGE_CHAIN_TERMINAL_FAILURE_CODES.includes(errorCode);
+}
 
 /**
  * True when this generation failed because the wallet refused, not because a
@@ -15,10 +33,7 @@ import { type ImageFailureDescription } from '../types/image-generation.types';
  * row afterwards.
  */
 export function isCreditFailureCode(errorCode: string | null | undefined): boolean {
-  if (errorCode === null || errorCode === undefined) {
-    return false;
-  }
-  return IMAGE_CREDIT_FAILURE_CODES.includes(errorCode);
+  return errorCode === null || errorCode === undefined ? false : IMAGE_CREDIT_FAILURE_CODES.includes(errorCode);
 }
 
 /**
@@ -30,9 +45,10 @@ export function isCreditFailureCode(errorCode: string | null | undefined): boole
  * broke" have to be told apart HERE or the user sees the same
  * "please try again" for a condition that retrying cannot fix.
  *
- * The provider branch keeps the existing generic copy on purpose: a raw upstream
- * message can carry a prompt, a URL or a key fragment, and this string is
- * persisted and streamed to the browser.
+ * A classified failure (see `ImageFailureCode`) stores the FIXED sentence for
+ * its code, never the provider's own words: a raw upstream message can carry a
+ * prompt, a URL or a key fragment, and this string is persisted and streamed to
+ * the browser. Anything unclassified keeps the generic copy.
  */
 export function describeImageFailure(error: unknown): ImageFailureDescription {
   if (error instanceof BusinessException && isCreditFailureCode(error.code)) {
@@ -42,9 +58,15 @@ export function describeImageFailure(error: unknown): ImageFailureDescription {
       isCreditFailure: true,
     };
   }
-  return {
-    errorCode: 'PROVIDER_FAILURE',
-    errorMessage: 'Image generation failed. Please try again.',
-    isCreditFailure: false,
-  };
+  return error instanceof BusinessException && isImageFailureCode(error.code)
+    ? {
+        errorCode: error.code,
+        errorMessage: imageFailureMessage(error.code),
+        isCreditFailure: false,
+      }
+    : {
+        errorCode: ImageFailureCode.PROVIDER_FAILURE,
+        errorMessage: imageFailureMessage(ImageFailureCode.PROVIDER_FAILURE),
+        isCreditFailure: false,
+      };
 }
