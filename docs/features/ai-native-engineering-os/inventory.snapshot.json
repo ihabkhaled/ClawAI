@@ -9888,7 +9888,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
-        "testFiles": 8
+        "testFiles": 9
       },
       "@claw/shared-rabbitmq": {
         "runner": "vitest",
@@ -10712,7 +10712,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1391,
+    "totalTestFiles": 1392,
     "workspaceCount": 25
   }
 }

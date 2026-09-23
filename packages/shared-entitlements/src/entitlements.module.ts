@@ -20,9 +20,20 @@ export type EntitlementsModuleOptions = {
 @Module({})
 export class EntitlementsModule {
   static forRoot(options: EntitlementsModuleOptions): DynamicModule {
+    // The module's option is `interServiceToken`; the adapter's is
+    // `serviceToken`. Passing `options` straight through compiled (the adapter's
+    // field is optional) and silently dropped the token, so every
+    // PermissionGuard lookup reached auth-service with no Authorization header,
+    // got 401 (TD-035) and failed closed as a 503 for every non-admin user.
+    // Map the fields explicitly.
     const adapterProvider: Provider = {
       provide: ENTITLEMENTS_ADAPTER,
-      useFactory: (): EntitlementsAdapter => new EntitlementsAdapter(options),
+      useFactory: (): EntitlementsAdapter =>
+        new EntitlementsAdapter({
+          authServiceUrl: options.authServiceUrl,
+          serviceToken: options.interServiceToken,
+          ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+        }),
     };
     // Provided by CLASS token, not a symbol: every consumer injects it as
     // `private readonly payg: PaygMeter`, and an @Optional() injection against a
