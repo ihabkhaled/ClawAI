@@ -6,8 +6,9 @@ import { localFrontierRepository } from '@/repositories/local-frontier/local-fro
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { HardwareSnapshot } from '@/types/local-frontier.types';
 
-export function useHardwareSnapshot(): UseQueryResult<HardwareSnapshot, Error> {
+export function useHardwareSnapshot(enabled = true): UseQueryResult<HardwareSnapshot, Error> {
   return useQuery({
+    enabled,
     queryKey: queryKeys.localFrontier.hardware(),
     queryFn: () => localFrontierRepository.getHardware(),
     staleTime: 60_000,

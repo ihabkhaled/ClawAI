@@ -10,7 +10,10 @@ import { classifyGpuVendor } from '@/utilities/gpu-vendor.utility';
 export function useGpuBadge(): GpuBadgeData {
   const { can } = usePermissions();
   const canView = can(Permission.ADMIN_SYSTEM_VIEW);
-  const query = useHardwareSnapshot();
+  // The badge renders only for ADMIN_SYSTEM_VIEW, and /llamacpp/hardware is
+  // admin-gated too. Fetching it for everyone put a 502/403 on every page a
+  // normal user opened (2026-09-23).
+  const query = useHardwareSnapshot(canView);
   const hardware = query.data;
   const firstGpu = hardware?.gpus?.[0];
 
