@@ -546,6 +546,10 @@ export type TranslationDictionary = {
       consentMaxLength: string;
       consentConfirm: string;
       consentCancel: string;
+      send: string;
+      fullScreenLabel: string;
+      waveformLabel: string;
+      cameraPreviewLabel: string;
     };
     noFiles: string;
     selectedFiles: string;
@@ -956,6 +960,13 @@ export type TranslationDictionary = {
     statusProcessing: string;
     statusCompleted: string;
     statusFailed: string;
+    uploadProgress: {
+      percentLabel: string;
+      etaLabel: string;
+      etaUnknown: string;
+      speedLabel: string;
+      elapsedLabel: string;
+    };
     archive: {
       badge: string;
       fileCount: string;

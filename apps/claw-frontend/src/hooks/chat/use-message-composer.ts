@@ -46,6 +46,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     placeholder: t('chat.composerPlaceholder'),
     sendLabel: t('chat.sendMessage'),
     uploadingLabel: state.isUploadingAttachment ? t('chat.attachment.uploading') : null,
+    uploadProgress: state.attachmentUploadProgress,
     validationError: state.validationError,
     canSubmit: !props.isPending && hasContent,
     content: state.content,

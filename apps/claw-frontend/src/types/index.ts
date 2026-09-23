@@ -256,7 +256,14 @@ export type {
   RetrievalReasonValue,
   PreviewContextRequest,
 } from './context-receipt.types';
-export type { UploadedFile, FileChunk, FileWithChunks, UploadFileRequest } from './file.types';
+export type {
+  UploadedFile,
+  FileChunk,
+  FileWithChunks,
+  UploadFileRequest,
+  ChunkedUploadStatus,
+  InitChunkedUploadRequest,
+} from './file.types';
 export type {
   DashboardStats,
   DashboardStatCard,
@@ -1161,7 +1168,17 @@ export type {
   UseMediaRecordingConsentParams,
   UseMediaRecordingConsentReturn,
   MediaRecordingConsentDialogProps,
+  WindowWithWebkitAudioContext,
+  RecordingSurfaceProps,
+  RecordingWaveformProps,
+  RecordingCameraPreviewProps,
 } from './media-recording.types';
+export type {
+  UploadProgressSnapshot,
+  UploadProgressIndicatorProps,
+  UseChunkedUploadParams,
+  UseChunkedUploadReturn,
+} from './upload-progress.types';
 export type {
   GrafanaAccessGrant,
   GrafanaTab,

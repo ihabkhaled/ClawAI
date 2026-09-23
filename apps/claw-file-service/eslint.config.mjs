@@ -281,6 +281,11 @@ export default tseslint.config(
     files: [
       'src/common/utilities/file-storage.utility.ts',
       'src/common/utilities/file-validator.utility.ts',
+      // uploadId is regex-validated (CHUNKED_UPLOAD_ID_PATTERN) by the DTO
+      // before it reaches this manager, and chunk index is a bounded integer
+      // checked against the session's declared totalChunks — same shape of
+      // guarantee as the two files above.
+      'src/modules/files/managers/chunked-upload.manager.ts',
     ],
     rules: {
       'security/detect-non-literal-fs-filename': 'off',

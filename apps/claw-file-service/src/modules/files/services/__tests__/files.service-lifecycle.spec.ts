@@ -125,6 +125,13 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
       chunksRepo as unknown as FileChunksRepository,
       rabbitMQ as unknown as RabbitMQService,
       mockSecurityManager() as unknown as FileSecurityManager,
+      {
+        init: vi.fn(),
+        receiveChunk: vi.fn(),
+        getStatus: vi.fn(),
+        reassemble: vi.fn(),
+        cleanup: vi.fn(),
+      } as never,
       mockProcessingManager(),
     );
   });

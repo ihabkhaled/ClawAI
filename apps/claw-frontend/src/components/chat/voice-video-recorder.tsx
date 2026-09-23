@@ -1,8 +1,9 @@
 'use client';
 
-import { Mic, Square, Video, X } from 'lucide-react';
+import { Mic, Video } from 'lucide-react';
 
 import { MediaRecordingConsentDialog } from '@/components/chat/media-recording-consent-dialog';
+import { RecordingSurface } from '@/components/chat/recording-surface';
 import { Button } from '@/components/ui/button';
 import {
   MEDIA_RECORDING_AUDIO_BLOCKED_KEY,
@@ -15,10 +16,7 @@ import { useMediaRecordingConsent } from '@/hooks/files/use-media-recording-cons
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { cn } from '@/lib/utils';
 import type { VoiceVideoRecorderProps } from '@/types';
-import {
-  formatRecordingElapsed,
-  resolveRecorderBlockedKey,
-} from '@/utilities/media-recording.utility';
+import { resolveRecorderBlockedKey } from '@/utilities/media-recording.utility';
 
 /**
  * Microphone and camera buttons for the composer.
@@ -42,9 +40,8 @@ export function VoiceVideoRecorder({
   disabled,
 }: VoiceVideoRecorderProps): React.ReactElement {
   const { t } = useTranslation();
-  const { isRecording, isSupported, start, stop, cancel, elapsedMs, error } = useMediaRecorder({
-    onRecorded,
-  });
+  const { isRecording, isSupported, start, stop, cancel, elapsedMs, error, stream, activeKind } =
+    useMediaRecorder({ onRecorded });
   const consent = useMediaRecordingConsent({ start });
 
   const audioBlockedKey = resolveRecorderBlockedKey(
@@ -61,46 +58,16 @@ export function VoiceVideoRecorder({
   const audioLabel = t(audioBlockedKey ?? 'chat.recorder.recordVoice');
   const videoLabel = t(videoBlockedKey ?? 'chat.recorder.recordVideo');
 
-  if (isRecording) {
+  if (isRecording && activeKind !== null) {
     return (
-      <div
-        className="flex shrink-0 items-center gap-1.5"
-        data-testid="voice-video-recorder"
-        role="group"
-        aria-label={t('chat.recorder.recordingGroupLabel')}
-      >
-        <span
-          className="text-destructive text-xs font-medium tabular-nums"
-          aria-live="polite"
-          data-testid="voice-video-recorder-elapsed"
-        >
-          {t('chat.recorder.recordingElapsed', { time: formatRecordingElapsed(elapsedMs) })}
-        </span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="border-border/60 h-9 w-9 shrink-0 justify-center rounded-xl px-0"
-          onClick={stop}
-          aria-label={t('chat.recorder.stop')}
-          title={t('chat.recorder.stop')}
-          data-testid="voice-video-recorder-stop"
-        >
-          <Square className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-9 w-9 shrink-0 justify-center rounded-xl px-0"
-          onClick={cancel}
-          aria-label={t('chat.recorder.cancel')}
-          title={t('chat.recorder.cancel')}
-          data-testid="voice-video-recorder-cancel"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      <RecordingSurface
+        kind={activeKind}
+        stream={stream}
+        elapsedMs={elapsedMs}
+        onStop={stop}
+        onSend={stop}
+        onCancel={cancel}
+      />
     );
   }
 

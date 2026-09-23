@@ -215,7 +215,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 19,
+      "endpointCount": 23,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -232,7 +232,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 36,
+      "testFiles": 37,
       "testRunner": "vitest"
     },
     {

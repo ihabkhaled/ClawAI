@@ -50,6 +50,7 @@ const composerStateMock = {
   handleValueChange: vi.fn(),
   ingestFiles: vi.fn(),
   isUploadingAttachment: false,
+  attachmentUploadProgress: null,
 };
 vi.mock('@/hooks/chat/use-message-composer-state', () => ({
   useMessageComposerState: (): typeof composerStateMock => composerStateMock,

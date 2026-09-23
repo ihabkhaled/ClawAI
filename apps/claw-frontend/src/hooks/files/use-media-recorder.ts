@@ -42,6 +42,12 @@ export function useMediaRecorder({ onRecorded }: UseMediaRecorderParams): UseMed
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<MediaRecordingError | null>(null);
+  // Exposed for the full-screen recording surface: a live waveform reads the
+  // audio track off `stream`, a video note previews the camera track off it.
+  // Never used to start a second recording — start() still guards on
+  // recorderRef, this is read-only visualization state.
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [activeKind, setActiveKind] = useState<MediaRecordingKind | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -77,13 +83,17 @@ export function useMediaRecorder({ onRecorded }: UseMediaRecorderParams): UseMed
 
   const releaseStream = useCallback((): void => {
     clearTick();
-    const stream = streamRef.current;
+    const activeStream = streamRef.current;
     streamRef.current = null;
     recorderRef.current = null;
-    if (stream === null) {
+    if (mountedRef.current) {
+      setStream(null);
+      setActiveKind(null);
+    }
+    if (activeStream === null) {
       return;
     }
-    for (const track of stream.getTracks()) {
+    for (const track of activeStream.getTracks()) {
       track.stop();
     }
   }, [clearTick]);
@@ -171,6 +181,8 @@ export function useMediaRecorder({ onRecorded }: UseMediaRecorderParams): UseMed
       recorderRef.current = recorder;
       chunksRef.current = [];
       cancelledRef.current = false;
+      setStream(stream);
+      setActiveKind(kind);
 
       recorder.ondataavailable = (event: BlobEvent): void => {
         if (event.data !== undefined && event.data.size > 0) {
@@ -251,5 +263,5 @@ export function useMediaRecorder({ onRecorded }: UseMediaRecorderParams): UseMed
     };
   }, [releaseStream]);
 
-  return { isRecording, isSupported, start, stop, cancel, elapsedMs, error };
+  return { isRecording, isSupported, start, stop, cancel, elapsedMs, error, stream, activeKind };
 }

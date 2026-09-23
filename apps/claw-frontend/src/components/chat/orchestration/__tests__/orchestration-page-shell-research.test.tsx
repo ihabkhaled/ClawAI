@@ -45,6 +45,7 @@ function buildComposer(
     ingestFiles: vi.fn(),
     isUploading: false,
     pendingCount: 0,
+    progress: null,
     research: { mode: ResearchMode.AUTO },
     setResearch: vi.fn(),
     researchProviders: [],

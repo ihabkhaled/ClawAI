@@ -50,9 +50,14 @@ beforeEach(() => {
   Object.defineProperty(globalThis.navigator, 'mediaDevices', {
     configurable: true,
     value: {
-      getUserMedia: vi.fn(
-        async () => ({ getTracks: () => [{ stop: vi.fn() }] }) as unknown as MediaStream,
-      ),
+      getUserMedia: vi.fn(async () => {
+        const tracks = [{ stop: vi.fn() }];
+        return {
+          getTracks: () => tracks,
+          getAudioTracks: () => tracks,
+          getVideoTracks: () => tracks,
+        } as unknown as MediaStream;
+      }),
     },
   });
   (globalThis as unknown as { MediaRecorder: unknown }).MediaRecorder = MockMediaRecorder;
@@ -71,6 +76,7 @@ function renderShell(ingestFiles: (files: File[] | FileList) => void): void {
       ingestFiles,
       isUploading: false,
       pendingCount: 0,
+      progress: null,
       research: { mode: ResearchMode.AUTO },
       setResearch: vi.fn(),
       researchProviders: [],
@@ -106,9 +112,9 @@ describe('OrchestrationPageShell — voice/video notes', () => {
     // Recording is consent-gated now: the dialog comes first, getUserMedia second.
     fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
     await waitFor(() => {
-      expect(screen.getByTestId('voice-video-recorder-stop')).toBeInTheDocument();
+      expect(screen.getByTestId('recording-surface-stop')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId('voice-video-recorder-stop'));
+    fireEvent.click(screen.getByTestId('recording-surface-stop'));
 
     await waitFor(() => {
       expect(ingestFiles).toHaveBeenCalledTimes(1);

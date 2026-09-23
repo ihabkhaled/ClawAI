@@ -118,6 +118,13 @@ describe('FilesService', () => {
       chunksRepo as unknown as FileChunksRepository,
       rabbitMQ as unknown as RabbitMQService,
       mockSecurityManager as any,
+      {
+        init: vi.fn(),
+        receiveChunk: vi.fn(),
+        getStatus: vi.fn(),
+        reassemble: vi.fn(),
+        cleanup: vi.fn(),
+      } as never,
       mockProcessingManager,
     );
   });

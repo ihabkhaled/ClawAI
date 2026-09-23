@@ -43,3 +43,18 @@ export type UploadFileRequest = {
   storagePath: string;
   content?: string;
 };
+
+/** Response shape shared by every chunked-upload endpoint (init/chunk/status). */
+export type ChunkedUploadStatus = {
+  uploadId: string;
+  totalChunks: number;
+  receivedChunks: number[];
+  complete: boolean;
+};
+
+export type InitChunkedUploadRequest = {
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  totalChunks: number;
+};

@@ -27,6 +27,8 @@ import { AppConfig } from '../../../app/config/app.config';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FileSecurityManager } from '../managers/file-security.manager';
+import { ChunkedUploadManager } from '../managers/chunked-upload.manager';
+import { type ChunkedUploadStatus } from '../types/chunked-upload.types';
 import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
 import {
@@ -48,6 +50,7 @@ export class FilesService {
     private readonly fileChunksRepository: FileChunksRepository,
     private readonly rabbitMQService: RabbitMQService,
     private readonly fileSecurityManager: FileSecurityManager,
+    private readonly chunkedUploadManager: ChunkedUploadManager,
     // Typed as the contract rather than the class for the same ESM reason
     // documented on FileProcessingContract: a class-typed parameter is emitted
     // into `design:paramtypes` and read while the module graph is still
@@ -95,24 +98,81 @@ export class FilesService {
     const contentBuffer = dto.content ? Buffer.from(dto.content, 'base64') : Buffer.alloc(0);
     this.validateDecodedFileSize(dto.sizeBytes, contentBuffer.length);
 
+    return this.persistUploadedFile(userId, dto.filename, dto.mimeType, contentBuffer);
+  }
+
+  /**
+   * Opens a chunked-upload session for a file above the single-shot threshold.
+   * The client uploads chunks with `uploadChunk`, polls `getChunkedUploadStatus`
+   * to resume after a dropped connection, then calls `completeChunkedUpload`.
+   */
+  initChunkedUpload(
+    userId: string,
+    args: { filename: string; mimeType: string; sizeBytes: number; totalChunks: number },
+  ): ChunkedUploadStatus {
+    this.validateMimeType(args.mimeType);
+    this.validateFileSize(args.sizeBytes);
+    return this.chunkedUploadManager.init(userId, args);
+  }
+
+  uploadChunk(
+    userId: string,
+    uploadId: string,
+    index: number,
+    base64Content: string,
+  ): ChunkedUploadStatus {
+    return this.chunkedUploadManager.receiveChunk(userId, uploadId, index, base64Content);
+  }
+
+  getChunkedUploadStatus(userId: string, uploadId: string): ChunkedUploadStatus {
+    return this.chunkedUploadManager.getStatus(userId, uploadId);
+  }
+
+  /**
+   * Reassembles every chunk and runs the SAME security + persistence pipeline
+   * as a single-shot upload — a payload split across chunk boundaries is
+   * scanned whole, never per-chunk.
+   */
+  async completeChunkedUpload(userId: string, uploadId: string): Promise<File> {
+    const { manifest, buffer } = this.chunkedUploadManager.reassemble(userId, uploadId);
+    this.logger.log(
+      `completeChunkedUpload: reassembled ${String(manifest.totalChunks)} chunks for "${manifest.filename}" (${String(buffer.length)} bytes)`,
+    );
+    try {
+      const file = await this.persistUploadedFile(
+        userId,
+        manifest.filename,
+        manifest.mimeType,
+        buffer,
+      );
+      return file;
+    } finally {
+      this.chunkedUploadManager.cleanup(uploadId);
+    }
+  }
+
+  /** Shared tail of every upload path: resolve mime, scan, store, create the row, publish, extract. */
+  private async persistUploadedFile(
+    userId: string,
+    filename: string,
+    declaredMimeType: string,
+    contentBuffer: Buffer,
+  ): Promise<File> {
     this.publishUploadStarted({
-      // fileId is unknown until the row is created — use empty string until then;
-      // the started event still carries enough metadata (user + filename +
-      // mimeType + size) for the audit trail.
       fileId: '',
       userId,
-      filename: dto.filename,
-      mimeType: dto.mimeType,
+      filename,
+      mimeType: declaredMimeType,
       sizeBytes: contentBuffer.length,
     });
 
     // An archive labelled octet-stream is stored, checked and expanded as the
     // archive it is; a declared archive MIME the bytes contradict is rejected
     // by the magic-byte check below.
-    const mimeType = await resolveUploadMimeType(dto.mimeType, contentBuffer);
-    await this.runSecurityChecks(dto.filename, mimeType, contentBuffer);
+    const mimeType = await resolveUploadMimeType(declaredMimeType, contentBuffer);
+    await this.runSecurityChecks(filename, mimeType, contentBuffer);
 
-    const safeName = this.fileSecurityManager.getSanitizedFilename(dto.filename);
+    const safeName = this.fileSecurityManager.getSanitizedFilename(filename);
     const storagePath = saveFile(`${String(Date.now())}-${safeName}`, contentBuffer);
 
     const file = await this.filesRepository.create({
@@ -121,11 +181,13 @@ export class FilesService {
       mimeType,
       sizeBytes: contentBuffer.length,
       storagePath,
-      content: dto.content ?? null,
+      content: contentBuffer.length > 0 ? contentBuffer.toString('base64') : null,
       retentionExpiresAt: this.computeRetentionExpiry(),
     });
 
-    this.logger.log(`uploadFile: uploaded file ${file.id} "${safeName}" (security checks passed)`);
+    this.logger.log(
+      `persistUploadedFile: uploaded file ${file.id} "${safeName}" (security checks passed)`,
+    );
     this.publishUploadCompleted(file);
     this.startExtraction(file);
 

@@ -262,9 +262,14 @@ describe('InThreadComparePanel — voice/video recorder', () => {
     Object.defineProperty(globalThis.navigator, 'mediaDevices', {
       configurable: true,
       value: {
-        getUserMedia: vi.fn(
-          async () => ({ getTracks: () => [{ stop: vi.fn() }] }) as unknown as MediaStream,
-        ),
+        getUserMedia: vi.fn(async () => {
+          const tracks = [{ stop: vi.fn() }];
+          return {
+            getTracks: () => tracks,
+            getAudioTracks: () => tracks,
+            getVideoTracks: () => tracks,
+          } as unknown as MediaStream;
+        }),
       },
     });
     (globalThis as unknown as { MediaRecorder: unknown }).MediaRecorder = MockMediaRecorder;
@@ -334,9 +339,9 @@ describe('InThreadComparePanel — voice/video recorder', () => {
     fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
     fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
     await waitFor(() => {
-      expect(screen.getByTestId('voice-video-recorder-stop')).toBeInTheDocument();
+      expect(screen.getByTestId('recording-surface-stop')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId('voice-video-recorder-stop'));
+    fireEvent.click(screen.getByTestId('recording-surface-stop'));
     await waitFor(() => {
       expect(onIngestFiles).toHaveBeenCalledTimes(1);
     });

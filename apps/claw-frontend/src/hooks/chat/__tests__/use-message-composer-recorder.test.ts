@@ -30,6 +30,7 @@ vi.mock('@/hooks/chat/use-message-composer-state', () => ({
     isResearchProvidersLoading: false,
     ingestFiles,
     isUploadingAttachment: false,
+    attachmentUploadProgress: null,
     handleValueChange: vi.fn(),
     submit: vi.fn(),
     handleSubmit: vi.fn(),

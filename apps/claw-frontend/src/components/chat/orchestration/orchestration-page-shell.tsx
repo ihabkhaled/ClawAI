@@ -9,6 +9,7 @@ import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { LoadingState } from '@/components/common/loading-state';
+import { UploadProgressIndicator } from '@/components/files/upload-progress-indicator';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -203,6 +204,10 @@ export function OrchestrationPageShell({
                     {t('chat.attachment.uploading')}
                     {composer.pendingCount > 0 ? ` (${String(composer.pendingCount)})` : ''}
                   </p>
+                ) : null}
+
+                {composer !== undefined && composer.progress !== null ? (
+                  <UploadProgressIndicator progress={composer.progress} />
                 ) : null}
 
                 {extraFieldsSlot !== undefined && extraFieldsSlot !== null ? (

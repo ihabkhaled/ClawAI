@@ -178,4 +178,5 @@ export { ModelRecencyTier } from './model-recency-tier.enum';
 export { AnswerExportFormat } from './answer-export-format.enum';
 export { PageWindowGap } from './page-window-gap.enum';
 export { MediaRecordingKind } from './media-recording-kind.enum';
+export { RecordingWaveformVariant } from './recording-waveform-variant.enum';
 export { MediaRecordingError } from './media-recording-error.enum';

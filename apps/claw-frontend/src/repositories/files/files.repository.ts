@@ -1,5 +1,11 @@
 import { apiClient } from '@/services/shared/api-client';
-import type { UploadedFile, FileWithChunks, UploadFileRequest } from '@/types';
+import type {
+  UploadedFile,
+  FileWithChunks,
+  UploadFileRequest,
+  ChunkedUploadStatus,
+  InitChunkedUploadRequest,
+} from '@/types';
 import type { ArchiveEntryListing, PaginatedFiles } from '@/types/archive.types';
 
 export const filesRepository = {
@@ -27,5 +33,39 @@ export const filesRepository = {
 
   async deleteFile(id: string): Promise<void> {
     await apiClient.delete(`/files/${id}`);
+  },
+
+  // Chunked upload — used by useChunkedUpload for files above
+  // CHUNKED_UPLOAD_THRESHOLD_BYTES (recordings, mainly). See
+  // ChunkedUploadManager on file-service for the session semantics.
+  async initChunkedUpload(data: InitChunkedUploadRequest): Promise<ChunkedUploadStatus> {
+    const response = await apiClient.post<ChunkedUploadStatus>('/files/upload/chunked/init', data);
+    return response.data;
+  },
+
+  async uploadChunk(
+    uploadId: string,
+    index: number,
+    content: string,
+  ): Promise<ChunkedUploadStatus> {
+    const response = await apiClient.post<ChunkedUploadStatus>(
+      `/files/upload/chunked/${uploadId}/chunks/${String(index)}`,
+      { content },
+    );
+    return response.data;
+  },
+
+  async getChunkedUploadStatus(uploadId: string): Promise<ChunkedUploadStatus> {
+    const response = await apiClient.get<ChunkedUploadStatus>(
+      `/files/upload/chunked/${uploadId}/status`,
+    );
+    return response.data;
+  },
+
+  async completeChunkedUpload(uploadId: string): Promise<UploadedFile> {
+    const response = await apiClient.post<UploadedFile>(
+      `/files/upload/chunked/${uploadId}/complete`,
+    );
+    return response.data;
   },
 };

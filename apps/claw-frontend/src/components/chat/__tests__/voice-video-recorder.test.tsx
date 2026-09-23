@@ -43,9 +43,14 @@ beforeEach(() => {
   Object.defineProperty(globalThis.navigator, 'mediaDevices', {
     configurable: true,
     value: {
-      getUserMedia: vi.fn(
-        async () => ({ getTracks: () => [{ stop: vi.fn() }] }) as unknown as MediaStream,
-      ),
+      getUserMedia: vi.fn(async () => {
+        const tracks = [{ stop: vi.fn() }];
+        return {
+          getTracks: () => tracks,
+          getAudioTracks: () => tracks,
+          getVideoTracks: () => tracks,
+        } as unknown as MediaStream;
+      }),
     },
   });
   (globalThis as unknown as { MediaRecorder: unknown }).MediaRecorder = MockMediaRecorder;
@@ -102,10 +107,10 @@ describe('VoiceVideoRecorder', () => {
     fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('voice-video-recorder-elapsed')).toBeInTheDocument();
+      expect(screen.getByTestId('recording-surface-elapsed')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByTestId('voice-video-recorder-stop'));
+    fireEvent.click(screen.getByTestId('recording-surface-stop'));
 
     await waitFor(() => {
       expect(onRecorded).toHaveBeenCalledTimes(1);
@@ -122,10 +127,10 @@ describe('VoiceVideoRecorder', () => {
     fireEvent.click(screen.getByTestId('voice-video-recorder-audio'));
     fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
     await waitFor(() => {
-      expect(screen.getByTestId('voice-video-recorder-cancel')).toBeInTheDocument();
+      expect(screen.getByTestId('recording-surface-cancel')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByTestId('voice-video-recorder-cancel'));
+    fireEvent.click(screen.getByTestId('recording-surface-cancel'));
 
     await waitFor(() => {
       expect(screen.getByTestId('voice-video-recorder-audio')).toBeInTheDocument();
@@ -209,7 +214,7 @@ describe('VoiceVideoRecorder — consent before the browser prompt', () => {
     fireEvent.click(await screen.findByTestId('media-recording-consent-confirm'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('voice-video-recorder-elapsed')).toBeInTheDocument();
+      expect(screen.getByTestId('recording-surface-elapsed')).toBeInTheDocument();
     });
     expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
     // A video note asks for the camera AND the microphone.
@@ -228,7 +233,7 @@ describe('VoiceVideoRecorder — consent before the browser prompt', () => {
       expect(screen.queryByTestId('media-recording-consent-dialog')).not.toBeInTheDocument();
     });
     expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('voice-video-recorder-elapsed')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('recording-surface-elapsed')).not.toBeInTheDocument();
   });
 
   it('starts nothing when the dialog is dismissed with Escape', async () => {

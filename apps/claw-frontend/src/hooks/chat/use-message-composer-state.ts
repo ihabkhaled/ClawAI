@@ -32,7 +32,11 @@ export const useMessageComposerState = ({
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
-  const { ingestFiles, isUploading: isUploadingAttachment } = useComposerAttachments({
+  const {
+    ingestFiles,
+    isUploading: isUploadingAttachment,
+    progress: attachmentUploadProgress,
+  } = useComposerAttachments({
     selectedFileIds,
     onChange: setSelectedFileIds,
     disabled: isPending,
@@ -179,5 +183,6 @@ export const useMessageComposerState = ({
     handleValueChange,
     ingestFiles,
     isUploadingAttachment,
+    attachmentUploadProgress,
   };
 };

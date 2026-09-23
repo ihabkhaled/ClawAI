@@ -8,6 +8,7 @@ import { FilesRepository } from './repositories/files.repository';
 import { FileChunksRepository } from './repositories/file-chunks.repository';
 import { FileProcessingManager } from './managers/file-processing.manager';
 import { FileSecurityManager } from './managers/file-security.manager';
+import { ChunkedUploadManager } from './managers/chunked-upload.manager';
 import { FileRetentionSweeperManager } from './managers/file-retention-sweeper.manager';
 import { ZipExpansionManager } from './managers/zip-expansion.manager';
 import { TranscriptionManager } from './managers/transcription.manager';
@@ -22,6 +23,7 @@ import { TranscriptionCapabilityClient } from './clients/transcription-capabilit
     FileChunksRepository,
     FileProcessingManager,
     FileSecurityManager,
+    ChunkedUploadManager,
     FileRetentionSweeperManager,
     ZipExpansionManager,
     // B6b - audio transcription. The manager subscribes to

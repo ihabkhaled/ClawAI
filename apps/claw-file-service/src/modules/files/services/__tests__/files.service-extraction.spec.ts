@@ -94,6 +94,13 @@ describe('FilesService extraction wiring', () => {
       } as unknown as FileChunksRepository,
       { publish: vi.fn().mockResolvedValue(void 0) } as unknown as RabbitMQService,
       security as unknown as FileSecurityManager,
+      {
+        init: vi.fn(),
+        receiveChunk: vi.fn(),
+        getStatus: vi.fn(),
+        reassemble: vi.fn(),
+        cleanup: vi.fn(),
+      } as never,
       processing,
     );
   });

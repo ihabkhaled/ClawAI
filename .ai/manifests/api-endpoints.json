@@ -1516,6 +1516,26 @@
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/files/upload/chunked/:uploadId/chunks/:index",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/files/upload/chunked/:uploadId/complete",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/files/upload/chunked/:uploadId/status",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/files/upload/chunked/init",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-file-service/src/modules/health/controllers/health.controller.ts"
@@ -3438,5 +3458,5 @@
     ]
   },
   "generated": true,
-  "total": 680
+  "total": 684
 }

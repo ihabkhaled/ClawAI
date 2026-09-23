@@ -38,7 +38,7 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
-  const { ingestFiles, isUploading, pendingCount } = useComposerAttachments({
+  const { ingestFiles, isUploading, pendingCount, progress } = useComposerAttachments({
     selectedFileIds,
     onChange: setSelectedFileIds,
     disabled,
@@ -67,6 +67,7 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
     ingestFiles,
     isUploading,
     pendingCount,
+    progress,
     research,
     setResearch,
     researchProviders: providerQuery.providers,

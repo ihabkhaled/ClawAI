@@ -83,6 +83,13 @@ describe('FilesService archive uploads (magic-byte routing)', () => {
       {} as FileChunksRepository,
       rabbitMQ as RabbitMQService,
       new FileSecurityManager(),
+      {
+        init: vi.fn(),
+        receiveChunk: vi.fn(),
+        getStatus: vi.fn(),
+        reassemble: vi.fn(),
+        cleanup: vi.fn(),
+      } as never,
       processing,
     );
   });

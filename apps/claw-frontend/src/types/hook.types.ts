@@ -71,6 +71,7 @@ import type {
   ResearchOptions,
   SanitizedResearchProvider,
 } from './research.types';
+import type { UploadProgressSnapshot } from './upload-progress.types';
 import type {
   WorkspaceConnector,
   WorkspaceHealthEvent,
@@ -519,6 +520,8 @@ export type UseComposerAttachmentsReturn = {
   ingestFiles: (files: FileList | File[] | null | undefined) => void;
   isUploading: boolean;
   pendingCount: number;
+  /** The most recently uploading file's percent/ETA/speed, null when idle. */
+  progress: UploadProgressSnapshot | null;
 };
 
 export type UseComposerDropzoneParams = {
@@ -573,6 +576,7 @@ export type UseMessageComposerReturn = {
   sendLabel: string;
   /** Non-null only while an attachment upload is in flight. */
   uploadingLabel: string | null;
+  uploadProgress: UploadProgressSnapshot | null;
   validationError: string | null;
   canSubmit: boolean;
   content: string;
@@ -606,6 +610,7 @@ export type UseMessageComposerStateReturn = {
   // selectedFileIds so they are sent to the model like picked files.
   ingestFiles: (files: FileList | File[]) => void;
   isUploadingAttachment: boolean;
+  attachmentUploadProgress: UploadProgressSnapshot | null;
 };
 
 // Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.
@@ -1162,6 +1167,7 @@ export type UseOrchestrationComposerReturn = {
   ingestFiles: (files: FileList | File[]) => void;
   isUploading: boolean;
   pendingCount: number;
+  progress: UploadProgressSnapshot | null;
   /** Selected research mode + provider, defaulted to AUTO exactly like chat. */
   research: ResearchOptions;
   setResearch: (next: ResearchOptions) => void;

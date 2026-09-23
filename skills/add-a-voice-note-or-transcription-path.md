@@ -60,10 +60,57 @@ and runs concurrently with the service's prefetch, rather than blocking the uplo
 ## The recorder, and why a control is dimmed
 
 `VoiceVideoRecorder` sits in the composer — once, in `OrchestrationPageShell`
-and in chat's toolbar, so all nine lab pages and chat get it together. It hands
-the recorded `File` to the composer's `ingestFiles`, which is the same upload
-pipeline the paperclip uses: antivirus, magic bytes, chunking. There is no
-second upload path and there must not be one.
+and in chat's toolbar, so all nine lab pages, Compare, and chat get it
+together. It hands the recorded `File` to the composer's `ingestFiles`, which
+is the same upload pipeline the paperclip uses: antivirus, magic bytes, chunked
+transport above the threshold. There is no second upload path and there must
+not be one.
+
+While recording, `VoiceVideoRecorder` renders `RecordingSurface`
+(`components/chat/recording-surface.tsx`) instead of the old inline bar: a
+full-screen sheet with a live camera preview (video notes) or a large
+`RecordingWaveform` (voice notes), an elapsed timer, and a rounded pill bar —
+cancel (X), a compact live waveform, stop (square), send (arrow). The waveform
+is driven by `useRecordingWaveform`, an `AnalyserNode` on the SAME
+`MediaStream` `useMediaRecorder` is already capturing (now exposed as
+`stream`/`activeKind` on its return value) — never a second `getUserMedia`
+call. Stop and Send both call the recorder's `stop()`; Send is the immediate-
+intent affordance the reference UI calls for, but nothing here auto-submits
+the chat message itself — that remains the composer's own Send button, same as
+every other attachment. A browser with no `AnalyserNode` just shows flat bars;
+recording, upload, and the timer are unaffected.
+
+## Reliable upload — chunked transport for anything above 4MB
+
+`useComposerAttachments` no longer POSTs the whole file as one JSON body. It
+calls `useChunkedUpload`, which:
+
+- sends a file at or below `CHUNKED_UPLOAD_THRESHOLD_BYTES` (4MB) through the
+  original single-shot `/files/upload`;
+- above that, splits it into `CHUNKED_UPLOAD_CHUNK_BYTES` (2MB) pieces and
+  calls the four endpoints file-service added under `/files/upload/chunked/`:
+  `init` → `chunks/:index` (repeated) → `complete`, with `status` for resuming;
+- retries a failed chunk with capped exponential backoff
+  (`CHUNKED_UPLOAD_MAX_RETRIES_PER_CHUNK` = 4 attempts, never unbounded — see
+  "No Infinite Polling"), and if the whole session still fails, a second
+  `upload()` call for the SAME `File` resumes via `getChunkedUploadStatus`
+  instead of re-sending chunks the server already has;
+- reports `percent`/`bytesPerSecond`/`etaSeconds`/`elapsedSeconds` at least
+  once a second (`UploadProgressSnapshot`, rendered by the shared
+  `UploadProgressIndicator` — main chat composer and every
+  `OrchestrationPageShell` lab both use it, not a copy each).
+
+Server-side, `ChunkedUploadManager`
+(`apps/claw-file-service/.../managers/chunked-upload.manager.ts`) holds each
+session as a manifest + per-chunk file under
+`<FILE_STORAGE_PATH>/.chunk-sessions/<uploadId>/` — deliberately NOT a new
+Prisma model, since a chunked-upload session is transient (minutes) and this
+change had no live DB connection to prove a migration safe against. `complete`
+is the ONLY place that concatenates the chunks and runs `FileSecurityManager`
+(magic bytes, zip-bomb, ClamAV) against the WHOLE reassembled buffer — a
+payload split across chunk boundaries is scanned whole, never bypassable
+per-chunk. `FilesService.uploadFile` and `completeChunkedUpload` now share one
+`persistUploadedFile` tail so both paths run the identical pipeline.
 
 Three decisions that will look arbitrary later:
 
@@ -175,7 +222,15 @@ and `apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/context
 ```bash
 cd apps/claw-file-service
 npx vitest run src/modules/files/managers/__tests__/transcription.manager.spec.ts \
-  src/modules/files/clients/__tests__/transcription-capability.client.spec.ts
+  src/modules/files/clients/__tests__/transcription-capability.client.spec.ts \
+  src/modules/files/managers/__tests__/chunked-upload.manager.spec.ts
+
+cd ../claw-frontend
+npx vitest run src/hooks/files/__tests__/use-chunked-upload.test.ts \
+  src/hooks/files/__tests__/use-recording-waveform.test.ts \
+  src/utilities/__tests__/chunked-upload.utility.test.ts \
+  src/utilities/__tests__/recording-waveform.utility.test.ts \
+  src/components/chat/__tests__/voice-video-recorder.test.tsx
 ```
 
 Live, per [`rules/49`](../rules/49-qa-team-discipline-and-test-evidence.md):

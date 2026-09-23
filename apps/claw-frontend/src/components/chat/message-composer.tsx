@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { ComposerToolbar } from '@/components/chat/composer-toolbar';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
+import { UploadProgressIndicator } from '@/components/files/upload-progress-indicator';
 import { Button } from '@/components/ui/button';
 import { useMessageComposer } from '@/hooks/chat/use-message-composer';
 import type { MessageComposerProps } from '@/types';
@@ -80,6 +81,11 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
           <p className="text-muted-foreground px-2 text-xs" aria-live="polite">
             {composer.uploadingLabel}
           </p>
+        ) : null}
+        {composer.uploadProgress !== null ? (
+          <div className="px-2">
+            <UploadProgressIndicator progress={composer.uploadProgress} />
+          </div>
         ) : null}
       </form>
     </ComposerDropzone>

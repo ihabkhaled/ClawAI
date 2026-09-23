@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 
 import type { MediaRecordingError } from '@/enums/media-recording-error.enum';
 import type { MediaRecordingKind } from '@/enums/media-recording-kind.enum';
+import type { RecordingWaveformVariant } from '@/enums/recording-waveform-variant.enum';
 
 // media-recording.types.ts — exported shapes only, no runtime code.
 
@@ -24,6 +25,20 @@ export type UseMediaRecorderReturn = {
   cancel: () => void;
   elapsedMs: number;
   error: MediaRecordingError | null;
+  /**
+   * The live MediaStream while recording, null otherwise. Exposed so the
+   * full-screen recording surface can drive a live waveform (AnalyserNode)
+   * and, for video, a live `<video>` preview — never used to start a second
+   * recording, only to visualize the one already running.
+   */
+  stream: MediaStream | null;
+  /** Which kind is currently recording, null when idle. */
+  activeKind: MediaRecordingKind | null;
+};
+
+/** `window.AudioContext` with the vendor-prefixed Safari/old-WebKit fallback. */
+export type WindowWithWebkitAudioContext = typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext;
 };
 
 /**
@@ -70,4 +85,27 @@ export type MediaRecordingConsentDialogProps = {
   onCancel: () => void;
   confirmRef: RefObject<HTMLButtonElement | null>;
   onOpenAutoFocus: (event: Event) => void;
+};
+
+/** The full-screen recording surface shown while `isRecording` is true. */
+export type RecordingSurfaceProps = {
+  kind: MediaRecordingKind;
+  stream: MediaStream | null;
+  elapsedMs: number;
+  /** Stop and keep the take (attaches it, does not close the composer). */
+  onStop: () => void;
+  /** Stop, keep the take, AND signal immediate send intent (same attach path). */
+  onSend: () => void;
+  /** Discard the take entirely. */
+  onCancel: () => void;
+};
+
+export type RecordingWaveformProps = {
+  levels: number[];
+  /** Compact renders a short strip for the pill bar; default is the full-height hero view. */
+  variant?: RecordingWaveformVariant;
+};
+
+export type RecordingCameraPreviewProps = {
+  stream: MediaStream | null;
 };
