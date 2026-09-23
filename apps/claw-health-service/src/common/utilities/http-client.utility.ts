@@ -1,5 +1,18 @@
 import { type AxiosRequestConfig } from 'axios';
-import { httpGet as httpGetShared, httpPost as httpPostShared } from '@claw/shared-utilities';
+import {
+  declaredHost as declaredHostShared,
+  httpGet as httpGetShared,
+  httpPost as httpPostShared,
+} from '@claw/shared-utilities';
+
+/**
+ * The host of a base URL, declared to the shared SSRF guard. Health-service
+ * reads Prometheus, whose address is a compose service name rather than an
+ * `*_SERVICE_URL` variable, so it names that destination at the call site.
+ */
+export function declaredHost(baseUrl: string): ReadonlySet<string> {
+  return declaredHostShared(baseUrl);
+}
 
 /**
  * Service-local typed wrapper around the shared axios HTTP client.

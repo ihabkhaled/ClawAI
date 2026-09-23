@@ -216,6 +216,7 @@ export const queryKeys = {
   health: {
     all: ['health'] as const,
     aggregated: ['health', 'aggregated'] as const,
+    status: ['health', 'status'] as const,
   },
   dashboard: {
     all: ['dashboard'] as const,

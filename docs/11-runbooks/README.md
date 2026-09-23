@@ -11,6 +11,7 @@
 | A new API route 404s as HTML in production         | [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) → nginx is pinned to a stale config inode; recreate the container                         |
 | A service fails on a symbol its source declares    | [runbook-stale-shared-package-dist.md](runbook-stale-shared-package-dist.md) → the container carries an image-baked `packages/*/dist`; rebuild the image |
 | Requests are slow / timing out                     | [runbook-high-latency.md](runbook-high-latency.md)                                                                                                       |
+| Status page shows Degraded / Down / no history     | [runbook-status-page-degraded.md](runbook-status-page-degraded.md) → map the component to its services, then read the raw fan-out or Prometheus          |
 | A database is corrupt / needs restore              | [runbook-database-recovery.md](runbook-database-recovery.md)                                                                                             |
 | The AI "forgot" something earlier in the thread    | [context-loss-triage.md](context-loss-triage.md) → read the receipt's `conversation` block; it says what was sent and why the rest was not               |
 | Routing picks the "wrong" model                    | [runbook-routing-misclassification.md](runbook-routing-misclassification.md)                                                                             |

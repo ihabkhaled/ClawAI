@@ -1,1 +1,1 @@
-export { httpGet, httpPost } from "./http-client.utility";
+export { declaredHost, httpGet, httpPost } from './http-client.utility';

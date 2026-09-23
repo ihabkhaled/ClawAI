@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ServiceStatus } from '@claw/shared-types';
 
 import {
@@ -8,11 +8,10 @@ import {
   METRIC_SERVICES_TOTAL,
   METRIC_SERVICES_UP,
   METRIC_SNAPSHOT_AGE_MS,
-  METRICS_SNAPSHOT_TTL_MS,
 } from '../constants/metrics.constants';
 import { type HealthSnapshot, type PrometheusMetric } from '../types/metrics.types';
 import { renderMetrics } from '../utilities/prometheus-text.utility';
-import { HealthService } from './health.service';
+import { HealthSnapshotService } from './health-snapshot.service';
 
 /**
  * The health fan-out, as Prometheus metrics (ADR-113).
@@ -23,41 +22,11 @@ import { HealthService } from './health.service';
  */
 @Injectable()
 export class MetricsService {
-  private readonly logger = new Logger(MetricsService.name);
-  private snapshot: HealthSnapshot | null = null;
-  private inFlight: Promise<HealthSnapshot> | null = null;
-
-  constructor(private readonly healthService: HealthService) {}
+  constructor(private readonly snapshots: HealthSnapshotService) {}
 
   async render(now: number = Date.now()): Promise<string> {
-    const snapshot = await this.snapshotFor(now);
+    const snapshot = await this.snapshots.current(now);
     return renderMetrics(this.metricsFrom(snapshot, now));
-  }
-
-  /**
-   * The cached snapshot, refreshed when it is older than the TTL.
-   *
-   * Concurrent scrapes share one refresh: two scrapers arriving together
-   * would otherwise both fan out to every service.
-   */
-  private async snapshotFor(now: number): Promise<HealthSnapshot> {
-    if (this.snapshot && now - this.snapshot.takenAtMs < METRICS_SNAPSHOT_TTL_MS) {
-      return this.snapshot;
-    }
-    this.inFlight ??= this.refresh(now).finally(() => {
-      this.inFlight = null;
-    });
-    return this.inFlight;
-  }
-
-  private async refresh(now: number): Promise<HealthSnapshot> {
-    this.logger.debug('refresh: taking a health snapshot for the exporter');
-    const snapshot: HealthSnapshot = {
-      health: await this.healthService.checkAll(),
-      takenAtMs: now,
-    };
-    this.snapshot = snapshot;
-    return snapshot;
   }
 
   private metricsFrom(snapshot: HealthSnapshot, now: number): PrometheusMetric[] {

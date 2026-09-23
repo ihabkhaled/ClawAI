@@ -275,6 +275,21 @@ export type {
 export type { ServiceHealthResult, AggregatedHealth } from './health.types';
 export type { UseServiceAvailabilityReturn } from './service-availability.types';
 export type {
+  ComponentStateAppearance,
+  ComponentStatus,
+  ComponentUptime,
+  StatusIncident,
+  StatusPageResponse,
+  UseServiceStatusReturn,
+} from './service-status.types';
+export type {
+  ComponentStateBadgeProps,
+  ComponentStatusRowProps,
+  ServiceStatusSectionProps,
+  StatusIncidentListProps,
+  UsageOverviewProps,
+} from './service-status-component.types';
+export type {
   ApiRequestConfig,
   ApiResponse,
   ApiError,

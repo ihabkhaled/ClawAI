@@ -47,6 +47,7 @@ const LIVE_HOOKS = [
   'hooks/logs/use-client-logs.ts',
   'hooks/logs/use-client-log-stats.ts',
   'hooks/observability/use-observability-page.ts',
+  'hooks/observability/use-service-status.ts',
   'hooks/audit/use-audit-logs.ts',
   'hooks/audit/use-audit-stats.ts',
   'hooks/audit/use-usage.ts',

@@ -1244,6 +1244,51 @@ export const es: TranslationDictionary = {
     },
   },
   observability: {
+    totalTokensCount: '{count} tokens en total',
+    status: {
+      title: 'Estado de los servicios',
+      description:
+        'Si cada parte de la plataforma responde ahora mismo y con qué fiabilidad ha respondido a lo largo del tiempo.',
+      overallLabel: 'General',
+      loading: 'Comprobando servicios…',
+      failedToLoad:
+        'No se pudo cargar el estado de los servicios. Se volverá a intentar automáticamente.',
+      historyUnavailable:
+        'El historial de disponibilidad no está disponible ahora mismo. El estado actual de abajo sigue en directo.',
+      uptime: 'Disponibilidad',
+      noData: 'Sin datos',
+      partialCoverage: 'Medido durante el {percent} de este periodo',
+      incidentsTitle: 'Incidencias de los últimos 7 días',
+      noIncidents: 'Sin incidencias en los últimos 7 días.',
+      startedAt: 'Inicio: {time}',
+      lasted: 'Duración: {duration}',
+      ongoingFor: 'En curso desde hace {duration}',
+      resolution:
+        'Se comprueba cada 15 segundos y se cuenta en intervalos de 5 minutos. Un intervalo cuenta en contra de un componente si falló alguna comprobación en él.',
+      windows: {
+        day: '24 horas',
+        week: '7 días',
+        month: '30 días',
+      },
+      states: {
+        up: 'Operativo',
+        degraded: 'Degradado',
+        down: 'Caído',
+        unknown: 'Desconocido',
+      },
+      components: {
+        accounts: 'Inicio de sesión y cuentas',
+        chat: 'Chat',
+        files: 'Archivos',
+        images: 'Generación de imágenes',
+        research: 'Investigación',
+        payments: 'Pagos',
+        workspaces: 'Espacios de trabajo',
+        codingAgent: 'Agente de programación',
+        localModels: 'Modelos locales',
+        platform: 'Registros y auditoría',
+      },
+    },
     title: 'Observabilidad',
     description: 'Monitoriza el uso y rendimiento de la IA',
     totalRequests: 'Solicitudes totales',

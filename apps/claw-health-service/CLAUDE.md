@@ -7,12 +7,12 @@ This is a lightweight, stateless aggregator service that calls all other service
 ## Tech Details
 
 - **Port**: 4009
-- **Database**: NONE (stateless)
-- **Dependencies**: Minimal (NestJS, axios, nestjs-pino, zod)
+- **Database**: NONE. History lives in Prometheus, which this service exports to and reads back (ADR-113)
+- **Dependencies**: Minimal (NestJS, axios, nestjs-pino, zod, `@claw/shared-utilities`, `@claw/shared-types`, `@claw/shared-auth`)
 
 ## Behavior
 
-- Calls all 8 service health endpoints in parallel
+- Calls all 17 service health endpoints in parallel
 - Returns aggregated status: healthy (all up), degraded (some down), unhealthy (all down)
 - Individual service failures do not crash this service — they are reported as degraded
 
@@ -121,3 +121,25 @@ After completing any implementation task on this service, produce:
   every tick: the healthcheck and the scraper run every 15 s each.
 - Prometheus scrapes this service over HTTPS with the stack CA and is never
   published. Its config is bind-mounted, so a change is a RECREATE.
+
+## The status page (observability plan B3)
+
+- `GET /api/v1/health/status` is **admin-only** (`AuthGuard` +
+  `SessionRevocationGuard` + `RolesGuard`, `@Roles(UserRole.ADMIN)`), throttled
+  at 120/min, `Cache-Control: private, max-age=30`. The public `/api/v1/health`
+  is unchanged.
+- **It speaks components, never services.** `COMPONENT_MEMBERS` maps the 17
+  services to 10 coarse groups. Nothing in `StatusPageResponse` may carry a
+  service name, host, port, version or error text; the redaction spec in
+  `status-aggregation.utility.spec.ts` enforces it. Log a failure, never
+  return it.
+- **Never fan out on a request.** Live state is `HealthSnapshotService.current()`,
+  the same 14 s snapshot the exporter serves. Do not call `checkAll()` from a
+  request path.
+- **History is read from Prometheus**: two range queries, cached 60 s; a failed
+  read is cached 30 s. One attempt, 5 s timeout, no retry loop.
+- **Integer basis points** for uptime, floored. Unmeasured buckets count on
+  neither side.
+- A new service in `SERVICE_URLS` must join exactly one group in
+  `COMPONENT_MEMBERS` (a spec fails otherwise). A new component needs the
+  frontend enum, label key and 13 locales: `skills/watch-production-health.md`.

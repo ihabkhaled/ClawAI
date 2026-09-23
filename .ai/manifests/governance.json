@@ -324,7 +324,7 @@
   ],
   "skills": [
     {
-      "bytes": 29116,
+      "bytes": 29395,
       "file": "skills/00-index.md"
     },
     {
@@ -658,6 +658,10 @@
     {
       "bytes": 3043,
       "file": "skills/verify-the-research-loop-live.md"
+    },
+    {
+      "bytes": 3786,
+      "file": "skills/watch-production-health.md"
     },
     {
       "bytes": 3058,

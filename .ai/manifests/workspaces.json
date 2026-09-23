@@ -293,6 +293,8 @@
     {
       "dir": "apps/claw-health-service",
       "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-types",
         "@claw/shared-utilities"
       ],
       "name": "claw-health-service",

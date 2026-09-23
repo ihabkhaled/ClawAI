@@ -60,6 +60,15 @@ A browser view (Grafana, behind the admin session) and the in-app status page
 are separate batches; see
 [observability-plan](../implementation/observability-plan.md).
 
+## Reading it back: the status page (B3)
+
+health-service reads these series back for the admin-only service-status
+section of `/observability` (`GET /api/v1/health/status`): two range queries
+over 30 days at a 5-minute step, cached for a minute, turned into per-component
+uptime and incidents. The browser never talks to Prometheus. Details:
+[service-guide-health](../04-backend/service-guide-health.md) § Status page ·
+[runbook-status-page-degraded](../11-runbooks/runbook-status-page-degraded.md).
+
 ## Changing the configuration
 
 `infra/prometheus/prometheus.yml` is **bind-mounted as a single file**, so a

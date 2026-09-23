@@ -1244,6 +1244,51 @@ export const pt: TranslationDictionary = {
     },
   },
   observability: {
+    totalTokensCount: '{count} tokens no total',
+    status: {
+      title: 'Status dos serviços',
+      description:
+        'Se cada parte da plataforma está respondendo agora e com que confiabilidade respondeu ao longo do tempo.',
+      overallLabel: 'Geral',
+      loading: 'Verificando serviços…',
+      failedToLoad:
+        'Não foi possível carregar o status dos serviços. Uma nova tentativa será feita automaticamente.',
+      historyUnavailable:
+        'O histórico de disponibilidade não pode ser exibido no momento. O estado atual abaixo continua ao vivo.',
+      uptime: 'Disponibilidade',
+      noData: 'Sem dados',
+      partialCoverage: 'Medido em {percent} deste período',
+      incidentsTitle: 'Incidentes dos últimos 7 dias',
+      noIncidents: 'Nenhum incidente nos últimos 7 dias.',
+      startedAt: 'Início: {time}',
+      lasted: 'Duração: {duration}',
+      ongoingFor: 'Em andamento há {duration}',
+      resolution:
+        'Verificado a cada 15 segundos e contado em intervalos de 5 minutos. Um intervalo conta contra um componente se alguma verificação nele falhou.',
+      windows: {
+        day: '24 horas',
+        week: '7 dias',
+        month: '30 dias',
+      },
+      states: {
+        up: 'Operacional',
+        degraded: 'Degradado',
+        down: 'Fora do ar',
+        unknown: 'Desconhecido',
+      },
+      components: {
+        accounts: 'Login e contas',
+        chat: 'Chat',
+        files: 'Arquivos',
+        images: 'Geração de imagens',
+        research: 'Pesquisa',
+        payments: 'Pagamentos',
+        workspaces: 'Espaços de trabalho',
+        codingAgent: 'Agente de programação',
+        localModels: 'Modelos locais',
+        platform: 'Registros e auditoria',
+      },
+    },
     title: 'Observabilidade',
     description: 'Monitorar uso e desempenho da IA',
     totalRequests: 'Total de Requisições',

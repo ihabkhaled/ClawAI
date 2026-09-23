@@ -21,6 +21,8 @@
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {
+    "@claw/shared-auth": "*",
+    "@claw/shared-types": "*",
     "@claw/shared-utilities": "*",
     "@nestjs/common": "^12.0.3",
     "@nestjs/core": "^12.0.1",

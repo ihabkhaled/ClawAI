@@ -1250,6 +1250,51 @@ export const de: TranslationDictionary = {
     },
   },
   observability: {
+    totalTokensCount: '{count} Tokens insgesamt',
+    status: {
+      title: 'Dienststatus',
+      description:
+        'Ob jeder Teil der Plattform gerade antwortet und wie zuverlässig er über die Zeit geantwortet hat.',
+      overallLabel: 'Gesamt',
+      loading: 'Dienste werden geprüft…',
+      failedToLoad:
+        'Der Dienststatus konnte nicht geladen werden. Es wird automatisch erneut versucht.',
+      historyUnavailable:
+        'Der Verfügbarkeitsverlauf ist gerade nicht verfügbar. Der aktuelle Zustand unten ist weiterhin live.',
+      uptime: 'Verfügbarkeit',
+      noData: 'Keine Daten',
+      partialCoverage: 'Für {percent} dieses Zeitraums gemessen',
+      incidentsTitle: 'Störungen der letzten 7 Tage',
+      noIncidents: 'Keine Störungen in den letzten 7 Tagen.',
+      startedAt: 'Begonnen {time}',
+      lasted: 'Dauer: {duration}',
+      ongoingFor: 'Seit {duration} andauernd',
+      resolution:
+        'Alle 15 Sekunden geprüft und in 5-Minuten-Intervallen gezählt. Ein Intervall zählt gegen eine Komponente, wenn darin eine Prüfung fehlgeschlagen ist.',
+      windows: {
+        day: '24 Stunden',
+        week: '7 Tage',
+        month: '30 Tage',
+      },
+      states: {
+        up: 'In Betrieb',
+        degraded: 'Beeinträchtigt',
+        down: 'Ausgefallen',
+        unknown: 'Unbekannt',
+      },
+      components: {
+        accounts: 'Anmeldung und Konten',
+        chat: 'Chat',
+        files: 'Dateien',
+        images: 'Bildgenerierung',
+        research: 'Recherche',
+        payments: 'Zahlungen',
+        workspaces: 'Arbeitsbereiche',
+        codingAgent: 'Coding-Agent',
+        localModels: 'Lokale Modelle',
+        platform: 'Protokolle und Audit',
+      },
+    },
     title: 'Beobachtbarkeit',
     description: 'KI-Nutzung und Performance überwachen',
     totalRequests: 'Gesamtanfragen',

@@ -1248,6 +1248,51 @@ export const fr: TranslationDictionary = {
     },
   },
   observability: {
+    totalTokensCount: '{count} jetons au total',
+    status: {
+      title: 'État des services',
+      description:
+        'Si chaque partie de la plateforme répond en ce moment, et avec quelle fiabilité elle a répondu dans le temps.',
+      overallLabel: 'Global',
+      loading: 'Vérification des services…',
+      failedToLoad:
+        'L’état des services n’a pas pu être chargé. Une nouvelle tentative aura lieu automatiquement.',
+      historyUnavailable:
+        'L’historique de disponibilité est indisponible pour le moment. L’état actuel ci-dessous reste en direct.',
+      uptime: 'Disponibilité',
+      noData: 'Aucune donnée',
+      partialCoverage: 'Mesuré sur {percent} de cette période',
+      incidentsTitle: 'Incidents des 7 derniers jours',
+      noIncidents: 'Aucun incident au cours des 7 derniers jours.',
+      startedAt: 'Début : {time}',
+      lasted: 'Durée : {duration}',
+      ongoingFor: 'En cours depuis {duration}',
+      resolution:
+        'Vérifié toutes les 15 secondes et compté par intervalles de 5 minutes. Un intervalle compte contre un composant si une vérification y a échoué.',
+      windows: {
+        day: '24 heures',
+        week: '7 jours',
+        month: '30 jours',
+      },
+      states: {
+        up: 'Opérationnel',
+        degraded: 'Dégradé',
+        down: 'En panne',
+        unknown: 'Inconnu',
+      },
+      components: {
+        accounts: 'Connexion et comptes',
+        chat: 'Chat',
+        files: 'Fichiers',
+        images: 'Génération d’images',
+        research: 'Recherche',
+        payments: 'Paiements',
+        workspaces: 'Espaces de travail',
+        codingAgent: 'Agent de code',
+        localModels: 'Modèles locaux',
+        platform: 'Journaux et audit',
+      },
+    },
     title: 'Observabilité',
     description: "Surveillez l'utilisation et les performances de l'IA",
     totalRequests: 'Requêtes totales',

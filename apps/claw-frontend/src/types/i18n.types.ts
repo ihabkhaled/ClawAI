@@ -1198,6 +1198,47 @@ export type TranslationDictionary = {
     };
   };
   observability: {
+    totalTokensCount: string;
+    status: {
+      title: string;
+      description: string;
+      overallLabel: string;
+      loading: string;
+      failedToLoad: string;
+      historyUnavailable: string;
+      uptime: string;
+      noData: string;
+      partialCoverage: string;
+      incidentsTitle: string;
+      noIncidents: string;
+      startedAt: string;
+      lasted: string;
+      ongoingFor: string;
+      resolution: string;
+      windows: {
+        day: string;
+        week: string;
+        month: string;
+      };
+      states: {
+        up: string;
+        degraded: string;
+        down: string;
+        unknown: string;
+      };
+      components: {
+        accounts: string;
+        chat: string;
+        files: string;
+        images: string;
+        research: string;
+        payments: string;
+        workspaces: string;
+        codingAgent: string;
+        localModels: string;
+        platform: string;
+      };
+    };
     title: string;
     description: string;
     totalRequests: string;

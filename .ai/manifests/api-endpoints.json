@@ -1569,6 +1569,11 @@
       },
       {
         "method": "GET",
+        "route": "/health/status",
+        "source": "apps/claw-health-service/src/modules/health/controllers/status-page.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/metrics",
         "source": "apps/claw-health-service/src/modules/health/controllers/metrics.controller.ts"
       }
@@ -3418,5 +3423,5 @@
     ]
   },
   "generated": true,
-  "total": 676
+  "total": 677
 }

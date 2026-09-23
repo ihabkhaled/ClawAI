@@ -1624,6 +1624,11 @@
         },
         {
           "method": "GET",
+          "route": "/health/status",
+          "source": "apps/claw-health-service/src/modules/health/controllers/status-page.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/metrics",
           "source": "apps/claw-health-service/src/modules/health/controllers/metrics.controller.ts"
         }
@@ -7598,7 +7603,7 @@
       ],
       "skills": [
         {
-          "bytes": 29116,
+          "bytes": 29395,
           "file": "skills/00-index.md"
         },
         {
@@ -7934,6 +7939,10 @@
           "file": "skills/verify-the-research-loop-live.md"
         },
         {
+          "bytes": 3786,
+          "file": "skills/watch-production-health.md"
+        },
+        {
           "bytes": 3058,
           "file": "skills/write-api-contract-tests.md"
         },
@@ -7960,7 +7969,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5250
+        "value": 5287
       },
       "localeCount": 13,
       "locales": [
@@ -9936,11 +9945,11 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 515
+        "testFiles": 518
       },
       "claw-health-service": {
         "runner": "vitest",
-        "testFiles": 6
+        "testFiles": 12
       },
       "claw-image-service": {
         "runner": "vitest",
@@ -10272,6 +10281,8 @@
       {
         "dir": "apps/claw-health-service",
         "internalDeps": [
+          "@claw/shared-auth",
+          "@claw/shared-types",
           "@claw/shared-utilities"
         ],
         "name": "claw-health-service",
@@ -10700,7 +10711,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 43,
-    "endpointCount": 676,
+    "endpointCount": 677,
     "envVarCount": 355,
     "eventCount": 181,
     "frontendRouteCount": 155,
@@ -10712,7 +10723,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1398,
+    "totalTestFiles": 1407,
     "workspaceCount": 25
   }
 }

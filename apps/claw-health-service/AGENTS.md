@@ -20,9 +20,9 @@ npm run dev
 - Port: 4009
 - Database: none
 - Prisma models: none
-- API endpoints: 2 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 6 (vitest)
-- Depends on: @claw/shared-utilities
+- API endpoints: 3 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 12 (vitest)
+- Depends on: @claw/shared-auth, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=health-service`

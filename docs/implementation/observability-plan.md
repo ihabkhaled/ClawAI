@@ -1,8 +1,8 @@
 # O3 — Operational observability: plan
 
-**Status**: B0 and B1 shipped 2026-09-20; B2 (Grafana behind the admin
-session) and B3 (the status page) are next, and are unordered with respect to
-each other. Revised after the CTO, ops, analyst and PM reviews.
+**Status**: B0 and B1 shipped 2026-09-20; B3 (the status page) shipped
+2026-09-23; B2 (Grafana behind the admin session) is independent of it.
+Revised after the CTO, ops, analyst and PM reviews.
 **Audit it came from**: this session's survey of the existing surface (§1).
 
 ## 1. What exists (audited, not assumed)
@@ -15,7 +15,7 @@ each other. Revised after the CTO, ops, analyst and PM reviews.
 | Business and security events, per-call cost/latency ledger | **DONE**    | `audit-service` (`audit_logs`, `usage_ledger`)                                                                                                                                 |
 | `/observability` page                                      | **PARTIAL** | LLM usage only: requests, cost, latency p50/p95, failures                                                                                                                      |
 | `/logs`, `/audits` pages                                   | **DONE**    | admin-gated browsers                                                                                                                                                           |
-| Service health                                             | **PARTIAL** | `health-service` fans out to 17 services on request. No history, no page, no alerting                                                                                          |
+| Service health                                             | **PARTIAL** | `health-service` fans out to 17 services on request. History + status page since B1/B3; no alerting                                                                            |
 | Metrics                                                    | **MISSING** | no `prom-client`, no `/metrics`, no store                                                                                                                                      |
 | Alerting                                                   | **MISSING** | —                                                                                                                                                                              |
 
@@ -131,7 +131,7 @@ deploy script learns to carry a container that has no build step.
 - **Verified by**: signed-out browser → 401; non-admin → 401; admin → the
   dashboard; after sign-out the cookie no longer opens it.
 
-### B3 — The status page
+### B3 — The status page — DONE (2026-09-23)
 
 - `/observability` gains a Services section: what is up now, what went down
   and when, for how long, over 24 h and 7 d, read through health-service
@@ -139,6 +139,36 @@ deploy script learns to carry a container that has no build step.
 - i18n in all 13 locales; admin-only, as the page already is.
 - **Verified by**: the browser lane — stop a service, watch it turn red,
   restart it, watch the incident close; three widths plus RTL.
+
+**What shipped**: `GET /api/v1/health/status` (admin-only, throttled,
+`Cache-Control: private`) → ten coarse components (Chat, Files, Payments, …)
+with live state from the exporter's cached snapshot, uptime 24 h / 7 d / 30 d in
+integer basis points from two Prometheus range queries (5-minute buckets,
+cached 60 s, a failed read cached 30 s, no retry), and the last 7 days of
+incidents (≤ 50). The page shows it above the usage overview, whose own
+loading/empty states no longer hide it. Guide:
+[service-guide-health](../04-backend/service-guide-health.md) § Status page ·
+[observability-page](../05-frontend/observability-page.md).
+
+**Deviations, stated rather than applied silently**:
+
+- **Admin-only, not public.** The B3 brief asked for a page "safe to be
+  public"; §2 says operational data is admin only, and policy wins. The
+  response is still built to be public-safe (components only, no host, port,
+  version or error text; a spec asserts it), so opening it later is a routing
+  decision, not a redaction project. No sitemap or footer entry.
+- **No Postgres history store, no migration.** The brief allowed one "if
+  history doesn't exist"; §2 already decided history is a Prometheus series.
+- **30 d, not 90 d.** Prometheus retention is 30 days; a 90-day figure would be
+  invented. 24 h and 7 d as planned, plus 30 d because the data exists.
+- **The controller is `status-page.controller.ts`**, not
+  `health-history.controller.ts`: it serves live state as well as history.
+- **`docs/product/observability.md` was not written**: `docs/product/` does not
+  exist. The product-facing description is `docs/05-frontend/observability-page.md`.
+- **`skills/watch-production-health.md` was created**, not extended: it did
+  not exist.
+- **Bucketed uptime is conservative**: any failed 15 s check costs its whole
+  5-minute bucket. Said on the page.
 
 ### B4 — Not in this pass
 
@@ -202,14 +232,25 @@ Why no X: no migration (the cookie is signed, not stored); no new skill
 **B3**
 
 ```
-Code:     apps/claw-health-service/.../controllers/health-history.controller.ts
-          apps/claw-frontend/src/app/(portal)/observability/*, hooks/observability/*,
-          components/observability/*, types/, constants/
-i18n:     all 13 locales + src/types/i18n.types.ts
-Docs:     docs/05-frontend/observability-page.md (new), docs/product/observability.md
-Skills:   skills/watch-production-health.md (extended with the page)
-Tests:    frontend component + hook tests; health-service controller tests
-Why no X: no ADR (B1 decided it); no new rule; no migration
+Code:     apps/claw-health-service/src/modules/health/{controllers/status-page.controller.ts,
+          services/{status-page,health-snapshot}.service.ts, managers/status-history.manager.ts,
+          adapters/prometheus.adapter.ts, utilities/status-aggregation.utility.ts,
+          schemas/prometheus-range.schema.ts, constants/status-page.constants.ts, enums/, types/}
+          apps/claw-frontend/src/app/(portal)/observability/page.tsx, hooks/observability/use-service-status.ts,
+          components/observability/{service-status-section,component-status-row,component-state-badge,
+          status-incident-list,usage-overview}.tsx, types/, enums/, constants/, utilities/
+i18n:     all 13 locales + src/types/i18n.types.ts (observability.status.*, observability.totalTokensCount)
+Docs:     docs/05-frontend/observability-page.md (new), docs/04-backend/service-guide-health.md,
+          docs/08-runtime-devops/metrics-and-dashboards.md, apps/claw-health-service/CLAUDE.md
+Runbook:  docs/11-runbooks/runbook-status-page-degraded.md (new)
+Skills:   skills/watch-production-health.md (new — it did not exist)
+Tests:    health-service: aggregation (integer uptime, incidents, cap, redaction), service
+          (caching, failure TTL, no leak), manager, adapter, controller (guards, header), snapshot;
+          frontend: section component, hook, utility + label keys, query policy;
+          tools/__tests__/status-page-route.test.mjs (nginx prefix, admin guard)
+Why no X: no ADR (B1 decided it); no new rule; no migration (Prometheus holds the history);
+          no env var / compose / nginx / install / CI change (existing route prefix, existing
+          workspace; @claw/shared-auth was already built in both health-service Dockerfiles)
 ```
 
 ## 6. Order and gate

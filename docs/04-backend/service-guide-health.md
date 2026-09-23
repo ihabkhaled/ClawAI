@@ -9,7 +9,7 @@
 | Env prefix  | N/A              |
 | Nginx route | `/api/v1/health` |
 
-The health service is a lightweight aggregator that checks the health of all other microservices and infrastructure components. It has no database of its own and no shared packages dependency -- it only needs HTTP access to other services.
+The health service is a lightweight aggregator that checks the health of all other microservices. It has no database of its own. Its history lives in Prometheus (ADR-113), which it exports to and reads back for the status page.
 
 ## Architecture
 
@@ -26,13 +26,19 @@ Notably lighter than other services:
 - `@nestjs/throttler` -- rate limiting
 - `zod` -- response validation
 
-No Prisma, no RabbitMQ, no Redis, no shared packages.
+- `@claw/shared-utilities` -- the SSRF-guarded HTTP client
+- `@claw/shared-types` -- `ServiceStatus`, `UserRole`
+- `@claw/shared-auth` -- `AuthGuard`, `SessionRevocationGuard`, `RolesGuard` on the status endpoint (2026-09-23)
 
-## API Endpoint
+No Prisma, no RabbitMQ. Redis only through `SessionRevocationGuard` (fails open).
 
-| Method | Path | Auth   | Description              |
-| ------ | ---- | ------ | ------------------------ |
-| GET    | /    | Public | Aggregated health status |
+## API Endpoints
+
+| Method | Path                    | Auth                    | Description                                                |
+| ------ | ----------------------- | ----------------------- | ---------------------------------------------------------- |
+| GET    | `/api/v1/health`        | Public                  | Aggregated health status (service names, errors)           |
+| GET    | `/api/v1/health/status` | Bearer, **ADMIN** only  | Status page: component state, uptime 24h/7d/30d, incidents |
+| GET    | `/api/v1/metrics`       | Internal (not in nginx) | Prometheus exposition of the same fan-out                  |
 
 ## Response Format
 
@@ -127,3 +133,43 @@ Prometheus text format: `claw_service_up`, `claw_service_response_ms`,
   identical lines a day.
 
 How to look at it: [metrics-and-dashboards](../08-runtime-devops/metrics-and-dashboards.md).
+
+## Status page (observability plan B3, 2026-09-23)
+
+`GET /api/v1/health/status` feeds the service-status section of
+`/observability` ([observability-page](../05-frontend/observability-page.md)).
+Admin-only, like the page (plan §2). nginx's existing `location /api/v1/health`
+prefix already routes it; `tools/__tests__/status-page-route.test.mjs` pins
+that no more specific location steals it.
+
+```
+StatusPageController (AuthGuard + SessionRevocationGuard + RolesGuard(ADMIN), throttle 120/min,
+│                     Cache-Control: private, max-age=30)
+└── StatusPageService
+    ├── HealthSnapshotService.current()   live state — the SAME 14 s snapshot the exporter uses
+    └── StatusHistoryManager.read()       history, cached 60 s (a failure cached 30 s)
+        └── PrometheusAdapter.queryRange()  one attempt, 5 s timeout, zod-validated, no retry
+            ├── count(claw_service_up)                          buckets that were measured
+            └── min_over_time(claw_service_up[300s]) == 0       buckets each service failed in
+```
+
+- **Components, not services.** `COMPONENT_MEMBERS` groups the 17 services into
+  10 user-facing components. The response carries component keys, states,
+  integers and ISO timestamps only — no service name, host, port, version or
+  error message. `status-aggregation.utility.spec.ts` serialises it and
+  asserts that; a failed Prometheus read is logged, never returned.
+- **Integer math.** Uptime is `floor(upBuckets × 10000 / measuredBuckets)` basis
+  points, rounded down so 99.99…% never shows as 100%. Unmeasured buckets are
+  left out of both sides and reported as `coverageBasisPoints`.
+- **Conservative by design.** 5-minute buckets; a bucket counts against a
+  component if any check in it failed. Degraded = some members failed, Down =
+  all did.
+- **Bounded.** Two range queries over 30 d at a 300 s step = 8,640 points per
+  series (Prometheus's limit is 11,000). At most 50 incidents, last 7 days.
+  90-day uptime does not exist: retention is 30 days.
+- **No new store, no migration.** Health history is a Prometheus series
+  (plan §2); this service only reads it.
+- `PROMETHEUS_BASE_URL` is a constant (`http://prometheus:9090`), like
+  `SERVICE_URLS`, declared to the SSRF guard with `declaredHost`.
+
+Degraded and don't know why: [runbook-status-page-degraded](../11-runbooks/runbook-status-page-degraded.md).

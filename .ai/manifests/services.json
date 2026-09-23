@@ -238,8 +238,10 @@
     {
       "database": "none",
       "dir": "apps/claw-health-service",
-      "endpointCount": 2,
+      "endpointCount": 3,
       "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-types",
         "@claw/shared-utilities"
       ],
       "mongooseModels": [],
@@ -247,7 +249,7 @@
       "port": 4009,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 6,
+      "testFiles": 12,
       "testRunner": "vitest"
     },
     {

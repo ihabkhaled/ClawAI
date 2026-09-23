@@ -3,7 +3,8 @@ import { ServiceStatus } from '@claw/shared-types';
 
 import { AggregatedHealthStatus } from '../../enums/aggregated-health-status.enum';
 import { type AggregatedHealth } from '../../types/health.types';
-import { type HealthService } from '../health.service';
+import { HealthSnapshotService } from '../health-snapshot.service';
+import { HealthService } from '../health.service';
 import { MetricsService } from '../metrics.service';
 
 const health = (overrides: Partial<AggregatedHealth> = {}): AggregatedHealth => ({
@@ -17,10 +18,11 @@ const health = (overrides: Partial<AggregatedHealth> = {}): AggregatedHealth => 
   ...overrides,
 });
 
-const build = (): { service: MetricsService; checkAll: ReturnType<typeof vi.fn> } => {
-  const checkAll = vi.fn().mockResolvedValue(health());
+const build = (): { service: MetricsService; checkAll: ReturnType<typeof vi.spyOn> } => {
+  const healthService = new HealthService();
+  const checkAll = vi.spyOn(healthService, 'checkAll').mockResolvedValue(health());
   return {
-    service: new MetricsService({ checkAll } as unknown as HealthService),
+    service: new MetricsService(new HealthSnapshotService(healthService)),
     checkAll,
   };
 };
@@ -69,13 +71,14 @@ describe('MetricsService', () => {
   });
 
   it('lets two scrapes arriving together share one fan-out', async () => {
-    const checkAll = vi.fn().mockImplementation(async () => {
+    const healthService = new HealthService();
+    const checkAll = vi.spyOn(healthService, 'checkAll').mockImplementation(async () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 5);
       });
       return health();
     });
-    const service = new MetricsService({ checkAll } as unknown as HealthService);
+    const service = new MetricsService(new HealthSnapshotService(healthService));
 
     await Promise.all([service.render(1_000), service.render(1_001)]);
 
