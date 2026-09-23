@@ -376,25 +376,27 @@ export class ChatExecutionManager implements OnModuleInit {
         qualityScore: null,
       };
     }
-    return outcome.kind === 'reRoute' ? {
-        attemptIndex: index,
-        provider: candidate.provider,
-        model: candidate.model,
-        startedAt,
-        durationMs,
-        status: 'RE_ROUTE',
-        qualityReasons: outcome.reasons,
-        qualityScore: null,
-      } : {
-      attemptIndex: index,
-      provider: candidate.provider,
-      model: candidate.model,
-      startedAt,
-      durationMs,
-      status: 'FAILURE',
-      qualityScore: null,
-      errorMessage: (outcome.error as Error | undefined)?.message ?? null,
-    };
+    return outcome.kind === 'reRoute'
+      ? {
+          attemptIndex: index,
+          provider: candidate.provider,
+          model: candidate.model,
+          startedAt,
+          durationMs,
+          status: 'RE_ROUTE',
+          qualityReasons: outcome.reasons,
+          qualityScore: null,
+        }
+      : {
+          attemptIndex: index,
+          provider: candidate.provider,
+          model: candidate.model,
+          startedAt,
+          durationMs,
+          status: 'FAILURE',
+          qualityScore: null,
+          errorMessage: (outcome.error as Error | undefined)?.message ?? null,
+        };
   }
 
   // Phase 6 — stamps workflow + search-first telemetry onto every
@@ -516,14 +518,16 @@ export class ChatExecutionManager implements OnModuleInit {
       reRouteAttempt: args.reRouteAttempt,
       reRouteReasons: args.reRouteReasons,
     });
-    return qualityOutcome.kind === 'reRoute' ? qualityOutcome : this.finalizeWithJudge(
-      qualityOutcome.response,
-      args.context,
-      args.payload,
-      args.threadSettings,
-      args.executionOptions,
-      fastPathEscalated,
-    );
+    return qualityOutcome.kind === 'reRoute'
+      ? qualityOutcome
+      : this.finalizeWithJudge(
+          qualityOutcome.response,
+          args.context,
+          args.payload,
+          args.threadSettings,
+          args.executionOptions,
+          fastPathEscalated,
+        );
   }
 
   private async invokeProviderWithProgress(
@@ -744,28 +748,30 @@ export class ChatExecutionManager implements OnModuleInit {
     streamContext: StreamContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
-    return !this.canStreamCandidate(provider) ? this.callProvider(
-        provider,
-        model,
-        context,
-        startTime,
-        false,
-        threadSettings,
-        undefined,
-        undefined,
-        TokenLedgerContext.COMPARE,
-        paygCall,
-      ) : this.streamCandidate(
-      { provider, model },
-      context,
-      startTime,
-      false,
-      threadSettings,
-      undefined,
-      streamContext,
-      TokenLedgerContext.COMPARE,
-      paygCall,
-    );
+    return !this.canStreamCandidate(provider)
+      ? this.callProvider(
+          provider,
+          model,
+          context,
+          startTime,
+          false,
+          threadSettings,
+          undefined,
+          undefined,
+          TokenLedgerContext.COMPARE,
+          paygCall,
+        )
+      : this.streamCandidate(
+          { provider, model },
+          context,
+          startTime,
+          false,
+          threadSettings,
+          undefined,
+          streamContext,
+          TokenLedgerContext.COMPARE,
+          paygCall,
+        );
   }
 
   /**
@@ -869,25 +875,27 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     return candidate.provider === LLAMACPP_PROVIDER ||
-      candidate.provider === LLAMACPP_CONNECTOR_PROVIDER ? this.streamLlamacpp(
-        candidate.provider,
-        candidate.model,
-        context,
-        startTime,
-        usedFallback,
-        threadSettings,
-        executionOptions,
-        streamContext,
-      ) : this.streamCloud(
-      candidate.provider,
-      candidate.model,
-      context,
-      startTime,
-      usedFallback,
-      threadSettings,
-      executionOptions,
-      streamContext,
-    );
+      candidate.provider === LLAMACPP_CONNECTOR_PROVIDER
+      ? this.streamLlamacpp(
+          candidate.provider,
+          candidate.model,
+          context,
+          startTime,
+          usedFallback,
+          threadSettings,
+          executionOptions,
+          streamContext,
+        )
+      : this.streamCloud(
+          candidate.provider,
+          candidate.model,
+          context,
+          startTime,
+          usedFallback,
+          threadSettings,
+          executionOptions,
+          streamContext,
+        );
   }
 
   private async streamCloud(
@@ -990,24 +998,32 @@ export class ChatExecutionManager implements OnModuleInit {
         headers: { Authorization: `Bearer ${apiKey}` },
       };
     }
-    return provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF ? {
-        url: `${baseUrl}/chat/completions`,
-        allowedHosts,
-        body: this.buildAnthropicNativeStreamingBody(
-          model,
-          context,
-          threadSettings,
-          executionOptions,
-        ),
-        protocol: AiStreamProtocol.OPENAI_SSE,
-        headers: { Authorization: `Bearer ${apiKey}` },
-      } : {
-      url: `${baseUrl}/chat/completions`,
-      allowedHosts,
-      body: this.buildStreamingChatBody(provider, model, context, threadSettings, executionOptions),
-      protocol: AiStreamProtocol.OPENAI_SSE,
-      headers: { Authorization: `Bearer ${apiKey}` },
-    };
+    return provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF
+      ? {
+          url: `${baseUrl}/chat/completions`,
+          allowedHosts,
+          body: this.buildAnthropicNativeStreamingBody(
+            model,
+            context,
+            threadSettings,
+            executionOptions,
+          ),
+          protocol: AiStreamProtocol.OPENAI_SSE,
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }
+      : {
+          url: `${baseUrl}/chat/completions`,
+          allowedHosts,
+          body: this.buildStreamingChatBody(
+            provider,
+            model,
+            context,
+            threadSettings,
+            executionOptions,
+          ),
+          protocol: AiStreamProtocol.OPENAI_SSE,
+          headers: { Authorization: `Bearer ${apiKey}` },
+        };
   }
 
   private async streamLlamacpp(
@@ -1434,16 +1450,18 @@ export class ChatExecutionManager implements OnModuleInit {
       return { kind: 'reRoute', reasons: qualityResult.reasons };
     }
 
-    return args.reRouteAttempt > 0 ? {
-        kind: 'pass',
-        response: this.addReRouteMetadata(
-          args.response,
-          args.payload,
-          qualityResult.score,
-          args.reRouteAttempt,
-          args.reRouteReasons,
-        ),
-      } : { kind: 'pass', response: args.finalProviderResponse };
+    return args.reRouteAttempt > 0
+      ? {
+          kind: 'pass',
+          response: this.addReRouteMetadata(
+            args.response,
+            args.payload,
+            qualityResult.score,
+            args.reRouteAttempt,
+            args.reRouteReasons,
+          ),
+        }
+      : { kind: 'pass', response: args.finalProviderResponse };
   }
 
   private async finalizeWithJudge(
@@ -1521,10 +1539,12 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     const message = lastError instanceof Error ? lastError.message : String(lastError);
-    return isProviderErrorResponse(message) ? new BusinessException(
-        this.describeChainFailure(attempts, lastError),
-        'LLM_EXECUTION_FAILED',
-      ) : lastError;
+    return isProviderErrorResponse(message)
+      ? new BusinessException(
+          this.describeChainFailure(attempts, lastError),
+          'LLM_EXECUTION_FAILED',
+        )
+      : lastError;
   }
 
   /**
@@ -1652,8 +1672,19 @@ export class ChatExecutionManager implements OnModuleInit {
     if (quotaCeiling === null) {
       return options;
     }
+    // `quotaCeiling` is a monthly/daily ALLOWANCE headroom, not a valid
+    // per-reply output size — a user with a large plan and a nearly-untouched
+    // window can have millions of tokens remaining. Sent straight through as
+    // `max_tokens`/`num_predict`, that value exceeded every model's actual
+    // output capacity and every provider call failed outright (glm-5.3,
+    // kimi-k3: "max_tokens exceeds model's maximum output tokens", 2026-09-23).
+    // Bound it by the same HARD ceiling `resolveMaxOutputTokens` already
+    // applies to an explicit thread cap, so a big quota can never widen a
+    // single reply past what a provider will accept.
+    const boundedQuotaCeiling = Math.min(quotaCeiling, HARD_MAX_OUTPUT_TOKENS);
     const existing = options.maxOutputTokens;
-    const ceiling = existing === undefined ? quotaCeiling : Math.min(existing, quotaCeiling);
+    const ceiling =
+      existing === undefined ? boundedQuotaCeiling : Math.min(existing, boundedQuotaCeiling);
     if (ceiling !== existing) {
       this.logger.debug(
         `applyQuotaCeiling: capping output to ${String(ceiling)} for the remaining daily allowance`,
@@ -1718,10 +1749,10 @@ export class ChatExecutionManager implements OnModuleInit {
       return false;
     }
 
-    return FAST_PATH_COMPLEXITY_PATTERN.test(normalizedPrompt) ? false : (
-      FAST_PATH_OPERATIONAL_PREFIX_PATTERN.test(normalizedPrompt.toLowerCase()) ||
-      normalizedPrompt.length <= 80
-    );
+    return FAST_PATH_COMPLEXITY_PATTERN.test(normalizedPrompt)
+      ? false
+      : FAST_PATH_OPERATIONAL_PREFIX_PATTERN.test(normalizedPrompt.toLowerCase()) ||
+          normalizedPrompt.length <= 80;
   }
 
   private resolveMaxOutputTokens(
@@ -2011,17 +2042,19 @@ export class ChatExecutionManager implements OnModuleInit {
     // Widening ASSIGNMENT, not an assertion: `string` assigns freely to
     // `string | undefined`, so the runtime guard below is legal without a cast.
     const userId: string | undefined = args.context.userId;
-    return userId === undefined || userId.length === 0 ? this.paygHoldWithoutUser(args.provider, args.requestedMax) : this.accessControlService.reserveCredit({
-      userId,
-      requestId: args.paygCall?.requestId ?? randomUUID(),
-      provider: normalizePaygProvider(args.provider),
-      model: args.model,
-      surface: args.paygCall?.surface ?? paygSurfaceForTokenContext(args.ledgerContext),
-      workflow: args.paygCall?.workflow ?? paygWorkflowForTokenContext(args.ledgerContext),
-      promptTokens: this.estimatePromptTokens(args.context),
-      cachedPromptTokens: 0,
-      requestedMaxOutputTokens: args.requestedMax,
-    });
+    return userId === undefined || userId.length === 0
+      ? this.paygHoldWithoutUser(args.provider, args.requestedMax)
+      : this.accessControlService.reserveCredit({
+          userId,
+          requestId: args.paygCall?.requestId ?? randomUUID(),
+          provider: normalizePaygProvider(args.provider),
+          model: args.model,
+          surface: args.paygCall?.surface ?? paygSurfaceForTokenContext(args.ledgerContext),
+          workflow: args.paygCall?.workflow ?? paygWorkflowForTokenContext(args.ledgerContext),
+          promptTokens: this.estimatePromptTokens(args.context),
+          cachedPromptTokens: 0,
+          requestedMaxOutputTokens: args.requestedMax,
+        });
   }
 
   /**
@@ -2079,12 +2112,14 @@ export class ChatExecutionManager implements OnModuleInit {
     requestedMax: number,
     executionOptions: ExecutionOptions | undefined,
   ): ExecutionOptions | undefined {
-    return hold.maxOutputTokens >= requestedMax ? executionOptions : {
-      fastPathEnabled: false,
-      applyShortResponseConstraint: false,
-      ...executionOptions,
-      maxOutputTokens: hold.maxOutputTokens,
-    };
+    return hold.maxOutputTokens >= requestedMax
+      ? executionOptions
+      : {
+          fastPathEnabled: false,
+          applyShortResponseConstraint: false,
+          ...executionOptions,
+          maxOutputTokens: hold.maxOutputTokens,
+        };
   }
 
   /** Reconciles the hold against measured usage and tells the user if we shortened the answer. */
@@ -2818,23 +2853,25 @@ export class ChatExecutionManager implements OnModuleInit {
         promptText,
       );
     }
-    return provider === OLLAMA_CONNECTOR_PROVIDER ? this.parseOllamaChatResponse(
-        data as OllamaChatResponse,
-        provider,
-        model,
-        startTime,
-        usedFallback,
-        promptText,
-        executionOptions,
-      ) : this.parseCloudResponse(
-      data as OpenAiChatResponse,
-      provider,
-      model,
-      startTime,
-      usedFallback,
-      promptText,
-      executionOptions,
-    );
+    return provider === OLLAMA_CONNECTOR_PROVIDER
+      ? this.parseOllamaChatResponse(
+          data as OllamaChatResponse,
+          provider,
+          model,
+          startTime,
+          usedFallback,
+          promptText,
+          executionOptions,
+        )
+      : this.parseCloudResponse(
+          data as OpenAiChatResponse,
+          provider,
+          model,
+          startTime,
+          usedFallback,
+          promptText,
+          executionOptions,
+        );
   }
 
   // Ollama Cloud agentic tool loop.
@@ -3560,7 +3597,9 @@ export class ChatExecutionManager implements OnModuleInit {
     if (toolName === TOOL_WEB_SEARCH && typeof toolArgs.query === 'string') {
       return `Query: ${toolArgs.query.slice(0, 120)}`;
     }
-    return toolName === TOOL_WEB_FETCH && typeof toolArgs.url === 'string' ? `URL: ${toolArgs.url.slice(0, 200)}` : undefined;
+    return toolName === TOOL_WEB_FETCH && typeof toolArgs.url === 'string'
+      ? `URL: ${toolArgs.url.slice(0, 200)}`
+      : undefined;
   }
 
   private buildWebFetchLabel(toolArgs: Record<string, unknown>): string {
@@ -3918,14 +3957,16 @@ export class ChatExecutionManager implements OnModuleInit {
     // `additionalProperties` and `maxLength` — which every Runtime V2
     // inputSchema carries. When tools are in play we must take the
     // OpenAI-compatible branch instead, which accepts the schemas verbatim.
-    return !carriesTools && this.shouldUseGeminiNativeRequest(provider, context) ? this.buildGeminiNativeRequestBody(
-        model,
-        context,
-        apiKey,
-        threadSettings,
-        executionOptions,
-        args.abortSignal,
-      ) : this.buildChatRequestBody(provider, model, context, threadSettings, executionOptions);
+    return !carriesTools && this.shouldUseGeminiNativeRequest(provider, context)
+      ? this.buildGeminiNativeRequestBody(
+          model,
+          context,
+          apiKey,
+          threadSettings,
+          executionOptions,
+          args.abortSignal,
+        )
+      : this.buildChatRequestBody(provider, model, context, threadSettings, executionOptions);
   }
 
   // Slice D — Anthropic native Messages API body builder. Routes every
@@ -4040,7 +4081,9 @@ export class ChatExecutionManager implements OnModuleInit {
     messages: OpenAiChatMessage[],
     executionOptions: ExecutionOptions | undefined,
   ): OpenAiChatMessage[] {
-    return executionOptions?.applyShortResponseConstraint !== true ? messages : [{ role: 'system', content: FAST_PATH_RESPONSE_CONSTRAINT }, ...messages];
+    return executionOptions?.applyShortResponseConstraint !== true
+      ? messages
+      : [{ role: 'system', content: FAST_PATH_RESPONSE_CONSTRAINT }, ...messages];
   }
 
   private resolveBoundedMaxTokens(
@@ -4050,7 +4093,9 @@ export class ChatExecutionManager implements OnModuleInit {
     if (executionOptions?.maxOutputTokens !== undefined) {
       return executionOptions.maxOutputTokens;
     }
-    return threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined ? Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS) : undefined;
+    return threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined
+      ? Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS)
+      : undefined;
   }
 
   // Slice D — Gemini native generateContent body builder. Routes every
@@ -4756,7 +4801,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private async resolveModel(model: string): Promise<string> {
-    return model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model !== 'AUTO' ? model : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private async buildImagePromptFromVision(
