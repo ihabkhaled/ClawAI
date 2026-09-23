@@ -55,6 +55,9 @@ RUN adduser --system --uid 1001 nestjs
 RUN mkdir -p /data/files && chown -R nestjs:nestjs /data
 COPY --from=builder /app/apps/claw-file-service/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+# 7z-wasm loads 7zz.wasm from its own package directory at runtime (ADR-114).
+# Fail the build, not the first .7z upload, if the asset did not make it.
+RUN test -f /app/node_modules/7z-wasm/7zz.wasm
 COPY --from=builder /app/apps/claw-file-service/package.json ./package.json
 COPY --from=builder /app/apps/claw-file-service/prisma ./prisma
 COPY --from=builder /app/apps/claw-file-service/prisma.config.ts ./prisma.config.ts

@@ -66,6 +66,24 @@ export const EXTRACTABLE_DOCUMENT_MIME_EXACT = new Set([
   // Before that it genuinely reached the model as nothing.
   'application/zip',
   'application/x-zip-compressed',
+  // Every other archive format, delivered the same way since batch A2 (ADR-114).
+  // Mirrors file-service ARCHIVE_MIME_ACCEPTED_FORMATS; change both together.
+  'application/x-7z-compressed',
+  'application/vnd.rar',
+  'application/x-rar-compressed',
+  'application/x-rar',
+  'application/x-tar',
+  'application/x-gtar',
+  'application/gzip',
+  'application/x-gzip',
+  'application/x-compressed-tar',
+  'application/x-compressed',
+  'application/x-bzip2',
+  'application/x-bzip',
+  'application/x-bzip-compressed-tar',
+  'application/x-bzip2-compressed-tar',
+  'application/x-xz',
+  'application/x-xz-compressed-tar',
 ]);
 
 export const IMAGE_MIME_PREFIX = 'image/';

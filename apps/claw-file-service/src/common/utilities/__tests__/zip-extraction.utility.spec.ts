@@ -301,6 +301,32 @@ describe('validateAndExtractZip', () => {
     expect(result.fileEntryCount).toBe(2);
   });
 
+  it('skips a Unix symlink or device entry, reading its type from the external attributes', async () => {
+    const zip = new JSZip();
+    zip.file('real.txt', 'real content');
+    zip.file('passwd', '/etc/passwd', { unixPermissions: 0o120_777 });
+    zip.file('tty', '', { unixPermissions: 0o020_644 });
+    zip.file('script.sh', 'echo ok', { unixPermissions: 0o100_755 });
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', platform: 'UNIX' });
+    const zipPath = writeRawZipToDisk(buffer, 'unix-links');
+    const destDir = makeDestDir('unix-links');
+    createdPaths.push(zipPath, destDir);
+
+    const result = await validateAndExtractZip(zipPath, destDir, TEST_THRESHOLDS, rootContext());
+
+    expect(result.entries.map((e) => e.archivePath).sort()).toEqual(['real.txt', 'script.sh']);
+    expect(result.skippedEntries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ archivePath: 'passwd', status: ArchiveEntryStatus.SKIPPED_LINK }),
+        expect.objectContaining({
+          archivePath: 'tty',
+          status: ArchiveEntryStatus.SKIPPED_SPECIAL_FILE,
+        }),
+      ]),
+    );
+    expect(fs.existsSync(path.join(destDir, 'passwd'))).toBe(false);
+  });
+
   it('reports an all-encrypted archive without throwing', async () => {
     const zipPath = writeRawZipToDisk(
       buildStoredZip([

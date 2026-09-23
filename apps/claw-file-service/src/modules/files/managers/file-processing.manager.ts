@@ -32,7 +32,7 @@ import {
   MIME_TYPE_XLSX,
   RTF_MIME_TYPES,
 } from '../constants/file-processing.constants';
-import { ZIP_MIME_TYPES } from '../constants/zip-expansion.constants';
+import { isArchiveMimeType } from '../../../common/utilities/archive-format.utility';
 import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
 import { ZipExpansionManager } from './zip-expansion.manager';
 import { TranscriptionManager } from './transcription.manager';
@@ -52,7 +52,7 @@ export class FileProcessingManager {
   async processFile(file: File): Promise<void> {
     this.logger.log(`processFile: starting processing for file ${file.id} (${file.mimeType})`);
 
-    if (ZIP_MIME_TYPES.includes(file.mimeType)) {
+    if (isArchiveMimeType(file.mimeType)) {
       this.logger.debug(`processFile: routing fileId=${file.id} to ZipExpansionManager`);
       await this.zipExpansionManager.expandArchive(file);
       return;

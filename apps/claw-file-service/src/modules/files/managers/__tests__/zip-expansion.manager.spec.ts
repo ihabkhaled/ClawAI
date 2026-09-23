@@ -5,13 +5,14 @@ import { type Mock, type MockedFunction, vi } from 'vitest';
 // temp directories stand in for FILE_STORAGE_PATH (persistent) and
 // ZIP_TEMP_EXTRACTION_PATH (the tmpfs staging area), so the tests prove on disk
 // that children land in persistent storage and that staging is removed on
-// success and on failure. `validateAndExtractZip` is replaced by a fake that
-// writes the entries into the staging dir the manager created, the way the real
-// extractor would.
+// success and on failure. `validateAndExtractArchive` (the format dispatcher
+// every archive goes through) is replaced by a fake that writes the entries into
+// the staging dir the manager created, the way the real extractor would.
 
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import * as zlib from 'node:zlib';
 import { HttpStatus } from '@nestjs/common';
 import { EventPattern } from '@claw/shared-types';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
@@ -23,7 +24,7 @@ import { type FileChunksRepository } from '../../repositories/file-chunks.reposi
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { ArchiveEntryStatus } from '../../../../common/enums/archive-entry-status.enum';
-import { validateAndExtractZip } from '../../../../common/utilities/zip-extraction.utility';
+import { validateAndExtractArchive } from '../../../../common/utilities/archive-extraction.utility';
 import type {
   ExtractedEntry,
   SkippedArchiveEntry,
@@ -46,16 +47,13 @@ vi.mock('../../../../app/config/app.config', () => ({
   },
 }));
 
-vi.mock('../../../../common/utilities/zip-extraction.utility', async () => {
-  const actual = await vi.importActual<object>(
-    '../../../../common/utilities/zip-extraction.utility',
-  );
-  return { ...actual, validateAndExtractZip: vi.fn() };
-});
+vi.mock('../../../../common/utilities/archive-extraction.utility', () => ({
+  validateAndExtractArchive: vi.fn(),
+}));
 
-const mockedExtract = validateAndExtractZip as MockedFunction<typeof validateAndExtractZip>;
+const mockedExtract = validateAndExtractArchive as MockedFunction<typeof validateAndExtractArchive>;
 
-type FakeEntry = { archivePath: string; body: string; mimeType?: string };
+type FakeEntry = { archivePath: string; body: string | Buffer; mimeType?: string };
 
 const RETENTION = new Date('2026-10-23T00:00:00Z');
 
@@ -397,6 +395,108 @@ describe('ZipExpansionManager', () => {
       const context = mockedExtract.mock.calls[0]?.[3];
       expect(context?.depth).toBe(1);
       expect(context?.budget.remainingBytes).toBe(500 * 1024 * 1024);
+    });
+  });
+
+  describe('nesting across formats (batch A2)', () => {
+    it('passes the display filename to the extractor, for naming a .gz member', async () => {
+      mockedExtract.mockImplementation(extractInto([]));
+
+      await manager.expandArchive(buildFile({ filename: 'report.csv.gz' }));
+
+      expect(mockedExtract.mock.calls[0]?.[4]).toEqual({ archiveFilename: 'report.csv.gz' });
+    });
+
+    it('recurses into a nested 7z exactly as into a nested zip', async () => {
+      const contexts: ZipExtractionContext[] = [];
+      mockedExtract.mockImplementation(async (archivePath, destDir, _thresholds, context) => {
+        contexts.push(context);
+        const level: FakeEntry[] =
+          contexts.length === 1
+            ? [
+                {
+                  archivePath: 'bundle.7z',
+                  body: 'fake-7z',
+                  mimeType: 'application/x-7z-compressed',
+                },
+              ]
+            : [{ archivePath: 'inside-7z.txt', body: 'seven zip text' }];
+        return extractInto(level)(archivePath, destDir);
+      });
+
+      await manager.expandArchive(buildFile());
+
+      expect(contexts.map((context) => context.depth)).toEqual([1, 2]);
+      expect(manifestFor('parent-file-id')).toContain('seven zip text');
+    });
+
+    it('recognises a nested archive with no archive extension by its bytes', async () => {
+      const contexts: ZipExtractionContext[] = [];
+      mockedExtract.mockImplementation(async (archivePath, destDir, _thresholds, context) => {
+        contexts.push(context);
+        const level: FakeEntry[] =
+          contexts.length === 1
+            ? [
+                {
+                  archivePath: 'backup',
+                  body: zlib.gzipSync(Buffer.from('payload')),
+                  mimeType: 'application/octet-stream',
+                },
+              ]
+            : [{ archivePath: 'restored.txt', body: 'restored text' }];
+        return extractInto(level)(archivePath, destDir);
+      });
+
+      await manager.expandArchive(buildFile());
+
+      expect(contexts).toHaveLength(2);
+      expect(filesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ filename: 'backup', mimeType: 'application/gzip' }),
+      );
+      expect(security.runAllChecks).toHaveBeenCalledWith(
+        'backup',
+        'application/gzip',
+        expect.any(Buffer),
+      );
+      expect(manifestFor('parent-file-id')).toContain('restored text');
+    });
+
+    it('skips a byte-detected nested archive at the depth limit instead of opening it', async () => {
+      mockedExtract.mockImplementation(
+        extractInto([
+          {
+            archivePath: 'deeper',
+            body: zlib.gzipSync(Buffer.from('too deep')),
+            mimeType: 'application/octet-stream',
+          },
+        ]),
+      );
+
+      await manager.expandArchive(buildFile(), {
+        depth: 5,
+        budget: { remainingBytes: 1024 * 1024 },
+      });
+
+      expect(mockedExtract).toHaveBeenCalledTimes(1);
+      expect(filesRepo.create).not.toHaveBeenCalled();
+      expect(manifestFor('parent-file-id')).toContain('- deeper (');
+      expect(manifestFor('parent-file-id')).toContain('skipped-nesting-depth');
+    });
+
+    it('reports an archive the dispatcher cannot open as FAILED with its code', async () => {
+      mockedExtract.mockRejectedValue(
+        new BusinessException(
+          'The archive encrypts its own file list',
+          'ARCHIVE_ENCRYPTED',
+          HttpStatus.BAD_REQUEST,
+        ),
+      );
+
+      await manager.expandArchive(buildFile({ filename: 'secret.7z' }));
+
+      const result = savedResultFor('parent-file-id');
+      expect(result?.['status']).toBe(FileIngestionStatus.FAILED);
+      expect(String(result?.['extractionError'])).toMatch(/^ARCHIVE_ENCRYPTED: /);
     });
   });
 

@@ -14,6 +14,7 @@ import {
 import { type File, type FileChunk, FileIngestionStatus } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
+import { resolveUploadMimeType } from '../../../common/utilities/archive-format.utility';
 import {
   MAX_PUBLISHED_COPY_BYTES,
   PUBLISHABLE_COPY_MIME_PREFIX,
@@ -65,13 +66,14 @@ export class FilesService {
     this.validateMimeType(body.mimeType);
     const buffer = Buffer.from(body.contentBase64, 'base64');
     this.validateFileSize(buffer.length);
-    await this.runSecurityChecks(body.filename, body.mimeType, buffer);
+    const mimeType = await resolveUploadMimeType(body.mimeType, buffer);
+    await this.runSecurityChecks(body.filename, mimeType, buffer);
     const safeName = this.fileSecurityManager.getSanitizedFilename(body.filename);
     const storagePath = saveFile(`${String(Date.now())}-${safeName}`, buffer);
     const file = await this.filesRepository.create({
       userId: body.userId,
       filename: safeName,
-      mimeType: body.mimeType,
+      mimeType,
       sizeBytes: buffer.length,
       storagePath,
       content: body.contentBase64,
@@ -102,7 +104,11 @@ export class FilesService {
       sizeBytes: contentBuffer.length,
     });
 
-    await this.runSecurityChecks(dto.filename, dto.mimeType, contentBuffer);
+    // An archive labelled octet-stream is stored, checked and expanded as the
+    // archive it is; a declared archive MIME the bytes contradict is rejected
+    // by the magic-byte check below.
+    const mimeType = await resolveUploadMimeType(dto.mimeType, contentBuffer);
+    await this.runSecurityChecks(dto.filename, mimeType, contentBuffer);
 
     const safeName = this.fileSecurityManager.getSanitizedFilename(dto.filename);
     const storagePath = saveFile(`${String(Date.now())}-${safeName}`, contentBuffer);
@@ -110,7 +116,7 @@ export class FilesService {
     const file = await this.filesRepository.create({
       userId,
       filename: safeName,
-      mimeType: dto.mimeType,
+      mimeType,
       sizeBytes: contentBuffer.length,
       storagePath,
       content: dto.content ?? null,

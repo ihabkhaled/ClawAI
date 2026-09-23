@@ -17,13 +17,21 @@ export type ExtractedEntry = {
   mimeType: string;
 };
 
-/** The central-directory fields the extractor decides on. */
+/**
+ * The entry-table fields the extractor decides on — a ZIP central directory
+ * entry, or one block of a 7-Zip listing. `compressedSize` is 0 when the format
+ * does not say (entries after the first in a solid 7z block).
+ */
 export type ArchiveEntryHeader = {
   name: string;
   isDirectory: boolean;
   compressedSize: number;
   size: number;
   encrypted: boolean;
+  /** Symbolic or hard link. node-stream-zip does not report it; absent = no. */
+  isLink?: boolean;
+  /** Device node, FIFO or socket. Absent = no. */
+  isSpecialFile?: boolean;
 };
 
 /** An entry the extractor deliberately did not write, and why. */

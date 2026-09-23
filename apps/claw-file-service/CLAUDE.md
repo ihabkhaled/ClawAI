@@ -46,14 +46,16 @@ Four rules follow from it:
   would stay PENDING forever, and the file list polls a 4.2 MB endpoint while any
   row is unfinished. Legacy rows heal one at a time, on use.
 
-Every archive this service opens is bounded. `zip-extraction.utility.ts` guards
-the expand-to-disk path; `ooxml-parser.utility.ts` guards the in-memory XLSX and
-PPTX path. An `.xlsx` is a ZIP and is user input. Do not add a third way to open
-one without bounds of its own.
+Every archive this service opens is bounded. `archive-policy.utility.ts` holds
+the expand-to-disk rules, applied by BOTH engines — `zip-extraction.utility.ts`
+(node-stream-zip, ZIP) and `seven-zip-extraction.utility.ts` (7-Zip WASM, every
+other format); `ooxml-parser.utility.ts` guards the in-memory XLSX and PPTX
+path. An `.xlsx` is a ZIP and is user input. Do not add another way to open an
+archive without bounds of its own.
 
 ## An archive's text is its manifest (2026-09-23)
 
-An attached `.zip` reaches the model through its own `extractedText`, which
+An attached archive (`.zip`, and since A2 every format below) reaches the model through its own `extractedText`, which
 `ZipExpansionManager` fills with the **archive manifest**
 (`utilities/archive-manifest.utility.ts`): an untrusted-content guard, the file
 tree with a status per entry, and the children's text packed into
@@ -69,10 +71,41 @@ both together). chat-service has no zip special case and needs none.
   starts a fresh depth-1 context with a fresh byte budget, which is how nesting
   limits used to be unenforced.
 - **Encrypted entries are skipped, not fatal** (`ARCHIVE_ENCRYPTED`). All
-  encrypted → FAILED, but the manifest still says why.
+  encrypted → FAILED, but the manifest still says why. A 7z/RAR that encrypts
+  its own file list fails with `ARCHIVE_ENCRYPTED` at listing time.
 
 Details: `docs/04-backend/service-guide-file.md` → "ZIP archive expansion",
 ADR-053 amendment.
+
+## Every archive format, and what an upload IS (batch A2, ADR-114)
+
+7z, RAR4/5, tar, and gzip/bzip2/xz (plus `.tgz`/`.tbz2`/`.txz`) get the zip
+treatment through **7-Zip compiled to WASM** (`7z-wasm`). ZIP stays on
+node-stream-zip. `archive-extraction.utility.ts` picks the engine from the
+bytes.
+
+- **`seven-zip.utility.ts` is the only importer of `7z-wasm`, and
+  `file-type-detection.utility.ts` the only importer of `file-type`** (rules/13).
+  No native addon: Smart App Control blocks unsigned `.node` files on the dev box.
+- **Magic bytes, not labels.** `resolveUploadMimeType` runs before the security
+  checks on both upload paths. An archive sent as `application/octet-stream` is
+  stored under its real archive MIME and expanded; a declared archive MIME the
+  bytes contradict is rejected. Adding an archive MIME means updating
+  `ARCHIVE_MIME_ACCEPTED_FORMATS`, `ALLOWED_MIME_TYPES` (a spec checks they
+  agree), and chat-service `EXTRACTABLE_DOCUMENT_MIME_EXACT`.
+- **Order is the guarantee on the 7-Zip path:** list (bounded) → validate → plan
+  → extract only the planned names → measure what landed. Never extract first.
+- **Links never extract, and a file may not share a path with one.** 7-Zip
+  extracts by name, so a tar with a symlink `x` and a file `x` would write the
+  file through the link. `rejectLinkShadowing` refuses that archive; keep it.
+- **Streams (gz/bz2/xz) are bounded while writing**, by the size cap and the
+  ratio limit together. Their headers carry no size worth trusting.
+- **`password` in `ArchiveExtractionOptions` is for batch A3.** It reaches the
+  engine as an argument only — never log it, store it, or echo it in an error.
+- **The engine is synchronous** (blocks the event loop ≈ 0.7 s per 100 MB).
+  Moving it to a worker thread is the known follow-up.
+
+Runbook for adding a format: [`skills/add-an-archive-format.md`](../../skills/add-an-archive-format.md).
 
 ## All Standard Backend Rules Apply
 

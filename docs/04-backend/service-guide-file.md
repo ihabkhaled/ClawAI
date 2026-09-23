@@ -183,9 +183,13 @@ Failures (e.g., blob already missing on disk) are logged as `warn` and do NOT ab
 
 ## ZIP archive expansion
 
-Uploads sent as an archive (`application/zip`, `application/x-zip-compressed`)
-are expanded by `ZipExpansionManager` using `zip-extraction.utility.ts`
-(node-stream-zip). Each extracted file becomes its own `File` row (a **child**,
+Uploads that are an archive — ZIP, and since batch A2 also 7z, RAR (4 and 5),
+tar, gzip, bzip2 and xz, including `.tgz`/`.tbz2`/`.txz` — are expanded by
+`ZipExpansionManager` through `archive-extraction.utility.ts`, which picks the
+engine from the file's bytes: ZIP stays on node-stream-zip
+(`zip-extraction.utility.ts`), every other format goes through 7-Zip compiled to
+WASM (`seven-zip-extraction.utility.ts` → `seven-zip.utility.ts`, ADR-114). See
+"Every other archive format" below. Each extracted file becomes its own `File` row (a **child**,
 `isExtracted = true`, `parentFileId` = the archive, `archivePath` = its path
 inside the archive) and runs the same security checks and text extraction as a
 direct upload. The archive row itself gets the **archive manifest** as its
@@ -238,7 +242,9 @@ checked again during extraction with the same codes.
 | Status in the manifest  | Why                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------- |
 | `skipped-encrypted`     | Password-protected. Detected up front from the entry flags, never attempted. Code `ARCHIVE_ENCRYPTED`.   |
-| `skipped-nesting-depth` | A `.zip` inside an archive already at `ZIP_MAX_NESTING_DEPTH`. Not opened.                               |
+| `skipped-nesting-depth` | An archive (by extension, or by its bytes) inside one already at `ZIP_MAX_NESTING_DEPTH`. Not opened.    |
+| `skipped-link`          | A symbolic or hard link (tar, 7z, RAR, or a ZIP made on Unix). Never extracted.                          |
+| `skipped-special-file`  | A device node, FIFO or socket. Never extracted.                                                          |
 | `skipped-too-large`     | Larger than a single upload may be (`MAX_FILE_SIZE`, 50 MB), by declared or real size.                   |
 | `skipped-unsafe`        | Failed `runAllChecks` (ClamAV, magic bytes, extension blocklist) — the same checks a direct upload runs. |
 
@@ -249,9 +255,64 @@ the model tells the user the archive is encrypted. If only some are, the archive
 is `COMPLETED` and `extractionError` records `ARCHIVE_ENCRYPTED: k of N files …`.
 Password support is a later batch.
 
+### Every other archive format (batch A2, ADR-114)
+
+| Format                                                 | Engine                               | Children                                                   |
+| ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------------------- |
+| `.zip`                                                 | node-stream-zip                      | every entry                                                |
+| `.7z`, `.rar` (RAR4 + RAR5), `.tar`                    | 7-Zip (WASM), `l -slt` first         | every entry                                                |
+| `.tar.gz`/`.tgz`, `.tar.bz2`/`.tbz2`, `.tar.xz`/`.txz` | 7-Zip: decompress, then open the tar | every entry of the tar                                     |
+| `.gz`, `.bz2`, `.xz` holding one file                  | 7-Zip, streamed                      | one child, named without the suffix (`a.csv.gz` → `a.csv`) |
+
+**Same guarantees as a ZIP.** The rules live in `archive-policy.utility.ts` and
+both engines call them: entry count, traversal, per-entry ratio, declared size
+against the shared budget, encrypted entries skipped, nested archives at the
+depth limit skipped. The 7-Zip path adds four:
+
+1. **The listing is bounded.** `7z l -slt` output past
+   `64 KB + ZIP_MAX_ENTRY_COUNT × 4 KB` aborts the run → `ZIP_TOO_MANY_ENTRIES`.
+   A listing it cannot parse strictly → `ARCHIVE_LISTING_INVALID`.
+2. **Whole-archive ratio.** A solid 7z/RAR block reports one packed size, so
+   `declared total / archive bytes` is checked too → `ZIP_BOMB_RATIO`.
+3. **Links cannot aim a write.** Links and device nodes are skipped; a file that
+   shares its path with a link, or sits beneath one, rejects the archive →
+   `ZIP_PATH_TRAVERSAL` (7-Zip extracts by name, so both would be selected).
+4. **Streams are bounded while writing.** gzip/bzip2/xz are decompressed through
+   a sink that refuses the byte past `min(size cap, compressed × ratio)` →
+   `ZIP_BOMB_RATIO` or the size-cap code. After extraction, an entry that wrote
+   more than it declared → `ZIP_BOMB_RATIO`.
+
+A 7z or RAR that encrypts its own file list cannot be listed without a password
+→ `ARCHIVE_ENCRYPTED` (the engine's stdin throws, so it never waits on a
+prompt). Bytes that are no supported archive → `ARCHIVE_UNSUPPORTED_FORMAT`.
+`ArchiveExtractionOptions.password` is accepted by the 7-Zip path for batch A3
+(chat-supplied passwords); nothing supplies it yet.
+
+**The upload decides by magic bytes, not by label.** `resolveUploadMimeType`
+runs before the security checks on both upload paths:
+
+- A declared archive MIME must sniff as a format it may be
+  (`ARCHIVE_MIME_ACCEPTED_FORMATS`), or the upload is rejected with
+  `FILE_SECURITY_CHECK_FAILED: magic_bytes: mime_magic_mismatch`. This includes
+  `application/x-zip-compressed`, which was unchecked before A2.
+- An upload labelled `application/octet-stream` (what Windows browsers send for
+  `.7z`, `.rar`, `.tar.gz`) or another `text/*`/`application/*` label with no
+  signature check of its own is stored under its real archive MIME when
+  `file-type` sees a plain archive, and expanded. A DOCX/XLSX/JAR shares ZIP's
+  signature but is not re-labelled.
+- Inside an archive, an entry with no archive extension (`backup`, `data.bin`)
+  is recognised the same way, so nesting works for any format inside any other.
+
+**Engine facts worth knowing.** Each 7-Zip run is a fresh WASM instance;
+archives are mounted from disk (NODEFS), never copied into the heap;
+`-smemx256m` caps the decoder dictionary; `process.exitCode` is restored after
+each run. `callMain` is synchronous, so extraction blocks the event loop while
+it runs (≈ 0.7 s per 100 MB measured) — a worker thread is the follow-up if it
+ever shows. Both Dockerfiles fail the build if `7z-wasm/7zz.wasm` is missing.
+
 ### Nesting
 
-A nested `.zip` is expanded by `ZipExpansionManager` itself, never handed to
+A nested archive of any format is expanded by `ZipExpansionManager` itself, never handed to
 `FileProcessingManager.processFile` — that route starts a fresh depth-1 context,
 which is how depth used to reset at every level. Each level receives
 `{ depth: parent + 1, budget }` where `budget` is the same object for the whole

@@ -113,9 +113,28 @@ export const ALLOWED_MIME_TYPES = [
   'image/svg+xml',
   ...VIDEO_MIME_TYPES,
   ...AUDIO_MIME_TYPES,
-  // Archives (expanded server-side via ZipExpansionManager — Slice C backend 2)
+  // Archives (expanded server-side via ZipExpansionManager — Slice C backend 2;
+  // every format beyond ZIP since batch A2). The canonical list, with the formats
+  // each label may really be, is ARCHIVE_MIME_ACCEPTED_FORMATS; a spec keeps the
+  // two in step.
   'application/zip',
   'application/x-zip-compressed',
+  'application/x-7z-compressed',
+  'application/vnd.rar',
+  'application/x-rar-compressed',
+  'application/x-rar',
+  'application/x-tar',
+  'application/x-gtar',
+  'application/gzip',
+  'application/x-gzip',
+  'application/x-compressed-tar',
+  'application/x-compressed',
+  'application/x-bzip2',
+  'application/x-bzip',
+  'application/x-bzip-compressed-tar',
+  'application/x-bzip2-compressed-tar',
+  'application/x-xz',
+  'application/x-xz-compressed-tar',
 ] as const;
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB

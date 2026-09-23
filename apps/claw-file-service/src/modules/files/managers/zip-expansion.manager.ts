@@ -16,14 +16,17 @@ import { saveFile } from '../../../common/utilities/file-storage.utility';
 import {
   prepareExtractionDir,
   removeExtractionDir,
-  validateAndExtractZip,
 } from '../../../common/utilities/zip-extraction.utility';
+import { validateAndExtractArchive } from '../../../common/utilities/archive-extraction.utility';
+import {
+  isArchiveMimeType,
+  resolveUploadMimeType,
+} from '../../../common/utilities/archive-format.utility';
 import {
   ARCHIVE_ENCRYPTED_ERROR_CODE,
   ARCHIVE_ROOT_DEPTH,
   BYTES_PER_MEGABYTE,
   ZIP_EXPANSION_FAILED_ERROR_CODE,
-  ZIP_MIME_TYPES,
 } from '../constants/zip-expansion.constants';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
@@ -109,11 +112,12 @@ export class ZipExpansionManager {
   ): Promise<void> {
     let extraction: ZipExtractionResult;
     try {
-      extraction = await validateAndExtractZip(
+      extraction = await validateAndExtractArchive(
         parentFile.storagePath,
         destDir,
         this.readThresholds(),
         context,
+        { archiveFilename: parentFile.filename },
       );
     } catch (error: unknown) {
       await this.handleExtractionFailure(parentFile, error);
@@ -157,7 +161,17 @@ export class ZipExpansionManager {
   ): Promise<ArchiveManifestRow> {
     const filename = path.basename(entry.archivePath);
     const buffer = fs.readFileSync(entry.path);
-    const check = await this.fileSecurityManager.runAllChecks(filename, entry.mimeType, buffer);
+    // An entry's MIME comes from its extension; an archive named without one
+    // ("backup", "data.bin") is recognised by its bytes, as an upload is.
+    const mimeType = await resolveUploadMimeType(entry.mimeType, buffer);
+    if (isArchiveMimeType(mimeType) && context.depth >= this.readThresholds().maxNestingDepth) {
+      return toSkippedRow({
+        archivePath: entry.archivePath,
+        sizeBytes: entry.sizeBytes,
+        status: ArchiveEntryStatus.SKIPPED_NESTING_DEPTH,
+      });
+    }
+    const check = await this.fileSecurityManager.runAllChecks(filename, mimeType, buffer);
     if (!check.passed) {
       this.logger.warn(
         `onboardSingleEntry: SKIPPED unsafe entry parentId=${parentFile.id} name=${filename}`,
@@ -177,7 +191,7 @@ export class ZipExpansionManager {
     const child = await this.filesRepository.create({
       userId: parentFile.userId,
       filename,
-      mimeType: entry.mimeType,
+      mimeType,
       sizeBytes: entry.sizeBytes,
       storagePath,
       // A child lives exactly as long as the archive it came from.
@@ -206,13 +220,14 @@ export class ZipExpansionManager {
     });
   }
 
-  // A nested archive recurses HERE, not through FileProcessingManager: that
-  // route starts a fresh root context, which is how depth used to reset at every
-  // level and ZIP_MAX_NESTING_DEPTH was never enforced. The extractor already
-  // skipped any nested archive at the depth limit, so one that reaches this
-  // point may be opened.
+  // A nested archive — any supported format inside any other — recurses HERE,
+  // not through FileProcessingManager: that route starts a fresh root context,
+  // which is how depth used to reset at every level and ZIP_MAX_NESTING_DEPTH
+  // was never enforced. The extractor skipped a nested archive at the depth
+  // limit by its extension, and onboardSingleEntry by its bytes, so one that
+  // reaches this point may be opened.
   private async processChild(child: File, context: ZipExtractionContext): Promise<void> {
-    if (ZIP_MIME_TYPES.includes(child.mimeType)) {
+    if (isArchiveMimeType(child.mimeType)) {
       await this.expandArchive(child, { depth: context.depth + 1, budget: context.budget });
       return;
     }

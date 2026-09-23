@@ -97,15 +97,25 @@ describe('buildFileDeliveryEntries', () => {
   // cannot read a PDF.
   // A ZIP left this list on 2026-09-23: file-service now writes its tree and
   // member text into the parent's extractedText, so it is delivered as text.
-  it.each(['application/zip', 'application/x-zip-compressed'])(
-    'records %s as EXTRACTED_TEXT now that its manifest is delivered',
-    (mimeType) => {
-      expect(modeOf(file({ mimeType }))).toBe(FileDeliveryMode.EXTRACTED_TEXT);
-    },
-  );
+  // Every other archive format followed in batch A2 (ADR-114).
+  it.each([
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-7z-compressed',
+    'application/vnd.rar',
+    'application/x-rar-compressed',
+    'application/x-tar',
+    'application/gzip',
+    'application/x-gzip',
+    'application/x-bzip2',
+    'application/x-xz',
+    'application/x-compressed-tar',
+  ])('records %s as EXTRACTED_TEXT now that its manifest is delivered', (mimeType) => {
+    expect(modeOf(file({ mimeType }))).toBe(FileDeliveryMode.EXTRACTED_TEXT);
+  });
 
   describe('formats with no extraction path', () => {
-    it.each(['application/x-7z-compressed', 'font/woff2'])(
+    it.each(['font/woff2', 'application/x-apple-diskimage'])(
       'records %s as OMITTED_UNSUPPORTED',
       (mimeType) => {
         expect(modeOf(file({ mimeType }))).toBe(FileDeliveryMode.OMITTED_UNSUPPORTED);
@@ -114,7 +124,7 @@ describe('buildFileDeliveryEntries', () => {
 
     it('carries a reason so the UI can explain the omission', () => {
       const [entry] = buildFileDeliveryEntries(
-        [file({ mimeType: 'application/x-7z-compressed' })],
+        [file({ mimeType: 'font/woff2' })],
         'OLLAMA',
         'model-1',
       );

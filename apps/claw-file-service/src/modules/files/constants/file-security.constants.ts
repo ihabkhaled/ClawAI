@@ -49,6 +49,8 @@ export const MIME_TO_MAGIC_BYTES: Record<string, Buffer[]> = {
   'image/gif': [Buffer.from('GIF87a'), Buffer.from('GIF89a')],
   'image/webp': [Buffer.from('RIFF')],
   'application/zip': [Buffer.from([0x50, 0x4b, 0x03, 0x04])],
+  // Unchecked until batch A2, so any bytes rode in under this label.
+  'application/x-zip-compressed': [Buffer.from([0x50, 0x4b, 0x03, 0x04])],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
     Buffer.from([0x50, 0x4b, 0x03, 0x04]),
   ],

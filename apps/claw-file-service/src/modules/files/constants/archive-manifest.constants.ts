@@ -6,7 +6,7 @@ import {
   RTF_MIME_TYPES,
 } from './file-processing.constants';
 import { AUDIO_PLACEHOLDER_PREFIX } from './transcription.constants';
-import { ZIP_MIME_TYPES } from './zip-expansion.constants';
+import { ARCHIVE_MIME_TYPES } from './archive-formats.constants';
 
 /**
  * Hard ceiling on the manifest written to an archive's `extractedText`.
@@ -95,7 +95,7 @@ export const ARCHIVE_DOCUMENT_MIME_TYPES: ReadonlySet<string> = new Set<string>(
   MIME_TYPE_XLSX,
   MIME_TYPE_PPTX,
   ...RTF_MIME_TYPES,
-  ...ZIP_MIME_TYPES,
+  ...ARCHIVE_MIME_TYPES,
 ]);
 
 export const IMAGE_MIME_PREFIX = 'image/';

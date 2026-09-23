@@ -110,3 +110,54 @@ describe('validateMagicBytes audio formats', () => {
     });
   });
 });
+
+// Batch A2 — archive MIMEs other than ZIP. A tar has no offset-0 signature and
+// a RAR has two, so these are sniffed; a declared label must match the bytes.
+const GZIP_BYTES = Buffer.from('1f8b0800000000000003', 'hex');
+const SEVEN_ZIP_BYTES = Buffer.from('377abcaf271c0004', 'hex');
+const RAR5_BYTES = Buffer.from('526172211a0701000000', 'hex');
+const RAR4_BYTES = Buffer.from('526172211a070000', 'hex');
+const BZIP2_BYTES = Buffer.from('425a683931415926', 'hex');
+const XZ_BYTES = Buffer.from('fd377a585a000004', 'hex');
+const ZIP_BYTES = Buffer.from('504b0304140000000800', 'hex');
+const USTAR_BYTES = ((): Buffer => {
+  const block = Buffer.alloc(512);
+  block.write('a.txt', 0);
+  block.write('ustar', 257);
+  return block;
+})();
+
+describe('validateMagicBytes archive formats', () => {
+  it.each([
+    ['application/x-7z-compressed', SEVEN_ZIP_BYTES],
+    ['application/vnd.rar', RAR5_BYTES],
+    ['application/x-rar-compressed', RAR4_BYTES],
+    ['application/gzip', GZIP_BYTES],
+    ['application/x-compressed-tar', GZIP_BYTES],
+    ['application/x-bzip2', BZIP2_BYTES],
+    ['application/x-xz', XZ_BYTES],
+    ['application/x-tar', USTAR_BYTES],
+    ['application/x-gtar', USTAR_BYTES],
+    ['application/x-gtar', GZIP_BYTES],
+    ['application/x-zip-compressed', ZIP_BYTES],
+  ])('accepts %s whose bytes agree', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: true,
+      reason: 'magic_bytes_match',
+    });
+  });
+
+  it.each([
+    ['application/x-7z-compressed', GZIP_BYTES],
+    ['application/vnd.rar', SEVEN_ZIP_BYTES],
+    ['application/gzip', XZ_BYTES],
+    ['application/x-tar', GZIP_BYTES],
+    ['application/x-xz', Buffer.from('%PDF-1.7')],
+    ['application/x-zip-compressed', GZIP_BYTES],
+  ])('rejects %s whose bytes are another format', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: false,
+      reason: `mime_magic_mismatch: declared ${mimeType}`,
+    });
+  });
+});

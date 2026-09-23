@@ -7598,7 +7598,7 @@
       ],
       "skills": [
         {
-          "bytes": 28837,
+          "bytes": 29116,
           "file": "skills/00-index.md"
         },
         {
@@ -7660,6 +7660,10 @@
         {
           "bytes": 3125,
           "file": "skills/add-an-answer-export-format.md"
+        },
+        {
+          "bytes": 4700,
+          "file": "skills/add-an-archive-format.md"
         },
         {
           "bytes": 6927,
@@ -9928,7 +9932,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 26
+        "testFiles": 31
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10708,7 +10712,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1386,
+    "totalTestFiles": 1391,
     "workspaceCount": 25
   }
 }

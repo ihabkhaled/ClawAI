@@ -1,5 +1,7 @@
 import { Logger } from '@nestjs/common';
+import type { ArchiveFormat } from '../enums/archive-format.enum';
 import type { FileValidationResult } from '../../modules/files/types/file-security.types';
+import { acceptedArchiveFormats, sniffArchiveFormat } from './archive-format.utility';
 import {
   AAC_ADTS_SECOND_BYTES,
   AUDIO_MIME_DETECTION_ALIASES,
@@ -65,6 +67,10 @@ export async function validateMagicBytes(
     ([k]) => k === declaredMimeType,
   )?.[1];
   if (!expectedSignatures) {
+    const acceptedFormats = acceptedArchiveFormats(declaredMimeType);
+    if (acceptedFormats !== undefined) {
+      return validateArchiveSignature(buffer, declaredMimeType, acceptedFormats);
+    }
     logger.debug(`validateMagicBytes: no signature check for ${declaredMimeType}`);
     return { valid: true, reason: 'no_signature_check' };
   }
@@ -77,6 +83,24 @@ export async function validateMagicBytes(
 
   logger.warn(
     `validateMagicBytes: MISMATCH — declared ${declaredMimeType} but magic bytes don't match`,
+  );
+  return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
+}
+
+// Batch A2 — 7z, RAR, tar, gzip, bzip2, xz. A tar has no offset-0 signature
+// and a RAR has two, so these are sniffed rather than looked up; a `.tgz`
+// declared `application/x-gtar` may be either a tar or a gzip.
+function validateArchiveSignature(
+  buffer: Buffer,
+  declaredMimeType: string,
+  acceptedFormats: readonly ArchiveFormat[],
+): FileValidationResult {
+  const detected = sniffArchiveFormat(buffer);
+  if (detected !== null && acceptedFormats.includes(detected)) {
+    return { valid: true, reason: 'magic_bytes_match' };
+  }
+  logger.warn(
+    `validateMagicBytes: MISMATCH — declared ${declaredMimeType} but bytes are ${detected ?? 'not an archive'}`,
   );
   return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
 }

@@ -1,15 +1,8 @@
 import { MAX_FILE_SIZE } from '../types/files.types';
 import type { ZipExtractionThresholds } from '../types/zip-expansion.types';
 
-/**
- * MIME types treated as ZIP archives.
- * Some clients send `application/x-zip-compressed` (older Windows browsers)
- * — both are accepted and dispatched through the archive expansion pipeline.
- */
-export const ZIP_MIME_TYPES: readonly string[] = [
-  'application/zip',
-  'application/x-zip-compressed',
-];
+// The MIME types routed to archive expansion — ZIP and every other format — are
+// ARCHIVE_MIME_ACCEPTED_FORMATS in archive-formats.constants.ts (batch A2).
 
 /**
  * Default ZIP-bomb thresholds, used when AppConfig is unavailable
@@ -61,6 +54,18 @@ export const EXTENSION_TO_MIME: Readonly<Record<string, string>> = {
   webp: 'image/webp',
   svg: 'image/svg+xml',
   zip: 'application/zip',
+  // Archives other than ZIP (batch A2). A .tgz/.tbz2/.txz is a stream codec whose
+  // payload is sniffed as a tar after decompression, so it carries the codec MIME.
+  '7z': 'application/x-7z-compressed',
+  rar: 'application/vnd.rar',
+  tar: 'application/x-tar',
+  gz: 'application/gzip',
+  tgz: 'application/gzip',
+  bz2: 'application/x-bzip2',
+  tbz2: 'application/x-bzip2',
+  tbz: 'application/x-bzip2',
+  xz: 'application/x-xz',
+  txz: 'application/x-xz',
 };
 
 export const DEFAULT_EXTRACTED_MIME_TYPE = 'application/octet-stream';
@@ -77,18 +82,38 @@ export const ARCHIVE_ROOT_DEPTH = 1;
  */
 export const ZIP_MAX_ENTRY_BYTES = MAX_FILE_SIZE;
 
-/** File extension that marks an entry as a nested archive. */
-export const NESTED_ARCHIVE_EXTENSION = '.zip';
+// A ZIP made on Unix stores the entry's POSIX st_mode in the high 16 bits of the
+// external attributes. The file-type bits tell a symlink or device node from a
+// regular file; the policy skips the first two exactly as it does in a tar.
+export const ZIP_UNIX_MODE_SHIFT = 16;
+export const POSIX_FILE_TYPE_MASK = 0o170000;
+export const POSIX_REGULAR_FILE_BITS = 0o100000;
+export const POSIX_DIRECTORY_BITS = 0o040000;
+export const POSIX_SYMLINK_BITS = 0o120000;
+/**
+ * File-type bits that mean an ordinary entry: none recorded (a ZIP from Windows
+ * or an old tool), a regular file, or a directory.
+ */
+export const ZIP_ORDINARY_FILE_TYPES: ReadonlySet<number> = new Set([
+  0,
+  POSIX_REGULAR_FILE_BITS,
+  POSIX_DIRECTORY_BITS,
+]);
 
 // Error codes. `ZIP_BOMB_RATIO` doubles as the per-archive size-cap code — that
 // is what it has always reported, and consumers match on it.
 export const ZIP_SIZE_CAP_ERROR_CODE = 'ZIP_BOMB_RATIO';
 export const ZIP_CUMULATIVE_SIZE_EXCEEDED_ERROR_CODE = 'ZIP_CUMULATIVE_SIZE_EXCEEDED';
 export const ZIP_EXPANSION_FAILED_ERROR_CODE = 'ZIP_EXPANSION_FAILED';
+export const ZIP_TOO_MANY_ENTRIES_ERROR_CODE = 'ZIP_TOO_MANY_ENTRIES';
+export const ZIP_PATH_TRAVERSAL_ERROR_CODE = 'ZIP_PATH_TRAVERSAL';
+/** One entry, or the whole archive, inflates past ZIP_COMPRESSION_RATIO_THRESHOLD. */
+export const ZIP_BOMB_RATIO_ERROR_CODE = 'ZIP_BOMB_RATIO';
 
 /**
  * Some or all entries are password-protected. Encrypted entries are skipped and
  * the rest still delivered; only an archive whose EVERY file is encrypted ends
- * FAILED. Password support is a later batch.
+ * FAILED. Also the code for a 7z or RAR whose entry table is itself encrypted,
+ * which cannot even be listed without a password. Password support is batch A3.
  */
 export const ARCHIVE_ENCRYPTED_ERROR_CODE = 'ARCHIVE_ENCRYPTED';

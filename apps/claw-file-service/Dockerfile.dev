@@ -17,6 +17,8 @@ COPY apps/claw-file-service/ ./apps/claw-file-service/
 # the TypeScript 7 npm compiler-linux-x64 (glibc binary) via the typescript alias.
 WORKDIR /app
 RUN npm install --ignore-scripts --legacy-peer-deps
+# 7z-wasm loads 7zz.wasm from its package directory at runtime (ADR-114).
+RUN test -f /app/node_modules/7z-wasm/7zz.wasm
 
 # Compile shared packages with workspace-hoisted types available
 RUN cd packages/shared-constants && npm run build
