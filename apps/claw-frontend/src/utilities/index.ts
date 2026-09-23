@@ -141,6 +141,15 @@ export {
   getFastestMessage,
 } from './parallel.utility';
 export {
+  buildCompareRankingRows,
+  getCompareJudgeNoticeKey,
+  getCompareJudgeVerdict,
+  getLaneRanking,
+  readCompareJudgeVerdict,
+  readCompareLaneIndex,
+  resolveBestResponse,
+} from './compare-judge.utility';
+export {
   countFileDeliveriesByMode,
   getFileDeliveryModeLabel,
   buildFileDeliveryTooltip,

@@ -88,6 +88,7 @@ import type {
   UseEditableTitleReturn,
   VisibleProgressStage,
 } from './chat.types';
+import type { CompareJudgeLaneResult } from './compare-judge.types';
 import type { ConfluencePageMetadata } from './confluence.types';
 import type { SharedConnectorView } from './connector-grant.types';
 import type {
@@ -1871,6 +1872,10 @@ export type CompareResultCardProps = {
 
 export type CompareJudgeBadgesProps = {
   judgeState: CompareJudgeState;
+  /** This lane's place in the comparative ranking; required to show RANKED. */
+  ranking?: CompareJudgeLaneResult | null;
+  /** Top of the verdict's shared score scale. */
+  scaleMax?: number;
   t: TranslateFunction;
 };
 

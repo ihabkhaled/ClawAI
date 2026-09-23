@@ -1,5 +1,6 @@
 import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../app/config/app.config';
+import { CompareJudgeState, CompareJudgeVerdictStatus } from '../common/enums';
 import { ParallelExecutionManager } from '../modules/chat-messages/managers/parallel-execution.manager';
 import type {
   ParallelModelResponse,
@@ -72,9 +73,9 @@ describe('ParallelExecutionManager', () => {
     assemble: vi.fn(),
   };
 
-  const mockJudgeRefereeManager = {
-    evaluate: vi.fn(),
-    buildMetadata: vi.fn(),
+  // ADR-116 — Compare's judge is ONE comparative call per run.
+  const mockCompareJudgeManager = {
+    judge: vi.fn(),
   };
 
   const mockChatMessagesRepository = {
@@ -176,7 +177,7 @@ describe('ParallelExecutionManager', () => {
     manager = new ParallelExecutionManager(
       mockChatExecutionManager as any,
       mockChatContextGateway as any,
-      mockJudgeRefereeManager as any,
+      mockCompareJudgeManager as any,
       mockChatMessagesRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
@@ -375,6 +376,128 @@ describe('ParallelExecutionManager', () => {
       expect(results[0]!.model).toBe('claude-sonnet-4');
       expect(results[1]!.provider).toBe('GEMINI');
       expect(results[1]!.model).toBe('gemini-2.5-flash');
+    });
+  });
+
+  describe('comparative judge (ADR-116)', () => {
+    const threeModels: ParallelModelTarget[] = [
+      { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+      { provider: 'OPENAI', model: 'gpt-5' },
+    ];
+    const rankedVerdict = {
+      version: 1,
+      status: CompareJudgeVerdictStatus.RANKED,
+      failureReason: null,
+      judgeModel: 'OPENAI/gpt-5-mini',
+      scale: { min: 0, max: 10 },
+      lanes: [],
+      winnerLaneIndex: 0,
+      tiedLaneIndices: [],
+      rationale: 'A beats B.',
+      shuffle: { seed: 'group-1', order: [2, 0], labels: ['A', 'B'] },
+      truncated: false,
+      latencyMs: 10,
+      usage: null,
+      judgedAt: '2026-09-23T00:00:00.000Z',
+    };
+
+    const runJudged = async (): Promise<ParallelModelResponse[]> => {
+      mockChatExecutionManager.callProvider
+        .mockResolvedValueOnce({ content: 'lane 0', provider: 'ANTHROPIC', model: 'claude-sonnet-4', latencyMs: 5 })
+        .mockRejectedValueOnce(new Error('Rate limited'))
+        .mockResolvedValueOnce({ content: 'lane 2', provider: 'OPENAI', model: 'gpt-5', latencyMs: 7 });
+      return (manager as any).executeAllModels(
+        'user-1',
+        threeModels,
+        mockContext,
+        undefined,
+        { enabled: true, model: 'OPENAI:gpt-5-mini' },
+        { enabled: false, model: null },
+        'group-1',
+        'thread-1',
+        [],
+        ['file-1'],
+      );
+    };
+
+    beforeEach(() => {
+      mockCompareJudgeManager.judge.mockResolvedValue(rankedVerdict);
+    });
+
+    it('asks the judge exactly once per run, with every completed lane and only those', async () => {
+      await runJudged();
+
+      expect(mockCompareJudgeManager.judge).toHaveBeenCalledTimes(1);
+      const request = mockCompareJudgeManager.judge.mock.calls[0]![0];
+      expect(request).toMatchObject({
+        userId: 'user-1',
+        threadId: 'thread-1',
+        runId: 'group-1',
+        judgeModel: 'OPENAI:gpt-5-mini',
+        fileIds: ['file-1'],
+      });
+      expect(request.lanes.map((lane: { laneIndex: number }) => lane.laneIndex)).toEqual([0, 2]);
+      // Three lane calls, zero per-lane judge calls on the provider path.
+      expect(mockChatExecutionManager.callProvider).toHaveBeenCalledTimes(3);
+    });
+
+    it('stamps the same verdict on every lane, with its own index and badge state', async () => {
+      const results = await runJudged();
+
+      expect(results.map((r) => r.compareLaneIndex)).toEqual([0, 1, 2]);
+      expect(results.every((r) => r.compareJudge === rankedVerdict)).toBe(true);
+      expect(results.map((r) => r.judgeState)).toEqual([
+        CompareJudgeState.RANKED,
+        CompareJudgeState.SKIPPED,
+        CompareJudgeState.RANKED,
+      ]);
+      expect(results.every((r) => r.judgeReview === null && r.judgeDialogAvailable === false)).toBe(
+        true,
+      );
+    });
+
+    it('marks every completed lane "judge unavailable" when the verdict is unavailable', async () => {
+      mockCompareJudgeManager.judge.mockResolvedValue({
+        ...rankedVerdict,
+        status: CompareJudgeVerdictStatus.UNAVAILABLE,
+        failureReason: 'parse_failed',
+        winnerLaneIndex: null,
+        rationale: null,
+      });
+
+      const results = await runJudged();
+
+      expect(results[0]!.judgeState).toBe(CompareJudgeState.UNAVAILABLE);
+      expect(results[0]!.judgeErrorState).toBe(CompareJudgeState.UNAVAILABLE);
+      expect(results[1]!.judgeState).toBe(CompareJudgeState.SKIPPED);
+    });
+
+    it('never asks the judge when the judge is off', async () => {
+      await (manager as any).executeAllModels(
+        'user-1',
+        sampleModels,
+        mockContext,
+        undefined,
+        disabledJudgeConfig,
+        disabledCriticConfig,
+        'group-1',
+        'thread-1',
+        [],
+      );
+      expect(mockCompareJudgeManager.judge).not.toHaveBeenCalled();
+    });
+
+    it('persists the verdict and lane index on each assistant message', async () => {
+      const results = await runJudged();
+      await (manager as any).storeAssistantMessages('user-1', 'thread-1', 'group-1', results);
+
+      const metadata = mockChatMessagesRepository.create.mock.calls.map(
+        (call) => call[0].metadata as Record<string, unknown>,
+      );
+      expect(metadata.map((m) => m['compareLaneIndex'])).toEqual([0, 1, 2]);
+      expect(metadata.every((m) => m['compareJudge'] === rankedVerdict)).toBe(true);
+      expect(metadata[0]!['judgeState']).toBe(CompareJudgeState.RANKED);
     });
   });
 

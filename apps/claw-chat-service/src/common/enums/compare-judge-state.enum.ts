@@ -7,4 +7,6 @@ export enum CompareJudgeState {
   FAILED = 'failed',
   UNAVAILABLE = 'unavailable',
   SKIPPED = 'skipped',
+  /** Scored side by side with every other lane by the comparative judge. */
+  RANKED = 'ranked',
 }

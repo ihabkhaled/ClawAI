@@ -1,5 +1,6 @@
 'use client';
 
+import { CompareJudgeRanking } from '@/components/chat/compare-judge-ranking';
 import { CompareResultCard } from '@/components/chat/compare-result-card';
 import { Badge } from '@/components/ui/badge';
 import { ParallelModelStatus } from '@/enums';
@@ -14,7 +15,8 @@ export function ParallelMessageGroup({
   // In-thread compare results reuse the same rich card as /chat/compare:
   // Raw / Copy / Download .md toolbar + Latency / Tokens / Judge / Image
   // delivery footer strip. One component, two surfaces — no JSX duplication.
-  const { responses, fastestModel, bestModel } = useParallelMessageGroup(messages);
+  const { responses, fastestModel, bestModel, bestIsJudged, judgeVerdict } =
+    useParallelMessageGroup(messages);
   const colClass = getParallelColClass(messages.length);
 
   return (
@@ -25,6 +27,8 @@ export function ParallelMessageGroup({
           {t('compare.modelCount', { count: messages.length })}
         </Badge>
       </div>
+
+      {judgeVerdict === null ? null : <CompareJudgeRanking verdict={judgeVerdict} t={t} />}
 
       <div className={`grid gap-3 ${colClass}`}>
         {responses.map((response) => (
@@ -37,7 +41,7 @@ export function ParallelMessageGroup({
             isBest={
               response.status === ParallelModelStatus.COMPLETED &&
               response.model === bestModel &&
-              bestModel !== fastestModel
+              (bestIsJudged || bestModel !== fastestModel)
             }
             t={t}
           />

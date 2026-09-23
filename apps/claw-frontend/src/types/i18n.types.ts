@@ -1807,6 +1807,7 @@ export type TranslationDictionary = {
     judgeVerified: string;
     judgeRevised: string;
     judgeEscalated: string;
+    judgeRanked: string;
     modelsProcessing: string;
     processingMessage: string;
     viewRaw: string;
@@ -1843,6 +1844,23 @@ export type TranslationDictionary = {
       ocrFailed: string;
       geminiUploading: string;
       anthropicNativePdf: string;
+    };
+    ranking: {
+      title: string;
+      judgedBy: string;
+      method: string;
+      tie: string;
+      rank: string;
+      candidateLabel: string;
+      winner: string;
+      score: string;
+      critic: string;
+      answerTruncated: string;
+      rationale: string;
+      truncatedNotice: string;
+      callFailed: string;
+      unavailable: string;
+      notEnough: string;
     };
   };
   judgeReview: {

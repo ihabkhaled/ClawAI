@@ -14,7 +14,7 @@ import { useCompareResultCard } from '@/hooks/chat/use-compare-result-card';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { CompareResultCardProps } from '@/types';
-import { formatLatency } from '@/utilities';
+import { formatLatency, getLaneRanking } from '@/utilities';
 
 export function CompareResultCard({
   response,
@@ -86,7 +86,12 @@ export function CompareResultCard({
               {t('compare.tokens')}: {totalTokens.toLocaleString()}
             </span>
           ) : null}
-          <CompareJudgeBadges judgeState={judgeState} t={t} />
+          <CompareJudgeBadges
+            judgeState={judgeState}
+            ranking={getLaneRanking(response)}
+            scaleMax={response.compareJudge?.scale.max}
+            t={t}
+          />
           {response.attachmentDelivery && response.attachmentDelivery.length > 0 ? (
             <AttachmentDeliveryChip delivery={response.attachmentDelivery} />
           ) : null}

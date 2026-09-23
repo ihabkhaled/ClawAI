@@ -56,6 +56,8 @@ export { ImageGenerationStatus } from './image-generation-status.enum';
 export { FileGenerationStatus } from './file-generation-status.enum';
 export { ParallelModelStatus } from './parallel-model-status.enum';
 export { CompareJudgeState } from './compare-judge-state.enum';
+export { CompareJudgeVerdictStatus } from './compare-judge-verdict-status.enum';
+export { CompareJudgeFailureReason } from './compare-judge-failure-reason.enum';
 export { CompareResultViewMode } from './compare-result-view-mode.enum';
 export { ModelCatalogViewMode } from './model-catalog-view-mode.enum';
 export { ChatThreadListTab } from './chat-thread-list-tab.enum';

@@ -22,6 +22,7 @@ import { CrossThreadRetrievalRepository } from './repositories/cross-thread-retr
 import { EscalationChainManager } from './managers/escalation-chain.manager';
 import { FallbackExecutorManager } from './managers/fallback-executor.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
+import { CompareJudgeManager } from './managers/compare-judge.manager';
 import { ResearchEnricherManager } from './managers/research-enricher.manager';
 import { QualityCheckManager } from './managers/quality-check.manager';
 import { JudgeRefereeManager } from './managers/judge-referee.manager';
@@ -90,6 +91,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     EscalationChainManager,
     FallbackExecutorManager,
     ParallelExecutionManager,
+    CompareJudgeManager,
     ResearchEnricherManager,
     QualityCheckManager,
     JudgeRefereeManager,

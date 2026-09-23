@@ -7,6 +7,7 @@ import {
   Info,
   MinusCircle,
   RefreshCw,
+  Scale,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -15,8 +16,18 @@ import type { CompareJudgeBadgesProps } from '@/types';
 
 export function CompareJudgeBadges({
   judgeState,
+  ranking = null,
+  scaleMax = 10,
   t,
 }: CompareJudgeBadgesProps): React.ReactElement | null {
+  if (judgeState === CompareJudgeState.RANKED && ranking !== null) {
+    return (
+      <span className="text-foreground inline-flex min-w-0 items-center gap-1 break-words">
+        <Scale className="h-3.5 w-3.5 shrink-0" />
+        {t('compare.judgeRanked', { rank: ranking.rank, score: ranking.score, max: scaleMax })}
+      </span>
+    );
+  }
   if (judgeState === CompareJudgeState.VERIFIED) {
     return (
       <span className="text-success inline-flex min-w-0 items-center gap-1 break-words">

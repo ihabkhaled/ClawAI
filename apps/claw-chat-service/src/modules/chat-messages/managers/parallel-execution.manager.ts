@@ -12,7 +12,7 @@ import { ChatExecutionManager } from './chat-execution.manager';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
-import { JudgeRefereeManager } from './judge-referee.manager';
+import { CompareJudgeManager } from './compare-judge.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
@@ -22,6 +22,7 @@ import { VISION_CAPABLE_PROVIDERS } from '../constants/file-delivery.constants';
 import { type FileDeliveryEntry } from '../types/file-delivery.types';
 import { type FileDeliveryRecordInput } from '../types/file-delivery-record.types';
 import {
+  type CompareJudgeRunInput,
   type ParallelCriticConfig,
   type ParallelJudgeConfig,
   type ParallelModelResponse,
@@ -38,8 +39,8 @@ import { type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
 import { type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
-import { type JudgeRefereeResult, type JudgeReviewPayload } from '../types/judge-referee.types';
 import { buildFileDeliveryEntries } from '../../../common/utilities';
+import { resolveLaneJudgeState } from '../utilities/compare-judge.utility';
 import { BusinessException } from '../../../common/errors';
 import {
   PAYG_COMPARE_ALL_OR_NOTHING_CODE,
@@ -54,7 +55,7 @@ export class ParallelExecutionManager {
   constructor(
     private readonly chatExecutionManager: ChatExecutionManager,
     private readonly chatContextGateway: ChatContextGatewayManager,
-    private readonly judgeRefereeManager: JudgeRefereeManager,
+    private readonly compareJudgeManager: CompareJudgeManager,
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
@@ -142,6 +143,7 @@ export class ParallelExecutionManager {
         parallelGroupId,
         threadId,
         laneHolds,
+        fileIds,
       );
       // Replay the shared enricher transcript onto every lane response so the
       // assistant message metadata carries it for FE rendering + analytics.
@@ -433,6 +435,7 @@ export class ParallelExecutionManager {
     parallelGroupId: string,
     threadId: string,
     laneHolds: PaygHold[],
+    fileIds?: string[],
   ): Promise<ParallelModelResponse[]> {
     const promises = models.map((target, index) =>
       this.executeWithTimeout(
@@ -460,29 +463,35 @@ export class ParallelExecutionManager {
       );
     });
 
+    // Every lane has settled before the judge is called: a comparison of the
+    // answers that happened to finish first is not a comparison.
     return this.applyJudgeToResponses(
-      userId,
+      {
+        userId,
+        threadId,
+        parallelGroupId,
+        context,
+        judgeConfig,
+        criticConfig,
+        ...(fileIds === undefined ? {} : { fileIds }),
+      },
       baseResponses,
-      context,
-      threadSettings,
-      judgeConfig,
-      criticConfig,
-      parallelGroupId,
-      threadId,
     );
   }
 
+  /**
+   * One comparative judge call for the whole run (ADR-116).
+   *
+   * This used to run the single-lane referee once per lane, so every lane got
+   * its own score from its own call and the scores could not be compared. The
+   * comparative judge sees every completed answer together and returns one
+   * ranking on one scale; each lane then carries that shared verdict.
+   */
   private async applyJudgeToResponses(
-    userId: string,
+    run: CompareJudgeRunInput,
     responses: ParallelModelResponse[],
-    context: AssembledContext,
-    threadSettings: ThreadSettings | undefined,
-    judgeConfig: ParallelJudgeConfig,
-    criticConfig: ParallelCriticConfig,
-    parallelGroupId: string,
-    threadId: string,
   ): Promise<ParallelModelResponse[]> {
-    if (!judgeConfig.enabled) {
+    if (!run.judgeConfig.enabled) {
       return responses.map((response) => ({
         ...response,
         judgeEnabled: false,
@@ -495,187 +504,52 @@ export class ParallelExecutionManager {
       }));
     }
 
-    const judgeThreadSettings = this.buildJudgeThreadSettings(threadSettings, judgeConfig);
-    const judgedResponses = await Promise.all(
-      responses.map(async (response) => {
-        return response.status !== 'completed' ? {
-            ...response,
-            judgeEnabled: true,
-            judgeModel: judgeConfig.model,
-            judgeDisplayName: judgeConfig.model,
-            judgeState: CompareJudgeState.SKIPPED,
-            judgeErrorState: CompareJudgeState.SKIPPED,
-            judgeDialogAvailable: false,
-            judgeReview: null,
-          } : this.judgeSingleResponse(
-          userId,
-          response,
-          context,
-          judgeThreadSettings,
-          parallelGroupId,
-          threadId,
-          judgeConfig,
-          criticConfig,
-        );
-      }),
-    );
+    const verdict = await this.compareJudgeManager.judge({
+      userId: run.userId,
+      threadId: run.threadId,
+      runId: run.parallelGroupId,
+      judgeModel: run.judgeConfig.model,
+      critic: run.criticConfig,
+      ...(run.fileIds === undefined ? {} : { fileIds: run.fileIds }),
+      instructions: run.context.systemPrompt,
+      laneContext: run.context,
+      lanes: responses.flatMap((response, laneIndex) =>
+        response.status === 'completed'
+          ? [
+              {
+                laneIndex,
+                provider: response.provider,
+                model: response.model,
+                content: response.content,
+                ...(response.attachmentDelivery === undefined
+                  ? {}
+                  : { attachmentDelivery: response.attachmentDelivery }),
+              },
+            ]
+          : [],
+      ),
+    });
 
-    return judgedResponses;
-  }
-
-  private async judgeSingleResponse(
-    userId: string,
-    response: ParallelModelResponse,
-    context: AssembledContext,
-    threadSettings: ThreadSettings | undefined,
-    parallelGroupId: string,
-    threadId: string,
-    judgeConfig: ParallelJudgeConfig,
-    criticConfig: ParallelCriticConfig,
-  ): Promise<ParallelModelResponse> {
-    const judgeModel = judgeConfig.model ?? null;
-    // The critic label must name the CRITIC. This passed the generator's own
-    // provider/model, so every compare lane reported the model under review as
-    // its own critic — and did so even with the critic switched off. Null means
-    // no critic ran and the field is omitted from the stream envelope.
-    const criticLabel = criticConfig.enabled ? (criticConfig.model ?? 'AUTO') : null;
-    this.chatStreamService.emitJudgeEvaluating(threadId, criticLabel, judgeModel ?? 'AUTO');
-
-    try {
-      const judgeResult = await this.judgeRefereeManager.evaluate(
-        {
-          content: response.content,
-          provider: response.provider,
-          model: response.model,
-          latencyMs: response.latencyMs,
-          usedFallback: false,
-          inputTokens: response.inputTokens ?? undefined,
-          outputTokens: response.outputTokens ?? undefined,
-        },
-        context,
-        {
-          enabled: true,
-          category: undefined,
-          routingMode: 'MANUAL_MODEL',
-          isLocalOnly: false,
-          criticEnabled: criticConfig.enabled,
-          criticModel: criticConfig.model,
-          // Threaded so JudgeRefereeManager can run the defense-in-depth
-          // assertCanUseCritic gate right before the critic LLM call.
-          userId,
-        },
-        {
-          messageId: parallelGroupId,
-          threadId,
-          selectedProvider: response.provider,
-          selectedModel: response.model,
-          routingMode: 'MANUAL_MODEL',
-          timestamp: new Date().toISOString(),
-          judgeEnabled: true,
-        },
-        threadSettings,
+    return responses.map((response, laneIndex) => {
+      const { judgeState, judgeErrorState } = resolveLaneJudgeState(
+        response.status === 'completed',
+        verdict,
       );
-      return this.buildJudgedResponse(response, judgeResult, judgeConfig);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown judge failure';
       return {
         ...response,
+        compareLaneIndex: laneIndex,
+        compareJudge: verdict,
         judgeEnabled: true,
-        judgeModel,
-        judgeDisplayName: judgeModel,
-        judgeState: CompareJudgeState.FAILED,
-        judgeErrorState: CompareJudgeState.FAILED,
+        judgeModel: run.judgeConfig.model,
+        judgeDisplayName: verdict.judgeModel,
+        judgeState,
+        judgeErrorState,
+        // The per-lane referee dialog belongs to the chat judge. Compare's
+        // explanation is the shared ranking and its rationale.
         judgeDialogAvailable: false,
         judgeReview: null,
-        errorMessage: response.errorMessage ?? message,
       };
-    }
-  }
-
-  private buildJudgedResponse(
-    response: ParallelModelResponse,
-    judgeResult: JudgeRefereeResult,
-    judgeConfig: ParallelJudgeConfig,
-  ): ParallelModelResponse {
-    const judgeReview = this.judgeRefereeManager.buildMetadata(judgeResult).judgeReview;
-    const state = this.resolveJudgeState(judgeResult, judgeReview, response.status);
-    const judgeErrorState = this.resolveJudgeErrorState(judgeResult.judgeVerdict.fallbackState);
-    const finalContent = this.resolveFinalContent(state, judgeResult, response);
-
-    return {
-      ...response,
-      content: finalContent,
-      judgeEnabled: true,
-      judgeModel: judgeConfig.model,
-      judgeDisplayName: judgeConfig.model,
-      judgeState: state,
-      judgeErrorState,
-      judgeDialogAvailable: judgeResult.judgeVerdict.wasFallback !== true,
-      judgeReview,
-      // Feature 1/2 — surface judge/critic token usage for the compare message.
-      judgeInputTokens: judgeResult.tokenUsage?.inputTokens,
-      judgeOutputTokens: judgeResult.tokenUsage?.outputTokens,
-      judgeTokenEstimated: judgeResult.tokenUsage?.estimated,
-      judgeTokenSource: judgeResult.tokenUsage?.source,
-    };
-  }
-
-  private resolveFinalContent(
-    state: CompareJudgeState,
-    judgeResult: JudgeRefereeResult,
-    response: ParallelModelResponse,
-  ): string {
-    if (state === CompareJudgeState.ESCALATED) {
-      return judgeResult.escalatedResponse?.content ?? response.content;
-    }
-    return state === CompareJudgeState.REVISED ? judgeResult.revisedResponse?.content ?? response.content : response.content;
-  }
-
-  private resolveJudgeState(
-    judgeResult: JudgeRefereeResult,
-    judgeReview: JudgeReviewPayload,
-    responseStatus: ParallelModelResponse['status'],
-  ): CompareJudgeState {
-    if (responseStatus !== 'completed') {
-      return CompareJudgeState.SKIPPED;
-    }
-
-    if (judgeResult.judgeVerdict.wasFallback === true) {
-      return judgeResult.judgeVerdict.fallbackState === 'failed'
-        ? CompareJudgeState.FAILED
-        : CompareJudgeState.UNAVAILABLE;
-    }
-
-    switch (judgeReview.judgeDecision) {
-      case 'ACCEPT':
-        return CompareJudgeState.VERIFIED;
-      case 'REVISE':
-        return CompareJudgeState.REVISED;
-      case 'ESCALATE':
-        return CompareJudgeState.ESCALATED;
-      default:
-        return CompareJudgeState.VERIFIED;
-    }
-  }
-
-  private resolveJudgeErrorState(
-    fallbackState: JudgeRefereeResult['judgeVerdict']['fallbackState'],
-  ): CompareJudgeState | null {
-    if (fallbackState === 'failed') {
-      return CompareJudgeState.FAILED;
-    }
-
-    return fallbackState === 'unavailable' ? CompareJudgeState.UNAVAILABLE : null;
-  }
-
-  private buildJudgeThreadSettings(
-    threadSettings: ThreadSettings | undefined,
-    judgeConfig: ParallelJudgeConfig,
-  ): ThreadSettings | undefined {
-    return !judgeConfig.enabled ? threadSettings : {
-      ...threadSettings,
-      judgeModel: judgeConfig.model,
-    };
+    });
   }
 
   private async executeWithTimeout(
@@ -922,6 +796,36 @@ export class ParallelExecutionManager {
       judgeErrorState: response.judgeErrorState ?? null,
       judgeDialogAvailable: response.judgeDialogAvailable === true,
       ...(response.judgeReview ? { judgeReview: response.judgeReview } : {}),
+      ...this.buildCompareJudgeMetaPart(response),
+      ...this.buildJudgeTokenMetaPart(response),
+      ...this.buildResearchTranscriptMetaPart(response),
+      // Slice A — per-lane attachment delivery telemetry. Mirrored to the FE
+      // via ParallelModelResponse.attachmentDelivery so it can render which
+      // files reached which lane, and consumed by the judge prompt builder.
+      ...(response.attachmentDelivery && response.attachmentDelivery.length > 0
+        ? { fileDelivery: response.attachmentDelivery }
+        : {}),
+      routeRoadmap: this.buildParallelRouteRoadmap(response),
+      progressSummary: this.buildParallelProgressSummary(response),
+    };
+  }
+
+  // ADR-116 — the ONE comparative verdict, identical on every lane of the run,
+  // plus this lane's index so a client can find itself in it. Extracted so
+  // buildParallelMessageMetadata stays under the complexity 15 cap.
+  private buildCompareJudgeMetaPart(response: ParallelModelResponse): Record<string, unknown> {
+    return {
+      ...(response.compareLaneIndex === undefined
+        ? {}
+        : { compareLaneIndex: response.compareLaneIndex }),
+      ...(response.compareJudge === undefined ? {} : { compareJudge: response.compareJudge }),
+    };
+  }
+
+  // Feature 1/2 — judge/critic token usage transparency. Extracted so
+  // buildParallelMessageMetadata stays under the complexity 15 cap.
+  private buildJudgeTokenMetaPart(response: ParallelModelResponse): Record<string, unknown> {
+    return {
       ...(response.judgeInputTokens === undefined
         ? {}
         : { judgeInputTokens: response.judgeInputTokens }),
@@ -934,15 +838,6 @@ export class ParallelExecutionManager {
       ...(response.judgeTokenSource === undefined
         ? {}
         : { judgeTokenSource: response.judgeTokenSource }),
-      ...this.buildResearchTranscriptMetaPart(response),
-      // Slice A — per-lane attachment delivery telemetry. Mirrored to the FE
-      // via ParallelModelResponse.attachmentDelivery so it can render which
-      // files reached which lane, and consumed by the judge prompt builder.
-      ...(response.attachmentDelivery && response.attachmentDelivery.length > 0
-        ? { fileDelivery: response.attachmentDelivery }
-        : {}),
-      routeRoadmap: this.buildParallelRouteRoadmap(response),
-      progressSummary: this.buildParallelProgressSummary(response),
     };
   }
 

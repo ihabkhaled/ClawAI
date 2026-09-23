@@ -193,21 +193,26 @@ sentence. Anything unrecognised stays a toast rather than being guessed at.
 - **ChatExecutionManager** -- executes LLM calls with fallback chain, quality checking, and auto re-routing
 - **QualityCheckManager** -- scores response quality (5 signals), recommends re-routing for weak answers
 - **ParallelExecutionManager** -- executes the same prompt against 2-5 models simultaneously via `Promise.allSettled`
-- **JudgeRefereeManager** -- runs the Critic → Judge quality pipeline on top of a generator response (see [Judge + Critic Pipeline](#judge--critic-pipeline) below)
+- **JudgeRefereeManager** -- runs the Critic → Judge quality pipeline on top of a single-answer response (chat, consensus, escalation — see [Judge + Critic Pipeline](#judge--critic-pipeline) below)
+- **CompareJudgeManager** -- Compare's judge: ONE comparative call that ranks every completed lane together (ADR-116 — see [Compare's Comparative Judge](#compares-comparative-judge-adr-114) below)
 
 ---
 
 ## Judge + Critic Pipeline
 
+**This section describes single-answer review (chat, regenerate, consensus,
+escalation) only. Compare does not use this pipeline any more — see
+[Compare's Comparative Judge](#compares-comparative-judge-adr-114) below.**
+
 ### When the pipeline runs
 
-`JudgeRefereeManager.execute()` is invoked from `ChatExecutionManager.execute()`
-(step 8a of the message flow above) and from `ParallelExecutionManager` per
-lane. It activates when **(a)** the lane/thread carries `judgeEnabled=true`,
-or **(b)** the routing decision flagged an auto-trigger category (coding,
-security, medical, legal, finance, data-analysis). On success the manager
-returns a `JudgeRefereeResult` containing the original response, the critic
-evaluation, the judge verdict, and (optionally) a revised or escalated response.
+`JudgeRefereeManager.evaluate()` is invoked from `ChatExecutionManager.execute()`
+(step 8a of the message flow above). It activates when **(a)** the
+thread carries `judgeEnabled=true`, or **(b)** the routing decision flagged an
+auto-trigger category (coding, security, medical, legal, finance,
+data-analysis). On success the manager returns a `JudgeRefereeResult`
+containing the original response, the critic evaluation, the judge verdict,
+and (optionally) a revised or escalated response.
 
 ### Critic target resolution
 
@@ -268,6 +273,66 @@ checks into a single `requireFeature: PlanFeature[]` call:
 `allowCriticReview` when `criticEnabled`, plus `allowResearchMode` when the
 research enricher is requested. A locked plan flag returns `403
 MODEL_NOT_ALLOWED_FOR_PLAN` before any LLM tokens are spent.
+
+## Compare's Comparative Judge (ADR-116)
+
+Compare's judge is a **separate manager, `CompareJudgeManager`**, not the
+`JudgeRefereeManager.evaluate()` pipeline above. It replaced a design that
+called `evaluate()` once per lane — every lane's score came from its own
+call, so scores were never on the same scale and the "best" badge was
+whichever per-lane call happened to be more generous.
+
+### One call, every lane, one scale
+
+`ParallelExecutionManager.applyJudgeToResponses()` waits for **every** lane in
+the run to settle, then calls `CompareJudgeManager.judge()` exactly once:
+
+1. Completed lanes only (`status === 'completed'`) are sent. Fewer than two →
+   `CompareJudgeVerdictStatus.SKIPPED`, `CompareJudgeFailureReason.NOT_ENOUGH_ANSWERS`,
+   no provider call.
+2. `buildLaneShuffle(runId, laneIndices)` — a SHA-256-seeded Fisher-Yates
+   shuffle, deterministic per run — assigns each lane a label (A, B, C…) in a
+   shuffled presentation order. The mapping is recorded on the verdict
+   (`CompareJudgeShuffle`) so `laneIndexForLabel` can always unshuffle a label
+   back to its lane.
+3. If the critic is on, `JudgeRefereeManager.critiqueLane()` (a thin new entry
+   point reusing `resolveCriticTarget` + `callCriticWithModel`) still runs
+   once per lane. Its **notes** are folded into the comparative prompt as
+   `Critic notes on candidate X: …`; its **score is dropped** — a per-lane
+   score is exactly the uncalibrated signal this ADR removes.
+4. Each answer is fitted to the judge model's own context window via
+   `fitAnswersFairly` (max-min "water-filling" — every shortened answer cut to
+   the SAME length, never a flat percentage), budgeted by
+   `computeAnswerBudgetChars` against `ChatContextGatewayManager`'s
+   `ChatSurface.JUDGE`-sized bundle. The prompt names which candidates were
+   shortened and to what length.
+5. The one call goes through `ModeExecutionGatewayManager.run()` →
+   `ChatExecutionManager.callProvider` — the same billing chokepoint every
+   mode uses — as `TokenLedgerContext.JUDGE` /
+   `PaygSurface.JUDGE` / `PAYG_WORKFLOW_COMPARE_JUDGE = 'compare-judge'`, with
+   `requestId = ${runId}:compare-judge`. **Exactly one reservation per Compare
+   run.**
+6. The reply is parsed by `parseCompareJudgeOutput` against a strict Zod
+   schema PLUS cross-field invariants: every shown label appears exactly once
+   in `ranking` AND `scores`, and walking `ranking` best-first never meets a
+   score higher than the one before it. Any violation — or a non-JSON reply —
+   returns `null`.
+
+### Verdict shape — failure is never a fake winner
+
+`CompareJudgeVerdict.status` is `RANKED | UNAVAILABLE | SKIPPED`. Only
+`RANKED` carries `lanes` and a `winnerLaneIndex`; the other two carry an empty
+`lanes` array, `winnerLaneIndex: null`, and a `CompareJudgeFailureReason`
+(`CALL_FAILED` / `PARSE_FAILED` / `NOT_ENOUGH_ANSWERS`). Ranks are competition
+ranks (`1, 1, 3` on a tie) — a tie for first place leaves `winnerLaneIndex:
+null` and lists the tied lanes in `tiedLaneIndices`; there is no
+first-one-wins tiebreak.
+
+The same verdict object is stamped on **every** `ParallelModelResponse` of the
+run (`compareJudge`), alongside that lane's own `compareLaneIndex`. A lane
+that did not complete is always `judgeState: CompareJudgeState.SKIPPED`
+regardless of the run's overall verdict. `CompareJudgeState.RANKED` is the new
+badge state the frontend renders for a ranked lane.
 
 ### Research workflow selection: mapping vs. classifying
 

@@ -7,6 +7,7 @@ import { ParallelExecutionManager } from '../managers/parallel-execution.manager
 import type { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import type { GeminiFilesApiManager } from '../managers/gemini-files-api.manager';
 import type { JudgeRefereeManager } from '../managers/judge-referee.manager';
+import type { CompareJudgeManager } from '../managers/compare-judge.manager';
 import type { QualityCheckManager } from '../managers/quality-check.manager';
 import type { ResearchEnricherManager } from '../managers/research-enricher.manager';
 import type { SearchFirstManager } from '../managers/search-first.manager';
@@ -232,7 +233,8 @@ describe('PAYG credit — compare is all-or-nothing (E2)', () => {
           latestUserMetadata: null,
         }),
       } as unknown as ChatContextGatewayManager,
-      { shouldActivate: vi.fn().mockReturnValue(false) } as unknown as JudgeRefereeManager,
+      // These runs have the judge off, so the comparative judge is never asked.
+      { judge: vi.fn() } as unknown as CompareJudgeManager,
       {
         create: vi.fn().mockResolvedValue({ id: 'msg-1', threadId: 'thread-1' }),
         findRecentByThreadId: vi.fn().mockResolvedValue([]),

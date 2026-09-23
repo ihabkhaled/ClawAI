@@ -777,3 +777,50 @@ Two rules carry the weight:
   conservative window and throws away history a large model had room for.
 
 Runbook: [`skills/give-a-surface-the-same-context-as-chat.md`](../../skills/give-a-surface-the-same-context-as-chat.md).
+
+## Compare's judge is ONE comparative call, not one per lane (ADR-116, 2026-09-23)
+
+`ParallelExecutionManager` no longer calls `JudgeRefereeManager.evaluate` once
+per lane. That referee is designed for single-answer review and reusing it per
+lane meant every score was calibrated against nothing but the answer in front
+of it — two lanes' numbers were never comparable, and the "best" badge was
+whichever per-lane call happened to be more generous.
+
+`CompareJudgeManager.judge()` now makes **exactly one** judge call per Compare
+run, ranking every completed lane together:
+
+- Lanes are anonymised A, B, C… in a **seeded shuffle**
+  (`buildLaneShuffle(runId, laneIndices)` — SHA-256-driven Fisher-Yates, not
+  `Math.random()`), recorded on the verdict so a label unshuffles back to its
+  lane. This defends against a judge's documented preference for
+  early-presented candidates.
+- The judge returns one JSON object — `{ ranking, scores, rationale }` on a
+  shared 0-10 scale — parsed by `parseCompareJudgeOutput` against a strict
+  schema **and** cross-field invariants (every label exactly once, ranking
+  never contradicts scores). A parse failure, a call failure, or fewer than
+  two completed lanes all produce `CompareJudgeVerdictStatus.UNAVAILABLE` /
+  `SKIPPED` with `winnerLaneIndex: null` — **never** a fake winner.
+- A tie for first place leaves `winnerLaneIndex: null` and lists every tied
+  lane in `tiedLaneIndices`, with a shared competition rank (`1, 1, 3`).
+- Answers are shortened fairly (`fitAnswersFairly` — max-min water-filling, not
+  a flat percentage cut) to fit the judge's own context window
+  (`computeAnswerBudgetChars`), and the prompt tells the judge exactly which
+  candidates were shortened.
+- The call goes through `ModeExecutionGatewayManager.run` →
+  `ChatExecutionManager.callProvider` — the same chokepoint every mode uses —
+  as `TokenLedgerContext.JUDGE` / `PAYG_WORKFLOW_COMPARE_JUDGE`, with
+  `requestId = ${runId}:compare-judge`: **one hold per Compare run**, never one
+  per lane.
+- The single-lane critic still runs once per lane when the user enables it
+  (`JudgeRefereeManager.critiqueLane`), and its notes feed the one judge call —
+  but its **score is dropped** before reaching the judge, since a per-lane
+  score is exactly the uncalibrated number this exists to stop comparing.
+
+The verdict (`CompareJudgeVerdict`) is stamped identically on every
+`ParallelModelResponse` of the run, plus that lane's own `compareLaneIndex`.
+`CompareJudgeState.RANKED` is the new badge state on the frontend; a lane that
+did not complete is always `SKIPPED` regardless of the verdict.
+
+`JudgeRefereeManager.evaluate` is unchanged and keeps serving every other mode
+(chat, consensus, escalation). See
+[ADR-116](../../docs/13-adr/adr-114-comparative-judge-for-compare.md).

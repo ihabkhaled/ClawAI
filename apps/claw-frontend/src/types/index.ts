@@ -667,6 +667,14 @@ export type {
 } from './file-delivery.types';
 export type { CompareResultMarkdownInput, UseCompareResultCardReturn } from './compare.types';
 export type {
+  CompareBestResponse,
+  CompareJudgeLaneResult,
+  CompareJudgeRankingProps,
+  CompareJudgeVerdict,
+  CompareRankingRow,
+  UseCompareJudgeRankingReturn,
+} from './compare-judge.types';
+export type {
   ConsensusModelBreakdown,
   ConsensusAnalysis,
   ConsensusMetadata,

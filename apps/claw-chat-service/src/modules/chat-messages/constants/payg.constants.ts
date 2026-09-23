@@ -108,6 +108,8 @@ export const PAYG_COMPARE_ALL_OR_NOTHING_CODE = 'PAYG_COMPARE_CREDIT_INSUFFICIEN
 export const PAYG_WORKFLOW_CRITIC = 'critic';
 export const PAYG_WORKFLOW_JUDGE = 'judge';
 export const PAYG_WORKFLOW_JUDGE_REVISION = 'judge-revision';
+/** The ONE judge call a Compare run makes, ranking every lane side by side (ADR-116). */
+export const PAYG_WORKFLOW_COMPARE_JUDGE = 'compare-judge';
 export const PAYG_WORKFLOW_CONSENSUS = 'consensus';
 export const PAYG_WORKFLOW_ESCALATION_CHAIN = 'escalation-chain';
 export const PAYG_WORKFLOW_BEST_OF_N = 'best-of-n';

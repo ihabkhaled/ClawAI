@@ -11,6 +11,7 @@ import {
 import { CompareJudgeState, ParallelModelStatus } from '@/enums';
 import type { ChatMessage, JudgeReview, MessageRenderItem, ParallelModelResponse } from '@/types';
 
+import { readCompareJudgeVerdict, readCompareLaneIndex } from './compare-judge.utility';
 import { readFileDeliveryFromMetadata } from './file-delivery.utility';
 import { getJudgeReviewFromMessage } from './judge-review.utility';
 
@@ -94,6 +95,9 @@ export function messageToParallelResponse(msg: ChatMessage): ParallelModelRespon
   // `metadata.fileDelivery`. Pass them through here so the FE chip can
   // render which files reached this lane and which were skipped/truncated.
   const attachmentDelivery = readFileDeliveryFromMetadata(meta);
+  // ADR-116 — the run's one comparative verdict, and this lane's place in it.
+  const compareJudge = readCompareJudgeVerdict(meta);
+  const compareLaneIndex = readCompareLaneIndex(meta);
 
   return {
     provider: msg.provider ?? '',
@@ -111,6 +115,8 @@ export function messageToParallelResponse(msg: ChatMessage): ParallelModelRespon
     judgeErrorState: getJudgeErrorState(meta, judgeReview, judgeState),
     judgeDialogAvailable: judgeReview?.judgeDialogAvailable === true,
     judgeReview,
+    compareJudge,
+    compareLaneIndex,
     message: msg,
     ...(attachmentDelivery !== undefined ? { attachmentDelivery } : {}),
   };
@@ -134,7 +140,8 @@ function getParallelJudgeState(
     rawState === CompareJudgeState.ESCALATED ||
     rawState === CompareJudgeState.FAILED ||
     rawState === CompareJudgeState.UNAVAILABLE ||
-    rawState === CompareJudgeState.SKIPPED
+    rawState === CompareJudgeState.SKIPPED ||
+    rawState === CompareJudgeState.RANKED
   ) {
     return rawState;
   }

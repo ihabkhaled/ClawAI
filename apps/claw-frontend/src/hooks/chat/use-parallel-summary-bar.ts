@@ -2,7 +2,12 @@ import { useMemo } from 'react';
 
 import { ParallelModelStatus } from '@/enums';
 import type { ChatMessage } from '@/types';
-import { getBestResponse, getFastestModel, messagesToParallelResponses } from '@/utilities';
+import {
+  getBestResponse,
+  getFastestModel,
+  messagesToParallelResponses,
+  resolveBestResponse,
+} from '@/utilities';
 
 export function useParallelSummaryBar(messages: ChatMessage[]): {
   completedCount: number;
@@ -10,11 +15,13 @@ export function useParallelSummaryBar(messages: ChatMessage[]): {
   timeoutCount: number;
   fastestModel: string | null;
   bestModel: string | null;
+  bestIsJudged: boolean;
   avgLatencyMs: number;
   totalTokens: number;
 } {
   return useMemo(() => {
     const responses = messagesToParallelResponses(messages);
+    const best = resolveBestResponse(responses, getBestResponse(responses));
 
     const completed = responses.filter((r) => r.status === ParallelModelStatus.COMPLETED);
     const failed = responses.filter((r) => r.status === ParallelModelStatus.FAILED);
@@ -35,7 +42,9 @@ export function useParallelSummaryBar(messages: ChatMessage[]): {
       failedCount: failed.length,
       timeoutCount: timedOut.length,
       fastestModel: getFastestModel(responses),
-      bestModel: getBestResponse(responses),
+      // With the judge on, only its winner is "best" — never the heuristic.
+      bestModel: best.model,
+      bestIsJudged: best.judged,
       avgLatencyMs,
       totalTokens,
     };

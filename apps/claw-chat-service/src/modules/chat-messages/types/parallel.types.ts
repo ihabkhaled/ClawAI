@@ -1,5 +1,7 @@
 import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { CompareJudgeState, ResearchMode } from '../../../common/enums';
+import type { AssembledContext } from './context.types';
+import type { CompareJudgeVerdict } from './compare-judge.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { JudgeReviewPayload } from './judge-referee.types';
 import type { ResearchTranscript } from './research-transcript.types';
@@ -29,6 +31,10 @@ export type ParallelModelResponse = {
   judgeErrorState?: CompareJudgeState | null;
   judgeDialogAvailable?: boolean;
   judgeReview?: JudgeReviewPayload | null;
+  /** Position of this lane in the run — the key the comparative verdict unshuffles to. */
+  compareLaneIndex?: number;
+  /** ADR-116 — the one comparative judge verdict for the whole run. Same object on every lane. */
+  compareJudge?: CompareJudgeVerdict;
   // Feature 1/2 — judge/critic combined token usage for this compare response.
   judgeInputTokens?: number;
   judgeOutputTokens?: number;
@@ -59,6 +65,18 @@ export type ParallelJudgeConfig = {
 export type ParallelCriticConfig = {
   enabled: boolean;
   model: string | null;
+};
+
+/** What the comparative judge step needs from a compare run. */
+export type CompareJudgeRunInput = {
+  userId: string;
+  threadId: string;
+  parallelGroupId: string;
+  /** The lanes' context, research evidence included. */
+  context: AssembledContext;
+  judgeConfig: ParallelJudgeConfig;
+  criticConfig: ParallelCriticConfig;
+  fileIds?: string[];
 };
 
 export type ParallelResponse = {

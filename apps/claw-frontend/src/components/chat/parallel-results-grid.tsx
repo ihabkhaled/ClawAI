@@ -2,6 +2,7 @@
 
 import { Download } from 'lucide-react';
 
+import { CompareJudgeRanking } from '@/components/chat/compare-judge-ranking';
 import { CompareResultCard } from '@/components/chat/compare-result-card';
 import { Button } from '@/components/ui/button';
 import { ParallelModelStatus } from '@/enums';
@@ -14,7 +15,8 @@ export function ParallelResultsGrid({
   prompt = '',
   t,
 }: ParallelResultsGridProps): React.ReactElement {
-  const { responses, fastestModel, bestModel, exportAll } = useParallelResultsGrid(messages, prompt);
+  const { responses, fastestModel, bestModel, bestIsJudged, judgeVerdict, exportAll } =
+    useParallelResultsGrid(messages, prompt);
 
   if (messages.length === 0) {
     return (
@@ -36,6 +38,8 @@ export function ParallelResultsGrid({
         </div>
       ) : null}
 
+      {judgeVerdict === null ? null : <CompareJudgeRanking verdict={judgeVerdict} t={t} />}
+
       <div className={`grid gap-4 ${colClass}`}>
         {responses.map((r) => (
           <CompareResultCard
@@ -45,7 +49,7 @@ export function ParallelResultsGrid({
             isBest={
               r.status === ParallelModelStatus.COMPLETED &&
               r.model === bestModel &&
-              bestModel !== fastestModel
+              (bestIsJudged || bestModel !== fastestModel)
             }
             t={t}
           />

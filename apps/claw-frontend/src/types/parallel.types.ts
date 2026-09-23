@@ -1,6 +1,7 @@
 import type { CompareJudgeState, ParallelModelStatus, PlanFeature, ResearchMode } from '@/enums';
 
 import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
+import type { CompareJudgeVerdict } from './compare-judge.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
 
@@ -20,6 +21,10 @@ export type ParallelModelResponse = {
   judgeErrorState?: CompareJudgeState | null;
   judgeDialogAvailable?: boolean;
   judgeReview?: JudgeReview | null;
+  /** Position of this lane in its run — the key the comparative verdict refers to. */
+  compareLaneIndex?: number | null;
+  /** ADR-116 — the run's one comparative judge verdict; identical on every lane. */
+  compareJudge?: CompareJudgeVerdict | null;
   message?: ChatMessage;
   // Per-file delivery record for THIS lane. Populated by chat-service from
   // ASSISTANT message `metadata.fileDelivery`. Lane 5 renders delivery

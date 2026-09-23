@@ -245,6 +245,23 @@ export class JudgeRefereeManager {
     };
   }
 
+  /**
+   * The single-lane critic on its own, for Compare.
+   *
+   * Compare no longer runs `evaluate` per lane — its judge is one comparative
+   * call (ADR-116) — but a user who switched the critic on still gets a critic
+   * pass per answer, whose notes the comparative judge reads. Same target
+   * resolution, same plan gate, same parse-failure marker as `evaluate`.
+   */
+  async critiqueLane(
+    response: LlmResponse,
+    context: AssembledContext,
+    config: JudgeRefereeConfig,
+  ): Promise<CriticEvaluation> {
+    const target = await this.resolveCriticTarget(response.provider, config);
+    return this.callCriticWithModel(response, context, config, target);
+  }
+
   private async callCriticWithModel(
     response: LlmResponse,
     context: AssembledContext,
@@ -754,7 +771,9 @@ export class JudgeRefereeManager {
   // provider routes through that provider (so tokens are captured + recorded);
   // a plain model name keeps the local-first Ollama behavior. AUTO / empty
   // falls back to the resolved local default model.
-  private async resolveJudgeTarget(rawModel: string): Promise<{ provider: string; model: string }> {
+  // Public because Compare's comparative judge (CompareJudgeManager) resolves
+  // the same user selection the same way; two resolvers would drift.
+  async resolveJudgeTarget(rawModel: string): Promise<{ provider: string; model: string }> {
     const parsed: ParsedJudgeModel = parseJudgeModel(rawModel);
     if (parsed.provider !== null) {
       const isOllamaLocal = parsed.provider === OLLAMA_PROVIDER;

@@ -8004,7 +8004,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5318
+        "value": 5335
       },
       "localeCount": 13,
       "locales": [
@@ -9972,7 +9972,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 165
+        "testFiles": 168
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -9992,7 +9992,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 529
+        "testFiles": 531
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10770,7 +10770,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1434,
+    "totalTestFiles": 1439,
     "workspaceCount": 25
   }
 }

@@ -8,6 +8,8 @@ export { AiReasoningVisibility } from './ai-reasoning-visibility.enum';
 export { AiStreamProtocol } from './ai-stream-protocol.enum';
 export { JudgeDecision } from './judge-decision.enum';
 export { CompareJudgeState } from './compare-judge-state.enum';
+export { CompareJudgeVerdictStatus } from './compare-judge-verdict-status.enum';
+export { CompareJudgeFailureReason } from './compare-judge-failure-reason.enum';
 export { ConsensusConfidenceLevel } from './consensus-confidence.enum';
 export { EscalationChainStatus } from './escalation-chain-status.enum';
 export { RepairType } from './repair-type.enum';

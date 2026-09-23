@@ -15,6 +15,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
     timeoutCount,
     fastestModel,
     bestModel,
+    bestIsJudged,
     avgLatencyMs,
     totalTokens,
   } = useParallelSummaryBar(messages);
@@ -60,10 +61,12 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
           </div>
         ) : null}
 
-        {bestModel && bestModel !== fastestModel ? (
+        {bestModel && (bestIsJudged || bestModel !== fastestModel) ? (
           <div className="flex items-center gap-1 text-sm">
             <Trophy className="h-3.5 w-3.5 text-warning" />
-            <span className="text-muted-foreground">{t('compare.bestResponse')}:</span>
+            <span className="text-muted-foreground">
+              {t(bestIsJudged ? 'compare.ranking.winner' : 'compare.bestResponse')}:
+            </span>
             <span className="font-medium">{bestModel}</span>
           </div>
         ) : null}
