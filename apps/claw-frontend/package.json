@@ -1,6 +1,6 @@
 {
   "name": "claw-frontend",
-  "version": "1.122.2",
+  "version": "1.123.0",
   "private": true,
   "scripts": {
     "clear-cache": "node -e \"require('node:fs').rmSync('.next', { recursive: true, force: true })\"",
