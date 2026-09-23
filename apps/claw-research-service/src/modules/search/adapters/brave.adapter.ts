@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   BRAVE_SEARCH_API_DEFAULT_BASE,
@@ -32,6 +33,7 @@ export class BraveAdapter implements SearchAdapter {
       const response = await fetch(this.buildUrl(context.baseUrl, 'ping', 1), {
         headers: this.buildHeaders(context),
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
       });
       const latencyMs = Date.now() - start;
       return response.ok
@@ -56,6 +58,7 @@ export class BraveAdapter implements SearchAdapter {
       {
         headers: this.buildHeaders(context),
         signal: AbortSignal.timeout(context.timeoutMs),
+        redirect: 'error',
       },
     );
     if (!response.ok) {
@@ -78,7 +81,7 @@ export class BraveAdapter implements SearchAdapter {
     return { results, latencyMs: Date.now() - start };
   }
 
-  private buildUrl(baseUrl: string, query: string, count: number): string {
+  private buildUrl(baseUrl: string, query: string, count: number): URL {
     const root = baseUrl.length > 0 ? baseUrl.replace(/\/+$/, '') : BRAVE_SEARCH_API_DEFAULT_BASE;
     const params = new URLSearchParams({
       q: query,
@@ -86,7 +89,13 @@ export class BraveAdapter implements SearchAdapter {
       search_lang: 'en',
       country: 'us',
     });
-    return `${root}${BRAVE_SEARCH_PATH}?${params.toString()}`;
+    // `root` is the operator-configured base URL or this adapter's own default
+    // literal — the BASE, never the request being built — so declaring its host
+    // is the connector pattern, not a URL authorising itself (TD-040).
+    return assertSafeRequestUrl(
+      `${root}${BRAVE_SEARCH_PATH}?${params.toString()}`,
+      declaredHost(root),
+    );
   }
 
   private buildHeaders(context: SearchAdapterContext): Record<string, string> {

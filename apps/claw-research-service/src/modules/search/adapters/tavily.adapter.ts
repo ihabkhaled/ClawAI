@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -39,12 +40,10 @@ export class TavilyAdapter implements SearchAdapter {
         headers: { 'Content-Type': 'application/json' },
         body,
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
       });
       const latencyMs = Date.now() - start;
-      if (response.ok) {
-        return { healthy: true, latencyMs };
-      }
-      return {
+      return response.ok ? { healthy: true, latencyMs } : {
         healthy: false,
         latencyMs,
         errorMessage: `HTTP ${response.status}`,
@@ -76,6 +75,7 @@ export class TavilyAdapter implements SearchAdapter {
       headers: { 'Content-Type': 'application/json' },
       body,
       signal: AbortSignal.timeout(context.timeoutMs),
+      redirect: 'error',
     });
     if (!response.ok) {
       throw new Error(`Tavily search failed: HTTP ${response.status}`);
@@ -95,8 +95,11 @@ export class TavilyAdapter implements SearchAdapter {
     return { results, latencyMs: Date.now() - start };
   }
 
-  private buildUrl(baseUrl: string): string {
+  private buildUrl(baseUrl: string): URL {
     const root = baseUrl.length > 0 ? baseUrl.replace(/\/+$/, '') : TAVILY_API_DEFAULT_BASE;
-    return `${root}${TAVILY_SEARCH_PATH}`;
+    // `root` is the operator-configured base URL or this adapter's own default
+    // literal — the BASE, never the request being built — so declaring its host
+    // is the connector pattern, not a URL authorising itself (TD-040).
+    return assertSafeRequestUrl(`${root}${TAVILY_SEARCH_PATH}`, declaredHost(root));
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -31,6 +32,7 @@ export class SerpApiAdapter implements SearchAdapter {
     try {
       const response = await fetch(this.buildUrl(context.baseUrl, 'ping', 1, context), {
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
       });
       const latencyMs = Date.now() - start;
       return response.ok
@@ -54,6 +56,7 @@ export class SerpApiAdapter implements SearchAdapter {
       this.buildUrl(context.baseUrl, request.query, request.maxResults, context),
       {
         signal: AbortSignal.timeout(context.timeoutMs),
+        redirect: 'error',
       },
     );
     if (!response.ok) {
@@ -84,7 +87,7 @@ export class SerpApiAdapter implements SearchAdapter {
     query: string,
     num: number,
     context: SearchAdapterContext,
-  ): string {
+  ): URL {
     const root = baseUrl.length > 0 ? baseUrl.replace(/\/+$/, '') : SERPAPI_DEFAULT_BASE;
     const params = new URLSearchParams({
       engine: 'google',
@@ -92,6 +95,12 @@ export class SerpApiAdapter implements SearchAdapter {
       num: String(num),
       api_key: context.credentials.apiKey ?? '',
     });
-    return `${root}${SERPAPI_SEARCH_PATH}?${params.toString()}`;
+    // `root` is the operator-configured base URL or this adapter's own default
+    // literal — the BASE, never the request being built — so declaring its host
+    // is the connector pattern, not a URL authorising itself (TD-040).
+    return assertSafeRequestUrl(
+      `${root}${SERPAPI_SEARCH_PATH}?${params.toString()}`,
+      declaredHost(root),
+    );
   }
 }

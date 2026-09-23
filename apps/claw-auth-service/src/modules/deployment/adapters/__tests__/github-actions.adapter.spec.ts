@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { DeploymentCredentialSource } from '@claw/shared-types';
+import { resetInternalHostAllowlist } from '@claw/shared-utilities';
 
 import { AppConfig, type AppConfigType } from '../../../../app/config/app.config';
 import { encrypt } from '../../../../common/utilities';
@@ -7,6 +8,22 @@ import { type DeploymentCredentialRepository } from '../../repositories/deployme
 import { GithubActionsAdapter } from '../github-actions.adapter';
 
 const KEY = 'a'.repeat(64);
+
+const GITHUB_API = 'https://api.github.com';
+
+// The real value is a literal; the URL-guard tests swap it for a hostile one to
+// prove the guard, not the literal, is what keeps the token on api.github.com.
+const githubBase = vi.hoisted(() => ({ url: 'https://api.github.com' }));
+
+vi.mock('../../constants/deployment-trigger.constants', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    get GITHUB_API_BASE_URL(): string {
+      return githubBase.url;
+    },
+  };
+});
 
 const BASE_CONFIG = {
   ENCRYPTION_KEY: KEY,
@@ -113,11 +130,11 @@ describe('GithubActionsAdapter', () => {
 
     await adapter().dispatch({ ref: 'main', targetSha: 'a'.repeat(40) });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    const [target, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(String(target)).toBe(
       'https://api.github.com/repos/ihabkhaled/ClawAI/actions/workflows/deploy-production.yml/dispatches',
-      expect.objectContaining({ method: 'POST' }),
     );
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({
       ref: 'main',
       inputs: { target_sha: 'a'.repeat(40), trigger_source: 'manual' },
@@ -294,6 +311,77 @@ describe('GithubActionsAdapter', () => {
   it('reads no run at all while unconfigured', async () => {
     mockConfig({ GITHUB_DEPLOY_TOKEN: undefined });
 
+    await expect(adapter().latestRun()).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+// TD-040. Every GitHub call carries the deploy token, so its URL is checked
+// before it is sent. The first two tests run with a CI-shaped environment — a
+// GitHub runner defines `*_ENDPOINT` variables, which makes the host check
+// ENFORCE rather than stand down — so they prove api.github.com is still
+// reachable, not merely that the check was skipped.
+describe('GithubActionsAdapter outbound URL guard', () => {
+  const fetchMock = vi.fn();
+  const repository = {
+    find: vi.fn().mockResolvedValue(null),
+  } as unknown as DeploymentCredentialRepository;
+  const adapter = (): GithubActionsAdapter => new GithubActionsAdapter(repository);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    fetchMock.mockResolvedValue({ ok: true, status: 204 });
+    mockConfig();
+  });
+
+  afterEach(() => {
+    githubBase.url = GITHUB_API;
+    vi.unstubAllEnvs();
+    resetInternalHostAllowlist();
+    vi.restoreAllMocks();
+  });
+
+  function enforceLikeCi(): void {
+    vi.stubEnv('ACTIONS_RESULTS_ENDPOINT', 'https://x.example');
+    resetInternalHostAllowlist();
+  }
+
+  it('dispatches to api.github.com with enforcement on, and never follows a redirect', async () => {
+    enforceLikeCi();
+
+    await adapter().dispatch({ ref: 'main', targetSha: null });
+
+    const [target, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(new URL(String(target)).host).toBe('api.github.com');
+    expect(init.redirect).toBe('error');
+  });
+
+  it('reads run progress from api.github.com with enforcement on, and never follows a redirect', async () => {
+    enforceLikeCi();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ workflow_runs: [] }),
+    });
+
+    await expect(adapter().latestRun()).resolves.toBeNull();
+
+    const [target, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(new URL(String(target)).host).toBe('api.github.com');
+    expect(init.redirect).toBe('error');
+  });
+
+  it.each([
+    ['a file: URL', 'file:///etc'],
+    ['embedded credentials', 'https://user:pass@api.github.com'],
+    ['the cloud metadata address', 'http://169.254.169.254'],
+  ])('refuses %s before the token is sent', async (_label, hostile) => {
+    githubBase.url = hostile;
+
+    await expect(adapter().dispatch({ ref: 'main', targetSha: null })).rejects.toMatchObject({
+      code: 'DEPLOYMENT_TRIGGER_UNREACHABLE',
+    });
     await expect(adapter().latestRun()).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });

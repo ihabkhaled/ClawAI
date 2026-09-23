@@ -284,9 +284,12 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-09-22 · **Severity**: Low · Full entry: [`technical-debt.md`](technical-debt.md) TD-039.
 
-### TD-040: The rest of the platform's direct `fetch` calls are still unguarded
+### TD-040 (PARTIALLY FIXED 2026-09-23): The rest of the platform's direct `fetch` calls are still unguarded
 
 - **Added**: 2026-09-22 · **Severity**: Medium · Full entry: [`technical-debt.md`](technical-debt.md) TD-040.
+- **Remaining**: the 27 workspace-service files in `KNOWN_UNGUARDED` (9 internal
+  callers + 18 OAuth adapters, helpers and the app probe). audit, auth, payment and the 7 research
+  search adapters were closed 2026-09-23; no research file was newly exempted.
 
 ### TD-038 (FIXED 2026-09-22): Eight services carry an unguarded copy of the HTTP client
 

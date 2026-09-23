@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BillingErrorCode } from '@claw/shared-types';
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
@@ -34,10 +35,7 @@ export class PaypalTokenManager {
   }
 
   async getAccessToken(nowMs: number = Date.now()): Promise<string> {
-    if (this.cachedToken !== null && nowMs < this.expiresAtMs) {
-      return this.cachedToken;
-    }
-    return this.fetchToken(nowMs);
+    return this.cachedToken !== null && nowMs < this.expiresAtMs ? this.cachedToken : this.fetchToken(nowMs);
   }
 
   // Forces the next call to re-authenticate. Used when PayPal rejects a token
@@ -53,19 +51,26 @@ export class PaypalTokenManager {
     const paypal = await this.runtimeConfig.getPaypalOperations();
     const credential = Buffer.from(`${paypal.clientId}:${paypal.clientSecret}`).toString('base64');
 
-    const response = await fetch(
+    // The request carries the client secret, so where it goes is checked
+    // first (TD-040). Both PayPal hosts are code constants and are already in
+    // the shared EXTERNAL_ENDPOINT_HOSTS — gateway-hosts-allowlisted.spec pins
+    // the two copies together — so nothing is declared here. Redirects are
+    // refused: PayPal's token endpoint never issues one, and following it would
+    // hand the Basic credential to a host nothing checked.
+    const tokenUrl = assertSafeRequestUrl(
       `${PaypalTokenManager.baseUrl(paypal.mode)}${PAYPAL_PATHS.OAUTH_TOKEN}`,
-      {
-        method: 'POST',
-        headers: {
-          // The token endpoint is form-encoded, not JSON.
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${credential}`,
-        },
-        body: 'grant_type=client_credentials',
-        signal: AbortSignal.timeout(config.PAYMENT_GATEWAY_TIMEOUT_MS),
-      },
     );
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        // The token endpoint is form-encoded, not JSON.
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${credential}`,
+      },
+      body: 'grant_type=client_credentials',
+      signal: AbortSignal.timeout(config.PAYMENT_GATEWAY_TIMEOUT_MS),
+      redirect: 'error',
+    });
 
     if (!response.ok) {
       // Status only — the body may echo credentials back.

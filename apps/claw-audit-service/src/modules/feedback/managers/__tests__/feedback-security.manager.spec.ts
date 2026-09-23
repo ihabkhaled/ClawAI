@@ -1,17 +1,23 @@
 import { type Mock, vi } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
+import { resetInternalHostAllowlist } from '@claw/shared-utilities';
 
 import { FeedbackManager } from '../feedback.manager';
 
 import type { FeedbackRepository } from '../../repositories/feedback.repository';
 
+const FILE_SERVICE_URL = 'https://file-service:4006';
+
+// Mutable so the URL-guard tests can point FILE_SERVICE_URL somewhere hostile.
+const mockConfig = vi.hoisted(() => ({
+  FILE_SERVICE_URL: 'https://file-service:4006',
+  INTER_SERVICE_AUTH_TOKEN: 'test-token',
+}));
+
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: () => ({
-      FILE_SERVICE_URL: 'https://file-service:4006',
-      INTER_SERVICE_AUTH_TOKEN: 'test-token',
-    }),
+    get: () => mockConfig,
   },
 }));
 
@@ -382,5 +388,90 @@ describe('feedback content is sanitised before it is stored', () => {
     expect(stored.contentMarkdown).not.toContain('<');
     expect(stored.contentMarkdown.toLowerCase()).not.toContain('javascript:');
     expect(stored.searchText).not.toContain('<');
+  });
+});
+
+// TD-040. Both file-service calls carry the inter-service token, so the URL is
+// checked before the token leaves the process. The first test runs with a
+// CI-shaped environment — a GitHub runner defines `*_ENDPOINT` variables, which
+// makes the host check ENFORCE rather than stand down — so it proves the real
+// destination is still allowed, not merely that the check was skipped.
+describe('feedback file-service calls go through the outbound URL guard', () => {
+  const attachment = {
+    fileId: 'file-1',
+    filename: 'shot.png',
+    mimeType: 'image/png',
+    sizeBytes: 1_024,
+    isScreenshot: true,
+  };
+  const dto = {
+    type: FeedbackType.BUG_REPORT,
+    title: 'Title',
+    contentMarkdown: 'body',
+    attachments: [attachment],
+  } as never;
+
+  let fetchMock: Mock;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          id: 'file-1',
+          userId: 'user-a',
+          filename: 'shot.png',
+          mimeType: 'image/png',
+          sizeBytes: 1_024,
+        }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    mockConfig.FILE_SERVICE_URL = FILE_SERVICE_URL;
+    vi.unstubAllEnvs();
+    resetInternalHostAllowlist();
+    vi.restoreAllMocks();
+  });
+
+  it('reaches the configured file-service with enforcement on, and never follows a redirect', async () => {
+    vi.stubEnv('ACTIONS_RESULTS_ENDPOINT', 'https://x.example');
+    resetInternalHostAllowlist();
+    const manager = new FeedbackManager(repositoryMock() as unknown as FeedbackRepository);
+
+    await manager.createTicket('user-a', 'a@test', dto);
+
+    const [target, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(String(target)).toBe(
+      `${FILE_SERVICE_URL}/api/v1/internal/files/metadata-internal/file-1`,
+    );
+    expect(init.redirect).toBe('error');
+  });
+
+  it.each([
+    ['a file: URL', 'file:///etc'],
+    ['embedded credentials', 'https://user:pass@file-service:4006'],
+    ['the cloud metadata address', 'http://169.254.169.254'],
+  ])('refuses %s before the token is sent', async (_label, hostile) => {
+    mockConfig.FILE_SERVICE_URL = hostile;
+    const repository = repositoryMock();
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+
+    await expect(manager.createTicket('user-a', 'a@test', dto)).rejects.toThrow(/httpRequest/);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a hostile file-service URL when streaming an attachment, too', async () => {
+    mockConfig.FILE_SERVICE_URL = 'http://169.254.169.254';
+    const repository = repositoryMock();
+    repository.findById.mockResolvedValue({ attachments: [attachment] });
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+
+    await expect(manager.streamAttachment('ticket-1', 'file-1', {} as never)).rejects.toMatchObject(
+      { code: 'FEEDBACK_ATTACHMENT_UNAVAILABLE' },
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

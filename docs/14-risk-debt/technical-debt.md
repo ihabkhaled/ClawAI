@@ -65,16 +65,56 @@ Last updated: 2026-09-10
   `fetch` with no guard at all. That was TD-038, closed 2026-09-22. The
   scattered single `fetch` calls in the remaining services are TD-040.
 
-### TD-040: The rest of the platform's direct `fetch` calls are still unguarded (2026-09-22)
+### TD-040: The rest of the platform's direct `fetch` calls are still unguarded (2026-09-22) — PARTIALLY FIXED (2026-09-23)
 
 - **Severity**: Medium · **Effort**: Medium · **Priority**: Next
-- **Detail**: TD-038 closed the eight services that had grown a whole HTTP
+- **Status**: 10 of 37 files closed on 2026-09-23. **What remains is the 27
+  workspace-service files** listed below; nothing outside workspace-service is
+  left. No new exemption was added — the only exempt service file is still the
+  research crawler (`fetch/adapters/http-fetch.adapter.ts`), whose URL is typed
+  by a user and which already has the stronger private-host +
+  post-redirect control.
+- **Closed 2026-09-23** — each calls `assertSafeRequestUrl` before its `fetch`,
+  passes the returned `URL`, and refuses redirects (`redirect: 'error'`):
+  - audit-service `feedback.manager.ts` — the two file-service calls
+    (attachment metadata + stream), which carry the inter-service token. The
+    host is `FILE_SERVICE_URL` (env, `_SERVICE_URL`), also declared at the call
+    with `declaredHost(FILE_SERVICE_URL)` — the configured base, never the
+    built URL. (The old note called this a "feedback webhook"; it never was.)
+  - auth-service `github-actions.adapter.ts` — dispatch and run-progress reads
+    carry the deploy token; declares `declaredHost(GITHUB_API_BASE_URL)`, a
+    literal in the service. Behaviour change: a **renamed** repository used to
+    be followed through GitHub's 301; it now fails as "GitHub could not be
+    reached" until the new name is saved.
+  - payment-service `paypal-token.manager.ts` — nothing declared; both PayPal
+    hosts are already in `EXTERNAL_ENDPOINT_HOSTS`, pinned by
+    `gateway-hosts-allowlisted.spec.ts`.
+  - research-service, the seven search adapters (brave, exa, firecrawl,
+    ollama-web, searxng, serpapi, tavily). None fetches a user-typed URL: the
+    destination is the admin-configured `SearchProvider.baseUrl` (write
+    endpoints are ADMIN + `ADMIN_SYSTEM_VIEW`) or the adapter's own default
+    literal when that is blank, so each declares `declaredHost(root)` of that
+    base — the connector pattern, not a URL authorising itself. ollama-web also
+    declares its two keyless fallback literals (DuckDuckGo HTML, Bing RSS) one
+    by one. SearXNG has no default and declares its configured base, which is
+    usually a private `http://searxng:8080`.
+  - Every default destination was probed on 2026-09-23 and none answers with a
+    redirect, so `redirect: 'error'` costs no live traffic. An operator base URL
+    that redirects (e.g. http→https) now fails its health check instead of
+    being silently followed; fix the base URL.
+  - Tests in each service run the "still reaches" case under a CI-shaped
+    environment (`ACTIONS_RESULTS_ENDPOINT` stubbed + `resetInternalHostAllowlist()`)
+    so they prove enforcement, not the empty-environment stand-down; and each
+    refuses `file:`, embedded credentials and `169.254.169.254` with `fetch`
+    never called.
+- **Detail (original)**: TD-038 closed the eight services that had grown a whole HTTP
   client of their own. It did not close the single `fetch` calls scattered
-  through four other services: audit-service's feedback webhook,
+  through four other services: audit-service's file-service calls,
   auth-service's GitHub Actions dispatch, payment-service's PayPal token call,
   research-service's seven search-provider adapters, and workspace-service —
   nine internal callers plus the seventeen OAuth provider adapters
-  (GitHub, GitLab, Jira, Confluence, Gmail, Drive, Slack, …).
+  (GitHub, GitLab, Jira, Confluence, Gmail, Drive, Slack, …). The first four
+  are closed (above); workspace-service is what remains.
 - **Why it matters less than TD-038, but still matters**: none of these is a
   reusable client, so a new caller does not inherit the hole. But each one is
   the same `fetch(caller-built-url)` sink, and workspace-service's adapters are
@@ -82,10 +122,11 @@ Last updated: 2026-09-10
   `common/utilities/url-safety.utility.ts` checks a baseUrl at CONFIG time, in
   `provider-app-config.service.ts` — not at the call, so a value that changes
   after configuration is never re-checked.
-- **The fix**: same as TD-038 — `assertSafeRequestUrl` before the fetch,
-  `declaredHost(baseUrl)` at every call site whose host an operator set. The
-  PayPal one is a pure wiring gap: both PayPal hosts are already in
-  `EXTERNAL_ENDPOINT_HOSTS`.
+- **The fix (remaining workspace batch)**: same as TD-038 — `assertSafeRequestUrl` before the fetch,
+  `declaredHost(baseUrl)` at every call site whose host an operator set. Watch
+  for hardcoded fallbacks used when an env var is unset (the trap
+  fd48d413b hit in routing): declare the fallback LITERAL's host, never the
+  host of the URL being fetched.
 - **Where the list lives**: `KNOWN_UNGUARDED` in
   `tools/__tests__/service-fetch-url-guarded.test.mjs`, file by file. That test
   also fails if one of them is fixed and left on the list, so the list can only

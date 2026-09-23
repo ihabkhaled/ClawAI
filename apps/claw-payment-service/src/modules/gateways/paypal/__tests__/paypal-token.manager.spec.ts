@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { resetInternalHostAllowlist } from '@claw/shared-utilities';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaypalTokenManager } from '../managers/paypal-token.manager';
 import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
@@ -96,6 +97,64 @@ describe('PaypalTokenManager', () => {
   it('throws when the token response fails schema validation', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ token_type: 'Bearer' })));
     await expect(manager.getAccessToken(0)).rejects.toThrow();
+  });
+
+  // TD-040. The token request carries the client secret. These run with a
+  // CI-shaped environment — a GitHub runner defines `*_ENDPOINT` variables,
+  // which makes the host check ENFORCE rather than stand down — so they prove
+  // both real PayPal hosts are still reachable, not that the check was skipped.
+  describe('outbound URL guard', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      resetInternalHostAllowlist();
+    });
+
+    function enforceLikeCi(): void {
+      vi.stubEnv('ACTIONS_RESULTS_ENDPOINT', 'https://x.example');
+      resetInternalHostAllowlist();
+    }
+
+    it.each([
+      [GatewayMode.SANDBOX, 'api-m.sandbox.paypal.com'],
+      [GatewayMode.LIVE, 'api-m.paypal.com'],
+    ])(
+      'reaches the %s host with enforcement on, and never follows a redirect',
+      async (mode, host) => {
+        enforceLikeCi();
+        runtimeConfig.getPaypalOperations.mockResolvedValue({
+          clientId: 'id',
+          clientSecret: 'secret',
+          webhookId: 'WH1',
+          mode,
+        });
+        fetchMock.mockResolvedValue(tokenOk(3_600));
+
+        await expect(manager.getAccessToken(0)).resolves.toBe('tok-1');
+
+        const [target, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+        expect(new URL(String(target)).host).toBe(host);
+        expect(init.redirect).toBe('error');
+      },
+    );
+
+    it('refuses a host that is not a PayPal endpoint when enforcement is on', async () => {
+      enforceLikeCi();
+      vi.spyOn(PaypalTokenManager, 'baseUrl').mockReturnValue('https://api-m.paypal.com.evil.test');
+
+      await expect(manager.getAccessToken(0)).rejects.toThrow(/does not call/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a file: URL', 'file:///etc'],
+      ['embedded credentials', 'https://user:pass@api-m.paypal.com'],
+      ['the cloud metadata address', 'http://169.254.169.254'],
+    ])('refuses %s before the client secret is sent', async (_label, hostile) => {
+      vi.spyOn(PaypalTokenManager, 'baseUrl').mockReturnValue(hostile);
+
+      await expect(manager.getAccessToken(0)).rejects.toThrow(/httpRequest/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
   });
 
   it('targets the sandbox host in sandbox mode and the live host in live mode', () => {

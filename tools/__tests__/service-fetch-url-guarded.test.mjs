@@ -39,7 +39,8 @@ const APPS = path.join(REPO_ROOT, 'apps');
 const FETCH_CALL = /(?<![\w$.])fetch\s*\(/gu;
 
 /** Only whitespace and member modifiers precede a METHOD DECLARATION named `fetch`. */
-const DECLARATION_PREFIX = /^(?:private|public|protected|static|async|readonly|abstract|override|\s)*$/u;
+const DECLARATION_PREFIX =
+  /^(?:private|public|protected|static|async|readonly|abstract|override|\s)*$/u;
 
 /** The guard that makes a fetch a checked one. */
 const GUARD = 'assertSafeRequestUrl';
@@ -116,32 +117,18 @@ const EXEMPT_FILES = new Map([
  * defect, outside TD-038's blast radius.
  *
  * TD-038 covered the eight services that had grown their own HTTP client.
- * These are single call sites scattered through three other services, each
- * talking to an operator-configured or OAuth-provider destination. They are
- * real, they are tracked as TD-040 in docs/14-risk-debt/technical-debt.md, and
- * they are listed here one by one rather than behind a directory wildcard so
- * that the list can only ever shrink: a new file in
- * `workspace/adapters/` fails this test.
+ * TD-040 is the scattered single call sites. Its first batch (2026-09-23)
+ * closed audit, auth, payment and the seven research search adapters; what is
+ * left is all in workspace-service, mostly OAuth adapters for third-party
+ * providers that need live connector verification before their redirect and
+ * host behaviour can be tightened. They are tracked as TD-040 in
+ * docs/14-risk-debt/technical-debt.md, and they are listed here one by one
+ * rather than behind a directory wildcard so that the list can only ever
+ * shrink: a new file in `workspace/adapters/` fails this test.
  *
  * Do not add to this list. Add the guard.
  */
 const KNOWN_UNGUARDED = [
-  // audit-service — one outbound webhook to an operator-configured URL.
-  'apps/claw-audit-service/src/modules/feedback/managers/feedback.manager.ts',
-  // auth-service — GitHub Actions dispatch, hardcoded api.github.com.
-  'apps/claw-auth-service/src/modules/deployment/adapters/github-actions.adapter.ts',
-  // payment-service — PayPal OAuth token. Both PayPal hosts are already in
-  // EXTERNAL_ENDPOINT_HOSTS, so this one is a pure wiring gap.
-  'apps/claw-payment-service/src/modules/gateways/paypal/managers/paypal-token.manager.ts',
-  // research-service — search providers. Each destination is an operator
-  // configured `context.baseUrl`, so each needs declaredHost(context.baseUrl).
-  'apps/claw-research-service/src/modules/search/adapters/brave.adapter.ts',
-  'apps/claw-research-service/src/modules/search/adapters/exa.adapter.ts',
-  'apps/claw-research-service/src/modules/search/adapters/firecrawl.adapter.ts',
-  'apps/claw-research-service/src/modules/search/adapters/ollama-web.adapter.ts',
-  'apps/claw-research-service/src/modules/search/adapters/searxng.adapter.ts',
-  'apps/claw-research-service/src/modules/search/adapters/serpapi.adapter.ts',
-  'apps/claw-research-service/src/modules/search/adapters/tavily.adapter.ts',
   // workspace-service — internal service calls that simply predate the guard.
   'apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts',
   'apps/claw-workspace-service/src/modules/ai-actions/managers/model-catalog-resolver.manager.ts',
@@ -261,8 +248,7 @@ for (const rel of TD_038_CLIENTS) {
     const source = fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
     // Either it calls the guard itself, or it delegates to the shared client
     // that does — both are closed; a copy that does neither is TD-038 again.
-    const guarded =
-      source.includes(GUARD) || /from '@claw\/shared-utilities'/u.test(source);
+    const guarded = source.includes(GUARD) || /from '@claw\/shared-utilities'/u.test(source);
     assert.ok(guarded, `${rel} neither guards its URL nor delegates to the shared client`);
   });
 }

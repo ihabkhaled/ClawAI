@@ -4,6 +4,7 @@ import {
   type DeploymentRunJob,
   type DeploymentRunView,
 } from '@claw/shared-types';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { decrypt } from '../../../common/utilities';
@@ -72,7 +73,7 @@ export class GithubActionsAdapter {
     const url = `${GITHUB_API_BASE_URL}/repos/${credentials.repository}/actions/workflows/${GITHUB_DEPLOY_WORKFLOW_FILE}/dispatches`;
     let response: Response;
     try {
-      response = await fetch(url, {
+      response = await fetch(this.githubUrl(url), {
         method: 'POST',
         headers: {
           accept: GITHUB_ACCEPT_HEADER,
@@ -88,6 +89,7 @@ export class GithubActionsAdapter {
           },
         }),
         signal: AbortSignal.timeout(GITHUB_DISPATCH_TIMEOUT_MS),
+        redirect: 'error',
       });
     } catch {
       // The message is intentionally generic: a fetch error can carry the
@@ -158,13 +160,14 @@ export class GithubActionsAdapter {
   ): Promise<ReturnType<TSchema['parse']> | null> {
     let response: Response;
     try {
-      response = await fetch(url, {
+      response = await fetch(this.githubUrl(url), {
         headers: {
           accept: GITHUB_ACCEPT_HEADER,
           authorization: `Bearer ${token}`,
           'x-github-api-version': GITHUB_API_VERSION,
         },
         signal: AbortSignal.timeout(GITHUB_READ_TIMEOUT_MS),
+        redirect: 'error',
       });
     } catch {
       this.logger.warn('GitHub Actions progress read could not reach GitHub.');
@@ -182,6 +185,22 @@ export class GithubActionsAdapter {
     return parsed.data as ReturnType<TSchema['parse']>;
   }
 
+  /**
+   * Every GitHub call carries the deploy token, so its URL is checked before
+   * it is sent (TD-040). The one declared host is GITHUB_API_BASE_URL's — a
+   * literal in this service, never derived from the URL being fetched — so the
+   * repository segment, which an operator types, cannot move the call off
+   * api.github.com. Redirects are refused at the fetch: a 3xx would carry the
+   * token to a destination nothing checked. A renamed repository therefore
+   * fails instead of being followed; re-save the new name to recover.
+   *
+   * Called inside each fetch's try block, so a refusal degrades exactly like
+   * an unreachable GitHub and never echoes the URL.
+   */
+  private githubUrl(url: string): URL {
+    return assertSafeRequestUrl(url, declaredHost(GITHUB_API_BASE_URL));
+  }
+
   private async resolveStored(): Promise<GithubDeployCredentials | null> {
     const stored = await this.credentials.find();
     if (!stored) return null;
@@ -196,8 +215,7 @@ export class GithubActionsAdapter {
       this.logger.error('Stored deployment token could not be decrypted; re-save it to recover.');
       return null;
     }
-    if (token.trim().length === 0) return null;
-    return {
+    return token.trim().length === 0 ? null : {
       token,
       repository: stored.repository,
       ref: stored.ref,
@@ -213,8 +231,7 @@ export class GithubActionsAdapter {
     const repository = config.GITHUB_DEPLOY_REPOSITORY?.trim() ?? '';
     const ref = config.GITHUB_DEPLOY_REF?.trim() ?? '';
     if (token.length === 0 || repository.length === 0 || ref.length === 0) return null;
-    if (!this.isUsableTarget(repository, ref)) return null;
-    return {
+    return !this.isUsableTarget(repository, ref) ? null : {
       token,
       repository,
       ref,

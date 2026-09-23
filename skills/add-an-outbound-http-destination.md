@@ -92,6 +92,26 @@ still apply. A deployed service always has those variables, so this never
 relaxes production. Do not lean on it: a test that needs a specific host should
 pass `declaredHost(...)` and prove the real path.
 
+## Test the allowed path with enforcement ON
+
+A spec that only runs where the environment is empty proves the stand-down, not
+the guard — and CI's `*_ENDPOINT` variables switch enforcement on, so a fake host
+that passes locally is refused there. Force it on inside the test:
+
+```ts
+import { resetInternalHostAllowlist } from '@claw/shared-utilities';
+
+vi.stubEnv('ACTIONS_RESULTS_ENDPOINT', 'https://x.example');
+resetInternalHostAllowlist(); // the allowlist is cached; re-read the stubbed env
+// ...call the real code, assert the fetched URL's host and `init.redirect === 'error'`
+// afterEach: vi.unstubAllEnvs(); resetInternalHostAllowlist();
+```
+
+Pair it with refusal cases (`file:`, `https://user:pass@…`, `169.254.169.254`)
+asserting `fetch` was never called. Worked examples (TD-040):
+`apps/claw-research-service/src/modules/search/adapters/__tests__/search-adapter-url-guard.spec.ts`,
+`apps/claw-payment-service/src/modules/gateways/paypal/__tests__/paypal-token.manager.spec.ts`.
+
 ## Verify
 
 ```bash

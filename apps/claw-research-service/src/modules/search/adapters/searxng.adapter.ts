@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -26,15 +27,13 @@ export class SearxngAdapter implements SearchAdapter {
     const start = Date.now();
     try {
       const params = new URLSearchParams({ q: 'ping', format: 'json' });
-      const response = await fetch(`${this.buildUrl(context.baseUrl)}?${params.toString()}`, {
+      const response = await fetch(this.buildUrl(context.baseUrl, params), {
         headers: this.buildHeaders(context),
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
       });
       const latencyMs = Date.now() - start;
-      if (response.ok) {
-        return { healthy: true, latencyMs };
-      }
-      return { healthy: false, latencyMs, errorMessage: `HTTP ${response.status}` };
+      return response.ok ? { healthy: true, latencyMs } : { healthy: false, latencyMs, errorMessage: `HTTP ${response.status}` };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`SearXNG health check failed: ${message}`);
@@ -55,9 +54,10 @@ export class SearxngAdapter implements SearchAdapter {
         : {}),
     });
     await context.onNetworkCall?.();
-    const response = await fetch(`${this.buildUrl(context.baseUrl)}?${params.toString()}`, {
+    const response = await fetch(this.buildUrl(context.baseUrl, params), {
       headers: this.buildHeaders(context),
       signal: AbortSignal.timeout(context.timeoutMs),
+      redirect: 'error',
     });
     if (!response.ok) {
       throw new Error(`SearXNG search failed: HTTP ${response.status}`);
@@ -78,11 +78,20 @@ export class SearxngAdapter implements SearchAdapter {
     return { results, latencyMs: Date.now() - start };
   }
 
-  private buildUrl(baseUrl: string): string {
+  private buildUrl(baseUrl: string, params: URLSearchParams): URL {
     if (baseUrl.length === 0) {
       throw new Error('SearXNG adapter requires a baseUrl');
     }
-    return `${baseUrl.replace(/\/+$/, '')}${SEARXNG_SEARCH_PATH}`;
+    // SearXNG has no default: the base is always the operator-configured
+    // instance, so its host is declared — the BASE, never the request being
+    // built, which is the connector pattern rather than a URL authorising
+    // itself (TD-040). The instance is usually private (`http://searxng:8080`),
+    // which this guard allows because it is declared; it still refuses file:,
+    // embedded credentials and the metadata address.
+    return assertSafeRequestUrl(
+      `${baseUrl.replace(/\/+$/, '')}${SEARXNG_SEARCH_PATH}?${params.toString()}`,
+      declaredHost(baseUrl),
+    );
   }
 
   private buildHeaders(context: SearchAdapterContext): Record<string, string> {

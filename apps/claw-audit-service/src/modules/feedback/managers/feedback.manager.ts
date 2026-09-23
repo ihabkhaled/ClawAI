@@ -10,6 +10,7 @@ import {
   FEEDBACK_MAX_TITLE_LENGTH,
   FEEDBACK_STATUS_TRANSITIONS,
 } from '@claw/shared-constants';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { FeedbackRepository } from '../repositories/feedback.repository';
@@ -209,11 +210,12 @@ export class FeedbackManager {
     const token = config.INTER_SERVICE_AUTH_TOKEN;
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(this.fileServiceUrl(url), {
         method: 'GET',
         headers: {
           Authorization: `Service ${token}`,
         },
+        redirect: 'error',
       });
 
       if (!response.ok || !response.body) {
@@ -263,11 +265,12 @@ export class FeedbackManager {
     const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/metadata-internal/${encodeURIComponent(attachment.fileId)}`;
     const token = config.INTER_SERVICE_AUTH_TOKEN;
 
-    const response = await fetch(url, {
+    const response = await fetch(this.fileServiceUrl(url), {
       method: 'GET',
       headers: {
         Authorization: `Service ${token}`,
       },
+      redirect: 'error',
     });
 
     if (!response.ok) {
@@ -317,6 +320,19 @@ export class FeedbackManager {
       sizeBytes: metadata.sizeBytes,
       isScreenshot: attachment.isScreenshot,
     };
+  }
+
+  /**
+   * Both file-service calls carry the inter-service token, so where they go is
+   * checked rather than assumed (TD-040). The only host declared is the one in
+   * the configured FILE_SERVICE_URL — the base, never the built request URL —
+   * so a URL that somehow pointed anywhere else, or at file:, embedded
+   * credentials or the metadata address, is refused before the token is sent.
+   * Redirects are refused at the fetch for the same reason: file-service never
+   * answers with one, and following it would take the token somewhere unchecked.
+   */
+  private fileServiceUrl(url: string): URL {
+    return assertSafeRequestUrl(url, declaredHost(AppConfig.get().FILE_SERVICE_URL));
   }
 
   /**

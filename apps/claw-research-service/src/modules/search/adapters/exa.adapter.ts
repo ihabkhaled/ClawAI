@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   EXA_API_DEFAULT_BASE,
@@ -34,6 +35,7 @@ export class ExaAdapter implements SearchAdapter {
         headers: this.buildHeaders(context),
         body: JSON.stringify({ query: 'ping', numResults: 1 }),
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
       });
       const latencyMs = Date.now() - start;
       return response.ok
@@ -64,6 +66,7 @@ export class ExaAdapter implements SearchAdapter {
       headers: this.buildHeaders(context),
       body,
       signal: AbortSignal.timeout(context.timeoutMs),
+      redirect: 'error',
     });
     if (!response.ok) {
       throw new Error(`Exa search failed: HTTP ${response.status}`);
@@ -85,9 +88,12 @@ export class ExaAdapter implements SearchAdapter {
     return { results, latencyMs: Date.now() - start };
   }
 
-  private buildUrl(baseUrl: string): string {
+  private buildUrl(baseUrl: string): URL {
     const root = baseUrl.length > 0 ? baseUrl.replace(/\/+$/, '') : EXA_API_DEFAULT_BASE;
-    return `${root}${EXA_SEARCH_PATH}`;
+    // `root` is the operator-configured base URL or this adapter's own default
+    // literal — the BASE, never the request being built — so declaring its host
+    // is the connector pattern, not a URL authorising itself (TD-040).
+    return assertSafeRequestUrl(`${root}${EXA_SEARCH_PATH}`, declaredHost(root));
   }
 
   private buildHeaders(context: SearchAdapterContext): Record<string, string> {

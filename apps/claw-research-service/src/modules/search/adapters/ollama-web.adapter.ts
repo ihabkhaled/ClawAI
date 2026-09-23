@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -78,6 +79,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
         headers: this.buildHeaders(context),
         body: JSON.stringify({ query: 'ping', max_results: 1 }),
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
       });
       const latencyMs = Date.now() - start;
       if (response.ok) {
@@ -109,6 +111,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       headers: this.buildHeaders(context),
       body: JSON.stringify({ query: request.query, max_results: request.maxResults }),
       signal: AbortSignal.timeout(context.timeoutMs),
+      redirect: 'error',
     });
     if (response.ok) {
       const data = (await response.json()) as OllamaWebSearchResponse;
@@ -142,9 +145,31 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     throw new Error(`Ollama web search failed: HTTP ${response.status}`);
   }
 
-  private buildUrl(baseUrl: string): string {
+  private buildUrl(baseUrl: string): URL {
     const root = baseUrl.length > 0 ? baseUrl.replace(/\/+$/, '') : OLLAMA_WEB_SEARCH_DEFAULT_BASE;
-    return `${root}${OLLAMA_WEB_SEARCH_PATH}`;
+    // `root` is the operator-configured base URL or this adapter's own default
+    // literal — the BASE, never the request being built — so declaring its host
+    // is the connector pattern, not a URL authorising itself (TD-040).
+    return assertSafeRequestUrl(`${root}${OLLAMA_WEB_SEARCH_PATH}`, declaredHost(root));
+  }
+
+  /**
+   * The two keyless fallbacks are fixed literals on this class, so each call
+   * declares exactly its own literal's host (TD-040). The query only ever lands
+   * in the search string; it cannot move the host.
+   */
+  private bingUrl(params: URLSearchParams): URL {
+    return assertSafeRequestUrl(
+      `${OllamaWebSearchAdapter.BING_SEARCH_URL}?${params.toString()}`,
+      declaredHost(OllamaWebSearchAdapter.BING_SEARCH_URL),
+    );
+  }
+
+  private duckDuckGoUrl(params: URLSearchParams): URL {
+    return assertSafeRequestUrl(
+      `${OllamaWebSearchAdapter.DUCKDUCKGO_HTML_URL}?${params.toString()}`,
+      declaredHost(OllamaWebSearchAdapter.DUCKDUCKGO_HTML_URL),
+    );
   }
 
   private buildHeaders(context: SearchAdapterContext): Record<string, string> {
@@ -162,22 +187,17 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       format: 'rss',
     });
     try {
-      const response = await fetch(
-        `${OllamaWebSearchAdapter.BING_SEARCH_URL}?${params.toString()}`,
-        {
-          method: 'GET',
-          headers: {
-            'User-Agent': 'ClawAI-ResearchBot/1.0',
-            Accept: 'application/rss+xml, application/xml, text/xml',
-          },
-          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      const response = await fetch(this.bingUrl(params), {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'ClawAI-ResearchBot/1.0',
+          Accept: 'application/rss+xml, application/xml, text/xml',
         },
-      );
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        redirect: 'error',
+      });
       const latencyMs = Date.now() - start;
-      if (response.ok) {
-        return { healthy: true, latencyMs };
-      }
-      return {
+      return response.ok ? { healthy: true, latencyMs } : {
         healthy: false,
         latencyMs,
         errorMessage: `Fallback HTTP ${response.status}`,
@@ -197,13 +217,14 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       format: 'rss',
     });
     await context.onNetworkCall?.();
-    const response = await fetch(`${OllamaWebSearchAdapter.BING_SEARCH_URL}?${params.toString()}`, {
+    const response = await fetch(this.bingUrl(params), {
       method: 'GET',
       headers: {
         'User-Agent': 'ClawAI-ResearchBot/1.0',
         Accept: 'application/rss+xml, application/xml, text/xml',
       },
       signal: AbortSignal.timeout(context.timeoutMs),
+      redirect: 'error',
     });
     if (!response.ok) {
       throw new Error(`Bing RSS fallback failed: HTTP ${response.status}`);
@@ -277,10 +298,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       relevance: this.scoreQueryMatch(query, result),
     }));
     ranked.sort((left, right) => {
-      if (right.relevance !== left.relevance) {
-        return right.relevance - left.relevance;
-      }
-      return left.index - right.index;
+      return right.relevance !== left.relevance ? right.relevance - left.relevance : left.index - right.index;
     });
     return ranked.map(({ result, relevance }) => ({
       ...result,
@@ -480,17 +498,15 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
   ): Promise<SearchResponse> {
     const params = new URLSearchParams({ q: request.query });
     await context.onNetworkCall?.();
-    const response = await fetch(
-      `${OllamaWebSearchAdapter.DUCKDUCKGO_HTML_URL}?${params.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          Accept: 'text/html,application/xhtml+xml',
-        },
-        signal: AbortSignal.timeout(context.timeoutMs),
+    const response = await fetch(this.duckDuckGoUrl(params), {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        Accept: 'text/html,application/xhtml+xml',
       },
-    );
+      signal: AbortSignal.timeout(context.timeoutMs),
+      redirect: 'error',
+    });
     if (!response.ok) {
       throw new Error(`DuckDuckGo HTML fallback failed: HTTP ${response.status}`);
     }
