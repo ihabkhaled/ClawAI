@@ -23,6 +23,7 @@ import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { QualityCheckManager } from './quality-check.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
+import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 
 @Injectable()
 export class EscalationChainManager {
@@ -95,7 +96,7 @@ export class EscalationChainManager {
         // named it. Every other orchestration manager passes it.
         providerId: researchProviderId,
       });
-      const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
+      const context = injectResearchEvidenceIntoContext(rawContext, enrichment.systemPrompt);
       const result = await this.runChain(threadId, content, chain, context, threadSettings);
       await this.storeChainResult(threadId, result, enrichment.transcript);
 
@@ -126,18 +127,6 @@ export class EscalationChainManager {
         this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
       }
     }
-  }
-
-  // Prepend the enricher's evidence block to the shared system prompt so
-  // every escalation step sees the same web evidence.
-  private applyResearchToContext(context: AssembledContext, evidence: string): AssembledContext {
-    if (evidence.length === 0) {
-      return context;
-    }
-    const trimmedPrompt = (context.systemPrompt ?? '').trim();
-    const nextSystemPrompt =
-      trimmedPrompt.length > 0 ? `${evidence}\n\n${trimmedPrompt}` : evidence;
-    return { ...context, systemPrompt: nextSystemPrompt };
   }
 
   /**

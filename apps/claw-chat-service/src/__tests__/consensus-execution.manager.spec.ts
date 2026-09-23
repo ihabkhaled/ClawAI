@@ -460,4 +460,93 @@ describe('ConsensusExecutionManager', () => {
       expect(synthCall?.[0].content).toBe('Much longer response with more detail and information');
     });
   });
+
+  // 2026-09-23 fabrication report: kimi-k3 gave a long, confident, zero-
+  // citation answer with fabricated prices; grok said "unknown" honestly with
+  // no citations either (its own search found nothing real to cite); the
+  // synthesis step picked the longer, uncited fabrication because
+  // buildHeuristicSynthesis/buildSynthesisResult both picked "longest
+  // content" with no idea whether a lane had grounded on evidence at all.
+  describe('citation-aware grounding synthesis (fabrication guard)', () => {
+    beforeEach(() => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Ollama unavailable'));
+      // Simulate a run where research evidence WAS actually injected — the
+      // signal `hasResearchEvidence` is derived from in consensus-execution.
+      mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+        transcript: null,
+        systemPrompt:
+          '## Web research evidence (mode: SEARCH, gathered now)\n[1] claw-ai.co — https://claw-ai.co\nPaid plans from $5/month.',
+      });
+    });
+
+    afterEach(() => {
+      globalThis.fetch = undefined as any;
+    });
+
+    it('prefers a short, cited answer over a longer, zero-citation one when this run had web evidence', async () => {
+      mockChatExecutionManager.callProvider
+        .mockResolvedValueOnce({
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          content:
+            'ClawAI Ultra is $200/month billed annually, or $250/month billed monthly, with a 3-tier Ultra/Pro/Basic comparison and full feature breakdown across every plan tier available today.',
+          latencyMs: 100,
+          inputTokens: 5,
+          outputTokens: 40,
+        })
+        .mockResolvedValueOnce({
+          provider: 'OPENAI',
+          model: 'gpt-4o',
+          content: 'From the crawled homepage [1]: paid plans start at $5/month.',
+          latencyMs: 120,
+          inputTokens: 5,
+          outputTokens: 15,
+        });
+
+      await manager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const synthCall = mockChatMessagesRepository.create.mock.calls.find(
+        (args: any[]) => args[0]?.metadata?.consensusSynthesis === true,
+      );
+      expect(synthCall).toBeDefined();
+      // The longer answer has zero [n] markers and invented numbers; the
+      // shorter one cites the evidence. The cited one must win even though
+      // it is shorter.
+      expect(synthCall?.[0].content).toBe(
+        'From the crawled homepage [1]: paid plans start at $5/month.',
+      );
+    });
+
+    it('falls back to the longest response when NEITHER lane cited anything, even with evidence present', async () => {
+      mockChatExecutionManager.callProvider
+        .mockResolvedValueOnce({
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          content: 'No verified prices found.',
+          latencyMs: 100,
+          inputTokens: 5,
+          outputTokens: 5,
+        })
+        .mockResolvedValueOnce({
+          provider: 'OPENAI',
+          model: 'gpt-4o',
+          content: 'No verified prices found on the homepage after searching multiple times.',
+          latencyMs: 120,
+          inputTokens: 5,
+          outputTokens: 15,
+        });
+
+      await manager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const synthCall = mockChatMessagesRepository.create.mock.calls.find(
+        (args: any[]) => args[0]?.metadata?.consensusSynthesis === true,
+      );
+      expect(synthCall).toBeDefined();
+      expect(synthCall?.[0].content).toBe(
+        'No verified prices found on the homepage after searching multiple times.',
+      );
+    });
+  });
 });

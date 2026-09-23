@@ -445,6 +445,52 @@ describe('ContextAssemblyManager', () => {
       );
     });
   });
+
+  describe('orchestration lanes (compare/consensus/escalation) that inject evidence as prose', () => {
+    // Root cause of the 2026-09-23 fabrication report. Compare, consensus and
+    // escalation never call ContextAssemblyManager.assemble() with a research
+    // option — they merge ResearchEnricherManager's evidence straight into
+    // context.systemPrompt via injectResearchEvidenceIntoContext, so
+    // researchEvidence/researchWarnings/researchRequested all stay at their
+    // defaults. Without researchGroundingInjected, hasResearchGrounding()
+    // never fired and the final-user-turn reminder — the fix that the
+    // 2026-09-11 measurement above proved necessary — silently never applied
+    // to any orchestration mode.
+    it('still appends the final-user-turn reminder when only researchGroundingInjected is set', () => {
+      const context = buildContext();
+      context.researchEvidence = [];
+      context.researchWarnings = [];
+      context.researchRequested = false;
+      context.systemPrompt =
+        '## Web research evidence (mode: SEARCH, gathered now)\n[1] Example — https://example.com\nSome real snippet.';
+      context.researchGroundingInjected = true;
+
+      const messages = manager.buildGeminiChatMessages(context);
+      const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+      const prompt = manager.buildPromptString(context);
+
+      expect(String(lastUser?.content)).toContain('already fetched for you by this platform');
+      expect(prompt).toContain('already fetched for you by this platform');
+    });
+
+    it('does not print a second, contradictory "NO usable web evidence" block over prose evidence already in systemPrompt', () => {
+      const context = buildContext();
+      context.researchEvidence = [];
+      context.researchWarnings = [];
+      context.researchRequested = false;
+      context.systemPrompt =
+        '## Web research evidence (mode: SEARCH, gathered now)\n[1] Example — https://example.com\nSome real snippet.';
+      context.researchGroundingInjected = true;
+
+      const prompt = manager.buildPromptString(context);
+
+      // formatResearchBlock must NOT fire on this flag alone — it renders
+      // structured researchEvidence citations, which are empty here even
+      // though the systemPrompt already carries real prose evidence.
+      expect(prompt).not.toContain('This run produced NO usable web evidence');
+      expect(prompt).toContain('Some real snippet.');
+    });
+  });
 });
 
 describe('ContextAssemblyManager memory selection', () => {

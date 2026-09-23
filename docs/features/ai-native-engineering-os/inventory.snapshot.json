@@ -7584,7 +7584,7 @@
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
-          "bytes": 16697,
+          "bytes": 20617,
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
@@ -9992,7 +9992,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 169
+        "testFiles": 170
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10790,7 +10790,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1451,
+    "totalTestFiles": 1452,
     "workspaceCount": 25
   }
 }

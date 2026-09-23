@@ -32,6 +32,7 @@ import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { ResearchEnricherManager } from './research-enricher.manager';
+import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 
 @Injectable()
 export class ConsensusExecutionManager {
@@ -107,7 +108,7 @@ export class ConsensusExecutionManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
-      const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
+      const context = injectResearchEvidenceIntoContext(rawContext, enrichment.systemPrompt);
       this.safeEmitStage(threadId, {
         label: 'Dispatching candidates',
         status: OrchestrationStageStatus.ACTIVE,
@@ -131,7 +132,13 @@ export class ConsensusExecutionManager {
         detail: 'Synthesizing consensus from candidates',
         stageId: 'consensus:judge',
       });
-      const synthesis = await this.synthesize(content, completedResponses, models, userId);
+      const synthesis = await this.synthesize(
+        content,
+        completedResponses,
+        models,
+        userId,
+        enrichment.systemPrompt.length > 0,
+      );
       this.safeEmitStage(threadId, {
         label: 'Judge returned',
         status: OrchestrationStageStatus.COMPLETED,
@@ -171,19 +178,6 @@ export class ConsensusExecutionManager {
       );
       this.chatStreamService.emitError(threadId, `Consensus execution failed: ${msg}`);
     }
-  }
-
-  // Prepend the enricher's evidence block to the assembled-context system
-  // prompt so every lane sees the same web evidence (same shape parallel
-  // uses via injectResearchIntoContext).
-  private applyResearchToContext(context: AssembledContext, evidence: string): AssembledContext {
-    if (evidence.length === 0) {
-      return context;
-    }
-    const trimmedPrompt = (context.systemPrompt ?? '').trim();
-    const nextSystemPrompt =
-      trimmedPrompt.length > 0 ? `${evidence}\n\n${trimmedPrompt}` : evidence;
-    return { ...context, systemPrompt: nextSystemPrompt };
   }
 
   /**
@@ -350,6 +344,7 @@ export class ConsensusExecutionManager {
     completedResponses: ParallelModelResponse[],
     allModels: ParallelModelTarget[],
     userId: string,
+    hasResearchEvidence: boolean,
   ): Promise<ConsensusSynthesisResult> {
     if (completedResponses.length === 0) {
       return this.buildFallbackSynthesis('No models produced a valid response');
@@ -361,11 +356,17 @@ export class ConsensusExecutionManager {
       }
     }
     try {
-      return await this.runOllamaSynthesis(prompt, completedResponses, allModels, userId);
+      return await this.runOllamaSynthesis(
+        prompt,
+        completedResponses,
+        allModels,
+        userId,
+        hasResearchEvidence,
+      );
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Synthesis failed';
       this.logger.warn(`synthesize: Ollama synthesis failed, using heuristic — ${msg}`);
-      return this.buildHeuristicSynthesis(completedResponses, allModels);
+      return this.buildHeuristicSynthesis(completedResponses, allModels, hasResearchEvidence);
     }
   }
 
@@ -374,6 +375,7 @@ export class ConsensusExecutionManager {
     completedResponses: ParallelModelResponse[],
     allModels: ParallelModelTarget[],
     userId: string,
+    hasResearchEvidence: boolean,
   ): Promise<ConsensusSynthesisResult> {
     const config = AppConfig.get();
     const responseList = completedResponses
@@ -387,6 +389,7 @@ export class ConsensusExecutionManager {
       prompt,
       responseList,
       completedResponses.length,
+      hasResearchEvidence,
     );
     const synthesisModel = await this.resolveModel();
     const requestBody: OllamaGenerateRequest = {
@@ -420,20 +423,34 @@ export class ConsensusExecutionManager {
     });
 
     const parsed = this.parseSynthesisJson(response.data.response);
-    return this.buildSynthesisResult(parsed, completedResponses, allModels);
+    return this.buildSynthesisResult(parsed, completedResponses, allModels, hasResearchEvidence);
   }
 
   private buildSynthesisPrompt(
     originalPrompt: string,
     responseList: string,
     count: number,
+    hasResearchEvidence: boolean,
   ): string {
+    // Bounded fix for the 2026-09-23 fabrication report: this synthesizer used
+    // to treat every lane as equally trustworthy, so a confident, zero-citation
+    // fabrication from one lane and an honest "no evidence found" from another
+    // were weighed the same — and the longer, more detailed-sounding
+    // fabrication won by construction (`buildSynthesisResult`'s own fallback
+    // picks the longest response). This is deliberately NOT a general
+    // disagreement-detection system — it is one instruction, added only when
+    // this run actually had web evidence to ground on, telling the synthesizer
+    // what a human reviewer would already do: trust the lane that cites the
+    // evidence over the one that does not, and say so.
+    const groundingRule = hasResearchEvidence
+      ? '\n\nThis run included live web research evidence. Some responses may cite it with [n] markers; others may lack citations, claim they found nothing, or invent details. Do NOT treat an uncited, confident-sounding answer as more trustworthy than one that honestly reports missing or unclear evidence. If responses disagree about a web fact, prefer the ones that cite [n] evidence, note the disagreement in "disagreements", and only include a specific number/date/URL in finalAnswer if at least one response actually cited it.'
+      : '';
     return `You are a consensus analyzer. Analyze ${String(count)} AI responses to a prompt and create a merged synthesis.
 
 ORIGINAL PROMPT: ${originalPrompt.slice(0, 500)}
 
 MODEL RESPONSES:
-${responseList}
+${responseList}${groundingRule}
 
 Return ONLY valid JSON, no markdown, no explanation:
 {"finalAnswer":"merged answer","agreementScore":0.8,"agreements":["point1","point2"],"disagreements":["diff1"],"contradictions":[],"confidenceLevel":"HIGH","synthesisRationale":"brief reason"}
@@ -454,10 +471,9 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
     parsed: Record<string, unknown>,
     completedResponses: ParallelModelResponse[],
     allModels: ParallelModelTarget[],
+    hasResearchEvidence: boolean,
   ): ConsensusSynthesisResult {
-    const bestResponse = completedResponses.reduce((best, cur) =>
-      cur.content.length > best.content.length ? cur : best,
-    );
+    const bestResponse = this.selectBestResponse(completedResponses, hasResearchEvidence);
 
     const analysis: ConsensusAnalysis = {
       agreementScore: this.clampScore(parsed['agreementScore']),
@@ -487,10 +503,9 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
   private buildHeuristicSynthesis(
     completedResponses: ParallelModelResponse[],
     allModels: ParallelModelTarget[],
+    hasResearchEvidence: boolean,
   ): ConsensusSynthesisResult {
-    const bestResponse = completedResponses.reduce((best, cur) =>
-      cur.content.length > best.content.length ? cur : best,
-    );
+    const bestResponse = this.selectBestResponse(completedResponses, hasResearchEvidence);
     const score = Math.max(0.3, 1 - (completedResponses.length - 1) * 0.1);
 
     return {
@@ -538,6 +553,43 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
       },
       modelBreakdown: [],
     };
+  }
+
+  /**
+   * The fallback "best" lane — used both as the finalAnswer when the LLM
+   * synthesizer's JSON is unusable/too short, and as the whole answer on the
+   * heuristic (synthesizer-unreachable) path.
+   *
+   * Length alone rewards confident invention: a fabricated three-tier pricing
+   * table is always longer than an honest "no verified prices found", so the
+   * old `cur.content.length > best.content.length` reducer picked the
+   * fabrication every time research evidence existed. When this run actually
+   * had web evidence, a lane that cites it with [n] markers is preferred over
+   * one that does not, before length is even considered; only content with NO
+   * citations from ANY lane (or a run with no evidence at all) falls back to
+   * length, which is the pre-existing behaviour for ordinary, non-web prompts.
+   */
+  private selectBestResponse(
+    completedResponses: ParallelModelResponse[],
+    hasResearchEvidence: boolean,
+  ): ParallelModelResponse {
+    if (hasResearchEvidence) {
+      const cited = completedResponses.filter((r) => this.countCitationMarkers(r.content) > 0);
+      if (cited.length > 0) {
+        return cited.reduce((best, cur) =>
+          this.countCitationMarkers(cur.content) > this.countCitationMarkers(best.content)
+            ? cur
+            : best,
+        );
+      }
+    }
+    return completedResponses.reduce((best, cur) =>
+      cur.content.length > best.content.length ? cur : best,
+    );
+  }
+
+  private countCitationMarkers(content: string): number {
+    return (content.match(/\[\d+\]/g) ?? []).length;
   }
 
   private buildModelBreakdown(
@@ -629,7 +681,9 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
   private parseConfidenceLevel(raw: unknown): ConsensusConfidenceLevel {
     return raw === ConsensusConfidenceLevel.HIGH ||
       raw === ConsensusConfidenceLevel.MEDIUM ||
-      raw === ConsensusConfidenceLevel.LOW ? raw : ConsensusConfidenceLevel.MEDIUM;
+      raw === ConsensusConfidenceLevel.LOW
+      ? raw
+      : ConsensusConfidenceLevel.MEDIUM;
   }
 
   private clampScore(score: unknown): number {
@@ -637,7 +691,9 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
   }
 
   private toStringArray(raw: unknown): string[] {
-    return !Array.isArray(raw) ? [] : raw.filter((v): v is string => typeof v === 'string').slice(0, 3);
+    return !Array.isArray(raw)
+      ? []
+      : raw.filter((v): v is string => typeof v === 'string').slice(0, 3);
   }
 
   private buildTimedOutResponse(provider: string, model: string): ParallelModelResponse {

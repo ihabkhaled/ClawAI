@@ -36,3 +36,19 @@ export const RESEARCH_GROUNDING_REMINDER = [
  * later turn must not carry a second copy.
  */
 export const RESEARCH_GROUNDING_MARKER = '[Platform note, not written by the user:';
+
+/**
+ * The one line that forbids fabrication when evidence IS present.
+ *
+ * Root cause of the 2026-09-23 fabrication report: this instruction existed
+ * only in `formatResearchBlock`'s EMPTY-evidence branch (single-chat path),
+ * never in the branch that actually lists evidence, and never at all in
+ * `ResearchEnricherManager.buildEvidenceBlock` — the evidence-block builder
+ * every orchestration mode (compare, consensus, escalation, repair, decompose,
+ * best-of-n, verify, pipeline, cost-ensemble, role-pack) shares. A run could
+ * hand a model real evidence and still never tell it not to invent numbers,
+ * dates or URLs beyond what that evidence contains. Shared here so the two
+ * evidence-block builders cannot drift apart again the way they already had.
+ */
+export const RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION =
+  'Do not invent facts, numbers, prices, dates, URLs, or citations that are not present in the evidence below (or already in this conversation). If the evidence does not contain something, say so instead of guessing.';

@@ -22,6 +22,7 @@ import { AiStreamStage } from '../../../common/enums';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { resolveEffectiveResearchMode } from '../utilities/auto-research-mode.utility';
 import { httpRequest } from '../../../common/utilities';
+import { RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION } from '../constants/research-grounding.constants';
 import {
   RESEARCH_ENRICHER_DEFAULT_TOP_FETCH,
   RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
@@ -454,9 +455,10 @@ export class ResearchEnricherManager {
       '',
       'The web search and browsing steps have already been run for you by the platform.',
       `Tools that ran on this turn: searched the web (${String(sources.length)} results)${opened}.`,
-      'Use the evidence below for any web claim and cite sources as [n].',
+      'Ground your answer strictly in the evidence below and cite sources as [n].',
       "Do not say that you can't browse the web or access the internet.",
       'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
+      RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
     ].join('\n');
     const blocks = sources.map((source, index) => this.formatSource(index + 1, source));
     return [header, '', ...blocks].join('\n').trimEnd();

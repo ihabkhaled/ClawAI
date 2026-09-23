@@ -80,6 +80,27 @@ export type AssembledContext = {
    */
   researchToolsUsed: string[];
   /**
+   * True when an orchestration lane (compare, consensus, escalation) has
+   * already merged research-enricher evidence into `systemPrompt` as raw text.
+   *
+   * `researchRequested` / `researchEvidence` / `researchWarnings` stay at their
+   * defaults on this path — the evidence is prose already folded into
+   * `systemPrompt` by `ResearchEnricherManager.buildEvidenceBlock`, not the
+   * structured citations `formatResearchBlock` renders — so re-triggering
+   * `formatResearchBlock` from this flag would print a second, contradictory
+   * "NO usable web evidence" block over evidence that is right above it.
+   *
+   * This flag exists purely so `hasResearchGrounding` still fires and the
+   * final-user-turn reminder (`withResearchGrounding`) still gets appended.
+   * Without it, an orchestration lane's evidence lived ONLY in the system
+   * message — the exact shape measured insufficient on 2026-09-11 (see
+   * `research-grounding.constants.ts`) — and a small local model (kimi-k3,
+   * kimi-k2.7) confabulated a confident, zero-citation answer instead of
+   * grounding on it. The single-chat path never had this gap because
+   * `ContextAssemblyManager.assemble` sets `researchRequested` itself.
+   */
+  researchGroundingInjected?: boolean;
+  /**
    * Completed Runtime V2 tool rounds, oldest first.
    *
    * Runtime V2 tools execute client-side across an SSE hop, so the provider

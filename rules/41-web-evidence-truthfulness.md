@@ -163,6 +163,39 @@ from the missing capability statement, and neither knew about the other.**
     issue a subrequest a plain GET never could, so the boundary from item 12
     has to hold for those too, not just the top-level URL.
 
+14. **An orchestration lane (compare, consensus, escalation) gets the SAME
+    grounding defences a single chat turn gets, not a weaker copy of them.**
+    Those three modes never call `ContextAssemblyManager.assemble()` with a
+    research option; they merge `ResearchEnricherManager`'s evidence into
+    `context.systemPrompt` as raw prose through the one shared
+    `injectResearchEvidenceIntoContext` (`utilities/research-prompt.utility.ts`
+    — do not reintroduce a per-manager copy). That function sets
+    `AssembledContext.researchGroundingInjected = true` whenever it merged
+    real evidence, purely so `hasResearchGrounding()` still fires and item
+    11's final-user-turn reminder still gets appended — without it, three
+    modes silently ran with evidence sitting only in the system message,
+    the exact shape item 11 measured as insufficient. It does **not** feed
+    `formatResearchBlock`'s own trigger: that block renders
+    `researchEvidence`, which orchestration lanes never populate, and would
+    print a contradictory "NO usable web evidence" block over real prose
+    evidence.
+
+    `RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION`
+    (`constants/research-grounding.constants.ts`) is the one "do not invent
+    facts/numbers/prices/dates/URLs/citations not in the evidence" line
+    both `ContextAssemblyManager.formatResearchBlock` (single chat) and
+    `ResearchEnricherManager.buildEvidenceBlock` (every orchestration mode)
+    emit in their always-present preamble, not only an empty-evidence
+    branch. One constant, both builders — it drifted apart once already.
+
+    Consensus's synthesis step must not silently launder a confident,
+    zero-citation fabrication over a lane that honestly reported no
+    evidence. `ConsensusExecutionManager.selectBestResponse` prefers the
+    response with the most `[n]` citation markers over the longest response,
+    but ONLY when this run actually had research evidence — an uncited run
+    (no web question asked) keeps the plain longest-response fallback. See
+    [ADR-118](../docs/13-adr/adr-118-orchestration-lanes-share-grounding-not-just-evidence.md).
+
 ## Prohibited patterns
 
 - Passing a prompt containing a URL to a search engine and calling the result
@@ -173,6 +206,12 @@ from the missing capability statement, and neither knew about the other.**
   is labelled as pages read.
 - Hardcoded zeros in a transcript that a user reads as a measurement.
 - A second fetch path that bypasses `FetchService`.
+- A per-manager copy of the evidence-into-systemPrompt merge instead of
+  `injectResearchEvidenceIntoContext` — the last time this existed (three
+  copies, none setting the grounding flag), the final-user-turn reminder
+  silently never reached compare, consensus or escalation.
+- A synthesis/judge step that treats a zero-citation lane as equally
+  trustworthy as a cited one when the run had web evidence.
 
 ## Enforcement
 
@@ -189,6 +228,9 @@ from the missing capability statement, and neither knew about the other.**
 | **Unit test**        | `apps/claw-research-service/src/modules/fetch/adapters/__tests__/headless-fetch.adapter.spec.ts` — extraction reuses `extractHtml`, the browser is shared across calls, a private-host URL is refused before a context opens, an in-page request to a private host or a blocked resource type is aborted, a public in-page request is allowed, the post-navigation final URL is re-checked. |
 | **Unit test**        | `apps/claw-research-service/src/modules/fetch/services/__tests__/fetch.service.headless-fallback.spec.ts` — retries only a thin `text/html` result, never a non-HTML one, never when the feature flag is off, keeps the plain result when the render fails or comes back thinner still.                                                                                                     |
 | **Unit test**        | `apps/claw-research-service/src/common/utilities/__tests__/url-safety.utility.spec.ts` — `isHostExplicitlyAllowlisted` (shared by both fetch adapters): exact match, wildcard suffix without matching the bare suffix, empty allowlist, unparseable URL.                                                                                                                                    |
+| **Unit test**        | `apps/claw-chat-service/src/modules/chat-messages/utilities/__tests__/research-prompt.utility.spec.ts` — `injectResearchEvidenceIntoContext` sets `researchGroundingInjected` only when evidence is non-empty, no-ops (including the flag) on empty evidence, trims a blank existing system prompt before deciding whether to prepend.                                                      |
+| **Unit test**        | `apps/claw-chat-service/src/modules/chat-messages/__tests__/context-assembly.manager.spec.ts` — `researchGroundingInjected` alone still appends the final-user-turn reminder, and does NOT also trigger a second "NO usable web evidence" block over real prose evidence already in `systemPrompt`.                                                                                         |
+| **Unit test**        | `apps/claw-chat-service/src/__tests__/consensus-execution.manager.spec.ts` ("citation-aware grounding synthesis") — a short, cited answer beats a longer, zero-citation fabrication when the run had evidence; the plain longest-response fallback still applies when neither lane cites anything.                                                                                          |
 | **Review checklist** | Rule 7 has no automatable form yet — the counts are assembled in several places. Read them against the bundle before shipping a change to any of them.                                                                                                                                                                                                                                      |
 
 ## Definition of done
@@ -202,6 +244,7 @@ from the missing capability statement, and neither knew about the other.**
 ## See also
 
 - [`docs/13-adr/adr-091-user-urls-are-opened-not-searched.md`](../docs/13-adr/adr-091-user-urls-are-opened-not-searched.md)
+- [`docs/13-adr/adr-118-orchestration-lanes-share-grounding-not-just-evidence.md`](../docs/13-adr/adr-118-orchestration-lanes-share-grounding-not-just-evidence.md)
 - [`docs/04-backend/service-guide-research.md`](../docs/04-backend/service-guide-research.md)
 - [`docs/14-risk-debt/chat-pipeline-audit-2026-09.md`](../docs/14-risk-debt/chat-pipeline-audit-2026-09.md) — section E
 - [`rules/19-logging-observability-and-redaction.md`](19-logging-observability-and-redaction.md)

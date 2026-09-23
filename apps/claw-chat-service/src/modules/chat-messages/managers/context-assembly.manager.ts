@@ -24,6 +24,7 @@ import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum'
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
   RESEARCH_GROUNDING_MARKER,
+  RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
   RESEARCH_GROUNDING_REMINDER,
 } from '../constants/research-grounding.constants';
 import {
@@ -697,7 +698,11 @@ ${evidence.snippet}`);
     return (
       context.researchRequested ||
       context.researchEvidence.length > 0 ||
-      context.researchWarnings.length > 0
+      context.researchWarnings.length > 0 ||
+      // Compare/consensus/escalation inject evidence as prose directly into
+      // systemPrompt rather than through researchEvidence/researchRequested —
+      // see the field's doc comment in context.types.ts for why.
+      context.researchGroundingInjected === true
     );
   }
 
@@ -1306,12 +1311,12 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       'Use the evidence below for any web claim and cite sources as [n].',
       "Do not say that you can't browse the web or access the internet.",
       'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
+      RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
       'LIVE RESEARCH EVIDENCE (ground your answer strictly in these sources — cite them as [n]):',
     ];
     if (context.researchEvidence.length === 0) {
       lines.push(
         'This run produced NO usable web evidence — the attempt was made and it did not succeed.',
-        'Do not invent facts, dates, issues, or citations when no reliable evidence is available.',
         'Say plainly that the web step ran and returned nothing usable, name the reason if one is listed below, and answer from your own knowledge only if you label it as such.',
       );
     }

@@ -66,6 +66,21 @@ storing each result as its own ASSISTANT message. The same pattern underlies
 consensus, escalation chains, repair, best-of-n, verifier, and pipeline modes
 (see [../02-business-product/](../02-business-product/)).
 
+**Research evidence for these modes is a second, parallel merge — not the
+single-chat research path.** Compare, consensus and escalation call
+`ResearchEnricherManager.enrich`/`enrichForOrchestration` **once**, before
+fan-out, and merge the result into `context.systemPrompt` as prose via
+`injectResearchEvidenceIntoContext`
+(`utilities/research-prompt.utility.ts`) — never per-lane, so every lane and
+(for consensus) the synthesis row see identical evidence. That merge also
+sets `AssembledContext.researchGroundingInjected`, the signal that makes
+`ContextAssemblyManager`'s final-user-turn grounding reminder fire for these
+three modes even though they never populate `researchEvidence`/
+`researchRequested` (ADR-118). The 7 raw-prompt orchestration managers
+(repair, decompose, best-of-n, cost-ensemble, verify, pipeline, role-pack)
+use the flatter `prependResearchEvidence` instead — they send a plain prompt
+string straight to ollama-service, never an `AssembledContext`.
+
 ## Tracing a bug across services
 
 1. **Find the request id.** The frontend sends `X-Request-ID`; it propagates through nginx and into every service log (pino) and is the join key in `claw-server-logs`.

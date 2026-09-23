@@ -824,3 +824,55 @@ did not complete is always `SKIPPED` regardless of the verdict.
 `JudgeRefereeManager.evaluate` is unchanged and keeps serving every other mode
 (chat, consensus, escalation). See
 [ADR-116](../../docs/13-adr/adr-114-comparative-judge-for-compare.md).
+
+## Orchestration lanes now get the same web-grounding defences as chat (ADR-118, 2026-09-23)
+
+Compare, Consensus and Escalation never call `ContextAssemblyManager.assemble()`
+with a research option — they merge `ResearchEnricherManager`'s evidence into
+`context.systemPrompt` as prose, once, before fan-out. Until this fix that
+merge never told `ContextAssemblyManager` a run had evidence at all, so the
+final-user-turn grounding reminder (`RESEARCH_GROUNDING_REMINDER` — proven
+necessary for small local models on 2026-09-11, see rule 41 §11) silently
+never reached these three modes. A user asked Consensus to crawl a real
+pricing page; one lane honestly reported no evidence, another (an Ollama
+model with only a system-message evidence block, no reminder) fabricated a
+detailed pricing table with fake citation URLs and zero `[n]` markers, and
+the synthesis step copied the fabrication verbatim.
+
+- **`injectResearchEvidenceIntoContext`** (`utilities/research-prompt.utility.ts`)
+  replaces the three near-identical `applyResearchToContext`/
+  `injectResearchIntoContext` copies that used to live in
+  `ConsensusExecutionManager`, `EscalationChainManager` and
+  `ParallelExecutionManager`. It merges evidence into `systemPrompt` exactly
+  as before, and sets `AssembledContext.researchGroundingInjected = true`
+  when it did. Use this for any future orchestration mode that shows a model
+  web evidence — never write a fourth copy.
+- **`ContextAssemblyManager.hasResearchGrounding`** now also fires on
+  `researchGroundingInjected`, so the final-user-turn reminder reaches these
+  three modes through the exact `buildChatMessages`/`buildGeminiChatMessages`/
+  `buildPromptString` path every provider call already goes through. The flag
+  deliberately does NOT feed `formatResearchBlock`'s own trigger — that would
+  print a second, contradictory "NO usable web evidence" block over real
+  prose evidence already sitting in `systemPrompt`.
+- **`RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION`** (`constants/research-grounding.constants.ts`)
+  is now emitted by both evidence-block builders'
+  always-present preamble — `ContextAssemblyManager.formatResearchBlock`
+  (single chat) and `ResearchEnricherManager.buildEvidenceBlock` (every
+  orchestration mode, including the 7 raw-prompt managers via
+  `prependResearchEvidence`) — not only their empty-evidence branches.
+- **`ConsensusExecutionManager.selectBestResponse`** prefers the completed
+  response with the most `[n]` citation markers over the longest response,
+  but only when the run actually had research evidence
+  (`hasResearchEvidence`, threaded through `synthesize` →
+  `runOllamaSynthesis`/`buildHeuristicSynthesis`/`buildSynthesisResult`). An
+  uncited run (no web question, or neither lane cited anything) keeps the
+  pre-existing longest-response fallback unchanged. The LLM synthesis prompt
+  also gets one instruction, added only when evidence existed, telling it not
+  to prefer a confident uncited answer over an honest "no evidence" one.
+
+This is a bounded fabrication guard, not fact-checking — a model can still
+cite `[n]` next to a wrong number. It stops the specific laundering behaviour
+observed: length rewarding invention over honesty. See
+[ADR-118](../../docs/13-adr/adr-118-orchestration-lanes-share-grounding-not-just-evidence.md),
+[rule 41 §14](../../rules/41-web-evidence-truthfulness.md), and
+[the runbook](../../docs/11-runbooks/runbook-fabricated-web-facts.md).

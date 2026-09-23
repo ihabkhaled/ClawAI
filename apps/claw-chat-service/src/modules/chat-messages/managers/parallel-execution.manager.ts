@@ -41,6 +41,7 @@ import { type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildFileDeliveryEntries } from '../../../common/utilities';
 import { resolveLaneJudgeState } from '../utilities/compare-judge.utility';
+import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 import { BusinessException } from '../../../common/errors';
 import {
   PAYG_COMPARE_ALL_OR_NOTHING_CODE,
@@ -220,11 +221,13 @@ export class ParallelExecutionManager {
    */
   private toCompareCreditRefusal(error: unknown, index: number, total: number): unknown {
     return !(error instanceof BusinessException) ||
-      error.getStatus() !== HttpStatus.PAYMENT_REQUIRED ? error : new BusinessException(
-      `Not enough pay-as-you-go credit to compare ${String(total)} models: lane ${String(index + 1)} could not be funded. No model was run and nothing was charged. Add credit or compare fewer models.`,
-      PAYG_COMPARE_ALL_OR_NOTHING_CODE,
-      HttpStatus.PAYMENT_REQUIRED,
-    );
+      error.getStatus() !== HttpStatus.PAYMENT_REQUIRED
+      ? error
+      : new BusinessException(
+          `Not enough pay-as-you-go credit to compare ${String(total)} models: lane ${String(index + 1)} could not be funded. No model was run and nothing was charged. Add credit or compare fewer models.`,
+          PAYG_COMPARE_ALL_OR_NOTHING_CODE,
+          HttpStatus.PAYMENT_REQUIRED,
+        );
   }
 
   private async storeUserMessage(
@@ -322,7 +325,7 @@ export class ParallelExecutionManager {
         result,
         Math.max(1, Date.now() - startedAt),
       );
-      return { context: this.injectResearchIntoContext(context, result), transcript };
+      return { context: injectResearchEvidenceIntoContext(context, result.evidence), transcript };
     } catch (error) {
       const message = (error as Error).message;
       this.logger.warn(`applyResearchEnrichment: failed mode=${mode} — ${message}`);
@@ -337,19 +340,6 @@ export class ParallelExecutionManager {
         ),
       };
     }
-  }
-
-  private injectResearchIntoContext(
-    context: AssembledContext,
-    result: ResearchEnrichResult,
-  ): AssembledContext {
-    if (result.evidence.length === 0) {
-      return context;
-    }
-    const trimmedPrompt = (context.systemPrompt ?? '').trim();
-    const nextSystemPrompt =
-      trimmedPrompt.length > 0 ? `${result.evidence}\n\n${trimmedPrompt}` : result.evidence;
-    return { ...context, systemPrompt: nextSystemPrompt };
   }
 
   private buildTranscriptFromEnricher(
@@ -411,7 +401,9 @@ export class ParallelExecutionManager {
     responses: ParallelModelResponse[],
     transcript: ResearchTranscript | null,
   ): ParallelModelResponse[] {
-    return transcript === null ? responses : responses.map((response) => ({ ...response, researchTranscript: transcript }));
+    return transcript === null
+      ? responses
+      : responses.map((response) => ({ ...response, researchTranscript: transcript }));
   }
 
   // Extracted so buildParallelMessageMetadata stays under the complexity 15 cap.
@@ -422,7 +414,9 @@ export class ParallelExecutionManager {
   private buildResearchTranscriptMetaPart(
     response: ParallelModelResponse,
   ): Record<string, unknown> {
-    return response.researchTranscript === undefined ? {} : { researchTranscript: response.researchTranscript };
+    return response.researchTranscript === undefined
+      ? {}
+      : { researchTranscript: response.researchTranscript };
   }
 
   private async executeAllModels(
