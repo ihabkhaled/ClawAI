@@ -626,10 +626,14 @@ describe('PipelineManager', () => {
         assistantCall![0] as { metadata?: { researchTranscript?: { sources?: unknown[] } } }
       ).metadata;
       expect(metadata?.researchTranscript).toEqual(transcript);
-      // The evidence reaches the model as a persona on the ONE shared bundle,
-      // not glued in front of every stage's prompt text.
+      // The evidence reaches the model on the ONE shared bundle, not glued in
+      // front of every stage's prompt text. Deliberate change (ADR-118,
+      // 2026-09-24 update): it must go through `researchEvidenceInstruction`,
+      // not the generic `personaInstruction`, so
+      // `injectResearchEvidenceIntoContext` sets `researchGroundingInjected`
+      // and the final-user-turn grounding reminder still fires.
       expect(contextGateway.build).toHaveBeenCalledWith(
-        expect.objectContaining({ personaInstruction: evidence }),
+        expect.objectContaining({ researchEvidenceInstruction: evidence }),
       );
     });
   });

@@ -5,10 +5,7 @@ import {
   fallbackModelTokenBudget,
 } from '../assembled-context.utility';
 import { type AssembledContext } from '../../types/context.types';
-import {
-  injectResearchEvidenceIntoContext,
-  prependResearchEvidence,
-} from '../research-prompt.utility';
+import { injectResearchEvidenceIntoContext } from '../research-prompt.utility';
 
 function baseContext(systemPrompt: string | null): AssembledContext {
   return {
@@ -30,16 +27,6 @@ function baseContext(systemPrompt: string | null): AssembledContext {
     crossThread: disabledCrossThreadResult(),
   };
 }
-
-describe('prependResearchEvidence', () => {
-  it('is a no-op when evidence is empty', () => {
-    expect(prependResearchEvidence('the prompt', '')).toBe('the prompt');
-  });
-
-  it('prepends evidence ahead of the prompt', () => {
-    expect(prependResearchEvidence('the prompt', '## evidence')).toBe('## evidence\n\nthe prompt');
-  });
-});
 
 describe('injectResearchEvidenceIntoContext', () => {
   // Shared by compare, consensus and escalation — previously each manager

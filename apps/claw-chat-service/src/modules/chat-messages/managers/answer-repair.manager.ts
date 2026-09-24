@@ -140,11 +140,13 @@ export class AnswerRepairManager {
         // read everything said after the answer it is fixing.
         ...(routedMessageId === undefined ? {} : { routedMessageId }),
         // The enricher's transcript used to be glued to the front of the repair
-        // prompt by `prependResearchEvidence`. It is an instruction about how to
-        // answer, so it belongs in the system prompt beside the user's own —
-        // appended, never replacing.
+        // prompt by `prependResearchEvidence`, then merged as a plain
+        // `personaInstruction` with no grounding flag. `researchEvidenceInstruction`
+        // routes it through `injectResearchEvidenceIntoContext`, which sets
+        // `researchGroundingInjected` so the final-user-turn reminder fires here
+        // the same way it does for Compare/Consensus/Escalation.
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
@@ -359,7 +361,9 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
   }
 
   private async resolveModel(model?: string): Promise<string> {
-    return model && model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model && model !== 'AUTO'
+      ? model
+      : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private safeEmitStage(
@@ -380,21 +384,23 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
   }
 
   private async resolveSelection(dto: RepairMessageDto): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider ?? dto.targetProvider,
-          requestedModel: dto.requestedModel ?? dto.targetModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider ?? dto.targetProvider,
+            requestedModel: dto.requestedModel ?? dto.targetModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          await this.resolveModel(),
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? dto.targetProvider ?? 'local-ollama',
+          requestedModel: dto.requestedModel ?? dto.targetModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        await this.resolveModel(),
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? dto.targetProvider ?? 'local-ollama',
-      requestedModel: dto.requestedModel ?? dto.targetModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

@@ -155,11 +155,13 @@ export class TaskDecompositionManager {
         surface: ChatSurface.DECOMPOSE,
         historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
         // The enricher's transcript used to be glued to the front of every raw
-        // prompt by `prependResearchEvidence`. It is an instruction about how
-        // to answer, so it belongs in the system prompt beside the user's own —
-        // appended, never replacing.
+        // prompt by `prependResearchEvidence`, then merged as a plain
+        // `personaInstruction` with no grounding flag. `researchEvidenceInstruction`
+        // routes it through `injectResearchEvidenceIntoContext`, which sets
+        // `researchGroundingInjected` so the final-user-turn reminder fires for
+        // the planner and every sub-task the same way it does for chat.
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
@@ -357,7 +359,9 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
         .replace(/\n?```$/, '')
         .trim();
       const parsed: unknown = JSON.parse(cleaned);
-      return !Array.isArray(parsed) || parsed.length === 0 ? this.buildFallbackSubTasks(originalContent) : (parsed as SubTask[]).slice(0, MAX_SUB_TASKS_PARSE_LIMIT);
+      return !Array.isArray(parsed) || parsed.length === 0
+        ? this.buildFallbackSubTasks(originalContent)
+        : (parsed as SubTask[]).slice(0, MAX_SUB_TASKS_PARSE_LIMIT);
     } catch {
       this.logger.warn('parseSubTasks: JSON parse failed, falling back to single task');
       return this.buildFallbackSubTasks(originalContent);
@@ -618,25 +622,29 @@ Provide a unified, coherent response that integrates all sub-task results into a
   }
 
   private async resolveModel(): Promise<string> {
-    return DEFAULT_DECOMPOSITION_MODEL !== 'AUTO' ? DEFAULT_DECOMPOSITION_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_DECOMPOSITION_MODEL !== 'AUTO'
+      ? DEFAULT_DECOMPOSITION_MODEL
+      : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private async resolveSelection(dto: DecomposeTaskDto): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider,
-          requestedModel: dto.requestedModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider,
+            requestedModel: dto.requestedModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          await this.resolveModel(),
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? null,
+          requestedModel: dto.requestedModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        await this.resolveModel(),
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? null,
-      requestedModel: dto.requestedModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

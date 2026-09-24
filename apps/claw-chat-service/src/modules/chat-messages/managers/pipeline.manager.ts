@@ -117,17 +117,19 @@ export class PipelineManager {
       // stages work on one question about one conversation, so one set of
       // history, memory, attachment and cross-thread retrievals serves the
       // run. A five-stage template would otherwise pay for them five times.
-      // The enricher's transcript rides in as a persona rather than being
-      // glued to the front of every stage prompt by `prependResearchEvidence`:
-      // it says how to answer, so it belongs in the system prompt beside the
-      // user's own — appended, never replacing.
+      // The enricher's transcript rides in via `researchEvidenceInstruction`
+      // rather than being glued to the front of every stage prompt by
+      // `prependResearchEvidence`. That routes it through
+      // `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires for
+      // every stage sharing this bundle.
       const bundle = await this.chatContextGateway.build({
         userId,
         threadId,
         surface: ChatSurface.PIPELINE,
         historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
       });
@@ -246,7 +248,9 @@ export class PipelineManager {
     dto: PipelineMessageDto,
     selection: AdvancedModelSelectionResolution,
   ): Promise<PipelineStage[]> {
-    return dto.template !== 'custom' ? this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? [], selection) : this.resolveStageModels(dto.customStages ?? [], selection);
+    return dto.template !== 'custom'
+      ? this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? [], selection)
+      : this.resolveStageModels(dto.customStages ?? [], selection);
   }
 
   /**
@@ -409,39 +413,45 @@ export class PipelineManager {
     stages: PipelineStage[],
     selection: AdvancedModelSelectionResolution,
   ): Promise<PipelineStage[]> {
-    return selection.modelSelectionMode === 'MANUAL_MODEL' ? stages.map((stage) => ({ ...stage, model: selection.actualModel })) : Promise.all(
-      stages.map(async (stage) => ({
-        ...stage,
-        model: await this.resolveModel(stage.model),
-      })),
-    );
+    return selection.modelSelectionMode === 'MANUAL_MODEL'
+      ? stages.map((stage) => ({ ...stage, model: selection.actualModel }))
+      : Promise.all(
+          stages.map(async (stage) => ({
+            ...stage,
+            model: await this.resolveModel(stage.model),
+          })),
+        );
   }
 
   private async resolveModel(model?: string): Promise<string> {
     if (model && model !== 'AUTO') {
       return model;
     }
-    return DEFAULT_PIPELINE_MODEL !== 'AUTO' ? DEFAULT_PIPELINE_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_PIPELINE_MODEL !== 'AUTO'
+      ? DEFAULT_PIPELINE_MODEL
+      : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private async resolveSelection(
     dto: PipelineMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider,
-          requestedModel: dto.requestedModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider,
+            requestedModel: dto.requestedModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          await this.resolveModel(),
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? null,
+          requestedModel: dto.requestedModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        await this.resolveModel(),
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? null,
-      requestedModel: dto.requestedModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

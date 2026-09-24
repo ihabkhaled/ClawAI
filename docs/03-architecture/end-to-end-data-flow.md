@@ -76,10 +76,15 @@ fan-out, and merge the result into `context.systemPrompt` as prose via
 sets `AssembledContext.researchGroundingInjected`, the signal that makes
 `ContextAssemblyManager`'s final-user-turn grounding reminder fire for these
 three modes even though they never populate `researchEvidence`/
-`researchRequested` (ADR-118). The 7 raw-prompt orchestration managers
+`researchRequested` (ADR-118). The 7 lab-mode orchestration managers
 (repair, decompose, best-of-n, cost-ensemble, verify, pipeline, role-pack)
-use the flatter `prependResearchEvidence` instead — they send a plain prompt
-string straight to ollama-service, never an `AssembledContext`.
+now route through the same `AssembledContext` path via
+`ChatContextGatewayManager.build()` + `ModeExecutionGatewayManager.run()` →
+`ChatExecutionManager.callProvider` — the same chokepoint chat, compare,
+consensus and escalation use. Each passes its enricher's evidence to
+`build()` as `researchEvidenceInstruction`, which `build()` itself routes
+through `injectResearchEvidenceIntoContext`, so these 7 get the identical
+`researchGroundingInjected` signal (ADR-118, 2026-09-24 update).
 
 ## Tracing a bug across services
 

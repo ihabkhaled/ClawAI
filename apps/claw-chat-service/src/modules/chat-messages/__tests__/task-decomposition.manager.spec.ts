@@ -365,7 +365,7 @@ describe('TaskDecompositionManager', () => {
       expect(bundle.context.systemPrompt).toBeNull();
     });
 
-    it('passes the enricher transcript as a persona instruction on the bundle', async () => {
+    it('passes the enricher transcript as researchEvidenceInstruction on the bundle', async () => {
       researchEnricher.enrichForOrchestration.mockResolvedValue({
         transcript: null,
         systemPrompt: '## Web research evidence',
@@ -378,8 +378,14 @@ describe('TaskDecompositionManager', () => {
 
       await manager.executeInBackground('thread-1', 'Some complex task', 2, 'user-1');
 
+      // Deliberate change (ADR-118, 2026-09-24 update): the pre-fix shape
+      // merged research evidence in via the generic `personaInstruction`
+      // field, which never set `researchGroundingInjected` and silently
+      // dropped the final-user-turn grounding reminder. It must now go
+      // through `researchEvidenceInstruction`, the only field routed through
+      // `injectResearchEvidenceIntoContext`.
       expect(contextGateway.build).toHaveBeenCalledWith(
-        expect.objectContaining({ personaInstruction: '## Web research evidence' }),
+        expect.objectContaining({ researchEvidenceInstruction: '## Web research evidence' }),
       );
     });
 

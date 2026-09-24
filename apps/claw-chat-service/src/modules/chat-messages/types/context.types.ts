@@ -80,8 +80,10 @@ export type AssembledContext = {
    */
   researchToolsUsed: string[];
   /**
-   * True when an orchestration lane (compare, consensus, escalation) has
-   * already merged research-enricher evidence into `systemPrompt` as raw text.
+   * True when an orchestration lane (compare, consensus, escalation) OR one of
+   * the 7 lab modes (repair, decompose, best-of-n, cost-ensemble, verifier,
+   * pipeline, role-pack) has already merged research-enricher evidence into
+   * `systemPrompt` as raw text.
    *
    * `researchRequested` / `researchEvidence` / `researchWarnings` stay at their
    * defaults on this path — the evidence is prose already folded into
@@ -92,12 +94,17 @@ export type AssembledContext = {
    *
    * This flag exists purely so `hasResearchGrounding` still fires and the
    * final-user-turn reminder (`withResearchGrounding`) still gets appended.
-   * Without it, an orchestration lane's evidence lived ONLY in the system
-   * message — the exact shape measured insufficient on 2026-09-11 (see
-   * `research-grounding.constants.ts`) — and a small local model (kimi-k3,
-   * kimi-k2.7) confabulated a confident, zero-citation answer instead of
-   * grounding on it. The single-chat path never had this gap because
-   * `ContextAssemblyManager.assemble` sets `researchRequested` itself.
+   * Without it, an orchestration lane's or a lab mode's evidence lived ONLY in
+   * the system message — the exact shape measured insufficient on 2026-09-11
+   * (see `research-grounding.constants.ts`) — and a small local model
+   * (kimi-k3, kimi-k2.7) confabulated a confident, zero-citation answer
+   * instead of grounding on it. The single-chat path never had this gap
+   * because `ContextAssemblyManager.assemble` sets `researchRequested` itself.
+   *
+   * The 3 lanes set it by calling `injectResearchEvidenceIntoContext` directly
+   * before their fan-out; the 7 lab modes set it indirectly, by passing
+   * `researchEvidenceInstruction` to `ChatContextGatewayManager.build`, which
+   * calls the same function. See ADR-118.
    */
   researchGroundingInjected?: boolean;
   /**

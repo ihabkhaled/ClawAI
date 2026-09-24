@@ -129,10 +129,13 @@ export class BestOfNManager {
         surface: ChatSurface.BEST_OF_N,
         historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
         // The enricher's transcript used to be glued to the front of the raw
-        // prompt. It is an instruction about how to answer, so it belongs in
-        // the system prompt beside the user's own — appended, never replacing.
+        // prompt, then merged as a plain `personaInstruction` with no
+        // grounding flag. `researchEvidenceInstruction` routes it through
+        // `injectResearchEvidenceIntoContext`, which sets
+        // `researchGroundingInjected` so the final-user-turn reminder fires for
+        // every candidate.
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         // Attachments were not merely ignored by the orchestration modes: they
         // were not expressible. The DTOs carried no file field at all, so a
@@ -229,7 +232,9 @@ export class BestOfNManager {
     if (selection.modelSelectionMode === 'MANUAL_MODEL') {
       return Array.from({ length: n }, () => selection.actualModel);
     }
-    return models && models.length > 0 ? models : Array.from({ length: n }, () => DEFAULT_CANDIDATE_MODEL);
+    return models && models.length > 0
+      ? models
+      : Array.from({ length: n }, () => DEFAULT_CANDIDATE_MODEL);
   }
 
   private async runCandidates(
@@ -400,21 +405,23 @@ export class BestOfNManager {
   private async resolveSelection(
     dto: BestOfNMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider,
-          requestedModel: dto.requestedModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider,
+            requestedModel: dto.requestedModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          (await this.localModelSelection?.resolveDefaultModel()) ?? DEFAULT_CANDIDATE_MODEL,
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? null,
+          requestedModel: dto.requestedModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        (await this.localModelSelection?.resolveDefaultModel()) ?? DEFAULT_CANDIDATE_MODEL,
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? null,
-      requestedModel: dto.requestedModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

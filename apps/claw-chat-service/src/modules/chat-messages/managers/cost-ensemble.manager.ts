@@ -135,11 +135,13 @@ export class CostEnsembleManager {
         surface: ChatSurface.COST_ENSEMBLE,
         historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
         // The enricher's transcript used to be glued to the front of each
-        // candidate's raw prompt. It is an instruction about how to answer, so
-        // it belongs in the system prompt beside the user's own — appended,
-        // never replacing.
+        // candidate's raw prompt, then merged as a plain `personaInstruction`
+        // with no grounding flag. `researchEvidenceInstruction` routes it
+        // through `injectResearchEvidenceIntoContext`, which sets
+        // `researchGroundingInjected` so the final-user-turn reminder fires for
+        // the classifier and every tier candidate.
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
@@ -513,27 +515,31 @@ export class CostEnsembleManager {
   }
 
   private async resolveModel(): Promise<string> {
-    return DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO' ? DEFAULT_COST_ENSEMBLE_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO'
+      ? DEFAULT_COST_ENSEMBLE_MODEL
+      : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private async resolveSelection(
     dto: CostEnsembleMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider,
-          requestedModel: dto.requestedModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider,
+            requestedModel: dto.requestedModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          await this.resolveModel(),
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? null,
+          requestedModel: dto.requestedModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        await this.resolveModel(),
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? null,
-      requestedModel: dto.requestedModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

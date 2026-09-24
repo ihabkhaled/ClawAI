@@ -10,6 +10,7 @@ import {
   type ChatContextRequest,
 } from '../types/chat-context-gateway.types';
 import { type ThreadSettings } from '../types/execution.types';
+import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 import { ContextAssemblyManager } from './context-assembly.manager';
 
 /**
@@ -85,11 +86,18 @@ export class ChatContextGatewayManager {
         `crossThread=${String(context.crossThread?.selections.length ?? 0)}`,
     );
 
+    // Evidence first (prepended, matching the compare/consensus/escalation
+    // shape), then a persona (appended). Both are ADDED to the user's own
+    // instructions, never swapped for them — replacing the system prompt is
+    // precisely how the judge stopped knowing what the user had asked the
+    // model to be.
+    const withEvidence = injectResearchEvidenceIntoContext(
+      context,
+      request.researchEvidenceInstruction ?? '',
+    );
+
     return {
-      // A persona is ADDED to the user's own instructions, never swapped for
-      // them. Replacing the system prompt is precisely how the judge stopped
-      // knowing what the user had asked the model to be.
-      context: this.withPersona(context, request.personaInstruction),
+      context: this.withPersona(withEvidence, request.personaInstruction),
       thread,
       threadSettings,
       messages: windowed,

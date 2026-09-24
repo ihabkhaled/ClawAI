@@ -196,6 +196,36 @@ from the missing capability statement, and neither knew about the other.**
     (no web question asked) keeps the plain longest-response fallback. See
     [ADR-118](../docs/13-adr/adr-118-orchestration-lanes-share-grounding-not-just-evidence.md).
 
+15. **The 7 lab modes (repair, decompose, best-of-n, cost-ensemble, verifier,
+    pipeline, role-pack) get the same grounding defences too, through the
+    same shared function as item 14 — not a raw-string equivalent of it.**
+    All 7 route through `ChatContextGatewayManager.build()` +
+    `ModeExecutionGatewayManager.run()` → `ChatExecutionManager.callProvider`,
+    the identical chokepoint chat, compare, consensus and escalation use, so
+    the turn-based message list (`buildChatMessages`/`buildGeminiChatMessages`)
+    for a cloud provider — or `buildPromptString` for local Ollama, exactly as
+    a normal chat turn on Ollama gets — already exists for these modes; there
+    is no separate "flat orchestration prompt" shape left to give a
+    raw-string reminder to.
+
+    Each of the 7 calls `ResearchEnricherManager.enrichForOrchestration` and
+    must pass the result to `ChatContextGatewayManager.build()` as
+    `researchEvidenceInstruction`, never as `personaInstruction`. Only
+    `researchEvidenceInstruction` is routed through
+    `injectResearchEvidenceIntoContext` (item 14's function) inside `build()`,
+    which sets `researchGroundingInjected`; `personaInstruction` is a plain
+    concat with no grounding flag, reserved for mode-specific personas
+    (a repair rubric, a planner instruction, a role-pack member's persona, a
+    pipeline stage's instruction) that are layered on AFTER the evidence
+    merge, via each manager's own local `withPersona` — those are additions
+    to how the model should behave, not evidence it must not contradict, and
+    do not set the flag. Passing research evidence through
+    `personaInstruction` is the exact defect item 14 fixed for
+    compare/consensus/escalation, reintroduced in a different call shape: the
+    evidence text still reaches the model, but `hasResearchGrounding()`
+    returns `false` and item 11's final-user-turn reminder silently never
+    fires. See ADR-118's 2026-09-24 update.
+
 ## Prohibited patterns
 
 - Passing a prompt containing a URL to a search engine and calling the result
@@ -210,6 +240,11 @@ from the missing capability statement, and neither knew about the other.**
   `injectResearchEvidenceIntoContext` — the last time this existed (three
   copies, none setting the grounding flag), the final-user-turn reminder
   silently never reached compare, consensus or escalation.
+- Passing research evidence to `ChatContextGatewayManager.build()` as
+  `personaInstruction` instead of `researchEvidenceInstruction` — the last
+  time this existed (all 7 lab modes), the evidence text still reached the
+  model but `researchGroundingInjected` was never set and the
+  final-user-turn reminder silently never fired for any of them.
 - A synthesis/judge step that treats a zero-citation lane as equally
   trustworthy as a cited one when the run had web evidence.
 

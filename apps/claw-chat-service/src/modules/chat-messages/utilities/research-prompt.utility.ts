@@ -1,35 +1,24 @@
-// Shared helper for the 7 orchestration managers that pass raw prompt strings
-// to ollama-service /generate (answer-repair, task-decomposition, best-of-n,
-// cost-ensemble, verifier, pipeline, role-pack). Each manager calls
-// ResearchEnricherManager.enrichForOrchestration once and prepends the
-// resulting evidence block (already formatted with a Markdown header by
-// `buildEvidenceBlock` in the enricher) to whatever prompt it would otherwise
-// have used.
-//
-// A no-evidence prompt (empty `evidence`) is the safe no-op path so callers
-// can unconditionally call this helper without any if-guards.
-
-import { type AssembledContext } from '../types/context.types';
-
-export function prependResearchEvidence(prompt: string, evidence: string): string {
-  return evidence.length === 0 ? prompt : `${evidence}\n\n${prompt}`;
-}
-
-// Sibling helper for the 3 orchestration managers that pass a whole
-// `AssembledContext` to `ChatExecutionManager` instead of a raw prompt string
-// (compare/parallel, consensus, escalation). Each manager calls
-// `ResearchEnricherManager.enrich` / `enrichForOrchestration` ONCE before its
-// lane fan-out and merges the resulting evidence into `context.systemPrompt`
-// through this one function, so every lane of every one of those three modes
-// gets the identical merge behaviour and the identical grounding signal.
+// Shared helper for every orchestration manager that already gathers web
+// research evidence (via `ResearchEnricherManager.enrich` /
+// `enrichForOrchestration`) and needs it folded into an `AssembledContext`:
+// Compare/Parallel, Consensus and Escalation call this directly before their
+// lane fan-out; the 7 lab modes (Repair, Decompose, Best-of-N, Verifier,
+// Pipeline, Cost-Ensemble, Role Pack) reach it indirectly, by passing
+// `researchEvidenceInstruction` to `ChatContextGatewayManager.build`, which
+// calls this function itself. Either way every caller gets the identical
+// merge behaviour and the identical grounding signal.
 //
 // Previously each manager carried its own byte-identical copy of this six-line
-// merge and NONE of them set `researchGroundingInjected`, so
-// `ContextAssemblyManager.hasResearchGrounding` never fired for these three
-// modes and the final-user-turn reminder (`withResearchGrounding`) that
+// merge (or, for the 7 lab modes, merged the evidence as a plain
+// `personaInstruction`) and NONE of them set `researchGroundingInjected`, so
+// `ContextAssemblyManager.hasResearchGrounding` never fired for these modes
+// and the final-user-turn reminder (`withResearchGrounding`) that
 // `formatResearchBlock`'s own history required for small local models was
 // silently skipped on every orchestration lane. See the field's doc comment
 // in `context.types.ts`.
+
+import { type AssembledContext } from '../types/context.types';
+
 export function injectResearchEvidenceIntoContext(
   context: AssembledContext,
   evidence: string,

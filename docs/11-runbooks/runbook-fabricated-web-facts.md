@@ -71,11 +71,18 @@ final-user-turn reminder (`RESEARCH_GROUNDING_REMINDER`). It fires on
   something is stripping it between the manager and the provider call — check
   for a spread (`{ ...context, ... }`) elsewhere in the chain that drops the
   field.
-- The 7 raw-prompt managers (`prependResearchEvidence` callers) have NO
-  equivalent reminder — they never build an `AssembledContext` or a provider
-  message turn, only a flat string. This is a known, deliberate gap (see
-  ADR-118 Consequences) — do not "fix" it by trying to force
-  `hasResearchGrounding` into that path; it does not apply there.
+- The 7 lab modes (repair, decompose, best-of-n, cost-ensemble, verifier,
+  pipeline, role-pack — since ADR-118's 2026-09-24 update) set it the same
+  way, indirectly: they must pass `researchEvidenceInstruction` (never
+  `personaInstruction`) to `ChatContextGatewayManager.build()`, which calls
+  `injectResearchEvidenceIntoContext` internally. If evidence exists but the
+  reminder is missing on one of these 7, check that specific manager's
+  `chatContextGateway.build()` call for a `personaInstruction:
+enrichment.systemPrompt` regression — that field type-checks and compiles
+  fine but silently drops the grounding flag, exactly the bug this whole ADR
+  is about. The grep-based regression test
+  `managers/__tests__/lab-modes-research-grounding.spec.ts` exists to catch
+  this before it reaches a live run.
 
 ### 3. Check the evidence-block wording itself
 

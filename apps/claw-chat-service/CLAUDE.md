@@ -858,8 +858,8 @@ the synthesis step copied the fabrication verbatim.
   is now emitted by both evidence-block builders'
   always-present preamble — `ContextAssemblyManager.formatResearchBlock`
   (single chat) and `ResearchEnricherManager.buildEvidenceBlock` (every
-  orchestration mode, including the 7 raw-prompt managers via
-  `prependResearchEvidence`) — not only their empty-evidence branches.
+  orchestration mode, including the 7 lab modes) — not only their
+  empty-evidence branches.
 - **`ConsensusExecutionManager.selectBestResponse`** prefers the completed
   response with the most `[n]` citation markers over the longest response,
   but only when the run actually had research evidence
@@ -876,3 +876,39 @@ observed: length rewarding invention over honesty. See
 [ADR-118](../../docs/13-adr/adr-118-orchestration-lanes-share-grounding-not-just-evidence.md),
 [rule 41 §14](../../rules/41-web-evidence-truthfulness.md), and
 [the runbook](../../docs/11-runbooks/runbook-fabricated-web-facts.md).
+
+### The 7 lab modes closed the same gap (ADR-118, 2026-09-24 update)
+
+By the time of this update, a separate migration had already moved all 7 lab
+modes (repair, decompose, best-of-n, cost-ensemble, verifier, pipeline,
+role-pack) off raw-string posts to `/api/v1/ollama/generate` and onto
+`ChatContextGatewayManager.build()` + `ModeExecutionGatewayManager.run()` →
+`ChatExecutionManager.callProvider` — the same chokepoint chat, compare,
+consensus and escalation use. **All 10 orchestration surfaces now share one
+prompt-assembly path**, branching only on provider (turn-based messages for a
+cloud provider, `buildPromptString` for local Ollama — never on mode).
+
+That migration alone did not close ADR-118's gap: each of the 7 called
+`ResearchEnricherManager.enrichForOrchestration` and handed the result to
+`ChatContextGatewayManager.build()` as `personaInstruction` — the generic
+field that just concatenates into `systemPrompt` with no grounding flag, the
+exact pre-fix shape this ADR describes for compare/consensus/escalation.
+`hasResearchGrounding` returned `false` for all 7, and the final-user-turn
+reminder silently never fired.
+
+- **`ChatContextRequest.researchEvidenceInstruction`** is a new field,
+  separate from `personaInstruction`, that `ChatContextGatewayManager.build()`
+  routes through `injectResearchEvidenceIntoContext` before applying any
+  `personaInstruction` — so evidence is prepended and
+  `researchGroundingInjected` is set exactly as it is for the three lanes.
+- Each of the 7 managers now passes `researchEvidenceInstruction:
+enrichment.systemPrompt` at its one `chatContextGateway.build()` call site.
+  Their mode-specific personas (the repair rubric, the planner instruction,
+  each role-pack member's persona, each pipeline stage's instruction) are
+  unchanged — still applied AFTER the evidence merge, via each manager's own
+  local `withPersona`.
+- The now-dead `prependResearchEvidence(prompt, evidence)` string helper was
+  removed from `research-prompt.utility.ts` along with its test — nothing
+  called it once all 7 moved off raw strings.
+
+See rule 41 item 15 and the `## Update — 2026-09-24` section of ADR-118.

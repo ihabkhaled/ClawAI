@@ -125,11 +125,13 @@ export class VerifierManager {
         surface: ChatSurface.VERIFY,
         historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
         // The enricher's transcript used to be glued to the front of the draft
-        // and repair prompts, and never reached the verifier at all. It is an
-        // instruction about how to answer, so it belongs in the system prompt
-        // beside the user's own — appended, never replacing.
+        // and repair prompts, and never reached the verifier at all.
+        // `researchEvidenceInstruction` routes it through
+        // `injectResearchEvidenceIntoContext`, which sets
+        // `researchGroundingInjected` so the final-user-turn reminder fires for
+        // the draft, every verify pass and the repair, all sharing this bundle.
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
@@ -536,25 +538,29 @@ Return ONLY the improved response. Do not explain changes.`;
     if (model !== 'AUTO') {
       return model;
     }
-    return DEFAULT_VERIFIER_MODEL !== 'AUTO' ? DEFAULT_VERIFIER_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_VERIFIER_MODEL !== 'AUTO'
+      ? DEFAULT_VERIFIER_MODEL
+      : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private async resolveSelection(dto: VerifyMessageDto): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider,
-          requestedModel: dto.requestedModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider,
+            requestedModel: dto.requestedModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          await this.resolveModel(DEFAULT_VERIFIER_MODEL),
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? null,
+          requestedModel: dto.requestedModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        await this.resolveModel(DEFAULT_VERIFIER_MODEL),
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? null,
-      requestedModel: dto.requestedModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

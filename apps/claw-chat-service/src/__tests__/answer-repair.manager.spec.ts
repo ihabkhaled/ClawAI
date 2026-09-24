@@ -291,7 +291,7 @@ describe('AnswerRepairManager', () => {
       expect(call.bundle.context.systemPrompt).toContain('FORMAT');
     });
 
-    it('passes the research transcript as a persona instruction, not glued to the prompt', async () => {
+    it('passes the research transcript as researchEvidenceInstruction, not glued to the prompt', async () => {
       mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
         transcript: { steps: [] },
         systemPrompt: 'Evidence: refunds are 45 days.',
@@ -309,8 +309,14 @@ describe('AnswerRepairManager', () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
+      // Deliberate change (ADR-118, 2026-09-24 update): the pre-fix shape
+      // merged research evidence in via the generic `personaInstruction`
+      // field, which never set `researchGroundingInjected` and silently
+      // dropped the final-user-turn grounding reminder. It must now go
+      // through `researchEvidenceInstruction`, the only field routed through
+      // `injectResearchEvidenceIntoContext`.
       expect(mockChatContextGateway.build).toHaveBeenCalledWith(
-        expect.objectContaining({ personaInstruction: 'Evidence: refunds are 45 days.' }),
+        expect.objectContaining({ researchEvidenceInstruction: 'Evidence: refunds are 45 days.' }),
       );
       const call = (mockModeExecutionGateway.run as any).mock.calls[0]?.[0];
       expect(call.prompt).toBe('Thirty days.');

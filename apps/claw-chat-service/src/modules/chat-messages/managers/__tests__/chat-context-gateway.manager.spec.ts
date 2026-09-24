@@ -226,6 +226,45 @@ describe('ChatContextGatewayManager', () => {
     expect(bundle.context.systemPrompt).toBe('You are terse.\n\nYou are a security reviewer.');
   });
 
+  it('prepends research evidence ahead of the persona and the thread prompt, and sets the grounding flag', async () => {
+    // The 7 lab modes (repair, decompose, best-of-n, cost-ensemble, verifier,
+    // pipeline, role-pack) call ResearchEnricherManager.enrichForOrchestration
+    // and must pass the result here as `researchEvidenceInstruction`, not
+    // `personaInstruction` — only this field sets `researchGroundingInjected`,
+    // which is what makes ContextAssemblyManager append the final-user-turn
+    // reminder. See ADR-118 (2026-09-24 update) and rule 41 item 15.
+    const { manager } = harness({ messages: [message('m1', 'USER')] });
+
+    const bundle = await manager.build({
+      userId: 'user-1',
+      threadId: 'thread-1',
+      surface: ChatSurface.VERIFY,
+      researchEvidenceInstruction: '## Web research evidence\n[1] example.com',
+      personaInstruction: 'You are a strict fact-checker.',
+    });
+
+    expect(bundle.context.systemPrompt).toBe(
+      '## Web research evidence\n[1] example.com\n\nYou are terse.\n\nYou are a strict fact-checker.',
+    );
+    expect(bundle.context.researchGroundingInjected).toBe(true);
+  });
+
+  it('does not set the grounding flag when there is no research evidence to inject', async () => {
+    const { manager } = harness({ messages: [message('m1', 'USER')] });
+
+    const bundle = await manager.build({
+      userId: 'user-1',
+      threadId: 'thread-1',
+      surface: ChatSurface.REPAIR,
+      personaInstruction: 'You are a precision answer repair assistant.',
+    });
+
+    expect(bundle.context.researchGroundingInjected).toBeUndefined();
+    expect(bundle.context.systemPrompt).toBe(
+      'You are terse.\n\nYou are a precision answer repair assistant.',
+    );
+  });
+
   it('serves a surface with no thread yet rather than refusing', async () => {
     const { manager, calls } = harness({ thread: null });
 

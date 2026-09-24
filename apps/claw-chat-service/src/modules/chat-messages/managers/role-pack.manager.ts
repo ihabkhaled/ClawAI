@@ -119,11 +119,14 @@ export class RolePackManager {
         surface: ChatSurface.ROLE_PACK,
         historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
         // The enricher's transcript used to be glued to the front of each
-        // member's raw prompt by `prependResearchEvidence`. It is an
-        // instruction about how to answer, so it belongs in the system prompt
-        // beside the user's own — appended, never replacing.
+        // member's raw prompt by `prependResearchEvidence`, then merged as a
+        // plain `personaInstruction` with no grounding flag.
+        // `researchEvidenceInstruction` routes it through
+        // `injectResearchEvidenceIntoContext`, which sets
+        // `researchGroundingInjected` so the final-user-turn reminder fires for
+        // every member of the pack.
         ...(enrichment.systemPrompt.length > 0
-          ? { personaInstruction: enrichment.systemPrompt }
+          ? { researchEvidenceInstruction: enrichment.systemPrompt }
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
@@ -346,10 +349,7 @@ export class RolePackManager {
     members: RoleMember[],
     selection: AdvancedModelSelectionResolution,
   ): Promise<RoleMember[]> {
-    if (selection.modelSelectionMode === 'MANUAL_MODEL') {
-      return members.map((member) => ({ ...member, model: selection.actualModel }));
-    }
-    return Promise.all(
+    return selection.modelSelectionMode === 'MANUAL_MODEL' ? members.map((member) => ({ ...member, model: selection.actualModel })) : Promise.all(
       members.map(async (member) => ({
         ...member,
         model: await this.resolveModel(member.model),
@@ -403,17 +403,13 @@ export class RolePackManager {
     if (model && model !== 'AUTO') {
       return model;
     }
-    if (DEFAULT_ROLE_PACK_MODEL !== 'AUTO') {
-      return DEFAULT_ROLE_PACK_MODEL;
-    }
-    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_ROLE_PACK_MODEL !== 'AUTO' ? DEFAULT_ROLE_PACK_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveSelection(
     dto: RolePackMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    if (this.advancedModelSelectionService) {
-      return this.advancedModelSelectionService.resolveSelection(
+    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
         {
           modelSelectionMode: dto.modelSelectionMode,
           requestedProvider: dto.requestedProvider,
@@ -422,10 +418,7 @@ export class RolePackManager {
           selectedModelSource: dto.selectedModelSource,
         },
         await this.resolveModel(),
-      );
-    }
-
-    return this.buildAutoSelection({
+      ) : this.buildAutoSelection({
       requestedProvider: dto.requestedProvider ?? null,
       requestedModel: dto.requestedModel ?? null,
       requestedDisplayName: dto.requestedDisplayName,

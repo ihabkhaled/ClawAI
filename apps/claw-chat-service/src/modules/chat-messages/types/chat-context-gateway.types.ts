@@ -48,6 +48,24 @@ export type ChatContextRequest = {
   personaInstruction?: string;
 
   /**
+   * Web-research evidence a caller already gathered (via
+   * `ResearchEnricherManager.enrichForOrchestration`) and wants folded into
+   * this context — the 7 lab modes (Repair, Decompose, Best-of-N, Verifier,
+   * Pipeline, Cost-Ensemble, Role Pack).
+   *
+   * Deliberately a SEPARATE field from `personaInstruction`, even though both
+   * end up merged into `systemPrompt`: this one goes through
+   * `injectResearchEvidenceIntoContext`, which also sets
+   * `researchGroundingInjected`, so `hasResearchGrounding` fires and the
+   * final-user-turn reminder (`withResearchGrounding`) gets appended — the
+   * same fix `d0eb97f10` gave Compare/Consensus/Escalation. Routing this
+   * through `personaInstruction` (the pre-fix shape) merged the evidence text
+   * in but never set the flag, so the reminder silently never fired for any
+   * lab mode. See `AssembledContext.researchGroundingInjected`.
+   */
+  researchEvidenceInstruction?: string;
+
+  /**
    * What this run is actually about, when that is not the last user turn — a
    * decomposed sub-task, or a verifier checking a specific claim.
    */

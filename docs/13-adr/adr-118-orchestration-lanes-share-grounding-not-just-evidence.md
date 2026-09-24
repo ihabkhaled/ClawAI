@@ -124,16 +124,62 @@ itself was unreachable or returned unusable JSON.
 - Compare, consensus and escalation lanes now receive the identical
   proximity-reminder defence single chat has had since 2026-09-11, through
   the same shared code path, with zero new per-mode logic to keep in sync.
-- The seven remaining orchestration managers that pass raw prompt strings
-  (`prependResearchEvidence` callers: answer-repair, task-decomposition,
-  best-of-n, cost-ensemble, verifier, pipeline, role-pack) get the stronger
-  "do not invent" wording automatically, because it lives in the one shared
-  `buildEvidenceBlock`. They do NOT get the final-user-turn reminder — they
-  never construct an `AssembledContext`/provider-message turn at all, only a
-  flat prompt string sent straight to `ollama-service /generate`. Deferred:
-  giving those seven a raw-string equivalent of the reminder is a separate,
-  larger change (it would mean restructuring how each one builds its prompt)
-  and out of scope for this bounded fix.
+- The seven remaining lab modes (answer-repair, task-decomposition, best-of-n,
+  cost-ensemble, verifier, pipeline, role-pack) get the stronger "do not
+  invent" wording automatically, because it lives in the one shared
+  `buildEvidenceBlock`.
+
+## Update — 2026-09-24: the 7 lab modes migrated too, deferral closed
+
+The deferral above ("they never construct an `AssembledContext`/
+provider-message turn at all, only a flat prompt string") was already stale
+by the time this update landed: a separate, unrelated migration had, in the
+interim, moved all 7 lab modes off `buildPromptString`/raw-string posts to
+`/api/v1/ollama/generate` and onto `ChatContextGatewayManager.build()` +
+`ModeExecutionGatewayManager.run()` → `ChatExecutionManager.callProvider` —
+the exact same chokepoint chat, compare, consensus and escalation use. For a
+cloud provider that means `ContextAssemblyManager.buildChatMessages` /
+`buildGeminiChatMessages` (the turn-based path); for local Ollama it is
+`buildPromptString`, exactly as for a normal chat turn on Ollama — that
+per-provider branch inside `callProvider` was never mode-specific and stays
+untouched. **All 10 orchestration surfaces now share one prompt-assembly
+path, branching only on provider, never on mode.**
+
+That migration did NOT close this ADR's gap, though: each of the 7 modes
+called `ResearchEnricherManager.enrichForOrchestration` and passed the result
+as `personaInstruction` to `ChatContextGatewayManager.build()` —
+`personaInstruction` just concatenates into `systemPrompt` with no grounding
+flag, the exact pre-fix shape this ADR describes for compare/consensus/
+escalation. `hasResearchGrounding` returned `false` for all 7, and the
+final-user-turn reminder silently never fired, even though the turn-based
+message list existed and the reminder had somewhere to attach.
+
+Fix, landed with this update: `ChatContextRequest` gained a
+`researchEvidenceInstruction` field, separate from `personaInstruction`
+precisely so it can be routed through the one shared
+`injectResearchEvidenceIntoContext` (this ADR's decision 1) instead of the
+plain-concat helper. `ChatContextGatewayManager.build()` now calls
+`injectResearchEvidenceIntoContext(context, request.researchEvidenceInstruction ?? '')`
+before applying any `personaInstruction`, so evidence is prepended and
+`researchGroundingInjected` is set exactly as it is for the three lanes. Each
+of the 7 managers now passes `researchEvidenceInstruction:
+enrichment.systemPrompt` instead of `personaInstruction: enrichment.systemPrompt`
+at its one `chatContextGateway.build()` call site; nothing else about their
+mode-specific personas (repair rubric, planner instruction, role-pack
+member persona, pipeline stage instruction — all still applied via each
+manager's own local `withPersona`, layered on AFTER the evidence merge)
+changed.
+
+The now-dead `prependResearchEvidence(prompt, evidence)` string helper
+(never called by any of the 7 once they moved off raw strings) was removed
+from `research-prompt.utility.ts` along with its test, since nothing in the
+codebase still called it — the plain string-concat shape it existed for no
+longer exists anywhere in this module.
+
+**All 10 modes now share both halves of ADR-118's fix**: the shared merge
+function that sets `researchGroundingInjected`, and the turn-based message
+path that reminder needs to attach to. See rule 41 item 15.
+
 - Consensus's fabrication-guard is a one-instruction, citation-counting
   heuristic, not a disagreement-detection system. It does not fact-check
   content; it only stops the synthesis step from rewarding length over
@@ -177,6 +223,12 @@ itself was unreachable or returned unusable JSON.
 - `apps/claw-chat-service/src/modules/chat-messages/constants/research-grounding.constants.ts`
 - `apps/claw-chat-service/src/modules/chat-messages/types/context.types.ts`
   (`AssembledContext.researchGroundingInjected`)
+- `apps/claw-chat-service/src/modules/chat-messages/types/chat-context-gateway.types.ts`
+  (`ChatContextRequest.researchEvidenceInstruction`)
+- `apps/claw-chat-service/src/modules/chat-messages/managers/chat-context-gateway.manager.ts`
+  (`build`)
+- `apps/claw-chat-service/src/modules/chat-messages/managers/mode-execution-gateway.manager.ts`
+  (the shared chokepoint the 7 lab modes route through)
 - [rule 41 — Web Evidence Truthfulness](../../rules/41-web-evidence-truthfulness.md), §§5 and 11
   (the two single-chat defences this ADR extends to orchestration)
 - [ADR-116](adr-116-comparative-judge-for-compare.md) — the last time Compare's
