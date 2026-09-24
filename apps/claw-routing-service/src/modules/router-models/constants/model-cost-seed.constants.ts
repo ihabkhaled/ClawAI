@@ -4,8 +4,8 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// Identity of the first-install price bootstrap. Bumping the version re-runs
 /// the seed; changing the payload without bumping it is a checksum mismatch,
 /// not a silent overwrite.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v2';
-export const MODEL_COST_SEED_VERSION = 2;
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v3';
+export const MODEL_COST_SEED_VERSION = 3;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -338,5 +338,152 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.PREMIUM,
+  }),
+
+  // ── Connector presets batch 2 (ADR-116/117) ─────────────────────────────
+  //
+  // Checked 2026-09-24, live via WebFetch against each provider's own pricing
+  // page — cited per row. NOT copied from a preset or a changelog. A provider
+  // in CONNECTOR_PRESETS with NO row here (Groq, Cerebras, Qwen, OpenRouter,
+  // Vercel AI Gateway) is deliberately left unpriced rather than guessed:
+  //   - Groq (groq.com/pricing, console.groq.com/pricing): both pages render
+  //     their price table client-side; no number could be verified.
+  //   - Cerebras (cerebras.ai/pricing, inference-docs.cerebras.ai/support/pricing):
+  //     same — page renders the table client-side.
+  //   - Qwen/Alibaba Model Studio (alibabacloud.com/help/en/model-studio/models):
+  //     lists models, no price figures on the fetched page.
+  //   - OpenRouter and Vercel AI Gateway are AGGREGATORS/pass-throughs: they
+  //     charge the underlying provider's own list price per model (Vercel:
+  //     "AI Gateway charges no markup and no platform fee on tokens", per
+  //     vercel.com/docs/ai-gateway/pricing, 2026-09-24). There is no single
+  //     per-aggregator rate to seed; each underlying model needs its own row,
+  //     which is exactly what `findRate` already falls through to null for.
+  // Per assumption A6, an unpriced model on a metered provider is BLOCKED, not
+  // free — leaving these out is the safe default, not an oversight.
+  Object.freeze({
+    // mistral.ai/pricing, 2026-09-24: "Mistral Large costs $0.5 /M tokens in
+    // and $1.5 /M tokens out."
+    provider: 'MISTRAL',
+    modelKey: 'mistral-large-latest',
+    inputPerMillionMicroUsd: 500_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 1_500_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // together.ai/pricing, 2026-09-24: Llama 3.3 70B serverless, $1.04/M
+    // tokens in and out.
+    provider: 'TOGETHER',
+    modelKey: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    inputPerMillionMicroUsd: 1_040_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 1_040_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // docs.fireworks.ai/serverless/pricing, 2026-09-24: unlisted models over
+    // 16B parameters are billed a flat $0.90/M tokens in and out; 70B falls in
+    // that bucket.
+    provider: 'FIREWORKS',
+    modelKey: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
+    inputPerMillionMicroUsd: 900_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 900_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // deepinfra.com/pricing, 2026-09-24: meta-llama/Llama-3.3-70B-Instruct-Turbo
+    // is $0.10/M input, $0.32/M output.
+    provider: 'DEEPINFRA',
+    modelKey: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    inputPerMillionMicroUsd: 100_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 320_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+  }),
+  Object.freeze({
+    // cloud.sambanova.ai/plans/pricing, 2026-09-24: Meta-Llama-3.3-70B-Instruct
+    // is $0.60/M input, $1.20/M output.
+    provider: 'SAMBANOVA',
+    modelKey: 'Meta-Llama-3.3-70B-Instruct',
+    inputPerMillionMicroUsd: 600_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 1_200_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // developers.cloudflare.com/workers-ai/platform/pricing, 2026-09-24:
+    // @cf/meta/llama-3.3-70b-instruct-fp8-fast is $0.293/M input tokens (26,668
+    // neurons), $2.253/M output tokens (204,805 neurons) at $0.011/1,000 neurons.
+    provider: 'CLOUDFLARE',
+    modelKey: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+    inputPerMillionMicroUsd: 293_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 2_253_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // docs.perplexity.ai/getting-started/pricing, 2026-09-24: "sonar" base
+    // model is $1.00/M tokens in and out (excludes the separate per-request
+    // search fee, which is not a token rate and cannot be expressed here).
+    provider: 'PERPLEXITY',
+    modelKey: 'sonar',
+    inputPerMillionMicroUsd: 1_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 1_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // cohere.com/pricing, 2026-09-24: Command R+ 08-2024 is $2.50/M input,
+    // $10.00/M output — Cohere's most capable Command model.
+    provider: 'COHERE',
+    modelKey: 'command-r-plus-08-2024',
+    inputPerMillionMicroUsd: 2_500_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 10_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+  }),
+  Object.freeze({
+    // docs.z.ai/guides/overview/pricing, 2026-09-24: GLM-4.6 is $0.60/M
+    // input, $2.20/M output.
+    provider: 'ZAI',
+    modelKey: 'glm-4.6',
+    inputPerMillionMicroUsd: 600_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 2_200_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+  }),
+  Object.freeze({
+    // platform.kimi.ai/docs/pricing/chat (Moonshot's pricing docs redirect
+    // here), 2026-09-24: kimi-k2.6 is $0.16/M cache-hit input, $0.95/M
+    // cache-miss input, $4.00/M output. cachedInput below is the cache-HIT
+    // rate; the seeded input rate is the cache-MISS (peak) rate so the wallet
+    // never under-reserves.
+    provider: 'MOONSHOT',
+    modelKey: 'kimi-k2.6',
+    inputPerMillionMicroUsd: 950_000,
+    cachedInputPerMillionMicroUsd: 160_000,
+    outputPerMillionMicroUsd: 4_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
   }),
 ]);

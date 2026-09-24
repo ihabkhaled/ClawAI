@@ -88,6 +88,50 @@ getExecutionConfig`, not by every caller. A preset's `{ACCOUNT_ID}`
   `PROVIDER_BASE_URLS`, routing-service's provider tables, and the frontend
   searchable combobox are follow-up batches against the same registry.
 
+## Batch 2 addendum (2026-09-24) — chat-service and routing-service wiring
+
+Batch 1's "one enum value in three places" undercounted by one: `RouterProvider`
+in claw-routing-service is a _fourth_ copy (see the comment on
+`ConnectorProvider` in `packages/shared-types/src/enums/connector-provider.enum.ts`),
+and it had NOT been migrated — a discovered OpenRouter/Groq/etc. model had no
+`RouterProvider` value to be persisted as, so it was silently undiscoverable.
+Batch 2 closes that gap:
+
+- `apps/claw-routing-service/prisma/schema.prisma` `RouterProvider` gained the
+  same 15 values as `ConnectorProvider`, migration
+  `20260924120000_add_openai_compatible_router_providers` (additive
+  `ALTER TYPE ... ADD VALUE`, same shape as connector-service's
+  `20260923120000_add_openai_compatible_presets`).
+- `CONNECTOR_PROVIDER_TO_ROUTER_PROVIDER` (`model-discovery.constants.ts`)
+  maps each preset key to the RouterProvider of the same name — 1:1, no
+  translation needed, same as every existing entry except OLLAMA→OLLAMA_CLOUD.
+- `KNOWN_JUDGE_PROVIDERS` / `PROVIDER_BASE_URLS`
+  (`apps/claw-chat-service/src/common/constants/execution.constants.ts`) are
+  now DERIVED from `CONNECTOR_PRESETS` (spread + `Object.fromEntries`) instead
+  of being hand-copied, closing the exact duplication risk this ADR exists to
+  prevent.
+- `MODEL_COST_SEED_ENTRIES` gained a verified-price row for 10 of the 15
+  providers (Mistral, Together, Fireworks, DeepInfra, SambaNova, Cloudflare,
+  Perplexity, Cohere, Z.ai, Moonshot); Groq, Cerebras and Qwen were left
+  unpriced because their pricing pages render the price table client-side and
+  no number could be verified via fetch, and OpenRouter/Vercel AI Gateway were
+  left unpriced on purpose — both are pass-through aggregators billing the
+  underlying model's own list price, so there is no single per-aggregator rate
+  to seed. Per assumption A6 (`model-cost-seed.constants.ts`), all five stay
+  BLOCKED on a PAYG request rather than being treated as free.
+
+**Deviation, stated rather than silently applied**: the pack asked that
+"free-tier providers are Free-plan routing-eligible only if the admin opts
+in." No existing gate does this anywhere in the codebase today —
+`ConnectorPreset.hasFreeTier` (batch 1) is set on 7 of the 15 presets but is
+not read by any eligibility check in routing-service, chat-service or
+auth-service; there is no PlanTier-scoped provider allowlist to extend. Batch
+2 did not invent a new admin-toggle subsystem for this — that is a real
+product decision (an admin UI, a config row, an ADR of its own) out of scope
+for a backend-wiring batch. Today every free-tier preset is routing-eligible
+exactly like a paid one once an administrator connects it, for every plan
+tier. Tracked as follow-up work, not shipped as a silent gap.
+
 ## Related
 
 - [`skills/add-an-openai-compatible-provider.md`](../../skills/add-an-openai-compatible-provider.md)

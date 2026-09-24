@@ -185,6 +185,24 @@ enum RouterProvider {
   OLLAMA
   OLLAMA_CLOUD
   LLAMACPP
+  // Connector presets batch 2 (ADR-116/117) — OpenAI-compatible providers
+  // whose base URL, links and model-list shape live in CONNECTOR_PRESETS
+  // (@claw/shared-utilities). Mirrors ConnectorProvider in claw-connector-service.
+  OPENROUTER
+  GROQ
+  CEREBRAS
+  SAMBANOVA
+  DEEPINFRA
+  FIREWORKS
+  TOGETHER
+  MISTRAL
+  MOONSHOT
+  ZAI
+  QWEN
+  CLOUDFLARE
+  VERCEL_AI_GATEWAY
+  PERPLEXITY
+  COHERE
 }
 
 enum DeploymentType {

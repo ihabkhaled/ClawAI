@@ -35,8 +35,7 @@ vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   buildInterServiceAuthHeader: vi.fn(() => 'Service test-token'),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    if (!record) return undefined;
-    return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
+    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
 }));
 
@@ -1787,6 +1786,67 @@ describe('ChatExecutionManager', () => {
       expect(lastMessage?.content).toContain('maximum allowed research budget');
       // 10 (chat) + 10 (web_search) + 1 (wrap-up) = 21 calls
       expect(httpRequest).toHaveBeenCalledTimes(21);
+    });
+  });
+
+  // Batch 2 (connector presets, ADR-116/117): every preset in
+  // CONNECTOR_PRESETS dispatches through the same generic OpenAI-compatible
+  // cloud path as OPENAI/DEEPSEEK/GROK — resolveProviderConfig() resolves the
+  // base URL, callProvider() builds `${baseUrl}/chat/completions` with a
+  // `Bearer` auth header. OpenRouter stands in for the other fourteen: it
+  // shares the exact same generic dispatch code, so one representative
+  // preset proves the wiring for all of them (the constants-wiring spec
+  // proves every preset key/URL is registered).
+  describe('connector-preset provider dispatch (OpenRouter, representative)', () => {
+    it('resolves OpenRouter base URL, sends Bearer auth, and returns the streamed-off completion', async () => {
+      const context = makeContext('summarize the incident');
+
+      httpRequest
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            provider: 'OPENROUTER',
+            apiKey: 'or-test-key',
+            baseUrl: 'https://openrouter.ai/api/v1',
+          },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            id: 'gen-1',
+            choices: [
+              {
+                index: 0,
+                message: { role: 'assistant', content: 'Incident summary.' },
+                finish_reason: 'stop',
+              },
+            ],
+            usage: { prompt_tokens: 14, completion_tokens: 6, total_tokens: 20 },
+          },
+        });
+
+      const result = await manager.callProvider(
+        'OPENROUTER',
+        'openrouter/some-model',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'AUTO',
+      );
+
+      expect(result.content).toBe('Incident summary.');
+
+      const completionCall = httpRequest.mock.calls[1]?.[0] as {
+        url: string;
+        headers: Record<string, string>;
+        body: { messages: Array<{ role: string; content: string }> };
+      };
+      expect(completionCall.url).toBe('https://openrouter.ai/api/v1/chat/completions');
+      expect(completionCall.headers.Authorization).toBe('Bearer or-test-key');
+      expect(completionCall.body.messages.length).toBeGreaterThan(0);
     });
   });
 });

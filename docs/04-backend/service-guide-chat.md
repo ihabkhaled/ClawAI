@@ -204,6 +204,34 @@ sentence. Anything unrecognised stays a toast rather than being guessed at.
 - **JudgeRefereeManager** -- runs the Critic → Judge quality pipeline on top of a single-answer response (chat, consensus, escalation — see [Judge + Critic Pipeline](#judge--critic-pipeline) below)
 - **CompareJudgeManager** -- Compare's judge: ONE comparative call that ranks every completed lane together (ADR-116 — see [Compare's Comparative Judge](#compares-comparative-judge-adr-114) below)
 
+## OpenAI-compatible connector presets (ADR-117, batch 2)
+
+`KNOWN_JUDGE_PROVIDERS` and `PROVIDER_BASE_URLS`
+(`common/constants/execution.constants.ts`) admit the 15 presets from
+`CONNECTOR_PRESETS` (`@claw/shared-utilities`) — OpenRouter, Groq, Cerebras,
+SambaNova, DeepInfra, Fireworks, Together, Mistral, Moonshot, Z.ai, Qwen,
+Cloudflare Workers AI, Vercel AI Gateway, Perplexity, Cohere — alongside the
+eight bespoke-adapter providers. Both constants are DERIVED from
+`CONNECTOR_PRESETS` (`preset.key`, `preset.defaultBaseUrl`), never
+hand-copied — that duplication is the exact bug ADR-117 exists to prevent.
+
+No new dispatch code was needed: `callCloudProvider()` already builds
+`${baseUrl}/chat/completions` with a `Bearer ${apiKey}` header for any
+provider that isn't OPENAI/ANTHROPIC/GEMINI/OLLAMA/LLAMACPP's bespoke
+branches, and every one of these 15 presets is OpenAI-compatible by
+definition. `resolveProviderConfig()` resolves `baseUrl` from the connector
+row first, falling back to `PROVIDER_BASE_URLS` only when the row has none.
+Cloudflare's `PROVIDER_BASE_URLS` entry still carries the unresolved
+`{ACCOUNT_ID}` placeholder — it is a fallback of last resort; the real,
+resolved base URL always comes from the connector row via
+`ConnectorsManager.getExecutionConfig`.
+
+Test: `common/constants/__tests__/connector-preset-provider-wiring.spec.ts`
+(every preset registered, sourced from the registry) and
+`modules/chat-messages/__tests__/chat-execution.manager.spec.ts` →
+"connector-preset provider dispatch (OpenRouter, representative)" (base URL,
+Bearer auth, response parsing through the real dispatch path).
+
 ---
 
 ## Judge + Critic Pipeline

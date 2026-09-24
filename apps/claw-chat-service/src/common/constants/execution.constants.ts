@@ -1,3 +1,5 @@
+import { CONNECTOR_PRESETS } from '@claw/shared-utilities';
+
 export const OLLAMA_PROVIDER = 'local-ollama';
 
 export const OLLAMA_CONNECTOR_PROVIDER = 'OLLAMA';
@@ -85,6 +87,10 @@ export const LOCAL_ONLY_ROUTING_MODES = new Set(['LOCAL_ONLY', 'PRIVACY_FIRST'])
 // recognize whether the leading segment is a real provider (so it is routed
 // through callProvider) vs. part of the model name (e.g. "gpt-4o:latest").
 // All compared case-insensitively against the upper-cased segment.
+// The bespoke-adapter providers, plus every OpenAI-compatible preset from
+// CONNECTOR_PRESETS (@claw/shared-utilities — the single source of truth,
+// ADR-117). Never hand-copy a preset's key here: that duplication is the
+// exact bug the registry exists to prevent.
 export const KNOWN_JUDGE_PROVIDERS = new Set([
   'OPENAI',
   'ANTHROPIC',
@@ -96,8 +102,14 @@ export const KNOWN_JUDGE_PROVIDERS = new Set([
   LLAMACPP_CONNECTOR_PROVIDER,
   OLLAMA_PROVIDER,
   LLAMACPP_PROVIDER,
+  ...CONNECTOR_PRESETS.map((preset) => preset.key as string),
 ]);
 
+// Base URLs for the bespoke-adapter providers are literal (they have no
+// CONNECTOR_PRESETS entry). Every OpenAI-compatible preset's base URL is
+// derived from CONNECTOR_PRESETS.defaultBaseUrl — never hand-duplicated here
+// (ADR-117; `tools/__tests__/connector-preset-single-source.test.mjs` guards
+// this).
 export const PROVIDER_BASE_URLS: Record<string, string> = {
   OPENAI: 'https://api.openai.com/v1',
   GEMINI: 'https://generativelanguage.googleapis.com/v1beta/openai',
@@ -108,6 +120,7 @@ export const PROVIDER_BASE_URLS: Record<string, string> = {
   // LLAMACPP entries are reached via callLlamacpp() using LLAMACPP_SERVICE_URL,
   // not via the cloud provider base-URL flow. Listed here for documentation symmetry.
   LLAMACPP: 'http://llamacpp-service:4017/api/v1/v1',
+  ...Object.fromEntries(CONNECTOR_PRESETS.map((preset) => [preset.key, preset.defaultBaseUrl])),
 };
 
 /**

@@ -164,18 +164,30 @@ seeder does not publish: there is nothing cached to bust.
 
 ## Model cost prices (`ModelCostVersion`)
 
-`ModelCostSeedService` seeds 16 public LIST prices on first boot (OpenAI ×6,
-Anthropic ×3, Gemini ×3, DeepSeek ×2, Grok ×2) from
-`router-models/constants/model-cost-seed.constants.ts`. **This is
+`ModelCostSeedService` seeds public LIST prices on first boot from
+`router-models/constants/model-cost-seed.constants.ts` — the original 16
+(OpenAI ×6, Anthropic ×3, Gemini ×3, DeepSeek ×2, Grok ×2) plus the image-gen
+rows, plus (batch 2, ADR-117) one verified row each for 10 of the 15
+connector-preset providers: Mistral, Together, Fireworks, DeepInfra,
+SambaNova, Cloudflare, Perplexity, Cohere, Z.ai, Moonshot. **This is
 launch-blocking**: PAYG treats an unpriced model on a metered provider as
 blocked rather than free, so an empty table refused every paid request on day
 one.
 
+Groq, Cerebras and Qwen have NO seed row — their pricing pages render the
+price table client-side and no number could be verified by fetch at the time
+of writing. OpenRouter and Vercel AI Gateway have no seed row on purpose: both
+are pass-through aggregators billing the underlying model's own list price,
+so there is no single per-aggregator rate — each underlying model needs its
+own row, which `findRate` already falls through to for an unseeded key. All
+five stay BLOCKED on a PAYG request, never treated as free.
+
 Run-once mechanism is the same as `DeploymentSeedService` — transaction-scoped
 advisory lock `740_040_003`, a `SeedExecution` ledger row on
-(`model-cost-list-prices-2026-v1`, version), and a checksum. Editing a price
+(`model-cost-list-prices-2026-v3`, version), and a checksum. Editing a price
 without bumping the version is a `CHECKSUM_MISMATCH` warning that writes
-nothing.
+nothing. Batch 2 bumped the seed name/version from v2 to v3 so the new rows
+apply to installs that already ran v2.
 
 Seeded rows are `source: SEED, confidence: ESTIMATED, isAdminOverride: false`,
 so an automated sync may refresh them later. The seed only ever **fills a gap** —
@@ -183,6 +195,33 @@ a model with any price history is skipped, which protects an administrator
 override and keeps the version counter from colliding on a retired v1. The
 prices are LIST prices off public cards, not contracts: an operator should verify
 them against their own invoices.
+
+## Connector presets batch 2 — RouterProvider, discovery, eligibility (ADR-117)
+
+Connector-service's `ConnectorProvider` gained 15 OpenAI-compatible providers
+in batch 1, but `RouterProvider` — the Prisma enum model discovery writes
+deployment rows under — was not migrated with it, so a discovered
+OpenRouter/Groq/etc. model had no enum value to persist as. Batch 2 closes
+this:
+
+- `RouterProvider` gained the same 15 values (migration
+  `20260924120000_add_openai_compatible_router_providers`, additive
+  `ALTER TYPE ... ADD VALUE`).
+- `CONNECTOR_PROVIDER_TO_ROUTER_PROVIDER`
+  (`router-models/constants/model-discovery.constants.ts`) maps each preset
+  key to the RouterProvider of the same name, so `ModelDiscoveryRepository`
+  can write a deployment row for a discovered model the moment an
+  administrator connects one of these providers.
+- `MODEL_COST_SEED_ENTRIES` gained the verified rows above.
+
+**Free-plan eligibility for free-tier providers — not implemented, stated as
+a gap rather than silently applied.** `ConnectorPreset.hasFreeTier` (batch 1)
+is set on 7 of the 15 presets but nothing in routing-service, chat-service or
+auth-service reads it for eligibility — there is no PlanTier-scoped provider
+allowlist anywhere in the codebase to extend. A connected free-tier preset is
+routing-eligible for every plan tier today, the same as a paid one. See the
+"Batch 2 addendum" in
+[ADR-117](../13-adr/adr-117-connector-presets-one-registry-generic-adapter.md#batch-2-addendum-2026-09-24--chat-service-and-routing-service-wiring).
 
 ## PAYG metering of the router's own calls
 

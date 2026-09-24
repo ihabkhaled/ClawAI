@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { SeedApplyOutcome } from '../../../common/enums';
 import { CostClass, CostConfidence, ModelCostSource } from '../../../generated/prisma';
 import { ModelCostSeedRepository } from '../repositories/model-cost-seed.repository';
@@ -88,6 +88,35 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
         'GROK:grok-3-mini',
       ]),
     );
+  });
+
+  // Batch 2 (connector presets, ADR-116/117): every provider with a
+  // WebFetch-verified real price gets a row so the Cost-Aware Ensemble does
+  // not treat it as free. Groq, Cerebras, Qwen, OpenRouter and Vercel AI
+  // Gateway are deliberately absent — no number could be verified for them
+  // (see the comment block above the batch-2 entries) — and stay UNPRICED,
+  // which `findRate` already treats as blocked rather than free.
+  it('covers every batch-2 provider whose price was verified', () => {
+    const keys = MODEL_COST_SEED_ENTRIES.map((e) => `${e.provider}:${e.modelKey}`);
+
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'MISTRAL:mistral-large-latest',
+        'TOGETHER:meta-llama/Llama-3.3-70B-Instruct-Turbo',
+        'FIREWORKS:accounts/fireworks/models/llama-v3p3-70b-instruct',
+        'DEEPINFRA:meta-llama/Llama-3.3-70B-Instruct-Turbo',
+        'SAMBANOVA:Meta-Llama-3.3-70B-Instruct',
+        'CLOUDFLARE:@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+        'PERPLEXITY:sonar',
+        'COHERE:command-r-plus-08-2024',
+        'ZAI:glm-4.6',
+        'MOONSHOT:kimi-k2.6',
+      ]),
+    );
+
+    for (const unverified of ['GROQ', 'CEREBRAS', 'QWEN', 'OPENROUTER', 'VERCEL_AI_GATEWAY']) {
+      expect(MODEL_COST_SEED_ENTRIES.some((entry) => entry.provider === unverified)).toBe(false);
+    }
   });
 
   it('has no duplicate provider/model pair', () => {
