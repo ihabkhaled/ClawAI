@@ -75,14 +75,24 @@ describe('useAttachmentFilePreview', () => {
     mockBlobUrl = 'blob:already-there';
 
     const { result } = renderHook(() =>
-      useAttachmentFilePreview('f1', 'plan.docx', AttachmentPreviewKind.Generic),
+      useAttachmentFilePreview(
+        'f1',
+        'plan.docx',
+        AttachmentPreviewKind.Generic,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ),
     );
 
     act(() => {
       result.current.download();
     });
 
-    expect(mockTriggerBrowserDownload).toHaveBeenCalledWith('blob:already-there', 'plan.docx');
+    // The MIME type is forwarded so the saved file keeps its real extension.
+    expect(mockTriggerBrowserDownload).toHaveBeenCalledWith(
+      'blob:already-there',
+      'plan.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
     expect(mockOpenBlobInNewTab).not.toHaveBeenCalled();
   });
 
