@@ -182,6 +182,19 @@ describe('InThreadComparePanel — drop-zone scope', () => {
     expect(dropzoneWrapper).not.toBeNull();
     expect(dropzoneWrapper?.contains(recorderButton)).toBe(false);
   });
+
+  // Live 2026-09-25: the fixed-width research selects ended 4px past the
+  // dialog edge in the ~350px column. They must sit in a width-bounded,
+  // sideways-scrolling wrapper.
+  it('bounds the research toggle to the column width', () => {
+    render(
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
+    );
+    const wrapper = screen.getByTestId('in-thread-compare-research');
+    expect(wrapper.className).toContain('max-w-full');
+    expect(wrapper.className).toContain('min-w-0');
+    expect(wrapper.className).toContain('overflow-x-auto');
+  });
 });
 
 describe('InThreadComparePanel — prompt textarea parity', () => {

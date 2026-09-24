@@ -115,14 +115,23 @@ export function InThreadComparePanel({
               {/* The shared control, not Compare's mode-only one: Compare
                   never had a provider picker, and its default was NONE while
                   every other surface defaulted to AUTO. */}
+              {/* The toggle's triggers are fixed-width by viewport breakpoint,
+                  but this panel's column is ~350px even on desktop, so they
+                  poked past the dialog edge. Bounded + sideways scroll is the
+                  same answer the chat toolbar uses. */}
               {allowResearchMode ? (
-                <ResearchToggle
-                  value={research}
-                  providers={researchProviders}
-                  isProvidersLoading={isResearchProvidersLoading}
-                  onChange={onResearchChange}
-                  disabled={isPending}
-                />
+                <div
+                  data-testid="in-thread-compare-research"
+                  className="max-w-full min-w-0 overflow-x-auto"
+                >
+                  <ResearchToggle
+                    value={research}
+                    providers={researchProviders}
+                    isProvidersLoading={isResearchProvidersLoading}
+                    onChange={onResearchChange}
+                    disabled={isPending}
+                  />
+                </div>
               ) : null}
             </div>
 
