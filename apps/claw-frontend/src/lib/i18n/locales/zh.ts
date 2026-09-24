@@ -545,6 +545,7 @@ export const zh: TranslationDictionary = {
       dropToAttach: '拖放要附加的文件',
       voiceNote: '语音留言',
       videoNote: '视频留言',
+      stillUploadingRefusal: '请等待附件上传完成后再发送。',
     },
     // B6c — composer voice / video notes.
     recorder: {

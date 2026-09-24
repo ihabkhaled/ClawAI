@@ -571,6 +571,7 @@ export const ja: TranslationDictionary = {
       dropToAttach: 'ファイルをドロップして添付します',
       voiceNote: 'ボイスメモ',
       videoNote: 'ビデオメモ',
+      stillUploadingRefusal: '添付ファイルのアップロードが完了してから送信してください。',
     },
     // B6c — composer voice / video notes.
     recorder: {

@@ -72,8 +72,21 @@ export function OrchestrationPageShell({
   const planFeatures = usePlanFeatures();
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
   const trimmedPrompt = prompt.trim();
+  // A file's progress reaches 100% the instant the last byte lands; the real
+  // completion (server-side reassembly, the antivirus/magic-byte scan, the id
+  // landing in composer.selectedFileIds) happens after that. Both the submit
+  // button and RichPromptTextarea's Enter-key handler gate on this same
+  // `canSubmit`, so this is the one place that has to know an upload is still
+  // running — otherwise a message sent in that window went out with no
+  // attachment at all, and the model answered as if nothing had been
+  // attached (2026-09-24).
+  const isAttachmentUploading = composer !== undefined && composer.isUploading;
   const canSubmit =
-    !isPending && selectedModel !== null && trimmedPrompt.length > 0 && isSubmitDisabled !== true;
+    !isPending &&
+    selectedModel !== null &&
+    trimmedPrompt.length > 0 &&
+    isSubmitDisabled !== true &&
+    !isAttachmentUploading;
 
   const hasError = errorMessage !== undefined && errorMessage !== null && errorMessage !== '';
   const hasResult = resultSlot !== undefined && resultSlot !== null && !isPending && !hasError;

@@ -573,6 +573,7 @@ export const ru: TranslationDictionary = {
       dropToAttach: 'Перетащите файлы для прикрепления',
       voiceNote: 'Голосовая заметка',
       videoNote: 'Видеозаметка',
+      stillUploadingRefusal: 'Дождитесь завершения загрузки вложения перед отправкой.',
     },
     // B6c — composer voice / video notes.
     recorder: {

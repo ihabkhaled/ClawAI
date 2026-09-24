@@ -557,6 +557,7 @@ export const th: TranslationDictionary = {
       dropToAttach: 'วางไฟล์ที่จะแนบ',
       voiceNote: 'บันทึกเสียง',
       videoNote: 'บันทึกวิดีโอ',
+      stillUploadingRefusal: 'รอให้ไฟล์แนบอัปโหลดเสร็จก่อนส่ง',
     },
     // B6c — composer voice / video notes.
     recorder: {

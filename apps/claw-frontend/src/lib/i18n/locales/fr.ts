@@ -574,6 +574,8 @@ export const fr: TranslationDictionary = {
       dropToAttach: 'Déposez des fichiers à joindre',
       voiceNote: 'Note vocale',
       videoNote: 'Note vidéo',
+      stillUploadingRefusal:
+        "Attendez la fin du téléchargement de la pièce jointe avant d'envoyer.",
     },
     // B6c — composer voice / video notes.
     recorder: {

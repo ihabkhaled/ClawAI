@@ -573,6 +573,7 @@ export const es: TranslationDictionary = {
       dropToAttach: 'Suelta archivos para adjuntar',
       voiceNote: 'Nota de voz',
       videoNote: 'Nota de vídeo',
+      stillUploadingRefusal: 'Espera a que el archivo adjunto termine de subirse antes de enviar.',
     },
     // B6c — composer voice / video notes.
     recorder: {

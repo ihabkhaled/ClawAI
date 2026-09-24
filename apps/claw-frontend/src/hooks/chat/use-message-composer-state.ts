@@ -5,6 +5,7 @@ import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
+import { useTranslation } from '@/lib/i18n';
 import { sendMessageSchema } from '@/lib/validation/message.schema';
 import type {
   ResearchOptions,
@@ -27,6 +28,7 @@ export const useMessageComposerState = ({
   // Seeded from the saved draft rather than restored in an effect: an effect
   // would render an empty composer first and then fill it, which reads as the
   // page overwriting what you typed.
+  const { t } = useTranslation();
   const [content, setContent] = useState(() => readComposerDraft(threadId));
   const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
@@ -96,6 +98,18 @@ export const useMessageComposerState = ({
   }, [content, threadId]);
 
   const validateAndSend = useCallback((): boolean => {
+    // A file's progress reaches 100% the instant the last BYTE lands; the
+    // real completion — server-side chunk reassembly, the antivirus/magic-byte
+    // scan, and the id landing in selectedFileIds — happens after that. The
+    // Enter key calls `submit()` directly and bypasses whatever the send
+    // button's `disabled` prop says, so this has to be the one choke point
+    // both paths go through: a message sent while `isUploadingAttachment` is
+    // still true went out with no attachment at all, and the model answered
+    // as if nothing had been sent (2026-09-24).
+    if (isUploadingAttachment) {
+      setValidationError(t('chat.attachment.stillUploadingRefusal'));
+      return false;
+    }
     const result = sendMessageSchema.safeParse({ content: content.trim() });
     if (!result.success) {
       logger.warn({
@@ -131,7 +145,16 @@ export const useMessageComposerState = ({
     clearComposerDraft(threadId);
     setSelectedFileIds([]);
     return true;
-  }, [content, onSend, selectedModel, selectedFileIds, research, threadId]);
+  }, [
+    content,
+    onSend,
+    selectedModel,
+    selectedFileIds,
+    research,
+    threadId,
+    isUploadingAttachment,
+    t,
+  ]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent): void => {

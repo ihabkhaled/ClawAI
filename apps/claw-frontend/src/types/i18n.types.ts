@@ -522,6 +522,7 @@ export type TranslationDictionary = {
       dropToAttach: string;
       voiceNote: string;
       videoNote: string;
+      stillUploadingRefusal: string;
     };
     recorder: {
       recordVoice: string;
