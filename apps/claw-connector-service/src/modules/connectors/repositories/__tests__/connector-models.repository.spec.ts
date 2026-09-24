@@ -145,6 +145,18 @@ describe('ConnectorModelsRepository', () => {
     });
   });
 
+  it('replaceMany overwrites capability flags on already-existing rows (update branch)', async () => {
+    prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
+    const model = buildModel('gemini-audio');
+    model.capabilities.supportsAudio = true;
+    await repository.replaceMany('c1', 'GEMINI' as never, [model as never]);
+    const args = prismaMock.connectorModel.upsert.mock.calls[0]?.[0] as {
+      update: Record<string, unknown>;
+    };
+    expect(args.update.supportsAudio).toBe(true);
+    expect(args.update.supportsVision).toBe(false);
+  });
+
   it('findByConnectorId orders by displayName asc', async () => {
     await repository.findByConnectorId('c1');
     expect(prismaMock.connectorModel.findMany).toHaveBeenCalledWith({
