@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { API_BASE_URL } from '@/constants';
 import { imageGenerationRepository } from '@/repositories/image-generation/image-generation.repository';
+import type { SseConnection } from '@/types/chat.types';
 import type { ImageGeneration, ImageGenerationEventPayload } from '@/types/image-generation.types';
 import { isTerminalImageStatus, logger } from '@/utilities';
+import { connectSse } from '@/utilities/sse.utility';
 
 export function useImageGenerationListener(generationId: string | undefined) {
   const [generation, setGeneration] = useState<ImageGeneration | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<SseConnection | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cleanup = useCallback((): void => {
@@ -49,24 +51,35 @@ export function useImageGenerationListener(generationId: string | undefined) {
       return;
     }
 
-    logger.debug({ component: 'chat', action: 'image-gen-listen-start', message: 'Starting image generation listener', details: { generationId } });
+    logger.debug({
+      component: 'chat',
+      action: 'image-gen-listen-start',
+      message: 'Starting image generation listener',
+      details: { generationId },
+    });
 
     void imageGenerationRepository
       .getById(generationId)
       .then((gen) => {
         setGeneration(gen);
         if (isTerminalImageStatus(gen.status)) {
-          logger.debug({ component: 'chat', action: 'image-gen-already-terminal', message: 'Image generation already in terminal state', details: { generationId, status: gen.status } });
+          logger.debug({
+            component: 'chat',
+            action: 'image-gen-already-terminal',
+            message: 'Image generation already in terminal state',
+            details: { generationId, status: gen.status },
+          });
           return;
         }
 
+        // Authenticated stream: the events route requires the owner's session
+        // (it was @Public(), so anyone holding an id could watch the job). A
+        // native EventSource cannot send the Bearer header; connectSse does.
         const sseUrl = `${API_BASE_URL}/images/${generationId}/events`;
-        const eventSource = new EventSource(sseUrl);
-        eventSourceRef.current = eventSource;
-
-        eventSource.onmessage = (event: MessageEvent<string>) => {
+        let terminal = false;
+        const onMessage = (data: string): void => {
           try {
-            const payload = JSON.parse(event.data) as ImageGenerationEventPayload;
+            const payload = JSON.parse(data) as ImageGenerationEventPayload;
             setGeneration((prev) => {
               if (!prev) {
                 return prev;
@@ -84,6 +97,7 @@ export function useImageGenerationListener(generationId: string | undefined) {
             });
 
             if (isTerminalImageStatus(payload.status)) {
+              terminal = true;
               cleanup();
               void imageGenerationRepository.getById(generationId).then(setGeneration);
             }
@@ -92,14 +106,29 @@ export function useImageGenerationListener(generationId: string | undefined) {
           }
         };
 
-        eventSource.onerror = () => {
-          logger.warn({ component: 'chat', action: 'image-gen-sse-error', message: 'Image generation SSE error, falling back to polling', details: { generationId } });
+        const onError = (): void => {
+          logger.warn({
+            component: 'chat',
+            action: 'image-gen-sse-error',
+            message: 'Image generation SSE error, falling back to polling',
+            details: { generationId },
+          });
           cleanup();
           startPolling(generationId);
         };
+        eventSourceRef.current = connectSse(
+          sseUrl,
+          { onMessage, onError, shouldReconnectAfterClose: () => !terminal },
+          { reconnect: false },
+        );
       })
       .catch(() => {
-        logger.warn({ component: 'chat', action: 'image-gen-fetch-error', message: 'Failed to fetch image generation, starting polling', details: { generationId } });
+        logger.warn({
+          component: 'chat',
+          action: 'image-gen-fetch-error',
+          message: 'Failed to fetch image generation, starting polling',
+          details: { generationId },
+        });
         startPolling(generationId);
       });
 

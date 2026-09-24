@@ -16,6 +16,13 @@ import {
   fallbackModelTokenBudget,
 } from '../../utilities/assembled-context.utility';
 
+// The constructor reads OLLAMA_GENERATE_TIMEOUT_MS. Without this mock the spec
+// only passed on machines whose shell happened to export every required env var.
+const { appConfigGet } = vi.hoisted(() => ({
+  appConfigGet: vi.fn(() => ({ OLLAMA_GENERATE_TIMEOUT_MS: 60_000 })),
+}));
+vi.mock('../../../../app/config/app.config', () => ({ AppConfig: { get: appConfigGet } }));
+
 // Regression coverage for the 2026-09-24 production report: a Consensus-mode
 // message with an attachment was answered by every lane as though nothing
 // were attached. ConsensusExecutionManager had NO unit tests at all before

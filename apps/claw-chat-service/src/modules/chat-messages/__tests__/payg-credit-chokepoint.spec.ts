@@ -27,9 +27,11 @@ vi.mock('../clients/model-exposure.client', () => ({
 }));
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
+  // image-service's internal routes are service-token guarded, so the image
+  // hop now builds this header.
+  buildInterServiceAuthHeader: vi.fn(() => 'Service test-token'),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    if (!record) return undefined;
-    return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
+    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
 }));
 
@@ -139,14 +141,11 @@ describe('PAYG credit — the chat chokepoint', () => {
     accessControl = createFakePaygAccessControl();
     manager = build(accessControl);
     httpRequest.mockImplementation(async (args: { url: string }) => {
-      if (args.url.includes('/internal/connectors/config')) {
-        return {
+      return args.url.includes('/internal/connectors/config') ? {
           ok: true,
           status: 200,
           data: { baseUrl: 'https://api.openai.com/v1', apiKey: 'k' },
-        };
-      }
-      return cloudOk();
+        } : cloudOk();
     });
   });
 
@@ -322,10 +321,7 @@ describe('PAYG credit — the chat chokepoint', () => {
       if (args.url.includes('/internal/connectors/config')) {
         return { ok: true, status: 200, data: { baseUrl: 'https://gemini/v1beta', apiKey: 'k' } };
       }
-      if (args.url.includes('image')) {
-        return { ok: true, status: 200, data: { generationId: 'gen-1' } };
-      }
-      return cloudOk('A serene mountain landscape, photorealistic, highly detailed.');
+      return args.url.includes('image') ? { ok: true, status: 200, data: { generationId: 'gen-1' } } : cloudOk('A serene mountain landscape, photorealistic, highly detailed.');
     });
 
     await manager.callProvider(

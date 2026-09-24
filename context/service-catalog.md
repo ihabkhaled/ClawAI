@@ -105,7 +105,7 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 
 - **Path:** `apps/claw-image-service` · **Gateway:** `/api/v1/images`
 - **Owns:** ImageGeneration, ImageGenerationAsset, ImageGenerationEvent
-- **Responsibility:** image generation (DALL-E/Gemini/SD/ComfyUI adapters), retry/retry-alternate, `/internal/images/generate`, SSE progress (SD WebUI + ComfyUI adapters).
+- **Responsibility:** image generation (OpenAI gpt-image-1/Gemini/xAI/SD/ComfyUI adapters), owner-only retry/retry-alternate + owner-guarded SSE `/images/:id/events`, service-token-guarded `/internal/images/*`, SSE progress (SD WebUI + ComfyUI adapters).
 - **Pitfalls:** `image.generated`/`image.failed` patterns declared; ComfyUI/SD gated by `local-ai`.
 
 ## claw-file-generation-service — :4013 · PostgreSQL

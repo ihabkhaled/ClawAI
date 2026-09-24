@@ -308,3 +308,13 @@ proxied, so without that block the route 404s in Docker while working on
   verbs, negations and the word "file" in all 13 UI locales. Ambiguous format
   names stay SOFT and only pdf/docx/xlsx/xls/pptx/csv count as a bare leading
   word — see rule 51 §9–12 before adding a word.
+
+## Image-generation model ids (2026-09-25)
+
+`IMAGE_MODEL_OPENAI` in `src/modules/routing/constants/routing.constants.ts` is
+`gpt-image-1` — `dall-e-3` is retired for new OpenAI keys and image-service no
+longer runs it. It must match image-service's `IMAGE_MODEL_OPENAI`. The
+`IMAGE_PROVIDER_OPENAI` rule in `provider-inference.constants.ts` lists
+`gpt-image` / `chatgpt-image` and sits ahead of the chat `OPENAI` rule
+(`startsWith: ['gpt']`), otherwise a manual `gpt-image-1` pick is inferred as a
+chat model.

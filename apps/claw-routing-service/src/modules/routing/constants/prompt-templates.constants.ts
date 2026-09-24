@@ -19,7 +19,7 @@ CLOUD MODELS (paid, internet required, higher quality):
 - GEMINI / gemini-2.5-flash (fast, multimodal, best for image/video, web search, YouTube, file analysis)
 
 IMAGE GENERATION MODELS (generate images from text prompts):
-- IMAGE_OPENAI / dall-e-3 (best quality, photorealistic images, DALL-E 3)
+- IMAGE_OPENAI / gpt-image-1 (best quality, photorealistic images, OpenAI GPT Image)
 - IMAGE_GEMINI / gemini-2.5-flash-image (Google Gemini 2.5 image generation)
 - IMAGE_LOCAL / sdxl-turbo (local Stable Diffusion, free, no internet, lower quality)
 

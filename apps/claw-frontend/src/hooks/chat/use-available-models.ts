@@ -104,7 +104,7 @@ export function useAvailableModels(): {
     // Image generation is offered only where it can actually run.
     //
     // These three used to be pushed unconditionally, so the composer advertised
-    // "Gemini (Image)" and "DALL-E 3" on an install with no Google or OpenAI
+    // "Gemini (Image)" and "GPT Image 1" on an install with no Google or OpenAI
     // connector, and "SDXL Turbo (Local)" with no local image runtime deployed
     // — the local-ai compose profile is opt-in. Picking any of them produced a
     // 403, which reads as a broken product rather than as a missing connector.

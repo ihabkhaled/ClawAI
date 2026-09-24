@@ -241,7 +241,7 @@ describe('useAvailableModels image capabilities', () => {
     expect(providers).not.toContain('IMAGE_OPENAI');
   });
 
-  it('offers DALL-E only when the OpenAI connector has models', () => {
+  it('offers OpenAI image generation only when the OpenAI connector has models', () => {
     const providers = providersFor([
       { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
     ]);

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { ImageGenerationStatus } from '../../../generated/prisma';
@@ -77,17 +77,55 @@ export class ImageGenerationService {
   async getById(id: string): Promise<ImageGenerationRecord> {
     const record = await this.repository.findById(id);
     if (!record) {
-      throw new BusinessException('Image generation not found', 'IMAGE_NOT_FOUND');
+      throw new BusinessException(
+        'Image generation not found',
+        'IMAGE_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
     }
     return record;
   }
 
+  /**
+   * The owner's generation, or the SAME 404 a missing id gets.
+   *
+   * A stranger must not be able to tell "exists but not yours" from "does not
+   * exist", so both paths throw the identical exception.
+   */
   async getByIdForUser(id: string, userId: string): Promise<ImageGenerationRecord> {
     const record = await this.getById(id);
     if (record.userId !== userId) {
-      throw new BusinessException('Image generation not found', 'IMAGE_NOT_FOUND');
+      throw new BusinessException(
+        'Image generation not found',
+        'IMAGE_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
     }
     return record;
+  }
+
+  /**
+   * Owner-only retry for the public route. `retryGeneration` itself trusts its
+   * caller (the service-token-guarded internal route); a user-facing route that
+   * called it directly let any user re-run — and bill — someone else's job.
+   */
+  async retryGenerationForUser(
+    generationId: string,
+    userId: string,
+  ): Promise<ImageGenerationRecord> {
+    await this.getByIdForUser(generationId, userId);
+    return this.retryGeneration(generationId);
+  }
+
+  /** Owner-only alternate-model retry for the public route; see `retryGenerationForUser`. */
+  async retryWithAlternateModelForUser(
+    generationId: string,
+    userId: string,
+    provider?: string,
+    model?: string,
+  ): Promise<ImageGenerationRecord> {
+    await this.getByIdForUser(generationId, userId);
+    return this.retryWithAlternateModel(generationId, provider, model);
   }
 
   async listByUser(
@@ -325,7 +363,9 @@ export class ImageGenerationService {
   ): { provider: string; model: string } | undefined {
     const idx = IMAGE_FALLBACK_CHAIN.findIndex((c) => `${c.provider}/${c.model}` === currentKey);
     const remaining = IMAGE_FALLBACK_CHAIN.slice(idx + 1);
-    return !localOnly ? remaining[0] : remaining.find((c) => IMAGE_LOCAL_PROVIDERS.includes(c.provider));
+    return !localOnly
+      ? remaining[0]
+      : remaining.find((c) => IMAGE_LOCAL_PROVIDERS.includes(c.provider));
   }
 
   private async createFallbackRecord(

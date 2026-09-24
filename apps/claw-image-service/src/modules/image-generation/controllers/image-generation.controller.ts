@@ -1,12 +1,27 @@
-import { Body, Controller, Get, MessageEvent, Param, Post, Query, Sse } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  MessageEvent,
+  Param,
+  Post,
+  Query,
+  Sse,
+  UseGuards,
+} from '@nestjs/common';
 import { type Observable } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
-import { Public } from '../../../app/decorators/public.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { ImageGenerationEventsService } from '../services/image-generation-events.service';
-import { type ListImagesQueryDto, listImagesQuerySchema } from '../dto/generate-image.dto';
+import { ImageGenerationOwnerGuard } from '../guards/image-generation-owner.guard';
+import {
+  type ListImagesQueryDto,
+  listImagesQuerySchema,
+  type RetryAlternateImageDto,
+  retryAlternateImageSchema,
+} from '../dto/generate-image.dto';
 
 @Controller('images')
 export class ImageGenerationController {
@@ -28,22 +43,29 @@ export class ImageGenerationController {
     return this.imageService.getByIdForUser(id, user.id);
   }
 
+  // Owner only: retry used to accept any id, so user A could re-run (and bill)
+  // user B's job. A stranger gets the same 404 as a missing id.
   @Post(':id/retry')
   async retry(
     @Param('id') id: string,
-    @CurrentUser() _user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ generationId: string; status: string }> {
-    const record = await this.imageService.retryGeneration(id);
+    const record = await this.imageService.retryGenerationForUser(id, user.id);
     return { generationId: record.id, status: record.status };
   }
 
   @Post(':id/retry-alternate')
   async retryAlternate(
     @Param('id') id: string,
-    @CurrentUser() _user: AuthenticatedUser,
-    @Body() body?: { provider?: string; model?: string },
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(retryAlternateImageSchema)) body: RetryAlternateImageDto,
   ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
-    const record = await this.imageService.retryWithAlternateModel(id, body?.provider, body?.model);
+    const record = await this.imageService.retryWithAlternateModelForUser(
+      id,
+      user.id,
+      body.provider,
+      body.model,
+    );
     return {
       generationId: record.id,
       status: record.status,
@@ -52,7 +74,10 @@ export class ImageGenerationController {
     };
   }
 
-  @Public()
+  // Owner only: this stream was @Public(), so anyone holding an id could watch
+  // the job's status, prompt-derived errors and asset links. The global
+  // AuthGuard authenticates; the owner guard refuses before a stream opens.
+  @UseGuards(ImageGenerationOwnerGuard)
   @Sse(':id/events')
   events(@Param('id') id: string): Observable<MessageEvent> {
     return this.eventsService.subscribe(id);

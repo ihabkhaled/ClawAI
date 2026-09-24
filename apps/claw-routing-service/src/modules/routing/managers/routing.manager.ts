@@ -51,8 +51,8 @@ import {
   GOVERNMENT_KEYWORDS,
   HOSPITALITY_KEYWORDS,
   HR_KEYWORDS,
-  IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
+  IMAGE_MODEL_OPENAI,
   IMAGE_MODEL_SD_LOCAL,
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
@@ -957,7 +957,7 @@ export class RoutingManager {
     if (this.isConnectorHealthy('GEMINI', context)) {
       return this.buildImageDecision(IMAGE_PROVIDER_GEMINI, IMAGE_MODEL_IMAGEN, context);
     }
-    return this.isConnectorHealthy('OPENAI', context) ? this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context) : this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
+    return this.isConnectorHealthy('OPENAI', context) ? this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_OPENAI, context) : this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
   }
 
   private buildImageDecision(
@@ -1496,7 +1496,7 @@ export class RoutingManager {
   ): FallbackEntry[] {
     const candidates: FallbackEntry[] = [
       { provider: IMAGE_PROVIDER_GEMINI, model: IMAGE_MODEL_IMAGEN },
-      { provider: IMAGE_PROVIDER_OPENAI, model: IMAGE_MODEL_DALLE3 },
+      { provider: IMAGE_PROVIDER_OPENAI, model: IMAGE_MODEL_OPENAI },
       { provider: IMAGE_PROVIDER_LOCAL, model: IMAGE_MODEL_SD_LOCAL },
     ];
 

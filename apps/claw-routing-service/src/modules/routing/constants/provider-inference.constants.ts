@@ -19,7 +19,9 @@ import type { ProviderInferenceRule } from '../types/provider-inference.types';
  * if a downstream rule (e.g. "gemini") would also match.
  */
 export const PROVIDER_INFERENCE_RULES: readonly ProviderInferenceRule[] = [
-  { provider: IMAGE_PROVIDER_OPENAI, includes: ['dall-e', 'dalle'] },
+  // `gpt-image` must sit here, ahead of the chat OPENAI rule's `startsWith: ['gpt']`,
+  // or a manual gpt-image-1 pick is inferred as a chat model.
+  { provider: IMAGE_PROVIDER_OPENAI, includes: ['dall-e', 'dalle', 'gpt-image', 'chatgpt-image'] },
   { provider: IMAGE_PROVIDER_GEMINI, includes: ['imagen'] },
   { provider: IMAGE_PROVIDER_LOCAL, includes: ['sdxl', 'stable-diffusion', 'sd-turbo'] },
   { provider: CLOUD_PROVIDER_ANTHROPIC, startsWith: ['claude'], includes: ['anthropic'] },

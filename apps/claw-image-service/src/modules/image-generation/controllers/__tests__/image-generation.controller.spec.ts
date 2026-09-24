@@ -1,9 +1,15 @@
 import { type Mock, vi } from 'vitest';
+import { HttpStatus } from '@nestjs/common';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ImageGenerationController } from '../image-generation.controller';
 import { InternalImageController } from '../internal-image.controller';
 import { ImageGenerationService } from '../../services/image-generation.service';
 import { ImageGenerationEventsService } from '../../services/image-generation-events.service';
+import { ImageGenerationOwnerGuard } from '../../guards/image-generation-owner.guard';
+import { ServiceTokenGuard } from '../../../../app/guards/service-token.guard';
+import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
+import { BusinessException } from '../../../../common/errors';
 
 const buildServiceMock = (): {
   enqueueGeneration: Mock;
@@ -11,14 +17,18 @@ const buildServiceMock = (): {
   getByIdForUser: Mock;
   listByUser: Mock;
   retryGeneration: Mock;
+  retryGenerationForUser: Mock;
   retryWithAlternateModel: Mock;
+  retryWithAlternateModelForUser: Mock;
 } => ({
   enqueueGeneration: vi.fn(),
   getById: vi.fn(),
   getByIdForUser: vi.fn(),
   listByUser: vi.fn(),
   retryGeneration: vi.fn(),
+  retryGenerationForUser: vi.fn(),
   retryWithAlternateModel: vi.fn(),
+  retryWithAlternateModelForUser: vi.fn(),
 });
 
 describe('ImageGenerationController', () => {
@@ -52,36 +62,68 @@ describe('ImageGenerationController', () => {
     expect(serviceMock.getByIdForUser).toHaveBeenCalledWith('g1', 'u1');
   });
 
-  it('retry returns { generationId, status }', async () => {
-    serviceMock.retryGeneration.mockResolvedValue({ id: 'g1', status: 'QUEUED' });
+  // IDOR fix: the user route must go through the owner-scoped method, never the
+  // trusting one the internal route uses.
+  it('retry goes through the owner-scoped service method with user.id', async () => {
+    serviceMock.retryGenerationForUser.mockResolvedValue({ id: 'g1', status: 'QUEUED' });
     const result = await controller.retry('g1', user as never);
+    expect(serviceMock.retryGenerationForUser).toHaveBeenCalledWith('g1', 'u1');
+    expect(serviceMock.retryGeneration).not.toHaveBeenCalled();
     expect(result).toEqual({ generationId: 'g1', status: 'QUEUED' });
   });
 
-  it('retryAlternate forwards provider/model from body', async () => {
-    serviceMock.retryWithAlternateModel.mockResolvedValue({
+  it('retryAlternate goes through the owner-scoped method with user.id and body', async () => {
+    serviceMock.retryWithAlternateModelForUser.mockResolvedValue({
       id: 'g2',
       status: 'QUEUED',
-      provider: 'gemini',
-      model: 'imagen-3',
+      provider: 'IMAGE_OPENAI',
+      model: 'gpt-image-1',
     });
     const result = await controller.retryAlternate('g1', user as never, {
-      provider: 'gemini',
-      model: 'imagen-3',
+      provider: 'IMAGE_OPENAI',
+      model: 'gpt-image-1',
     });
-    expect(serviceMock.retryWithAlternateModel).toHaveBeenCalledWith('g1', 'gemini', 'imagen-3');
-    expect(result.provider).toBe('gemini');
+    expect(serviceMock.retryWithAlternateModelForUser).toHaveBeenCalledWith(
+      'g1',
+      'u1',
+      'IMAGE_OPENAI',
+      'gpt-image-1',
+    );
+    expect(serviceMock.retryWithAlternateModel).not.toHaveBeenCalled();
+    expect(result.provider).toBe('IMAGE_OPENAI');
   });
 
-  it('retryAlternate works without body', async () => {
-    serviceMock.retryWithAlternateModel.mockResolvedValue({
+  it('retryAlternate with an empty body lets the service pick the next model', async () => {
+    serviceMock.retryWithAlternateModelForUser.mockResolvedValue({
       id: 'g2',
       status: 'QUEUED',
       provider: 'auto',
       model: 'auto',
     });
-    await controller.retryAlternate('g1', user as never);
-    expect(serviceMock.retryWithAlternateModel).toHaveBeenCalledWith('g1', undefined, undefined);
+    await controller.retryAlternate('g1', user as never, {});
+    expect(serviceMock.retryWithAlternateModelForUser).toHaveBeenCalledWith(
+      'g1',
+      'u1',
+      undefined,
+      undefined,
+    );
+  });
+
+  it('a non-owner retry surfaces the service 404 unchanged', async () => {
+    const notFound = new BusinessException(
+      'Image generation not found',
+      'IMAGE_NOT_FOUND',
+      HttpStatus.NOT_FOUND,
+    );
+    serviceMock.retryGenerationForUser.mockRejectedValue(notFound);
+    await expect(controller.retry('g1', user as never)).rejects.toBe(notFound);
+  });
+
+  it('events is not @Public and is guarded by ImageGenerationOwnerGuard', () => {
+    const handler = Object.getOwnPropertyDescriptor(ImageGenerationController.prototype, 'events');
+    const guards: unknown = Reflect.getMetadata(GUARDS_METADATA, handler?.value ?? {});
+    expect(guards).toEqual([ImageGenerationOwnerGuard]);
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, handler?.value ?? {})).toBeUndefined();
   });
 
   it('events subscribes via eventsService', () => {
@@ -114,16 +156,21 @@ describe('InternalImageController', () => {
     serviceMock.enqueueGeneration.mockResolvedValue({
       id: 'g1',
       status: 'QUEUED',
-      provider: 'openai',
-      model: 'dall-e-3',
+      provider: 'IMAGE_OPENAI',
+      model: 'gpt-image-1',
     });
     const result = await controller.generate({ prompt: 'cat', userId: 'u1' } as never);
     expect(result).toEqual({
       generationId: 'g1',
       status: 'QUEUED',
-      provider: 'openai',
-      model: 'dall-e-3',
+      provider: 'IMAGE_OPENAI',
+      model: 'gpt-image-1',
     });
+  });
+
+  it('the whole internal controller is guarded by ServiceTokenGuard', () => {
+    const guards: unknown = Reflect.getMetadata(GUARDS_METADATA, InternalImageController);
+    expect(guards).toEqual([ServiceTokenGuard]);
   });
 
   it('getGeneration forwards id', async () => {

@@ -28,3 +28,16 @@ export const listImagesQuerySchema = z.object({
 });
 
 export type ListImagesQueryDto = z.infer<typeof listImagesQuerySchema>;
+
+/**
+ * Body of `POST /images/:id/retry-alternate` (and its internal twin). Both
+ * fields optional: omitted, the service walks `IMAGE_FALLBACK_CHAIN`.
+ */
+export const retryAlternateImageSchema = z
+  .object({
+    provider: z.string().min(1).max(50).optional(),
+    model: z.string().min(1).max(100).optional(),
+  })
+  .default({});
+
+export type RetryAlternateImageDto = z.infer<typeof retryAlternateImageSchema>;

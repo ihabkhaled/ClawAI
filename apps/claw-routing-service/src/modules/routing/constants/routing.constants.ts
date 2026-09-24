@@ -28,7 +28,10 @@ export const CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash';
 export const IMAGE_PROVIDER_OPENAI = 'IMAGE_OPENAI';
 export const IMAGE_PROVIDER_GEMINI = 'IMAGE_GEMINI';
 export const IMAGE_PROVIDER_LOCAL = 'IMAGE_LOCAL';
-export const IMAGE_MODEL_DALLE3 = 'dall-e-3';
+// OpenAI's current image model. NOT dall-e-3: OpenAI retired DALL-E for new
+// keys ("The model 'dall-e-3' does not exist"). Must match image-service's
+// IMAGE_MODEL_OPENAI (apps/claw-image-service/src/common/constants/image.constants.ts).
+export const IMAGE_MODEL_OPENAI = 'gpt-image-1';
 export const IMAGE_MODEL_IMAGEN = 'gemini-2.5-flash-image';
 export const IMAGE_MODEL_SD_LOCAL = 'sdxl-turbo';
 
@@ -164,7 +167,7 @@ CLOUD MODELS (paid, internet required, higher quality):
 - DEEPSEEK / deepseek-chat (strong coding and math, very low cost)
 
 IMAGE GENERATION MODELS (generate images from text prompts):
-- IMAGE_OPENAI / dall-e-3 (best quality, photorealistic images, DALL-E 3)
+- IMAGE_OPENAI / gpt-image-1 (best quality, photorealistic images, OpenAI GPT Image)
 - IMAGE_GEMINI / gemini-2.5-flash-image (Google Gemini 2.5 image generation)
 - IMAGE_LOCAL / sdxl-turbo (local Stable Diffusion, free, no internet, lower quality)
 

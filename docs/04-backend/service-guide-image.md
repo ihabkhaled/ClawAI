@@ -20,25 +20,25 @@ The image service orchestrates AI image generation across multiple providers (Op
 
 ### ImageGeneration
 
-| Column             | Type                  | Notes                                        |
-| ------------------ | --------------------- | -------------------------------------------- |
-| id                 | String                | CUID primary key                             |
-| userId             | String                | Requesting user                              |
-| threadId           | String?               | Associated chat thread                       |
-| userMessageId      | String?               | Triggering user message                      |
-| assistantMessageId | String?               | Response message ID                          |
-| prompt             | String                | User's image prompt                          |
-| revisedPrompt      | String?               | Provider-revised prompt                      |
-| provider           | String                | IMAGE_OPENAI, IMAGE_GEMINI, IMAGE_LOCAL      |
-| model              | String                | dall-e-3, gemini-2.5-flash-image, sdxl-turbo |
-| width              | Int                   | Default 1024                                 |
-| height             | Int                   | Default 1024                                 |
-| quality            | String?               | Provider-specific quality                    |
-| style              | String?               | Provider-specific style                      |
-| status             | ImageGenerationStatus | QUEUED through COMPLETED/FAILED              |
-| errorCode          | String?               | Error identifier                             |
-| errorMessage       | String?               | Human-readable error                         |
-| latencyMs          | Int?                  | Generation time                              |
+| Column             | Type                  | Notes                                                                                      |
+| ------------------ | --------------------- | ------------------------------------------------------------------------------------------ |
+| id                 | String                | CUID primary key                                                                           |
+| userId             | String                | Requesting user                                                                            |
+| threadId           | String?               | Associated chat thread                                                                     |
+| userMessageId      | String?               | Triggering user message                                                                    |
+| assistantMessageId | String?               | Response message ID                                                                        |
+| prompt             | String                | User's image prompt                                                                        |
+| revisedPrompt      | String?               | Provider-revised prompt                                                                    |
+| provider           | String                | IMAGE_OPENAI, IMAGE_GEMINI, IMAGE_LOCAL                                                    |
+| model              | String                | gpt-image-1, gemini-2.5-flash-image, sdxl-turbo (older rows may hold the retired dall-e-3) |
+| width              | Int                   | Default 1024                                                                               |
+| height             | Int                   | Default 1024                                                                               |
+| quality            | String?               | Provider-specific quality                                                                  |
+| style              | String?               | Provider-specific style                                                                    |
+| status             | ImageGenerationStatus | QUEUED through COMPLETED/FAILED                                                            |
+| errorCode          | String?               | Error identifier                                                                           |
+| errorMessage       | String?               | Human-readable error                                                                       |
+| latencyMs          | Int?                  | Generation time                                                                            |
 
 ### ImageGenerationAsset
 
@@ -69,7 +69,9 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 
 ## Provider Adapters
 
-### DALL-E 3 (OpenAI)
+### OpenAI GPT Image (`gpt-image-1`)
+
+- `dall-e-3` is retired for new OpenAI keys ("The model 'dall-e-3' does not exist"). image-service's `IMAGE_MODEL_OPENAI`, routing-service's `IMAGE_MODEL_OPENAI`, and the frontend's `IMAGE_MODEL_OPTIONS` / `IMAGE_CAPABILITIES` must all name the same current model (`gpt-image-1`, fixed 2026-09-25).
 
 - Endpoint: POST `https://api.openai.com/v1/images/generations`
 - Supports: text-to-image, revised prompts, quality/style parameters
@@ -102,13 +104,27 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 
 ## API Endpoints
 
-| Method | Path        | Auth   | Description                     |
-| ------ | ----------- | ------ | ------------------------------- |
-| POST   | /           | Bearer | Create image generation request |
-| GET    | /           | Bearer | List user's generations         |
-| GET    | /:id        | Bearer | Get generation details + assets |
-| GET    | /:id/status | Bearer | Poll generation status          |
-| DELETE | /:id        | Bearer | Cancel/delete generation        |
+All paths are under `/api/v1`. Verified against the controllers 2026-09-25.
+
+| Method | Path                                             | Auth                                                | Ownership                                                 | Description                       |
+| ------ | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
+| GET    | `/images`                                        | Bearer                                              | scoped to caller                                          | List the caller's generations     |
+| GET    | `/images/:id`                                    | Bearer                                              | `getByIdForUser` → 404 if not owner                       | Generation details + assets       |
+| POST   | `/images/:id/retry`                              | Bearer                                              | `retryGenerationForUser` → 404 if not owner               | Re-queue the same row             |
+| POST   | `/images/:id/retry-alternate`                    | Bearer                                              | `retryWithAlternateModelForUser` → 404                    | Clone onto another provider/model |
+| GET    | `/images/:id/events` (SSE)                       | Bearer header (`connectSse`)                        | `ImageGenerationOwnerGuard` → 404 before the stream opens | Live status events                |
+| POST   | `/internal/images/generate`                      | `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` | caller is trusted (chat-service)                          | Enqueue a generation              |
+| GET    | `/internal/images/:generationId`                 | Service token                                       | —                                                         | Read any generation               |
+| POST   | `/internal/images/:generationId/retry`           | Service token                                       | —                                                         | Retry                             |
+| POST   | `/internal/images/:generationId/retry-alternate` | Service token                                       | —                                                         | Alternate-model retry             |
+| GET    | `/internal/images/:generationId/events` (SSE)    | Service token                                       | —                                                         | Live status events                |
+
+### Ownership and auth invariants (2026-09-25)
+
+- **Every user-facing `:id` route answers a stranger with the SAME 404 as a missing id** (`IMAGE_NOT_FOUND`, `HttpStatus.NOT_FOUND`). Before this, `retry` and `retry-alternate` called the trusting `retryGeneration` / `retryWithAlternateModel` directly, so any signed-in user could re-run — and bill — anyone's job; and `IMAGE_NOT_FOUND` was a 400, not a 404.
+- **The user SSE stream is authenticated and owner-checked by a guard, not in the handler.** Once an `@Sse` handler runs, Nest has already sent 200 and can only emit an error frame. `ImageGenerationOwnerGuard` refuses first. The frontend opens it with `connectSse` (fetch + Bearer header), never a native `EventSource`, which cannot send headers. Mirrors file-generation-service's `FileGenerationOwnerGuard`.
+- **`/internal/images/*` is `@UseGuards(ServiceTokenGuard)`.** The per-route `@Public()` only skips the user-JWT guard. chat-service's `callImageService` sends `buildInterServiceAuthHeader()`; a caller without it gets `401 Service token required`.
+- The trusting methods (`retryGeneration`, `retryWithAlternateModel`, `getById`) exist for the service-token lane only. A new user-facing route must use a `…ForUser` method.
 
 ## Reference Image Support
 

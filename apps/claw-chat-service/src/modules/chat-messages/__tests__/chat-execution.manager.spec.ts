@@ -946,6 +946,43 @@ describe('ChatExecutionManager', () => {
 
   // ADR-110: the plan's daily AI-file allowance, reserved before the model
   // writes, consumed once the file is queued, released when it fails.
+  // image-service's /internal/images routes are ServiceTokenGuard-protected
+  // (they were @Public() — anyone who could reach the service could start a
+  // billed generation for any userId). No header here = every chat image 401s.
+  it('sends the inter-service token when asking image-service for an image', async () => {
+    AppConfig.get.mockReturnValue({
+      ...DEFAULT_APP_CONFIG,
+      IMAGE_SERVICE_URL: 'http://image-service:4012',
+    });
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      data: {
+        generationId: 'img-1',
+        status: 'QUEUED',
+        provider: 'IMAGE_OPENAI',
+        model: 'gpt-image-1',
+      },
+    });
+
+    const result = await manager.callProvider(
+      'IMAGE_OPENAI',
+      'gpt-image-1',
+      makeContext('generate an image of a lighthouse'),
+      Date.now(),
+      false,
+    );
+
+    expect(httpRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://image-service:4012/api/v1/internal/images/generate',
+        method: 'POST',
+        headers: { Authorization: 'Service test-token' },
+      }),
+    );
+    expect(result.imageGenerationId).toBe('img-1');
+  });
+
   it('consumes one AI-file allowance once the file is queued', async () => {
     vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
     httpRequest

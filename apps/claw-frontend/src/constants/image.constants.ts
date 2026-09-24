@@ -2,7 +2,7 @@ import { ImageCapabilityProvider } from '@/enums/image-capability-provider.enum'
 
 export const IMAGE_MODEL_OPTIONS = [
   { provider: 'IMAGE_GEMINI', model: 'gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image' },
-  { provider: 'IMAGE_OPENAI', model: 'dall-e-3', label: 'DALL-E 3 (OpenAI)' },
+  { provider: 'IMAGE_OPENAI', model: 'gpt-image-1', label: 'GPT Image 1 (OpenAI)' },
   { provider: 'IMAGE_LOCAL', model: 'sdxl-turbo', label: 'SDXL Turbo (Local)' },
 ] as const;
 
@@ -28,8 +28,10 @@ export const IMAGE_CAPABILITIES = [
   },
   {
     provider: ImageCapabilityProvider.OPENAI,
-    model: 'dall-e-3',
-    displayName: 'DALL-E 3',
+    // Not dall-e-3: OpenAI retired DALL-E for new keys ("The model 'dall-e-3'
+    // does not exist"). Must match image-service's IMAGE_MODEL_OPENAI.
+    model: 'gpt-image-1',
+    displayName: 'GPT Image 1',
     requiresConnector: 'OPENAI',
   },
   {

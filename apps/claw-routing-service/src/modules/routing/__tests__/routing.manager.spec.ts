@@ -426,6 +426,36 @@ describe('RoutingManager', () => {
       expect(result.reasonTags).toContain('image_generation');
     });
 
+    // dall-e-3 is retired for new OpenAI keys ("The model 'dall-e-3' does not
+    // exist"); image-service only runs gpt-image-1 on the OpenAI rung.
+    it('picks gpt-image-1 (never dall-e-3) when OpenAI is the best healthy image provider', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'generate a picture of a lighthouse at sunset',
+        connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: false },
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(result.selectedProvider).toBe('IMAGE_OPENAI');
+      expect(result.selectedModel).toBe('gpt-image-1');
+    });
+
+    it('offers gpt-image-1 as the OpenAI rung of the image fallback chain', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'generate a picture of a lighthouse at sunset',
+        connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: true },
+        userMode: RoutingMode.AUTO,
+      });
+
+      const models = result.fallbackChain.map((entry) => entry.model);
+      expect(models).not.toContain('dall-e-3');
+      expect(result.fallbackChain).toContainEqual({
+        provider: 'IMAGE_OPENAI',
+        model: 'gpt-image-1',
+      });
+    });
+
     it('does not misroute conversational response prompts to file generation', async () => {
       const result = await manager.evaluateRoute({
         ...baseContext,
@@ -521,6 +551,17 @@ describe('RoutingManager', () => {
       const result = await manager.evaluateRoute(context);
 
       expect(result.selectedProvider).toBe('ANTHROPIC');
+    });
+
+    it('infers the IMAGE_OPENAI provider for a manual gpt-image-1 pick, not chat OPENAI', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedModel: 'gpt-image-1',
+      });
+
+      expect(result.selectedProvider).toBe('IMAGE_OPENAI');
+      expect(result.selectedModel).toBe('gpt-image-1');
     });
 
     it('does not let AUTO policy override manual model selection', async () => {

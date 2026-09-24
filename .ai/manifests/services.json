@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 19,
+      "testFiles": 22,
       "testRunner": "vitest"
     },
     {

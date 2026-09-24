@@ -22,7 +22,7 @@ vi.mock('@/hooks/chat/use-available-models', () => ({
       {
         provider: 'IMAGE_OPENAI',
         label: 'OpenAI (Image)',
-        models: [{ provider: 'IMAGE_OPENAI', model: 'dall-e-3', displayName: 'DALL-E 3' }],
+        models: [{ provider: 'IMAGE_OPENAI', model: 'gpt-image-1', displayName: 'GPT Image 1' }],
       },
     ],
     isLoading: false,
@@ -77,7 +77,7 @@ describe('ParallelModelSelector — search', () => {
 
   it('never shows IMAGE_* groups regardless of search (pre-existing behavior)', () => {
     render(<ParallelModelSelector {...baseProps} />);
-    expect(screen.queryByText('DALL-E 3')).not.toBeInTheDocument();
+    expect(screen.queryByText('GPT Image 1')).not.toBeInTheDocument();
   });
 
   it('clearing the search restores every group', () => {

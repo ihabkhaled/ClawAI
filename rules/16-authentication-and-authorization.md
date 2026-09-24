@@ -29,6 +29,9 @@ and the frontend feature-gate hook.
    on the backend and `useFeatureGates` on the frontend — gate both ends.
 6. **Ownership is checked in the service** (see [09](09-backend-services.md)) —
    RBAC says "may call this endpoint," ownership says "may act on this row."
+   A stranger gets the same 404 as a missing id. On an `@Sse` route the check is
+   a guard, because a handler runs after Nest has already sent 200 —
+   worked example: image-service `ImageGenerationOwnerGuard` (2026-09-25).
 7. **Internal service-to-service calls authenticate** with the service token /
    `ServiceTokenGuard`; do not leave internal endpoints open.
 8. **A session outlives many tabs, windows and flaky networks**

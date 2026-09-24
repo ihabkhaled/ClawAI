@@ -4606,6 +4606,9 @@ export class ChatExecutionManager implements OnModuleInit {
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
       method: 'POST',
+      // image-service's internal routes are ServiceTokenGuard-protected; without
+      // this header every chat image request is refused with 401.
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: {
         prompt,
         provider,

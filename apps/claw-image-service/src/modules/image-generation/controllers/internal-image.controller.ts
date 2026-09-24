@@ -1,12 +1,21 @@
-import { Body, Controller, Get, MessageEvent, Param, Post, Sse } from '@nestjs/common';
+import { Body, Controller, Get, MessageEvent, Param, Post, Sse, UseGuards } from '@nestjs/common';
 import { type Observable } from 'rxjs';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { ImageGenerationEventsService } from '../services/image-generation-events.service';
-import { type GenerateImageDto, generateImageSchema } from '../dto/generate-image.dto';
+import {
+  type GenerateImageDto,
+  generateImageSchema,
+  type RetryAlternateImageDto,
+  retryAlternateImageSchema,
+} from '../dto/generate-image.dto';
 
+// `@Public()` only skips the USER JWT guard — a service has no user token.
+// `ServiceTokenGuard` is what actually authenticates every route here.
 @Controller('internal/images')
+@UseGuards(ServiceTokenGuard)
 export class InternalImageController {
   constructor(
     private readonly imageService: ImageGenerationService,
@@ -46,12 +55,12 @@ export class InternalImageController {
   @Post(':generationId/retry-alternate')
   async retryAlternate(
     @Param('generationId') generationId: string,
-    @Body() body?: { provider?: string; model?: string },
+    @Body(new ZodValidationPipe(retryAlternateImageSchema)) body: RetryAlternateImageDto,
   ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
     const record = await this.imageService.retryWithAlternateModel(
       generationId,
-      body?.provider,
-      body?.model,
+      body.provider,
+      body.model,
     );
     return {
       generationId: record.id,

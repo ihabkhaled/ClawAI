@@ -2,7 +2,32 @@
 
 ## Service Overview
 
-Image generation microservice for the Claw platform. Orchestrates image generation across cloud providers (DALL-E 3, Gemini Imagen) and local Stable Diffusion. Runs on port 4012 with its own PostgreSQL database (claw_images).
+Image generation microservice for the Claw platform. Orchestrates image generation across cloud providers (OpenAI `gpt-image-1`, Gemini, xAI Grok) and local Stable Diffusion. Runs on port 4012 with its own PostgreSQL database (claw_images).
+
+## Ownership and auth invariants (2026-09-25 — read before adding a route)
+
+1. **Every user-facing `:id` route checks ownership in the service and answers a
+   stranger with the SAME 404 as a missing id** (`IMAGE_NOT_FOUND`,
+   `HttpStatus.NOT_FOUND` — no existence leak). Use `getByIdForUser`,
+   `retryGenerationForUser`, `retryWithAlternateModelForUser`. The trusting
+   `getById` / `retryGeneration` / `retryWithAlternateModel` are for the
+   service-token lane only. `POST /images/:id/retry(-alternate)` once called the
+   trusting ones, so any user could re-run and bill anyone's job.
+2. **`GET /images/:id/events` (SSE) is authenticated and guarded by
+   `ImageGenerationOwnerGuard`** (`modules/image-generation/guards/`). Owner
+   checks for SSE go in a guard, never the handler: by the time an `@Sse`
+   handler runs, Nest has sent 200. Never mark it `@Public()` again. The
+   frontend opens it with `connectSse` (Bearer header), not `new EventSource`.
+3. **`/internal/images/*` is `@UseGuards(ServiceTokenGuard)`**
+   (`src/app/guards/service-token.guard.ts`, constant-time compare against
+   `INTER_SERVICE_AUTH_TOKEN`). `@Public()` on those routes only skips the
+   user-JWT guard. Callers (chat-service `callImageService`) must send
+   `Authorization: buildInterServiceAuthHeader()`.
+4. **OpenAI image model is `gpt-image-1`, not `dall-e-3`** (retired). Keep
+   `IMAGE_MODEL_OPENAI` here, routing-service's `IMAGE_MODEL_OPENAI`, and the
+   frontend `IMAGE_MODEL_OPTIONS` / `IMAGE_CAPABILITIES` in step.
+
+Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 
 ## Tech Stack
 

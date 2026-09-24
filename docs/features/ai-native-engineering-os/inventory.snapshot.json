@@ -7489,7 +7489,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 5731,
+          "bytes": 5956,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -10017,7 +10017,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 563
+        "testFiles": 565
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10025,7 +10025,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 19
+        "testFiles": 22
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10795,7 +10795,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1482,
+    "totalTestFiles": 1487,
     "workspaceCount": 25
   }
 }
