@@ -61,4 +61,22 @@ describe('ImageDetectionManager', () => {
     const result = manager.detect('GENERATE A POSTER FOR THE CONFERENCE');
     expect(result.matched).toBe(true);
   });
+
+  // Live 2026-09-25: "ارسم لي صورة قطة…" (draw me a picture of a cat) stayed
+  // a chat answer on 8/8 models in manual mode — there was no Arabic cue.
+  it.each([
+    'ارسم لي صورة قطة تلعب في الحديقة',
+    'ارسملي قطة',
+    'اعمل لي صورة لغروب الشمس',
+    'صمم لي شعار لمقهى',
+  ])('detects an Arabic image request: %s', (message) => {
+    expect(manager.detect(message).matched).toBe(true);
+  });
+
+  it.each(['اعمل ملخص للصورة المرفقة', 'ما هي الصورة النمطية عن المبرمجين'])(
+    'leaves an Arabic message about an image alone: %s',
+    (message) => {
+      expect(manager.detect(message).matched).toBe(false);
+    },
+  );
 });

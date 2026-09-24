@@ -543,6 +543,129 @@ describe('RoutingManager', () => {
     });
   });
 
+  // F6 (2026-09-24): a file request in any mode other than AUTO used to be
+  // answered as chat text, because only handleAuto ran file-intent detection.
+  // Live: 0/52 explicit-model file requests produced a file.
+  describe('evaluateRoute - file requests outside AUTO', () => {
+    it('routes a manual-model file request to FILE_GENERATION with the chosen model as writer', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'make me an excel of monthly expenses',
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'GEMINI',
+        forcedModel: 'models/gemini-2.5-flash',
+      });
+
+      expect(result.selectedProvider).toBe('FILE_GENERATION');
+      expect(result.selectedModel).toBe('auto');
+      expect(result.routingMode).toBe(RoutingMode.MANUAL_MODEL);
+      expect(result.fileWriter).toEqual({ provider: 'GEMINI', model: 'models/gemini-2.5-flash' });
+      expect(result.reasonTags).toEqual(expect.arrayContaining(['user_forced', 'file_generation']));
+      expect(result.fallbackChain).toEqual([]);
+    });
+
+    it('routes an Arabic manual-model file request to FILE_GENERATION', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'اعمل لي ملف PDF عن فوائد النوم',
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'OLLAMA',
+        forcedModel: 'gemma4:31b',
+      });
+
+      expect(result.selectedProvider).toBe('FILE_GENERATION');
+      expect(result.fileWriter).toEqual({ provider: 'OLLAMA', model: 'gemma4:31b' });
+    });
+
+    it('keeps an ordinary manual-model message on the chosen model', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is a pdf?',
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'GEMINI',
+        forcedModel: 'models/gemini-2.5-flash',
+      });
+
+      expect(result.selectedProvider).toBe('GEMINI');
+      expect(result.fileWriter).toBeUndefined();
+    });
+
+    it('never turns a Runtime V2 agent run into a file job', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'create a README.md file for this repo',
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'OLLAMA',
+        forcedModel: 'gpt-oss:120b',
+        runtimeV2: true,
+      });
+
+      expect(result.selectedProvider).toBe('OLLAMA');
+      expect(result.selectedModel).toBe('gpt-oss:120b');
+    });
+
+    it('leaves a manual image model alone', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'make me a pdf poster',
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'IMAGE_GEMINI',
+        forcedModel: 'gemini-2.5-flash-image',
+      });
+
+      expect(result.selectedProvider).toBe('IMAGE_GEMINI');
+    });
+
+    // Live 2026-09-25: 0/16 image requests made an image while a text model
+    // was picked — the picked text model answered "I can't draw".
+    it('routes a manual-model image request to image generation', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        connectorHealth: { GEMINI: true },
+        message: 'generate an image of a red bicycle on a beach',
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'OLLAMA',
+        forcedModel: 'glm-5.1',
+      });
+
+      expect(result.selectedProvider).toBe('IMAGE_GEMINI');
+      expect(result.routingMode).toBe(RoutingMode.MANUAL_MODEL);
+      expect(result.reasonTags).toEqual(
+        expect.arrayContaining(['user_forced', 'image_generation']),
+      );
+    });
+
+    it('keeps a privacy-mode image request on the local image runtime', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        connectorHealth: { GEMINI: true, OPENAI: true },
+        message: 'draw a picture of a mountain at sunrise',
+        userMode: RoutingMode.PRIVACY_FIRST,
+      });
+
+      expect(result.selectedProvider).toBe('IMAGE_LOCAL');
+      expect(result.fallbackChain.every((entry) => entry.provider === 'IMAGE_LOCAL')).toBe(true);
+    });
+
+    it.each([
+      RoutingMode.LOCAL_ONLY,
+      RoutingMode.PRIVACY_FIRST,
+      RoutingMode.LOW_LATENCY,
+      RoutingMode.HIGH_REASONING,
+      RoutingMode.COST_SAVER,
+    ])('routes a file request in %s to FILE_GENERATION, keeping the mode', async (mode) => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'export a CSV of the top 5 programming languages',
+        userMode: mode,
+      });
+
+      expect(result.selectedProvider).toBe('FILE_GENERATION');
+      expect(result.routingMode).toBe(mode);
+      expect(result.fileWriter).toBeUndefined();
+    });
+  });
+
   describe('evaluateRoute - LOCAL_ONLY', () => {
     it('should always select local provider', async () => {
       const context: RoutingContext = {

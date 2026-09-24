@@ -153,8 +153,84 @@ export class RoutingManager {
     mode: RoutingMode,
     context: RoutingContext,
   ): Promise<RoutingDecisionResult> | RoutingDecisionResult {
+    if (mode !== RoutingMode.AUTO) {
+      const fileDecision = this.detectExplicitModeFileRequest(mode, context);
+      if (fileDecision) return fileDecision;
+    }
     const handler = this.modeHandlers.get(mode);
     return handler ? handler(context) : this.handleAuto(context);
+  }
+
+  /**
+   * A file or image request is one in every mode, not only AUTO (F6,
+   * ADR-119). Before this, only handleAuto ran the detectors, so a user who
+   * had picked a model — the common case — got the file's text pasted into
+   * chat (0/52 live) and "I can't draw" for an image (0/16).
+   *
+   * - MANUAL_MODEL keeps the user's choice: their model writes the file's
+   *   content (`fileWriter`), with the admin FILE_WRITER list behind it.
+   * - LOCAL_ONLY / PRIVACY_FIRST keep their mode; chat-service then uses
+   *   local file writers only, and an image goes to the local runtime only.
+   * - A manual image or file provider, a manual pick with no model (falls
+   *   through to AUTO, which detects on its own) and Runtime V2 agent runs
+   *   are left alone.
+   */
+  private detectExplicitModeFileRequest(
+    mode: RoutingMode,
+    context: RoutingContext,
+  ): RoutingDecisionResult | null {
+    const manual = mode === RoutingMode.MANUAL_MODEL;
+    const writer = manual ? this.manualFileWriter(context) : null;
+    if (!this.explicitModeMayGenerate(manual, writer, context)) return null;
+    const localOnly = mode === RoutingMode.LOCAL_ONLY || mode === RoutingMode.PRIVACY_FIRST;
+    const decision = this.detectExplicitModeArtifact(context, localOnly);
+    if (!decision) return null;
+    const fileWriter =
+      decision.selectedProvider === FILE_GENERATION_PROVIDER ? (writer ?? undefined) : undefined;
+    this.logger.log(
+      `detectExplicitModeFileRequest: mode=${mode} → ${decision.selectedProvider}/${decision.selectedModel} writer=${fileWriter ? `${fileWriter.provider}/${fileWriter.model}` : 'default'}`,
+    );
+    return {
+      ...decision,
+      routingMode: mode,
+      confidence: manual ? 1.0 : decision.confidence,
+      reasonTags: [manual ? 'user_forced' : mode.toLowerCase(), ...decision.reasonTags.slice(1)],
+      privacyClass: localOnly ? 'local' : decision.privacyClass,
+      ...(fileWriter === undefined ? {} : { fileWriter }),
+    };
+  }
+
+  /** The picked provider/model of a MANUAL_MODEL send, or null without a model. */
+  private manualFileWriter(context: RoutingContext): FallbackEntry | null {
+    const model = context.forcedModel;
+    return !model ? null : { provider: context.forcedProvider ?? this.inferProvider(model), model };
+  }
+
+  /** Runtime V2, a manual pick with no model, or a generation provider: leave alone. */
+  private explicitModeMayGenerate(
+    manual: boolean,
+    writer: FallbackEntry | null,
+    context: RoutingContext,
+  ): boolean {
+    if (context.runtimeV2 === true) return false;
+    if (!manual) return true;
+    return writer === null ? false : !writer.provider.startsWith('IMAGE_') && writer.provider !== FILE_GENERATION_PROVIDER;
+  }
+
+  /** Image first, then file — the order handleAuto uses. */
+  private detectExplicitModeArtifact(
+    context: RoutingContext,
+    localOnly: boolean,
+  ): RoutingDecisionResult | null {
+    if (this.imageDetection.detect(context.message).matched) {
+      if (!localOnly) return this.buildImageDecisionForBestProvider(context);
+      const local = this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
+      return {
+        ...local,
+        fallbackChain: local.fallbackChain.filter((e) => e.provider === IMAGE_PROVIDER_LOCAL),
+      };
+    }
+    return this.detectFileGenerationRequest(context);
   }
 
   private get modeHandlers(): ReadonlyMap<RoutingMode, ModeHandler> {
@@ -254,8 +330,7 @@ export class RoutingManager {
       const confirmed =
         Number(this.isConnectorConfirmedHealthy(b.provider, context)) -
         Number(this.isConnectorConfirmedHealthy(a.provider, context));
-      if (confirmed !== 0) return confirmed;
-      return (
+      return confirmed !== 0 ? confirmed : (
         this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context)
       );
     });
@@ -683,10 +758,7 @@ export class RoutingManager {
     if (this.detectExecutiveRequest(message)) {
       return 'domain_executive';
     }
-    if (this.detectGovernmentRequest(message)) {
-      return 'domain_government';
-    }
-    return null;
+    return this.detectGovernmentRequest(message) ? 'domain_government' : null;
   }
 
   private async handleAutoHeuristic(context: RoutingContext): Promise<RoutingDecisionResult> {
@@ -753,10 +825,7 @@ export class RoutingManager {
       return localResult;
     }
     const cloudResult = this.tryCloudRoute(context, state);
-    if (cloudResult) {
-      return cloudResult;
-    }
-    return this.buildNoReachableModelDecision();
+    return cloudResult ? cloudResult : this.buildNoReachableModelDecision();
   }
 
   private tryExpertComplexityRoute(
@@ -872,10 +941,7 @@ export class RoutingManager {
   }
 
   private matchesProviderRule(lower: string, rule: ProviderInferenceRule): boolean {
-    if (rule.startsWith?.some((p) => lower.startsWith(p))) {
-      return true;
-    }
-    return rule.includes?.some((p) => lower.includes(p)) ?? false;
+    return rule.startsWith?.some((p) => lower.startsWith(p)) ? true : rule.includes?.some((p) => lower.includes(p)) ?? false;
   }
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
@@ -891,10 +957,7 @@ export class RoutingManager {
     if (this.isConnectorHealthy('GEMINI', context)) {
       return this.buildImageDecision(IMAGE_PROVIDER_GEMINI, IMAGE_MODEL_IMAGEN, context);
     }
-    if (this.isConnectorHealthy('OPENAI', context)) {
-      return this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context);
-    }
-    return this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
+    return this.isConnectorHealthy('OPENAI', context) ? this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context) : this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
   }
 
   private buildImageDecision(
@@ -1253,11 +1316,7 @@ export class RoutingManager {
   private detectCategoryRole(message: string): LocalModelRole | null {
     const multiIntent = this.resolveMultipleCategories(message);
 
-    if (multiIntent.primary === 'general') {
-      return null;
-    }
-
-    return this.mapCategoryToRole(multiIntent.primary);
+    return multiIntent.primary === 'general' ? null : this.mapCategoryToRole(multiIntent.primary);
   }
 
   private mapCategoryToRole(category: string): LocalModelRole | null {
@@ -1428,10 +1487,7 @@ export class RoutingManager {
       return null;
     }
     const model = await this.findModelForRole(role);
-    if (!model) {
-      return null;
-    }
-    return `${model.name}:${model.tag}`;
+    return !model ? null : `${model.name}:${model.tag}`;
   }
 
   private buildImageFallbackChain(
@@ -1521,11 +1577,7 @@ export class RoutingManager {
       }
     }
 
-    if (!Number.isFinite(bestLatency)) {
-      return 0;
-    }
-
-    return Math.floor(bestLatency / latencyPenaltyStepMs);
+    return !Number.isFinite(bestLatency) ? 0 : Math.floor(bestLatency / latencyPenaltyStepMs);
   }
 
   private isProviderCircuitOpen(provider: string, context: RoutingContext): boolean {
@@ -1549,10 +1601,7 @@ export class RoutingManager {
     if (provider === IMAGE_PROVIDER_OPENAI) {
       return [provider, CLOUD_PROVIDER_OPENAI];
     }
-    if (provider === IMAGE_PROVIDER_GEMINI) {
-      return [provider, CLOUD_PROVIDER_GEMINI];
-    }
-    return [provider];
+    return provider === IMAGE_PROVIDER_GEMINI ? [provider, CLOUD_PROVIDER_GEMINI] : [provider];
   }
 
   private isRuntimeHealthy(runtime: string, context: RoutingContext): boolean {
@@ -1646,10 +1695,7 @@ export class RoutingManager {
 
   estimateProviderCost(provider: string): number {
     const costs = recordGet(PROVIDER_COST_PER_1M_TOKENS, provider);
-    if (!costs) {
-      return 0;
-    }
-    return (costs.input + costs.output) / 2;
+    return !costs ? 0 : (costs.input + costs.output) / 2;
   }
 
   private collectCategoryMatches(message: string): Array<{ category: string; priority: number }> {

@@ -23,17 +23,37 @@ export const ROUTING_TO_CHAT_PROVIDER: Readonly<Record<string, string>> = {
  * Words that name a file format in a request, in the order formats are tried
  * when two are equally likely (F3b, ADR-108). Matched as whole words, so
  * "password" is not "word" and "deckhand" is not "deck".
+ *
+ * F6 (2026-09-24): `\b` is defined over ASCII `\w` only, so it never fires
+ * next to a non-Latin letter — an Arabic loanword like "اكسل" (Excel) sits
+ * between two `\W` characters (from `\b`'s point of view) and `\bاكسل\b`
+ * never matches at all. routing-service already routes such a message to
+ * FILE_GENERATION (its own intent detector was fixed the same day), but
+ * this detector then fell through to DEFAULT_FILE_FORMAT (TXT) because it
+ * could not see the format word either. `wordBoundary` below builds the
+ * same whole-word guarantee from `\p{L}\p{N}` instead of `\w`, so it works
+ * for every script. Each pattern is a literal (not built from a runtime
+ * string), so it stays a fixed, auditable regex rather than dynamic input.
  */
 export const FILE_FORMAT_KEYWORDS: ReadonlyArray<readonly [string, RegExp]> = [
-  ['XLSX', /\b(?:xlsx|xls|excel|spreadsheets?|workbook)\b/giu],
-  ['PPTX', /\b(?:pptx|powerpoint|slides?|slide deck|deck|presentation)\b/giu],
-  ['ZIP', /\b(?:zip|archive)\b/giu],
-  ['PDF', /\b(?:pdf)\b/giu],
-  ['DOCX', /\b(?:docx|doc|(?:ms |microsoft )word|word (?=doc|document|file|format))/giu],
-  ['CSV', /\b(?:csv)\b/giu],
-  ['JSON', /\b(?:json)\b/giu],
-  ['HTML', /\b(?:html|web ?page)\b/giu],
-  ['MD', /\b(?:markdown|md)\b/giu],
+  [
+    'XLSX',
+    /(?<![\p{L}\p{N}])(?:xlsx|xls|excel|spreadsheets?|workbook|اكسل|إكسل)(?![\p{L}\p{N}])/giu,
+  ],
+  [
+    'PPTX',
+    /(?<![\p{L}\p{N}])(?:pptx|powerpoint|slides?|slide deck|deck|presentation|بوربوينت|عرض تقديمي|تقديمي|شرائح)(?![\p{L}\p{N}])/giu,
+  ],
+  ['ZIP', /(?<![\p{L}\p{N}])(?:zip|archive)(?![\p{L}\p{N}])/giu],
+  ['PDF', /(?<![\p{L}\p{N}])pdf(?![\p{L}\p{N}])/giu],
+  [
+    'DOCX',
+    /(?<![\p{L}\p{N}])(?:docx|doc|(?:ms |microsoft )word|word(?= doc| document| file| format)|وورد|مستند|documento)(?![\p{L}\p{N}])/giu,
+  ],
+  ['CSV', /(?<![\p{L}\p{N}])csv(?![\p{L}\p{N}])/giu],
+  ['JSON', /(?<![\p{L}\p{N}])json(?![\p{L}\p{N}])/giu],
+  ['HTML', /(?<![\p{L}\p{N}])(?:html|web ?page)(?![\p{L}\p{N}])/giu],
+  ['MD', /(?<![\p{L}\p{N}])(?:markdown|md)(?![\p{L}\p{N}])/giu],
 ];
 
 /** "as a pdf", "to Excel", "into slides": the format the user wants, when several are named. */

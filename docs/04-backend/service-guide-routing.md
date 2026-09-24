@@ -72,7 +72,7 @@ AUTO mode is the most complex. It follows a 6-stage pipeline where each stage ca
 
 1. **Privacy enforcement** -- 30 privacy keywords scanned; if ANY match, forces local routing (no cloud fallback)
 2. **Image detection** -- 70+ exact keywords + 5 detection layers (verb+noun combo, art styles, reference-based, strong nouns)
-3. **File generation detection** -- 7 exact phrases + 9 verbs x 18 format words = 162 combinations
+3. **File generation detection** -- `detectFileIntent` (phrases, extensions, strong/soft format words with create/delivery verbs in 13 locales, a bare leading pdf/docx/xlsx/xls/pptx/csv). Since ADR-119 it also runs before every non-AUTO mode; MANUAL_MODEL keeps the user's model as the file writer (`fileWriter`)
 4. **Multimodal capability routing** _(SAR 2.0)_ -- detects audio/video/PDF/OCR/web-search/vision keywords; routes to best healthy cloud provider per capability priority (GEMINI first for most modalities); runs BEFORE category detection to prevent multimodal messages from incorrectly matching local categories
 5. **Category detection** -- 1650+ keywords across 33 capability classes; maps to LocalModelRole and finds installed model
 6. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models, adaptive insights, learned priors, and router education hints; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response

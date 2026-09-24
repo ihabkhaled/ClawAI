@@ -206,7 +206,7 @@ import {
 } from '../constants/payg.constants';
 import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
 import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
-import type { FileContentCandidate } from '../types/file-writer.types';
+import type { FileContentCandidate, FileContentCandidateOptions } from '../types/file-writer.types';
 import {
   detectRequestedFileFormat,
   fileLimitResponse,
@@ -214,7 +214,11 @@ import {
   fileWriterSystemPrompt,
   unwrapWholeCodeFence,
 } from '../utilities/file-format.utility';
-import { toFileContentCandidates } from '../utilities/file-writer.utility';
+import {
+  fileWriterOptionsFor,
+  stripWriterReasoning,
+  toFileContentCandidates,
+} from '../utilities/file-writer.utility';
 import type { PaygCallOptions } from '../types/payg.types';
 
 @Injectable()
@@ -1736,6 +1740,9 @@ export class ChatExecutionManager implements OnModuleInit {
       ),
       applyShortResponseConstraint: fastPathEnabled,
       ...(crawlRetrieval === undefined ? {} : { crawlRetrieval }),
+      ...(payload.selectedProvider === FILE_GENERATION_PROVIDER
+        ? { fileWriters: fileWriterOptionsFor(payload) }
+        : {}),
     };
   }
 
@@ -2264,7 +2271,13 @@ export class ChatExecutionManager implements OnModuleInit {
     );
     if (provider === FILE_GENERATION_PROVIDER) {
       this.logger.debug('callProvider: routing to file generation service');
-      return this.callFileGenerationService(context, startTime, usedFallback, threadSettings);
+      return this.callFileGenerationService(
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions?.fileWriters,
+      );
     }
     if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
       this.logger.debug('callProvider: routing to image service');
@@ -4636,8 +4649,11 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
+    fileWriters?: FileContentCandidateOptions,
   ): Promise<LlmResponse> {
-    this.logger.log('callFileGenerationService: starting file generation');
+    this.logger.log(
+      `callFileGenerationService: starting file generation writer=${fileWriters?.preferred ? `${fileWriters.preferred.provider}/${fileWriters.preferred.model}` : 'list'} localOnly=${String(fileWriters?.localOnly === true)}`,
+    );
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
     const prompt = lastUserMsg?.content ?? 'generate a file';
     const format = detectRequestedFileFormat(prompt);
@@ -4666,8 +4682,12 @@ export class ChatExecutionManager implements OnModuleInit {
         startTime,
         usedFallback,
         threadSettings,
+        fileWriters,
       ));
-      const fileContent = unwrapWholeCodeFence(contentResponse.content, format);
+      const fileContent = unwrapWholeCodeFence(
+        stripWriterReasoning(contentResponse.content),
+        format,
+      );
       generationId = await this.dispatchFileGeneration(
         prompt,
         fileContent,
@@ -4701,6 +4721,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings: ThreadSettings | undefined,
+    fileWriters: FileContentCandidateOptions | undefined,
   ): Promise<{ contentResponse: LlmResponse; contentFallbackUsed: boolean }> {
     const fileExecutionOptions = this.buildFileGenerationExecutionOptions(threadSettings);
     const fileContext: AssembledContext = {
@@ -4708,7 +4729,7 @@ export class ChatExecutionManager implements OnModuleInit {
       systemPrompt: fileWriterSystemPrompt(format),
       memories: fileWriterMemories(context.memories, format),
     };
-    const contentCandidates = await this.buildFileContentProviderCandidates();
+    const contentCandidates = await this.buildFileContentProviderCandidates(fileWriters);
     let contentResponse: LlmResponse | null = null;
     let contentFallbackUsed = false;
     let lastContentError: unknown = null;
@@ -4813,13 +4834,15 @@ export class ChatExecutionManager implements OnModuleInit {
    * Assistant models), then any local file model. No hard-coded providers:
    * those failed the exposure gate whenever the admin had not exposed them.
    */
-  private async buildFileContentProviderCandidates(): Promise<FileContentCandidate[]> {
+  private async buildFileContentProviderCandidates(
+    fileWriters: FileContentCandidateOptions = {},
+  ): Promise<FileContentCandidate[]> {
     const [admin, local] = await Promise.all([
-      this.fileWriterCandidates.resolve(),
+      fileWriters.localOnly === true ? Promise.resolve([]) : this.fileWriterCandidates.resolve(),
       this.localModelSelection?.resolveModelList(3, LocalModelRole.LOCAL_FILE_GENERATION) ??
         Promise.resolve([]),
     ]);
-    return toFileContentCandidates(admin, local);
+    return toFileContentCandidates(admin, local, fileWriters);
   }
 
   private async resolveModel(model: string): Promise<string> {

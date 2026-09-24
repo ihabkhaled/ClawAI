@@ -671,6 +671,18 @@ service can tell its own user why the answer is short.
 - `reserveFeature` fails open when auth-service is unreachable. That is
   deliberate: a plan limit is a business rule, not security.
 
+## Who writes the file, per mode (ADR-119)
+
+- routing-service sends `fileWriter` on a MANUAL_MODEL FILE_GENERATION
+  decision. `parseFileWriter` reads it off `message.routed`, and
+  `resolveExecutionOptions` turns it into `ExecutionOptions.fileWriters`
+  (`fileWriterOptionsFor`).
+- Writer order (`toFileContentCandidates`): the user's pick, then the admin
+  `FILE_WRITER` list, then local file models. LOCAL_ONLY / PRIVACY_FIRST keep
+  local models only; the `FILE_WRITER` list is hosted.
+- "another" / "one more" after a file re-routes in MANUAL_MODEL too and keeps
+  the pick as writer (`rerouteFileFollowUp`).
+
 ## What a file writer sees (ADR-111)
 
 - CSV and JSON writers get no INSTRUCTION memories (`fileWriterMemories`,

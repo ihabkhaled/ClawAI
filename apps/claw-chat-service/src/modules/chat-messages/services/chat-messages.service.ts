@@ -113,6 +113,7 @@ import {
 import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
+import { fileWriterField, rerouteFileFollowUp } from '../utilities/file-writer.utility';
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -1403,6 +1404,8 @@ export class ChatMessagesService implements OnModuleInit {
       // these, so undefined is normal and means "execute DIRECT_LLM".
       selectedWorkflow: (payload['selectedWorkflow'] as string | null | undefined) ?? null,
       workflowReason: (payload['workflowReason'] as string | null | undefined) ?? null,
+      // F6 (ADR-119) — only on a manual FILE_GENERATION decision.
+      ...fileWriterField(payload['fileWriter']),
     };
   }
 
@@ -2436,7 +2439,7 @@ export class ChatMessagesService implements OnModuleInit {
     _thread: ChatThread | null,
     messages: ChatMessage[],
   ): MessageRoutedData {
-    if (payload.routingMode !== 'AUTO') return payload;
+    if (payload.routingMode !== 'AUTO' && payload.routingMode !== 'MANUAL_MODEL') return payload;
     if (payload.selectedProvider === 'FILE_GENERATION') return payload;
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'ASSISTANT');
     const meta = lastAssistant?.metadata as Record<string, unknown> | null;
@@ -2448,7 +2451,7 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.log(
       `File generation follow-up detected: "${lower}" → re-routing to FILE_GENERATION`,
     );
-    return { ...payload, selectedProvider: 'FILE_GENERATION', selectedModel: 'auto' };
+    return rerouteFileFollowUp(payload);
   }
 
   private detectImageFromAttachment(

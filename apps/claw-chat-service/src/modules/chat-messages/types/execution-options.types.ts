@@ -2,6 +2,7 @@ import type { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
 import type { ToolChoiceMode } from '../../../common/enums';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import type { CrawlRetrievalContext } from './crawl-retrieval.types';
+import type { FileContentCandidateOptions } from './file-writer.types';
 
 export type ExecutionOptions = {
   fastPathEnabled: boolean;
@@ -51,4 +52,8 @@ export type ExecutionOptions = {
   // ADR-093. Undefined on every other path: ordinary chat, compare, judge and
   // Runtime V2 are unaffected.
   crawlRetrieval?: CrawlRetrievalContext;
+  // Who may write a FILE_GENERATION turn's content (F6, ADR-119): the model a
+  // manual user picked goes first, and a local-only mode forbids hosted
+  // writers. Undefined keeps the admin FILE_WRITER list, as AUTO always had.
+  fileWriters?: FileContentCandidateOptions;
 };

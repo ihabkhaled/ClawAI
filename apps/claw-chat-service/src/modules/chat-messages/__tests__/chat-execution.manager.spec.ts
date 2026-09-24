@@ -812,6 +812,64 @@ describe('ChatExecutionManager', () => {
     expect(callProvider.mock.calls[1]?.slice(0, 2)).toEqual(['OLLAMA', 'gpt-oss:120b']);
   });
 
+  // F6 (ADR-119): a manual pick's model writes its own file first.
+  it('asks the user-picked model before the FILE_WRITER list', async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([
+      { provider: 'OLLAMA_CLOUD', modelAlias: 'gemma4:31b', timeoutMs: 120_000, maxTokens: 8_192 },
+    ]);
+    const callProvider = vi.spyOn(manager, 'callProvider');
+    httpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
+
+    await manager
+      .callProvider(
+        'FILE_GENERATION',
+        'auto',
+        makeContext('make me an excel of monthly expenses'),
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        {
+          fastPathEnabled: false,
+          applyShortResponseConstraint: false,
+          fileWriters: { preferred: { provider: 'GEMINI', model: 'models/gemini-2.5-flash' } },
+        },
+      )
+      .catch(() => {});
+
+    expect(callProvider.mock.calls[1]?.slice(0, 2)).toEqual(['GEMINI', 'models/gemini-2.5-flash']);
+    expect(callProvider.mock.calls[2]?.slice(0, 2)).toEqual(['OLLAMA', 'gemma4:31b']);
+  });
+
+  it('never hands a local-only file request to a hosted writer', async () => {
+    vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([
+      { provider: 'OLLAMA_CLOUD', modelAlias: 'gemma4:31b', timeoutMs: 120_000, maxTokens: 8_192 },
+    ]);
+    const callProvider = vi.spyOn(manager, 'callProvider');
+    httpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
+
+    await manager
+      .callProvider(
+        'FILE_GENERATION',
+        'auto',
+        makeContext('export a CSV of the top 5 programming languages'),
+        Date.now(),
+        false,
+        undefined,
+        'LOCAL_ONLY',
+        {
+          fastPathEnabled: false,
+          applyShortResponseConstraint: false,
+          fileWriters: { localOnly: true },
+        },
+      )
+      .catch(() => {});
+
+    const writers = callProvider.mock.calls.slice(1).map((call) => call[0]);
+    expect(writers).not.toContain('OLLAMA');
+    expect(writers.every((provider) => provider === 'local-ollama')).toBe(true);
+  });
+
   it('uses local file models when no admin FILE_WRITER is configured', async () => {
     vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
     const context = makeContext(

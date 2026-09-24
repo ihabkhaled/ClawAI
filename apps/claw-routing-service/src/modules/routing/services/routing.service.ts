@@ -466,6 +466,7 @@ export class RoutingService implements OnModuleInit {
       ),
       allowedModels,
       modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
+      runtimeV2,
     };
     const rawDecision = await this.routingManager.evaluateRoute(context);
     const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
@@ -973,6 +974,9 @@ export class RoutingService implements OnModuleInit {
       // hot path is in effect and DIRECT_LLM is assumed downstream.
       selectedWorkflow: decision.selectedWorkflow ?? null,
       workflowReason: decision.workflowReason ?? null,
+      // F6 (ADR-119) — a manual pick's model writes the file it asked for.
+      // Absent on every other decision; chat-service then uses FILE_WRITER.
+      ...(decision.fileWriter === undefined ? {} : { fileWriter: decision.fileWriter }),
       timestamp: new Date().toISOString(),
     });
   }
@@ -1163,10 +1167,7 @@ export class RoutingService implements OnModuleInit {
   }
 
   private asFeedback(value: unknown): RouterFeedbackPolarity | null {
-    if (value === 'positive' || value === 'negative') {
-      return value;
-    }
-    return null;
+    return value === 'positive' || value === 'negative' ? value : null;
   }
 
   private pruneExpiredProviderCircuits(): void {
@@ -1185,10 +1186,7 @@ export class RoutingService implements OnModuleInit {
 
   private normalizeProviderName(provider: string): string {
     const normalized = provider.trim();
-    if (normalized.toLowerCase() === 'local-ollama') {
-      return 'local-ollama';
-    }
-    return normalized.toUpperCase();
+    return normalized.toLowerCase() === 'local-ollama' ? 'local-ollama' : normalized.toUpperCase();
   }
 
   private removeProviderCircuit(provider: string): void {

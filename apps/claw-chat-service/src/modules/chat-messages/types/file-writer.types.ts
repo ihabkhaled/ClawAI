@@ -12,6 +12,14 @@ export interface FileContentCandidate {
   model: string;
 }
 
+/** How a file's writer list is shaped for one request (F6, ADR-119). */
+export interface FileContentCandidateOptions {
+  /** The model the user picked; it writes first. Manual mode only. */
+  preferred?: FileContentCandidate;
+  /** LOCAL_ONLY / PRIVACY_FIRST: hosted writers are not allowed. */
+  localOnly?: boolean;
+}
+
 export interface CachedFileWriterCandidates {
   candidates: readonly FileWriterCandidate[];
   expiresAt: number;

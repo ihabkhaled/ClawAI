@@ -54,6 +54,12 @@ export interface RoutingContext {
    */
   workspaceId?: string;
   /**
+   * The message runs in the Runtime V2 agent lane (the coding agent). Its
+   * "create a README.md file" is a tool call inside the agent loop, never a
+   * downloadable file job, so file-intent routing must not claim it.
+   */
+  runtimeV2?: boolean;
+  /**
    * Who sent the message this routing decision is for.
    *
    * Present for anything that reached routing through `message.created`, which
@@ -96,6 +102,12 @@ export interface RoutingDecisionResult {
   selectedWorkflow?: WorkflowKind | null;
   workflowReason?: string | null;
   workflowAlternatives?: WorkflowAvailability[];
+  /**
+   * Set only on a FILE_GENERATION decision made outside AUTO, when the user
+   * picked the model: that model writes the file's content first, before the
+   * admin's FILE_WRITER list (F6, ADR-119). Undefined means "use the list".
+   */
+  fileWriter?: FallbackEntry;
 }
 
 export type MultiIntentResult = {

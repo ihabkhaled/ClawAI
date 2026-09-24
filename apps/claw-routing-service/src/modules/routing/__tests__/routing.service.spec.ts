@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { RoutingService } from '../services/routing.service';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
@@ -11,7 +11,7 @@ import { httpRequest } from '../../../common/utilities';
 import { RoutingMode } from '../../../generated/prisma';
 
 vi.mock('../../../common/utilities', async () => ({
-  ...await vi.importActual('../../../common/utilities'),
+  ...(await vi.importActual('../../../common/utilities')),
   httpRequest: vi.fn(),
 }));
 
@@ -132,9 +132,7 @@ const mockRabbitMQ = (): { publish: Mock; subscribe: Mock } => ({
 });
 
 const mockRouterEducationManager = (): Record<string, Mock> => ({
-  calibrateDecision: vi
-    .fn()
-    .mockImplementation(async (decision) => ({ decision, changed: false })),
+  calibrateDecision: vi.fn().mockImplementation(async (decision) => ({ decision, changed: false })),
   ingestExecutionOutcome: vi.fn().mockResolvedValue(void 0),
   ingestFeedbackSignal: vi.fn().mockResolvedValue(void 0),
   getLatestSnapshot: vi.fn().mockResolvedValue(null),
@@ -404,6 +402,47 @@ describe('RoutingService', () => {
 
       expect(liveWorkflowSelector.selectWorkflow).toHaveBeenCalledWith(
         expect.objectContaining({ message: generatedPrompt, runtimeV2: true }),
+      );
+      // The manager needs it too: an agent run must never become a file job.
+      expect(routingManager.evaluateRoute).toHaveBeenCalledWith(
+        expect.objectContaining({ runtimeV2: true }),
+      );
+    });
+
+    it('publishes the preferred file writer of a manual file request (F6)', async () => {
+      routingManager.evaluateRoute?.mockResolvedValueOnce({
+        selectedProvider: 'FILE_GENERATION',
+        selectedModel: 'auto',
+        routingMode: RoutingMode.MANUAL_MODEL,
+        confidence: 1,
+        reasonTags: ['user_forced', 'file_generation'],
+        privacyClass: 'cloud',
+        costClass: 'medium',
+        fallbackChain: [],
+        fileWriter: { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+      });
+      await service.onModuleInit();
+      const messageCall = rabbitMQ.subscribe.mock.calls.find(
+        ([pattern]) => pattern === EventPattern.MESSAGE_CREATED,
+      );
+      const handler = messageCall?.[1] as (data: unknown) => Promise<void>;
+
+      await handler({
+        messageId: 'message-file',
+        threadId: 'thread-file',
+        content: 'make me an excel of monthly expenses',
+        routingMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'GEMINI',
+        forcedModel: 'models/gemini-2.5-flash',
+        modelAccessMode: 'ALLOW_ALL',
+      });
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_ROUTED,
+        expect.objectContaining({
+          selectedProvider: 'FILE_GENERATION',
+          fileWriter: { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+        }),
       );
     });
   });

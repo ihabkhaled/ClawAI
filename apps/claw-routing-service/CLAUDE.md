@@ -296,3 +296,15 @@ Reached from the edge through `location /api/v1/router-models` in
 mount at `router-models/*`, NOT under the `routing/*` prefix nginx already
 proxied, so without that block the route 404s in Docker while working on
 `localhost:4004`. `/api/v1/internal/router-models` stays unproxied on purpose.
+
+## File requests in every mode (ADR-119)
+
+- `dispatchByMode` runs `detectExplicitModeFileRequest` before every non-AUTO
+  handler. A file request keeps its mode; MANUAL_MODEL adds `fileWriter` (the
+  user's provider/model), published on `message.routed`.
+- Skipped for Runtime V2 (`RoutingContext.runtimeV2`), for a manual image or
+  file provider, and for MANUAL_MODEL without a model (AUTO detects itself).
+- `detectFileIntent` is Unicode-aware (`Intl.Segmenter`) with create/delivery
+  verbs, negations and the word "file" in all 13 UI locales. Ambiguous format
+  names stay SOFT and only pdf/docx/xlsx/xls/pptx/csv count as a bare leading
+  word — see rule 51 §9–12 before adding a word.

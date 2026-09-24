@@ -39,6 +39,24 @@ A run passes only if the **model under test** wrote the file. When the writer
 falls back to another candidate, that run counts as a failure of the model
 under test, not a success.
 
+## Chat lane: the way users really ask (ADR-119)
+
+`scripts/qa-lab/file-chat-matrix.mjs` sends the plain prompt (English, Arabic,
+terse, French/Spanish; 4 phrasings × 10 formats incl. IMAGE) and lets the
+product decide — no forced provider, no swapped writer. Use it for "the AI
+doesn't make files" reports; the writer lane above is for writer quality.
+
+```bash
+export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" QA_LAB_EMAIL=… QA_LAB_PASSWORD=…
+node scripts/qa-lab/file-chat-matrix.mjs --mode=manual   --models=OLLAMA:gemma4:31b,GEMINI:models/gemini-2.5-flash   --formats=PDF,XLSX,IMAGE --variants=0,1 --out=scripts/qa-lab/results/CHATMATRIX-x
+```
+
+- `--mode=manual` is the case users hit most (a model picked in the
+  composer); `--mode=auto` ignores `--models`. Same `--out` resumes.
+- Never edit `apps/*/src` while it runs: the dev containers recompile and
+  restart, and every in-flight call returns 502 (happened 2026-09-25).
+- Results: [docs/09-testing/file-chat-matrix.md](../docs/09-testing/file-chat-matrix.md).
+
 ## Run it
 
 Prerequisites:

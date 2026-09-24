@@ -41,3 +41,23 @@ model was sent a 16.7k-token prompt.
 8. **File intent needs a file word.** Change `detectFileIntent` only together
    with its case table (`file-intent.utility.spec.ts`), and add any new false
    positive to it first.
+
+## Added 2026-09-25 (ADR-119)
+
+9. **A file request is a file request in every routing mode.** File intent is
+   checked before every non-AUTO mode handler (`detectExplicitModeFileRequest`),
+   not only in `handleAuto`. Live, 0/52 explicit-model file requests made a
+   file before this; each model pasted the content or said it "can't create
+   files".
+10. **A manual pick writes its own file.** The decision carries `fileWriter`
+    (the user's provider/model) on `message.routed`; chat-service tries it
+    before the `FILE_WRITER` list. LOCAL_ONLY / PRIVACY_FIRST allow local
+    writers only — the `FILE_WRITER` list is hosted.
+11. **Runtime V2 is never a file job.** `RoutingContext.runtimeV2` is set from
+    the event; an agent's "create a README.md file" is a tool call.
+12. **Intent words must not be ordinary words.** A format name that is also a
+    common word or a formatting/coding request (`word`, `markdown`, `html`,
+    `docs`, `json`) stays SOFT, and only office/data acronyms (pdf, docx,
+    xlsx, xls, pptx, csv) count as a bare leading word. One token cannot be
+    both the format and the verb ("zip codes"). Add a "stays in chat" case to
+    `file-intent.utility.spec.ts` with every new word.

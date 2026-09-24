@@ -58,6 +58,19 @@ describe('detectRequestedFileFormat', () => {
     ['turn this CSV into a spreadsheet', 'XLSX'],
     ['convert the pdf to a word document', 'DOCX'],
     ['make a pdf from this json', 'PDF'],
+    // F6 (2026-09-24): a non-English request naming the format as a common
+    // loanword, or in Latin script inside an otherwise non-Latin sentence.
+    // `\b` never matched next to a non-Latin letter, so these used to fall
+    // through to the TXT default even after routing-service correctly sent
+    // them to FILE_GENERATION.
+    ['اعمل لي ملف اكسل لميزانية شهرية', 'XLSX'],
+    ['اعمل لي ملف PDF عن فوائد النوم', 'PDF'],
+    ['crée un PDF sur les bienfaits du sport', 'PDF'],
+    ['genera un documento Word con una carta de presentación', 'DOCX'],
+    // Live 2026-09-25: 8/8 models wrote the Arabic "presentation" as TXT.
+    ['اعمل لي عرض تقديمي عن الذكاء الاصطناعي', 'PPTX'],
+    ['اعمل لي شرائح عن إدارة الوقت', 'PPTX'],
+    ['اكتب لي مستند عن خطة عمل', 'DOCX'],
   ])('%j → %s', (prompt, format) => {
     expect(detectRequestedFileFormat(prompt)).toBe(format);
   });

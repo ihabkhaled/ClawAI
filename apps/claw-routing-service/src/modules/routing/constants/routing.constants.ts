@@ -33,6 +33,22 @@ export const IMAGE_MODEL_IMAGEN = 'gemini-2.5-flash-image';
 export const IMAGE_MODEL_SD_LOCAL = 'sdxl-turbo';
 
 export const IMAGE_KEYWORDS = [
+  // ar — exact phrases only: the detector matches substrings, and a loose
+  // "صورة" (image) would catch "summarize the attached image" (ADR-119).
+  'ارسم لي',
+  'ارسملي',
+  'ارسم صورة',
+  'اعمل لي صورة',
+  'اعمل صورة',
+  'اعملي صورة',
+  'اصنع لي صورة',
+  'اصنع صورة',
+  'انشئ صورة',
+  'أنشئ صورة',
+  'ولد صورة',
+  'ولّد صورة',
+  'صمم لي شعار',
+  'صمم شعار',
   'generate an image',
   'generate image',
   'generate a picture',

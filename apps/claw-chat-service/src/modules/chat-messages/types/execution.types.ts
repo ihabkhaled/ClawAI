@@ -1,5 +1,6 @@
 import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
+import type { FileContentCandidate } from './file-writer.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type { AnthropicMessage } from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
@@ -83,6 +84,9 @@ export type MessageRoutedData = {
   // Live UAT (2026-08-16) — see RouteRoadmap.confidence/costClass.
   confidence?: number | null;
   costClass?: string | null;
+  // F6 (ADR-119) — on a FILE_GENERATION decision made in MANUAL_MODEL, the
+  // model the user picked; it writes the file's content first.
+  fileWriter?: FileContentCandidate;
 };
 
 export type LlmResponse = {
