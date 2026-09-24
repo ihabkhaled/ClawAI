@@ -1,5 +1,10 @@
-import { type ArgumentMetadata, BadRequestException, Injectable, type PipeTransform } from '@nestjs/common';
-import { type ZodSchema } from 'zod';
+import {
+  type ArgumentMetadata,
+  BadRequestException,
+  Injectable,
+  type PipeTransform,
+} from '@nestjs/common';
+import { type ZodError, type ZodSchema } from 'zod';
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
@@ -8,14 +13,21 @@ export class ZodValidationPipe implements PipeTransform {
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
     const result = this.schema.safeParse(value);
     if (!result.success) {
+      // Grouped by field so a client sees every rule a field broke, not just
+      // the first, and so this matches ApiClientError.errors's
+      // Record<string, string[]> shape. It used to be a flat array of
+      // { path, message, code } the frontend never read, which is why a
+      // validation failure anywhere on the platform showed only the generic
+      // "Validation failed" with no detail (2026-09-24).
+      const errors: Record<string, string[]> = {};
+      for (const issue of (result.error as ZodError).issues) {
+        const field = issue.path.join('.') || '<root>';
+        (errors[field] ??= []).push(issue.message);
+      }
       throw new BadRequestException({
         message: 'Validation failed',
         code: 'VALIDATION_ERROR',
-        errors: result.error.issues.map((issue) => ({
-          path: issue.path.join('.'),
-          message: issue.message,
-          code: issue.code,
-        })),
+        errors,
       });
     }
     return result.data;

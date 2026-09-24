@@ -13,6 +13,7 @@ import type {
   ModelExposureFilters,
   UseModelExposureResult,
 } from '@/types/model-exposure.types';
+import { chunkModelKeys, describeModelExposureError } from '@/utilities/model-exposure.utility';
 
 export function useModelExposure(connectorId: string): UseModelExposureResult {
   const [rows, setRows] = useState<ConnectorModelRow[]>([]);
@@ -34,7 +35,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
       const fetched = await fetchConnectorModels(connectorId);
       setRows(fetched);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to load models');
+      setErrorMessage(describeModelExposureError(err));
     } finally {
       setIsLoading(false);
     }
@@ -100,11 +101,18 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
       }
       setIsSaving(true);
       setErrorMessage(null);
+      // The backend caps one request at MODEL_EXPOSURE_BATCH_SIZE models so a
+      // single call can't rewrite an entire catalog unaudited. "Select all
+      // shown" can pick far more than that (a connector can carry hundreds
+      // of models), so a bulk apply goes out as sequential batches instead
+      // of one oversized request.
+      const batches = chunkModelKeys(Array.from(selected));
+      let appliedKeys = 0;
       try {
-        await setModelExposure(connectorId, {
-          modelKeys: Array.from(selected),
-          exposed,
-        });
+        for (const batch of batches) {
+          await setModelExposure(connectorId, { modelKeys: batch, exposed });
+          appliedKeys += batch.length;
+        }
         // After a successful apply, reload from the server rather than
         // mutating local state, so the screen shows what the server actually
         // did rather than what was requested.
@@ -112,9 +120,18 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
         setRows(refreshed);
         clearSelection();
       } catch (err) {
-        // Any failure sets errorMessage and leaves the selection intact so
-        // the operator can retry without re-picking.
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to apply');
+        // A batch partway through failing still applied everything before
+        // it — say so, and leave the remaining selection intact so the
+        // operator can retry just what didn't land.
+        const prefix =
+          appliedKeys > 0 ? `Applied ${String(appliedKeys)} model(s) before this failed — ` : '';
+        setErrorMessage(`${prefix}${describeModelExposureError(err)}`);
+        if (appliedKeys > 0) {
+          const refreshed = await fetchConnectorModels(connectorId).catch(() => null);
+          if (refreshed !== null) {
+            setRows(refreshed);
+          }
+        }
       } finally {
         setIsSaving(false);
       }

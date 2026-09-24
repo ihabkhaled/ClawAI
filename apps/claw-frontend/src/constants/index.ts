@@ -3,6 +3,7 @@ export { COUNTRY_DIAL_CODES, DEFAULT_COUNTRY_ISO2 } from './country-dial-codes.c
 export { SUGGESTED_PROMPTS } from './suggested-prompts.constants';
 export { THREAD_DATE_GROUP_LABEL_KEYS } from './thread-date-group.constants';
 export { SEVERITY_COLORS, ALL_FILTER } from './audit.constants';
+export { MODEL_EXPOSURE_BATCH_SIZE } from './model-exposure.constants';
 export {
   AUTH_INITIAL_STATE,
   AUTH_MARKER_COOKIE,

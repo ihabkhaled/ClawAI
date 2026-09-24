@@ -38,7 +38,7 @@ describe('ZodValidationPipe', () => {
       expect(error).toBeInstanceOf(BadRequestException);
       const body = (error as BadRequestException).getResponse() as Record<string, unknown>;
       expect(body['message']).toBe('Validation failed');
-      expect(body['errors']).toEqual([expect.objectContaining({ field: 'planId' })]);
+      expect(body['errors']).toHaveProperty('planId');
     }
   });
 
@@ -71,7 +71,7 @@ describe('ZodValidationPipe', () => {
       throw new Error('expected throw');
     } catch (error) {
       const body = (error as BadRequestException).getResponse() as Record<string, unknown>;
-      expect(body['errors']).toEqual([expect.objectContaining({ field: 'price.amountMinor' })]);
+      expect(body['errors']).toHaveProperty('price.amountMinor');
     }
   });
 
@@ -82,7 +82,23 @@ describe('ZodValidationPipe', () => {
       throw new Error('expected throw');
     } catch (error) {
       const body = (error as BadRequestException).getResponse() as Record<string, unknown>;
-      expect((body['errors'] as unknown[]).length).toBe(2);
+      expect(Object.keys(body['errors'] as Record<string, string[]>)).toHaveLength(2);
+    }
+  });
+
+  it('groups every rule a single field broke under that one field', () => {
+    // Record<string, string[]>, not a flat array — a client can show all of
+    // a field's violations, and this is what ApiClientError.errors on the
+    // frontend expects (a flat array was silently discarded there).
+    const strict = z.object({ code: z.string().min(5).max(2) });
+    const pipe = new ZodValidationPipe(strict);
+    try {
+      pipe.transform({ code: 'ab' }, metadata);
+      throw new Error('expected throw');
+    } catch (error) {
+      const body = (error as BadRequestException).getResponse() as Record<string, unknown>;
+      const errors = body['errors'] as Record<string, string[]>;
+      expect(errors['code']?.length).toBeGreaterThanOrEqual(1);
     }
   });
 });
