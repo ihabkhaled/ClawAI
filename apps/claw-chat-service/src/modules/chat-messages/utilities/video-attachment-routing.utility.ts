@@ -36,10 +36,28 @@ export function resolveVideoAttachmentCandidates(
   }
 
   const normalizedProvider = payload.selectedProvider.trim().toUpperCase();
-  const normalizedModel = payload.selectedModel.trim().toLowerCase();
+  // The connector catalog keys Gemini models with a `models/` prefix (see
+  // `image-generation-target.constants.ts`), and the frontend passes that
+  // catalog id straight through as `selectedModel`. Stripping the optional
+  // prefix here keeps this check aligned with the same model id shape the
+  // rest of chat-service already normalizes — without it, a real
+  // video-capable model such as `models/gemini-2.5-flash` never matches
+  // `GEMINI_VIDEO_CAPABLE_MODELS` (which is keyed bare) and gets rejected
+  // while being simultaneously recommended as the fix.
+  const normalizedModel = payload.selectedModel
+    .trim()
+    .toLowerCase()
+    .replace(/^models\//u, '');
   if (normalizedProvider !== GEMINI_PROVIDER || !GEMINI_VIDEO_CAPABLE_MODELS.has(normalizedModel)) {
+    // The suggestion list is derived from the same `GEMINI_VIDEO_CAPABLE_MODELS`
+    // set the check above just consulted, so the rejection and the recommended
+    // alternatives can never disagree — a model this function rejects can
+    // never also appear as its own suggested fix.
+    const suggestions = [...GEMINI_VIDEO_CAPABLE_MODELS]
+      .map((model) => `${GEMINI_PROVIDER[0]}${GEMINI_PROVIDER.slice(1).toLowerCase()}/${model}`)
+      .join(', ');
     throw new BusinessException(
-      `The selected provider/model ${payload.selectedProvider}/${payload.selectedModel} cannot process video attachments. Choose Gemini/gemini-2.5-flash, Gemini/gemini-2.5-pro, or use Auto.`,
+      `The selected provider/model ${payload.selectedProvider}/${payload.selectedModel} cannot process video attachments. Choose ${suggestions}, or use Auto.`,
       'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
       undefined,
       'chat.errors.videoAttachmentProviderUnsupported',

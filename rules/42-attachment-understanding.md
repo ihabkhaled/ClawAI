@@ -107,6 +107,28 @@ Full reasoning:
     placeholder string to the model as if it were the transcript. See
     [`skills/add-a-voice-note-or-transcription-path.md`](../skills/add-a-voice-note-or-transcription-path.md#solved-a-voice-note-reaching-the-model-as-nothing-2026-09-23).
 
+13. **A capability check and the alternatives it recommends must read the same
+    identifier shape as the payload it validates, or it will reject the exact
+    model it just suggested.** `resolveVideoAttachmentCandidates`
+    (`video-attachment-routing.utility.ts`) compared `payload.selectedModel`
+    against `GEMINI_VIDEO_CAPABLE_MODELS`, a bare-keyed set
+    (`gemini-2.5-flash`, `gemini-2.5-pro`) — correct, and matching
+    routing-service's real `supportsVideoInput` data for both models. But the
+    Gemini connector catalog keys every model with a `models/` prefix (see
+    `image-generation-target.constants.ts`'s `^(models/)?...` pattern), and the
+    frontend passes that catalog id straight through. A user told to "Choose
+    Gemini/gemini-2.5-flash" who did exactly that got rejected for the same
+    reason, because `models/gemini-2.5-flash` never matched the bare-keyed set.
+    This was not stale or wrong capability data (root cause (a) in the
+    2026-09-24 triage) — it was a normalization gap between two correct pieces
+    of data (root cause (b)): the check's own id-shape handling had drifted
+    from a normalization pattern the same codebase already applies elsewhere.
+    Two independent fixes close this class of bug for good: normalize the
+    incoming id the same way before comparing, and build the suggested
+    alternatives FROM the same set the rejection just consulted rather than as
+    a separately hardcoded string — so the two can never disagree again, even
+    if the underlying model list changes.
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                     |
@@ -119,6 +141,7 @@ Full reasoning:
 | 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                                                                                                                                               |
 | 10      | The migration carries no backfill, and says why in its own comment                                                                                                                                                                                                                                            |
 | 12      | `files.service-extraction.spec.ts` "an audio row still carrying the transcription placeholder" — asserts `PROCESSING`/`FAILED` reporting without touching the row; `context-assembly-attachments.spec.ts` "voice notes" — asserts the placeholder never leaks and a real transcript is framed as spoken words |
+| 13      | `video-attachment-routing.utility.spec.ts` — accepts the connector catalog's `models/`-prefixed id, and asserts no video-capable model is ever rejected while also appearing in its own suggested-alternatives text                                                                                           |
 
 ## Runbook
 
