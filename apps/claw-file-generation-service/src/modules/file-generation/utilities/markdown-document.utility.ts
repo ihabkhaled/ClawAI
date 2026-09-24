@@ -19,6 +19,7 @@ import type {
   TableBlock,
   TokenCursor,
 } from '../types/markdown-document.types';
+import { repairPipeTables } from './pipe-table.utility';
 
 /**
  * An answer's Markdown as document blocks, parsed once for every format
@@ -26,7 +27,7 @@ import type {
  */
 export function parseMarkdownDocument(markdown: string): DocumentBlock[] {
   const parser = new MarkdownIt({ html: false, linkify: true });
-  const cursor: TokenCursor = { tokens: parser.parse(markdown, {}), index: 0 };
+  const cursor: TokenCursor = { tokens: parser.parse(repairPipeTables(markdown), {}), index: 0 };
   return parseBlocks(cursor, null);
 }
 
@@ -91,10 +92,7 @@ export function flattenBlocks(blocks: DocumentBlock[]): DocumentBlock[] {
     if (block.kind === BlockKind.QUOTE) {
       return flattenBlocks(block.blocks);
     }
-    if (block.kind === BlockKind.LIST) {
-      return flattenBlocks(block.items.flat());
-    }
-    return [block];
+    return block.kind === BlockKind.LIST ? flattenBlocks(block.items.flat()) : [block];
   });
 }
 
@@ -221,10 +219,7 @@ function cellAlign(style: string | null): TableAlign {
   if (style?.includes('right') === true) {
     return TableAlign.RIGHT;
   }
-  if (style?.includes('left') === true) {
-    return TableAlign.LEFT;
-  }
-  return TableAlign.NONE;
+  return style?.includes('left') === true ? TableAlign.LEFT : TableAlign.NONE;
 }
 
 function codeLanguage(info: string): string | null {

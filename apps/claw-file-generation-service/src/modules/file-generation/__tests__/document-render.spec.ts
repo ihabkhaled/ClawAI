@@ -236,6 +236,18 @@ describe('rendered files', () => {
     expect(csv).toBe('Name,Note\n"A, B","say ""hi"""\n');
   });
 
+  // Live 2026-09-25: gemini-3.5-flash-lite wrote an Arabic table with no
+  // `|---|` row, markdown-it saw a paragraph, and the CSV was one column.
+  it('reads a pipe table that is missing its separator row', () => {
+    const csv = convertToCsv('|المنتج|السعر|\n|منتج 1|100|\n|منتج 2|200|').toString();
+    expect(csv).toBe('المنتج,السعر\nمنتج 1,100\nمنتج 2,200\n');
+  });
+
+  it('does not invent a table from a single pipe line', () => {
+    const blocks = parseMarkdownDocument('| just one line |');
+    expect(blocks.some((block) => block.kind === BlockKind.TABLE)).toBe(false);
+  });
+
   it('exports a Markdown table as JSON records', () => {
     const json = JSON.parse(
       convertToJson('Intro\n\n| k | v |\n|---|---|\n| a | 1 |').toString(),

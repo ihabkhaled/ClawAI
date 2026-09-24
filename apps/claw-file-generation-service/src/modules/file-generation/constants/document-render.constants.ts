@@ -140,3 +140,12 @@ export const CODE_LANGUAGE_EXTENSIONS: Readonly<Record<string, string>> = {
   yml: 'yml',
   zsh: 'sh',
 };
+
+/** A line of a pipe table: starts and ends with `|`. */
+export const PIPE_TABLE_LINE = /^\s*\|.*\|\s*$/u;
+
+/** A pipe table's separator row: `|---|:--:|`. */
+export const PIPE_TABLE_SEPARATOR = /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$/u;
+
+/** A fenced code block's opening or closing line. */
+export const CODE_FENCE_LINE = /^\s*(?:```|~~~)/u;

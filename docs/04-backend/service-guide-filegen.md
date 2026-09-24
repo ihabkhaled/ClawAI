@@ -71,7 +71,7 @@ QUEUED -> STARTING -> GENERATING_CONTENT -> CONVERTING -> FINALIZING -> COMPLETE
 
 Every format except TXT and MD is rendered from the same parsed document:
 `parseMarkdownDocument` (markdown-it → typed blocks) in
-`utilities/markdown-document.utility.ts` (ADR-107).
+`utilities/markdown-document.utility.ts` (ADR-107). A separator-less pipe table is repaired first (`repairPipeTables`, ADR-119).
 
 | Format | How                                                                                           |
 | ------ | --------------------------------------------------------------------------------------------- |

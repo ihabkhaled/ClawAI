@@ -144,6 +144,9 @@ After implementing any change to this service:
 - **CSV cells always pass `csvSafeCell`** (formula injection), and XLSX cells are
   inline strings, never formulas. Zip paths from the model always pass
   `safeBundlePath` (zip-slip). ADR-108.
+- `parseMarkdownDocument` first runs `repairPipeTables`: a pipe table a model
+  wrote without its `|---|` row gets one, or markdown-it reads it as a
+  paragraph and the CSV is one column (ADR-119).
 
 ## Access (ADR-103)
 
