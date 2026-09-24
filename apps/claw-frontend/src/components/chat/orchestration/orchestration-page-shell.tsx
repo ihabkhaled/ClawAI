@@ -163,6 +163,8 @@ export function OrchestrationPageShell({
                       selectedFileIds={composer.selectedFileIds}
                       onChange={composer.setSelectedFileIds}
                       disabled={isPending}
+                      ingestFiles={composer.ingestFiles}
+                      isUploading={composer.isUploading}
                     />
                     {/* One wiring here gives all nine lab pages voice and video
                         notes, exactly as it did attachments. */}

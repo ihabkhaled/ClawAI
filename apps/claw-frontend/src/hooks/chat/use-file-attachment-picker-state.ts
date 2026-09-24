@@ -1,8 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { uploadFileSchema } from '@/lib/validation/file.schema';
 import type {
-  UploadFileRequest,
   UseFileAttachmentPickerStateParams,
   UseFileAttachmentPickerStateReturn,
 } from '@/types';
@@ -10,9 +8,15 @@ import { logger } from '@/utilities';
 
 // Selection itself lives in useArchiveSelection, which keeps a whole archive
 // and a file picked from inside it from both being attached.
+//
+// Upload itself is delegated to `ingestFiles` (use-composer-attachments.ts /
+// use-chunked-upload.ts) — the same pipeline paste, drag-drop-onto-composer
+// and the recorder already use. It owns its own validation (uploadFileSchema),
+// chunking above the threshold, retry/backoff and the percent/ETA/speed
+// readout, so this hook no longer reads the file itself.
 export const useFileAttachmentPickerState = ({
   selectedFileIds,
-  uploadFile,
+  ingestFiles,
 }: UseFileAttachmentPickerStateParams): UseFileAttachmentPickerStateReturn => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -25,43 +29,21 @@ export const useFileAttachmentPickerState = ({
         message: 'Uploading file attachment',
         details: { filename: file.name, sizeBytes: file.size },
       });
-      const metadata = {
-        filename: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-      };
-
-      const result = uploadFileSchema.safeParse(metadata);
-      if (!result.success) {
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (): void => {
-        const base64 = (reader.result as string).split(',')[1] ?? '';
-        const data: UploadFileRequest = {
-          ...result.data,
-          storagePath: `/uploads/${file.name}`,
-          content: base64,
-        };
-        uploadFile(data);
-      };
-      reader.readAsDataURL(file);
+      ingestFiles([file]);
     },
-    [uploadFile],
+    [ingestFiles],
   );
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      const selectedFile = e.target.files?.[0];
-      if (selectedFile) {
-        handleFileUpload(selectedFile);
+      if (e.target.files && e.target.files.length > 0) {
+        ingestFiles(e.target.files);
       }
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     },
-    [handleFileUpload],
+    [ingestFiles],
   );
 
   const handleDrop = useCallback(
@@ -69,12 +51,11 @@ export const useFileAttachmentPickerState = ({
       e.preventDefault();
       e.stopPropagation();
       setDragOver(false);
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) {
-        handleFileUpload(droppedFile);
+      if (e.dataTransfer.files.length > 0) {
+        ingestFiles(e.dataTransfer.files);
       }
     },
-    [handleFileUpload],
+    [ingestFiles],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent): void => {

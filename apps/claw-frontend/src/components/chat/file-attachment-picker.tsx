@@ -24,8 +24,15 @@ export function FileAttachmentPicker({
   disabled,
   variant = ComposerControlVariant.Default,
   showLabel,
+  ingestFiles,
+  isUploading,
 }: FileAttachmentPickerProps): React.ReactElement {
-  const ctrl = useFileAttachmentPicker({ selectedFileIds, onChange });
+  const ctrl = useFileAttachmentPicker({
+    selectedFileIds,
+    onChange,
+    ingestFiles,
+    isUploading,
+  });
   const { t, selection } = ctrl;
 
   // Phase 2 mobile composer redesign — `compact` shrinks the trigger to a

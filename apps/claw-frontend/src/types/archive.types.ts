@@ -152,6 +152,17 @@ export type UseArchiveSelectionParams = {
   onChange: (fileIds: string[]) => void;
 };
 
+export type UseFileAttachmentPickerParams = UseArchiveSelectionParams & {
+  // Same chunked/antivirus/magic-byte upload pipeline every other composer
+  // ingestion path uses (paste, drag-drop-onto-composer, recorder) — see
+  // use-composer-attachments.ts. Passed down from the composer that owns it
+  // rather than instantiated again here, so the paperclip picker's uploads
+  // share one in-flight session and one percent/ETA/speed readout with the
+  // rest of the composer instead of running a second, un-chunked pipeline.
+  ingestFiles: (files: FileList | File[]) => void;
+  isUploading?: boolean;
+};
+
 export type UseArchiveSelectionReturn = ArchiveTreeSelection & {
   /** How many files inside this archive are picked individually. */
   selectedMemberCount: (archiveId: string) => number;

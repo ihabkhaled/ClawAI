@@ -135,6 +135,7 @@ export default function ComparePage() {
                       selectedFileIds={selectedFileIds}
                       onChange={setSelectedFileIds}
                       disabled={isPending || isPolling}
+                      ingestFiles={ingestFiles}
                     />
                   ) : null}
                   {/* Same recorder the chat composer and the nine labs render;

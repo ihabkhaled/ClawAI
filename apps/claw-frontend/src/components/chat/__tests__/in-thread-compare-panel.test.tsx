@@ -7,7 +7,9 @@ import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel'
 import { ResearchMode } from '@/enums';
 
 // The compare panel mounts FileAttachmentPicker, which transitively calls
-// useTranslation() (LocaleProvider-backed) plus useFiles()/useUploadFile().
+// useTranslation() (LocaleProvider-backed) plus useFiles(). Upload itself is
+// the `onIngestFiles` prop in baseProps below, not a hook FileAttachmentPicker
+// opens on its own — see use-file-attachment-picker.ts.
 // In this unit test we don't render a LocaleProvider, so mock those modules.
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -15,10 +17,6 @@ vi.mock('@/lib/i18n/use-translation', () => ({
 
 vi.mock('@/hooks/files/use-files', () => ({
   useFiles: () => ({ files: [], isLoading: false, isError: false, error: null }),
-}));
-
-vi.mock('@/hooks/files/use-upload-file', () => ({
-  useUploadFile: () => ({ uploadFile: vi.fn(), isPending: false }),
 }));
 
 // The recorder's capability gate reads the connector catalog. Two rows: one

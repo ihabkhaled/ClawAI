@@ -39,6 +39,8 @@ export function ComposerToolbar({
   showModelLabel,
   selectedFileIds,
   onSelectedFileIdsChange,
+  ingestFiles,
+  isUploadingAttachment,
   onRecorded,
   canSendAudio,
   canSendVideo,
@@ -65,6 +67,8 @@ export function ComposerToolbar({
         onChange={onSelectedFileIdsChange}
         disabled={disabled}
         variant={controlVariant}
+        ingestFiles={ingestFiles}
+        isUploading={isUploadingAttachment}
       />
       <VoiceVideoRecorder
         canSendAudio={canSendAudio}

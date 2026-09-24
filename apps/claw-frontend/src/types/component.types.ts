@@ -856,6 +856,12 @@ export type FileAttachmentPickerProps = {
   // `showLabel` opts back into the "Attach files" text alongside the paperclip.
   variant?: ComposerControlVariant;
   showLabel?: boolean;
+  // The composer's own chunked/antivirus upload pipeline (useComposerAttachments),
+  // shared with paste, drag-drop-onto-composer and the recorder. Required so
+  // the "Upload new file" button and this picker's own drop zone get the same
+  // chunking + percent/ETA/speed readout as every other attachment path.
+  ingestFiles: (files: FileList | File[]) => void;
+  isUploading?: boolean;
 };
 
 export type FileAttachmentRowProps = {
@@ -889,6 +895,9 @@ export type ComposerToolbarProps = {
   showModelLabel: boolean;
   selectedFileIds: string[];
   onSelectedFileIdsChange: (ids: string[]) => void;
+  /** Same chunked/antivirus pipeline behind the paperclip picker and the recorder. */
+  ingestFiles: (files: FileList | File[]) => void;
+  isUploadingAttachment: boolean;
   /** A finished voice/video note, on its way to the same upload pipeline. */
   onRecorded: (file: File) => void;
   canSendAudio: boolean;

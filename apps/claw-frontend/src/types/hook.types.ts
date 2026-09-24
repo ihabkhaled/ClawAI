@@ -55,7 +55,6 @@ import type {
   VirtualizedMessagesProps,
 } from './component.types';
 import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
-import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
 import type { NarrationEntry } from './narration.types';
@@ -486,7 +485,12 @@ export type UseAuditsPageReturn = {
 
 export type UseFileAttachmentPickerStateParams = {
   selectedFileIds: string[];
-  uploadFile: (data: UploadFileRequest) => void;
+  // Routes through the same chunked/antivirus/magic-byte pipeline as paste,
+  // drag-drop-onto-composer and the recorder — see use-composer-attachments.ts.
+  // A prior version of this hook called useUploadFile directly, which sent
+  // every paperclip-picker upload single-shot with no chunking and no
+  // percent/ETA/speed readout, regardless of file size.
+  ingestFiles: (files: FileList | File[]) => void;
 };
 
 export type UseFileAttachmentPickerStateReturn = {

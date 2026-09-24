@@ -69,6 +69,8 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
       showModelLabel: isWideViewport,
       selectedFileIds: state.selectedFileIds,
       onSelectedFileIdsChange: state.setSelectedFileIds,
+      ingestFiles: state.ingestFiles,
+      isUploadingAttachment: state.isUploadingAttachment,
       // A recorded note is an ordinary attachment: same upload pipeline
       // (antivirus, magic bytes), same selected list, same delivery.
       onRecorded: (file: File) => state.ingestFiles([file]),

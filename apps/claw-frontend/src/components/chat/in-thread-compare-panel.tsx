@@ -102,6 +102,7 @@ export function InThreadComparePanel({
                 selectedFileIds={selectedFileIds}
                 onChange={onSelectedFileIdsChange}
                 disabled={isPending}
+                ingestFiles={onIngestFiles}
               />
               {/* Same recorder the chat composer and the nine labs render; the
                   consent dialog ships inside it, so it comes along. */}
