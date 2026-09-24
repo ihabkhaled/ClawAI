@@ -1,3 +1,4 @@
+import type { ConnectorPreset } from '@claw/shared-types';
 import type { LucideIcon } from 'lucide-react';
 import type { UseFormReturn } from 'react-hook-form';
 
@@ -1366,7 +1367,7 @@ export type ConnectorFormFieldsProps = {
   name: string;
   setName: (value: string) => void;
   provider: ConnectorProvider | null;
-  setProvider: (value: ConnectorProvider) => void;
+  onProviderSelect: (value: ConnectorProvider) => void;
   authType: ConnectorAuthType;
   setAuthType: (value: ConnectorAuthType) => void;
   apiKey: string;
@@ -1377,7 +1378,12 @@ export type ConnectorFormFieldsProps = {
   setRegion: (value: string) => void;
   workspaceId: string;
   setWorkspaceId: (value: string) => void;
+  accountId: string;
+  setAccountId: (value: string) => void;
+  requiresAccountId: boolean;
   defaultBaseUrl: string | null;
+  selectedPreset: ConnectorPreset | undefined;
+  resolvedBaseUrlPreview: string | null;
 };
 
 export type ModelTableProps = {

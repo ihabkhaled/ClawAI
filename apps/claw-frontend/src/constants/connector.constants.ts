@@ -1,6 +1,9 @@
+import { getConnectorPreset } from '@claw/shared-utilities';
+
 import { ConnectorAuthType, ConnectorProvider } from '@/enums';
 
-export const PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = {
+/** Providers connector-service serves through a bespoke adapter, not the preset registry. */
+const BESPOKE_PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   [ConnectorProvider.OPENAI]: 'OpenAI',
   [ConnectorProvider.ANTHROPIC]: 'Anthropic',
   [ConnectorProvider.GEMINI]: 'Google Gemini',
@@ -8,9 +11,24 @@ export const PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = {
   [ConnectorProvider.DEEPSEEK]: 'DeepSeek',
   [ConnectorProvider.OLLAMA]: 'Ollama',
   [ConnectorProvider.GROK]: 'Grok (xAI)',
+  [ConnectorProvider.LLAMACPP]: 'llama.cpp',
 };
 
-export const PROVIDER_ICON_COLORS: Record<ConnectorProvider, string> = {
+/**
+ * Display name per provider. The eight bespoke adapters are named here; every
+ * OpenAI-compatible preset is named from `CONNECTOR_PRESETS`
+ * (`@claw/shared-utilities`, ADR-117) — the single source for that name.
+ */
+export const PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = Object.fromEntries(
+  Object.values(ConnectorProvider).map((provider) => [
+    provider,
+    BESPOKE_PROVIDER_DISPLAY_NAMES[provider] ??
+      getConnectorPreset(provider)?.displayName ??
+      provider,
+  ]),
+) as Record<ConnectorProvider, string>;
+
+const BESPOKE_PROVIDER_ICON_COLORS: Record<string, string> = {
   [ConnectorProvider.OPENAI]:
     'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   [ConnectorProvider.ANTHROPIC]:
@@ -23,7 +41,20 @@ export const PROVIDER_ICON_COLORS: Record<ConnectorProvider, string> = {
   [ConnectorProvider.OLLAMA]:
     'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
   [ConnectorProvider.GROK]: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+  [ConnectorProvider.LLAMACPP]:
+    'bg-stone-100 text-stone-700 dark:bg-stone-900/30 dark:text-stone-400',
 };
+
+/** Neutral fallback color for a preset provider that has no bespoke branding. */
+const PRESET_PROVIDER_ICON_COLOR =
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
+
+export const PROVIDER_ICON_COLORS: Record<ConnectorProvider, string> = Object.fromEntries(
+  Object.values(ConnectorProvider).map((provider) => [
+    provider,
+    BESPOKE_PROVIDER_ICON_COLORS[provider] ?? PRESET_PROVIDER_ICON_COLOR,
+  ]),
+) as Record<ConnectorProvider, string>;
 
 export const AUTH_TYPE_LABELS: Record<string, string> = {
   [ConnectorAuthType.API_KEY]: 'API Key',
@@ -49,7 +80,7 @@ export const LIFECYCLE_LABELS: Record<string, string> = {
   beta: 'Beta',
 };
 
-export const PROVIDER_DEFAULT_BASE_URLS: Record<ConnectorProvider, string> = {
+const BESPOKE_PROVIDER_DEFAULT_BASE_URLS: Record<string, string> = {
   [ConnectorProvider.OPENAI]: 'https://api.openai.com/v1',
   [ConnectorProvider.ANTHROPIC]: 'https://api.anthropic.com',
   [ConnectorProvider.GEMINI]: 'https://generativelanguage.googleapis.com/v1',
@@ -57,4 +88,19 @@ export const PROVIDER_DEFAULT_BASE_URLS: Record<ConnectorProvider, string> = {
   [ConnectorProvider.DEEPSEEK]: 'https://api.deepseek.com/v1',
   [ConnectorProvider.OLLAMA]: 'http://localhost:11434',
   [ConnectorProvider.GROK]: 'https://api.x.ai/v1',
+  [ConnectorProvider.LLAMACPP]: 'http://localhost:8080',
 };
+
+/**
+ * The base URL prefilled when a provider is picked. The eight bespoke
+ * adapters are listed here; every OpenAI-compatible preset comes from
+ * `CONNECTOR_PRESETS` (`@claw/shared-utilities`), the single source for it.
+ */
+export const PROVIDER_DEFAULT_BASE_URLS: Record<ConnectorProvider, string> = Object.fromEntries(
+  Object.values(ConnectorProvider).map((provider) => [
+    provider,
+    BESPOKE_PROVIDER_DEFAULT_BASE_URLS[provider] ??
+      getConnectorPreset(provider)?.defaultBaseUrl ??
+      '',
+  ]),
+) as Record<ConnectorProvider, string>;

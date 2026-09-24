@@ -34,7 +34,7 @@ export function ConnectorForm({
     name,
     setName,
     provider,
-    setProvider,
+    onProviderSelect,
     authType,
     setAuthType,
     apiKey,
@@ -45,11 +45,16 @@ export function ConnectorForm({
     setRegion,
     workspaceId,
     setWorkspaceId,
+    accountId,
+    setAccountId,
+    requiresAccountId,
     fieldErrors,
     isEditing,
     pendingLabel,
     submitLabel,
     defaultBaseUrl,
+    selectedPreset,
+    resolvedBaseUrlPreview,
     handleSubmit,
     handleOpenChange,
   } = useConnectorFormState({ open, connector, onSubmit, onOpenChange });
@@ -66,7 +71,7 @@ export function ConnectorForm({
       name={name}
       setName={setName}
       provider={provider}
-      setProvider={setProvider}
+      onProviderSelect={onProviderSelect}
       authType={authType}
       setAuthType={setAuthType}
       apiKey={apiKey}
@@ -77,7 +82,12 @@ export function ConnectorForm({
       setRegion={setRegion}
       workspaceId={workspaceId}
       setWorkspaceId={setWorkspaceId}
+      accountId={accountId}
+      setAccountId={setAccountId}
+      requiresAccountId={requiresAccountId}
       defaultBaseUrl={defaultBaseUrl}
+      selectedPreset={selectedPreset}
+      resolvedBaseUrlPreview={resolvedBaseUrlPreview}
     />
   );
 

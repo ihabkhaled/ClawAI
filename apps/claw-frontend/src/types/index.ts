@@ -111,6 +111,12 @@ export type {
   UpdateConnectorParams,
   ConnectorFormStateParams,
   ConnectorFormStateReturn,
+  ConnectorProviderComboboxOption,
+  ConnectorProviderComboboxGroup,
+  ConnectorProviderComboboxState,
+  ConnectorProviderComboboxProps,
+  ConnectorProviderComboboxItemProps,
+  ConnectorPresetLinksProps,
 } from './connector.types';
 export type {
   ExplanationFactor,

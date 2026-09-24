@@ -1,3 +1,5 @@
+import type { ConnectorPreset } from '@claw/shared-types';
+
 import type { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '@/enums';
 
 export type Connector = {
@@ -43,6 +45,7 @@ export type CreateConnectorRequest = {
   baseUrl?: string;
   region?: string;
   workspaceId?: string;
+  accountId?: string;
 };
 
 export type UpdateConnectorRequest = Partial<CreateConnectorRequest> & {
@@ -77,6 +80,7 @@ export type ConnectorFormFieldErrors = {
   baseUrl?: string[];
   region?: string[];
   workspaceId?: string[];
+  accountId?: string[];
 };
 
 export type UpdateConnectorParams = {
@@ -95,7 +99,7 @@ export type ConnectorFormStateReturn = {
   name: string;
   setName: (value: string) => void;
   provider: ConnectorProvider | null;
-  setProvider: (value: ConnectorProvider) => void;
+  onProviderSelect: (value: ConnectorProvider) => void;
   authType: ConnectorAuthType;
   setAuthType: (value: ConnectorAuthType) => void;
   apiKey: string;
@@ -106,11 +110,54 @@ export type ConnectorFormStateReturn = {
   setRegion: (value: string) => void;
   workspaceId: string;
   setWorkspaceId: (value: string) => void;
+  accountId: string;
+  setAccountId: (value: string) => void;
+  requiresAccountId: boolean;
   fieldErrors: ConnectorFormFieldErrors;
   isEditing: boolean;
   pendingLabel: string;
   submitLabel: string;
   defaultBaseUrl: string | null;
+  selectedPreset: ConnectorPreset | undefined;
+  /** The base URL with `{ACCOUNT_ID}` resolved, once the id is valid hex. */
+  resolvedBaseUrlPreview: string | null;
   handleSubmit: (e: React.FormEvent) => void;
   handleOpenChange: (nextOpen: boolean) => void;
+};
+
+/** One provider row in the searchable connector-provider combobox. */
+export type ConnectorProviderComboboxOption = {
+  value: ConnectorProvider;
+  label: string;
+  hasFreeTier: boolean;
+};
+
+/** One labeled section of the connector-provider combobox. */
+export type ConnectorProviderComboboxGroup = {
+  key: string;
+  label: string;
+  options: ConnectorProviderComboboxOption[];
+};
+
+export type ConnectorProviderComboboxState = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  groups: ConnectorProviderComboboxGroup[];
+};
+
+export type ConnectorProviderComboboxProps = {
+  value: ConnectorProvider | null;
+  onChange: (value: ConnectorProvider) => void;
+  disabled?: boolean;
+};
+
+export type ConnectorProviderComboboxItemProps = {
+  option: ConnectorProviderComboboxOption;
+  isSelected: boolean;
+  onSelect: (value: string) => void;
+};
+
+/** Props for the preset's register/apiKeys/pricing/docs link row. */
+export type ConnectorPresetLinksProps = {
+  preset: ConnectorPreset;
 };

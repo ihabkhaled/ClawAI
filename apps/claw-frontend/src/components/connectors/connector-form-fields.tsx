@@ -1,6 +1,8 @@
 import { Info } from 'lucide-react';
 
 import { PasswordInput } from '@/components/common/password-input';
+import { ConnectorPresetLinks } from '@/components/connectors/connector-preset-links';
+import { ConnectorProviderCombobox } from '@/components/connectors/connector-provider-combobox';
 import { FieldHint } from '@/components/connectors/field-hint';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,12 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  AUTH_TYPE_LABELS,
-  CONNECTOR_AUTH_TYPE_OPTIONS,
-  CONNECTOR_PROVIDER_OPTIONS,
-  PROVIDER_DISPLAY_NAMES,
-} from '@/constants';
+import { AUTH_TYPE_LABELS, CONNECTOR_AUTH_TYPE_OPTIONS } from '@/constants';
 import { ConnectorAuthType, ConnectorProvider } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import type { ConnectorFormFieldsProps } from '@/types';
@@ -26,7 +23,7 @@ export function ConnectorFormFields({
   name,
   setName,
   provider,
-  setProvider,
+  onProviderSelect,
   authType,
   setAuthType,
   apiKey,
@@ -37,7 +34,12 @@ export function ConnectorFormFields({
   setRegion,
   workspaceId,
   setWorkspaceId,
+  accountId,
+  setAccountId,
+  requiresAccountId,
   defaultBaseUrl,
+  selectedPreset,
+  resolvedBaseUrlPreview,
 }: ConnectorFormFieldsProps): React.ReactElement {
   const { t } = useTranslation();
   return (
@@ -62,26 +64,16 @@ export function ConnectorFormFields({
         <label htmlFor="connector-provider" className="text-sm font-medium">
           {t('connectors.provider')}
         </label>
-        <Select
-          value={provider ?? undefined}
-          onValueChange={(value) => setProvider(value as ConnectorProvider)}
+        <ConnectorProviderCombobox
+          value={provider}
+          onChange={onProviderSelect}
           disabled={isEditing}
-        >
-          <SelectTrigger id="connector-provider">
-            <SelectValue placeholder={t('connectors.selectProvider')} />
-          </SelectTrigger>
-          <SelectContent>
-            {CONNECTOR_PROVIDER_OPTIONS.map((p) => (
-              <SelectItem key={p} value={p}>
-                {PROVIDER_DISPLAY_NAMES[p]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        />
         <FieldHint text={t('connectors.providerHelp')} />
         {fieldErrors.provider ? (
           <p className="text-destructive mt-1 text-sm">{fieldErrors.provider[0]}</p>
         ) : null}
+        {selectedPreset ? <ConnectorPresetLinks preset={selectedPreset} /> : null}
       </div>
 
       <div className="grid grid-cols-1 gap-2">
@@ -180,6 +172,30 @@ export function ConnectorFormFields({
           <FieldHint text={t('connectors.workspaceIdHelp')} />
           {fieldErrors.workspaceId ? (
             <p className="text-destructive mt-1 text-sm">{fieldErrors.workspaceId[0]}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {requiresAccountId ? (
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="connector-account-id" className="text-sm font-medium">
+            {t('connectors.accountId')}
+          </label>
+          <Input
+            id="connector-account-id"
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            placeholder={t('connectors.accountIdPlaceholder')}
+          />
+          <FieldHint text={t('connectors.accountIdHelp')} />
+          {fieldErrors.accountId ? (
+            <p className="text-destructive mt-1 text-sm">{fieldErrors.accountId[0]}</p>
+          ) : null}
+          {resolvedBaseUrlPreview !== null ? (
+            <p className="text-muted-foreground text-xs">
+              {t('connectors.resolvedUrlLabel')}{' '}
+              <code className="bg-muted rounded px-1 py-0.5">{resolvedBaseUrlPreview}</code>
+            </p>
           ) : null}
         </div>
       ) : null}

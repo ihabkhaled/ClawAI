@@ -1,3 +1,10 @@
+import {
+  getConnectorPreset,
+  hasAccountIdPlaceholder,
+  isValidPresetAccountId,
+  presetRequiresAccountId,
+  resolvePresetUrl,
+} from '@claw/shared-utilities';
 import { useEffect, useState } from 'react';
 
 import { PROVIDER_DEFAULT_BASE_URLS } from '@/constants';
@@ -9,6 +16,7 @@ import type {
   ConnectorFormStateReturn,
   CreateConnectorRequest,
 } from '@/types';
+import { toFrontendConnectorAuthType } from '@/utilities';
 
 export function useConnectorFormState({
   open,
@@ -25,6 +33,7 @@ export function useConnectorFormState({
   const [baseUrl, setBaseUrl] = useState(connector?.baseUrl ?? '');
   const [region, setRegion] = useState(connector?.region ?? '');
   const [workspaceId, setWorkspaceId] = useState(connector?.workspaceId ?? '');
+  const [accountId, setAccountId] = useState('');
   const [fieldErrors, setFieldErrors] = useState<ConnectorFormFieldErrors>({});
 
   const isEditing = !!connector;
@@ -38,6 +47,7 @@ export function useConnectorFormState({
       setBaseUrl(connector?.baseUrl ?? '');
       setRegion(connector?.region ?? '');
       setWorkspaceId(connector?.workspaceId ?? '');
+      setAccountId('');
       setFieldErrors({});
     }
   }, [open, connector]);
@@ -47,6 +57,21 @@ export function useConnectorFormState({
       setFieldErrors({});
     }
     onOpenChange(nextOpen);
+  };
+
+  // Picking a preset prefills the fields its registry entry knows — name,
+  // base URL, auth type — while leaving every field editable afterward. The
+  // name is only filled when the admin has not already typed one, so a
+  // second click through the combobox never clobbers custom input.
+  const onProviderSelect = (nextProvider: ConnectorProvider): void => {
+    setProvider(nextProvider);
+    setAccountId('');
+    const preset = getConnectorPreset(nextProvider);
+    if (preset) {
+      setName((prev) => (prev.trim().length > 0 ? prev : preset.displayName));
+      setBaseUrl(preset.defaultBaseUrl);
+      setAuthType(toFrontendConnectorAuthType(preset.authType));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent): void => {
@@ -69,6 +94,9 @@ export function useConnectorFormState({
     if (workspaceId) {
       formData.workspaceId = workspaceId;
     }
+    if (accountId) {
+      formData.accountId = accountId;
+    }
 
     const result = createConnectorSchema.safeParse(formData);
 
@@ -84,12 +112,19 @@ export function useConnectorFormState({
   const pendingLabel = isEditing ? 'Saving...' : 'Creating...';
   const submitLabel = isEditing ? 'Save Changes' : 'Create Connector';
   const defaultBaseUrl = provider !== null ? PROVIDER_DEFAULT_BASE_URLS[provider] : null;
+  const selectedPreset = provider !== null ? getConnectorPreset(provider) : undefined;
+  const requiresAccountId = provider !== null && presetRequiresAccountId(provider);
+  const effectiveBaseUrl = baseUrl || defaultBaseUrl || '';
+  const resolvedBaseUrlPreview =
+    hasAccountIdPlaceholder(effectiveBaseUrl) && isValidPresetAccountId(accountId)
+      ? resolvePresetUrl(effectiveBaseUrl, accountId)
+      : null;
 
   return {
     name,
     setName,
     provider,
-    setProvider,
+    onProviderSelect,
     authType,
     setAuthType,
     apiKey,
@@ -100,11 +135,16 @@ export function useConnectorFormState({
     setRegion,
     workspaceId,
     setWorkspaceId,
+    accountId,
+    setAccountId,
+    requiresAccountId,
     fieldErrors,
     isEditing,
     pendingLabel,
     submitLabel,
     defaultBaseUrl,
+    selectedPreset,
+    resolvedBaseUrlPreview,
     handleSubmit,
     handleOpenChange,
   };

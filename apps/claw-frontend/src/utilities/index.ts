@@ -59,6 +59,8 @@ export {
   getConnectorStatusDotTone,
   getConnectorStatusLabelKey,
 } from './connector-status-style.utility';
+export { toFrontendConnectorAuthType } from './connector-preset-auth-type.utility';
+export { connectorPresetGroupLabelKey } from './connector-provider-combobox.utility';
 export {
   getContextPackItemTypeIcon,
   getContextPackItemTypeTone,

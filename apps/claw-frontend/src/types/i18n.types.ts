@@ -867,6 +867,21 @@ export type TranslationDictionary = {
     workspaceIdPlaceholder: string;
     saveFirstThenTest: string;
     selectProvider: string;
+    groupConnected: string;
+    groupLowCost: string;
+    groupAggregators: string;
+    groupDirectLabs: string;
+    freeTierBadge: string;
+    searchProviderPlaceholder: string;
+    noProviderResults: string;
+    linkRegister: string;
+    linkApiKeys: string;
+    linkPricing: string;
+    linkDocs: string;
+    accountId: string;
+    accountIdHelp: string;
+    accountIdPlaceholder: string;
+    resolvedUrlLabel: string;
   };
   memory: {
     title: string;
