@@ -134,21 +134,53 @@ export function useVirtualizedMessages(
   const totalCount = query.data?.pages[0]?.meta.total ?? 0;
 
   // Stable firstItemIndex: starts at VIRTUOSO_START_INDEX - initialCount.
-  // When older messages are prepended (messages.length grows), decrement by delta
-  // so Virtuoso can maintain scroll position without a visual jump.
+  // Virtuoso keys every rendered row by `originalIndex + firstItemIndex`
+  // (react-virtuoso's default `computeItemKey`), so this number must move
+  // ONLY when messages are prepended (older history loaded) — decrementing
+  // it is what lets the item that used to be first keep the same absolute
+  // index, so Virtuoso does not treat it as new. It must NOT move when a
+  // message is appended at the end (a send, or the assistant's reply
+  // landing), because that keeps every earlier item's array position and
+  // therefore its virtual index unchanged.
+  //
+  // The previous version decremented on ANY growth of `messages.length`,
+  // prepend or append alike. Every ordinary message — the user's own send,
+  // then the assistant's reply — silently shifted firstItemIndex down by
+  // one, which shifted every ALREADY-RENDERED row's key by one too. React
+  // read that as "every row is now a different item" and remounted the
+  // whole visible window on every single message. A voice/video note that
+  // had already been played (blobUrl loaded from
+  // useAuthenticatedFileBlob) lost that state on the remount and came back
+  // showing native player controls with no source — the "0:00, dead
+  // scrubber" report — right as the AI's reply arrived, because that is
+  // the next append after the user's own send re-triggered the same bug.
+  //
+  // Fixed by comparing identity, not length: track the id of whatever is
+  // at position 0. If that id is still in the new array but has moved to
+  // a later position, the messages ahead of it are newly PREPENDED older
+  // history, and firstItemIndex shifts by exactly that many. If it is
+  // still at position 0, all growth happened at the end and firstItemIndex
+  // is untouched.
   const [firstItemIndex, setFirstItemIndex] = useState(() =>
     Math.max(0, VIRTUOSO_START_INDEX - messages.length),
   );
-  const prevLengthRef = useRef(messages.length);
+  const prevFirstMessageIdRef = useRef<string | null>(messages[0]?.id ?? null);
 
   useEffect(() => {
-    const newLength = messages.length;
-    if (newLength > prevLengthRef.current) {
-      const delta = newLength - prevLengthRef.current;
-      setFirstItemIndex((prev) => Math.max(0, prev - delta));
+    const prevFirstId = prevFirstMessageIdRef.current;
+    if (prevFirstId !== null) {
+      const indexOfPrevFirst = messages.findIndex((message) => message.id === prevFirstId);
+      // > 0: that many older messages were prepended before it — shift.
+      // === 0: unchanged position, nothing was prepended — leave it alone.
+      // === -1: the previously-first message fell out of the loaded window
+      // (e.g. cache reset); there is nothing sane to compute, so it is left
+      // alone rather than guessed at.
+      if (indexOfPrevFirst > 0) {
+        setFirstItemIndex((prev) => Math.max(0, prev - indexOfPrevFirst));
+      }
     }
-    prevLengthRef.current = newLength;
-  }, [messages.length]);
+    prevFirstMessageIdRef.current = messages[0]?.id ?? prevFirstId;
+  }, [messages]);
 
   // "Fetch older" = fetch next page in the infinite query (higher page number = older messages)
   const fetchOlderMessages = useCallback((): void => {

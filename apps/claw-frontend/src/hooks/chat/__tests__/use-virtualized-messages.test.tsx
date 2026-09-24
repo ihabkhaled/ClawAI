@@ -7,6 +7,7 @@ import { MESSAGE_POLL_INTERVAL_MS } from '@/constants';
 import { MessageRole } from '@/enums';
 import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
 import type { ChatMessage, MessagesListResponse } from '@/types';
+import { mergeLatestMessagesPageIntoCache } from '@/utilities';
 
 const { mockGetMessagesPaginated } = vi.hoisted(() => ({
   mockGetMessagesPaginated: vi.fn(),
@@ -208,5 +209,57 @@ describe('useVirtualizedMessages', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // Regression for the attachment-playback bug: Virtuoso keys every rendered
+  // row by `originalIndex + firstItemIndex` (react-virtuoso's default
+  // computeItemKey), so firstItemIndex moving on an APPEND (a send, or the
+  // assistant's reply landing) reshuffles every already-rendered row's key
+  // and forces a full remount — which is what reset a played voice note's
+  // blob URL back to an unplayable state right after the AI answered. It
+  // must move ONLY when older history is PREPENDED.
+  it('does not shift firstItemIndex when a new message is appended at the end', async () => {
+    mockGetMessagesPaginated.mockResolvedValue(PAGE_1);
+    const { result } = renderHook(() => useVirtualizedMessages('thread-1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.messages.map((message) => message.id)).toEqual(['msg-2', 'msg-3']);
+    const firstItemIndexBefore = result.current.firstItemIndex;
+
+    // A reply (or the user's own just-sent message) lands on page 1 as a NEW
+    // newest message, same shape as `mergeLatestMessagesPageIntoCache` /
+    // `insertSentMessageIntoCache` write in production.
+    act(() => {
+      mergeLatestMessagesPageIntoCache(queryClient, 'thread-1', {
+        data: [buildMessage('msg-4'), buildMessage('msg-3'), buildMessage('msg-2')],
+        meta: { total: 4, limit: 3, nextBefore: 'msg-2' },
+      });
+    });
+
+    await waitFor(() =>
+      expect(result.current.messages.map((message) => message.id)).toEqual([
+        'msg-2',
+        'msg-3',
+        'msg-4',
+      ]),
+    );
+    expect(result.current.firstItemIndex).toBe(firstItemIndexBefore);
+  });
+
+  it('decrements firstItemIndex by exactly the count of newly prepended older messages', async () => {
+    mockGetMessagesPaginated.mockImplementation((_threadId: string, before: string | undefined) =>
+      Promise.resolve(before === undefined ? PAGE_1 : PAGE_2),
+    );
+    const { result } = renderHook(() => useVirtualizedMessages('thread-1'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const firstItemIndexBefore = result.current.firstItemIndex;
+
+    act(() => {
+      result.current.fetchPreviousPage();
+    });
+    await waitFor(() => expect(result.current.hasPreviousPage).toBe(false));
+
+    // PAGE_2 adds exactly one older message ('msg-1') ahead of the previous
+    // first message ('msg-2').
+    expect(result.current.firstItemIndex).toBe(firstItemIndexBefore - 1);
   });
 });
