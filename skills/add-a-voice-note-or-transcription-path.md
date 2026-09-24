@@ -34,10 +34,17 @@ and runs concurrently with the service's prefetch, rather than blocking the uplo
    transcript. Match the existing two.
 2. Add the provider to `TRANSCRIPTION_PROVIDER_PRIORITY`. Order is preference,
    first capable wins.
-3. Make sure the connector's adapter reports `supportsAudio: true` in
+3. Make sure the connector's adapter reports `supportsAudio` correctly in
    **connector-service** — that flag is what the capability client filters on.
    OpenAI's said `false` while routing already listed it as an audio provider;
    the two sources of truth disagreed and the fallback was unreachable.
+   **Do not hardcode `true` for every model a provider's `/models` list
+   returns** — that is the exact bug fixed below. If the provider's list
+   endpoint carries no real per-model modality data (most don't), write a
+   name-pattern heuristic in that adapter's own `constants/` file
+   (`gemini-audio-heuristics.constants.ts` is the template) that fails
+   closed: unknown/preview/experimental model names default to
+   `supportsAudio: false`, never `true`.
 
 ## The rules that do not bend
 
@@ -146,6 +153,17 @@ on the tracks.
   `'AUDIO'`; routing-service's `ModalityKind` uses `'AUDIO_INPUT'`. The
   capability client matches what is actually emitted. Reconciling them is a
   routing-owned change.
+- **Gemini's `supportsAudio` is still a name-pattern heuristic, not a synced
+  fact.** See "Solved: a Gemini model marked audio-capable that Gemini itself
+  refuses" below — neither of Gemini's own list endpoints reports per-model
+  audio-input support, so `isGeminiAudioCapableModel` guesses from the model
+  ID and fails closed for anything outside the numbered stable
+  `gemini-<N>-{flash,pro}` family. A real audio-capable model that ships under
+  an unfamiliar name (a new family, not `flash`/`pro`) will read as
+  NOT audio-capable until the pattern is widened by hand. The fallback below
+  softens the blast radius of getting this wrong, but does not remove the
+  need for a human to confirm and widen the allowlist when Google ships a new
+  audio-capable line.
 
 ## Solved: a voice note reaching the model as nothing (2026-09-23)
 
@@ -217,12 +235,82 @@ Tests: `apps/claw-file-service/src/modules/files/services/__tests__/files.servic
 and `apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/context-assembly-attachments.spec.ts`
 (`voice notes`).
 
+## Solved: a Gemini model marked audio-capable that Gemini itself refuses (2026-09-24)
+
+The live bug: every automatic transcription through Gemini failed with 400
+`"Audio input modality is not enabled for models/antigravity-preview-05-2026"`.
+`TRANSCRIPTION_PROVIDER_PRIORITY` always picked GEMINI first, and the
+connector catalog's first audio-capable GEMINI row was always this one model.
+
+Root cause was `GeminiAdapter#syncModels`
+(`apps/claw-connector-service/.../managers/adapters/gemini.adapter.ts`)
+hardcoding `supportsAudio: true` for **every** model the sync read — not a
+stale or wrong hand-curated row for this one model, a blanket default for the
+whole provider. It looked like a live sync but wasn't one: Gemini's
+OpenAI-compatible `/models` list carries only `id`/`object`/`created`/
+`owned_by` (see `GeminiModelEntry`), and Google's native `/v1beta/models`
+list (already fetched for context windows) reports no audio-input boolean
+either. There was never a real signal to sync `supportsAudio` from, so
+every future preview/experimental Gemini model, or a whole new non-`gemini`
+product line, would have gotten the same wrong `true`.
+
+Fixed at the mechanism, not the one model:
+
+- `isGeminiAudioCapableModel` (new:
+  `apps/claw-connector-service/src/modules/connectors/constants/gemini-audio-heuristics.constants.ts`)
+  replaces the hardcoded `true`. It fails closed: only the canonical
+  `gemini-<major>[.<minor>]-{flash,pro}[-lite][-<digits>]` family reads as
+  audio-capable; anything containing `preview`/`exp`/`experimental`/
+  `thinking`/`live`, or any non-`gemini` product line, reads `false`. No
+  regex — a hand-rolled segment/digit walk, same reasoning as
+  `MODEL_VERSION_DIGITS` in the frontend's `model-recency.constants.ts`: a
+  security linter cannot prove a `\d+` group is safe from catastrophic
+  backtracking, splitting and checking digits can.
+- `TranscriptionCapabilityClient` gained `findCapableModels()` (plural),
+  returning one candidate per provider in `TRANSCRIPTION_PROVIDER_PRIORITY`
+  order instead of stopping at the first match. `findCapableModel()`
+  (singular) still exists — `findCapableModels().at(0) ?? null` — for any
+  caller that only wants one answer.
+- `TranscriptionManager` walks that whole candidate list. On a genuine
+  `"...modality is not enabled..."` refusal from the provider
+  (`isAudioModalityRejection` in the new
+  `apps/claw-file-service/src/modules/files/utilities/transcription-error.utility.ts`,
+  which reaches into `error.response.data` the same way
+  claw-image-service's `extractProviderErrorMessage` does — that pattern is
+  reused verbatim, not reinvented), it falls through to the next candidate
+  instead of failing the whole job. Every OTHER failure (rate limit, auth,
+  empty transcript, a genuinely bad recording) still stops at the first
+  candidate and is recorded as a real failure — falling through on those
+  would mean paying a second provider for a request that was never going to
+  succeed.
+
+**The stated tradeoff**: the heuristic can be wrong in the other direction —
+a real audio-capable Gemini model that does not match the stable
+`flash`/`pro` pattern reads as not-capable until a human confirms it and
+widens `GEMINI_AUDIO_FAMILY_NAMES`/`GEMINI_AUDIO_UNSAFE_MARKERS`. That is the
+deliberate side of failing closed: a wrong "not capable" is a clean
+`NO_CAPABLE_CONNECTOR` refusal the user can read; a wrong "capable" is a
+malformed request behind a provider's back, dressed up as a bug in the
+user's recording.
+
+Tests: `apps/claw-connector-service/src/modules/connectors/constants/__tests__/gemini-audio-heuristics.constants.spec.ts`,
+the new case in `apps/claw-connector-service/src/modules/connectors/__tests__/gemini-context-window.spec.ts`,
+`apps/claw-file-service/src/modules/files/utilities/__tests__/transcription-error.utility.spec.ts`,
+the `findCapableModels` cases in `transcription-capability.client.spec.ts`,
+and the `provider fallback on an audio-modality rejection` describe block in
+`transcription.manager.spec.ts`.
+
 ## Verify
 
 ```bash
-cd apps/claw-file-service
+cd apps/claw-connector-service
+npx vitest run src/modules/connectors/constants/__tests__/gemini-audio-heuristics.constants.spec.ts \
+  src/modules/connectors/__tests__/gemini-context-window.spec.ts
+
+cd ../claw-file-service
 npx vitest run src/modules/files/managers/__tests__/transcription.manager.spec.ts \
   src/modules/files/clients/__tests__/transcription-capability.client.spec.ts \
+  src/modules/files/utilities/__tests__/transcription-error.utility.spec.ts \
   src/modules/files/managers/__tests__/chunked-upload.manager.spec.ts
 
 cd ../claw-frontend

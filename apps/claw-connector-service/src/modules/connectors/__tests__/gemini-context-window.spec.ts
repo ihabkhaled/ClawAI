@@ -56,6 +56,32 @@ describe('GeminiAdapter context windows', () => {
     expect(models).toHaveLength(1);
     expect(models[0]?.capabilities.maxContextTokens).toBeUndefined();
   });
+
+  // Live bug this guards against: syncModels used to hardcode
+  // `supportsAudio: true` for every Gemini model, regardless of the model —
+  // Gemini's own /models list carries no modality data to sync from. The
+  // catalog then routed audio to a model that Gemini itself refuses.
+  it('does not mark a preview model as audio-capable just because it came from Gemini', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        respond({
+          object: 'list',
+          data: [
+            { id: 'models/antigravity-preview-05-2026', object: 'model' },
+            { id: 'models/gemini-2.5-flash', object: 'model' },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(respond({ models: [] }));
+
+    const models = await new GeminiAdapter().syncModels(config);
+
+    const antigravity = models.find((m) => m.modelKey === 'models/antigravity-preview-05-2026');
+    const flash = models.find((m) => m.modelKey === 'models/gemini-2.5-flash');
+    expect(antigravity?.capabilities.supportsAudio).toBe(false);
+    expect(flash?.capabilities.supportsAudio).toBe(true);
+  });
 });
 
 describe('known context windows', () => {

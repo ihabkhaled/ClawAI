@@ -117,4 +117,47 @@ describe('TranscriptionCapabilityClient', () => {
       'Connector GEMINI returned no API key',
     );
   });
+
+  describe('findCapableModels', () => {
+    it('returns one candidate per provider, in priority order, not just the first', async () => {
+      mockedHttpGet.mockResolvedValue(
+        snapshot([
+          { provider: 'OPENAI', modelKey: 'gpt-4o-audio', modalitiesIn: ['AUDIO'] },
+          { provider: 'GEMINI', modelKey: 'gemini-2.5-flash', modalitiesIn: ['AUDIO'] },
+        ]),
+      );
+
+      await expect(client.findCapableModels()).resolves.toEqual([
+        { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+    });
+
+    it('returns only the providers that actually have an audio-capable row', async () => {
+      mockedHttpGet.mockResolvedValue(
+        snapshot([{ provider: 'GEMINI', modelKey: 'gemini-2.5-flash', modalitiesIn: ['AUDIO'] }]),
+      );
+
+      await expect(client.findCapableModels()).resolves.toEqual([
+        { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+      ]);
+    });
+
+    it('returns an empty list, not null, when nothing is capable', async () => {
+      mockedHttpGet.mockResolvedValue(snapshot([]));
+
+      await expect(client.findCapableModels()).resolves.toEqual([]);
+    });
+
+    it('caches the whole list, matching findCapableModel', async () => {
+      mockedHttpGet.mockResolvedValue(
+        snapshot([{ provider: 'GEMINI', modelKey: 'gemini-2.5-flash', modalitiesIn: ['AUDIO'] }]),
+      );
+
+      await client.findCapableModels();
+      await client.findCapableModels();
+
+      expect(mockedHttpGet).toHaveBeenCalledTimes(1);
+    });
+  });
 });

@@ -186,7 +186,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 29,
+      "testFiles": 30,
       "testRunner": "vitest"
     },
     {
@@ -232,7 +232,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 37,
+      "testFiles": 38,
       "testRunner": "vitest"
     },
     {

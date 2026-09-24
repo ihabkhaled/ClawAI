@@ -32,7 +32,7 @@ export class TranscriptionCapabilityClient {
   // Static so every holder shares one answer, matching chat-service's
   // ModelContextWindowClient. The capability set is a property of the
   // deployment, not of the caller.
-  private static cached: { capability: TranscriptionCapability | null; expiresAt: number } | null =
+  private static cached: { capabilities: TranscriptionCapability[]; expiresAt: number } | null =
     null;
 
   /** Drops the memoised answer. Called by tests and after a connector sync. */
@@ -40,19 +40,38 @@ export class TranscriptionCapabilityClient {
     TranscriptionCapabilityClient.cached = null;
   }
 
+  /**
+   * The single best answer — kept for callers that only ever try one model.
+   * `TranscriptionManager` uses `findCapableModels` instead so a wrong
+   * `supportsAudio` row does not stop the whole request.
+   */
   async findCapableModel(): Promise<TranscriptionCapability | null> {
+    const capabilities = await this.findCapableModels();
+    return capabilities.at(0) ?? null;
+  }
+
+  /**
+   * Every audio-capable candidate, one per provider, in
+   * `TRANSCRIPTION_PROVIDER_PRIORITY` order — not just the first. A model
+   * marked `supportsAudio: true` in the connector catalog can still be
+   * refused by the provider itself (a stale or over-broad sync, e.g. a
+   * preview model the catalog got wrong); returning the whole ranked list
+   * lets the caller fall through to the next provider instead of failing
+   * outright on the first rejection.
+   */
+  async findCapableModels(): Promise<TranscriptionCapability[]> {
     const now = Date.now();
     const hit = TranscriptionCapabilityClient.cached;
     if (hit !== null && hit.expiresAt > now) {
-      return hit.capability;
+      return hit.capabilities;
     }
 
-    const capability = await this.resolve();
+    const capabilities = await this.resolveAll();
     TranscriptionCapabilityClient.cached = {
-      capability,
+      capabilities,
       expiresAt: now + TRANSCRIPTION_CAPABILITY_CACHE_TTL_MS,
     };
-    return capability;
+    return capabilities;
   }
 
   async fetchConnectorConfig(provider: string): Promise<TranscriptionConnectorConfig> {
@@ -69,7 +88,7 @@ export class TranscriptionCapabilityClient {
     return config;
   }
 
-  private async resolve(): Promise<TranscriptionCapability | null> {
+  private async resolveAll(): Promise<TranscriptionCapability[]> {
     let models: TranscriptionSnapshotEntry[];
     try {
       const base = AppConfig.get().CONNECTOR_SERVICE_URL;
@@ -82,27 +101,32 @@ export class TranscriptionCapabilityClient {
       models = Array.isArray(snapshot.models) ? snapshot.models : [];
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'unknown error';
-      this.logger.warn(`resolve: models-snapshot unavailable — ${message}`);
-      return null;
+      this.logger.warn(`resolveAll: models-snapshot unavailable — ${message}`);
+      return [];
     }
 
-    // Priority order drives the search, not the snapshot's order: the FIRST
-    // provider in TRANSCRIPTION_PROVIDER_PRIORITY that has an audio-capable
-    // row wins, so GEMINI beats OPENAI even when OpenAI's rows come first.
+    // Priority order drives the search, not the snapshot's order: GEMINI's
+    // candidate is listed before OPENAI's even when OpenAI's rows come
+    // first in the snapshot. One candidate per provider — the first
+    // audio-capable row for each — so a caller that walks the whole list
+    // tries GEMINI, then OPENAI, never two GEMINI rows in a row.
+    const capabilities: TranscriptionCapability[] = [];
     for (const provider of TRANSCRIPTION_PROVIDER_PRIORITY) {
       const match = models.find(
         (model) => model.provider === provider && this.supportsAudio(model),
       );
       if (match !== undefined) {
-        this.logger.log(`resolve: audio-capable model ${provider}/${match.modelKey}`);
-        return { provider, model: match.modelKey };
+        this.logger.log(`resolveAll: audio-capable model ${provider}/${match.modelKey}`);
+        capabilities.push({ provider, model: match.modelKey });
       }
     }
 
-    this.logger.warn(
-      `resolve: none of [${TRANSCRIPTION_PROVIDER_PRIORITY.join(', ')}] has an audio-capable model in the snapshot (${String(models.length)} models seen)`,
-    );
-    return null;
+    if (capabilities.length === 0) {
+      this.logger.warn(
+        `resolveAll: none of [${TRANSCRIPTION_PROVIDER_PRIORITY.join(', ')}] has an audio-capable model in the snapshot (${String(models.length)} models seen)`,
+      );
+    }
+    return capabilities;
   }
 
   private supportsAudio(model: TranscriptionSnapshotEntry): boolean {

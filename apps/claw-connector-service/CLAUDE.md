@@ -145,6 +145,36 @@ After completing any implementation task on this service, produce:
 - `syncModels` → `GET ${baseUrl}/catalog?downloadStatus=READY&limit=100` — maps each row to `NormalizedModel` with per-model `supportsTools`/`supportsVision` derived from `entry.capabilities`.
 - Default `baseUrl` is `http://llamacpp-service:4017/api/v1` — users can override per connector. Adapter doesn't require an API key.
 
+## Gemini `supportsAudio` is a name-pattern heuristic, not a synced fact
+
+`GeminiAdapter#syncModels` (`managers/adapters/gemini.adapter.ts`) reads two
+Gemini endpoints — the OpenAI-compatible `/models` list (`id`/`object`/
+`created`/`owned_by` only) and, for context windows, the native
+`/v1beta/models` list. **Neither reports per-model audio-input support.**
+There is no live signal to sync `supportsAudio` from, so it is never really
+"synced" — writing `true` unconditionally (the bug this fixes) is a blanket
+default dressed up as one, and it bit `models/antigravity-preview-05-2026`,
+which Gemini itself refuses for audio with 400 "Audio input modality is not
+enabled for …".
+
+`isGeminiAudioCapableModel`
+(`constants/gemini-audio-heuristics.constants.ts`) is the fix: a fail-closed
+name-pattern check. Only the canonical numbered
+`gemini-<major>[.<minor>]-{flash,pro}[-lite][-<digits>]` family reads as
+audio-capable; `preview`/`exp`/`experimental`/`thinking`/`live` markers, and
+any non-`gemini` product line, read `false` regardless of how the rest of the
+name looks. Widening this is a manual, confirmed edit — never restore a
+blanket `true`, and never sync `supportsAudio` from a Gemini list endpoint
+without first confirming that endpoint actually carries modality data (as of
+this writing, neither does).
+
+`apps/claw-file-service`'s `TranscriptionCapabilityClient` softens the blast
+radius of this heuristic being wrong: `findCapableModels()` returns one
+candidate per provider in priority order, and `TranscriptionManager` falls
+through to the next provider on a genuine "modality not enabled" refusal.
+That is a safety net, not a substitute for keeping this heuristic accurate —
+see `skills/add-a-voice-note-or-transcription-path.md`.
+
 ## PAYG credit classification (`Connector.isPayAsYouGo`)
 
 `Connector.isPayAsYouGo` decides whether inference through a connector debits a

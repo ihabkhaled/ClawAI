@@ -74,6 +74,25 @@ export const TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE =
   'Audio transcription is unavailable: no connector with an audio-capable model is configured. Ask an administrator to enable one.';
 
 /**
+ * Phrases a provider uses to say "this exact model does not accept audio",
+ * as opposed to a transport failure, rate limit or auth problem. Matched
+ * case-insensitively against the provider's own error body (see
+ * `extractTranscriptionErrorMessage`), never against the generic axios
+ * transport message ("Request failed with status code 400"), which carries
+ * none of this.
+ *
+ * This is what lets `TranscriptionManager` fall through to the next
+ * candidate in `TRANSCRIPTION_PROVIDER_PRIORITY` instead of recording a
+ * hard failure: a model-catalog mismatch (a row wrongly marked
+ * `supportsAudio: true`) is recoverable by trying the next provider: a
+ * genuine provider outage or a bad recording is not, and must still fail.
+ */
+export const TRANSCRIPTION_MODALITY_REJECTION_MARKERS: readonly string[] = [
+  'modality is not enabled',
+  'audio input modality',
+];
+
+/**
  * The most audio one job will send to a provider.
  *
  * Twelve megabytes, which is roughly 25 minutes of the Opus a browser records

@@ -7710,7 +7710,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 13715,
+          "bytes": 19249,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
@@ -10000,7 +10000,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 29
+        "testFiles": 30
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -10008,7 +10008,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 37
+        "testFiles": 38
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10790,7 +10790,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1456,
+    "totalTestFiles": 1458,
     "workspaceCount": 25
   }
 }

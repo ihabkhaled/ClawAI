@@ -63,7 +63,7 @@ interface Harness {
   manager: TranscriptionManager;
   filesRepository: { findById: Mock; saveExtractionResult: Mock };
   rabbit: { publish: Mock; publishConfirmed: Mock; subscribe: Mock };
-  capability: { findCapableModel: Mock; fetchConnectorConfig: Mock };
+  capability: { findCapableModels: Mock; fetchConnectorConfig: Mock };
 }
 
 const buildHarness = (file: File | null): Harness => {
@@ -77,7 +77,9 @@ const buildHarness = (file: File | null): Harness => {
     subscribe: vi.fn().mockResolvedValue(undefined),
   };
   const capability = {
-    findCapableModel: vi.fn().mockResolvedValue({ provider: 'GEMINI', model: 'gemini-2.5-flash' }),
+    findCapableModels: vi
+      .fn()
+      .mockResolvedValue([{ provider: 'GEMINI', model: 'gemini-2.5-flash' }]),
     fetchConnectorConfig: vi.fn().mockResolvedValue({
       provider: 'GEMINI',
       apiKey: 'test-key',
@@ -146,10 +148,9 @@ describe('TranscriptionManager', () => {
   it('routes OPENAI through the whisper deployment, not the snapshot chat model', async () => {
     mockedOpenAi.mockResolvedValue('openai transcript');
     const harness = buildHarness(buildFile());
-    harness.capability.findCapableModel.mockResolvedValue({
-      provider: 'OPENAI',
-      model: 'gpt-4o-audio',
-    });
+    harness.capability.findCapableModels.mockResolvedValue([
+      { provider: 'OPENAI', model: 'gpt-4o-audio' },
+    ]);
     harness.capability.fetchConnectorConfig.mockResolvedValue({
       provider: 'OPENAI',
       apiKey: 'openai-key',
@@ -172,7 +173,7 @@ describe('TranscriptionManager', () => {
 
   it('refuses clearly when no capable connector is configured', async () => {
     const harness = buildHarness(buildFile());
-    harness.capability.findCapableModel.mockResolvedValue(null);
+    harness.capability.findCapableModels.mockResolvedValue([]);
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
 
@@ -260,7 +261,7 @@ describe('TranscriptionManager', () => {
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
 
-    expect(harness.capability.findCapableModel).not.toHaveBeenCalled();
+    expect(harness.capability.findCapableModels).not.toHaveBeenCalled();
     expect(mockedGemini).not.toHaveBeenCalled();
     expect(harness.filesRepository.saveExtractionResult).not.toHaveBeenCalled();
     expect(harness.rabbit.publish).not.toHaveBeenCalled();
@@ -306,5 +307,96 @@ describe('TranscriptionManager', () => {
       'audio/mpeg',
       'gemini-2.5-flash',
     );
+  });
+
+  describe('provider fallback on an audio-modality rejection', () => {
+    // Reproduces the live bug: the connector catalog marked
+    // models/antigravity-preview-05-2026 supportsAudio: true, so it was
+    // picked first, and Gemini answered with its real refusal.
+    const geminiModalityRejection = () => {
+      const error = new Error('Request failed with status code 400') as Error & {
+        response: { status: number; data: unknown };
+      };
+      error.response = {
+        status: 400,
+        data: {
+          error: {
+            code: 400,
+            message: 'Audio input modality is not enabled for models/antigravity-preview-05-2026',
+            status: 'INVALID_ARGUMENT',
+          },
+        },
+      };
+      return error;
+    };
+
+    it('falls through to the next provider when the first rejects the audio modality', async () => {
+      mockedGemini.mockRejectedValue(geminiModalityRejection());
+      mockedOpenAi.mockResolvedValue('transcribed by the fallback provider');
+      const harness = buildHarness(buildFile());
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/antigravity-preview-05-2026' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      expect(mockedGemini).toHaveBeenCalledWith(
+        expect.any(String),
+        'test-key',
+        expect.any(String),
+        'audio/mpeg',
+        'models/antigravity-preview-05-2026',
+      );
+      expect(mockedOpenAi).toHaveBeenCalledWith(
+        expect.any(String),
+        'test-key',
+        expect.any(String),
+        'audio/mpeg',
+        'whisper-1',
+      );
+      const completed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED);
+      expect(completed.provider).toBe('OPENAI');
+      expect(harness.filesRepository.saveExtractionResult).toHaveBeenCalledWith('file-1', {
+        extractedText: 'transcribed by the fallback provider',
+        extractionError: null,
+        status: FileIngestionStatus.COMPLETED,
+      });
+      expect(publishedPatterns(harness.rabbit)).not.toContain(EventPattern.FILE_TRANSCRIBE_FAILED);
+    });
+
+    it('records a real failure when every candidate rejects the audio modality', async () => {
+      mockedGemini.mockRejectedValue(geminiModalityRejection());
+      const harness = buildHarness(buildFile());
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/antigravity-preview-05-2026' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+      expect(failed.reasonCode).toBe('PROVIDER_ERROR');
+      expect(failed.provider).toBe('GEMINI');
+      expect(publishedPatterns(harness.rabbit)).not.toContain(
+        EventPattern.FILE_TRANSCRIBE_COMPLETED,
+      );
+    });
+
+    it('does NOT fall through on an ordinary provider error — only on a modality rejection', async () => {
+      mockedGemini.mockRejectedValue(new Error('429 rate limited'));
+      mockedOpenAi.mockResolvedValue('should never be called');
+      const harness = buildHarness(buildFile());
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      expect(mockedOpenAi).not.toHaveBeenCalled();
+      const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+      expect(failed.reasonCode).toBe('PROVIDER_ERROR');
+      expect(failed.provider).toBe('GEMINI');
+    });
   });
 });

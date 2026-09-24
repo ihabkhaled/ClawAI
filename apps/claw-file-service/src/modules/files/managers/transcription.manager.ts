@@ -24,6 +24,7 @@ import {
 } from '../constants/transcription.constants';
 import { type TranscriptionCapability } from '../types/transcription.types';
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
+import { isAudioModalityRejection } from '../utilities/transcription-error.utility';
 
 /**
  * B6b — turns an uploaded audio file into a transcript, out of band.
@@ -96,8 +97,8 @@ export class TranscriptionManager implements OnModuleInit {
       return;
     }
 
-    const capability = await this.capabilityClient.findCapableModel();
-    if (capability === null) {
+    const candidates = await this.capabilityClient.findCapableModels();
+    if (candidates.length === 0) {
       this.logger.warn(`handleJob: fileId=${fileId} — no audio-capable connector configured`);
       await this.recordFailure(file, TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE);
       this.publishFailed(
@@ -109,84 +110,156 @@ export class TranscriptionManager implements OnModuleInit {
       return;
     }
 
-    await this.runTranscription(file, userId, capability);
+    await this.runTranscription(file, userId, candidates);
   }
 
+  /**
+   * Walks `candidates` in priority order, stopping at the first success.
+   *
+   * A candidate the connector catalog marked audio-capable can still be one
+   * the provider itself refuses for that exact model — a stale or
+   * over-broad `supportsAudio` sync, not a real outage. That refusal
+   * (`isAudioModalityRejection`) is the ONLY reason this falls through to
+   * the next candidate; every other failure (rate limit, auth, a bad
+   * recording, an empty transcript) stops here and is recorded as a real
+   * failure — falling through on those would mean paying a second provider
+   * for a request that was never going to succeed.
+   */
   private async runTranscription(
     file: File,
     userId: string,
-    capability: TranscriptionCapability,
+    candidates: TranscriptionCapability[],
   ): Promise<void> {
     const startedAt = Date.now();
-    const model = this.effectiveModel(capability);
+
+    // Refused BEFORE any provider is contacted, because the cost is the
+    // call, not the storage, and this guard is independent of which
+    // candidate ends up handling the request.
+    if (!this.isTranscribableSize(file)) {
+      this.logger.warn(
+        `runTranscription: refusing ${file.id} — ${String(file.sizeBytes)} bytes exceeds ` +
+          `${String(MAX_TRANSCRIBABLE_AUDIO_BYTES)}`,
+      );
+      await this.recordFailure(file, TRANSCRIPTION_TOO_LARGE_MESSAGE);
+      this.publishFailed(file.id, userId, 'AUDIO_TOO_LARGE', TRANSCRIPTION_TOO_LARGE_MESSAGE);
+      return;
+    }
+
+    let base64: string;
     try {
-      const base64 = this.readAudioBase64(file);
-      // Refused BEFORE a provider is contacted, because the cost is the call,
-      // not the storage. The upload cap is 50MB of bytes, and compressed speech
-      // is small enough that 50MB is hours of audio — hours that would be
-      // transcribed and billed because one file was dropped in. Nothing else in
-      // the pipeline would have objected.
-      if (!this.isTranscribableSize(file)) {
-        this.logger.warn(
-          `runTranscription: refusing ${file.id} — ${String(file.sizeBytes)} bytes exceeds ` +
-            `${String(MAX_TRANSCRIBABLE_AUDIO_BYTES)}`,
-        );
-        await this.recordFailure(file, TRANSCRIPTION_TOO_LARGE_MESSAGE);
-        this.publishFailed(file.id, userId, 'AUDIO_TOO_LARGE', TRANSCRIPTION_TOO_LARGE_MESSAGE);
-        return;
-      }
-      const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
-      const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
-      // Trimmed HERE as well as in each adapter. Whitespace is what a provider
-      // returns when it heard nothing, and a row holding three spaces would
-      // pass every "has a transcript" check while telling the user nothing.
-      const raw = await this.callProvider(
-        capability.provider,
-        baseUrl,
-        config.apiKey,
-        base64,
-        file.mimeType,
-        model,
-      );
-      const transcript = raw.trim();
-
-      if (transcript.length === 0) {
-        throw new Error('The provider returned an empty transcript.');
-      }
-
-      await this.filesRepository.saveExtractionResult(file.id, {
-        extractedText: transcript,
-        extractionError: null,
-        status: FileIngestionStatus.COMPLETED,
-      });
-
-      const durationMs = Date.now() - startedAt;
-      const payload: FileTranscribeCompletedPayload = {
-        fileId: file.id,
-        userId,
-        provider: capability.provider,
-        model,
-        characters: transcript.length,
-        durationMs,
-        timestamp: new Date().toISOString(),
-      };
-      void this.rabbitMQService.publish(EventPattern.FILE_TRANSCRIBE_COMPLETED, payload);
-      this.logger.log(
-        `runTranscription: fileId=${file.id} provider=${capability.provider} model=${model} chars=${String(transcript.length)} durationMs=${String(durationMs)}`,
-      );
+      base64 = this.readAudioBase64(file);
     } catch (error: unknown) {
       const reason = error instanceof Error ? error.message : 'Unknown transcription error';
-      this.logger.error(`runTranscription: fileId=${file.id} failed — ${reason}`);
+      this.logger.error(`runTranscription: fileId=${file.id} unreadable — ${reason}`);
       await this.recordFailure(file, `Audio transcription failed: ${reason}`);
       this.publishFailed(
         file.id,
         userId,
         this.classify(reason),
         `Audio transcription failed: ${reason}`,
-        capability.provider,
-        model,
       );
+      return;
     }
+
+    const firstCandidate = candidates.at(0);
+    if (firstCandidate === undefined) {
+      // Unreachable — the caller only enters this method with a non-empty
+      // list — but the type checker cannot prove that across the call
+      // boundary, and a silent no-op here would be worse than a clear log.
+      this.logger.error(`runTranscription: fileId=${file.id} called with no candidates`);
+      return;
+    }
+
+    let lastReason = 'Unknown transcription error';
+    let lastCapability = firstCandidate;
+    for (const [index, capability] of candidates.entries()) {
+      lastCapability = capability;
+      try {
+        await this.attemptCandidate(file, userId, capability, base64, startedAt);
+        return;
+      } catch (error: unknown) {
+        const reason = error instanceof Error ? error.message : 'Unknown transcription error';
+        lastReason = reason;
+        const hasNextCandidate = index < candidates.length - 1;
+        const model = this.effectiveModel(capability);
+        if (isAudioModalityRejection(error) && hasNextCandidate) {
+          this.logger.warn(
+            `runTranscription: fileId=${file.id} provider=${capability.provider} model=${model} refused the audio modality — falling through to the next candidate (${reason})`,
+          );
+          continue;
+        }
+        this.logger.error(
+          `runTranscription: fileId=${file.id} provider=${capability.provider} model=${model} failed — ${reason}`,
+        );
+        break;
+      }
+    }
+
+    await this.recordFailure(file, `Audio transcription failed: ${lastReason}`);
+    this.publishFailed(
+      file.id,
+      userId,
+      this.classify(lastReason),
+      `Audio transcription failed: ${lastReason}`,
+      lastCapability.provider,
+      this.effectiveModel(lastCapability),
+    );
+  }
+
+  /**
+   * One candidate, start to finish. THROWS on any failure — an empty
+   * transcript included — so `runTranscription`'s loop is the only place
+   * that decides whether a failure is recoverable (fall through) or
+   * terminal (record it). Returns normally only after the COMPLETED event
+   * is published, so the caller's `return` on success is safe.
+   */
+  private async attemptCandidate(
+    file: File,
+    userId: string,
+    capability: TranscriptionCapability,
+    base64: string,
+    startedAt: number,
+  ): Promise<void> {
+    const model = this.effectiveModel(capability);
+    const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
+    const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
+    // Trimmed HERE as well as in each adapter. Whitespace is what a provider
+    // returns when it heard nothing, and a row holding three spaces would
+    // pass every "has a transcript" check while telling the user nothing.
+    const raw = await this.callProvider(
+      capability.provider,
+      baseUrl,
+      config.apiKey,
+      base64,
+      file.mimeType,
+      model,
+    );
+    const transcript = raw.trim();
+
+    if (transcript.length === 0) {
+      throw new Error('The provider returned an empty transcript.');
+    }
+
+    await this.filesRepository.saveExtractionResult(file.id, {
+      extractedText: transcript,
+      extractionError: null,
+      status: FileIngestionStatus.COMPLETED,
+    });
+
+    const durationMs = Date.now() - startedAt;
+    const payload: FileTranscribeCompletedPayload = {
+      fileId: file.id,
+      userId,
+      provider: capability.provider,
+      model,
+      characters: transcript.length,
+      durationMs,
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_TRANSCRIBE_COMPLETED, payload);
+    this.logger.log(
+      `attemptCandidate: fileId=${file.id} provider=${capability.provider} model=${model} chars=${String(transcript.length)} durationMs=${String(durationMs)}`,
+    );
   }
 
   private async callProvider(

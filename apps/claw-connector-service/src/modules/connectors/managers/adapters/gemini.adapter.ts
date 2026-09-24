@@ -16,6 +16,7 @@ import { GEMINI_DEFAULT_BASE_URL } from '../../constants/gemini.constants';
 import { GEMINI_NATIVE_MODELS_PAGE_SIZE } from '../../constants/model-context-window.constants';
 import { geminiNativeBaseUrl } from '../../utilities/model-context-window.utility';
 import { formatModelDisplayName } from '../../utilities/model-display-name.utility';
+import { isGeminiAudioCapableModel } from '../../constants/gemini-audio-heuristics.constants';
 
 const logger = new Logger('GeminiAdapter');
 
@@ -99,7 +100,11 @@ export class GeminiAdapter implements ProviderAdapter {
         supportsStreaming: true,
         supportsTools: true,
         supportsVision: true,
-        supportsAudio: true,
+        // NOT a live sync — Gemini's OpenAI-compatible /models list carries no
+        // modality data (see GeminiModelEntry), and the native list has none
+        // either. Name-pattern heuristic, fails closed for anything outside
+        // the confirmed stable family. See gemini-audio-heuristics.constants.ts.
+        supportsAudio: isGeminiAudioCapableModel(model.id),
         supportsStructuredOutput: true,
         ...(limits.has(model.id) ? { maxContextTokens: limits.get(model.id) } : {}),
       },
