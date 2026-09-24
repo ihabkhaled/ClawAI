@@ -1,5 +1,6 @@
 import {
   describeProviderErrorResponse,
+  extractSafeProviderErrorMessage,
   isProviderErrorResponse,
 } from '../provider-error-response.utility';
 
@@ -62,5 +63,44 @@ describe('detecting a provider error returned as an answer', () => {
 
   it('distinguishes an empty answer from an error payload', () => {
     expect(describeProviderErrorResponse('')).toBe('Provider returned an empty response');
+  });
+});
+
+// A Groq-style `{"error":{"message":...}}` body is already a plain English
+// sentence a developer wrote ("The model `X` has been decommissioned...").
+// Unlike the Gemini incident, it carries no billing URL, so it is safe to
+// surface to the user instead of the generic "every provider failed" text.
+describe('extracting a safe message from a provider error envelope', () => {
+  it('extracts the message from a Groq-shaped decommissioned-model error', () => {
+    const body =
+      '{"error":{"message":"The model `qwen/qwen3.8-27b` has been decommissioned and is no longer supported.","type":"invalid_request_error","code":"model_decommissioned"}}';
+
+    expect(extractSafeProviderErrorMessage(body)).toBe(
+      'The model `qwen/qwen3.8-27b` has been decommissioned and is no longer supported.',
+    );
+  });
+
+  it('extracts a string-form error detail', () => {
+    expect(extractSafeProviderErrorMessage('{"error":"rate limited"}')).toBe('rate limited');
+  });
+
+  it('refuses a message carrying a URL, same as the Gemini billing-link leak', () => {
+    const body = '{"error":{"code":429,"message":"go to https://ai.studio/projects to pay"}}';
+
+    expect(extractSafeProviderErrorMessage(body)).toBeUndefined();
+  });
+
+  it('returns undefined for an empty message, a missing field, or non-JSON prose', () => {
+    expect(extractSafeProviderErrorMessage('{"error":{"message":""}}')).toBeUndefined();
+    expect(extractSafeProviderErrorMessage('{"error":{"code":500}}')).toBeUndefined();
+    expect(extractSafeProviderErrorMessage('request failed with status 401')).toBeUndefined();
+    expect(extractSafeProviderErrorMessage(undefined)).toBeUndefined();
+    expect(extractSafeProviderErrorMessage(null)).toBeUndefined();
+  });
+
+  it('unwraps the Gemini single-element array envelope too', () => {
+    const body = '[{"error":{"code":429,"message":"Your prepayment credits are depleted."}}]';
+
+    expect(extractSafeProviderErrorMessage(body)).toBe('Your prepayment credits are depleted.');
   });
 });

@@ -1,4 +1,5 @@
 import { type Mock, vi } from 'vitest';
+import { BusinessException } from '../../../common/errors';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import type { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import type { QualityCheckManager } from '../managers/quality-check.manager';
@@ -7,6 +8,7 @@ import type { ChatStreamService } from '../services/chat-stream.service';
 import type { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { AccessControlService } from '../services/access-control.service';
 import type { AssembledContext } from '../types/context.types';
+import type { AttemptRecord } from '../types/fallback-executor.types';
 import { JudgeDecision } from '../../../common/enums';
 // Import the live caps so the test moves with the constants rather than
 // pinning brittle numeric literals — previously the test asserted
@@ -35,7 +37,9 @@ vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   buildInterServiceAuthHeader: vi.fn(() => 'Service test-token'),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
+    return !record
+      ? undefined
+      : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
 }));
 
@@ -1847,6 +1851,97 @@ describe('ChatExecutionManager', () => {
       expect(completionCall.url).toBe('https://openrouter.ai/api/v1/chat/completions');
       expect(completionCall.headers.Authorization).toBe('Bearer or-test-key');
       expect(completionCall.body.messages.length).toBeGreaterThan(0);
+    });
+  });
+
+  // Bug: a manual single-model selection has no fallback chain, so "Every
+  // available AI provider failed to respond (tried X)" reads oddly for one
+  // model — and a Groq-shaped `{"error":{"message":...}}` body was being
+  // treated as an unsafe provider payload and swallowed into that generic
+  // text, even though its `message` field is a plain, already-safe sentence.
+  describe('failure wording for an exhausted chain', () => {
+    type ManagerWithChainFailure = {
+      buildChainFailureError(lastError: unknown, attempts: AttemptRecord[]): unknown;
+    };
+    const asManagerWithChainFailure = (): ManagerWithChainFailure =>
+      manager as unknown as ManagerWithChainFailure;
+
+    const attemptRecord = (provider: string, model: string, attemptIndex = 0): AttemptRecord => ({
+      attemptIndex,
+      provider,
+      model,
+      startedAt: new Date().toISOString(),
+      durationMs: 12,
+      status: 'FAILURE',
+    });
+    const attemptFor = (provider: string, model: string): AttemptRecord[] => [
+      attemptRecord(provider, model),
+    ];
+
+    it('names the single model and surfaces a safe Groq decommissioned-model message', () => {
+      const groqBody =
+        '{"error":{"message":"The model `qwen/qwen3.8-27b` has been decommissioned and is no longer supported.","type":"invalid_request_error","code":"model_decommissioned"}}';
+      const lastError = new Error(groqBody);
+
+      const result = asManagerWithChainFailure().buildChainFailureError(
+        lastError,
+        attemptFor('GROQ', 'qwen/qwen3.8-27b'),
+      );
+
+      expect(result).toBeInstanceOf(BusinessException);
+      expect((result as InstanceType<typeof BusinessException>).message).toBe(
+        'GROQ/qwen/qwen3.8-27b failed to respond: The model `qwen/qwen3.8-27b` has been decommissioned and is no longer supported.',
+      );
+    });
+
+    it('falls back to a plain single-model message when there is nothing safe to extract', () => {
+      const lastError = new Error('{"error":{"code":500}}');
+
+      const result = asManagerWithChainFailure().buildChainFailureError(
+        lastError,
+        attemptFor('GROQ', 'allam-2-7b'),
+      );
+
+      expect((result as InstanceType<typeof BusinessException>).message).toBe(
+        'GROQ/allam-2-7b failed to respond. Please try again shortly.',
+      );
+    });
+
+    it('never leaks a URL, even from an otherwise-safe-looking message', () => {
+      const lastError = new Error(
+        '{"error":{"code":429,"message":"go to https://ai.studio/projects to pay"}}',
+      );
+
+      const result = asManagerWithChainFailure().buildChainFailureError(
+        lastError,
+        attemptFor('GEMINI', 'gemini-2.5-pro'),
+      );
+
+      const message = (result as InstanceType<typeof BusinessException>).message;
+      expect(message).not.toContain('ai.studio');
+      expect(message).toBe('GEMINI/gemini-2.5-pro failed to respond. Please try again shortly.');
+    });
+
+    it('keeps the multi-provider chain wording unchanged', () => {
+      const lastError = new Error('{"error":{"message":"decommissioned"}}');
+      const attempts = [attemptRecord('GROQ', 'model-a'), attemptRecord('CEREBRAS', 'model-b', 1)];
+
+      const result = asManagerWithChainFailure().buildChainFailureError(lastError, attempts);
+
+      expect((result as InstanceType<typeof BusinessException>).message).toBe(
+        'Every available AI provider failed to respond (tried GROQ/model-a, CEREBRAS/model-b). Please try again shortly.',
+      );
+    });
+
+    it('preserves a non-provider-payload error untouched', () => {
+      const lastError = new Error('request failed with status 401');
+
+      const result = asManagerWithChainFailure().buildChainFailureError(
+        lastError,
+        attemptFor('GROQ', 'openai/gpt-oss-120b'),
+      );
+
+      expect(result).toBe(lastError);
     });
   });
 });

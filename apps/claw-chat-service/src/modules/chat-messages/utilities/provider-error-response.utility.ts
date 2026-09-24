@@ -42,6 +42,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** `detail.message` from an `{code, message, status}`-shaped error detail. */
+function detailMessage(detail: unknown): unknown {
+  return isRecord(detail) ? detail['message'] : undefined;
+}
+
 /**
  * True when the object carries an error and nothing else worth reading.
  *
@@ -69,10 +74,9 @@ export function isProviderErrorResponse(content?: string | null): boolean {
     return false;
   }
   // Gemini wraps its envelope in a single-element array.
-  if (Array.isArray(document)) {
-    return document.length === 1 && isErrorOnlyObject(document[0]);
-  }
-  return isErrorOnlyObject(document);
+  return Array.isArray(document)
+    ? document.length === 1 && isErrorOnlyObject(document[0])
+    : isErrorOnlyObject(document);
 }
 
 /**
@@ -82,8 +86,46 @@ export function isProviderErrorResponse(content?: string | null): boolean {
  * billing URLs and account identifiers into places a user can read.
  */
 export function describeProviderErrorResponse(content?: string | null): string {
-  if (content === undefined || content === null || content.trim().length === 0) {
-    return 'Provider returned an empty response';
+  return content === undefined || content === null || content.trim().length === 0
+    ? 'Provider returned an empty response'
+    : 'Provider returned an error payload instead of an answer';
+}
+
+/**
+ * A URL is the one thing that made the original leak unsafe (a Gemini
+ * billing link). Anything else in a provider's own `message` field is a
+ * plain English sentence written for a developer to read.
+ */
+function containsUrl(value: string): boolean {
+  return /https?:\/\//iu.test(value);
+}
+
+/**
+ * Pulls the human-readable sentence out of a provider error envelope that
+ * `isProviderErrorResponse` recognized, so it can be shown instead of the
+ * generic "every provider failed" message.
+ *
+ * Covers the common OpenAI-compatible shape `{"error":{"message":...}}`
+ * (OpenAI, Groq, Mistral and the rest of `CONNECTOR_PRESETS` speak this
+ * surface) and the simpler `{"error":"..."}` some providers use. Returns
+ * `undefined` when there is nothing safe to show — no message field, an
+ * empty message, or a message carrying a URL (account/billing links must
+ * never reach the user, per the Gemini incident this module guards against).
+ */
+export function extractSafeProviderErrorMessage(content?: string | null): string | undefined {
+  if (content === undefined || content === null) {
+    return undefined;
   }
-  return 'Provider returned an error payload instead of an answer';
+  const document = parseJsonPrefix(content);
+  const candidate = Array.isArray(document) ? document[0] : document;
+  if (!isRecord(candidate)) {
+    return undefined;
+  }
+  const detail = candidate['error'];
+  const rawMessage = typeof detail === 'string' ? detail : detailMessage(detail);
+  if (typeof rawMessage !== 'string') {
+    return undefined;
+  }
+  const trimmed = rawMessage.trim();
+  return trimmed.length === 0 || containsUrl(trimmed) ? undefined : trimmed;
 }

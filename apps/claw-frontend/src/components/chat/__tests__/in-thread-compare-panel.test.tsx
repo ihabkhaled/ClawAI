@@ -165,6 +165,25 @@ describe('InThreadComparePanel — plan-feature gates', () => {
   });
 });
 
+describe('InThreadComparePanel — drop-zone scope', () => {
+  // Regression: ComposerDropzone used to wrap the ENTIRE right column —
+  // attach picker, recorder, research toggle, the prompt form AND the submit
+  // button — so a drag-over painted its dashed overlay across every one of
+  // those unrelated controls instead of just the prompt field. It now wraps
+  // only the form, matching the full-page Compare and orchestration
+  // composers.
+  it('keeps the attach/mic/research row outside the drop-target wrapper', () => {
+    render(
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
+    );
+    const recorderButton = screen.getByTestId('voice-video-recorder-audio');
+    const textarea = screen.getByLabelText('compare.sendPrompt');
+    const dropzoneWrapper = textarea.closest('.relative');
+    expect(dropzoneWrapper).not.toBeNull();
+    expect(dropzoneWrapper?.contains(recorderButton)).toBe(false);
+  });
+});
+
 describe('InThreadComparePanel — prompt textarea parity', () => {
   it('stacks the prompt and submit action on narrow screens', () => {
     render(

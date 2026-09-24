@@ -103,6 +103,10 @@ describe('isPresetChatModel', () => {
     ['a non-chat Cohere model', entry({ endpoints: ['embed'] })],
     ['a non-text Cloudflare task', entry({ taskName: 'Text-to-Image' })],
     ['a speech id', entry({ id: 'whisper-large-v3-turbo' })],
+    // Live incident 2026-09-24: Groq's /models reports no type/tags for this
+    // TTS model, and it sailed through AUTO/manual selection and failed.
+    ['a Groq TTS id with no type/tags', entry({ id: 'canopylabs/orpheus-v1-english' })],
+    ['a Groq Arabic TTS id with no type/tags', entry({ id: 'canopylabs/orpheus-arabic-saudi' })],
   ])('rejects %s', (_label, candidate) => {
     expect(isPresetChatModel(candidate)).toBe(false);
   });
@@ -112,6 +116,10 @@ describe('isPresetChatModel', () => {
     ['a language type with feature tags', entry({ type: 'language', tags: ['reasoning'] })],
     ['DeepInfra vlm tags', entry({ tags: ['vlm', 'vision'] })],
     ['a Cloudflare text-generation task', entry({ taskName: 'Text Generation' })],
+    // Real, current Groq chat ids (console.groq.com/docs/models, checked
+    // 2026-09-24) must keep working after the orpheus/canopylabs denylist add.
+    ['a Groq chat id', entry({ id: 'openai/gpt-oss-120b' })],
+    ['a Groq preview chat id', entry({ id: 'qwen/qwen3.8-27b' })],
   ])('accepts %s', (_label, candidate) => {
     expect(isPresetChatModel(candidate)).toBe(true);
   });

@@ -26,9 +26,24 @@ export const CONNECTOR_PRESET_ACCOUNT_ID_PATTERN = /^[0-9a-f]{32}$/u;
  * next to Llama) and would fail the first time a user picked one. Image-output
  * SKUs (`gpt-image-1`, `*-flash-image`) are excluded too: chat-service reroutes
  * those to image-service only for providers image-service has an adapter for.
+ *
+ * `orpheus`/`canopylabs` were added after a live incident: Groq's `/models`
+ * (an OpenAI-compatible list with no `type`/`tags`/`outputModalities` field —
+ * see `isPresetChatModel`) listed `canopylabs/orpheus-v1-english`, a TTS
+ * model (console.groq.com/docs/text-to-speech, checked 2026-09-24), and it
+ * sailed through as chat-capable because neither keyword was denylisted.
+ *
+ * KNOWN LIMITATION: this is a denylist keyed on the id string of ONE
+ * provider's catalogue at the time it was checked. It cannot be complete —
+ * the next unfamiliar model family (a new TTS/ASR vendor, or an existing one
+ * renaming its SKUs) will sail through exactly the same way until someone
+ * adds its keyword here. Preferred first, per model: an explicit signal from
+ * the provider (`type`, `tags`, `outputModalities`) — this pattern is
+ * consulted only when `isPresetChatModel` has none of those to go on. See
+ * "Known limitations" in docs/13-adr/adr-117-connector-presets-one-registry-generic-adapter.md.
  */
 export const CONNECTOR_PRESET_NON_CHAT_MODEL_PATTERN =
-  /(embed|whisper|tts|transcri|rerank|moderation|guard|dall-e|flux|stable-diffusion|sdxl|imagen|imagine|speech|(^|[-/_])image([-/_]|$))/iu;
+  /(embed|whisper|tts|transcri|rerank|moderation|guard|dall-e|flux|stable-diffusion|sdxl|imagen|imagine|speech|orpheus|canopylabs|(^|[-/_])image([-/_]|$))/iu;
 
 /** `type` values a list may report that still mean "answers a chat turn". */
 export const CONNECTOR_PRESET_CHAT_MODEL_TYPES: readonly string[] = ['chat', 'language', 'code'];

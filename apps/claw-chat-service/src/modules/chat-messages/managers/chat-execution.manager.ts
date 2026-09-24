@@ -164,6 +164,7 @@ import {
 } from '../utilities/ollama-cloud-tool-runner.utility';
 import {
   describeProviderErrorResponse,
+  extractSafeProviderErrorMessage,
   isProviderErrorResponse,
 } from '../utilities/provider-error-response.utility';
 import {
@@ -1530,6 +1531,12 @@ export class ChatExecutionManager implements OnModuleInit {
    * with a billing URL into the chat transcript as though the assistant had
    * said it. So the original error is preserved unless its message is itself a
    * provider payload, which is precisely the leak.
+   *
+   * A provider payload is not automatically discarded, though: common
+   * OpenAI-compatible envelopes (`{"error":{"message":"..."}}}`, the shape
+   * Groq and most other presets use) carry a plain English sentence that is
+   * already safe to show — `extractSafeProviderErrorMessage` pulls it out
+   * (refusing anything with a URL) and it replaces the generic chain text.
    */
   private buildChainFailureError(lastError: unknown, attempts: AttemptRecord[]): unknown {
     if (lastError === undefined || lastError === null) {
@@ -1541,7 +1548,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const message = lastError instanceof Error ? lastError.message : String(lastError);
     return isProviderErrorResponse(message)
       ? new BusinessException(
-          this.describeChainFailure(attempts, lastError),
+          this.describeChainFailure(attempts, lastError, message),
           'LLM_EXECUTION_FAILED',
         )
       : lastError;
@@ -1553,17 +1560,32 @@ export class ChatExecutionManager implements OnModuleInit {
    * Names which providers were tried, because "all providers failed" with a
    * one-provider chain and with a six-provider chain are very different
    * situations and the difference is what the operator needs. Vendor text is
-   * deliberately excluded: it is unbounded, it has carried billing URLs and
-   * account identifiers, and it reads as though the assistant said it.
+   * excluded by default — it is unbounded and has carried billing URLs and
+   * account identifiers — except for the one safe sentence
+   * `extractSafeProviderErrorMessage` can pull out of a recognized envelope.
+   *
+   * A single manually-selected model has no fallback chain to describe, so
+   * "every available provider failed" reads oddly for it; that case gets its
+   * own wording, with the safe provider message appended when there is one.
    */
-  private describeChainFailure(attempts: AttemptRecord[], lastError: unknown): string {
+  private describeChainFailure(
+    attempts: AttemptRecord[],
+    lastError: unknown,
+    rawMessage?: string,
+  ): string {
     const tried = attempts
       .map((attempt) => `${attempt.provider}/${attempt.model}`)
       .filter((label, index, all) => all.indexOf(label) === index);
+    const safeMessage = extractSafeProviderErrorMessage(rawMessage);
     if (tried.length === 0) {
       return lastError instanceof BusinessException
         ? lastError.message
         : 'No AI provider could be reached. Please try again shortly.';
+    }
+    if (tried.length === 1) {
+      return safeMessage === undefined
+        ? `${tried[0]} failed to respond. Please try again shortly.`
+        : `${tried[0]} failed to respond: ${safeMessage}`;
     }
     return `Every available AI provider failed to respond (tried ${tried.join(', ')}). Please try again shortly.`;
   }

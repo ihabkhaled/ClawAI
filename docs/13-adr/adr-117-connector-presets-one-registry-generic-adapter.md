@@ -132,6 +132,37 @@ for a backend-wiring batch. Today every free-tier preset is routing-eligible
 exactly like a paid one once an administrator connects it, for every plan
 tier. Tracked as follow-up work, not shipped as a silent gap.
 
+## Known limitations
+
+- **`isPresetChatModel`'s id-based fallback (`CONNECTOR_PRESET_NON_CHAT_MODEL_PATTERN`)
+  is inherently incomplete.** A provider's list entry is trusted first
+  (`type`, `tags`, `outputModalities`, `endpoints`/`taskName`); the pattern is
+  consulted only when a provider reports none of those. Groq's
+  OpenAI-compatible `/models` is exactly that case — it returns only
+  `id`/`object`/`created`/`owned_by` — so a new, unfamiliar model family on
+  Groq (or any other minimal-metadata preset) sails through as "chat" until
+  its keyword is added to the denylist by hand. Hit live 2026-09-24:
+  `canopylabs/orpheus-v1-english`, a TTS model, was exposed to AUTO/manual
+  selection and failed on first use; fixed by adding `orpheus`/`canopylabs`
+  to the pattern. There is no complete fix available — a denylist keyed on
+  today's model-name conventions will always lag the next vendor's naming.
+  Anyone hitting this again: check whether the provider's list response
+  actually carries more signal than we parse first (some minimal-looking
+  endpoints add fields over time), and only fall back to widening the
+  denylist.
+- Two Groq ids reported alongside the TTS one turned out NOT to be a
+  filtering bug: `qwen/qwen3.8-27b` is Groq's current, correctly-spelled
+  preview model id (console.groq.com/docs/models, checked 2026-09-24) — a
+  preview-tier model can still fail per-account (preview access, rate
+  limits) without that being a code defect here. `allam-2-7b` does not
+  appear anywhere in Groq's current model or deprecation docs; it looks
+  decommissioned outright. `OpenAICompatibleAdapter.syncModels` already
+  replaces a connector's model rows with the provider's live snapshot on
+  every sync (`ConnectorsManager.syncModels`), so a removed model drops out
+  automatically — a persisted `allam-2-7b` row past that point means the
+  Groq connector's last sync predates the removal, which is an operational
+  staleness question (re-run the sync), not a code bug to fix here.
+
 ## Related
 
 - [`skills/add-an-openai-compatible-provider.md`](../../skills/add-an-openai-compatible-provider.md)

@@ -96,7 +96,7 @@ export function InThreadComparePanel({
             ) : null}
           </div>
 
-          <ComposerDropzone onFiles={onIngestFiles} disabled={isPending} className="space-y-4">
+          <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <FileAttachmentPicker
                 selectedFileIds={selectedFileIds}
@@ -126,36 +126,44 @@ export function InThreadComparePanel({
               ) : null}
             </div>
 
-            <form
-              className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
-              onSubmit={(e) => {
-                e.preventDefault();
-                onSend();
-              }}
-            >
-              <RichPromptTextarea
-                value={prompt}
-                onChange={onPromptChange}
-                onSubmit={onSend}
-                placeholder={t('compare.sendPrompt')}
-                ariaLabel={t('compare.sendPrompt')}
-                disabled={isPending}
-                className="w-full min-w-0 flex-1"
-              />
-              <Button
-                type="submit"
-                disabled={!canSend || isPending}
-                size="sm"
-                className="w-full sm:w-auto"
+            {/* Scoped to the prompt field only — same as the full-page Compare
+                and orchestration composers. This used to wrap the whole
+                column (attach, recorder, research picker, prompt AND the
+                submit button), so a drag-over painted its dashed overlay
+                across every one of those unrelated controls instead of just
+                the drop target. */}
+            <ComposerDropzone onFiles={onIngestFiles} disabled={isPending}>
+              <form
+                className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onSend();
+                }}
               >
-                {isPending ? (
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="me-2 h-4 w-4" />
-                )}
-                {isPending ? t('compare.comparing') : t('compare.sendPrompt')}
-              </Button>
-            </form>
+                <RichPromptTextarea
+                  value={prompt}
+                  onChange={onPromptChange}
+                  onSubmit={onSend}
+                  placeholder={t('compare.sendPrompt')}
+                  ariaLabel={t('compare.sendPrompt')}
+                  disabled={isPending}
+                  className="w-full min-w-0 flex-1"
+                />
+                <Button
+                  type="submit"
+                  disabled={!canSend || isPending}
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  {isPending ? (
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="me-2 h-4 w-4" />
+                  )}
+                  {isPending ? t('compare.comparing') : t('compare.sendPrompt')}
+                </Button>
+              </form>
+            </ComposerDropzone>
 
             {result ? (
               <div className="bg-muted flex items-center gap-2 rounded-md p-3 text-sm">
@@ -165,7 +173,7 @@ export function InThreadComparePanel({
                 </span>
               </div>
             ) : null}
-          </ComposerDropzone>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
