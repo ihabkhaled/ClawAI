@@ -136,6 +136,7 @@ model ConnectorModel {
   supportsTools            Boolean           @default(false) @map("supports_tools")
   supportsVision           Boolean           @default(false) @map("supports_vision")
   supportsAudio            Boolean           @default(false) @map("supports_audio")
+  supportsVideoInput       Boolean           @default(false) @map("supports_video_input")
   supportsStructuredOutput Boolean           @default(false) @map("supports_structured_output")
   maxContextTokens         Int?              @map("max_context_tokens")
   usageTier                ModelUsageTier    @default(UNKNOWN) @map("usage_tier")

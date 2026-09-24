@@ -59,6 +59,11 @@ connector-service owns the 7 providers (OPENAI, ANTHROPIC, GEMINI, AWS_BEDROCK, 
 1. Add the provider to the provider enum (and `packages/shared-types` if cross-service).
 2. Wrap the vendor SDK in an adapter under `managers/adapters/` per [`./add-library-adapter.md`](./add-library-adapter.md) — never import the SDK in services/controllers.
 3. Implement `chat`/generate, `listModels`, and `healthCheck`; map capability flags onto `ConnectorModel`.
+   Set the media INPUT flags (`supportsVision`, `supportsAudio`, `supportsVideoInput`) per model from a
+   heuristic in the adapter's own `constants/<provider>-*-heuristics.constants.ts` that FAILS CLOSED —
+   unknown id → `false`, never a provider-wide `true`. Strip any id prefix (Gemini's `models/`) before
+   matching, and table-test known-capable, known-incapable and unknown ids. Semantics table:
+   `apps/claw-connector-service/CLAUDE.md` § "Media input capability flags".
 4. Store credentials only as AES-256-GCM `encryptedConfig`; decrypt inside the adapter at call time.
 5. Emit `connector.synced` and `connector.health_checked` from the service layer (audit + routing consume them) — see [`./add-rabbitmq-event.md`](./add-rabbitmq-event.md).
 6. Ensure the repository strips `encryptedConfig` from every response shape.

@@ -5,15 +5,17 @@
 through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
 **Decision record:** ADR-119 "ClawAI owns multimodal orchestration" (lands with batch 2).
 
-## Owner decisions (2026-09-25)
+## Owner decisions (2026-09-25, second round supersedes the first where they differ)
 
-| Question                     | Decision                                                                                                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Transcription billing        | **Meter it.** New `PaygSurface.TRANSCRIPTION`; file-service reserves / finalizes / releases per paid transcription, charged to the uploader.                           |
-| Selected model has no vision | **Helper vision.** A `VISION_HELPER` assistant role describes the image, framed as derived observations, metered on its own surface; OCR + honest note when no helper. |
-| ffmpeg for video             | **Yes.** file-service image gets Debian `ffmpeg`; bounded spawn, argument arrays, no network protocols, temp frames garbage-collected.                                 |
-| Landing                      | Each gated batch is pushed to `origin/main`.                                                                                                                           |
-| Text-to-speech               | **Out of scope.** Audited as MISSING; not built. Routing's `supportsAudioOutput` stays unused.                                                                         |
+| Question                     | Decision                                                                                                                                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transcription billing        | **Meter via PAYG.** New `PaygSurface.TRANSCRIPTION`; paid cloud STT does reserve → call → finalize / release, charged to the uploader. Local STT stays free.                              |
+| OpenAI image pricing         | **Charge the per-image rate.** OpenAI generations settle at $0 today because the per-image price is never summed. The per-image cost lives in DB pricing, never env; provider list price. |
+| Plan gating                  | **Free gets the basics** (image understanding, voice notes, short video). **Paid gets everything** (image generation / edit, long video, helper vision / helper models). Server-enforced. |
+| Selected model has no vision | **Helper vision.** A `VISION_HELPER` assistant role describes the image, framed as derived observations, metered on its own surface; OCR + honest note when no helper.                    |
+| ffmpeg for video             | **Yes.** file-service image gets Debian `ffmpeg`; bounded spawn, argument arrays, no network protocols, temp frames garbage-collected.                                                    |
+| Text-to-speech               | **Build it now.** Separate `textToSpeech` capability, endpoint, player UI, and its own `PaygSurface.TTS` — never mixed with transcription.                                                |
+| Landing                      | Each gated batch is pushed to `origin/main`.                                                                                                                                              |
 
 ## Audit (against code, 2026-09-25)
 
@@ -25,7 +27,7 @@ through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
 | Image understanding          | PARTIAL / WRONG      | `image_url` parts go to every model with no per-model vision check. No helper path.                                                                     |
 | Voice notes / transcription  | DONE (unmetered)     | Full pipeline wired; no `PaygSurface` — rule 37 violation.                                                                                              |
 | Native audio into chat model | MISSING              | No provider payload carries audio.                                                                                                                      |
-| TTS                          | MISSING              | Out of scope (owner decision).                                                                                                                          |
+| TTS                          | MISSING              | No TTS anywhere; built in batch 8 (owner decision).                                                                                                     |
 | Video upload                 | DONE                 | Allowlist, magic bytes, chunked upload, recorder.                                                                                                       |
 | Native video                 | PARTIAL              | Gemini only, via a hardcoded chat-service model set; routing's `supportsVideoInput` is populated but read by nothing.                                   |
 | Video → frames + transcript  | MISSING              | No ffmpeg, no probe, no audio-track transcription. `[Video file: x]` placeholder reaches the model as content.                                          |
@@ -37,20 +39,23 @@ through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
 
 ## Batches
 
-1. **Image-service hardening** — ownership on retry/retry-alternate, authenticated SSE, retired default model in routing.
-2. **Capability foundation** — chat-service reads per-model capability from connector-service; `FileDeliveryMode` gains transcript / video / processing / failed modes; single chat records delivery; OpenAI vision heuristic; video placeholder leak; ADR-119.
+1. **Image-service hardening** — ownership on retry/retry-alternate, authenticated SSE, retired default model in routing. _Shipped `d55f80e81`._
+2. **Capability foundation**
+   - 2a connector-service is the per-model media source of truth (`supportsVideoInput` + migration, OpenAI vision/audio heuristics); routing sync maps snapshot `AUDIO` → `AUDIO_INPUT`.
+   - 2b chat-service reads per-model capability; `FileDeliveryMode` gains transcript / video / processing / failed modes; single chat records delivery; video placeholder leak; compare budgets per real window; ADR-120.
 3. **Helper vision** — `VISION_HELPER` role + `PaygSurface.VISION_HELPER`; derived-observation framing; compare lanes resolve per model.
-4. **Transcription metering** — `PaygSurface.TRANSCRIPTION` in file-service.
-5. **Video processing** — ffmpeg in file-service; probe metadata into `extractionMetadata`; audio track into the existing transcription path; bounded, time-biased frame sampling.
-6. **Video + AUTO orchestration** — chat assembles timestamped video context; routing receives attachment modalities.
-7. **Frontend** — recorder dims on transcription availability, not chat-model audio; video flag; chat image-generation card fixes.
-8. **QA automation + knowledge** — `qa/test-multimodal.sh`, capability matrix, skills, runbooks.
+4. **Transcription metering** — `PaygSurface.TRANSCRIPTION` in file-service; local STT exempt.
+5. **Image pricing + plan gating** — OpenAI per-image rate from DB pricing; plan entitlements for image generation/edit, long video, helper vision.
+6. **Video processing** — ffmpeg in file-service; probe metadata into `extractionMetadata`; audio track into the existing transcription path; bounded, time-biased frame sampling.
+7. **Video + AUTO orchestration** — chat assembles timestamped video context; routing receives attachment modalities.
+8. **Text-to-speech** — `textToSpeech` capability, endpoint, `PaygSurface.TTS`, player UI.
+9. **Frontend** — recorder dims on transcription availability, not chat-model audio; video flag; chat image-generation card fixes.
+10. **QA automation + knowledge** — `qa/test-multimodal.sh`, capability matrix, skills, runbooks.
 
 Each batch ships its own knowledge delta (rule 33) and scoped gates (rule 34).
 
 ## Deviations from the pack
 
-- Pack §15 TTS: not built, owner decision.
 - Pack §140 batch split: security hardening moved first because the audit found an IDOR.
 - Pack §101 names `qa/test-multimodal.sh`; created in batch 8.
 - Live QA: dev containers compile the **main checkout's** `src`, so worktree code runs live only after it reaches `main` and the main checkout is updated. The main checkout carries unrelated uncommitted WIP, which is not touched.

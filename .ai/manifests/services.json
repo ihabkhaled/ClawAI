@@ -186,7 +186,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 30,
+      "testFiles": 34,
       "testRunner": "vitest"
     },
     {
@@ -476,7 +476,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 107,
+      "testFiles": 108,
       "testRunner": "vitest"
     },
     {

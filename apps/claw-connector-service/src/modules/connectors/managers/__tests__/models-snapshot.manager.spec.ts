@@ -8,6 +8,7 @@ type Row = {
   displayName: string;
   supportsVision: boolean;
   supportsAudio: boolean;
+  supportsVideoInput: boolean;
   maxContextTokens: number | null;
   exposure: string;
   kind: string;
@@ -20,6 +21,7 @@ function makeRow(overrides: Partial<Row> = {}): Row {
     displayName: 'GPT-4o',
     supportsVision: false,
     supportsAudio: false,
+    supportsVideoInput: false,
     maxContextTokens: 128_000,
     exposure: 'UNEXPOSED',
     kind: 'CHAT',
@@ -62,6 +64,24 @@ describe('ModelsSnapshotManager', () => {
     const manager = buildManager([makeRow({ supportsAudio: true })]);
     const result = await manager.build();
     expect(result.models[0]!.modalitiesIn).toContain('AUDIO');
+  });
+
+  it('appends VIDEO_INPUT when supportsVideoInput is true', async () => {
+    const manager = buildManager([
+      makeRow({
+        provider: 'GEMINI',
+        modelKey: 'models/gemini-2.5-flash',
+        supportsVideoInput: true,
+      }),
+    ]);
+    const result = await manager.build();
+    expect(result.models[0]?.modalitiesIn).toContain('VIDEO_INPUT');
+  });
+
+  it('does not append VIDEO_INPUT when supportsVideoInput is false', async () => {
+    const manager = buildManager([makeRow({ supportsVision: true, supportsAudio: true })]);
+    const result = await manager.build();
+    expect(result.models[0]?.modalitiesIn).toEqual(['TEXT', 'IMAGE_INPUT', 'AUDIO']);
   });
 
   it('passes provider and modelKey through unchanged', async () => {

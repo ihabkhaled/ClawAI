@@ -233,6 +233,7 @@ describe('AnthropicAdapter', () => {
           supportsTools: true,
           supportsVision: true,
           supportsAudio: false,
+          supportsVideoInput: false,
           supportsStructuredOutput: true,
         },
       });

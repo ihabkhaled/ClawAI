@@ -127,6 +127,7 @@ export function toNormalizedPresetModel(
       supportsTools,
       supportsVision: presetModelSupportsVision(entry, preset),
       supportsAudio: false,
+      supportsVideoInput: false,
       supportsStructuredOutput: supportsTools,
       ...(entry.contextWindow === undefined ? {} : { maxContextTokens: entry.contextWindow }),
     },

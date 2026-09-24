@@ -1,4 +1,4 @@
-import { vi, type Mocked, type Mock } from 'vitest';
+import { type Mock, type Mocked, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
@@ -104,8 +104,7 @@ describe('RouterSyncManager — Phase 3 intelligence enrichment', () => {
 
     await manager.syncAll();
     const call = registryRepo.upsert.mock.calls.find(
-      (c) =>
-        (c[0] as string) === 'OLLAMA' && (c[1] as string) === 'totally-novel-model:7b',
+      (c) => (c[0] as string) === 'OLLAMA' && (c[1] as string) === 'totally-novel-model:7b',
     );
     expect(call).toBeDefined();
     const createInput = call![2] as Record<string, unknown>;

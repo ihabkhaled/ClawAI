@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { httpRequest } from '../../../common/utilities';
 import { SYNC_TIMEOUT_MS } from '../constants/sync.constants';
 import { type SnapshotFetchOutcome, type UpstreamModelSnapshot } from '../types/sync.types';
+import { normalizeSnapshotRow } from './snapshot-modality.utility';
 
 const logger = new Logger('SnapshotFetcher');
 
@@ -27,7 +28,9 @@ export async function fetchSnapshot(
       logger.error(`snapshot endpoint ${url} returned status=${response.status}`);
       return { status: 'UPSTREAM_ERROR', message: `HTTP ${response.status}` };
     }
-    const models = Array.isArray(response.data?.models) ? response.data.models : [];
+    const models = Array.isArray(response.data?.models)
+      ? response.data.models.map(normalizeSnapshotRow)
+      : [];
     return { status: 'OK', models };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'unknown';

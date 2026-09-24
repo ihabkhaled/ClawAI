@@ -14,6 +14,7 @@ const buildModel = (
     supportsTools: boolean;
     supportsVision: boolean;
     supportsAudio: boolean;
+    supportsVideoInput: boolean;
     supportsStructuredOutput: boolean;
     maxContextTokens: number | null;
   };
@@ -26,6 +27,7 @@ const buildModel = (
     supportsTools: false,
     supportsVision: false,
     supportsAudio: false,
+    supportsVideoInput: false,
     supportsStructuredOutput: false,
     maxContextTokens: 8000,
   },
@@ -155,6 +157,44 @@ describe('ConnectorModelsRepository', () => {
     };
     expect(args.update.supportsAudio).toBe(true);
     expect(args.update.supportsVision).toBe(false);
+  });
+
+  it('replaceMany writes supportsVideoInput on the create branch', async () => {
+    prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
+    const model = buildModel('models/gemini-2.5-flash');
+    model.capabilities.supportsVideoInput = true;
+    await repository.replaceMany('c1', 'GEMINI' as never, [model as never]);
+    const args = prismaMock.connectorModel.upsert.mock.calls[0]?.[0] as {
+      create: Record<string, unknown>;
+    };
+    expect(args.create.supportsVideoInput).toBe(true);
+  });
+
+  // A resync must be able to turn the flag OFF too — a heuristic narrowed
+  // after release has to reach rows that were created under the old rule.
+  it('replaceMany overwrites supportsVideoInput on resync (update branch), both directions', async () => {
+    prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
+    const on = buildModel('models/gemini-2.5-pro');
+    on.capabilities.supportsVideoInput = true;
+    const off = buildModel('models/gemini-2.5-flash-image');
+    await repository.replaceMany('c1', 'GEMINI' as never, [on as never, off as never]);
+    const calls = prismaMock.connectorModel.upsert.mock.calls as Array<
+      [{ update: Record<string, unknown> }]
+    >;
+    expect(calls[0]?.[0].update.supportsVideoInput).toBe(true);
+    expect(calls[1]?.[0].update.supportsVideoInput).toBe(false);
+  });
+
+  it('upsertMany writes supportsVideoInput on both create and update', async () => {
+    const model = buildModel('models/gemini-2.0-flash');
+    model.capabilities.supportsVideoInput = true;
+    await repository.upsertMany('c1', 'GEMINI' as never, [model as never]);
+    const args = prismaMock.connectorModel.upsert.mock.calls[0]?.[0] as {
+      create: Record<string, unknown>;
+      update: Record<string, unknown>;
+    };
+    expect(args.create.supportsVideoInput).toBe(true);
+    expect(args.update.supportsVideoInput).toBe(true);
   });
 
   it('findByConnectorId orders by displayName asc', async () => {

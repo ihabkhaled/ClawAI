@@ -47,20 +47,21 @@ inference running on their own hardware. The toggle is the lever.
 
 ### ConnectorModel
 
-| Column                   | Type              | Notes                      |
-| ------------------------ | ----------------- | -------------------------- |
-| id                       | String            | CUID primary key           |
-| connectorId              | String            | FK to Connector            |
-| provider                 | ConnectorProvider | Denormalized for queries   |
-| modelKey                 | String            | API model identifier       |
-| displayName              | String            | Human-readable name        |
-| lifecycle                | ModelLifecycle    | ACTIVE, DEPRECATED, SUNSET |
-| supportsStreaming        | Boolean           | Streaming capability       |
-| supportsTools            | Boolean           | Function calling support   |
-| supportsVision           | Boolean           | Image input support        |
-| supportsAudio            | Boolean           | Audio input support        |
-| supportsStructuredOutput | Boolean           | JSON mode support          |
-| maxContextTokens         | Int?              | Context window size        |
+| Column                   | Type              | Notes                                                                           |
+| ------------------------ | ----------------- | ------------------------------------------------------------------------------- |
+| id                       | String            | CUID primary key                                                                |
+| connectorId              | String            | FK to Connector                                                                 |
+| provider                 | ConnectorProvider | Denormalized for queries                                                        |
+| modelKey                 | String            | API model identifier                                                            |
+| displayName              | String            | Human-readable name                                                             |
+| lifecycle                | ModelLifecycle    | ACTIVE, DEPRECATED, SUNSET                                                      |
+| supportsStreaming        | Boolean           | Streaming capability                                                            |
+| supportsTools            | Boolean           | Function calling support                                                        |
+| supportsVision           | Boolean           | Image input support                                                             |
+| supportsAudio            | Boolean           | Connector can serve speech-to-text / audio input for this model                 |
+| supportsVideoInput       | Boolean           | Native video input (migration `20260925120000_add_connector_model_video_input`) |
+| supportsStructuredOutput | Boolean           | JSON mode support                                                               |
+| maxContextTokens         | Int?              | Context window size                                                             |
 
 ### ConnectorHealthEvent
 
@@ -168,7 +169,13 @@ When a sync is triggered:
 1. Service calls the provider's model listing API (e.g., OpenAI `/v1/models`)
 2. Compares returned models with stored `ConnectorModel` records
 3. Adds new models, marks removed models as SUNSET
-4. Updates capability flags based on known model metadata
+4. Updates capability flags on create AND update. Media input flags
+   (`supportsVision`, `supportsAudio`, `supportsVideoInput`) come from per-adapter,
+   fail-closed name heuristics in `constants/*-heuristics.constants.ts` — no provider
+   list endpoint reports input modalities. The models snapshot maps them to
+   `modalitiesIn` `IMAGE_INPUT` / `AUDIO` / `VIDEO_INPUT`. Per-provider table and
+   the OpenAI audio provider-level fallback: `apps/claw-connector-service/CLAUDE.md`
+   § "Media input capability flags".
 5. Records the sync run with counts
 6. Publishes `connector.synced` event
 

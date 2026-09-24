@@ -175,6 +175,35 @@ through to the next provider on a genuine "modality not enabled" refusal.
 That is a safety net, not a substitute for keeping this heuristic accurate —
 see `skills/add-a-voice-note-or-transcription-path.md`.
 
+## Media input capability flags — connector-service is the source of truth
+
+Per-model media INPUT capability lives on `ConnectorModel` and flows to every
+consumer from here (routing via `/internal/connectors/models-snapshot`,
+file-service transcription, the chat picker via `/connectors/available-models`).
+No provider list endpoint reports input modalities, so each flag is a
+**name-pattern heuristic in the adapter's own constants file, and it FAILS
+CLOSED**: an id outside the confirmed family is `false`.
+
+| Flag                 | Means                                                           | Snapshot `modalitiesIn` | How it is set                                                                                                                                                                                                                                                                                                                                              |
+| -------------------- | --------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportsVision`     | model accepts image input                                       | `IMAGE_INPUT`           | OpenAI: `isOpenAiVisionCapableModel` (`constants/openai-media-heuristics.constants.ts` — gpt-4o, gpt-4.1, gpt-4.5, gpt-4-turbo, gpt-5*, o1/o1-pro, o3/o3-pro, o4-mini; denies `-mini` reasoning models, `-audio`/`-realtime`/`-search`/`-transcribe`/`-tts`, gpt-3.5). Gemini/Anthropic: `true`. Ollama: `ollama-vision-heuristics`. Grok: `vision` in id. |
+| `supportsAudio`      | connector can serve speech-to-text / audio input for this model | `AUDIO`                 | Gemini: `isGeminiAudioCapableModel`. OpenAI: `resolveOpenAiAudioFlags` — per model (`-audio-*`, `-transcribe`), with a provider-level fallback (every row `true`, logged) only when the listing has no audio model, so file-service keeps an OpenAI candidate for `whisper-1`. Others `false`.                                                             |
+| `supportsVideoInput` | model accepts native video input                                | `VIDEO_INPUT`           | Gemini only: `isGeminiVideoCapableModel` (`constants/gemini-video-heuristics.constants.ts` — `gemini-<major≥2>-{flash,pro}[-lite][-preview][-<digits>]`, `models/` prefix stripped; image/tts/live/native-audio/exp/embedding refused). Every other adapter writes `false`.                                                                                |
+
+- The snapshot string for video is `VIDEO_INPUT`, not `VIDEO`: routing-service
+  writes `modalitiesIn` straight into its Prisma `ModalityKind` enum column,
+  and a non-member makes that row's upsert throw.
+- `AUDIO` stays `AUDIO` because file-service's transcription client reads it.
+  Routing's sync maps it to `AUDIO_INPUT` at the fetch boundary
+  (`normalizeSnapshotModalities`, routing `sync/utilities/snapshot-modality.utility.ts`)
+  and drops any unknown string. Until 2026-09-25 it did not, and every
+  audio-flagged row failed its routing upsert.
+- Both repository upsert paths (`upsertMany`, `replaceMany`) write every flag
+  on create AND update, so a narrowed heuristic reaches existing rows on the
+  next resync.
+- Widening a heuristic is a confirmed, tested edit to its constants file.
+  Never restore a blanket `true`.
+
 ## PAYG credit classification (`Connector.isPayAsYouGo`)
 
 `Connector.isPayAsYouGo` decides whether inference through a connector debits a

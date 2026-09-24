@@ -45,11 +45,13 @@ export class LlamacppAdapter implements ProviderAdapter {
           errorMessage: `llamacpp returned status ${String(response.status)}`,
         };
       }
-      return response.data.binary?.installed !== true ? {
-          status: ConnectorStatus.DEGRADED,
-          latencyMs,
-          errorMessage: 'llamacpp binary not yet installed',
-        } : { status: ConnectorStatus.HEALTHY, latencyMs };
+      return response.data.binary?.installed !== true
+        ? {
+            status: ConnectorStatus.DEGRADED,
+            latencyMs,
+            errorMessage: 'llamacpp binary not yet installed',
+          }
+        : { status: ConnectorStatus.HEALTHY, latencyMs };
     } catch (error) {
       const latencyMs = Date.now() - start;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -91,7 +93,9 @@ export class LlamacppAdapter implements ProviderAdapter {
 
   private resolveBaseUrl(configured: string | undefined): string {
     const trimmed = configured?.trim();
-    return trimmed === undefined || trimmed.length === 0 ? LLAMACPP_DEFAULT_BASE_URL : trimmed.replace(/\/+$/, '');
+    return trimmed === undefined || trimmed.length === 0
+      ? LLAMACPP_DEFAULT_BASE_URL
+      : trimmed.replace(/\/+$/, '');
   }
 
   private toNormalizedModel(entry: LlamacppCatalogEntryDto): NormalizedModel {
@@ -112,6 +116,7 @@ export class LlamacppAdapter implements ProviderAdapter {
         supportsTools,
         supportsVision,
         supportsAudio: false,
+        supportsVideoInput: false,
         supportsStructuredOutput: false,
         maxContextTokens: entry.contextLength,
       },

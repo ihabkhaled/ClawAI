@@ -120,6 +120,7 @@ export class GrokAdapter implements ProviderAdapter {
         supportsTools: true,
         supportsVision: GrokAdapter.supportsVision(model.id),
         supportsAudio: false,
+        supportsVideoInput: false,
         supportsStructuredOutput: true,
       },
     }));

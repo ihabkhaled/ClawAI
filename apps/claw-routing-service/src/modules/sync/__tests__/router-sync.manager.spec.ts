@@ -1,4 +1,4 @@
-import { vi, type Mocked, type Mock } from 'vitest';
+import { type Mock, type Mocked, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';

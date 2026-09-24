@@ -126,6 +126,7 @@ export class AnthropicAdapter implements ProviderAdapter {
         supportsTools: true,
         supportsVision: true,
         supportsAudio: false,
+        supportsVideoInput: false,
         supportsStructuredOutput: true,
       },
     }));

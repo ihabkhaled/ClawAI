@@ -65,11 +65,13 @@ export class OllamaAdapter implements ProviderAdapter {
 
       const latencyMs = Date.now() - start;
 
-      return response.ok ? { status: ConnectorStatus.HEALTHY, latencyMs } : {
-        status: ConnectorStatus.DOWN,
-        latencyMs,
-        errorMessage: `Ollama returned status ${String(response.status)}`,
-      };
+      return response.ok
+        ? { status: ConnectorStatus.HEALTHY, latencyMs }
+        : {
+            status: ConnectorStatus.DOWN,
+            latencyMs,
+            errorMessage: `Ollama returned status ${String(response.status)}`,
+          };
     } catch (error: unknown) {
       const latencyMs = Date.now() - start;
       const errorMsg =
@@ -169,9 +171,11 @@ export class OllamaAdapter implements ProviderAdapter {
   }
 
   private buildHeaders(apiKey: string): Record<string, string> | undefined {
-    return apiKey.trim().length === 0 ? undefined : {
-      Authorization: `Bearer ${apiKey}`,
-    };
+    return apiKey.trim().length === 0
+      ? undefined
+      : {
+          Authorization: `Bearer ${apiKey}`,
+        };
   }
 
   /**
@@ -272,6 +276,7 @@ export class OllamaAdapter implements ProviderAdapter {
         },
         supportsVision: isOllamaMultimodalModel(modelKey),
         supportsAudio: false,
+        supportsVideoInput: false,
         supportsStructuredOutput: false,
         ...(metadata.contextTokens > 0 ? { maxContextTokens: metadata.contextTokens } : {}),
       },

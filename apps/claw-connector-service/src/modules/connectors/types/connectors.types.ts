@@ -95,7 +95,10 @@ export interface ModelCapabilities {
   supportsStreaming: boolean;
   supportsTools: boolean;
   supportsVision: boolean;
+  /** Connector can serve speech-to-text / audio input for this model. */
   supportsAudio: boolean;
+  /** Model accepts native video input (not frames). Fails closed per adapter heuristic. */
+  supportsVideoInput: boolean;
   supportsStructuredOutput: boolean;
   maxContextTokens?: number;
   /**

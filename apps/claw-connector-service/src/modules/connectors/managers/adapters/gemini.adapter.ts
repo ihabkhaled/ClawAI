@@ -17,6 +17,7 @@ import { GEMINI_NATIVE_MODELS_PAGE_SIZE } from '../../constants/model-context-wi
 import { geminiNativeBaseUrl } from '../../utilities/model-context-window.utility';
 import { formatModelDisplayName } from '../../utilities/model-display-name.utility';
 import { isGeminiAudioCapableModel } from '../../constants/gemini-audio-heuristics.constants';
+import { isGeminiVideoCapableModel } from '../../constants/gemini-video-heuristics.constants';
 
 const logger = new Logger('GeminiAdapter');
 
@@ -105,6 +106,9 @@ export class GeminiAdapter implements ProviderAdapter {
         // either. Name-pattern heuristic, fails closed for anything outside
         // the confirmed stable family. See gemini-audio-heuristics.constants.ts.
         supportsAudio: isGeminiAudioCapableModel(model.id),
+        // Same no-live-signal situation as audio; fails closed outside the
+        // confirmed flash/pro family. See gemini-video-heuristics.constants.ts.
+        supportsVideoInput: isGeminiVideoCapableModel(model.id),
         supportsStructuredOutput: true,
         ...(limits.has(model.id) ? { maxContextTokens: limits.get(model.id) } : {}),
       },

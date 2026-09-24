@@ -112,6 +112,7 @@ export class DeepSeekAdapter implements ProviderAdapter {
         supportsTools: !model.id.includes('reasoner'),
         supportsVision: DeepSeekAdapter.supportsVision(model.id),
         supportsAudio: false,
+        supportsVideoInput: false,
         supportsStructuredOutput: !model.id.includes('reasoner'),
       },
     }));

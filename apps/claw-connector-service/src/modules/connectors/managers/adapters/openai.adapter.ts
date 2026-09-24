@@ -13,6 +13,10 @@ import {
   OPENAI_CHAT_MODEL_PREFIXES,
   OPENAI_DEFAULT_BASE_URL,
 } from '../../constants/openai.constants';
+import {
+  isOpenAiVisionCapableModel,
+  resolveOpenAiAudioFlags,
+} from '../../constants/openai-media-heuristics.constants';
 
 const logger = new Logger('OpenAIAdapter');
 
@@ -106,6 +110,13 @@ export class OpenAIAdapter implements ProviderAdapter {
       `syncModels: found ${String(chatModels.length)} chat models out of ${String(models.length)} total`,
     );
 
+    const audio = resolveOpenAiAudioFlags(chatModels.map((model) => model.id));
+    if (audio.usedProviderFallback) {
+      logger.warn(
+        'syncModels: listing has no audio-input model — applying the provider-level supportsAudio rule so transcription keeps an OpenAI candidate',
+      );
+    }
+
     return chatModels.map((model) => ({
       modelKey: model.id,
       displayName: OpenAIAdapter.formatDisplayName(model.id),
@@ -113,16 +124,14 @@ export class OpenAIAdapter implements ProviderAdapter {
       capabilities: {
         supportsStreaming: true,
         supportsTools: true,
-        supportsVision: model.id.includes('vision') || model.id.startsWith('gpt-4'),
-        // B6b — this said `false` while routing-service's
-        // CAPABILITY_PROVIDER_PRIORITY already listed OPENAI for AUDIO_INPUT,
-        // so the two halves of the platform disagreed about the same provider.
-        // OpenAI does accept audio: `/audio/transcriptions` (Whisper) is part
-        // of the same connector's credentials, which is what file-service's
-        // transcription adapter calls. The flag describes the PROVIDER's audio
-        // capability, which is what `modalitiesIn: ['AUDIO']` in the models
-        // snapshot is read for.
-        supportsAudio: true,
+        // Fail-closed family table — see openai-media-heuristics.constants.ts.
+        supportsVision: isOpenAiVisionCapableModel(model.id),
+        // "This connector can serve speech-to-text / audio input for this
+        // model": per-model (`-audio-*`, `-transcribe`), with a documented
+        // provider-level fallback when the listing has none, because
+        // file-service needs one OpenAI audio row to reach whisper-1.
+        supportsAudio: audio.flags.get(model.id) ?? false,
+        supportsVideoInput: false,
         supportsStructuredOutput: true,
       },
     }));
