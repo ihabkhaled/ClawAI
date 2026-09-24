@@ -159,6 +159,7 @@ export {
 export { BadgeTone } from './badge-tone.enum';
 export { OptionalService } from './optional-service.enum';
 export { TrialStatus } from './trial-status.enum';
+export { TrialBannerDismissalChoice } from './trial-banner-dismissal.enum';
 export { InstallPromptOutcome } from './install-prompt-outcome.enum';
 export { FeedbackSortDirection } from './feedback-sort-direction.enum';
 export { FeedbackEditorTab } from './feedback-editor-tab.enum';

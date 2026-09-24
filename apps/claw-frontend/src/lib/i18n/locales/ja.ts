@@ -4038,6 +4038,10 @@ export const ja: TranslationDictionary = {
     expiredTitle: '無料トライアルは終了しました',
     expiredBody: 'AI 機能を引き続き利用するには有料プランを選択してください。',
     upgrade: '有料プランを見る',
+    dismiss: 'トライアルのバナーを閉じる',
+    remindInOneDay: '1 日後に再通知',
+    remindInSevenDays: '7 日後に再通知',
+    hideForever: '今後表示しない',
   },
   adminConnectors: {
     exposure: {

@@ -4090,6 +4090,10 @@ export const fr: TranslationDictionary = {
     expiredTitle: 'Votre essai gratuit est terminé',
     expiredBody: 'Choisissez une offre payante pour continuer à utiliser les fonctionnalités d’IA.',
     upgrade: 'Voir les offres payantes',
+    dismiss: 'Fermer la bannière de l’essai',
+    remindInOneDay: 'Me le rappeler dans 1 jour',
+    remindInSevenDays: 'Me le rappeler dans 7 jours',
+    hideForever: 'Masquer définitivement',
   },
   adminConnectors: {
     exposure: {

@@ -4024,6 +4024,10 @@ export const fa: TranslationDictionary = {
     expiredTitle: 'دوره آزمایشی رایگان شما پایان یافته است',
     expiredBody: 'برای ادامه استفاده از قابلیت‌های هوش مصنوعی یک طرح پولی انتخاب کنید.',
     upgrade: 'مشاهده طرح‌های پولی',
+    dismiss: 'بستن نوار دوره آزمایشی',
+    remindInOneDay: '۱ روز دیگر یادآوری کن',
+    remindInSevenDays: '۷ روز دیگر یادآوری کن',
+    hideForever: 'برای همیشه پنهان کن',
   },
   adminConnectors: {
     exposure: {

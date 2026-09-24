@@ -4075,6 +4075,10 @@ export const es: TranslationDictionary = {
     expiredTitle: 'Tu prueba gratuita ha terminado',
     expiredBody: 'Elige un plan de pago para seguir usando las funciones de IA.',
     upgrade: 'Ver planes de pago',
+    dismiss: 'Cerrar el aviso de la prueba',
+    remindInOneDay: 'Recordármelo en 1 día',
+    remindInSevenDays: 'Recordármelo en 7 días',
+    hideForever: 'Ocultar para siempre',
   },
   adminConnectors: {
     exposure: {

@@ -4058,6 +4058,10 @@ export const ru: TranslationDictionary = {
     expiredTitle: 'Бесплатный пробный период завершён',
     expiredBody: 'Выберите платный тариф, чтобы продолжить пользоваться функциями ИИ.',
     upgrade: 'Посмотреть платные тарифы',
+    dismiss: 'Закрыть баннер пробного периода',
+    remindInOneDay: 'Напомнить через 1 день',
+    remindInSevenDays: 'Напомнить через 7 дней',
+    hideForever: 'Скрыть навсегда',
   },
   adminConnectors: {
     exposure: {

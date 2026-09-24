@@ -3888,6 +3888,10 @@ export const zh: TranslationDictionary = {
     expiredTitle: '您的免费试用已结束',
     expiredBody: '请选择付费方案以继续使用 AI 功能。',
     upgrade: '查看付费方案',
+    dismiss: '关闭试用提示栏',
+    remindInOneDay: '1 天后提醒我',
+    remindInSevenDays: '7 天后提醒我',
+    hideForever: '永久隐藏',
   },
   adminConnectors: {
     exposure: {

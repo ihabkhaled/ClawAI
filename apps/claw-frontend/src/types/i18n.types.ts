@@ -4013,6 +4013,10 @@ export type TranslationDictionary = {
     expiredTitle: string;
     expiredBody: string;
     upgrade: string;
+    dismiss: string;
+    remindInOneDay: string;
+    remindInSevenDays: string;
+    hideForever: string;
   };
   adminConnectors: {
     exposure: {

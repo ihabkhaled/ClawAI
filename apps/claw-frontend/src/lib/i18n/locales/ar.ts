@@ -3969,6 +3969,10 @@ export const ar: TranslationDictionary = {
     expiredTitle: 'انتهت فترتك التجريبية المجانية',
     expiredBody: 'اختر خطة مدفوعة لمواصلة استخدام ميزات الذكاء الاصطناعي.',
     upgrade: 'عرض الخطط المدفوعة',
+    dismiss: 'إخفاء شريط الفترة التجريبية',
+    remindInOneDay: 'ذكّرني بعد يوم واحد',
+    remindInSevenDays: 'ذكّرني بعد 7 أيام',
+    hideForever: 'إخفاء نهائيًا',
   },
   adminConnectors: {
     exposure: {

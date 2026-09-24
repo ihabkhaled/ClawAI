@@ -4057,6 +4057,10 @@ export const pt: TranslationDictionary = {
     expiredTitle: 'O seu teste gratuito terminou',
     expiredBody: 'Escolha um plano pago para continuar a usar as funcionalidades de IA.',
     upgrade: 'Ver planos pagos',
+    dismiss: 'Fechar o aviso do teste',
+    remindInOneDay: 'Lembrar-me em 1 dia',
+    remindInSevenDays: 'Lembrar-me em 7 dias',
+    hideForever: 'Ocultar para sempre',
   },
   adminConnectors: {
     exposure: {

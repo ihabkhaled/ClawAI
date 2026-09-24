@@ -4024,6 +4024,10 @@ export const hi: TranslationDictionary = {
     expiredTitle: 'आपका मुफ़्त परीक्षण समाप्त हो गया है',
     expiredBody: 'AI सुविधाओं का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
     upgrade: 'सशुल्क प्लान देखें',
+    dismiss: 'ट्रायल बैनर बंद करें',
+    remindInOneDay: '1 दिन बाद याद दिलाएँ',
+    remindInSevenDays: '7 दिन बाद याद दिलाएँ',
+    hideForever: 'हमेशा के लिए छिपाएँ',
   },
   adminConnectors: {
     exposure: {

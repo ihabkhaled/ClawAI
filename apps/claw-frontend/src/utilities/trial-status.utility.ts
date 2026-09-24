@@ -22,6 +22,7 @@ export function resolveTrialStatusBanner(
       body: t('trialStatus.expiredBody'),
       upgradeLabel: t('trialStatus.upgrade'),
       upgradeHref: ROUTES.BILLING,
+      daysRemaining: 0,
     };
   }
 
@@ -42,5 +43,6 @@ export function resolveTrialStatusBanner(
     body: t('trialStatus.activeBody', { days, date }),
     upgradeLabel: t('trialStatus.upgrade'),
     upgradeHref: ROUTES.BILLING,
+    daysRemaining: days,
   };
 }

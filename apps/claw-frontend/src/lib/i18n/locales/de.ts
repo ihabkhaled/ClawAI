@@ -4088,6 +4088,10 @@ export const de: TranslationDictionary = {
     expiredTitle: 'Deine kostenlose Testphase ist beendet',
     expiredBody: 'Wähle einen kostenpflichtigen Tarif, um die KI-Funktionen weiter zu nutzen.',
     upgrade: 'Kostenpflichtige Tarife ansehen',
+    dismiss: 'Testphasen-Hinweis schließen',
+    remindInOneDay: 'In 1 Tag erinnern',
+    remindInSevenDays: 'In 7 Tagen erinnern',
+    hideForever: 'Dauerhaft ausblenden',
   },
   adminConnectors: {
     exposure: {

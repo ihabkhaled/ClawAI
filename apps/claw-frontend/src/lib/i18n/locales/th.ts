@@ -3986,6 +3986,10 @@ export const th: TranslationDictionary = {
     expiredTitle: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว',
     expiredBody: 'เลือกแผนแบบชำระเงินเพื่อใช้ฟีเจอร์ AI ต่อ',
     upgrade: 'ดูแผนแบบชำระเงิน',
+    dismiss: 'ปิดแบนเนอร์ช่วงทดลองใช้',
+    remindInOneDay: 'เตือนอีกครั้งใน 1 วัน',
+    remindInSevenDays: 'เตือนอีกครั้งใน 7 วัน',
+    hideForever: 'ซ่อนตลอดไป',
   },
   adminConnectors: {
     exposure: {

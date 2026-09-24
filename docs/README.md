@@ -63,6 +63,7 @@
 | [Frontend Architecture](05-frontend/frontend-architecture.md)    | Page->Hook->Service->Repo pattern, state management, i18n       |
 | [Frontend Coding Standards](05-frontend/coding-standards.md)     | Component/hook/query patterns                                   |
 | [PWA Update Banner](05-frontend/pwa-update-banner.md)            | How a new version is offered, and why it asks only once         |
+| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)  | Snooze / hide-forever for the trial banner, and when it returns |
 | [Observability Page](05-frontend/observability-page.md)          | Service status (state, uptime, incidents) and usage, admin-only |
 
 ### Layer E: Data & Integrations

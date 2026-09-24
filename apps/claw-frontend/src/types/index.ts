@@ -1023,6 +1023,10 @@ export type {
   HiddenTrialStatusBannerView,
   VisibleTrialStatusBannerView,
   TrialStatusBannerView,
+  TrialBannerDismissalRecord,
+  TrialBannerDismissalOption,
+  TrialBannerDismissalView,
+  TrialBannerDismissMenuProps,
 } from './trial-status.types';
 export type {
   RoleWithPermissions,

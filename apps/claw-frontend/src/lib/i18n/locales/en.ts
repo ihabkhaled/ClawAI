@@ -4002,6 +4002,10 @@ export const en: TranslationDictionary = {
     expiredTitle: 'Your free trial has ended',
     expiredBody: 'Choose a paid plan to continue using AI features.',
     upgrade: 'View paid plans',
+    dismiss: 'Dismiss trial banner',
+    remindInOneDay: 'Remind me in 1 day',
+    remindInSevenDays: 'Remind me in 7 days',
+    hideForever: 'Hide forever',
   },
   adminConnectors: {
     exposure: {
