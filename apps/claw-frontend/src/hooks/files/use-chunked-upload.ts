@@ -179,6 +179,11 @@ export function useChunkedUpload({
       } finally {
         window.clearInterval(tick);
         setIsUploading(false);
+        // Without this the last snapshot (100% / 0:00 remaining) sticks around
+        // under the composer forever: `progress` is one piece of state shared
+        // by every upload in the session, and nothing else ever nulls it out
+        // once this upload settles, success or failure alike.
+        setProgress(null);
       }
     },
     [uploadChunked, uploadSingleShot],

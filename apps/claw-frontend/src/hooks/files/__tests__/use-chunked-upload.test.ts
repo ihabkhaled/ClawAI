@@ -47,6 +47,42 @@ describe('useChunkedUpload', () => {
     expect(filesRepository.initChunkedUpload).not.toHaveBeenCalled();
   });
 
+  // Live bug (2026-09-24): the SAME "100% uploaded, 0:00 remaining" readout
+  // was still rendering under the composer minutes later, across four
+  // unrelated sends, because nothing ever cleared `progress` once an upload
+  // settled — it just sat there as stale state until the next upload
+  // overwrote it (and never cleared after the LAST upload of a session).
+  it('clears progress back to null once a successful upload settles', async () => {
+    vi.mocked(filesRepository.uploadFile).mockResolvedValue({ id: 'file-1' } as never);
+    const { result } = renderHook(() => useChunkedUpload());
+
+    await act(async () => {
+      await result.current.upload(smallFile(3));
+    });
+
+    expect(result.current.progress).toBeNull();
+    expect(result.current.isUploading).toBe(false);
+  });
+
+  it('clears progress back to null once a failed upload settles', async () => {
+    vi.mocked(filesRepository.initChunkedUpload).mockResolvedValue({
+      uploadId: 'up-fail',
+      totalChunks: 1,
+      receivedChunks: [],
+      complete: false,
+    });
+    vi.mocked(filesRepository.uploadChunk).mockRejectedValue(new Error('always fails'));
+
+    const { result } = renderHook(() => useChunkedUpload());
+    await act(async () => {
+      await expect(result.current.upload(smallFile(8))).rejects.toThrow();
+    });
+
+    expect(result.current.progress).toBeNull();
+    expect(result.current.isUploading).toBe(false);
+    expect(result.current.error).not.toBeNull();
+  });
+
   it('chunks a file above the threshold and completes the session', async () => {
     vi.mocked(filesRepository.initChunkedUpload).mockResolvedValue({
       uploadId: 'up-1',
