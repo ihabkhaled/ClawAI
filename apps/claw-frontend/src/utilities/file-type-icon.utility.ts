@@ -150,6 +150,12 @@ export function isVideoMime(mimeType: string): boolean {
   return (mimeType ?? '').toLowerCase().startsWith('video/');
 }
 
+export function isPdfMime(mimeType: string, filename: string): boolean {
+  const lowerMime = (mimeType ?? '').toLowerCase();
+  const lowerName = (filename ?? '').toLowerCase();
+  return lowerMime === 'application/pdf' || lowerName.endsWith('.pdf');
+}
+
 type IngestionStatusIcon = {
   Icon: LucideIcon;
   spin: boolean;
@@ -176,6 +182,13 @@ export function isTextLikeMime(mimeType: string, filename: string): boolean {
   const lowerName = (filename ?? '').toLowerCase();
   if (lowerMime.startsWith('text/')) {
     return true;
+  }
+  // Every Office Open XML mimeType contains "xml" (…openxmlformats…) — the
+  // same trap getFileTypeDescriptor's Office check already guards against.
+  // Without this, a docx/xlsx/pptx would be classified as text-like and its
+  // binary bytes handed to `blob.text()` for an inline "readable" preview.
+  if (lowerMime.includes('openxmlformats')) {
+    return false;
   }
   if (lowerMime.includes('json') || lowerMime.includes('xml')) {
     return true;

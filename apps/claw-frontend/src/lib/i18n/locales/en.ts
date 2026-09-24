@@ -566,6 +566,13 @@ export const en: TranslationDictionary = {
       voiceNote: 'Voice note',
       videoNote: 'Video note',
       stillUploadingRefusal: 'Wait for the attachment to finish uploading before sending.',
+      play: 'Play',
+      loading: 'Loading…',
+      previewFailed: 'Could not load this attachment',
+      download: 'Download',
+      view: 'Open',
+      previewTruncated: 'Showing the first part — download to see the rest',
+      noCaptionsAvailable: 'No captions available',
     },
     // B6c — composer voice / video notes.
     recorder: {

@@ -523,6 +523,13 @@ export type TranslationDictionary = {
       voiceNote: string;
       videoNote: string;
       stillUploadingRefusal: string;
+      play: string;
+      loading: string;
+      previewFailed: string;
+      download: string;
+      view: string;
+      previewTruncated: string;
+      noCaptionsAvailable: string;
     };
     recorder: {
       recordVoice: string;

@@ -568,6 +568,13 @@ export const hi: TranslationDictionary = {
       voiceNote: 'वॉइस नोट',
       videoNote: 'वीडियो नोट',
       stillUploadingRefusal: 'भेजने से पहले अटैचमेंट के अपलोड पूरा होने का इंतज़ार करें।',
+      play: 'चलाएं',
+      loading: 'लोड हो रहा है…',
+      previewFailed: 'यह अटैचमेंट लोड नहीं हो सका',
+      download: 'डाउनलोड करें',
+      view: 'खोलें',
+      previewTruncated: 'केवल शुरुआती हिस्सा दिखाया जा रहा है — बाकी देखने के लिए डाउनलोड करें',
+      noCaptionsAvailable: 'कोई कैप्शन उपलब्ध नहीं है',
     },
     // B6c — composer voice / video notes.
     recorder: {

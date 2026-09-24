@@ -574,6 +574,13 @@ export const ru: TranslationDictionary = {
       voiceNote: 'Голосовая заметка',
       videoNote: 'Видеозаметка',
       stillUploadingRefusal: 'Дождитесь завершения загрузки вложения перед отправкой.',
+      play: 'Воспроизвести',
+      loading: 'Загрузка…',
+      previewFailed: 'Не удалось загрузить это вложение',
+      download: 'Скачать',
+      view: 'Открыть',
+      previewTruncated: 'Показана только начальная часть — скачайте, чтобы увидеть остальное',
+      noCaptionsAvailable: 'Субтитры недоступны',
     },
     // B6c — composer voice / video notes.
     recorder: {

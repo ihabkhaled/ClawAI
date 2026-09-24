@@ -576,6 +576,13 @@ export const fr: TranslationDictionary = {
       videoNote: 'Note vidéo',
       stillUploadingRefusal:
         "Attendez la fin du téléchargement de la pièce jointe avant d'envoyer.",
+      play: 'Lecture',
+      loading: 'Chargement…',
+      previewFailed: 'Impossible de charger cette pièce jointe',
+      download: 'Télécharger',
+      view: 'Ouvrir',
+      previewTruncated: 'Affiche seulement le début — téléchargez pour voir le reste',
+      noCaptionsAvailable: 'Aucun sous-titre disponible',
     },
     // B6c — composer voice / video notes.
     recorder: {

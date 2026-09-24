@@ -6,6 +6,7 @@ import {
   getFileTypeDescriptor,
   getIngestionStatusIcon,
   isAudioMime,
+  isTextLikeMime,
   isVideoMime,
 } from '@/utilities/file-type-icon.utility';
 
@@ -68,5 +69,27 @@ describe('getIngestionStatusIcon', () => {
     );
 
     expect(icons.size).toBe(4);
+  });
+});
+
+describe('isTextLikeMime', () => {
+  it('recognises real text-like types', () => {
+    expect(isTextLikeMime('text/plain', 'notes.txt')).toBe(true);
+    expect(isTextLikeMime('application/json', 'data.json')).toBe(true);
+    expect(isTextLikeMime('application/xml', 'data.xml')).toBe(true);
+  });
+
+  // Every Office Open XML mimeType contains the substring "xml"
+  // (…openxmlformats…), which used to make a docx/xlsx/pptx match the naive
+  // `.includes('xml')` check — its binary bytes would then be handed to
+  // `blob.text()` for an inline "readable" preview instead of getting a
+  // download action. Caught while testing every allowed mimetype for the
+  // sent-message attachment preview (2026-09-24).
+  it.each([
+    ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'plan.docx'],
+    ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'data.xlsx'],
+    ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'deck.pptx'],
+  ])('%s is NOT text-like despite containing "xml"', (mime, name) => {
+    expect(isTextLikeMime(mime, name)).toBe(false);
   });
 });

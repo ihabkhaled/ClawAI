@@ -560,6 +560,13 @@ export const ar: TranslationDictionary = {
       voiceNote: 'ملاحظة صوتية',
       videoNote: 'ملاحظة فيديو',
       stillUploadingRefusal: 'انتظر حتى ينتهي رفع المرفق قبل الإرسال.',
+      play: 'تشغيل',
+      loading: 'جارٍ التحميل…',
+      previewFailed: 'تعذّر تحميل هذا المرفق',
+      download: 'تنزيل',
+      view: 'فتح',
+      previewTruncated: 'يظهر الجزء الأول فقط — نزّل الملف لرؤية الباقي',
+      noCaptionsAvailable: 'لا تتوفر ترجمة',
     },
     // B6c — composer voice / video notes.
     recorder: {

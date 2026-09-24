@@ -558,6 +558,13 @@ export const th: TranslationDictionary = {
       voiceNote: 'บันทึกเสียง',
       videoNote: 'บันทึกวิดีโอ',
       stillUploadingRefusal: 'รอให้ไฟล์แนบอัปโหลดเสร็จก่อนส่ง',
+      play: 'เล่น',
+      loading: 'กำลังโหลด…',
+      previewFailed: 'ไม่สามารถโหลดไฟล์แนบนี้ได้',
+      download: 'ดาวน์โหลด',
+      view: 'เปิด',
+      previewTruncated: 'แสดงเฉพาะส่วนแรก — ดาวน์โหลดเพื่อดูส่วนที่เหลือ',
+      noCaptionsAvailable: 'ไม่มีคำบรรยาย',
     },
     // B6c — composer voice / video notes.
     recorder: {

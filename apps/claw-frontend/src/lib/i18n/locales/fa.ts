@@ -568,6 +568,13 @@ export const fa: TranslationDictionary = {
       voiceNote: 'یادداشت صوتی',
       videoNote: 'یادداشت ویدیویی',
       stillUploadingRefusal: 'قبل از ارسال، صبر کنید تا بارگذاری پیوست تمام شود.',
+      play: 'پخش',
+      loading: 'در حال بارگذاری…',
+      previewFailed: 'این پیوست بارگذاری نشد',
+      download: 'دانلود',
+      view: 'باز کردن',
+      previewTruncated: 'فقط بخش ابتدایی نمایش داده می‌شود — برای دیدن بقیه دانلود کنید',
+      noCaptionsAvailable: 'زیرنویسی موجود نیست',
     },
     // B6c — composer voice / video notes.
     recorder: {

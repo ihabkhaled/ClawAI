@@ -572,6 +572,13 @@ export const ja: TranslationDictionary = {
       voiceNote: 'ボイスメモ',
       videoNote: 'ビデオメモ',
       stillUploadingRefusal: '添付ファイルのアップロードが完了してから送信してください。',
+      play: '再生',
+      loading: '読み込み中…',
+      previewFailed: 'この添付ファイルを読み込めませんでした',
+      download: 'ダウンロード',
+      view: '開く',
+      previewTruncated: '冒頭のみ表示しています — 続きを見るにはダウンロードしてください',
+      noCaptionsAvailable: '字幕はありません',
     },
     // B6c — composer voice / video notes.
     recorder: {

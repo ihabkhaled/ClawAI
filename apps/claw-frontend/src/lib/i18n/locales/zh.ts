@@ -546,6 +546,13 @@ export const zh: TranslationDictionary = {
       voiceNote: '语音留言',
       videoNote: '视频留言',
       stillUploadingRefusal: '请等待附件上传完成后再发送。',
+      play: '播放',
+      loading: '加载中…',
+      previewFailed: '无法加载此附件',
+      download: '下载',
+      view: '打开',
+      previewTruncated: '仅显示开头部分——下载查看其余内容',
+      noCaptionsAvailable: '暂无字幕',
     },
     // B6c — composer voice / video notes.
     recorder: {

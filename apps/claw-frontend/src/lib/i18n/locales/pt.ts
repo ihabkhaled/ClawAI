@@ -573,6 +573,13 @@ export const pt: TranslationDictionary = {
       voiceNote: 'Nota de voz',
       videoNote: 'Nota de vídeo',
       stillUploadingRefusal: 'Aguarde o anexo terminar de ser enviado antes de enviar a mensagem.',
+      play: 'Reproduzir',
+      loading: 'Carregando…',
+      previewFailed: 'Não foi possível carregar este anexo',
+      download: 'Baixar',
+      view: 'Abrir',
+      previewTruncated: 'Mostrando apenas o início — baixe para ver o restante',
+      noCaptionsAvailable: 'Nenhuma legenda disponível',
     },
     // B6c — composer voice / video notes.
     recorder: {
