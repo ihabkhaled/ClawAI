@@ -142,20 +142,22 @@ log line, an event payload, or the stored error message" tests in
 serialize the actual mock call arguments and assert the literal string is
 absent, not just a code-review claim.
 
-**Frontend note:** the distinct "encrypted" status
-(`ArchiveRejectionReason.Encrypted` / `ArchiveEntryDisplayStatus.Encrypted`) and
-its notice component already shipped in batch A2
+**Frontend note (updated 2026-09-24, same day):** the distinct "encrypted"
+status (`ArchiveRejectionReason.Encrypted` / `ArchiveEntryDisplayStatus.
+Encrypted`) and its notice component shipped in batch A2
 (`apps/claw-frontend/src/components/files/archive/archive-rejection-notice.tsx`).
-The in-chat password DIALOG that calls the new endpoint — following the
+The in-chat password DIALOG that calls the endpoint above now also shipped, as
+a same-day follow-up: `ArchivePasswordDialog` follows the
 `MediaRecordingConsentDialog` pattern
 (`apps/claw-frontend/src/components/chat/media-recording-consent-dialog.tsx`:
-a controlled `Dialog` keyed off an enum-typed prop, `data-testid`s per
-element, footer Cancel/Confirm) — is **not** part of this batch: doing it
-properly needs a real i18n pass across all 13 locales for the prompt copy, the
-wrong-password message and the attempts-exceeded message, which did not fit
-this batch's time box. The backend is fully usable via `curl`/Postman today;
-wiring the dialog is the next batch's first task, and it has everything it
-needs (the endpoint, the distinct status, the UI pattern to copy).
+a controlled `Dialog`, `data-testid`s per element, footer Cancel/primary), its
+state lives in `useArchivePasswordPrompt` (`hooks/files/`), and it is mounted
+from `ArchiveAttachmentCard` whenever `rejection.reason` is `Encrypted` or
+`PartlyEncrypted`. `files.archive.password.*` was added in all 13 locales, and
+the existing `rejected.encrypted`/`partlyEncrypted` copy — which used to claim
+password-protected archives "are not supported yet" — was corrected in all 13
+locales too. Detail: `apps/claw-frontend/CLAUDE.md` → "The in-chat archive
+password prompt (batch A3)".
 
 ### RAR fixtures — what exists and why
 

@@ -1062,12 +1062,26 @@ export const fr: TranslationDictionary = {
         traversal:
           'Elle contient des chemins qui pointent hors de l’archive ; elle n’a donc pas été ouverte.',
         tooDeep: 'Elle imbrique des archives plus profondément que permis.',
-        encrypted:
-          'Elle est protégée par mot de passe. Les archives protégées par mot de passe ne sont pas encore prises en charge.',
+        encrypted: 'Elle est protégée par mot de passe. Saisissez le mot de passe pour l’ouvrir.',
         partlyEncrypted:
-          'Certains fichiers sont protégés par mot de passe et ont été ignorés. Les autres sont disponibles.',
+          'Certains fichiers sont protégés par mot de passe et ont été ignorés. Saisissez le mot de passe pour les déverrouiller.',
         unsupported: 'Ce fichier n’est pas dans un format d’archive que nous savons ouvrir.',
         generic: 'Impossible de l’ouvrir. Recréez l’archive et envoyez-la à nouveau.',
+      },
+      password: {
+        unlockButton: 'Saisir le mot de passe',
+        title: 'Saisissez le mot de passe de l’archive',
+        description:
+          'Cette archive est protégée par mot de passe. Saisissez son mot de passe pour l’ouvrir.',
+        placeholder: 'Mot de passe',
+        submit: 'Déverrouiller',
+        cancel: 'Annuler',
+        submitting: 'Vérification du mot de passe…',
+        wrongPassword: 'Ce mot de passe n’a pas fonctionné. Réessayez.',
+        attemptsExceededTitle: 'Trop de tentatives',
+        attemptsExceeded:
+          'Cette archive n’a pas pu être déverrouillée après trop de mots de passe erronés.',
+        genericError: 'Une erreur est survenue. Réessayez.',
       },
     },
     retention: {

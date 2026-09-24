@@ -1064,12 +1064,25 @@ export const it: TranslationDictionary = {
         tooManyEntries: 'Contiene più file di quanti ne consenta un singolo caricamento.',
         traversal: 'Contiene percorsi che puntano fuori dall’archivio, quindi non è stato aperto.',
         tooDeep: 'Annida archivi più in profondità di quanto consentito.',
-        encrypted:
-          'È protetto da password. Gli archivi protetti da password non sono ancora supportati.',
+        encrypted: 'È protetto da password. Inserisci la password per aprirlo.',
         partlyEncrypted:
-          'Alcuni file sono protetti da password e sono stati saltati. Gli altri sono disponibili.',
+          'Alcuni file sono protetti da password e sono stati saltati. Inserisci la password per sbloccarli.',
         unsupported: 'Questo file non è in un formato di archivio che possiamo aprire.',
         generic: 'Impossibile aprirlo. Ricrea l’archivio e caricalo di nuovo.',
+      },
+      password: {
+        unlockButton: 'Inserisci password',
+        title: 'Inserisci la password dell’archivio',
+        description: 'Questo archivio è protetto da password. Inserisci la password per aprirlo.',
+        placeholder: 'Password',
+        submit: 'Sblocca',
+        cancel: 'Annulla',
+        submitting: 'Verifica della password…',
+        wrongPassword: 'Password errata. Riprova.',
+        attemptsExceededTitle: 'Troppi tentativi',
+        attemptsExceeded:
+          'Non è stato possibile sbloccare questo archivio dopo troppi tentativi errati.',
+        genericError: 'Qualcosa è andato storto. Riprova.',
       },
     },
     retention: {

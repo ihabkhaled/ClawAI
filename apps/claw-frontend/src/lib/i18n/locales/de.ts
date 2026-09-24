@@ -1066,13 +1066,27 @@ export const de: TranslationDictionary = {
         traversal:
           'Es enthält Pfade, die aus dem Archiv herausführen, daher wurde es nicht geöffnet.',
         tooDeep: 'Es verschachtelt Archive tiefer als erlaubt.',
-        encrypted:
-          'Es ist passwortgeschützt. Passwortgeschützte Archive werden noch nicht unterstützt.',
+        encrypted: 'Es ist passwortgeschützt. Geben Sie das Passwort ein, um es zu öffnen.',
         partlyEncrypted:
-          'Einige Dateien sind passwortgeschützt und wurden übersprungen. Die übrigen sind verfügbar.',
+          'Einige Dateien sind passwortgeschützt und wurden übersprungen. Geben Sie das Passwort ein, um sie freizuschalten.',
         unsupported: 'Diese Datei hat kein Archivformat, das wir öffnen können.',
         generic:
           'Es konnte nicht geöffnet werden. Erstellen Sie das Archiv neu und laden Sie es erneut hoch.',
+      },
+      password: {
+        unlockButton: 'Passwort eingeben',
+        title: 'Archivpasswort eingeben',
+        description:
+          'Dieses Archiv ist passwortgeschützt. Geben Sie das Passwort ein, um es zu öffnen.',
+        placeholder: 'Passwort',
+        submit: 'Entsperren',
+        cancel: 'Abbrechen',
+        submitting: 'Passwort wird geprüft…',
+        wrongPassword: 'Das Passwort war falsch. Versuchen Sie es erneut.',
+        attemptsExceededTitle: 'Zu viele Versuche',
+        attemptsExceeded:
+          'Dieses Archiv konnte nach zu vielen falschen Passwörtern nicht entsperrt werden.',
+        genericError: 'Etwas ist schiefgelaufen. Versuchen Sie es erneut.',
       },
     },
     retention: {

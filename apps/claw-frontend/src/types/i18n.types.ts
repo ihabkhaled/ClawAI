@@ -1022,6 +1022,19 @@ export type TranslationDictionary = {
         unsupported: string;
         generic: string;
       };
+      password: {
+        unlockButton: string;
+        title: string;
+        description: string;
+        placeholder: string;
+        submit: string;
+        cancel: string;
+        submitting: string;
+        wrongPassword: string;
+        attemptsExceededTitle: string;
+        attemptsExceeded: string;
+        genericError: string;
+      };
     };
     retention: {
       expired: string;

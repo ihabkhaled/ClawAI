@@ -1057,12 +1057,25 @@ export const es: TranslationDictionary = {
         tooManyEntries: 'Contiene más archivos de los que admite una sola subida.',
         traversal: 'Contiene rutas que apuntan fuera del archivo comprimido, así que no se abrió.',
         tooDeep: 'Anida archivos comprimidos a más profundidad de la permitida.',
-        encrypted:
-          'Está protegido con contraseña. Los archivos comprimidos con contraseña aún no son compatibles.',
+        encrypted: 'Está protegido con contraseña. Introduce la contraseña para abrirlo.',
         partlyEncrypted:
-          'Algunos archivos están protegidos con contraseña y se omitieron. El resto está disponible.',
+          'Algunos archivos están protegidos con contraseña y se omitieron. Introduce la contraseña para desbloquearlos.',
         unsupported: 'Este archivo no tiene un formato de archivo comprimido que podamos abrir.',
         generic: 'No se pudo abrir. Vuelve a crear el archivo comprimido y súbelo de nuevo.',
+      },
+      password: {
+        unlockButton: 'Introducir contraseña',
+        title: 'Introduce la contraseña del archivo',
+        description:
+          'Este archivo comprimido está protegido con contraseña. Introduce la contraseña para abrirlo.',
+        placeholder: 'Contraseña',
+        submit: 'Desbloquear',
+        cancel: 'Cancelar',
+        submitting: 'Comprobando la contraseña…',
+        wrongPassword: 'Esa contraseña no funcionó. Inténtalo de nuevo.',
+        attemptsExceededTitle: 'Demasiados intentos',
+        attemptsExceeded: 'No se pudo desbloquear este archivo tras demasiados intentos fallidos.',
+        genericError: 'Algo salió mal. Inténtalo de nuevo.',
       },
     },
     retention: {

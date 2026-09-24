@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 
 import type { FileIngestionStatus } from '@/enums';
+import type { ArchivePasswordPromptStatus } from '@/enums/archive-password-prompt-status.enum';
 import type { ArchiveRejectionReason } from '@/enums/archive-rejection-reason.enum';
 import type { ArchiveTreeNodeKind } from '@/enums/archive-tree-node-kind.enum';
 
@@ -208,6 +209,19 @@ export type UseMessageAttachmentItemReturn = {
   rejection: ArchiveRejection | null;
   isExpanded: boolean;
   toggleExpanded: () => void;
+  passwordPrompt: UseArchivePasswordPromptReturn;
+};
+
+// ─── Password prompt (batch A3) ───────────────────────────────────────────────
+
+export type UseArchivePasswordPromptReturn = {
+  isOpen: boolean;
+  status: ArchivePasswordPromptStatus;
+  password: string;
+  setPassword: (value: string) => void;
+  open: () => void;
+  onOpenChange: (open: boolean) => void;
+  submit: () => void;
 };
 
 // ─── Components ──────────────────────────────────────────────────────────────
@@ -275,6 +289,17 @@ export type ArchiveAttachmentCardProps = {
   rejection: ArchiveRejection | null;
   isExpanded: boolean;
   onToggle: () => void;
+  passwordPrompt: UseArchivePasswordPromptReturn;
+  t: TranslateFunction;
+};
+
+export type ArchivePasswordDialogProps = {
+  open: boolean;
+  status: ArchivePasswordPromptStatus;
+  password: string;
+  onPasswordChange: (value: string) => void;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: () => void;
   t: TranslateFunction;
 };
 

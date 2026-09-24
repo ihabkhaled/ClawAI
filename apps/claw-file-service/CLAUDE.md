@@ -109,10 +109,13 @@ recordFailedPasswordAttempt`), which runs BEFORE the normal `finalize` write
   password field. Tests in `zip-expansion.manager.spec.ts` and
   `archive-entries.service.spec.ts` serialize the actual mock call arguments
   and assert the string is absent — not a code-review claim.
-- **The frontend dialog is not wired yet.** The distinct "encrypted" status
-  (`ArchiveRejectionReason.Encrypted`) shipped in A2; the password PROMPT
-  itself (follow `MediaRecordingConsentDialog`'s pattern) is the next batch.
-  The backend above is complete and independently testable via the endpoint.
+- **The frontend dialog shipped the same day, as a follow-up batch.** The
+  distinct "encrypted" status (`ArchiveRejectionReason.Encrypted`) came from
+  A2; the password prompt itself
+  (`apps/claw-frontend/src/components/files/archive/archive-password-dialog.tsx`,
+  following `MediaRecordingConsentDialog`'s pattern) now calls this endpoint.
+  Detail: `apps/claw-frontend/CLAUDE.md` → "The in-chat archive password
+  prompt (batch A3)".
 
 Addendum: [ADR-114](../../docs/13-adr/adr-114-seven-zip-wasm-for-every-archive-format.md)
 §"batch A3" · Runbook: [`skills/add-an-archive-format.md`](../../skills/add-an-archive-format.md).

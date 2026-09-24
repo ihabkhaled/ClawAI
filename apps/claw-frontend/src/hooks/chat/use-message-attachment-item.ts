@@ -1,5 +1,6 @@
 import { useToggle } from '@/hooks/common/use-toggle';
 import { useArchiveEntries } from '@/hooks/files/use-archive-entries';
+import { useArchivePasswordPrompt } from '@/hooks/files/use-archive-password-prompt';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { UseMessageAttachmentItemReturn } from '@/types/archive.types';
 import { getArchiveRejection } from '@/utilities/archive-status.utility';
@@ -13,6 +14,7 @@ export function useMessageAttachmentItem(fileId: string): UseMessageAttachmentIt
   const { t } = useTranslation();
   const { isOpen, toggle } = useToggle(false);
   const { listing, isLoading } = useArchiveEntries(fileId, true);
+  const passwordPrompt = useArchivePasswordPrompt(fileId);
   const isArchive = listing?.isArchive === true;
 
   return {
@@ -24,5 +26,6 @@ export function useMessageAttachmentItem(fileId: string): UseMessageAttachmentIt
       : null,
     isExpanded: isOpen,
     toggleExpanded: toggle,
+    passwordPrompt,
   };
 }

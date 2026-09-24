@@ -651,3 +651,39 @@ Three things to know before touching it:
 Canonical: [`rules/40-chat-surface-layout-and-composer.md`](../../rules/40-chat-surface-layout-and-composer.md) ·
 [`docs/05-frontend/chat-surface-layout.md`](../../docs/05-frontend/chat-surface-layout.md) ·
 [ADR-088](../../docs/13-adr/adr-088-composer-auto-height-replaces-drag-resize.md)
+
+## The in-chat archive password prompt (batch A3, 2026-09-24)
+
+`ArchiveAttachmentCard` (rendered by `MessageAttachmentItem` under a sent
+message) shows an "Enter password" button whenever `rejection.reason` is
+`ArchiveRejectionReason.Encrypted` or `PartlyEncrypted`. It opens
+`ArchivePasswordDialog`, which follows `MediaRecordingConsentDialog`'s pattern
+on purpose — a controlled `Dialog`, a `data-testid` per part, a plain
+Cancel/primary footer — rather than inventing a second inline-prompt shape.
+That dialog was the only other "ask before an action" prompt already in chat.
+
+- **All state lives in `useArchivePasswordPrompt`** (`hooks/files/`), not in
+  the dialog or the card: open/closed, the one controlled password field, and
+  an `ArchivePasswordPromptStatus` (Idle/Submitting/WrongPassword/
+  AttemptsExceeded/Error). The dialog and card are pure props-in, JSX-out —
+  rules/03's TSX-components-only line applies here like everywhere else.
+- **Wrong-vs-exceeded is decided by claw-file-service, never counted in the
+  browser.** A 200 whose fresh listing is still `Encrypted` is
+  `WrongPassword` (offer another try); a 400 with `code:
+ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED` (`ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED_CODE`
+  in `constants/archive.constants.ts`) is `AttemptsExceeded` — terminal, no
+  more input offered. Do not add a client-side attempt counter; the server's
+  `ARCHIVE_PASSWORD_MAX_ATTEMPTS` (3) is the only cap that matters.
+- **The password is cleared from state on every outcome** (right, wrong, or
+  error) and is never put in the query cache, a toast, or a log call — see the
+  non-leakage tests in `use-archive-password-prompt.test.tsx` and
+  `archive-password-dialog.test.tsx`, which serialize actual call arguments
+  and DOM output rather than asserting by code review alone.
+- **i18n**: `files.archive.password.*` in all 13 locales
+  (`i18n.types.ts` + every `lib/i18n/locales/<code>.ts`); the existing
+  `files.archive.rejected.encrypted`/`partlyEncrypted` copy was also rewritten
+  in all 13 locales — it used to say password-protected archives "are not
+  supported yet", which stopped being true this batch.
+
+Backend: `apps/claw-file-service/CLAUDE.md` → "The in-chat password prompt
+(batch A3)" · [ADR-114 addendum](../../docs/13-adr/adr-114-seven-zip-wasm-for-every-archive-format.md).

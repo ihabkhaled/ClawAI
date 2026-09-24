@@ -142,3 +142,11 @@ export const ARCHIVE_TREE_BASE_INDENT_REM = 0.25;
 
 /** A finished archive's contents do not change; re-asking is wasted work. */
 export const ARCHIVE_ENTRIES_STALE_MS = 5 * 60 * 1000;
+
+/**
+ * The error code file-service's POST /files/:id/archive-password answers with
+ * once its retry cap (ARCHIVE_PASSWORD_MAX_ATTEMPTS, currently 3) is spent —
+ * see useArchivePasswordPrompt. Any other error code from that endpoint is a
+ * generic failure, not the terminal "too many attempts" state.
+ */
+export const ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED_CODE = 'ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED';

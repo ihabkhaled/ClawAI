@@ -21,6 +21,7 @@ export function MessageAttachmentItem({ fileId }: MessageAttachmentItemProps): R
         rejection={ctrl.rejection}
         isExpanded={ctrl.isExpanded}
         onToggle={ctrl.toggleExpanded}
+        passwordPrompt={ctrl.passwordPrompt}
         t={ctrl.t}
       />
     );

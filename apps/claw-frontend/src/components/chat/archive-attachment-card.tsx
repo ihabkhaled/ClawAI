@@ -1,8 +1,10 @@
-import { Archive, ChevronDown, ChevronRight } from 'lucide-react';
+import { Archive, ChevronDown, ChevronRight, Lock } from 'lucide-react';
 
 import { ArchiveEntryTree } from '@/components/files/archive/archive-entry-tree';
+import { ArchivePasswordDialog } from '@/components/files/archive/archive-password-dialog';
 import { ArchiveRejectionNotice } from '@/components/files/archive/archive-rejection-notice';
 import { Button } from '@/components/ui/button';
+import { ArchiveRejectionReason } from '@/enums/archive-rejection-reason.enum';
 import type { ArchiveAttachmentCardProps } from '@/types/archive.types';
 import { getArchiveListingCount } from '@/utilities/archive-status.utility';
 
@@ -14,9 +16,14 @@ export function ArchiveAttachmentCard({
   rejection,
   isExpanded,
   onToggle,
+  passwordPrompt,
   t,
 }: ArchiveAttachmentCardProps): React.ReactElement {
   const count = getArchiveListingCount(listing);
+  const isUnlockable =
+    rejection !== null &&
+    (rejection.reason === ArchiveRejectionReason.Encrypted ||
+      rejection.reason === ArchiveRejectionReason.PartlyEncrypted);
 
   return (
     <div
@@ -35,6 +42,30 @@ export function ArchiveAttachmentCard({
       {rejection === null ? null : (
         <ArchiveRejectionNotice rejection={rejection} t={t} className="mt-2 p-2 text-xs" />
       )}
+      {isUnlockable ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={passwordPrompt.open}
+          className="touch:min-h-11 mt-2 h-8 gap-1 px-2 text-xs"
+          data-testid="archive-unlock-trigger"
+        >
+          <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('files.archive.password.unlockButton')}
+        </Button>
+      ) : null}
+      {isUnlockable ? (
+        <ArchivePasswordDialog
+          open={passwordPrompt.isOpen}
+          status={passwordPrompt.status}
+          password={passwordPrompt.password}
+          onPasswordChange={passwordPrompt.setPassword}
+          onOpenChange={passwordPrompt.onOpenChange}
+          onSubmit={passwordPrompt.submit}
+          t={t}
+        />
+      ) : null}
       {count > 0 ? (
         <>
           <Button

@@ -1059,13 +1059,27 @@ export const pt: TranslationDictionary = {
         traversal:
           'Contém caminhos que apontam para fora do arquivo compactado, por isso não foi aberto.',
         tooDeep: 'Aninha arquivos compactados mais fundo do que o permitido.',
-        encrypted:
-          'Está protegido por senha. Arquivos compactados com senha ainda não são suportados.',
+        encrypted: 'Está protegido por senha. Digite a senha para abri-lo.',
         partlyEncrypted:
-          'Alguns arquivos estão protegidos por senha e foram ignorados. Os demais estão disponíveis.',
+          'Alguns arquivos estão protegidos por senha e foram ignorados. Digite a senha para desbloqueá-los.',
         unsupported:
           'Este arquivo não está em um formato de arquivo compactado que possamos abrir.',
         generic: 'Não foi possível abri-lo. Crie o arquivo compactado de novo e envie outra vez.',
+      },
+      password: {
+        unlockButton: 'Digitar senha',
+        title: 'Digite a senha do arquivo compactado',
+        description:
+          'Este arquivo compactado está protegido por senha. Digite a senha para abri-lo.',
+        placeholder: 'Senha',
+        submit: 'Desbloquear',
+        cancel: 'Cancelar',
+        submitting: 'Verificando a senha…',
+        wrongPassword: 'Essa senha não funcionou. Tente novamente.',
+        attemptsExceededTitle: 'Muitas tentativas',
+        attemptsExceeded:
+          'Não foi possível desbloquear este arquivo após muitas senhas incorretas.',
+        genericError: 'Algo deu errado. Tente novamente.',
       },
     },
     retention: {
