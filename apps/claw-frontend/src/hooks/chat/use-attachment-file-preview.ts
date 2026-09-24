@@ -19,6 +19,7 @@ export function useAttachmentFilePreview(
   fileId: string,
   filename: string,
   kind: AttachmentPreviewKind.Pdf | AttachmentPreviewKind.Text | AttachmentPreviewKind.Generic,
+  mimeType?: string,
 ): UseAttachmentFilePreviewReturn {
   const { t } = useTranslation();
   const { blobUrl, isLoading, error, load } = useAuthenticatedFileBlob(
@@ -62,9 +63,9 @@ export function useAttachmentFilePreview(
     if (action === AttachmentPendingAction.View) {
       openBlobInNewTab(blobUrl);
     } else {
-      triggerBrowserDownload(blobUrl, filename);
+      triggerBrowserDownload(blobUrl, filename, mimeType);
     }
-  }, [blobUrl, filename]);
+  }, [blobUrl, filename, mimeType]);
 
   const view = useCallback((): void => {
     if (blobUrl !== null) {
@@ -77,12 +78,12 @@ export function useAttachmentFilePreview(
 
   const download = useCallback((): void => {
     if (blobUrl !== null) {
-      triggerBrowserDownload(blobUrl, filename);
+      triggerBrowserDownload(blobUrl, filename, mimeType);
       return;
     }
     pendingActionRef.current = AttachmentPendingAction.Download;
     load();
-  }, [blobUrl, filename, load]);
+  }, [blobUrl, filename, mimeType, load]);
 
   return { t, isLoading, error, previewText, isPreviewTruncated, view, download };
 }

@@ -49,7 +49,14 @@ export function MessageAttachmentItem({ fileId }: MessageAttachmentItemProps): R
     return <AttachmentThumbnail fileId={fileId} filename={meta.file.filename} />;
   }
   if (kind === AttachmentPreviewKind.Audio || kind === AttachmentPreviewKind.Video) {
-    return <AttachmentMediaPreview fileId={fileId} filename={meta.file.filename} kind={kind} />;
+    return (
+      <AttachmentMediaPreview
+        fileId={fileId}
+        filename={meta.file.filename}
+        mimeType={meta.file.mimeType}
+        kind={kind}
+      />
+    );
   }
   return (
     <AttachmentFilePreview

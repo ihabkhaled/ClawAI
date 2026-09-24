@@ -19,7 +19,7 @@ export function AttachmentFilePreview({
   kind,
 }: AttachmentFilePreviewProps): React.ReactElement {
   const { t, isLoading, error, previewText, isPreviewTruncated, view, download } =
-    useAttachmentFilePreview(fileId, filename, kind);
+    useAttachmentFilePreview(fileId, filename, kind, mimeType);
   const { Icon, tone } = getFileTypeDescriptor(mimeType, filename);
   const isPdf = kind === AttachmentPreviewKind.Pdf;
   const isText = kind === AttachmentPreviewKind.Text;

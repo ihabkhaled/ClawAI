@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { API_BASE_URL } from '@/constants';
 import type { UseFileDownloadResult } from '@/types/file-generation.types';
 import { getAccessToken, logger } from '@/utilities';
+import { saveBlobDownload } from '@/utilities/file-download.utility';
 
 /**
  * Downloads a generated file on click, with the session, as a real file.
@@ -27,12 +28,7 @@ export function useFileDownload(): UseFileDownloadResult {
         setFailed(true);
         return;
       }
-      const objectUrl = URL.createObjectURL(await response.blob());
-      const anchor = document.createElement('a');
-      anchor.href = objectUrl;
-      anchor.download = filename;
-      anchor.click();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+      saveBlobDownload(await response.blob(), filename);
     } catch {
       logger.warn({
         component: 'chat',

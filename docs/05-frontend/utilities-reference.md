@@ -150,6 +150,24 @@ getStatusLabel(ConnectorStatus.DOWN); // 'Offline'
 
 ---
 
+## Download Utilities
+
+### `download-blob.utility.ts`
+
+`ensureFilenameExtension(filename, mimeType?)`, `triggerBrowserDownload(blobUrl, filename, mimeType?)`, `openBlobInNewTab(blobUrl)`.
+
+A blob URL carries no name, so any save without an explicit, extension-bearing
+`download` name lands on disk as "blob" with no extension (reported 2026-09-25).
+Every save path goes through `ensureFilenameExtension` (map in
+`constants/download-filename.constants.ts`). Voice/video note players set
+`controlsList="nodownload"` and offer a named Download button instead of the
+player's own nameless download. `saveBlobDownload` (`file-download.utility.ts`)
+revokes its URL after `DOWNLOAD_REVOKE_DELAY_MS`, not synchronously — a
+synchronous revoke raced the download on mobile browsers.
+
+Known limit: "View" opens the blob in a new tab; saving from that tab's own
+viewer still gets a browser-chosen name. Use the Download button.
+
 ## AI / Generation Utilities
 
 ### `image-generation.utility.ts`

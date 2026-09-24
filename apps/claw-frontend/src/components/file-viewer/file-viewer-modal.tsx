@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { FileViewerRenderKind } from '@/enums/file-viewer-render-kind.enum';
 import type { FileViewerModalProps } from '@/types/file-viewer.types';
+import { ensureFilenameExtension } from '@/utilities/download-blob.utility';
 
 export function FileViewerModal({
   openObjectId,
@@ -32,12 +33,10 @@ export function FileViewerModal({
         </DialogHeader>
 
         <div className="min-h-[12rem]">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">{labels.loading}</p>
-          ) : null}
+          {isLoading ? <p className="text-muted-foreground text-sm">{labels.loading}</p> : null}
 
           {error !== null ? (
-            <p className="rounded border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-3 text-sm">
               {error.message || labels.error}
             </p>
           ) : null}
@@ -48,7 +47,7 @@ export function FileViewerModal({
                 <iframe
                   title={content.filename}
                   src={content.blobUrl}
-                  className="h-[60vh] w-full rounded border border-border"
+                  className="border-border h-[60vh] w-full rounded border"
                 />
               ) : null}
 
@@ -60,19 +59,19 @@ export function FileViewerModal({
                 <div
                   role="img"
                   aria-label={content.filename}
-                  className="h-[60vh] w-full rounded border border-border bg-contain bg-center bg-no-repeat"
+                  className="border-border h-[60vh] w-full rounded border bg-contain bg-center bg-no-repeat"
                   style={{ backgroundImage: `url("${content.blobUrl}")` }}
                 />
               ) : null}
 
               {renderKind === FileViewerRenderKind.TEXT ? (
-                <pre className="max-h-[60vh] overflow-auto rounded border border-border bg-muted/30 p-3 text-xs">
+                <pre className="border-border bg-muted/30 max-h-[60vh] overflow-auto rounded border p-3 text-xs">
                   {textPreview ?? ''}
                 </pre>
               ) : null}
 
               {renderKind === FileViewerRenderKind.UNSUPPORTED ? (
-                <p className="text-sm text-muted-foreground">{labels.unsupported}</p>
+                <p className="text-muted-foreground text-sm">{labels.unsupported}</p>
               ) : null}
             </>
           ) : null}
@@ -80,7 +79,10 @@ export function FileViewerModal({
 
         <DialogFooter>
           {content !== null ? (
-            <a href={content.blobUrl} download={content.filename}>
+            <a
+              href={content.blobUrl}
+              download={ensureFilenameExtension(content.filename, content.mimeType)}
+            >
               <Button variant="outline">{labels.download}</Button>
             </a>
           ) : null}

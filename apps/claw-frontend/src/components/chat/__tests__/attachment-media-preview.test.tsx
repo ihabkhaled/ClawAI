@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AttachmentMediaPreview } from '@/components/chat/attachment-media-preview';
@@ -122,5 +123,42 @@ describe('AttachmentMediaPreview', () => {
     );
 
     expect(screen.getByText('chat.attachment.previewFailed')).toBeInTheDocument();
+  });
+
+  // The player's own download menu saved a nameless "blob" with no extension
+  // (reported 2026-09-25). It is hidden, and an explicit button saves the
+  // stored filename.
+  it('hides the native nameless download and offers a named Download button', async () => {
+    const download = vi.fn();
+    mockUseAttachmentMediaPreview.mockReturnValue({
+      t,
+      blobUrl: 'blob:mock-audio',
+      isLoading: false,
+      error: null,
+      hasStarted: true,
+      play: vi.fn(),
+      download,
+    });
+
+    render(
+      <AttachmentMediaPreview
+        fileId="f1"
+        filename="voice-note.webm"
+        mimeType="audio/webm"
+        kind={AttachmentPreviewKind.Audio}
+      />,
+    );
+
+    expect(screen.getByTestId('attachment-audio-player')).toHaveAttribute(
+      'controlslist',
+      'nodownload',
+    );
+    await userEvent.click(screen.getByTestId('attachment-media-download'));
+    expect(download).toHaveBeenCalledOnce();
+    expect(mockUseAttachmentMediaPreview).toHaveBeenLastCalledWith(
+      'f1',
+      'voice-note.webm',
+      'audio/webm',
+    );
   });
 });

@@ -25,6 +25,8 @@ export type UseAttachmentMediaPreviewReturn = {
   error: Error | null;
   hasStarted: boolean;
   play: () => void;
+  /** Saves the loaded note under its real name and extension. */
+  download: () => void;
 };
 
 export type UseAttachmentThumbnailReturn = {
@@ -56,6 +58,7 @@ export type AttachmentUnavailableCardProps = {
 export type AttachmentMediaPreviewProps = {
   fileId: string;
   filename: string;
+  mimeType?: string;
   kind: AttachmentPreviewKind.Audio | AttachmentPreviewKind.Video;
 };
 

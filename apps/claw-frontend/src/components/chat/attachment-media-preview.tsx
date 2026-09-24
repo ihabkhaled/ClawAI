@@ -1,4 +1,4 @@
-import { Loader2, Play } from 'lucide-react';
+import { Download, Loader2, Play } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum';
@@ -13,9 +13,14 @@ import type { AttachmentMediaPreviewProps } from '@/types/attachment-preview.typ
 export function AttachmentMediaPreview({
   fileId,
   filename,
+  mimeType,
   kind,
 }: AttachmentMediaPreviewProps): React.ReactElement {
-  const { t, blobUrl, isLoading, error, play } = useAttachmentMediaPreview(fileId);
+  const { t, blobUrl, isLoading, error, play, download } = useAttachmentMediaPreview(
+    fileId,
+    filename,
+    mimeType,
+  );
   const kindLabel = t(
     kind === AttachmentPreviewKind.Audio
       ? 'chat.attachment.voiceNote'
@@ -25,30 +30,49 @@ export function AttachmentMediaPreview({
   // A recorded voice/video note has no caption track of its own — the
   // `<track>` below is a real (empty) captions track rather than a suppressed
   // lint finding, so the caption control the browser shows is honest about
-  // there being nothing to turn on.
+  // there being nothing to turn on. `controlsList="nodownload"` hides the
+  // player's own download, which saves a nameless "blob"; the button below
+  // saves the real filename.
   if (blobUrl !== null) {
-    return kind === AttachmentPreviewKind.Audio ? (
-      <audio
-        className="w-64 max-w-full"
-        controls
-        autoPlay
-        src={blobUrl}
-        data-testid="attachment-audio-player"
-      >
-        <track kind="captions" label={t('chat.attachment.noCaptionsAvailable')} />
-        {filename}
-      </audio>
-    ) : (
-      <video
-        className="max-h-64 w-64 max-w-full rounded-lg"
-        controls
-        autoPlay
-        src={blobUrl}
-        data-testid="attachment-video-player"
-      >
-        <track kind="captions" label={t('chat.attachment.noCaptionsAvailable')} />
-        {filename}
-      </video>
+    return (
+      <div className="bg-card text-card-foreground flex max-w-full flex-col items-start gap-1.5 rounded-lg border p-2">
+        {kind === AttachmentPreviewKind.Audio ? (
+          <audio
+            className="w-64 max-w-full"
+            controls
+            controlsList="nodownload"
+            autoPlay
+            src={blobUrl}
+            data-testid="attachment-audio-player"
+          >
+            <track kind="captions" label={t('chat.attachment.noCaptionsAvailable')} />
+            {filename}
+          </audio>
+        ) : (
+          <video
+            className="max-h-64 w-64 max-w-full rounded-lg"
+            controls
+            controlsList="nodownload"
+            autoPlay
+            src={blobUrl}
+            data-testid="attachment-video-player"
+          >
+            <track kind="captions" label={t('chat.attachment.noCaptionsAvailable')} />
+            {filename}
+          </video>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={download}
+          className="touch:min-h-11 h-8 gap-1 px-2 text-xs"
+          data-testid="attachment-media-download"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('chat.attachment.download')}
+        </Button>
+      </div>
     );
   }
 
