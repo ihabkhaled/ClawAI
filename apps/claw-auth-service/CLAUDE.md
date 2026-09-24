@@ -480,6 +480,22 @@ Persist only OTP and confirmation-token hashes. Enforce expiry, resend cooldown,
 - Never add a second cookie or reuse this one for another purpose. A new
   narrow surface gets its own `deriveScopedKey` context string.
 
+## Deployment live progress (modules/deployment)
+
+- `GithubActionsAdapter.latestRun()` reads TWO lanes: `deploy-production.yml`
+  runs (manual dispatches only) and `release.yml` runs (the automatic lane —
+  release calls deploy-production as a reusable workflow, so those rollouts
+  never show in deploy-production's own run list). Reading one lane pinned the
+  admin panel on the last manual run.
+- Selection lives in `utilities/deployment-run.utility.ts`
+  (`rankRunCandidates`, `selectDeployJobs`): active run first, then newest
+  `created_at`; skipped runs dropped; for a release run only jobs named
+  `deploy / …` (`GITHUB_RELEASE_DEPLOY_JOB_PREFIX`) are shown; a finished
+  release run with no deploy job is passed over. Job reads per poll are capped
+  by `GITHUB_MAX_RUN_PROBES` — it is on the page's poll path.
+- Renaming the `deploy` job id in `release.yml` changes the job-name prefix and
+  silently hides every automatic rollout — update the constant with it.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

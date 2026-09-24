@@ -83,6 +83,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Logs',
       runNoSteps: 'This job has not reported any steps yet.',
       runAutoRefresh: 'This updates automatically every few seconds.',
+      runLane: {
+        auto: 'Automatic release',
+        manual: 'Manual deploy',
+      },
       credentialsSource: {
         database: 'Saved here',
         environment: 'From server environment',
@@ -246,6 +250,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'السجلات',
       runNoSteps: 'لم تُبلِّغ هذه المهمة عن أي خطوات بعد.',
       runAutoRefresh: 'يتحدَّث هذا تلقائيًا كل بضع ثوانٍ.',
+      runLane: {
+        auto: 'إصدار تلقائي',
+        manual: 'نشر يدوي',
+      },
       credentialsSource: {
         database: 'محفوظة هنا',
         environment: 'من بيئة الخادم',
@@ -407,6 +415,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Journaux',
       runNoSteps: "Cette tâche n'a encore signalé aucune étape.",
       runAutoRefresh: 'Mise à jour automatique toutes les quelques secondes.',
+      runLane: {
+        auto: 'Publication automatique',
+        manual: 'Déploiement manuel',
+      },
       credentialsSource: {
         database: 'Enregistrés ici',
         environment: "Depuis l'environnement du serveur",
@@ -575,6 +587,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Log',
       runNoSteps: 'Questo job non ha ancora segnalato alcun passo.',
       runAutoRefresh: 'Si aggiorna da solo ogni pochi secondi.',
+      runLane: {
+        auto: 'Rilascio automatico',
+        manual: 'Deploy manuale',
+      },
       credentialsSource: {
         database: 'Salvate qui',
         environment: 'Dall’ambiente del server',
@@ -743,6 +759,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Protokolle',
       runNoSteps: 'Dieser Job hat noch keine Schritte gemeldet.',
       runAutoRefresh: 'Aktualisiert sich alle paar Sekunden von selbst.',
+      runLane: {
+        auto: 'Automatisches Release',
+        manual: 'Manuelles Deployment',
+      },
       credentialsSource: {
         database: 'Hier gespeichert',
         environment: 'Aus der Serverumgebung',
@@ -909,6 +929,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Registros',
       runNoSteps: 'Este trabajo aún no ha informado de ningún paso.',
       runAutoRefresh: 'Esto se actualiza solo cada pocos segundos.',
+      runLane: {
+        auto: 'Lanzamiento automático',
+        manual: 'Despliegue manual',
+      },
       credentialsSource: {
         database: 'Guardadas aquí',
         environment: 'Del entorno del servidor',
@@ -1074,6 +1098,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Журналы',
       runNoSteps: 'Это задание пока не сообщило ни об одном шаге.',
       runAutoRefresh: 'Обновляется автоматически каждые несколько секунд.',
+      runLane: {
+        auto: 'Автоматический релиз',
+        manual: 'Ручное развёртывание',
+      },
       credentialsSource: {
         database: 'Сохранены здесь',
         environment: 'Из окружения сервера',
@@ -1240,6 +1268,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'Registos',
       runNoSteps: 'Esta tarefa ainda não comunicou nenhum passo.',
       runAutoRefresh: 'Isto atualiza-se sozinho a cada poucos segundos.',
+      runLane: {
+        auto: 'Lançamento automático',
+        manual: 'Implementação manual',
+      },
       credentialsSource: {
         database: 'Guardadas aqui',
         environment: 'Do ambiente do servidor',
@@ -1405,6 +1437,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'लॉग',
       runNoSteps: 'इस जॉब ने अभी तक कोई चरण नहीं बताया है।',
       runAutoRefresh: 'यह हर कुछ सेकंड में अपने आप अपडेट होता है।',
+      runLane: {
+        auto: 'स्वचालित रिलीज़',
+        manual: 'मैन्युअल डिप्लॉय',
+      },
       credentialsSource: {
         database: 'यहाँ सहेजे गए',
         environment: 'सर्वर परिवेश से',
@@ -1566,6 +1602,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'ログ',
       runNoSteps: 'このジョブはまだステップを報告していません。',
       runAutoRefresh: '数秒ごとに自動更新されます。',
+      runLane: {
+        auto: '自動リリース',
+        manual: '手動デプロイ',
+      },
       credentialsSource: {
         database: 'ここに保存済み',
         environment: 'サーバー環境から',
@@ -1729,6 +1769,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'บันทึก',
       runNoSteps: 'งานนี้ยังไม่ได้รายงานขั้นตอนใด ๆ',
       runAutoRefresh: 'ข้อมูลนี้อัปเดตเองทุกไม่กี่วินาที',
+      runLane: {
+        auto: 'รีลีสอัตโนมัติ',
+        manual: 'ดีพลอยด้วยตนเอง',
+      },
       credentialsSource: {
         database: 'บันทึกไว้ที่นี่',
         environment: 'จากสภาพแวดล้อมของเซิร์ฟเวอร์',
@@ -1891,6 +1935,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: 'گزارش‌ها',
       runNoSteps: 'این کار هنوز هیچ گامی گزارش نکرده است.',
       runAutoRefresh: 'این بخش هر چند ثانیه خودش به‌روز می‌شود.',
+      runLane: {
+        auto: 'انتشار خودکار',
+        manual: 'استقرار دستی',
+      },
       credentialsSource: {
         database: 'ذخیره‌شده در اینجا',
         environment: 'از محیط سرور',
@@ -2049,6 +2097,10 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       runOpenJob: '日志',
       runNoSteps: '此作业尚未报告任何步骤。',
       runAutoRefresh: '每隔几秒自动刷新。',
+      runLane: {
+        auto: '自动发布',
+        manual: '手动部署',
+      },
       credentialsSource: {
         database: '已保存在此',
         environment: '来自服务器环境',

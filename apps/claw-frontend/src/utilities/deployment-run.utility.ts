@@ -1,5 +1,6 @@
 import {
   DeploymentRunConclusion,
+  type DeploymentRunLane,
   type DeploymentRunStep,
   DeploymentRunStatus,
 } from '@claw/shared-types';
@@ -46,6 +47,14 @@ export function runStateKey(
     return `adminDeployment.runConclusion.${conclusion}`;
   }
   return `adminDeployment.runStatus.${status}`;
+}
+
+/**
+ * The i18n key naming the lane a run came from — the automatic release
+ * pipeline or a manual dispatch — so an operator can tell them apart.
+ */
+export function runLaneKey(lane: DeploymentRunLane): string {
+  return `adminDeployment.runLane.${lane}`;
 }
 
 /** Wall-clock duration of a step, in whole seconds, or null while unknown. */

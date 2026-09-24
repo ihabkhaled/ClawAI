@@ -9,6 +9,38 @@ export const GITHUB_ACCEPT_HEADER = 'application/vnd.github+json';
 /** Workflow file dispatched for a production rollout. */
 export const GITHUB_DEPLOY_WORKFLOW_FILE = 'deploy-production.yml';
 
+/**
+ * The automatic lane. release.yml calls deploy-production.yml as a reusable
+ * workflow, so an automatic rollout is a job INSIDE a release run and never
+ * appears under deploy-production.yml's own run list — which only ever holds
+ * manual dispatches. Live progress has to read both lanes.
+ */
+export const GITHUB_RELEASE_WORKFLOW_FILE = 'release.yml';
+
+/**
+ * Name prefix GitHub gives the jobs of a reusable-workflow call: the caller's
+ * job id (`deploy` in release.yml), a slash, then the called job's name. A
+ * skipped call is reported as a bare `deploy` job with no steps, which this
+ * prefix deliberately does not match.
+ */
+export const GITHUB_RELEASE_DEPLOY_JOB_PREFIX = 'deploy / ';
+
+/**
+ * How many recent runs each lane contributes. Most release runs deploy nothing
+ * (CI failed, or no release was cut), so one per lane is not enough to find
+ * the newest real rollout.
+ */
+export const GITHUB_RUN_CANDIDATES_PER_LANE = 5;
+
+/**
+ * Most job reads one progress poll may spend looking for a run that actually
+ * deployed. Bounds GitHub API use on the page's poll path.
+ */
+export const GITHUB_MAX_RUN_PROBES = 3;
+
+/** First line of the triggering commit message, bounded before it reaches the UI. */
+export const GITHUB_COMMIT_TITLE_MAX_LENGTH = 200;
+
 /** A dispatch is a single small POST; it either lands quickly or is retried by hand. */
 export const GITHUB_DISPATCH_TIMEOUT_MS = 10_000;
 

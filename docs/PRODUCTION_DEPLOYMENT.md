@@ -217,6 +217,16 @@ highlighted and each finished step marked passed or failed. When a step fails,
 the page names the **first** failed step — later ones usually fail as a
 consequence — and links directly to that job's log.
 
+It reads **both** deployment lanes. An automatic rollout is the `deploy / …`
+job inside a `release.yml` run (release calls `deploy-production.yml` as a
+reusable workflow), so it never appears in `deploy-production.yml`'s own run
+list — that list holds only manual dispatches. Until 2026-09-25 the panel read
+only that list and stayed pinned on the last manual run. Now a queued or
+running rollout wins, otherwise the newest; release runs that deployed nothing
+(skipped, or no release cut) are passed over within three job reads. For a
+release run only its deploy jobs are shown, and the panel labels the lane
+(automatic release / manual deploy) and the triggering commit's title.
+
 This is deliberately independent of `.deploy/status.json`. The two disagree in
 exactly the case that is hardest to diagnose: the workflow has already failed
 while the box still reports `running`. The page detects that combination and

@@ -3885,6 +3885,10 @@ export type TranslationDictionary = {
     runOpenJob: string;
     runNoSteps: string;
     runAutoRefresh: string;
+    runLane: {
+      auto: string;
+      manual: string;
+    };
     credentialsSource: {
       database: string;
       environment: string;

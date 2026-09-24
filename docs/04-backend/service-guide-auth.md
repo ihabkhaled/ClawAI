@@ -545,3 +545,20 @@ revoked session after one access-token lifetime and the cookie must never
 outlive that. `GET /grafana-access/verify`'s successful calls are excluded
 from the request log (`ROUTINE_SUCCESS_PATHS`) — one call per Grafana asset or
 panel query would otherwise fill the 30-day log store with the same line.
+
+## Deployment live progress reads both lanes (2026-09-25)
+
+The admin deployment page's "Live deployment progress" panel comes from
+`GithubActionsAdapter.latestRun()`. Production has two lanes: a manual
+dispatch of `deploy-production.yml`, and the automatic lane, where
+`release.yml` calls `deploy-production.yml` as a reusable workflow. The
+automatic rollouts exist only as the `deploy / Deploy <sha>` job inside a
+release run, so reading `deploy-production.yml`'s run list alone showed the
+last manual run forever. The adapter now lists recent runs of both workflows,
+prefers a queued or running one, else the newest by `created_at`, skips
+release runs that deployed nothing (GitHub-skipped, or a bare skipped `deploy`
+job), and for a release run returns only its deploy jobs. The view carries
+`triggerSource` (`DeploymentRunLane.AUTO` / `MANUAL`) and `commitTitle` (first
+line of the triggering commit) for the page to label the run. A failed job
+read of the best candidate returns null (the page says "unreachable") rather
+than quietly showing an older run.

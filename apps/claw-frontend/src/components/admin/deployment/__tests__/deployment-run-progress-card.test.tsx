@@ -1,5 +1,6 @@
 import {
   DeploymentRunConclusion,
+  DeploymentRunLane,
   DeploymentRunStatus,
   DeploymentRunUnavailableReason,
 } from '@claw/shared-types';
@@ -16,6 +17,7 @@ function run(overrides: Record<string, unknown> = {}): Record<string, unknown> {
     conclusion: null,
     url: 'https://github.com/ihabkhaled/ClawAI/actions/runs/1',
     headSha: 'a'.repeat(40),
+    commitTitle: null,
     triggerSource: null,
     startedAt: '2026-08-22T14:43:55Z',
     updatedAt: '2026-08-22T14:45:00Z',
@@ -150,5 +152,42 @@ describe('DeploymentRunProgressCard', () => {
     );
 
     expect(screen.queryByText('adminDeployment.runAutoRefresh')).not.toBeInTheDocument();
+  });
+  it('says which lane started the run and which commit it carries', () => {
+    render(
+      <DeploymentRunProgressCard
+        t={(key) => key}
+        locale="en"
+        progress={{
+          progress: {
+            available: true,
+            reason: null,
+            run: run({
+              triggerSource: DeploymentRunLane.AUTO,
+              commitTitle: 'fix(chat): keep rows mounted',
+            }),
+          } as never,
+          isLoading: false,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('adminDeployment.runLane.auto')).toBeInTheDocument();
+    expect(screen.getByText('fix(chat): keep rows mounted')).toBeInTheDocument();
+  });
+
+  it('shows no lane badge or commit line for a run that reported neither', () => {
+    render(
+      <DeploymentRunProgressCard
+        t={(key) => key}
+        locale="en"
+        progress={{
+          progress: { available: true, reason: null, run: run() } as never,
+          isLoading: false,
+        }}
+      />,
+    );
+
+    expect(screen.queryByText(/adminDeployment\.runLane\./)).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import {
   type DeploymentRunConclusion,
+  type DeploymentRunLane,
   type DeploymentRunStatus,
   type DeploymentRunUnavailableReason,
 } from './deployment-run-status.enum';
@@ -38,9 +39,12 @@ export type DeploymentRunView = {
   status: DeploymentRunStatus;
   conclusion: DeploymentRunConclusion | null;
   url: string;
+  /** The commit that started the run (for the automatic lane, the commit that was released). */
   headSha: string;
-  /** 'auto' or 'manual' when the run recorded it, null for older runs. */
-  triggerSource: string | null;
+  /** First line of that commit's message, or null when GitHub did not report it. */
+  commitTitle: string | null;
+  /** Which lane the run came from: the release pipeline or a manual dispatch. */
+  triggerSource: DeploymentRunLane | null;
   startedAt: string | null;
   updatedAt: string | null;
   jobs: DeploymentRunJob[];

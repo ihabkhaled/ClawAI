@@ -56,7 +56,11 @@ export const githubRunSchema = z.object({
   html_url: githubUrlSchema,
   head_sha: z.string().min(7).max(64),
   run_started_at: z.iso.datetime().nullish(),
+  created_at: z.iso.datetime().nullish(),
   updated_at: z.iso.datetime().nullish(),
+  // Only the message is read, and only its first line reaches the page. A
+  // missing or odd head_commit degrades to no title rather than failing the read.
+  head_commit: z.object({ message: z.string() }).nullish().catch(null),
 });
 
 export const githubRunListSchema = z.object({

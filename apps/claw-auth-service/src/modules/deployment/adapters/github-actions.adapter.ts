@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   DeploymentCredentialSource,
   type DeploymentRunJob,
+  DeploymentRunLane,
   type DeploymentRunView,
 } from '@claw/shared-types';
 import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
@@ -16,17 +17,26 @@ import {
   GITHUB_DEPLOY_WORKFLOW_FILE,
   GITHUB_DISPATCH_TIMEOUT_MS,
   GITHUB_MAX_JOBS,
+  GITHUB_MAX_RUN_PROBES,
   GITHUB_READ_TIMEOUT_MS,
   GITHUB_REF_PATTERN,
+  GITHUB_RELEASE_WORKFLOW_FILE,
   GITHUB_REPOSITORY_PATTERN,
+  GITHUB_RUN_CANDIDATES_PER_LANE,
 } from '../constants/deployment-trigger.constants';
 import { githubJobListSchema, githubRunListSchema } from '../schemas/github-run.schema';
-import { toDeploymentRunJob, toDeploymentRunView } from '../utilities/deployment-run.utility';
+import {
+  rankRunCandidates,
+  selectDeployJobs,
+  toDeploymentRunJob,
+  toDeploymentRunView,
+} from '../utilities/deployment-run.utility';
 import { DeploymentCredentialRepository } from '../repositories/deployment-credential.repository';
 import {
   type GithubDeployCredentials,
   type GithubDispatchRequest,
 } from '../types/deployment-trigger.types';
+import { type GithubRunCandidate } from '../types/github-run.types';
 
 /**
  * Dispatches the `deploy-production` workflow on GitHub Actions.
@@ -112,7 +122,15 @@ export class GithubActionsAdapter {
   }
 
   /**
-   * The most recent run of the deployment workflow, with its jobs and steps.
+   * The rollout an operator cares about right now, with its jobs and steps.
+   *
+   * Production is deployed by two lanes: a manual dispatch of
+   * deploy-production.yml, and the automatic lane, where release.yml calls that
+   * workflow as a reusable job. The automatic runs never appear in
+   * deploy-production.yml's own run list, so reading only that list pinned the
+   * panel to the last MANUAL run forever. Both lanes are read; a queued or
+   * running rollout wins, otherwise the newest. Release runs that deployed
+   * nothing are passed over, within a bounded number of job reads.
    *
    * Returns null rather than throwing when GitHub is unreachable or refuses
    * the read: this sits on the deployment page's polling path, and a transient
@@ -122,21 +140,27 @@ export class GithubActionsAdapter {
     const credentials = await this.resolve();
     if (!credentials) return null;
 
-    const runs = await this.read(
-      `${GITHUB_API_BASE_URL}/repos/${credentials.repository}/actions/workflows/${GITHUB_DEPLOY_WORKFLOW_FILE}/runs?per_page=1`,
-      credentials.token,
-      githubRunListSchema,
-    );
-    const run = runs?.workflow_runs[0];
-    if (!run) return null;
+    const [manual, automatic] = await Promise.all([
+      this.readLane(credentials, GITHUB_DEPLOY_WORKFLOW_FILE, DeploymentRunLane.MANUAL),
+      this.readLane(credentials, GITHUB_RELEASE_WORKFLOW_FILE, DeploymentRunLane.AUTO),
+    ]);
+    const candidates = rankRunCandidates([...manual, ...automatic]).slice(0, GITHUB_MAX_RUN_PROBES);
 
-    const jobs = await this.read(
-      `${GITHUB_API_BASE_URL}/repos/${credentials.repository}/actions/runs/${String(run.id)}/jobs?per_page=${String(GITHUB_MAX_JOBS)}`,
-      credentials.token,
-      githubJobListSchema,
-    );
-    const mapped: DeploymentRunJob[] = (jobs?.jobs ?? []).map(toDeploymentRunJob);
-    return toDeploymentRunView(run, mapped);
+    for (const candidate of candidates) {
+      const jobs = await this.read(
+        `${GITHUB_API_BASE_URL}/repos/${credentials.repository}/actions/runs/${String(candidate.run.id)}/jobs?per_page=${String(GITHUB_MAX_JOBS)}`,
+        credentials.token,
+        githubJobListSchema,
+      );
+      // A failed read of the best candidate is reported as unreachable rather
+      // than quietly showing an older run in its place.
+      if (!jobs) return null;
+      const deployJobs = selectDeployJobs(candidate, jobs.jobs);
+      if (!deployJobs) continue;
+      const mapped: DeploymentRunJob[] = deployJobs.map(toDeploymentRunJob);
+      return toDeploymentRunView(candidate, mapped);
+    }
+    return null;
   }
 
   /** Actions tab for the deployment workflow of a given repository. */
@@ -151,6 +175,20 @@ export class GithubActionsAdapter {
    */
   isUsableTarget(repository: string, ref: string): boolean {
     return GITHUB_REPOSITORY_PATTERN.test(repository) && GITHUB_REF_PATTERN.test(ref);
+  }
+
+  /** Recent runs of one lane's workflow; an unreadable lane contributes none. */
+  private async readLane(
+    credentials: GithubDeployCredentials,
+    workflowFile: string,
+    lane: DeploymentRunLane,
+  ): Promise<GithubRunCandidate[]> {
+    const runs = await this.read(
+      `${GITHUB_API_BASE_URL}/repos/${credentials.repository}/actions/workflows/${workflowFile}/runs?per_page=${String(GITHUB_RUN_CANDIDATES_PER_LANE)}`,
+      credentials.token,
+      githubRunListSchema,
+    );
+    return (runs?.workflow_runs ?? []).map((run) => ({ run, lane }));
   }
 
   private async read<TSchema extends { parse: (value: unknown) => unknown }>(
@@ -215,14 +253,16 @@ export class GithubActionsAdapter {
       this.logger.error('Stored deployment token could not be decrypted; re-save it to recover.');
       return null;
     }
-    return token.trim().length === 0 ? null : {
-      token,
-      repository: stored.repository,
-      ref: stored.ref,
-      source: DeploymentCredentialSource.DATABASE,
-      tokenLastFour: stored.tokenLastFour,
-      updatedAt: stored.updatedAt.toISOString(),
-    };
+    return token.trim().length === 0
+      ? null
+      : {
+          token,
+          repository: stored.repository,
+          ref: stored.ref,
+          source: DeploymentCredentialSource.DATABASE,
+          tokenLastFour: stored.tokenLastFour,
+          updatedAt: stored.updatedAt.toISOString(),
+        };
   }
 
   private resolveEnvironment(): GithubDeployCredentials | null {
@@ -231,13 +271,15 @@ export class GithubActionsAdapter {
     const repository = config.GITHUB_DEPLOY_REPOSITORY?.trim() ?? '';
     const ref = config.GITHUB_DEPLOY_REF?.trim() ?? '';
     if (token.length === 0 || repository.length === 0 || ref.length === 0) return null;
-    return !this.isUsableTarget(repository, ref) ? null : {
-      token,
-      repository,
-      ref,
-      source: DeploymentCredentialSource.ENVIRONMENT,
-      tokenLastFour: token.slice(-4),
-      updatedAt: null,
-    };
+    return !this.isUsableTarget(repository, ref)
+      ? null
+      : {
+          token,
+          repository,
+          ref,
+          source: DeploymentCredentialSource.ENVIRONMENT,
+          tokenLastFour: token.slice(-4),
+          updatedAt: null,
+        };
   }
 }

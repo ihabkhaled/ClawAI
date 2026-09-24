@@ -30,3 +30,12 @@ export enum DeploymentRunUnavailableReason {
   /** GitHub answered, but this workflow has never run in that repository. */
   NO_RUNS = 'no_runs',
 }
+
+/**
+ * Which lane started a rollout. AUTO is the deploy job inside a release.yml
+ * run; MANUAL is a direct deploy-production.yml dispatch from the admin page.
+ */
+export enum DeploymentRunLane {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+}

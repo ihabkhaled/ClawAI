@@ -180,113 +180,319 @@ describe('GithubActionsAdapter', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  // Both lanes are read on every poll: manual dispatches of deploy-production.yml
+  // and release.yml runs, whose `deploy / …` job is the automatic rollout.
+  function runJson(overrides: Record<string, unknown>): Record<string, unknown> {
+    return {
+      status: 'completed',
+      conclusion: 'success',
+      head_sha: 'a'.repeat(40),
+      ...overrides,
+      html_url: `https://github.com/ihabkhaled/ClawAI/actions/runs/${String(overrides.id)}`,
+    };
+  }
+
+  function jobJson(overrides: Record<string, unknown>): Record<string, unknown> {
+    return {
+      status: 'completed',
+      conclusion: 'success',
+      html_url: `https://github.com/ihabkhaled/ClawAI/actions/runs/1/job/${String(overrides.id)}`,
+      steps: [],
+      ...overrides,
+    };
+  }
+
+  function routeGithub(routes: {
+    manual?: Record<string, unknown>[] | null;
+    release?: Record<string, unknown>[] | null;
+    jobs?: Record<number, Record<string, unknown>[]>;
+  }): void {
+    fetchMock.mockImplementation(async (input: URL | string) => {
+      const url = String(input);
+      const ok = (body: unknown): unknown => ({ ok: true, status: 200, json: async () => body });
+      if (url.includes('/workflows/deploy-production.yml/runs')) {
+        return routes.manual === null
+          ? { ok: false, status: 502 }
+          : ok({ workflow_runs: routes.manual ?? [] });
+      }
+      if (url.includes('/workflows/release.yml/runs')) {
+        return routes.release === null
+          ? { ok: false, status: 502 }
+          : ok({ workflow_runs: routes.release ?? [] });
+      }
+      const jobsMatch = /\/runs\/(\d+)\/jobs/.exec(url);
+      const runId = jobsMatch ? Number(jobsMatch[1]) : Number.NaN;
+      const jobs = routes.jobs?.[runId];
+      return jobs ? ok({ jobs }) : { ok: false, status: 404 };
+    });
+  }
+
+  function jobReads(): string[] {
+    return fetchMock.mock.calls
+      .map(([target]) => String(target))
+      .filter((url) => url.includes('/jobs'));
+  }
+
   it('reads the latest run with its jobs and names the running step', async () => {
     mockConfig();
-    fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          workflow_runs: [
-            {
-              id: 32579565369,
-              run_number: 1122,
-              status: 'in_progress',
-              conclusion: null,
-              html_url: 'https://github.com/ihabkhaled/ClawAI/actions/runs/32579565369',
-              head_sha: 'a'.repeat(40),
-              run_started_at: '2026-08-22T14:43:55Z',
-              updated_at: '2026-08-22T14:45:00Z',
-            },
-          ],
+    routeGithub({
+      manual: [
+        runJson({
+          id: 32579565369,
+          run_number: 1122,
+          status: 'in_progress',
+          conclusion: null,
+          run_started_at: '2026-08-22T14:43:55Z',
+          created_at: '2026-08-22T14:43:50Z',
+          updated_at: '2026-08-22T14:45:00Z',
+          head_commit: { message: 'fix(chat): keep rows mounted\n\nLonger body.' },
         }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          jobs: [
-            {
-              id: 97046795781,
-              name: 'Deploy',
-              status: 'in_progress',
-              conclusion: null,
-              html_url: 'https://github.com/ihabkhaled/ClawAI/actions/runs/1/job/2',
-              started_at: '2026-08-22T14:43:57Z',
-              completed_at: null,
-              steps: [
-                {
-                  number: 1,
-                  name: 'Configure SSH',
-                  status: 'completed',
-                  conclusion: 'success',
-                  started_at: '2026-08-22T14:43:57Z',
-                  completed_at: '2026-08-22T14:43:59Z',
-                },
-                {
-                  number: 2,
-                  name: 'Deploy over SSH',
-                  status: 'in_progress',
-                  conclusion: null,
-                  started_at: '2026-08-22T14:43:59Z',
-                  completed_at: null,
-                },
-              ],
-            },
-          ],
-        }),
-      });
+      ],
+      jobs: {
+        32579565369: [
+          jobJson({
+            id: 97046795781,
+            name: 'Deploy',
+            status: 'in_progress',
+            conclusion: null,
+            started_at: '2026-08-22T14:43:57Z',
+            completed_at: null,
+            steps: [
+              {
+                number: 1,
+                name: 'Configure SSH',
+                status: 'completed',
+                conclusion: 'success',
+                started_at: '2026-08-22T14:43:57Z',
+                completed_at: '2026-08-22T14:43:59Z',
+              },
+              {
+                number: 2,
+                name: 'Deploy over SSH',
+                status: 'in_progress',
+                conclusion: null,
+                started_at: '2026-08-22T14:43:59Z',
+                completed_at: null,
+              },
+            ],
+          }),
+        ],
+      },
+    });
 
     const run = await adapter().latestRun();
 
     expect(run).toMatchObject({
       id: 32579565369,
       runNumber: 1122,
+      triggerSource: 'manual',
+      commitTitle: 'fix(chat): keep rows mounted',
       currentStep: { jobName: 'Deploy', stepName: 'Deploy over SSH' },
       failedStep: null,
     });
     expect(run?.jobs[0]?.steps).toHaveLength(2);
   });
 
+  it('shows an automatic release run that is newer than the last manual dispatch', async () => {
+    mockConfig();
+    routeGithub({
+      manual: [runJson({ id: 21, run_number: 21, created_at: '2026-09-17T09:35:07Z' })],
+      release: [
+        runJson({
+          id: 730,
+          run_number: 730,
+          created_at: '2026-09-24T16:17:29Z',
+          head_sha: 'c'.repeat(40),
+        }),
+      ],
+      jobs: {
+        730: [
+          jobJson({ id: 1, name: 'Bump version and publish release' }),
+          jobJson({ id: 2, name: `deploy / Deploy ${'d'.repeat(40)}` }),
+        ],
+        21: [jobJson({ id: 3, name: 'Deploy' })],
+      },
+    });
+
+    const run = await adapter().latestRun();
+
+    expect(run).toMatchObject({ id: 730, triggerSource: 'auto', headSha: 'c'.repeat(40) });
+    expect(jobReads()).toHaveLength(1);
+  });
+
+  it('shows only the deploy jobs of a release run, never the version-bump job', async () => {
+    mockConfig();
+    routeGithub({
+      release: [runJson({ id: 730, run_number: 730, created_at: '2026-09-24T16:17:29Z' })],
+      jobs: {
+        730: [
+          jobJson({
+            id: 1,
+            name: 'Bump version and publish release',
+            steps: [
+              { number: 1, name: 'Bump version', status: 'completed', conclusion: 'success' },
+            ],
+          }),
+          jobJson({
+            id: 2,
+            name: `deploy / Deploy ${'d'.repeat(40)}`,
+            status: 'in_progress',
+            conclusion: null,
+            steps: [
+              { number: 1, name: 'Deploy over SSH', status: 'in_progress', conclusion: null },
+            ],
+          }),
+        ],
+      },
+    });
+
+    const run = await adapter().latestRun();
+
+    expect(run?.jobs.map((job) => job.name)).toEqual([`deploy / Deploy ${'d'.repeat(40)}`]);
+    expect(run?.currentStep).toMatchObject({ stepName: 'Deploy over SSH' });
+  });
+
+  it('prefers an in-progress run over a newer finished one', async () => {
+    mockConfig();
+    routeGithub({
+      manual: [
+        runJson({
+          id: 22,
+          run_number: 22,
+          status: 'in_progress',
+          conclusion: null,
+          created_at: '2026-09-24T10:00:00Z',
+        }),
+      ],
+      release: [runJson({ id: 731, run_number: 731, created_at: '2026-09-24T12:00:00Z' })],
+      jobs: {
+        22: [jobJson({ id: 5, name: 'Deploy', status: 'in_progress', conclusion: null })],
+        731: [jobJson({ id: 6, name: `deploy / Deploy ${'e'.repeat(40)}` })],
+      },
+    });
+
+    await expect(adapter().latestRun()).resolves.toMatchObject({
+      id: 22,
+      triggerSource: 'manual',
+    });
+  });
+
+  it('skips release runs that deployed nothing and falls back to the newest real rollout', async () => {
+    mockConfig();
+    routeGithub({
+      manual: [runJson({ id: 21, run_number: 21, created_at: '2026-09-17T09:35:07Z' })],
+      release: [
+        // CI failed: GitHub skipped the whole run, so it is never probed.
+        runJson({
+          id: 733,
+          run_number: 733,
+          conclusion: 'skipped',
+          created_at: '2026-09-24T18:00:00Z',
+        }),
+        // Released nothing: the deploy call is a bare, skipped `deploy` job.
+        runJson({ id: 732, run_number: 732, created_at: '2026-09-24T17:00:00Z' }),
+        runJson({ id: 730, run_number: 730, created_at: '2026-09-24T16:17:29Z' }),
+      ],
+      jobs: {
+        732: [
+          jobJson({ id: 7, name: 'Bump version and publish release' }),
+          jobJson({ id: 8, name: 'deploy', conclusion: 'skipped' }),
+        ],
+        730: [jobJson({ id: 9, name: `deploy / Deploy ${'d'.repeat(40)}` })],
+      },
+    });
+
+    await expect(adapter().latestRun()).resolves.toMatchObject({ id: 730, triggerSource: 'auto' });
+    expect(jobReads().some((url) => url.includes('/runs/733/'))).toBe(false);
+  });
+
+  it('shows a release run that is still preparing before its deploy job exists', async () => {
+    mockConfig();
+    routeGithub({
+      manual: [runJson({ id: 21, run_number: 21, created_at: '2026-09-17T09:35:07Z' })],
+      release: [
+        runJson({
+          id: 734,
+          run_number: 734,
+          status: 'in_progress',
+          conclusion: null,
+          created_at: '2026-09-24T19:00:00Z',
+        }),
+      ],
+      jobs: {
+        734: [
+          jobJson({
+            id: 10,
+            name: 'Bump version and publish release',
+            status: 'in_progress',
+            conclusion: null,
+          }),
+        ],
+      },
+    });
+
+    const run = await adapter().latestRun();
+
+    expect(run).toMatchObject({ id: 734, triggerSource: 'auto' });
+    expect(run?.jobs.map((job) => job.name)).toEqual(['Bump version and publish release']);
+  });
+
+  it('stops probing after a bounded number of job reads', async () => {
+    mockConfig();
+    const ids = [740, 741, 742, 743, 744];
+    const idle = ids.map((id, index) =>
+      runJson({ id, run_number: id, created_at: `2026-09-24T1${String(index)}:00:00Z` }),
+    );
+    const idleJobs = Object.fromEntries(
+      ids.map((id) => [id, [jobJson({ id, name: 'deploy', conclusion: 'skipped' })]]),
+    );
+    routeGithub({ release: idle, jobs: idleJobs });
+
+    await expect(adapter().latestRun()).resolves.toBeNull();
+    expect(jobReads()).toHaveLength(3);
+  });
+
+  it('reports nothing rather than an older run when the best run cannot be read', async () => {
+    mockConfig();
+    routeGithub({
+      manual: [runJson({ id: 21, run_number: 21, created_at: '2026-09-17T09:35:07Z' })],
+      release: [runJson({ id: 730, run_number: 730, created_at: '2026-09-24T16:17:29Z' })],
+      jobs: { 21: [jobJson({ id: 3, name: 'Deploy' })] },
+    });
+
+    await expect(adapter().latestRun()).resolves.toBeNull();
+  });
+
+  it('still reads the other lane when one lane cannot be listed', async () => {
+    mockConfig();
+    routeGithub({
+      manual: null,
+      release: [runJson({ id: 730, run_number: 730, created_at: '2026-09-24T16:17:29Z' })],
+      jobs: { 730: [jobJson({ id: 2, name: `deploy / Deploy ${'d'.repeat(40)}` })] },
+    });
+
+    await expect(adapter().latestRun()).resolves.toMatchObject({ id: 730 });
+  });
+
   it('names the FIRST failed step, which is the one whose log explains the run', async () => {
     mockConfig();
-    fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          workflow_runs: [
-            {
-              id: 1,
-              run_number: 2,
-              status: 'completed',
-              conclusion: 'failure',
-              html_url: 'https://github.com/ihabkhaled/ClawAI/actions/runs/1',
-              head_sha: 'b'.repeat(40),
-            },
-          ],
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          jobs: [
-            {
-              id: 2,
-              name: 'Deploy',
-              status: 'completed',
-              conclusion: 'failure',
-              html_url: 'https://github.com/ihabkhaled/ClawAI/actions/runs/1/job/2',
-              steps: [
-                { number: 1, name: 'Configure SSH', status: 'completed', conclusion: 'success' },
-                { number: 2, name: 'Deploy over SSH', status: 'completed', conclusion: 'failure' },
-                { number: 3, name: 'Publish summary', status: 'completed', conclusion: 'failure' },
-              ],
-            },
-          ],
-        }),
-      });
+    routeGithub({
+      manual: [runJson({ id: 1, run_number: 2, conclusion: 'failure', head_sha: 'b'.repeat(40) })],
+      jobs: {
+        1: [
+          jobJson({
+            id: 2,
+            name: 'Deploy',
+            conclusion: 'failure',
+            steps: [
+              { number: 1, name: 'Configure SSH', status: 'completed', conclusion: 'success' },
+              { number: 2, name: 'Deploy over SSH', status: 'completed', conclusion: 'failure' },
+              { number: 3, name: 'Publish summary', status: 'completed', conclusion: 'failure' },
+            ],
+          }),
+        ],
+      },
+    });
 
     await expect(adapter().latestRun()).resolves.toMatchObject({
       failedStep: { jobName: 'Deploy', stepName: 'Deploy over SSH' },

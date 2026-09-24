@@ -1,6 +1,7 @@
 export { DeploymentCredentialSource } from './deployment-credential-source.enum';
 export {
   DeploymentRunConclusion,
+  DeploymentRunLane,
   DeploymentRunStatus,
   DeploymentRunUnavailableReason,
 } from './deployment-run-status.enum';

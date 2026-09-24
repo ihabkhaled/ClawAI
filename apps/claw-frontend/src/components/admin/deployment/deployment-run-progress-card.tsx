@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DeploymentRunProgressCardProps } from '@/types/deployment-page.types';
-import { runConclusionVariant, runStateKey } from '@/utilities/deployment-run.utility';
+import { runConclusionVariant, runLaneKey, runStateKey } from '@/utilities/deployment-run.utility';
 
 /**
  * Live GitHub Actions progress: the run, its jobs, and every step with the one
@@ -73,12 +73,18 @@ export function DeploymentRunProgressCard({
         {run ? (
           <>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              {run.triggerSource ? (
+                <Badge variant="outline">{t(runLaneKey(run.triggerSource))}</Badge>
+              ) : null}
               <span className="text-muted-foreground">
                 {t('adminDeployment.runNumber')} #{run.runNumber}
               </span>
               <span className="font-mono text-xs">{run.headSha.slice(0, 12)}</span>
               {startedAt ? <span className="text-muted-foreground">{startedAt}</span> : null}
             </div>
+            {run.commitTitle ? (
+              <p className="text-muted-foreground min-w-0 text-sm break-words">{run.commitTitle}</p>
+            ) : null}
 
             {run.currentStep ? (
               <div
