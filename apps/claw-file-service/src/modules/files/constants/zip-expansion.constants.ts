@@ -117,3 +117,14 @@ export const ZIP_BOMB_RATIO_ERROR_CODE = 'ZIP_BOMB_RATIO';
  * which cannot even be listed without a password. Password support is batch A3.
  */
 export const ARCHIVE_ENCRYPTED_ERROR_CODE = 'ARCHIVE_ENCRYPTED';
+
+/**
+ * Batch A3 — the password prompt in chat. Bounded so a wrong password cannot
+ * be retried forever: the 4th submission is refused before 7-Zip ever runs.
+ * `passwordAttempts` on the archive's own `extractionMetadata` is the counter.
+ */
+export const ARCHIVE_PASSWORD_MAX_ATTEMPTS = 3;
+/** The archive's own extractionError does not carry ARCHIVE_ENCRYPTED — nothing to unlock. */
+export const ARCHIVE_NOT_ENCRYPTED_ERROR_CODE = 'ARCHIVE_NOT_ENCRYPTED';
+/** The retry cap (ARCHIVE_PASSWORD_MAX_ATTEMPTS) was already spent. */
+export const ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED_ERROR_CODE = 'ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED';

@@ -113,3 +113,87 @@ On the dev box (Node 26, Windows 11), outside the service:
 - 7-Zip matches the list file by name, so an archive with two entries of the
   same path extracts both. The link-shadowing rule (decision 3) is what makes
   that safe; do not remove it.
+
+## Addendum (2026-09-24) — batch A3: the in-chat password prompt, and the RAR fixture situation
+
+Decisions and status above are unchanged; this section records what batch A3
+added and what it could not obtain.
+
+### Password flow shipped
+
+`ArchiveExtractionOptions.password` (decision 6) is now reachable end to end:
+`FileArchiveController.submitPassword` (`POST /files/:id/archive-password`) →
+`ArchiveEntriesService.submitPassword` → `ZipExpansionManager.expandArchive(file,
+undefined, password, attempts)` → `extractWithSevenZip`. The archive's own
+`extractionMetadata.passwordAttempts` (a field on the existing JSON column, no
+migration) is the retry counter; `ARCHIVE_PASSWORD_MAX_ATTEMPTS = 3` in
+`zip-expansion.constants.ts` is the cap, enforced in the service **before** a
+4th attempt ever reaches 7-Zip. A right password re-runs the ordinary
+extraction path unchanged (manifest, children, policy limits all apply); a
+wrong one lands back on `ARCHIVE_ENCRYPTED` with the attempt recorded.
+
+The password is never persisted beyond the engine call: `req.body.password` is
+already redacted by file-service's pino logger (`app.module.ts`), the
+`BusinessException` messages thrown by `submitPassword` are static strings, and
+`FileArchiveExpandedPayload`/`FileFailedPayload` (the RabbitMQ events) never
+carried a password field to begin with. See the "never puts the password in a
+log line, an event payload, or the stored error message" tests in
+`zip-expansion.manager.spec.ts` and `archive-entries.service.spec.ts` — they
+serialize the actual mock call arguments and assert the literal string is
+absent, not just a code-review claim.
+
+**Frontend note:** the distinct "encrypted" status
+(`ArchiveRejectionReason.Encrypted` / `ArchiveEntryDisplayStatus.Encrypted`) and
+its notice component already shipped in batch A2
+(`apps/claw-frontend/src/components/files/archive/archive-rejection-notice.tsx`).
+The in-chat password DIALOG that calls the new endpoint — following the
+`MediaRecordingConsentDialog` pattern
+(`apps/claw-frontend/src/components/chat/media-recording-consent-dialog.tsx`:
+a controlled `Dialog` keyed off an enum-typed prop, `data-testid`s per
+element, footer Cancel/Confirm) — is **not** part of this batch: doing it
+properly needs a real i18n pass across all 13 locales for the prompt copy, the
+wrong-password message and the attempts-exceeded message, which did not fit
+this batch's time box. The backend is fully usable via `curl`/Postman today;
+wiring the dialog is the next batch's first task, and it has everything it
+needs (the endpoint, the distinct status, the UI pattern to copy).
+
+### RAR fixtures — what exists and why
+
+`7z-wasm`'s own codec listing (`e.callMain(['i'])`) lists `Rar1`/`Rar2`/`Rar3`/
+`Rar5` with only the `D` (decode) flag — no `E` (encode) — confirming what
+decision "Licence" already says in prose: **7-Zip cannot create a RAR file**,
+proprietary format, read-only support. `node-unrar-js` is not a dependency
+anywhere in this monorepo (checked `node_modules` across the main checkout and
+this worktree, and every `package.json`), so there was no ready-made fixture
+library to pull from either; a web search for small, permissively-licensed
+RAR4/RAR5 test fixtures on `node-unrar.js`'s own repository did not surface a
+committed binary fixture with a compatible licence to vendor.
+
+What batch A2 already built instead — `buildRar4`/`buildRar5` in
+`src/common/utilities/__tests__/__fixtures__/archive-fixtures.ts` — **is a
+meaningful real test**, not a mock: `archive-extraction.utility.spec.ts`
+(`it.each(['RAR4', buildRar4], ['RAR5', buildRar5])`) feeds these bytes to the
+unmocked `validateAndExtractArchive`, which runs the actual `7zz.wasm` RAR
+decoder. That decoder parses the hand-built headers, block CRCs and file table
+and extracts real content back out — it only works because the bytes are a
+structurally valid RAR the real engine accepts, not because anything is
+stubbed. Batch A3 relied on this directly: the `it.each` RAR4/RAR5 case
+already proves unencrypted real-engine RAR extraction; no new fixture was
+needed for that half of section C.
+
+**Password-protected RAR could not be produced or found, and this batch does
+not claim otherwise.** `buildRar4`'s `encrypted: true` per-entry flag only sets
+the RAR4 header's encryption BIT — the real engine reads that bit and reports
+`ARCHIVE_ENCRYPTED` correctly (proving the _detection_ path against the real
+decoder, exercised since A2 in "reports encrypted RAR entries as
+ARCHIVE_ENCRYPTED skips and delivers the rest"), but the entry's bytes are
+plaintext, not RAR's actual encryption. There is no way to produce genuine
+RAR crypto without a RAR encoder, and 7-Zip cannot write RAR (see above). The
+password-retry tests batch A3 added therefore exercise the real 7z engine
+against 7z/zip fixtures 7-Zip CAN create with `-p`, plus the RAR4
+flag-detection path for "an encrypted RAR is reported, not silently
+mis-extracted" — never a claim of decrypting a real password-protected RAR.
+If a genuine encrypted RAR fixture is ever needed (e.g. to test the password
+actually being handed to 7-Zip's RAR decoder), the honest path is a real copy
+of WinRAR/`rar` CLI to produce one, vendored under its own licence check —
+out of scope for a WASM-only toolchain.

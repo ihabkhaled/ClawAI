@@ -179,11 +179,18 @@ export function rejectArchiveBombRatio(
  * a generic ZIP_EXPANSION_FAILED. A nested archive at the depth limit, a link
  * and a device node are skipped rather than fatal: the rest of the archive is
  * still worth delivering.
+ *
+ * `passwordProvided` is batch A3: when the caller supplied a password for
+ * THIS extraction, an entry the listing marked `encrypted` is no longer
+ * skipped up front — it is handed to 7-Zip to attempt, and a wrong password
+ * surfaces as a failed extract run (see `rejectFailedRun` in
+ * seven-zip-extraction.utility.ts), not a silent skip.
  */
 export function planExtraction(
   entries: ReadonlyArray<ArchiveEntryHeader>,
   thresholds: ZipExtractionThresholds,
   context: ZipExtractionContext,
+  passwordProvided = false,
 ): ArchiveExtractionPlan {
   const plan: ArchiveExtractionPlan = {
     toExtract: [],
@@ -196,7 +203,7 @@ export function planExtraction(
       continue;
     }
     plan.fileEntryCount += 1;
-    const status = skipReason(entry, thresholds, context);
+    const status = skipReason(entry, thresholds, context, passwordProvided);
     if (status === null) {
       plan.toExtract.push(entry);
       continue;
@@ -214,6 +221,7 @@ function skipReason(
   entry: ArchiveEntryHeader,
   thresholds: ZipExtractionThresholds,
   context: ZipExtractionContext,
+  passwordProvided: boolean,
 ): ArchiveEntryStatus | null {
   if (entry.isLink === true) {
     return ArchiveEntryStatus.SKIPPED_LINK;
@@ -221,9 +229,9 @@ function skipReason(
   if (entry.isSpecialFile === true) {
     return ArchiveEntryStatus.SKIPPED_SPECIAL_FILE;
   }
-  // Password support is batch A3; until then an encrypted entry is reported,
-  // never attempted.
-  if (entry.encrypted) {
+  // No password for this attempt: reported, never attempted. With one, the
+  // entry is handed to 7-Zip — see the doc comment on planExtraction.
+  if (entry.encrypted && !passwordProvided) {
     return ArchiveEntryStatus.SKIPPED_ENCRYPTED;
   }
   if (isArchiveFileName(entry.name) && context.depth >= thresholds.maxNestingDepth) {

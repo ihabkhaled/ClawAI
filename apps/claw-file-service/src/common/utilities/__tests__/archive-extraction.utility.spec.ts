@@ -405,7 +405,7 @@ describe('validateAndExtractArchive (7-Zip engine)', () => {
       await expect(codeOf(open(bytes, 'headers.7z'))).resolves.toBe('ARCHIVE_ENCRYPTED');
     });
 
-    it('opens a header-encrypted 7z when the right password is supplied (batch A3 contract)', async () => {
+    it('decrypts a header-encrypted 7z when the right password is supplied (batch A3)', async () => {
       const bytes = await buildWithSevenZip('7z', { 'a.txt': 'alpha' }, ['-pSECRET', '-mhe=on']);
       const archivePath = writeTempArchive(bytes, 'headers.7z');
       created.push(path.dirname(archivePath));
@@ -416,10 +416,65 @@ describe('validateAndExtractArchive (7-Zip engine)', () => {
         password: 'SECRET',
       });
 
-      // The list is readable; the entries are still reported, not decrypted —
-      // decrypting them is A3's work.
+      // Batch A3: a password supplied for THIS attempt is handed to 7-Zip, so
+      // the entry is actually decrypted — not merely listed and skipped.
       expect(result.fileEntryCount).toBe(1);
-      expect(result.encryptedEntryCount).toBe(1);
+      expect(result.encryptedEntryCount).toBe(0);
+      expect(textOf(result, 'a.txt')).toBe('alpha');
+    });
+
+    it('decrypts a password-protected 7z without header encryption, same contract', async () => {
+      const bytes = await buildWithSevenZip('7z', { 'a.txt': 'alpha', 'b.txt': 'beta' }, [
+        '-pSECRET',
+      ]);
+      const archivePath = writeTempArchive(bytes, 'locked.7z');
+      created.push(path.dirname(archivePath));
+      const dir = destDir();
+
+      const result = await validateAndExtractArchive(archivePath, dir, THRESHOLDS, rootContext(), {
+        archiveFilename: 'locked.7z',
+        password: 'SECRET',
+      });
+
+      expect(result.encryptedEntryCount).toBe(0);
+      expect(textOf(result, 'a.txt')).toBe('alpha');
+      expect(textOf(result, 'b.txt')).toBe('beta');
+    });
+
+    it('reports ARCHIVE_ENCRYPTED (not a generic failure) when the supplied password is wrong', async () => {
+      const bytes = await buildWithSevenZip('7z', { 'a.txt': 'alpha' }, ['-pSECRET']);
+      const archivePath = writeTempArchive(bytes, 'locked.7z');
+      created.push(path.dirname(archivePath));
+      const dir = destDir();
+
+      await expect(
+        codeOf(
+          validateAndExtractArchive(archivePath, dir, THRESHOLDS, rootContext(), {
+            archiveFilename: 'locked.7z',
+            password: 'wrong-guess',
+          }),
+        ),
+      ).resolves.toBe('ARCHIVE_ENCRYPTED');
+    });
+
+    it('never puts the password in the thrown error message', async () => {
+      const SECRET = 'do-not-leak-me';
+      const bytes = await buildWithSevenZip('7z', { 'a.txt': 'alpha' }, [`-p${SECRET}`]);
+      const archivePath = writeTempArchive(bytes, 'locked.7z');
+      created.push(path.dirname(archivePath));
+      const dir = destDir();
+
+      try {
+        await validateAndExtractArchive(archivePath, dir, THRESHOLDS, rootContext(), {
+          archiveFilename: 'locked.7z',
+          password: 'still-wrong',
+        });
+        throw new Error('expected a BusinessException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(BusinessException);
+        expect((error as BusinessException).message).not.toContain(SECRET);
+        expect((error as BusinessException).message).not.toContain('still-wrong');
+      }
     });
   });
 

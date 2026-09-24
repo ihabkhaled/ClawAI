@@ -1556,6 +1556,11 @@
           "source": "apps/claw-file-service/src/modules/files/controllers/file-archive.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/files/:id/archive-password",
+          "source": "apps/claw-file-service/src/modules/files/controllers/file-archive.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/files/:id/chunks",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
@@ -7718,7 +7723,7 @@
           "file": "skills/add-an-answer-export-format.md"
         },
         {
-          "bytes": 4700,
+          "bytes": 6124,
           "file": "skills/add-an-archive-format.md"
         },
         {
@@ -10778,7 +10783,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 44,
-    "endpointCount": 684,
+    "endpointCount": 685,
     "envVarCount": 356,
     "eventCount": 181,
     "frontendRouteCount": 155,

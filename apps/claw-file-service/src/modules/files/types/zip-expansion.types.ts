@@ -93,6 +93,22 @@ export type ArchiveExtractionMetadata = {
   skippedEntryCount: number;
   encryptedEntryCount: number;
   depth: number;
+  /**
+   * How many times a password has been submitted, in chat, for THIS archive.
+   * 0 for an ordinary upload. Written on every password retry (right or
+   * wrong) so `ArchiveEntriesService.submitPassword` can enforce the cap
+   * without a separate table. Never the password itself.
+   */
+  passwordAttempts: number;
+};
+
+/** What the caller of an encrypted-archive password retry gets back. */
+export type ArchivePasswordRetryOutcome = {
+  /** True once the archive extracted cleanly with this password. */
+  succeeded: boolean;
+  /** Attempts spent so far, including this one. */
+  attemptsUsed: number;
+  attemptsRemaining: number;
 };
 
 // The slice of FileProcessingManager that ZipExpansionManager depends on.

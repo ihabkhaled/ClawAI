@@ -39,6 +39,7 @@ import { FileProcessingManager } from './file-processing.manager';
 import { FileSecurityManager } from './file-security.manager';
 import type { ArchiveManifestRow } from '../types/archive-manifest.types';
 import type {
+  ArchiveExtractionMetadata,
   ExtractedEntry,
   FileProcessingContract,
   ZipExtractionContext,
@@ -71,8 +72,19 @@ export class ZipExpansionManager {
    * `context` is omitted for an uploaded archive and passed when this manager
    * recurses into an archive inside an archive: it carries the nesting depth and
    * the extracted-bytes budget every level shares.
+   *
+   * `password` and `passwordAttempts` are batch A3 (the in-chat password
+   * prompt): `ArchiveEntriesService.submitPassword` is the only caller that
+   * passes them, after it has already checked the retry cap. They reach the
+   * 7-Zip engine as an argument only (`ArchiveExtractionOptions.password`) —
+   * never logged, stored beyond `passwordAttempts` itself, or put in an event.
    */
-  async expandArchive(parentFile: File, context?: ZipExtractionContext): Promise<void> {
+  async expandArchive(
+    parentFile: File,
+    context?: ZipExtractionContext,
+    password?: string,
+    passwordAttempts = 0,
+  ): Promise<void> {
     const expansion = context ?? this.createRootContext();
     this.logger.log(
       `expandArchive: starting parentFileId=${parentFile.id} filename=${parentFile.filename} depth=${String(expansion.depth)}`,
@@ -89,7 +101,7 @@ export class ZipExpansionManager {
 
     const destDir = prepareExtractionDir(AppConfig.get().ZIP_TEMP_EXTRACTION_PATH, parentFile.id);
     try {
-      await this.expandInto(parentFile, destDir, expansion);
+      await this.expandInto(parentFile, destDir, expansion, password, passwordAttempts);
     } finally {
       // The temp directory is tmpfs and only a staging area: every child has
       // been copied to FILE_STORAGE_PATH by now, or the expansion failed.
@@ -109,6 +121,8 @@ export class ZipExpansionManager {
     parentFile: File,
     destDir: string,
     context: ZipExtractionContext,
+    password?: string,
+    passwordAttempts = 0,
   ): Promise<void> {
     let extraction: ZipExtractionResult;
     try {
@@ -117,18 +131,18 @@ export class ZipExpansionManager {
         destDir,
         this.readThresholds(),
         context,
-        { archiveFilename: parentFile.filename },
+        { archiveFilename: parentFile.filename, password },
       );
     } catch (error: unknown) {
-      await this.handleExtractionFailure(parentFile, error);
+      await this.handleExtractionFailure(parentFile, error, passwordAttempts);
       return;
     }
 
     try {
       const rows = await this.onboardExtractedEntries(parentFile, extraction.entries, context);
-      await this.finalize(parentFile, rows, extraction, context);
+      await this.finalize(parentFile, rows, extraction, context, passwordAttempts);
     } catch (error: unknown) {
-      await this.handleExtractionFailure(parentFile, error);
+      await this.handleExtractionFailure(parentFile, error, passwordAttempts);
     }
   }
 
@@ -239,6 +253,7 @@ export class ZipExpansionManager {
     childRows: ReadonlyArray<ArchiveManifestRow>,
     extraction: ZipExtractionResult,
     context: ZipExtractionContext,
+    passwordAttempts = 0,
   ): Promise<void> {
     const childFileCount = childRows.filter((row) => row.childFileId !== null).length;
     const manifest = await buildArchiveManifest({
@@ -258,6 +273,7 @@ export class ZipExpansionManager {
       skippedEntryCount: extraction.fileEntryCount - childFileCount,
       encryptedEntryCount: extraction.encryptedEntryCount,
       depth: context.depth,
+      passwordAttempts,
     });
 
     const allEncrypted =
@@ -309,12 +325,23 @@ export class ZipExpansionManager {
     this.publishFailure(parentFile, errorMessage);
   }
 
-  private async handleExtractionFailure(parentFile: File, error: unknown): Promise<void> {
+  private async handleExtractionFailure(
+    parentFile: File,
+    error: unknown,
+    passwordAttempts = 0,
+  ): Promise<void> {
     const errorMessage = error instanceof Error ? error.message : 'Unknown ZIP expansion error';
     const code = error instanceof BusinessException ? error.code : ZIP_EXPANSION_FAILED_ERROR_CODE;
     this.logger.error(
       `expandArchive: parentFileId=${parentFile.id} failed code=${code} message=${errorMessage}`,
     );
+
+    // A password attempt that still failed (wrong password) must record the
+    // spent attempt, or ArchiveEntriesService.submitPassword's cap never
+    // trips and a wrong password could be retried forever.
+    if (passwordAttempts > 0) {
+      await this.recordFailedPasswordAttempt(parentFile, passwordAttempts);
+    }
 
     // The reason is stored with the status, as for any other file, so a model
     // attached to a rejected archive can tell the user why.
@@ -324,6 +351,27 @@ export class ZipExpansionManager {
       status: FileIngestionStatus.FAILED,
     });
     this.publishFailure(parentFile, `${code}: ${errorMessage}`);
+  }
+
+  // This throw happened before `finalize` ran, so nothing else has written
+  // extractionMetadata for this attempt yet — carry forward whatever the
+  // PREVIOUS attempt recorded (child counts etc. are stale but harmless; they
+  // describe an archive that never delivered anything either way).
+  private async recordFailedPasswordAttempt(
+    parentFile: File,
+    passwordAttempts: number,
+  ): Promise<void> {
+    const previous = parentFile.extractionMetadata as ArchiveExtractionMetadata | null;
+    await this.filesRepository.recordExtractionMetadata(parentFile.id, {
+      childFileCount: previous?.childFileCount ?? 0,
+      totalExtractedBytes: previous?.totalExtractedBytes ?? 0,
+      expandedAt: new Date().toISOString(),
+      fileEntryCount: previous?.fileEntryCount ?? 0,
+      skippedEntryCount: previous?.skippedEntryCount ?? 0,
+      encryptedEntryCount: previous?.encryptedEntryCount ?? 0,
+      depth: previous?.depth ?? ARCHIVE_ROOT_DEPTH,
+      passwordAttempts,
+    });
   }
 
   private publishFailure(parentFile: File, errorMessage: string): void {

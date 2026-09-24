@@ -1501,6 +1501,11 @@
         "source": "apps/claw-file-service/src/modules/files/controllers/file-archive.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/files/:id/archive-password",
+        "source": "apps/claw-file-service/src/modules/files/controllers/file-archive.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/files/:id/chunks",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
@@ -3458,5 +3463,5 @@
     ]
   },
   "generated": true,
-  "total": 684
+  "total": 685
 }

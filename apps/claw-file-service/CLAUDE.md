@@ -74,6 +74,49 @@ both together). chat-service has no zip special case and needs none.
   encrypted → FAILED, but the manifest still says why. A 7z/RAR that encrypts
   its own file list fails with `ARCHIVE_ENCRYPTED` at listing time.
 
+## The in-chat password prompt (batch A3, 2026-09-24)
+
+An `ARCHIVE_ENCRYPTED` archive is not a dead end: `FileArchiveController.
+submitPassword` (`POST /files/:id/archive-password`, DTO in
+`dto/archive-password.dto.ts`) re-runs extraction with a password the user
+typed in chat. The chain is `ArchiveEntriesService.submitPassword` →
+`ZipExpansionManager.expandArchive(file, undefined, password, attempts)` →
+`extractWithSevenZip`, ending at the SAME `ArchiveExtractionOptions.password`
+argument decision 6 of ADR-114 already named. A right password now actually
+decrypts the entries (`archive-policy.utility.ts`'s `skipReason` only skips an
+`encrypted` entry when NO password was supplied for this attempt) — before
+this batch an encrypted entry stayed `SKIPPED_ENCRYPTED` even with a correct
+password, because nothing routed one down that far.
+
+- **Bounded: `ARCHIVE_PASSWORD_MAX_ATTEMPTS = 3`**
+  (`zip-expansion.constants.ts`). The count lives in the archive's own
+  `extractionMetadata.passwordAttempts` (the existing JSON column — no
+  migration). `ArchiveEntriesService.submitPassword` checks the cap BEFORE
+  calling the manager, so a 4th attempt never reaches 7-Zip.
+- **A wrong password reports `ARCHIVE_ENCRYPTED` again, not
+  `ZIP_EXPANSION_FAILED`.** `seven-zip-extraction.utility.ts`'s
+  `rejectFailedRun` takes a `passwordAttempted` flag and reclassifies a failed
+  extract run so the retry gate above can tell "wrong password" from "broken
+  archive" by the error code alone.
+- **The attempt count is written on every retry, right or wrong** — including
+  from the early-failure path (`ZipExpansionManager.
+recordFailedPasswordAttempt`), which runs BEFORE the normal `finalize` write
+  would have. Skipping it there is how a wrong password would retry forever.
+- **The password is never logged, stored beyond the attempt count, or put in
+  an event.** `req.body.password` is redacted by the pino logger config in
+  `app.module.ts`; every `BusinessException` message this flow throws is a
+  static string; `FileArchiveExpandedPayload`/`FileFailedPayload` never had a
+  password field. Tests in `zip-expansion.manager.spec.ts` and
+  `archive-entries.service.spec.ts` serialize the actual mock call arguments
+  and assert the string is absent — not a code-review claim.
+- **The frontend dialog is not wired yet.** The distinct "encrypted" status
+  (`ArchiveRejectionReason.Encrypted`) shipped in A2; the password PROMPT
+  itself (follow `MediaRecordingConsentDialog`'s pattern) is the next batch.
+  The backend above is complete and independently testable via the endpoint.
+
+Addendum: [ADR-114](../../docs/13-adr/adr-114-seven-zip-wasm-for-every-archive-format.md)
+§"batch A3" · Runbook: [`skills/add-an-archive-format.md`](../../skills/add-an-archive-format.md).
+
 Details: `docs/04-backend/service-guide-file.md` → "ZIP archive expansion",
 ADR-053 amendment.
 

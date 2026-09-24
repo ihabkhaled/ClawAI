@@ -99,11 +99,12 @@ async function extractContainerArchive(
   context: ZipExtractionContext,
   password: string | undefined,
 ): Promise<ZipExtractionResult> {
+  const passwordProvided = password !== undefined;
   const entries = await listEntries(source, thresholds, password);
   rejectTooManyEntries(entries.length, thresholds);
   validateEntries(entries, thresholds);
 
-  const plan = planExtraction(entries, thresholds, context);
+  const plan = planExtraction(entries, thresholds, context, passwordProvided);
   enforceDeclaredSize(plan.toExtract, thresholds, context);
   rejectArchiveBombRatio(sumDeclaredBytes(plan.toExtract), source.compressedBytes, thresholds);
 
@@ -116,7 +117,7 @@ async function extractContainerArchive(
       entryNames: plan.toExtract.map((entry) => entry.name),
       password,
     });
-    rejectFailedRun(outcome, 'extract');
+    rejectFailedRun(outcome, 'extract', passwordProvided);
   }
 
   const collected = collectExtractedEntries(plan.toExtract, destDir, thresholds, context);
@@ -161,14 +162,32 @@ async function listEntries(
 
 // A warning (exit 1) is not fatal; anything worse, or an engine that threw, is.
 // The engine's stderr names the mount path and storage name, so it goes to the
-// log and not into the error a user or a model is shown.
-function rejectFailedRun(outcome: SevenZipRunOutcome, step: string): void {
+// log and not into the error a user or a model is shown — never the password,
+// which is never part of `outcome.stderr` in the first place (seven-zip.utility.ts
+// logs the args WITHOUT the password).
+//
+// `passwordAttempted` is batch A3: a failed run when a password WAS supplied
+// is reported as ARCHIVE_ENCRYPTED (wrong password), not the generic
+// ZIP_EXPANSION_FAILED, so ArchiveEntriesService.submitPassword can tell a
+// wrong password from a genuinely broken archive and let the user retry.
+function rejectFailedRun(
+  outcome: SevenZipRunOutcome,
+  step: string,
+  passwordAttempted = false,
+): void {
   if (outcome.exitCode !== null && outcome.exitCode <= SEVEN_ZIP_EXIT_WARNING) {
     return;
   }
   logger.warn(
     `rejectFailedRun: ${step} failed exit=${String(outcome.exitCode)} stderr=${outcome.stderr.trim().slice(0, 300)}`,
   );
+  if (passwordAttempted) {
+    throw new BusinessException(
+      'The password did not unlock this archive',
+      ARCHIVE_ENCRYPTED_ERROR_CODE,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
   throw new BusinessException(
     `The archive could not be read (${step} failed${outcome.exitCode === null ? '' : `, 7-Zip exit ${String(outcome.exitCode)}`})`,
     ZIP_EXPANSION_FAILED_ERROR_CODE,

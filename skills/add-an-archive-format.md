@@ -63,6 +63,32 @@ cd apps/claw-chat-service && npx vitest run src/common/utilities/__tests__/file-
 
 Then update the format table in `service-guide-file.md`.
 
+## The password retry flow (batch A3)
+
+`ArchiveExtractionOptions.password` is wired end to end:
+`FileArchiveController.submitPassword` → `ArchiveEntriesService.submitPassword`
+→ `ZipExpansionManager.expandArchive(file, undefined, password, attempts)` →
+`extractWithSevenZip`. If you touch any layer of that chain for a new format,
+keep these invariants:
+
+- **`archive-policy.utility.ts`'s `skipReason`/`planExtraction` take a
+  `passwordProvided` flag.** An `encrypted` entry is skipped only when no
+  password was supplied for THIS attempt; with one, it goes to 7-Zip to
+  actually decrypt. Don't special-case a new format around this — it is
+  format-agnostic by design.
+- **A failed extract run with a password supplied reports `ARCHIVE_ENCRYPTED`,
+  not the format's normal failure code** (`rejectFailedRun`'s
+  `passwordAttempted` flag in `seven-zip-extraction.utility.ts`). This is what
+  lets the retry cap distinguish "wrong password" from "broken archive".
+- **The attempt count (`extractionMetadata.passwordAttempts`,
+  `ARCHIVE_PASSWORD_MAX_ATTEMPTS = 3`) is written on BOTH the success path
+  (`finalize`) and the early-failure path
+  (`ZipExpansionManager.recordFailedPasswordAttempt`).** Miss the second one
+  and a wrong password retries forever.
+- **ZIP stays out of this.** node-stream-zip's own encrypted-entry handling is
+  unchanged; only the 7-Zip path (every other format) decrypts with a
+  password.
+
 ## Traps
 
 - **Never extract before listing.** Every guarantee is decided from the listing.

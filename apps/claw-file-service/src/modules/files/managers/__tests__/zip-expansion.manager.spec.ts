@@ -559,4 +559,81 @@ describe('ZipExpansionManager', () => {
       );
     });
   });
+
+  // Batch A3 — the in-chat password prompt.
+  describe('password retry (batch A3)', () => {
+    it('passes the password to the extractor as an argument, and persists the attempt count', async () => {
+      mockedExtract.mockImplementation(
+        extractInto([{ archivePath: 'secret.txt', body: 'unlocked text' }]),
+      );
+
+      await manager.expandArchive(buildFile(), undefined, 'hunter2', 1);
+
+      expect(mockedExtract).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+        expect.any(Object),
+        expect.any(Object),
+        expect.objectContaining({ password: 'hunter2' }),
+      );
+      expect(filesRepo.recordExtractionMetadata).toHaveBeenCalledWith(
+        'parent-file-id',
+        expect.objectContaining({ passwordAttempts: 1 }),
+      );
+    });
+
+    it('records passwordAttempts even when the password was wrong again', async () => {
+      mockedExtract.mockImplementation(
+        extractInto(
+          [],
+          [{ archivePath: 'a.txt', sizeBytes: 10, status: ArchiveEntryStatus.SKIPPED_ENCRYPTED }],
+          1,
+        ),
+      );
+
+      await manager.expandArchive(buildFile(), undefined, 'wrong-guess', 2);
+
+      expect(filesRepo.recordExtractionMetadata).toHaveBeenCalledWith(
+        'parent-file-id',
+        expect.objectContaining({ passwordAttempts: 2 }),
+      );
+      const result = savedResultFor('parent-file-id');
+      expect(result?.['status']).toBe(FileIngestionStatus.FAILED);
+    });
+
+    it('never puts the password in a log line, an event payload, or the stored error message', async () => {
+      const SECRET = 'sup3r-secret-archive-pw';
+      mockedExtract.mockImplementation(
+        extractInto([{ archivePath: 'secret.txt', body: 'unlocked text' }]),
+      );
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await manager.expandArchive(buildFile(), undefined, SECRET, 1);
+
+      const loggedText = [...logSpy.mock.calls, ...errorSpy.mock.calls, ...warnSpy.mock.calls]
+        .map((call) => JSON.stringify(call))
+        .join('\n');
+      expect(loggedText).not.toContain(SECRET);
+
+      const publishedText = rabbitMQ.publish.mock.calls
+        .map((call) => JSON.stringify(call))
+        .join('\n');
+      expect(publishedText).not.toContain(SECRET);
+
+      const persistedText = [
+        ...(filesRepo.recordExtractionMetadata?.mock.calls ?? []),
+        ...(filesRepo.saveExtractionResult?.mock.calls ?? []),
+      ]
+        .map((call) => JSON.stringify(call))
+        .join('\n');
+      expect(persistedText).not.toContain(SECRET);
+
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
+    });
+  });
 });

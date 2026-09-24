@@ -81,6 +81,7 @@ const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
   findArchiveParent: vi.fn(),
   findArchiveChildren: vi.fn(),
   countArchiveChildren: vi.fn(),
+  findForPasswordRetry: vi.fn(),
 });
 
 const mockFileChunksRepository = (): Record<keyof FileChunksRepository, Mock> => ({

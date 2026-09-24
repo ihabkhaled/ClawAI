@@ -167,6 +167,16 @@ export class FilesRepository {
     return counts;
   }
 
+  /**
+   * The columns a password retry needs: enough to re-run extraction
+   * (`storagePath`, `filename`) and enough to enforce the retry cap
+   * (`extractionMetadata.passwordAttempts`), without the original bytes or
+   * chunks.
+   */
+  async findForPasswordRetry(id: string): Promise<File | null> {
+    return this.prisma.file.findUnique({ where: { id } });
+  }
+
   /** An archive's own row, without its original bytes or chunks. */
   async findArchiveParent(id: string): Promise<ArchiveParentRow | null> {
     return this.prisma.file.findUnique({
