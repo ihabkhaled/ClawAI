@@ -26,3 +26,9 @@ export const EVIDENCE_FIT_PER_ITEM_OVERHEAD_CHARS = 12;
 
 /** A shortened history message keeps at least this much, so it still reads as a turn. */
 export const HISTORY_MIN_MESSAGE_CHARS = 200;
+
+/**
+ * Appended to a text `fitTextsToBudget` shortened. Also how the delivery
+ * resolver tells a shortened attachment (TRUNCATED_TEXT) from a whole one.
+ */
+export const TEXT_BUDGET_SHORTENED_MARKER = "\n[...shortened to fit the model's context window...]";

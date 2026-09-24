@@ -1,55 +1,64 @@
-import { FileDeliveryMode } from '@/enums';
+import {
+  FILE_DELIVERY_BADGE_SPECS,
+  FILE_DELIVERY_EMPTY_COUNTS,
+  FILE_DELIVERY_MODE_COUNT_KEYS,
+  FILE_DELIVERY_MODE_LABEL_KEYS,
+  FILE_DELIVERY_MODES,
+} from '@/constants';
+import type { FileDeliveryMode } from '@/enums';
 import type {
   ChatMessage,
+  FileDeliveryBadge,
   FileDeliveryCounts,
   FileDeliveryEntry,
   FileDeliveryTranslator,
 } from '@/types';
 
+// Type guard over the single FILE_DELIVERY_MODES allow-list. Both the
+// metadata reader and the file-delivery repository narrow through this, so a
+// wire value the FE does not know is dropped in one place, not two.
+export function isFileDeliveryMode(value: unknown): value is FileDeliveryMode {
+  return typeof value === 'string' && FILE_DELIVERY_MODES.has(value);
+}
+
 // Group a flat FileDeliveryEntry[] by delivery mode so the chip can render
 // one badge per non-zero count. Pure function — no i18n, no React.
 export function countFileDeliveriesByMode(delivery: FileDeliveryEntry[]): FileDeliveryCounts {
-  const counts: FileDeliveryCounts = {
-    extracted: 0,
-    image: 0,
-    skipped: 0,
-    unsupported: 0,
-    truncated: 0,
-  };
+  const counts: FileDeliveryCounts = { ...FILE_DELIVERY_EMPTY_COUNTS };
   for (const entry of delivery) {
-    if (entry.mode === FileDeliveryMode.EXTRACTED_TEXT) {
-      counts.extracted++;
-    } else if (entry.mode === FileDeliveryMode.NATIVE_IMAGE) {
-      counts.image++;
-    } else if (entry.mode === FileDeliveryMode.OMITTED_NO_VISION) {
-      counts.skipped++;
-    } else if (entry.mode === FileDeliveryMode.OMITTED_UNSUPPORTED) {
-      counts.unsupported++;
-    } else if (entry.mode === FileDeliveryMode.TRUNCATED_TEXT) {
-      counts.truncated++;
-    }
+    counts[FILE_DELIVERY_MODE_COUNT_KEYS[entry.mode]]++;
   }
   return counts;
 }
 
-// Resolve the i18n-translated mode label for a single delivery entry.
+// Resolve the i18n-translated mode label for a single delivery entry. The
+// label map is exhaustive over FileDeliveryMode — no fall-through default.
 export function getFileDeliveryModeLabel(
   mode: FileDeliveryMode,
   t: FileDeliveryTranslator,
 ): string {
-  if (mode === FileDeliveryMode.EXTRACTED_TEXT) {
-    return t('compare.delivery.extractedText');
+  return t(FILE_DELIVERY_MODE_LABEL_KEYS[mode]);
+}
+
+// Resolve the chip's non-zero badges, in render order, each with its
+// localized text label so no badge relies on color or icon alone.
+export function buildFileDeliveryBadges(
+  counts: FileDeliveryCounts,
+  t: FileDeliveryTranslator,
+): FileDeliveryBadge[] {
+  const badges: FileDeliveryBadge[] = [];
+  for (const spec of FILE_DELIVERY_BADGE_SPECS) {
+    const count = counts[spec.countKey];
+    if (count > 0) {
+      badges.push({
+        countKey: spec.countKey,
+        icon: spec.icon,
+        label: getFileDeliveryModeLabel(spec.mode, t),
+        count,
+      });
+    }
   }
-  if (mode === FileDeliveryMode.NATIVE_IMAGE) {
-    return t('compare.delivery.nativeImage');
-  }
-  if (mode === FileDeliveryMode.OMITTED_NO_VISION) {
-    return t('compare.delivery.omittedNoVision');
-  }
-  if (mode === FileDeliveryMode.OMITTED_UNSUPPORTED) {
-    return t('compare.delivery.omittedUnsupported');
-  }
-  return t('compare.delivery.truncatedText');
+  return badges;
 }
 
 // Build the multi-line `title` tooltip text for the chip strip: first line is
@@ -90,13 +99,7 @@ export function readFileDeliveryFromMetadata(
     }
     const candidate = item as Record<string, unknown>;
     const mode = candidate['mode'];
-    if (
-      mode !== FileDeliveryMode.EXTRACTED_TEXT &&
-      mode !== FileDeliveryMode.NATIVE_IMAGE &&
-      mode !== FileDeliveryMode.OMITTED_NO_VISION &&
-      mode !== FileDeliveryMode.OMITTED_UNSUPPORTED &&
-      mode !== FileDeliveryMode.TRUNCATED_TEXT
-    ) {
+    if (!isFileDeliveryMode(mode)) {
       continue;
     }
     const fileId = candidate['fileId'];

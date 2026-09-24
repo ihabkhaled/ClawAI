@@ -326,3 +326,10 @@ export {
   QUERY_STALE_CONFIG_MS,
   QUERY_STALE_SESSION_MS,
 } from './query-policy.constants';
+export {
+  FILE_DELIVERY_BADGE_SPECS,
+  FILE_DELIVERY_EMPTY_COUNTS,
+  FILE_DELIVERY_MODE_COUNT_KEYS,
+  FILE_DELIVERY_MODE_LABEL_KEYS,
+  FILE_DELIVERY_MODES,
+} from './file-delivery.constants';

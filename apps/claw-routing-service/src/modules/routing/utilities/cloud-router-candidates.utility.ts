@@ -1,3 +1,4 @@
+import { modelMatchKey } from '@claw/shared-utilities';
 import { DeploymentActivationState } from '../../../generated/prisma';
 import type {
   CloudRouterCandidateFilter,
@@ -5,18 +6,11 @@ import type {
   RoutableDeploymentRecord,
 } from '../types/model-deployment.types';
 
-/**
- * One spelling per model, so catalog, deployment and plan keys compare equal:
- * Gemini's `models/` prefix and Ollama's `:cloud` suffix are dropped, case too.
- */
-export function modelMatchKey(provider: string, model: string): string {
-  const bare = model
-    .trim()
-    .toLowerCase()
-    .replace(/^models\//u, '')
-    .replace(/:cloud$/u, '');
-  return `${provider.trim().toUpperCase()}/${bare}`;
-}
+// One spelling per model, so catalog, deployment and plan keys compare equal.
+// The normalizer lives in @claw/shared-utilities because chat-service's
+// capability lookup must key the connector snapshot exactly the same way
+// (rule 42 item 13); re-exported so existing importers stay untouched.
+export { modelMatchKey };
 
 /**
  * The AUTO router's candidates: exposed by an admin, on a healthy connector,

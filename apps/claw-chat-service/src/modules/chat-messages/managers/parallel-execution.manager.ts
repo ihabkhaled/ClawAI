@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, Optional } from '@nestjs/common';
 import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 import type { PaygHold } from '@claw/shared-entitlements';
 import { randomUUID } from 'node:crypto';
@@ -10,6 +10,7 @@ import {
 } from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { AttachmentDeliveryManager } from './attachment-delivery.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { CompareJudgeManager } from './compare-judge.manager';
@@ -61,6 +62,10 @@ export class ParallelExecutionManager {
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly fileDeliveryRecordService: FileDeliveryRecordService,
+    // Resolves each lane's attachments against that lane's own model (ADR-120).
+    // Optional so hand-built specs keep their shape; without it a lane falls
+    // back to the provider-level classifier.
+    @Optional() private readonly attachmentDelivery?: AttachmentDeliveryManager,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
   }
@@ -125,7 +130,12 @@ export class ParallelExecutionManager {
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Parallel compare',
       });
-      const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
+      const { context, threadSettings } = await this.buildContext(
+        userId,
+        threadId,
+        models,
+        fileIds,
+      );
       const { context: enrichedContext, transcript: researchTranscript } =
         await this.applyResearchEnrichment(context, userMessageContent, researchOptions, threadId);
       // EDGE CASE E2 - all-or-nothing. Every lane is reserved before a single
@@ -258,9 +268,15 @@ export class ParallelExecutionManager {
    * what a mode can see had to be made three times, and a fourth mode simply
    * did without.
    */
+  //
+  // Every lane shares one context, so it is budgeted against the SMALLEST
+  // lane's real window (`laneTargets`) — rule 51 item 4. It used to name no
+  // model at all, so a 1M-token lane and an 8k lane were both budgeted at the
+  // conservative 8k fallback.
   private async buildContext(
     userId: string,
     threadId: string,
+    models: ParallelModelTarget[],
     fileIds?: string[],
   ): Promise<{ context: AssembledContext; threadSettings: ThreadSettings | undefined }> {
     const bundle = await this.chatContextGateway.build({
@@ -268,6 +284,7 @@ export class ParallelExecutionManager {
       threadId,
       surface: ChatSurface.COMPARE,
       historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      laneTargets: models.map((target) => ({ provider: target.provider, model: target.model })),
       ...(fileIds !== undefined ? { fileIds } : {}),
     });
     return { context: bundle.context, threadSettings: bundle.threadSettings };
@@ -622,16 +639,11 @@ export class ParallelExecutionManager {
         },
       );
 
-      // TODO(Slice B follow-up): pass authoritative ModelMetadata.supportsVision
-      // sourced from the connector-service catalog so the delivery classifier
-      // can override the provider-level VISION_CAPABLE_PROVIDERS heuristic on a
-      // per-model basis. For now we pass `undefined` so the heuristic remains
-      // in force; the API is ready when the data source lands.
-      const attachmentDelivery = buildFileDeliveryEntries(
-        context.fileContents,
-        llmResponse.provider,
-        llmResponse.model,
-      );
+      // The lane's own record, from the same plan its payload was built from
+      // (ADR-120). Resolved here only when the chokepoint produced none.
+      const attachmentDelivery =
+        llmResponse.fileDelivery ??
+        (await this.laneDeliveryEntries(context, llmResponse.provider, llmResponse.model));
 
       return {
         provider: llmResponse.provider,
@@ -660,16 +672,28 @@ export class ParallelExecutionManager {
         Date.now() - modelStart,
       );
       // Still emit a delivery summary so the FE knows which files would
-      // have reached this lane, marked against the requested target.
-      // TODO(Slice B follow-up): thread ModelMetadata once available; see note
-      // on the success path above.
-      failed.attachmentDelivery = buildFileDeliveryEntries(
-        context.fileContents,
+      // have reached this lane, resolved against the requested target's own
+      // catalog capability.
+      failed.attachmentDelivery = await this.laneDeliveryEntries(
+        context,
         target.provider,
         target.model,
       );
       return failed;
     }
+  }
+
+  // Per-lane capability when the resolver is wired; the provider-level
+  // classifier otherwise. Never throws — the capability client degrades to
+  // UNKNOWN on its own.
+  private async laneDeliveryEntries(
+    context: AssembledContext,
+    provider: string,
+    model: string,
+  ): Promise<FileDeliveryEntry[]> {
+    return this.attachmentDelivery === undefined
+      ? buildFileDeliveryEntries(context.fileContents, provider, model)
+      : this.attachmentDelivery.entriesFor(context, provider, model);
   }
 
   private async storeAssistantMessages(

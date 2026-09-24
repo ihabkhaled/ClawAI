@@ -3,7 +3,7 @@
 **Started:** 2026-09-25 · **Branch:** `feat/multimodal-orchestration` (worktree), each batch pushed to `origin/main`
 **Source:** the "ClawAI Multimodal Orchestration Expansion" prompt pack (151 sections), run
 through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
-**Decision record:** ADR-119 "ClawAI owns multimodal orchestration" (lands with batch 2).
+**Decision record:** [ADR-120](../13-adr/adr-120-clawai-owns-multimodal-orchestration.md) "ClawAI owns multimodal orchestration" (landed with batch 2b; ADR-119 was taken by the file-request work).
 
 ## Owner decisions (2026-09-25, second round supersedes the first where they differ)
 
@@ -43,6 +43,7 @@ through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
 2. **Capability foundation**
    - 2a connector-service is the per-model media source of truth (`supportsVideoInput` + migration, OpenAI vision/audio heuristics); routing sync maps snapshot `AUDIO` → `AUDIO_INPUT`.
    - 2b chat-service reads per-model capability; `FileDeliveryMode` gains transcript / video / processing / failed modes; single chat records delivery; video placeholder leak; compare budgets per real window; ADR-120.
+     _Shipped:_ `ModelCapabilityClient` (connector `models-snapshot`, 60 s cache, never throws, tri-state `MediaCapabilityState`); `modelMatchKey`/`bareModelKey` moved to `@claw/shared-utilities` (routing re-exports); pure `resolveAttachmentDelivery` + `AttachmentDeliveryManager` applied at both execution chokepoints (`callProvider`, `streamCandidate`) so single chat, compare lanes, judge and critic each resolve against their own model; non-vision lanes get no image bytes, only OCR + honest note; `FileDeliveryMode` += `TRANSCRIPT`, `STILL_PROCESSING`, `FAILED_PROCESSING`, `NATIVE_VIDEO`, and `TRUNCATED_TEXT` is emitted; single chat writes `metadata.fileDelivery`; `[Video file:]` placeholder no longer reaches the model; video routing reads `VIDEO_INPUT` with the static set as UNKNOWN fallback; compare budgets for the smallest lane window (`laneTargets`); per-turn `mediaDelivery` log line; rule 42 item 14. Open: frontend labels for the four new modes (batch 9); local vision heuristic misses gemma3 / qwen-vl families.
 3. **Helper vision** — `VISION_HELPER` role + `PaygSurface.VISION_HELPER`; derived-observation framing; compare lanes resolve per model.
 4. **Transcription metering** — `PaygSurface.TRANSCRIPTION` in file-service; local STT exempt.
 5. **Image pricing + plan gating** — OpenAI per-image rate from DB pricing; plan entitlements for image generation/edit, long video, helper vision.

@@ -93,4 +93,35 @@ describe('AttachmentDeliveryChip', () => {
     const root = screen.getByLabelText('compare.delivery.tooltip');
     expect(root).toBeInTheDocument();
   });
+
+  it('renders transcript, video, processing and failed badges with visible text', () => {
+    const multimodal: FileDeliveryEntry[] = [
+      FileDeliveryMode.TRANSCRIPT,
+      FileDeliveryMode.NATIVE_VIDEO,
+      FileDeliveryMode.STILL_PROCESSING,
+      FileDeliveryMode.FAILED_PROCESSING,
+    ].map((mode, index) => ({
+      fileId: `m-${String(index)}`,
+      filename: `media-${String(index)}`,
+      mimeType: 'application/octet-stream',
+      provider: 'GEMINI',
+      model: 'gemini-2.5-flash',
+      mode,
+    }));
+    render(withQueryClient(<AttachmentDeliveryChip delivery={multimodal} />));
+    expect(screen.getByTestId('attachment-delivery-badge-transcript')).toHaveTextContent(
+      'compare.delivery.transcript 1',
+    );
+    expect(screen.getByTestId('attachment-delivery-badge-video')).toHaveTextContent(
+      'compare.delivery.nativeVideo 1',
+    );
+    expect(screen.getByTestId('attachment-delivery-badge-processing')).toHaveTextContent(
+      'compare.delivery.stillProcessing 1',
+    );
+    expect(screen.getByTestId('attachment-delivery-badge-failed')).toHaveTextContent(
+      'compare.delivery.failedProcessing 1',
+    );
+    const root = screen.getByTestId('attachment-delivery-chip');
+    expect(root.textContent).not.toContain('compare.delivery.truncatedText');
+  });
 });

@@ -2,6 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 
 import { GEMINI_VIDEO_CAPABLE_MODELS } from '../../../../common/constants';
 import { BusinessException } from '../../../../common/errors';
+import { MediaCapabilityState } from '../../../../common/enums/media-capability-state.enum';
 import type { AssembledContext } from '../../types/context.types';
 import type { MessageRoutedData } from '../../types/execution.types';
 import { resolveVideoAttachmentCandidates } from '../video-attachment-routing.utility';
@@ -218,4 +219,110 @@ describe('resolveVideoAttachmentCandidates', () => {
       );
     },
   );
+
+  // ADR-120: eligibility comes from the connector catalog's VIDEO_INPUT flag;
+  // the static set is only the fallback when the catalog cannot answer.
+  describe('driven by per-model capability', () => {
+    const catalog = [
+      { provider: 'GEMINI', model: 'gemini-3.1-pro' },
+      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+    ];
+
+    it('accepts a model the catalog says takes video even if the static set lacks it', () => {
+      const candidates = resolveVideoAttachmentCandidates(
+        makePayload('MANUAL_MODEL', 'GEMINI', 'models/gemini-3.1-pro'),
+        makeContext('video/mp4'),
+        [],
+        { selected: MediaCapabilityState.SUPPORTED, capableModels: catalog },
+      );
+
+      expect(candidates).toEqual([{ provider: 'GEMINI', model: 'gemini-3.1-pro' }]);
+    });
+
+    it('rejects a model the catalog says cannot take video even if the static set has it', () => {
+      expect(() =>
+        resolveVideoAttachmentCandidates(
+          makePayload('MANUAL_MODEL', 'GEMINI', 'gemini-2.5-pro'),
+          makeContext('video/mp4'),
+          [],
+          { selected: MediaCapabilityState.UNSUPPORTED, capableModels: catalog },
+        ),
+      ).toThrow('Choose Gemini/gemini-3.1-pro, Gemini/gemini-2.5-flash, or use Auto.');
+    });
+
+    it('never suggests the model it just rejected, and only suggests catalog models', () => {
+      try {
+        resolveVideoAttachmentCandidates(
+          makePayload('MANUAL_MODEL', 'GEMINI', 'models/gemini-2.5-flash'),
+          makeContext('video/mp4'),
+          [],
+          { selected: MediaCapabilityState.UNSUPPORTED, capableModels: catalog },
+        );
+        throw new Error('Expected video routing to fail');
+      } catch (error: unknown) {
+        const message = (error as BusinessException).message;
+        const suggested = message.slice(message.indexOf('Choose'));
+        expect(suggested).not.toContain('gemini-2.5-flash');
+        expect(suggested).toContain('Gemini/gemini-3.1-pro');
+        expect(suggested).not.toContain('gemini-2.5-pro');
+      }
+    });
+
+    it('sends AUTO to a catalog video model, preferring the default when it is listed', () => {
+      expect(
+        resolveVideoAttachmentCandidates(
+          makePayload('AUTO', 'local-ollama', 'qwen3:1.7b'),
+          makeContext('video/mp4'),
+          fallbackCandidates,
+          { selected: MediaCapabilityState.UNSUPPORTED, capableModels: catalog },
+        ),
+      ).toEqual([{ provider: 'GEMINI', model: 'gemini-2.5-flash' }]);
+      expect(
+        resolveVideoAttachmentCandidates(
+          makePayload('AUTO', 'local-ollama', 'qwen3:1.7b'),
+          makeContext('video/mp4'),
+          fallbackCandidates,
+          {
+            selected: MediaCapabilityState.UNSUPPORTED,
+            capableModels: [{ provider: 'GEMINI', model: 'gemini-3.1-pro' }],
+          },
+        ),
+      ).toEqual([{ provider: 'GEMINI', model: 'gemini-3.1-pro' }]);
+    });
+
+    it('falls back to the static set when the catalog is unavailable', () => {
+      const unknown = { selected: MediaCapabilityState.UNKNOWN, capableModels: null };
+
+      expect(
+        resolveVideoAttachmentCandidates(
+          makePayload('MANUAL_MODEL', 'GEMINI', 'gemini-2.5-pro'),
+          makeContext('video/mp4'),
+          [],
+          unknown,
+        ),
+      ).toEqual([{ provider: 'GEMINI', model: 'gemini-2.5-pro' }]);
+      expect(() =>
+        resolveVideoAttachmentCandidates(
+          makePayload('MANUAL_MODEL', 'OPENAI', 'gpt-4o'),
+          makeContext('video/mp4'),
+          [],
+          unknown,
+        ),
+      ).toThrow('Choose Gemini/gemini-2.5-flash, Gemini/gemini-2.5-pro, or use Auto.');
+    });
+
+    it('never offers a non-Gemini model, which has no transport that carries video', () => {
+      expect(() =>
+        resolveVideoAttachmentCandidates(
+          makePayload('MANUAL_MODEL', 'OPENAI', 'gpt-4o'),
+          makeContext('video/mp4'),
+          [],
+          {
+            selected: MediaCapabilityState.SUPPORTED,
+            capableModels: [{ provider: 'OPENAI', model: 'gpt-4o' }, ...catalog],
+          },
+        ),
+      ).toThrow('Choose Gemini/gemini-3.1-pro, Gemini/gemini-2.5-flash, or use Auto.');
+    });
+  });
 });

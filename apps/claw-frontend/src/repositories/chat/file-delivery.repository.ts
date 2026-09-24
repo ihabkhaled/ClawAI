@@ -1,6 +1,6 @@
-import { FileDeliveryMode } from '@/enums';
 import { apiClient } from '@/services/shared/api-client';
 import type { FileDeliveryEntry, FileDeliveryRecordWire } from '@/types';
+import { isFileDeliveryMode } from '@/utilities/file-delivery.utility';
 
 export const fileDeliveryRepository = {
   async getFileDeliveryForMessage(messageId: string): Promise<FileDeliveryEntry[]> {
@@ -10,13 +10,7 @@ export const fileDeliveryRepository = {
     const entries: FileDeliveryEntry[] = [];
     for (const record of response.data) {
       const mode = record.mode;
-      if (
-        mode !== FileDeliveryMode.EXTRACTED_TEXT &&
-        mode !== FileDeliveryMode.NATIVE_IMAGE &&
-        mode !== FileDeliveryMode.OMITTED_NO_VISION &&
-        mode !== FileDeliveryMode.OMITTED_UNSUPPORTED &&
-        mode !== FileDeliveryMode.TRUNCATED_TEXT
-      ) {
+      if (!isFileDeliveryMode(mode)) {
         continue;
       }
       entries.push({

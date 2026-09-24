@@ -1,4 +1,7 @@
-import { TEXT_BUDGET_MIN_ITEM_CHARS } from '../constants/evidence-fit.constants';
+import {
+  TEXT_BUDGET_MIN_ITEM_CHARS,
+  TEXT_BUDGET_SHORTENED_MARKER,
+} from '../constants/evidence-fit.constants';
 import type { TextBudgetResult } from '../types/evidence-fit.types';
 
 /**
@@ -33,5 +36,5 @@ export function fitTextsToBudget(texts: readonly string[], maxChars: number): Te
 function shorten(text: string, maxChars: number): string {
   return text.length <= maxChars
     ? text
-    : `${text.slice(0, maxChars)}\n[...shortened to fit the model's context window...]`;
+    : `${text.slice(0, maxChars)}${TEXT_BUDGET_SHORTENED_MARKER}`;
 }

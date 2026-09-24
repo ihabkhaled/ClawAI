@@ -1678,6 +1678,7 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildTokenUsageMetaPart(llmResponse),
       ...this.buildWorkflowMetaPart(llmResponse, payload),
       ...this.buildTruncationMetaPart(llmResponse),
+      ...this.buildFileDeliveryMetaPart(llmResponse),
       ...this.buildPaygMetaPart(llmResponse),
       ...this.buildToolTranscriptMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
@@ -1686,6 +1687,16 @@ export class ChatMessagesService implements OnModuleInit {
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
     };
+  }
+
+  // What each attachment actually was for the lane that answered — the same
+  // `metadata.fileDelivery` shape compare writes (ADR-120). Single chat used to
+  // record nothing, so "did the model see my image?" had no answer after the
+  // fact. Absent on turns with no attachments.
+  private buildFileDeliveryMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    return llmResponse.fileDelivery === undefined || llmResponse.fileDelivery.length === 0
+      ? {}
+      : { fileDelivery: llmResponse.fileDelivery };
   }
 
   // Records that the answer was shortened to fit the user's remaining

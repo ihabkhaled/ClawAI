@@ -1,0 +1,170 @@
+import { describe, expect, it } from 'vitest';
+
+import { FILE_DELIVERY_MODES } from '@/constants';
+import { FileDeliveryMode } from '@/enums';
+import type { FileDeliveryEntry } from '@/types';
+import {
+  buildFileDeliveryBadges,
+  countFileDeliveriesByMode,
+  getFileDeliveryModeLabel,
+  isFileDeliveryMode,
+  readFileDeliveryFromMetadata,
+} from '@/utilities/file-delivery.utility';
+
+const identity = (key: string): string => key;
+
+function entry(mode: FileDeliveryMode, fileId = 'f-1'): FileDeliveryEntry {
+  return {
+    fileId,
+    filename: `${fileId}.bin`,
+    mimeType: 'application/octet-stream',
+    provider: 'GEMINI',
+    model: 'gemini-2.5-flash',
+    mode,
+  };
+}
+
+describe('isFileDeliveryMode', () => {
+  it('accepts every enum member, including the multimodal ones', () => {
+    for (const mode of Object.values(FileDeliveryMode)) {
+      expect(isFileDeliveryMode(mode)).toBe(true);
+    }
+    expect(FILE_DELIVERY_MODES.size).toBe(Object.values(FileDeliveryMode).length);
+  });
+
+  it('rejects garbage', () => {
+    for (const value of ['', 'transcript', 'NOT_A_MODE', 42, null, undefined, {}]) {
+      expect(isFileDeliveryMode(value)).toBe(false);
+    }
+  });
+});
+
+describe('getFileDeliveryModeLabel', () => {
+  it('gives each mode its own label', () => {
+    const labels = Object.values(FileDeliveryMode).map((mode) =>
+      getFileDeliveryModeLabel(mode, identity),
+    );
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it('only TRUNCATED_TEXT resolves to the truncated label', () => {
+    for (const mode of Object.values(FileDeliveryMode)) {
+      const label = getFileDeliveryModeLabel(mode, identity);
+      if (mode === FileDeliveryMode.TRUNCATED_TEXT) {
+        expect(label).toBe('compare.delivery.truncatedText');
+      } else {
+        expect(label).not.toBe('compare.delivery.truncatedText');
+      }
+    }
+  });
+
+  it('maps the multimodal modes to their own keys', () => {
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.TRANSCRIPT, identity)).toBe(
+      'compare.delivery.transcript',
+    );
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.NATIVE_VIDEO, identity)).toBe(
+      'compare.delivery.nativeVideo',
+    );
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.STILL_PROCESSING, identity)).toBe(
+      'compare.delivery.stillProcessing',
+    );
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.FAILED_PROCESSING, identity)).toBe(
+      'compare.delivery.failedProcessing',
+    );
+  });
+});
+
+describe('countFileDeliveriesByMode', () => {
+  it('counts every mode into its own bucket', () => {
+    const counts = countFileDeliveriesByMode([
+      entry(FileDeliveryMode.EXTRACTED_TEXT),
+      entry(FileDeliveryMode.NATIVE_IMAGE),
+      entry(FileDeliveryMode.OMITTED_NO_VISION),
+      entry(FileDeliveryMode.OMITTED_UNSUPPORTED),
+      entry(FileDeliveryMode.TRUNCATED_TEXT),
+      entry(FileDeliveryMode.TRANSCRIPT),
+      entry(FileDeliveryMode.TRANSCRIPT, 'f-2'),
+      entry(FileDeliveryMode.NATIVE_VIDEO),
+      entry(FileDeliveryMode.STILL_PROCESSING),
+      entry(FileDeliveryMode.FAILED_PROCESSING),
+    ]);
+    expect(counts).toEqual({
+      extracted: 1,
+      image: 1,
+      skipped: 1,
+      unsupported: 1,
+      truncated: 1,
+      transcript: 2,
+      video: 1,
+      processing: 1,
+      failed: 1,
+    });
+  });
+
+  it('never leaks counts between calls', () => {
+    const first = countFileDeliveriesByMode([entry(FileDeliveryMode.TRANSCRIPT)]);
+    const second = countFileDeliveriesByMode([]);
+    expect(first.transcript).toBe(1);
+    expect(second.transcript).toBe(0);
+  });
+});
+
+describe('buildFileDeliveryBadges', () => {
+  it('returns only non-zero badges, each with a text label', () => {
+    const badges = buildFileDeliveryBadges(
+      countFileDeliveriesByMode([
+        entry(FileDeliveryMode.STILL_PROCESSING),
+        entry(FileDeliveryMode.FAILED_PROCESSING),
+      ]),
+      identity,
+    );
+    expect(badges.map((badge) => [badge.countKey, badge.label, badge.count])).toEqual([
+      ['processing', 'compare.delivery.stillProcessing', 1],
+      ['failed', 'compare.delivery.failedProcessing', 1],
+    ]);
+  });
+});
+
+describe('readFileDeliveryFromMetadata', () => {
+  const base = {
+    fileId: 'f-9',
+    filename: 'memo.m4a',
+    mimeType: 'audio/mp4',
+    provider: 'GEMINI',
+    model: 'gemini-2.5-flash',
+  };
+
+  it('accepts the new modes', () => {
+    const entries = readFileDeliveryFromMetadata({
+      fileDelivery: [
+        { ...base, mode: 'TRANSCRIPT' },
+        { ...base, mode: 'NATIVE_VIDEO' },
+        { ...base, mode: 'STILL_PROCESSING' },
+        { ...base, mode: 'FAILED_PROCESSING', reason: 'decode failed' },
+      ],
+    });
+    expect(entries?.map((item) => item.mode)).toEqual([
+      FileDeliveryMode.TRANSCRIPT,
+      FileDeliveryMode.NATIVE_VIDEO,
+      FileDeliveryMode.STILL_PROCESSING,
+      FileDeliveryMode.FAILED_PROCESSING,
+    ]);
+    expect(entries?.[3]?.reason).toBe('decode failed');
+  });
+
+  it('still rejects garbage', () => {
+    expect(readFileDeliveryFromMetadata(null)).toBeUndefined();
+    expect(readFileDeliveryFromMetadata({ fileDelivery: 'nope' })).toBeUndefined();
+    expect(
+      readFileDeliveryFromMetadata({
+        fileDelivery: [
+          { ...base, mode: 'BOGUS' },
+          { ...base, mode: 7 },
+          { ...base, fileId: 1, mode: 'TRANSCRIPT' },
+          null,
+          'string',
+        ],
+      }),
+    ).toBeUndefined();
+  });
+});

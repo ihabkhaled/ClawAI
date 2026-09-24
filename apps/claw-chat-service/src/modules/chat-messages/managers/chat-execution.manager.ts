@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, type OnModuleInit, Optional } from '@nestjs/common';
 import {
   BillingErrorCode,
   LocalModelRole,
@@ -95,6 +95,9 @@ import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-refe
 import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
+import { AttachmentDeliveryManager } from './attachment-delivery.manager';
+import { deliveryEntriesOf, nativeImageContents } from '../utilities/attachment-delivery.utility';
+import type { FileDeliveryEntry } from '../types/file-delivery.types';
 import { QualityCheckManager } from './quality-check.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
 import { SearchFirstManager } from './search-first.manager';
@@ -242,6 +245,10 @@ export class ChatExecutionManager implements OnModuleInit {
     private readonly localModelSelection?: LocalModelSelectionService,
     private readonly providerStreamExecutor?: ProviderStreamExecutor,
     private readonly streamCancellation?: StreamCancellationService,
+    // Optional so the many specs that build this manager by hand keep their
+    // shape; without it every lane keeps the provider-level behaviour that
+    // predates per-model capability (ADR-120). Nest always supplies it.
+    @Optional() private readonly attachmentDelivery?: AttachmentDeliveryManager,
   ) {}
 
   onModuleInit(): void {
@@ -271,6 +278,12 @@ export class ChatExecutionManager implements OnModuleInit {
       payload,
       context,
       this.buildCandidateChain(payload, payload.routingMode),
+      hasVideoAttachment(context)
+        ? await this.attachmentDelivery?.resolveVideoRouting(
+            payload.selectedProvider,
+            payload.selectedModel,
+          )
+        : undefined,
     );
     const userPrompt = this.extractUserPrompt(context);
     const executionOptions = await this.applyQuotaCeiling(
@@ -790,7 +803,7 @@ export class ChatExecutionManager implements OnModuleInit {
    */
   private async streamCandidate(
     candidate: { provider: string; model: string },
-    context: AssembledContext,
+    laneInput: AssembledContext,
     startTime: number,
     usedFallback: boolean,
     threadSettings: ThreadSettings | undefined,
@@ -799,6 +812,11 @@ export class ChatExecutionManager implements OnModuleInit {
     tokenContext?: TokenLedgerContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
+    const context = await this.withAttachmentDelivery(
+      laneInput,
+      candidate.provider,
+      candidate.model,
+    );
     const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
     const requestedMax = this.paygRequestedMaxOutputTokens(
       candidate.provider,
@@ -841,6 +859,7 @@ export class ChatExecutionManager implements OnModuleInit {
       ...dispatched,
       tokenContext: dispatched.tokenContext ?? ledgerContext,
       ...(hold.clamped ? { paygClamped: true } : {}),
+      ...this.fileDeliveryPart(context, candidate.provider, candidate.model),
     };
     this.recordChokepointUsage(context, tagged);
     await this.settlePaygHold(hold, tagged, streamContext.threadId);
@@ -1944,7 +1963,7 @@ export class ChatExecutionManager implements OnModuleInit {
   async callProvider(
     provider: string,
     model: string,
-    context: AssembledContext,
+    laneInput: AssembledContext,
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
@@ -1953,6 +1972,7 @@ export class ChatExecutionManager implements OnModuleInit {
     tokenContext?: TokenLedgerContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
+    const context = await this.withAttachmentDelivery(laneInput, provider, model);
     const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
     const requestedMax = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
     const hold = await this.reservePaygHold({
@@ -1991,10 +2011,42 @@ export class ChatExecutionManager implements OnModuleInit {
       ...response,
       tokenContext: ledgerContext,
       ...(hold.clamped ? { paygClamped: true } : {}),
+      ...this.fileDeliveryPart(context, provider, model),
     };
     this.recordChokepointUsage(context, tagged);
     await this.settlePaygHold(hold, tagged, paygCall?.threadId);
     return tagged;
+  }
+
+  /**
+   * The context as THIS lane's model should receive it (ADR-120).
+   *
+   * Both chokepoints call this, so single chat, each compare lane, the judge
+   * and the critic are resolved against their own model's catalog capability —
+   * a judge that cannot see never receives the generator's image bytes. Image
+   * and file generation are not a model reading the attachments, so they keep
+   * the context untouched.
+   */
+  private async withAttachmentDelivery(
+    context: AssembledContext,
+    provider: string,
+    model: string,
+  ): Promise<AssembledContext> {
+    return this.attachmentDelivery === undefined ||
+      provider === FILE_GENERATION_PROVIDER ||
+      provider.startsWith(IMAGE_PROVIDER_PREFIX) ? context : this.attachmentDelivery.applyToContext(context, provider, model);
+  }
+
+  /** `fileDelivery` for the response, from the plan the payload was built from. */
+  private fileDeliveryPart(
+    context: AssembledContext,
+    provider: string,
+    model: string,
+  ): { fileDelivery?: FileDeliveryEntry[] } {
+    const plan = context.attachmentDelivery;
+    return plan?.provider === provider && plan.model === model && plan.decisions.length > 0
+      ? { fileDelivery: deliveryEntriesOf(plan.decisions) }
+      : {};
   }
 
   /**
@@ -2611,10 +2663,9 @@ export class ChatExecutionManager implements OnModuleInit {
         ? this.applyShortResponseConstraint(prompt)
         : prompt;
     this.logger.debug(`callOllama: prompt built — length=${String(prompt.length)} chars`);
-    const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
-    const images = imageFiles
-      .map((f) => f.content)
-      .filter((c): c is string => c !== null && c.length > 0);
+    // Only images this lane's model can see (ADR-120): a text-only local model
+    // gets the OCR note in the prompt, never the bytes.
+    const images = nativeImageContents(context);
     this.logger.debug(`callOllama: found ${String(images.length)} images for multimodal input`);
     const resolvedMaxOutputTokens =
       executionOptions?.maxOutputTokens ??

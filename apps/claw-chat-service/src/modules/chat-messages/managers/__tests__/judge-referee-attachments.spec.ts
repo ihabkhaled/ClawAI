@@ -1,4 +1,5 @@
 import { type Mock, vi } from 'vitest';
+import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.enum';
 import { JudgeRefereeManager } from '../judge-referee.manager';
 import { ChatExecutionManager } from '../chat-execution.manager';
 import { ChatStreamService } from '../../services/chat-stream.service';
@@ -290,5 +291,44 @@ describe('JudgeRefereeManager — attachments injection', () => {
     expect(judgeUserMsg).not.toContain('<attached_files>');
     expect(judgeUserMsg).not.toContain('Delivery summary:');
     expect(systemPrompt).not.toContain('File grounding rule');
+  });
+
+  // ADR-120: the delivery summary the judge rules on comes from the record the
+  // generator's payload was actually built from, resolved against that
+  // model's catalog capability — not from the provider-level guess, which
+  // calls every OPENAI model vision-capable.
+  it("summarises the generator's own fileDelivery record, not the provider heuristic", async () => {
+    callProviderMock.mockResolvedValueOnce(judgeAcceptResponse);
+    const image = buildFile({ id: 'img', filename: 'chart.png', mimeType: 'image/png' });
+
+    await manager.evaluate(
+      buildResponse({
+        provider: 'OPENAI',
+        model: 'gpt-4o-audio-preview',
+        fileDelivery: [
+          {
+            fileId: 'img',
+            filename: 'chart.png',
+            mimeType: 'image/png',
+            provider: 'OPENAI',
+            model: 'gpt-4o-audio-preview',
+            mode: FileDeliveryMode.OMITTED_NO_VISION,
+          },
+        ],
+      }),
+      buildContext([image]),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+      },
+      buildPayload(),
+    );
+
+    const judgeCtx = callProviderMock.mock.calls[0]![2] as AssembledContext;
+    const judgeMsg = judgeCtx.threadMessages.at(-1)!.content as string;
+    expect(judgeMsg).toContain('1 OMITTED_NO_VISION');
+    expect(judgeMsg).not.toContain('NATIVE_IMAGE');
   });
 });

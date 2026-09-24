@@ -1889,6 +1889,10 @@ export type TranslationDictionary = {
       omittedNoVision: string;
       omittedUnsupported: string;
       truncatedText: string;
+      transcript: string;
+      nativeVideo: string;
+      stillProcessing: string;
+      failedProcessing: string;
       tooltip: string;
       ocrProcessing: string;
       ocrFailed: string;

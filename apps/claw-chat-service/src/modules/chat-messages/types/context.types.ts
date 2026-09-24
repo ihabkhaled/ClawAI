@@ -2,6 +2,7 @@ import { type ChatMessage } from '../../../generated/prisma';
 import type { ToolTurn } from './tool-turn.types';
 import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
 import type { CrossThreadRetrievalResult } from './cross-thread-retrieval.types';
+import type { AttachmentDeliveryPlan } from './attachment-delivery.types';
 
 export type FileChunkResponse = {
   id: string;
@@ -139,6 +140,17 @@ export type AssembledContext = {
    * opted in and something scored. ADR-087.
    */
   crossThread: CrossThreadRetrievalResult;
+  /**
+   * How each attachment reaches the lane this context is about to be sent to:
+   * its FileDeliveryMode and whether its bytes ride the payload (ADR-120).
+   *
+   * Stamped per lane by `AttachmentDeliveryManager` at the execution
+   * chokepoints, and read by every payload builder — so a lane whose model
+   * cannot see never receives an `image_url` part, and the recorded mode is
+   * what was actually sent. Absent only outside execution (estimates, tests),
+   * where the builders keep the provider-level behaviour.
+   */
+  attachmentDelivery?: AttachmentDeliveryPlan;
 };
 
 export type ResearchEvidenceCitation = {

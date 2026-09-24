@@ -924,3 +924,50 @@ enrichment.systemPrompt` at its one `chatContextGateway.build()` call site.
   called it once all 7 moved off raw strings.
 
 See rule 41 item 15 and the `## Update — 2026-09-24` section of ADR-118.
+
+## Every lane gets the media its own model can read (ADR-120, 2026-09-25)
+
+The model the user picked is **not** assumed to be the media executor. Per lane
+(single chat, each compare lane, judge, critic) chat-service decides how every
+attachment reaches THAT model, and the one decision drives both the payload and
+the record. Rule: [rules/42](../../rules/42-attachment-understanding.md) item 14.
+
+- **Capability**: `ModelCapabilityClient` (`clients/model-capability.client.ts`)
+  reads connector-service `GET /api/v1/internal/connectors/models-snapshot`
+  (60 s cache, 10 s negative cache, 2.5 s timeout, **never throws**), keyed by
+  `modelMatchKey` from `@claw/shared-utilities` (the same normalizer routing
+  uses). Result per modality: `MediaCapabilityState` SUPPORTED / UNSUPPORTED /
+  UNKNOWN (`IMAGE_INPUT`, `AUDIO`|`AUDIO_INPUT`, `VIDEO_INPUT`).
+- **Unknown policy**: no row for a local runtime (`local-ollama`, `OLLAMA`,
+  `local-llamacpp`, `LLAMACPP`) → `isLocalVisionModel` name heuristic; no row
+  for a cloud model, or snapshot down → UNKNOWN → the old provider-level
+  behaviour (`VISION_CAPABLE_PROVIDERS`, `GEMINI_VIDEO_CAPABLE_MODELS`).
+- **Resolver**: pure `resolveAttachmentDelivery(files, capabilities, options)`
+  (`utilities/attachment-delivery.utility.ts`) → per file a `FileDeliveryMode`
+  and `sendNative`. `buildFileDeliveryEntries` delegates to it (one classifier).
+- **Chokepoints**: `AttachmentDeliveryManager.applyToContext` runs at the top of
+  `callProvider` and `streamCandidate`, stamps `context.attachmentDelivery`, and
+  the response carries `fileDelivery`. Builders read `isSentNatively` /
+  `nativeImageContents` — never re-derive vision themselves. Image/file
+  generation providers are skipped.
+- **Non-vision lane**: no `image_url` part, no Ollama `images[]`; the system
+  block carries the OCR text framed as extracted text, or a plain "cannot see
+  this image" note; recorded `OMITTED_NO_VISION` (batch 3's helper vision
+  upgrades exactly this decision).
+- **Modes**: `TRANSCRIPT` / `STILL_PROCESSING` / `FAILED_PROCESSING` for audio,
+  `NATIVE_VIDEO` only on Gemini's native transport, `TRUNCATED_TEXT` when the
+  text exceeded `MAX_FILE_CONTENT_LENGTH` or carries `TEXT_BUDGET_SHORTENED_MARKER`.
+- **Provenance**: single chat writes `metadata.fileDelivery` (compare's shape);
+  compare records each lane from its own model (`laneDeliveryEntries`); the
+  judge summarises `response.fileDelivery` before falling back to the heuristic.
+- **Video routing**: `resolveVideoAttachmentCandidates` takes a
+  `VideoRoutingCapability` (`AttachmentDeliveryManager.resolveVideoRouting`);
+  alternatives are built from the same catalog data and never include the
+  rejected model.
+- **Placeholders**: `decodeFileContent` checks video BEFORE `extractedText`, so
+  file-service's `[Video file: x]` never reaches a model.
+- **Compare budget**: `ChatContextRequest.laneTargets` → the gateway budgets
+  the shared context for the smallest lane window; any unknown lane keeps the
+  conservative 8k.
+- **Log line** (content-free): `mediaDelivery {"provider","model","vision","videoInput","files","modes":{…},"fileIds":[…]}`.
+  `docker logs claw-chat-service | grep mediaDelivery` answers "did the model get my image?".

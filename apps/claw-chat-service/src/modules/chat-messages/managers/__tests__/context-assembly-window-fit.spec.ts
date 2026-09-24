@@ -4,6 +4,10 @@ import { ContextComposerManager } from '../context-composer.manager';
 import { CrossThreadRetrievalManager } from '../cross-thread-retrieval.manager';
 import { estimateTokensFromText } from '../../utilities/token-estimator.utility';
 import { fitTextsToBudget } from '../../utilities/text-budget.utility';
+import { ChatContextGatewayManager } from '../chat-context-gateway.manager';
+import { ChatSurface } from '../../../../common/enums/chat-surface.enum';
+import { CONSERVATIVE_CONTEXT_WINDOW_TOKENS } from '../../constants/context-composer.constants';
+import type { AssembledContext } from '../../types/context.types';
 
 const { appConfigGet, httpRequest } = vi.hoisted(() => ({
   appConfigGet: vi.fn(),
@@ -47,8 +51,7 @@ function wireOversizedSources(): void {
     if (url.includes('/ingestion-state')) {
       return Promise.resolve({ ok: true, status: 200, data: { status: 'READY' } });
     }
-    if (url.includes('/internal/files/')) {
-      return Promise.resolve({
+    return url.includes('/internal/files/') ? Promise.resolve({
         ok: true,
         status: 200,
         data: {
@@ -59,9 +62,7 @@ function wireOversizedSources(): void {
           extractedText: BIG,
           ingestionStatus: 'READY',
         },
-      });
-    }
-    return Promise.resolve({ ok: true, status: 200, data: [] });
+      }) : Promise.resolve({ ok: true, status: 200, data: [] });
   });
 }
 
@@ -164,6 +165,95 @@ describe('ContextAssemblyManager fits every source to the model window', () => {
     );
 
     expect(context.researchWarnings).toEqual([]);
+  });
+});
+
+// Rule 51 item 4, compare: ONE context goes to every lane, so it is budgeted
+// for the smallest lane's real window. Compare used to name no model at all
+// and budgeted a 1M-token lane and an 8k lane alike at the 8k fallback.
+describe('compare budgets one shared context for its smallest lane', () => {
+  const promptTokensOf = (context: AssembledContext): number =>
+    estimateTokensFromText(
+      manager()
+        .buildChatMessages(context)
+        .map((message) =>
+          typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
+        )
+        .join('\n'),
+    );
+
+  function gateway(windows: Record<string, number>): ChatContextGatewayManager {
+    return new ChatContextGatewayManager(
+      { findRecentByThreadId: async () => Promise.resolve([...history].reverse()) } as never,
+      {
+        findById: async () =>
+          Promise.resolve({
+            id: 't1',
+            systemPrompt: null,
+            maxTokens: 1_024,
+            contextPackIds: ['pack-1'],
+            useCrossThreadContext: false,
+          }),
+      } as never,
+      manager(),
+      {
+        findContextWindowTokens: async (provider: string, model: string) =>
+          Promise.resolve(windows[`${provider}/${model}`] ?? null),
+      } as never,
+    );
+  }
+
+  const build = async (windows: Record<string, number>, lanes: string[]) =>
+    gateway(windows).build({
+      userId: 'u1',
+      threadId: 't1',
+      surface: ChatSurface.COMPARE,
+      laneTargets: lanes.map((lane) => {
+        const [provider = '', model = ''] = lane.split('/');
+        return { provider, model };
+      }),
+      fileIds: ['f1'],
+    });
+
+  beforeEach(() => {
+    appConfigGet.mockReturnValue({
+      FILE_SERVICE_URL: 'http://file',
+      MEMORY_SERVICE_URL: 'http://memory',
+      WORKSPACE_SERVICE_URL: 'http://workspace',
+      RESEARCH_SERVICE_URL: 'http://research',
+      INTER_SERVICE_AUTH_TOKEN: 't',
+    });
+    wireOversizedSources();
+  });
+
+  it('fits the prompt inside the smallest lane, not the largest', async () => {
+    const bundle = await build(
+      { 'GEMINI/gemini-2.5-flash': 1_048_576, 'LLAMACPP/llama-8k': 8_192 },
+      ['GEMINI/gemini-2.5-flash', 'LLAMACPP/llama-8k'],
+    );
+
+    expect(bundle.context.modelBudget.contextWindowTokens).toBe(8_192);
+    expect(promptTokensOf(bundle.context)).toBeLessThanOrEqual(8_192);
+  });
+
+  it('uses the real window when every lane is large, instead of the 8k fallback', async () => {
+    const bundle = await build(
+      { 'GEMINI/gemini-2.5-flash': 1_048_576, 'ANTHROPIC/claude-sonnet-4': 200_000 },
+      ['GEMINI/gemini-2.5-flash', 'ANTHROPIC/claude-sonnet-4'],
+    );
+
+    expect(bundle.context.modelBudget.contextWindowTokens).toBe(200_000);
+    expect(bundle.context.modelBudget.source).toBe('MODEL_CATALOG');
+  });
+
+  it('keeps the conservative window when any lane window is unknown', async () => {
+    const bundle = await build({ 'GEMINI/gemini-2.5-flash': 1_048_576 }, [
+      'GEMINI/gemini-2.5-flash',
+      'SOME_PROVIDER/unenriched-model',
+    ]);
+
+    expect(bundle.context.modelBudget.contextWindowTokens).toBe(CONSERVATIVE_CONTEXT_WINDOW_TOKENS);
+    expect(promptTokensOf(bundle.context)).toBeLessThanOrEqual(CONSERVATIVE_CONTEXT_WINDOW_TOKENS);
   });
 });
 

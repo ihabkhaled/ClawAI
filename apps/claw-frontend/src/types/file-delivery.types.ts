@@ -25,6 +25,29 @@ export type FileDeliveryCounts = {
   skipped: number;
   unsupported: number;
   truncated: number;
+  transcript: number;
+  video: number;
+  processing: number;
+  failed: number;
+};
+
+// One bucket name of FileDeliveryCounts.
+export type FileDeliveryCountKey = keyof FileDeliveryCounts;
+
+// Static render spec for one chip badge: which count it shows, which mode
+// supplies its text label, and a decorative icon.
+export type FileDeliveryBadgeSpec = {
+  countKey: FileDeliveryCountKey;
+  mode: FileDeliveryMode;
+  icon: string;
+};
+
+// A resolved, non-zero badge ready to render: localized label + count.
+export type FileDeliveryBadge = {
+  countKey: FileDeliveryCountKey;
+  icon: string;
+  label: string;
+  count: number;
 };
 
 // Options for `useFileDelivery`. `enabled` defaults to true; callers can set

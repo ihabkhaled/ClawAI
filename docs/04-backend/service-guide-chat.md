@@ -187,17 +187,18 @@ sentence. Anything unrecognised stays a toast rather than being guessed at.
 
 ## Inter-Service HTTP Calls
 
-| Target Service    | Purpose                                 |
-| ----------------- | --------------------------------------- |
-| memory-service    | Fetch user memories, pack items         |
-| workspace-service | Fetch grounded workspace search results |
-| file-service      | Fetch attachment text + ingestion state |
-| connector-service | Execute LLM calls                       |
-| ollama-service    | Execute local Ollama calls              |
+| Target Service    | Purpose                                                                    |
+| ----------------- | -------------------------------------------------------------------------- |
+| memory-service    | Fetch user memories, pack items                                            |
+| workspace-service | Fetch grounded workspace search results                                    |
+| file-service      | Fetch attachment text + ingestion state                                    |
+| connector-service | Execute LLM calls; per-model media capability (`models-snapshot`, ADR-120) |
+| ollama-service    | Execute local Ollama calls                                                 |
 
 ## Key Managers
 
 - **ContextAssemblyManager** -- assembles full prompt from multiple sources
+- **AttachmentDeliveryManager** -- resolves each lane's attachments against that lane's own model capability (ADR-120)
 - **ChatExecutionManager** -- executes LLM calls with fallback chain, quality checking, and auto re-routing
 - **QualityCheckManager** -- scores response quality (5 signals), recommends re-routing for weak answers
 - **ParallelExecutionManager** -- executes the same prompt against 2-5 models simultaneously via `Promise.allSettled`
@@ -514,7 +515,8 @@ The `ParallelExecutionManager` handles:
 - Minimum 2 models, maximum 5 models per request
 - Each model must belong to a healthy, active connector (or be a local Ollama model)
 - Thread ownership is validated before execution
-- All models share the same assembled context (system prompt, memories, files, history)
+- All models share the same assembled context (system prompt, memories, files, history), budgeted for the smallest lane's real window (`laneTargets`, rule 51 item 4)
+- Each lane's attachments are resolved against that lane's own model (ADR-120): a text-only lane gets no image bytes, and its `fileDelivery` says so
 
 ## Coding agent conversations are a separate origin
 
@@ -633,3 +635,50 @@ ordinary chat has always written.
 **If you add another way to start a run**, write the attachments to the same
 place. A second lookup path is how the coding agent and chat drifted apart the
 first time.
+
+## Every lane gets the media its own model can read (ADR-120, 2026-09-25)
+
+The model the user picked is **not** assumed to be the media executor. Per lane
+(single chat, each compare lane, judge, critic) chat-service decides how every
+attachment reaches THAT model, and the one decision drives both the payload and
+the record. Rule: [rules/42](../../rules/42-attachment-understanding.md) item 14.
+
+- **Capability**: `ModelCapabilityClient` (`clients/model-capability.client.ts`)
+  reads connector-service `GET /api/v1/internal/connectors/models-snapshot`
+  (60 s cache, 10 s negative cache, 2.5 s timeout, **never throws**), keyed by
+  `modelMatchKey` from `@claw/shared-utilities` (the same normalizer routing
+  uses). Result per modality: `MediaCapabilityState` SUPPORTED / UNSUPPORTED /
+  UNKNOWN (`IMAGE_INPUT`, `AUDIO`|`AUDIO_INPUT`, `VIDEO_INPUT`).
+- **Unknown policy**: no row for a local runtime (`local-ollama`, `OLLAMA`,
+  `local-llamacpp`, `LLAMACPP`) → `isLocalVisionModel` name heuristic; no row
+  for a cloud model, or snapshot down → UNKNOWN → the old provider-level
+  behaviour (`VISION_CAPABLE_PROVIDERS`, `GEMINI_VIDEO_CAPABLE_MODELS`).
+- **Resolver**: pure `resolveAttachmentDelivery(files, capabilities, options)`
+  (`utilities/attachment-delivery.utility.ts`) → per file a `FileDeliveryMode`
+  and `sendNative`. `buildFileDeliveryEntries` delegates to it (one classifier).
+- **Chokepoints**: `AttachmentDeliveryManager.applyToContext` runs at the top of
+  `callProvider` and `streamCandidate`, stamps `context.attachmentDelivery`, and
+  the response carries `fileDelivery`. Builders read `isSentNatively` /
+  `nativeImageContents` — never re-derive vision themselves. Image/file
+  generation providers are skipped.
+- **Non-vision lane**: no `image_url` part, no Ollama `images[]`; the system
+  block carries the OCR text framed as extracted text, or a plain "cannot see
+  this image" note; recorded `OMITTED_NO_VISION` (batch 3's helper vision
+  upgrades exactly this decision).
+- **Modes**: `TRANSCRIPT` / `STILL_PROCESSING` / `FAILED_PROCESSING` for audio,
+  `NATIVE_VIDEO` only on Gemini's native transport, `TRUNCATED_TEXT` when the
+  text exceeded `MAX_FILE_CONTENT_LENGTH` or carries `TEXT_BUDGET_SHORTENED_MARKER`.
+- **Provenance**: single chat writes `metadata.fileDelivery` (compare's shape);
+  compare records each lane from its own model (`laneDeliveryEntries`); the
+  judge summarises `response.fileDelivery` before falling back to the heuristic.
+- **Video routing**: `resolveVideoAttachmentCandidates` takes a
+  `VideoRoutingCapability` (`AttachmentDeliveryManager.resolveVideoRouting`);
+  alternatives are built from the same catalog data and never include the
+  rejected model.
+- **Placeholders**: `decodeFileContent` checks video BEFORE `extractedText`, so
+  file-service's `[Video file: x]` never reaches a model.
+- **Compare budget**: `ChatContextRequest.laneTargets` → the gateway budgets
+  the shared context for the smallest lane window; any unknown lane keeps the
+  conservative 8k.
+- **Log line** (content-free): `mediaDelivery {"provider","model","vision","videoInput","files","modes":{…},"fileIds":[…]}`.
+  `docker logs claw-chat-service | grep mediaDelivery` answers "did the model get my image?".

@@ -1468,4 +1468,68 @@ describe('ChatMessagesService', () => {
       });
     });
   });
+
+  // ADR-120: single chat records what each attachment actually was for the
+  // lane that answered, in the same metadata.fileDelivery shape compare uses.
+  describe('handleMessageRouted — attachment delivery provenance', () => {
+    const routedPayload = {
+      messageId: 'msg-1',
+      threadId: 'thread-1',
+      selectedProvider: 'DEEPSEEK',
+      selectedModel: 'deepseek-chat',
+      routingMode: 'MANUAL_MODEL',
+      timestamp: new Date().toISOString(),
+    };
+
+    const arrange = (fileDelivery?: unknown[]): void => {
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockResolvedValue({
+        content: 'I cannot see the image, but its text says the total is 42.',
+        provider: 'DEEPSEEK',
+        model: 'deepseek-chat',
+        latencyMs: 500,
+        usedFallback: false,
+        ...(fileDelivery === undefined ? {} : { fileDelivery }),
+      });
+      messagesRepo.create.mockResolvedValue({ ...mockMessage, role: 'ASSISTANT' as const });
+    };
+
+    it('stores the lane record on the assistant message metadata', async () => {
+      const fileDelivery = [
+        {
+          fileId: 'img-1',
+          filename: 'receipt.png',
+          mimeType: 'image/png',
+          provider: 'DEEPSEEK',
+          model: 'deepseek-chat',
+          mode: 'OMITTED_NO_VISION',
+          reason: 'file_delivery.reason.no_vision',
+        },
+      ];
+      arrange(fileDelivery);
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'ASSISTANT',
+          metadata: expect.objectContaining({ fileDelivery }),
+        }),
+      );
+    });
+
+    it('adds no fileDelivery key to a turn without attachments', async () => {
+      arrange();
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'ASSISTANT',
+          metadata: expect.not.objectContaining({ fileDelivery: expect.anything() }),
+        }),
+      );
+    });
+  });
 });

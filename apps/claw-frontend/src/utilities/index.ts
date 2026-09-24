@@ -152,8 +152,10 @@ export {
   resolveBestResponse,
 } from './compare-judge.utility';
 export {
+  buildFileDeliveryBadges,
   countFileDeliveriesByMode,
   getFileDeliveryModeLabel,
+  isFileDeliveryMode,
   buildFileDeliveryTooltip,
   readFileDeliveryFromMetadata,
   resolveFileDelivery,

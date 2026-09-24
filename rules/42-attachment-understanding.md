@@ -129,19 +129,40 @@ Full reasoning:
     a separately hardcoded string — so the two can never disagree again, even
     if the underlying model list changes.
 
+14. **Media is never silently dropped and never sent to a model that cannot
+    read it; the payload matches the recorded `FileDeliveryMode`.** The model
+    the user picked is not assumed to be the media executor (ADR-120). Each
+    lane's attachments are resolved against THAT lane's catalog capability
+    (`ModelCapabilityClient` → connector `models-snapshot`) by one pure
+    resolver, `resolveAttachmentDelivery`, and the same decision drives both
+    the provider payload (`isSentNatively`) and the record
+    (`metadata.fileDelivery`). A lane whose model cannot see receives no
+    `image_url` part and no `images[]` bytes — it receives the OCR text framed
+    as extracted text, or a plain statement that it cannot see the image, and
+    the record says `OMITTED_NO_VISION`. Audio is `TRANSCRIPT` /
+    `STILL_PROCESSING` / `FAILED_PROCESSING`, never `OMITTED_UNSUPPORTED`;
+    video is `NATIVE_VIDEO` only where the bytes really ride the payload. A
+    file-service placeholder (`[Video file: …]`, `[Image file: …]`,
+    `[Audio file: …]`) is never handed to a model as content. When the catalog
+    cannot answer, capability is UNKNOWN and the pre-existing provider-level
+    behaviour applies, so an outage never strips a working flow. A new payload
+    builder or a new provider path reads the plan; it never re-derives "can
+    this model see" on its own.
+
 ## How this is enforced
 
-| Rule    | Mechanism                                                                                                                                                                                                                                                                                                     |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1, 5, 6 | `context-assembly-attachments.spec.ts` — asserts extracted text is preferred, and that unfinished and failed states are distinguished                                                                                                                                                                         |
-| 2, 3, 4 | `files.service-extraction.spec.ts` — asserts both upload paths start extraction, that the upload does not wait, and that text and status land together                                                                                                                                                        |
-| 7       | `file-delivery.utility.spec.ts` — asserts the extractable documents record as `EXTRACTED_TEXT` and that `OMITTED_UNSUPPORTED` stays reserved for formats with no extraction path                                                                                                                              |
-| 8       | `ooxml-parser.utility.spec.ts`, `rtf-parser.utility.spec.ts` — real containers, not mocks                                                                                                                                                                                                                     |
-| 9       | `ooxml-parser.utility.spec.ts` "archive bounds" — entry count and inflation caps                                                                                                                                                                                                                              |
-| 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                                                                                                                                               |
-| 10      | The migration carries no backfill, and says why in its own comment                                                                                                                                                                                                                                            |
-| 12      | `files.service-extraction.spec.ts` "an audio row still carrying the transcription placeholder" — asserts `PROCESSING`/`FAILED` reporting without touching the row; `context-assembly-attachments.spec.ts` "voice notes" — asserts the placeholder never leaks and a real transcript is framed as spoken words |
-| 13      | `video-attachment-routing.utility.spec.ts` — accepts the connector catalog's `models/`-prefixed id, and asserts no video-capable model is ever rejected while also appearing in its own suggested-alternatives text                                                                                           |
+| Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                   |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1, 5, 6 | `context-assembly-attachments.spec.ts` — asserts extracted text is preferred, and that unfinished and failed states are distinguished                                                                                                                                                                                                                                       |
+| 2, 3, 4 | `files.service-extraction.spec.ts` — asserts both upload paths start extraction, that the upload does not wait, and that text and status land together                                                                                                                                                                                                                      |
+| 7       | `file-delivery.utility.spec.ts` — asserts the extractable documents record as `EXTRACTED_TEXT` and that `OMITTED_UNSUPPORTED` stays reserved for formats with no extraction path                                                                                                                                                                                            |
+| 8       | `ooxml-parser.utility.spec.ts`, `rtf-parser.utility.spec.ts` — real containers, not mocks                                                                                                                                                                                                                                                                                   |
+| 9       | `ooxml-parser.utility.spec.ts` "archive bounds" — entry count and inflation caps                                                                                                                                                                                                                                                                                            |
+| 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                                                                                                                                                                                                             |
+| 10      | The migration carries no backfill, and says why in its own comment                                                                                                                                                                                                                                                                                                          |
+| 12      | `files.service-extraction.spec.ts` "an audio row still carrying the transcription placeholder" — asserts `PROCESSING`/`FAILED` reporting without touching the row; `context-assembly-attachments.spec.ts` "voice notes" — asserts the placeholder never leaks and a real transcript is framed as spoken words                                                               |
+| 13      | `video-attachment-routing.utility.spec.ts` — accepts the connector catalog's `models/`-prefixed id, and asserts no video-capable model is ever rejected while also appearing in its own suggested-alternatives text                                                                                                                                                         |
+| 14      | `attachment-delivery.utility.spec.ts` (resolver matrix); `context-assembly-media-delivery.spec.ts` (non-vision payload has no `image_url` and carries the honest note; video placeholder never in a prompt); `chat-execution-media-delivery.spec.ts` (the chokepoint's body and `fileDelivery` agree); `parallel-execution-media-delivery.spec.ts` (two lanes, two records) |
 
 ## Runbook
 

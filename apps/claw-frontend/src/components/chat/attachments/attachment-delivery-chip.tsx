@@ -2,7 +2,11 @@ import { Badge } from '@/components/ui/badge';
 import { useAttachmentDeliveryChip } from '@/hooks/chat/use-attachment-delivery-chip';
 import { useTranslation } from '@/lib/i18n';
 import type { AttachmentDeliveryChipProps } from '@/types';
-import { buildFileDeliveryTooltip, countFileDeliveriesByMode } from '@/utilities';
+import {
+  buildFileDeliveryBadges,
+  buildFileDeliveryTooltip,
+  countFileDeliveriesByMode,
+} from '@/utilities';
 
 // Pure presentational chip strip showing per-mode counts for one compare lane.
 // Backed by chat-service's `file_delivery_records` table (Slice D dual-read):
@@ -25,7 +29,7 @@ export function AttachmentDeliveryChip({
     return null;
   }
 
-  const counts = countFileDeliveriesByMode(resolved);
+  const badges = buildFileDeliveryBadges(countFileDeliveriesByMode(resolved), t);
   const tooltip = buildFileDeliveryTooltip(resolved, t);
 
   return (
@@ -35,36 +39,17 @@ export function AttachmentDeliveryChip({
       aria-label={t('compare.delivery.tooltip')}
       data-testid="attachment-delivery-chip"
     >
-      {counts.extracted > 0 ? (
-        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
-          <span aria-hidden>📄</span>
-          {t('compare.delivery.extractedText')} {String(counts.extracted)}
+      {badges.map((badge) => (
+        <Badge
+          key={badge.countKey}
+          variant="outline"
+          className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]"
+          data-testid={`attachment-delivery-badge-${badge.countKey}`}
+        >
+          <span aria-hidden>{badge.icon}</span>
+          {badge.label} {String(badge.count)}
         </Badge>
-      ) : null}
-      {counts.image > 0 ? (
-        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
-          <span aria-hidden>🖼️</span>
-          {t('compare.delivery.nativeImage')} {String(counts.image)}
-        </Badge>
-      ) : null}
-      {counts.skipped > 0 ? (
-        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
-          <span aria-hidden>🚫</span>
-          {t('compare.delivery.omittedNoVision')} {String(counts.skipped)}
-        </Badge>
-      ) : null}
-      {counts.unsupported > 0 ? (
-        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
-          <span aria-hidden>🚫</span>
-          {t('compare.delivery.omittedUnsupported')} {String(counts.unsupported)}
-        </Badge>
-      ) : null}
-      {counts.truncated > 0 ? (
-        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
-          <span aria-hidden>✂️</span>
-          {t('compare.delivery.truncatedText')} {String(counts.truncated)}
-        </Badge>
-      ) : null}
+      ))}
     </div>
   );
 }

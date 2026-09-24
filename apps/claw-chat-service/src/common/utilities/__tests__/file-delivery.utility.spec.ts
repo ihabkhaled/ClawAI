@@ -137,6 +137,30 @@ describe('buildFileDeliveryEntries', () => {
     });
   });
 
+  // ADR-120: audio and video have their own modes. They used to fall through
+  // to OMITTED_UNSUPPORTED, which said "dropped" about a voice note whose
+  // transcript the model had in fact received.
+  describe('audio and video', () => {
+    it('records a transcribed voice note as TRANSCRIPT', () => {
+      expect(modeOf(file({ mimeType: 'audio/webm', extractedText: 'see you at 5' }))).toBe(
+        FileDeliveryMode.TRANSCRIPT,
+      );
+    });
+
+    it('records a voice note still being transcribed as STILL_PROCESSING', () => {
+      expect(
+        modeOf(file({ mimeType: 'audio/webm', extractedText: '[Audio file: memo.webm]' })),
+      ).toBe(FileDeliveryMode.STILL_PROCESSING);
+    });
+
+    it('records video as NATIVE_VIDEO only on the Gemini transport', () => {
+      expect(modeOf(file({ mimeType: 'video/mp4' }), 'GEMINI')).toBe(FileDeliveryMode.NATIVE_VIDEO);
+      expect(modeOf(file({ mimeType: 'video/mp4' }), 'OPENAI')).toBe(
+        FileDeliveryMode.OMITTED_UNSUPPORTED,
+      );
+    });
+  });
+
   it('produces one entry per file', () => {
     const entries = buildFileDeliveryEntries(
       [file(), file({ id: 'file-2', mimeType: 'image/png' })],

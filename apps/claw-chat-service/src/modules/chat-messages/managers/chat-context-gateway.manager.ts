@@ -8,6 +8,7 @@ import { ModelContextWindowClient } from '../clients/model-context-window.client
 import {
   type ChatContextBundle,
   type ChatContextRequest,
+  type ContextLaneTarget,
 } from '../types/chat-context-gateway.types';
 import { type ThreadSettings } from '../types/execution.types';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
@@ -59,11 +60,10 @@ export class ChatContextGatewayManager {
       request.maxOutputTokens === undefined
         ? baseSettings
         : { ...(baseSettings ?? {}), maxTokens: request.maxOutputTokens };
-    const threadSettings = await this.withModelContextWindow(
-      withReserve,
-      request.provider,
-      request.model,
-    );
+    const threadSettings =
+      request.provider === undefined && request.laneTargets !== undefined
+        ? await this.withSmallestLaneWindow(withReserve, request.laneTargets)
+        : await this.withModelContextWindow(withReserve, request.provider, request.model);
 
     // A caller's explicit list wins: a lab mode receives attachments on its DTO
     // before any message row carries them.
@@ -182,6 +182,41 @@ export class ChatContextGatewayManager {
       model,
     );
     return { ...(settings ?? {}), provider, contextWindowTokens };
+  }
+
+  /**
+   * The smallest real window among the lanes one shared context is sent to.
+   *
+   * Compare used to name no model here at all, so every lane — a 1M-token one
+   * included — was budgeted at the conservative 8k fallback. The smallest lane
+   * decides because the one context goes to all of them. If ANY lane's window
+   * is unknown the conservative fallback stays: the unknown lane may be the
+   * small one, and overfilling it fails that lane at the provider.
+   */
+  private async withSmallestLaneWindow(
+    settings: ThreadSettings | undefined,
+    lanes: readonly ContextLaneTarget[],
+  ): Promise<ThreadSettings | undefined> {
+    if (lanes.length === 0) {
+      return settings;
+    }
+    const windows = await Promise.all(
+      lanes.map(async (lane) =>
+        this.modelContextWindow.findContextWindowTokens(lane.provider, lane.model),
+      ),
+    );
+    const known = windows.filter((tokens): tokens is number => tokens !== null && tokens > 0);
+    if (known.length !== windows.length) {
+      this.logger.log(
+        `withSmallestLaneWindow: ${String(windows.length - known.length)}/${String(windows.length)} lane window(s) unknown — keeping the conservative window`,
+      );
+      return settings;
+    }
+    const contextWindowTokens = Math.min(...known);
+    this.logger.log(
+      `withSmallestLaneWindow: ${String(lanes.length)} lanes budgeted at the smallest window=${String(contextWindowTokens)}`,
+    );
+    return { ...(settings ?? {}), contextWindowTokens };
   }
 
   private latestUserFileIds(messages: ChatMessage[]): string[] {

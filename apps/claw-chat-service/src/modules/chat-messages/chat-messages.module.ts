@@ -14,6 +14,8 @@ import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
+import { ModelCapabilityClient } from './clients/model-capability.client';
+import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
@@ -83,6 +85,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     // provider. Injecting it keeps the gateway's spec able to hand it a fake
     // rather than letting a unit test reach the network.
     ModelContextWindowClient,
+    ModelCapabilityClient,
+    AttachmentDeliveryManager,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,
     ContextComposerManager,

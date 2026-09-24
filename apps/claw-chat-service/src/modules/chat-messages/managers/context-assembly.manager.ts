@@ -74,6 +74,13 @@ import {
   AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX,
   VOICE_NOTE_TRANSCRIPT_FRAME,
 } from '../constants/voice-note.constants';
+import {
+  NO_VISION_IMAGE_WITH_OCR_FRAME,
+  NO_VISION_IMAGE_WITHOUT_TEXT_NOTE,
+  UNSUPPORTED_VIDEO_NOTE,
+} from '../constants/attachment-delivery.constants';
+import { IMAGE_FILE_PLACEHOLDER_PREFIX } from '../constants/media-placeholder.constants';
+import { isSentNatively } from '../utilities/attachment-delivery.utility';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -553,7 +560,7 @@ ${evidence.snippet}`);
       parts.push(this.formatResearchBlock(context));
     }
     parts.push(
-      ...this.formatFileBlocks(context.fileContents),
+      ...this.formatFileBlocks(context),
       ...this.formatMessageLines(relevantMessages, this.hasResearchGrounding(context)),
     );
     const crossThreadBlock = this.formatCrossThreadBlock(context);
@@ -571,16 +578,27 @@ ${evidence.snippet}`);
     return this.truncateToTokenBudget(fullPrompt, context.tokenBudget);
   }
 
-  private formatFileBlocks(fileContents: AssembledContext['fileContents']): string[] {
+  private formatFileBlocks(context: AssembledContext): string[] {
     // An audio file's decoded block is self-labelled ("VOICE NOTE …" or the
     // still-transcribing / failed message) — wrapping it in the generic
     // "ATTACHED FILE" prefix buried that label behind a wrapper that never
     // says the word "voice" or "audio" at all.
-    return fileContents.map((file) =>
+    return context.fileContents.map((file) =>
       this.isAudioFile(file)
         ? this.decodeFileContent(file)
-        : `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.decodeFileContent(file)}`,
+        : `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.renderFileText(context, file, false)}`,
     );
+  }
+
+  /** The text a lane is given for one file that does not ride the payload natively. */
+  private renderFileText(
+    context: AssembledContext,
+    file: FileContentResponse,
+    includeVideo: boolean,
+  ): string {
+    return this.isImageFile(file) && !isSentNatively(context, file, includeVideo)
+      ? this.describeImageForBlindLane(file)
+      : this.decodeFileContent(file);
   }
 
   /**
@@ -736,13 +754,17 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       context,
       relevantMemories,
       relevantWorkspaceCitations,
+      includeVideo,
     );
     const messages: OpenAiChatMessage[] = [];
     if (systemParts.length > 0) {
       messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
-    const mediaFiles = context.fileContents.filter(
-      (file) => this.isImageFile(file) || (includeVideo && this.isVideoFile(file)),
+    // Only what this lane's model can actually take. A lane that cannot see
+    // gets no image_url part at all — its system block carries the honest
+    // note instead (ADR-120, rule 42 item 14).
+    const mediaFiles = context.fileContents.filter((file) =>
+      isSentNatively(context, file, includeVideo),
     );
     const grounded = this.hasResearchGrounding(context);
     for (const msg of relevantMessages) {
@@ -766,6 +788,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     context: AssembledContext,
     relevantMemories: AssembledContext['memories'],
     relevantWorkspaceCitations: AssembledContext['workspaceCitations'],
+    includeVideo: boolean,
   ): string[] {
     const parts: string[] = [];
     if (context.systemPrompt) parts.push(context.systemPrompt);
@@ -797,7 +820,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     ) {
       parts.push(this.formatResearchBlock(context));
     }
-    const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
+    const textFiles = context.fileContents.filter(
+      (file) => !isSentNatively(context, file, includeVideo),
+    );
     for (const file of textFiles) {
       // Same reasoning as formatFileBlocks: an audio file's decoded block
       // already carries its own voice-note framing (or the still-transcribing
@@ -805,7 +830,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       parts.push(
         this.isAudioFile(file)
           ? this.decodeFileContent(file)
-          : `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.decodeFileContent(file)}`,
+          : `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.renderFileText(context, file, includeVideo)}`,
       );
     }
     return parts;
@@ -1374,6 +1399,16 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       return this.decodeAudioContent(file);
     }
 
+    // Also before the extracted-text branch, for the same reason as audio:
+    // file-service writes `[Video file: <name>]` into a video row's
+    // extractedText, and the generic branch used to hand that placeholder to
+    // the model as if it were the video's content. A video has no text until
+    // batch 6 adds frames + a transcript, and its bytes must never be decoded
+    // into the prompt; a lane that watches it natively never reaches here.
+    if (this.isVideoFile(file)) {
+      return `[Video file "${file.filename}" (${file.mimeType}) — video has no text to extract. ${UNSUPPORTED_VIDEO_NOTE}]`;
+    }
+
     const extracted = file.extractedText?.trim();
     if (extracted !== undefined && extracted.length > 0 && !this.isImageFile(file)) {
       return this.truncateFileText(extracted, file.filename);
@@ -1381,13 +1416,6 @@ ${RESEARCH_GROUNDING_REMINDER}`;
 
     if (this.isImageFile(file)) {
       return this.describeImage(file);
-    }
-
-    // A video has no text to extract and its bytes must never be decoded into
-    // the prompt. Providers that can watch it receive the bytes natively
-    // elsewhere; this line is what a text lane is told instead.
-    if (this.isVideoFile(file)) {
-      return `[Video file "${file.filename}" (${file.mimeType}) — video has no text to extract. It is delivered natively to models that accept video; do not describe its contents.]`;
     }
 
     // Extraction is asynchronous, so "no text yet" and "no text ever" are
@@ -1422,9 +1450,29 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    */
   private describeImage(file: FileContentResponse): string {
     const extracted = file.extractedText?.trim();
-    return extracted !== undefined && extracted.length > 0 && !extracted.startsWith('[Image file:')
+    return extracted !== undefined &&
+      extracted.length > 0 &&
+      !extracted.startsWith(IMAGE_FILE_PLACEHOLDER_PREFIX)
       ? `Text read from the image "${file.filename}":\n${this.truncateFileText(extracted, file.filename)}`
       : `[Image file "${file.filename}" — passed via multimodal images field]`;
+  }
+
+  /**
+   * What a lane whose model cannot see is told about an image it was NOT sent.
+   *
+   * Never "passed via multimodal images field" — that would claim a delivery
+   * that did not happen, and the model would answer about a picture it never
+   * received. OCR text when there is any, framed as extracted text rather than
+   * as the image itself; otherwise a plain statement that it cannot see it.
+   * Batch 3's helper-vision description slots in ahead of this.
+   */
+  private describeImageForBlindLane(file: FileContentResponse): string {
+    const extracted = file.extractedText?.trim();
+    return extracted !== undefined &&
+      extracted.length > 0 &&
+      !extracted.startsWith(IMAGE_FILE_PLACEHOLDER_PREFIX)
+      ? `Image "${file.filename}": ${NO_VISION_IMAGE_WITH_OCR_FRAME}\n${this.truncateFileText(extracted, file.filename)}`
+      : `[Image "${file.filename}": ${NO_VISION_IMAGE_WITHOUT_TEXT_NOTE}]`;
   }
 
   private truncateFileText(text: string, filename: string): string {

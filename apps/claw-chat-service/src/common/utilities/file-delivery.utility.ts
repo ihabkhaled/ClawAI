@@ -1,129 +1,44 @@
-import { FileDeliveryMode } from '../enums/file-delivery-mode.enum';
-import {
-  EXTRACTABLE_DOCUMENT_MIME_EXACT,
-  IMAGE_MIME_PREFIX,
-  TEXT_LIKE_MIME_EXACT,
-  TEXT_LIKE_MIME_PREFIXES,
-  VISION_CAPABLE_PROVIDERS,
-} from '../../modules/chat-messages/constants/file-delivery.constants';
+import { type FileDeliveryMode } from '../enums/file-delivery-mode.enum';
+import { MediaCapabilityState } from '../enums/media-capability-state.enum';
+import { GEMINI_PROVIDER } from '../constants/execution.constants';
+import { IMAGE_MIME_PREFIX } from '../../modules/chat-messages/constants/file-delivery.constants';
 import type { FileContentResponse } from '../../modules/chat-messages/types/context.types';
 import type { FileDeliveryEntry } from '../../modules/chat-messages/types/file-delivery.types';
 import type { ModelMetadata } from '../../modules/chat-messages/types/model-metadata.types';
+import {
+  deliveryEntriesOf,
+  resolveAttachmentDelivery,
+} from '../../modules/chat-messages/utilities/attachment-delivery.utility';
+import { unknownCapabilities } from '../../modules/chat-messages/utilities/model-capability.utility';
 
-// Per SHARED CONTRACT — Slice A Lane 2 (extended in Slice B). Builds the
-// FileDeliveryEntry list for a single (provider, model) lane from the
-// AssembledContext's fileContents.
-// Classification rules:
-//   text/*, json, csv, markdown, code → EXTRACTED_TEXT
-//   pdf, docx, xlsx, pptx, rtf         → EXTRACTED_TEXT (file-service extracts)
-//   image/* + model has vision        → NATIVE_IMAGE
-//   image/* + model lacks vision      → OMITTED_NO_VISION
-//   anything else                     → OMITTED_UNSUPPORTED
-// TRUNCATED_TEXT is reserved for the assembly path to emit when it cuts a
-// file for token budget; this utility never produces TRUNCATED_TEXT (the
-// budget owner does, see Slice B).
-//
-// Vision capability resolution (in order of preference):
-//   1. `modelMetadata.supportsVision` — per-model truth from the connector
-//      catalog. Prefer this whenever it's available; it's the authoritative
-//      source for whether THIS specific model accepts native images.
-//   2. `VISION_CAPABLE_PROVIDERS` heuristic — coarse provider-level fallback
-//      kept for legacy callers that have not yet been threaded through the
-//      ModelMetadata pipeline. Will misclassify text-only models from
-//      vision-capable providers as vision-capable.
-//
-// Prefer passing `modelMetadata` for per-model accuracy; the heuristic is a
-// fallback only.
+// The FileDeliveryEntry list for one (provider, model) lane, for callers that
+// hold no live capability answer — a failed compare lane, the judge's legacy
+// fallback. It is the SAME classifier the execution chokepoint uses
+// (`resolveAttachmentDelivery`, ADR-120), so the two can never disagree; only
+// the capability input differs:
+//   1. `modelMetadata.supportsVision` when supplied — per-model truth.
+//   2. otherwise UNKNOWN, which falls back to the provider-level
+//      `VISION_CAPABLE_PROVIDERS` list (documented, unchanged behaviour).
+// Execution itself never calls this: `AttachmentDeliveryManager` resolves the
+// lane's real capabilities from the connector catalog.
 export function buildFileDeliveryEntries(
   files: FileContentResponse[],
   provider: string,
   model: string,
   modelMetadata?: ModelMetadata,
 ): FileDeliveryEntry[] {
-  return files.map((file) => buildSingleEntry(file, provider, model, modelMetadata));
-}
-
-function buildSingleEntry(
-  file: FileContentResponse,
-  provider: string,
-  model: string,
-  modelMetadata: ModelMetadata | undefined,
-): FileDeliveryEntry {
-  const mime = (file.mimeType ?? '').toLowerCase();
-
-  // A document the platform extracts text from delivers as text. The mime is
-  // binary; what the model receives is not.
-  if (isTextLikeMime(mime) || EXTRACTABLE_DOCUMENT_MIME_EXACT.has(mime)) {
-    return {
-      fileId: file.id,
-      filename: file.filename,
-      mimeType: file.mimeType,
-      provider,
-      model,
-      mode: FileDeliveryMode.EXTRACTED_TEXT,
-    };
-  }
-
-  if (mime.startsWith(IMAGE_MIME_PREFIX)) {
-    if (resolveSupportsVision(provider, modelMetadata)) {
-      return {
-        fileId: file.id,
-        filename: file.filename,
-        mimeType: file.mimeType,
-        provider,
-        model,
-        mode: FileDeliveryMode.NATIVE_IMAGE,
-      };
-    }
-    return {
-      fileId: file.id,
-      filename: file.filename,
-      mimeType: file.mimeType,
-      provider,
-      model,
-      mode: FileDeliveryMode.OMITTED_NO_VISION,
-      reason: 'file_delivery.reason.no_vision',
-    };
-  }
-
-  return {
-    fileId: file.id,
-    filename: file.filename,
-    mimeType: file.mimeType,
-    provider,
-    model,
-    mode: FileDeliveryMode.OMITTED_UNSUPPORTED,
-    reason: 'file_delivery.reason.unsupported_mime',
-  };
-}
-
-function isTextLikeMime(mime: string): boolean {
-  if (mime.length === 0) {
-    return false;
-  }
-  if (TEXT_LIKE_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix))) {
-    return true;
-  }
-  return TEXT_LIKE_MIME_EXACT.has(mime);
-}
-
-// Authoritative-first vision resolution: trust the per-model metadata when
-// supplied; otherwise fall back to the provider-level heuristic. Exported
-// indirectly through buildFileDeliveryEntries — direct callers should use
-// the public API rather than reaching into this helper.
-function resolveSupportsVision(
-  provider: string,
-  modelMetadata: ModelMetadata | undefined,
-): boolean {
+  const capabilities = unknownCapabilities();
   if (modelMetadata !== undefined) {
-    return modelMetadata.supportsVision;
+    capabilities.vision = modelMetadata.supportsVision
+      ? MediaCapabilityState.SUPPORTED
+      : MediaCapabilityState.UNSUPPORTED;
   }
-  return providerSupportsVisionHeuristic(provider);
-}
-
-function providerSupportsVisionHeuristic(provider: string): boolean {
-  return (
-    VISION_CAPABLE_PROVIDERS.has(provider) || VISION_CAPABLE_PROVIDERS.has(provider.toUpperCase())
+  return deliveryEntriesOf(
+    resolveAttachmentDelivery(files, capabilities, {
+      provider,
+      model,
+      nativeVideoTransport: provider.toUpperCase() === GEMINI_PROVIDER,
+    }),
   );
 }
 

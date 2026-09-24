@@ -277,12 +277,7 @@ export class JudgeRefereeManager {
     );
 
     const userPrompt = this.extractUserPrompt(context);
-    const attachments = this.buildAttachmentsBlock(
-      context,
-      response.provider,
-      response.model,
-      deliveryRecords,
-    );
+    const attachments = this.buildAttachmentsBlock(context, response, deliveryRecords);
     const criticContext = this.buildReviewContext(
       context,
       criticPrompt,
@@ -458,12 +453,7 @@ export class JudgeRefereeManager {
     deliveryRecords?: FileDeliveryRecordView[],
   ): AssembledContext {
     const userPrompt = this.extractUserPrompt(context);
-    const attachments = this.buildAttachmentsBlock(
-      context,
-      response.provider,
-      response.model,
-      deliveryRecords,
-    );
+    const attachments = this.buildAttachmentsBlock(context, response, deliveryRecords);
     const sections: string[] = [];
     if (attachments !== undefined) {
       if (attachments.manifestBlock.length > 0) {
@@ -551,10 +541,15 @@ export class JudgeRefereeManager {
   // context.fileContents because the records table does not store snippet
   // content. When records are absent we fall back to the legacy heuristic
   // path so pre-Slice-D messages keep their existing prompt shape.
+  //
+  // ADR-120: between the durable records and the heuristic sits the
+  // generator's own `response.fileDelivery` — the per-lane decision its
+  // payload was actually built from, resolved against that model's real
+  // catalog capability. The provider-level heuristic is now only the last
+  // resort for a response that carries no record at all.
   private buildAttachmentsBlock(
     context: AssembledContext,
-    provider: string,
-    model: string,
+    response: LlmResponse,
     deliveryRecords?: FileDeliveryRecordView[],
   ): { manifestBlock: string; perLaneDelivery: string } | undefined {
     const files = context.fileContents ?? [];
@@ -562,10 +557,13 @@ export class JudgeRefereeManager {
     if (files.length === 0 && records.length === 0) {
       return undefined;
     }
+    const { provider, model } = response;
+    const fromRecords =
+      records.length > 0 ? this.deliveryEntriesFromRecords(records, provider, model) : [];
     const entries =
-      records.length > 0
-        ? this.deliveryEntriesFromRecords(records, provider, model)
-        : buildFileDeliveryEntries(files, provider, model);
+      fromRecords.length > 0
+        ? fromRecords
+        : (response.fileDelivery ?? buildFileDeliveryEntries(files, provider, model));
     return {
       manifestBlock: buildAttachedFilesManifest(files),
       perLaneDelivery: buildLaneDeliverySummary(entries),
@@ -763,7 +761,7 @@ export class JudgeRefereeManager {
   }
 
   private async resolveModel(model: string): Promise<string> {
-    return model !== 'AUTO' ? model : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return model !== 'AUTO' ? model : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   // Feature 1 — resolves a user-chosen judge/critic selection into a concrete
@@ -862,14 +860,18 @@ export class JudgeRefereeManager {
       'missing',
       'incomplete',
     ];
-    return reviseHints.some((hint) => normalized.includes(hint)) ? JudgeDecision.REVISE : JudgeDecision.ACCEPT;
+    return reviseHints.some((hint) => normalized.includes(hint))
+      ? JudgeDecision.REVISE
+      : JudgeDecision.ACCEPT;
   }
 
   private buildJudgeSummary(content: string): string {
     const normalized = content.replaceAll(/\s+/g, ' ').trim();
     const firstSentence = normalized.split(/(?<=[.!?])\s+/u)[0]?.trim();
 
-    return firstSentence && firstSentence.length > 0 ? firstSentence.slice(0, 180) : normalized.slice(0, 180);
+    return firstSentence && firstSentence.length > 0
+      ? firstSentence.slice(0, 180)
+      : normalized.slice(0, 180);
   }
 
   parseJudgeOutput(content: string): ParsedJudgeVerdict {
@@ -882,17 +884,19 @@ export class JudgeRefereeManager {
       const msg = error instanceof Error ? error.message : 'Parse error';
       this.logger.warn(`parseJudgeOutput: failed to parse — ${msg}. Defaulting to ACCEPT.`);
       const plainVerdict = this.parseJudgePlainTextOutput(content);
-      return plainVerdict ? plainVerdict : {
-        decision: JudgeDecision.ACCEPT,
-        summary: 'The judge completed a review of the answer.',
-        reasoning: 'Could not parse judge output, accepting by default',
-        confidence: JUDGE_CONFIDENCE_THRESHOLD,
-        response: 'The answer passed review.',
-        responseType: 'verification_note',
-        recommendedChanges: [],
-        wasFallback: true,
-        fallbackState: 'failed',
-      };
+      return plainVerdict
+        ? plainVerdict
+        : {
+            decision: JudgeDecision.ACCEPT,
+            summary: 'The judge completed a review of the answer.',
+            reasoning: 'Could not parse judge output, accepting by default',
+            confidence: JUDGE_CONFIDENCE_THRESHOLD,
+            response: 'The answer passed review.',
+            responseType: 'verification_note',
+            recommendedChanges: [],
+            wasFallback: true,
+            fallbackState: 'failed',
+          };
     }
   }
 
@@ -1019,7 +1023,9 @@ export class JudgeRefereeManager {
   }
 
   private deriveSummaryFallback(feedback: string[]): string {
-    return feedback.length === 0 ? 'No critical issues detected.' : `Critic raised ${String(feedback.length)} note(s); see details for the full list.`;
+    return feedback.length === 0
+      ? 'No critical issues detected.'
+      : `Critic raised ${String(feedback.length)} note(s); see details for the full list.`;
   }
 
   private extractUserPrompt(context: AssembledContext): string {

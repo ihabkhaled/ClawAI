@@ -671,6 +671,9 @@ export type {
   UseInThreadCompareReturn,
 } from './parallel.types';
 export type {
+  FileDeliveryBadge,
+  FileDeliveryBadgeSpec,
+  FileDeliveryCountKey,
   FileDeliveryEntry,
   FileDeliveryCounts,
   FileDeliveryRecordWire,

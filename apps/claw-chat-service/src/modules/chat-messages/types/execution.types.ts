@@ -1,6 +1,7 @@
 import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
+import type { FileDeliveryEntry } from './file-delivery.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type { AnthropicMessage } from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
@@ -188,6 +189,12 @@ export type LlmResponse = {
   // the UI say "requested turbo, ran standard" instead of silently showing a
   // tier that never happened.
   speed?: ResolvedSpeed;
+  /**
+   * What each attachment actually was for THIS response's lane (ADR-120) —
+   * the same decision the payload was built from. Persisted as the assistant
+   * message's `metadata.fileDelivery`, the shape compare already writes.
+   */
+  fileDelivery?: FileDeliveryEntry[];
 };
 
 export type OllamaGenerateRequest = {

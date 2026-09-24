@@ -84,6 +84,22 @@ export type ChatContextRequest = {
    * protect.
    */
   maxOutputTokens?: number;
+
+  /**
+   * Every model this ONE context will be sent to — compare's lanes.
+   *
+   * The shared context is budgeted against the smallest of their real windows,
+   * so no lane is sent more than it can take (rule 51 item 4). Any lane whose
+   * window is unknown keeps the conservative fallback for all of them: an
+   * unknown lane may be the small one. Ignored when `provider`/`model` is set.
+   */
+  laneTargets?: readonly ContextLaneTarget[];
+};
+
+/** One model a shared context is sent to. */
+export type ContextLaneTarget = {
+  provider: string;
+  model: string;
 };
 
 /**
