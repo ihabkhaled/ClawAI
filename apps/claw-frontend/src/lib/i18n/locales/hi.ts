@@ -575,6 +575,7 @@ export const hi: TranslationDictionary = {
       view: 'खोलें',
       previewTruncated: 'केवल शुरुआती हिस्सा दिखाया जा रहा है — बाकी देखने के लिए डाउनलोड करें',
       noCaptionsAvailable: 'कोई कैप्शन उपलब्ध नहीं है',
+      unavailable: 'अब उपलब्ध नहीं है — इसकी अवधि समाप्त हो गई होगी या इसे हटा दिया गया होगा',
     },
     // B6c — composer voice / video notes.
     recorder: {

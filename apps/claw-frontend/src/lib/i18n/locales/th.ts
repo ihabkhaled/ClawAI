@@ -565,6 +565,7 @@ export const th: TranslationDictionary = {
       view: 'เปิด',
       previewTruncated: 'แสดงเฉพาะส่วนแรก — ดาวน์โหลดเพื่อดูส่วนที่เหลือ',
       noCaptionsAvailable: 'ไม่มีคำบรรยาย',
+      unavailable: 'ไม่พร้อมใช้งานแล้ว — อาจหมดอายุหรือถูกลบไปแล้ว',
     },
     // B6c — composer voice / video notes.
     recorder: {

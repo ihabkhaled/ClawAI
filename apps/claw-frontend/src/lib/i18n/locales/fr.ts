@@ -583,6 +583,7 @@ export const fr: TranslationDictionary = {
       view: 'Ouvrir',
       previewTruncated: 'Affiche seulement le début — téléchargez pour voir le reste',
       noCaptionsAvailable: 'Aucun sous-titre disponible',
+      unavailable: "N'est plus disponible — il a peut-être expiré ou été supprimé",
     },
     // B6c — composer voice / video notes.
     recorder: {

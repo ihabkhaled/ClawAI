@@ -38,13 +38,15 @@ export function MessageAttachmentItem({ fileId }: MessageAttachmentItemProps): R
   }
   if (meta.file === undefined) {
     // Metadata failed to resolve (404, transient error): fall back to the
-    // best-effort image thumbnail rather than blocking the whole message.
+    // best-effort image thumbnail rather than blocking the whole message. If
+    // the download fails too (file past retention), the thumbnail degrades to
+    // a translated "unavailable" card — never a broken <img>.
     return <AttachmentThumbnail fileId={fileId} />;
   }
 
   const kind = getAttachmentPreviewKind(meta.file.mimeType, meta.file.filename);
   if (kind === AttachmentPreviewKind.Image) {
-    return <AttachmentThumbnail fileId={fileId} />;
+    return <AttachmentThumbnail fileId={fileId} filename={meta.file.filename} />;
   }
   if (kind === AttachmentPreviewKind.Audio || kind === AttachmentPreviewKind.Video) {
     return <AttachmentMediaPreview fileId={fileId} filename={meta.file.filename} kind={kind} />;

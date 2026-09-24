@@ -585,6 +585,7 @@ export const it: TranslationDictionary = {
       view: 'Apri',
       previewTruncated: "Viene mostrato solo l'inizio — scarica per vedere il resto",
       noCaptionsAvailable: 'Nessun sottotitolo disponibile',
+      unavailable: 'Non più disponibile: potrebbe essere scaduto o stato eliminato',
     },
     // B6c — composer voice / video notes.
     recorder: {

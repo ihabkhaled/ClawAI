@@ -165,6 +165,59 @@ function HorizontalRule(props: React.JSX.IntrinsicElements['hr']): React.JSX.Ele
   return <hr className="border-border my-4" {...props} />;
 }
 
+// Model-written disclosure (quiz answers, spoilers). Native <details> keeps
+// keyboard + screen-reader semantics for free; only the look is ours. Logical
+// properties (ps/pe/start) so the marker and padding mirror under RTL.
+function Disclosure({
+  children,
+  ...props
+}: React.JSX.IntrinsicElements['details']): React.JSX.Element {
+  return (
+    <details
+      className="border-border bg-muted/40 group/details my-2 rounded-lg border px-3 py-2 break-words open:pb-3"
+      {...props}
+    >
+      {children}
+    </details>
+  );
+}
+
+function DisclosureSummary({
+  children,
+  ...props
+}: React.JSX.IntrinsicElements['summary']): React.JSX.Element {
+  return (
+    <summary
+      className="marker:text-muted-foreground focus-visible:ring-ring -mx-1 cursor-pointer rounded px-1 font-medium select-none group-open/details:mb-2 focus-visible:ring-2 focus-visible:outline-none"
+      {...props}
+    >
+      {children}
+    </summary>
+  );
+}
+
+function KeyboardKey({
+  children,
+  ...props
+}: React.JSX.IntrinsicElements['kbd']): React.JSX.Element {
+  return (
+    <kbd
+      className="border-border bg-muted rounded border px-1.5 py-0.5 font-mono text-[0.85em] shadow-sm"
+      {...props}
+    >
+      {children}
+    </kbd>
+  );
+}
+
+function Highlight({ children, ...props }: React.JSX.IntrinsicElements['mark']): React.JSX.Element {
+  return (
+    <mark className="rounded bg-yellow-200/70 px-0.5 text-inherit dark:bg-yellow-500/30" {...props}>
+      {children}
+    </mark>
+  );
+}
+
 function ImageBlock({ src, alt, ...props }: React.JSX.IntrinsicElements['img']): React.JSX.Element {
   const { t } = useTranslation();
   const srcStr = typeof src === 'string' ? src : undefined;
@@ -214,4 +267,8 @@ export const markdownComponents: Components = {
   h3: Heading3,
   p: Paragraph,
   hr: HorizontalRule,
+  details: Disclosure,
+  summary: DisclosureSummary,
+  kbd: KeyboardKey,
+  mark: Highlight,
 };

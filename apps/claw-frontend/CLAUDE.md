@@ -687,3 +687,37 @@ ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED` (`ARCHIVE_PASSWORD_ATTEMPTS_EXCEEDED_CODE`
 
 Backend: `apps/claw-file-service/CLAUDE.md` → "The in-chat password prompt
 (batch A3)" · [ADR-114 addendum](../../docs/13-adr/adr-114-seven-zip-wasm-for-every-archive-format.md).
+
+## Chat markdown parses an HTML allowlist (2026-09-25)
+
+Models write `<details><summary>الإجابة</summary><strong>B</strong></details>`
+for quiz answers; it used to reach users as raw tag text. `MarkdownRenderer`
+(`lib/markdown/markdown-renderer.tsx`) now runs `rehype-raw` →
+`rehype-sanitize` → `rehype-highlight` — **that order is load-bearing**.
+
+- The schema is `MARKDOWN_SANITIZE_SCHEMA` in
+  `constants/markdown-sanitize.constants.ts`: markdown/GFM output tags plus
+  `details summary strong b em i br sub sup kbd mark`. No `style`, no `class`
+  (except GFM/`language-*`), no `on*`, no iframe/object/svg/form; `script`,
+  `style` and `iframe` drop with their contents. Widen it only with a matching
+  XSS test in `lib/markdown/__tests__/markdown-renderer-html.test.tsx`.
+- Ids survive only with the `user-content-` prefix and clobbering is off —
+  re-prefixing would break GFM footnote links; allowing bare ids lets a model
+  clobber `window` globals.
+- This one renderer serves every chat mode (bubble, compare, parallel,
+  escalation, judge, answer dialog, admin feedback). `PublicMarkdownRenderer`
+  (share pages) deliberately parses **no** HTML — do not add `rehype-raw` there.
+- `details`/`summary`/`kbd`/`mark` have styled components in
+  `markdown-components.tsx` (theme tokens, logical properties for RTL).
+
+## A sent image that cannot load becomes a file card (2026-09-25)
+
+`AttachmentThumbnail` (via `useAttachmentThumbnail`) has three states:
+loading placeholder → image → `AttachmentUnavailableCard` (icon + filename +
+`chat.attachment.unavailable`). It goes unavailable when the authenticated
+download fails (404 past retention, 401, network — the old
+`useAuthenticatedImage` swallowed these and spun forever) **or** when the
+`<img>` fires `error` (bytes that do not decode: HEIC on Chrome, an HTML
+error page with 200). Never render an `<img>` for an attachment without an
+`onError` fallback. `useAuthenticatedImage` is still used by
+`image-generation-bubble.tsx` only.

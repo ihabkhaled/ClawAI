@@ -581,6 +581,7 @@ export const ru: TranslationDictionary = {
       view: 'Открыть',
       previewTruncated: 'Показана только начальная часть — скачайте, чтобы увидеть остальное',
       noCaptionsAvailable: 'Субтитры недоступны',
+      unavailable: 'Больше недоступен — возможно, срок хранения истёк или файл удалён',
     },
     // B6c — composer voice / video notes.
     recorder: {

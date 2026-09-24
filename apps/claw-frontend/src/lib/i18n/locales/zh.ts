@@ -553,6 +553,7 @@ export const zh: TranslationDictionary = {
       view: '打开',
       previewTruncated: '仅显示开头部分——下载查看其余内容',
       noCaptionsAvailable: '暂无字幕',
+      unavailable: '已不可用——可能已过期或被删除',
     },
     // B6c — composer voice / video notes.
     recorder: {

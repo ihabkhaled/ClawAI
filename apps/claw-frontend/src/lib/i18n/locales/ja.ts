@@ -579,6 +579,7 @@ export const ja: TranslationDictionary = {
       view: '開く',
       previewTruncated: '冒頭のみ表示しています — 続きを見るにはダウンロードしてください',
       noCaptionsAvailable: '字幕はありません',
+      unavailable: '利用できなくなりました。期限切れか削除された可能性があります',
     },
     // B6c — composer voice / video notes.
     recorder: {

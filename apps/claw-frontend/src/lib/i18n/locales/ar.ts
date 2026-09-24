@@ -567,6 +567,7 @@ export const ar: TranslationDictionary = {
       view: 'فتح',
       previewTruncated: 'يظهر الجزء الأول فقط — نزّل الملف لرؤية الباقي',
       noCaptionsAvailable: 'لا تتوفر ترجمة',
+      unavailable: 'لم يعد متاحًا — ربما انتهت صلاحيته أو حُذف',
     },
     // B6c — composer voice / video notes.
     recorder: {

@@ -581,6 +581,7 @@ export const es: TranslationDictionary = {
       view: 'Abrir',
       previewTruncated: 'Mostrando solo el inicio — descarga para ver el resto',
       noCaptionsAvailable: 'No hay subtítulos disponibles',
+      unavailable: 'Ya no está disponible: puede haber caducado o haberse eliminado',
     },
     // B6c — composer voice / video notes.
     recorder: {

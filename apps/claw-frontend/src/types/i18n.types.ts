@@ -530,6 +530,7 @@ export type TranslationDictionary = {
       view: string;
       previewTruncated: string;
       noCaptionsAvailable: string;
+      unavailable: string;
     };
     recorder: {
       recordVoice: string;

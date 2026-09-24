@@ -580,6 +580,7 @@ export const pt: TranslationDictionary = {
       view: 'Abrir',
       previewTruncated: 'Mostrando apenas o início — baixe para ver o restante',
       noCaptionsAvailable: 'Nenhuma legenda disponível',
+      unavailable: 'Não está mais disponível — pode ter expirado ou sido excluído',
     },
     // B6c — composer voice / video notes.
     recorder: {

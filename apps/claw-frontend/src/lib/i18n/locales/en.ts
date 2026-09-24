@@ -573,6 +573,7 @@ export const en: TranslationDictionary = {
       view: 'Open',
       previewTruncated: 'Showing the first part — download to see the rest',
       noCaptionsAvailable: 'No captions available',
+      unavailable: 'No longer available — it may have expired or been deleted',
     },
     // B6c — composer voice / video notes.
     recorder: {

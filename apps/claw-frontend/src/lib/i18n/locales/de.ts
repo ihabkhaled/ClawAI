@@ -586,6 +586,7 @@ export const de: TranslationDictionary = {
       view: 'Öffnen',
       previewTruncated: 'Zeigt nur den Anfang — zum Lesen des Rests herunterladen',
       noCaptionsAvailable: 'Keine Untertitel verfügbar',
+      unavailable: 'Nicht mehr verfügbar – möglicherweise abgelaufen oder gelöscht',
     },
     // B6c — composer voice / video notes.
     recorder: {

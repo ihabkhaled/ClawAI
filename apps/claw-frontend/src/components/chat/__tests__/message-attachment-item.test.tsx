@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MessageAttachmentItem } from '@/components/chat/message-attachment-item';
 import { FileIngestionStatus } from '@/enums';
@@ -25,11 +25,14 @@ vi.mock('@/hooks/files/use-attachment-file-meta', () => ({
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en', dir: 'ltr' }),
 }));
-vi.mock('@/hooks/chat/use-authenticated-image', () => ({
-  useAuthenticatedImage: () => null,
-}));
+let mockBlobError: Error | null = null;
 vi.mock('@/hooks/chat/use-authenticated-file-blob', () => ({
-  useAuthenticatedFileBlob: () => ({ blobUrl: null, isLoading: false, error: null, load: vi.fn() }),
+  useAuthenticatedFileBlob: () => ({
+    blobUrl: null,
+    isLoading: false,
+    error: mockBlobError,
+    load: vi.fn(),
+  }),
 }));
 
 function notResolvingAsArchive(): void {
@@ -60,6 +63,10 @@ function metaFile(overrides: Partial<UploadedFile>): UploadedFile {
 }
 
 describe('MessageAttachmentItem', () => {
+  beforeEach(() => {
+    mockBlobError = null;
+  });
+
   it('shows a placeholder while metadata is still resolving', () => {
     mockUseMessageAttachmentItem.mockReturnValue({
       t: (key: string) => key,
@@ -202,5 +209,36 @@ describe('MessageAttachmentItem', () => {
     mockUseAttachmentFileMeta.mockReturnValue({ file: undefined, isLoading: false, isError: true });
 
     expect(() => render(<MessageAttachmentItem fileId="file-1" />)).not.toThrow();
+  });
+
+  // Production (claw-ai.co, 2026-09-24): an image past retention answered the
+  // metadata call with 404 and the download with 404 — the bubble showed the
+  // browser's broken-image glyph. It must be a named, translated file card.
+  it('shows an unavailable file card when an image attachment can no longer be downloaded', () => {
+    notResolvingAsArchive();
+    mockBlobError = new Error('Attachment download failed (404)');
+    mockUseAttachmentFileMeta.mockReturnValue({
+      file: metaFile({ mimeType: 'image/jpeg', filename: 'receipt.jpg' }),
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<MessageAttachmentItem fileId="file-1" />);
+
+    const card = screen.getByTestId('attachment-unavailable');
+    expect(card).toHaveTextContent('receipt.jpg');
+    expect(card).toHaveTextContent('chat.attachment.unavailable');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('shows the unavailable card, not a broken image, when metadata AND download both 404', () => {
+    notResolvingAsArchive();
+    mockBlobError = new Error('Attachment download failed (404)');
+    mockUseAttachmentFileMeta.mockReturnValue({ file: undefined, isLoading: false, isError: true });
+
+    render(<MessageAttachmentItem fileId="file-1" />);
+
+    expect(screen.getByTestId('attachment-unavailable')).toHaveTextContent('chat.attachedFile');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });

@@ -575,6 +575,7 @@ export const fa: TranslationDictionary = {
       view: 'باز کردن',
       previewTruncated: 'فقط بخش ابتدایی نمایش داده می‌شود — برای دیدن بقیه دانلود کنید',
       noCaptionsAvailable: 'زیرنویسی موجود نیست',
+      unavailable: 'دیگر در دسترس نیست — ممکن است منقضی یا حذف شده باشد',
     },
     // B6c — composer voice / video notes.
     recorder: {

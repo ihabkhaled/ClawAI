@@ -27,6 +27,14 @@ export type UseAttachmentMediaPreviewReturn = {
   play: () => void;
 };
 
+export type UseAttachmentThumbnailReturn = {
+  t: TranslateFunction;
+  blobUrl: string | null;
+  /** The download failed (404 past retention, 401, network) or the bytes did not decode. */
+  isUnavailable: boolean;
+  handleImageError: () => void;
+};
+
 export type UseAttachmentFilePreviewReturn = {
   t: TranslateFunction;
   isLoading: boolean;
@@ -38,6 +46,12 @@ export type UseAttachmentFilePreviewReturn = {
 };
 
 // ─── Components ──────────────────────────────────────────────────────────────
+
+export type AttachmentUnavailableCardProps = {
+  /** Display name; the generic "Attached file" label when metadata is gone too. */
+  label: string;
+  unavailableLabel: string;
+};
 
 export type AttachmentMediaPreviewProps = {
   fileId: string;

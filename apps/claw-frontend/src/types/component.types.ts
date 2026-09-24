@@ -1164,6 +1164,8 @@ export type FileGenerationBubbleProps = {
 
 export type AttachmentThumbnailProps = {
   fileId: string;
+  /** Known when metadata resolved; names the image and its unavailable card. */
+  filename?: string;
 };
 
 // Strict pure-render props for VirtualizedMessages. After the strict-TSX
