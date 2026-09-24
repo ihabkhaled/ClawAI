@@ -1,7 +1,7 @@
 import {
   CONNECTOR_PRESET_ACCOUNT_ID_PATTERN,
   presetRequiresAccountId,
-} from '@claw/shared-utilities';
+} from '@claw/shared-utilities/connector-presets';
 import { z } from 'zod';
 
 import { ConnectorProvider } from '@/enums';

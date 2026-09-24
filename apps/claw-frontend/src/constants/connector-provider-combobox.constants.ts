@@ -1,5 +1,5 @@
 import { ConnectorPresetGroup } from '@claw/shared-types';
-import { CONNECTOR_PRESETS } from '@claw/shared-utilities';
+import { CONNECTOR_PRESETS } from '@claw/shared-utilities/connector-presets';
 
 /** Every provider key served through the OpenAI-compatible preset registry. */
 export const PRESET_PROVIDER_KEYS = new Set<string>(CONNECTOR_PRESETS.map((preset) => preset.key));

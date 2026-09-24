@@ -1,4 +1,4 @@
-import { getConnectorPreset } from '@claw/shared-utilities';
+import { getConnectorPreset } from '@claw/shared-utilities/connector-presets';
 
 import { ConnectorAuthType, ConnectorProvider } from '@/enums';
 

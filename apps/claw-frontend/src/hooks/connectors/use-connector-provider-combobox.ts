@@ -1,4 +1,4 @@
-import { CONNECTOR_PRESETS, getConnectorPreset } from '@claw/shared-utilities';
+import { CONNECTOR_PRESETS, getConnectorPreset } from '@claw/shared-utilities/connector-presets';
 import { useMemo, useState } from 'react';
 
 import { PRESET_GROUP_ORDER, PRESET_PROVIDER_KEYS, PROVIDER_DISPLAY_NAMES } from '@/constants';

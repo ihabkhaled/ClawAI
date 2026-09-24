@@ -4,7 +4,7 @@ import {
   isValidPresetAccountId,
   presetRequiresAccountId,
   resolvePresetUrl,
-} from '@claw/shared-utilities';
+} from '@claw/shared-utilities/connector-presets';
 import { useEffect, useState } from 'react';
 
 import { PROVIDER_DEFAULT_BASE_URLS } from '@/constants';
