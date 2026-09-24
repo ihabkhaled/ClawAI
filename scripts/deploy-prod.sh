@@ -753,10 +753,24 @@ compute_plan() {
   fi
 
   if [ "$broad" = "1" ]; then
+    # A broad-impact change resets the selection built so far — including any
+    # image-only service (grafana, prometheus, log-shipper) matched above via
+    # CONFIG_DIR_SERVICES. $SVC_COMPOSE_REL is itself a BROAD_IMPACT_PATHS
+    # entry, so a commit that DECLARES a new image-only service in the compose
+    # file always trips this branch; if only $buildable were reselected here,
+    # that service's own introducing commit could never create it, and no
+    # later deploy would either, because its config directory would not
+    # change again. Re-add image-only services too, so a broad-impact deploy
+    # really does mean "every container the target commit still declares",
+    # not "every container with a Dockerfile" (fixed 2026-09-24, ADR-115
+    # Grafana never reached production because of this).
     PLAN_SELECTED='|'
     while IFS= read -r svc; do
       [ -n "$svc" ] && select_service "$svc"
     done <"$buildable"
+    while IFS= read -r svc; do
+      [ -n "$svc" ] && select_service "$svc"
+    done <"$image_only"
   fi
 
   while IFS= read -r file; do

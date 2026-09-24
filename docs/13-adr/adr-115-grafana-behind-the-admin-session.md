@@ -105,3 +105,29 @@ attribution, revocation or audit trail.
   datasource and dashboard provisioned.
 - **Not verified**: the real stack (not restarted, by instruction), a browser
   walk through the admin UI, and production (no deploy approved).
+
+## Addendum (2026-09-24): the container never reached production
+
+Declaring the `grafana` service in `docker/docker-compose.prod.services.yml`
+also edits that file itself, and it is a `BROAD_IMPACT_PATHS` entry in
+`scripts/deploy-prod.sh`. `compute_plan`'s broad branch reset the selection
+and reselected only `$buildable` (services with a Dockerfile) — silently
+dropping any image-only service (grafana, prometheus, log-shipper) that had
+matched earlier via `CONFIG_DIR_SERVICES`. Every incremental production
+deploy since this ADR landed built the whole app fleet and recreated nothing
+image-only; `grafana`, `prometheus` and `log-shipper` were absent from
+`docker ps` and from every `.deploy/history.log` line. `https://claw-ai.co/
+grafana/` 401'd for an unauthenticated request as designed, but the DNS name
+`grafana` did not resolve inside the nginx container even for an admin,
+because the container was never created. nginx's own config was correctly
+loaded and in sync (not the stale-bind-mount bug from
+`runbook-nginx-stale-config.md`) — there was simply nothing behind it.
+
+Fixed in `scripts/deploy-prod.sh`'s broad branch: it now reselects
+`$image_only` alongside `$buildable`, so a broad-impact deploy really means
+"every container the target commit still declares." Rehearsed in
+`tools/__tests__/deploy-prod-e2e.sh` ("a broad-impact change still recreates
+the image-only container", log-shipper as the reproduction). The fix ships
+the container; **starting it on production still requires a deploy** — see
+`docs/11-runbooks/` for the deploy trigger, this was not run as part of the
+fix.

@@ -265,13 +265,17 @@ reset_docker_log
 out="$(deploy "$SHA_SHARED")"
 assert_contains "shared-package deployment succeeds" "$out" "Deployment successful"
 build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
-for consumer in payment-service workspace-service agent-service research-service chat-service; do
+for consumer in payment-service workspace-service agent-service research-service chat-service health-service; do
   assert_contains "shared-auth change rebuilds $consumer" "$build_line" "$consumer"
 done
-# health-service authenticates nothing, so it is the one service a shared-auth
-# change must not touch. chat-service moved to the other list on 2026-09-20,
-# when every service that authenticates took the revocation guard (ADR-112).
-assert_not_contains "shared-auth change spares health-service" "$build_line" "health-service"
+# frontend is the one buildable, non-profiled service with no @claw/shared-auth
+# edge in the dependency graph (it is a Next.js app, not a Nest service), so it
+# is the one a shared-auth change must not touch. chat-service moved to the
+# rebuild list on 2026-09-20 (ADR-112, revocation guard). health-service moved
+# to it on 2026-09-24: StatusPageController now guards with AuthGuard +
+# SessionRevocationGuard from @claw/shared-auth (commit f7d59436c, ADR-115 B3),
+# so "health-service authenticates nothing" stopped being true.
+assert_not_contains "shared-auth change spares frontend" "$build_line" "frontend"
 
 # ─── Image-only container ────────────────────────────────────────────────────
 # log-shipper has no `build:`, so it never reached PLAN_SERVICES: a change to
@@ -284,6 +288,31 @@ up_line="$(grep -m1 ' up -d .*log-shipper' "$CLAW_STUB_LOG" || true)"
 assert_contains "the container is recreated, not restarted" "$up_line" "--force-recreate"
 assert_not_contains "an image-only container is never built" "$(cat "$CLAW_STUB_LOG")" " build log-shipper"
 assert_equals "the deployment is recorded" "$(deployed_sha)" "$SHA_SHIPPER"
+
+# ─── Broad-impact change must not drop an image-only service ────────────────
+# $SVC_COMPOSE_REL is itself a BROAD_IMPACT_PATHS entry, so DECLARING a new
+# image-only service (grafana, prometheus, log-shipper) always means editing
+# it in the same commit as the service's own config directory. Before the
+# 2026-09-24 fix, compute_plan's broad branch reset the selection and
+# reselected only $buildable, silently dropping any image-only service that
+# had matched via CONFIG_DIR_SERVICES earlier in the same pass — which is
+# exactly why grafana never reached production despite shipping days earlier
+# (ADR-115). Reproduced here with log-shipper: a commit that touches both
+# infra/vector/ and the compose file itself.
+printf 'broad plus shipper\n' >>"$SRC/infra/vector/vector.yaml"
+printf '# rehearsal broad-impact touch\n' >>"$SRC/docker/docker-compose.prod.services.yml"
+git -C "$SRC" add -A >/dev/null
+git -C "$SRC" commit --quiet --no-verify -m 'broad-impact compose edit plus log-shipper config' >/dev/null
+git -C "$SRC" push --quiet origin HEAD:refs/heads/main >/dev/null 2>&1
+SHA_BROAD_SHIPPER="$(git -C "$SRC" rev-parse HEAD)"
+
+reset_docker_log
+out="$(deploy "$SHA_BROAD_SHIPPER")"
+assert_contains "a broad-impact deployment succeeds" "$out" "Deployment successful"
+assert_contains "a broad-impact change still names the image-only service" "$out" "log-shipper (image only)"
+up_line="$(grep -m1 ' up -d .*log-shipper' "$CLAW_STUB_LOG" || true)"
+assert_contains "a broad-impact change still recreates the image-only container" "$up_line" "--force-recreate"
+assert_equals "the broad-impact deployment is recorded" "$(deployed_sha)" "$SHA_BROAD_SHIPPER"
 
 # ─── No-op (docs only) ───────────────────────────────────────────────────────
 # Deploy the docs commit on top of the payment commit by rewinding state.
