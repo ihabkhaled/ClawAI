@@ -100,8 +100,8 @@ export type ImageProviderResponse = {
    * Present for Gemini, which answers `:generateContent` with a `usageMetadata`
    * block exactly like a text call. ABSENT for OpenAI images: the
    * `/images/generations` response carries `created` and `data` and nothing
-   * else — there is genuinely no usage to read, which is why images are priced
-   * per unit rather than per token. See `IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS`.
+   * else — there is genuinely no usage to read, which is why OpenAI images are
+   * priced per image (`imageUnits` on finalize) rather than per token.
    */
   usage?: TokenUsage;
 };

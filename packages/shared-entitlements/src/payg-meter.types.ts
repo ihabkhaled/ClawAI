@@ -1,4 +1,4 @@
-import type { PaygSurface } from '@claw/shared-types';
+import type { PaygSurface, PaygUnitCounts } from '@claw/shared-types';
 
 /**
  * Everything the auth-service needs to price and gate one provider call.
@@ -8,6 +8,12 @@ import type { PaygSurface } from '@claw/shared-types';
  * of the SAME logical call and distinct between different calls — a compare run
  * fanning out to five lanes needs five ids, and a tool loop needs one per turn,
  * or N paid turns get billed as one.
+ *
+ * The optional unit counts (`imageUnits`, `audioSeconds`, `ttsCharacters`) are
+ * the EXPECTED quantities of a non-token call — one per requested image, the
+ * clip length of a transcription, the text length of a speech request. auth
+ * sizes the hold on them, so a surface priced per unit reserves real money
+ * instead of $0. Omit them for an ordinary token call.
  */
 export type PaygReserveInput = {
   userId: string;
@@ -19,7 +25,7 @@ export type PaygReserveInput = {
   promptTokens: number;
   cachedPromptTokens?: number;
   requestedMaxOutputTokens: number;
-};
+} & PaygUnitCounts;
 
 /**
  * The hold, as every call site sees it.
@@ -57,7 +63,15 @@ export type PaygFinalizeUsage = {
   reasoningTokens: number;
 };
 
-export type PaygFinalizeCalls = {
+/**
+ * Everything the orchestrator counted rather than the provider reported.
+ *
+ * The unit counts here are MEASURED: images actually returned, seconds actually
+ * transcribed, characters actually synthesised. A non-token surface finalizes on
+ * these, never on zero tokens — an image API reports no usage, so settling on
+ * tokens alone prices every generation at $0.
+ */
+export type PaygFinalizeCalls = PaygUnitCounts & {
   toolCalls?: number;
   searchCalls?: number;
 };

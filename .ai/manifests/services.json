@@ -111,7 +111,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 107,
+      "testFiles": 110,
       "testRunner": "vitest"
     },
     {
@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 22,
+      "testFiles": 24,
       "testRunner": "vitest"
     },
     {
@@ -476,7 +476,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 108,
+      "testFiles": 109,
       "testRunner": "vitest"
     },
     {

@@ -14,6 +14,11 @@ task_keywords:
     wallet,
     payg surface,
     credit ledger,
+    unit metering,
+    per image price,
+    image units,
+    audio seconds,
+    tts characters,
     402,
     payment required,
     payg credit exhausted,
@@ -209,6 +214,34 @@ its reason, the way
 `apps/claw-routing-service/src/modules/routing/managers/router-shadow-evaluation.manager.ts:138`
 records U7. Do not invent a user to charge.
 
+### Meter a per-unit surface
+
+For a call the provider does **not** report tokens for — image generation,
+speech-to-text, text-to-speech — tokens are the wrong meter. Rule 37 item 17.
+
+1. **Price the model per unit, in a DB row.** `ModelCostVersion` carries
+   `imagePerUnitMicroUsd` (per image), `audioPerUnitMicroUsd` (per **second** of
+   input audio) and `ttsPerCharacterMicroUsd` (per character). Add a seed entry
+   in `apps/claw-routing-service/src/modules/router-models/constants/model-cost-seed.constants.ts`
+   with the per-unit field set, the token rates it genuinely bills (usually `0`
+   output) and a source + date comment, then **bump `MODEL_COST_SEED_VERSION`**.
+   Correcting a price an earlier seed wrote needs `supersedesSeededPrice: true`,
+   which retires the old seeded row and appends a new version — never an edit,
+   never an admin override. Never an env var, never a runtime constant.
+2. **Reserve on expected units** — `imageUnits: <images requested>`,
+   `audioSeconds: <clip length>`, `ttsCharacters: <text length>`. The hold is
+   sized on them.
+3. **Finalize on measured units** — images actually returned, seconds actually
+   transcribed, characters actually synthesised — in the third argument beside
+   `toolCalls`: `payg.finalize(hold, usage, { toolCalls: 0, imageUnits })`.
+4. **Release on failure** exactly as for tokens.
+5. **Test**: a RESERVATION then a non-zero CONSUMPTION for the surface; provider
+   throw → exactly one `RESERVATION_RELEASE`; the reserve carries the expected
+   units; a token-only caller still settles on tokens.
+
+Reference implementation: `apps/claw-image-service/src/modules/image-generation/managers/image-execution.manager.ts`
+(`reserveImageHold` / `finalizeImageHold`, `countReturnedImages`).
+
 ### 6. Surface the clamp
 
 If `hold.clamped` is true the answer was shortened to fit the balance. Propagate it
@@ -239,6 +272,7 @@ being bad rather than the wallet being empty.
 | A local chat debits credit                       | You classified locally instead of asking the meter, or a paid provider reached the zero-rate fallback. **Serious** — see rule 37 #6.   |
 | One generation debited twice                     | Both the dispatching service and the executing service took a hold.                                                                    |
 | Users see a truncated answer with no explanation | `hold.clamped` never reached the UI.                                                                                                   |
+| An image / transcription / speech call costs $0  | It finalized on zero tokens with no unit count, or its price row has no per-unit rate. See "Meter a per-unit surface".                 |
 
 ## Validation commands
 

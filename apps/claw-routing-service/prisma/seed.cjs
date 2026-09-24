@@ -54,7 +54,7 @@ async function main() {
     const service = new ModelCostSeedService(new ModelCostSeedRepository(prisma));
     const result = await service.seed();
     console.warn(
-      `[seed] model-cost: ${result.outcome} inserted=${result.inserted} skipped=${result.skipped}`,
+      `[seed] model-cost: ${result.outcome} inserted=${result.inserted} repriced=${result.repriced.length} skipped=${result.skipped}`,
     );
   } finally {
     await prisma.$disconnect();

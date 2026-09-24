@@ -136,6 +136,15 @@ paid model, rule 1 applies to it like anything else.
     `clamped: true` must reach a rendered surface, and the test must assert the
     string is **visible**, not merely mounted.
 
+17. **A non-token surface finalizes on measured units, never on zero tokens.** An
+    image, transcription or speech call reserves its **expected** `imageUnits` /
+    `audioSeconds` / `ttsCharacters` and finalizes on the **measured** ones, and its
+    model row carries the matching per-unit rate (`imagePerUnitMicroUsd`,
+    `audioPerUnitMicroUsd` = per second of input audio, `ttsPerCharacterMicroUsd`).
+    OpenAI's image API reports no usage, so a zero-token finalize settled every
+    OpenAI image at $0 and released the whole hold. Mechanism:
+    [`docs/03-architecture/payg-credit.md` § Unit metering](../docs/03-architecture/payg-credit.md#unit-metering--surfaces-that-are-not-priced-by-tokens).
+
 ## Prohibited patterns
 
 - Calling a paid provider with `maxTokens` set to anything but `hold.maxOutputTokens`.
@@ -162,6 +171,8 @@ paid model, rule 1 applies to it like anything else.
 - Writing a `TOPUP` ledger row for anything other than money that actually arrived.
 - A price, ratio or allowance as a constant, an env var, or a client-supplied value.
 - One `requestId` shared across the lanes of a fan-out.
+- Finalizing an image, transcription or speech call with zero tokens and no unit
+  count, or pricing one with a fake per-token rate ("$/image ÷ 8192").
 
 ## Correct pattern
 
@@ -217,6 +228,7 @@ rather than claiming a check that is not there.
 | 14 — attributed adjustments            | **Unit test** — an adjustment without actor or reason is refused; one above the cap is refused.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 15 — non-colliding `requestId`         | **Unit test** per fan-out surface asserting N distinct holds for N lanes/attempts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 16 — clamp is visible                  | **Unit test** asserting the clamp string is **rendered and visible**, not merely mounted (frontend).                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 17 — units, not zero tokens            | **Unit tests** — `credit-unit-metering.spec.ts` (auth: RESERVATION then non-zero CONSUMPTION for an OpenAI image), `unit-metering.spec.ts` (shared-utilities: BigInt sums), `image-execution.manager.payg.spec.ts` (image: `imageUnits` on reserve and finalize), `model-cost-seed.spec.ts` (routing: per-image seed prices). **Review checklist** for new per-unit surfaces.                                                                                                                                                                      |
 
 Plus the standing gates: **CI job** (lint → typecheck → test → build per touched
 workspace) and **knowledge check** (`npm run knowledge:coverage`, which fails if
@@ -251,5 +263,7 @@ this rule is unreachable from an index).
 - [ ] Ledger movements are append-only and the wallet reconciles to their sum.
 - [ ] Release is bucket-correct and idempotent; `requestId` is unique per paid call.
 - [ ] A clamped answer is proven visible to the user.
+- [ ] A non-token surface reserves expected units and finalizes measured units
+      against a per-unit rate row.
 - [ ] The ADRs, the runbook and `docs/business/` are current with any change to the
       numbers or the policy.

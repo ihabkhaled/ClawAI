@@ -44,6 +44,7 @@ export function toModelCostSnapshot(record: ModelCostVersion): ModelCostSnapshot
     videoPerUnitMicroUsd: toSafeNumber(record.videoPerUnitMicroUsd),
     toolCallPerUnitMicroUsd: toSafeNumber(record.toolCallPerUnitMicroUsd),
     searchCallPerUnitMicroUsd: toSafeNumber(record.searchCallPerUnitMicroUsd),
+    ttsPerCharacterMicroUsd: toSafeNumber(record.ttsPerCharacterMicroUsd),
     costClass: PRISMA_TO_SHARED_COST_CLASS[record.costClass],
     isAdminOverride: record.isAdminOverride,
     effectiveFrom: record.effectiveFrom.toISOString(),
@@ -73,6 +74,7 @@ export function ratesAreUnchanged(record: ModelCostVersion, incoming: ModelCostR
     record.audioPerUnitMicroUsd === incoming.audioPerUnitMicroUsd &&
     record.videoPerUnitMicroUsd === incoming.videoPerUnitMicroUsd &&
     record.toolCallPerUnitMicroUsd === incoming.toolCallPerUnitMicroUsd &&
-    record.searchCallPerUnitMicroUsd === incoming.searchCallPerUnitMicroUsd
+    record.searchCallPerUnitMicroUsd === incoming.searchCallPerUnitMicroUsd &&
+    record.ttsPerCharacterMicroUsd === incoming.ttsPerCharacterMicroUsd
   );
 }

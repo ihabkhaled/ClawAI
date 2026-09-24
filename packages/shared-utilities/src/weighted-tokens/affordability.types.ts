@@ -23,7 +23,8 @@ export type AffordabilityInput = {
   minViableOutputTokens: number;
   /**
    * Artifacts this request will produce that are priced per unit rather than per
-   * token — images, today.
+   * token — images, seconds of input audio, characters of synthesised speech.
+   * Same meaning and rate columns as `BillableUnitCounts`.
    *
    * Their cost is fixed and known BEFORE the call, so it is subtracted from the
    * balance up front like the prompt. Leaving it out is what made an image
@@ -31,6 +32,8 @@ export type AffordabilityInput = {
    * spent elsewhere.
    */
   imageUnits?: number;
+  audioSeconds?: number;
+  ttsCharacters?: number;
 };
 
 /**

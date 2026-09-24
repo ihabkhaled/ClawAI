@@ -27,6 +27,18 @@ Image generation microservice for the Claw platform. Orchestrates image generati
    `IMAGE_MODEL_OPENAI` here, routing-service's `IMAGE_MODEL_OPENAI`, and the
    frontend `IMAGE_MODEL_OPTIONS` / `IMAGE_CAPABILITIES` in step.
 
+5. **An OpenAI image is metered per IMAGE, not per token** (rule 37 item 17).
+   `reserveImageHold` sends `imageUnits: IMAGE_PAYG_IMAGES_PER_REQUEST` (1 — the
+   adapter hard-codes `n: 1`); `finalizeImageHold` sends the images actually
+   returned (`countReturnedImages`). OpenAI's `/images/generations` reports no
+   usage, so a zero-token finalize settled every OpenAI image at $0 until
+   2026-09-25. Gemini still settles on its `usageMetadata` tokens (its rows have
+   no per-image rate). One hold per paid call; a provider throw releases it.
+   **Known under-charge:** the price row is gpt-image-1 `high` 1024x1024
+   ($0.167) and dall-e-3 `standard` ($0.040). Chat sends no size or quality, so
+   it is covered; a direct API caller asking for 1536x1024/`high` ($0.25) or
+   dall-e-3 `hd` ($0.08) is charged the 1024/standard price.
+
 Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 
 ## Tech Stack
@@ -337,3 +349,13 @@ comes from `imageFailureMessage(code)`, never from the provider.
   `promptFeedback.blockReason`) must NOT fall through to the next candidate —
   every Gemini model refuses the same prompt, so retrying wastes 2 more calls
   and 2 more provider round trips before finally reporting the same refusal.
+
+## gpt-image quality is pinned to the priced tier (2026-09-25)
+
+`gpt-image*` is billed per image at the HIGH-quality 1024x1024 list price
+(routing seed v4). `resolveOpenAiImageQuality` therefore always sends
+`quality: 'high'` for that family — left to OpenAI's `auto`, or to a caller's
+`low`, the call and the charge would disagree. dall-e keeps the caller's
+quality (its seeded price is standard). **Known gap:** a non-square size
+(1536x1024 / 1024x1536, $0.25 at high) is still charged the 1024x1024 price;
+chat never sends one. A size-aware price needs a price matrix, not one rate.

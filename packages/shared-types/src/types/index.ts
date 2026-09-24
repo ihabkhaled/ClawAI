@@ -26,6 +26,7 @@ export type {
   PaygLedgerEntryView,
   PaygRejection,
   PaygReservationOutcome,
+  PaygUnitCounts,
   PaygWalletSnapshot,
   PaygWarningThreshold,
 } from './payg-credit.type';

@@ -25,6 +25,7 @@ const STANDARD_RATES: ModelCostRates = {
   videoPerUnitMicroUsd: null,
   toolCallPerUnitMicroUsd: 1000,
   searchCallPerUnitMicroUsd: 10_000,
+  ttsPerCharacterMicroUsd: null,
   costClass: ModelCostClass.STANDARD,
   isAdminOverride: false,
   effectiveFrom: '2026-07-01T00:00:00.000Z',

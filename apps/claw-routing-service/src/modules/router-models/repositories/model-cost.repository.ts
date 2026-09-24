@@ -23,9 +23,22 @@ export class ModelCostRepository {
    * pays input; a model with a huge output rate and no input rate would not be
    * a safe ceiling.
    */
+  //
+  // Only TOKEN-priced chat rows qualify. A per-unit row (gpt-image-1, dall-e, a
+  // transcription or speech model) keeps its money in a unit column and carries
+  // a zero output rate by design; standing it in for an unknown CHAT model
+  // would price that model's output at $0.
   async findMostExpensiveForProvider(provider: string): Promise<ModelCostVersion | null> {
     return this.prisma.modelCostVersion.findFirst({
-      where: { provider, isActive: true, inputPerMillionMicroUsd: { not: null } },
+      where: {
+        provider,
+        isActive: true,
+        inputPerMillionMicroUsd: { not: null },
+        outputPerMillionMicroUsd: { gt: 0n },
+        imagePerUnitMicroUsd: null,
+        audioPerUnitMicroUsd: null,
+        ttsPerCharacterMicroUsd: null,
+      },
       orderBy: [{ inputPerMillionMicroUsd: 'desc' }, { outputPerMillionMicroUsd: 'desc' }],
     });
   }
@@ -73,6 +86,7 @@ export class ModelCostRepository {
           videoPerUnitMicroUsd: input.videoPerUnitMicroUsd,
           toolCallPerUnitMicroUsd: input.toolCallPerUnitMicroUsd,
           searchCallPerUnitMicroUsd: input.searchCallPerUnitMicroUsd,
+          ttsPerCharacterMicroUsd: input.ttsPerCharacterMicroUsd,
           costClass: input.costClass,
           confidence: input.confidence,
           source: input.source,

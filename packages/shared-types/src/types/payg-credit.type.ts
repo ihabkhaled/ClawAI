@@ -104,6 +104,31 @@ export type PaygReservationOutcome =
     };
 
 /**
+ * Non-token quantities a paid call is billed on, carried on the PAYG wire
+ * beside the token counts.
+ *
+ * Every field is OPTIONAL and absent means zero, so a caller that meters only
+ * tokens sends exactly what it sent before unit metering existed. Each one is
+ * priced by its own `ModelCostVersion` column:
+ *
+ * | Field           | Rate column               | Unit                         |
+ * | --------------- | ------------------------- | ---------------------------- |
+ * | `imageUnits`    | `imagePerUnitMicroUsd`    | one generated image          |
+ * | `audioSeconds`  | `audioPerUnitMicroUsd`    | one SECOND of input audio    |
+ * | `ttsCharacters` | `ttsPerCharacterMicroUsd` | one character synthesised    |
+ *
+ * At reserve these are the EXPECTED units (the hold is sized on them); at
+ * finalize they are the MEASURED units (what was actually produced). A
+ * non-token surface must finalize on measured units, never on zero tokens —
+ * that is how an OpenAI image used to settle at $0.
+ */
+export type PaygUnitCounts = {
+  imageUnits?: number;
+  audioSeconds?: number;
+  ttsCharacters?: number;
+};
+
+/**
  * Why a PAYG request was refused. Carries the numbers the user needs to act —
  * never an internal cost ceiling, a margin, or a provider rate.
  */

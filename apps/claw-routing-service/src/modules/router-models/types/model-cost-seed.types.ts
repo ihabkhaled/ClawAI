@@ -4,10 +4,15 @@ import { type CostClass } from '../../../generated/prisma';
 /**
  * One model's bootstrap list price.
  *
- * Deliberately a narrow subset of `ModelCostVersion`. The per-unit modality
- * rates (image, audio, video, tool, search) are absent because no provider
- * publishes them per chat model, and a seeded `0` would read as "free" rather
- * than "not published" — `null` is the honest value and is what the row gets.
+ * Deliberately a narrow subset of `ModelCostVersion`. Chat models carry only
+ * token rates: no provider publishes a per-unit rate for them, and a seeded `0`
+ * would read as "free" rather than "not published" — `null` is the honest
+ * value and is what the row gets.
+ *
+ * The OPTIONAL per-unit rates are for models billed per artifact instead:
+ * `imagePerUnitMicroUsd` per generated image, `audioPerUnitMicroUsd` per
+ * SECOND of input audio (speech-to-text), `ttsPerCharacterMicroUsd` per
+ * character synthesised (text-to-speech). Omitted means null.
  *
  * Rates are integer micro-USD per MILLION tokens, held as `number` here and
  * widened to `bigint` at the Prisma boundary. Every value in this file is well
@@ -30,6 +35,27 @@ export interface ModelCostSeedEntry {
    */
   reasoningPerMillionMicroUsd: number | null;
   costClass: CostClass;
+  imagePerUnitMicroUsd?: number | null;
+  audioPerUnitMicroUsd?: number | null;
+  ttsPerCharacterMicroUsd?: number | null;
+  /**
+   * Set when this entry CORRECTS a price an earlier seed version already wrote.
+   *
+   * The seed otherwise only fills gaps, so a wrong seeded price would survive
+   * every later version. With this flag, a model whose ACTIVE row is still a
+   * seeded list price (`source: SEED`, not an administrator override) and whose
+   * rates differ gets its active row retired and a NEW version appended — never
+   * an in-place edit. An override, a synced price or an identical price is left
+   * alone.
+   */
+  supersedesSeededPrice?: boolean;
+}
+
+/** One model the seed re-priced, so the caller can bust downstream rate caches. */
+export interface ModelCostSeedRepricedModel {
+  provider: string;
+  modelKey: string;
+  version: number;
 }
 
 /** What the seed repository applies, once, under an advisory lock. */
@@ -52,4 +78,6 @@ export interface ModelCostSeedResult {
   outcome: SeedApplyOutcome;
   inserted: number;
   skipped: number;
+  /** Models whose seeded price was superseded by a new version this run. */
+  repriced: readonly ModelCostSeedRepricedModel[];
 }

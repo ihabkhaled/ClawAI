@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { ModelCostService } from '../services/model-cost.service';
@@ -23,6 +23,7 @@ const baseRecord = (overrides: Record<string, unknown> = {}) => ({
   videoPerUnitMicroUsd: null,
   toolCallPerUnitMicroUsd: null,
   searchCallPerUnitMicroUsd: null,
+  ttsPerCharacterMicroUsd: null,
   costClass: 'PREMIUM',
   confidence: 'EXACT',
   source: 'PROVIDER_SYNC',
@@ -53,6 +54,7 @@ const syncInput = (overrides: Partial<PublishModelCostInput> = {}): PublishModel
   videoPerUnitMicroUsd: null,
   toolCallPerUnitMicroUsd: null,
   searchCallPerUnitMicroUsd: null,
+  ttsPerCharacterMicroUsd: null,
   costClass: CostClass.PREMIUM,
   confidence: CostConfidence.ESTIMATED,
   source: ModelCostSource.PROVIDER_SYNC,

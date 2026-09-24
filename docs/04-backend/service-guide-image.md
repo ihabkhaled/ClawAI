@@ -76,7 +76,14 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 - Endpoint: POST `https://api.openai.com/v1/images/generations`
 - Supports: text-to-image, revised prompts, quality/style parameters
 - Sizes: 1024x1024, 1792x1024, 1024x1792
-- Returns: base64 or URL
+- Returns: base64 or URL — and **no token usage**
+- PAYG: metered **per image** (rule 37 item 17). Reserve sends `imageUnits: 1`
+  (`n: 1` is hard-coded); finalize sends the images actually returned
+  (`countReturnedImages`). The price is `ModelCostVersion.imagePerUnitMicroUsd`
+  (seed v4: gpt-image-1 $0.167 = `high` 1024x1024, the worst case of the
+  `auto` quality chat sends; dall-e-3 $0.040 standard; dall-e-2 $0.020), with a
+  zero output token rate. Before 2026-09-25 these rows carried a fake token rate
+  and every OpenAI image settled at $0.
 
 ### Gemini Image Generation
 
@@ -93,7 +100,7 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 - Endpoint: POST `https://api.x.ai/v1/images/generations` (no admin base URL configured — falls back to `XAI_DEFAULT_BASE_URL`)
 - Body: `{ model, prompt, n: 1, response_format: 'b64_json' }` — `size`, `quality`, `style` are OpenAI-only and never sent
 - Response: `{ data: [{ b64_json, mime_type: "image/jpeg" }], usage: { cost_in_usd_ticks } }` — verified live against `grok-imagine-image`, `grok-imagine-image-2.0`, `grok-imagine-image-quality` on 2026-09-23
-- `usage.cost_in_usd_ticks` is a price, not a token count — the PAYG hold settles at zero tokens exactly like an OpenAI image
+- `usage.cost_in_usd_ticks` is a price, not a token count. Finalize carries `imageUnits: 1`, but no Grok image model has a per-image price row yet, so a Grok image still settles at zero tokens — seed an `imagePerUnitMicroUsd` row for it to charge (open gap)
 
 ### Stable Diffusion (Local)
 

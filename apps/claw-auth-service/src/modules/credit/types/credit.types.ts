@@ -43,6 +43,10 @@ export type CreditReserveInput = {
   promptTokens: number;
   cachedPromptTokens: number;
   requestedMaxOutputTokens: number;
+  /** Expected per-unit quantities; absent means zero. Sizes the hold. */
+  imageUnits?: number;
+  audioSeconds?: number;
+  ttsCharacters?: number;
 };
 
 export type CreditFinalizeInput = {
@@ -53,6 +57,10 @@ export type CreditFinalizeInput = {
   reasoningTokens: number;
   toolCalls: number;
   searchCalls: number;
+  /** Measured per-unit quantities; absent means zero. */
+  imageUnits?: number;
+  audioSeconds?: number;
+  ttsCharacters?: number;
 };
 
 /**

@@ -15,8 +15,23 @@ import { BillingErrorCode } from '@claw/shared-types';
  * hold is never short, while staying ~4x smaller than the 30,512 text default —
  * which at any realistic output rate would hold more than a Starter plan's
  * entire daily allowance for a single picture.
+ *
+ * OpenAI image rows are priced PER IMAGE with an output token rate of 0, so for
+ * them this ceiling adds nothing to the hold: the hold is exactly
+ * `IMAGE_PAYG_IMAGES_PER_REQUEST x imagePerUnitMicroUsd`.
  */
 export const IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS = 8192;
+
+/**
+ * Images one generation request asks the provider for — the EXPECTED
+ * `imageUnits` the hold is sized on.
+ *
+ * One, because that is what this service sends: the OpenAI adapter hard-codes
+ * `n: 1`, Gemini and xAI return one image per call, and no request DTO carries
+ * a count. If a count parameter is ever added, reserve on it instead of this.
+ * Settlement never uses this number — it uses the images actually returned.
+ */
+export const IMAGE_PAYG_IMAGES_PER_REQUEST = 1;
 
 /**
  * The prompt-token figure handed to `reserve` for an image request.
@@ -57,3 +72,16 @@ export const IMAGE_CREDIT_FAILURE_CODES: readonly string[] = [
  */
 export const IMAGE_CREDIT_FAILURE_MESSAGE =
   'Image generation needs pay-as-you-go credit. Add credit or switch to a local image model.';
+
+/**
+ * The quality every `gpt-image*` call is sent at. The per-image rate seeded
+ * for `gpt-image-1` (seed v4) is OpenAI's HIGH-quality 1024x1024 list price,
+ * so the request must ask for exactly that tier: left unset, OpenAI's `auto`
+ * picks a tier the charge does not follow, and a caller-supplied `low` would
+ * be billed at the high price. The charge follows the call only when the call
+ * is pinned.
+ */
+export const OPENAI_GPT_IMAGE_PRICED_QUALITY = 'high';
+
+/** Model-id prefix of the OpenAI image family priced per image at a fixed quality. */
+export const OPENAI_GPT_IMAGE_MODEL_PREFIX = 'gpt-image';

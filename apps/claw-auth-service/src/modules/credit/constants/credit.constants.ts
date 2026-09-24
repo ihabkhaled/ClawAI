@@ -53,6 +53,14 @@ export const CREDIT_WORKFLOW_MAX_LENGTH = 64;
 export const CREDIT_TOKEN_COUNT_MAX = 10_000_000;
 export const CREDIT_MAX_OUTPUT_TOKENS_MAX = 1_000_000;
 export const CREDIT_CALL_COUNT_MAX = 1_000;
+// Per-unit quantities on reserve/finalize (unit metering). Bounded like every
+// token count: an unbounded count times a per-unit rate is how an overflow
+// becomes a free request. Each ceiling sits well above one real call:
+// OpenAI caps `n` at 10 images, two hours is the longest clip a transcription
+// accepts, and 100k characters is roughly 25 minutes of speech.
+export const CREDIT_IMAGE_UNITS_MAX = 10;
+export const CREDIT_AUDIO_SECONDS_MAX = 7_200;
+export const CREDIT_TTS_CHARACTERS_MAX = 100_000;
 export const CREDIT_PACKAGE_ID_MAX_LENGTH = 64;
 export const CREDIT_EVENT_ID_MAX_LENGTH = 200;
 // 19 digits is BIGINT's ceiling. A longer figure could not be stored, so

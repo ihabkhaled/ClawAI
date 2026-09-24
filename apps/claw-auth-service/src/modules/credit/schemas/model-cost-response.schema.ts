@@ -30,6 +30,10 @@ export const modelCostResponseSchema = z.object({
   videoPerUnitMicroUsd: rateSchema,
   toolCallPerUnitMicroUsd: rateSchema,
   searchCallPerUnitMicroUsd: rateSchema,
+  // Per character of synthesised speech. DEFAULTED to null so a routing-service
+  // (or a cached entry) that predates the column still parses: null means "not
+  // published", which prices the unit at zero rather than failing the lookup.
+  ttsPerCharacterMicroUsd: rateSchema.default(null),
   costClass: z.nativeEnum(ModelCostClass),
   isAdminOverride: z.boolean(),
   effectiveFrom: z.string().min(1).max(64),

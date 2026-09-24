@@ -181,6 +181,19 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   honest (a retired v1 would collide on `@@unique([provider, modelKey, version])`).
 - Changing a price without bumping `MODEL_COST_SEED_VERSION` is a
   `CHECKSUM_MISMATCH` warning and writes **nothing**. Bump the version to apply.
+- **Per-unit models** (seed v4, 2026-09-25): OpenAI `gpt-image-1` $0.167,
+  `dall-e-3` $0.040, `dall-e-2` $0.020 **per image** (`imagePerUnitMicroUsd`),
+  output token rate `0` so an image is never billed twice. `ModelCostVersion`
+  also carries `ttsPerCharacterMicroUsd` (migration
+  `20260925120000_add_tts_per_character_rate`); `audioPerUnitMicroUsd` means per
+  SECOND of input audio. A per-unit row is excluded from
+  `findMostExpensiveForProvider`, or it would price an unknown chat model's
+  output at $0.
+- **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
+  and bump the seed version. A model whose ACTIVE row is still `source: SEED`
+  (never an override, never a synced row) and whose rates differ gets that row
+  retired and a new version appended, and `ModelCostSeedService` publishes
+  `routing.model_cost.published` for it so auth's 300 s rate cache drops.
 - Reasoning is priced at the output rate wherever it is set, because no provider
   bills it differently. `calculateCostMicroUsd` sums reasoning and output as
   **disjoint** buckets, so a caller must never put reasoning tokens in both.

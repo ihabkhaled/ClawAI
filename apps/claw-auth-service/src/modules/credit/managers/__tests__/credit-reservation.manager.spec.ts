@@ -33,6 +33,7 @@ const PRICED_RATE: PaygRateSnapshot = {
     videoPerUnitMicroUsd: null,
     toolCallPerUnitMicroUsd: null,
     searchCallPerUnitMicroUsd: null,
+    ttsPerCharacterMicroUsd: null,
     costClass: ModelCostClass.STANDARD,
     isAdminOverride: false,
     effectiveFrom: '2026-08-29T00:00:00.000Z',

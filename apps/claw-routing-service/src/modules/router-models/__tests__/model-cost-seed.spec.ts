@@ -45,7 +45,14 @@ const seedInput = (overrides: Partial<ModelCostSeedInput> = {}): ModelCostSeedIn
 type TransactionMock = {
   $queryRaw: Mock;
   seedExecution: { findUnique: Mock; upsert: Mock; update: Mock };
-  modelCostVersion: { findMany: Mock; createMany: Mock };
+  modelCostVersion: {
+    findMany: Mock;
+    createMany: Mock;
+    findUnique: Mock;
+    findFirst: Mock;
+    update: Mock;
+    create: Mock;
+  };
 };
 
 const buildTransaction = (): TransactionMock => ({
@@ -58,8 +65,58 @@ const buildTransaction = (): TransactionMock => ({
   modelCostVersion: {
     findMany: vi.fn().mockResolvedValue([]),
     createMany: vi.fn().mockResolvedValue({ count: 2 }),
+    findUnique: vi.fn().mockResolvedValue(null),
+    findFirst: vi.fn().mockResolvedValue(null),
+    update: vi.fn().mockResolvedValue(undefined),
+    create: vi.fn().mockResolvedValue(undefined),
   },
 });
+
+// The v3 row gpt-image-1 carried before unit metering: a fake token rate.
+const V3_GPT_IMAGE_ROW = {
+  id: 'cost-gpt-image-1-v3',
+  provider: 'OPENAI',
+  modelKey: 'gpt-image-1',
+  version: 1,
+  currency: 'USD',
+  inputPerMillionMicroUsd: 10_000_000n,
+  outputPerMillionMicroUsd: 20_385_742n,
+  cachedInputPerMillionMicroUsd: null,
+  cacheWritePerMillionMicroUsd: null,
+  reasoningPerMillionMicroUsd: null,
+  imagePerUnitMicroUsd: null,
+  audioPerUnitMicroUsd: null,
+  videoPerUnitMicroUsd: null,
+  toolCallPerUnitMicroUsd: null,
+  searchCallPerUnitMicroUsd: null,
+  ttsPerCharacterMicroUsd: null,
+  costClass: CostClass.PREMIUM,
+  confidence: CostConfidence.ESTIMATED,
+  source: ModelCostSource.SEED,
+  isAdminOverride: false,
+  localComputeOwnership: null,
+  isActive: true,
+  activeKey: 'OPENAI:gpt-image-1',
+  effectiveFrom: new Date('2026-09-01T00:00:00.000Z'),
+  retiredAt: null,
+  lastVerifiedAt: null,
+  createdAt: new Date('2026-09-01T00:00:00.000Z'),
+  createdByUserId: null,
+  notes: null,
+};
+
+const GPT_IMAGE_V4_ENTRY = {
+  provider: 'OPENAI',
+  modelKey: 'gpt-image-1',
+  inputPerMillionMicroUsd: 5_000_000,
+  outputPerMillionMicroUsd: 0,
+  cachedInputPerMillionMicroUsd: null,
+  cacheWritePerMillionMicroUsd: null,
+  reasoningPerMillionMicroUsd: null,
+  costClass: CostClass.PREMIUM,
+  imagePerUnitMicroUsd: 167_000,
+  supersedesSeededPrice: true,
+};
 
 describe('MODEL_COST_SEED_ENTRIES', () => {
   // The point of the whole seeder: an empty price table blocks every PAYG
@@ -126,12 +183,49 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
 
   // `hasUsablePricing` needs both. A model missing either is UNPRICED, which
   // for a PAYG provider means blocked — the exact failure this seed exists to
-  // prevent.
-  it('prices both input and output for every entry', () => {
+  // prevent. A per-UNIT model (an image model) carries its money in the unit
+  // column instead, and must then carry a positive per-unit price.
+  it('prices every entry by tokens or, for a per-unit model, by the unit', () => {
     for (const entry of MODEL_COST_SEED_ENTRIES) {
+      const perUnit =
+        (entry.imagePerUnitMicroUsd ?? 0) > 0 ||
+        (entry.audioPerUnitMicroUsd ?? 0) > 0 ||
+        (entry.ttsPerCharacterMicroUsd ?? 0) > 0;
+      if (perUnit) {
+        expect(entry.inputPerMillionMicroUsd).toBeGreaterThanOrEqual(0);
+        expect(entry.outputPerMillionMicroUsd).toBe(0);
+        continue;
+      }
       expect(entry.inputPerMillionMicroUsd).toBeGreaterThan(0);
       expect(entry.outputPerMillionMicroUsd).toBeGreaterThan(0);
     }
+  });
+
+  // OpenAI's image API reports no token usage, so its price must be per image
+  // or every generation settles at $0. List prices, seed v4.
+  it('prices OpenAI images per image, at the quality image-service sends', () => {
+    const byModel = new Map(MODEL_COST_SEED_ENTRIES.map((e) => [`${e.provider}:${e.modelKey}`, e]));
+    expect(byModel.get('OPENAI:gpt-image-1')).toMatchObject({
+      imagePerUnitMicroUsd: 167_000,
+      outputPerMillionMicroUsd: 0,
+      supersedesSeededPrice: true,
+    });
+    expect(byModel.get('OPENAI:dall-e-3')).toMatchObject({ imagePerUnitMicroUsd: 40_000 });
+    expect(byModel.get('OPENAI:dall-e-2')).toMatchObject({ imagePerUnitMicroUsd: 20_000 });
+  });
+
+  // Gemini images report real usageMetadata and stay token-metered.
+  it('leaves Gemini image models token-priced', () => {
+    for (const entry of MODEL_COST_SEED_ENTRIES.filter(
+      (e) => e.provider === 'GEMINI' && e.modelKey.includes('image'),
+    )) {
+      expect(entry.imagePerUnitMicroUsd ?? null).toBeNull();
+      expect(entry.outputPerMillionMicroUsd).toBeGreaterThan(0);
+    }
+  });
+
+  it('is version 4 or later, so installs that ran v3 pick up the image prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(4);
   });
 
   // Money is integer micro-USD everywhere in this platform. A float here would
@@ -144,12 +238,15 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
         entry.cachedInputPerMillionMicroUsd,
         entry.cacheWritePerMillionMicroUsd,
         entry.reasoningPerMillionMicroUsd,
+        entry.imagePerUnitMicroUsd ?? null,
+        entry.audioPerUnitMicroUsd ?? null,
+        entry.ttsPerCharacterMicroUsd ?? null,
       ]) {
         if (rate === null) {
           continue;
         }
         expect(Number.isInteger(rate)).toBe(true);
-        expect(rate).toBeGreaterThan(0);
+        expect(rate).toBeGreaterThanOrEqual(0);
       }
     }
   });
@@ -211,7 +308,12 @@ describe('ModelCostSeedRepository', () => {
   it('inserts every missing price and completes the ledger row', async () => {
     const result = await repository.applyOnce(seedInput());
 
-    expect(result).toEqual({ outcome: SeedApplyOutcome.APPLIED, inserted: 2, skipped: 0 });
+    expect(result).toEqual({
+      outcome: SeedApplyOutcome.APPLIED,
+      inserted: 2,
+      skipped: 0,
+      repriced: [],
+    });
     const [args] = transaction.modelCostVersion.createMany.mock.calls[0] as [
       { data: Array<Record<string, unknown>> },
     ];
@@ -266,7 +368,12 @@ describe('ModelCostSeedRepository', () => {
 
     const result = await repository.applyOnce(seedInput());
 
-    expect(result).toEqual({ outcome: SeedApplyOutcome.APPLIED, inserted: 1, skipped: 1 });
+    expect(result).toEqual({
+      outcome: SeedApplyOutcome.APPLIED,
+      inserted: 1,
+      skipped: 1,
+      repriced: [],
+    });
     const [args] = transaction.modelCostVersion.createMany.mock.calls[0] as [
       { data: Array<Record<string, unknown>> },
     ];
@@ -282,7 +389,12 @@ describe('ModelCostSeedRepository', () => {
     const result = await repository.applyOnce(seedInput());
 
     expect(transaction.modelCostVersion.createMany).not.toHaveBeenCalled();
-    expect(result).toEqual({ outcome: SeedApplyOutcome.APPLIED, inserted: 0, skipped: 2 });
+    expect(result).toEqual({
+      outcome: SeedApplyOutcome.APPLIED,
+      inserted: 0,
+      skipped: 2,
+      repriced: [],
+    });
   });
 
   it('short-circuits a completed run with a matching checksum', async () => {
@@ -324,6 +436,106 @@ describe('ModelCostSeedRepository', () => {
     expect(result.outcome).toBe(SeedApplyOutcome.APPLIED);
     expect(transaction.modelCostVersion.createMany).toHaveBeenCalled();
   });
+
+  describe('superseding a seeded price', () => {
+    beforeEach(() => {
+      transaction.modelCostVersion.findMany.mockResolvedValue([
+        { provider: 'OPENAI', modelKey: 'gpt-image-1' },
+      ]);
+      transaction.modelCostVersion.findUnique.mockResolvedValue(V3_GPT_IMAGE_ROW);
+      transaction.modelCostVersion.findFirst.mockResolvedValue({ version: 1 });
+    });
+
+    it('retires the old seeded row and appends a NEW version with the per-image price', async () => {
+      const result = await repository.applyOnce(seedInput({ entries: [GPT_IMAGE_V4_ENTRY] }));
+
+      expect(result.repriced).toEqual([
+        { provider: 'OPENAI', modelKey: 'gpt-image-1', version: 2 },
+      ]);
+      // The old row's rates are never rewritten — only its active flags.
+      expect(transaction.modelCostVersion.update).toHaveBeenCalledWith({
+        where: { id: V3_GPT_IMAGE_ROW.id },
+        data: { isActive: false, activeKey: null, retiredAt: expect.any(Date) },
+      });
+      const [created] = transaction.modelCostVersion.create.mock.calls[0] as [
+        { data: Record<string, unknown> },
+      ];
+      expect(created.data).toMatchObject({
+        provider: 'OPENAI',
+        modelKey: 'gpt-image-1',
+        version: 2,
+        imagePerUnitMicroUsd: 167_000n,
+        outputPerMillionMicroUsd: 0n,
+        inputPerMillionMicroUsd: 5_000_000n,
+        source: ModelCostSource.SEED,
+        isAdminOverride: false,
+        isActive: true,
+        activeKey: 'OPENAI:gpt-image-1',
+      });
+      expect(transaction.modelCostVersion.createMany).not.toHaveBeenCalled();
+    });
+
+    it('never supersedes an administrator override', async () => {
+      transaction.modelCostVersion.findUnique.mockResolvedValue({
+        ...V3_GPT_IMAGE_ROW,
+        isAdminOverride: true,
+        source: ModelCostSource.ADMIN_OVERRIDE,
+      });
+
+      const result = await repository.applyOnce(seedInput({ entries: [GPT_IMAGE_V4_ENTRY] }));
+
+      expect(result.repriced).toEqual([]);
+      expect(transaction.modelCostVersion.update).not.toHaveBeenCalled();
+      expect(transaction.modelCostVersion.create).not.toHaveBeenCalled();
+    });
+
+    it('never supersedes a synced price', async () => {
+      transaction.modelCostVersion.findUnique.mockResolvedValue({
+        ...V3_GPT_IMAGE_ROW,
+        source: ModelCostSource.PROVIDER_SYNC,
+      });
+
+      const result = await repository.applyOnce(seedInput({ entries: [GPT_IMAGE_V4_ENTRY] }));
+
+      expect(result.repriced).toEqual([]);
+      expect(transaction.modelCostVersion.create).not.toHaveBeenCalled();
+    });
+
+    it('is a no-op when the active seeded price already matches', async () => {
+      transaction.modelCostVersion.findUnique.mockResolvedValue({
+        ...V3_GPT_IMAGE_ROW,
+        inputPerMillionMicroUsd: 5_000_000n,
+        outputPerMillionMicroUsd: 0n,
+        imagePerUnitMicroUsd: 167_000n,
+      });
+
+      const result = await repository.applyOnce(seedInput({ entries: [GPT_IMAGE_V4_ENTRY] }));
+
+      expect(result).toMatchObject({ inserted: 0, skipped: 1, repriced: [] });
+      expect(transaction.modelCostVersion.update).not.toHaveBeenCalled();
+    });
+
+    it('does not supersede anything for an entry without the flag', async () => {
+      const { supersedesSeededPrice: _flag, ...unflagged } = GPT_IMAGE_V4_ENTRY;
+
+      await repository.applyOnce(seedInput({ entries: [unflagged] }));
+
+      expect(transaction.modelCostVersion.findUnique).not.toHaveBeenCalled();
+      expect(transaction.modelCostVersion.update).not.toHaveBeenCalled();
+    });
+
+    it('writes the per-image price on a fresh install (gap fill)', async () => {
+      transaction.modelCostVersion.findMany.mockResolvedValue([]);
+
+      await repository.applyOnce(seedInput({ entries: [GPT_IMAGE_V4_ENTRY] }));
+
+      const [args] = transaction.modelCostVersion.createMany.mock.calls[0] as [
+        { data: Array<Record<string, unknown>> },
+      ];
+      expect(args.data[0]).toMatchObject({ version: 1, imagePerUnitMicroUsd: 167_000n });
+      expect(transaction.modelCostVersion.update).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('ModelCostSeedService', () => {
@@ -332,9 +544,12 @@ describe('ModelCostSeedService', () => {
 
   beforeEach(() => {
     repository = {
-      applyOnce: vi
-        .fn()
-        .mockResolvedValue({ outcome: SeedApplyOutcome.APPLIED, inserted: 16, skipped: 0 }),
+      applyOnce: vi.fn().mockResolvedValue({
+        outcome: SeedApplyOutcome.APPLIED,
+        inserted: 16,
+        skipped: 0,
+        repriced: [],
+      }),
     };
     service = new ModelCostSeedService(repository as unknown as ModelCostSeedRepository);
   });
@@ -372,12 +587,14 @@ describe('ModelCostSeedService', () => {
       outcome: SeedApplyOutcome.ALREADY_APPLIED,
       inserted: 0,
       skipped: 16,
+      repriced: [],
     });
 
     await expect(service.seed()).resolves.toEqual({
       outcome: SeedApplyOutcome.ALREADY_APPLIED,
       inserted: 0,
       skipped: 16,
+      repriced: [],
     });
   });
 });

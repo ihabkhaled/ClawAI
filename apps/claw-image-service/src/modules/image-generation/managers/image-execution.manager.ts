@@ -1,13 +1,16 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { resolveOpenAiImageQuality } from '../utilities/openai-image-quality.utility';
 import { isPaygCreditExhaustedError, type PaygHold, PaygMeter } from '@claw/shared-entitlements';
 import { PaygSurface } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader, httpGet, httpPost } from '@common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
+  IMAGE_PAYG_IMAGES_PER_REQUEST,
   IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
   IMAGE_PAYG_PROMPT_TOKENS,
 } from '../constants/image-payg.constants';
+import { countReturnedImages } from '../utilities/image-unit-count.utility';
 import { providerImageDownloadHosts } from '../utilities/provider-image-download.utility';
 import {
   type ConnectorConfigResponse,
@@ -173,7 +176,7 @@ export class ImageExecutionManager {
         params.model,
         width,
         height,
-        params.quality,
+        resolveOpenAiImageQuality(params.model, params.quality),
         params.style,
       );
     }
@@ -212,6 +215,10 @@ export class ImageExecutionManager {
         promptTokens: IMAGE_PAYG_PROMPT_TOKENS,
         cachedPromptTokens: 0,
         requestedMaxOutputTokens: IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
+        // EXPECTED images. On a per-image price (OpenAI) this is what the hold
+        // is made of; on a token price (Gemini) the rate row has no per-image
+        // column and it adds nothing.
+        imageUnits: IMAGE_PAYG_IMAGES_PER_REQUEST,
       });
       this.logger.log(
         `reserveImageHold: provider=${connectorProvider} metered=${String(hold.metered)} held=${String(hold.heldMicroUsd)}`,
@@ -234,15 +241,16 @@ export class ImageExecutionManager {
   }
 
   /**
-   * Settles the hold against whatever the provider was willing to report.
+   * Settles the hold on what the provider actually produced.
    *
-   * Gemini reports real `usageMetadata`, so a Gemini image settles on measured
-   * numbers. OpenAI images report NOTHING — the `/images/generations` response
-   * has no `usage` block at all — so those settle at zero tokens and the cost
-   * has to come from the per-unit image rate instead. See the finding recorded
-   * in `IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS`: `calculateCostMicroUsd` does not
-   * currently sum `imagePerUnitMicroUsd`, so a zero-token image finalize prices
-   * at zero and the whole hold is released.
+   * Two signals, and the rate row decides which one carries the cost:
+   *  - TOKENS, when the provider reports them. Gemini answers with real
+   *    `usageMetadata` and is priced per token (no per-image rate).
+   *  - IMAGES RETURNED, always. OpenAI's `/images/generations` reports no usage
+   *    at all, so its rows are priced per image (`imagePerUnitMicroUsd`) and
+   *    this count is the whole charge. Settling on zero tokens alone is what
+   *    used to make every OpenAI image cost $0 (rule 37: a non-token surface
+   *    finalizes on measured units, never on zero tokens).
    */
   private async finalizeImageHold(
     hold: PaygHold,
@@ -250,11 +258,10 @@ export class ImageExecutionManager {
     connectorProvider: string,
   ): Promise<void> {
     const usage = response.usage;
-    if (usage === undefined) {
-      this.logger.warn(
-        `finalizeImageHold: ${connectorProvider} reported no token usage — settling at zero tokens; the per-unit image rate is what should carry this cost`,
-      );
-    }
+    const imageUnits = countReturnedImages(response);
+    this.logger.debug(
+      `finalizeImageHold: provider=${connectorProvider} imageUnits=${String(imageUnits)} reportedUsage=${String(usage !== undefined)}`,
+    );
     await this.payg.finalize(
       hold,
       {
@@ -263,7 +270,7 @@ export class ImageExecutionManager {
         cachedPromptTokens: usage?.cachedPromptTokens ?? 0,
         reasoningTokens: usage?.reasoningTokens ?? 0,
       },
-      { toolCalls: 0 },
+      { toolCalls: 0, imageUnits },
     );
   }
 

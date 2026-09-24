@@ -4,8 +4,13 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// Identity of the first-install price bootstrap. Bumping the version re-runs
 /// the seed; changing the payload without bumping it is a checksum mismatch,
 /// not a silent overwrite.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v3';
-export const MODEL_COST_SEED_VERSION = 3;
+///
+/// v4 (2026-09-25): OpenAI image models move from a fake per-token rate
+/// ("$/image / 8192 tokens") to their real per-IMAGE list price, flagged
+/// `supersedesSeededPrice` so an install that already ran v3 gets a NEW version
+/// row for them (the v3 rows are retired, never edited).
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v4';
+export const MODEL_COST_SEED_VERSION = 4;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -299,45 +304,70 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.PREMIUM,
   }),
-  // $0.040 per 1024x1024 standard image / 8192 nominal tokens.
+  // ── OpenAI images: PER-IMAGE list prices (unit metering, seed v4) ────────
   //
-  // DALL-E publishes no per-token INPUT price — it bills per image. The input
-  // rate is set equal to the output rate rather than 0 because
-  // `hasUsablePricing` treats a zero rate as UNPRICED and would block the model
-  // outright. It never charges anything: an image reservation passes 0 prompt
-  // tokens, so this figure is always multiplied by zero.
+  // Source: OpenAI's public pricing page (platform.openai.com/docs/pricing,
+  // "Image generation" per-image table), figures supplied by the owner on
+  // 2026-09-25 and NOT re-fetched here — verify against an invoice before
+  // treating them as margin numbers.
+  //
+  // WHY PER IMAGE. `POST /images/generations` returns no token usage, so the
+  // old token rates ("$/image / 8192 nominal tokens") priced every OpenAI image
+  // at $0: the finalize carried zero tokens and the whole hold was released.
+  // The image is now charged by `imagePerUnitMicroUsd` x images returned.
+  //
+  // WHY THE OUTPUT TOKEN RATE IS 0. The per-image price IS the output-image
+  // token cost, already converted. A non-zero output rate would bill the same
+  // image twice the day the adapter starts forwarding `usage`, and would also
+  // inflate every hold by 8,192 x rate. 0 is published-and-zero, not unknown;
+  // auth-service's local-fallback check looks at the per-unit column too, so a
+  // zero-token row with a per-image price is priced, not blocked.
+  //
+  // WHICH QUALITY. image-service sends `n: 1`, size `1024x1024` by default and,
+  // from chat, NO `quality` — so gpt-image-1 runs at `auto`, whose worst case is
+  // `high`. Priced at high so an `auto` that resolves high is never
+  // under-charged (low $0.011 / medium $0.042 / high $0.167). dall-e-3 without
+  // a quality is `standard` ($0.040; HD is $0.080). A direct API caller asking
+  // for a larger size or HD is a known under-charge — see the image-service
+  // CLAUDE.md.
   Object.freeze({
     provider: 'OPENAI',
     modelKey: 'dall-e-3',
-    inputPerMillionMicroUsd: 4_882_813,
+    inputPerMillionMicroUsd: 0,
     cachedInputPerMillionMicroUsd: null,
-    outputPerMillionMicroUsd: 4_882_813,
+    outputPerMillionMicroUsd: 0,
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 40_000,
+    supersedesSeededPrice: true,
   }),
-  // $0.020 per 1024x1024 image / 8192 nominal tokens. Input rate mirrors the
-  // output rate for the same reason as dall-e-3 above.
   Object.freeze({
     provider: 'OPENAI',
     modelKey: 'dall-e-2',
-    inputPerMillionMicroUsd: 2_441_406,
+    inputPerMillionMicroUsd: 0,
     cachedInputPerMillionMicroUsd: null,
-    outputPerMillionMicroUsd: 2_441_406,
+    outputPerMillionMicroUsd: 0,
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.CHEAP,
+    imagePerUnitMicroUsd: 20_000,
+    supersedesSeededPrice: true,
   }),
-  // $0.167 per 1024x1024 high-quality image / 8192 nominal tokens.
+  // Text prompt input is $5/M; kept so a future adapter that forwards
+  // `usage.input_tokens` prices the prompt. Image-service reserves 0 prompt
+  // tokens today, so it contributes nothing yet.
   Object.freeze({
     provider: 'OPENAI',
     modelKey: 'gpt-image-1',
-    inputPerMillionMicroUsd: 10_000_000,
+    inputPerMillionMicroUsd: 5_000_000,
     cachedInputPerMillionMicroUsd: null,
-    outputPerMillionMicroUsd: 20_385_742,
+    outputPerMillionMicroUsd: 0,
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.PREMIUM,
+    imagePerUnitMicroUsd: 167_000,
+    supersedesSeededPrice: true,
   }),
 
   // ── Connector presets batch 2 (ADR-116/117) ─────────────────────────────

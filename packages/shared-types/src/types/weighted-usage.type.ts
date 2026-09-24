@@ -16,6 +16,14 @@ export type RawTokenBreakdown = {
   // stored, published and forwarded across three services before anything
   // summed it; this is the field that closes that loop.
   imageUnits: number;
+  // Seconds of INPUT audio a speech-to-text call transcribed, priced at
+  // `audioPerUnitMicroUsd` (which is therefore a per-SECOND rate). Optional so
+  // every token-only breakdown built before unit metering stays valid; absent
+  // means zero.
+  audioSeconds?: number;
+  // Characters a text-to-speech call synthesised, priced at
+  // `ttsPerCharacterMicroUsd`. Optional for the same reason; absent means zero.
+  ttsCharacters?: number;
 };
 
 // Versioned per-million pricing for one model, in integer micro-USD.
@@ -31,11 +39,15 @@ export type ModelCostRates = {
   cachedInputPerMillionMicroUsd: number | null;
   cacheWritePerMillionMicroUsd: number | null;
   reasoningPerMillionMicroUsd: number | null;
+  // Per generated image.
   imagePerUnitMicroUsd: number | null;
+  // Per SECOND of input audio (speech-to-text). Not per minute, not per token.
   audioPerUnitMicroUsd: number | null;
   videoPerUnitMicroUsd: number | null;
   toolCallPerUnitMicroUsd: number | null;
   searchCallPerUnitMicroUsd: number | null;
+  // Per character of text synthesised (text-to-speech).
+  ttsPerCharacterMicroUsd: number | null;
   costClass: ModelCostClass;
   // True when an administrator pinned these values; automated sync must NEVER
   // overwrite an active admin override.

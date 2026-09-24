@@ -4,7 +4,7 @@ import {
   PAYG_EXEMPT_PROVIDERS,
   PAYG_RESERVATION_TTL_MS,
 } from '@claw/shared-constants';
-import { BillingErrorCode } from '@claw/shared-types';
+import { BillingErrorCode, type PaygUnitCounts } from '@claw/shared-types';
 
 import { PaygCreditExhaustedError } from './payg-credit-exhausted.error';
 import {
@@ -64,17 +64,11 @@ function isWireUnmetered(value: unknown): value is WireUnmetered {
 }
 
 function readErrorCode(payload: unknown): BillingErrorCode {
-  if (isRecord(payload) && typeof payload['errorCode'] === 'string') {
-    return payload['errorCode'] as BillingErrorCode;
-  }
-  return BillingErrorCode.PAYG_CREDIT_EXHAUSTED;
+  return isRecord(payload) && typeof payload['errorCode'] === 'string' ? (payload['errorCode'] as BillingErrorCode) : BillingErrorCode.PAYG_CREDIT_EXHAUSTED;
 }
 
 function readNumber(payload: unknown, key: string): number {
-  if (isRecord(payload) && typeof payload[key] === 'number') {
-    return payload[key];
-  }
-  return 0;
+  return isRecord(payload) && typeof payload[key] === 'number' ? payload[key] : 0;
 }
 
 /**
@@ -151,6 +145,7 @@ export class PaygMeter {
         promptTokens: Math.max(0, Math.floor(input.promptTokens)),
         cachedPromptTokens: Math.max(0, Math.floor(input.cachedPromptTokens ?? 0)),
         requestedMaxOutputTokens: Math.max(1, Math.floor(input.requestedMaxOutputTokens)),
+        ...PaygMeter.unitWire(input),
       });
     } catch (error) {
       if (error instanceof PaygCreditExhaustedError) {
@@ -216,6 +211,7 @@ export class PaygMeter {
         },
         toolCalls: Math.max(0, Math.floor(calls.toolCalls ?? 0)),
         searchCalls: Math.max(0, Math.floor(calls.searchCalls ?? 0)),
+        ...PaygMeter.unitWire(calls),
       });
     } catch {
       // Swallowed on purpose. See the doc comment: the sweeper is the backstop,
@@ -249,16 +245,31 @@ export class PaygMeter {
     return this.exemptProviders.some((exempt) => exempt.toUpperCase() === normalized);
   }
 
+  /**
+   * The unit counts as they go on the wire: floored, and PRESENT ONLY WHEN
+   * POSITIVE. A token-only call therefore sends byte-for-byte the body it sent
+   * before unit metering existed, so an auth-service that predates these fields
+   * sees nothing new, and one that knows them reads an absent field as zero.
+   */
+  private static unitWire(units: PaygUnitCounts): PaygUnitCounts {
+    // Spelled out per field rather than looped over a key list: reserve and
+    // finalize both go through here, so a unit cannot be forwarded on one and
+    // dropped on the other — which would hold the right money and settle $0.
+    const imageUnits = Math.floor(units.imageUnits ?? 0);
+    const audioSeconds = Math.floor(units.audioSeconds ?? 0);
+    const ttsCharacters = Math.floor(units.ttsCharacters ?? 0);
+    return {
+      ...(imageUnits > 0 ? { imageUnits } : {}),
+      ...(audioSeconds > 0 ? { audioSeconds } : {}),
+      ...(ttsCharacters > 0 ? { ttsCharacters } : {}),
+    };
+  }
+
   private static narrowReason(reason: string): PaygHold['reason'] {
-    if (
-      reason === 'NOT_PAYG' ||
+    return reason === 'NOT_PAYG' ||
       reason === 'METERING_DISABLED' ||
       reason === 'ADMIN_BYPASS' ||
-      reason === 'METER_UNAVAILABLE_EXEMPT'
-    ) {
-      return reason;
-    }
-    return 'NOT_PAYG';
+      reason === 'METER_UNAVAILABLE_EXEMPT' ? reason : 'NOT_PAYG';
   }
 
   private static unmeteredHold(maxOutputTokens: number, reason: PaygHold['reason']): PaygHold {
@@ -311,10 +322,7 @@ export class PaygMeter {
       if (!response.ok) {
         throw new Error(`PAYG meter request failed: ${path} → ${String(response.status)}`);
       }
-      if (response.status === 204) {
-        return undefined;
-      }
-      return await response.json();
+      return response.status === 204 ? undefined : (await response.json());
     } finally {
       clearTimeout(timer);
     }

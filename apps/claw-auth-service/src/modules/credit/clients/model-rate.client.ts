@@ -134,6 +134,7 @@ export class ModelRateClient {
       videoPerUnitMicroUsd: payload.videoPerUnitMicroUsd,
       toolCallPerUnitMicroUsd: payload.toolCallPerUnitMicroUsd,
       searchCallPerUnitMicroUsd: payload.searchCallPerUnitMicroUsd,
+      ttsPerCharacterMicroUsd: payload.ttsPerCharacterMicroUsd,
       costClass: payload.costClass,
       isAdminOverride: payload.isAdminOverride,
       effectiveFrom: payload.effectiveFrom,
@@ -155,15 +156,21 @@ export class ModelRateClient {
    * priced, at a rate of zero on both sides" is the SHAPE of that answer and
    * catches it even if the marker is ever dropped from the payload. For a
    * metered provider both mean the same thing: block, never bill zero.
+   *
+   * "Zero on both sides" means EVERY billable side, per-unit ones included. A
+   * per-image, per-second or per-character row (dall-e, gpt-image-1, a
+   * transcription or speech model) legitimately carries zero token rates, since
+   * its money is in the unit column, and must not be mistaken for a free local
+   * answer and refused.
    */
   private static looksLikeLocalFallback(payload: ModelCostResponse): boolean {
-    if (payload.localComputeOwnership !== null) {
-      return true;
-    }
-    return (
+    return payload.localComputeOwnership !== null ? true : (
       payload.isPriced &&
       (payload.inputPerMillionMicroUsd ?? 0) === 0 &&
-      (payload.outputPerMillionMicroUsd ?? 0) === 0
+      (payload.outputPerMillionMicroUsd ?? 0) === 0 &&
+      (payload.imagePerUnitMicroUsd ?? 0) === 0 &&
+      (payload.audioPerUnitMicroUsd ?? 0) === 0 &&
+      (payload.ttsPerCharacterMicroUsd ?? 0) === 0
     );
   }
 }

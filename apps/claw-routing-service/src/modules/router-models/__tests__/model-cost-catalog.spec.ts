@@ -30,6 +30,7 @@ const snapshot = (overrides: Partial<ModelCostSnapshot> = {}): ModelCostSnapshot
     videoPerUnitMicroUsd: null,
     toolCallPerUnitMicroUsd: null,
     searchCallPerUnitMicroUsd: null,
+    ttsPerCharacterMicroUsd: null,
     costClass: ModelCostClass.PREMIUM,
     isAdminOverride: false,
     effectiveFrom: '2026-07-01T00:00:00.000Z',

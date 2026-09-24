@@ -147,7 +147,15 @@ export class CreditReservationManager {
         // are measured rather than inferred from text.
         source: TokenUsageSource.NATIVE,
       },
-      { toolCalls: input.toolCalls, searchCalls: input.searchCalls },
+      {
+        toolCalls: input.toolCalls,
+        searchCalls: input.searchCalls,
+        // MEASURED units. A non-token surface (an OpenAI image reports no usage
+        // at all) is priced by these, never by its zero tokens.
+        imageUnits: input.imageUnits,
+        audioSeconds: input.audioSeconds,
+        ttsCharacters: input.ttsCharacters,
+      },
     );
     const actualMicroUsd = await this.priceUsage(record, breakdown);
     const moved = await this.usage.markFinalized({
@@ -238,10 +246,7 @@ export class CreditReservationManager {
       return { isPayg: false, reason: 'ADMIN_BYPASS' };
     }
     const policy = await this.policy.getPolicy();
-    if (!isMeteredProvider(provider, policy, ConnectorPolicyClient.defaultForProvider(provider))) {
-      return { isPayg: false, reason: 'NOT_PAYG' };
-    }
-    return { isPayg: true, rate: await this.requireRate(provider, model) };
+    return !isMeteredProvider(provider, policy, ConnectorPolicyClient.defaultForProvider(provider)) ? { isPayg: false, reason: 'NOT_PAYG' } : { isPayg: true, rate: await this.requireRate(provider, model) };
   }
 
   /**
@@ -282,6 +287,11 @@ export class CreditReservationManager {
       cachedPromptTokens: input.cachedPromptTokens,
       requestedMaxOutputTokens: input.requestedMaxOutputTokens,
       minViableOutputTokens: PAYG_MIN_VIABLE_OUTPUT_TOKENS,
+      // EXPECTED units, fixed before the call: held up front like the prompt,
+      // so a per-image generation reserves its real price instead of $0.
+      imageUnits: input.imageUnits,
+      audioSeconds: input.audioSeconds,
+      ttsCharacters: input.ttsCharacters,
     });
     if (clamp.status === 'PROMPT_UNAFFORDABLE') {
       // An empty wallet is EXHAUSTED, not "too expensive". Both refuse, but

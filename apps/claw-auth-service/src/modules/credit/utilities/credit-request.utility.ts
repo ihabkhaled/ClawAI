@@ -21,6 +21,9 @@ export function toCreditReserveInput(dto: ReserveCreditDto): CreditReserveInput 
     promptTokens: dto.promptTokens,
     cachedPromptTokens: dto.cachedPromptTokens,
     requestedMaxOutputTokens: dto.requestedMaxOutputTokens,
+    imageUnits: dto.imageUnits,
+    audioSeconds: dto.audioSeconds,
+    ttsCharacters: dto.ttsCharacters,
   };
 }
 
@@ -40,5 +43,8 @@ export function toCreditFinalizeInput(dto: FinalizeCreditDto): CreditFinalizeInp
     reasoningTokens: dto.usage.reasoningTokens,
     toolCalls: dto.toolCalls,
     searchCalls: dto.searchCalls,
+    imageUnits: dto.imageUnits,
+    audioSeconds: dto.audioSeconds,
+    ttsCharacters: dto.ttsCharacters,
   };
 }

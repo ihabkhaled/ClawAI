@@ -10,7 +10,7 @@
     },
     "@claw/shared-entitlements": {
       "runner": "vitest",
-      "testFiles": 9
+      "testFiles": 10
     },
     "@claw/shared-rabbitmq": {
       "runner": "vitest",
@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "vitest",
-      "testFiles": 42
+      "testFiles": 43
     },
     "claw-agent-service": {
       "runner": "vitest",
@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 107
+      "testFiles": 110
     },
     "claw-chat-service": {
       "runner": "vitest",
@@ -66,7 +66,7 @@
     },
     "claw-image-service": {
       "runner": "vitest",
-      "testFiles": 22
+      "testFiles": 24
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 108
+      "testFiles": 109
     },
     "claw-server-logs-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1502
+  "total": 1510
 }

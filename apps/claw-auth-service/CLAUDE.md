@@ -98,6 +98,18 @@ every paid model on every install that had not armed it, which is the default.
 Pinned by the short-circuit cases in `credit-reservation.manager.spec.ts` and by
 `payg-meter-wire.spec.ts` in shared-entitlements.
 
+**Unit metering (rule 37 item 17).** Reserve and finalize accept optional
+`imageUnits` (≤ 10), `audioSeconds` (≤ 7,200, seconds of INPUT audio) and
+`ttsCharacters` (≤ 100,000), defaulted to 0 in `credit-internal.dto.ts`. The
+hold is sized on the EXPECTED units (`clampOutputTokensToBalance`) and settled
+on the MEASURED ones (`toRawTokenBreakdown`) against `imagePerUnitMicroUsd`,
+`audioPerUnitMicroUsd` and `ttsPerCharacterMicroUsd`. `ModelRateClient`'s
+local-fallback shape check counts the per-unit columns: a per-image row has
+zero token rates on purpose and must not be refused as "free local". The units
+are NOT persisted on `weighted_usage_records` (no column) — the ledger amount
+carries the cost. Pinned by `credit-unit-metering.spec.ts`,
+`credit-internal-units.dto.spec.ts`, `clients/__tests__/model-rate.client.spec.ts`.
+
 **The disabled path is the default path.** It is what a fresh install runs and
 what rollback lever #1 selects, so it needs more testing than the enabled one,
 not less. Test a PAID model with the switch off.

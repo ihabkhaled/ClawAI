@@ -19,6 +19,7 @@ export type ModelCostRateInput = {
   videoPerUnitMicroUsd: bigint | null;
   toolCallPerUnitMicroUsd: bigint | null;
   searchCallPerUnitMicroUsd: bigint | null;
+  ttsPerCharacterMicroUsd: bigint | null;
 };
 
 export type PublishModelCostInput = ModelCostRateInput & {
@@ -76,6 +77,7 @@ export type ModelCostRateDto = {
   videoPerUnitMicroUsd: number | null;
   toolCallPerUnitMicroUsd: number | null;
   searchCallPerUnitMicroUsd: number | null;
+  ttsPerCharacterMicroUsd: number | null;
   costClass: CostClass;
   localComputeOwnership: LocalComputeOwnership | null;
   notes: string | null;

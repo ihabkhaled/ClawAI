@@ -7573,7 +7573,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 23088,
+          "bytes": 24635,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7923,7 +7923,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 14427,
+          "bytes": 16472,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -9969,7 +9969,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
-        "testFiles": 9
+        "testFiles": 10
       },
       "@claw/shared-rabbitmq": {
         "runner": "vitest",
@@ -9981,7 +9981,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 42
+        "testFiles": 43
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -9993,7 +9993,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 107
+        "testFiles": 110
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -10025,7 +10025,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 22
+        "testFiles": 24
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10049,7 +10049,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 108
+        "testFiles": 109
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -10795,7 +10795,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1502,
+    "totalTestFiles": 1510,
     "workspaceCount": 25
   }
 }

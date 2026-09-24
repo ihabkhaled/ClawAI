@@ -4,6 +4,7 @@ import type { ModelCostRates } from '@claw/shared-types';
 import { MoneyError } from '../money/money-error';
 import { MoneyErrorCode } from '../money/money-error-code.enum';
 import type { AffordabilityInput, AffordabilityOutcome } from './affordability.types';
+import { calculateUnitCostMicroUsd } from './weighted-tokens.utility';
 
 /**
  * Worst-case cost of the prompt half of a request, in integer micro-USD.
@@ -54,10 +55,7 @@ export function affordableOutputTokens(remainingMicroUsd: number, rates: ModelCo
   if (outputRate <= 0) {
     return Number.MAX_SAFE_INTEGER;
   }
-  if (remainingMicroUsd <= 0) {
-    return 0;
-  }
-  return Math.floor((remainingMicroUsd * TOKENS_PER_PRICING_UNIT) / outputRate);
+  return remainingMicroUsd <= 0 ? 0 : Math.floor((remainingMicroUsd * TOKENS_PER_PRICING_UNIT) / outputRate);
 }
 
 /**
@@ -86,7 +84,14 @@ export function clampOutputTokensToBalance(input: AffordabilityInput): Affordabi
   // so they join the prompt on the fixed side of the ledger.
   const fixedCostMicroUsd =
     estimateInputCostMicroUsd(input.promptTokens, input.cachedPromptTokens, input.rates) +
-    Math.max(0, input.imageUnits ?? 0) * Math.max(0, input.rates.imagePerUnitMicroUsd ?? 0);
+    calculateUnitCostMicroUsd(
+      {
+        imageUnits: input.imageUnits,
+        audioSeconds: input.audioSeconds,
+        ttsCharacters: input.ttsCharacters,
+      },
+      input.rates,
+    );
   if (fixedCostMicroUsd > input.balanceMicroUsd) {
     return { status: 'PROMPT_UNAFFORDABLE', promptCostMicroUsd: fixedCostMicroUsd };
   }

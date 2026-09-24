@@ -258,7 +258,11 @@ change together.
 | `FILE_GENERATION`  | chat      | Document/file content generation                                       | —           |
 | `WORKSPACE_ACTION` | workspace | AI actions, multi-model review, chain NL draft, IMPL handoff           | U8–U10, U12 |
 | `ROUTING`          | routing   | The cloud router's own paid calls — **one hold per attempt**           | U5, U6      |
-| `RESEARCH`         | research  | Research enrichment that reaches a paid model rather than a search API | —           |
+
+There is **no `RESEARCH` member**: research-service reaches search SaaS, never a
+paid model, and is metered through `FeatureUsageRecord` (see "Not metered", below).
+An earlier revision of this table listed one that never existed in
+`packages/shared-types/src/enums/payg-surface.enum.ts`.
 
 The vision-prompt path (audit **U2**) previously hard-coded a direct Gemini call
 and bypassed the chokepoint; it now goes through `callProvider` at
@@ -280,6 +284,56 @@ second paid call and sharing the key would silently under-charge it. See
 | Ollama / llama.cpp                          | `PAYG_EXEMPT_PROVIDERS` — the user's or operator's own hardware                                                                                                  |
 | **Ollama Cloud**                            | **Unmetered by default.** A routing-only provider name connector-service does not carry, so it resolves unclassified. ADR-078 A3; the lever is the admin toggle. |
 | **Admin routing replay / shadow eval (U7)** | **Known gap.** Reaches billed providers with no `userId`; `RoutingDecision` has no `userId` column. Recorded at `router-shadow-evaluation.manager.ts:138`.       |
+
+## Unit metering — surfaces that are not priced by tokens
+
+Some paid calls produce no token usage at all: OpenAI's `/images/generations`
+answers with `created` and `data` and nothing else; a transcription is billed by
+the length of the audio; speech synthesis by the length of the text. Settling
+those on tokens settles them at **$0** — which is exactly how every OpenAI image
+was free until 2026-09-25.
+
+The PAYG wire therefore carries three **optional** unit counts beside the token
+counts (`PaygUnitCounts` in `@claw/shared-types`):
+
+| Field           | Priced by (`ModelCostVersion` column) | Unit                                      | DTO bound |
+| --------------- | ------------------------------------- | ----------------------------------------- | --------- |
+| `imageUnits`    | `imagePerUnitMicroUsd`                | one generated image                       | ≤ 10      |
+| `audioSeconds`  | `audioPerUnitMicroUsd`                | one **second** of INPUT audio (STT)       | ≤ 7,200   |
+| `ttsCharacters` | `ttsPerCharacterMicroUsd`             | one character of synthesised speech (TTS) | ≤ 100,000 |
+
+`audioPerUnitMicroUsd` is **per second of input audio** — not per minute and not
+per audio token. whisper-1's $0.006/min is `100` micro-USD per second.
+
+- **Reserve** takes the **expected** units. They join the prompt on the fixed
+  side of the affordability clamp (`calculateUnitCostMicroUsd`), so the hold is
+  the real price: one gpt-image-1 image holds exactly `167_000`.
+- **Finalize** takes the **measured** units — images actually returned, seconds
+  actually transcribed, characters actually synthesised. A call that produced
+  nothing finalizes `0` units (or, more usually, is released).
+- **Math.** `calculateCostMicroUsd` sums token modalities (each rounded up once,
+  per-million rates) and per-unit products (exact integer products) in `BigInt`,
+  and converts to `number` once, refusing anything past `MAX_SAFE_INTEGER`.
+- **Compatibility.** Every field is optional and absent means zero. `PaygMeter`
+  only puts a unit field on the wire when it is positive, so a token-only caller
+  sends byte-for-byte what it sent before; auth-service defaults a missing field
+  to `0`. Old callers are unchanged.
+- **A per-unit row has zero token rates by design.** auth's local-fallback check
+  (`ModelRateClient.looksLikeLocalFallback`) and routing's dearest-rate fallback
+  (`findMostExpensiveForProvider`) both look at the per-unit columns, so a
+  per-image row is neither refused as "free local" nor used to price an unknown
+  chat model's output at $0.
+
+| Surface             | Model rows priced by       | Reserve units                                | Finalize units           |
+| ------------------- | -------------------------- | -------------------------------------------- | ------------------------ |
+| `IMAGE` (OpenAI)    | `imagePerUnitMicroUsd`     | `imageUnits: 1`                              | images returned          |
+| `IMAGE` (Gemini)    | tokens (`usageMetadata`)   | `imageUnits: 1` (no per-image rate → adds 0) | images returned + tokens |
+| Transcription / TTS | per second / per character | batch 4 / batch 8                            | measured length          |
+
+Prices live only in `ModelCostVersion` rows (seeded list prices in
+`model-cost-seed.constants.ts`, seed v4 for the OpenAI image rows). Runbook for
+a new per-unit surface:
+[`skills/meter-a-paid-provider-call.md`](../../skills/meter-a-paid-provider-call.md#meter-a-per-unit-surface).
 
 ## Telling the user
 
@@ -399,14 +453,14 @@ Every route requires `buildInterServiceAuthHeader` and validates with bounded
 Zod. These move dollars, so they deliberately do NOT inherit the `@Public()`
 shape that `internal/quota` still has.
 
-| Route                                              | Body                                                                                                                                 | Returns                                                                                                                                                                                                   |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /internal/credit/reserve`                    | `userId`, `requestId`, `provider`, `model`, `surface`, `workflow?`, `promptTokens`, `cachedPromptTokens`, `requestedMaxOutputTokens` | `{metered:false, reason, maxOutputTokens}` · `{metered:true, reservationId, maxOutputTokens, clamped, heldMicroUsd, availableAfterMicroUsd}` · **402** `{errorCode, availableMicroUsd, requiredMicroUsd}` |
-| `POST /internal/credit/finalize`                   | `reservationId`, `usage{promptTokens, completionTokens, cachedPromptTokens, reasoningTokens}`, `toolCalls`, `searchCalls`            | `204`                                                                                                                                                                                                     |
-| `POST /internal/credit/release`                    | `reservationId`, `reason`                                                                                                            | `204`                                                                                                                                                                                                     |
-| `GET /internal/credit/wallet/:userId`              | —                                                                                                                                    | `PaygWalletSnapshot`                                                                                                                                                                                      |
-| `GET /internal/credit/packages`                    | —                                                                                                                                    | active `CreditPackageView[]`. payment-service proxies this so the checkout UI has a single origin.                                                                                                        |
-| `GET /internal/credit/packages/:id/active-version` | —                                                                                                                                    | the immutable version a top-up is priced from. Deliberately uncached: it decides a charge.                                                                                                                |
+| Route                                              | Body                                                                                                                                                                                              | Returns                                                                                                                                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /internal/credit/reserve`                    | `userId`, `requestId`, `provider`, `model`, `surface`, `workflow?`, `promptTokens`, `cachedPromptTokens`, `requestedMaxOutputTokens`, `imageUnits?`, `audioSeconds?`, `ttsCharacters?` (expected) | `{metered:false, reason, maxOutputTokens}` · `{metered:true, reservationId, maxOutputTokens, clamped, heldMicroUsd, availableAfterMicroUsd}` · **402** `{errorCode, availableMicroUsd, requiredMicroUsd}` |
+| `POST /internal/credit/finalize`                   | `reservationId`, `usage{promptTokens, completionTokens, cachedPromptTokens, reasoningTokens}`, `toolCalls`, `searchCalls`, `imageUnits?`, `audioSeconds?`, `ttsCharacters?` (measured)            | `204`                                                                                                                                                                                                     |
+| `POST /internal/credit/release`                    | `reservationId`, `reason`                                                                                                                                                                         | `204`                                                                                                                                                                                                     |
+| `GET /internal/credit/wallet/:userId`              | —                                                                                                                                                                                                 | `PaygWalletSnapshot`                                                                                                                                                                                      |
+| `GET /internal/credit/packages`                    | —                                                                                                                                                                                                 | active `CreditPackageView[]`. payment-service proxies this so the checkout UI has a single origin.                                                                                                        |
+| `GET /internal/credit/packages/:id/active-version` | —                                                                                                                                                                                                 | the immutable version a top-up is priced from. Deliberately uncached: it decides a charge.                                                                                                                |
 
 `reserve` is idempotent on `(userId, requestId)` — a retry reuses its hold
 rather than taking a second one. `finalize` on an unknown reservation returns

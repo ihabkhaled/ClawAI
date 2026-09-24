@@ -21,6 +21,7 @@ export const publishModelCostSchema = z
     videoPerUnitMicroUsd: rateSchema.default(null),
     toolCallPerUnitMicroUsd: rateSchema.default(null),
     searchCallPerUnitMicroUsd: rateSchema.default(null),
+    ttsPerCharacterMicroUsd: rateSchema.default(null),
     costClass: z.nativeEnum(CostClass).default(CostClass.STANDARD),
     localComputeOwnership: z.nativeEnum(LocalComputeOwnership).nullable().default(null),
     notes: z.string().max(1000).nullable().default(null),
@@ -57,6 +58,10 @@ export const priceModelCostSchema = z.object({
   // reports no token usage at all, so this is the only signal that the call cost
   // anything. Defaults to 0 so every existing text-only caller is unchanged.
   imageUnits: z.coerce.number().int().min(0).max(1_000).default(0),
+  // Seconds of input audio (speech-to-text) and characters synthesised
+  // (text-to-speech). Same defaulting: text-only callers are unchanged.
+  audioSeconds: z.coerce.number().int().min(0).max(7_200).default(0),
+  ttsCharacters: z.coerce.number().int().min(0).max(100_000).default(0),
 });
 
 export type PriceModelCostDto = z.infer<typeof priceModelCostSchema>;

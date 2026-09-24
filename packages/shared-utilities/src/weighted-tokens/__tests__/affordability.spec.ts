@@ -31,6 +31,7 @@ function rates(overrides: Partial<ModelCostRates> = {}): ModelCostRates {
     videoPerUnitMicroUsd: null,
     toolCallPerUnitMicroUsd: null,
     searchCallPerUnitMicroUsd: null,
+    ttsPerCharacterMicroUsd: null,
     costClass: ModelCostClass.STANDARD,
     isAdminOverride: false,
     effectiveFrom: new Date(0).toISOString(),
@@ -221,6 +222,8 @@ describe('toRawTokenBreakdown', () => {
       toolCalls: 0,
       searchCalls: 0,
       imageUnits: 0,
+      audioSeconds: 0,
+      ttsCharacters: 0,
     });
     // The four token fields still add up to what the provider reported.
     expect(raw.inputTokens + raw.cachedInputTokens).toBe(1000);

@@ -47,6 +47,7 @@ through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
 3. **Helper vision** — `VISION_HELPER` role + `PaygSurface.VISION_HELPER`; derived-observation framing; compare lanes resolve per model.
 4. **Transcription metering** — `PaygSurface.TRANSCRIPTION` in file-service; local STT exempt.
 5. **Image pricing + plan gating** — OpenAI per-image rate from DB pricing; plan entitlements for image generation/edit, long video, helper vision.
+   _Unit-metering foundation + OpenAI image pricing landed (2026-09-25):_ optional `imageUnits` / `audioSeconds` / `ttsCharacters` on the PAYG wire (`PaygUnitCounts`), bounded in auth's reserve/finalize DTOs; hold sized on expected units, settled on measured units; `calculateCostMicroUsd` sums per-unit terms in BigInt; new `ModelCostVersion.ttsPerCharacterMicroUsd` (migration `20260925120000_add_tts_per_character_rate`); seed v4 prices gpt-image-1 $0.167 / dall-e-3 $0.040 / dall-e-2 $0.020 per image and supersedes the v3 token rows; image-service reserves `imageUnits: 1` and finalizes images returned; rule 37 item 17. Plan gating still open. Transcription (batch 4) and TTS (batch 8) reuse the same fields.
 6. **Video processing** — ffmpeg in file-service; probe metadata into `extractionMetadata`; audio track into the existing transcription path; bounded, time-biased frame sampling.
 7. **Video + AUTO orchestration** — chat assembles timestamped video context; routing receives attachment modalities.
 8. **Text-to-speech** — `textToSpeech` capability, endpoint, `PaygSurface.TTS`, player UI.

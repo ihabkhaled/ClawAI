@@ -1220,12 +1220,15 @@ model ModelCostVersion {
   cacheWritePerMillionMicroUsd  BigInt? @map("cache_write_per_million_micro_usd")
   reasoningPerMillionMicroUsd   BigInt? @map("reasoning_per_million_micro_usd")
 
-  // Per-unit rates, integer micro-USD.
+  // Per-unit rates, integer micro-USD. Units: image = one generated image;
+  // audio = one SECOND of input audio (speech-to-text); ttsPerCharacter = one
+  // character of synthesised speech (text-to-speech).
   imagePerUnitMicroUsd      BigInt? @map("image_per_unit_micro_usd")
   audioPerUnitMicroUsd      BigInt? @map("audio_per_unit_micro_usd")
   videoPerUnitMicroUsd      BigInt? @map("video_per_unit_micro_usd")
   toolCallPerUnitMicroUsd   BigInt? @map("tool_call_per_unit_micro_usd")
   searchCallPerUnitMicroUsd BigInt? @map("search_call_per_unit_micro_usd")
+  ttsPerCharacterMicroUsd   BigInt? @map("tts_per_character_micro_usd")
 
   costClass  CostClass       @default(STANDARD) @map("cost_class")
   confidence CostConfidence  @default(UNKNOWN)

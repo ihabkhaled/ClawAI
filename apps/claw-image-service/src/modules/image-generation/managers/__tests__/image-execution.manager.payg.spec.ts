@@ -10,6 +10,7 @@ import { generateWithGemini } from '../../adapters/gemini-image.adapter';
 import { generateWithOpenAI } from '../../adapters/openai-image.adapter';
 import { generateWithStableDiffusion } from '../../adapters/stable-diffusion.adapter';
 import {
+  IMAGE_PAYG_IMAGES_PER_REQUEST,
   IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
   IMAGE_PAYG_PROMPT_TOKENS,
 } from '../../constants/image-payg.constants';
@@ -109,6 +110,8 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
       promptTokens: IMAGE_PAYG_PROMPT_TOKENS,
       cachedPromptTokens: 0,
       requestedMaxOutputTokens: IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
+      // One hold per paid call, sized on the images this call will produce.
+      imageUnits: IMAGE_PAYG_IMAGES_PER_REQUEST,
     });
   });
 
@@ -139,11 +142,11 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
         cachedPromptTokens: 0,
         reasoningTokens: 20,
       },
-      { toolCalls: 0 },
+      { toolCalls: 0, imageUnits: 1 },
     );
   });
 
-  it('finalizes an OpenAI image at zero tokens, because that API reports none', async () => {
+  it('finalizes an OpenAI image on the image it returned, since that API reports no tokens', async () => {
     const payg = meter();
     // DALL-E answers with a URL, so the connector-config GET and the image
     // download share this mock and are told apart by path.
@@ -163,8 +166,52 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
     expect(payg.finalize).toHaveBeenCalledWith(
       expect.objectContaining({ reservationId: 'res-image-1' }),
       { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
-      { toolCalls: 0 },
+      // The per-image price is charged on this count. Zero tokens alone used to
+      // settle every OpenAI image at $0.
+      { toolCalls: 0, imageUnits: 1 },
     );
+  });
+
+  it('meters a gpt-image-1 generation: one image reserved, one image settled, one hold', async () => {
+    const payg = meter();
+    utilities.httpGet.mockResolvedValue({ provider: 'OPENAI', apiKey: 'k' });
+    openai.generateWithOpenAI.mockResolvedValue({ imageBase64: 'AAA', mimeType: 'image/png' });
+
+    await build(payg).execute(input({ provider: 'IMAGE_OPENAI', model: 'gpt-image-1' }));
+
+    expect(payg.reserve).toHaveBeenCalledTimes(1);
+    expect(payg.reserve).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'OPENAI',
+        model: 'gpt-image-1',
+        surface: PaygSurface.IMAGE,
+        imageUnits: 1,
+      }),
+    );
+    expect(payg.finalize).toHaveBeenCalledTimes(1);
+    expect(payg.finalize).toHaveBeenCalledWith(
+      expect.objectContaining({ reservationId: 'res-image-1' }),
+      expect.any(Object),
+      { toolCalls: 0, imageUnits: 1 },
+    );
+    expect(payg.release).not.toHaveBeenCalled();
+  });
+
+  it('releases (never finalizes) when OpenAI refuses the generation', async () => {
+    const payg = meter();
+    utilities.httpGet.mockResolvedValue({ provider: 'OPENAI', apiKey: 'k' });
+    openai.generateWithOpenAI.mockRejectedValue(new Error('openai 400'));
+
+    await expect(
+      build(payg).execute(input({ provider: 'IMAGE_OPENAI', model: 'gpt-image-1' })),
+    ).rejects.toThrow('openai 400');
+
+    expect(payg.release).toHaveBeenCalledTimes(1);
+    expect(payg.release).toHaveBeenCalledWith(
+      expect.objectContaining({ reservationId: 'res-image-1' }),
+      'PROVIDER_ERROR',
+    );
+    expect(payg.finalize).not.toHaveBeenCalled();
   });
 
   it('never sends the clamped output ceiling to the image API', async () => {
