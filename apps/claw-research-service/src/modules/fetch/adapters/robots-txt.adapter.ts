@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
 import {
@@ -43,6 +44,7 @@ export class RobotsTxtAdapter {
       const { response } = await followRedirectsSafely(
         robotsUrl,
         async (url) => {
+          assertSafeRequestUrl(url, declaredHost(url));
           const hop = await fetch(url, {
             redirect: 'manual',
             signal,

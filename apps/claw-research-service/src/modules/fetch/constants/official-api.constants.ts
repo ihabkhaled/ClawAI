@@ -37,5 +37,20 @@ export const GITHUB_RESERVED_OWNERS: ReadonlySet<string> = new Set([
   'search',
 ]);
 
+/**
+ * The fixed API hosts the official-API strategy may call (TD-038 allowlist
+ * for `assertSafeRequestUrl`). Wikipedia's per-language hosts are added per
+ * call, only for a `*.wikipedia.org` host the resolver produced.
+ */
+export const OFFICIAL_API_FIXED_HOSTS: readonly string[] = [
+  'api.github.com',
+  'export.arxiv.org',
+  'api.crossref.org',
+  'hacker-news.firebaseio.com',
+];
+
+/** Suffix of the Wikipedia language editions the REST API lives on. */
+export const WIKIPEDIA_HOST_SUFFIX = '.wikipedia.org';
+
 /** Largest official-API response body read, in bytes. */
 export const OFFICIAL_API_MAX_BYTES = 2 * 1024 * 1024;

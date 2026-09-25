@@ -62,4 +62,18 @@ describe('OfficialApiFetchAdapter', () => {
       /No official API/u,
     );
   });
+
+  it('refuses an API redirect to a loopback host before requesting it', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 302,
+      headers: {
+        get: (name: string) => (name === 'location' ? 'http://127.0.0.1:4016/api' : null),
+      },
+      body: null,
+    });
+
+    await expect(adapter.fetchPage({ url: 'https://github.com/apify/impit' })).rejects.toThrow();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
 });

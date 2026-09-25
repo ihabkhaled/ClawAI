@@ -1,3 +1,5 @@
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
+
 import {
   FETCH_MAX_CONTENT_LENGTH,
   FETCH_MAX_LINKS,
@@ -30,6 +32,7 @@ export async function postSidecarJson<T>(
   if (isCloudMetadataHost(endpoint.hostname)) {
     throw new Error(`Refusing sidecar base URL on a metadata host: ${endpoint.hostname}`);
   }
+  assertSafeRequestUrl(endpoint.href, declaredHost(baseUrl));
   const response = await fetch(endpoint.href, {
     method: 'POST',
     redirect: 'error',

@@ -95,14 +95,12 @@ describe('sidecar fetch adapters', () => {
 
   describe('FlareSolverrFetchAdapter', () => {
     it('sends request.get to /v1 and uses the solved page', async () => {
-      global.fetch = vi
-        .fn()
-        .mockResolvedValue(
-          jsonResponse({
-            status: 'ok',
-            solution: { url: 'https://example.com/', status: 200, response: ARTICLE },
-          }),
-        );
+      global.fetch = vi.fn().mockResolvedValue(
+        jsonResponse({
+          status: 'ok',
+          solution: { url: 'https://example.com/', status: 200, response: ARTICLE },
+        }),
+      );
 
       const result = await new FlareSolverrFetchAdapter().fetchPage({
         url: 'https://example.com/',
@@ -162,6 +160,33 @@ describe('sidecar fetch adapters', () => {
           strategyConfig: { baseUrl: 'http://169.254.169.254' },
         }),
       ).rejects.toThrow(/metadata host/u);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('shared request guard on the sidecar endpoint', () => {
+    it('refuses a sidecar base URL carrying credentials before any request', async () => {
+      global.fetch = vi.fn();
+
+      await expect(
+        new FlareSolverrFetchAdapter().fetchPage({
+          url: 'https://example.com/',
+          strategyConfig: { baseUrl: 'http://admin:pw@flaresolverr:8191' },
+        }),
+      ).rejects.toThrow(/embedded credentials/u);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('never sends a loopback target to any sidecar', async () => {
+      global.fetch = vi.fn();
+
+      for (const adapter of [
+        new Crawl4AiFetchAdapter(),
+        new FlareSolverrFetchAdapter(),
+        new FirecrawlFetchAdapter(),
+      ]) {
+        await expect(adapter.fetchPage({ url: 'http://localhost:4001/' })).rejects.toThrow();
+      }
       expect(global.fetch).not.toHaveBeenCalled();
     });
   });

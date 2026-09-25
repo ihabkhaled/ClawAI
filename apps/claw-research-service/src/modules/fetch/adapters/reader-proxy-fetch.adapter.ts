@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 
 import {
   FETCH_DEFAULT_TIMEOUT_MS,
@@ -47,7 +48,9 @@ export class ReaderProxyFetchAdapter implements FetchStrategyAdapter {
     );
     await this.limiter.waitForTurn(READER_PROXY_RATE_LIMIT_KEY);
 
-    const response = await fetch(`${baseUrl}${target.href}`, {
+    const readerUrl = `${baseUrl}${target.href}`;
+    assertSafeRequestUrl(readerUrl, declaredHost(baseUrl));
+    const response = await fetch(readerUrl, {
       redirect: 'error',
       signal: AbortSignal.timeout(request.timeoutMs ?? FETCH_DEFAULT_TIMEOUT_MS),
       headers: {

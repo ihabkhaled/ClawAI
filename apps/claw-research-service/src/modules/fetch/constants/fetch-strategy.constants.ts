@@ -175,6 +175,12 @@ export const DEAD_HOST_ERROR_MARKERS: readonly string[] = [
   'failed to lookup address',
 ];
 
+/** The Internet Archive hosts the archive strategy may call (TD-038 allowlist). */
+export const ARCHIVE_SNAPSHOT_HOSTS: ReadonlySet<string> = new Set([
+  'archive.org',
+  'web.archive.org',
+]);
+
 /** Wayback Machine availability API. */
 export const ARCHIVE_SNAPSHOT_AVAILABILITY_URL = 'https://archive.org/wayback/available';
 

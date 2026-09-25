@@ -63,7 +63,11 @@ The owner approved a set on 2026-09-25 (see "Per-tool status").
    the reader follow redirects themselves: the target is checked before, the
    reported final URL after, and the sidecars sit on the isolated
    `claw-scrapers` bridge (research-service is the only ClawAI container on
-   it) so a sidecar-side redirect cannot reach our services. The reader and
+   it) so a sidecar-side redirect cannot reach our services. In addition,
+   every direct `fetch` in the chain also passes the shared
+   `assertSafeRequestUrl` (TD-038, no exemption): fixed hosts for the archive
+   and official APIs, `declaredHost(baseUrl)` for the reader and sidecars, the
+   target site's own host for robots.txt. The reader and
    the archive are third parties: they only ever receive a public URL with no
    token-like query parameter and no signed-in-only app host.
 7. **Host memory.** `HostStrategyMemory` moves the last winning tier to the

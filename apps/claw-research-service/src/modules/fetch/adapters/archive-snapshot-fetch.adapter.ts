@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
+
 import { AppConfig } from '../../../app/config/app.config';
 import {
   FETCH_DEFAULT_TIMEOUT_MS,
@@ -12,6 +14,7 @@ import {
 import { FetchStrategyKind } from '../../../generated/prisma';
 import {
   ARCHIVE_SNAPSHOT_AVAILABILITY_URL,
+  ARCHIVE_SNAPSHOT_HOSTS,
   ARCHIVE_SNAPSHOT_LABEL_PREFIX,
 } from '../constants/fetch-strategy.constants';
 import { readLimitedBody } from '../utilities/limited-body.utility';
@@ -55,6 +58,7 @@ export class ArchiveSnapshotFetchAdapter implements FetchStrategyAdapter {
     const { response, finalUrl } = await followRedirectsSafely(
       toRawSnapshotUrl(snapshot.url, snapshot.timestamp),
       async (url) => {
+        assertSafeRequestUrl(url, ARCHIVE_SNAPSHOT_HOSTS);
         const hop = await fetch(url, {
           redirect: 'manual',
           signal,
@@ -91,10 +95,12 @@ export class ArchiveSnapshotFetchAdapter implements FetchStrategyAdapter {
   }
 
   private async findSnapshot(url: string, signal: AbortSignal): Promise<WaybackSnapshot | null> {
-    const response = await fetch(
-      `${ARCHIVE_SNAPSHOT_AVAILABILITY_URL}?url=${encodeURIComponent(url)}`,
-      { signal, headers: { 'User-Agent': RESEARCH_BOT_USER_AGENT } },
-    );
+    const lookupUrl = `${ARCHIVE_SNAPSHOT_AVAILABILITY_URL}?url=${encodeURIComponent(url)}`;
+    assertSafeRequestUrl(lookupUrl, ARCHIVE_SNAPSHOT_HOSTS);
+    const response = await fetch(lookupUrl, {
+      signal,
+      headers: { 'User-Agent': RESEARCH_BOT_USER_AGENT },
+    });
     if (!response.ok) {
       return null;
     }

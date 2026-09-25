@@ -102,4 +102,25 @@ describe('ReaderProxyFetchAdapter', () => {
     await second;
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
+
+  it('refuses a configured reader base URL carrying credentials (shared request guard)', async () => {
+    global.fetch = vi.fn();
+
+    await expect(
+      new ReaderProxyFetchAdapter().fetchPage({
+        url: 'https://example.com/',
+        strategyConfig: { baseUrl: 'https://user:secret@r.jina.ai/' },
+      }),
+    ).rejects.toThrow(/embedded credentials/u);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('never hands a loopback target to the reader', async () => {
+    global.fetch = vi.fn();
+
+    await expect(
+      new ReaderProxyFetchAdapter().fetchPage({ url: 'http://127.0.0.1:4016/api/v1/health' }),
+    ).rejects.toThrow();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

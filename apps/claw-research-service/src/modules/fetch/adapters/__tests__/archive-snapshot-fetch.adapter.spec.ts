@@ -112,4 +112,13 @@ describe('ArchiveSnapshotFetchAdapter', () => {
       new ArchiveSnapshotFetchAdapter().fetchPage({ url: 'https://example.com/' }),
     ).rejects.toThrow(/HTTP 503/u);
   });
+
+  it('never asks the archive about a loopback URL', async () => {
+    global.fetch = vi.fn();
+
+    await expect(
+      new ArchiveSnapshotFetchAdapter().fetchPage({ url: 'http://127.0.0.1:5452/' }),
+    ).rejects.toThrow();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

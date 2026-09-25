@@ -81,4 +81,25 @@ describe('RobotsTxtAdapter', () => {
 
     expect(outcome.status).toBeNull();
   });
+
+  it('never requests a loopback robots.txt (both guards refuse it before any fetch)', async () => {
+    global.fetch = vi.fn();
+
+    const outcome = await new RobotsTxtAdapter().fetchRobotsTxt('http://127.0.0.1/robots.txt');
+
+    expect(outcome.status).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(impersonatedGet).not.toHaveBeenCalled();
+  });
+
+  it('refuses a robots.txt URL with embedded credentials before any fetch', async () => {
+    global.fetch = vi.fn();
+
+    const outcome = await new RobotsTxtAdapter().fetchRobotsTxt(
+      'https://user:pw@example.com/robots.txt',
+    );
+
+    expect(outcome.status).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

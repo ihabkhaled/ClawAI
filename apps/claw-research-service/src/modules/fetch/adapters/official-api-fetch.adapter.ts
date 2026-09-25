@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
+
 import { AppConfig } from '../../../app/config/app.config';
 import {
   FETCH_DEFAULT_TIMEOUT_MS,
@@ -12,6 +14,7 @@ import { FetchStrategyKind } from '../../../generated/prisma';
 import { OFFICIAL_API_MAX_BYTES } from '../constants/official-api.constants';
 import { readLimitedBody } from '../utilities/limited-body.utility';
 import { formatOfficialApiDocument } from '../utilities/official-api-format.utility';
+import { officialApiAllowedHosts } from '../utilities/official-api-hosts.utility';
 import { resolveOfficialApiTarget } from '../utilities/official-api-resolver.utility';
 import { followRedirectsSafely } from '../utilities/safe-redirect.utility';
 import type { FetchStrategyAdapter } from './fetch-strategy-adapter.interface';
@@ -43,9 +46,11 @@ export class OfficialApiFetchAdapter implements FetchStrategyAdapter {
       throw new Error(`No official API for ${request.url}`);
     }
     const signal = AbortSignal.timeout(request.timeoutMs ?? FETCH_DEFAULT_TIMEOUT_MS);
+    const allowedHosts = officialApiAllowedHosts(target.apiUrl);
     const { response } = await followRedirectsSafely(
       target.apiUrl,
       async (url) => {
+        assertSafeRequestUrl(url, allowedHosts);
         const hop = await fetch(url, {
           redirect: 'manual',
           signal,
