@@ -42,8 +42,14 @@ FROM node:26-bookworm-slim AS runner
 # util-linux gives us `runuser`, which the wrapper entrypoint uses to drop
 # from root to nestjs after chowning the upload volume (Debian has no
 # su-exec; runuser is the bookworm-native equivalent, matching llamacpp).
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget util-linux \
+#
+# ffmpeg (provides ffprobe) — multimodal batch 7 video processing. Only the
+# runner needs it: the build stages never spawn it. Debian's package, run only
+# through the bounded spawn wrapper (media-process.utility.ts).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget util-linux ffmpeg \
   && rm -rf /var/lib/apt/lists/*
+# Fail the build, not the first video upload, if the binaries are missing.
+RUN ffmpeg -hide_banner -version >/dev/null && ffprobe -hide_banner -version >/dev/null
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs

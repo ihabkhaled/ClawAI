@@ -72,3 +72,14 @@ ENTITLEMENTS_UNAVAILABLE` (a stated `PLAN_TRIAL_EXPIRED` keeps its code);
 - `maxVideoSeconds` is exposed now; its enforcement lands with the video
   batches. Unlimited stays at 600 s deliberately: video processing (ffmpeg
   CPU) is not PAYG-metered, so no tier is uncapped until that is priced.
+
+## Addendum — video enforcement (multimodal batch 7, 2026-09-25)
+
+file-service executes the paid video step (the audio-track transcription), so
+it enforces `maxVideoSeconds`: `VideoPlanLimitManager` reads it through
+`resolvePlanLimit` and compares the ffprobe-MEASURED duration before any hold.
+Over the limit → the video row is `FAILED` `VIDEO_TOO_LONG_FOR_PLAN` with a
+message naming the limit (`0` → `VIDEO_DISABLED_FOR_PLAN`); the upload stays
+stored and downloadable. auth-service unreachable (or an older build without
+the field) → the paid step fails closed and the free, local steps (probe,
+thumbnail) still land. ADMIN is unlimited via `resolvePlanLimit`.

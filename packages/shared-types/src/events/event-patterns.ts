@@ -52,6 +52,13 @@ export enum EventPattern {
   FILE_TRANSCRIBE_REQUESTED = 'file.transcribe_requested',
   FILE_TRANSCRIBE_COMPLETED = 'file.transcribe_completed',
   FILE_TRANSCRIBE_FAILED = 'file.transcribe_failed',
+  // === Multimodal batch 7 — video processing job (file-service → file-service) ===
+  // Same ordering trap as FILE_TRANSCRIBE_REQUESTED: VideoProcessingManager
+  // subscribes in `onModuleInit`, which asserts the queue before
+  // FileProcessingManager can publish the first request.
+  FILE_VIDEO_PROCESS_REQUESTED = 'file.video_process_requested',
+  FILE_VIDEO_PROCESS_COMPLETED = 'file.video_process_completed',
+  FILE_VIDEO_PROCESS_FAILED = 'file.video_process_failed',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',

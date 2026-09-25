@@ -887,6 +887,30 @@
     },
     {
       "consumers": [],
+      "key": "FILE_VIDEO_PROCESS_COMPLETED",
+      "pattern": "file.video_process_completed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "FILE_VIDEO_PROCESS_FAILED",
+      "pattern": "file.video_process_failed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "FILE_VIDEO_PROCESS_REQUESTED",
+      "pattern": "file.video_process_requested",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
       "key": "FILE_GENERATION_FAILED",
       "pattern": "file_generation.failed",
       "producers": []

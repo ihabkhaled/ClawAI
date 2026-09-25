@@ -14,6 +14,10 @@ import { ZipExpansionManager } from './managers/zip-expansion.manager';
 import { TranscriptionManager } from './managers/transcription.manager';
 import { TranscriptionMeterManager } from './managers/transcription-meter.manager';
 import { TranscriptionCapabilityClient } from './clients/transcription-capability.client';
+import { VideoProcessingManager } from './managers/video-processing.manager';
+import { VideoMediaManager } from './managers/video-media.manager';
+import { VideoPlanLimitManager } from './managers/video-plan-limit.manager';
+import { VideoFramesService } from './services/video-frames.service';
 
 @Module({
   controllers: [FilesController, FileArchiveController, FilesInternalController],
@@ -35,6 +39,13 @@ import { TranscriptionCapabilityClient } from './clients/transcription-capabilit
     // comes from the @Global() EntitlementsModule in AppModule.
     TranscriptionMeterManager,
     TranscriptionCapabilityClient,
+    // Multimodal batch 7 - video processing (ffprobe/ffmpeg). The manager
+    // subscribes to file.video_process_requested in onModuleInit, which
+    // asserts the queue before FileProcessingManager can publish into it.
+    VideoProcessingManager,
+    VideoMediaManager,
+    VideoPlanLimitManager,
+    VideoFramesService,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],
 })

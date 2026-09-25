@@ -5,4 +5,5 @@ export {
   InvalidCredentialsException,
   AccountSuspendedException,
   InvalidRefreshTokenException,
-} from "./business.exception";
+} from './business.exception';
+export { MediaSourceUnreadableError } from './media-source-unreadable.error';

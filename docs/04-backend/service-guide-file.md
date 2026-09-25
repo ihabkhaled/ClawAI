@@ -87,11 +87,12 @@ the caller's own, the same rule `FilesService.getFile` uses.
 
 ### Internal API (service-to-service)
 
-| Method | Path                                | Description                                            |
-| ------ | ----------------------------------- | ------------------------------------------------------ |
-| GET    | /internal/files/:id/content         | The payload chat-service attaches to a turn            |
-| GET    | /internal/files/:id/ingestion-state | Cheap readiness poll — status and text length, no text |
-| GET    | /internal/files/:id/chunks          | Chunks, for retrieval                                  |
+| Method | Path                                | Description                                               |
+| ------ | ----------------------------------- | --------------------------------------------------------- |
+| GET    | /internal/files/:id/content         | The payload chat-service attaches to a turn               |
+| GET    | /internal/files/:id/ingestion-state | Cheap readiness poll — status and text length, no text    |
+| GET    | /internal/files/:id/chunks          | Chunks, for retrieval                                     |
+| POST   | /internal/files/:id/video-frames    | JPEG frames of a processed video (batch 7), owner-checked |
 
 `/content` is the attachment path. `/chunks` serves retrieval and performs no
 ownership check, which is a second reason not to route attachment content
@@ -102,7 +103,8 @@ column. An audio row reaches `COMPLETED` the instant the upload lands — see
 "Audio transcription" below — with `extractedText` still the `[Audio file: …]`
 placeholder; transcription runs later, out of band. `FilesService#effectiveIngestionStatus`
 reports `PROCESSING` (or `FAILED`, once `extractionError` is set) for exactly
-that row, WITHOUT touching the persisted column, so chat-service's bounded
+that row — and, since batch 7, for a video row still carrying `[Video file: …]` —
+WITHOUT touching the persisted column, so chat-service's bounded
 `waitForIngestion` poll actually waits for the transcript instead of seeing
 `COMPLETED` on the first poll and moving on. `getFileContent` and every other
 reader of the real column are unaffected.
@@ -167,10 +169,13 @@ FILE_STORAGE_PATH/
 
 ## Events
 
-| Event         | Direction | Notes                    |
-| ------------- | --------- | ------------------------ |
-| file.uploaded | Publish   | After file saved to disk |
-| file.chunked  | Publish   | After chunks created     |
+| Event                                            | Direction                | Notes                                                                       |
+| ------------------------------------------------ | ------------------------ | --------------------------------------------------------------------------- |
+| file.uploaded                                    | Publish                  | After file saved to disk                                                    |
+| file.chunked                                     | Publish                  | After chunks created                                                        |
+| file.transcribe_requested / _completed / _failed | Publish + consume (self) | Audio transcription job                                                     |
+| file.video_process_requested                     | Publish + consume (self) | Video job (batch 7), `publishConfirmed` after the placeholder write         |
+| file.video_process_completed / _failed           | Publish                  | Carries ids, duration, `audioStatus` / `reasonCode` — never transcript text |
 
 ## Download Proxy
 
@@ -478,6 +483,68 @@ image-service's `callMeteredCloudProvider`); `PaygMeter` comes from the global
   closed.
 
 Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md).
+
+## Video processing (multimodal batch 7)
+
+ffmpeg (Debian `ffmpeg`, which provides `ffprobe`) is installed in both images.
+A video upload completes with `extractedText = "[Video file: …]"`; a
+`file.video_process_requested` job runs `VideoProcessingManager`:
+
+| Step          | What                                                                              | Limit / rule                                                                          |
+| ------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Probe         | `ffprobe -show_format -show_streams -of json`, Zod-parsed                         | 15 s, 1 MB stdout, ≤ 32 streams                                                       |
+| Global policy | video stream present, duration > 0, ≤ 3840×2160, ≤ 30 min                         | else `FAILED` + `VideoProcessingFailureReason`                                        |
+| Thumbnail     | one JPEG ~10% in, ≤ 480 px wide                                                   | ≤ 96 KB, persisted in `extractionMetadata.media.thumbnailBase64`                      |
+| Plan limit    | `Plan.maxVideoSeconds` (`null` unlimited, `0` disabled; ADMIN unlimited)          | over → `FAILED` `VIDEO_TOO_LONG_FOR_PLAN`, no hold; auth down → paid step skipped     |
+| Audio track   | first audio stream → 16 kHz mono 32 kbps MP3                                      | 180 s; ≤ 12 MB                                                                        |
+| Transcription | `TranscriptionManager.transcribeDerivedAudio`, PAYG `TRANSCRIPTION`               | requestId `transcription:${fileId}:video-audio:${provider}`, held on measured seconds |
+| Write         | `saveVideoExtractionResult`: document + status + `extractionMetadata.media`, once | document ≤ 60,000 chars; ≤ 1,000 segments × 500 chars                                 |
+
+`extractionMetadata.media` = `{ durationMs, width, height, fps, videoCodec,
+audioCodec, hasAudio, container, sizeBytes, thumbnailBase64, thumbnailMimeType,
+transcriptSegments[{startMs,endMs,text}], audioStatus, audioReason,
+transcriptionProvider, transcriptionModel, failureReason, processedAt }`.
+
+The document written to `extractedText`:
+
+```
+Video "demo.mp4" — length 01:23, 1920×1080, 30 fps, h264, audio: aac.
+Transcript of the audio track (times are from the start of the video):
+[00:12–00:20] We ship on Friday.
+```
+
+or `No audio track.` / `Audio could not be transcribed: <reason>.` /
+`Audio was not transcribed: the plan could not be checked…`. A plan-limit or
+probe failure is `FAILED` with the readable reason in `extractionError`; the
+upload itself stays stored and downloadable.
+
+**Duration, not bytes, bounds cost.** Audio uploads are still capped by bytes
+(`MAX_TRANSCRIBABLE_AUDIO_BYTES`); a video's paid step is gated on its MEASURED
+duration against the plan, and the hold is sized on those seconds.
+
+**Idempotency.** A job for a row that no longer carries the placeholder is a
+no-op; a Redis `SET NX` lock per file makes a concurrent duplicate a no-op. A
+placeholder older than 10 minutes is re-queued when polled (legacy rows, lost
+jobs) — never bulk-migrated.
+
+**Security.** `spawn` with an argument array and `shell: false`, stdin ignored,
+SIGKILL at the budget, stdout byte cap (`media-process.utility.ts`, the only
+`child_process` import). `-protocol_whitelist file,pipe` and
+`-format_whitelist mov,mp4,…,mpegvideo` precede every `-i` — the second one
+refuses an HLS/concat playlist renamed to `.mp4` (`[hls] Format not on
+whitelist`, verified on bookworm ffmpeg 5.1). The only input path is
+`<mkdtemp>/input`; the user's filename never becomes an argument. Temp dirs are
+removed in `finally`.
+
+**Frames — retention decision.** `POST /internal/files/:id/video-frames`
+`{ userId, timestampsMs: 1..8 }` returns `[{ timestampMs, mimeType, base64 }]`
+(JPEG ≤ 768 px, ≤ 512 KB each, ≤ 3 MB total). Frames are **never persisted**:
+extracted per request in a temp dir and cached in Redis for 10 minutes keyed by
+(file, timestamp). Only the thumbnail lives on the row. 404 for a non-owner,
+409 until processed (or when processing failed), 400 past `durationMs`, 401
+without the service token. chat-service calls it in batch 8.
+
+Runbook: [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).
 
 ## OCR pipeline (Slice D foundation 3)
 

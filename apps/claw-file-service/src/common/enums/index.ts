@@ -8,3 +8,6 @@ export {
   TranscriptionAttemptStatus,
   TranscriptionReserveStatus,
 } from './transcription-meter-status.enum';
+export { MediaProcessStatus } from './media-process-status.enum';
+export { VideoPlanDecision } from './video-plan-decision.enum';
+export { DerivedTranscriptionStatus } from './derived-transcription-status.enum';

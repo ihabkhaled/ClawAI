@@ -39,6 +39,7 @@ export const transcribeWithGemini = async (
   mimeType: string,
   model: string,
   maxOutputTokens?: number,
+  instruction: string = TRANSCRIPTION_INSTRUCTION,
 ): Promise<TranscriptionProviderResult> => {
   const nativeBase = toGeminiNativeBaseUrl(baseUrl);
   // `model` is the connector catalog's key, which already carries a `models/`
@@ -53,7 +54,9 @@ export const transcribeWithGemini = async (
       {
         role: 'user',
         parts: [
-          { text: TRANSCRIPTION_INSTRUCTION },
+          // Plain text for an audio upload; `[mm:ss]` lines for a video's
+          // track (VIDEO_TRANSCRIPTION_INSTRUCTION), parsed by the caller.
+          { text: instruction },
           // snake_case is the native REST wire format. camelCase `inlineData`
           // is the SDK's spelling and is silently ignored over plain HTTP,
           // which reads back as "the model did not hear any audio".

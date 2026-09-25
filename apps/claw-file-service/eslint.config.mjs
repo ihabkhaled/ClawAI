@@ -286,6 +286,10 @@ export default tseslint.config(
       // checked against the session's declared totalChunks — same shape of
       // guarantee as the two files above.
       'src/modules/files/managers/chunked-upload.manager.ts',
+      // Batch 7 — every path here is built inside a job's own mkdtemp dir
+      // from a constant name or a formatted integer; the user's filename
+      // never reaches it (media-args.utility / video-processing.constants).
+      'src/common/utilities/media-process.utility.ts',
     ],
     rules: {
       'security/detect-non-literal-fs-filename': 'off',

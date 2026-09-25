@@ -12,7 +12,11 @@ import { readFile } from '../../../common/utilities';
 import { FilesRepository } from '../repositories/files.repository';
 import { TranscriptionCapabilityClient } from '../clients/transcription-capability.client';
 import { TranscriptionMeterManager } from './transcription-meter.manager';
-import { TranscriptionAttemptStatus, TranscriptionReserveStatus } from '../../../common/enums';
+import {
+  DerivedTranscriptionStatus,
+  TranscriptionAttemptStatus,
+  TranscriptionReserveStatus,
+} from '../../../common/enums';
 import { transcribeWithGemini } from '../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
 import {
@@ -28,7 +32,13 @@ import {
   type TranscriptionAttemptOutcome,
   type TranscriptionCapability,
   type TranscriptionProviderResult,
+  type TranscriptionRequestContext,
+  type TranscriptionRunOutcome,
 } from '../types/transcription.types';
+import {
+  type DerivedAudioTranscriptionInput,
+  type DerivedAudioTranscriptionOutcome,
+} from '../types/video-processing.types';
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
 import { isAudioModalityRejection } from '../utilities/transcription-error.utility';
 
@@ -123,20 +133,8 @@ export class TranscriptionManager implements OnModuleInit {
   }
 
   /**
-   * Walks `candidates` in priority order, stopping at the first success.
-   *
-   * A candidate the connector catalog marked audio-capable can still be one
-   * the provider itself refuses for that exact model — a stale or
-   * over-broad `supportsAudio` sync, not a real outage. That refusal
-   * (`isAudioModalityRejection`) is the ONLY reason this falls through to
-   * the next candidate; every other failure (rate limit, auth, a bad
-   * recording, an empty transcript) stops here and is recorded as a real
-   * failure — falling through on those would mean paying a second provider
-   * for a request that was never going to succeed.
-   *
-   * A PAYG credit refusal is not a throw at all: `attemptCandidate` returns
-   * `REFUSED` and this loop stops there. Trying the next provider after "you
-   * have no credit" would only be refused again — or, worse, charged.
+   * The audio-upload path: size guard, read, run the candidate loop, then the
+   * ONE write for this row (transcript, or the reason there is none).
    */
   private async runTranscription(
     file: File,
@@ -174,76 +172,202 @@ export class TranscriptionManager implements OnModuleInit {
       return;
     }
 
+    const context: TranscriptionRequestContext = {
+      fileId: file.id,
+      userId,
+      base64,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+    };
+    const outcome = await this.runCandidates(context, candidates);
+    if (outcome !== null) {
+      await this.applyUploadOutcome(file, userId, outcome, startedAt);
+    }
+  }
+
+  /** The single write + event for an audio upload, whichever way the loop ended. */
+  private async applyUploadOutcome(
+    file: File,
+    userId: string,
+    outcome: TranscriptionRunOutcome,
+    startedAt: number,
+  ): Promise<void> {
+    const provider = outcome.capability.provider;
+    if (outcome.status === TranscriptionAttemptStatus.COMPLETED) {
+      await this.filesRepository.saveExtractionResult(file.id, {
+        extractedText: outcome.transcript,
+        extractionError: null,
+        status: FileIngestionStatus.COMPLETED,
+      });
+      const durationMs = Date.now() - startedAt;
+      const payload: FileTranscribeCompletedPayload = {
+        fileId: file.id,
+        userId,
+        provider,
+        model: outcome.model,
+        characters: outcome.transcript.length,
+        durationMs,
+        timestamp: new Date().toISOString(),
+      };
+      void this.rabbitMQService.publish(EventPattern.FILE_TRANSCRIBE_COMPLETED, payload);
+      this.logger.log(
+        `runTranscription: fileId=${file.id} provider=${provider} model=${outcome.model} chars=${String(outcome.transcript.length)} durationMs=${String(durationMs)}`,
+      );
+      return;
+    }
+    if (outcome.status === TranscriptionAttemptStatus.REFUSED) {
+      await this.recordFailure(file, outcome.reason);
+      this.publishFailed(
+        file.id,
+        userId,
+        outcome.reasonCode,
+        outcome.reason,
+        provider,
+        outcome.model,
+      );
+      return;
+    }
+    const reason = `Audio transcription failed: ${outcome.reason}`;
+    await this.recordFailure(file, reason);
+    this.publishFailed(
+      file.id,
+      userId,
+      this.classify(outcome.reason),
+      reason,
+      provider,
+      outcome.model,
+    );
+  }
+
+  /**
+   * Transcribes audio DERIVED from another upload — a video's audio track
+   * (multimodal batch 7). Same candidate loop, same PAYG meter, charged to the
+   * same uploader, but it never writes the row: `VideoProcessingManager` owns
+   * the video row's single write. The request id carries the scope
+   * (`transcription:${fileId}:video-audio:${provider}`), so a redelivered job
+   * re-uses its hold and never collides with an audio upload's. Never throws.
+   */
+  async transcribeDerivedAudio(
+    input: DerivedAudioTranscriptionInput,
+  ): Promise<DerivedAudioTranscriptionOutcome> {
+    if (input.sizeBytes > MAX_TRANSCRIBABLE_AUDIO_BYTES) {
+      this.logger.warn(`transcribeDerivedAudio: fileId=${input.fileId} derived track too large`);
+      return { status: DerivedTranscriptionStatus.FAILED, reason: TRANSCRIPTION_TOO_LARGE_MESSAGE };
+    }
+    let candidates: TranscriptionCapability[];
+    try {
+      candidates = await this.capabilityClient.findCapableModels();
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? error.message : 'capability lookup failed';
+      return { status: DerivedTranscriptionStatus.FAILED, reason };
+    }
+    const outcome = await this.runCandidates(
+      {
+        fileId: input.fileId,
+        userId: input.userId,
+        base64: input.audioBase64,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+        audioSeconds: input.audioSeconds,
+        requestScope: input.requestScope,
+        instruction: input.instruction,
+      },
+      candidates,
+    );
+    if (outcome === null) {
+      return {
+        status: DerivedTranscriptionStatus.FAILED,
+        reason: TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
+      };
+    }
+    if (outcome.status !== TranscriptionAttemptStatus.COMPLETED) {
+      this.logger.warn(
+        `transcribeDerivedAudio: fileId=${input.fileId} provider=${outcome.capability.provider} status=${outcome.status}`,
+      );
+      return { status: DerivedTranscriptionStatus.FAILED, reason: outcome.reason };
+    }
+    this.logger.log(
+      `transcribeDerivedAudio: fileId=${input.fileId} provider=${outcome.capability.provider} model=${outcome.model} chars=${String(outcome.transcript.length)}`,
+    );
+    return {
+      status: DerivedTranscriptionStatus.TRANSCRIBED,
+      text: outcome.transcript,
+      segments: outcome.result.segments ?? [],
+      provider: outcome.capability.provider,
+      model: outcome.model,
+    };
+  }
+
+  /**
+   * Walks `candidates` in priority order, stopping at the first success.
+   * Returns null only for an empty list. Never writes the row.
+   *
+   * A candidate the connector catalog marked audio-capable can still be one
+   * the provider itself refuses for that exact model — a stale or
+   * over-broad `supportsAudio` sync, not a real outage. That refusal
+   * (`isAudioModalityRejection`) is the ONLY reason this falls through to
+   * the next candidate; every other failure (rate limit, auth, a bad
+   * recording, an empty transcript) stops here and is returned as a real
+   * failure — falling through on those would mean paying a second provider
+   * for a request that was never going to succeed.
+   *
+   * A PAYG credit refusal is not a throw at all: `attemptCandidate` returns
+   * `REFUSED` and this loop stops there. Trying the next provider after "you
+   * have no credit" would only be refused again — or, worse, charged.
+   */
+  private async runCandidates(
+    context: TranscriptionRequestContext,
+    candidates: TranscriptionCapability[],
+  ): Promise<TranscriptionRunOutcome | null> {
     const firstCandidate = candidates.at(0);
     if (firstCandidate === undefined) {
-      // Unreachable — the caller only enters this method with a non-empty
-      // list — but the type checker cannot prove that across the call
-      // boundary, and a silent no-op here would be worse than a clear log.
-      this.logger.error(`runTranscription: fileId=${file.id} called with no candidates`);
-      return;
+      this.logger.error(`runCandidates: fileId=${context.fileId} called with no candidates`);
+      return null;
     }
 
     let lastReason = 'Unknown transcription error';
     let lastCapability = firstCandidate;
     for (const [index, capability] of candidates.entries()) {
       lastCapability = capability;
+      const model = this.effectiveModel(capability);
       try {
-        const outcome = await this.attemptCandidate(file, userId, capability, base64, startedAt);
-        if (outcome.status === TranscriptionAttemptStatus.REFUSED) {
-          await this.recordFailure(file, outcome.reason);
-          this.publishFailed(
-            file.id,
-            userId,
-            outcome.reasonCode,
-            outcome.reason,
-            capability.provider,
-            this.effectiveModel(capability),
-          );
-        }
-        return;
+        const outcome = await this.attemptCandidate(context, capability);
+        return { ...outcome, capability, model };
       } catch (error: unknown) {
         const reason = error instanceof Error ? error.message : 'Unknown transcription error';
         lastReason = reason;
         const hasNextCandidate = index < candidates.length - 1;
-        const model = this.effectiveModel(capability);
         if (isAudioModalityRejection(error) && hasNextCandidate) {
           this.logger.warn(
-            `runTranscription: fileId=${file.id} provider=${capability.provider} model=${model} refused the audio modality — falling through to the next candidate (${reason})`,
+            `runCandidates: fileId=${context.fileId} provider=${capability.provider} model=${model} refused the audio modality — falling through to the next candidate (${reason})`,
           );
           continue;
         }
         this.logger.error(
-          `runTranscription: fileId=${file.id} provider=${capability.provider} model=${model} failed — ${reason}`,
+          `runCandidates: fileId=${context.fileId} provider=${capability.provider} model=${model} failed — ${reason}`,
         );
         break;
       }
     }
-
-    await this.recordFailure(file, `Audio transcription failed: ${lastReason}`);
-    this.publishFailed(
-      file.id,
-      userId,
-      this.classify(lastReason),
-      `Audio transcription failed: ${lastReason}`,
-      lastCapability.provider,
-      this.effectiveModel(lastCapability),
-    );
+    return {
+      status: TranscriptionAttemptStatus.FAILED,
+      reason: lastReason,
+      capability: lastCapability,
+      model: this.effectiveModel(lastCapability),
+    };
   }
 
   /**
    * One candidate, start to finish, inside a PAYG hold. THROWS on any
    * provider failure — an empty transcript included — after releasing the
-   * hold, so `runTranscription`'s loop is the only place that decides whether
-   * a failure is recoverable (fall through) or terminal (record it). Returns
-   * `REFUSED` (no provider call made) when the credit check says no, and
-   * `COMPLETED` only after the transcript is saved and the event published.
+   * hold, so `runCandidates` is the only place that decides whether a
+   * failure is recoverable (fall through) or terminal. Returns `REFUSED` (no
+   * provider call made) when the credit check says no, and `COMPLETED` with
+   * the transcript once the hold is settled on measured units.
    */
   private async attemptCandidate(
-    file: File,
-    userId: string,
+    context: TranscriptionRequestContext,
     capability: TranscriptionCapability,
-    base64: string,
-    startedAt: number,
   ): Promise<TranscriptionAttemptOutcome> {
     const model = this.effectiveModel(capability);
     const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
@@ -252,11 +376,13 @@ export class TranscriptionManager implements OnModuleInit {
     // Charged to the UPLOADER — the job's userId — per attempt. The requestId
     // is per provider, so a modality fall-through is a second, separate hold.
     const reservation = await this.meter.reserve({
-      userId,
-      fileId: file.id,
+      userId: context.userId,
+      fileId: context.fileId,
       provider: capability.provider,
       model,
-      sizeBytes: file.sizeBytes,
+      sizeBytes: context.sizeBytes,
+      ...(context.audioSeconds === undefined ? {} : { audioSeconds: context.audioSeconds }),
+      ...(context.requestScope === undefined ? {} : { requestScope: context.requestScope }),
     });
     if (reservation.status === TranscriptionReserveStatus.REFUSED) {
       // No provider call: a refused hold means nothing was spent.
@@ -275,8 +401,7 @@ export class TranscriptionManager implements OnModuleInit {
         capability.provider,
         baseUrl,
         config.apiKey,
-        base64,
-        file.mimeType,
+        context,
         model,
         meterHold.hold.maxOutputTokens,
       );
@@ -295,44 +420,36 @@ export class TranscriptionManager implements OnModuleInit {
     }
 
     await this.meter.finalize(meterHold, result);
-
-    await this.filesRepository.saveExtractionResult(file.id, {
-      extractedText: transcript,
-      extractionError: null,
-      status: FileIngestionStatus.COMPLETED,
-    });
-
-    const durationMs = Date.now() - startedAt;
-    const payload: FileTranscribeCompletedPayload = {
-      fileId: file.id,
-      userId,
-      provider: capability.provider,
-      model,
-      characters: transcript.length,
-      durationMs,
-      timestamp: new Date().toISOString(),
-    };
-    void this.rabbitMQService.publish(EventPattern.FILE_TRANSCRIBE_COMPLETED, payload);
-    this.logger.log(
-      `attemptCandidate: fileId=${file.id} provider=${capability.provider} model=${model} chars=${String(transcript.length)} durationMs=${String(durationMs)}`,
-    );
-    return { status: TranscriptionAttemptStatus.COMPLETED };
+    return { status: TranscriptionAttemptStatus.COMPLETED, transcript, result };
   }
 
   private async callProvider(
     provider: string,
     baseUrl: string,
     apiKey: string,
-    base64: string,
-    mimeType: string,
+    context: TranscriptionRequestContext,
     model: string,
     maxOutputTokens: number,
   ): Promise<TranscriptionProviderResult> {
+    const { base64, mimeType, instruction } = context;
     if (provider === 'GEMINI') {
       // The GRANTED ceiling from the hold, never the requested one (rule 37 item 2).
-      return transcribeWithGemini(baseUrl, apiKey, base64, mimeType, model, maxOutputTokens);
+      // The instruction is passed only when the caller has its own (a video's
+      // timestamped lines); an audio upload keeps the adapter's default.
+      return instruction === undefined
+        ? transcribeWithGemini(baseUrl, apiKey, base64, mimeType, model, maxOutputTokens)
+        : transcribeWithGemini(
+            baseUrl,
+            apiKey,
+            base64,
+            mimeType,
+            model,
+            maxOutputTokens,
+            instruction,
+          );
     }
     if (provider === 'OPENAI') {
+      // verbose_json already carries timestamped segments; no instruction needed.
       return transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model);
     }
     // Unreachable while the capability client filters on

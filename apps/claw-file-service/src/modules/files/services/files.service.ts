@@ -21,6 +21,10 @@ import {
 } from '../constants/published-copy.constants';
 import { EXTRACTION_REQUIRED_MIME_TYPES } from '../constants/file-processing.constants';
 import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
+import {
+  VIDEO_PLACEHOLDER_PREFIX,
+  VIDEO_PROCESSING_STALE_MS,
+} from '../constants/video-processing.constants';
 import { type PublishedCopyResult } from '../types/published-copy.types';
 import { type PaginatedResult } from '../../../common/types';
 import { AppConfig } from '../../../app/config/app.config';
@@ -387,6 +391,7 @@ export class FilesService {
     if (file?.userId !== userId) {
       throw new EntityNotFoundException('File', id);
     }
+    this.healStalledVideoIfNeeded(file);
     return {
       id: file.id,
       filename: file.filename,
@@ -395,6 +400,38 @@ export class FilesService {
       extractionError: file.extractionError,
       extractedTextLength: file.extractedText?.length ?? 0,
     };
+  }
+
+  /**
+   * Batch 7 — a video row still carrying its placeholder long after its last
+   * write (uploaded before the video job existed, or a job lost to a restart)
+   * is re-queued when someone actually polls it. Never a bulk migration (rule
+   * 42 item 10). Started, not awaited (item 3). A duplicate is harmless: the
+   * job is idempotent and holds a per-file lock.
+   */
+  private healStalledVideoIfNeeded(file: File): void {
+    const stalled =
+      this.isVideoPlaceholder(file) &&
+      file.ingestionStatus === FileIngestionStatus.COMPLETED &&
+      file.extractionError === null &&
+      Date.now() - file.updatedAt.getTime() > VIDEO_PROCESSING_STALE_MS;
+    if (!stalled) {
+      return;
+    }
+    this.logger.log(
+      `healStalledVideoIfNeeded: fileId=${file.id} placeholder is stale — re-queuing`,
+    );
+    void this.fileProcessingManager.requestVideoProcessing(file).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.error(`healStalledVideoIfNeeded: fileId=${file.id} re-queue failed — ${message}`);
+    });
+  }
+
+  private isVideoPlaceholder(file: File): boolean {
+    return (
+      file.mimeType.startsWith('video/') &&
+      (file.extractedText ?? '').startsWith(VIDEO_PLACEHOLDER_PREFIX)
+    );
   }
 
   /**
@@ -425,9 +462,12 @@ export class FilesService {
     if (file.ingestionStatus !== FileIngestionStatus.COMPLETED) {
       return file.ingestionStatus;
     }
+    // Batch 7 — a video row carries `[Video file: …]` from upload until the
+    // timestamped document lands, exactly like audio, and gets the same answer.
     const stillPlaceholder =
-      file.mimeType.startsWith('audio/') &&
-      (file.extractedText ?? '').startsWith(AUDIO_PLACEHOLDER_PREFIX);
+      (file.mimeType.startsWith('audio/') &&
+        (file.extractedText ?? '').startsWith(AUDIO_PLACEHOLDER_PREFIX)) ||
+      this.isVideoPlaceholder(file);
     if (!stillPlaceholder) {
       return file.ingestionStatus;
     }

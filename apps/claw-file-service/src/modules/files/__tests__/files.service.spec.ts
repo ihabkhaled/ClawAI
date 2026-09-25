@@ -64,6 +64,7 @@ const mockChunk = {
 
 const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
   create: vi.fn(),
+  saveVideoExtractionResult: vi.fn(),
   findById: vi.fn(),
   findAll: vi.fn(),
   updateIngestionStatus: vi.fn(),
@@ -107,6 +108,7 @@ describe('FilesService', () => {
     // Extraction is kicked off but never awaited by uploadFile; the stub keeps
     // the fire-and-forget call from touching the real pipeline in unit tests.
     const mockProcessingManager = {
+      requestVideoProcessing: vi.fn().mockResolvedValue(undefined),
       processFile: vi.fn().mockResolvedValue(void 0),
       updateIngestionStatus: vi.fn().mockResolvedValue(void 0),
     };

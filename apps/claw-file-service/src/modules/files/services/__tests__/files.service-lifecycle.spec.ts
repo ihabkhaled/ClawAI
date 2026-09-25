@@ -65,6 +65,7 @@ const buildFile = (overrides: Partial<File> = {}): File =>
 
 const mockFilesRepository = (): Record<keyof FilesRepository, Mock> => ({
   create: vi.fn(),
+  saveVideoExtractionResult: vi.fn(),
   findById: vi.fn(),
   findAll: vi.fn(),
   updateIngestionStatus: vi.fn(),
@@ -99,6 +100,7 @@ const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
 // fire-and-forget call away from the real pipeline in unit tests.
 const mockProcessingManager = (): FileProcessingContract => ({
   processFile: vi.fn().mockResolvedValue(void 0),
+  requestVideoProcessing: vi.fn().mockResolvedValue(void 0),
   updateIngestionStatus: vi.fn().mockResolvedValue(void 0),
 });
 

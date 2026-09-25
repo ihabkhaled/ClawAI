@@ -330,6 +330,24 @@ sidecar is still unused until its tier is enabled DB-level
 
 ---
 
+### Native tools inside service images (ffmpeg, multimodal batch 7)
+
+`claw-file-service` installs Debian's `ffmpeg` (which provides `ffprobe`) in
+BOTH `Dockerfile.dev` and the `Dockerfile` runner stage, with a build-time
+`ffmpeg -version && ffprobe -version` check so a missing binary fails the
+build rather than the first video upload. It is used for video probe,
+audio-track extraction, the thumbnail and on-demand frames — always through
+`common/utilities/media-process.utility.ts` (argument arrays, `shell: false`,
+SIGKILL budget, protocol/format whitelists, per-job temp dir under
+`os.tmpdir()`, removed in `finally`). No env var: the binaries are on `PATH`.
+Adding it grows the image by roughly 100 MB of shared libraries. An old
+container reports `TOOL_UNAVAILABLE` on every video until it is **rebuilt**
+(a restart keeps the old image). Verify:
+
+```bash
+docker exec claw-file-service sh -c "ffmpeg -version | head -1; ffprobe -version | head -1"
+```
+
 ## Resource Requirements
 
 ### Minimum Development Requirements

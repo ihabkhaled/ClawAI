@@ -134,3 +134,53 @@ describe('FileProcessingManager — audio transcription trigger', () => {
     expect(harness.rabbit.publishConfirmed).not.toHaveBeenCalled();
   });
 });
+
+// Multimodal batch 7 — the same producer contract for video.
+describe('FileProcessingManager — video processing trigger', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const video = (): File =>
+    buildFile({ id: 'video-1', mimeType: 'video/mp4', filename: 'clip.mp4' });
+
+  it('writes the [Video file: …] placeholder, then publishes FILE_VIDEO_PROCESS_REQUESTED with confirms', async () => {
+    const harness = buildHarness();
+
+    await harness.manager.processFile(video());
+
+    expect((harness.filesRepository.saveExtractionResult as Mock).mock.calls[0]?.[1]).toEqual({
+      extractedText: '[Video file: clip.mp4]',
+      extractionError: null,
+      status: FileIngestionStatus.COMPLETED,
+    });
+    expect(harness.rabbit.publishConfirmed).toHaveBeenCalledWith(
+      EventPattern.FILE_VIDEO_PROCESS_REQUESTED,
+      expect.objectContaining({ fileId: 'video-1', userId: 'user-1', mimeType: 'video/mp4' }),
+    );
+    expect(harness.rabbit.publishConfirmed).not.toHaveBeenCalledWith(
+      EventPattern.FILE_TRANSCRIBE_REQUESTED,
+      expect.anything(),
+    );
+    expect(harness.order).toEqual(['saveExtractionResult', 'publishConfirmed']);
+  });
+
+  it('records a reason on the row when the broker refuses the video job', async () => {
+    const harness = buildHarness();
+    harness.rabbit.publishConfirmed.mockRejectedValue(new Error('channel closed'));
+
+    await harness.manager.processFile(video());
+
+    expect(harness.filesRepository.saveExtractionResult).toHaveBeenLastCalledWith('video-1', {
+      extractedText: '[Video file: clip.mp4]',
+      extractionError: 'Video processing could not be queued: channel closed',
+      status: FileIngestionStatus.COMPLETED,
+    });
+  });
+
+  it('requestVideoProcessing is a no-op for anything that is not a video', async () => {
+    const harness = buildHarness();
+    await harness.manager.requestVideoProcessing(buildFile());
+    expect(harness.rabbit.publishConfirmed).not.toHaveBeenCalled();
+  });
+});

@@ -75,6 +75,7 @@ describe('FilesService archive uploads (magic-byte routing)', () => {
     const filesRepository: Pick<FilesRepository, 'create'> = { create };
     const processing: FileProcessingContract = {
       processFile,
+      requestVideoProcessing: vi.fn().mockResolvedValue(undefined),
       updateIngestionStatus: vi.fn().mockResolvedValue(undefined),
     };
     const rabbitMQ: Pick<RabbitMQService, 'publish'> = { publish: vi.fn() };

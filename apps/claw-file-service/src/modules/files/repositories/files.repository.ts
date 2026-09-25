@@ -5,6 +5,7 @@ import { type CreateFileData, type FileFilters, type FileWithChunks } from '../t
 import { type ChildExtractionState } from '../types/archive-manifest.types';
 import { type ArchiveExtractionMetadata } from '../types/zip-expansion.types';
 import { type ArchiveChildRow, type ArchiveParentRow } from '../types/archive-entries.types';
+import { type VideoExtractionWrite } from '../types/video-processing.types';
 
 @Injectable()
 export class FilesRepository {
@@ -65,6 +66,24 @@ export class FilesRepository {
         extractedText: result.extractedText,
         extractionError: result.extractionError,
         ingestionStatus: result.status,
+      },
+    });
+  }
+
+  /**
+   * The ONE write that ends a video job (multimodal batch 7): the timestamped
+   * document (or null), the reason, the terminal status and
+   * `extractionMetadata.media`, in a single update — rule 42 item 4. A video
+   * row carries no archive metadata, so the column is replaced, not merged.
+   */
+  async saveVideoExtractionResult(id: string, write: VideoExtractionWrite): Promise<File> {
+    return this.prisma.file.update({
+      where: { id },
+      data: {
+        extractedText: write.extractedText,
+        extractionError: write.extractionError,
+        ingestionStatus: write.status,
+        extractionMetadata: write.metadata,
       },
     });
   }

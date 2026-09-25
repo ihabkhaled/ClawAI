@@ -199,6 +199,19 @@ prompt is still open. A leaked microphone or camera is the worst outcome this
 feature can produce, and it is the one a test will not notice unless it asserts
 on the tracks.
 
+## A video's audio track uses this same path (multimodal batch 7)
+
+file-service's `VideoProcessingManager` extracts a video's first audio track
+with ffmpeg (16 kHz mono MP3) and hands it to
+`TranscriptionManager.transcribeDerivedAudio` — the same candidate loop and
+PAYG meter, charged to the uploader, under its own request id
+(`transcription:${fileId}:video-audio:${provider}`) and held on the MEASURED
+seconds from ffprobe. It never writes the row; the video job owns that single
+write. A change to the candidate loop, the meter or an adapter reaches videos
+too — run `video-processing.manager.spec.ts` and the derived-audio block of
+`transcription-metering.spec.ts`. Runbook:
+[`debug-a-video-the-model-cannot-read.md`](./debug-a-video-the-model-cannot-read.md).
+
 ## What is NOT solved yet
 
 - **Duration is bounded by bytes and credit, not measured before the call.**

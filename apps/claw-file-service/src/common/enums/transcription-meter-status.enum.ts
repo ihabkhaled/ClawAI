@@ -10,8 +10,13 @@ export enum TranscriptionReserveStatus {
   REFUSED = 'REFUSED',
 }
 
-/** How one candidate attempt ended when it did not throw. */
+/**
+ * How one candidate attempt ended when it did not throw (`COMPLETED` /
+ * `REFUSED`), and — for the whole candidate loop — `FAILED` when every
+ * candidate that was tried threw.
+ */
 export enum TranscriptionAttemptStatus {
   COMPLETED = 'COMPLETED',
   REFUSED = 'REFUSED',
+  FAILED = 'FAILED',
 }

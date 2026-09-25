@@ -125,4 +125,6 @@ export type ArchivePasswordRetryOutcome = {
 export type FileProcessingContract = {
   processFile(file: File): Promise<void>;
   updateIngestionStatus(fileId: string, status: FileIngestionStatus): Promise<void>;
+  /** Batch 7 — (re-)queues the video job; a no-op for anything that is not a video. */
+  requestVideoProcessing(file: File): Promise<void>;
 };

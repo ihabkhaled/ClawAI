@@ -34,8 +34,10 @@ import {
 } from '../constants/file-processing.constants';
 import { isArchiveMimeType } from '../../../common/utilities/archive-format.utility';
 import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
+import { VIDEO_PLACEHOLDER_PREFIX } from '../constants/video-processing.constants';
 import { ZipExpansionManager } from './zip-expansion.manager';
 import { TranscriptionManager } from './transcription.manager';
+import { VideoProcessingManager } from './video-processing.manager';
 
 @Injectable()
 export class FileProcessingManager {
@@ -86,6 +88,7 @@ export class FileProcessingManager {
       this.logger.log(`File ${file.id} processed: ${String(chunks.length)} chunks created`);
 
       await this.requestTranscription(file);
+      await this.requestVideoProcessing(file);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       this.logger.error(`File ${file.id} processing failed: ${errorMessage}`);
@@ -142,9 +145,13 @@ export class FileProcessingManager {
       return this.extractImageText(file, storagePath);
     }
 
+    // Batch 7 — the same shape as audio: the placeholder makes the row
+    // coherent the moment it reaches COMPLETED, and `requestVideoProcessing`
+    // queues the probe / transcript AFTER the write, so a fast job can never
+    // be overwritten by the placeholder that requested it.
     if (mimeType.startsWith('video/')) {
       this.logger.debug(`extractText: video "${filename}" — preserving binary payload`);
-      return `[Video file: ${filename}]`;
+      return `${VIDEO_PLACEHOLDER_PREFIX}${filename}]`;
     }
 
     // B6a — audio is stored, never decoded. UTF-8 decoding an MP3 produces
@@ -273,6 +280,38 @@ export class FileProcessingManager {
       await this.filesRepository.saveExtractionResult(file.id, {
         extractedText: `${AUDIO_PLACEHOLDER_PREFIX}${file.filename}]`,
         extractionError: `Audio transcription could not be queued: ${message}`,
+        status: FileIngestionStatus.COMPLETED,
+      });
+    }
+  }
+
+  /**
+   * Batch 7 — queue the video job (probe, thumbnail, plan limit, audio-track
+   * transcription). Public because `FilesService` also calls it to heal a
+   * video row that has carried its placeholder for too long (a row from
+   * before batch 7, or a job lost to a restart) — on use, never in bulk.
+   *
+   * publishConfirmed for the reason `requestTranscription` gives: this is the
+   * only thing that will ever replace the placeholder, so a broker outage is
+   * recorded on the row instead of being lost.
+   */
+  async requestVideoProcessing(file: File): Promise<void> {
+    if (!file.mimeType.startsWith('video/')) {
+      return;
+    }
+    const payload = VideoProcessingManager.buildRequest(file);
+    try {
+      await this.rabbitMQService.publishConfirmed(
+        EventPattern.FILE_VIDEO_PROCESS_REQUESTED,
+        payload,
+      );
+      this.logger.log(`requestVideoProcessing: queued video processing for fileId=${file.id}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'broker unavailable';
+      this.logger.error(`requestVideoProcessing: fileId=${file.id} not queued — ${message}`);
+      await this.filesRepository.saveExtractionResult(file.id, {
+        extractedText: `${VIDEO_PLACEHOLDER_PREFIX}${file.filename}]`,
+        extractionError: `Video processing could not be queued: ${message}`,
         status: FileIngestionStatus.COMPLETED,
       });
     }

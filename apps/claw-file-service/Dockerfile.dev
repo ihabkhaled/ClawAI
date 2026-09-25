@@ -1,8 +1,13 @@
 FROM node:26-bookworm-slim
 # Debian base (not Alpine) — the TypeScript 7 npm compiler ships glibc-linked
 # binaries with no musl variant. Alpine would fail to load the TypeScript 7 compiler.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+# ffmpeg (provides ffprobe) — multimodal batch 7 video processing: probe,
+# audio-track extraction, thumbnail and on-demand frames. Debian's build, run
+# only through the bounded spawn wrapper (media-process.utility.ts).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget ffmpeg \
   && rm -rf /var/lib/apt/lists/*
+# Fail the build, not the first video upload, if the binaries are missing.
+RUN ffmpeg -hide_banner -version >/dev/null && ffprobe -hide_banner -version >/dev/null
 WORKDIR /app
 
 # Copy entire monorepo structure for workspace resolution

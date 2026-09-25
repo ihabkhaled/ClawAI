@@ -58,5 +58,18 @@ export const transcribeWithOpenAi = async (
   logger.debug(
     `transcribeWithOpenAi: received ${String(transcript.length)} characters, duration=${String(response.duration ?? 'absent')}`,
   );
-  return { text: transcript, durationSeconds: response.duration };
+  // verbose_json always carries `segments`; they are what gives a video's
+  // transcript its timestamps. Seconds → whole ms, empty lines dropped.
+  const segments = (response.segments ?? [])
+    .map((segment) => ({
+      startMs: Math.round((segment.start ?? 0) * 1000),
+      endMs: Math.round((segment.end ?? segment.start ?? 0) * 1000),
+      text: (segment.text ?? '').trim(),
+    }))
+    .filter((segment) => segment.text.length > 0);
+  return {
+    text: transcript,
+    durationSeconds: response.duration,
+    ...(segments.length > 0 ? { segments } : {}),
+  };
 };

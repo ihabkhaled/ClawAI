@@ -38,18 +38,18 @@ chat  --message.completed-->    routing, memory, audit
 
 ## Fan-in / fan-out highlights
 
-| Producer(s)                    | Event(s)                                                                                                                            | Consumer(s)       |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| connector, ollama              | `connector.synced`, `connector.updated`                                                                                             | routing, audit    |
-| connector                      | `connector.health_checked`                                                                                                          | routing, audit    |
-| llamacpp                       | `llamacpp.model.loaded/unloaded/crashed`                                                                                            | routing, audit    |
-| memory                         | `memory.extracted/suggested/approved/rejected/redacted/forgotten`                                                                   | audit (extracted) |
-| auth                           | `user.login/logout`                                                                                                                 | audit             |
-| payment                        | `billing.subscription.*`, `billing.payment.*`, `billing.invoice.*`, `billing.refund.*`, `billing.entitlement.*`                     | auth, audit       |
-| agent                          | `agent.capability.*` (12), `agent.session_*`, `agent.device_*`, `agent.token_*`                                                     | audit             |
-| workspace                      | `workspace.sync.*`, `workspace_action.*`, `ai_action.*`, `workspace_connector.*`, `workspace.webhook.*`, `workspace.auto_suggest.*` | audit             |
-| file                           | `file.uploaded/chunked/deleted/failed`, `file.ocr_*`, `file.retention_expired`, `file.archive_expanded`                             | audit             |
-| **all 17 non-health services** | **`log.server`**                                                                                                                    | **server-logs**   |
+| Producer(s)                    | Event(s)                                                                                                                                                                                                                         | Consumer(s)       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| connector, ollama              | `connector.synced`, `connector.updated`                                                                                                                                                                                          | routing, audit    |
+| connector                      | `connector.health_checked`                                                                                                                                                                                                       | routing, audit    |
+| llamacpp                       | `llamacpp.model.loaded/unloaded/crashed`                                                                                                                                                                                         | routing, audit    |
+| memory                         | `memory.extracted/suggested/approved/rejected/redacted/forgotten`                                                                                                                                                                | audit (extracted) |
+| auth                           | `user.login/logout`                                                                                                                                                                                                              | audit             |
+| payment                        | `billing.subscription.*`, `billing.payment.*`, `billing.invoice.*`, `billing.refund.*`, `billing.entitlement.*`                                                                                                                  | auth, audit       |
+| agent                          | `agent.capability.*` (12), `agent.session_*`, `agent.device_*`, `agent.token_*`                                                                                                                                                  | audit             |
+| workspace                      | `workspace.sync.*`, `workspace_action.*`, `ai_action.*`, `workspace_connector.*`, `workspace.webhook.*`, `workspace.auto_suggest.*`                                                                                              | audit             |
+| file                           | `file.uploaded/chunked/deleted/failed`, `file.ocr_*`, `file.retention_expired`, `file.archive_expanded`; self-consumed jobs `file.transcribe_requested` and `file.video_process_requested` (+ `_completed` / `_failed`, batch 7) | audit             |
+| **all 17 non-health services** | **`log.server`**                                                                                                                                                                                                                 | **server-logs**   |
 
 ## `log.server` (the logging pipeline)
 

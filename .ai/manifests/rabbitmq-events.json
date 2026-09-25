@@ -486,6 +486,21 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "FILE_VIDEO_PROCESS_COMPLETED",
+      "pattern": "file.video_process_completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_VIDEO_PROCESS_FAILED",
+      "pattern": "file.video_process_failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_VIDEO_PROCESS_REQUESTED",
+      "pattern": "file.video_process_requested",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "FILE_GENERATION_FAILED",
       "pattern": "file_generation.failed",
       "source": "packages/shared-types/src/events/event-patterns.ts"

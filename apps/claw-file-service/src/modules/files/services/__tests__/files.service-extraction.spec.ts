@@ -79,6 +79,7 @@ describe('FilesService extraction wiring', () => {
     };
     processing = {
       processFile: vi.fn().mockResolvedValue(void 0),
+      requestVideoProcessing: vi.fn().mockResolvedValue(void 0),
       updateIngestionStatus: vi.fn().mockResolvedValue(void 0),
     };
     const security = {
@@ -279,6 +280,60 @@ describe('FilesService extraction wiring', () => {
     // final, so it stopped waiting immediately and the model was handed the
     // literal placeholder string as if it were the transcript — the live bug
     // report: a voice note that reached the model as nothing.
+    // Multimodal batch 7 — rule 42 item 12's mechanism, extended to video.
+    describe('a video row still carrying its placeholder', () => {
+      const videoRow = (overrides: Partial<File> = {}): File =>
+        buildFile({
+          mimeType: 'video/mp4',
+          ingestionStatus: 'COMPLETED',
+          extractedText: '[Video file: clip.mp4]',
+          extractionError: null,
+          updatedAt: new Date(),
+          ...overrides,
+        });
+
+      it('reports PROCESSING until the timestamped document lands', async () => {
+        filesRepo['findById']?.mockResolvedValue(videoRow());
+        const state = await service.getIngestionState('file-1', USER_ID);
+        expect(state.ingestionStatus).toBe('PROCESSING');
+        expect(processing.requestVideoProcessing).not.toHaveBeenCalled();
+      });
+
+      it('reports FAILED once queuing it has failed', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          videoRow({ extractionError: 'Video processing could not be queued: channel closed' }),
+        );
+        const state = await service.getIngestionState('file-1', USER_ID);
+        expect(state.ingestionStatus).toBe('FAILED');
+      });
+
+      it('reports COMPLETED once the document has landed', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          videoRow({
+            extractedText: 'Video "clip.mp4" — length 00:12, 1280×720.\nNo audio track.',
+          }),
+        );
+        const state = await service.getIngestionState('file-1', USER_ID);
+        expect(state.ingestionStatus).toBe('COMPLETED');
+      });
+
+      it('re-queues a placeholder that has gone stale (legacy row / lost job) — on use, not in bulk', async () => {
+        const stale = videoRow({ updatedAt: new Date(Date.now() - 11 * 60 * 1000) });
+        filesRepo['findById']?.mockResolvedValue(stale);
+        const state = await service.getIngestionState('file-1', USER_ID);
+        expect(state.ingestionStatus).toBe('PROCESSING');
+        expect(processing.requestVideoProcessing).toHaveBeenCalledWith(stale);
+      });
+
+      it('does not re-queue a video whose processing already FAILED', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          videoRow({ ingestionStatus: 'FAILED', extractedText: null, updatedAt: new Date(0) }),
+        );
+        await service.getIngestionState('file-1', USER_ID);
+        expect(processing.requestVideoProcessing).not.toHaveBeenCalled();
+      });
+    });
+
     describe('an audio row still carrying the transcription placeholder', () => {
       it('reports PROCESSING instead of the persisted COMPLETED, so chat-service keeps waiting', async () => {
         filesRepo['findById']?.mockResolvedValue(

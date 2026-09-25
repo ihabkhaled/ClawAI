@@ -4,6 +4,7 @@ import { FilesInternalController } from '../files-internal.controller';
 import { FileChunksRepository } from '../../repositories/file-chunks.repository';
 import { FilesRepository } from '../../repositories/files.repository';
 import { FilesService } from '../../services/files.service';
+import { VideoFramesService } from '../../services/video-frames.service';
 
 describe('FilesInternalController', () => {
   let controller: FilesInternalController;
@@ -31,6 +32,7 @@ describe('FilesInternalController', () => {
         { provide: FileChunksRepository, useValue: chunksMock },
         { provide: FilesRepository, useValue: filesRepoMock },
         { provide: FilesService, useValue: serviceMock },
+        { provide: VideoFramesService, useValue: { getFrames: vi.fn() } },
       ],
     }).compile();
     controller = module.get<FilesInternalController>(FilesInternalController);

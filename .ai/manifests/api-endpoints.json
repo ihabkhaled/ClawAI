@@ -1566,6 +1566,11 @@
         "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/internal/files/:id/video-frames",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/internal/files/download-internal/:id",
         "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
@@ -3473,5 +3478,5 @@
     ]
   },
   "generated": true,
-  "total": 687
+  "total": 688
 }

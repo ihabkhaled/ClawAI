@@ -38,6 +38,21 @@ describe('validateMagicBytes video formats', () => {
     });
   });
 
+  // Batch 7 — the classic ffmpeg polyglot: an HLS playlist (or concat script)
+  // renamed to .mp4 that points the demuxer at a local path. The magic-byte
+  // check refuses it at upload; `-format_whitelist` refuses it again at probe
+  // time for a polyglot that does carry a real container header.
+  it.each([
+    [
+      'an HLS playlist',
+      '#EXTM3U\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:1.0,\nfile:///etc/passwd\n#EXT-X-ENDLIST\n',
+    ],
+    ['an ffconcat script', "ffconcat version 1.0\nfile '/etc/passwd'\n"],
+  ])('rejects %s declared as video/mp4', async (_label, text) => {
+    const result = await validateMagicBytes(Buffer.from(text), 'video/mp4');
+    expect(result.valid).toBe(false);
+  });
+
   it('rejects undetectable bytes for a declared video format', async () => {
     await expect(validateMagicBytes(Buffer.from('%PDF-not-a-video'), 'video/mp4')).resolves.toEqual(
       {

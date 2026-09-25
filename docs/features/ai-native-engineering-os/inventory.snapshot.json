@@ -1621,6 +1621,11 @@
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/internal/files/:id/video-frames",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/internal/files/download-internal/:id",
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
@@ -6182,6 +6187,21 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "FILE_VIDEO_PROCESS_COMPLETED",
+        "pattern": "file.video_process_completed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "FILE_VIDEO_PROCESS_FAILED",
+        "pattern": "file.video_process_failed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "FILE_VIDEO_PROCESS_REQUESTED",
+        "pattern": "file.video_process_requested",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "FILE_GENERATION_FAILED",
         "pattern": "file_generation.failed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7668,7 +7688,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 14176,
+          "bytes": 15856,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -7730,7 +7750,7 @@
       ],
       "skills": [
         {
-          "bytes": 30511,
+          "bytes": 30790,
           "file": "skills/00-index.md"
         },
         {
@@ -7798,7 +7818,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 23802,
+          "bytes": 24569,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
@@ -7948,6 +7968,10 @@
         {
           "bytes": 3192,
           "file": "skills/debug-a-stuck-scheduled-job.md"
+        },
+        {
+          "bytes": 7663,
+          "file": "skills/debug-a-video-the-model-cannot-read.md"
         },
         {
           "bytes": 7779,
@@ -10070,7 +10094,7 @@
       },
       "@claw/shared-types": {
         "runner": "vitest",
-        "testFiles": 3
+        "testFiles": 4
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
@@ -10106,7 +10130,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 41
+        "testFiles": 49
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10876,9 +10900,9 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 687,
+    "endpointCount": 688,
     "envVarCount": 359,
-    "eventCount": 181,
+    "eventCount": 184,
     "frontendRouteCount": 155,
     "localeCount": 13,
     "nginxRouteCount": 62,
@@ -10888,7 +10912,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1542,
+    "totalTestFiles": 1551,
     "workspaceCount": 25
   }
 }

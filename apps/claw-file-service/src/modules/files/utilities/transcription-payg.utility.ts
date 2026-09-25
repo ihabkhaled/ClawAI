@@ -29,8 +29,10 @@ import {
  * redelivered job (the same attempt reuses its open hold) and distinct per
  * provider (a fall-through to a second provider is a second paid call).
  */
-export function transcriptionRequestId(fileId: string, provider: string): string {
-  return `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${provider}`;
+export function transcriptionRequestId(fileId: string, provider: string, scope?: string): string {
+  return scope === undefined
+    ? `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${provider}`
+    : `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${scope}:${provider}`;
 }
 
 function clampSeconds(seconds: number): number {
@@ -47,6 +49,17 @@ function clampSeconds(seconds: number): number {
 export function estimateWorstCaseAudioSeconds(sizeBytes: number): number {
   const bytes = Math.max(0, Math.floor(sizeBytes));
   return clampSeconds(Math.ceil(bytes / TRANSCRIPTION_PAYG_MIN_AUDIO_BYTES_PER_SECOND));
+}
+
+/**
+ * Seconds to hold for: the MEASURED length when the caller has one (a video's
+ * track, from ffprobe), rounded up and bounded; otherwise the byte-derived
+ * worst case.
+ */
+export function holdAudioSeconds(sizeBytes: number, measuredSeconds?: number): number {
+  return measuredSeconds !== undefined && Number.isFinite(measuredSeconds) && measuredSeconds > 0
+    ? clampSeconds(Math.ceil(measuredSeconds))
+    : estimateWorstCaseAudioSeconds(sizeBytes);
 }
 
 /** Gemini prompt tokens for a clip of `seconds`: audio tokens plus the instruction. */

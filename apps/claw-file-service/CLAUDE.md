@@ -294,3 +294,60 @@ Three behaviours worth knowing before changing it:
   `EntitlementsModule` in `AppModule`. Never log a balance (rule 37 item 4).
 
 Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md).
+
+## Video is processed here: probe, plan limit, audio track, frames (multimodal batch 7)
+
+A video upload lands `COMPLETED` with `extractedText = "[Video file: x.mp4]"`
+(`VIDEO_PLACEHOLDER_PREFIX`), then `FileProcessingManager.requestVideoProcessing`
+publishes `FILE_VIDEO_PROCESS_REQUESTED` (`publishConfirmed`) AFTER that write.
+`VideoProcessingManager` (subscribed in `onModuleInit`) runs, in order:
+
+1. **ffprobe** (`MediaToolAdapter.probeMediaFile`) → Zod-parsed
+   (`ffprobe-output.dto.ts`) → `VideoProbeSummary`. Refused (row `FAILED`,
+   readable `extractionError`, `VideoProcessingFailureReason`) on: no video
+   stream, duration missing/≤0, width×height > 3840×2160, > 30 min, probe
+   timeout, corrupt container, ffprobe missing.
+2. **Thumbnail**: one JPEG ~10% in, ≤480 px wide, ≤96 KB, persisted in
+   `extractionMetadata.media.thumbnailBase64`. Never fatal.
+3. **Plan limit** (`VideoPlanLimitManager`, `Plan.maxVideoSeconds` via
+   `resolvePlanLimit`): over it → `FAILED` `VIDEO_TOO_LONG_FOR_PLAN` naming the
+   limit; `0` → `VIDEO_DISABLED_FOR_PLAN`; `null`/ADMIN → unlimited. No hold is
+   taken. auth-service unreachable → the paid step is skipped
+   (`VideoAudioStatus.ENTITLEMENTS_UNAVAILABLE`), the free steps still land.
+4. **Audio track** → 16 kHz mono 32 kbps MP3 → `TranscriptionManager.transcribeDerivedAudio`
+   (same candidate loop and PAYG meter as audio uploads; requestId
+   `transcription:${fileId}:video-audio:${provider}`; held on the MEASURED
+   seconds). OpenAI `verbose_json` segments; Gemini is told to emit `[mm:ss]`
+   lines, parsed leniently. It never writes the row.
+5. **ONE write** — `FilesRepository.saveVideoExtractionResult`: the timestamped
+   document (header line + `[00:12–00:20] text` lines, or "No audio track." /
+   "Audio could not be transcribed: …"), status and `extractionMetadata.media`
+   together.
+
+Until that write `getIngestionState` reports `PROCESSING` (placeholder) or
+`FAILED` (placeholder + `extractionError`). A placeholder older than
+`VIDEO_PROCESSING_STALE_MS` is re-queued on poll (legacy rows, lost jobs) —
+never in bulk.
+
+**Idempotent by fileId**: a job whose row no longer carries the placeholder is
+a no-op, and a Redis `SET NX` lock (`file:video-process-lock:<id>`, 15 min)
+turns a concurrent duplicate into a no-op — a video is never transcribed twice.
+
+**ffmpeg is spawned in exactly one file**, `common/utilities/media-process.utility.ts`:
+`spawn(cmd, argsArray, { shell: false })`, stdin ignored, SIGKILL at a
+wall-clock budget, stdout byte cap. Every input is preceded by
+`-protocol_whitelist file,pipe` AND `-format_whitelist <video demuxers>` (blocks
+the HLS/concat polyglot — verified on bookworm ffmpeg 5.1). The only input path
+is `<mkdtemp dir>/input`; the user's filename never reaches an argument. The
+temp dir is removed in `finally`. Every limit lives in
+`constants/video-processing.constants.ts`; nothing is an env var.
+
+**Frames** — `POST /internal/files/:id/video-frames` `{ userId, timestampsMs[1..8] }`
+(service token; owner-checked, 404 otherwise; 409 until processed; 400 past
+`durationMs`). JPEG ≤768 px, input-seeked. **Never persisted**: temp dir per
+request + Redis cache (`file:video-frame:<id>:<ms>`, 10 min). Response capped
+at 3 MB.
+
+ffmpeg is installed in BOTH images (`Dockerfile.dev`, `Dockerfile` runner) with
+a build-time `ffmpeg -version` check. Runbook:
+[`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).

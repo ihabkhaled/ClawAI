@@ -13,6 +13,8 @@ import {
   type MemoryType,
   type RoutingMode,
   type UserRole,
+  type VideoAudioStatus,
+  type VideoProcessingFailureReason,
   type WorkspaceConnectorStatus,
   type WorkspaceProvider,
 } from '../enums';
@@ -361,6 +363,36 @@ export interface FileTranscribeFailedPayload extends BaseEventPayload {
   /** Absent when the failure happened before a provider was chosen. */
   provider?: string;
   model?: string;
+}
+
+// ---- Multimodal batch 7 — video processing (file-service, RabbitMQ job) ----
+
+/** The job. Carries only identifiers — the bytes are read from the row. */
+export interface FileVideoProcessRequestedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  mimeType: string;
+}
+
+/** The timestamped document landed on the row. No transcript text on the wire. */
+export interface FileVideoProcessCompletedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  durationMs: number;
+  hasAudio: boolean;
+  audioStatus: VideoAudioStatus;
+  transcriptSegmentCount: number;
+  /** Wall-clock time the job took, probe through write. */
+  processingMs: number;
+}
+
+export interface FileVideoProcessFailedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  reasonCode: VideoProcessingFailureReason;
+  /** Human-readable; this is also what lands in `files.extraction_error`. */
+  reason: string;
 }
 
 // ---- Memory Events ----
@@ -882,6 +914,9 @@ export type EventPayload =
   | FileTranscribeRequestedPayload
   | FileTranscribeCompletedPayload
   | FileTranscribeFailedPayload
+  | FileVideoProcessRequestedPayload
+  | FileVideoProcessCompletedPayload
+  | FileVideoProcessFailedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload

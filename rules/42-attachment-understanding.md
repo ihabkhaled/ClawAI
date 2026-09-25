@@ -155,6 +155,24 @@ Full reasoning:
     never as if the model saw the image, and never as instructions
     (`vision-helper.manager.spec.ts`, `vision-helper.utility.spec.ts`).
 
+15. **A video is `PROCESSING` until its timestamped document lands, and its
+    cost is bounded by MEASURED duration, not bytes.** A video upload reaches
+    `COMPLETED` with the `[Video file: …]` placeholder (`VIDEO_PLACEHOLDER_PREFIX`,
+    mirrored as chat-service's `VIDEO_FILE_PLACEHOLDER_PREFIX`); file-service's
+    `VideoProcessingManager` (multimodal batch 7) probes it with ffprobe,
+    checks the uploader's `Plan.maxVideoSeconds` against the probed duration
+    BEFORE any paid step, transcribes the audio track through the metered
+    transcription path, and writes the header + `[mm:ss–mm:ss] text` document,
+    status and `extractionMetadata.media` in ONE `saveVideoExtractionResult`.
+    Until then `getIngestionState` reports `PROCESSING` exactly as item 12
+    does for audio. A video over the plan limit is `FAILED` with a message
+    naming the limit, never silently truncated; a video with no audio track
+    or an untranscribed one says so in the document. ffmpeg runs only through
+    `media-process.utility.ts` (argument arrays, no shell, protocol + format
+    whitelists before every input, SIGKILL budget, temp dir removed), and
+    frames are never persisted. Runbook:
+    [`skills/debug-a-video-the-model-cannot-read.md`](../skills/debug-a-video-the-model-cannot-read.md).
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                   |
@@ -168,6 +186,7 @@ Full reasoning:
 | 10      | The migration carries no backfill, and says why in its own comment                                                                                                                                                                                                                                                                                                          |
 | 12      | `files.service-extraction.spec.ts` "an audio row still carrying the transcription placeholder" — asserts `PROCESSING`/`FAILED` reporting without touching the row; `context-assembly-attachments.spec.ts` "voice notes" — asserts the placeholder never leaks and a real transcript is framed as spoken words                                                               |
 | 13      | `video-attachment-routing.utility.spec.ts` — accepts the connector catalog's `models/`-prefixed id, and asserts no video-capable model is ever rejected while also appearing in its own suggested-alternatives text                                                                                                                                                         |
+| 15      | `video-processing.manager.spec.ts` (plan 59/60/61 s, 0, null, auth down; no-audio; refused transcription; idempotent redelivery; temp dir removed; probe failure matrix); `files.service-extraction.spec.ts` "a video row still carrying its placeholder"; `media-args.utility.spec.ts` + `media-process.utility.spec.ts` (whitelists, no shell, SIGKILL, stdout cap)       |
 | 14      | `attachment-delivery.utility.spec.ts` (resolver matrix); `context-assembly-media-delivery.spec.ts` (non-vision payload has no `image_url` and carries the honest note; video placeholder never in a prompt); `chat-execution-media-delivery.spec.ts` (the chokepoint's body and `fileDelivery` agree); `parallel-execution-media-delivery.spec.ts` (two lanes, two records) |
 
 ## Runbook

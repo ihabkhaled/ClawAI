@@ -24,6 +24,9 @@ import { type PublishCopyDto, publishCopySchema } from '../dto/publish-copy.dto'
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
+import { VideoFramesService } from '../services/video-frames.service';
+import { type VideoFramesDto, videoFramesSchema } from '../dto/video-frames.dto';
+import { type VideoFrame } from '../types/video-processing.types';
 import type {
   CreateInternalFileBody,
   FileIngestionState,
@@ -37,6 +40,7 @@ export class FilesInternalController {
     private readonly fileChunksRepository: FileChunksRepository,
     private readonly filesRepository: FilesRepository,
     private readonly filesService: FilesService,
+    private readonly videoFramesService: VideoFramesService,
   ) {}
 
   @Public()
@@ -74,6 +78,23 @@ export class FilesInternalController {
     query: InternalFileContentQueryDto,
   ): Promise<FileIngestionState> {
     return this.filesService.getIngestionState(fileId, query.userId);
+  }
+
+  /**
+   * Batch 7 — JPEG frames of a processed video at the given timestamps, for
+   * a sibling service (chat, batch 8). Service-token guarded; the owner is
+   * named in the body and checked by the service (404 for anyone else).
+   * Frames are never persisted — extracted per request, cached briefly.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post(':id/video-frames')
+  @HttpCode(HttpStatus.OK)
+  async getVideoFrames(
+    @Param('id') fileId: string,
+    @Body(new ZodValidationPipe(videoFramesSchema)) body: VideoFramesDto,
+  ): Promise<VideoFrame[]> {
+    return this.videoFramesService.getFrames(fileId, body);
   }
 
   @Public()

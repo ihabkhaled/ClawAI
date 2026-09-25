@@ -1,4 +1,5 @@
 import { type PaygHold } from '@claw/shared-entitlements';
+import { type TranscriptSegment } from './video-processing.types';
 import {
   type TranscriptionAttemptStatus,
   type TranscriptionCreditRefusalCode,
@@ -66,6 +67,8 @@ export interface TranscriptionProviderResult {
   text: string;
   usage?: TranscriptionTokenUsage;
   durationSeconds?: number;
+  /** OpenAI `verbose_json` segments, in ms. Absent for Gemini (it has no segment API). */
+  segments?: TranscriptSegment[];
 }
 
 /** A transcription adapter. Every provider implementation has this shape. */
@@ -76,6 +79,7 @@ export type TranscriptionAdapter = (
   mimeType: string,
   model: string,
   maxOutputTokens?: number,
+  instruction?: string,
 ) => Promise<TranscriptionProviderResult>;
 
 /** One provider attempt, as the PAYG meter needs to see it. */
@@ -85,6 +89,30 @@ export interface TranscriptionMeterInput {
   provider: string;
   model: string;
   sizeBytes: number;
+  /**
+   * MEASURED seconds (a video's track, from ffprobe). When present the hold is
+   * sized on it instead of the byte-derived worst case.
+   */
+  audioSeconds?: number;
+  /** Extra request-id scope (`video-audio`) so a derived track never collides with an upload. */
+  requestScope?: string;
+}
+
+/**
+ * One transcription request as the candidate loop sees it: the audio, who
+ * pays, and how the request id is scoped. The audio-upload path fills the
+ * first five; the video path adds the measured seconds, a scope and its own
+ * timestamped instruction.
+ */
+export interface TranscriptionRequestContext {
+  fileId: string;
+  userId: string;
+  base64: string;
+  mimeType: string;
+  sizeBytes: number;
+  audioSeconds?: number;
+  requestScope?: string;
+  instruction?: string;
 }
 
 /** A readable credit refusal, recorded on the row instead of a transcript. */
@@ -126,6 +154,9 @@ export type TranscriptionReserveOutcome = TranscriptionReserveHeld | Transcripti
 
 export interface TranscriptionAttemptCompleted {
   status: TranscriptionAttemptStatus.COMPLETED;
+  /** Trimmed, non-empty. */
+  transcript: string;
+  result: TranscriptionProviderResult;
 }
 
 export interface TranscriptionAttemptRefused extends TranscriptionCreditRefusal {
@@ -135,6 +166,21 @@ export interface TranscriptionAttemptRefused extends TranscriptionCreditRefusal 
 /** How one candidate attempt ended when it did not throw. */
 export type TranscriptionAttemptOutcome =
   TranscriptionAttemptCompleted | TranscriptionAttemptRefused;
+
+/** Which candidate the loop ended on, for the event and the log. */
+export interface TranscriptionRunTarget {
+  capability: TranscriptionCapability;
+  model: string;
+}
+
+/**
+ * How the whole candidate loop ended. The loop never writes the row: the
+ * audio-upload path and the video path each own their single write.
+ */
+export type TranscriptionRunOutcome =
+  | (TranscriptionRunTarget & TranscriptionAttemptCompleted)
+  | (TranscriptionRunTarget & TranscriptionAttemptRefused)
+  | (TranscriptionRunTarget & { status: TranscriptionAttemptStatus.FAILED; reason: string });
 
 // ---- Provider response read models ----
 // The adapters live in `*.adapter.ts`, where ESLint forbids inline interface
@@ -165,4 +211,12 @@ export interface GeminiGenerateContentResponse {
 export interface OpenAiTranscriptionResponse {
   text?: string;
   duration?: number;
+  segments?: OpenAiTranscriptionSegment[];
+}
+
+/** One `verbose_json` segment; `start`/`end` are seconds from the start. */
+export interface OpenAiTranscriptionSegment {
+  start?: number;
+  end?: number;
+  text?: string;
 }

@@ -16,6 +16,7 @@ import { TranscriptionMeterManager } from '../transcription-meter.manager';
 import { FilesRepository } from '../../repositories/files.repository';
 import { TranscriptionCapabilityClient } from '../../clients/transcription-capability.client';
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
+import { DerivedTranscriptionStatus } from '../../../../common/enums';
 import { transcribeWithGemini } from '../../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../../adapters/openai-transcription.adapter';
 import {
@@ -434,5 +435,140 @@ describe('TranscriptionManager — PAYG metering', () => {
       expect(line).not.toMatch(/9700|9_700|available|heldMicro/i);
       expect(line).toContain('reservationId=res-1');
     }
+  });
+});
+
+// Multimodal batch 7 — a VIDEO's audio track through the same meter. The row
+// is never written here (VideoProcessingManager owns that write); what is
+// asserted is the wire: its own request-id scope, charged to the uploader,
+// held on the MEASURED seconds rather than a byte estimate.
+describe('TranscriptionManager.transcribeDerivedAudio — video audio track', () => {
+  const DERIVED = {
+    fileId: 'video-1',
+    userId: 'uploader-1',
+    audioBase64: Buffer.from('mp3').toString('base64'),
+    mimeType: 'audio/mpeg',
+    sizeBytes: 96_000,
+    audioSeconds: 42,
+    requestScope: 'video-audio',
+    instruction: 'TIMESTAMPED',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('OpenAI: holds the measured seconds under a video-scoped request id and returns segments', async () => {
+    mockedOpenAi.mockResolvedValue({
+      text: 'hi there',
+      durationSeconds: 41.2,
+      segments: [{ startMs: 0, endMs: 2_000, text: 'hi there' }],
+    });
+    const h = await buildHarness(buildFile(), [OPENAI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(1))),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(DERIVED);
+
+    expect(outcome).toEqual({
+      status: DerivedTranscriptionStatus.TRANSCRIBED,
+      text: 'hi there',
+      segments: [{ startMs: 0, endMs: 2_000, text: 'hi there' }],
+      provider: 'OPENAI',
+      model: 'whisper-1',
+    });
+    const [reserve, finalize] = h.wire();
+    expect(reserve?.body).toMatchObject({
+      userId: 'uploader-1',
+      requestId: 'transcription:video-1:video-audio:OPENAI',
+      surface: PaygSurface.TRANSCRIPTION,
+      audioSeconds: 42,
+    });
+    expect(finalize?.body).toMatchObject({ audioSeconds: 42 });
+    expect(h.files.saveExtractionResult).not.toHaveBeenCalled();
+    expect(h.rabbit.publish).not.toHaveBeenCalled();
+  });
+
+  it('Gemini: is sent the timestamped instruction', async () => {
+    mockedGemini.mockResolvedValue({ text: '[00:01] hello' });
+    const h = await buildHarness(buildFile(), [GEMINI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(700))),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(DERIVED);
+
+    expect(outcome).toMatchObject({
+      status: DerivedTranscriptionStatus.TRANSCRIBED,
+      text: '[00:01] hello',
+      segments: [],
+    });
+    expect(mockedGemini).toHaveBeenCalledWith(
+      expect.any(String),
+      'k',
+      DERIVED.audioBase64,
+      'audio/mpeg',
+      'gemini-2.5-flash',
+      700,
+      'TIMESTAMPED',
+    );
+    expect(h.wire()[0]?.body).toMatchObject({
+      requestId: 'transcription:video-1:video-audio:GEMINI',
+    });
+  });
+
+  it('a 402 is a FAILED outcome with the readable reason — no provider call, no row write', async () => {
+    const h = await buildHarness(buildFile(), [OPENAI], () =>
+      Promise.resolve(
+        jsonResponse(402, {
+          errorCode: BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
+          message: 'no credit',
+        }),
+      ),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(DERIVED);
+
+    expect(outcome).toEqual({
+      status: DerivedTranscriptionStatus.FAILED,
+      reason: TRANSCRIPTION_INSUFFICIENT_CREDIT_MESSAGE,
+    });
+    expect(mockedOpenAi).not.toHaveBeenCalled();
+    expect(h.files.saveExtractionResult).not.toHaveBeenCalled();
+  });
+
+  it('a provider error releases the hold and comes back FAILED', async () => {
+    mockedOpenAi.mockRejectedValue(new Error('upstream 500'));
+    const h = await buildHarness(buildFile(), [OPENAI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(1))),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(DERIVED);
+
+    expect(outcome).toEqual({ status: DerivedTranscriptionStatus.FAILED, reason: 'upstream 500' });
+    expect(paths(h)).toEqual(['reserve', 'release']);
+  });
+
+  it('no capable connector → FAILED without touching the meter', async () => {
+    const h = await buildHarness(buildFile(), [], () =>
+      Promise.resolve(jsonResponse(200, heldReply(1))),
+    );
+    const outcome = await h.manager.transcribeDerivedAudio(DERIVED);
+    expect(outcome.status).toBe(DerivedTranscriptionStatus.FAILED);
+    expect(h.wire()).toEqual([]);
+  });
+
+  it('a derived track over the byte ceiling is refused before any lookup', async () => {
+    const h = await buildHarness(buildFile(), [OPENAI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(1))),
+    );
+    const outcome = await h.manager.transcribeDerivedAudio({
+      ...DERIVED,
+      sizeBytes: 13 * 1024 * 1024,
+    });
+    expect(outcome.status).toBe(DerivedTranscriptionStatus.FAILED);
+    expect(h.capability.findCapableModels).not.toHaveBeenCalled();
   });
 });
