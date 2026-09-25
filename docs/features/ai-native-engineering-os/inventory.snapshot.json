@@ -7703,7 +7703,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 25708,
+          "bytes": 26888,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -10141,7 +10141,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 34
+        "testFiles": 35
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -10931,7 +10931,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1599,
+    "totalTestFiles": 1600,
     "workspaceCount": 25
   }
 }

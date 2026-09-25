@@ -1,4 +1,5 @@
 import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { expandExposurePairs, requestedPairsMatching } from '../utilities/exposure-pair.utility';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel, type ModelBehaviorProbeResult } from '@claw/shared-types';
 import { type Connector, type ConnectorModel, ConnectorProvider } from '../../../generated/prisma';
@@ -464,7 +465,9 @@ export class ConnectorsService implements OnApplicationBootstrap {
   async validateExposedModels(
     pairs: Array<{ provider: string; model: string }>,
   ): Promise<{ valid: Array<{ provider: string; model: string }> }> {
-    const valid = await this.connectorModelsRepository.findExposedPairs(pairs);
+    // Widen to every catalog spelling, then answer in the caller's spelling.
+    const rows = await this.connectorModelsRepository.findExposedPairs(expandExposurePairs(pairs));
+    const valid = requestedPairsMatching(pairs, rows);
     this.logger.debug(
       `validateExposedModels: requested=${String(pairs.length)} valid=${String(valid.length)}`,
     );

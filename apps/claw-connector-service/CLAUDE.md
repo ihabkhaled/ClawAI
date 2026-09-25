@@ -253,3 +253,13 @@ into the preset's `{ACCOUNT_ID}` URL placeholder by `ConnectorsManager.
 getExecutionConfig` — the method chat-service's `getConnectorConfig` call
 resolves through, so no caller ever sees a template URL. Validated as a
 32-character lowercase hex string in `create-connector.dto.ts`.
+
+## Exposure lookups normalize the model id (2026-09-25)
+
+`POST /internal/connectors/models/validate-exposed` widens each requested id to
+every catalog spelling (`modelKeyVariants`: as asked, bare, `models/<bare>`),
+then answers with the pairs **as the caller spelled them**
+(`requestedPairsMatching`, shared `modelMatchKey`). Before this, an exact match
+refused `GEMINI/gemini-2.5-flash` — the VISION_HELPER role's model — because
+the Gemini catalog stores `models/gemini-2.5-flash`. Found by the live
+multimodal QA lane; rule 42 item 13 is the same bug class.

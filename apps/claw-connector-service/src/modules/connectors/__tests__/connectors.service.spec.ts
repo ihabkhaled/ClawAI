@@ -554,4 +554,29 @@ describe('ConnectorsService', () => {
       expect(result.data[0]?.encryptedConfig).toBeNull();
     });
   });
+
+  describe('validateExposedModels', () => {
+    it('finds a models/-keyed catalog row for a bare id and answers in the caller spelling', async () => {
+      const findExposedPairs = vi
+        .fn()
+        .mockResolvedValue([{ provider: 'GEMINI', model: 'models/gemini-2.5-flash' }]);
+      modelsRepo.findExposedPairs = findExposedPairs;
+
+      const result = await service.validateExposedModels([
+        { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+      ]);
+
+      expect(findExposedPairs).toHaveBeenCalledWith([
+        { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+      ]);
+      expect(result).toEqual({ valid: [{ provider: 'GEMINI', model: 'gemini-2.5-flash' }] });
+    });
+
+    it('answers nothing for a pair no exposed row matches', async () => {
+      modelsRepo.findExposedPairs = vi.fn().mockResolvedValue([]);
+      const result = await service.validateExposedModels([{ provider: 'OPENAI', model: 'gpt-x' }]);
+      expect(result).toEqual({ valid: [] });
+    });
+  });
 });
