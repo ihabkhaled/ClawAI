@@ -1,5 +1,9 @@
+import type { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum';
 import type { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import type { FileIngestionStatus } from '@/enums/file-ingestion-status.enum';
+import type { UploadedFile } from '@/types/file.types';
+import type { UploadProgressSnapshot } from '@/types/upload-progress.types';
+import type { getFileTypeDescriptor } from '@/utilities/file-type-icon.utility';
 
 // composer-attachment.types.ts — per-attachment chip state in the composer.
 // Exported shapes only, no runtime code.
@@ -88,4 +92,79 @@ export type ComposerAttachmentChipsProps = UseComposerAttachmentChipsReturn;
 export type ComposerAttachmentChipProps = {
   chip: ComposerAttachmentChip;
   onRemove: (chip: ComposerAttachmentChip) => void;
+};
+
+/** A file the composer is still uploading — shown as a tile before it has an id. */
+export type PendingComposerUpload = {
+  key: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+};
+
+/**
+ * Everything the tray above a composer's textarea needs. One bag so every
+ * surface (chat, Compare, in-thread Compare, the nine labs) renders the same
+ * tray from the same hook output.
+ */
+export type ComposerAttachmentTrayProps = {
+  fileIds: string[];
+  pendingUploads: PendingComposerUpload[];
+  progress: UploadProgressSnapshot | null;
+  onRemove: (fileId: string) => void;
+  disabled?: boolean;
+  /**
+   * The state line for a selected file that is not simply ready — "Processing
+   * — you can send now", "Failed — <reason>" — from the chip resolver, so a
+   * file is listed once, with its preview AND its state.
+   */
+  statusByFileId?: ReadonlyMap<string, string>;
+};
+
+export type ComposerAttachmentTileProps = {
+  fileId: string;
+  onRemove: (fileId: string) => void;
+  disabled?: boolean;
+  status?: string;
+};
+
+export type ComposerPendingAttachmentTileProps = {
+  upload: PendingComposerUpload;
+  progress: UploadProgressSnapshot | null;
+};
+
+export type UseComposerAttachmentTileReturn = {
+  file: UploadedFile | undefined;
+  kind: AttachmentPreviewKind | null;
+  /** Non-null only for a voice or video note, which renders as a player. */
+  mediaKind: AttachmentPreviewKind.Audio | AttachmentPreviewKind.Video | null;
+  showPlaceholder: boolean;
+  showImage: boolean;
+  showMedia: boolean;
+  showDocument: boolean;
+  descriptor: ReturnType<typeof getFileTypeDescriptor> | null;
+  label: string;
+  sizeLabel: string | null;
+  removeLabel: string;
+};
+
+/**
+ * The composer that a whole-panel drop feeds. The chat thread panel wraps the
+ * messages AND the composer, but the upload pipeline lives inside the composer,
+ * so the composer registers its ingest function here and the panel reads it.
+ */
+export type ComposerDropTargetStore = {
+  ingest: ((files: FileList | File[]) => void) | null;
+  register: (ingest: (files: FileList | File[]) => void) => void;
+  unregister: (ingest: (files: FileList | File[]) => void) => void;
+};
+
+export type ChatPanelDropzoneProps = {
+  className?: string;
+  children: React.ReactNode;
+};
+
+export type UseChatPanelDropzoneReturn = {
+  onFiles: (files: FileList | File[]) => void;
+  disabled: boolean;
 };

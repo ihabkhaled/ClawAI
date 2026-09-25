@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react';
 
+import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { OrchestrationPageHeader } from '@/components/chat/orchestration/orchestration-page-header';
@@ -14,6 +15,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ORCHESTRATION_PROMPT_MAX_ROWS, ORCHESTRATION_PROMPT_MIN_ROWS } from '@/constants';
+import { NOOP_FILE_INGEST } from '@/constants/composer-attachment.constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { LoadingStateVariant } from '@/enums/loading-state.enum';
 import { PlanFeature } from '@/enums/plan-feature.enum';
@@ -21,6 +23,7 @@ import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { cn } from '@/lib/utils';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 // Shared shell every orchestration lab page composes around.
 //
@@ -71,7 +74,6 @@ export function OrchestrationPageShell({
   // paid feature, and a lab is not an exception to that.
   const planFeatures = usePlanFeatures();
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
-  const trimmedPrompt = prompt.trim();
   // A file's progress reaches 100% the instant the last byte lands; the real
   // completion (server-side reassembly, the antivirus/magic-byte scan, the id
   // landing in composer.selectedFileIds) happens after that. Both the submit
@@ -84,7 +86,8 @@ export function OrchestrationPageShell({
   const canSubmit =
     !isPending &&
     selectedModel !== null &&
-    trimmedPrompt.length > 0 &&
+    // Words or files — an attachment alone is a complete request.
+    hasSendableInput(prompt, composer?.selectedFileIds.length ?? 0) &&
     isSubmitDisabled !== true &&
     !isAttachmentUploading;
 
@@ -97,8 +100,16 @@ export function OrchestrationPageShell({
   const resolvedPromptLabel = promptLabel ?? t('orchestrationShell.promptLabel');
   const resolvedPromptPlaceholder = promptPlaceholder ?? t('orchestrationShell.promptPlaceholder');
 
+  // The whole lab page takes a dropped file, not only the prompt box: the
+  // overlay covers the page while a file is dragged over it. Paste still works
+  // anywhere on it and only swallows the event when it carried files.
   return (
-    <div className={cn('flex h-full min-h-0 flex-col', className)}>
+    <ComposerDropzone
+      onFiles={composer?.ingestFiles ?? NOOP_FILE_INGEST}
+      disabled={composer === undefined || isPending}
+      className={cn('flex h-full min-h-0 flex-col', className)}
+      testId="orchestration-page-dropzone"
+    >
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 sm:px-6">
         <OrchestrationPageHeader
           icon={headerIcon}
@@ -138,33 +149,21 @@ export function OrchestrationPageShell({
                       guard, so typing a long prompt scrolled inside six rows
                       and a CJK composition could not be confirmed safely. It
                       is the same component chat and compare already use. */}
-                  {composer === undefined ? (
-                    <RichPromptTextarea
-                      id="orchestration-prompt"
-                      value={prompt}
-                      onChange={onPromptChange}
-                      onSubmit={canSubmit ? onSubmit : undefined}
-                      placeholder={resolvedPromptPlaceholder}
-                      disabled={isPending}
-                      minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
-                      maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
-                      className="min-h-[8rem]"
-                    />
-                  ) : (
-                    <ComposerDropzone onFiles={composer.ingestFiles} disabled={isPending}>
-                      <RichPromptTextarea
-                        id="orchestration-prompt"
-                        value={prompt}
-                        onChange={onPromptChange}
-                        onSubmit={canSubmit ? onSubmit : undefined}
-                        placeholder={resolvedPromptPlaceholder}
-                        disabled={isPending}
-                        minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
-                        maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
-                        className="min-h-[8rem]"
-                      />
-                    </ComposerDropzone>
+                  {composer === undefined ? null : (
+                    <ComposerAttachmentTray {...composer.attachmentTray} />
                   )}
+                  <RichPromptTextarea
+                    id="orchestration-prompt"
+                    value={prompt}
+                    onChange={onPromptChange}
+                    onSubmit={canSubmit ? onSubmit : undefined}
+                    allowEmptySubmit={(composer?.selectedFileIds.length ?? 0) > 0}
+                    placeholder={resolvedPromptPlaceholder}
+                    disabled={isPending}
+                    minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
+                    maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
+                    className="min-h-[8rem]"
+                  />
                 </div>
 
                 {composer === undefined ? null : (
@@ -290,6 +289,6 @@ export function OrchestrationPageShell({
           </section>
         </div>
       </div>
-    </div>
+    </ComposerDropzone>
   );
 }

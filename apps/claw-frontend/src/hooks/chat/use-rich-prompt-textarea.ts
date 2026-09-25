@@ -45,6 +45,7 @@ export function useRichPromptTextarea(
     minRows = RICH_PROMPT_DEFAULT_MIN_ROWS,
     maxRows = RICH_PROMPT_DEFAULT_MAX_ROWS,
     recallHistory,
+    allowEmptySubmit = false,
   } = params;
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -228,7 +229,7 @@ export function useRichPromptTextarea(
       if (onSubmit === undefined) {
         return;
       }
-      if (value.trim().length === 0) {
+      if (value.trim().length === 0 && !allowEmptySubmit) {
         // Treat empty/whitespace-only as a no-op submit; suppress the newline
         // so the user doesn't end up with leading blank lines they didn't ask
         // for.
@@ -238,7 +239,7 @@ export function useRichPromptTextarea(
       e.preventDefault();
       onSubmit();
     },
-    [disabled, onChange, onSubmit, recallHistory, value],
+    [allowEmptySubmit, disabled, onChange, onSubmit, recallHistory, value],
   );
 
   const handleCompositionStart = useCallback((): void => {

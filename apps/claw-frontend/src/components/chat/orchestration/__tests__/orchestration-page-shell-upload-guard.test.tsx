@@ -10,6 +10,9 @@ import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 vi.mock('@/components/chat/file-attachment-picker', () => ({
   FileAttachmentPicker: () => <div data-testid="picker" />,
 }));
+vi.mock('@/components/chat/composer-attachment-tray', () => ({
+  ComposerAttachmentTray: () => <div data-testid="attachment-tray" />,
+}));
 vi.mock('@/components/chat/composer-dropzone', () => ({
   ComposerDropzone: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -39,6 +42,7 @@ function buildComposer(
     isUploading: false,
     pendingCount: 0,
     progress: null,
+    attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
     research: { mode: ResearchMode.AUTO },
     setResearch: vi.fn(),
     researchProviders: [],
@@ -49,7 +53,7 @@ function buildComposer(
   };
 }
 
-function renderShell(composer: UseOrchestrationComposerReturn): void {
+function renderShell(composer: UseOrchestrationComposerReturn, prompt = 'a real prompt'): void {
   const props: OrchestrationPageShellProps = {
     headerIcon: Sparkles,
     headerTitle: 'Lab',
@@ -57,7 +61,7 @@ function renderShell(composer: UseOrchestrationComposerReturn): void {
     selectedModel: { provider: 'OLLAMA', model: 'some-model', displayName: 'Some Model' },
     onModelChange: vi.fn(),
     composer,
-    prompt: 'a real prompt',
+    prompt,
     onPromptChange: vi.fn(),
     onSubmit: vi.fn(),
     submitLabel: 'Run',
@@ -86,5 +90,26 @@ describe('OrchestrationPageShell — refuses to submit while an attachment is up
     renderShell(buildComposer({ isUploading: false }));
 
     expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled();
+  });
+});
+
+// "I can send attachments/files WITHOUT text."
+describe('OrchestrationPageShell — attachment-only runs', () => {
+  it('enables Run with an attached file and an empty prompt', () => {
+    renderShell(buildComposer({ selectedFileIds: ['file-1'] }), '');
+
+    expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled();
+  });
+
+  it('keeps Run disabled with neither text nor files', () => {
+    renderShell(buildComposer({ selectedFileIds: [] }), '   ');
+
+    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled();
+  });
+
+  it('renders the attachment tray above the prompt', () => {
+    renderShell(buildComposer({ selectedFileIds: ['file-1'] }));
+
+    expect(screen.getByTestId('attachment-tray')).toBeInTheDocument();
   });
 });

@@ -26,6 +26,8 @@ import type { LoginFailureCopy } from '@/types/auth.types';
 import type {
   ComposerUploadEntry,
   UseComposerAttachmentChipsReturn,
+  ComposerAttachmentTrayProps,
+  PendingComposerUpload,
 } from '@/types/composer-attachment.types';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
@@ -521,14 +523,19 @@ export type UseImageErrorStateReturn = {
 // model exactly like a paperclip-picked file.
 export type UseComposerAttachmentsParams = {
   selectedFileIds: string[];
-  onChange: (fileIds: string[]) => void;
+  /** A useState setter: uploads resolve concurrently, so updates are functional. */
+  onChange: React.Dispatch<React.SetStateAction<string[]>>;
   disabled?: boolean;
 };
 
 export type UseComposerAttachmentsReturn = {
   ingestFiles: (files: FileList | File[] | null | undefined) => void;
+  /** Drops one selected file; the tray's remove (x) button. */
+  removeAttachment: (fileId: string) => void;
   isUploading: boolean;
   pendingCount: number;
+  /** Files still uploading, one tile each, before they have an id. */
+  pendingUploads: PendingComposerUpload[];
   /** The most recently uploading file's percent/ETA/speed, null when idle. */
   progress: UploadProgressSnapshot | null;
   /** One entry per ingested file — what the per-attachment chips are built from. */
@@ -606,6 +613,8 @@ export type UseMessageComposerReturn = {
   onSubmitValue: () => void;
   onFormSubmit: (e: React.FormEvent) => void;
   onIngestFiles: (files: FileList | File[]) => void;
+  /** Tiles above the textarea: what is attached, and what is still uploading. */
+  attachmentTray: ComposerAttachmentTrayProps;
   toolbarProps: ComposerToolbarProps;
   /** One chip per attachment: uploading → processing → ready, or failed. */
   attachmentChips: UseComposerAttachmentChipsReturn;
@@ -632,6 +641,8 @@ export type UseMessageComposerStateReturn = {
   attachmentUploadProgress: UploadProgressSnapshot | null;
   attachmentUploads: ComposerUploadEntry[];
   dismissAttachmentUpload: (localId: string) => void;
+  pendingUploads: PendingComposerUpload[];
+  removeAttachment: (fileId: string) => void;
 };
 
 // Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.
@@ -644,6 +655,9 @@ export type UseRichPromptTextareaParams = {
   disabled?: boolean;
   minRows?: number;
   maxRows?: number;
+  // True when files are attached: plain Enter then submits an EMPTY prompt,
+  // because an attachment alone is a complete message.
+  allowEmptySubmit?: boolean;
   // The text ArrowUp recalls into an EMPTY composer — the user's own previous
   // message. Undefined (the default) disables recall entirely, which is why
   // the compare panel, whose textarea has no history behind it, simply omits
@@ -1189,6 +1203,8 @@ export type UseOrchestrationComposerReturn = {
   isUploading: boolean;
   pendingCount: number;
   progress: UploadProgressSnapshot | null;
+  /** Tiles above the prompt: what is attached, and what is still uploading. */
+  attachmentTray: ComposerAttachmentTrayProps;
   /** Selected research mode + provider, defaulted to AUTO exactly like chat. */
   research: ResearchOptions;
   setResearch: (next: ResearchOptions) => void;

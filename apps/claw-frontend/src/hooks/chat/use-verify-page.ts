@@ -8,6 +8,7 @@ import { useVerifyPoll } from '@/hooks/chat/use-verify-poll';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, UseVerifyPageReturn } from '@/types';
 import { buildAdvancedModelSelectionPayload } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useVerifyPage(): UseVerifyPageReturn {
   const { t } = useTranslation();
@@ -29,7 +30,11 @@ export function useVerifyPage(): UseVerifyPageReturn {
   const { stages } = useOrchestrationStages(threadId, isRunning);
 
   const trimmedContent = content.trim();
-  const meetsMinLength = trimmedContent.length >= VERIFIER_CONTENT_MIN_LENGTH;
+  const meetsMinLength = hasSendableInput(
+    trimmedContent,
+    composer.selectedFileIds.length,
+    VERIFIER_CONTENT_MIN_LENGTH,
+  );
   const hasSelectedModel = selectedModel !== null;
   // `canSend` is the legacy/internal gate used by handleSend itself. The
   // shell uses `canSubmit` and adds its own `isPending` check.

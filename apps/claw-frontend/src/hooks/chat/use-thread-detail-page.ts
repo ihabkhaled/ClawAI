@@ -192,6 +192,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       selectedFileIds: compare.selectedFileIds,
       onSelectedFileIdsChange: compare.setSelectedFileIds,
       onIngestFiles: compare.ingestFiles,
+      attachmentTray: compare.attachmentTray,
       t,
     },
     threadSettingsProps: {

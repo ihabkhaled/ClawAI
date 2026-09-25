@@ -135,7 +135,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      request, never in storage — by `buildAttachmentOnlyInstruction`: answer
      what a voice note said, describe an image/video, summarize a document and
      offer next steps, reply in the attachment's language. Log line to grep:
-     `userTurnText: attachment-only turn — files=N mimeTypes=[…]`.
+     `assemble: attachment-only turn — files=N mimeTypes=[…]`.
 6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)

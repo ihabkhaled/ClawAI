@@ -2,10 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
+import { MAX_ATTACHMENTS_PER_MESSAGE } from '@/constants/composer-attachment.constants';
 import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
+import { showToast } from '@/utilities';
 
 const mockUpload = vi.fn();
 let mockProgress: unknown = null;
@@ -42,6 +44,19 @@ function makeWrapper(): (props: { children: ReactNode }) => ReactElement {
   };
 }
 
+// The hook updates the selected list through a functional state update, so
+// the sink applies updaters exactly like React's setState does.
+function stateSink(initial: string[]): {
+  onChange: Mock<React.Dispatch<React.SetStateAction<string[]>>>;
+  value: () => string[];
+} {
+  let current = initial;
+  const onChange = vi.fn<React.Dispatch<React.SetStateAction<string[]>>>((next) => {
+    current = typeof next === 'function' ? next(current) : next;
+  });
+  return { onChange, value: () => current };
+}
+
 function pngFile(name = 'photo.png'): File {
   return new File([new Uint8Array(10)], name, { type: 'image/png' });
 }
@@ -54,7 +69,8 @@ describe('useComposerAttachments', () => {
 
   it('isUploading returns to false once a successful upload settles', async () => {
     mockUpload.mockResolvedValue('file-1');
-    const onChange = vi.fn();
+    const sink = stateSink([]);
+    const onChange = sink.onChange;
     const { result } = renderHook(
       () => useComposerAttachments({ selectedFileIds: [], onChange, disabled: false }),
       { wrapper: makeWrapper() },
@@ -69,12 +85,13 @@ describe('useComposerAttachments', () => {
       expect(result.current.isUploading).toBe(false);
     });
     expect(result.current.pendingCount).toBe(0);
-    expect(onChange).toHaveBeenCalledWith(['file-1']);
+    expect(sink.value()).toEqual(['file-1']);
   });
 
   it('isUploading ALSO returns to false when the upload fails — not stuck forever', async () => {
     mockUpload.mockRejectedValue(new Error('network error'));
-    const onChange = vi.fn();
+    const sink = stateSink([]);
+    const onChange = sink.onChange;
     const { result } = renderHook(
       () => useComposerAttachments({ selectedFileIds: [], onChange, disabled: false }),
       { wrapper: makeWrapper() },
@@ -95,7 +112,8 @@ describe('useComposerAttachments', () => {
 
   it('a second ingestFiles call after the first settled starts clean, not refused', async () => {
     mockUpload.mockResolvedValueOnce('file-1').mockResolvedValueOnce('file-2');
-    const onChange = vi.fn();
+    const sink = stateSink([]);
+    const onChange = sink.onChange;
     const { result, rerender } = renderHook(
       (props: { selectedFileIds: string[] }) =>
         useComposerAttachments({
@@ -122,13 +140,18 @@ describe('useComposerAttachments', () => {
     await waitFor(() => {
       expect(result.current.isUploading).toBe(false);
     });
-    expect(onChange).toHaveBeenCalledWith(['file-1', 'file-2']);
+    expect(sink.value()).toEqual(['file-1', 'file-2']);
   });
 
   it('tracks each file: Uploading, then Uploaded with its id', async () => {
     mockUpload.mockResolvedValue('file-7');
     const { result } = renderHook(
-      () => useComposerAttachments({ selectedFileIds: [], onChange: vi.fn(), disabled: false }),
+      () =>
+        useComposerAttachments({
+          selectedFileIds: [],
+          onChange: stateSink([]).onChange,
+          disabled: false,
+        }),
       { wrapper: makeWrapper() },
     );
 
@@ -153,7 +176,12 @@ describe('useComposerAttachments', () => {
   it('keeps a failed upload as a Failed entry WITH its reason until dismissed', async () => {
     mockUpload.mockRejectedValue(new Error('network error'));
     const { result } = renderHook(
-      () => useComposerAttachments({ selectedFileIds: [], onChange: vi.fn(), disabled: false }),
+      () =>
+        useComposerAttachments({
+          selectedFileIds: [],
+          onChange: stateSink([]).onChange,
+          disabled: false,
+        }),
       { wrapper: makeWrapper() },
     );
 
@@ -175,5 +203,106 @@ describe('useComposerAttachments', () => {
       result.current.dismissUpload(localId);
     });
     expect(result.current.uploads).toEqual([]);
+  });
+});
+
+describe('useComposerAttachments — cap, concurrency and tiles', () => {
+  beforeEach(() => {
+    mockUpload.mockReset();
+    mockProgress = null;
+  });
+
+  it('keeps EVERY file when several uploads resolve before a re-render', async () => {
+    // Each upload used to append to the selectedFileIds captured when the
+    // batch started, so three concurrent files ended with only the last one.
+    mockUpload
+      .mockResolvedValueOnce('file-1')
+      .mockResolvedValueOnce('file-2')
+      .mockResolvedValueOnce('file-3');
+    const sink = stateSink([]);
+    const onChange = sink.onChange;
+    const { result } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: [], onChange, disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('a.png'), pngFile('b.png'), pngFile('c.png')]);
+    });
+    await waitFor(() => {
+      expect(result.current.isUploading).toBe(false);
+    });
+
+    expect(sink.value()).toEqual(['file-1', 'file-2', 'file-3']);
+  });
+
+  it(`refuses files past ${String(MAX_ATTACHMENTS_PER_MESSAGE)} with a translated message`, async () => {
+    mockUpload.mockImplementation((file: File) => Promise.resolve(`id-${file.name}`));
+    const existing = Array.from(
+      { length: MAX_ATTACHMENTS_PER_MESSAGE - 1 },
+      (_, i) => `f${String(i)}`,
+    );
+    const sink = stateSink(existing);
+    const onChange = sink.onChange;
+    const { result } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: existing, onChange, disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('one.png'), pngFile('two.png'), pngFile('three.png')]);
+    });
+    await waitFor(() => {
+      expect(result.current.isUploading).toBe(false);
+    });
+
+    expect(mockUpload).toHaveBeenCalledTimes(1);
+    expect(showToast.error).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'chat.attachment.tooMany' }),
+    );
+    expect(sink.value()).toEqual([...existing, 'id-one.png']);
+  });
+
+  it('lists an in-flight upload as a pending tile, then drops it', async () => {
+    let resolveUpload: (id: string) => void = () => undefined;
+    mockUpload.mockReturnValue(
+      new Promise<string>((resolvePromise) => {
+        resolveUpload = resolvePromise;
+      }),
+    );
+    const { result } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: [], onChange: vi.fn(), disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('shot.png')]);
+    });
+    expect(result.current.pendingUploads).toEqual([
+      expect.objectContaining({ filename: 'shot.png', mimeType: 'image/png', sizeBytes: 10 }),
+    ]);
+
+    await act(async () => {
+      resolveUpload('file-9');
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(result.current.pendingUploads).toEqual([]);
+    });
+  });
+
+  it('removes one attachment and keeps the rest', () => {
+    const sink = stateSink(['a', 'b', 'c']);
+    const onChange = sink.onChange;
+    const { result } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: ['a', 'b', 'c'], onChange, disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.removeAttachment('b');
+    });
+
+    expect(sink.value()).toEqual(['a', 'c']);
   });
 });

@@ -35,6 +35,7 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       ariaLabel,
       className,
       recallHistory,
+      allowEmptySubmit,
     } = props;
 
     const {
@@ -51,6 +52,7 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       minRows,
       maxRows,
       recallHistory,
+      allowEmptySubmit,
     });
 
     // Bridge the internal textareaRef (used for autosize measurements) with

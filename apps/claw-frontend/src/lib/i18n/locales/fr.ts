@@ -594,13 +594,15 @@ export const fr: TranslationDictionary = {
     feedbackSaved: 'Retour enregistré',
     attachFiles: 'Joindre des fichiers',
     attachment: {
-      added: '{name} joint',
       uploading: 'Téléversement de la pièce jointe…',
       dropToAttach: 'Déposez des fichiers à joindre',
       voiceNote: 'Note vocale',
       videoNote: 'Note vidéo',
       stillUploadingRefusal:
         "Attendez la fin du téléchargement de la pièce jointe avant d'envoyer.",
+      tooMany: 'Vous pouvez joindre jusqu’à {max} fichiers par message.',
+      remove: 'Retirer {name}',
+      trayLabel: 'Fichiers joints',
       play: 'Lecture',
       loading: 'Chargement…',
       previewFailed: 'Impossible de charger cette pièce jointe',

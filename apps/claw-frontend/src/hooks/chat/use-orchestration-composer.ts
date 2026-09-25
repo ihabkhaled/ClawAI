@@ -38,11 +38,12 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
-  const { ingestFiles, isUploading, pendingCount, progress } = useComposerAttachments({
-    selectedFileIds,
-    onChange: setSelectedFileIds,
-    disabled,
-  });
+  const { ingestFiles, removeAttachment, isUploading, pendingCount, pendingUploads, progress } =
+    useComposerAttachments({
+      selectedFileIds,
+      onChange: setSelectedFileIds,
+      disabled,
+    });
 
   // NONE is expressed by omitting the fields, not by sending the string. The
   // backend resolves an absent mode to NONE anyway, and an absent field keeps
@@ -68,6 +69,13 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
     isUploading,
     pendingCount,
     progress,
+    attachmentTray: {
+      fileIds: selectedFileIds,
+      pendingUploads,
+      progress,
+      onRemove: removeAttachment,
+      disabled,
+    },
     research,
     setResearch,
     researchProviders: providerQuery.providers,

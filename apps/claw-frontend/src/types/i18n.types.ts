@@ -539,12 +539,14 @@ export type TranslationDictionary = {
     feedbackSaved: string;
     attachFiles: string;
     attachment: {
-      added: string;
       uploading: string;
       dropToAttach: string;
       voiceNote: string;
       videoNote: string;
       stillUploadingRefusal: string;
+      tooMany: string;
+      remove: string;
+      trayLabel: string;
       play: string;
       loading: string;
       previewFailed: string;

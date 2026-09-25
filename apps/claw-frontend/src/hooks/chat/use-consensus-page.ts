@@ -7,6 +7,7 @@ import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useSendConsensus } from '@/hooks/chat/use-send-consensus';
 import { useTranslation } from '@/lib/i18n';
 import type { ModelSelection, UseConsensusPageReturn } from '@/types';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 // Controller hook for the Consensus Mode lab page. Composes the
 // orchestration-shell single-model picker (`selectedModel`) with the
@@ -49,7 +50,7 @@ export function useConsensusPage(): UseConsensusPageReturn {
   } = useOrchestrationStages(threadId, isStreamActive);
 
   const trimmedPrompt = prompt.trim();
-  const hasContent = trimmedPrompt.length > 0;
+  const hasContent = hasSendableInput(trimmedPrompt, composer.selectedFileIds.length);
   const hasLeadModel = selectedModel !== null;
 
   // Legacy gate — keeps the in-page picker's "select at least 2 models"

@@ -72,6 +72,7 @@ const baseProps = {
   selectedFileIds: [],
   onSelectedFileIdsChange: vi.fn(),
   onIngestFiles: vi.fn(),
+  attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
   t,
 };
 
@@ -166,21 +167,16 @@ describe('InThreadComparePanel — plan-feature gates', () => {
 });
 
 describe('InThreadComparePanel — drop-zone scope', () => {
-  // Regression: ComposerDropzone used to wrap the ENTIRE right column —
-  // attach picker, recorder, research toggle, the prompt form AND the submit
-  // button — so a drag-over painted its dashed overlay across every one of
-  // those unrelated controls instead of just the prompt field. It now wraps
-  // only the form, matching the full-page Compare and orchestration
-  // composers.
-  it('keeps the attach/mic/research row outside the drop-target wrapper', () => {
+  // Reversed 2026-09-25 by the owner: "drag and drop files into the WHOLE
+  // chat panel, not only the text area". The dialog body — models, controls,
+  // prompt — is one drop target now, the way ChatGPT and Claude behave.
+  it('makes the whole dialog body the drop target, prompt and controls included', () => {
     render(
       withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
     );
-    const recorderButton = screen.getByTestId('voice-video-recorder-audio');
-    const textarea = screen.getByLabelText('compare.sendPrompt');
-    const dropzoneWrapper = textarea.closest('.relative');
-    expect(dropzoneWrapper).not.toBeNull();
-    expect(dropzoneWrapper?.contains(recorderButton)).toBe(false);
+    const dropzone = screen.getByTestId('in-thread-compare-dropzone');
+    expect(dropzone.contains(screen.getByLabelText('compare.sendPrompt'))).toBe(true);
+    expect(dropzone.contains(screen.getByTestId('voice-video-recorder-audio'))).toBe(true);
   });
 
   // Live 2026-09-25: the fixed-width research selects ended 4px past the

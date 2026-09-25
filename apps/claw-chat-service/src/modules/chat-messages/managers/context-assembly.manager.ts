@@ -93,7 +93,7 @@ import {
   formatDerivedImageBlock,
   visionHelperNoteFor,
 } from '../utilities/vision-helper.utility';
-import { resolveUserTurnText } from '../utilities/attachment-only-turn.utility';
+import { isTrivialUserText, resolveUserTurnText } from '../utilities/attachment-only-turn.utility';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -144,6 +144,7 @@ export class ContextAssemblyManager {
       userId,
     );
     const retrievalMs = Date.now() - retrievalStartedAt;
+    this.logAttachmentOnlyTurn(lastUserContent, filteredFileContents);
     this.fitFixedContext(fetched, filteredFileContents, threadSettings);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const researchEvidence = this.fitResearchEvidence(
@@ -690,14 +691,22 @@ ${evidence.snippet}`);
    * only: the stored row stays what the user sent. Rule 42 §18.
    */
   private userTurnText(content: string, fileContents: AssembledContext['fileContents']): string {
-    const resolved = resolveUserTurnText(content, fileContents);
-    if (resolved !== content) {
-      this.logger.log(
-        `userTurnText: attachment-only turn — files=${String(fileContents.length)} ` +
-          `mimeTypes=[${fileContents.map((file) => file.mimeType).join(',')}]`,
-      );
+    // Logged once per turn in assemble(), not here: the builders run several
+    // times per turn (token estimates, then the real call).
+    return resolveUserTurnText(content, fileContents);
+  }
+
+  private logAttachmentOnlyTurn(
+    lastUserContent: string,
+    fileContents: AssembledContext['fileContents'],
+  ): void {
+    if (fileContents.length === 0 || !isTrivialUserText(lastUserContent)) {
+      return;
     }
-    return resolved;
+    this.logger.log(
+      `assemble: attachment-only turn — files=${String(fileContents.length)} ` +
+        `mimeTypes=[${fileContents.map((file) => file.mimeType).join(',')}]`,
+    );
   }
 
   private formatWorkspaceCitations(

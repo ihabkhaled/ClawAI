@@ -196,6 +196,29 @@ today, and any future page built as header + transcript + input.
     with `aria-label="Open search"` cannot be activated by someone saying
     "click Search". Label the icon-only variant; leave the labelled one alone.
 
+20. **What is attached is visible above the textarea, and the whole panel takes
+    a drop.** `ComposerAttachmentTray` renders one tile per file — image
+    thumbnail, voice/video player, or type icon + name + size — plus a tile per
+    upload still in flight, each with a keyboard-reachable remove button on the
+    inline-end corner. Every surface with attachments renders it: chat, Compare,
+    in-thread Compare, and the nine labs via `OrchestrationPageShell`. A drop
+    anywhere on the panel (chat: the reading column, messages included; Compare,
+    labs: the page; in-thread Compare: the dialog body) goes through the same
+    `useComposerAttachments` pipeline. In the chat thread the panel is
+    `ChatPanelDropzone`, fed by the composer through
+    `useComposerDropTargetStore`; the composer keeps paste and passes
+    `acceptDrop={false}`, because two nested drop zones upload every dropped
+    file twice.
+
+21. **Files alone are a message, and the composer's file cap is the server's.**
+    Every send gate is `hasSendableInput(content, fileCount, minLength)` —
+    Enter and the button alike, and never while an upload is in flight.
+    `MAX_ATTACHMENTS_PER_MESSAGE` (10) mirrors chat-service's
+    `MAX_ATTACHMENTS_PER_REQUEST`, pinned by a test that reads the server file;
+    the eleventh file is refused in the composer with `chat.attachment.tooMany`,
+    never left to the server's "Validation failed". See rule 42 (attachment-only
+    turns) for what the model is told.
+
 ## Prohibited patterns
 
 - A pixel height, or a ratio-of-window height, for a composer or a transcript.
@@ -237,15 +260,16 @@ today, and any future page built as header + transcript + input.
 
 ## Enforcement
 
-| Mechanism            | What it checks                                                                                                                                                                                                                                                                                                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mechanism            | What it checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/chat-surface-layout-contract.test.ts` reads the shell, composer, toolbar and action-rail source and fails on an arbitrary pixel/vh height, an inline `height:`, a missing `min-h-0` on the transcript, a missing `chat-content-column`, a rail strip taken out of the reading column instead of reserved beside it, a primary action back on the header row, a rail placed with a physical utility, twin breakpoint-hidden control rows, a missing `resize-none`, or a missing `data-rail-obstacle`. |
-| **Unit test**        | `hooks/chat/__tests__/use-message-composer.test.tsx` asserts the composer is bounded in rows and that the variant is resolved once, not rendered twice.                                                                                                                                                                                                                       |
-| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/model-picker.test.tsx` asserts the picker opens with the current choice highlighted, re-seeds on each open, still finds a model by display name after the item value became its id, and shows the short label with the full one on `title`/`aria-label`.                                                                    |
-| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/stream-health-notice.test.tsx` — renders nothing when healthy, distinguishes reconnecting from lost, and announces politely to a screen reader.                                                                                                                                                                             |
-| **Unit test**        | `apps/claw-frontend/src/utilities/__tests__/sse-reconnect.utility.test.ts` — a connection that stays open and goes silent is abandoned and retried, and health transitions are reported.                                                                                                                                                                                      |
-| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/research-toggle.test.tsx` asserts both research triggers carry a fixed width and `shrink-0`, and never `flex-1`.                                                                                                                                                                                                            |
-| **Review checklist** | Rules 6, 7, 9 and 15 have no automatable form — a wrapped header and a keyboard-shrunk viewport are only visible in a browser. `skills/verify-responsive-layout-in-browser.md` is the procedure, and its evidence is the check.                                                                                                                                               |
+| **Unit test**        | `hooks/chat/__tests__/use-message-composer.test.tsx` asserts the composer is bounded in rows and that the variant is resolved once, not rendered twice.                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/model-picker.test.tsx` asserts the picker opens with the current choice highlighted, re-seeds on each open, still finds a model by display name after the item value became its id, and shows the short label with the full one on `title`/`aria-label`.                                                                                                                                                                                                                                             |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/stream-health-notice.test.tsx` — renders nothing when healthy, distinguishes reconnecting from lost, and announces politely to a screen reader.                                                                                                                                                                                                                                                                                                                                                      |
+| **Unit test**        | `apps/claw-frontend/src/utilities/__tests__/sse-reconnect.utility.test.ts` — a connection that stays open and goes silent is abandoned and retried, and health transitions are reported.                                                                                                                                                                                                                                                                                                                                                               |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/research-toggle.test.tsx` asserts both research triggers carry a fixed width and `shrink-0`, and never `flex-1`.                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Unit test**        | `composer-attachment-tray.test.tsx` (tiles by kind, remove, live percent), `chat-panel-dropzone.test.tsx` (a drop on the messages area reaches the composer once; inert with no composer), `use-composer-attachments.test.ts` (concurrent uploads all kept, cap refusal, pending tiles), `composer-attachment.constants.test.ts` (cap = server's), `use-message-composer-state-attachment-only.test.ts`, `orchestration-page-shell-upload-guard.test.tsx` "attachment-only runs".                                                                      |
+| **Review checklist** | Rules 6, 7, 9 and 15 have no automatable form — a wrapped header and a keyboard-shrunk viewport are only visible in a browser. `skills/verify-responsive-layout-in-browser.md` is the procedure, and its evidence is the check.                                                                                                                                                                                                                                                                                                                        |
 
 ## Definition of done
 

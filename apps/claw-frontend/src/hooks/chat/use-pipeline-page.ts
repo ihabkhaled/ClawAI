@@ -11,6 +11,7 @@ import {
   buildAdvancedModelSelectionPayload,
   mapVisibleProgressStagesToOrchestrationStages,
 } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 // Controller hook for the Pipeline Lab page.
 //
@@ -54,7 +55,14 @@ export function usePipelinePage(): UsePipelinePageReturn {
   );
 
   const trimmedContent = content.trim();
-  const canSend = trimmedContent.length >= PIPELINE_CONTENT_MIN_LENGTH && !isPending && !isPolling;
+  const canSend =
+    hasSendableInput(
+      trimmedContent,
+      composer.selectedFileIds.length,
+      PIPELINE_CONTENT_MIN_LENGTH,
+    ) &&
+    !isPending &&
+    !isPolling;
   const canSubmit = canSend && selectedModel !== null;
   const hasProgress = stages.length > 0;
 

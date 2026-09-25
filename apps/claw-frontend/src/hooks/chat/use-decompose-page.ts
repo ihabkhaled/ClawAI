@@ -7,6 +7,7 @@ import { useSendDecompose } from '@/hooks/chat/use-send-decompose';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, UseDecomposePageReturn } from '@/types';
 import { buildAdvancedModelSelectionPayload, buildDecomposeStages } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useDecomposePage(): UseDecomposePageReturn {
   const { t } = useTranslation();
@@ -30,7 +31,10 @@ export function useDecomposePage(): UseDecomposePageReturn {
   // Legacy `canSend` gate stays in place for the in-place button label
   // logic. New `canSubmit` is the orchestration shell's gate: it requires
   // a selected model AND a non-empty prompt AND no in-flight run.
-  const canSend = content.trim().length >= DECOMPOSE_CONTENT_MIN_LENGTH && !isPending && !isPolling;
+  const canSend =
+    hasSendableInput(content, composer.selectedFileIds.length, DECOMPOSE_CONTENT_MIN_LENGTH) &&
+    !isPending &&
+    !isPolling;
 
   const canSubmit = canSend && selectedModel !== null;
 

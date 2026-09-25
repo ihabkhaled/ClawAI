@@ -91,6 +91,7 @@ import type {
   VisibleProgressStage,
 } from './chat.types';
 import type { CompareJudgeLaneResult } from './compare-judge.types';
+import type { ComposerAttachmentTrayProps } from './composer-attachment.types';
 import type { ConfluencePageMetadata } from './confluence.types';
 import type { SharedConnectorView } from './connector-grant.types';
 import type {
@@ -1019,6 +1020,9 @@ export type RichPromptTextareaProps = {
   maxRows?: number;
   ariaLabel?: string;
   className?: string;
+  // True when files are attached: plain Enter then submits an EMPTY prompt,
+  // because an attachment alone is a complete message.
+  allowEmptySubmit?: boolean;
   // ArrowUp/ArrowDown history. See UseRichPromptTextareaParams.recallHistory.
   recallHistory?: readonly string[];
 };
@@ -1032,6 +1036,14 @@ export type ComposerDropzoneProps = {
   disabled?: boolean;
   className?: string;
   overlayLabel?: string;
+  /**
+   * Off when an outer zone owns that event. The chat composer keeps paste but
+   * gives up drop to the whole-panel zone around it — two nested drop zones
+   * would upload every dropped file twice.
+   */
+  acceptPaste?: boolean;
+  acceptDrop?: boolean;
+  testId?: string;
   children: React.ReactNode;
 };
 
@@ -1981,8 +1993,10 @@ export type InThreadComparePanelProps = {
   // as `fileIds`. The picker mirrors the main composer's attachment UX.
   selectedFileIds: string[];
   onSelectedFileIdsChange: (ids: string[]) => void;
-  // Paste/drop ingestion for the compare prompt area (upload-and-attach).
+  // Paste/drop ingestion for the whole compare dialog (upload-and-attach).
   onIngestFiles: (files: FileList | File[]) => void;
+  // Tiles above the prompt: what is attached, and what is still uploading.
+  attachmentTray: ComposerAttachmentTrayProps;
   t: TranslateFunction;
 };
 

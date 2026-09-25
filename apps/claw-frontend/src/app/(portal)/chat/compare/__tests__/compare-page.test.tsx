@@ -72,6 +72,7 @@ vi.mock('@/hooks/chat/use-parallel-compare-page', () => ({
     selectedFileIds: [],
     setSelectedFileIds: vi.fn(),
     ingestFiles: vi.fn(),
+    attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
     upgradeFeature: null,
     clearUpgradeFeature: vi.fn(),
   }),

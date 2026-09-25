@@ -50,3 +50,14 @@ describe('sendMessageSchema', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('sendMessageSchema — attachment-only sends', () => {
+  it('accepts empty content when files are attached', () => {
+    expect(sendMessageSchema.safeParse({ content: '', fileCount: 1 }).success).toBe(true);
+  });
+
+  it('still rejects empty or whitespace content with no files', () => {
+    expect(sendMessageSchema.safeParse({ content: '', fileCount: 0 }).success).toBe(false);
+    expect(sendMessageSchema.safeParse({ content: '   ' }).success).toBe(false);
+  });
+});

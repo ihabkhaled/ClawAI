@@ -19,6 +19,7 @@ import type {
   UseInThreadCompareReturn,
 } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useInThreadCompare({
   threadId,
@@ -41,10 +42,11 @@ export function useInThreadCompare({
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const { ingestFiles } = useComposerAttachments({
-    selectedFileIds,
-    onChange: setSelectedFileIds,
-  });
+  const { ingestFiles, removeAttachment, isUploading, pendingUploads, progress } =
+    useComposerAttachments({
+      selectedFileIds,
+      onChange: setSelectedFileIds,
+    });
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -102,11 +104,14 @@ export function useInThreadCompare({
     });
   }, []);
 
-  const canSend = selectedModels.length >= MIN_PARALLEL_MODELS && !mutation.isPending;
+  // Never while a file is still uploading, or it would go out without it.
+  const canSend =
+    selectedModels.length >= MIN_PARALLEL_MODELS && !mutation.isPending && !isUploading;
 
   const handleCompare = useCallback(
     (promptValue: string) => {
-      if (!canSend || promptValue.trim().length === 0) {
+      // Words or files — an attachment alone is a complete request.
+      if (!canSend || !hasSendableInput(promptValue, selectedFileIds.length)) {
         return;
       }
       mutation.mutate({
@@ -145,12 +150,12 @@ export function useInThreadCompare({
   // RichPromptTextarea's Enter handler + the Send button both call this so
   // there is a single source of truth for "send the current prompt".
   const handleSend = useCallback(() => {
-    if (!canSend || prompt.trim().length === 0) {
+    if (!canSend || !hasSendableInput(prompt, selectedFileIds.length)) {
       return;
     }
     handleCompare(prompt);
     setPrompt('');
-  }, [canSend, prompt, handleCompare]);
+  }, [canSend, prompt, handleCompare, selectedFileIds]);
 
   return {
     selectedModels,
@@ -180,5 +185,12 @@ export function useInThreadCompare({
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
+    attachmentTray: {
+      fileIds: selectedFileIds,
+      pendingUploads,
+      progress,
+      onRemove: removeAttachment,
+      disabled: mutation.isPending,
+    },
   };
 }

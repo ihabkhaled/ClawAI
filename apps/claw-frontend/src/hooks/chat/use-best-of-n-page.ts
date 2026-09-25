@@ -8,6 +8,7 @@ import { useSendBestOfN } from '@/hooks/chat/use-send-best-of-n';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, ModelSelection, UseBestOfNPageReturn } from '@/types';
 import { buildAdvancedModelSelectionPayload } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useBestOfNPage(): UseBestOfNPageReturn {
   const { t } = useTranslation();
@@ -27,12 +28,17 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
   // Legacy flag — kept on the return shape so existing callers still
   // compile. The shell drives its submit button off `canSubmit` instead
   // because the shell already factors in `isPending` itself.
-  const canSend = content.trim().length >= BEST_OF_N_CONTENT_MIN_LENGTH && !isPending && !isPolling;
+  const canSend =
+    hasSendableInput(content, composer.selectedFileIds.length, BEST_OF_N_CONTENT_MIN_LENGTH) &&
+    !isPending &&
+    !isPolling;
 
   // Strict submission gate the OrchestrationPageShell consumes. We
   // deliberately keep this independent of `isPending` because the shell
   // owns the pending-disable state internally.
-  const canSubmit = content.trim().length >= BEST_OF_N_CONTENT_MIN_LENGTH && selectedModel !== null;
+  const canSubmit =
+    hasSendableInput(content, composer.selectedFileIds.length, BEST_OF_N_CONTENT_MIN_LENGTH) &&
+    selectedModel !== null;
 
   const errorMessage = ((): string | null => {
     if (isError) {

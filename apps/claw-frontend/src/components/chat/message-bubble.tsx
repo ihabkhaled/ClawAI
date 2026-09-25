@@ -200,7 +200,11 @@ function MessageBubbleBase({
         >
           {isUser ? (
             <>
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              {/* An attachment-only message is stored with no text; it shows
+                  its attachments alone rather than an empty line. */}
+              {message.content.length > 0 ? (
+                <p className="whitespace-pre-wrap">{message.content}</p>
+              ) : null}
               {contextFileIds.length > 0 ? <MessageAttachments fileIds={contextFileIds} /> : null}
             </>
           ) : null}

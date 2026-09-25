@@ -595,13 +595,15 @@ export const it: TranslationDictionary = {
     feedbackSaved: 'Feedback salvato',
     attachFiles: 'Allega file',
     attachment: {
-      added: '{name} allegato',
       uploading: 'Caricamento allegato…',
       dropToAttach: 'Trascina i file per allegarli',
       voiceNote: 'Nota vocale',
       videoNote: 'Nota video',
       stillUploadingRefusal:
         "Attendi il completamento del caricamento dell'allegato prima di inviare.",
+      tooMany: 'Puoi allegare fino a {max} file per messaggio.',
+      remove: 'Rimuovi {name}',
+      trayLabel: 'File allegati',
       play: 'Riproduci',
       loading: 'Caricamento…',
       previewFailed: 'Impossibile caricare questo allegato',

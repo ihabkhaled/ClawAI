@@ -102,6 +102,27 @@ The decorative globe beside the research select is hidden below `sm`. It is
 `aria-hidden` and the select next to it says "No research" in words; it was
 worth 20px of a 375px row.
 
+### Attachments: the tray and the panel drop zone (2026-09-25)
+
+Selected files used to be a number on the paperclip. `ComposerAttachmentTray`
+now sits above the textarea on every attachment surface: an image as a
+thumbnail, a voice or video note as a player (nothing downloads until Play),
+anything else as its type icon, name and size, and one dashed tile per upload
+still in flight with its percentage. Each tile has a remove (x) on the
+inline-end corner, so RTL needs no twin. The tray wraps; it never scrolls
+sideways, so every remove button stays reachable on a phone.
+
+A file can be dropped anywhere on the reading column — the transcript as well
+as the composer. The column is `ChatPanelDropzone`; the composer registers its
+ingest function in `useComposerDropTargetStore` while mounted and keeps only
+paste for itself. Compare and the labs wrap the whole page, in-thread Compare
+the dialog body. One upload path (`useComposerAttachments`), capped at
+`MAX_ATTACHMENTS_PER_MESSAGE` = the server's 10.
+
+Sending needs words **or** files (`hasSendableInput`). An attachment-only send
+is stored with empty text and renders as its attachments alone; chat-service
+tells the model to respond to the attachment (rule 42).
+
 ## The model picker
 
 `components/chat/model-picker.tsx` is render-only over

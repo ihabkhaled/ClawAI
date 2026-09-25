@@ -9,6 +9,7 @@ import { useSendRolePack } from '@/hooks/chat/use-send-role-pack';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, RolePack, UseRolePackPageReturn } from '@/types';
 import { buildAdvancedModelSelectionPayload } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useRolePackPage(): UseRolePackPageReturn {
   const { t } = useTranslation();
@@ -26,8 +27,10 @@ export function useRolePackPage(): UseRolePackPageReturn {
   const stagesEnabled = isPending || isPolling || (threadId !== null && !isRolePackReady);
   const { stages } = useRolePackStages(threadId, stagesEnabled);
 
-  const trimmedLength = content.trim().length;
-  const canSend = trimmedLength >= ROLE_PACK_CONTENT_MIN_LENGTH && !isPending && !isPolling;
+  const canSend =
+    hasSendableInput(content, composer.selectedFileIds.length, ROLE_PACK_CONTENT_MIN_LENGTH) &&
+    !isPending &&
+    !isPolling;
   const canSubmit = canSend && selectedModel !== null;
 
   const handleSend = useCallback((): void => {

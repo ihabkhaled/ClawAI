@@ -13,6 +13,9 @@ const hasFeatureMock = vi.fn();
 vi.mock('@/components/chat/file-attachment-picker', () => ({
   FileAttachmentPicker: () => <div data-testid="picker" />,
 }));
+vi.mock('@/components/chat/composer-attachment-tray', () => ({
+  ComposerAttachmentTray: () => <div data-testid="attachment-tray" />,
+}));
 vi.mock('@/components/chat/composer-dropzone', () => ({
   ComposerDropzone: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -46,6 +49,7 @@ function buildComposer(
     isUploading: false,
     pendingCount: 0,
     progress: null,
+    attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
     research: { mode: ResearchMode.AUTO },
     setResearch: vi.fn(),
     researchProviders: [],

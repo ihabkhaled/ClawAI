@@ -14,6 +14,7 @@ function ControlledHarness(props: {
   disabled?: boolean;
   placeholder?: string;
   ariaLabel?: string;
+  allowEmptySubmit?: boolean;
 }): ReactElement {
   const [value, setValue] = useState(props.initialValue ?? '');
   return (
@@ -24,15 +25,14 @@ function ControlledHarness(props: {
       placeholder={props.placeholder}
       ariaLabel={props.ariaLabel}
       disabled={props.disabled}
+      allowEmptySubmit={props.allowEmptySubmit}
     />
   );
 }
 
 describe('RichPromptTextarea', () => {
   it('renders with the supplied placeholder and aria-label', () => {
-    render(
-      <ControlledHarness placeholder="Type a prompt..." ariaLabel="prompt-input" />,
-    );
+    render(<ControlledHarness placeholder="Type a prompt..." ariaLabel="prompt-input" />);
     const textarea = screen.getByLabelText('prompt-input');
     expect(textarea).toBeInTheDocument();
     expect(textarea).toHaveAttribute('placeholder', 'Type a prompt...');
@@ -40,9 +40,7 @@ describe('RichPromptTextarea', () => {
 
   it('calls onChange when the user types', () => {
     const onChange = vi.fn();
-    render(
-      <RichPromptTextarea value="" onChange={onChange} ariaLabel="prompt-input" />,
-    );
+    render(<RichPromptTextarea value="" onChange={onChange} ariaLabel="prompt-input" />);
     const textarea = screen.getByLabelText('prompt-input');
     fireEvent.change(textarea, { target: { value: 'hi' } });
     expect(onChange).toHaveBeenCalledWith('hi');
@@ -50,13 +48,7 @@ describe('RichPromptTextarea', () => {
 
   it('calls onSubmit on plain Enter when value is non-empty and not disabled', () => {
     const onSubmit = vi.fn();
-    render(
-      <ControlledHarness
-        initialValue="hello"
-        onSubmit={onSubmit}
-        ariaLabel="prompt-input"
-      />,
-    );
+    render(<ControlledHarness initialValue="hello" onSubmit={onSubmit} ariaLabel="prompt-input" />);
     const textarea = screen.getByLabelText('prompt-input');
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -64,23 +56,24 @@ describe('RichPromptTextarea', () => {
 
   it('does NOT call onSubmit on Enter when value is empty/whitespace', () => {
     const onSubmit = vi.fn();
-    render(
-      <ControlledHarness initialValue="   " onSubmit={onSubmit} ariaLabel="prompt-input" />,
-    );
+    render(<ControlledHarness initialValue="   " onSubmit={onSubmit} ariaLabel="prompt-input" />);
     const textarea = screen.getByLabelText('prompt-input');
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  // "I can send attachments WITHOUT text": with a file attached, Enter on an
+  // empty prompt is a real send.
+  it('calls onSubmit on Enter with an empty value when allowEmptySubmit is set', () => {
+    const onSubmit = vi.fn();
+    render(<ControlledHarness onSubmit={onSubmit} ariaLabel="prompt-input" allowEmptySubmit />);
+    fireEvent.keyDown(screen.getByLabelText('prompt-input'), { key: 'Enter', shiftKey: false });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
   it('does NOT call onSubmit and falls through to default newline on Shift+Enter', () => {
     const onSubmit = vi.fn();
-    render(
-      <ControlledHarness
-        initialValue="hello"
-        onSubmit={onSubmit}
-        ariaLabel="prompt-input"
-      />,
-    );
+    render(<ControlledHarness initialValue="hello" onSubmit={onSubmit} ariaLabel="prompt-input" />);
     const textarea = screen.getByLabelText('prompt-input');
     const event = fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
     expect(onSubmit).not.toHaveBeenCalled();
@@ -92,13 +85,7 @@ describe('RichPromptTextarea', () => {
 
   it('does NOT call onSubmit during an IME composition even if Enter fires', () => {
     const onSubmit = vi.fn();
-    render(
-      <ControlledHarness
-        initialValue="こん"
-        onSubmit={onSubmit}
-        ariaLabel="prompt-input"
-      />,
-    );
+    render(<ControlledHarness initialValue="こん" onSubmit={onSubmit} ariaLabel="prompt-input" />);
     const textarea = screen.getByLabelText('prompt-input');
     fireEvent.compositionStart(textarea);
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });

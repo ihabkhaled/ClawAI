@@ -11,6 +11,7 @@ import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
 import type { ParallelModelTarget, ResearchOptions, UseParallelComparePageReturn } from '@/types';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useParallelComparePage(): UseParallelComparePageReturn {
   const { t } = useTranslation();
@@ -28,10 +29,11 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const { ingestFiles } = useComposerAttachments({
-    selectedFileIds,
-    onChange: setSelectedFileIds,
-  });
+  const { ingestFiles, removeAttachment, isUploading, pendingUploads, progress } =
+    useComposerAttachments({
+      selectedFileIds,
+      onChange: setSelectedFileIds,
+    });
   const { send, result, isPending, isError, upgradeFeature, clearUpgradeFeature } =
     useParallelCompare();
 
@@ -55,7 +57,10 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const canSend =
     selectedModels.length >= MIN_PARALLEL_MODELS &&
     selectedModels.length <= MAX_PARALLEL_MODELS &&
-    prompt.trim().length > 0 &&
+    // Words or files — an attachment alone is a complete request — and never
+    // while a file is still uploading, or it would go out without it.
+    hasSendableInput(prompt, selectedFileIds.length) &&
+    !isUploading &&
     !isPending &&
     !isPolling;
 
@@ -149,6 +154,13 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
+    attachmentTray: {
+      fileIds: selectedFileIds,
+      pendingUploads,
+      progress,
+      onRemove: removeAttachment,
+      disabled: isPending || isPolling,
+    },
     upgradeFeature,
     clearUpgradeFeature,
   };

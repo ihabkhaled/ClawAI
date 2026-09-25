@@ -11,6 +11,7 @@ import type {
   EscalationChainStep,
   UseEscalationPageReturn,
 } from '@/types';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useEscalationPage(): UseEscalationPageReturn {
   const { t } = useTranslation();
@@ -68,7 +69,7 @@ export function useEscalationPage(): UseEscalationPageReturn {
 
   const canSubmit =
     selectedModel !== null &&
-    prompt.trim().length > 0 &&
+    hasSendableInput(prompt, composer.selectedFileIds.length) &&
     totalChainLength >= MIN_CHAIN_STEPS &&
     totalChainLength <= MAX_CHAIN_STEPS &&
     !isPending &&

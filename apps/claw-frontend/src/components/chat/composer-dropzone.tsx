@@ -14,6 +14,9 @@ export function ComposerDropzone({
   disabled,
   className,
   overlayLabel,
+  acceptPaste = true,
+  acceptDrop = true,
+  testId,
   children,
 }: ComposerDropzoneProps): React.ReactElement {
   const { t } = useTranslation();
@@ -29,16 +32,20 @@ export function ComposerDropzone({
   return (
     <div
       className={cn('relative', className)}
-      onPaste={handlePaste}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      data-testid={testId}
+      onPaste={acceptPaste ? handlePaste : undefined}
+      onDragOver={acceptDrop ? handleDragOver : undefined}
+      onDragEnter={acceptDrop ? handleDragEnter : undefined}
+      onDragLeave={acceptDrop ? handleDragLeave : undefined}
+      onDrop={acceptDrop ? handleDrop : undefined}
     >
       {children}
       {isDragActive ? (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm">
-          <div className="flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-medium text-primary shadow-soft">
+        <div
+          className="border-primary bg-primary/10 pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur-sm"
+          data-testid="composer-drop-overlay"
+        >
+          <div className="bg-card text-primary shadow-soft flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium">
             <Upload className="h-4 w-4" aria-hidden />
             {overlayLabel ?? t('chat.attachment.dropToAttach')}
           </div>

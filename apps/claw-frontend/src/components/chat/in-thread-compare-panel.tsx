@@ -2,6 +2,7 @@ import { CheckCircle, Loader2, Play } from 'lucide-react';
 
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
@@ -45,6 +46,7 @@ export function InThreadComparePanel({
   selectedFileIds,
   onSelectedFileIdsChange,
   onIngestFiles,
+  attachmentTray,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
   // Recorder gating is model-independent: see useModelMediaCapabilities. The
@@ -62,7 +64,16 @@ export function InThreadComparePanel({
             </Badge>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-6 xl:space-y-0">
+        {/* The whole dialog body takes a dropped file, not only the prompt:
+            the owner asked for a drop anywhere on the panel, the way ChatGPT
+            and Claude behave. Scoping it to the prompt field (the previous
+            choice) made the target a few rows tall. */}
+        <ComposerDropzone
+          onFiles={onIngestFiles}
+          disabled={isPending}
+          className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-6 xl:space-y-0"
+          testId="in-thread-compare-dropzone"
+        >
           <div className="space-y-4">
             <ParallelModelSelector
               selectedModels={selectedModels}
@@ -135,44 +146,38 @@ export function InThreadComparePanel({
               ) : null}
             </div>
 
-            {/* Scoped to the prompt field only — same as the full-page Compare
-                and orchestration composers. This used to wrap the whole
-                column (attach, recorder, research picker, prompt AND the
-                submit button), so a drag-over painted its dashed overlay
-                across every one of those unrelated controls instead of just
-                the drop target. */}
-            <ComposerDropzone onFiles={onIngestFiles} disabled={isPending}>
-              <form
-                className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  onSend();
-                }}
+            <ComposerAttachmentTray {...attachmentTray} />
+            <form
+              className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
+              onSubmit={(e) => {
+                e.preventDefault();
+                onSend();
+              }}
+            >
+              <RichPromptTextarea
+                value={prompt}
+                onChange={onPromptChange}
+                onSubmit={onSend}
+                allowEmptySubmit={selectedFileIds.length > 0}
+                placeholder={t('compare.sendPrompt')}
+                ariaLabel={t('compare.sendPrompt')}
+                disabled={isPending}
+                className="w-full min-w-0 flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={!canSend || isPending}
+                size="sm"
+                className="w-full sm:w-auto"
               >
-                <RichPromptTextarea
-                  value={prompt}
-                  onChange={onPromptChange}
-                  onSubmit={onSend}
-                  placeholder={t('compare.sendPrompt')}
-                  ariaLabel={t('compare.sendPrompt')}
-                  disabled={isPending}
-                  className="w-full min-w-0 flex-1"
-                />
-                <Button
-                  type="submit"
-                  disabled={!canSend || isPending}
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
-                  {isPending ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Play className="me-2 h-4 w-4" />
-                  )}
-                  {isPending ? t('compare.comparing') : t('compare.sendPrompt')}
-                </Button>
-              </form>
-            </ComposerDropzone>
+                {isPending ? (
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="me-2 h-4 w-4" />
+                )}
+                {isPending ? t('compare.comparing') : t('compare.sendPrompt')}
+              </Button>
+            </form>
 
             {result ? (
               <div className="bg-muted flex items-center gap-2 rounded-md p-3 text-sm">
@@ -183,7 +188,7 @@ export function InThreadComparePanel({
               </div>
             ) : null}
           </div>
-        </div>
+        </ComposerDropzone>
       </DialogContent>
     </Dialog>
   );

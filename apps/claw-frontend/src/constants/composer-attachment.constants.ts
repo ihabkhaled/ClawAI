@@ -47,3 +47,18 @@ export const COMPOSER_ATTACHMENT_UNSUPPORTED_KEY = 'mediaUi.attachmentState.unsu
 export const COMPOSER_ATTACHMENT_UNNAMED_KEY = 'chat.attachedFile';
 /** HTTP 415: the upload was refused for its type, not for a transient reason. */
 export const COMPOSER_ATTACHMENT_UNSUPPORTED_STATUS = 415;
+
+/**
+ * The most files one message may carry.
+ *
+ * The same number chat-service enforces as `MAX_ATTACHMENTS_PER_REQUEST`
+ * (`apps/claw-chat-service/.../constants/attachment.constants.ts`). The
+ * composer used to accept 13 and let the server answer the eleventh with a
+ * bare "Validation failed"; now the eleventh is refused here, with a message
+ * a user can act on. Pinned to the server's value by
+ * `constants/__tests__/composer-attachment.constants.test.ts`.
+ */
+export const MAX_ATTACHMENTS_PER_MESSAGE = 10;
+
+/** The drop handler of a surface with no composer: the zone is inert. */
+export const NOOP_FILE_INGEST = (): void => undefined;

@@ -36,6 +36,8 @@ export const useMessageComposerState = ({
   const providerQuery = useResearchProviders();
   const {
     ingestFiles,
+    removeAttachment,
+    pendingUploads,
     isUploading: isUploadingAttachment,
     progress: attachmentUploadProgress,
     uploads: attachmentUploads,
@@ -112,7 +114,13 @@ export const useMessageComposerState = ({
       setValidationError(t('chat.attachment.stillUploadingRefusal'));
       return false;
     }
-    const result = sendMessageSchema.safeParse({ content: content.trim() });
+    // Files alone are a message: an empty prompt with a voice note or a PDF
+    // attached is sent as-is, and chat-service tells the model to respond to
+    // the attachment itself.
+    const result = sendMessageSchema.safeParse({
+      content: content.trim(),
+      fileCount: selectedFileIds.length,
+    });
     if (!result.success) {
       logger.warn({
         component: 'chat',
@@ -211,5 +219,7 @@ export const useMessageComposerState = ({
     attachmentUploadProgress,
     attachmentUploads,
     dismissAttachmentUpload,
+    pendingUploads,
+    removeAttachment,
   };
 };

@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import {
   COMPOSER_MAX_ROWS,
   COMPOSER_MIN_ROWS,
@@ -7,13 +9,16 @@ import {
 } from '@/constants/chat.constants';
 import { MEDIA_QUERY_LG_UP } from '@/constants/media-query.constants';
 import { ComposerControlVariant, PlanFeature } from '@/enums';
+import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useComposerAttachmentChips } from '@/hooks/chat/use-composer-attachment-chips';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
+import { useRegisterComposerDropTarget } from '@/hooks/chat/use-register-composer-drop-target';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import type { MessageComposerProps, UseMessageComposerReturn } from '@/types';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 /**
  * The one controller hook behind MessageComposer.
@@ -40,14 +45,43 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     threadId: props.threadId ?? NEW_THREAD_DRAFT_KEY,
   });
 
-  const attachmentChips = useComposerAttachmentChips({
+  const chipState = useComposerAttachmentChips({
     selectedFileIds: state.selectedFileIds,
     onSelectedFileIdsChange: state.setSelectedFileIds,
     uploads: state.attachmentUploads,
     onDismissUpload: state.dismissAttachmentUpload,
   });
+  // One list per file. Selected files render as tray tiles (preview + remove)
+  // with the chip's state line; the chip strip keeps only uploads that never
+  // got an id — failed or not supported. In-flight uploads are tray tiles.
+  const attachmentChips = useMemo(
+    () => ({
+      ...chipState,
+      chips: chipState.chips.filter(
+        (chip) => chip.fileId === null && chip.state !== ComposerAttachmentState.Uploading,
+      ),
+    }),
+    [chipState],
+  );
+  const statusByFileId = useMemo(
+    () =>
+      new Map(
+        chipState.chips.flatMap((chip) =>
+          chip.fileId === null || chip.note === null
+            ? []
+            : [[chip.fileId, `${chip.stateLabel} — ${chip.note}`] as const],
+        ),
+      ),
+    [chipState],
+  );
 
-  const hasContent = state.content.trim().length > 0;
+  // A whole-panel drop lands here: the thread panel reads this composer's
+  // ingest function from the drop-target store.
+  useRegisterComposerDropTarget(state.ingestFiles);
+
+  // Words or files. Still refused while an upload is in flight — that guard
+  // lives in validateAndSend, which both Enter and the button go through.
+  const hasSendable = hasSendableInput(state.content, state.selectedFileIds.length);
 
   return {
     isPending: props.isPending,
@@ -56,7 +90,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     uploadingLabel: state.isUploadingAttachment ? t('chat.attachment.uploading') : null,
     uploadProgress: state.attachmentUploadProgress,
     validationError: state.validationError,
-    canSubmit: !props.isPending && hasContent,
+    canSubmit: !props.isPending && hasSendable && !state.isUploadingAttachment,
     content: state.content,
     minRows: COMPOSER_MIN_ROWS,
     maxRows: COMPOSER_MAX_ROWS,
@@ -66,6 +100,14 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     onFormSubmit: state.handleSubmit,
     onIngestFiles: state.ingestFiles,
     attachmentChips,
+    attachmentTray: {
+      fileIds: state.selectedFileIds,
+      pendingUploads: state.pendingUploads,
+      progress: state.attachmentUploadProgress,
+      onRemove: state.removeAttachment,
+      disabled: props.isPending,
+      statusByFileId,
+    },
     toolbarProps: {
       selectedModel: props.selectedModel,
       onModelChange: props.onModelChange,

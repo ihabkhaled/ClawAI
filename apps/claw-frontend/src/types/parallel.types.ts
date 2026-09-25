@@ -2,6 +2,7 @@ import type { CompareJudgeState, ParallelModelStatus, PlanFeature, ResearchMode 
 
 import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
 import type { CompareJudgeVerdict } from './compare-judge.types';
+import type { ComposerAttachmentTrayProps } from './composer-attachment.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
 
@@ -139,6 +140,8 @@ export type UseParallelComparePageReturn = {
   setSelectedFileIds: (ids: string[]) => void;
   // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
   ingestFiles: (files: FileList | File[]) => void;
+  // Tiles above the prompt: what is attached, and what is still uploading.
+  attachmentTray: ComposerAttachmentTrayProps;
   // Set to the locked PlanFeature when the latest send was rejected with a
   // PLAN_FEATURE_DISABLED 403 from the backend (judge/critic/research). The
   // page renders an UpgradeCtaBanner above the results when non-null;
@@ -199,4 +202,6 @@ export type UseInThreadCompareReturn = {
   setSelectedFileIds: (ids: string[]) => void;
   // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
   ingestFiles: (files: FileList | File[]) => void;
+  // Tiles above the prompt: what is attached, and what is still uploading.
+  attachmentTray: ComposerAttachmentTrayProps;
 };

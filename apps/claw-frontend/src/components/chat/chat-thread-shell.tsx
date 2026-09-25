@@ -3,6 +3,7 @@
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
+import { ChatPanelDropzone } from '@/components/chat/chat-panel-dropzone';
 import { ChatThreadActionRail } from '@/components/chat/chat-thread-action-rail';
 import { ChatThreadHeaderMenu } from '@/components/chat/chat-thread-header-menu';
 import { EditableTitle } from '@/components/chat/editable-title';
@@ -136,7 +137,11 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
             transcript's min-content is wider than a 768px tablet leaves: the
             column refused to shrink and pushed the rail 50px off the right edge
             of the screen. Measured at 768x1024. */}
-        <div className="chat-content-column flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 sm:gap-3">
+        {/* The whole column — messages AND composer — takes a dropped file,
+            not only the textarea. The overlay covers the column while a file
+            is dragged over it; the files go to the composer's own upload
+            pipeline. */}
+        <ChatPanelDropzone className="chat-content-column flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 sm:gap-3">
           <div className="min-h-0 flex-1 overflow-hidden rounded-xl border">
             <ThreadSearchPanel search={props.search} onJumpToMessage={props.onJumpToMessage} />
             <VirtualizedMessages {...props.virtualizedMessagesProps} />
@@ -148,7 +153,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           <StreamHealthNotice health={props.connectionHealth} />
 
           <MessageComposer {...props.composerProps} />
-        </div>
+        </ChatPanelDropzone>
 
         {props.showInlineActions ? <ChatThreadActionRail {...props.actionRailProps} /> : null}
       </div>

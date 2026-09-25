@@ -9,6 +9,7 @@ import { useSendRepair } from '@/hooks/chat/use-send-repair';
 import { useTranslation } from '@/lib/i18n';
 import type { AdvancedModuleModelSelection, UseRepairPageReturn } from '@/types';
 import { buildAdvancedModelSelectionPayload } from '@/utilities';
+import { hasSendableInput } from '@/utilities/composer-send.utility';
 
 export function useRepairPage(): UseRepairPageReturn {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ export function useRepairPage(): UseRepairPageReturn {
   }, []);
 
   const canSend =
-    content.trim().length >= REPAIR_CONTENT_MIN_LENGTH &&
+    hasSendableInput(content, composer.selectedFileIds.length, REPAIR_CONTENT_MIN_LENGTH) &&
     selectedRepairTypes.length > 0 &&
     !isPending &&
     !isPolling;

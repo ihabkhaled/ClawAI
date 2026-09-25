@@ -4,6 +4,7 @@ import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
@@ -60,6 +61,7 @@ export default function ComparePage() {
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
+    attachmentTray,
     upgradeFeature,
     clearUpgradeFeature,
   } = useParallelComparePage();
@@ -77,8 +79,15 @@ export default function ComparePage() {
   const showEmpty =
     !isPending && !isPolling && pollingMessages.length === 0 && errorMessage === null;
 
+  // The whole page takes a dropped file, not only the prompt box; the overlay
+  // covers the page while a file is dragged over it.
   return (
-    <div className="space-y-6">
+    <ComposerDropzone
+      onFiles={ingestFiles}
+      disabled={isPending || isPolling}
+      className="space-y-6"
+      testId="compare-page-dropzone"
+    >
       <PageHeader title={t('compare.title')} description={t('compare.description')} />
 
       <DailyTokenIndicator />
@@ -120,14 +129,13 @@ export default function ComparePage() {
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardContent className="pt-4">
-              <ComposerDropzone onFiles={ingestFiles} disabled={isPending || isPolling}>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={t('compare.sendPrompt')}
-                  className="min-h-[100px] resize-y"
-                />
-              </ComposerDropzone>
+              <ComposerAttachmentTray {...attachmentTray} />
+              <Textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={t('compare.sendPrompt')}
+                className="min-h-[100px] resize-y"
+              />
               <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   {selectedModels.length > 0 ? (
@@ -231,6 +239,6 @@ export default function ComparePage() {
           description={t('compare.description')}
         />
       ) : null}
-    </div>
+    </ComposerDropzone>
   );
 }

@@ -1,6 +1,7 @@
 import { Send } from 'lucide-react';
 
 import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
+import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { ComposerToolbar } from '@/components/chat/composer-toolbar';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
@@ -28,9 +29,13 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
   const composer = useMessageComposer(props);
 
   return (
+    // Paste only: a drop anywhere on the chat panel — this composer included —
+    // is handled by the ChatPanelDropzone around it, so a second drop zone
+    // here would upload every dropped file twice.
     <ComposerDropzone
       onFiles={composer.onIngestFiles}
       disabled={composer.isPending}
+      acceptDrop={false}
       className="safe-bottom w-full"
     >
       <form
@@ -41,6 +46,10 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
         data-rail-obstacle=""
         className="border-border/60 bg-card shadow-soft focus-within:border-primary/40 focus-within:ring-primary/15 duration-fast flex flex-col gap-1 rounded-2xl border p-2 transition-colors focus-within:ring-1 sm:p-2.5"
       >
+        {/* Each selected file once: its preview, remove button and — when it
+            is not simply ready — its state line. The chips below it carry only
+            uploads that never got an id (failed, not supported). */}
+        <ComposerAttachmentTray {...composer.attachmentTray} />
         <ComposerAttachmentChips {...composer.attachmentChips} />
 
         <RichPromptTextarea
@@ -53,6 +62,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
           minRows={composer.minRows}
           maxRows={composer.maxRows}
           recallHistory={composer.recallHistory}
+          allowEmptySubmit={composer.attachmentTray.fileIds.length > 0}
           // Strips the shadcn field frame — the card around it is the frame
           // now — and turns off the native drag handle. Dragging is what let
           // the old composer be left in a state the user could not undo, and
