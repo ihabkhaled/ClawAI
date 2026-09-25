@@ -590,6 +590,81 @@ describe('ChatExecutionManager', () => {
     expect(releaseCancellation).toHaveBeenCalledWith('thread-cancel');
   });
 
+  // Prod 2026-09-25, OLLAMA / glm-5.3 in Direct mode: the saved answer began
+  // with the model's private notes. The Ollama Cloud stream is a buffered call
+  // REPLAYED through runSimulated, and both the replay and the stored answer
+  // came from the raw content.
+  it('replays GLM reasoning to the reasoning panel and stores a clean answer', async () => {
+    const runSimulated = vi.fn().mockResolvedValue({});
+    const replayManager = new ChatExecutionManager(
+      contextAssembly as unknown as ContextAssemblyManager,
+      qualityManager as unknown as QualityCheckManager,
+      judgeManager as unknown as JudgeRefereeManager,
+      streamService as unknown as ChatStreamService,
+      {
+        run: vi.fn().mockImplementation(async (_query: string, requestContext: unknown) => ({
+          context: requestContext,
+          outcome: { applied: false, results: [], runId: null, warning: null },
+        })),
+      } as unknown as ConstructorParameters<typeof ChatExecutionManager>[4],
+      asAccessControlService(createFakePaygAccessControl()),
+      {
+        uploadFile: vi.fn(),
+        getCachedOrUpload: vi.fn(),
+      } as unknown as ConstructorParameters<typeof ChatExecutionManager>[6],
+      localModelSelection as unknown as LocalModelSelectionService,
+      { runSimulated } as unknown as ConstructorParameters<typeof ChatExecutionManager>[8],
+      {
+        register: vi.fn().mockReturnValue(new AbortController()),
+        release: vi.fn(),
+      } as unknown as ConstructorParameters<typeof ChatExecutionManager>[9],
+    );
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider: 'OLLAMA', apiKey: 'ollama-key', baseUrl: 'https://ollama.com/api' },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'glm-5.3',
+          message: {
+            role: 'assistant',
+            content:
+              "I already told them. Be concise.</think>Same voice note, same problem. I can't hear it — type it out instead.",
+          },
+          done: true,
+          done_reason: 'stop',
+          prompt_eval_count: 40,
+          eval_count: 30,
+        },
+      });
+
+    const result = await replayManager.execute(
+      {
+        messageId: 'msg-glm',
+        threadId: 'thread-glm',
+        selectedProvider: 'OLLAMA',
+        selectedModel: 'glm-5.3',
+        routingMode: 'MANUAL_MODEL',
+        timestamp: new Date().toISOString(),
+      },
+      makeContext('here is my voice note again'),
+    );
+
+    expect(runSimulated).toHaveBeenCalledTimes(1);
+    expect(runSimulated.mock.calls[0]?.[0]).toMatchObject({
+      fullContent: "Same voice note, same problem. I can't hear it — type it out instead.",
+      reasoningContent: 'I already told them. Be concise.',
+    });
+    expect(result.content).toBe(
+      "Same voice note, same problem. I can't hear it — type it out instead.",
+    );
+    expect(result.reasoning).toBe('I already told them. Be concise.');
+  });
+
   // Multimodal batch 8 (changed on purpose): this used to throw
   // VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED before any request. The user's model
   // now answers from the video's transcript + frames; the bytes never ride.

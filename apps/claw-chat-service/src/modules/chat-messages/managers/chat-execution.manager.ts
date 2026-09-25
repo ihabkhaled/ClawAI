@@ -121,6 +121,7 @@ import {
   modelRequiresMaxCompletionTokens,
 } from '../utilities/openai-request-shape.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { splitOllamaMessageReasoning } from '../utilities/buffered-reasoning.utility';
 import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
@@ -1162,6 +1163,8 @@ export class ChatExecutionManager implements OnModuleInit {
         provider: OLLAMA_PROVIDER,
         model: buffered.model,
         fullContent: buffered.content,
+        // Set when the tool route parsed through parseOllamaChatResponse.
+        ...(buffered.reasoning === undefined ? {} : { reasoningContent: buffered.reasoning }),
         inputTokens: buffered.inputTokens,
         outputTokens: buffered.outputTokens,
         startMs: startTime,
@@ -1208,6 +1211,10 @@ export class ChatExecutionManager implements OnModuleInit {
         provider,
         model: buffered.model,
         fullContent: buffered.content,
+        // Already split out of the content by parseOllamaChatResponse (GLM's
+        // bare </think>, or message.thinking). Replayed first so the live
+        // reasoning panel shows it; `buffered.reasoning` is what gets stored.
+        ...(buffered.reasoning === undefined ? {} : { reasoningContent: buffered.reasoning }),
         inputTokens: buffered.inputTokens,
         outputTokens: buffered.outputTokens,
         startMs: startTime,
@@ -4581,7 +4588,11 @@ export class ChatExecutionManager implements OnModuleInit {
     executionOptions?: ExecutionOptions,
   ): LlmResponse {
     const latencyMs = Date.now() - startTime;
-    const responseContent = data.message?.content ?? '';
+    // Reasoning never rides in the answer. It arrives two ways: Ollama's
+    // `message.thinking` field, and inline — including GLM's bare `</think>`
+    // with no opening tag (prod 2026-09-25, glm-5.3), which the stream
+    // scanner cannot see. Both go to `reasoning`, the "Model reasoning" panel.
+    const { content: responseContent, reasoning } = splitOllamaMessageReasoning(data.message);
     const toolCalls = this.extractNativeToolCalls(
       data.message?.tool_calls,
       provider,
@@ -4598,7 +4609,7 @@ export class ChatExecutionManager implements OnModuleInit {
       // spends the turn thinking and answers nothing is a different fault from
       // a provider that returned an empty envelope, and the two were
       // indistinguishable in the logs.
-      const thinkingLength = data.message?.thinking?.length ?? 0;
+      const thinkingLength = reasoning.length;
       // promptEvalCount separates the two ways this can happen, which read
       // identically without it: a positive count means the provider did read
       // our prompt and the model chose to say nothing, while zero alongside
@@ -4630,6 +4641,7 @@ export class ChatExecutionManager implements OnModuleInit {
       latencyMs,
       finishReason: data.done_reason ?? (data.done ? 'stop' : undefined),
       usedFallback,
+      ...(reasoning.length > 0 ? { reasoning } : {}),
       ...(toolCalls.length > 0 ? { toolCalls, finishedForTools: true } : {}),
     };
   }

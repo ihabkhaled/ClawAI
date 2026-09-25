@@ -1184,3 +1184,30 @@ transcription (ADR-120 addendum).
   the connector base URL.
 - Log line per attempt: `ttsAttempt {messageId, provider, model, requestId,
 outcome, latencyMs}` — no text, no key.
+
+## Reasoning never reaches the answer (rule 56, 2026-09-25)
+
+Prod, OLLAMA / `glm-5.3`, Direct mode: the stored answer was
+`"…Be concise.</think>Same voice note, same problem: …"`. GLM's template
+injects `<think>` into the prompt, so its output starts INSIDE the reasoning
+and contains only a bare `</think>`. `ThinkingFragmentScanner` looks only for
+an opening tag outside a block, and the Ollama Cloud path stored the raw
+buffered content; the markdown renderer hid the tag, so the user read the
+model's private notes run into its reply.
+
+- `splitBufferedReasoning` (`utilities/buffered-reasoning.utility.ts`) splits a
+  COMPLETE response: a closing tag before any opening tag ends a reasoning
+  block that began at byte 0; then ordinary `<think>` / `<thinking>` /
+  `<reasoning>` / `<thought>` blocks (any case, unterminated included). No
+  tag → byte-for-byte unchanged; a tag quoted in inline code is text.
+- `parseOllamaChatResponse` applies it and folds `message.thinking` in, so
+  every buffered Ollama path (cloud, cloud tool loop, local tool route) returns
+  clean `content` plus `reasoning`. `simulateOllamaCloudStream` and
+  `simulateOllamaStream` pass `reasoningContent` to `runSimulated` so the live
+  panel shows it; `metadata.reasoning` stores it.
+- The "reasoned but produced no answer" error now also fires when the only
+  thing before a bare `</think>` was reasoning.
+- Known gap: Ollama Cloud is always a buffered replay, so it is covered; a
+  provider that TRULY streams GLM-style output over SSE (e.g. via OpenRouter)
+  still leaks in the live scanner, because the text before a bare `</think>`
+  is emitted before the tag arrives. See rule 56 "Known gap".

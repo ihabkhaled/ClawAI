@@ -55,7 +55,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 27251,
+      "bytes": 31295,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -317,6 +317,10 @@
     {
       "bytes": 4863,
       "file": "rules/55-akinator-station-discipline.md"
+    },
+    {
+      "bytes": 4010,
+      "file": "rules/56-model-reasoning-never-in-the-answer.md"
     },
     {
       "bytes": 6156,

@@ -35,8 +35,9 @@ vi.mock('../clients/model-exposure.client', () => ({
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    if (!record) return undefined;
-    return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
+    return !record
+      ? undefined
+      : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
 }));
 
@@ -488,6 +489,63 @@ describe('ChatExecutionManager — native tool transport', () => {
           withTools(),
         ),
       ).rejects.toThrow(/no message content/u);
+    });
+
+    // Prod 2026-09-25, OLLAMA / glm-5.3 (Direct): the stored answer began with
+    // the model's private notes, ended by a bare </think> the markdown hid.
+    describe('Ollama Cloud reasoning never reaches the answer', () => {
+      const GLM_PROD_CONTENT =
+        "The attachment is a voice note that couldn't be transcribed (429 error). I already told them. They resent the same file. I still can't transcribe it. Be concise.</think>Same voice note, same problem: transcription failed (error 429). I can't hear it — type it out instead.";
+
+      const callOllama = () =>
+        manager.callProvider(
+          'OLLAMA',
+          'glm-5.3',
+          makeContext('here is my voice note again'),
+          Date.now(),
+          false,
+          undefined,
+          'MANUAL_MODEL',
+        );
+
+      it('routes the text before a bare </think> to reasoning (captured GLM payload)', async () => {
+        mockOllama({ role: 'assistant', content: GLM_PROD_CONTENT });
+
+        const result = await callOllama();
+
+        expect(result.content).toBe(
+          "Same voice note, same problem: transcription failed (error 429). I can't hear it — type it out instead.",
+        );
+        expect(result.content).not.toContain('</think>');
+        expect(result.content).not.toContain('Be concise');
+        expect(result.reasoning).toBe(
+          "The attachment is a voice note that couldn't be transcribed (429 error). I already told them. They resent the same file. I still can't transcribe it. Be concise.",
+        );
+      });
+
+      it('carries the message.thinking field to reasoning, not content', async () => {
+        mockOllama({ role: 'assistant', content: 'Short answer.', thinking: 'private plan' });
+
+        const result = await callOllama();
+
+        expect(result.content).toBe('Short answer.');
+        expect(result.reasoning).toBe('private plan');
+      });
+
+      it('leaves an ordinary answer and its reasoning field untouched', async () => {
+        mockOllama({ role: 'assistant', content: 'Plain answer.' });
+
+        const result = await callOllama();
+
+        expect(result.content).toBe('Plain answer.');
+        expect(result.reasoning).toBeUndefined();
+      });
+
+      it('reports "reasoned but produced no answer" when only reasoning came back', async () => {
+        mockOllama({ role: 'assistant', content: 'all of it was thinking</think>' });
+
+        await expect(callOllama()).rejects.toThrow(/reasoned but produced no answer/u);
+      });
     });
 
     it('leaves toolCalls undefined on an ordinary final answer', async () => {

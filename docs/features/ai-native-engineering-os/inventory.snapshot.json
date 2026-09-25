@@ -7495,7 +7495,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 27251,
+          "bytes": 31295,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7757,6 +7757,10 @@
         {
           "bytes": 4863,
           "file": "rules/55-akinator-station-discipline.md"
+        },
+        {
+          "bytes": 4010,
+          "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
           "bytes": 6156,
@@ -10133,7 +10137,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 201
+        "testFiles": 202
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10931,7 +10935,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1603,
+    "totalTestFiles": 1604,
     "workspaceCount": 25
   }
 }
