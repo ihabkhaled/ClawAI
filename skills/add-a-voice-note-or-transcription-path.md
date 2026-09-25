@@ -366,7 +366,8 @@ Fixed at the mechanism, not the one model:
   empty transcript, a genuinely bad recording) still stops at the first
   candidate and is recorded as a real failure — falling through on those
   would mean paying a second provider for a request that was never going to
-  succeed.
+  succeed. **Superseded 2026-09-25 for 429s and for the one-per-provider
+  list** — see the next section.
 
 **The stated tradeoff**: the heuristic can be wrong in the other direction —
 a real audio-capable Gemini model that does not match the stable
@@ -384,17 +385,67 @@ the `findCapableModels` cases in `transcription-capability.client.spec.ts`,
 and the `provider fallback on an audio-modality rejection` describe block in
 `transcription.manager.spec.ts`.
 
+## Solved: the 09-24 fix never reached prod's catalog, and a 429 ended the job (2026-09-25)
+
+The live bug, one day after the section above shipped: every voice note still
+went to `models/antigravity-preview-05-2026` (400), fell through to OpenAI
+`whisper-1` (429, the key had no quota), and the user was told "Audio
+transcription failed: Request failed with status code 429" — relayed by the
+model, since chat-service hands `extractionError` to it verbatim.
+
+Three separate causes:
+
+1. **The heuristic was deployed but never applied.** connector-service has no
+   scheduled sync; rows keep whatever the last admin-triggered sync wrote.
+   Prod's last GEMINI sync was 2026-09-22, so all 63 GEMINI rows — imagen,
+   veo, lyria, embeddings — still said `supports_audio = true`. Fix:
+   `snapshotSupportsAudio` / `snapshotSupportsVideoInput`
+   (connector `utilities/snapshot-media-capability.utility.ts`) re-apply the
+   Gemini heuristics when the models snapshot is built. They only narrow.
+2. **One candidate per provider, chosen by alphabet.** The snapshot is sorted
+   by key and `antigravity` sorts first. Fix: `selectTranscriptionCandidates`
+   (file-service `utilities/transcription-candidates.utility.ts`) — up to
+   `TRANSCRIPTION_MAX_CANDIDATES_PER_PROVIDER` (2) models per provider,
+   `flash-lite` → `flash` → other, EXPOSED before unexposed, and
+   `TRANSCRIPTION_UNSTABLE_MODEL_MARKERS` rows only when nothing stable exists.
+   OpenAI is offered once (its model is always `whisper-1`).
+3. **A 429 was terminal.** A 429 means the provider processed nothing, so
+   moving on is free. `classifyTranscriptionFailure` sorts every failure into
+   `MODEL_REJECTED` (modality 400, 404 → next model, same provider first),
+   `RATE_LIMITED` (one `TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS` retry per JOB,
+   then the provider is skipped), `QUOTA_EXHAUSTED` (OpenAI
+   `insufficient_quota` → provider skipped, no retry) and `TERMINAL` (stop).
+   `TRANSCRIPTION_MAX_PROVIDER_CALLS` (4) bounds the job; each call is its own
+   PAYG hold (`transcription:<file>:GEMINI`, `…:GEMINI:2`), released on
+   failure.
+
+And the user now reads a fixed sentence (`TRANSCRIPTION_PROVIDER_BUSY_MESSAGE`,
+`…_UNAVAILABLE_MESSAGE`, `…_NO_USABLE_MODEL_MESSAGE`,
+`…_PROVIDER_FAILED_MESSAGE`); the raw provider text stays in the log.
+
+**Deliberately not done:** no new `FileTranscribeFailureReasonCode`. The event
+has no consumer, and editing `@claw/shared-types` marks all 18 services
+affected. The event still says `PROVIDER_ERROR`; the `kind=` in the log and
+the sentence in `reason` carry the detail. No frontend string either — no UI
+renders `extractionError` for audio; the model relays it in the user's own
+language.
+
+Runbook: [`docs/11-runbooks/runbook-voice-note-transcription-failed.md`](../docs/11-runbooks/runbook-voice-note-transcription-failed.md).
+
 ## Verify
 
 ```bash
 cd apps/claw-connector-service
 npx vitest run src/modules/connectors/constants/__tests__/gemini-audio-heuristics.constants.spec.ts \
-  src/modules/connectors/__tests__/gemini-context-window.spec.ts
+  src/modules/connectors/__tests__/gemini-context-window.spec.ts \
+  src/modules/connectors/managers/__tests__/models-snapshot.manager.spec.ts
 
 cd ../claw-file-service
 npx vitest run src/modules/files/managers/__tests__/transcription.manager.spec.ts \
   src/modules/files/clients/__tests__/transcription-capability.client.spec.ts \
   src/modules/files/utilities/__tests__/transcription-error.utility.spec.ts \
+  src/modules/files/utilities/__tests__/transcription-candidates.utility.spec.ts \
+  src/modules/files/managers/__tests__/transcription-metering.spec.ts \
   src/modules/files/managers/__tests__/chunked-upload.manager.spec.ts
 
 cd ../claw-frontend

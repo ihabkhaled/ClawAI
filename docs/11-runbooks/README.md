@@ -22,6 +22,8 @@
 | Picking an image model always fails                                                   | [runbook-image-generation-failure.md](runbook-image-generation-failure.md) → did chat-service redirect it to image-service at all; read `image_generations.error_code`, never the stored message |
 | TLS / cert / `Hostname doesn't match` errors                                          | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                                                                                       |
 | Local frontier (llama.cpp) issues                                                     | [frontier-troubleshooting.md](frontier-troubleshooting.md) · [frontier-first-time-walkthrough.md](frontier-first-time-walkthrough.md)                                                            |
+| A voice note is never transcribed / "transcription service is busy"                   | [runbook-voice-note-transcription-failed.md](runbook-voice-note-transcription-failed.md) → read the ranked walk in the file-service log; `kind=` names the cause                                 |
+| An answer starts with the model's private notes ("Be concise.")                       | [rules/56](../../rules/56-model-reasoning-never-in-the-answer.md) → a reasoning channel reached `content`; GLM ends its reasoning with a bare `</think>`                                         |
 | Chat says "every available AI provider failed"                                        | [runbook-provider-call-rejected.md](runbook-provider-call-rejected.md) → read the provider's own body; usually a dropped param or no credit                                                      |
 | Provider connector: sync 500s but the test says OK                                    | [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md) → the test toast lied; read `model_sync_runs.error_message`                                                   |
 | Workspace connector sync failing                                                      | [runbook-workspace-automation.md](runbook-workspace-automation.md)                                                                                                                               |
@@ -57,6 +59,7 @@
 - [runbook-image-generation-failure.md](runbook-image-generation-failure.md)
 - [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md)
 - [runbook-provider-call-rejected.md](runbook-provider-call-rejected.md)
+- [runbook-voice-note-transcription-failed.md](runbook-voice-note-transcription-failed.md)
 - [runbook-fabricated-web-facts.md](runbook-fabricated-web-facts.md)
 
 ### Local frontier (llama.cpp)

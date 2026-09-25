@@ -119,7 +119,7 @@ describe('TranscriptionCapabilityClient', () => {
   });
 
   describe('findCapableModels', () => {
-    it('returns one candidate per provider, in priority order, not just the first', async () => {
+    it('returns every provider in priority order, not just the first', async () => {
       mockedHttpGet.mockResolvedValue(
         snapshot([
           { provider: 'OPENAI', modelKey: 'gpt-4o-audio', modalitiesIn: ['AUDIO'] },
@@ -140,6 +140,29 @@ describe('TranscriptionCapabilityClient', () => {
 
       await expect(client.findCapableModels()).resolves.toEqual([
         { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+      ]);
+    });
+
+    // Prod 2026-09-25: the snapshot's first GEMINI audio row was
+    // models/antigravity-preview-05-2026 and every voice note went there.
+    it('ranks a stable flash model ahead of the preview row the snapshot lists first', async () => {
+      mockedHttpGet.mockResolvedValue(
+        snapshot([
+          {
+            provider: 'GEMINI',
+            modelKey: 'models/antigravity-preview-05-2026',
+            modalitiesIn: ['TEXT', 'AUDIO'],
+          },
+          { provider: 'GEMINI', modelKey: 'models/gemini-2.5-pro', modalitiesIn: ['AUDIO'] },
+          { provider: 'GEMINI', modelKey: 'models/gemini-2.5-flash', modalitiesIn: ['AUDIO'] },
+          { provider: 'OPENAI', modelKey: 'gpt-4o-audio', modalitiesIn: ['AUDIO'] },
+        ]),
+      );
+
+      await expect(client.findCapableModels()).resolves.toEqual([
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+        { provider: 'GEMINI', model: 'models/gemini-2.5-pro' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
       ]);
     });
 

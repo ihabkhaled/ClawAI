@@ -84,6 +84,61 @@ describe('ModelsSnapshotManager', () => {
     expect(result.models[0]?.modalitiesIn).toEqual(['TEXT', 'IMAGE_INPUT', 'AUDIO']);
   });
 
+  // Prod 2026-09-25: the fail-closed Gemini heuristic shipped 2026-09-24, but
+  // the last GEMINI sync ran 2026-09-22, so every GEMINI row (antigravity,
+  // imagen, veo, lyria, embeddings…) still said supports_audio = true and
+  // transcription sent every voice note to a model Gemini refuses. The
+  // snapshot applies the heuristic on read, so a stale row cannot lie.
+  describe('stale GEMINI rows synced before the fail-closed heuristic', () => {
+    it.each([
+      'models/antigravity-preview-05-2026',
+      'models/imagen-4.0-generate-001',
+      'models/gemini-2.5-flash-preview-tts',
+      'models/gemini-embedding-001',
+      'models/veo-3.1-generate-preview',
+    ])('does not advertise AUDIO or VIDEO_INPUT for %s', async (modelKey) => {
+      const manager = buildManager([
+        makeRow({
+          provider: 'GEMINI',
+          modelKey,
+          supportsVision: true,
+          supportsAudio: true,
+          supportsVideoInput: true,
+        }),
+      ]);
+      const result = await manager.build();
+      expect(result.models[0]?.modalitiesIn).toEqual(['TEXT', 'IMAGE_INPUT']);
+    });
+
+    it('still advertises AUDIO for the stable flash family', async () => {
+      const manager = buildManager([
+        makeRow({
+          provider: 'GEMINI',
+          modelKey: 'models/gemini-2.5-flash-lite',
+          supportsAudio: true,
+        }),
+      ]);
+      const result = await manager.build();
+      expect(result.models[0]?.modalitiesIn).toContain('AUDIO');
+    });
+
+    it('never turns a false flag true — the guard only narrows', async () => {
+      const manager = buildManager([
+        makeRow({ provider: 'GEMINI', modelKey: 'models/gemini-2.5-flash', supportsAudio: false }),
+      ]);
+      const result = await manager.build();
+      expect(result.models[0]?.modalitiesIn).not.toContain('AUDIO');
+    });
+
+    it('leaves other providers to their own sync', async () => {
+      const manager = buildManager([
+        makeRow({ provider: 'OPENAI', modelKey: 'gpt-4o-mini-transcribe', supportsAudio: true }),
+      ]);
+      const result = await manager.build();
+      expect(result.models[0]?.modalitiesIn).toContain('AUDIO');
+    });
+  });
+
   it('passes provider and modelKey through unchanged', async () => {
     const manager = buildManager([makeRow({ provider: 'ANTHROPIC', modelKey: 'claude-opus-4' })]);
     const result = await manager.build();

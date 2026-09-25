@@ -70,6 +70,112 @@ export const TRANSCRIPTION_CAPABILITY_CACHE_TTL_MS = 60_000;
  */
 export const AUDIO_PLACEHOLDER_PREFIX = '[Audio file: ';
 
+/**
+ * How many models of ONE provider the walk may offer. Two, so a single wrong
+ * catalog row costs one refused call and not the whole job; not more, because
+ * a provider that refuses two stable models is not going to accept a third.
+ */
+export const TRANSCRIPTION_MAX_CANDIDATES_PER_PROVIDER = 2;
+
+/**
+ * Providers whose snapshot row only proves "configured": the model actually
+ * called is fixed (`OPENAI_TRANSCRIPTION_MODEL`), so a second row would be the
+ * same call twice, and the row's own name says nothing about stability.
+ */
+export const TRANSCRIPTION_FIXED_MODEL_PROVIDERS: readonly string[] = ['OPENAI'];
+
+/**
+ * Model-key fragments that mark a row as NOT a plain transcription model:
+ * preview/experimental releases, other product lines that share the Gemini
+ * catalog (image, video, music, embeddings, agents), speech OUTPUT and
+ * live/realtime dialog models. Matched case-insensitively on the key.
+ *
+ * Prod 2026-09-25: `models/antigravity-preview-05-2026` was the snapshot's
+ * first GEMINI audio row, Gemini answered every voice note with a 400, and no
+ * stable model was ever tried. Such rows are used only when NO stable
+ * candidate exists at all.
+ */
+export const TRANSCRIPTION_UNSTABLE_MODEL_MARKERS: readonly string[] = [
+  'preview',
+  'exp',
+  'antigravity',
+  'thinking',
+  'live',
+  'realtime',
+  'native-audio',
+  'tts',
+  'image',
+  'veo',
+  'lyria',
+  'embedding',
+  'gemma',
+  'aqa',
+  'robotics',
+  'computer-use',
+  'deep-research',
+  'nano-banana',
+];
+
+/**
+ * Preference inside one provider, best first: the cheapest GA tier that hears
+ * audio well, then its bigger sibling. Anything matching neither ranks after.
+ * `flash-lite` must precede `flash` — every flash-lite key also contains flash.
+ */
+export const TRANSCRIPTION_PREFERRED_MODEL_FAMILIES: readonly string[] = ['flash-lite', 'flash'];
+
+/** Exposure value of a row an admin turned on for users; preferred within a rank. */
+export const TRANSCRIPTION_EXPOSED_EXPOSURE = 'EXPOSED';
+
+export const TRANSCRIPTION_MODELS_PREFIX = 'models/';
+
+/**
+ * Hard ceiling on provider calls for ONE job, retries included. A 429 or a
+ * refused model moves the walk on; this is what keeps "move on" from becoming
+ * a loop. Three candidates (two per provider at most) plus one backoff retry.
+ */
+export const TRANSCRIPTION_MAX_PROVIDER_CALLS = 4;
+
+/** Calls one candidate may take: the first, plus one retry after a transient 429. */
+export const TRANSCRIPTION_CALLS_PER_CANDIDATE = 2;
+
+/** The single short pause before retrying a transient 429. Once per job, never per provider. */
+export const TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS = 2_000;
+
+/** HTTP statuses the failure classifier reads off the provider response. */
+export const TRANSCRIPTION_HTTP_STATUS_NOT_FOUND = 404;
+export const TRANSCRIPTION_HTTP_STATUS_TOO_MANY_REQUESTS = 429;
+
+/**
+ * OpenAI's marker for "this key has no credit left". A 429 carrying it is not
+ * a rate limit and waiting will not fix it (`error.code` / `error.type`).
+ */
+export const TRANSCRIPTION_QUOTA_EXHAUSTED_CODES: readonly string[] = ['insufficient_quota'];
+
+/** Thrown by the manager when a provider answers with whitespace. */
+export const TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR = 'The provider returned an empty transcript.';
+
+// ---- What the USER is told ----
+// Stored in `extractionError` and relayed by chat-service to the model, which
+// answers in the user's language. Never a raw transport string: the old
+// "Audio transcription failed: Request failed with status code 429" reached a
+// user verbatim on 2026-09-25. The raw reason stays in the log.
+
+/** Every provider we could reach was rate-limited. */
+export const TRANSCRIPTION_PROVIDER_BUSY_MESSAGE =
+  'The transcription service is busy right now — please try again in a minute.';
+
+/** A provider's account is out of quota; retrying soon will not help. */
+export const TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE =
+  'Audio transcription is temporarily unavailable. Please try again later.';
+
+/** Every model tried refused the audio — a catalog problem for an administrator. */
+export const TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE =
+  'Audio transcription is unavailable: none of the configured models accepted this recording. Ask an administrator to check the transcription connectors.';
+
+/** Any other provider failure. */
+export const TRANSCRIPTION_PROVIDER_FAILED_MESSAGE =
+  'Audio transcription failed because the transcription service returned an error. Please try again later.';
+
 export const TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE =
   'Audio transcription is unavailable: no connector with an audio-capable model is configured. Ask an administrator to enable one.';
 

@@ -21,9 +21,16 @@ import { transcribeWithGemini } from '../../adapters/gemini-transcription.adapte
 import { transcribeWithOpenAi } from '../../adapters/openai-transcription.adapter';
 import {
   MAX_TRANSCRIBABLE_AUDIO_BYTES,
+  TRANSCRIPTION_MAX_PROVIDER_CALLS,
   TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
+  TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE,
+  TRANSCRIPTION_PROVIDER_BUSY_MESSAGE,
+  TRANSCRIPTION_PROVIDER_FAILED_MESSAGE,
+  TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE,
+  TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS,
   TRANSCRIPTION_TOO_LARGE_MESSAGE,
 } from '../../constants/transcription.constants';
+import { waitForTranscriptionBackoff } from '../../utilities/transcription-backoff.utility';
 
 vi.mock('../../adapters/gemini-transcription.adapter', () => ({
   transcribeWithGemini: vi.fn(),
@@ -31,12 +38,25 @@ vi.mock('../../adapters/gemini-transcription.adapter', () => ({
 vi.mock('../../adapters/openai-transcription.adapter', () => ({
   transcribeWithOpenAi: vi.fn(),
 }));
+vi.mock('../../utilities/transcription-backoff.utility', () => ({
+  waitForTranscriptionBackoff: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('../../../../common/utilities', () => ({
   readFile: vi.fn(() => Buffer.from('on-disk-audio')),
 }));
 
 const mockedGemini = transcribeWithGemini as Mock;
 const mockedOpenAi = transcribeWithOpenAi as Mock;
+const mockedBackoff = waitForTranscriptionBackoff as Mock;
+
+/** An axios error carrying a provider body, the shape `httpPost` re-throws. */
+const providerError = (status: number, data: unknown): Error => {
+  const error = new Error(`Request failed with status code ${String(status)}`) as Error & {
+    response: { status: number; data: unknown };
+  };
+  error.response = { status, data };
+  return error;
+};
 
 const AUDIO_PLACEHOLDER = '[Audio file: meeting.mp3]';
 
@@ -246,14 +266,16 @@ describe('TranscriptionManager', () => {
   });
 
   it('records a provider error without letting the row claim success', async () => {
-    mockedGemini.mockRejectedValue(new Error('429 rate limited'));
+    mockedGemini.mockRejectedValue(providerError(500, { error: { message: 'internal' } }));
     const harness = buildHarness(buildFile());
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
 
+    // The user reads this sentence through the model; the raw axios text
+    // ("Request failed with status code 500") stays in the log.
     expect(harness.filesRepository.saveExtractionResult).toHaveBeenCalledWith('file-1', {
       extractedText: AUDIO_PLACEHOLDER,
-      extractionError: 'Audio transcription failed: 429 rate limited',
+      extractionError: TRANSCRIPTION_PROVIDER_FAILED_MESSAGE,
       status: FileIngestionStatus.COMPLETED,
     });
     const payload = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
@@ -402,13 +424,14 @@ describe('TranscriptionManager', () => {
       const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
       expect(failed.reasonCode).toBe('PROVIDER_ERROR');
       expect(failed.provider).toBe('GEMINI');
+      expect(failed.reason).toBe(TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE);
       expect(publishedPatterns(harness.rabbit)).not.toContain(
         EventPattern.FILE_TRANSCRIBE_COMPLETED,
       );
     });
 
-    it('does NOT fall through on an ordinary provider error — only on a modality rejection', async () => {
-      mockedGemini.mockRejectedValue(new Error('429 rate limited'));
+    it('does NOT fall through on a terminal provider error (5xx, network)', async () => {
+      mockedGemini.mockRejectedValue(new Error('ECONNRESET'));
       mockedOpenAi.mockResolvedValue({ text: 'should never be called' });
       const harness = buildHarness(buildFile());
       harness.capability.findCapableModels.mockResolvedValue([
@@ -422,6 +445,222 @@ describe('TranscriptionManager', () => {
       const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
       expect(failed.reasonCode).toBe('PROVIDER_ERROR');
       expect(failed.provider).toBe('GEMINI');
+    });
+  });
+
+  // Prod 2026-09-25: the one GEMINI candidate was a preview model Gemini
+  // refuses (400), the one OPENAI candidate hit a 429, and the user was told
+  // "Request failed with status code 429". Every case below is bounded: at
+  // most TRANSCRIPTION_MAX_PROVIDER_CALLS provider calls and one backoff.
+  describe('bounded candidate walk', () => {
+    const modalityRejection = (model: string): Error =>
+      providerError(400, {
+        error: {
+          code: 400,
+          message: `Audio input modality is not enabled for ${model}`,
+          status: 'INVALID_ARGUMENT',
+        },
+      });
+    const openAiQuotaExhausted = (): Error =>
+      providerError(429, {
+        error: {
+          message: 'You exceeded your current quota, please check your plan and billing details.',
+          type: 'insufficient_quota',
+          code: 'insufficient_quota',
+        },
+      });
+    const transientRateLimit = (): Error =>
+      providerError(429, {
+        error: {
+          code: 429,
+          message: 'Resource has been exhausted (e.g. check quota).',
+          status: 'RESOURCE_EXHAUSTED',
+        },
+      });
+
+    const reserveIds = (harness: Harness): string[] =>
+      vi.mocked(harness.payg.reserve).mock.calls.map((call) => call[0].requestId);
+    const releaseCount = (harness: Harness): number =>
+      vi.mocked(harness.payg.release).mock.calls.length;
+    const spyRelease = (harness: Harness): void => {
+      vi.spyOn(harness.payg, 'release').mockResolvedValue(undefined);
+    };
+
+    it('tries a second model of the SAME provider after a modality rejection', async () => {
+      mockedGemini
+        .mockRejectedValueOnce(modalityRejection('models/gemini-3.1-flash-lite'))
+        .mockResolvedValueOnce({ text: 'second gemini model heard it' });
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/gemini-3.1-flash-lite' },
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      expect(mockedGemini).toHaveBeenCalledTimes(2);
+      expect(mockedGemini.mock.calls[1]?.[4]).toBe('models/gemini-2.5-flash');
+      expect(mockedOpenAi).not.toHaveBeenCalled();
+      expect(publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED).model).toBe(
+        'models/gemini-2.5-flash',
+      );
+      // One hold per real provider call, each under its own id; the refused
+      // one went back.
+      expect(reserveIds(harness)).toEqual([
+        'transcription:file-1:GEMINI',
+        'transcription:file-1:GEMINI:2',
+      ]);
+      expect(releaseCount(harness)).toBe(1);
+    });
+
+    it('replays prod: preview refused, OpenAI out of quota — one OpenAI call, a readable reason', async () => {
+      mockedGemini.mockRejectedValue(modalityRejection('models/antigravity-preview-05-2026'));
+      mockedOpenAi.mockRejectedValue(openAiQuotaExhausted());
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/antigravity-preview-05-2026' },
+        { provider: 'OPENAI', model: 'chatgpt-image-latest' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      // insufficient_quota is not transient: no backoff, no second OpenAI call.
+      expect(mockedOpenAi).toHaveBeenCalledTimes(1);
+      expect(mockedBackoff).not.toHaveBeenCalled();
+      const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+      expect(failed.reason).toBe(TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE);
+      expect(String(failed.reason)).not.toContain('status code');
+      expect(harness.filesRepository.saveExtractionResult).toHaveBeenCalledWith('file-1', {
+        extractedText: AUDIO_PLACEHOLDER,
+        extractionError: TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE,
+        status: FileIngestionStatus.COMPLETED,
+      });
+      expect(reserveIds(harness)).toEqual([
+        'transcription:file-1:GEMINI',
+        'transcription:file-1:OPENAI',
+      ]);
+      expect(releaseCount(harness)).toBe(2);
+    });
+
+    it('retries a transient 429 once, after one short backoff, on the same model', async () => {
+      mockedGemini
+        .mockRejectedValueOnce(transientRateLimit())
+        .mockResolvedValueOnce({ text: 'heard on the retry' });
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash-lite' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      expect(mockedBackoff).toHaveBeenCalledTimes(1);
+      expect(mockedBackoff).toHaveBeenCalledWith(TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS);
+      expect(mockedGemini).toHaveBeenCalledTimes(2);
+      expect(mockedGemini.mock.calls[1]?.[4]).toBe('models/gemini-2.5-flash-lite');
+      expect(mockedOpenAi).not.toHaveBeenCalled();
+      expect(publishedPatterns(harness.rabbit)).toContain(EventPattern.FILE_TRANSCRIBE_COMPLETED);
+      expect(reserveIds(harness)).toEqual([
+        'transcription:file-1:GEMINI',
+        'transcription:file-1:GEMINI:2',
+      ]);
+    });
+
+    it('moves to the next PROVIDER when the retry is rate-limited too, skipping the rest of that key', async () => {
+      mockedGemini.mockRejectedValue(transientRateLimit());
+      mockedOpenAi.mockResolvedValue({ text: 'the other provider heard it' });
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash-lite' },
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      // Same key, same limit: the second GEMINI model is not tried.
+      expect(mockedGemini.mock.calls.map((call) => call[4])).toEqual([
+        'models/gemini-2.5-flash-lite',
+        'models/gemini-2.5-flash-lite',
+      ]);
+      expect(mockedOpenAi).toHaveBeenCalledTimes(1);
+      expect(
+        publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED).provider,
+      ).toBe('OPENAI');
+    });
+
+    it('says "busy" — never the status code — when every provider is rate-limited', async () => {
+      mockedGemini.mockRejectedValue(transientRateLimit());
+      mockedOpenAi.mockRejectedValue(
+        providerError(429, {
+          error: { message: 'Rate limit reached for whisper-1', code: 'rate_limit_exceeded' },
+        }),
+      );
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+      harness.capability.findCapableModels.mockResolvedValue([
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash-lite' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ]);
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      // One backoff per job, not per provider.
+      expect(mockedBackoff).toHaveBeenCalledTimes(1);
+      expect(mockedGemini).toHaveBeenCalledTimes(2);
+      expect(mockedOpenAi).toHaveBeenCalledTimes(1);
+      const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+      expect(failed.reason).toBe(TRANSCRIPTION_PROVIDER_BUSY_MESSAGE);
+      expect(failed.reasonCode).toBe('PROVIDER_ERROR');
+      expect(releaseCount(harness)).toBe(3);
+    });
+
+    it('never makes more than TRANSCRIPTION_MAX_PROVIDER_CALLS calls, however many candidates', async () => {
+      mockedGemini.mockImplementation(
+        (_base: string, _key: string, _audio: string, _mime: string, model: string) =>
+          Promise.reject(modalityRejection(model)),
+      );
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+      harness.capability.findCapableModels.mockResolvedValue(
+        ['a', 'b', 'c', 'd', 'e', 'f'].map((suffix) => ({
+          provider: 'GEMINI',
+          model: `models/gemini-2.5-flash-${suffix}`,
+        })),
+      );
+
+      await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+      expect(mockedGemini).toHaveBeenCalledTimes(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+      expect(reserveIds(harness)).toHaveLength(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+      expect(releaseCount(harness)).toBe(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+      expect(publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED).reason).toBe(
+        TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE,
+      );
+    });
+
+    it("hands a video's derived track the same readable reason, not the raw 429", async () => {
+      mockedGemini.mockRejectedValue(transientRateLimit());
+      const harness = buildHarness(buildFile());
+      spyRelease(harness);
+
+      const outcome = await harness.manager.transcribeDerivedAudio({
+        fileId: 'video-1',
+        userId: 'user-1',
+        audioBase64: 'YXVkaW8=',
+        mimeType: 'audio/wav',
+        sizeBytes: 1024,
+        audioSeconds: 10,
+        requestScope: 'video-audio',
+        instruction: 'timestamped',
+      });
+
+      expect(outcome).toEqual({ status: 'FAILED', reason: TRANSCRIPTION_PROVIDER_BUSY_MESSAGE });
     });
   });
 });

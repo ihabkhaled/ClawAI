@@ -9,7 +9,11 @@
  * already has its own copy of.
  */
 export type TranscriptionProviderErrorBody = {
-  error?: { message?: string } | string;
+  /**
+   * `code`/`type` carry OpenAI's `insufficient_quota`; Gemini puts a number in
+   * `code` and `RESOURCE_EXHAUSTED` in `status`.
+   */
+  error?: { message?: string; code?: string | number; type?: string; status?: string } | string;
   message?: string;
 };
 

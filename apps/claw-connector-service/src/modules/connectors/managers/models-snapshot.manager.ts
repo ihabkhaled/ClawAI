@@ -3,6 +3,10 @@ import { type ConnectorModel } from '../../../generated/prisma';
 import { SNAPSHOT_VIDEO_INPUT_MODALITY } from '../constants/models-snapshot.constants';
 import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
 import {
+  snapshotSupportsAudio,
+  snapshotSupportsVideoInput,
+} from '../utilities/snapshot-media-capability.utility';
+import {
   type ConnectorModelsSnapshotResult,
   type UpstreamModelSnapshotEntry,
 } from '../types/connectors.types';
@@ -31,10 +35,12 @@ export class ModelsSnapshotManager {
     const modalitiesIn: string[] = ['TEXT'];
     const modalitiesOut: string[] = ['TEXT'];
     if (row.supportsVision) modalitiesIn.push('IMAGE_INPUT');
-    if (row.supportsAudio) modalitiesIn.push('AUDIO');
+    // Media flags go through the same fail-closed heuristic the sync uses, so
+    // a row written before that heuristic cannot advertise audio it lacks.
+    if (snapshotSupportsAudio(row)) modalitiesIn.push('AUDIO');
     // routing-service's Prisma `ModalityKind` spells this VIDEO_INPUT; a bare
     // 'VIDEO' is not a member and would fail that row's registry upsert.
-    if (row.supportsVideoInput) modalitiesIn.push(SNAPSHOT_VIDEO_INPUT_MODALITY);
+    if (snapshotSupportsVideoInput(row)) modalitiesIn.push(SNAPSHOT_VIDEO_INPUT_MODALITY);
     return {
       provider: row.provider,
       modelKey: row.modelKey,

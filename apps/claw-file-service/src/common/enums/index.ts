@@ -11,4 +11,5 @@ export {
 export { MediaProcessStatus } from './media-process-status.enum';
 export { VideoPlanDecision } from './video-plan-decision.enum';
 export { DerivedTranscriptionStatus } from './derived-transcription-status.enum';
+export { TranscriptionFailureKind } from './transcription-failure-kind.enum';
 export { ClamScanOutcome } from './clam-scan-outcome.enum';

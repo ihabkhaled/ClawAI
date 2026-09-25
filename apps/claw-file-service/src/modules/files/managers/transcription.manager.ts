@@ -15,6 +15,7 @@ import { TranscriptionMeterManager } from './transcription-meter.manager';
 import {
   DerivedTranscriptionStatus,
   TranscriptionAttemptStatus,
+  TranscriptionFailureKind,
   TranscriptionReserveStatus,
 } from '../../../common/enums';
 import { transcribeWithGemini } from '../adapters/gemini-transcription.adapter';
@@ -25,7 +26,15 @@ import {
   MAX_TRANSCRIBABLE_AUDIO_BYTES,
   OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL,
   OPENAI_TRANSCRIPTION_MODEL,
+  TRANSCRIPTION_CALLS_PER_CANDIDATE,
+  TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR,
+  TRANSCRIPTION_MAX_PROVIDER_CALLS,
   TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
+  TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE,
+  TRANSCRIPTION_PROVIDER_BUSY_MESSAGE,
+  TRANSCRIPTION_PROVIDER_FAILED_MESSAGE,
+  TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE,
+  TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS,
   TRANSCRIPTION_TOO_LARGE_MESSAGE,
 } from '../constants/transcription.constants';
 import {
@@ -34,13 +43,15 @@ import {
   type TranscriptionProviderResult,
   type TranscriptionRequestContext,
   type TranscriptionRunOutcome,
+  type TranscriptionWalkState,
 } from '../types/transcription.types';
 import {
   type DerivedAudioTranscriptionInput,
   type DerivedAudioTranscriptionOutcome,
 } from '../types/video-processing.types';
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
-import { isAudioModalityRejection } from '../utilities/transcription-error.utility';
+import { classifyTranscriptionFailure } from '../utilities/transcription-error.utility';
+import { waitForTranscriptionBackoff } from '../utilities/transcription-backoff.utility';
 
 /**
  * B6b — turns an uploaded audio file into a transcript, out of band.
@@ -227,13 +238,13 @@ export class TranscriptionManager implements OnModuleInit {
       );
       return;
     }
-    const reason = `Audio transcription failed: ${outcome.reason}`;
-    await this.recordFailure(file, reason);
+    // Already user-safe: the walk never hands back a raw transport message.
+    await this.recordFailure(file, outcome.reason);
     this.publishFailed(
       file.id,
       userId,
       this.classify(outcome.reason),
-      reason,
+      outcome.reason,
       provider,
       outcome.model,
     );
@@ -299,21 +310,26 @@ export class TranscriptionManager implements OnModuleInit {
   }
 
   /**
-   * Walks `candidates` in priority order, stopping at the first success.
-   * Returns null only for an empty list. Never writes the row.
+   * Walks `candidates` (already ranked by `selectTranscriptionCandidates`),
+   * stopping at the first success. Returns null only for an empty list.
+   * Never writes the row.
    *
-   * A candidate the connector catalog marked audio-capable can still be one
-   * the provider itself refuses for that exact model — a stale or
-   * over-broad `supportsAudio` sync, not a real outage. That refusal
-   * (`isAudioModalityRejection`) is the ONLY reason this falls through to
-   * the next candidate; every other failure (rate limit, auth, a bad
-   * recording, an empty transcript) stops here and is returned as a real
-   * failure — falling through on those would mean paying a second provider
-   * for a request that was never going to succeed.
+   * What may happen after a failed call depends on WHY it failed
+   * (`classifyTranscriptionFailure`):
+   *  - MODEL_REJECTED (the modality 400, a 404): this model is wrong for
+   *    audio, the provider processed nothing — try the next candidate, which
+   *    may be another model of the SAME provider.
+   *  - RATE_LIMITED (a transient 429): nothing was processed. One short
+   *    backoff and one retry of the same model, once per JOB; after that the
+   *    provider is skipped, never looped on.
+   *  - QUOTA_EXHAUSTED (OpenAI `insufficient_quota`): that key cannot pay.
+   *    Skip the provider without retrying.
+   *  - TERMINAL (5xx, network, empty transcript): stop. It may have been
+   *    processed, and paying a second provider for it would be a guess.
    *
-   * A PAYG credit refusal is not a throw at all: `attemptCandidate` returns
-   * `REFUSED` and this loop stops there. Trying the next provider after "you
-   * have no credit" would only be refused again — or, worse, charged.
+   * `TRANSCRIPTION_MAX_PROVIDER_CALLS` bounds the whole walk, retries
+   * included. A PAYG refusal is a `REFUSED` result, not a throw, and ends the
+   * walk: the next provider would only be refused again, or charged.
    */
   private async runCandidates(
     context: TranscriptionRequestContext,
@@ -325,36 +341,108 @@ export class TranscriptionManager implements OnModuleInit {
       return null;
     }
 
-    let lastReason = 'Unknown transcription error';
-    let lastCapability = firstCandidate;
-    for (const [index, capability] of candidates.entries()) {
-      lastCapability = capability;
-      const model = this.effectiveModel(capability);
-      try {
-        const outcome = await this.attemptCandidate(context, capability);
-        return { ...outcome, capability, model };
-      } catch (error: unknown) {
-        const reason = error instanceof Error ? error.message : 'Unknown transcription error';
-        lastReason = reason;
-        const hasNextCandidate = index < candidates.length - 1;
-        if (isAudioModalityRejection(error) && hasNextCandidate) {
-          this.logger.warn(
-            `runCandidates: fileId=${context.fileId} provider=${capability.provider} model=${model} refused the audio modality — falling through to the next candidate (${reason})`,
-          );
-          continue;
-        }
-        this.logger.error(
-          `runCandidates: fileId=${context.fileId} provider=${capability.provider} model=${model} failed — ${reason}`,
-        );
-        break;
+    const walk: TranscriptionWalkState = {
+      calls: 0,
+      backoffUsed: false,
+      blockedProviders: new Set<string>(),
+      providerCalls: new Map<string, number>(),
+      seen: new Set<TranscriptionFailureKind>(),
+      last: firstCandidate,
+    };
+    for (const capability of candidates) {
+      if (walk.blockedProviders.has(capability.provider)) {
+        continue;
+      }
+      const outcome = await this.tryCandidate(context, capability, walk);
+      if (outcome !== null) {
+        return outcome;
       }
     }
     return {
       status: TranscriptionAttemptStatus.FAILED,
-      reason: lastReason,
-      capability: lastCapability,
-      model: this.effectiveModel(lastCapability),
+      reason: this.exhaustedReason(walk.seen),
+      capability: walk.last,
+      model: this.effectiveModel(walk.last),
     };
+  }
+
+  /**
+   * At most `TRANSCRIPTION_CALLS_PER_CANDIDATE` calls on one candidate: the
+   * first, plus the single job-wide 429 retry. Returns the final outcome, or
+   * null when the walk should move to the next candidate.
+   */
+  private async tryCandidate(
+    context: TranscriptionRequestContext,
+    capability: TranscriptionCapability,
+    walk: TranscriptionWalkState,
+  ): Promise<TranscriptionRunOutcome | null> {
+    const { provider } = capability;
+    const model = this.effectiveModel(capability);
+    for (let call = 0; call < TRANSCRIPTION_CALLS_PER_CANDIDATE; call += 1) {
+      if (walk.calls >= TRANSCRIPTION_MAX_PROVIDER_CALLS) {
+        this.logger.warn(
+          `runCandidates: fileId=${context.fileId} stopping after ${String(walk.calls)} provider calls`,
+        );
+        return null;
+      }
+      walk.calls += 1;
+      walk.last = capability;
+      const providerAttempt = (walk.providerCalls.get(provider) ?? 0) + 1;
+      walk.providerCalls.set(provider, providerAttempt);
+      try {
+        const outcome = await this.attemptCandidate(context, capability, providerAttempt);
+        return { ...outcome, capability, model };
+      } catch (error: unknown) {
+        const raw = error instanceof Error ? error.message : 'Unknown transcription error';
+        const kind = classifyTranscriptionFailure(error);
+        if (kind === TranscriptionFailureKind.TERMINAL) {
+          this.logger.error(
+            `runCandidates: fileId=${context.fileId} provider=${provider} model=${model} failed — ${raw}`,
+          );
+          return {
+            status: TranscriptionAttemptStatus.FAILED,
+            reason: this.terminalReason(raw),
+            capability,
+            model,
+          };
+        }
+        walk.seen.add(kind);
+        this.logger.warn(
+          `runCandidates: fileId=${context.fileId} provider=${provider} model=${model} kind=${kind} — ${raw}`,
+        );
+        if (kind === TranscriptionFailureKind.RATE_LIMITED && !walk.backoffUsed) {
+          walk.backoffUsed = true;
+          await waitForTranscriptionBackoff(TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS);
+          continue;
+        }
+        if (kind !== TranscriptionFailureKind.MODEL_REJECTED) {
+          walk.blockedProviders.add(provider);
+        }
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /** The user-facing reason when every candidate failed recoverably. Busy beats the rest. */
+  private exhaustedReason(seen: ReadonlySet<TranscriptionFailureKind>): string {
+    if (seen.has(TranscriptionFailureKind.RATE_LIMITED)) {
+      return TRANSCRIPTION_PROVIDER_BUSY_MESSAGE;
+    }
+    return seen.has(TranscriptionFailureKind.QUOTA_EXHAUSTED)
+      ? TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE
+      : TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE;
+  }
+
+  /**
+   * An empty transcript is our own finding and says something true about the
+   * recording, so it is kept; any other raw reason is a transport string and
+   * stays in the log.
+   */
+  private terminalReason(raw: string): string {
+    return raw === TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR
+      ? `Audio transcription failed: ${raw}`
+      : TRANSCRIPTION_PROVIDER_FAILED_MESSAGE;
   }
 
   /**
@@ -368,19 +456,22 @@ export class TranscriptionManager implements OnModuleInit {
   private async attemptCandidate(
     context: TranscriptionRequestContext,
     capability: TranscriptionCapability,
+    providerAttempt: number,
   ): Promise<TranscriptionAttemptOutcome> {
     const model = this.effectiveModel(capability);
     const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
     const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
 
     // Charged to the UPLOADER — the job's userId — per attempt. The requestId
-    // is per provider, so a modality fall-through is a second, separate hold.
+    // is per provider CALL (`providerAttempt`), so a second model or the 429
+    // retry is a second, separate hold, never a reuse of a released one.
     const reservation = await this.meter.reserve({
       userId: context.userId,
       fileId: context.fileId,
       provider: capability.provider,
       model,
       sizeBytes: context.sizeBytes,
+      providerAttempt,
       ...(context.audioSeconds === undefined ? {} : { audioSeconds: context.audioSeconds }),
       ...(context.requestScope === undefined ? {} : { requestScope: context.requestScope }),
     });
@@ -410,7 +501,7 @@ export class TranscriptionManager implements OnModuleInit {
       // pass every "has a transcript" check while telling the user nothing.
       transcript = result.text.trim();
       if (transcript.length === 0) {
-        throw new Error('The provider returned an empty transcript.');
+        throw new Error(TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR);
       }
     } catch (error: unknown) {
       // The user got no transcript, so the hold goes back rather than being

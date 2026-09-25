@@ -319,8 +319,22 @@ Three behaviours worth knowing before changing it:
   (402 or clamped hold) or `CREDIT_CHECK_UNAVAILABLE` (meter down / model
   unpriced; fails closed, no provider call). `PaygMeter` comes from the global
   `EntitlementsModule` in `AppModule`. Never log a balance (rule 37 item 4).
+  A second call to the same provider in one job (another model, or the 429
+  retry) is `…:${provider}:2` — its own hold, never a reuse.
+- **Which models, in what order, and when to move on** (rule 42 item 20).
+  `selectTranscriptionCandidates` ranks: provider priority, ≤2 models per
+  provider (OpenAI once), stable `flash-lite` → `flash` first, preview /
+  image / tts / live / non-transcription lines only if nothing stable exists.
+  `TranscriptionManager#runCandidates` classifies each failure
+  (`classifyTranscriptionFailure`): model refusal → next model; transient 429
+  → one backoff retry per job, then skip the provider; OpenAI
+  `insufficient_quota` → skip, no retry; anything else → stop. Hard ceiling
+  `TRANSCRIPTION_MAX_PROVIDER_CALLS` = 4. `extractionError` is always one of
+  the fixed `TRANSCRIPTION_*_MESSAGE` sentences — never a raw axios string,
+  because chat-service hands it to the model and the model repeats it.
 
-Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md).
+Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md) ·
+[`docs/11-runbooks/runbook-voice-note-transcription-failed.md`](../../docs/11-runbooks/runbook-voice-note-transcription-failed.md).
 
 ## Video is processed here: probe, plan limit, audio track, frames (multimodal batch 7)
 

@@ -3,6 +3,7 @@ import { type TranscriptSegment } from './video-processing.types';
 import {
   type TranscriptionAttemptStatus,
   type TranscriptionCreditRefusalCode,
+  type TranscriptionFailureKind,
   type TranscriptionReserveStatus,
 } from '../../../common/enums';
 
@@ -26,6 +27,8 @@ export interface TranscriptionSnapshotEntry {
    * working if the raw capability flag is ever surfaced directly.
    */
   supportsAudio?: boolean;
+  /** `EXPOSED` when an admin turned the row on for users; preferred within a rank. */
+  exposure?: string;
 }
 
 export interface TranscriptionSnapshotResponse {
@@ -96,6 +99,12 @@ export interface TranscriptionMeterInput {
   audioSeconds?: number;
   /** Extra request-id scope (`video-audio`) so a derived track never collides with an upload. */
   requestScope?: string;
+  /**
+   * 1-based count of calls to THIS provider within the job. The second call
+   * (another model, or the one 429 retry) gets its own request id, so each
+   * real provider call is its own hold.
+   */
+  providerAttempt?: number;
 }
 
 /**
@@ -181,6 +190,25 @@ export type TranscriptionRunOutcome =
   | (TranscriptionRunTarget & TranscriptionAttemptCompleted)
   | (TranscriptionRunTarget & TranscriptionAttemptRefused)
   | (TranscriptionRunTarget & { status: TranscriptionAttemptStatus.FAILED; reason: string });
+
+/**
+ * The candidate walk's bookkeeping for one job. Mutated as calls happen; lives
+ * only for the duration of `runCandidates`.
+ */
+export interface TranscriptionWalkState {
+  /** Provider calls made so far, retries included. */
+  calls: number;
+  /** Whether the one backoff this job may take has been taken. */
+  backoffUsed: boolean;
+  /** Providers that must not be called again (quota gone, or rate-limited twice). */
+  blockedProviders: Set<string>;
+  /** Calls made per provider, for the request-id suffix. */
+  providerCalls: Map<string, number>;
+  /** Every recoverable failure kind seen, to pick the message if the walk runs dry. */
+  seen: Set<TranscriptionFailureKind>;
+  /** The candidate the walk touched last, for the event and the log. */
+  last: TranscriptionCapability;
+}
 
 // ---- Provider response read models ----
 // The adapters live in `*.adapter.ts`, where ESLint forbids inline interface

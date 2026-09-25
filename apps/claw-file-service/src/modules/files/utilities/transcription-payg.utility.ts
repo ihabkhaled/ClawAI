@@ -27,12 +27,24 @@ import {
 /**
  * The idempotency key of one paid provider attempt. Stable across a
  * redelivered job (the same attempt reuses its open hold) and distinct per
- * provider (a fall-through to a second provider is a second paid call).
+ * provider call: a fall-through to a second provider, a second model of the
+ * same provider, and the one 429 retry are each their own paid call. The
+ * first call to a provider keeps the bare `…:PROVIDER` form; the n-th adds
+ * `:n`.
  */
-export function transcriptionRequestId(fileId: string, provider: string, scope?: string): string {
-  return scope === undefined
-    ? `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${provider}`
-    : `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${scope}:${provider}`;
+export function transcriptionRequestId(
+  fileId: string,
+  provider: string,
+  scope?: string,
+  providerAttempt?: number,
+): string {
+  const base =
+    scope === undefined
+      ? `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${provider}`
+      : `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${scope}:${provider}`;
+  return providerAttempt === undefined || providerAttempt <= 1
+    ? base
+    : `${base}:${String(providerAttempt)}`;
 }
 
 function clampSeconds(seconds: number): number {

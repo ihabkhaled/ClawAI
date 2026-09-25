@@ -23,6 +23,7 @@ import {
   TRANSCRIPTION_CREDIT_CHECK_UNAVAILABLE_MESSAGE,
   TRANSCRIPTION_INSUFFICIENT_CREDIT_MESSAGE,
 } from '../../constants/transcription-payg.constants';
+import { TRANSCRIPTION_PROVIDER_FAILED_MESSAGE } from '../../constants/transcription.constants';
 
 vi.mock('../../adapters/gemini-transcription.adapter', () => ({
   transcribeWithGemini: vi.fn(),
@@ -547,7 +548,11 @@ describe('TranscriptionManager.transcribeDerivedAudio — video audio track', ()
 
     const outcome = await h.manager.transcribeDerivedAudio(DERIVED);
 
-    expect(outcome).toEqual({ status: DerivedTranscriptionStatus.FAILED, reason: 'upstream 500' });
+    // The raw "upstream 500" stays in the log; the video document gets the readable reason.
+    expect(outcome).toEqual({
+      status: DerivedTranscriptionStatus.FAILED,
+      reason: TRANSCRIPTION_PROVIDER_FAILED_MESSAGE,
+    });
     expect(paths(h)).toEqual(['reserve', 'release']);
   });
 

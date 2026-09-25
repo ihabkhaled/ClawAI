@@ -173,7 +173,10 @@ When a sync is triggered:
    (`supportsVision`, `supportsAudio`, `supportsVideoInput`) come from per-adapter,
    fail-closed name heuristics in `constants/*-heuristics.constants.ts` — no provider
    list endpoint reports input modalities. The models snapshot maps them to
-   `modalitiesIn` `IMAGE_INPUT` / `AUDIO` / `VIDEO_INPUT`. Per-provider table and
+   `modalitiesIn` `IMAGE_INPUT` / `AUDIO` / `VIDEO_INPUT` — and for GEMINI it
+   re-applies the audio/video heuristics on read (`snapshot-media-capability.utility.ts`),
+   because there is no scheduled sync and a row synced before a heuristic
+   changed keeps its old flag until an admin re-syncs. Per-provider table and
    the OpenAI audio provider-level fallback: `apps/claw-connector-service/CLAUDE.md`
    § "Media input capability flags".
 5. Records the sync run with counts

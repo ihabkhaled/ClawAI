@@ -26,6 +26,14 @@ describe('transcription PAYG utility', () => {
     expect(transcriptionRequestId('f1', 'OPENAI')).not.toBe(transcriptionRequestId('f1', 'GEMINI'));
   });
 
+  it('keeps the first call bare and gives every later call to that provider its own id', () => {
+    expect(transcriptionRequestId('f1', 'GEMINI', undefined, 1)).toBe('transcription:f1:GEMINI');
+    expect(transcriptionRequestId('f1', 'GEMINI', undefined, 2)).toBe('transcription:f1:GEMINI:2');
+    expect(transcriptionRequestId('v1', 'GEMINI', 'video-audio', 3)).toBe(
+      'transcription:v1:video-audio:GEMINI:3',
+    );
+  });
+
   describe('estimateWorstCaseAudioSeconds', () => {
     it('divides bytes by the 1,000 B/s floor and rounds UP', () => {
       expect(estimateWorstCaseAudioSeconds(2_048)).toBe(3);

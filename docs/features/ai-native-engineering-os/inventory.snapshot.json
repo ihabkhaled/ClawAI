@@ -7703,7 +7703,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 28228,
+          "bytes": 30562,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -7837,7 +7837,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 25255,
+          "bytes": 28418,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
@@ -10153,7 +10153,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 57
+        "testFiles": 58
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10935,7 +10935,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1604,
+    "totalTestFiles": 1605,
     "workspaceCount": 25
   }
 }

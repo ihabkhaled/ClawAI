@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { declaredHost, httpGet } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import {
-  TRANSCRIPTION_AUDIO_MODALITY,
   TRANSCRIPTION_CAPABILITY_CACHE_TTL_MS,
   TRANSCRIPTION_CONNECTOR_TIMEOUT_MS,
   TRANSCRIPTION_PROVIDER_PRIORITY,
@@ -13,6 +12,7 @@ import {
   type TranscriptionSnapshotEntry,
   type TranscriptionSnapshotResponse,
 } from '../types/transcription.types';
+import { selectTranscriptionCandidates } from '../utilities/transcription-candidates.utility';
 
 /**
  * Which provider, if any, can turn this audio into text.
@@ -51,13 +51,13 @@ export class TranscriptionCapabilityClient {
   }
 
   /**
-   * Every audio-capable candidate, one per provider, in
-   * `TRANSCRIPTION_PROVIDER_PRIORITY` order — not just the first. A model
-   * marked `supportsAudio: true` in the connector catalog can still be
-   * refused by the provider itself (a stale or over-broad sync, e.g. a
-   * preview model the catalog got wrong); returning the whole ranked list
-   * lets the caller fall through to the next provider instead of failing
-   * outright on the first rejection.
+   * The ranked candidate list (`selectTranscriptionCandidates`): providers in
+   * `TRANSCRIPTION_PROVIDER_PRIORITY` order, up to two models each, stable
+   * flash-lite/flash first, preview and non-transcription product lines only
+   * when nothing stable exists. A row marked audio-capable can still be
+   * refused by the provider (a stale catalog row — prod 2026-09-25 picked
+   * `models/antigravity-preview-05-2026` because it sorted first), so the
+   * caller walks this list instead of betting the job on one model.
    */
   async findCapableModels(): Promise<TranscriptionCapability[]> {
     const now = Date.now();
@@ -105,20 +105,13 @@ export class TranscriptionCapabilityClient {
       return [];
     }
 
-    // Priority order drives the search, not the snapshot's order: GEMINI's
-    // candidate is listed before OPENAI's even when OpenAI's rows come
-    // first in the snapshot. One candidate per provider — the first
-    // audio-capable row for each — so a caller that walks the whole list
-    // tries GEMINI, then OPENAI, never two GEMINI rows in a row.
-    const capabilities: TranscriptionCapability[] = [];
-    for (const provider of TRANSCRIPTION_PROVIDER_PRIORITY) {
-      const match = models.find(
-        (model) => model.provider === provider && this.supportsAudio(model),
+    // Ranking, not snapshot order, decides who goes first: the snapshot is
+    // sorted by key, and the first GEMINI key alphabetically was a preview.
+    const capabilities = selectTranscriptionCandidates(models);
+    for (const [index, capability] of capabilities.entries()) {
+      this.logger.log(
+        `resolveAll: candidate ${String(index + 1)} ${capability.provider}/${capability.model}`,
       );
-      if (match !== undefined) {
-        this.logger.log(`resolveAll: audio-capable model ${provider}/${match.modelKey}`);
-        capabilities.push({ provider, model: match.modelKey });
-      }
     }
 
     if (capabilities.length === 0) {
@@ -127,11 +120,5 @@ export class TranscriptionCapabilityClient {
       );
     }
     return capabilities;
-  }
-
-  private supportsAudio(model: TranscriptionSnapshotEntry): boolean {
-    return model.supportsAudio === true
-      ? true
-      : (model.modalitiesIn ?? []).includes(TRANSCRIPTION_AUDIO_MODALITY);
   }
 }

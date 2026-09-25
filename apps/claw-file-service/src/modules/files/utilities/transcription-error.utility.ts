@@ -1,4 +1,10 @@
-import { TRANSCRIPTION_MODALITY_REJECTION_MARKERS } from '../constants/transcription.constants';
+import {
+  TRANSCRIPTION_HTTP_STATUS_NOT_FOUND,
+  TRANSCRIPTION_HTTP_STATUS_TOO_MANY_REQUESTS,
+  TRANSCRIPTION_MODALITY_REJECTION_MARKERS,
+  TRANSCRIPTION_QUOTA_EXHAUSTED_CODES,
+} from '../constants/transcription.constants';
+import { TranscriptionFailureKind } from '../../../common/enums';
 import { type ProviderErrorShape } from '../types/transcription-error.types';
 
 function asErrorShape(error: unknown): ProviderErrorShape {
@@ -39,4 +45,35 @@ export function extractTranscriptionErrorMessage(error: unknown): string {
 export function isAudioModalityRejection(error: unknown): boolean {
   const detail = extractTranscriptionErrorMessage(error).toLowerCase();
   return TRANSCRIPTION_MODALITY_REJECTION_MARKERS.some((marker) => detail.includes(marker));
+}
+
+/** OpenAI's `insufficient_quota`, in `error.code` or `error.type`. */
+function isQuotaExhausted(error: unknown): boolean {
+  const body = asErrorShape(error).response?.data?.error;
+  if (typeof body !== 'object') {
+    return false;
+  }
+  const markers = [body.code, body.type].filter(
+    (value): value is string => typeof value === 'string',
+  );
+  return markers.some((marker) => TRANSCRIPTION_QUOTA_EXHAUSTED_CODES.includes(marker));
+}
+
+/**
+ * Which class of failure one provider call ended in — the input to the
+ * candidate walk's "may I call again, and where?" decision. Reads the HTTP
+ * status and the provider's own body, never the axios transport message.
+ */
+export function classifyTranscriptionFailure(error: unknown): TranscriptionFailureKind {
+  const status = asErrorShape(error).response?.status;
+  if (status === TRANSCRIPTION_HTTP_STATUS_TOO_MANY_REQUESTS) {
+    return isQuotaExhausted(error)
+      ? TranscriptionFailureKind.QUOTA_EXHAUSTED
+      : TranscriptionFailureKind.RATE_LIMITED;
+  }
+  const isModelRejection =
+    status === TRANSCRIPTION_HTTP_STATUS_NOT_FOUND || isAudioModalityRejection(error);
+  return isModelRejection
+    ? TranscriptionFailureKind.MODEL_REJECTED
+    : TranscriptionFailureKind.TERMINAL;
 }

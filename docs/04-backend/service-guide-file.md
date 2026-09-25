@@ -474,7 +474,23 @@ An audio upload completes with `extractedText = "[Audio file: …]"`; a
 `TranscriptionManager`. Limits, in order: 12 MB (`MAX_TRANSCRIBABLE_AUDIO_BYTES`,
 refused as `AUDIO_TOO_LARGE` before any provider or meter call), then the PAYG
 hold. Candidates come from connector-service (`supportsAudio`), OpenAI always
-through `whisper-1`; only an audio-modality rejection falls through to the next.
+through `whisper-1`.
+
+### Candidate walk (rule 42 item 20, 2026-09-25)
+
+| Step                              | Decided by                                        | Behaviour                                                                                                                                                                                                                 |
+| --------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rank                              | `selectTranscriptionCandidates`                   | Provider priority GEMINI → OPENAI; ≤2 models per provider (OpenAI once); `flash-lite` → `flash` → other; EXPOSED first; preview / image / tts / live / embedding / non-transcription rows only when nothing stable exists |
+| Model refused (modality 400, 404) | `classifyTranscriptionFailure` → `MODEL_REJECTED` | Next candidate — the same provider's next model first                                                                                                                                                                     |
+| Transient 429                     | `RATE_LIMITED`                                    | One `TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS` retry per job; a second 429 skips the provider                                                                                                                                  |
+| OpenAI `insufficient_quota`       | `QUOTA_EXHAUSTED`                                 | Skip the provider, no retry                                                                                                                                                                                               |
+| 5xx, network, empty transcript    | `TERMINAL`                                        | Stop                                                                                                                                                                                                                      |
+| Ceiling                           | `TRANSCRIPTION_MAX_PROVIDER_CALLS` = 4            | Retries included                                                                                                                                                                                                          |
+
+`extractionError` is always a fixed `TRANSCRIPTION_*_MESSAGE` sentence
+(busy / temporarily unavailable / no model accepted it / service error); the
+raw provider text is logged as `runCandidates: … kind=<KIND> — <raw>`.
+Runbook: [`runbook-voice-note-transcription-failed.md`](../11-runbooks/runbook-voice-note-transcription-failed.md).
 
 ### PAYG metering (multimodal batch 4)
 
@@ -489,8 +505,10 @@ image-service's `callMeteredCloudProvider`); `PaygMeter` comes from the global
 | OpenAI `whisper-1` | per second, `audioPerUnitMicroUsd` = 100 (routing seed v5, $0.006/min) | `audioSeconds` = ceil(bytes / 1,000), bounded 1..7,200; `requestedMaxOutputTokens` 1 | `verbose_json` `duration`, rounded up; reserved seconds if absent                      |
 | Gemini             | per token (existing rows)                                              | `promptTokens` = 32/s × seconds + 128; output = 8/s × seconds + 1,024                | `usageMetadata` (thinking folded into completion); reserved prompt + chars/4 if absent |
 
-- `requestId` = `transcription:${fileId}:${provider}` — one hold per provider
-  attempt; a modality fall-through releases the first and takes a second.
+- `requestId` = `transcription:${fileId}:${provider}` for the first call to a
+  provider, `…:${provider}:${n}` for the n-th (a second model, or the 429
+  retry) — one hold per real provider call; a failed call releases its hold
+  before the next is taken.
 - Gemini is sent `hold.maxOutputTokens`, the GRANTED ceiling (rule 37 item 2).
 - Release on a provider throw (`PROVIDER_ERROR`), an axios timeout
   (`TIMEOUT`) or an empty transcript.

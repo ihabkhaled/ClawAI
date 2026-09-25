@@ -251,6 +251,28 @@ Full reasoning:
     turn would never be answered, and (b) runs no web research: there is no
     text to search for.
 
+20. **Transcription tries a ranked, bounded list of models — and the user is
+    never told a status code.** `selectTranscriptionCandidates` (file-service)
+    orders providers by `TRANSCRIPTION_PROVIDER_PRIORITY`, offers up to two
+    models per provider (OpenAI once: its model is always `whisper-1`), puts
+    stable `flash-lite` then `flash` first, and drops preview / image / tts /
+    live / embedding / non-transcription product lines whenever anything
+    stable exists. The walk in `TranscriptionManager#runCandidates` moves on
+    after a model refusal (modality 400, 404) — to the next model of the SAME
+    provider first — and after a 429, because a 429 was not processed; a
+    transient 429 gets ONE short backoff retry per job, OpenAI
+    `insufficient_quota` gets none, and a provider that 429s twice is skipped.
+    `TRANSCRIPTION_MAX_PROVIDER_CALLS` (4) bounds the whole job, each call is
+    its own PAYG hold (`…:PROVIDER`, then `…:PROVIDER:2`), and a 5xx /
+    network error / empty transcript still stops the walk. `extractionError`
+    carries a fixed sentence ("busy — try again in a minute", "temporarily
+    unavailable", "no configured model accepted this recording"), never
+    axios's "Request failed with status code 429". connector-service's
+    snapshot re-applies the Gemini audio/video heuristic on read, so a row
+    synced before that heuristic cannot advertise audio. Found live
+    2026-09-25: every voice note went to `models/antigravity-preview-05-2026`
+    (400), then `whisper-1` (429), and users read the raw status code.
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -272,7 +294,9 @@ Full reasoning:
 | 17      | `content-security-policy.test.ts` "lets <audio>/<video> play an attachment from a blob: URL" and "keeps blob: out of connect-src and frame-src"; `use-attachment-file-preview.test.ts` and `use-file-viewer.test.ts` assert the text preview never calls `fetch`                                                                                                                                                                                                                                                                                                                                                                  |
 | 18      | `context-assembly-attachment-only-turn.spec.ts` — all three builders rewrite only the final trivial turn, only with files attached; `attachment-only-turn.utility.spec.ts` pins what counts as "no words" and each kind's instruction                                                                                                                                                                                                                                                                                                                                                                                             |
 | 19      | `attachment-only-send.dto.spec.ts` — every send schema × (empty + files → valid, empty + no files → invalid, 11 files → invalid, whitespace fuzz); `chat-messages.service.spec.ts` "stores an attachment-only send empty but routes it on a hint"; frontend `composer-attachment.constants.test.ts` pins the cap to chat-service's constant                                                                                                                                                                                                                                                                                       |
+| 20      | `transcription-candidates.utility.spec.ts` (a 19-row sample of prod's GEMINI rows → stable flash-lite first, preview never first, OpenAI once, preview only when nothing stable); `transcription-error.utility.spec.ts` "classifyTranscriptionFailure" (real 429 / 404 / modality bodies); `transcription.manager.spec.ts` "bounded candidate walk" (same-provider fall-through, prod replay, one backoff, provider skip, busy message, call ceiling, one hold per call); connector `models-snapshot.manager.spec.ts` "stale GEMINI rows synced before the fail-closed heuristic"                                                 |
 
 ## Runbook
 
-[`skills/debug-an-attachment-the-model-cannot-read.md`](../skills/debug-an-attachment-the-model-cannot-read.md)
+[`skills/debug-an-attachment-the-model-cannot-read.md`](../skills/debug-an-attachment-the-model-cannot-read.md) ·
+voice notes: [`docs/11-runbooks/runbook-voice-note-transcription-failed.md`](../docs/11-runbooks/runbook-voice-note-transcription-failed.md)

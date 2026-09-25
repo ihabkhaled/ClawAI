@@ -55,7 +55,12 @@ export class TranscriptionMeterManager {
    * provider failure and fall through to a second paid provider.
    */
   async reserve(input: TranscriptionMeterInput): Promise<TranscriptionReserveOutcome> {
-    const requestId = transcriptionRequestId(input.fileId, input.provider, input.requestScope);
+    const requestId = transcriptionRequestId(
+      input.fileId,
+      input.provider,
+      input.requestScope,
+      input.providerAttempt,
+    );
     const seconds = holdAudioSeconds(input.sizeBytes, input.audioSeconds);
     const perSecond = isPerSecondPricedProvider(input.provider);
     const promptTokens = perSecond ? 0 : estimateGeminiPromptTokens(seconds);

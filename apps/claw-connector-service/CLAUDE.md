@@ -168,10 +168,20 @@ blanket `true`, and never sync `supportsAudio` from a Gemini list endpoint
 without first confirming that endpoint actually carries modality data (as of
 this writing, neither does).
 
+**The snapshot re-applies it on read** (`snapshotSupportsAudio` /
+`snapshotSupportsVideoInput`, `utilities/snapshot-media-capability.utility.ts`).
+There is no scheduled sync — a row keeps what the last admin-triggered sync
+wrote — so rows synced before the heuristic shipped kept the blanket `true`
+in prod until 2026-09-25 (all 63 GEMINI rows, including imagen/veo/lyria).
+The read-time guard only narrows, and it makes the deployed rule the truth
+for routing and transcription whatever a row's age. An admin re-sync makes
+the stored column match.
+
 `apps/claw-file-service`'s `TranscriptionCapabilityClient` softens the blast
-radius of this heuristic being wrong: `findCapableModels()` returns one
-candidate per provider in priority order, and `TranscriptionManager` falls
-through to the next provider on a genuine "modality not enabled" refusal.
+radius of this heuristic being wrong: `findCapableModels()` returns a ranked
+list (up to two stable models per provider, previews last), and
+`TranscriptionManager` moves to the next model on a "modality not enabled"
+refusal or a 429 (rule 42 item 20).
 That is a safety net, not a substitute for keeping this heuristic accurate —
 see `skills/add-a-voice-note-or-transcription-path.md`.
 
