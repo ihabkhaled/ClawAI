@@ -1,3 +1,4 @@
+import type { PlanFeature } from '@claw/shared-entitlements';
 import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
@@ -143,6 +144,12 @@ export type LlmResponse = {
   fileGenerationId?: string;
   /** Set instead of a file when the plan's AI-file allowance is used (ADR-110). */
   fileLimit?: FileLimitNotice;
+  /**
+   * Set instead of a generation when the user's plan does not include the
+   * feature the turn needed (ADR-122) — the chat shows a translated upgrade
+   * notice from this, not an error.
+   */
+  planFeatureRefusal?: PlanFeatureRefusalNotice;
   reRouted?: boolean;
   originalProvider?: string;
   originalModel?: string;
@@ -479,3 +486,6 @@ export type CloudProviderRequestBody =
 
 /** Why an AI-written file was refused, with the numbers the notice shows (ADR-110). */
 export type FileLimitNotice = { used: number; limit: number; window: string | null };
+
+/** Which plan feature a turn needed and did not have (ADR-122). */
+export type PlanFeatureRefusalNotice = { feature: PlanFeature };

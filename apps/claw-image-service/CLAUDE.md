@@ -39,6 +39,15 @@ Image generation microservice for the Claw platform. Orchestrates image generati
    it is covered; a direct API caller asking for 1536x1024/`high` ($0.25) or
    dall-e-3 `hd` ($0.08) is charged the 1024/standard price.
 
+6. **Image generation and edit are a paid plan feature** (ADR-122).
+   `ImagePlanGateManager.assertCanGenerate(userId)` runs FIRST in
+   `enqueueGeneration`, `retryGeneration` and `retryWithAlternateModel` (the
+   `…ForUser` variants call these) — before a row, a PAYG hold or a provider
+   call. Plan without `allowImageGeneration` → `403 PLAN_FEATURE_DISABLED`
+   (chat-service's code/message). Fails CLOSED: auth-service unreachable →
+   `503 ENTITLEMENTS_UNAVAILABLE`; `PLAN_TRIAL_EXPIRED` passes through. ADMIN
+   bypasses. A new generation entry point must call it too.
+
 Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 
 ## Tech Stack

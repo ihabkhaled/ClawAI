@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-import { PAYG_CREDIT_PERCENT_BPS_MAX } from '@/constants/plan.constants';
+import {
+  PAYG_CREDIT_PERCENT_BPS_MAX,
+  PLAN_MAX_VIDEO_SECONDS_LIMIT,
+} from '@/constants/plan.constants';
 
 // Mirror of apps/claw-auth-service plan DTOs. Numeric inputs arrive as strings
 // from controlled inputs; optional numerics are blank strings → undefined.
@@ -60,6 +63,13 @@ export const createPlanSchema = z.object({
   maxWorkspaceConnections: optionalNonNegativeInt,
   maxContextPacks: optionalNonNegativeInt,
   maxMemoryItems: optionalNonNegativeInt,
+  // Unlike the limits above, blank is sent as an explicit null — UNLIMITED —
+  // because the column defaults to the free 60 s, so "omitted" would not mean
+  // what the placeholder says. 0 switches video off (ADR-122).
+  maxVideoSeconds: z.preprocess(
+    (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
+    z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_VIDEO_SECONDS_LIMIT)]),
+  ),
   allowCompareMode: z.boolean().optional(),
   allowJudgeMode: z.boolean().optional(),
   allowResearchMode: z.boolean().optional(),
@@ -76,6 +86,9 @@ export const createPlanSchema = z.object({
   allowPipelineLab: z.boolean().optional(),
   allowCostEnsemble: z.boolean().optional(),
   allowRolePack: z.boolean().optional(),
+  allowImageGeneration: z.boolean().optional(),
+  allowHelperVision: z.boolean().optional(),
+  allowTextToSpeech: z.boolean().optional(),
 });
 
 export type CreatePlanForm = z.infer<typeof createPlanSchema>;

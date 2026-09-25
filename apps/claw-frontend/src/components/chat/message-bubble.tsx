@@ -25,6 +25,7 @@ import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
 import { NarrationLog } from '@/components/chat/narration-log';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
+import { PlanFeatureNotice } from '@/components/chat/plan-feature-notice';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -43,6 +44,7 @@ import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } fro
 import { formatShortDateTime, getJudgeReviewFromMessage, getStoredReasoning } from '@/utilities';
 import { readFileLimit } from '@/utilities/file-limit.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
+import { readPlanFeatureRefusal } from '@/utilities/plan-feature-refusal.utility';
 import { describeRoute } from '@/utilities/route-label.utility';
 
 function MessageBubbleBase({
@@ -91,6 +93,8 @@ function MessageBubbleBase({
     typeof metadata?.['generationId'] === 'string' ? metadata['generationId'] : undefined;
   const isFileGeneration = metadata?.['type'] === 'file_generation';
   const fileLimit = readFileLimit(metadata);
+  const planFeatureRefusal = readPlanFeatureRefusal(metadata);
+  const isNotice = fileLimit !== null || planFeatureRefusal !== null;
   const fileGenerationId =
     typeof metadata?.['generationId'] === 'string' && isFileGeneration
       ? metadata['generationId']
@@ -215,7 +219,10 @@ function MessageBubbleBase({
           {!isUser && fileLimit !== null ? (
             <FileLimitNotice used={fileLimit.used} limit={fileLimit.limit} />
           ) : null}
-          {!isUser && !isImageGeneration && !isFileGeneration && fileLimit === null
+          {!isUser && planFeatureRefusal !== null ? (
+            <PlanFeatureNotice feature={planFeatureRefusal} />
+          ) : null}
+          {!isUser && !isImageGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
           {/* Below the answer, not above it: the reasoning is how the reply was
@@ -326,10 +333,7 @@ function MessageBubbleBase({
                 className="text-muted-foreground h-7 w-7"
               />
             ) : null}
-            {hasVisibleAssistantContent &&
-            !isFileGeneration &&
-            !isImageGeneration &&
-            fileLimit === null ? (
+            {hasVisibleAssistantContent && !isFileGeneration && !isImageGeneration && !isNotice ? (
               <>
                 <AnswerExpandDialog content={message.content} t={t} />
                 <AnswerExportMenu content={message.content} t={t} />

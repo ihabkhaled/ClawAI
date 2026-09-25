@@ -150,6 +150,27 @@ When generation fails with one provider, the service can:
 2. Fall back to a different provider entirely
 3. As a last resort, try local Stable Diffusion
 
+## Plan gate (ADR-122, 2026-09-25)
+
+Image generation and image edit (a reference image) are a paid plan feature.
+`ImagePlanGateManager` (`managers/image-plan-gate.manager.ts`) reads the
+user's entitlements through the shared `ENTITLEMENTS_ADAPTER` and runs first in
+every entry:
+
+| Entry                                         | Checked on         |
+| --------------------------------------------- | ------------------ |
+| `POST /internal/images/generate` (chat)       | `dto.userId`       |
+| `POST /images/:id/retry` + internal twin      | the job's `userId` |
+| `POST /images/:id/retry-alternate` + internal | the job's `userId` |
+
+A plan without `allowImageGeneration` → `403 PLAN_FEATURE_DISABLED` with no
+row, no event, no PAYG hold and no provider call. auth-service unreachable →
+`503 ENTITLEMENTS_UNAVAILABLE` (fails closed); `PLAN_TRIAL_EXPIRED` passes
+through with its own status. ADMIN bypasses via `hasPlanFeature`. The
+auto-fallback chain is a continuation of an entry that already passed.
+chat-service checks the same gate first and turns a refusal into a translated
+in-chat notice; this check is the authority.
+
 ## Failure taxonomy (`ImageFailureCode`)
 
 Every generation failure is classified into one of these codes before it is

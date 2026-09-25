@@ -32,6 +32,11 @@ export const updatePlanSchema = z
     allowPipelineLab: z.boolean().optional(),
     allowCostEnsemble: z.boolean().optional(),
     allowRolePack: z.boolean().optional(),
+    allowImageGeneration: z.boolean().optional(),
+    allowHelperVision: z.boolean().optional(),
+    allowTextToSpeech: z.boolean().optional(),
+    // null = unlimited, 0 = video disabled (ADR-122). Ten hours is the bound.
+    maxVideoSeconds: z.number().int().min(0).max(36_000).nullable().optional(),
   })
   .refine(
     (value) => {

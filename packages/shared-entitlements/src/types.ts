@@ -24,6 +24,16 @@ export type PlanFeatureGates = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  // Media gates (ADR-122). Free keeps the basics — image understanding, voice
+  // notes, short video — and these are the paid half. Each is enforced by the
+  // service that EXECUTES the media work, never by the browser.
+  // Image generation and image edit (image-service, every entry path).
+  allowImageGeneration: boolean;
+  // A second, paid model describing an image the chat model cannot see
+  // (chat-service VisionHelperManager). Without it: OCR + the honest note.
+  allowHelperVision: boolean;
+  // Spoken replies. Enforced by the text-to-speech endpoint.
+  allowTextToSpeech: boolean;
 };
 
 export type AllowedModel = {
@@ -60,6 +70,9 @@ export type UserEntitlements = {
       workspaceConnections: number | null;
       contextPacks: number | null;
       memoryItems: number | null;
+      // Longest video the plan processes, in seconds. `null` = unlimited,
+      // `0` = video disabled. Read it through `resolvePlanLimit`, never `?? 0`.
+      maxVideoSeconds: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

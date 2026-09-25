@@ -28,6 +28,7 @@ const base: UserEntitlements = {
       workspaceConnections: 0,
       contextPacks: 1,
       memoryItems: 5,
+      maxVideoSeconds: 60,
     },
     featureGates: {
       allowCompareMode: false,
@@ -46,6 +47,9 @@ const base: UserEntitlements = {
       allowPipelineLab: false,
       allowCostEnsemble: false,
       allowRolePack: false,
+      allowImageGeneration: false,
+      allowHelperVision: false,
+      allowTextToSpeech: false,
     },
   },
   modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
@@ -104,6 +108,34 @@ describe('entitlements helpers', () => {
     });
     it('ADMIN bypasses allowCriticReview even when plan locks it', () => {
       expect(hasPlanFeature(admin, 'allowCriticReview')).toBe(true);
+    });
+
+    // ADR-122: the paid media half. Free carries all three as false.
+    it.each(['allowImageGeneration', 'allowHelperVision', 'allowTextToSpeech'] as const)(
+      'a free plan without %s is refused it, and ADMIN is not',
+      (feature) => {
+        expect(hasPlanFeature(base, feature)).toBe(false);
+        expect(hasPlanFeature(admin, feature)).toBe(true);
+      },
+    );
+
+    it.each(['allowImageGeneration', 'allowHelperVision', 'allowTextToSpeech'] as const)(
+      'a paid plan that unlocks %s is granted it',
+      (feature) => {
+        const plan = base.plan;
+        if (plan === null) {
+          throw new Error('fixture has a plan');
+        }
+        const paid: UserEntitlements = {
+          ...base,
+          plan: { ...plan, featureGates: { ...plan.featureGates, [feature]: true } },
+        };
+        expect(hasPlanFeature(paid, feature)).toBe(true);
+      },
+    );
+
+    it('an account with no plan has no media feature (fails closed)', () => {
+      expect(hasPlanFeature({ ...base, plan: null }, 'allowImageGeneration')).toBe(false);
     });
   });
 

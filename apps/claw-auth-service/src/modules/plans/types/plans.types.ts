@@ -26,6 +26,9 @@ export type PlanFeatureGates = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  allowImageGeneration: boolean;
+  allowHelperVision: boolean;
+  allowTextToSpeech: boolean;
 };
 
 export type PlanModelAccessView = {
@@ -67,6 +70,8 @@ export type PlanView = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  /** Longest video processed, in seconds. Null = unlimited, 0 = disabled. */
+  maxVideoSeconds: number | null;
   /** Monthly fair-use ceiling on weighted provider spend. Null = no ceiling. */
   monthlyProviderCostCeilingMicroUsd: number | null;
   /** Share of the monthly price granted as connector credit, in basis points. */
@@ -87,6 +92,9 @@ export type PlanView = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  allowImageGeneration: boolean;
+  allowHelperVision: boolean;
+  allowTextToSpeech: boolean;
   modelAccessMode: PlanModelAccessMode;
   allowedCostClasses: string[];
   modelAccess: PlanModelAccessView[];
@@ -113,6 +121,7 @@ export type CreatePlanData = {
   maxWorkspaceConnections?: number;
   maxContextPacks?: number;
   maxMemoryItems?: number;
+  maxVideoSeconds?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
@@ -129,6 +138,9 @@ export type CreatePlanData = {
   allowPipelineLab?: boolean;
   allowCostEnsemble?: boolean;
   allowRolePack?: boolean;
+  allowImageGeneration?: boolean;
+  allowHelperVision?: boolean;
+  allowTextToSpeech?: boolean;
 };
 
 export type UpdatePlanData = Partial<Omit<CreatePlanData, 'slug'>>;

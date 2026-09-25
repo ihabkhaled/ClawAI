@@ -4,6 +4,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { ImageGenerationStatus } from '../../../generated/prisma';
 import { ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { ImageExecutionManager } from '../managers/image-execution.manager';
+import { ImagePlanGateManager } from '../managers/image-plan-gate.manager';
 import { ImageGenerationEventsService } from './image-generation-events.service';
 import {
   type GenerateImageParams,
@@ -29,9 +30,16 @@ export class ImageGenerationService {
     private readonly executionManager: ImageExecutionManager,
     private readonly eventsService: ImageGenerationEventsService,
     private readonly rabbitMQ: RabbitMQService,
+    private readonly planGate: ImagePlanGateManager,
   ) {}
 
+  /**
+   * The one entry for a new generation or edit, from chat (internal route) or
+   * any other caller. The plan gate runs FIRST (ADR-122): a refused user leaves
+   * no row, no event, no PAYG hold and no provider call behind.
+   */
   async enqueueGeneration(params: GenerateImageParams): Promise<ImageGenerationRecord> {
+    await this.planGate.assertCanGenerate(params.userId);
     const record = await this.repository.create({
       userId: params.userId,
       threadId: params.threadId,
@@ -153,6 +161,9 @@ export class ImageGenerationService {
   async retryGeneration(generationId: string): Promise<ImageGenerationRecord> {
     this.logger.log(`retryGeneration: retrying generation ${generationId}`);
     const record = await this.getById(generationId);
+    // A retry is a new paid run for the job's owner; a plan that lost the
+    // feature since (downgrade, expired trial) must not re-run it.
+    await this.planGate.assertCanGenerate(record.userId);
 
     await this.repository.updateStatus(generationId, ImageGenerationStatus.QUEUED, {
       errorCode: undefined,
@@ -187,6 +198,7 @@ export class ImageGenerationService {
       `retryWithAlternateModel: retrying generation ${generationId} with provider=${provider ?? 'auto'} model=${model ?? 'auto'}`,
     );
     const record = await this.getById(generationId);
+    await this.planGate.assertCanGenerate(record.userId);
     const { targetProvider, targetModel } = this.resolveAlternateModel(record, provider, model);
     const newRecord = await this.cloneAsAlternate(
       record,

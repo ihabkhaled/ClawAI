@@ -281,6 +281,23 @@ export class AccessControlService {
     }
   }
 
+  /**
+   * Whether the user's plan unlocks `feature`, as a question (ADR-122).
+   *
+   * For gates that sit LOW in a turn — the media work a message happens to
+   * need — where the caller answers "no" with a notice or a degraded path
+   * rather than a 403 on the whole turn. ADMIN passes via hasPlanFeature.
+   *
+   * Fails CLOSED: when entitlements cannot be read this throws the same 503
+   * every plan gate does. A caller that must never break the turn (helper
+   * vision) catches it and takes the free path; one that is about to start
+   * paid work (image generation) lets it surface as the outage it is.
+   */
+  async hasPlanFeatureFor(userId: string, feature: PlanFeature): Promise<boolean> {
+    const ent = await this.resolve(userId);
+    return hasPlanFeature(ent, feature);
+  }
+
   private assertFeaturesEnabled(
     ent: UserEntitlements,
     features: PlanFeature | readonly PlanFeature[],

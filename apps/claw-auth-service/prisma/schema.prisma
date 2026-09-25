@@ -213,6 +213,16 @@ model Plan {
   allowPipelineLab                   Boolean             @default(false) @map("allow_pipeline_lab")
   allowCostEnsemble                  Boolean             @default(false) @map("allow_cost_ensemble")
   allowRolePack                      Boolean             @default(false) @map("allow_role_pack")
+  // Media gates (ADR-122). Free keeps the basics (image understanding, voice
+  // notes, short video); these are the paid half, enforced by the service that
+  // executes the work. Opt-in DEFAULT(false) like every gate above.
+  allowImageGeneration               Boolean             @default(false) @map("allow_image_generation")
+  allowHelperVision                  Boolean             @default(false) @map("allow_helper_vision")
+  allowTextToSpeech                  Boolean             @default(false) @map("allow_text_to_speech")
+  // Longest video processed, in seconds. NULL = unlimited, 0 = video disabled.
+  // DEFAULT 60 so a plan created without the field gets the free allowance,
+  // never an accidental unlimited.
+  maxVideoSeconds                    Int?                @default(60) @map("max_video_seconds")
   // New and seeded plans expose every discovered model until an administrator
   // saves an explicit allow-list or deny-all policy.
   modelAccessMode                    PlanModelAccessMode @default(ALLOW_ALL) @map("model_access_mode")

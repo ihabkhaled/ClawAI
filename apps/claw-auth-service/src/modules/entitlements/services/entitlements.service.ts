@@ -136,6 +136,7 @@ export class EntitlementsService {
         workspaceConnections: plan.maxWorkspaceConnections ?? null,
         contextPacks: plan.maxContextPacks ?? null,
         memoryItems: plan.maxMemoryItems ?? null,
+        maxVideoSeconds: plan.maxVideoSeconds,
       },
       featureGates: {
         allowCompareMode: plan.allowCompareMode,
@@ -154,6 +155,9 @@ export class EntitlementsService {
         allowPipelineLab: plan.allowPipelineLab,
         allowCostEnsemble: plan.allowCostEnsemble,
         allowRolePack: plan.allowRolePack,
+        allowImageGeneration: plan.allowImageGeneration,
+        allowHelperVision: plan.allowHelperVision,
+        allowTextToSpeech: plan.allowTextToSpeech,
       },
     };
   }
@@ -173,10 +177,7 @@ export class EntitlementsService {
     isAdmin: boolean,
     mode: PlanModelAccessMode | undefined,
   ): PlanModelAccessMode {
-    if (isAdmin) {
-      return PlanModelAccessMode.ALLOW_ALL;
-    }
-    return mode ?? PlanModelAccessMode.DENY_ALL;
+    return isAdmin ? PlanModelAccessMode.ALLOW_ALL : mode ?? PlanModelAccessMode.DENY_ALL;
   }
 
   // Resolves the user's daily token limit for quota reservation (0 = ADMIN /

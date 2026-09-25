@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { BillingIntervalKind, PlanFeatureKey } from '../../../../generated/prisma';
 import { PlanCatalogService } from '../plan-catalog.service';
 import type { PlanBillingRepository } from '../../repositories/plan-billing.repository';
@@ -24,6 +24,7 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     maxWorkspaceConnections: null,
     maxContextPacks: null,
     maxMemoryItems: null,
+    maxVideoSeconds: 600,
     // Margin control. Must never reach the payment service or a customer.
     monthlyProviderCostCeilingMicroUsd: BigInt(5_000_000),
     allowCompareMode: true,
@@ -42,6 +43,9 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     allowPipelineLab: true,
     allowCostEnsemble: true,
     allowRolePack: true,
+    allowImageGeneration: true,
+    allowHelperVision: true,
+    allowTextToSpeech: true,
     ...overrides,
   };
 }
@@ -179,9 +183,12 @@ describe('PlanCatalogService', () => {
           allowCompareMode: false,
           allowConsensusMode: true,
           allowRolePack: true,
+          allowImageGeneration: true,
+          allowHelperVision: true,
+          allowTextToSpeech: true,
         }),
       );
-      expect(Object.keys(entry?.featureGates ?? {})).toHaveLength(16);
+      expect(Object.keys(entry?.featureGates ?? {})).toHaveLength(19);
     });
   });
 

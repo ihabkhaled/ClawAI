@@ -111,7 +111,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 110,
+      "testFiles": 111,
       "testRunner": "vitest"
     },
     {
@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 182,
+      "testFiles": 184,
       "testRunner": "vitest"
     },
     {
@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 24,
+      "testFiles": 25,
       "testRunner": "vitest"
     },
     {

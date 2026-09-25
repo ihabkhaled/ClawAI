@@ -26,6 +26,8 @@ export type UserEntitlements = {
       workspaceConnections: number | null;
       contextPacks: number | null;
       memoryItems: number | null;
+      // Seconds. null = unlimited, 0 = video disabled (ADR-122).
+      maxVideoSeconds: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

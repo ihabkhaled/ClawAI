@@ -81,6 +81,7 @@ describe('ImageGenerationService', () => {
       execManager as unknown as ImageExecutionManager,
       eventsService as unknown as ImageGenerationEventsService,
       rabbitMQ as unknown as RabbitMQService,
+      { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,
     );
   });
 

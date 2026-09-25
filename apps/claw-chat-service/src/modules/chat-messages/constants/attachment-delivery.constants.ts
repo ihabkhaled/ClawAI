@@ -13,6 +13,11 @@ export const DELIVERY_REASON_TRUNCATED = 'file_delivery.reason.truncated';
 export const DELIVERY_REASON_VISION_HELPER_FAILED = 'file_delivery.reason.vision_helper_failed';
 /** The helper call was refused for credit (rule 37 item 18); no second helper was tried. */
 export const DELIVERY_REASON_VISION_HELPER_REFUSED = 'file_delivery.reason.vision_helper_refused';
+/**
+ * The plan does not include helper vision (ADR-122): the lane got OCR + the
+ * honest note, and no helper was called or held for.
+ */
+export const DELIVERY_REASON_HELPER_VISION_PLAN = 'file_delivery.reason.helper_vision_plan';
 /** Past the per-turn image cap (`VISION_HELPER_MAX_IMAGES_PER_TURN`); not described. */
 export const DELIVERY_REASON_VISION_HELPER_LIMIT = 'file_delivery.reason.vision_helper_limit';
 

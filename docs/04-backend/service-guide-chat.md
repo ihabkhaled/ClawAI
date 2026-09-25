@@ -730,3 +730,16 @@ conversational model; the message's `provider`/`model` are never replaced.
   on single chat and every compare lane it served.
 - **Log line** (content-free, per attempt): `visionHelper {"kind","provider","model","fileId","latencyMs","outcome"}`.
 - **Not yet**: plan gating (paid-only helper vision) is batch 6.
+
+## Media plan gates (ADR-122, 2026-09-25)
+
+- **Image turn on a free plan**: `callImageService` asks
+  `hasPlanFeatureFor(userId, 'allowImageGeneration')` before the vision prompt
+  hop and before image-service. "No" → a finished reply with
+  `planFeatureRefusal`, stored as `metadata.type = 'plan_feature_disabled'`,
+  `planFeature: 'allowImageGeneration'`; the frontend renders a translated
+  upgrade notice. image-service's own 403 maps to the same reply. Outage → 503.
+- **Helper vision on a free plan**: `VisionHelperManager` skips the helper,
+  keeps OCR + the honest note, reason `file_delivery.reason.helper_vision_plan`;
+  no candidate lookup, no hold, no call. Asked only when an image is blind, so
+  ordinary chat never pays for or fails on the check.

@@ -102,6 +102,7 @@ import { THREAD_TITLE_SCAN_LIMIT } from '../../chat-threads/constants/thread-tit
 import { deriveThreadTitle } from '../../chat-threads/utilities/derive-thread-title.utility';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
+import { PLAN_FEATURE_REFUSAL_METADATA_TYPE } from '../constants/plan-feature-refusal.constants';
 import {
   MESSAGE_EDIT_UNCHANGED_CODE,
   MESSAGE_EDIT_UNCHANGED_MESSAGE_KEY,
@@ -1916,6 +1917,14 @@ export class ChatMessagesService implements OnModuleInit {
     }
     // The plan's AI-file allowance was used: the chat shows a translated
     // notice from these numbers (ADR-110).
+    if (llmResponse.planFeatureRefusal) {
+      // The plan lacks the media feature the turn needed (ADR-122); the chat
+      // renders a translated upgrade notice keyed on `planFeature`.
+      return {
+        type: PLAN_FEATURE_REFUSAL_METADATA_TYPE,
+        planFeature: llmResponse.planFeatureRefusal.feature,
+      };
+    }
     return llmResponse.fileLimit ? { type: 'file_limit', fileLimit: llmResponse.fileLimit } : {};
   }
 

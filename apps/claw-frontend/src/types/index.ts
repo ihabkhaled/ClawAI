@@ -400,6 +400,7 @@ export type {
   FileCompletedStateProps,
   FileLimitNoticeData,
   FileLimitNoticeProps,
+  PlanFeatureNoticeProps,
   FileExpiredStateProps,
   FileGenerationBubbleProps,
   AttachmentThumbnailProps,

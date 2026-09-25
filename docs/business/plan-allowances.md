@@ -79,6 +79,47 @@ token pace ($0.05, 50,000 tokens) usually binds before the 15th large file.
 Stored as `plan_feature_rules` rows (`FILE_GENERATION`, `DAY`); a change is
 one row, and it survives redeploys.
 
+## Media features per plan (ADR-122, 2026-09-25)
+
+Owner decision: **Free keeps the basics, paid gets everything.** Image
+understanding (a model that can see, or OCR + an honest note), voice notes
+(transcription, PAYG-metered on its own) and short video are on every plan.
+The four entitlements below are the paid half.
+
+| Plan      | Image generation / edit | Helper vision | Text-to-speech | Max video length |
+| --------- | :---------------------: | :-----------: | :------------: | ---------------: |
+| Free      |           no            |      no       |       no       |             60 s |
+| Starter   |           yes           |      yes      |      yes       |            600 s |
+| Plus      |           yes           |      yes      |      yes       |            600 s |
+| Pro       |           yes           |      yes      |      yes       |            600 s |
+| Team      |           yes           |      yes      |      yes       |            600 s |
+| Scale     |           yes           |      yes      |      yes       |            600 s |
+| Unlimited |           yes           |      yes      |      yes       |            600 s |
+
+Why each one is paid:
+
+- **Image generation / edit** (`allowImageGeneration`) — every generation is a
+  real per-image provider charge (gpt-image-1 high 1024² is $0.167). Free has
+  no connector credit to pay it from (30% of $0 is $0), so it would only ever
+  have been refused at the PAYG hold anyway; the plan gate says so honestly
+  and earlier, before the vision prompt hop spends anything.
+- **Helper vision** (`allowHelperVision`) — a second paid model describing an
+  image the chat model cannot see. Free still gets the image's OCR text and a
+  truthful "this model cannot see it" note.
+- **Text-to-speech** (`allowTextToSpeech`) — per-character provider cost
+  (`ttsPerCharacterMicroUsd`). Gate added now; enforced when TTS ships.
+- **Max video length** (`maxVideoSeconds`) — `null` unlimited, `0` disabled.
+  Ten minutes on every paid tier, **including Unlimited**: ffmpeg frame
+  extraction is local CPU that no PAYG surface prices yet, so no tier is
+  uncapped until it is. Enforced by the video batches.
+
+Stored as `Plan` columns (`allow_image_generation`, `allow_helper_vision`,
+`allow_text_to_speech`, `max_video_seconds`), edited in the admin plan editor.
+Existing installs are moved by migration `20260925200000_add_media_plan_gates`
+by slug; an administrator-created custom plan keeps the free defaults until an
+operator switches it on. A trial carries the gates of the plan it trials.
+ADMIN bypasses all four.
+
 ## Which limit binds first, and why that question exists
 
 A request can be refused by any of nine windows. Three of them are denominated in

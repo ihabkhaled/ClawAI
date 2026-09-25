@@ -430,6 +430,7 @@ export class PlansService {
       maxWorkspaceConnections: plan.maxWorkspaceConnections,
       maxContextPacks: plan.maxContextPacks,
       maxMemoryItems: plan.maxMemoryItems,
+      maxVideoSeconds: plan.maxVideoSeconds,
       // Both of these are ADMIN-form fields. Omitting them from the view meant
       // the edit form loaded `undefined`, rendered blank in a number input, and
       // then failed to save with "expected number, received NaN" — so an
@@ -470,6 +471,9 @@ export class PlansService {
       allowPipelineLab: plan.allowPipelineLab,
       allowCostEnsemble: plan.allowCostEnsemble,
       allowRolePack: plan.allowRolePack,
+      allowImageGeneration: plan.allowImageGeneration,
+      allowHelperVision: plan.allowHelperVision,
+      allowTextToSpeech: plan.allowTextToSpeech,
     };
   }
 

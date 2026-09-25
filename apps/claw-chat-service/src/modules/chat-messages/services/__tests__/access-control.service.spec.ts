@@ -384,6 +384,40 @@ describe('AccessControlService', () => {
 
   // ADR-110: the AI-file allowance. A limit is a business rule, so an
   // unreachable auth-service lets the file through instead of blocking it.
+  // ADR-122: the low-in-the-turn question the media gates ask.
+  describe('hasPlanFeatureFor', () => {
+    it('answers false for a free plan without the media gate, true for a paid one', async () => {
+      getEntitlements.mockResolvedValueOnce(
+        ent({ plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: {} } }),
+      );
+      await expect(service.hasPlanFeatureFor('u1', 'allowImageGeneration')).resolves.toBe(false);
+
+      getEntitlements.mockResolvedValueOnce(
+        ent({
+          plan: {
+            id: 'p2',
+            slug: 'pro',
+            name: 'Pro',
+            featureGates: { allowImageGeneration: true, allowHelperVision: true },
+          },
+        }),
+      );
+      await expect(service.hasPlanFeatureFor('u1', 'allowHelperVision')).resolves.toBe(true);
+    });
+
+    it('answers true for ADMIN whatever the plan says', async () => {
+      getEntitlements.mockResolvedValueOnce(ent({ isAdmin: true, role: 'ADMIN' }));
+      await expect(service.hasPlanFeatureFor('u1', 'allowTextToSpeech')).resolves.toBe(true);
+    });
+
+    it('throws the 503 rather than guessing when entitlements are unreachable', async () => {
+      getEntitlements.mockRejectedValueOnce(new Error('auth down'));
+      await expect(service.hasPlanFeatureFor('u1', 'allowImageGeneration')).rejects.toMatchObject({
+        code: 'ENTITLEMENTS_UNAVAILABLE',
+      });
+    });
+  });
+
   describe('feature reservations', () => {
     it('passes the auth-service decision through', async () => {
       reserveFeatureUsage.mockResolvedValueOnce({

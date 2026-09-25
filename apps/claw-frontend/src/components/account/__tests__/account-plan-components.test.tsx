@@ -32,6 +32,9 @@ const gates: EntitlementFeatureGates = {
   allowPipelineLab: false,
   allowCostEnsemble: false,
   allowRolePack: false,
+  allowImageGeneration: false,
+  allowHelperVision: false,
+  allowTextToSpeech: false,
 };
 
 describe('UsageMeter', () => {

@@ -33,6 +33,7 @@ const seedPlan = {
   maxWorkspaceConnections: 10,
   maxContextPacks: 5,
   maxMemoryItems: 100,
+  maxVideoSeconds: 600,
   allowCompareMode: true,
   allowJudgeMode: false,
   allowResearchMode: true,
@@ -49,6 +50,9 @@ const seedPlan = {
   allowPipelineLab: false,
   allowCostEnsemble: false,
   allowRolePack: false,
+  allowImageGeneration: true,
+  allowHelperVision: true,
+  allowTextToSpeech: true,
   modelAccess: [],
   createdAt: '2026-05-01T00:00:00.000Z',
   updatedAt: '2026-05-01T00:00:00.000Z',
@@ -110,6 +114,48 @@ describe('usePlanForm', () => {
     expect(payload?.slug).toBe('starter');
     expect(payload?.weeklyTokenQuota).toBe(20_000);
     expect(payload).toMatchObject({ isTrial: false, trialDurationDays: null });
+  });
+
+  // ADR-122: paid media is opt-in on a new plan, and the video cap starts at
+  // the free 60 s — blank would mean unlimited.
+  it('creates a plan with paid media off and a 60-second video cap by default', () => {
+    const { result } = renderHook(() => usePlanForm(null));
+    act(() => {
+      result.current.setField('name', 'Custom');
+      result.current.setField('slug', 'custom');
+    });
+
+    expect(result.current.buildCreateRequest()).toMatchObject({
+      allowImageGeneration: false,
+      allowHelperVision: false,
+      allowTextToSpeech: false,
+      maxVideoSeconds: 60,
+    });
+  });
+
+  it('sends a blank video cap as null (unlimited) and keeps 0 as disabled', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+    act(() => {
+      result.current.setField('maxVideoSeconds', '');
+    });
+    expect(result.current.buildUpdateRequest()?.maxVideoSeconds).toBeNull();
+
+    act(() => {
+      result.current.setField('maxVideoSeconds', '0');
+    });
+    expect(result.current.buildUpdateRequest()?.maxVideoSeconds).toBe(0);
+  });
+
+  it('round-trips the media gates from a seeded plan', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+
+    expect(result.current.state.maxVideoSeconds).toBe('600');
+    expect(result.current.buildUpdateRequest()).toMatchObject({
+      allowImageGeneration: true,
+      allowHelperVision: true,
+      allowTextToSpeech: true,
+      maxVideoSeconds: 600,
+    });
   });
 
   it('serializes an enabled trial with the fixed 30-day duration', () => {

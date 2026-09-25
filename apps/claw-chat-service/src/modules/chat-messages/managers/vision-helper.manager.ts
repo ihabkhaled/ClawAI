@@ -13,6 +13,7 @@ import { MessageRole } from '../../../generated/prisma';
 import { ModelCapabilityClient } from '../clients/model-capability.client';
 import { VisionHelperCandidatesClient } from '../clients/vision-helper-candidates.client';
 import { PAYG_WORKFLOW_VISION_HELPER } from '../constants/payg.constants';
+import { HELPER_VISION_PLAN_FEATURE } from '../constants/plan-feature-refusal.constants';
 import {
   VISION_HELPER_IMAGE_PROMPT_TOKENS,
   VISION_HELPER_MAX_IMAGES_PER_TURN,
@@ -38,6 +39,7 @@ import {
   blindImageDecisions,
   fitLaneFileShare,
   isImageRejectionError,
+  markHelperVisionNotOnPlan,
   toVisionHelperCandidates,
   visionHelperRequestId,
 } from '../utilities/vision-helper.utility';
@@ -86,6 +88,15 @@ export class VisionHelperManager {
     if (blind.length === 0) {
       return context;
     }
+    // Paid feature (ADR-122). Checked here, low in the turn, so a free plan's
+    // ordinary chat is never refused — it simply keeps OCR + the honest note,
+    // with no paid call and no hold.
+    const onPlan = await this.helperVisionOnPlan(context.userId);
+    if (onPlan !== true) {
+      return onPlan === false
+        ? { ...context, attachmentDelivery: markHelperVisionNotOnPlan(plan) }
+        : context;
+    }
     const candidates = await this.eligibleCandidates(context);
     if (candidates.length === 0) {
       // No helper configured or reachable: today's OCR + honest note.
@@ -112,6 +123,23 @@ export class VisionHelperManager {
         fit.derivedImages,
       ),
     };
+  }
+
+  /**
+   * Whether the plan includes helper vision; null when entitlements could not
+   * be read. Null fails closed to the free path (no helper, no hold) without
+   * labelling the image "not on your plan" — an outage is not the plan's doing
+   * — and without breaking the turn.
+   */
+  private async helperVisionOnPlan(userId: string): Promise<boolean | null> {
+    try {
+      return await this.accessControl.hasPlanFeatureFor(userId, HELPER_VISION_PLAN_FEATURE);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `helperVisionOnPlan: entitlements unavailable, skipping helper user=${userId} — ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return null;
+    }
   }
 
   /** Admin candidates the catalog says can SEE, local-only when the turn requires it. */

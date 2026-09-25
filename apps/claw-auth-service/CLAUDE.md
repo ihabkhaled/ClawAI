@@ -396,6 +396,19 @@ Rule: [28-billing-integrity-and-api-contracts](../../rules/28-billing-integrity-
 - Prove any change with `scripts/qa-lab/session-refresh-experiment.mjs`
   ([skills/debug-a-sign-out.md](../../skills/debug-a-sign-out.md)).
 
+## Media plan gates (ADR-122, 2026-09-25)
+
+`Plan.allowImageGeneration` / `allowHelperVision` / `allowTextToSpeech`
+(`DEFAULT false`) and `Plan.maxVideoSeconds` (`Int? DEFAULT 60`; `null`
+unlimited, `0` disabled) ride the entitlements payload as
+`plan.featureGates.*` and `plan.limits.maxVideoSeconds`. Free: off / 60 s;
+every paid slug: on / 600 s. Fresh installs take them from the `media` block of
+`plan-catalog.json` (`mediaGateProjections` in the seeder, deliberately NOT in
+the checksummed payload); existing rows from migration
+`20260925200000_add_media_plan_gates`, by slug. The admin entitlement plan has
+all on and `maxVideoSeconds: null`. Deploy auth-service before image-service
+and chat-service: an old payload reads as "gate off" and refuses paid users.
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

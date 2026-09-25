@@ -226,6 +226,11 @@ import {
   toFileContentCandidates,
 } from '../utilities/file-writer.utility';
 import type { PaygCallOptions } from '../types/payg.types';
+import { IMAGE_GENERATION_PLAN_FEATURE } from '../constants/plan-feature-refusal.constants';
+import {
+  imagePlanRefusalResponse,
+  isPlanFeatureDisabledResponse,
+} from '../utilities/plan-feature-refusal.utility';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -4665,6 +4670,21 @@ export class ChatExecutionManager implements OnModuleInit {
     isAutoMode?: boolean,
   ): Promise<LlmResponse> {
     this.logger.log(`callImageService: requesting image generation via ${provider}/${model}`);
+    // Checked before the vision prompt hop and before image-service, so a free
+    // plan spends nothing and gets a translated upgrade notice, not an error
+    // (ADR-122). image-service enforces the same gate; this is the clean path.
+    if (
+      !(await this.accessControlService.hasPlanFeatureFor(userId, IMAGE_GENERATION_PLAN_FEATURE))
+    ) {
+      this.logger.warn(`callImageService: image generation not on plan user=${userId}`);
+      return imagePlanRefusalResponse(
+        IMAGE_GENERATION_PLAN_FEATURE,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+      );
+    }
     const config = AppConfig.get();
     this.logger.debug('callImageService: extracting last user message for prompt');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
@@ -4721,6 +4741,17 @@ export class ChatExecutionManager implements OnModuleInit {
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
 
+    if (isPlanFeatureDisabledResponse(response.status, response.data)) {
+      // The plan changed between the check above and image-service's own gate.
+      this.logger.warn(`callImageService: image-service refused on plan user=${userId}`);
+      return imagePlanRefusalResponse(
+        IMAGE_GENERATION_PLAN_FEATURE,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+      );
+    }
     if (!response.ok) {
       this.logger.error(
         `callImageService: image service returned error status=${String(response.status)}`,

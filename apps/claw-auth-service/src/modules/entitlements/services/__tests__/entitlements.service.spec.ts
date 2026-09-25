@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { PlanModelAccessMode, UserRole } from '@claw/shared-types';
 import { EntitlementsService } from '../entitlements.service';
 import { type AuthRepository } from '../../../auth/repositories/auth.repository';
@@ -99,6 +99,56 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       remaining: 50000,
       windows: [],
     });
+  });
+
+  // ADR-122: the media gates ride the same featureGates payload every service
+  // already reads. A trial resolves to the plan it trials, so it carries that
+  // plan's media gates — there is no separate trial media policy.
+  it('publishes a free trial plan with the media half locked and a 60 s video cap', async () => {
+    const freeMedia = {
+      ...freePlanWithNoModelAccess,
+      allowImageGeneration: false,
+      allowHelperVision: false,
+      allowTextToSpeech: false,
+      maxVideoSeconds: 60,
+    };
+    plansRepoMock.findEffectiveForUser.mockResolvedValue(freeMedia);
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan?.featureGates).toEqual(
+      expect.objectContaining({
+        allowImageGeneration: false,
+        allowHelperVision: false,
+        allowTextToSpeech: false,
+      }),
+    );
+    expect(result.plan?.limits.maxVideoSeconds).toBe(60);
+  });
+
+  it('publishes a paid plan with every media gate open and a null (unlimited) cap as null', async () => {
+    const paidMedia = {
+      ...freePlanWithNoModelAccess,
+      slug: 'pro',
+      isTrial: false,
+      allowImageGeneration: true,
+      allowHelperVision: true,
+      allowTextToSpeech: true,
+      maxVideoSeconds: null,
+    };
+    plansRepoMock.findEffectiveForUser.mockResolvedValue(paidMedia);
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan?.featureGates).toEqual(
+      expect.objectContaining({
+        allowImageGeneration: true,
+        allowHelperVision: true,
+        allowTextToSpeech: true,
+      }),
+    );
+    // null stays null — it must never be coalesced into 0 (disabled).
+    expect(result.plan?.limits.maxVideoSeconds).toBeNull();
   });
 
   it('returns allowedModels=[] (no restriction) when the plan has zero PlanModelAccess rows', async () => {
@@ -254,6 +304,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         workspaceConnections: null,
         contextPacks: null,
         memoryItems: null,
+        maxVideoSeconds: null,
       },
       featureGates: {
         allowCompareMode: true,
@@ -272,6 +323,9 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         allowPipelineLab: true,
         allowCostEnsemble: true,
         allowRolePack: true,
+        allowImageGeneration: true,
+        allowHelperVision: true,
+        allowTextToSpeech: true,
       },
     });
     expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);

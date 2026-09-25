@@ -1,5 +1,5 @@
 import { type Mock, vi } from 'vitest';
-import type { PaygHold } from '@claw/shared-entitlements';
+import type { PaygHold, PlanFeature } from '@claw/shared-entitlements';
 
 import type { AccessControlService } from '../../services/access-control.service';
 /** Knobs for the shared AccessControlService double used across the PAYG suites. */
@@ -13,6 +13,8 @@ export type FakePaygAccessControlOptions = {
   refuseWith?: unknown;
   /** When set, the AI-file allowance is used up (ADR-110). */
   fileLimit?: { used: number; limit: number };
+  /** Plan features the user's plan does NOT include (ADR-122). Default: none. */
+  lockedPlanFeatures?: readonly PlanFeature[];
 };
 
 /** The shape a PAYG test asserts against. */
@@ -29,6 +31,7 @@ export type FakePaygAccessControl = {
   assertCanUseCritic: Mock;
   assertResearchAccess: Mock;
   resolveOutputCeiling: Mock;
+  hasPlanFeatureFor: Mock;
 };
 
 /**
@@ -112,6 +115,12 @@ export function createFakePaygAccessControl(
     // null = no quota ceiling, which is what an unlimited/admin entitlement
     // resolves to. A test that wants the clamp asserts on it explicitly.
     resolveOutputCeiling: vi.fn(async () => null),
+    // Every plan feature on unless the test locks one, so suites that predate
+    // the media gates keep exercising the paid path they were written for.
+    hasPlanFeatureFor: vi.fn(
+      async (_userId: string, feature: PlanFeature) =>
+        !(options.lockedPlanFeatures ?? []).includes(feature),
+    ),
   };
   return double as unknown as FakePaygAccessControl;
 }

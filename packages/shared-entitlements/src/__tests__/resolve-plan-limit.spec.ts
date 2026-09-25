@@ -7,10 +7,7 @@ function facts(
   isAdmin: boolean,
   limits: Partial<NonNullable<UserEntitlements['plan']>['limits']> | null,
 ): LimitFacts {
-  if (limits === null) {
-    return { isAdmin, plan: null };
-  }
-  return {
+  return limits === null ? { isAdmin, plan: null } : {
     isAdmin,
     plan: {
       id: 'plan-1',
@@ -28,6 +25,7 @@ function facts(
         workspaceConnections: null,
         contextPacks: null,
         memoryItems: null,
+        maxVideoSeconds: null,
         ...limits,
       },
       featureGates: {} as NonNullable<UserEntitlements['plan']>['featureGates'],
@@ -71,11 +69,22 @@ describe('resolvePlanLimit', () => {
     ['messagesPerDay', (l: NonNullable<UserEntitlements['plan']>['limits']) => l.messagesPerDay],
     ['contextPacks', (l: NonNullable<UserEntitlements['plan']>['limits']) => l.contextPacks],
     ['memoryItems', (l: NonNullable<UserEntitlements['plan']>['limits']) => l.memoryItems],
+    ['maxVideoSeconds', (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxVideoSeconds],
     [
       'workspaceConnections',
       (l: NonNullable<UserEntitlements['plan']>['limits']) => l.workspaceConnections,
     ],
   ])('treats an unlimited %s as unlimited', (_name, select) => {
     expect(resolvePlanLimit(facts(false, {}), select)).toBeNull();
+  });
+
+  // ADR-122: free processes 60 s of video; 0 would switch video off entirely.
+  it('passes a video-length cap through, and keeps 0 as disabled', () => {
+    expect(resolvePlanLimit(facts(false, { maxVideoSeconds: 60 }), (l) => l.maxVideoSeconds)).toBe(
+      60,
+    );
+    expect(resolvePlanLimit(facts(false, { maxVideoSeconds: 0 }), (l) => l.maxVideoSeconds)).toBe(
+      0,
+    );
   });
 });

@@ -263,6 +263,19 @@ export function PlanForm({
           />
         </div>
         <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-max-video-seconds" className="text-sm font-medium">
+            {t('adminPlans.form.maxVideoSeconds')}
+          </label>
+          <Input
+            id="plan-max-video-seconds"
+            type="number"
+            min={0}
+            value={state.maxVideoSeconds}
+            onChange={(e) => setField('maxVideoSeconds', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-display-order" className="text-sm font-medium">
             {t('adminPlans.form.displayOrder')}
           </label>
@@ -471,6 +484,36 @@ export function PlanForm({
             id="plan-allow-role-pack"
             checked={state.allowRolePack}
             onCheckedChange={(next) => setField('allowRolePack', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-image-generation" className="text-sm">
+            {t('adminPlans.gate.allowImageGeneration')}
+          </label>
+          <Switch
+            id="plan-allow-image-generation"
+            checked={state.allowImageGeneration}
+            onCheckedChange={(next) => setField('allowImageGeneration', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-helper-vision" className="text-sm">
+            {t('adminPlans.gate.allowHelperVision')}
+          </label>
+          <Switch
+            id="plan-allow-helper-vision"
+            checked={state.allowHelperVision}
+            onCheckedChange={(next) => setField('allowHelperVision', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-text-to-speech" className="text-sm">
+            {t('adminPlans.gate.allowTextToSpeech')}
+          </label>
+          <Switch
+            id="plan-allow-text-to-speech"
+            checked={state.allowTextToSpeech}
+            onCheckedChange={(next) => setField('allowTextToSpeech', next)}
           />
         </div>
       </div>

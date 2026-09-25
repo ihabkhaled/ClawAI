@@ -138,6 +138,7 @@ describe('ImageGenerationService — PAYG credit failures (U4)', () => {
       { execute } as unknown as ImageExecutionManager,
       events as unknown as ImageGenerationEventsService,
       { publish: vi.fn().mockResolvedValue(undefined) } as unknown as RabbitMQService,
+      { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,
     );
   });
 

@@ -57,6 +57,7 @@ const build = (found: typeof failedRecord | null): { service: ImageGenerationSer
     { execute } as never,
     { publish } as never,
     { publish: rabbitPublish } as never,
+    { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,
   );
   return { service, repo, execute, publish, rabbitPublish };
 };

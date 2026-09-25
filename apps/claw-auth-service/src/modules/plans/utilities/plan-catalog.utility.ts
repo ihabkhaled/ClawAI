@@ -68,6 +68,7 @@ export function toCatalogEntry(
     maxWorkspaceConnections: plan.maxWorkspaceConnections,
     maxContextPacks: plan.maxContextPacks,
     maxMemoryItems: plan.maxMemoryItems,
+    maxVideoSeconds: plan.maxVideoSeconds,
     featureGates: {
       allowCompareMode: plan.allowCompareMode,
       allowJudgeMode: plan.allowJudgeMode,
@@ -85,6 +86,9 @@ export function toCatalogEntry(
       allowPipelineLab: plan.allowPipelineLab,
       allowCostEnsemble: plan.allowCostEnsemble,
       allowRolePack: plan.allowRolePack,
+      allowImageGeneration: plan.allowImageGeneration,
+      allowHelperVision: plan.allowHelperVision,
+      allowTextToSpeech: plan.allowTextToSpeech,
     },
     prices,
     features,

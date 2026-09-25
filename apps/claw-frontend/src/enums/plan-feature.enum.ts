@@ -19,4 +19,8 @@ export enum PlanFeature {
   ALLOW_PIPELINE_LAB = 'allowPipelineLab',
   ALLOW_COST_ENSEMBLE = 'allowCostEnsemble',
   ALLOW_ROLE_PACK = 'allowRolePack',
+  // Media gates (ADR-122): the paid half. Enforced by the executing service.
+  ALLOW_IMAGE_GENERATION = 'allowImageGeneration',
+  ALLOW_HELPER_VISION = 'allowHelperVision',
+  ALLOW_TEXT_TO_SPEECH = 'allowTextToSpeech',
 }

@@ -13,6 +13,8 @@ import { VisionHelperOutcome } from '../../../../common/enums/vision-helper-outc
 import { BusinessException } from '../../../../common/errors';
 import type { ChatMessage } from '../../../../generated/prisma';
 import {
+  DELIVERY_REASON_HELPER_VISION_PLAN,
+  DELIVERY_REASON_NO_VISION,
   DELIVERY_REASON_VISION_HELPER_FAILED,
   DELIVERY_REASON_VISION_HELPER_LIMIT,
   DELIVERY_REASON_VISION_HELPER_REFUSED,
@@ -130,16 +132,22 @@ function contextWith(
   };
 }
 
-function build(candidates: VisionHelperCandidateWire[]): {
+function build(
+  candidates: VisionHelperCandidateWire[],
+  planHasHelperVision: () => Promise<boolean> = async () => Promise.resolve(true),
+): {
   helper: VisionHelperManager;
   access: {
     reserveCredit: ReturnType<typeof vi.fn>;
     releaseCredit: ReturnType<typeof vi.fn>;
+    hasPlanFeatureFor: ReturnType<typeof vi.fn>;
   };
+  client: { resolve: ReturnType<typeof vi.fn> };
 } {
   const access = {
     reserveCredit: vi.fn(async () => Promise.resolve(hold())),
     releaseCredit: vi.fn(async () => Promise.resolve()),
+    hasPlanFeatureFor: vi.fn(planHasHelperVision),
   };
   const client = { resolve: vi.fn(async () => Promise.resolve(candidates)) };
   const helper = new VisionHelperManager(
@@ -147,7 +155,7 @@ function build(candidates: VisionHelperCandidateWire[]): {
     capabilityClient as never,
     access as never,
   );
-  return { helper, access };
+  return { helper, access, client };
 }
 
 const delivery = new AttachmentDeliveryManager(capabilityClient as never);
@@ -172,6 +180,73 @@ const answered = (content: string): Mock<VisionHelperInvoker> =>
   vi.fn<VisionHelperInvoker>(async () => Promise.resolve(reply(content)));
 
 describe('VisionHelperManager', () => {
+  // ADR-122: helper vision is a paid feature. A free plan keeps OCR + the
+  // honest note — no helper call, no hold — and ordinary chat is never refused.
+  describe('plan gate', () => {
+    it('skips the helper on a plan without allowHelperVision: no call, no hold, OCR kept', async () => {
+      const { helper, access, client } = build([GEMINI], async () => Promise.resolve(false));
+      const invoke = answered('should never run');
+
+      const lane = await helper.upgradeContext(
+        await blindLane(contextWith([image('img-1')])),
+        invoke,
+      );
+
+      expect(access.hasPlanFeatureFor).toHaveBeenCalledWith('user-1', 'allowHelperVision');
+      expect(invoke).not.toHaveBeenCalled();
+      expect(access.reserveCredit).not.toHaveBeenCalled();
+      expect(client.resolve).not.toHaveBeenCalled();
+      const decision = lane.attachmentDelivery?.decisions[0];
+      expect(decision?.mode).toBe(FileDeliveryMode.OMITTED_NO_VISION);
+      expect(decision?.reason).toBe(DELIVERY_REASON_HELPER_VISION_PLAN);
+      expect(lane.fileContents[0]?.extractedText).toBe('TOTAL 42.00 EUR');
+      expect(lane.attachmentDelivery?.derivedImages).toBeUndefined();
+    });
+
+    it('runs the helper on a plan with allowHelperVision', async () => {
+      const { helper, access } = build([GEMINI]);
+      const invoke = answered('A receipt.');
+
+      const lane = await helper.upgradeContext(
+        await blindLane(contextWith([image('img-1')])),
+        invoke,
+      );
+
+      expect(invoke).toHaveBeenCalledTimes(1);
+      expect(access.reserveCredit).toHaveBeenCalledTimes(1);
+      expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(FileDeliveryMode.DERIVED_IMAGE_TEXT);
+    });
+
+    it('never breaks the turn when entitlements cannot be read: free path, honest no-vision note', async () => {
+      const { helper, access } = build([GEMINI], async () =>
+        Promise.reject(new Error('entitlements down')),
+      );
+      const invoke = answered('should never run');
+
+      const lane = await helper.upgradeContext(
+        await blindLane(contextWith([image('img-1')])),
+        invoke,
+      );
+
+      expect(invoke).not.toHaveBeenCalled();
+      expect(access.reserveCredit).not.toHaveBeenCalled();
+      const decision = lane.attachmentDelivery?.decisions[0];
+      expect(decision?.mode).toBe(FileDeliveryMode.OMITTED_NO_VISION);
+      expect(decision?.reason).toBe(DELIVERY_REASON_NO_VISION);
+    });
+
+    it('does not ask the plan at all when no image is blind', async () => {
+      const { helper, access } = build([GEMINI], async () => Promise.resolve(false));
+
+      await helper.upgradeContext(
+        await blindLane(contextWith([image('img-1')]), 'OPENAI', 'gpt-4o'),
+        answered('unused'),
+      );
+
+      expect(access.hasPlanFeatureFor).not.toHaveBeenCalled();
+    });
+  });
+
   it('describes a blind image: DERIVED_IMAGE_TEXT, provenance, one metered hold at the granted ceiling', async () => {
     const { helper, access } = build([GEMINI]);
     const invoke = answered('A receipt. Text: "TOTAL 42.00 EUR".');

@@ -24,7 +24,12 @@
     "bump plan-catalog to v3 to apply them: on an install where v2 already ran,",
     "every plan takes the else-branch of run() and only modelAccessMode and a",
     "null weeklyTokenQuota are written — the new allowances would land on ZERO",
-    "rows while the seeder reported success."
+    "rows while the seeder reported success.",
+    "",
+    "media (ADR-122): Free keeps the basics, paid gets image generation/edit,",
+    "helper vision, text-to-speech and 600 s of video. maxVideoSeconds null would",
+    "mean unlimited; 0 would switch video off. Existing installs are moved by",
+    "migration 20260925200000_add_media_plan_gates, not by this file."
   ],
   "plans": [
     {
@@ -116,6 +121,12 @@
         "pipelineLab": true,
         "costEnsemble": true,
         "rolePack": true
+      },
+      "media": {
+        "imageGeneration": false,
+        "helperVision": false,
+        "textToSpeech": false,
+        "maxVideoSeconds": 60
       },
       "isPopular": false,
       "paygCreditPercentBps": 3000
@@ -210,6 +221,12 @@
         "costEnsemble": false,
         "rolePack": false
       },
+      "media": {
+        "imageGeneration": true,
+        "helperVision": true,
+        "textToSpeech": true,
+        "maxVideoSeconds": 600
+      },
       "isPopular": false,
       "paygCreditPercentBps": 3000
     },
@@ -302,6 +319,12 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
+      },
+      "media": {
+        "imageGeneration": true,
+        "helperVision": true,
+        "textToSpeech": true,
+        "maxVideoSeconds": 600
       },
       "isPopular": false,
       "paygCreditPercentBps": 3000
@@ -396,6 +419,12 @@
         "costEnsemble": false,
         "rolePack": false
       },
+      "media": {
+        "imageGeneration": true,
+        "helperVision": true,
+        "textToSpeech": true,
+        "maxVideoSeconds": 600
+      },
       "isPopular": true,
       "paygCreditPercentBps": 2500
     },
@@ -488,6 +517,12 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
+      },
+      "media": {
+        "imageGeneration": true,
+        "helperVision": true,
+        "textToSpeech": true,
+        "maxVideoSeconds": 600
       },
       "isPopular": false,
       "paygCreditPercentBps": 2500
@@ -582,6 +617,12 @@
         "costEnsemble": false,
         "rolePack": false
       },
+      "media": {
+        "imageGeneration": true,
+        "helperVision": true,
+        "textToSpeech": true,
+        "maxVideoSeconds": 600
+      },
       "isPopular": false,
       "paygCreditPercentBps": 2500
     },
@@ -674,6 +715,12 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
+      },
+      "media": {
+        "imageGeneration": true,
+        "helperVision": true,
+        "textToSpeech": true,
+        "maxVideoSeconds": 600
       },
       "isPopular": false,
       "paygCreditPercentBps": 2500

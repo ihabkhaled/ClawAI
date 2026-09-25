@@ -7564,7 +7564,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 5956,
+          "bytes": 6622,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -8112,7 +8112,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5394
+        "value": 5401
       },
       "localeCount": 13,
       "locales": [
@@ -10086,11 +10086,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 110
+        "testFiles": 111
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 182
+        "testFiles": 184
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10110,7 +10110,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 568
+        "testFiles": 570
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10118,7 +10118,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 24
+        "testFiles": 25
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10888,7 +10888,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1536,
+    "totalTestFiles": 1542,
     "workspaceCount": 25
   }
 }

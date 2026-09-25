@@ -509,6 +509,24 @@ refused. Both these and `internal/users/:id/entitlements` require
 2026-09-20; `EntitlementsAdapter` sends it. A caller that does not is 401
 (TD-035). Deploy auth-service and its callers together.
 
+## Media plan gates (ADR-122, 2026-09-25)
+
+Four `Plan` fields, modelled like `allowCompareMode`:
+
+| Field                  | Type (default)  | Free | Paid tiers |
+| ---------------------- | --------------- | ---- | ---------- |
+| `allowImageGeneration` | Boolean (false) | off  | on         |
+| `allowHelperVision`    | Boolean (false) | off  | on         |
+| `allowTextToSpeech`    | Boolean (false) | off  | on         |
+| `maxVideoSeconds`      | Int? (60)       | 60   | 600        |
+
+`null` video = unlimited, `0` = disabled. Exposed on `GET
+/internal/users/:id/entitlements` (`plan.featureGates.*`,
+`plan.limits.maxVideoSeconds`), on the plan views/catalog, and editable by
+create/update plan DTOs. Migration `20260925200000_add_media_plan_gates` sets
+existing rows by slug; `plan-catalog.json` `media` feeds fresh installs.
+Business rationale: [`docs/business/plan-allowances.md`](../business/plan-allowances.md#media-features-per-plan-adr-122-2026-09-25).
+
 ## A revoked session is refused everywhere (ADR-112, 2026-09-20)
 
 Every revoke — logout, a family revoked for refresh-token theft, an admin

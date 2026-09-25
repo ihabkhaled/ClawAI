@@ -1018,3 +1018,25 @@ conversational model; the message's `provider`/`model` are never replaced.
   on single chat and every compare lane it served.
 - **Log line** (content-free, per attempt): `visionHelper {"kind","provider","model","fileId","latencyMs","outcome"}`.
 - **Not yet**: plan gating (paid-only helper vision) is batch 6.
+
+## Media plan gates (ADR-122, 2026-09-25)
+
+Free keeps the basics; image generation / edit and helper vision are paid.
+Both are asked with `AccessControlService.hasPlanFeatureFor(userId, feature)`
+(boolean; throws the 503 when auth-service cannot answer). Never gate these at
+the turn entry — ordinary chat must not 403 because a plan lacks media.
+
+- **Image generation**: `ChatExecutionManager.callImageService` asks
+  `allowImageGeneration` FIRST, before the vision prompt hop and before
+  image-service. "No" (or image-service's own `403 PLAN_FEATURE_DISABLED`) →
+  `imagePlanRefusalResponse` (`utilities/plan-feature-refusal.utility.ts`), a
+  finished reply with `planFeatureRefusal`, persisted as
+  `metadata.type = 'plan_feature_disabled'` + `planFeature`. The frontend's
+  `PlanFeatureNotice` renders it translated. An entitlements outage surfaces as
+  the 503 (fails closed). image-service enforces the same gate itself.
+- **Helper vision**: `VisionHelperManager.upgradeContext` asks
+  `allowHelperVision` only when an image is actually blind. "No" → blind
+  decisions keep `OMITTED_NO_VISION` (OCR + honest note) with reason
+  `file_delivery.reason.helper_vision_plan`; no candidate lookup, no hold, no
+  call. Outage → same free path but reason stays `no_vision`.
+- Test doubles: `createFakePaygAccessControl({ lockedPlanFeatures: [...] })`.

@@ -91,6 +91,22 @@ function labGateProjections(labs) {
   };
 }
 
+// Media gates (ADR-122): plain per-plan values read off `definition.media`.
+// A missing block yields the FREE defaults (off, 60 s) — never null, which
+// would mean unlimited video.
+const FREE_MAX_VIDEO_SECONDS = 60;
+
+function mediaGateProjections(media) {
+  const block = media ?? {};
+  return {
+    allowImageGeneration: block.imageGeneration === true,
+    allowHelperVision: block.helperVision === true,
+    allowTextToSpeech: block.textToSpeech === true,
+    maxVideoSeconds:
+      block.maxVideoSeconds === undefined ? FREE_MAX_VIDEO_SECONDS : block.maxVideoSeconds,
+  };
+}
+
 // Mirrors POPULAR_PLAN_KEY in src/modules/plans/constants/popular-plan.constants.ts.
 // The seeder is plain JS run by `prisma db seed` and cannot import the TS source.
 const POPULAR_PLAN_KEY = 'popular';
@@ -136,6 +152,10 @@ function planColumns(definition) {
     allowedCostClasses: definition.allowedCostClasses,
     ...booleanProjections(definition.features),
     ...labGateProjections(definition.labs),
+    // Fresh installs only (the create/upgrade branches). Existing rows are moved
+    // by migration 20260925200000_add_media_plan_gates. Deliberately not in the
+    // checksummed `payload` below, for the reason the isPopular note gives.
+    ...mediaGateProjections(definition.media),
   };
 }
 
@@ -293,5 +313,6 @@ module.exports = {
   matchesLegacyFingerprint,
   booleanProjections,
   labGateProjections,
+  mediaGateProjections,
   computeDiscountedIntervalMinor,
 };

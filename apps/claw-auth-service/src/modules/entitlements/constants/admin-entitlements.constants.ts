@@ -16,6 +16,7 @@ export const ADMIN_ENTITLEMENT_PLAN: NonNullable<UserEntitlements['plan']> = {
     workspaceConnections: null,
     contextPacks: null,
     memoryItems: null,
+    maxVideoSeconds: null,
   },
   featureGates: {
     allowCompareMode: true,
@@ -34,5 +35,8 @@ export const ADMIN_ENTITLEMENT_PLAN: NonNullable<UserEntitlements['plan']> = {
     allowPipelineLab: true,
     allowCostEnsemble: true,
     allowRolePack: true,
+    allowImageGeneration: true,
+    allowHelperVision: true,
+    allowTextToSpeech: true,
   },
 };

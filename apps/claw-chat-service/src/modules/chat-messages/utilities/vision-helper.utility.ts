@@ -2,6 +2,7 @@ import { APPROX_CHARS_PER_TOKEN } from '../../../common/constants/execution.cons
 import { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
 import { VisionHelperOutcome } from '../../../common/enums/vision-helper-outcome.enum';
 import {
+  DELIVERY_REASON_HELPER_VISION_PLAN,
   DELIVERY_REASON_NO_VISION,
   DELIVERY_REASON_VISION_HELPER_FAILED,
   DELIVERY_REASON_VISION_HELPER_LIMIT,
@@ -71,6 +72,23 @@ export function blindImageDecisions(plan: AttachmentDeliveryPlan): AttachmentDel
       decision.reason === DELIVERY_REASON_NO_VISION &&
       decision.mimeType.toLowerCase().startsWith(IMAGE_MIME_PREFIX),
   );
+}
+
+/**
+ * The lane's plan when the user's plan has no helper vision (ADR-122): the
+ * blind images stay OMITTED_NO_VISION — so the lane still gets OCR + the
+ * honest note — and say why no helper described them.
+ */
+export function markHelperVisionNotOnPlan(plan: AttachmentDeliveryPlan): AttachmentDeliveryPlan {
+  const blindIds = new Set(blindImageDecisions(plan).map((decision) => decision.fileId));
+  return {
+    ...plan,
+    decisions: plan.decisions.map((decision) =>
+      blindIds.has(decision.fileId)
+        ? { ...decision, reason: DELIVERY_REASON_HELPER_VISION_PLAN }
+        : decision,
+    ),
+  };
 }
 
 /** A provider error about the image itself, which the next candidate may accept. */

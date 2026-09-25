@@ -771,6 +771,9 @@ export type TranslationDictionary = {
         pipelineLab: string;
         costEnsemble: string;
         rolePack: string;
+        imageGeneration: string;
+        helperVision: string;
+        textToSpeech: string;
       };
     };
   };
@@ -4124,6 +4127,7 @@ export type TranslationDictionary = {
       maxWorkspaceConnections: string;
       maxContextPacks: string;
       maxMemoryItems: string;
+      maxVideoSeconds: string;
       isPublic: string;
       isTrial: string;
       trialHelp: string;
@@ -4152,6 +4156,9 @@ export type TranslationDictionary = {
       allowPipelineLab: string;
       allowCostEnsemble: string;
       allowRolePack: string;
+      allowImageGeneration: string;
+      allowHelperVision: string;
+      allowTextToSpeech: string;
     };
     modelAccess: {
       title: string;

@@ -30,6 +30,7 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   maxWorkspaceConnections: numToStr(plan.maxWorkspaceConnections),
   maxContextPacks: numToStr(plan.maxContextPacks),
   maxMemoryItems: numToStr(plan.maxMemoryItems),
+  maxVideoSeconds: numToStr(plan.maxVideoSeconds),
   allowCompareMode: plan.allowCompareMode,
   allowJudgeMode: plan.allowJudgeMode,
   allowResearchMode: plan.allowResearchMode,
@@ -46,6 +47,9 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   allowPipelineLab: plan.allowPipelineLab,
   allowCostEnsemble: plan.allowCostEnsemble,
   allowRolePack: plan.allowRolePack,
+  allowImageGeneration: plan.allowImageGeneration,
+  allowHelperVision: plan.allowHelperVision,
+  allowTextToSpeech: plan.allowTextToSpeech,
 });
 
 const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
@@ -66,6 +70,7 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   maxWorkspaceConnections: state.maxWorkspaceConnections,
   maxContextPacks: state.maxContextPacks,
   maxMemoryItems: state.maxMemoryItems,
+  maxVideoSeconds: state.maxVideoSeconds,
   allowCompareMode: state.allowCompareMode,
   allowJudgeMode: state.allowJudgeMode,
   allowResearchMode: state.allowResearchMode,
@@ -82,6 +87,9 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   allowPipelineLab: state.allowPipelineLab,
   allowCostEnsemble: state.allowCostEnsemble,
   allowRolePack: state.allowRolePack,
+  allowImageGeneration: state.allowImageGeneration,
+  allowHelperVision: state.allowHelperVision,
+  allowTextToSpeech: state.allowTextToSpeech,
 });
 
 export function usePlanForm(initial: PlanView | null): UsePlanFormResult {

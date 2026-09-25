@@ -8,4 +8,22 @@
 // suppressed finding.
 declare module '*/plan-catalog.seeder.cjs' {
   export function computeDiscountedIntervalMinor(monthlyMinor: number, months: number): number;
+
+  /** A plan's `media` block in plan-catalog.json (ADR-122). */
+  export type PlanCatalogMediaBlock = {
+    imageGeneration?: boolean;
+    helperVision?: boolean;
+    textToSpeech?: boolean;
+    maxVideoSeconds?: number | null;
+  };
+
+  /** The Plan columns the media block projects to; a missing block is the free default. */
+  export type PlanMediaColumns = {
+    allowImageGeneration: boolean;
+    allowHelperVision: boolean;
+    allowTextToSpeech: boolean;
+    maxVideoSeconds: number | null;
+  };
+
+  export function mediaGateProjections(media: PlanCatalogMediaBlock | undefined): PlanMediaColumns;
 }

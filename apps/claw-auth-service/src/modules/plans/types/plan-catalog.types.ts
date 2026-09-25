@@ -45,6 +45,9 @@ export type PlanFeatureGatesView = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  allowImageGeneration: boolean;
+  allowHelperVision: boolean;
+  allowTextToSpeech: boolean;
 };
 
 /**
@@ -92,6 +95,8 @@ export type PlanCatalogEntry = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  /** Longest video processed, in seconds. Null = unlimited, 0 = disabled. */
+  maxVideoSeconds: number | null;
   featureGates: PlanFeatureGatesView;
   prices: PlanPriceVersionView[];
   features: PlanFeatureRuleView[];

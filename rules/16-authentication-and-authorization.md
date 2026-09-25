@@ -27,6 +27,15 @@ and the frontend feature-gate hook.
 5. **Feature gates use entitlements.** Plan `allow*` flags (e.g. `allowCompareMode`,
    `allowJudgeMode`, `allowCriticReview`) are evaluated via `@claw/shared-entitlements`
    on the backend and `useFeatureGates` on the frontend — gate both ends.
+   **Media features are gated by the service that EXECUTES them**
+   ([ADR-122](../docs/13-adr/adr-122-media-features-plan-gated-at-the-executing-service.md)):
+   `allowImageGeneration` in image-service before any row / PAYG hold / provider
+   call (every entry: generate, retry, retry-alternate), `allowHelperVision` in
+   chat-service `VisionHelperManager` (low in the turn — ordinary chat never
+   403s), `allowTextToSpeech` in the TTS endpoint, `maxVideoSeconds`
+   (`null` unlimited, `0` disabled) in the video path. A courtesy check upstream
+   (chat) is fine; it never replaces the executor's check. Paid gates fail
+   CLOSED when auth-service cannot answer.
 6. **Ownership is checked in the service** (see [09](09-backend-services.md)) —
    RBAC says "may call this endpoint," ownership says "may act on this row."
    A stranger gets the same 404 as a missing id. On an `@Sse` route the check is

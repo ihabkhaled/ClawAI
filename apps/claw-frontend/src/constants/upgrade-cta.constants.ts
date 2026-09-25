@@ -4,6 +4,12 @@ import { PlanFeature } from '@/enums';
 // UpgradeCtaBanner renders "Unlock {feature}" by interpolating the resolved
 // label into chat.upgrade.title. Keep keys in sync with i18n.types.ts and
 // every locale file.
+/**
+ * `metadata.type` chat-service stores on an assistant message that is a plan
+ * refusal, not an answer (ADR-122). `metadata.planFeature` names the gate.
+ */
+export const PLAN_FEATURE_REFUSAL_METADATA_TYPE = 'plan_feature_disabled';
+
 export const PLAN_FEATURE_LABEL_KEYS: Record<PlanFeature, string> = {
   [PlanFeature.ALLOW_COMPARE_MODE]: 'chat.upgrade.features.compare',
   [PlanFeature.ALLOW_JUDGE_MODE]: 'chat.upgrade.features.judge',
@@ -21,4 +27,7 @@ export const PLAN_FEATURE_LABEL_KEYS: Record<PlanFeature, string> = {
   [PlanFeature.ALLOW_PIPELINE_LAB]: 'chat.upgrade.features.pipelineLab',
   [PlanFeature.ALLOW_COST_ENSEMBLE]: 'chat.upgrade.features.costEnsemble',
   [PlanFeature.ALLOW_ROLE_PACK]: 'chat.upgrade.features.rolePack',
+  [PlanFeature.ALLOW_IMAGE_GENERATION]: 'chat.upgrade.features.imageGeneration',
+  [PlanFeature.ALLOW_HELPER_VISION]: 'chat.upgrade.features.helperVision',
+  [PlanFeature.ALLOW_TEXT_TO_SPEECH]: 'chat.upgrade.features.textToSpeech',
 };

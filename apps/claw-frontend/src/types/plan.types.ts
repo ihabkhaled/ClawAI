@@ -72,6 +72,8 @@ export type PlanView = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  /** Longest video processed, in seconds. null = unlimited, 0 = disabled (ADR-122). */
+  maxVideoSeconds: number | null;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -88,6 +90,9 @@ export type PlanView = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  allowImageGeneration: boolean;
+  allowHelperVision: boolean;
+  allowTextToSpeech: boolean;
   modelAccessMode?: PlanModelAccessMode;
   allowedCostClasses?: string[];
   modelAccess: PlanModelAccessView[];
@@ -139,6 +144,8 @@ export type CreatePlanRequest = {
   maxWorkspaceConnections?: number;
   maxContextPacks?: number;
   maxMemoryItems?: number;
+  /** null sets unlimited; omitted leaves the plan's value untouched. */
+  maxVideoSeconds?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
@@ -155,6 +162,9 @@ export type CreatePlanRequest = {
   allowPipelineLab?: boolean;
   allowCostEnsemble?: boolean;
   allowRolePack?: boolean;
+  allowImageGeneration?: boolean;
+  allowHelperVision?: boolean;
+  allowTextToSpeech?: boolean;
 };
 
 export type UpdatePlanRequest = Partial<CreatePlanRequest>;
@@ -190,6 +200,9 @@ export type EntitlementFeatureGates = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  allowImageGeneration: boolean;
+  allowHelperVision: boolean;
+  allowTextToSpeech: boolean;
 };
 
 export type EntitlementPlan = {
@@ -212,6 +225,8 @@ export type EntitlementPlanLimits = {
   workspaceConnections: number | null;
   contextPacks: number | null;
   memoryItems: number | null;
+  /** Seconds. null = unlimited, 0 = video disabled (ADR-122). Absent from an older auth-service. */
+  maxVideoSeconds?: number | null;
 };
 
 // One enforced token window. `limit: null` is unlimited, `0` is disabled —
@@ -264,6 +279,7 @@ export type PlanFormState = {
   maxWorkspaceConnections: string;
   maxContextPacks: string;
   maxMemoryItems: string;
+  maxVideoSeconds: string;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -280,6 +296,9 @@ export type PlanFormState = {
   allowPipelineLab: boolean;
   allowCostEnsemble: boolean;
   allowRolePack: boolean;
+  allowImageGeneration: boolean;
+  allowHelperVision: boolean;
+  allowTextToSpeech: boolean;
 };
 
 export type PlanFormFieldErrors = Partial<Record<keyof PlanFormState, string>>;

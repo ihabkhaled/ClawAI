@@ -1148,6 +1148,9 @@ export type FileLimitNoticeData = { used: number; limit: number };
 
 export type FileLimitNoticeProps = FileLimitNoticeData;
 
+/** The plan feature a turn needed and the user's plan lacks (ADR-122). */
+export type PlanFeatureNoticeProps = { feature: PlanFeature };
+
 export type FileExpiredStateProps = {
   filename: string;
   format: string;

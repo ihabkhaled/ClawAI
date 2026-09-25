@@ -983,6 +983,101 @@ describe('ChatExecutionManager', () => {
     expect(result.imageGenerationId).toBe('img-1');
   });
 
+  // ADR-122: image generation / edit is a paid feature. A free plan's image
+  // turn is answered with a notice the chat translates — never a raw error —
+  // and nothing is spent: no vision hop, no image-service call, no hold.
+  describe('image generation plan gate', () => {
+    it('answers a free plan with a plan refusal and never calls image-service', async () => {
+      accessControl.hasPlanFeatureFor.mockResolvedValue(false);
+
+      const result = await manager.callProvider(
+        'IMAGE_OPENAI',
+        'gpt-image-1',
+        makeContext('generate an image of a lighthouse'),
+        Date.now(),
+        false,
+      );
+
+      expect(accessControl.hasPlanFeatureFor).toHaveBeenCalledWith(
+        expect.any(String),
+        'allowImageGeneration',
+      );
+      expect(result.planFeatureRefusal).toEqual({ feature: 'allowImageGeneration' });
+      expect(result.imageGenerationId).toBeUndefined();
+      expect(result.finishReason).toBe('stop');
+      expect(httpRequest).not.toHaveBeenCalled();
+      expect(accessControl.reserveCredit).not.toHaveBeenCalled();
+    });
+
+    it("turns image-service's own PLAN_FEATURE_DISABLED 403 into the same refusal", async () => {
+      AppConfig.get.mockReturnValue({
+        ...DEFAULT_APP_CONFIG,
+        IMAGE_SERVICE_URL: 'http://image-service:4012',
+      });
+      httpRequest.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        data: { statusCode: 403, code: 'PLAN_FEATURE_DISABLED', message: 'Feature not available' },
+      });
+
+      const result = await manager.callProvider(
+        'IMAGE_OPENAI',
+        'gpt-image-1',
+        makeContext('generate an image of a lighthouse'),
+        Date.now(),
+        false,
+      );
+
+      expect(result.planFeatureRefusal).toEqual({ feature: 'allowImageGeneration' });
+      expect(result.imageGenerationId).toBeUndefined();
+    });
+
+    it('surfaces an entitlements outage as the outage, not as the plan (fails closed)', async () => {
+      accessControl.hasPlanFeatureFor.mockRejectedValue(new Error('ENTITLEMENTS_UNAVAILABLE'));
+
+      await expect(
+        manager.callProvider(
+          'IMAGE_OPENAI',
+          'gpt-image-1',
+          makeContext('generate an image of a lighthouse'),
+          Date.now(),
+          false,
+        ),
+      ).rejects.toThrow('ENTITLEMENTS_UNAVAILABLE');
+      expect(httpRequest).not.toHaveBeenCalled();
+    });
+
+    it('leaves an ordinary chat turn on a free plan alone', async () => {
+      accessControl.hasPlanFeatureFor.mockResolvedValue(false);
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          model: 'glm4:latest',
+          response: 'local response',
+          done: true,
+          promptEvalCount: 9,
+          evalCount: 6,
+        },
+      });
+
+      const result = await manager.callProvider(
+        'local-ollama',
+        'glm4:latest',
+        makeContext('explain photosynthesis'),
+        Date.now(),
+        false,
+      );
+
+      expect(result.content).toBe('local response');
+      expect(result.planFeatureRefusal).toBeUndefined();
+      expect(accessControl.hasPlanFeatureFor).not.toHaveBeenCalledWith(
+        expect.any(String),
+        'allowImageGeneration',
+      );
+    });
+  });
+
   it('consumes one AI-file allowance once the file is queued', async () => {
     vi.spyOn(FileWriterCandidatesClient.prototype, 'resolve').mockResolvedValue([]);
     httpRequest

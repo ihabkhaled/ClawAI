@@ -35,6 +35,8 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   maxWorkspaceConnections: '',
   maxContextPacks: '',
   maxMemoryItems: '',
+  // The free allowance, not blank: blank means unlimited video (ADR-122).
+  maxVideoSeconds: '60',
   allowCompareMode: true,
   allowJudgeMode: true,
   allowResearchMode: true,
@@ -51,6 +53,11 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   allowPipelineLab: true,
   allowCostEnsemble: true,
   allowRolePack: true,
+  // Paid media is opt-in on a new plan, matching the database default: a new
+  // plan must never start generating images before an operator says so.
+  allowImageGeneration: false,
+  allowHelperVision: false,
+  allowTextToSpeech: false,
 };
 
 export const PLAN_TRIAL_DURATION_DAYS = 30;
@@ -72,6 +79,9 @@ export const DISABLED_PLAN_FEATURE_GATES: EntitlementFeatureGates = {
   allowPipelineLab: false,
   allowCostEnsemble: false,
   allowRolePack: false,
+  allowImageGeneration: false,
+  allowHelperVision: false,
+  allowTextToSpeech: false,
 };
 
 // Feature-gate toggle field names rendered as Switches in the PlanForm and as
@@ -97,4 +107,10 @@ export const PLAN_FEATURE_GATE_FIELDS: ReadonlyArray<{
   { field: 'allowPipelineLab', labelKey: 'adminPlans.gate.allowPipelineLab' },
   { field: 'allowCostEnsemble', labelKey: 'adminPlans.gate.allowCostEnsemble' },
   { field: 'allowRolePack', labelKey: 'adminPlans.gate.allowRolePack' },
+  { field: 'allowImageGeneration', labelKey: 'adminPlans.gate.allowImageGeneration' },
+  { field: 'allowHelperVision', labelKey: 'adminPlans.gate.allowHelperVision' },
+  { field: 'allowTextToSpeech', labelKey: 'adminPlans.gate.allowTextToSpeech' },
 ];
+
+/** Upper bound on the plan editor's video length, matching the auth-service DTO (ten hours). */
+export const PLAN_MAX_VIDEO_SECONDS_LIMIT = 36_000;
