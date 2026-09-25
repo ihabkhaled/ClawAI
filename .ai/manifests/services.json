@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 202,
+      "testFiles": 206,
       "testRunner": "vitest"
     },
     {
@@ -167,7 +167,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 19,
+      "endpointCount": 20,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -186,7 +186,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 35,
+      "testFiles": 37,
       "testRunner": "vitest"
     },
     {

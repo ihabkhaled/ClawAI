@@ -530,6 +530,8 @@ export const en: TranslationDictionary = {
         'This model cannot process video attachments. Choose Gemini 2.5 Flash or Pro, or switch to Auto.',
       videoAttachmentLocalModelUnavailable:
         'Video attachments are not available in local-only or privacy-first mode because no local video-capable model is configured.',
+      providerCreditExhausted:
+        'This model’s provider is out of credit right now. Choose another model or try again later.',
     },
     imageGeneration: 'Image Generation',
     generatedImage: 'Generated Image',

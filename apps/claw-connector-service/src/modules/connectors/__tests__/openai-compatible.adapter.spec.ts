@@ -365,3 +365,88 @@ describe('OpenAICompatibleAdapter.getCapabilities', () => {
     expect(adapter.probeToolCapability).toBeUndefined();
   });
 });
+
+describe('getCreditHeadroom', () => {
+  function routeFetch(routes: Record<string, { status: number; body: unknown } | Error>) {
+    const fetchMock = vi.fn().mockImplementation(async (url: URL) => {
+      const route = routes[String(url)];
+      if (route === undefined || route instanceof Error) {
+        throw route ?? new Error(`unrouted ${String(url)}`);
+      }
+      return {
+        ok: route.status >= 200 && route.status < 300,
+        status: route.status,
+        text: () => Promise.resolve(JSON.stringify(route.body)),
+      };
+    });
+    global.fetch = fetchMock;
+    return fetchMock;
+  }
+
+  const KEY = 'https://openrouter.ai/api/v1/key';
+  const CREDITS = 'https://openrouter.ai/api/v1/credits';
+
+  it('reads the key limit and the account balance with the key, smaller wins', async () => {
+    const fetchMock = routeFetch({
+      [KEY]: { status: 200, body: { data: { limit: 5, limit_remaining: 0.0213 } } },
+      [CREDITS]: { status: 200, body: { data: { total_credits: 10, total_usage: 2 } } },
+    });
+
+    await expect(adapterFor('OPENROUTER').getCreditHeadroom(config('OPENROUTER'))).resolves.toEqual(
+      {
+        known: true,
+        remainingMicroUsd: 21_300,
+      },
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const headers = calledInit(fetchMock).headers as Record<string, string>;
+    expect(headers['Authorization']).toBe('Bearer test-key');
+  });
+
+  it('an unlimited key falls back to the account balance', async () => {
+    routeFetch({
+      [KEY]: { status: 200, body: { data: { limit: null, limit_remaining: null } } },
+      [CREDITS]: { status: 200, body: { data: { total_credits: 3, total_usage: 2.5 } } },
+    });
+    await expect(adapterFor('OPENROUTER').getCreditHeadroom(config('OPENROUTER'))).resolves.toEqual(
+      {
+        known: true,
+        remainingMicroUsd: 500_000,
+      },
+    );
+  });
+
+  it('a refused /credits (key without that scope) leaves the key reading', async () => {
+    routeFetch({
+      [KEY]: { status: 200, body: { data: { limit_remaining: null } } },
+      [CREDITS]: { status: 403, body: { error: { message: 'forbidden' } } },
+    });
+    await expect(adapterFor('OPENROUTER').getCreditHeadroom(config('OPENROUTER'))).resolves.toEqual(
+      {
+        known: true,
+        remainingMicroUsd: null,
+      },
+    );
+  });
+
+  it('is unknown — never a guess — when both endpoints fail or time out', async () => {
+    const abort = new Error('This operation was aborted');
+    abort.name = 'AbortError';
+    routeFetch({ [KEY]: abort, [CREDITS]: new Error('ECONNRESET') });
+    await expect(adapterFor('OPENROUTER').getCreditHeadroom(config('OPENROUTER'))).resolves.toEqual(
+      {
+        known: false,
+        remainingMicroUsd: null,
+      },
+    );
+  });
+
+  it('a preset without credit endpoints makes no call and is unknown', async () => {
+    const fetchMock = routeFetch({});
+    await expect(adapterFor('GROQ').getCreditHeadroom(config('GROQ'))).resolves.toEqual({
+      known: false,
+      remainingMicroUsd: null,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

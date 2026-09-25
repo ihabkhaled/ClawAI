@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { type ConnectorPreset } from '@claw/shared-types';
+import { type ConnectorCreditHeadroomFormat, type ConnectorPreset } from '@claw/shared-types';
 import { declaredHost, resolvePresetBaseUrl, resolvePresetEndpoint } from '@claw/shared-utilities';
 import { ConnectorStatus } from '../../../../generated/prisma';
 import { httpGet, httpPost } from '../../../../common/utilities/http.utility';
@@ -10,6 +10,15 @@ import {
   PRESET_HEALTH_PROBE_PROMPT,
 } from '../../constants/openai-compatible.constants';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
+import { type ProviderCreditHeadroom } from '../../types/credit-headroom.types';
+import {
+  CREDIT_HEADROOM_TIMEOUT_MS,
+  UNKNOWN_CREDIT_HEADROOM,
+} from '../../constants/credit-headroom.constants';
+import {
+  combineCreditHeadroom,
+  parseCreditHeadroom,
+} from '../../utilities/credit-headroom.utility';
 import {
   isPresetChatModel,
   parsePresetModelList,
@@ -102,6 +111,66 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
       supportsTools: this.preset.supportsNativeTools,
       supportsVision: this.preset.visionModelPattern !== null,
     };
+  }
+
+  /**
+   * How much the key can still spend, read from the preset's key-credit
+   * endpoints in parallel (OpenRouter: `/key` and `/credits`).
+   *
+   * Never throws and never guesses: a failed, refused or timed-out endpoint
+   * contributes nothing, and when nothing was read the answer is
+   * `{ known: false }` — chat-service then sends no pre-flight cap and the
+   * provider's own 402 (retried once) is the backstop.
+   */
+  async getCreditHeadroom(config: ConnectorConfig): Promise<ProviderCreditHeadroom> {
+    const declared = this.preset.creditHeadroom;
+    if (declared === null) {
+      return UNKNOWN_CREDIT_HEADROOM;
+    }
+    try {
+      const baseUrl = resolvePresetBaseUrl(this.preset, config.baseUrl, config.accountId);
+      const readings = await Promise.all(
+        declared.endpoints.map((endpoint) =>
+          this.readCreditEndpoint(
+            resolvePresetEndpoint(endpoint, baseUrl, config.accountId),
+            config,
+            declared.format,
+          ),
+        ),
+      );
+      return combineCreditHeadroom(readings);
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? error.message : 'unknown';
+      logger.warn(`getCreditHeadroom: ${this.preset.key} unreadable — ${reason}`);
+      return UNKNOWN_CREDIT_HEADROOM;
+    }
+  }
+
+  private async readCreditEndpoint(
+    url: string,
+    config: ConnectorConfig,
+    format: ConnectorCreditHeadroomFormat,
+  ): Promise<ProviderCreditHeadroom> {
+    try {
+      const response = await httpGet<unknown>({
+        url,
+        headers: this.authHeaders(config),
+        allowedHosts: declaredHost(url),
+        timeoutMs: CREDIT_HEADROOM_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        // Status only: a credit endpoint's body can carry account details.
+        logger.debug(
+          `readCreditEndpoint: ${this.preset.key} status=${String(response.status)} — ignored`,
+        );
+        return UNKNOWN_CREDIT_HEADROOM;
+      }
+      return parseCreditHeadroom(format, response.data);
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? error.name : 'unknown';
+      logger.debug(`readCreditEndpoint: ${this.preset.key} failed (${reason}) — ignored`);
+      return UNKNOWN_CREDIT_HEADROOM;
+    }
   }
 
   private async probe(baseUrl: string, config: ConnectorConfig): Promise<number> {

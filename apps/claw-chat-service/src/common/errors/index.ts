@@ -4,3 +4,4 @@ export {
   DuplicateEntityException,
 } from './business.exception';
 export { SpeechProviderError } from './speech-provider.error';
+export { ProviderCreditExhaustedException } from './provider-credit-exhausted.exception';

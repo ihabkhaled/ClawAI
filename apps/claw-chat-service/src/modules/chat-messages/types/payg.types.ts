@@ -1,5 +1,7 @@
 import type { PaygHold } from '@claw/shared-entitlements';
 import type { PaygSurface } from '@claw/shared-types';
+import type { AssembledContext } from './context.types';
+import type { ThreadSettings } from './execution.types';
 
 /**
  * How one provider call identifies itself to the PAYG meter.
@@ -70,4 +72,20 @@ export type PaygOrchestrationCall = {
 export type PaygOrchestrationUsage = {
   promptTokens: number;
   completionTokens: number;
+};
+
+/**
+ * The per-call facts one chokepoint attempt needs, fixed across a credit
+ * retry. Only the output ceiling and the PAYG call identity change between the
+ * first attempt and the retry; everything here stays the same.
+ */
+export type ChokepointCall = {
+  provider: string;
+  model: string;
+  /** Already resolved for this lane's model (attachment delivery ran once). */
+  context: AssembledContext;
+  startTime: number;
+  usedFallback: boolean;
+  threadSettings: ThreadSettings | undefined;
+  routingMode: string | undefined;
 };

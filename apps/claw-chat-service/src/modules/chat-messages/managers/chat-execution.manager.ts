@@ -22,7 +22,7 @@ import {
 } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader, httpRequest, recordGet } from '../../../common/utilities';
-import { BusinessException } from '../../../common/errors';
+import { BusinessException, ProviderCreditExhaustedException } from '../../../common/errors';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from '../services/model-authorization-metrics.service';
@@ -157,10 +157,7 @@ import {
   MIN_OUTPUT_TOKENS,
   STANDARD_TARGET_LATENCY_MS,
 } from '../constants/execution-fast-path.constants';
-import {
-  computeDefaultMaxTokens,
-  pickDefaultCtxSizeForProvider,
-} from '../constants/output-token-bounds.constants';
+import { computeDefaultMaxTokensForProvider } from '../constants/output-token-bounds.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.constants';
 import {
@@ -189,12 +186,25 @@ import type {
 } from '../types/ollama-cloud-tool.types';
 import { providerFailureCode } from '../utilities/runtime-v2-provider-failure.utility';
 import {
+  carriesUrl,
+  creditRetryCeiling,
+  redactProviderText,
+  sanitizeUserFacingErrorMessage,
+  toProviderHttpFailure,
+} from '../utilities/provider-http-failure.utility';
+import {
+  PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
+  PROVIDER_REQUEST_FAILED_MESSAGE,
+} from '../constants/provider-credit.constants';
+import {
+  creditRetryPaygCall,
   isPaygDelegatedProvider,
   isPaygExemptProvider,
   normalizePaygProvider,
   paygSurfaceForTokenContext,
   paygUnmeteredHold,
   paygWorkflowForTokenContext,
+  withOutputCeiling,
 } from '../utilities/payg-metering.utility';
 import {
   PAYG_CLAMPED_NOTICE_DESCRIPTION,
@@ -215,6 +225,7 @@ import { VisionHelperManager } from './vision-helper.manager';
 import { VideoDeliveryManager } from './video-delivery.manager';
 import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
 import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
+import { ProviderCreditHeadroomClient } from '../clients/provider-credit-headroom.client';
 import type { FileContentCandidate, FileContentCandidateOptions } from '../types/file-writer.types';
 import {
   detectRequestedFileFormat,
@@ -228,7 +239,7 @@ import {
   stripWriterReasoning,
   toFileContentCandidates,
 } from '../utilities/file-writer.utility';
-import type { PaygCallOptions } from '../types/payg.types';
+import type { ChokepointCall, PaygCallOptions } from '../types/payg.types';
 import { IMAGE_GENERATION_PLAN_FEATURE } from '../constants/plan-feature-refusal.constants';
 import {
   imagePlanRefusalResponse,
@@ -240,6 +251,9 @@ export class ChatExecutionManager implements OnModuleInit {
   // Admin-managed FILE_WRITER models (F0). A plain instance, like the other
   // per-request clients, so the manager's constructor stays unchanged.
   private readonly fileWriterCandidates = new FileWriterCandidatesClient();
+  // Key-credit pre-flight (OpenRouter 402). A plain instance like the other
+  // per-request clients; it makes no call for a provider without credit endpoints.
+  private readonly providerCreditHeadroom = new ProviderCreditHeadroomClient();
 
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
@@ -863,6 +877,50 @@ export class ChatExecutionManager implements OnModuleInit {
       candidate.provider,
       candidate.model,
     );
+    // A credit refusal arrives as the HTTP status of the stream request, before
+    // a single token is emitted, so retrying here cannot duplicate output.
+    const attempt = (
+      options: ExecutionOptions | undefined,
+      call: PaygCallOptions | undefined,
+    ): Promise<LlmResponse> =>
+      this.streamCandidateOnce(
+        candidate,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        options,
+        streamContext,
+        tokenContext,
+        call,
+      );
+    return this.withProviderCreditRetry(
+      candidate.provider,
+      candidate.model,
+      executionOptions,
+      paygCall,
+      attempt,
+    );
+  }
+
+  /** One reserve → stream → settle pass of the streaming chokepoint. */
+  private async streamCandidateOnce(
+    candidate: { provider: string; model: string },
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    requestedOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+    tokenContext: TokenLedgerContext | undefined,
+    paygCall: PaygCallOptions | undefined,
+  ): Promise<LlmResponse> {
+    const executionOptions = await this.applyProviderCreditCap(
+      candidate.provider,
+      candidate.model,
+      context,
+      requestedOptions,
+    );
     const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
     const requestedMax = this.paygRequestedMaxOutputTokens(
       candidate.provider,
@@ -1404,10 +1462,7 @@ export class ChatExecutionManager implements OnModuleInit {
       this.setOutputCap(
         body,
         model,
-        computeDefaultMaxTokens(
-          pickDefaultCtxSizeForProvider(provider),
-          this.estimatePromptTokens(context),
-        ),
+        computeDefaultMaxTokensForProvider(provider, this.estimatePromptTokens(context)),
         'buildStreamingChatBody',
       );
     }
@@ -1621,7 +1676,12 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     const message = lastError instanceof Error ? lastError.message : String(lastError);
-    return isProviderErrorResponse(message)
+    // A URL anywhere in the message is treated exactly like a provider
+    // payload: the chain's own sentence replaces it. Every provider hop now
+    // classifies its failure (`toProviderHttpFailure`), so this is the last
+    // line, for an error text nobody classified — a truncated body is not
+    // parseable JSON, and that is how the OpenRouter key URL got through.
+    return isProviderErrorResponse(message) || carriesUrl(message)
       ? new BusinessException(
           this.describeChainFailure(attempts, lastError, message),
           'LLM_EXECUTION_FAILED',
@@ -1672,9 +1732,12 @@ export class ChatExecutionManager implements OnModuleInit {
     candidates: Array<{ provider: string; model: string }>,
     payload: MessageRoutedData,
   ): void {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    const rawMsg = error instanceof Error ? error.message : 'Unknown error';
+    // The fallback-attempt event reaches the browser, and the log line a log
+    // store three services can read — neither may carry a provider URL.
+    const errorMsg = sanitizeUserFacingErrorMessage(rawMsg, PROVIDER_REQUEST_FAILED_MESSAGE);
     this.logger.warn(
-      `Provider ${candidate.provider}/${candidate.model} failed (attempt ${String(candidateIndex + 1)}/${String(candidates.length)}): ${errorMsg}`,
+      `Provider ${candidate.provider}/${candidate.model} failed (attempt ${String(candidateIndex + 1)}/${String(candidates.length)}): ${redactProviderText(rawMsg)}`,
     );
     const nextCandidate = candidates.at(candidateIndex + 1);
     this.chatStreamService.emitFallbackAttempt(payload.threadId, {
@@ -2024,7 +2087,113 @@ export class ChatExecutionManager implements OnModuleInit {
     tokenContext?: TokenLedgerContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
+    // Delivery runs once, outside the retry: it can itself be a paid helper
+    // call (a vision description), which a credit retry must not repeat.
     const context = await this.withAttachmentDelivery(laneInput, provider, model);
+    const attempt = (
+      options: ExecutionOptions | undefined,
+      call: PaygCallOptions | undefined,
+    ): Promise<LlmResponse> =>
+      this.callProviderOnce(
+        { provider, model, context, startTime, usedFallback, threadSettings, routingMode },
+        options,
+        tokenContext,
+        call,
+      );
+    return this.withProviderCreditRetry(provider, model, executionOptions, paygCall, attempt);
+  }
+
+  /**
+   * Runs one chokepoint attempt, and — only when the provider refused for its
+   * OWN account's credit and said what it could afford ("can only afford N",
+   * OpenRouter) — exactly one more, capped at 90% of N.
+   *
+   * The retry is a distinct paid call: its own hold under its own request id,
+   * reserved and settled like any other (rule 37 §15). The first attempt's hold
+   * was already released by the attempt that failed. There is no loop: the
+   * retry's own failure is thrown as-is, and a stated N too small to answer in
+   * is not retried at all.
+   */
+  private async withProviderCreditRetry(
+    provider: string,
+    model: string,
+    executionOptions: ExecutionOptions | undefined,
+    paygCall: PaygCallOptions | undefined,
+    attempt: (
+      options: ExecutionOptions | undefined,
+      call: PaygCallOptions | undefined,
+    ) => Promise<LlmResponse>,
+  ): Promise<LlmResponse> {
+    try {
+      return await attempt(executionOptions, paygCall);
+    } catch (error: unknown) {
+      const ceiling = creditRetryCeiling(error);
+      if (ceiling === undefined) {
+        throw error;
+      }
+      this.logger.warn(
+        `withProviderCreditRetry: ${provider}/${model} refused for provider-account credit — retrying once with an output cap of ${String(ceiling)}`,
+      );
+      return attempt(withOutputCeiling(executionOptions, ceiling), creditRetryPaygCall(paygCall));
+    }
+  }
+
+  /**
+   * Pre-flight: lowers the output cap to what the provider KEY can pay for
+   * (OpenRouter pre-authorizes `max_tokens × price` and refuses with a 402).
+   *
+   * Runs before the PAYG hold so the user's reservation is sized to the cap
+   * actually sent. The final ceiling is the smallest of every cap in the chain:
+   * thread / fast-path / quota (`applyQuotaCeiling`), the hosted default, the
+   * PAYG hold, and this. A key that cannot pay for a minimal answer is refused
+   * here with PROVIDER_CREDIT_EXHAUSTED — no hold, no provider call — and the
+   * fallback chain moves on (a 503, not the user's 402). An unknown balance or
+   * price sends no cap; the reactive retry covers what this cannot see.
+   */
+  private async applyProviderCreditCap(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    executionOptions: ExecutionOptions | undefined,
+  ): Promise<ExecutionOptions | undefined> {
+    const affordable = await this.providerCreditHeadroom.affordableOutputTokens(
+      provider,
+      model,
+      this.estimatePromptTokens(context),
+    );
+    if (affordable === undefined) {
+      return executionOptions;
+    }
+    if (affordable < PROVIDER_CREDIT_MIN_OUTPUT_TOKENS) {
+      this.logger.warn(
+        `applyProviderCreditCap: ${provider}/${model} key cannot pay for a minimal answer — refused before the call`,
+      );
+      throw new ProviderCreditExhaustedException(undefined);
+    }
+    const requested = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
+    if (affordable >= requested) {
+      return executionOptions;
+    }
+    this.logger.log(
+      `applyProviderCreditCap: ${provider}/${model} output cap ${String(requested)} -> ${String(affordable)} to fit the provider key's credit`,
+    );
+    return withOutputCeiling(executionOptions, affordable);
+  }
+
+  /** One reserve → dispatch → settle pass of the buffered chokepoint. */
+  private async callProviderOnce(
+    call: ChokepointCall,
+    requestedOptions: ExecutionOptions | undefined,
+    tokenContext: TokenLedgerContext | undefined,
+    paygCall: PaygCallOptions | undefined,
+  ): Promise<LlmResponse> {
+    const { provider, model, context, startTime, usedFallback, threadSettings, routingMode } = call;
+    const executionOptions = await this.applyProviderCreditCap(
+      provider,
+      model,
+      context,
+      requestedOptions,
+    );
     const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
     const requestedMax = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
     const hold = await this.reservePaygHold({
@@ -2248,10 +2417,7 @@ export class ChatExecutionManager implements OnModuleInit {
   ): number {
     return (
       executionOptions?.maxOutputTokens ??
-      computeDefaultMaxTokens(
-        pickDefaultCtxSizeForProvider(provider),
-        this.estimatePromptTokens(context),
-      )
+      computeDefaultMaxTokensForProvider(provider, this.estimatePromptTokens(context))
     );
   }
 
@@ -2505,8 +2671,8 @@ export class ChatExecutionManager implements OnModuleInit {
     // local-ollama gets a tight 4_096 default and won't time out on CPU.
     const effectiveMaxTokens =
       maxTokens ??
-      computeDefaultMaxTokens(
-        pickDefaultCtxSizeForProvider(provider),
+      computeDefaultMaxTokensForProvider(
+        provider,
         estimateTokensFromText(`${systemPrompt}\n${userPrompt}`),
       );
     const requestedMaxTokens = Math.min(effectiveMaxTokens, HARD_MAX_OUTPUT_TOKENS);
@@ -2595,13 +2761,15 @@ export class ChatExecutionManager implements OnModuleInit {
         timeoutMs: args.timeoutMs,
       });
       if (!response.ok) {
-        throw new BusinessException(
-          this.extractHttpErrorMessage(
-            response.data,
-            `Provider ${args.provider} returned ${String(response.status)}`,
-          ),
-          providerFailureCode(response.status),
+        this.logger.error(
+          `generateOnce: ${args.provider} returned status=${String(response.status)} body=${redactProviderText(response.data)}`,
         );
+        throw toProviderHttpFailure({
+          status: response.status,
+          body: response.data,
+          failureCode: providerFailureCode(response.status),
+          fallbackMessage: `Provider ${args.provider} returned ${String(response.status)}`,
+        });
       }
       return args.isOllamaConnector
         ? this.parseOllamaChatResponse(
@@ -2665,14 +2833,15 @@ export class ChatExecutionManager implements OnModuleInit {
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
     if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Ollama service returned status ${String(response.status)}`,
-      );
       this.logger.error(
-        `callOllama: Ollama returned error status=${String(response.status)} message=${errorMessage}`,
+        `callOllama: Ollama returned error status=${String(response.status)} body=${redactProviderText(response.data)}`,
       );
-      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
+      throw toProviderHttpFailure({
+        status: response.status,
+        body: response.data,
+        failureCode: 'OLLAMA_REQUEST_FAILED',
+        fallbackMessage: `Ollama service returned status ${String(response.status)}`,
+      });
     }
     return this.buildOllamaResponse(response.data, startTime, usedFallback, requestBody.prompt);
   }
@@ -2705,12 +2874,13 @@ export class ChatExecutionManager implements OnModuleInit {
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
     if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Ollama service returned status ${String(response.status)}`,
-      );
       this.logger.error(`callOllamaChat: failed status=${String(response.status)}`);
-      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
+      throw toProviderHttpFailure({
+        status: response.status,
+        body: response.data,
+        failureCode: 'OLLAMA_REQUEST_FAILED',
+        fallbackMessage: `Ollama service returned status ${String(response.status)}`,
+      });
     }
     return this.parseOllamaChatResponse(
       response.data,
@@ -2757,10 +2927,7 @@ export class ChatExecutionManager implements OnModuleInit {
     // inside the 5-min HTTP timeout.
     const maxOutputTokens =
       resolvedMaxOutputTokens ??
-      computeDefaultMaxTokens(
-        pickDefaultCtxSizeForProvider(OLLAMA_PROVIDER),
-        estimateTokensFromText(prompt),
-      );
+      computeDefaultMaxTokensForProvider(OLLAMA_PROVIDER, estimateTokensFromText(prompt));
     return {
       model: resolvedModel,
       prompt: constrainedPrompt,
@@ -2845,14 +3012,15 @@ export class ChatExecutionManager implements OnModuleInit {
     });
 
     if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `llama.cpp service returned status ${String(response.status)}`,
-      );
       this.logger.error(
-        `callLlamacpp: llama.cpp returned error status=${String(response.status)} message=${errorMessage}`,
+        `callLlamacpp: llama.cpp returned error status=${String(response.status)} body=${redactProviderText(response.data)}`,
       );
-      throw new BusinessException(errorMessage, 'LLAMACPP_REQUEST_FAILED');
+      throw toProviderHttpFailure({
+        status: response.status,
+        body: response.data,
+        failureCode: 'LLAMACPP_REQUEST_FAILED',
+        fallbackMessage: `llama.cpp service returned status ${String(response.status)}`,
+      });
     }
 
     const promptText = this.buildPromptTextForEstimate(context);
@@ -2982,14 +3150,15 @@ export class ChatExecutionManager implements OnModuleInit {
       signal: abortSignal,
     });
     if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Cloud provider ${provider} returned status ${String(response.status)}`,
-      );
       this.logger.error(
-        `callCloudProvider: ${provider} returned error status=${String(response.status)} message=${errorMessage}`,
+        `callCloudProvider: ${provider} returned error status=${String(response.status)} body=${redactProviderText(response.data)}`,
       );
-      throw new BusinessException(errorMessage, providerFailureCode(response.status));
+      throw toProviderHttpFailure({
+        status: response.status,
+        body: response.data,
+        failureCode: providerFailureCode(response.status),
+        fallbackMessage: `Cloud provider ${provider} returned status ${String(response.status)}`,
+      });
     }
     return response.data;
   }
@@ -3389,14 +3558,15 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     if (!response.ok) {
       await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Cloud provider ${provider} returned status ${String(response.status)}`,
-      );
       this.logger.error(
-        `runOllamaCloudToolLoop: turn=${String(iteration)} ${provider} returned status=${String(response.status)} message=${errorMessage}`,
+        `runOllamaCloudToolLoop: turn=${String(iteration)} ${provider} returned status=${String(response.status)} body=${redactProviderText(response.data)}`,
       );
-      throw new BusinessException(errorMessage, providerFailureCode(response.status));
+      throw toProviderHttpFailure({
+        status: response.status,
+        body: response.data,
+        failureCode: providerFailureCode(response.status),
+        fallbackMessage: `Cloud provider ${provider} returned status ${String(response.status)}`,
+      });
     }
     const toolCalls = response.data.message?.tool_calls ?? [];
     const content = response.data.message?.content ?? '';
@@ -3420,10 +3590,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }): Promise<PaygHold> {
     const requestedMax =
       args.initialBody.options?.num_predict ??
-      computeDefaultMaxTokens(
-        pickDefaultCtxSizeForProvider(args.provider),
-        estimateTokensFromText(args.promptText),
-      );
+      computeDefaultMaxTokensForProvider(args.provider, estimateTokensFromText(args.promptText));
     return this.accessControlService.reserveCredit({
       userId: args.userId,
       requestId: `${args.baseRequestId}:turn:${String(args.iteration)}`,
@@ -4398,10 +4565,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const numPredict =
       explicitMaxOutputTokens ??
       Math.min(
-        computeDefaultMaxTokens(
-          pickDefaultCtxSizeForProvider(OLLAMA_CONNECTOR_PROVIDER),
-          promptTokensEstimate,
-        ),
+        computeDefaultMaxTokensForProvider(OLLAMA_CONNECTOR_PROVIDER, promptTokensEstimate),
         HARD_MAX_OUTPUT_TOKENS,
       );
 
@@ -5114,42 +5278,15 @@ Your task:
     });
 
     if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Failed to fetch connector config for provider ${provider}`,
-      );
-      throw new BusinessException(errorMessage, 'CONNECTOR_CONFIG_FETCH_FAILED');
+      throw toProviderHttpFailure({
+        status: response.status,
+        body: response.data,
+        failureCode: 'CONNECTOR_CONFIG_FETCH_FAILED',
+        fallbackMessage: `Failed to fetch connector config for provider ${provider}`,
+      });
     }
 
     return response.data;
-  }
-
-  private extractHttpErrorMessage(responseData: unknown, fallbackMessage: string): string {
-    if (responseData !== null && typeof responseData === 'object') {
-      const payload = responseData as Record<string, unknown>;
-      const message = payload['message'];
-      if (typeof message === 'string' && message.trim().length > 0) {
-        return message;
-      }
-
-      const error = payload['error'];
-      if (typeof error === 'string' && error.trim().length > 0) {
-        return error;
-      }
-
-      // Anthropic and OpenAI both nest the useful sentence one level down, as
-      // { error: { message } }. Reading only the string form threw that away and
-      // left every provider rejection logged as a bare status code, which is the
-      // one thing a status code cannot explain.
-      if (error !== null && typeof error === 'object') {
-        const nested = (error as Record<string, unknown>)['message'];
-        if (typeof nested === 'string' && nested.trim().length > 0) {
-          return nested;
-        }
-      }
-    }
-
-    return fallbackMessage;
   }
 
   private normalizeCloudOllamaModel(model: string): string {

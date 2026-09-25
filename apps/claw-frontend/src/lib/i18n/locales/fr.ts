@@ -540,6 +540,8 @@ export const fr: TranslationDictionary = {
         'Ce modèle ne peut pas traiter les vidéos jointes. Choisissez Gemini 2.5 Flash ou Pro, ou passez en mode Automatique.',
       videoAttachmentLocalModelUnavailable:
         'Les vidéos jointes ne sont pas disponibles en mode Local uniquement ou Confidentialité d’abord, car aucun modèle local compatible avec la vidéo n’est configuré.',
+      providerCreditExhausted:
+        'Le fournisseur de ce modèle n’a plus de crédit pour le moment. Choisissez un autre modèle ou réessayez plus tard.',
     },
     imageGeneration: "Génération d'image",
     generatedImage: 'Image générée',

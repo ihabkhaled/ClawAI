@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConnectorsController } from './controllers/connectors.controller';
 import { ConnectorsInternalController } from './controllers/connectors-internal.controller';
 import { PublicModelCatalogController } from './controllers/public-model-catalog.controller';
+import { CreditHeadroomInternalController } from './controllers/credit-headroom-internal.controller';
+import { CreditHeadroomService } from './services/credit-headroom.service';
+import { CreditHeadroomManager } from './managers/credit-headroom.manager';
 import { PublicModelCatalogService } from './services/public-model-catalog.service';
 import { ConnectorsService } from './services/connectors.service';
 import { ConnectorsManager } from './managers/connectors.manager';
@@ -12,9 +15,16 @@ import { HealthEventsRepository } from './repositories/health-events.repository'
 import { SyncRunsRepository } from './repositories/sync-runs.repository';
 
 @Module({
-  controllers: [ConnectorsController, ConnectorsInternalController, PublicModelCatalogController],
+  controllers: [
+    ConnectorsController,
+    ConnectorsInternalController,
+    PublicModelCatalogController,
+    CreditHeadroomInternalController,
+  ],
   providers: [
     PublicModelCatalogService,
+    CreditHeadroomService,
+    CreditHeadroomManager,
     ConnectorsService,
     ConnectorsManager,
     ModelsSnapshotManager,

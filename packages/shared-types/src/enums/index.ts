@@ -8,6 +8,7 @@ export { ConnectorPresetCategory } from './connector-preset-category.enum';
 export { ConnectorPresetGroup } from './connector-preset-group.enum';
 export { ConnectorPresetAuthHeader } from './connector-preset-auth-header.enum';
 export { ConnectorPresetExtraField } from './connector-preset-extra-field.enum';
+export { ConnectorCreditHeadroomFormat } from './connector-credit-headroom-format.enum';
 export { ConnectorModelsResponseFormat } from './connector-models-response-format.enum';
 export { ModelLifecycle } from './model-lifecycle.enum';
 export { RoutingMode } from './routing-mode.enum';

@@ -1,5 +1,6 @@
 import {
   ConnectorAuthType,
+  ConnectorCreditHeadroomFormat,
   ConnectorModelsResponseFormat,
   type ConnectorPreset,
   ConnectorPresetAuthHeader,
@@ -113,6 +114,13 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: true,
     supportsNativeTools: true,
     visionModelPattern: null,
+    // OpenRouter pre-authorizes max_tokens x price against the key and refuses
+    // with 402 "can only afford N". `/key` reports the key's own limit left,
+    // `/credits` the account balance; the smaller one binds.
+    creditHeadroom: {
+      endpoints: ['https://openrouter.ai/api/v1/key', 'https://openrouter.ai/api/v1/credits'],
+      format: ConnectorCreditHeadroomFormat.OPENROUTER,
+    },
     links: {
       register: 'https://openrouter.ai/sign-up',
       apiKeys: 'https://openrouter.ai/settings/keys',
@@ -140,6 +148,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: true,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://console.groq.com',
       apiKeys: 'https://console.groq.com/keys',
@@ -167,6 +176,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://cloud.cerebras.ai',
       apiKeys: 'https://cloud.cerebras.ai',
@@ -197,6 +207,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: true,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://cloud.sambanova.ai',
       apiKeys: 'https://cloud.sambanova.ai/apis',
@@ -225,6 +236,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://deepinfra.com/login',
       apiKeys: 'https://deepinfra.com/dash/api_keys',
@@ -254,6 +266,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://fireworks.ai/login',
       apiKeys: 'https://app.fireworks.ai/settings/users/api-keys',
@@ -282,6 +295,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://api.together.ai/signup',
       apiKeys: 'https://api.together.ai/settings/api-keys',
@@ -310,6 +324,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: true,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://console.mistral.ai',
       apiKeys: 'https://console.mistral.ai/api-keys',
@@ -338,6 +353,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     supportsNativeTools: true,
     // Moonshot names its image-input SKUs `*-vision-*` (moonshot-v1-8k-vision-preview).
     visionModelPattern: /vision/u,
+    creditHeadroom: null,
     links: {
       register: 'https://platform.moonshot.ai',
       apiKeys: 'https://platform.moonshot.ai/console/api-keys',
@@ -380,6 +396,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://z.ai/model-api',
       apiKeys: 'https://z.ai/manage-apikey/apikey-list',
@@ -408,6 +425,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     supportsNativeTools: true,
     // Qwen's vision-language SKUs carry a `-vl` segment (qwen-vl-max, qwen2.5-vl-72b-instruct).
     visionModelPattern: /-vl(-|$)/u,
+    creditHeadroom: null,
     links: {
       register: 'https://www.alibabacloud.com/product/model-studio',
       apiKeys: 'https://modelstudio.console.alibabacloud.com',
@@ -439,6 +457,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     // say which; off until it is proven per model.
     supportsNativeTools: false,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://dash.cloudflare.com/sign-up',
       apiKeys: 'https://dash.cloudflare.com/profile/api-tokens',
@@ -467,6 +486,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: true,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://vercel.com/signup',
       apiKeys: 'https://vercel.com/dashboard',
@@ -497,6 +517,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: false,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://www.perplexity.ai',
       apiKeys: 'https://www.perplexity.ai/account/api',
@@ -528,6 +549,7 @@ export const CONNECTOR_PRESETS: readonly ConnectorPreset[] = [
     hasFreeTier: false,
     supportsNativeTools: true,
     visionModelPattern: null,
+    creditHeadroom: null,
     links: {
       register: 'https://dashboard.cohere.com/welcome/register',
       apiKeys: 'https://dashboard.cohere.com/api-keys',

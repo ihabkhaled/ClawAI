@@ -532,6 +532,8 @@ export const fa: TranslationDictionary = {
         'این مدل نمی‌تواند پیوست‌های ویدیویی را پردازش کند.Gemini 2.5 Flash یا Pro را انتخاب کنید یا به Auto بروید.',
       videoAttachmentLocalModelUnavailable:
         'پیوست‌های ویدیویی در حالت فقط محلی یا حریم خصوصی در دسترس نیستند زیرا هیچ مدلی با قابلیت ویدیوی محلی پیکربندی نشده است.',
+      providerCreditExhausted:
+        'اعتبار ارائه‌دهندهٔ این مدل در حال حاضر تمام شده است. مدل دیگری انتخاب کنید یا بعداً دوباره تلاش کنید.',
     },
     imageGeneration: 'تولید تصویر',
     generatedImage: 'تصویر تولید شده',

@@ -1,0 +1,141 @@
+import { BusinessException, ProviderCreditExhaustedException } from '../../../common/errors';
+import {
+  PROVIDER_AFFORDABLE_TOKENS_PATTERN,
+  PROVIDER_CREDIT_FAILURE_PATTERN,
+  PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
+  PROVIDER_CREDIT_SAFETY_DENOMINATOR,
+  PROVIDER_CREDIT_SAFETY_NUMERATOR,
+  PROVIDER_TEXT_MAX_CHARS,
+  PROVIDER_TEXT_URL_PATTERN,
+  PROVIDER_TEXT_URL_REPLACEMENT,
+} from '../constants/provider-credit.constants';
+import { type ProviderHttpFailureInput } from '../types/provider-http-failure.types';
+
+/**
+ * The one place a provider's non-2xx response becomes an error chat-service
+ * throws. Every provider hop — buffered, streaming, the tool loop and
+ * `generateOnce` — goes through here, so there is one rule for what a user can
+ * ever read of a provider's own text.
+ *
+ * Production, 2026-09-25: OpenRouter answered 402 with a sentence ending in a
+ * key-management URL containing the key hash. The streaming hop threw the raw
+ * body truncated to 300 chars; truncation broke the JSON, so the chain's
+ * envelope guard did not recognise it, and the whole thing was stored as the
+ * assistant's reply. The buffered hop threw the nested `error.message`, URL
+ * and all. Both now end here.
+ */
+
+function bodyText(body: unknown): string {
+  if (typeof body === 'string') {
+    return body;
+  }
+  if (body === undefined || body === null) {
+    return '';
+  }
+  try {
+    return JSON.stringify(body);
+  } catch {
+    return '';
+  }
+}
+
+function parseBody(body: unknown): unknown {
+  if (typeof body !== 'string') {
+    return body;
+  }
+  try {
+    return JSON.parse(body) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function nonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+/** `message`, `error` (string) or `error.message` — the shapes providers use. */
+function providerSentence(body: unknown): string | undefined {
+  const parsed = parseBody(body);
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return undefined;
+  }
+  const record = parsed as Record<string, unknown>;
+  const error = record['error'];
+  const nested =
+    typeof error === 'object' && error !== null && !Array.isArray(error)
+      ? nonEmptyString((error as Record<string, unknown>)['message'])
+      : undefined;
+  return nonEmptyString(record['message']) ?? nonEmptyString(error) ?? nested;
+}
+
+/** True when the text contains anything URL-shaped. */
+export function carriesUrl(text: string): boolean {
+  PROVIDER_TEXT_URL_PATTERN.lastIndex = 0;
+  const found = PROVIDER_TEXT_URL_PATTERN.test(text);
+  PROVIDER_TEXT_URL_PATTERN.lastIndex = 0;
+  return found;
+}
+
+/** The token ceiling a provider said it would accept ("can only afford N"). */
+export function parseAffordableOutputTokens(text: string | undefined): number | undefined {
+  if (text === undefined) {
+    return undefined;
+  }
+  const match = PROVIDER_AFFORDABLE_TOKENS_PATTERN.exec(text);
+  const digits = match?.[1]?.replaceAll(',', '');
+  if (digits === undefined || digits.length === 0) {
+    return undefined;
+  }
+  const value = Number.parseInt(digits, 10);
+  return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+}
+
+/**
+ * The single reactive retry's output ceiling: 90% of the provider's stated
+ * ceiling, or `undefined` when there is nothing worth retrying — no stated
+ * ceiling, not a credit error, or an answer too small to be useful.
+ */
+export function creditRetryCeiling(error: unknown): number | undefined {
+  if (!(error instanceof ProviderCreditExhaustedException)) {
+    return undefined;
+  }
+  const affordable = error.affordableOutputTokens;
+  if (affordable === undefined) {
+    return undefined;
+  }
+  const ceiling = Math.floor(
+    (affordable * PROVIDER_CREDIT_SAFETY_NUMERATOR) / PROVIDER_CREDIT_SAFETY_DENOMINATOR,
+  );
+  return ceiling >= PROVIDER_CREDIT_MIN_OUTPUT_TOKENS ? ceiling : undefined;
+}
+
+/** Provider text safe for a log line: every URL replaced, length bounded. */
+export function redactProviderText(body: unknown): string {
+  const redacted = bodyText(body).replace(PROVIDER_TEXT_URL_PATTERN, PROVIDER_TEXT_URL_REPLACEMENT);
+  return redacted.length > PROVIDER_TEXT_MAX_CHARS
+    ? `${redacted.slice(0, PROVIDER_TEXT_MAX_CHARS - 3)}...`
+    : redacted;
+}
+
+/**
+ * The last guard before an error string is stored or shown: anything carrying
+ * a URL is replaced whole. Redacting in place would still show a user a
+ * provider's billing sentence; the fallback is a sentence we wrote.
+ */
+export function sanitizeUserFacingErrorMessage(message: string, fallback: string): string {
+  return carriesUrl(message) ? fallback : message;
+}
+
+export function toProviderHttpFailure(input: ProviderHttpFailureInput): BusinessException {
+  const text = bodyText(input.body);
+  if (input.status === 402 || PROVIDER_CREDIT_FAILURE_PATTERN.test(text)) {
+    return new ProviderCreditExhaustedException(parseAffordableOutputTokens(text));
+  }
+  const sentence = providerSentence(input.body);
+  const safe =
+    sentence === undefined || carriesUrl(sentence) || sentence.length > PROVIDER_TEXT_MAX_CHARS
+      ? input.fallbackMessage
+      : sentence;
+  return new BusinessException(safe, input.failureCode);
+}

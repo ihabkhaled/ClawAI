@@ -50,6 +50,7 @@ import {
   getStoredReasoning,
   resolveFileDelivery,
 } from '@/utilities';
+import { resolveStoredErrorMessage } from '@/utilities/chat-stream-error.utility';
 import { readFileLimit } from '@/utilities/file-limit.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
 import { readPlanFeatureRefusal } from '@/utilities/plan-feature-refusal.utility';
@@ -108,8 +109,9 @@ function MessageBubbleBase({
       ? metadata['generationId']
       : undefined;
   const hasVisibleAssistantContent = message.content.trim().length > 0;
+  const storedErrorText = resolveStoredErrorMessage(metadata, t);
   const assistantContent = hasVisibleAssistantContent ? (
-    <MarkdownRenderer content={message.content} />
+    <MarkdownRenderer content={storedErrorText ?? message.content} />
   ) : (
     <p className="text-muted-foreground whitespace-pre-wrap">{t('chat.noVisibleAnswer')}</p>
   );

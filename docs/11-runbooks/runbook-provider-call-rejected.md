@@ -22,8 +22,9 @@ them are per-_model_, not per-provider, so "OpenAI is down" is usually wrong.
 docker logs claw-chat-service --since 30m 2>&1 | grep -A 6 "failed (attempt"
 ```
 
-That WARN line carries the verbatim provider error. Everything below is read off
-it. If it says nothing useful, widen with `grep -B 2 -A 10 "returned 4"` to see
+That WARN line carries the provider error (every URL replaced by `<url>` since
+ADR-124; the full body is in the `returned status=... body=...` line logged by
+the hop just before it). Everything below is read off it. If it says nothing useful, widen with `grep -B 2 -A 10 "returned 4"` to see
 the status the HTTP client logged.
 
 ## The three causes
@@ -107,6 +108,40 @@ HTTP **429** with `insufficient_quota` / `credit_balance_exhausted` means the
 provider account is out of credit. Nothing in this repo can fix it — top up the
 account. Note 429 here does **not** mean rate limiting, so backing off and
 retrying will never clear it.
+
+### 2b. OpenRouter: "can only afford N" (the KEY's credit, ADR-124)
+
+```
+{"error":{"message":"This request requires more credits, or fewer max_tokens.
+You requested up to 31776 tokens, but can only afford 9063. To increase, visit
+https://openrouter.ai/.../keys/<hash> ...","code":402}}
+```
+
+OpenRouter pre-authorizes `max_tokens × output price` against the key's
+remaining credit (its own limit, or the account balance). Since 2026-09-25:
+
+- The user reads only the translated `chat.errors.providerCreditExhausted`
+  sentence (code `PROVIDER_CREDIT_EXHAUSTED`, HTTP 503). If they ever see raw
+  JSON or a URL, the classifier was bypassed — find the hop that throws without
+  `toProviderHttpFailure`.
+- Hosted turns ask for at most 16,384 output tokens by default, not ~31.7k.
+- Before the call, chat caps `max_tokens` to what the key can afford (logged
+  `applyProviderCreditCap: ... output cap A -> B`). A 402 that still happens is
+  retried once at 90% of N (`withProviderCreditRetry: ... retrying once`).
+- `applyProviderCreditCap: ... refused before the call` = the key cannot pay
+  for 256 tokens. Top the key up or raise its limit — nothing in the repo fixes it.
+
+Check what the key can spend (connector-service caches 60 s):
+
+```bash
+docker exec claw-chat-service-1 sh -lc 'wget -qO- --header "Authorization: Service $INTER_SERVICE_AUTH_TOKEN" \
+  "$CONNECTOR_SERVICE_URL/api/v1/internal/connectors/credit-headroom?provider=OPENROUTER"'
+# {"known":true,"remainingMicroUsd":21300}   known=false → no pre-flight cap (fail open)
+```
+
+No pre-flight cap is applied when the model has no real price on routing's
+rate card (unpriced or fallback rate) — only the retry protects those turns.
+Logs carry the provider body with every URL replaced by `<url>`.
 
 ### 3. A rejected credential or a malformed request
 

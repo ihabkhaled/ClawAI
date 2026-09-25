@@ -131,6 +131,11 @@ import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
 import { fileWriterField, rerouteFileFollowUp } from '../utilities/file-writer.utility';
 import {
+  redactProviderText,
+  sanitizeUserFacingErrorMessage,
+} from '../utilities/provider-http-failure.utility';
+import { PROVIDER_REQUEST_FAILED_MESSAGE } from '../constants/provider-credit.constants';
+import {
   isTrivialUserText,
   resolveRoutingContent,
 } from '../utilities/attachment-only-turn.utility';
@@ -1228,11 +1233,18 @@ export class ChatMessagesService implements OnModuleInit {
     chronologicalMessages: ChatMessage[],
     startedAt: number,
   ): Promise<void> {
-    const errorMsg = error instanceof Error ? error.message : 'All providers failed';
+    // Stored as the assistant's reply and pushed over SSE, so it is the last
+    // place a provider's own text could reach a user. Anything carrying a URL
+    // (a billing or key-management link) is replaced whole, whichever path
+    // produced it; the log line keeps the redacted original.
+    const rawMsg = error instanceof Error ? error.message : 'All providers failed';
+    const errorMsg = sanitizeUserFacingErrorMessage(rawMsg, PROVIDER_REQUEST_FAILED_MESSAGE);
     const errorCode = error instanceof BusinessException ? error.code : undefined;
     const errorMessageKey = error instanceof BusinessException ? error.messageKey : undefined;
     const failureLatencyMs = Math.max(1, Date.now() - startedAt);
-    this.logger.error(`handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`);
+    this.logger.error(
+      `handleMessageRouted: failed for message ${payload.messageId} - ${redactProviderText(rawMsg)}`,
+    );
     const errorMessage = await this.storeErrorResponse(
       payload,
       errorMsg,
@@ -1415,7 +1427,7 @@ export class ChatMessagesService implements OnModuleInit {
       if (await this.runtimeV2LoopManager.tryHandleRouted(parsed)) return;
       await this.handleMessageRouted(parsed);
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      const errorMsg = redactProviderText(error instanceof Error ? error.message : 'Unknown error');
       this.logger.error(
         `Failed to handle message.routed for message ${parsed.messageId}: ${errorMsg}`,
       );

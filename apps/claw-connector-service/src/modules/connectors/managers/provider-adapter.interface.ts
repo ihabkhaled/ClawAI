@@ -1,5 +1,6 @@
 import type { ModelBehaviorProbeResult } from '@claw/shared-types';
 import { type HealthCheckResult, type NormalizedModel } from '../types/connectors.types';
+import { type ProviderCreditHeadroom } from '../types/credit-headroom.types';
 
 export interface ProviderAdapter {
   healthCheck(config: ConnectorConfig): Promise<HealthCheckResult>;
@@ -12,6 +13,10 @@ export interface ProviderAdapter {
     config: ConnectorConfig,
     modelKey: string,
   ): Promise<ModelBehaviorProbeResult>;
+  // Optional: only providers that pre-authorize output against the key's
+  // credit (OpenRouter) expose it. Never throws — an unreadable balance is
+  // `{ known: false }`, and the caller then applies no pre-flight cap.
+  getCreditHeadroom?(config: ConnectorConfig): Promise<ProviderCreditHeadroom>;
 }
 
 export type ConnectorConfig = {

@@ -160,6 +160,14 @@ paid model, rule 1 applies to it like anything else.
     provider auth classifies differently, spends credit the user was just told
     they lack. Reference: file-service `TranscriptionMeterManager` returns
     `REFUSED` instead of throwing, so `TranscriptionManager` cannot mistake it.
+19. **A provider-ACCOUNT credit refusal is not a user credit refusal.** When
+    the operator's key at a provider is out of credit (OpenRouter 402 "can only
+    afford N"), chat-service throws `PROVIDER_CREDIT_EXHAUSTED` with HTTP
+    **503**, never 402 — a 402 ends the candidate walk (§18), and an empty
+    provider key says nothing about the next provider. Its one reactive retry
+    is a distinct paid call: its own hold under `<requestId>:credit-retry`
+    (§15), never the first attempt's key. The provider's text never reaches the
+    user ([ADR-124](../docs/13-adr/adr-124-provider-key-credit-preflight-and-one-retry.md)).
 
 ## Prohibited patterns
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PAYG_DEFAULT_PROVIDERS } from '@claw/shared-constants';
 import {
+  ConnectorCreditHeadroomFormat,
   ConnectorPresetCategory,
   ConnectorPresetExtraField,
   ConnectorPresetGroup,
@@ -228,5 +229,23 @@ describe('non-chat model pattern', () => {
     'qwen2.5-vl-72b-instruct',
   ])('keeps %s', (id) => {
     expect(CONNECTOR_PRESET_NON_CHAT_MODEL_PATTERN.test(id)).toBe(false);
+  });
+});
+
+describe('key-credit headroom', () => {
+  it('OpenRouter declares its key and account credit endpoints', () => {
+    const openRouter = getConnectorPreset(ConnectorProvider.OPENROUTER);
+    expect(openRouter?.creditHeadroom?.format).toBe(ConnectorCreditHeadroomFormat.OPENROUTER);
+    expect(openRouter?.creditHeadroom?.endpoints).toEqual([
+      'https://openrouter.ai/api/v1/key',
+      'https://openrouter.ai/api/v1/credits',
+    ]);
+  });
+
+  it('every other preset declares none, so chat-service makes no extra hop for it', () => {
+    const others = CONNECTOR_PRESETS.filter(
+      (preset) => preset.key !== ConnectorProvider.OPENROUTER,
+    );
+    expect(others.every((preset) => preset.creditHeadroom === null)).toBe(true);
   });
 });

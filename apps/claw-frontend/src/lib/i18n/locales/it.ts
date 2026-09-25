@@ -540,6 +540,8 @@ export const it: TranslationDictionary = {
         'Questo modello non può elaborare gli allegati video. Scegli Gemini 2.5 Flash o Pro oppure passa alla modalità Auto.',
       videoAttachmentLocalModelUnavailable:
         'Gli allegati video non sono disponibili nelle modalità Solo locale o Privacy prima di tutto perché non è configurato alcun modello locale compatibile con i video.',
+      providerCreditExhausted:
+        'Il fornitore di questo modello ha esaurito il credito al momento. Scegli un altro modello o riprova più tardi.',
     },
     imageGeneration: 'Generazione immagini',
     generatedImage: 'Immagine generata',

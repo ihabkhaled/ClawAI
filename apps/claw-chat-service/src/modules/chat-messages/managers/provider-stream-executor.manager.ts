@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AiReasoningVisibility, AiStreamProtocol, AiStreamStage } from '../../../common/enums';
 import { httpStream } from '../../../common/utilities';
-import { BusinessException } from '../../../common/errors';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { ProviderStreamReader } from '../utilities/provider-stream-reader.utility';
 import { ThinkingFragmentScanner } from '../utilities/thinking-fragment-scanner.utility';
 import { StreamProgressTracker } from '../utilities/stream-progress-tracker.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { computeFinalStreamMetrics } from '../utilities/final-metrics.utility';
+import {
+  redactProviderText,
+  toProviderHttpFailure,
+} from '../utilities/provider-http-failure.utility';
 import {
   METRICS_THROTTLE_MS,
   SIMULATED_CHUNK_DELAY_MS,
@@ -54,11 +57,20 @@ export class ProviderStreamExecutor {
     });
 
     if (!result.ok) {
-      throw new BusinessException(
-        this.truncateError(result.errorBody) ??
-          `Provider ${input.provider} returned ${String(result.status)}`,
-        'STREAM_PROVIDER_REQUEST_FAILED',
+      // The raw body used to be thrown here, truncated to 300 chars — which
+      // broke its JSON, slipped past the chain's envelope guard, and put an
+      // OpenRouter key-management URL into the transcript (2026-09-25). The
+      // shared classifier is the only thing that turns provider text into an
+      // error now; the log line gets the URL-redacted body.
+      this.logger.warn(
+        `run: ${input.provider}/${input.model} returned status=${String(result.status)} body=${redactProviderText(result.errorBody)}`,
       );
+      throw toProviderHttpFailure({
+        status: result.status,
+        body: result.errorBody,
+        failureCode: 'STREAM_PROVIDER_REQUEST_FAILED',
+        fallbackMessage: `Provider ${input.provider} returned ${String(result.status)}`,
+      });
     }
 
     this.transitionStage(ctx, state, AiStreamStage.WAITING_FIRST_TOKEN, 'Waiting for first token');
@@ -431,12 +443,5 @@ export class ProviderStreamExecutor {
         finish();
       }
     });
-  }
-
-  private truncateError(body: string | undefined): string | undefined {
-    if (body === undefined || body.length === 0) {
-      return undefined;
-    }
-    return body.length > 300 ? `${body.slice(0, 297)}...` : body;
   }
 }

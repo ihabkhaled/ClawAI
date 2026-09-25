@@ -667,6 +667,39 @@ chain drafting and implementation handoff all spend real provider money through
 the callers that most need it. The response carries `clamped` so the calling
 service can tell its own user why the answer is short.
 
+## Provider-key credit and provider error text (ADR-124, 2026-09-25)
+
+Production showed a user raw OpenRouter JSON — "can only afford 9063", plus a
+key-management URL with the key hash — because we sent `max_tokens≈31,776` and
+the streaming hop threw the provider body verbatim.
+
+- **Every provider non-2xx goes through `toProviderHttpFailure`**
+  (`utilities/provider-http-failure.utility.ts`): streaming
+  (`ProviderStreamExecutor.run`), buffered cloud, tool loop, `generateOnce`,
+  ollama/llama.cpp, connector config. Never `new BusinessException(<provider
+text>)` again. Credit refusals → `ProviderCreditExhaustedException`
+  (`PROVIDER_CREDIT_EXHAUSTED`, **503** so AUTO falls through — a 402 would end
+  the chain as a user-credit refusal; `messageKey`
+  `chat.errors.providerCreditExhausted`). Other failures keep their code and the
+  provider sentence only if it has no URL and ≤300 chars. Log provider text only
+  through `redactProviderText`.
+- **Exits are guarded too:** `buildChainFailureError` (URL ⇒ chain sentence),
+  `emitCandidateFailure` (SSE fallback event), and
+  `ChatMessagesService.handleMessageRoutedFailure` (stored reply + emitted
+  error) all pass through `sanitizeUserFacingErrorMessage`.
+- **Default output budget:** use `computeDefaultMaxTokensForProvider` — hosted
+  providers get min(ctx-derived, 16,384); local runtimes keep ctx-derived.
+- **Pre-flight (`applyProviderCreditCap`)** runs at the top of
+  `callProviderOnce` / `streamCandidateOnce`, BEFORE the PAYG hold, for presets
+  with `creditHeadroom` only (OpenRouter). `ProviderCreditHeadroomClient` reads
+  the key balance from connector-service and the rate from routing-service
+  (`internal/router-models/costs`), BigInt micro-USD, ×0.9. Unknown / unlimited /
+  unpriced / fallback rate ⇒ no cap. Below 256 tokens ⇒ refuse, no hold.
+- **One reactive retry (`withProviderCreditRetry`)**: a stated N ⇒ one retry at
+  min(cap, 90% N), its own hold `<requestId>:credit-retry`. Attachment delivery
+  runs once, outside the retry. Specs:
+  `__tests__/provider-credit-chokepoint.spec.ts`.
+
 ## AI-written files: format and writer prompt (ADR-108, 2026-09-19)
 
 - `detectRequestedFileFormat` (utilities/file-format.utility.ts) decides the

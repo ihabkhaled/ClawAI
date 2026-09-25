@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { PaygHold } from '@claw/shared-entitlements';
 import { PAYG_EXEMPT_PROVIDERS } from '@claw/shared-constants';
 import { PaygSurface, type TokenLedgerContext } from '@claw/shared-types';
@@ -8,6 +9,9 @@ import {
 } from '../../../common/constants/execution.constants';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { PAYG_PROVIDER_ALIASES, PAYG_SURFACE_BY_TOKEN_CONTEXT } from '../constants/payg.constants';
+import { PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX } from '../constants/provider-credit.constants';
+import type { ExecutionOptions } from '../types/execution-options.types';
+import type { PaygCallOptions } from '../types/payg.types';
 
 /**
  * Rewrites a runtime provider tag to the connector provider auth-service knows.
@@ -77,5 +81,34 @@ export function paygUnmeteredHold(maxOutputTokens: number): PaygHold {
     heldMicroUsd: 0,
     availableAfterMicroUsd: 0,
     reason: 'NOT_PAYG',
+  };
+}
+
+/**
+ * The PAYG identity of the one provider-credit retry: a NEW hold under a
+ * distinct request id. Reusing the first attempt's key would return the hold
+ * that attempt just released (reservation is idempotent on the key), and a
+ * caller-supplied hold (a compare lane's) was released by the failed attempt,
+ * so the retry must reserve its own.
+ */
+export function creditRetryPaygCall(paygCall: PaygCallOptions | undefined): PaygCallOptions {
+  return {
+    ...paygCall,
+    hold: undefined,
+    requestId: `${paygCall?.requestId ?? randomUUID()}${PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX}`,
+  };
+}
+
+/** The options with the output ceiling lowered to `ceiling` — never raised. */
+export function withOutputCeiling(
+  options: ExecutionOptions | undefined,
+  ceiling: number,
+): ExecutionOptions {
+  const current = options?.maxOutputTokens;
+  return {
+    fastPathEnabled: false,
+    applyShortResponseConstraint: false,
+    ...options,
+    maxOutputTokens: current === undefined ? ceiling : Math.min(current, ceiling),
   };
 }

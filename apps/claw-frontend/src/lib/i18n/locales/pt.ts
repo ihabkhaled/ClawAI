@@ -537,6 +537,8 @@ export const pt: TranslationDictionary = {
         'Este modelo não consegue processar anexos de vídeo. Escolha o Gemini 2.5 Flash ou Pro, ou mude para Automático.',
       videoAttachmentLocalModelUnavailable:
         'Os anexos de vídeo não estão disponíveis nos modos Somente local ou Privacidade primeiro porque nenhum modelo local compatível com vídeo está configurado.',
+      providerCreditExhausted:
+        'O provedor deste modelo está sem crédito no momento. Escolha outro modelo ou tente novamente mais tarde.',
     },
     imageGeneration: 'Geração de Imagem',
     generatedImage: 'Imagem Gerada',

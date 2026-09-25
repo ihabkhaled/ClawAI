@@ -532,6 +532,8 @@ export const hi: TranslationDictionary = {
         'यह मॉडल वीडियो अटैचमेंट प्रोसेस नहीं कर सकता। Gemini 2.5 Flash या Pro चुनें, या Auto पर स्विच करें।',
       videoAttachmentLocalModelUnavailable:
         'वीडियो अटैचमेंट केवल-स्थानीय या गोपनीयता-प्रथम मोड में उपलब्ध नहीं हैं, क्योंकि कोई स्थानीय वीडियो-सक्षम मॉडल कॉन्फ़िगर नहीं है।',
+      providerCreditExhausted:
+        'इस मॉडल के प्रदाता का क्रेडिट अभी समाप्त हो गया है। कोई दूसरा मॉडल चुनें या बाद में फिर से प्रयास करें।',
     },
     imageGeneration: 'छवि जनरेशन',
     generatedImage: 'जनरेट की गई छवि',

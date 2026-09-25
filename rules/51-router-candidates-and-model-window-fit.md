@@ -80,3 +80,19 @@ model was sent a 16.7k-token prompt.
     never overrides AUTO's pick for media any more — the ranking lives here.
     Video frames and frame descriptions are prompt sources under item 4: they
     spend the file share, framing reserved, native frames capped per window.
+
+## Added 2026-09-25 (ADR-124 — output budget and provider-key credit)
+
+14. **Never request a hosted model's maximum output by default.** With no
+    thread / fast-path / quota cap, a hosted provider gets
+    `computeDefaultMaxTokensForProvider` = min(ctx-derived, **16,384**); only
+    local runtimes keep the ctx-derived default. Every new place that computes
+    a default output cap calls that function — never
+    `computeDefaultMaxTokens(pickDefaultCtxSizeForProvider(...))` directly.
+    A cap is a window-fit input too: OpenRouter pre-authorizes
+    `max_tokens × price`, so an oversized cap is refused outright.
+15. **Fit the key, not only the window.** For a preset with `creditHeadroom`
+    (OpenRouter), the chokepoint caps output at what the key can afford
+    (`applyProviderCreditCap`) before the PAYG hold, and a 402 "can only afford
+    N" is retried once at 90% of N. The final `max_tokens` is the minimum of
+    every cap in the chain; none of them may widen another.

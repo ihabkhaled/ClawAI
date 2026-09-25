@@ -859,3 +859,34 @@ model's private notes run into its reply.
   provider that TRULY streams GLM-style output over SSE (e.g. via OpenRouter)
   still leaks in the live scanner, because the text before a bare `</think>`
   is emitted before the tag arrives. See rule 56 "Known gap".
+
+## Provider-key credit and provider error text (ADR-124, 2026-09-25)
+
+**Symptom it fixes:** a turn on OpenRouter ended with the raw provider JSON as
+the reply — "requested up to 31776 tokens, but can only afford 9063 ... visit
+https://openrouter.ai/.../keys/<hash>".
+
+**Error hygiene.** `toProviderHttpFailure` is the single translation from a
+provider's non-2xx to a thrown error for every hop (stream, buffered, tool
+loop, `generateOnce`, local runtimes). Credit refusals become
+`PROVIDER_CREDIT_EXHAUSTED` (HTTP 503, `messageKey`
+`chat.errors.providerCreditExhausted`, translated in 13 locales, rendered from
+the stored reply's metadata after a reload). A provider sentence is shown only
+when it carries no URL; logs get `redactProviderText`. The chain failure, the
+fallback-attempt SSE event and the stored reply each re-check for URLs.
+
+**Output budget.** A hosted provider's default output cap is
+min(ctx-derived, 16,384) (`computeDefaultMaxTokensForProvider`); explicit thread
+caps, tool-loop / Runtime V2 caps and file generation are unchanged. The final
+`max_tokens` is the minimum of: thread / fast-path cap, `applyQuotaCeiling`, the
+hosted default, the key-credit cap below, and the PAYG hold.
+
+**Key-credit pre-flight.** For presets with `creditHeadroom` (OpenRouter),
+`applyProviderCreditCap` asks connector-service for the key's remaining credit
+(60 s cache there) and routing-service for the model's rate, and caps
+`max_tokens` to `floor((remaining − input cost) / output price × 0.9)` before
+the PAYG hold. Below 256 tokens the call is refused with no hold; AUTO moves to
+the next candidate. Anything unknown ⇒ no cap.
+
+**Reactive retry.** A credit refusal that states N is retried exactly once at
+min(cap, 90% of N), as a separate PAYG hold (`<requestId>:credit-retry`).

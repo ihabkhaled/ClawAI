@@ -327,4 +327,11 @@ docker exec claw-pg-auth psql -U claw -d claw_auth -tAF'|' -c "
 - [ ] `hold.clamped` reaches a rendered, visible surface.
 - [ ] Any deliberately unmetered path is recorded **at the call site** with its
       reason.
+- [ ] A retry of a paid call (e.g. the provider-credit retry,
+      [ADR-124](../docs/13-adr/adr-124-provider-key-credit-preflight-and-one-retry.md))
+      releases the failed hold and reserves its OWN under a distinct
+      `requestId` (`<requestId>:credit-retry`) — reusing the key returns the
+      released hold.
+- [ ] Provider error text is thrown only through `toProviderHttpFailure`
+      (chat-service): no provider body, and no URL, ever reaches the user.
 - [ ] Docs and the architecture surface table updated.

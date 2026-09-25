@@ -510,6 +510,7 @@ export const zh: TranslationDictionary = {
         '该模型无法处理视频附件。选择 Gemini 2.5 Flash 或 Pro，或切换到自动。',
       videoAttachmentLocalModelUnavailable:
         '视频附件在仅本地或隐私优先模式下不可用，因为没有配置支持本地视频的模型。',
+      providerCreditExhausted: '该模型的提供商账户目前额度不足。请选择其他模型或稍后重试。',
     },
     imageGeneration: '图像生成',
     generatedImage: '生成的图像',

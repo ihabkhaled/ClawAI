@@ -524,6 +524,8 @@ export const ar: TranslationDictionary = {
         'لا يستطيع هذا النموذج معالجة مرفقات الفيديو. اختر Gemini 2.5 Flash أو Pro، أو انتقل إلى الوضع التلقائي.',
       videoAttachmentLocalModelUnavailable:
         'مرفقات الفيديو غير متاحة في وضع التشغيل المحلي فقط أو وضع الخصوصية أولاً لعدم إعداد نموذج محلي يدعم الفيديو.',
+      providerCreditExhausted:
+        'نفد رصيد مزوّد هذا النموذج حاليًا. اختر نموذجًا آخر أو حاول مرة أخرى لاحقًا.',
     },
     imageGeneration: 'توليد الصور',
     generatedImage: 'الصورة المُولَّدة',

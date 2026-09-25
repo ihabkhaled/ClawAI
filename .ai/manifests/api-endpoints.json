@@ -1413,6 +1413,11 @@
       },
       {
         "method": "GET",
+        "route": "/internal/connectors/credit-headroom",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/credit-headroom-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/internal/connectors/health-snapshot",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       },
@@ -3493,5 +3498,5 @@
     ]
   },
   "generated": true,
-  "total": 691
+  "total": 692
 }

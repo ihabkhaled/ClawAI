@@ -1,10 +1,24 @@
 import type { ConnectorAuthType } from '../enums/connector-auth-type.enum';
+import type { ConnectorCreditHeadroomFormat } from '../enums/connector-credit-headroom-format.enum';
 import type { ConnectorModelsResponseFormat } from '../enums/connector-models-response-format.enum';
 import type { ConnectorPresetAuthHeader } from '../enums/connector-preset-auth-header.enum';
 import type { ConnectorPresetCategory } from '../enums/connector-preset-category.enum';
 import type { ConnectorPresetExtraField } from '../enums/connector-preset-extra-field.enum';
 import type { ConnectorPresetGroup } from '../enums/connector-preset-group.enum';
 import type { ConnectorProvider } from '../enums/connector-provider.enum';
+
+/**
+ * Where a provider reports how much credit its API key can still spend.
+ *
+ * Providers that pre-authorize `max_tokens × price` against the key (OpenRouter
+ * refuses "can only afford N" with a 402) need this read BEFORE the call, so
+ * chat-service can send a `max_tokens` the key can actually pay for.
+ */
+export type ConnectorPresetCreditHeadroom = {
+  /** GET endpoints (paths or absolute URLs), read in parallel. */
+  endpoints: readonly string[];
+  format: ConnectorCreditHeadroomFormat;
+};
 
 /** The four quick links the admin form shows beside a picked preset. */
 export type ConnectorPresetLinks = {
@@ -68,5 +82,11 @@ export type ConnectorPreset = {
    * modality. Narrow on purpose: a false positive sends images to a text model.
    */
   visionModelPattern: RegExp | null;
+  /**
+   * The key-credit endpoints, or `null` when the provider exposes none (or
+   * does not pre-authorize output). `null` means chat-service sends no
+   * affordability cap and relies on the reactive 402 retry instead.
+   */
+  creditHeadroom: ConnectorPresetCreditHeadroom | null;
   links: ConnectorPresetLinks;
 };

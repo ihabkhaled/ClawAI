@@ -47,22 +47,57 @@ const LOCAL_OLLAMA_PROVIDER_ID = 'local-ollama';
 // Ollama Cloud, OpenAI-compat cloud, Anthropic, Gemini, …) keeps the
 // 32_768 baseline.
 export const pickDefaultCtxSizeForProvider = (provider: string): number => {
-  if (provider === LOCAL_OLLAMA_PROVIDER_ID) {
-    return OUTPUT_BOUNDS_LOCAL_OLLAMA_DEFAULT_CTX_SIZE;
-  }
-  return OUTPUT_BOUNDS_DEFAULT_CTX_SIZE;
+  return provider === LOCAL_OLLAMA_PROVIDER_ID
+    ? OUTPUT_BOUNDS_LOCAL_OLLAMA_DEFAULT_CTX_SIZE
+    : OUTPUT_BOUNDS_DEFAULT_CTX_SIZE;
 };
 
 // Compute a defensive max-output-tokens default from the resident ctx
 // size and an estimate of the prompt token count. Clamps to the floor
 // when the prompt is already eating most of the context window.
-export const computeDefaultMaxTokens = (
-  ctxSize: number,
+export const computeDefaultMaxTokens = (ctxSize: number, promptTokens: number): number => {
+  const available = ctxSize - promptTokens - OUTPUT_BOUNDS_SAFETY_MARGIN;
+  return available < OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS ? OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS : available;
+};
+
+// The default output budget for a HOSTED model when nobody asked for a length
+// (2026-09-25). Before this, the ctx-derived default above sent ~32_768 minus
+// the prompt — effectively "the model's maximum" — on every ordinary turn.
+// That is harmless on the operator's own GPU but not on a metered provider:
+// OpenRouter pre-authorizes `max_tokens × output price` against the key's
+// remaining credit, so a key with $0.02 left refused a two-line question
+// ("requested up to 31776 tokens, but can only afford 9063"), and every PAYG
+// hold reserved ~31k output tokens of the user's credit for a reply that used
+// a few hundred.
+//
+// Why 16_384 and not 4_096/8_192: reasoning models (GLM, DeepSeek-R, o-series)
+// count thinking tokens against the same cap, and 8k cut thinking-heavy answers
+// off before the answer began. 16k is ~12,000 words of visible output — no
+// conversational reply gets near it — while halving the pre-authorization.
+// Long-form paths are unaffected: an explicit thread `maxTokens`, the tool-loop
+// / Runtime V2 caps and file generation (its own service) all set their own
+// ceiling, bounded only by HARD_MAX_OUTPUT_TOKENS.
+export const OUTPUT_BOUNDS_HOSTED_DEFAULT_MAX_OUTPUT_TOKENS = 16_384;
+
+// Runtimes on the operator's own hardware. Their ctx-derived default stays: the
+// resident --ctx-size is the real bound there and nothing is pre-authorized.
+const LOCAL_RUNTIME_PROVIDER_IDS: readonly string[] = [
+  LOCAL_OLLAMA_PROVIDER_ID,
+  'local-llamacpp',
+  'LLAMACPP',
+];
+
+// The default output cap for `provider` when neither the caller nor the thread
+// set one: ctx-derived, and for a hosted provider never above the hosted default.
+export const computeDefaultMaxTokensForProvider = (
+  provider: string,
   promptTokens: number,
 ): number => {
-  const available = ctxSize - promptTokens - OUTPUT_BOUNDS_SAFETY_MARGIN;
-  if (available < OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS) {
-    return OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS;
-  }
-  return available;
+  const fromContext = computeDefaultMaxTokens(
+    pickDefaultCtxSizeForProvider(provider),
+    promptTokens,
+  );
+  return LOCAL_RUNTIME_PROVIDER_IDS.includes(provider)
+    ? fromContext
+    : Math.min(fromContext, OUTPUT_BOUNDS_HOSTED_DEFAULT_MAX_OUTPUT_TOKENS);
 };

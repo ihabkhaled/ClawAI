@@ -273,3 +273,21 @@ then answers with the pairs **as the caller spelled them**
 refused `GEMINI/gemini-2.5-flash` — the VISION_HELPER role's model — because
 the Gemini catalog stores `models/gemini-2.5-flash`. Found by the live
 multimodal QA lane; rule 42 item 13 is the same bug class.
+
+## Key-credit headroom (ADR-124, 2026-09-25)
+
+`GET /internal/connectors/credit-headroom?provider=` → `{ known, remainingMicroUsd }`
+(integer micro-USD; `known:true, remainingMicroUsd:null` = unlimited key). It
+is the OPERATOR's balance at the provider, so unlike its `@Public()` siblings
+it sits behind `ServiceTokenGuard`.
+
+- Which providers: those whose preset declares `creditHeadroom` (OpenRouter:
+  `/key` `limit_remaining` and `/credits` `total_credits − total_usage`, smaller
+  wins). Read by `OpenAICompatibleAdapter.getCreditHeadroom()` — optional on
+  `ProviderAdapter`; a new provider adds a `ConnectorCreditHeadroomFormat`
+  member and a `parseCreditHeadroom` case.
+- `CreditHeadroomManager` caches the read promise per connector for 60 s;
+  endpoints time out at 2.5 s. Every failure is `known:false` (fail open —
+  chat-service then sends no pre-flight cap). Floats → micro-USD by
+  `usdAmountToMicroUsdFloor` (fixed-decimal truncation, never `parseFloat`).
+- Only statuses are logged for credit endpoints — their bodies carry account data.

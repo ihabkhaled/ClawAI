@@ -43,10 +43,7 @@ import {
   PAYG_CREDIT_FALLBACK_ERROR_MESSAGE,
 } from '../constants/payg.constants';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
-import {
-  computeDefaultMaxTokens,
-  pickDefaultCtxSizeForProvider,
-} from '../constants/output-token-bounds.constants';
+import { computeDefaultMaxTokensForProvider } from '../constants/output-token-bounds.constants';
 import type { PaygOrchestrationCall, PaygOrchestrationUsage } from '../types/payg.types';
 import { normalizePaygProvider } from '../utilities/payg-metering.utility';
 
@@ -120,7 +117,7 @@ export class AccessControlService {
       cachedPromptTokens: 0,
       requestedMaxOutputTokens:
         call.requestedMaxOutputTokens ??
-        computeDefaultMaxTokens(pickDefaultCtxSizeForProvider(call.provider), promptTokens),
+        computeDefaultMaxTokensForProvider(call.provider, promptTokens),
     });
     let result: T;
     try {

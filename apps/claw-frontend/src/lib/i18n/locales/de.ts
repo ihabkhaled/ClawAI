@@ -542,6 +542,8 @@ export const de: TranslationDictionary = {
         'Dieses Modell kann keine Videoanhänge verarbeiten. Wähle Gemini 2.5 Flash oder Pro oder wechsle zu „Auto“.',
       videoAttachmentLocalModelUnavailable:
         'Videoanhänge sind im Modus „Nur lokal“ oder „Datenschutz zuerst“ nicht verfügbar, da kein lokales videofähiges Modell konfiguriert ist.',
+      providerCreditExhausted:
+        'Das Guthaben beim Anbieter dieses Modells ist derzeit aufgebraucht. Wählen Sie ein anderes Modell oder versuchen Sie es später erneut.',
     },
     imageGeneration: 'Bildgenerierung',
     generatedImage: 'Generiertes Bild',

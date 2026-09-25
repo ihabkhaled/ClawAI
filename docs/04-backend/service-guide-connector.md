@@ -272,3 +272,16 @@ Adding provider #16: see
 Never re-type a preset's base URL or display name anywhere else —
 `tools/__tests__/connector-preset-single-source.test.mjs` fails the build if
 you do.
+
+## Key-credit headroom (ADR-124, 2026-09-25)
+
+`GET /api/v1/internal/connectors/credit-headroom?provider=<PROVIDER>` (service
+token required) answers `{ known, remainingMicroUsd }` for the connector
+chat-service would execute on. Presets opt in with `creditHeadroom` in
+`CONNECTOR_PRESETS`; OpenRouter reads `/key` (`limit_remaining`, `null` =
+unlimited) and `/credits` (`total_credits − total_usage`), and the smaller
+known balance wins. The adapter method is `getCreditHeadroom()` (optional on
+`ProviderAdapter`); `CreditHeadroomManager` caches per connector for 60 s,
+endpoints time out at 2.5 s, and every failure is `known: false` so chat-service
+falls back to no pre-flight cap. USD floats are converted to integer micro-USD
+by truncation (`usdAmountToMicroUsdFloor`).

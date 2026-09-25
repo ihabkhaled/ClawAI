@@ -535,6 +535,8 @@ export const ja: TranslationDictionary = {
         'このモデルはビデオ添付ファイルを処理できません。 Gemini 2.5 Flash または Pro を選択するか、Auto に切り替えます。',
       videoAttachmentLocalModelUnavailable:
         'ローカル ビデオ対応モデルが構成されていないため、ビデオ添付ファイルはローカル専用モードまたはプライバシー優先モードでは使用できません。',
+      providerCreditExhausted:
+        'このモデルのプロバイダーのクレジットが現在不足しています。別のモデルを選択するか、しばらくしてからもう一度お試しください。',
     },
     imageGeneration: '画像の生成',
     generatedImage: '生成されたイメージ',
