@@ -20,6 +20,7 @@ import {
   indexModelsSnapshot,
   listVideoCapableModels,
   resolveModelMediaCapabilities,
+  snapshotMaxOutputTokens,
 } from '../utilities/model-capability.utility';
 
 /**
@@ -46,6 +47,11 @@ export class ModelCapabilityClient {
 
   async resolve(provider: string, model: string): Promise<ModelMediaCapabilities> {
     return resolveModelMediaCapabilities(await this.loadIndex(), provider, model);
+  }
+
+  /** The catalog's output ceiling for (provider, model), or undefined (ADR-125). */
+  async resolveMaxOutputTokens(provider: string, model: string): Promise<number | undefined> {
+    return snapshotMaxOutputTokens(await this.loadIndex(), provider, model);
   }
 
   /**

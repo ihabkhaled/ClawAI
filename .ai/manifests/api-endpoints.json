@@ -1433,6 +1433,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/connectors/models/output-limit",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/model-output-limit-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/connectors/models/validate-exposed",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       },
@@ -3503,5 +3508,5 @@
     ]
   },
   "generated": true,
-  "total": 693
+  "total": 694
 }

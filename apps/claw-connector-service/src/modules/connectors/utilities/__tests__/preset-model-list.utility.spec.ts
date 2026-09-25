@@ -7,7 +7,47 @@ import {
   presetModelSupportsTools,
   presetModelSupportsVision,
   staticPresetModels,
+  toNormalizedPresetModel,
 } from '../preset-model-list.utility';
+
+describe('catalog output ceiling (ADR-125)', () => {
+  it('reads OpenRouter top_provider.max_completion_tokens', () => {
+    const [parsed] = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, {
+      data: [
+        {
+          id: 'z-ai/glm-5.3',
+          context_length: 1_310_720,
+          top_provider: { context_length: 1_310_720, max_completion_tokens: 131_072 },
+        },
+      ],
+    });
+    expect(parsed?.maxOutputTokens).toBe(131_072);
+    const normalized = toNormalizedPresetModel(
+      parsed ?? entry({}),
+      getConnectorPreset('OPENROUTER') as ConnectorPreset,
+    );
+    expect(normalized.capabilities.maxOutputTokens).toBe(131_072);
+  });
+
+  it('reads Groq max_completion_tokens', () => {
+    const [parsed] = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, {
+      data: [{ id: 'qwen/qwen3.8-27b', context_window: 131_072, max_completion_tokens: 16_384 }],
+    });
+    expect(parsed?.maxOutputTokens).toBe(16_384);
+  });
+
+  it('a null top_provider limit stays unknown', () => {
+    const [parsed] = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, {
+      data: [{ id: 'm', top_provider: { max_completion_tokens: null } }],
+    });
+    expect(parsed?.maxOutputTokens).toBeUndefined();
+    const normalized = toNormalizedPresetModel(
+      parsed ?? entry({}),
+      getConnectorPreset('OPENROUTER') as ConnectorPreset,
+    );
+    expect(normalized.capabilities).not.toHaveProperty('maxOutputTokens');
+  });
+});
 
 function preset(provider: string): ConnectorPreset {
   const found = getConnectorPreset(provider);

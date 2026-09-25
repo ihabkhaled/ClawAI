@@ -494,6 +494,8 @@ export type TranslationDictionary = {
       videoAttachmentProviderUnsupported: string;
       videoAttachmentLocalModelUnavailable: string;
       providerCreditExhausted: string;
+      providerRateLimited: string;
+      providerOutputLimit: string;
     };
     imageGeneration: string;
     generatedImage: string;

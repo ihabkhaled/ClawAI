@@ -552,6 +552,10 @@ export const de: TranslationDictionary = {
         'Videoanhänge sind im Modus „Nur lokal“ oder „Datenschutz zuerst“ nicht verfügbar, da kein lokales videofähiges Modell konfiguriert ist.',
       providerCreditExhausted:
         'Das Guthaben beim Anbieter dieses Modells ist derzeit aufgebraucht. Wählen Sie ein anderes Modell oder versuchen Sie es später erneut.',
+      providerRateLimited:
+        'Dieses Modell ist bei seinem Anbieter gerade ausgelastet. Versuchen Sie es gleich erneut oder wählen Sie ein anderes Modell.',
+      providerOutputLimit:
+        'Dieses Modell konnte keine Antwort in der angeforderten Länge erzeugen. Bitte versuchen Sie es erneut.',
     },
     imageGeneration: 'Bildgenerierung',
     generatedImage: 'Generiertes Bild',

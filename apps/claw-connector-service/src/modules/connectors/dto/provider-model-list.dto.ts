@@ -15,6 +15,12 @@ export const openAICompatibleModelEntrySchema = z.object({
   type: z.string().max(50).nullish(),
   context_length: z.number().int().positive().nullish(),
   context_window: z.number().int().positive().nullish(),
+  // Groq publishes the output ceiling at the top level; OpenRouter under
+  // `top_provider` (ADR-125).
+  max_completion_tokens: z.number().int().positive().nullish(),
+  top_provider: z
+    .object({ max_completion_tokens: z.number().int().positive().nullish() })
+    .nullish(),
   active: z.boolean().nullish(),
   tags: stringList,
   supported_parameters: stringList,

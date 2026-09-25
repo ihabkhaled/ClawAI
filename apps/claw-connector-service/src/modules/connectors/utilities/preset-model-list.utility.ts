@@ -130,6 +130,7 @@ export function toNormalizedPresetModel(
       supportsVideoInput: false,
       supportsStructuredOutput: supportsTools,
       ...(entry.contextWindow === undefined ? {} : { maxContextTokens: entry.contextWindow }),
+      ...(entry.maxOutputTokens === undefined ? {} : { maxOutputTokens: entry.maxOutputTokens }),
     },
   };
 }
@@ -161,12 +162,15 @@ function parseOpenAIEntries(rows: readonly unknown[]): PresetModelListEntry[] {
 function fromOpenAIEntry(entry: OpenAICompatibleModelEntry): PresetModelListEntry {
   const contextWindow =
     entry.context_length ?? entry.context_window ?? entry.metadata?.context_length ?? undefined;
+  const maxOutputTokens =
+    entry.top_provider?.max_completion_tokens ?? entry.max_completion_tokens ?? undefined;
   return {
     id: entry.id,
     name: entry.name ?? entry.display_name ?? undefined,
     type: entry.type ?? undefined,
     tags: [...(entry.tags ?? []), ...(entry.metadata?.tags ?? [])],
     contextWindow,
+    ...(maxOutputTokens === undefined ? {} : { maxOutputTokens }),
     inputModalities: entry.architecture?.input_modalities ?? entry.modalities?.input ?? [],
     outputModalities: entry.architecture?.output_modalities ?? entry.modalities?.output ?? [],
     supportedParameters: entry.supported_parameters ?? [],

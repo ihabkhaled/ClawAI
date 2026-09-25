@@ -1488,6 +1488,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/connectors/models/output-limit",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/model-output-limit-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/connectors/models/validate-exposed",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
         },
@@ -7693,7 +7698,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 26535,
+          "bytes": 26914,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7749,7 +7754,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 5732,
+          "bytes": 6524,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -8059,7 +8064,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 18187,
+          "bytes": 18189,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -8169,7 +8174,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5449
+        "value": 5451
       },
       "localeCount": 13,
       "locales": [
@@ -10147,7 +10152,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 208
+        "testFiles": 211
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10155,7 +10160,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 37
+        "testFiles": 38
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -10933,7 +10938,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 693,
+    "endpointCount": 694,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -10945,7 +10950,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1615,
+    "totalTestFiles": 1619,
     "workspaceCount": 25
   }
 }

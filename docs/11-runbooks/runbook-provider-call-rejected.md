@@ -109,6 +109,48 @@ provider account is out of credit. Nothing in this repo can fix it — top up th
 account. Note 429 here does **not** mean rate limiting, so backing off and
 retrying will never clear it.
 
+Since ADR-125 (OpenAI "no credits remaining", Anthropic "credit balance is too
+low", Gemini "exceeded your current quota", DeepSeek "Insufficient Balance",
+xAI "spending limit"): the user reads the translated
+`PROVIDER_CREDIT_EXHAUSTED` sentence, AUTO moves to the next provider, and the
+provider is **skipped for 10 minutes** per replica (then one probe):
+
+```bash
+docker logs claw-chat-service-1 --since 30m 2>&1 | grep -E "recordOutcome|breaker open|half-open"
+```
+
+After topping up, the breaker closes on the first successful probe (≤10 min);
+restarting chat-service clears it at once.
+
+### 2c. Output-length refusals (ADR-125)
+
+```
+`max_tokens` must be less than or equal to `16384` ...            (Groq)
+max_tokens (32768) exceeds model's maximum output tokens (16384)  (Ollama Cloud)
+This model supports at most 16384 completion tokens               (OpenAI)
+max_tokens: 32768 > 8192, which is the maximum allowed ...        (Anthropic)
+```
+
+Retried once at the stated ceiling (`withProviderRecovery: ... refused the
+requested output length — retrying once with an output cap of N`) and written
+to `connector_models.learned_max_output_tokens`; later turns pre-clamp
+(`applyModelOutputLimit: ... (model ceiling)`). Check what a model has learned:
+
+```sql
+-- claw-pg-connector
+SELECT provider, model_key, max_output_tokens, learned_max_output_tokens, learned_max_output_at
+FROM connector_models WHERE learned_max_output_tokens IS NOT NULL ORDER BY learned_max_output_at DESC;
+```
+
+A wrongly learned value only ever lowers a cap; clear it with
+`UPDATE connector_models SET learned_max_output_tokens = NULL WHERE ...`.
+
+### 2d. Upstream rate limits (ADR-125)
+
+OpenRouter `:free` models: "temporarily rate-limited upstream". Any 429 that is
+not a credit message gets one retry after 1.5 s, then the translated
+`chat.errors.providerRateLimited` sentence; AUTO moves on.
+
 ### 2b. OpenRouter: "can only afford N" (the KEY's credit, ADR-124)
 
 ```
@@ -127,7 +169,7 @@ remaining credit (its own limit, or the account balance). Since 2026-09-25:
 - Hosted turns ask for at most 16,384 output tokens by default, not ~31.7k.
 - Before the call, chat caps `max_tokens` to what the key can afford (logged
   `applyProviderCreditCap: ... output cap A -> B`). A 402 that still happens is
-  retried once at 90% of N (`withProviderCreditRetry: ... retrying once`).
+  retried once at 90% of N (`withProviderRecovery: ... retrying once`).
 - `applyProviderCreditCap: ... refused before the call` = the key cannot pay
   for 256 tokens. Top the key up or raise its limit — nothing in the repo fixes it.
 

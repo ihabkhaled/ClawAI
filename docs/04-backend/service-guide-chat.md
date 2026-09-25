@@ -929,4 +929,21 @@ the PAYG hold. Below 256 tokens the call is refused with no hold; AUTO moves to
 the next candidate. Anything unknown ⇒ no cap.
 
 **Reactive retry.** A credit refusal that states N is retried exactly once at
-min(cap, 90% of N), as a separate PAYG hold (`<requestId>:credit-retry`).
+min(cap, 90% of N), as a separate PAYG hold (`<requestId>:provider-retry`).
+
+## Every provider's refusals recover at the chokepoint (ADR-125, 2026-09-25)
+
+Production showed Groq / Ollama Cloud "max_tokens exceeds the model maximum",
+OpenRouter `:free` "temporarily rate-limited upstream", and OpenAI / Anthropic /
+Gemini "out of credit" — some as raw JSON from compare / consensus lanes.
+
+- **Output limits.** The refusal's stated ceiling is parsed per provider
+  wording, the call is retried once at it (own PAYG hold), and the ceiling is
+  written to connector-service (`learned_max_output_tokens`, only lowered).
+  Every later call is pre-clamped from the models-snapshot `maxOutputTokens`
+  (catalog or learned, whichever is smaller), before the PAYG hold.
+- **Rate limits.** One retry after 1.5 s; then the translated
+  `chat.errors.providerRateLimited` sentence and AUTO moves on.
+- **Account out of credit.** Translated `PROVIDER_CREDIT_EXHAUSTED`; the
+  provider is skipped for 10 minutes per replica (half-open probe after).
+- **Lanes.** Compare and consensus store only our sentence for a failed lane.

@@ -101,6 +101,8 @@ export interface ModelCapabilities {
   supportsVideoInput: boolean;
   supportsStructuredOutput: boolean;
   maxContextTokens?: number;
+  /** Provider-published output ceiling (ADR-125); absent = unknown. */
+  maxOutputTokens?: number;
   /**
    * Provenance for `supportsTools`.
    *

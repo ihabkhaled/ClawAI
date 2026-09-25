@@ -285,3 +285,15 @@ known balance wins. The adapter method is `getCreditHeadroom()` (optional on
 endpoints time out at 2.5 s, and every failure is `known: false` so chat-service
 falls back to no pre-flight cap. USD floats are converted to integer micro-USD
 by truncation (`usdAmountToMicroUsdFloor`).
+
+## Model output ceilings (ADR-125, 2026-09-25)
+
+`connector_models.max_output_tokens` is the catalog's published output limit,
+written by every sync (OpenRouter `top_provider.max_completion_tokens`, Groq
+`max_completion_tokens`). `learned_max_output_tokens` (+ `learned_max_output_at`)
+is written by `POST /api/v1/internal/connectors/models/output-limit`
+(`{ provider, model, maxOutputTokens }`, service token) when chat-service sees a
+provider refuse a `max_tokens` — only ever lowered, never touched by sync, and
+matched across catalog spellings (`modelKeyVariants`). The models-snapshot
+publishes the smaller of the two as `maxOutputTokens`; routing-service's registry
+sync and chat-service's pre-clamp both read it.

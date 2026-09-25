@@ -15,6 +15,7 @@ import { ResearchOrchestratorManager } from './managers/research-orchestrator.ma
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
+import { ModelOutputLimitClient } from './clients/model-output-limit.client';
 import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
 import { VisionHelperManager } from './managers/vision-helper.manager';
 import { VisionHelperCandidatesClient } from './clients/vision-helper-candidates.client';
@@ -100,6 +101,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     // rather than letting a unit test reach the network.
     ModelContextWindowClient,
     ModelCapabilityClient,
+    ModelOutputLimitClient,
     AttachmentDeliveryManager,
     VisionHelperCandidatesClient,
     VisionHelperManager,

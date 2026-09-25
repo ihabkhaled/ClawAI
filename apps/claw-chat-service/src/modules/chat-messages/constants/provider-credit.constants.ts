@@ -24,17 +24,25 @@ export const PROVIDER_CREDIT_MIN_OUTPUT_TOKENS = 256;
 export const PROVIDER_CREDIT_SAFETY_NUMERATOR = 9;
 export const PROVIDER_CREDIT_SAFETY_DENOMINATOR = 10;
 
-// Distinct PAYG idempotency key for the one reactive retry. Reservation is
-// idempotent on (userId, requestId): reusing the first attempt's key would hand
-// back the hold that was just released instead of placing a new one (rule 37 §15).
-export const PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX = ':credit-retry';
+// Distinct PAYG idempotency key for the one reactive retry (credit, output
+// limit or rate limit). Reservation is idempotent on (userId, requestId):
+// reusing the first attempt's key would hand back the hold that was just
+// released instead of placing a new one (rule 37 §15).
+export const PROVIDER_RETRY_REQUEST_SUFFIX = ':provider-retry';
 
-// Text that marks a provider refusal as a credit/balance problem rather than a
-// malformed request. OpenRouter: "requires more credits ... can only afford N";
-// OpenAI: insufficient_quota; Anthropic: credit_balance_exhausted / "credit
-// balance is too low".
-export const PROVIDER_CREDIT_FAILURE_PATTERN =
-  /can only afford|requires more credits|insufficient[_ ](?:credits?|quota|balance)|credit[_ ]balance|out of credits?|no credits remaining/iu;
+// The provider ACCOUNT is out of money: every request on this key will fail
+// until an operator tops it up, so the circuit breaker opens (ADR-125).
+// OpenAI: "You have no credits remaining" / insufficient_quota; Anthropic:
+// "Your credit balance is too low"; Gemini / OpenAI: "You exceeded your current
+// quota"; DeepSeek: "Insufficient Balance"; xAI: "used all available credits"
+// / "monthly spending limit".
+export const PROVIDER_ACCOUNT_EXHAUSTED_PATTERN =
+  /insufficient[_ ](?:credits?|quota|balance)|credit[_ ]balance(?:[_ ]is[_ ]too[_ ]low|[_ ]exhausted)|no credits remaining|out of credits?|exceeded your current quota|used all available credits|spending limit/iu;
+
+// THIS request cannot be paid for, but a smaller or cheaper one could
+// (OpenRouter: "requires more credits, or fewer max_tokens ... can only afford
+// N"). No breaker: a :free model on the same key still works.
+export const PROVIDER_REQUEST_CREDIT_PATTERN = /can only afford|requires more credits/iu;
 
 // OpenRouter states the ceiling it would accept: "... but can only afford 9063".
 // Digits may carry thousands separators in other locales of the same message.
@@ -74,3 +82,67 @@ export const PROVIDER_RATE_TIMEOUT_MS = 2_000;
 export const PROVIDER_RATE_CACHE_TTL_MS = 300_000;
 
 export const PROVIDER_RATE_CACHE_MAX_ENTRIES = 512;
+
+// ── Output-limit refusals (ADR-125) ───────────────────────────────────────
+
+export const PROVIDER_OUTPUT_LIMIT_MESSAGE =
+  'This model could not produce an answer of the requested length. Please try again.';
+
+export const PROVIDER_OUTPUT_LIMIT_MESSAGE_KEY = 'chat.errors.providerOutputLimit';
+
+// A refusal is only read as an output-limit refusal when it names the output
+// cap — "maximum context length" (the PROMPT is too long) must never be
+// mistaken for it.
+export const PROVIDER_OUTPUT_LIMIT_SUBJECT_PATTERN =
+  /max[_ ]?(?:completion[_ ])?tokens|maxOutputTokens|output tokens|completion tokens/iu;
+
+// Each provider's wording, capture group 1 = the model's real ceiling.
+// Groq:      "`max_tokens` must be less than or equal to `16384`, ..."
+// Ollama:    "max_tokens (32768) exceeds model's maximum output tokens (16384) ..."
+// OpenAI:    "This model supports at most 16384 completion tokens, whereas ..."
+// Anthropic: "max_tokens: 32768 > 8192, which is the maximum allowed ..."
+// generic:   "... maximum output tokens is 8192" / "maximum completion tokens: 8192"
+export const PROVIDER_OUTPUT_LIMIT_PATTERNS: readonly RegExp[] = [
+  /less than or equal to\s*`?(\d[\d,]*)`?/iu,
+  /maximum output tokens\s*\(\s*(\d[\d,]*)\s*\)/iu,
+  /supports at most\s+(\d[\d,]*)\s+completion tokens/iu,
+  /max_tokens:\s*\d[\d,]*\s*>\s*(\d[\d,]*)/iu,
+  /maximum[^.\d]{0,30}(?:output|completion)[ _-]*tokens?\s*(?:is|of|:|=)\s*(\d[\d,]*)/iu,
+];
+
+// Gemini: "... maxOutputTokens value of 100000 but the supported range is from
+// 1 (inclusive) to 65537 (exclusive)." — the ceiling is the bound minus one.
+export const PROVIDER_OUTPUT_LIMIT_EXCLUSIVE_PATTERN =
+  /supported range is from\s*\d+\s*\(inclusive\)\s*to\s*(\d[\d,]*)\s*\(exclusive\)/iu;
+
+// connector-service: remembers a learned ceiling on the model row.
+export const PROVIDER_OUTPUT_LIMIT_RECORD_PATH = '/api/v1/internal/connectors/models/output-limit';
+
+export const PROVIDER_OUTPUT_LIMIT_RECORD_TIMEOUT_MS = 2_000;
+
+export const PROVIDER_OUTPUT_LIMIT_CACHE_MAX_ENTRIES = 1_024;
+
+// A stated ceiling this small is a mis-parse or a model unusable for chat;
+// retrying with it would only return a stub, so it is not retried.
+export const PROVIDER_OUTPUT_LIMIT_MIN_RETRY_TOKENS = 64;
+
+// ── Transient upstream rate limits (ADR-125) ──────────────────────────────
+
+export const PROVIDER_RATE_LIMITED_MESSAGE =
+  'This model is busy at its provider right now. Try again in a moment or choose another model.';
+
+export const PROVIDER_RATE_LIMITED_MESSAGE_KEY = 'chat.errors.providerRateLimited';
+
+// OpenRouter ":free": "... is temporarily rate-limited upstream. Please retry shortly".
+export const PROVIDER_RATE_LIMIT_PATTERN = /rate[- ]?limit|too many requests/iu;
+
+// One short wait before the single retry. Short on purpose: this sits inside a
+// user's turn, and a longer outage is what the next candidate is for.
+export const PROVIDER_RATE_LIMIT_BACKOFF_MS = 1_500;
+
+// ── Account-exhaustion circuit breaker (ADR-125) ──────────────────────────
+
+// How long a provider whose ACCOUNT is out of credit is skipped. After it, ONE
+// call probes (half-open); success closes the breaker, another exhaustion
+// re-opens it for the same period.
+export const PROVIDER_BREAKER_OPEN_MS = 600_000;

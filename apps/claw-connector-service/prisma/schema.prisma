@@ -139,6 +139,12 @@ model ConnectorModel {
   supportsVideoInput       Boolean           @default(false) @map("supports_video_input")
   supportsStructuredOutput Boolean           @default(false) @map("supports_structured_output")
   maxContextTokens         Int?              @map("max_context_tokens")
+  // Output ceiling the provider's catalog publishes (a sync overwrites it).
+  maxOutputTokens          Int?              @map("max_output_tokens")
+  // Output ceiling learned from a provider refusal: only ever lowered, never
+  // touched by a sync (ADR-125). NULL = unknown, not unlimited.
+  learnedMaxOutputTokens   Int?              @map("learned_max_output_tokens")
+  learnedMaxOutputAt       DateTime?         @map("learned_max_output_at")
   usageTier                ModelUsageTier    @default(UNKNOWN) @map("usage_tier")
   inputUsdPerMillion       Decimal?          @map("input_usd_per_million") @db.Decimal(12, 6)
   cachedInputUsdPerMillion Decimal?          @map("cached_input_usd_per_million") @db.Decimal(12, 6)

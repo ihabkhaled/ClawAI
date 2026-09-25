@@ -27,6 +27,16 @@ export function indexModelsSnapshot(entries: readonly ModelsSnapshotEntry[]): Mo
   return index;
 }
 
+/** The catalog's output ceiling for (provider, model); undefined = unknown (ADR-125). */
+export function snapshotMaxOutputTokens(
+  index: ModelsSnapshotIndex | null,
+  provider: string,
+  model: string,
+): number | undefined {
+  const value = index?.get(modelMatchKey(provider, model))?.maxOutputTokens;
+  return typeof value === 'number' && value > 0 ? value : undefined;
+}
+
 /**
  * What (provider, model) can take natively.
  *

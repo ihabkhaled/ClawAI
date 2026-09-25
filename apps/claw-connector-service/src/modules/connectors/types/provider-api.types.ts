@@ -93,6 +93,8 @@ export type PresetModelListEntry = {
   type?: string;
   tags: string[];
   contextWindow?: number;
+  /** The provider-published output ceiling, when the list reports one. */
+  maxOutputTokens?: number;
   inputModalities: string[];
   outputModalities: string[];
   supportedParameters: string[];

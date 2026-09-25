@@ -7,6 +7,7 @@ import type {
   ParallelModelTarget,
 } from '../modules/chat-messages/types/parallel.types';
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
+import { PROVIDER_REQUEST_FAILED_MESSAGE } from '../modules/chat-messages/constants/provider-credit.constants';
 import {
   disabledCrossThreadResult,
   emptyConversationManifest,
@@ -404,9 +405,19 @@ describe('ParallelExecutionManager', () => {
 
     const runJudged = async (): Promise<ParallelModelResponse[]> => {
       mockChatExecutionManager.callProvider
-        .mockResolvedValueOnce({ content: 'lane 0', provider: 'ANTHROPIC', model: 'claude-sonnet-4', latencyMs: 5 })
+        .mockResolvedValueOnce({
+          content: 'lane 0',
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          latencyMs: 5,
+        })
         .mockRejectedValueOnce(new Error('Rate limited'))
-        .mockResolvedValueOnce({ content: 'lane 2', provider: 'OPENAI', model: 'gpt-5', latencyMs: 7 });
+        .mockResolvedValueOnce({
+          content: 'lane 2',
+          provider: 'OPENAI',
+          model: 'gpt-5',
+          latencyMs: 7,
+        });
       return (manager as any).executeAllModels(
         'user-1',
         threeModels,
@@ -571,7 +582,21 @@ describe('ParallelExecutionManager', () => {
       );
 
       expect(result.status).toBe('failed');
-      expect(result.errorMessage).toBe('Unknown error');
+      expect(result.errorMessage).toBe(PROVIDER_REQUEST_FAILED_MESSAGE);
+    });
+
+    it('never stores a provider JSON body or URL as the lane error (ADR-125)', async () => {
+      mockChatExecutionManager.callProvider.mockRejectedValue(
+        new Error(
+          '{"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"z-ai/glm-5.2:free is temporarily rate-limited upstream: https://openrouter.ai/settings/integrations"}}}',
+        ),
+      );
+      const target: ParallelModelTarget = { provider: 'OPENROUTER', model: 'z-ai/glm-5.2:free' };
+      const result: ParallelModelResponse = await (manager as any).executeSingleModel(
+        target,
+        mockContext,
+      );
+      expect(result.errorMessage).toBe(PROVIDER_REQUEST_FAILED_MESSAGE);
     });
 
     it('should measure latency even on failure', async () => {

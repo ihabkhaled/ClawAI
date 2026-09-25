@@ -291,3 +291,14 @@ it sits behind `ServiceTokenGuard`.
   chat-service then sends no pre-flight cap). Floats → micro-USD by
   `usdAmountToMicroUsdFloor` (fixed-decimal truncation, never `parseFloat`).
 - Only statuses are logged for credit endpoints — their bodies carry account data.
+
+## Model output ceilings (ADR-125, 2026-09-25)
+
+- `max_output_tokens` = catalog value, overwritten on sync (`fromOpenAIEntry`
+  reads `top_provider.max_completion_tokens` / `max_completion_tokens`).
+- `learned_max_output_tokens` = from chat-service refusals via
+  `POST internal/connectors/models/output-limit` (`ServiceTokenGuard`,
+  `ModelOutputLimitService`); `lowerLearnedMaxOutputTokens` only lowers it.
+  Never let a sync write it.
+- Snapshot `maxOutputTokens` = `effectiveMaxOutputTokens(catalog, learned)`.
+- Not read yet: Gemini native `outputTokenLimit`, Ollama `show` — learned instead.

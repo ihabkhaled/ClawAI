@@ -4,6 +4,8 @@ import { ConnectorsInternalController } from './controllers/connectors-internal.
 import { PublicModelCatalogController } from './controllers/public-model-catalog.controller';
 import { CreditHeadroomInternalController } from './controllers/credit-headroom-internal.controller';
 import { CreditHeadroomService } from './services/credit-headroom.service';
+import { ModelOutputLimitInternalController } from './controllers/model-output-limit-internal.controller';
+import { ModelOutputLimitService } from './services/model-output-limit.service';
 import { CreditHeadroomManager } from './managers/credit-headroom.manager';
 import { PublicModelCatalogService } from './services/public-model-catalog.service';
 import { ConnectorsService } from './services/connectors.service';
@@ -20,9 +22,11 @@ import { SyncRunsRepository } from './repositories/sync-runs.repository';
     ConnectorsInternalController,
     PublicModelCatalogController,
     CreditHeadroomInternalController,
+    ModelOutputLimitInternalController,
   ],
   providers: [
     PublicModelCatalogService,
+    ModelOutputLimitService,
     CreditHeadroomService,
     CreditHeadroomManager,
     ConnectorsService,

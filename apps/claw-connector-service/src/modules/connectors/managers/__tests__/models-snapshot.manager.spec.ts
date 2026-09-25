@@ -10,6 +10,8 @@ type Row = {
   supportsAudio: boolean;
   supportsVideoInput: boolean;
   maxContextTokens: number | null;
+  maxOutputTokens?: number | null;
+  learnedMaxOutputTokens?: number | null;
   exposure: string;
   kind: string;
 };
@@ -52,6 +54,22 @@ describe('ModelsSnapshotManager', () => {
     expect(result.models[0]!.modalitiesOut).toEqual(['TEXT']);
     expect(result.models[0]!.isLocal).toBe(false);
     expect(result.models[0]!.contextWindowTokens).toBe(128_000);
+  });
+
+  it('publishes the smaller of the catalog and learned output ceilings (ADR-125)', async () => {
+    const manager = buildManager([
+      makeRow({ modelKey: 'a', maxOutputTokens: 32_768, learnedMaxOutputTokens: 16_384 }),
+      makeRow({ modelKey: 'b', maxOutputTokens: 8_192, learnedMaxOutputTokens: null }),
+      makeRow({ modelKey: 'c', maxOutputTokens: null, learnedMaxOutputTokens: 4_096 }),
+      makeRow({ modelKey: 'd' }),
+    ]);
+    const result = await manager.build();
+    expect(result.models.map((model) => model.maxOutputTokens)).toEqual([
+      16_384,
+      8_192,
+      4_096,
+      undefined,
+    ]);
   });
 
   it('appends IMAGE_INPUT when supportsVision is true', async () => {

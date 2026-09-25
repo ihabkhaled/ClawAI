@@ -45,6 +45,11 @@ import { resolveLaneJudgeState } from '../utilities/compare-judge.utility';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 import { BusinessException } from '../../../common/errors';
 import {
+  redactProviderText,
+  userFacingErrorText,
+} from '../utilities/provider-http-failure.utility';
+import { PROVIDER_REQUEST_FAILED_MESSAGE } from '../constants/provider-credit.constants';
+import {
   PAYG_COMPARE_ALL_OR_NOTHING_CODE,
   PAYG_WORKFLOW_COMPARE_LANE,
 } from '../constants/payg.constants';
@@ -663,9 +668,11 @@ export class ParallelExecutionManager {
           : { helperExecutions: llmResponse.helperExecutions }),
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      // Stored as the lane's content ("Error: …") and streamed to the browser,
+      // so provider JSON / URLs are replaced here (ADR-125).
+      const errorMessage = userFacingErrorText(error, PROVIDER_REQUEST_FAILED_MESSAGE);
       this.logger.warn(
-        `executeSingleModel: ${target.provider}/${target.model} failed — ${errorMessage}`,
+        `executeSingleModel: ${target.provider}/${target.model} failed — ${redactProviderText(error instanceof Error ? error.message : 'unknown')}`,
       );
 
       const failed = this.buildFailedResponse(

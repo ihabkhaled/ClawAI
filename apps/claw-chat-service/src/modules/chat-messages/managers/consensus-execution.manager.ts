@@ -33,6 +33,8 @@ import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { ResearchEnricherManager } from './research-enricher.manager';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
+import { userFacingErrorText } from '../utilities/provider-http-failure.utility';
+import { PROVIDER_REQUEST_FAILED_MESSAGE } from '../constants/provider-credit.constants';
 
 @Injectable()
 export class ConsensusExecutionManager {
@@ -329,7 +331,8 @@ export class ConsensusExecutionManager {
         errorMessage: null,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      // Stored as the lane's reply — never provider JSON or a URL (ADR-125).
+      const errorMessage = userFacingErrorText(error, PROVIDER_REQUEST_FAILED_MESSAGE);
       return this.buildFailedResponse(
         target.provider,
         target.model,

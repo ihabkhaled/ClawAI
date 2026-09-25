@@ -12,6 +12,8 @@ export type ModelsSnapshotEntry = {
   provider: string;
   modelKey: string;
   modalitiesIn?: string[];
+  /** The model's output ceiling, when the catalog knows it (ADR-125). */
+  maxOutputTokens?: number | null;
   exposure?: string;
   kind?: string;
 };

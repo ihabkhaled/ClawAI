@@ -695,10 +695,31 @@ text>)` again. Credit refusals → `ProviderCreditExhaustedException`
   the key balance from connector-service and the rate from routing-service
   (`internal/router-models/costs`), BigInt micro-USD, ×0.9. Unknown / unlimited /
   unpriced / fallback rate ⇒ no cap. Below 256 tokens ⇒ refuse, no hold.
-- **One reactive retry (`withProviderCreditRetry`)**: a stated N ⇒ one retry at
-  min(cap, 90% N), its own hold `<requestId>:credit-retry`. Attachment delivery
+- **One reactive retry (`withProviderRecovery`)**: a stated N ⇒ one retry at
+  min(cap, 90% N), its own hold `<requestId>:provider-retry`. Attachment delivery
   runs once, outside the retry. Specs:
   `__tests__/provider-credit-chokepoint.spec.ts`.
+
+### Every provider's refusals (ADR-125)
+
+- The classifier also returns `ProviderOutputLimitException(maxOutputTokens)`
+  (Groq / Ollama / OpenAI / Anthropic / Gemini wordings) and
+  `ProviderRateLimitedException` (429, "rate-limited upstream"); both keep the
+  caller's code (Runtime V2's transient retry still works) and add a
+  translated `messageKey`. Account-wide exhaustion sets
+  `ProviderCreditExhaustedException.accountExhausted`.
+- `withProviderRecovery` = breaker check, one attempt, at most one retry by
+  `providerRetryPlan`: credit N → 90% N; output limit → the stated ceiling
+  (+ `ModelOutputLimitClient.record`); rate limit → 1.5 s wait. Own hold
+  `<requestId>:provider-retry`.
+- `applyProviderLimits` = `applyModelOutputLimit` (snapshot `maxOutputTokens`
+  - per-replica learned map) then the key-credit cap, before the PAYG hold.
+    `ModelOutputLimitClient` is an `@Optional()` constructor param; hand-built
+    specs without it get no pre-clamp.
+- `ProviderCircuitBreakerManager` (static, per replica): account exhaustion ⇒
+  provider refused for 10 min with no hold/call, then one probe.
+- Compare / consensus lanes store `userFacingErrorText(error)` — never
+  `error.message` raw. Spec: `__tests__/provider-recovery-chokepoint.spec.ts`.
 
 ## AI-written files: format and writer prompt (ADR-108, 2026-09-19)
 

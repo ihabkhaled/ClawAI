@@ -17,7 +17,7 @@ import type { MessageRoutedData } from '../types/execution.types';
 import { ProviderCreditExhaustedException } from '../../../common/errors';
 import {
   PROVIDER_CREDIT_EXHAUSTED_CODE,
-  PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX,
+  PROVIDER_RETRY_REQUEST_SUFFIX,
 } from '../constants/provider-credit.constants';
 import { OUTPUT_BOUNDS_HOSTED_DEFAULT_MAX_OUTPUT_TOKENS } from '../constants/output-token-bounds.constants';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
@@ -212,7 +212,7 @@ describe('provider credit — the buffered chokepoint', () => {
       requestedMaxOutputTokens: number;
     };
     expect(first.requestId).toBe('req-1');
-    expect(second.requestId).toBe(`req-1${PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX}`);
+    expect(second.requestId).toBe(`req-1${PROVIDER_RETRY_REQUEST_SUFFIX}`);
     expect(second.requestedMaxOutputTokens).toBe(8156);
     expect(access.releaseCredit).toHaveBeenCalledTimes(1);
     expect(access.releaseCredit.mock.calls[0]?.[1]).toBe('PROVIDER_ERROR');
@@ -278,7 +278,7 @@ describe('provider credit — the buffered chokepoint', () => {
     expect(access.releaseCredit.mock.calls[0]?.[0]).toBe(laneHold);
     expect(access.reserveCredit).toHaveBeenCalledTimes(1);
     expect(access.reserveCredit.mock.calls[0]?.[0]).toMatchObject({
-      requestId: `lane-1${PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX}`,
+      requestId: `lane-1${PROVIDER_RETRY_REQUEST_SUFFIX}`,
       surface: PaygSurface.COMPARE,
     });
   });

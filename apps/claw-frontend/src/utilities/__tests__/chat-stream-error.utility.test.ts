@@ -49,6 +49,23 @@ describe('provider credit exhaustion', () => {
   });
 });
 
+describe('rate-limit and output-limit keys (ADR-125)', () => {
+  it.each(['chat.errors.providerRateLimited', 'chat.errors.providerOutputLimit'])(
+    'translates %s from the stream and from a stored reply',
+    (key) => {
+      expect(
+        resolveChatStreamError(
+          { code: 'CLOUD_PROVIDER_UNAVAILABLE', messageKey: key } as StreamEvent,
+          translate,
+        ),
+      ).toBe(`localized:${key}`);
+      expect(resolveStoredErrorMessage({ error: true, errorMessageKey: key }, translate)).toBe(
+        `⚠️ localized:${key}`,
+      );
+    },
+  );
+});
+
 describe('resolveStoredErrorMessage', () => {
   it('translates a stored error reply by its message key', () => {
     expect(

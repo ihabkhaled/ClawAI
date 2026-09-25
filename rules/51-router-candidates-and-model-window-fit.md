@@ -96,3 +96,16 @@ model was sent a 16.7k-token prompt.
     (`applyProviderCreditCap`) before the PAYG hold, and a 402 "can only afford
     N" is retried once at 90% of N. The final `max_tokens` is the minimum of
     every cap in the chain; none of them may widen another.
+
+## Added 2026-09-25 (ADR-125 — every provider's output ceiling)
+
+16. **Never send a model more `max_tokens` than it is known to accept, and
+    learn what it did not say.** The model's ceiling lives on
+    `connector_models` (`max_output_tokens` from the catalog sync,
+    `learned_max_output_tokens` from refusals — only ever lowered) and reaches
+    chat through the models-snapshot `maxOutputTokens`; the chokepoint
+    pre-clamps with it (`applyModelOutputLimit`). A refusal that states a
+    ceiling is retried once at it and recorded. A new provider's refusal
+    wording gets a pattern in `PROVIDER_OUTPUT_LIMIT_PATTERNS` and a verbatim
+    case in `provider-http-failure.utility.spec.ts`; a catalog that publishes
+    an output limit gets read in `fromOpenAIEntry` (or its adapter).

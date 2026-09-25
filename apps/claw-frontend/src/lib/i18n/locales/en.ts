@@ -539,6 +539,10 @@ export const en: TranslationDictionary = {
         'Video attachments are not available in local-only or privacy-first mode because no local video-capable model is configured.',
       providerCreditExhausted:
         'This model’s provider is out of credit right now. Choose another model or try again later.',
+      providerRateLimited:
+        'This model is busy at its provider right now. Try again in a moment or choose another model.',
+      providerOutputLimit:
+        'This model could not produce an answer of the requested length. Please try again.',
     },
     imageGeneration: 'Image Generation',
     generatedImage: 'Generated Image',

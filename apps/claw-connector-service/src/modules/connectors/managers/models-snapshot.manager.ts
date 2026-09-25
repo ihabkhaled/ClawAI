@@ -6,6 +6,7 @@ import {
   snapshotSupportsAudio,
   snapshotSupportsVideoInput,
 } from '../utilities/snapshot-media-capability.utility';
+import { effectiveMaxOutputTokens } from '../utilities/model-output-limit.utility';
 import {
   type ConnectorModelsSnapshotResult,
   type UpstreamModelSnapshotEntry,
@@ -49,6 +50,8 @@ export class ModelsSnapshotManager {
       modalitiesIn,
       modalitiesOut,
       contextWindowTokens: row.maxContextTokens ?? undefined,
+      // chat-service pre-clamps `max_tokens` with this (ADR-125).
+      maxOutputTokens: effectiveMaxOutputTokens(row.maxOutputTokens, row.learnedMaxOutputTokens),
       exposure: row.exposure,
       kind: row.kind,
     };

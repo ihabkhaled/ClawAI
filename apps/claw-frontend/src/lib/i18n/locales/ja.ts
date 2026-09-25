@@ -544,6 +544,10 @@ export const ja: TranslationDictionary = {
         'ローカル ビデオ対応モデルが構成されていないため、ビデオ添付ファイルはローカル専用モードまたはプライバシー優先モードでは使用できません。',
       providerCreditExhausted:
         'このモデルのプロバイダーのクレジットが現在不足しています。別のモデルを選択するか、しばらくしてからもう一度お試しください。',
+      providerRateLimited:
+        'このモデルは現在プロバイダー側で混み合っています。しばらくしてから再試行するか、別のモデルを選択してください。',
+      providerOutputLimit:
+        'このモデルは要求された長さの回答を生成できませんでした。もう一度お試しください。',
     },
     imageGeneration: '画像の生成',
     generatedImage: '生成されたイメージ',

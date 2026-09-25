@@ -165,9 +165,14 @@ paid model, rule 1 applies to it like anything else.
     afford N"), chat-service throws `PROVIDER_CREDIT_EXHAUSTED` with HTTP
     **503**, never 402 — a 402 ends the candidate walk (§18), and an empty
     provider key says nothing about the next provider. Its one reactive retry
-    is a distinct paid call: its own hold under `<requestId>:credit-retry`
+    is a distinct paid call: its own hold under `<requestId>:provider-retry`
     (§15), never the first attempt's key. The provider's text never reaches the
     user ([ADR-124](../docs/13-adr/adr-124-provider-key-credit-preflight-and-one-retry.md)).
+    The same holds for the output-limit and rate-limit retries, and an
+    ACCOUNT-wide exhaustion (OpenAI insufficient_quota, Anthropic "credit
+    balance is too low", Gemini "exceeded your current quota") opens a
+    10-minute breaker: that provider is refused with no hold and no call
+    ([ADR-125](../docs/13-adr/adr-125-provider-refusals-recover-at-the-chokepoint.md)).
 
 ## Prohibited patterns
 

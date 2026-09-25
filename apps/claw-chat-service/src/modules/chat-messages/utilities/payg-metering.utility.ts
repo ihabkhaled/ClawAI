@@ -9,7 +9,7 @@ import {
 } from '../../../common/constants/execution.constants';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { PAYG_PROVIDER_ALIASES, PAYG_SURFACE_BY_TOKEN_CONTEXT } from '../constants/payg.constants';
-import { PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX } from '../constants/provider-credit.constants';
+import { PROVIDER_RETRY_REQUEST_SUFFIX } from '../constants/provider-credit.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import type { PaygCallOptions } from '../types/payg.types';
 
@@ -91,11 +91,11 @@ export function paygUnmeteredHold(maxOutputTokens: number): PaygHold {
  * caller-supplied hold (a compare lane's) was released by the failed attempt,
  * so the retry must reserve its own.
  */
-export function creditRetryPaygCall(paygCall: PaygCallOptions | undefined): PaygCallOptions {
+export function retryPaygCall(paygCall: PaygCallOptions | undefined): PaygCallOptions {
   return {
     ...paygCall,
     hold: undefined,
-    requestId: `${paygCall?.requestId ?? randomUUID()}${PROVIDER_CREDIT_RETRY_REQUEST_SUFFIX}`,
+    requestId: `${paygCall?.requestId ?? randomUUID()}${PROVIDER_RETRY_REQUEST_SUFFIX}`,
   };
 }
 

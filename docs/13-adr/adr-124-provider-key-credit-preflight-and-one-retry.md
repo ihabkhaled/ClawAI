@@ -82,9 +82,9 @@ routing-service (ADR-079).
    enforces its own limit; a guessed cap would refuse answers the key could pay
    for.
 7. **One reactive retry.** On `ProviderCreditExhaustedException` with a stated
-   N, `withProviderCreditRetry` retries exactly once with
+   N, `withProviderRecovery` retries exactly once with
    `min(existing cap, floor(N × 0.9))` (≥ 256). The retry is a distinct paid
-   call: its own hold under `<requestId>:credit-retry` (a caller-supplied compare
+   call: its own hold under `<requestId>:provider-retry` (a caller-supplied compare
    hold was already released by the failed attempt). Attachment delivery runs
    once, outside the retry, so a paid vision helper is not repeated. No loop.
 

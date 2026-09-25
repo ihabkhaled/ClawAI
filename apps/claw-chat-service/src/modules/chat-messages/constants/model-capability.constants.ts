@@ -60,6 +60,8 @@ export const modelsSnapshotResponseSchema = z.object({
       provider: z.string(),
       modelKey: z.string(),
       modalitiesIn: z.array(z.string()).optional(),
+      // Smaller of the catalog's and the learned output ceiling (ADR-125).
+      maxOutputTokens: z.number().int().positive().nullish(),
       exposure: z.string().optional(),
       kind: z.string().optional(),
     }),

@@ -31,6 +31,7 @@ export class ConnectorModelsRepository {
           supportsVideoInput: model.capabilities.supportsVideoInput,
           supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
           maxContextTokens: model.capabilities.maxContextTokens,
+          maxOutputTokens: model.capabilities.maxOutputTokens,
           usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
           inputUsdPerMillion: model.usage?.inputUsdPerMillion,
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
@@ -50,6 +51,7 @@ export class ConnectorModelsRepository {
           supportsVideoInput: model.capabilities.supportsVideoInput,
           supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
           maxContextTokens: model.capabilities.maxContextTokens,
+          maxOutputTokens: model.capabilities.maxOutputTokens,
           usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
           inputUsdPerMillion: model.usage?.inputUsdPerMillion,
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
@@ -98,6 +100,7 @@ export class ConnectorModelsRepository {
             supportsVideoInput: model.capabilities.supportsVideoInput,
             supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
             maxContextTokens: model.capabilities.maxContextTokens,
+            maxOutputTokens: model.capabilities.maxOutputTokens,
             usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
@@ -118,6 +121,7 @@ export class ConnectorModelsRepository {
             supportsVideoInput: model.capabilities.supportsVideoInput,
             supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
             maxContextTokens: model.capabilities.maxContextTokens,
+            maxOutputTokens: model.capabilities.maxOutputTokens,
             usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
@@ -206,6 +210,25 @@ export class ConnectorModelsRepository {
       select: { modelKey: true },
     });
     return rows.map((row) => row.modelKey);
+  }
+
+  // Records an output ceiling learned from a provider refusal (ADR-125). Only
+  // ever LOWERS it: a row whose learned value is already at or below `max`
+  // is left alone, so one mis-parsed refusal can never widen a model's cap.
+  async lowerLearnedMaxOutputTokens(
+    provider: ConnectorProvider,
+    modelKeys: string[],
+    max: number,
+  ): Promise<number> {
+    const result = await this.prisma.connectorModel.updateMany({
+      where: {
+        provider,
+        modelKey: { in: modelKeys },
+        OR: [{ learnedMaxOutputTokens: null }, { learnedMaxOutputTokens: { gt: max } }],
+      },
+      data: { learnedMaxOutputTokens: max, learnedMaxOutputAt: new Date() },
+    });
+    return result.count;
   }
 
   // Which of these (provider, model) pairs are real, exposed, chat-capable

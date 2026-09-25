@@ -184,26 +184,30 @@ import type {
   OllamaToolTranscript,
   OllamaToolTranscriptTurn,
 } from '../types/ollama-cloud-tool.types';
-import { providerFailureCode } from '../utilities/runtime-v2-provider-failure.utility';
+import { delay, providerFailureCode } from '../utilities/runtime-v2-provider-failure.utility';
 import {
   carriesUrl,
-  creditRetryCeiling,
+  isAccountExhaustion,
+  providerRetryPlan,
   redactProviderText,
   sanitizeUserFacingErrorMessage,
   toProviderHttpFailure,
 } from '../utilities/provider-http-failure.utility';
+import type { ProviderRetryPlan } from '../types/provider-retry.types';
+import { ModelOutputLimitClient } from '../clients/model-output-limit.client';
+import { ProviderCircuitBreakerManager } from './provider-circuit-breaker.manager';
 import {
   PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
   PROVIDER_REQUEST_FAILED_MESSAGE,
 } from '../constants/provider-credit.constants';
 import {
-  creditRetryPaygCall,
   isPaygDelegatedProvider,
   isPaygExemptProvider,
   normalizePaygProvider,
   paygSurfaceForTokenContext,
   paygUnmeteredHold,
   paygWorkflowForTokenContext,
+  retryPaygCall,
   withOutputCeiling,
 } from '../utilities/payg-metering.utility';
 import {
@@ -254,6 +258,8 @@ export class ChatExecutionManager implements OnModuleInit {
   // Key-credit pre-flight (OpenRouter 402). A plain instance like the other
   // per-request clients; it makes no call for a provider without credit endpoints.
   private readonly providerCreditHeadroom = new ProviderCreditHeadroomClient();
+  // Process-wide state (static); a plain instance like the clients above.
+  private readonly providerBreaker = new ProviderCircuitBreakerManager();
 
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
@@ -281,6 +287,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // transcript strategy gets its transcript and the honest "frames could
     // not be viewed" note (multimodal batch 8).
     @Optional() private readonly videoDelivery?: VideoDeliveryManager,
+    // Optional for the same reason. Without it there is no output-ceiling
+    // pre-clamp; an output-limit refusal is still retried once (ADR-125).
+    @Optional() private readonly modelOutputLimits?: ModelOutputLimitClient,
   ) {}
 
   /**
@@ -894,7 +903,7 @@ export class ChatExecutionManager implements OnModuleInit {
         tokenContext,
         call,
       );
-    return this.withProviderCreditRetry(
+    return this.withProviderRecovery(
       candidate.provider,
       candidate.model,
       executionOptions,
@@ -915,7 +924,7 @@ export class ChatExecutionManager implements OnModuleInit {
     tokenContext: TokenLedgerContext | undefined,
     paygCall: PaygCallOptions | undefined,
   ): Promise<LlmResponse> {
-    const executionOptions = await this.applyProviderCreditCap(
+    const executionOptions = await this.applyProviderLimits(
       candidate.provider,
       candidate.model,
       context,
@@ -2100,21 +2109,26 @@ export class ChatExecutionManager implements OnModuleInit {
         tokenContext,
         call,
       );
-    return this.withProviderCreditRetry(provider, model, executionOptions, paygCall, attempt);
+    return this.withProviderRecovery(provider, model, executionOptions, paygCall, attempt);
   }
 
   /**
-   * Runs one chokepoint attempt, and — only when the provider refused for its
-   * OWN account's credit and said what it could afford ("can only afford N",
-   * OpenRouter) — exactly one more, capped at 90% of N.
+   * Runs one chokepoint attempt and, for the three recoverable refusals, exactly
+   * one more (ADR-124, ADR-125):
+   *  - credit ("can only afford N")      → retry at 90% of N;
+   *  - output limit ("≤ `16384`")        → retry at the stated ceiling, and
+   *                                         remember it for the model;
+   *  - transient upstream rate limit     → wait briefly, retry once.
    *
-   * The retry is a distinct paid call: its own hold under its own request id,
-   * reserved and settled like any other (rule 37 §15). The first attempt's hold
-   * was already released by the attempt that failed. There is no loop: the
-   * retry's own failure is thrown as-is, and a stated N too small to answer in
-   * is not retried at all.
+   * A provider whose ACCOUNT is out of credit trips the circuit breaker; while
+   * it is open the provider is refused here with no hold and no call, so AUTO
+   * moves on at once (half-open probe after the window).
+   *
+   * The retry is a distinct paid call: its own hold under its own request id
+   * (rule 37 §15); the failed attempt's hold was already released. No loop: the
+   * retry's own failure is thrown as-is.
    */
-  private async withProviderCreditRetry(
+  private async withProviderRecovery(
     provider: string,
     model: string,
     executionOptions: ExecutionOptions | undefined,
@@ -2124,18 +2138,89 @@ export class ChatExecutionManager implements OnModuleInit {
       call: PaygCallOptions | undefined,
     ) => Promise<LlmResponse>,
   ): Promise<LlmResponse> {
+    if (!this.providerBreaker.allowsCall(provider)) {
+      this.logger.warn(
+        `withProviderRecovery: ${provider} skipped — its account is out of credit (breaker open)`,
+      );
+      throw new ProviderCreditExhaustedException(undefined, true);
+    }
     try {
-      return await attempt(executionOptions, paygCall);
+      return this.trackBreaker(provider, await attempt(executionOptions, paygCall));
     } catch (error: unknown) {
-      const ceiling = creditRetryCeiling(error);
-      if (ceiling === undefined) {
+      this.providerBreaker.recordOutcome(provider, isAccountExhaustion(error));
+      const plan = providerRetryPlan(error);
+      if (plan === undefined) {
         throw error;
       }
-      this.logger.warn(
-        `withProviderCreditRetry: ${provider}/${model} refused for provider-account credit — retrying once with an output cap of ${String(ceiling)}`,
-      );
-      return attempt(withOutputCeiling(executionOptions, ceiling), creditRetryPaygCall(paygCall));
+      await this.prepareProviderRetry(provider, model, plan);
+      const retryOptions =
+        plan.ceiling === undefined
+          ? executionOptions
+          : withOutputCeiling(executionOptions, plan.ceiling);
+      try {
+        return this.trackBreaker(provider, await attempt(retryOptions, retryPaygCall(paygCall)));
+      } catch (retryError: unknown) {
+        this.providerBreaker.recordOutcome(provider, isAccountExhaustion(retryError));
+        throw retryError;
+      }
     }
+  }
+
+  private trackBreaker(provider: string, response: LlmResponse): LlmResponse {
+    this.providerBreaker.recordOutcome(provider, false);
+    return response;
+  }
+
+  /** Remembers a learned output ceiling and waits out a rate limit, before the one retry. */
+  private async prepareProviderRetry(
+    provider: string,
+    model: string,
+    plan: ProviderRetryPlan,
+  ): Promise<void> {
+    this.logger.warn(
+      `withProviderRecovery: ${provider}/${model} ${plan.reason} — retrying once${plan.ceiling === undefined ? '' : ` with an output cap of ${String(plan.ceiling)}`}`,
+    );
+    if (plan.learnedMaxOutputTokens !== undefined) {
+      await this.modelOutputLimits?.record(provider, model, plan.learnedMaxOutputTokens);
+    }
+    if (plan.delayMs !== undefined) {
+      await delay(plan.delayMs);
+    }
+  }
+
+  /**
+   * Pre-flight clamps, in order: the model's known output ceiling (catalog or
+   * learned, ADR-125), then what the provider key can afford (ADR-124).
+   */
+  private async applyProviderLimits(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    executionOptions: ExecutionOptions | undefined,
+  ): Promise<ExecutionOptions | undefined> {
+    const clamped = await this.applyModelOutputLimit(provider, model, context, executionOptions);
+    return this.applyProviderCreditCap(provider, model, context, clamped);
+  }
+
+  /** Never sends a model more `max_tokens` than it is known to accept. */
+  private async applyModelOutputLimit(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    executionOptions: ExecutionOptions | undefined,
+  ): Promise<ExecutionOptions | undefined> {
+    const known = await this.modelOutputLimits?.find(provider, model);
+    if (known === undefined) {
+      return executionOptions;
+    }
+    const requested = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
+    if (known >= requested) {
+      return executionOptions;
+    }
+    this.logger.log(
+      `applyModelOutputLimit: ${provider}/${model} output cap ${String(requested)} -> ${String(known)} (model ceiling)`,
+    );
+    return withOutputCeiling(executionOptions, known);
   }
 
   /**
@@ -2188,7 +2273,7 @@ export class ChatExecutionManager implements OnModuleInit {
     paygCall: PaygCallOptions | undefined,
   ): Promise<LlmResponse> {
     const { provider, model, context, startTime, usedFallback, threadSettings, routingMode } = call;
-    const executionOptions = await this.applyProviderCreditCap(
+    const executionOptions = await this.applyProviderLimits(
       provider,
       model,
       context,
