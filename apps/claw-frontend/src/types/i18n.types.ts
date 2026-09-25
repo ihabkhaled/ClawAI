@@ -1359,6 +1359,7 @@ export type TranslationDictionary = {
         payments: string;
         workspaces: string;
         codingAgent: string;
+        antivirus: string;
         localModels: string;
         platform: string;
       };

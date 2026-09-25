@@ -101,6 +101,20 @@ The health service is configured with URLs for all other services, typically via
 | file-gen-service  | http://file-generation-service:4013 |
 | ollama runtime    | http://ollama:11434                 |
 
+## Dependency rows (ClamAV)
+
+Some dependencies are checked by the service that uses them and reported in its
+`/health` body. `DEPENDENCY_PROBES` (`constants/health.constants.ts`) lifts them
+into rows of their own in `checkAll()`:
+
+| Row      | Source       | Body field        | Status component                           |
+| -------- | ------------ | ----------------- | ------------------------------------------ |
+| `clamav` | file-service | `services.clamav` | `antivirus` — "Antivirus scanner (ClamAV)" |
+
+`up` → UP, `down` → DOWN (host-free `error`), anything else or the source down
+→ no row (not measured). Each row gets a `claw_service_up` series and uptime
+history like a service. clamd down makes the aggregate `degraded`.
+
 ## Timeout and Retry
 
 - Each health check has a 5-second timeout

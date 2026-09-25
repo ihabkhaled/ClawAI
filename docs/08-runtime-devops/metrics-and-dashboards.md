@@ -21,13 +21,13 @@ health-service  ──checks 17 services──►  /api/v1/metrics  ◄──scr
 
 ## What is collected
 
-| Metric                        | Type  | Labels    | Meaning                                                                                                                           |
-| ----------------------------- | ----- | --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `claw_service_up`             | gauge | `service` | 1 when the service answered its health check, 0 when it did not                                                                   |
-| `claw_service_response_ms`    | gauge | `service` | How long that answer took. Absent while a service is down                                                                         |
-| `claw_services_total`         | gauge | —         | How many services are checked (17)                                                                                                |
-| `claw_services_up`            | gauge | —         | How many answered                                                                                                                 |
-| `claw_health_snapshot_age_ms` | gauge | —         | Age of the snapshot this scrape was served from. Near the scrape interval is normal; growing means the exporter is not refreshing |
+| Metric                        | Type  | Labels    | Meaning                                                                                                                                           |
+| ----------------------------- | ----- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `claw_service_up`             | gauge | `service` | 1 when the service answered its health check, 0 when it did not. Also `service="clamav"`: clamd as reported by file-service (`DEPENDENCY_PROBES`) |
+| `claw_service_response_ms`    | gauge | `service` | How long that answer took. Absent while a service is down                                                                                         |
+| `claw_services_total`         | gauge | —         | How many services are checked (17)                                                                                                                |
+| `claw_services_up`            | gauge | —         | How many answered                                                                                                                                 |
+| `claw_health_snapshot_age_ms` | gauge | —         | Age of the snapshot this scrape was served from. Near the scrape interval is normal; growing means the exporter is not refreshing                 |
 
 **A metric carries `service` and nothing else.** The renderer throws on any
 other label: metrics live for a month and are read by anyone with the

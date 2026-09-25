@@ -1398,6 +1398,7 @@ export const ja: TranslationDictionary = {
         accounts: 'サインインとアカウント',
         chat: 'チャット',
         files: 'ファイル',
+        antivirus: 'ウイルススキャナー (ClamAV)',
         images: '画像生成',
         research: 'リサーチ',
         payments: '支払い',

@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ServiceStatus } from '@claw/shared-types';
 import { httpGet } from '@common/utilities';
-import { HEALTH_CHECK_TIMEOUT_MS, SERVICE_URLS } from '../constants/health.constants';
+import {
+  DEPENDENCY_PROBES,
+  HEALTH_CHECK_TIMEOUT_MS,
+  SERVICE_URLS,
+} from '../constants/health.constants';
 import {
   type AggregatedHealth,
   type AggregatedHealthSummary,
+  type ServiceCheckOutcome,
   type ServiceHealthResult,
 } from '../types/health.types';
+import { deriveDependencyResults } from '../utilities/dependency-health.utility';
 import { AggregatedHealthStatus } from '../enums/aggregated-health-status.enum';
 
 @Injectable()
@@ -19,7 +25,21 @@ export class HealthService {
     this.logger.debug(`checkAll: input services=${String(Object.keys(SERVICE_URLS).length)}`);
     try {
       const entries = Object.entries(SERVICE_URLS);
-      const results = await Promise.all(entries.map(([name, url]) => this.checkService(name, url)));
+      const outcomes = await Promise.all(
+        entries.map(([name, url]) => this.checkService(name, url)),
+      );
+      // Dependencies a service reports in its own body (ClamAV via
+      // file-service) become rows of their own: a status component, a
+      // `claw_service_up` series and uptime history, with no extra request.
+      const bodiesBySource = new Map(
+        outcomes
+          .filter((outcome) => outcome.result.status === ServiceStatus.UP)
+          .map((outcome) => [outcome.result.name, outcome.body] as const),
+      );
+      const results = [
+        ...outcomes.map((outcome) => outcome.result),
+        ...deriveDependencyResults(DEPENDENCY_PROBES, bodiesBySource),
+      ];
       const summary = this.summarise(results);
       const status = this.deriveStatus(summary);
 
@@ -61,33 +81,26 @@ export class HealthService {
     if (summary.down === 0) {
       return AggregatedHealthStatus.HEALTHY;
     }
-    if (summary.up === 0) {
-      return AggregatedHealthStatus.UNHEALTHY;
-    }
-    return AggregatedHealthStatus.DEGRADED;
+    return summary.up === 0 ? AggregatedHealthStatus.UNHEALTHY : AggregatedHealthStatus.DEGRADED;
   }
 
-  private async checkService(name: string, url: string): Promise<ServiceHealthResult> {
+  private async checkService(name: string, url: string): Promise<ServiceCheckOutcome> {
     this.logger.debug(`checkService: name=${name} url=${url}`);
     const start = Date.now();
     try {
-      await httpGet(url, { timeout: HEALTH_CHECK_TIMEOUT_MS });
+      const body = await httpGet<unknown>(url, { timeout: HEALTH_CHECK_TIMEOUT_MS });
       const responseTimeMs = Date.now() - start;
       this.logger.debug(`checkService: name=${name} ok responseTimeMs=${String(responseTimeMs)}`);
       return {
-        name,
-        status: ServiceStatus.UP,
-        responseTimeMs,
-        error: null,
+        result: { name, status: ServiceStatus.UP, responseTimeMs, error: null },
+        body,
       };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`checkService: name=${name} down — ${message}`);
       return {
-        name,
-        status: ServiceStatus.DOWN,
-        responseTimeMs: null,
-        error: message,
+        result: { name, status: ServiceStatus.DOWN, responseTimeMs: null, error: message },
+        body: null,
       };
     }
   }

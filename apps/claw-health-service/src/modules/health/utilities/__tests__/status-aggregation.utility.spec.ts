@@ -1,6 +1,6 @@
 import { ServiceStatus } from '@claw/shared-types';
 
-import { SERVICE_URLS } from '../../constants/health.constants';
+import { DEPENDENCY_PROBES, SERVICE_URLS } from '../../constants/health.constants';
 import {
   COMPONENT_MEMBERS,
   MAX_INCIDENTS,
@@ -85,7 +85,9 @@ describe('COMPONENT_MEMBERS', () => {
   // A service missing from every group would silently fall off the page.
   it('puts every checked service in exactly one component', () => {
     const grouped = COMPONENT_MEMBERS.flatMap((group) => [...group.services]).sort();
-    expect(grouped).toEqual(Object.keys(SERVICE_URLS).sort());
+    expect(grouped).toEqual(
+      [...Object.keys(SERVICE_URLS), ...DEPENDENCY_PROBES.map((probe) => probe.name)].sort(),
+    );
   });
 });
 

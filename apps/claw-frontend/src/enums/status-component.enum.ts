@@ -7,6 +7,8 @@ export enum StatusComponent {
   ACCOUNTS = 'accounts',
   CHAT = 'chat',
   FILES = 'files',
+  /** ClamAV: when it is down every upload is refused (fail closed). */
+  ANTIVIRUS = 'antivirus',
   IMAGES = 'images',
   RESEARCH = 'research',
   PAYMENTS = 'payments',

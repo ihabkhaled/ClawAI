@@ -129,7 +129,7 @@ After completing any implementation task on this service, produce:
   at 120/min, `Cache-Control: private, max-age=30`. The public `/api/v1/health`
   is unchanged.
 - **It speaks components, never services.** `COMPONENT_MEMBERS` maps the 17
-  services to 10 coarse groups. Nothing in `StatusPageResponse` may carry a
+  services (plus the `clamav` dependency row) to 11 coarse groups. Nothing in `StatusPageResponse` may carry a
   service name, host, port, version or error text; the redaction spec in
   `status-aggregation.utility.spec.ts` enforces it. Log a failure, never
   return it.
@@ -140,6 +140,21 @@ After completing any implementation task on this service, produce:
   read is cached 30 s. One attempt, 5 s timeout, no retry loop.
 - **Integer basis points** for uptime, floored. Unmeasured buckets count on
   neither side.
-- A new service in `SERVICE_URLS` must join exactly one group in
-  `COMPONENT_MEMBERS` (a spec fails otherwise). A new component needs the
+- A new service in `SERVICE_URLS` (or a new `DEPENDENCY_PROBES` row) must join
+  exactly one group in `COMPONENT_MEMBERS` (a spec fails otherwise). A new component needs the
   frontend enum, label key and 13 locales: `skills/watch-production-health.md`.
+
+## Dependency rows: ClamAV via file-service (2026-09-25)
+
+`DEPENDENCY_PROBES` turns a dependency another service checks itself into a
+row of its own, read from that service's `/health` body with no extra request:
+`clamav` ← file-service `services.clamav` (a real clamd `zPING` → `PONG`).
+
+- The row feeds everything a service row does: `claw_service_up{service="clamav"}`,
+  uptime history, and the **Antivirus scanner (ClamAV)** status component
+  (`StatusComponent.ANTIVIRUS`).
+- It is UP/DOWN only when the source said so. `disabled`, a missing key (older
+  file-service) or file-service itself down = no row = "not measured", never an
+  outage. Its `error` is a fixed, host-free string (`DEPENDENCY_DOWN_ERROR`).
+- health-service never opens a socket to clamd; file-service owns that check.
+- Runbook: [`runbook-clamav-unreachable.md`](../../docs/11-runbooks/runbook-clamav-unreachable.md).

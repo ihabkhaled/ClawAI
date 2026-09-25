@@ -1397,6 +1397,7 @@ export const hi: TranslationDictionary = {
         accounts: 'साइन-इन और खाते',
         chat: 'चैट',
         files: 'फ़ाइलें',
+        antivirus: 'वायरस स्कैनर (ClamAV)',
         images: 'इमेज निर्माण',
         research: 'रिसर्च',
         payments: 'भुगतान',

@@ -1377,6 +1377,7 @@ export const th: TranslationDictionary = {
         accounts: 'การลงชื่อเข้าใช้และบัญชี',
         chat: 'แชท',
         files: 'ไฟล์',
+        antivirus: 'ตัวสแกนไวรัส (ClamAV)',
         images: 'การสร้างรูปภาพ',
         research: 'การค้นคว้า',
         payments: 'การชำระเงิน',

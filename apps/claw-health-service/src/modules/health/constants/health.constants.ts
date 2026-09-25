@@ -1,3 +1,5 @@
+import { type DependencyProbe } from '../types/health.types';
+
 export const SERVICE_URLS: Record<string, string> = {
   'auth-service': 'https://auth-service:4001/api/v1/health',
   'chat-service': 'https://chat-service:4002/api/v1/health',
@@ -19,3 +21,20 @@ export const SERVICE_URLS: Record<string, string> = {
 };
 
 export const HEALTH_CHECK_TIMEOUT_MS = 5000;
+
+/**
+ * Dependencies a service checks itself and reports in its own `/health` body,
+ * surfaced here as if they were services of their own: they get a
+ * `claw_service_up{service=…}` series (ADR-113), uptime history and a status
+ * component, without health-service ever connecting to them.
+ *
+ * `clamav`: file-service PINGs clamd and answers `services.clamav` =
+ * `up`/`down`/`disabled`. A missing key, `disabled`, or file-service itself
+ * down means "not measured" — the row is omitted, never reported DOWN.
+ */
+export const DEPENDENCY_PROBES: readonly DependencyProbe[] = [
+  { name: 'clamav', source: 'file-service', key: 'clamav' },
+];
+
+/** The `error` a derived dependency carries when its source reports it down. Host-free. */
+export const DEPENDENCY_DOWN_ERROR = 'dependency not answering (reported by its service)';

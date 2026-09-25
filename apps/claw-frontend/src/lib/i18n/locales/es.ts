@@ -1410,6 +1410,7 @@ export const es: TranslationDictionary = {
         accounts: 'Inicio de sesión y cuentas',
         chat: 'Chat',
         files: 'Archivos',
+        antivirus: 'Analizador antivirus (ClamAV)',
         images: 'Generación de imágenes',
         research: 'Investigación',
         payments: 'Pagos',

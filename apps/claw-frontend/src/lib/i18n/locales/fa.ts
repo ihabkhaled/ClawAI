@@ -1393,6 +1393,7 @@ export const fa: TranslationDictionary = {
         accounts: 'ورود و حساب‌ها',
         chat: 'گفتگو',
         files: 'فایل‌ها',
+        antivirus: 'اسکنر ویروس (ClamAV)',
         images: 'تولید تصویر',
         research: 'پژوهش',
         payments: 'پرداخت‌ها',

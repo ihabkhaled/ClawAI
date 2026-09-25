@@ -49,6 +49,38 @@ describe('HealthService', () => {
     });
   });
 
+  // The "Antivirus scanner" component: file-service reports clamd in its own
+  // body, and the fan-out turns that into a `clamav` row with no extra request.
+  describe('dependency rows (ClamAV via file-service)', () => {
+    const bodyWithClamav = (clamav: string) => (url: string) =>
+      Promise.resolve(url.includes('file-service') ? { status: 'ok', services: { clamav } } : {});
+
+    it('adds a clamav UP row when file-service reports clamav up', async () => {
+      mockHttpGet.mockImplementation(bodyWithClamav('up'));
+      const result = await service.checkAll();
+      expect(result.services.find((s) => s.name === 'clamav')?.status).toBe(ServiceStatus.UP);
+      expect(result.status).toBe(AggregatedHealthStatus.HEALTHY);
+    });
+
+    it('adds a clamav DOWN row and degrades when clamd is not answering', async () => {
+      mockHttpGet.mockImplementation(bodyWithClamav('down'));
+      const result = await service.checkAll();
+      const clamav = result.services.find((s) => s.name === 'clamav');
+      expect(clamav?.status).toBe(ServiceStatus.DOWN);
+      expect(clamav?.error).not.toMatch(/\d+\.\d+\.\d+\.\d+|3310/);
+      expect(result.status).toBe(AggregatedHealthStatus.DEGRADED);
+      expect(result.summary.down).toBe(1);
+    });
+
+    it('has no clamav row when file-service itself is down', async () => {
+      mockHttpGet.mockImplementation((url: string) =>
+        url.includes('file-service') ? Promise.reject(new Error('down')) : Promise.resolve({}),
+      );
+      const result = await service.checkAll();
+      expect(result.services.some((s) => s.name === 'clamav')).toBe(false);
+    });
+  });
+
   describe('checkAll', () => {
     it('returns HEALTHY when every service responds', async () => {
       mockHttpGet.mockResolvedValue({});
@@ -76,10 +108,7 @@ describe('HealthService', () => {
 
     it('returns DEGRADED when some services are down', async () => {
       mockHttpGet.mockImplementation((url: string) => {
-        if (url.includes('auth')) {
-          return Promise.reject(new Error('auth down'));
-        }
-        return Promise.resolve({});
+        return url.includes('auth') ? Promise.reject(new Error('auth down')) : Promise.resolve({});
       });
 
       const result = await service.checkAll();
@@ -97,10 +126,7 @@ describe('HealthService', () => {
 
     it('records responseTimeMs for UP services and null for DOWN', async () => {
       mockHttpGet.mockImplementation((url: string) => {
-        if (url.includes('auth')) {
-          return Promise.reject(new Error('auth down'));
-        }
-        return Promise.resolve({});
+        return url.includes('auth') ? Promise.reject(new Error('auth down')) : Promise.resolve({});
       });
 
       const result = await service.checkAll();

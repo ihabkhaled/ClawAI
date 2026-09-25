@@ -1377,6 +1377,7 @@ export const ar: TranslationDictionary = {
         accounts: 'تسجيل الدخول والحسابات',
         chat: 'المحادثة',
         files: 'الملفات',
+        antivirus: 'ماسح الفيروسات (ClamAV)',
         images: 'توليد الصور',
         research: 'البحث',
         payments: 'المدفوعات',

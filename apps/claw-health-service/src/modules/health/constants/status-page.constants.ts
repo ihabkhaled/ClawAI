@@ -7,8 +7,8 @@ import { type ComponentMembers } from '../types/status-page.types';
  *
  * Each component is a coarse group of services named by what a person does
  * with it. The ORDER here is the order the page shows them. Every service
- * `SERVICE_URLS` checks must appear in exactly one group; a spec enforces
- * that, so a new service cannot silently fall off the page.
+ * `SERVICE_URLS` checks, and every `DEPENDENCY_PROBES` row, must appear in
+ * exactly one group; a spec enforces that, so nothing silently falls off the page.
  */
 export const COMPONENT_MEMBERS: readonly ComponentMembers[] = [
   { component: StatusComponent.ACCOUNTS, services: ['auth-service'] },
@@ -17,6 +17,8 @@ export const COMPONENT_MEMBERS: readonly ComponentMembers[] = [
     services: ['chat-service', 'routing-service', 'connector-service', 'memory-service'],
   },
   { component: StatusComponent.FILES, services: ['file-service', 'file-generation-service'] },
+  // `clamav` is a DEPENDENCY_PROBES row (file-service reports clamd), not a SERVICE_URLS entry.
+  { component: StatusComponent.ANTIVIRUS, services: ['clamav'] },
   { component: StatusComponent.IMAGES, services: ['image-service'] },
   { component: StatusComponent.RESEARCH, services: ['research-service'] },
   { component: StatusComponent.PAYMENTS, services: ['payment-service'] },

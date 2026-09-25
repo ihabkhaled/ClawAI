@@ -1407,6 +1407,7 @@ export const ru: TranslationDictionary = {
         accounts: 'Вход и аккаунты',
         chat: 'Чат',
         files: 'Файлы',
+        antivirus: 'Антивирусный сканер (ClamAV)',
         images: 'Генерация изображений',
         research: 'Исследования',
         payments: 'Платежи',

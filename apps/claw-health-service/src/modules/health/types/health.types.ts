@@ -20,3 +20,19 @@ export interface AggregatedHealth {
   services: ServiceHealthResult[];
   summary: AggregatedHealthSummary;
 }
+
+/**
+ * A dependency read from another service's `/health` body:
+ * `body.services[key]` of `source`, published under `name`.
+ */
+export interface DependencyProbe {
+  name: string;
+  source: string;
+  key: string;
+}
+
+/** What one service's health check produced: its row, and the body it answered with. */
+export interface ServiceCheckOutcome {
+  result: ServiceHealthResult;
+  body: unknown;
+}

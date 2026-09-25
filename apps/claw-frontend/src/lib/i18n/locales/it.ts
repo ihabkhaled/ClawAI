@@ -1412,6 +1412,7 @@ export const it: TranslationDictionary = {
         accounts: 'Accesso e account',
         chat: 'Chat',
         files: 'File',
+        antivirus: 'Scanner antivirus (ClamAV)',
         images: 'Generazione di immagini',
         research: 'Ricerca',
         payments: 'Pagamenti',

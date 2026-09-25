@@ -57,6 +57,15 @@ docker logs claw-file-service 2>&1 | grep ClamavClient | tail
 `PONG` means clamd answers. file-service's `/health` does the same PING (2 s
 timeout) and reports `services.clamav` as `up` / `down` / `disabled`.
 
+Where it shows up without a shell:
+
+- **Admin → Observability → Service status**: the **Antivirus scanner (ClamAV)**
+  row (`StatusComponent.ANTIVIRUS`), with 24 h / 7 d / 30 d uptime and incidents.
+- **health-service** `/api/v1/health`: a `clamav` row (derived from file-service's
+  body via `DEPENDENCY_PROBES`; no row = not measured).
+- **Prometheus**: `claw_service_up{service="clamav"}` (0 = down). E.g.
+  `min_over_time(claw_service_up{service="clamav"}[1h])`.
+
 ## Fix
 
 - Immediate: `docker restart claw-clamav`, wait for `healthy` (clamd loads its

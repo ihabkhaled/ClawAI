@@ -1358,6 +1358,7 @@ export const zh: TranslationDictionary = {
         accounts: '登录与账户',
         chat: '聊天',
         files: '文件',
+        antivirus: '病毒扫描程序 (ClamAV)',
         images: '图像生成',
         research: '研究',
         payments: '支付',

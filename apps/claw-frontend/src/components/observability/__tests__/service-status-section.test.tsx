@@ -120,6 +120,25 @@ describe('ServiceStatusSection', () => {
     expect(screen.getByText(en.observability.status.states.down)).toBeInTheDocument();
   });
 
+  it('lists the antivirus scanner (ClamAV) as its own component', () => {
+    renderSection({
+      status: {
+        ...status,
+        components: [
+          {
+            component: StatusComponent.ANTIVIRUS,
+            state: ComponentState.DOWN,
+            uptime: uptime(9_900),
+          },
+        ],
+        incidents: [],
+      },
+    });
+    const row = screen.getAllByRole('listitem')[0] as HTMLElement;
+    expect(within(row).getByText(en.observability.status.components.antivirus)).toBeInTheDocument();
+    expect(within(row).getByText(en.observability.status.states.down)).toBeInTheDocument();
+  });
+
   it('announces a failed load', () => {
     renderSection({ status: undefined, isError: true });
     expect(screen.getByRole('alert')).toHaveTextContent(en.observability.status.failedToLoad);

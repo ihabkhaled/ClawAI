@@ -8,6 +8,7 @@ export const STATUS_COMPONENT_LABEL_KEYS: Readonly<Record<StatusComponent, strin
   [StatusComponent.ACCOUNTS]: 'observability.status.components.accounts',
   [StatusComponent.CHAT]: 'observability.status.components.chat',
   [StatusComponent.FILES]: 'observability.status.components.files',
+  [StatusComponent.ANTIVIRUS]: 'observability.status.components.antivirus',
   [StatusComponent.IMAGES]: 'observability.status.components.images',
   [StatusComponent.RESEARCH]: 'observability.status.components.research',
   [StatusComponent.PAYMENTS]: 'observability.status.components.payments',
