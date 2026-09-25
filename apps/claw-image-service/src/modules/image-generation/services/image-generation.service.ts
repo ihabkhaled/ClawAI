@@ -1,6 +1,10 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { type ClawRuntimeProgressEvent } from '@claw/shared-types';
+import {
+  type ClawRuntimeProgressEvent,
+  EventPattern,
+  type ImageFailedPayload,
+} from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { ImageGenerationStatus } from '../../../generated/prisma';
 import { ImageGenerationRepository } from '../repositories/image-generation.repository';
@@ -716,7 +720,10 @@ export class ImageGenerationService {
       ...(supersededById === undefined ? {} : { supersededById }),
     });
 
-    void this.rabbitMQ.publish('image.failed', {
+    // `supersededById` rides the bus event too (optional, additive): an AUTO
+    // attempt that failed and handed off is not a terminal failure, and a
+    // consumer can tell the two apart without reading image-service's rows.
+    const failedEvent: ImageFailedPayload = {
       generationId,
       userId: generation.userId,
       provider: generation.provider,
@@ -724,7 +731,10 @@ export class ImageGenerationService {
       prompt: generation.prompt,
       errorCode: described.errorCode,
       errorMessage: rawErrorMessage,
-    });
+      timestamp: new Date().toISOString(),
+      ...(supersededById === undefined ? {} : { supersededById }),
+    };
+    void this.rabbitMQ.publish(EventPattern.IMAGE_FAILED, failedEvent);
   }
 
   private async transitionStatus(

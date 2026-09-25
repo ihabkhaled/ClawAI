@@ -135,6 +135,13 @@ use — follow [`add-a-voice-note-or-transcription-path.md`](./add-a-voice-note-
 (no capable connector, `INSUFFICIENT_CREDIT`, provider error). The PAYG
 requestId is `transcription:<fileId>:video-audio:<provider>`.
 
+`audio` = `NO_SPEECH` is not a failure: ffmpeg `volumedetect` measured the
+track's peak below -50 dBFS, so no transcription was attempted and nothing was
+charged. Log: `measurePeakVolume: max_volume=<n> dB` then `silent track …
+NO_SPEECH`. `measurePeakVolume: volumedetect failed … proceeding to
+transcription` means the measurement failed and the job fell back to
+transcribing (a silent clip then ends `TRANSCRIPTION_FAILED`, empty transcript).
+
 ## 7. Frames
 
 ```bash

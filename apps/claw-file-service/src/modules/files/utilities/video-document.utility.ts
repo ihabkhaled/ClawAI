@@ -5,6 +5,7 @@ import {
   VIDEO_EMPTY_TRANSCRIPT_LINE,
   VIDEO_MAX_DURATION_MS,
   VIDEO_NO_AUDIO_LINE,
+  VIDEO_NO_SPEECH_LINE,
   VIDEO_TRANSCRIPT_MAX_SEGMENTS,
   VIDEO_TRANSCRIPT_SEGMENT_MAX_CHARS,
 } from '../constants/video-processing.constants';
@@ -137,6 +138,9 @@ function describeAudio(input: VideoDocumentInput): string[] {
   const { audio } = input;
   if (audio.status === VideoAudioStatus.NO_AUDIO_TRACK) {
     return [VIDEO_NO_AUDIO_LINE];
+  }
+  if (audio.status === VideoAudioStatus.NO_SPEECH) {
+    return [VIDEO_NO_SPEECH_LINE];
   }
   if (audio.status !== VideoAudioStatus.TRANSCRIBED) {
     const verb =

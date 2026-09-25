@@ -111,8 +111,11 @@ WITHOUT touching the persisted column, so chat-service's bounded
 same function, so the composer chip shows "processing" until the document lands.
 The owner view alone stops saying `PROCESSING` 30 minutes after the row's last
 write (`OWNER_PLACEHOLDER_PROCESSING_CEILING_MS`), so a lost job cannot keep the
-file list polling forever. `getFileContent` and the `?ingestionStatus=` list
-filter still read the stored column.
+file list polling forever. The `?ingestionStatus=` list filter matches the same
+effective status (2026-09-25, `effectiveIngestionStatusWhere` in
+`utilities/effective-ingestion-filter.utility.ts` — a query-level condition on
+the placeholder prefixes, `extractionError` and the ceiling; no migration).
+`getFileContent` still reads the stored column.
 
 ## Upload and Chunking Flow
 
@@ -507,9 +510,11 @@ after cut-offs, `TRANSCRIPTION_INCOMPLETE_MESSAGE`.
   counts, never with transcript text. A block, a `MAX_TOKENS` cut-off or a
   reasoning-only answer throws `TranscriptionResponseError` with a typed
   `TranscriptionResponseIssue`, classified per the table above.
-- Known gap: a silent video track still ends `TRANSCRIPTION_FAILED` — an
-  honest `SILENT` status needs a `@claw/shared-types` `VideoAudioStatus` edit
-  (all 18 services affected), so `volumedetect` was not added.
+- Silent video track (2026-09-25): ffmpeg `volumedetect` runs on the derived
+  MP3 before any paid step; peak < -50 dBFS (`VIDEO_SILENCE_MAX_VOLUME_DB`) →
+  `VideoAudioStatus.NO_SPEECH`, "No speech detected in the audio track.", no
+  transcription call, no hold. A failed measurement fails open to transcription;
+  an empty transcript of quiet-but-audible audio stays `TRANSCRIPTION_FAILED`.
 
 Runbook: [`runbook-voice-note-transcription-failed.md`](../11-runbooks/runbook-voice-note-transcription-failed.md).
 

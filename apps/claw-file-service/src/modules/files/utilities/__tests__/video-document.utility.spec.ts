@@ -6,6 +6,7 @@ import {
   VIDEO_DOCUMENT_MAX_CHARS,
   VIDEO_DOCUMENT_TRUNCATED_NOTE,
   VIDEO_NO_AUDIO_LINE,
+  VIDEO_NO_SPEECH_LINE,
   VIDEO_TRANSCRIPT_MAX_SEGMENTS,
   VIDEO_TRANSCRIPT_SEGMENT_MAX_CHARS,
 } from '../../constants/video-processing.constants';
@@ -122,6 +123,18 @@ describe('buildVideoDocument', () => {
     });
     expect(text).toContain('no audio');
     expect(text.split('\n').at(-1)).toBe(VIDEO_NO_AUDIO_LINE);
+  });
+
+  it('says a silent track has no speech, with the audio still listed in the header', () => {
+    const text = buildVideoDocument({
+      filename: 'quiet.mp4',
+      summary: SUMMARY,
+      audio: audio({ status: VideoAudioStatus.NO_SPEECH }),
+    });
+    const lines = text.split('\n');
+    expect(lines[0]).toContain('audio: aac');
+    expect(lines.at(-1)).toBe(VIDEO_NO_SPEECH_LINE);
+    expect(VIDEO_NO_SPEECH_LINE).toBe('No speech detected in the audio track.');
   });
 
   it('states why a track was not transcribed, never pretending it was', () => {

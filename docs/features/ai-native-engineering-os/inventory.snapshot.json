@@ -7718,7 +7718,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 31010,
+          "bytes": 31579,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -8004,7 +8004,7 @@
           "file": "skills/debug-a-stuck-scheduled-job.md"
         },
         {
-          "bytes": 10786,
+          "bytes": 11233,
           "file": "skills/debug-a-video-the-model-cannot-read.md"
         },
         {
@@ -10132,7 +10132,7 @@
       },
       "@claw/shared-types": {
         "runner": "vitest",
-        "testFiles": 4
+        "testFiles": 5
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
@@ -10168,7 +10168,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 59
+        "testFiles": 61
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10180,7 +10180,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 29
+        "testFiles": 30
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10950,7 +10950,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1620,
+    "totalTestFiles": 1624,
     "workspaceCount": 25
   }
 }

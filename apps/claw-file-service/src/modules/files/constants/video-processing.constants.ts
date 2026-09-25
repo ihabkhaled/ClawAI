@@ -33,6 +33,15 @@ export const MEDIA_PROBE_TIMEOUT_MS = 15_000;
 export const MEDIA_AUDIO_EXTRACT_TIMEOUT_MS = 180_000;
 /** One frame, input-seeked (`-ss` before `-i`). */
 export const MEDIA_FRAME_TIMEOUT_MS = 20_000;
+/** `volumedetect` decodes the derived 16 kHz mono track once; a 30-minute track is seconds. */
+export const MEDIA_VOLUME_DETECT_TIMEOUT_MS = 60_000;
+/**
+ * `volumedetect` prints its result at the END of stderr, after the input and
+ * output banners, so this run keeps a larger head than the 16 KB default. A
+ * result pushed past it simply does not parse, and the job proceeds to
+ * transcription (fail open to the pre-detection behaviour).
+ */
+export const MEDIA_VOLUME_DETECT_STDERR_MAX_BYTES = 64 * 1024;
 
 /** ffprobe's JSON for a sane file is a few KB; past this the run is killed. */
 export const MEDIA_STDOUT_MAX_BYTES = 1024 * 1024;
@@ -65,6 +74,29 @@ export const VIDEO_AUDIO_CHANNELS = '1';
 export const VIDEO_AUDIO_BITRATE = '32k';
 export const VIDEO_AUDIO_CODEC = 'libmp3lame';
 export const VIDEO_AUDIO_FORMAT = 'mp3';
+/**
+ * `-format_whitelist` for the DERIVED track only. It is our own MP3 inside the
+ * job's temp dir, so the only demuxer it may open is `mp3`.
+ */
+export const MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST = 'mp3';
+
+/**
+ * Silence threshold for the derived track, in dBFS. `volumedetect` reports the
+ * PEAK (`max_volume`); a track whose loudest sample is below -50 dB carries no
+ * audible speech (room tone sits around -60 dB; quiet speech peaks well above
+ * -30 dB; pure digital silence reads -91 dB). Below it the video is recorded
+ * `NO_SPEECH` and the paid transcription is never called. Quiet-but-not-silent
+ * audio (at or above this) is still transcribed, and an empty answer there keeps
+ * the `TRANSCRIPTION_FAILED` path.
+ */
+export const VIDEO_SILENCE_MAX_VOLUME_DB = -50;
+/** The `volumedetect` result line's label, e.g. `max_volume: -91.0 dB`. */
+export const VOLUME_DETECT_MAX_VOLUME_LABEL = 'max_volume:';
+/** The unit after the value on that line. */
+export const VOLUME_DETECT_UNIT_SUFFIX = ' dB';
+/** What `volumedetect` prints for a track with no non-zero sample. */
+export const VOLUME_DETECT_NEGATIVE_INFINITY = '-inf';
+
 /** What the derived track is sent to the transcription provider as. */
 export const VIDEO_AUDIO_MIME_TYPE = 'audio/mpeg';
 
@@ -135,6 +167,7 @@ export const VIDEO_TRANSCRIPTION_INSTRUCTION =
   'Transcribe the attached audio verbatim. Start every line with the time it begins, as [mm:ss] (or [h:mm:ss] past one hour), then the spoken words. Start a new line at each pause or change of speaker. Output only those lines, with no commentary and no summary. If the audio contains no speech, output nothing.';
 
 export const VIDEO_NO_AUDIO_LINE = 'No audio track.';
+export const VIDEO_NO_SPEECH_LINE = 'No speech detected in the audio track.';
 export const VIDEO_EMPTY_TRANSCRIPT_LINE = 'The audio track contains no recognisable speech.';
 export const VIDEO_ENTITLEMENTS_UNAVAILABLE_MESSAGE =
   'the plan could not be checked, so the paid transcription step was skipped';

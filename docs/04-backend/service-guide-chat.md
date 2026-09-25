@@ -772,6 +772,9 @@ plus the sampled frames — `image_url` parts labelled with their time for a
 lane that can see, the VISION_HELPER role's timestamped descriptions for one
 that cannot, or the honest "frames could not be viewed; only its transcript was
 used" note. Still-processing and failed videos say so (plan limits named).
+A silent video (file-service `NO_SPEECH`) carries "No speech detected in the
+audio track." as its transcript line, so the model is told there are no words
+rather than that none could be read.
 
 - Pieces: `resolveAttachmentDelivery` (strategy, pure) → `VideoDeliveryManager`
   (frames, after `VisionHelperManager`) → `ContextAssemblyManager`

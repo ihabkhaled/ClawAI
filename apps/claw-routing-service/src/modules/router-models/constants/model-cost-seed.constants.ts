@@ -19,8 +19,15 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// batch 9). OpenAI `tts-1` / `tts-1-hd` priced per CHARACTER
 /// (`ttsPerCharacterMicroUsd`); Gemini `gemini-2.5-flash-preview-tts` priced
 /// per token (text in, audio out). New models — they fill gaps.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v6';
-export const MODEL_COST_SEED_VERSION = 6;
+///
+/// v7 (2026-09-25): SIZE-aware `gpt-image-1`. Sized price rows keyed
+/// `gpt-image-1@<width>x<height>` (HIGH quality, which image-service pins):
+/// 1024x1024 $0.167, 1024x1536 and 1536x1024 $0.25 per image. image-service
+/// reserves against the row for the size it sends (an unknown size against the
+/// dearest row), so a portrait/landscape image is no longer charged the square
+/// price. New keys — they fill gaps; the v4 `gpt-image-1` row is untouched.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v7';
+export const MODEL_COST_SEED_VERSION = 7;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -378,6 +385,52 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     costClass: CostClass.PREMIUM,
     imagePerUnitMicroUsd: 167_000,
     supersedesSeededPrice: true,
+  }),
+  // ── OpenAI gpt-image-1 by SIZE (unit metering, seed v7) ──────────────────
+  //
+  // Source: the same OpenAI pricing page as the v4 rows above
+  // (platform.openai.com/docs/pricing, "Image generation", HIGH quality),
+  // owner-supplied 2026-09-25 and NOT re-fetched here: 1024x1024 $0.167,
+  // 1024x1536 / 1536x1024 $0.25 per image.
+  //
+  // WHY SEPARATE ROWS. One `imagePerUnitMicroUsd` cannot vary by size, and a
+  // price must never live in a constant (rule 37 item 13), so each priced size
+  // is its own immutable ModelCostVersion row. image-service picks the key
+  // (`meteredImageModelKey`), auth-service prices reserve AND finalize from the
+  // same reservation's key. The bare `gpt-image-1` row (v4, the square price)
+  // stays for any hold taken before v7.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-1@1024x1024',
+    inputPerMillionMicroUsd: 5_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    imagePerUnitMicroUsd: 167_000,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-1@1024x1536',
+    inputPerMillionMicroUsd: 5_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    imagePerUnitMicroUsd: 250_000,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-1@1536x1024',
+    inputPerMillionMicroUsd: 5_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    imagePerUnitMicroUsd: 250_000,
   }),
   // ── OpenAI speech-to-text: PER-SECOND list price (unit metering, seed v5) ─
   //

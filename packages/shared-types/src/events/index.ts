@@ -124,6 +124,7 @@ export type {
   FileVideoProcessRequestedPayload,
   FileVideoProcessCompletedPayload,
   FileVideoProcessFailedPayload,
+  ImageFailedPayload,
   MemoryExtractedPayload,
   AuditEventPayload,
   HealthCheckPayload,

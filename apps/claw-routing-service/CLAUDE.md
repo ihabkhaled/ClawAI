@@ -189,6 +189,13 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   SECOND of input audio. A per-unit row is excluded from
   `findMostExpensiveForProvider`, or it would price an unknown chat model's
   output at $0.
+- **Size-aware gpt-image-1** (seed **v7**, `model-cost-list-prices-2026-v7`,
+  2026-09-25): three NEW keys, `gpt-image-1@1024x1024` $0.167 and
+  `gpt-image-1@1024x1536` / `gpt-image-1@1536x1024` $0.25 per image (HIGH
+  quality; same OpenAI pricing-page source as v4). image-service meters each
+  image against the row for the size it sends (unknown size → the dearest row).
+  New keys fill gaps, so no `routing.model_cost.published` event is needed
+  (auth caches only rates it found). The v4 `gpt-image-1` row is untouched.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
   (never an override, never a synced row) and whose rates differ gets that row

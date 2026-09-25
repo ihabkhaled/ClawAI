@@ -1133,6 +1133,12 @@ the strategy its OWN model allows — rule 42 item 16, ADR-120 addendum
 | FAILED                                                                                                                                                                                                         | `FAILED_PROCESSING`           | file-service's reason; `file_delivery.reason.video_plan_limit` for a plan refusal                                           |
 | no text and no status at all (pre-batch-7 row)                                                                                                                                                                 | `OMITTED_UNSUPPORTED`         | "video has no text to extract"                                                                                              |
 
+- **Silent audio** (2026-09-25): a video file-service measured as silent
+  (`VideoAudioStatus.NO_SPEECH`) has the document body line "No speech detected
+  in the audio track.", which lands verbatim under `TRANSCRIPT (timestamped):`
+  — never the generic `VIDEO_BLOCK_NO_TRANSCRIPT`. chat-service reads no
+  `audioStatus`; the document is the contract. Test:
+  `video-context.utility.spec.ts` "no-speech note".
 - **Media facts**: file-service's internal `/content` now carries `media`
   (`durationMs, width, height, hasAudio, failureReason`) for a processed video
   (`FileContentResponse.media`).

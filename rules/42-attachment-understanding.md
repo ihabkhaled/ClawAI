@@ -115,7 +115,9 @@ Full reasoning:
     (`OWNER_PLACEHOLDER_PROCESSING_CEILING_MS`, 30 min since the row's last
     write). Past it, the view reports the stored status again, so a lost job
     cannot keep the file list polling forever (item 10). The internal check has
-    no ceiling.
+    no ceiling. The list's `?ingestionStatus=` filter matches the same effective
+    status through a query-level condition (`effectiveIngestionStatusWhere`),
+    never by rewriting the column.
 
 13. **A capability check and the alternatives it recommends must read the same
     identifier shape as the payload it validates, or it will reject the exact
@@ -177,7 +179,13 @@ Full reasoning:
     Until then `getIngestionState`, the file list and `GET /files/:id` all
     report `PROCESSING`, exactly as item 12 does for audio. A video over the plan limit is `FAILED` with a message
     naming the limit, never silently truncated; a video with no audio track
-    or an untranscribed one says so in the document. ffmpeg runs only through
+    or an untranscribed one says so in the document. A track ffmpeg
+    `volumedetect` measures as silent (peak below -50 dBFS,
+    `VIDEO_SILENCE_MAX_VOLUME_DB`) is `VideoAudioStatus.NO_SPEECH` — "No speech
+    detected in the audio track.", checked BEFORE the paid step, so no
+    transcription call and no hold; a failed measurement fails open to
+    transcription, and an empty transcript of audible audio stays
+    `TRANSCRIPTION_FAILED`. ffmpeg runs only through
     `media-process.utility.ts` (argument arrays, no shell, protocol + format
     whitelists before every input, SIGKILL budget, temp dir removed), and
     frames are never persisted. Runbook:

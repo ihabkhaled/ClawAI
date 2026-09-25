@@ -411,6 +411,26 @@ export interface FileVideoProcessFailedPayload extends BaseEventPayload {
   reason: string;
 }
 
+// ---- Image generation (image-service) ----
+
+/**
+ * `image.failed`. `supersededById` is present only when AUTO mode already
+ * created and linked a fallback successor for this generation (it is created
+ * BEFORE the failure is published), so a consumer can tell "this attempt
+ * failed, generation continues as <id>" from a terminal failure. Optional:
+ * a consumer built before the field existed is unaffected.
+ */
+export interface ImageFailedPayload extends BaseEventPayload {
+  generationId: string;
+  userId: string;
+  provider: string;
+  model: string;
+  prompt: string;
+  errorCode: string;
+  errorMessage: string;
+  supersededById?: string;
+}
+
 // ---- Memory Events ----
 
 export interface MemoryExtractedPayload extends BaseEventPayload {
@@ -933,6 +953,7 @@ export type EventPayload =
   | FileVideoProcessRequestedPayload
   | FileVideoProcessCompletedPayload
   | FileVideoProcessFailedPayload
+  | ImageFailedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload

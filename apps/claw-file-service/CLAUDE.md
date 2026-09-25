@@ -348,14 +348,18 @@ Three behaviours worth knowing before changing it:
   the text), and throws `TranscriptionResponseError` (typed `issue`) for a
   block, a `MAX_TOKENS` cut-off or a reasoning-only answer; a plain empty
   answer returns '' and the manager's empty check throws the `EMPTY` issue.
-- **Known gap — a genuinely silent video track still reads
-  `TRANSCRIPTION_FAILED`.** ffmpeg `volumedetect` would be one cheap extra
-  pass, but the honest outcome needs a new `VideoAudioStatus` (e.g. `SILENT`)
-  and that enum lives in `@claw/shared-types` — editing it marks all 18
-  services affected. Reusing `TRANSCRIBED` with no provider would lie to the
-  UI and to the model. Until that change is worth its fan-out, silence costs
-  two released holds (the call + the empty retry) and the video document says
-  "Audio could not be transcribed: … empty transcript."
+- **A silent video track is `NO_SPEECH`, not `TRANSCRIPTION_FAILED`
+  (2026-09-25).** After `extractAudio`, `VideoMediaManager.measurePeakVolume`
+  runs ffmpeg `volumedetect` on the DERIVED MP3 through the same bounded
+  `runMediaProcess` wrapper (`detectAudioVolume`, format whitelist `mp3` only,
+  60 s budget, 64 KB stderr head). A peak below `VIDEO_SILENCE_MAX_VOLUME_DB`
+  (-50 dBFS) → `VideoAudioStatus.NO_SPEECH`, document line "No speech detected
+  in the audio track.", **no transcription call and no hold**. A failed or
+  unparseable measurement fails OPEN (logged, transcribed as before).
+  Quiet-but-not-silent audio (≥ -50 dB) is still transcribed, and an empty
+  answer there keeps the `TRANSCRIPTION_FAILED` path. Tests:
+  `video-processing.manager.spec.ts` "silence gate",
+  `volume-detect.utility.spec.ts`.
 
 Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md) ·
 [`docs/11-runbooks/runbook-voice-note-transcription-failed.md`](../../docs/11-runbooks/runbook-voice-note-transcription-failed.md).
@@ -386,7 +390,8 @@ publishes `FILE_VIDEO_PROCESS_REQUESTED` (`publishConfirmed`) AFTER that write.
    lines, parsed leniently. It never writes the row.
 5. **ONE write** — `FilesRepository.saveVideoExtractionResult`: the timestamped
    document (header line + `[00:12–00:20] text` lines, or "No audio track." /
-   "Audio could not be transcribed: …"), status and `extractionMetadata.media`
+   "No speech detected in the audio track." / "Audio could not be
+   transcribed: …"), status and `extractionMetadata.media`
    together.
 
 Until that write `getIngestionState`, `GET /files` and `GET /files/:id` report
@@ -398,6 +403,18 @@ item 12). The owner-facing pair stops saying `PROCESSING` after
 list polling forever. A placeholder older than
 `VIDEO_PROCESSING_STALE_MS` is re-queued on poll (legacy rows, lost jobs) —
 never in bulk.
+
+The list's `?ingestionStatus=` filter matches the SAME effective status the
+list shows (2026-09-25): `effectiveIngestionStatusWhere`
+(`utilities/effective-ingestion-filter.utility.ts`) turns the mapping into a
+query condition on the placeholder prefixes, `extractionError` and the owner
+ceiling — PROCESSING includes fresh placeholder rows stored `COMPLETED`,
+COMPLETED excludes them, FAILED includes placeholder rows with an error. No
+migration, no bulk update (rule 42 item 10). `getFiles` uses ONE `now` for the
+filter and the mapping. `effective-ingestion-filter.utility.spec.ts` proves the
+two agree on every column combination with NULL-aware (SQL three-valued)
+evaluation — `NOT (text LIKE …)` is NULL for a row with no text, so COMPLETED
+lists `extractedText: null` explicitly.
 
 **Idempotent by fileId**: a job whose row no longer carries the placeholder is
 a no-op, and a Redis `SET NX` lock (`file:video-process-lock:<id>`, 15 min)

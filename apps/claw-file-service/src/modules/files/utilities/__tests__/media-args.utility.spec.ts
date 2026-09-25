@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST,
   MEDIA_FORMAT_WHITELIST,
   MEDIA_PROTOCOL_WHITELIST,
   VIDEO_MAX_DURATION_MS,
@@ -12,6 +13,7 @@ import {
   buildAudioExtractArgs,
   buildFrameArgs,
   buildProbeArgs,
+  buildVolumeDetectArgs,
   formatSeekSeconds,
 } from '../media-args.utility';
 
@@ -101,6 +103,22 @@ describe('media argument arrays', () => {
     expect(args[args.indexOf('-ar') + 1]).toBe('16000');
     expect(args[args.indexOf('-b:a') + 1]).toBe('32k');
     expect(args[args.indexOf('-t') + 1]).toBe('60');
+  });
+
+  it('volumedetect reads only the derived MP3: whitelists first, mp3 demuxer only, no output file', () => {
+    const audioPath = '/tmp/claw-media-AbC123/audio.mp3';
+    const args = buildVolumeDetectArgs(audioPath);
+    const input = args.indexOf('-i');
+    expect(args[input + 1]).toBe(audioPath);
+    expect(args.indexOf('-protocol_whitelist')).toBeLessThan(input);
+    expect(args[args.indexOf('-protocol_whitelist') + 1]).toBe(MEDIA_PROTOCOL_WHITELIST);
+    expect(args.indexOf('-format_whitelist')).toBeLessThan(input);
+    expect(args[args.indexOf('-format_whitelist') + 1]).toBe(MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST);
+    expect(MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST).toBe('mp3');
+    expect(args).toContain('-nostdin');
+    expect(args[args.indexOf('-af') + 1]).toBe('volumedetect');
+    expect(args.slice(-3)).toEqual(['-f', 'null', '-']);
+    expect(args.some((arg) => SHELL_METACHARACTERS.test(arg))).toBe(false);
   });
 });
 

@@ -4,7 +4,10 @@
 import { VideoProcessingFailureReason } from '@claw/shared-types';
 
 import { VideoFrameDelivery } from '../../../../common/enums/video-frame-delivery.enum';
-import { VIDEO_FRAMES_TRANSCRIPT_ONLY_NOTE } from '../../constants/video-delivery.constants';
+import {
+  VIDEO_BLOCK_NO_TRANSCRIPT,
+  VIDEO_FRAMES_TRANSCRIPT_ONLY_NOTE,
+} from '../../constants/video-delivery.constants';
 import type { FileContentResponse } from '../../types/context.types';
 import type { FileMediaSummary, VideoFrameSet } from '../../types/video-delivery.types';
 import {
@@ -96,6 +99,28 @@ describe('formatVideoContextBlock', () => {
     expect(block).toContain('[01:10–01:20] Meet Ada Lovelace.');
     expect(block).not.toContain('Video "clip.mp4" — length');
     expect(block).toContain(VIDEO_FRAMES_TRANSCRIPT_ONLY_NOTE);
+  });
+
+  // file-service's NO_SPEECH (volumedetect measured a silent track): the
+  // document's only body line is the honest note, and it reaches the lane
+  // verbatim under the transcript label — never the generic "no transcript".
+  it('carries the no-speech note for a silent track instead of an empty transcript', () => {
+    const silent = [
+      'Video "quiet.mp4" — length 01:23, 1280×720, 30 fps, h264, audio: aac.',
+      'No speech detected in the audio track.',
+    ].join('\n');
+    expect(hasVideoDocument(video({ extractedText: silent }))).toBe(true);
+    const lines = formatVideoContextBlock({
+      filename: 'quiet.mp4',
+      media: MEDIA,
+      document: silent,
+      frameSet: undefined,
+    }).split('\n');
+
+    expect(lines[0]).toBe('VIDEO: quiet.mp4 (duration 01:23, 1280x720, audio: yes)');
+    expect(lines[1]).toBe('TRANSCRIPT (timestamped):');
+    expect(lines[2]).toBe('No speech detected in the audio track.');
+    expect(lines).not.toContain(VIDEO_BLOCK_NO_TRANSCRIPT);
   });
 
   it('lists the native frames by timestamp', () => {

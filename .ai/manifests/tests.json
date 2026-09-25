@@ -18,7 +18,7 @@
     },
     "@claw/shared-types": {
       "runner": "vitest",
-      "testFiles": 4
+      "testFiles": 5
     },
     "@claw/shared-utilities": {
       "runner": "vitest",
@@ -54,7 +54,7 @@
     },
     "claw-file-service": {
       "runner": "vitest",
-      "testFiles": 59
+      "testFiles": 61
     },
     "claw-frontend": {
       "runner": "vitest",
@@ -66,7 +66,7 @@
     },
     "claw-image-service": {
       "runner": "vitest",
-      "testFiles": 29
+      "testFiles": 30
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1620
+  "total": 1624
 }

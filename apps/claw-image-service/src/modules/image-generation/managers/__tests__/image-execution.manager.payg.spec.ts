@@ -193,11 +193,14 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
     expect(payg.reserve).toHaveBeenCalledWith(
       expect.objectContaining({
         provider: 'OPENAI',
-        model: 'gpt-image-1',
+        // The sized price row (seed v7), not the bare model: 1024x1024 default.
+        model: 'gpt-image-1@1024x1024',
         surface: PaygSurface.IMAGE,
         imageUnits: 1,
       }),
     );
+    // The PROVIDER call still names the real model.
+    expect(openai.generateWithOpenAI.mock.calls[0]?.[3]).toBe('gpt-image-1');
     expect(payg.finalize).toHaveBeenCalledTimes(1);
     expect(payg.finalize).toHaveBeenCalledWith(
       expect.objectContaining({ reservationId: 'res-image-1' }),
@@ -206,6 +209,32 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
     );
     expect(payg.release).not.toHaveBeenCalled();
   });
+
+  it.each([
+    [1024, 1024, 'gpt-image-1@1024x1024'],
+    [1536, 1024, 'gpt-image-1@1536x1024'],
+    [1024, 1536, 'gpt-image-1@1024x1536'],
+    [768, 768, 'gpt-image-1@1536x1024'],
+  ])(
+    'gpt-image-1 at %dx%d reserves on %s, and finalize settles that same hold',
+    async (width, height, priceKey) => {
+      const payg = meter();
+      utilities.httpGet.mockResolvedValue({ provider: 'OPENAI', apiKey: 'k' });
+      openai.generateWithOpenAI.mockResolvedValue({ imageBase64: 'AAA', mimeType: 'image/png' });
+
+      const manager = build(payg);
+      const result = await manager.execute(
+        input({ provider: 'IMAGE_OPENAI', model: 'gpt-image-1', width, height }),
+      );
+      await manager.settle(result.settlement);
+
+      expect(payg.reserve).toHaveBeenCalledWith(expect.objectContaining({ model: priceKey }));
+      const hold: unknown = await payg.reserve.mock.results[0]?.value;
+      expect(payg.finalize).toHaveBeenCalledTimes(1);
+      expect(payg.finalize.mock.calls[0]?.[0]).toBe(hold);
+      expect(result.settlement?.hold).toBe(hold);
+    },
+  );
 
   it('releases (never finalizes) when OpenAI refuses the generation', async () => {
     const payg = meter();

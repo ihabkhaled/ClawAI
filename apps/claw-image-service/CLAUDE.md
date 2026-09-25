@@ -45,10 +45,10 @@ Image generation microservice for the Claw platform. Orchestrates image generati
    image that was not saved; the platform absorbs the provider cost. Log:
    `imageSettlement reservationId=<id> outcome=FINALIZED|RELEASED reason=STORE_FAILED`.
    Local providers carry no settlement; both calls are no-ops.
-   **Known under-charge:** the price row is gpt-image-1 `high` 1024x1024
-   ($0.167) and dall-e-3 `standard` ($0.040). Chat sends no size or quality, so
-   it is covered; a direct API caller asking for 1536x1024/`high` ($0.25) or
-   dall-e-3 `hd` ($0.08) is charged the 1024/standard price.
+   gpt-image-1 is metered on a SIZED price row (see "Size-aware gpt-image
+   pricing" below). **Known under-charge left:** dall-e-3 is priced
+   `standard` ($0.040); a direct API caller asking for `hd` ($0.08) is charged
+   the standard price.
 
 6. **Image generation and edit are a paid plan feature** (ADR-122).
    `ImagePlanGateManager.assertCanGenerate(userId)` runs FIRST in
@@ -408,6 +408,36 @@ comes from `imageFailureMessage(code)`, never from the provider.
 (routing seed v4). `resolveOpenAiImageQuality` therefore always sends
 `quality: 'high'` for that family — left to OpenAI's `auto`, or to a caller's
 `low`, the call and the charge would disagree. dall-e keeps the caller's
-quality (its seeded price is standard). **Known gap:** a non-square size
-(1536x1024 / 1024x1536, $0.25 at high) is still charged the 1024x1024 price;
-chat never sends one. A size-aware price needs a price matrix, not one rate.
+quality (its seeded price is standard).
+
+## Size-aware gpt-image pricing (2026-09-25)
+
+**Decision:** one immutable `ModelCostVersion` row per priced size, keyed
+`gpt-image-1@<width>x<height>` (routing model-cost seed **v7**:
+`@1024x1024` $0.167, `@1024x1536` and `@1536x1024` $0.25, HIGH quality). No
+price lives in this service (rule 37 item 13): `meteredImageModelKey`
+(`utilities/image-price-key.utility.ts`) only picks WHICH row, and
+`reserveImageHold` sends that key as the reservation's `model`. auth-service
+prices the finalize from the same reservation, so reserve and finalize use the
+same row. The OpenAI call itself still names `gpt-image-1`.
+
+- A size not in `OPENAI_GPT_IMAGE_PRICED_SIZES` is metered on
+  `OPENAI_GPT_IMAGE_WORST_CASE_SIZE` (1536x1024, the dearest row) — never an
+  under-charge.
+- Only models in `OPENAI_SIZE_PRICED_IMAGE_MODELS` (`gpt-image-1`) are sized;
+  dall-e and Gemini keep their own rows.
+- Rejected: a per-size multiplier constant in this service (a price in code)
+  and a size column on `ModelCostVersion` (schema + migration + auth DTO change
+  for one model).
+- Deploy order: routing (seed v7 fills the three rows) BEFORE image-service, or
+  every gpt-image-1 hold is `PAYG_MODEL_UNPRICED`.
+- Tests: `image-price-key.utility.spec.ts`,
+  `image-execution.manager.payg.spec.ts` (each size → its key; finalize settles
+  the reserve's own hold).
+
+## `image.failed` carries `supersededById` (2026-09-25)
+
+The RabbitMQ `image.failed` event is typed `ImageFailedPayload`
+(`@claw/shared-types`) and now carries `supersededById` when an AUTO fallback
+successor already exists (it is created before the failure is published), plus
+`timestamp`. Optional and additive; no service consumes the event today.

@@ -12,6 +12,7 @@ import {
   writeMediaTempFile,
 } from '../../../common/utilities/media-process.utility';
 import {
+  detectAudioVolume,
   extractAudioTrack,
   extractVideoFrame,
   probeMediaFile,
@@ -33,6 +34,7 @@ import {
   type VideoProbeOutcome,
 } from '../types/video-processing.types';
 import { parseProbeOutput } from '../utilities/video-probe.utility';
+import { parseMaxVolumeDb } from '../utilities/volume-detect.utility';
 
 /**
  * Everything ffmpeg does to a video, inside one per-job temp dir (batch 7).
@@ -121,6 +123,29 @@ export class VideoMediaManager {
     const audio = await readMediaTempFile(outputPath, MAX_TRANSCRIBABLE_AUDIO_BYTES);
     this.logger.log(`extractAudio: derived track bytes=${String(audio?.length ?? 0)}`);
     return audio;
+  }
+
+  /**
+   * The derived track's peak level in dBFS (ffmpeg `volumedetect`), or null
+   * when it could not be measured. Null means "unknown", never "silent": the
+   * caller then transcribes exactly as it did before detection existed.
+   * Call only after `extractAudio` returned a track.
+   */
+  async measurePeakVolume(workspace: MediaWorkspace): Promise<number | null> {
+    const result = await detectAudioVolume(mediaTempPath(workspace.dir, VIDEO_AUDIO_TEMP_NAME));
+    if (!this.succeeded(result)) {
+      this.logger.warn(
+        `measurePeakVolume: volumedetect failed status=${result.status} exit=${String(result.exitCode)} — proceeding to transcription`,
+      );
+      return null;
+    }
+    const peak = parseMaxVolumeDb(result.stderr);
+    if (peak === null) {
+      this.logger.warn('measurePeakVolume: no max_volume in output — proceeding to transcription');
+      return null;
+    }
+    this.logger.log(`measurePeakVolume: max_volume=${String(peak)} dB`);
+    return peak;
   }
 
   private async extractJpeg(

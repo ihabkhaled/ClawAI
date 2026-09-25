@@ -6,6 +6,7 @@ import { type ChildExtractionState } from '../types/archive-manifest.types';
 import { type ArchiveExtractionMetadata } from '../types/zip-expansion.types';
 import { type ArchiveChildRow, type ArchiveParentRow } from '../types/archive-entries.types';
 import { type VideoExtractionWrite } from '../types/video-processing.types';
+import { effectiveIngestionStatusWhere } from '../utilities/effective-ingestion-filter.utility';
 
 @Injectable()
 export class FilesRepository {
@@ -274,8 +275,11 @@ export class FilesRepository {
       parentFileId: filters.parentFileId ?? null,
     };
 
+    // The status the OWNER sees, not the stored column: a placeholder audio /
+    // video row stored COMPLETED is listed under PROCESSING (or FAILED) exactly
+    // as the response shows it (rule 42 items 10 + 12). Query-level only.
     if (filters.ingestionStatus !== undefined) {
-      where.ingestionStatus = filters.ingestionStatus;
+      where.AND = [effectiveIngestionStatusWhere(filters.ingestionStatus, filters.now)];
     }
 
     if (filters.search) {

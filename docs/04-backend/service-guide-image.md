@@ -96,8 +96,10 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
   asset row written, then finalizes; a failed store or asset row releases it
   (`CANCELLED`, logged `reason=STORE_FAILED`) and the row fails as
   `IMAGE_STORAGE_FAILED` — the user is never charged for an unsaved image. The price is `ModelCostVersion.imagePerUnitMicroUsd`
-  (seed v4: gpt-image-1 $0.167 = `high` 1024x1024, the worst case of the
-  `auto` quality chat sends; dall-e-3 $0.040 standard; dall-e-2 $0.020), with a
+  (seed v4: gpt-image-1 $0.167 = `high` 1024x1024; dall-e-3 $0.040 standard;
+  dall-e-2 $0.020). Since seed v7 gpt-image-1 is metered on a SIZED row,
+  `gpt-image-1@<w>x<h>` (1024x1024 $0.167, 1024x1536 / 1536x1024 $0.25; an
+  unknown size uses the dearest row) chosen by `meteredImageModelKey`, with a
   zero output token rate. Before 2026-09-25 these rows carried a fake token rate
   and every OpenAI image settled at $0.
 
@@ -288,3 +290,7 @@ under-classifies auth failures).
 | --------------- | --------- | --------- |
 | image.generated | Publish   | audit     |
 | image.failed    | Publish   | audit     |
+
+`image.failed` is `ImageFailedPayload` (`@claw/shared-types`): ids, provider,
+model, prompt, error code/message, `timestamp`, and — only when an AUTO
+fallback successor exists — `supersededById` (optional, additive).

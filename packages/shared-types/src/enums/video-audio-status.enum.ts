@@ -7,6 +7,11 @@ export enum VideoAudioStatus {
   TRANSCRIBED = 'TRANSCRIBED',
   /** The container has no audio stream. Nothing was extracted or charged. */
   NO_AUDIO_TRACK = 'NO_AUDIO_TRACK',
+  /**
+   * The audio track exists but ffmpeg's `volumedetect` measured it as silent
+   * (peak below the silence threshold). No transcription call, no hold.
+   */
+  NO_SPEECH = 'NO_SPEECH',
   /** ffmpeg could not pull the audio track out. Nothing was charged. */
   EXTRACTION_FAILED = 'EXTRACTION_FAILED',
   /** The transcription path refused or failed (credit, provider, no connector). */

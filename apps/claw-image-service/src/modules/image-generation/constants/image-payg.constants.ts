@@ -85,8 +85,9 @@ export const IMAGE_CREDIT_FAILURE_MESSAGE =
   'Image generation needs pay-as-you-go credit. Add credit or switch to a local image model.';
 
 /**
- * The quality every `gpt-image*` call is sent at. The per-image rate seeded
- * for `gpt-image-1` (seed v4) is OpenAI's HIGH-quality 1024x1024 list price,
+ * The quality every `gpt-image*` call is sent at. The per-image rates seeded
+ * for `gpt-image-1` (seed v4 base row; seed v7 sized rows
+ * `gpt-image-1@<size>`) are OpenAI's HIGH-quality list prices,
  * so the request must ask for exactly that tier: left unset, OpenAI's `auto`
  * picks a tier the charge does not follow, and a caller-supplied `low` would
  * be billed at the high price. The charge follows the call only when the call
@@ -96,3 +97,31 @@ export const OPENAI_GPT_IMAGE_PRICED_QUALITY = 'high';
 
 /** Model-id prefix of the OpenAI image family priced per image at a fixed quality. */
 export const OPENAI_GPT_IMAGE_MODEL_PREFIX = 'gpt-image';
+
+/**
+ * OpenAI image models whose per-image price depends on the SIZE (at the pinned
+ * quality). For these the hold is taken against a SIZED price row —
+ * `<model>@<width>x<height>` (e.g. `gpt-image-1@1536x1024`) — seeded as its own
+ * immutable `ModelCostVersion` row by routing-service (model-cost seed v7). The
+ * prices themselves live only in those rows (rule 37 item 13); this service only
+ * chooses WHICH row a call is metered against.
+ */
+export const OPENAI_SIZE_PRICED_IMAGE_MODELS: readonly string[] = ['gpt-image-1'];
+
+/** Joins a model id and a size into the sized price key: `gpt-image-1@1024x1024`. */
+export const SIZED_PRICE_KEY_SEPARATOR = '@';
+
+/** The sizes a sized price row is seeded for (`<width>x<height>`). */
+export const OPENAI_GPT_IMAGE_PRICED_SIZES: readonly string[] = [
+  '1024x1024',
+  '1024x1536',
+  '1536x1024',
+];
+
+/**
+ * The size an UNKNOWN size is metered as: the largest priced size, whose row is
+ * the most expensive for the model (a bigger image never costs less at a fixed
+ * quality; 1536x1024 and 1024x1536 share the top price). Never under-charge — a
+ * size this service did not expect is billed as the dearest one.
+ */
+export const OPENAI_GPT_IMAGE_WORST_CASE_SIZE = '1536x1024';

@@ -2,6 +2,8 @@ import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FilesRepository } from '../files.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
+import { FileIngestionStatus } from '../../../../generated/prisma';
+import { effectiveIngestionStatusWhere } from '../../utilities/effective-ingestion-filter.utility';
 
 describe('FilesRepository', () => {
   let repository: FilesRepository;
@@ -68,12 +70,31 @@ describe('FilesRepository', () => {
       expect(args.orderBy).toEqual({ createdAt: 'desc' });
     });
 
-    it('applies ingestionStatus filter', async () => {
-      await repository.findAll({ userId: 'u1', ingestionStatus: 'COMPLETED' } as never, 1, 20);
+    it('applies the ingestionStatus filter as the EFFECTIVE status, not the stored column', async () => {
+      const now = Date.parse('2026-09-25T12:00:00Z');
+      await repository.findAll(
+        { userId: 'u1', ingestionStatus: FileIngestionStatus.PROCESSING, now },
+        1,
+        20,
+      );
       const argsCall = prismaMock.file.findMany.mock.calls[0];
       expect(argsCall).toBeDefined();
       const args = argsCall?.[0];
-      expect(args.where.ingestionStatus).toBe('COMPLETED');
+      expect(args.where.ingestionStatus).toBeUndefined();
+      expect(args.where.AND).toEqual([
+        effectiveIngestionStatusWhere(FileIngestionStatus.PROCESSING, now),
+      ]);
+      expect(args.where.userId).toBe('u1');
+    });
+
+    it('counts with the same effective-status condition it lists with', async () => {
+      const now = Date.parse('2026-09-25T12:00:00Z');
+      const filters = { userId: 'u1', ingestionStatus: FileIngestionStatus.COMPLETED, now };
+      await repository.findAll(filters, 1, 20);
+      await repository.countAll(filters);
+      const listed = prismaMock.file.findMany.mock.calls[0]?.[0];
+      const counted = prismaMock.file.count.mock.calls[0]?.[0];
+      expect(counted.where).toEqual(listed.where);
     });
 
     it('applies filename search filter', async () => {

@@ -925,7 +925,9 @@
       "consumers": [],
       "key": "IMAGE_FAILED",
       "pattern": "image.failed",
-      "producers": []
+      "producers": [
+        "claw-image-service"
+      ]
     },
     {
       "consumers": [],

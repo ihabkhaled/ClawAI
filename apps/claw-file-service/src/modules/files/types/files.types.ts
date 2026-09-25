@@ -21,7 +21,10 @@ export interface CreateFileData {
 
 export interface FileFilters {
   userId: string;
+  /** Matched against the OWNER-FACING effective status, not the stored column. */
   ingestionStatus?: FileIngestionStatus;
+  /** Clock for the effective-status ceiling (epoch ms); defaults to now. */
+  now?: number;
   search?: string;
   /** List this archive's children. Omitted or null lists top-level files only. */
   parentFileId?: string | null;

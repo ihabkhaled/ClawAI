@@ -34,6 +34,7 @@ import {
   type VideoProbeSummary,
 } from '../types/video-processing.types';
 import { validateProbeSummary } from '../utilities/video-probe.utility';
+import { isSilentPeak } from '../utilities/volume-detect.utility';
 import {
   boundSegments,
   buildVideoDocument,
@@ -48,7 +49,8 @@ import { TranscriptionManager } from './transcription.manager';
  * Multimodal batch 7 — turns a stored video into a timestamped document.
  *
  * probe (ffprobe) → global limits → thumbnail → the uploader's plan limit →
- * audio track (ffmpeg) → transcription through the EXISTING metered path →
+ * audio track (ffmpeg) → silence check (`volumedetect`; silent → NO_SPEECH,
+ * nothing charged) → transcription through the EXISTING metered path →
  * ONE write: `extractedText` + status + `extractionMetadata.media` together
  * (rule 42 item 4). Until that write the row carries the `[Video file: …]`
  * placeholder and `getIngestionState` reports PROCESSING (rule 42 item 12's
@@ -227,6 +229,16 @@ export class VideoProcessingManager implements OnModuleInit {
         VideoAudioStatus.EXTRACTION_FAILED,
         VIDEO_AUDIO_EXTRACTION_FAILED_MESSAGE,
       );
+    }
+    // Silence gate BEFORE the paid step: a track whose peak is below the
+    // silence threshold has no speech, so no hold is taken and no provider is
+    // called. An unmeasurable track (null) fails open to transcription.
+    const peakDb = await this.videoMedia.measurePeakVolume(workspace);
+    if (peakDb !== null && isSilentPeak(peakDb)) {
+      this.logger.log(
+        `transcribeTrack: fileId=${file.id} silent track (max_volume=${String(peakDb)} dB) — NO_SPEECH, transcription skipped`,
+      );
+      return this.audioOutcome(VideoAudioStatus.NO_SPEECH, null);
     }
     const result = await this.transcription.transcribeDerivedAudio({
       fileId: file.id,

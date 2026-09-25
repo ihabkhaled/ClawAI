@@ -13,6 +13,7 @@ import {
   IMAGE_STORE_FAILED_RELEASE_REASON,
 } from '../constants/image-payg.constants';
 import { imageSettlement } from '../utilities/image-settlement.utility';
+import { meteredImageModelKey } from '../utilities/image-price-key.utility';
 import { providerImageDownloadHosts } from '../utilities/provider-image-download.utility';
 import {
   type ConnectorConfigResponse,
@@ -191,7 +192,11 @@ export class ImageExecutionManager {
   ): Promise<ImageProviderOutcome> {
     this.logger.debug(`callMeteredCloudProvider: fetching config for ${connectorProvider}`);
     const config = await this.fetchConnectorConfig(connectorProvider);
-    const hold = await this.reserveImageHold(params, connectorProvider);
+    const hold = await this.reserveImageHold(
+      params,
+      connectorProvider,
+      meteredImageModelKey(params.model, width, height),
+    );
 
     try {
       // `hold.maxOutputTokens` is DELIBERATELY NOT PASSED to either image API.
@@ -266,13 +271,17 @@ export class ImageExecutionManager {
   private async reserveImageHold(
     params: ExecuteImageInput,
     connectorProvider: string,
+    meteredModel: string,
   ): Promise<PaygHold> {
     try {
       const hold = await this.payg.reserve({
         userId: params.userId,
         requestId: params.requestId,
         provider: connectorProvider,
-        model: params.model,
+        // The PRICE row, not the provider model: `gpt-image-1@1536x1024` for a
+        // size-priced model (seed v7), the model id otherwise. Finalize settles
+        // on this same reservation, so reserve and finalize price identically.
+        model: meteredModel,
         surface: PaygSurface.IMAGE,
         promptTokens: IMAGE_PAYG_PROMPT_TOKENS,
         cachedPromptTokens: 0,
@@ -283,7 +292,7 @@ export class ImageExecutionManager {
         imageUnits: IMAGE_PAYG_IMAGES_PER_REQUEST,
       });
       this.logger.log(
-        `reserveImageHold: provider=${connectorProvider} metered=${String(hold.metered)} held=${String(hold.heldMicroUsd)}`,
+        `reserveImageHold: provider=${connectorProvider} priceKey=${meteredModel} metered=${String(hold.metered)} held=${String(hold.heldMicroUsd)}`,
       );
       return hold;
     } catch (error: unknown) {

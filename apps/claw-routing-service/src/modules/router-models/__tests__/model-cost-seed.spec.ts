@@ -279,6 +279,28 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(6);
   });
 
+  // Size-aware gpt-image-1 (v7): one immutable row per priced size, keyed
+  // `gpt-image-1@<w>x<h>`, which image-service meters against. HIGH quality.
+  it('prices gpt-image-1 per size: square $0.167, portrait/landscape $0.25', () => {
+    const find = (modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'OPENAI' && e.modelKey === modelKey);
+    expect(find('gpt-image-1@1024x1024')).toMatchObject({
+      imagePerUnitMicroUsd: 167_000,
+      outputPerMillionMicroUsd: 0,
+    });
+    expect(find('gpt-image-1@1024x1536')).toMatchObject({ imagePerUnitMicroUsd: 250_000 });
+    expect(find('gpt-image-1@1536x1024')).toMatchObject({ imagePerUnitMicroUsd: 250_000 });
+    // New keys fill gaps; the v4 base row is untouched.
+    for (const key of ['gpt-image-1@1024x1024', 'gpt-image-1@1024x1536', 'gpt-image-1@1536x1024']) {
+      expect(find(key)?.supersedesSeededPrice ?? false).toBe(false);
+    }
+    expect(find('gpt-image-1')).toMatchObject({ imagePerUnitMicroUsd: 167_000 });
+  });
+
+  it('is version 7 or later, so installs that ran v6 pick up the sized image prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(7);
+  });
+
   // Money is integer micro-USD everywhere in this platform. A float here would
   // reach a BigInt column and throw at insert time, on first boot.
   it('holds every rate as a non-negative integer', () => {

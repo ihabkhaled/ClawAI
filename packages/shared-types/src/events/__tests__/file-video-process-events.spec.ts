@@ -53,6 +53,7 @@ describe('file video-process events', () => {
     expect(Object.values(VideoAudioStatus)).toEqual([
       'TRANSCRIBED',
       'NO_AUDIO_TRACK',
+      'NO_SPEECH',
       'EXTRACTION_FAILED',
       'TRANSCRIPTION_FAILED',
       'ENTITLEMENTS_UNAVAILABLE',

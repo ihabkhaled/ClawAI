@@ -105,7 +105,8 @@ matrix once the stack runs this code
 
 ### Open gaps collected across batches
 
-- **Deploy order is load-bearing:** auth → routing → file → image → chat; dev
+- **Deploy order is load-bearing:** auth → routing → file → image → chat (routing
+  seed v7 must land before image-service meters on sized `gpt-image-1@…` keys); dev
   containers need `service:rebuild` (shared packages, file-service `ffmpeg`), not a restart.
 - Transcription (4): local STT has no path; gpt-4o-(mini-)transcribe unseeded.
 - Video (7/8): no audit-service consumer for the `file.video_process_*` events;
@@ -182,8 +183,17 @@ Evidence: [`docs/16-quality-engineering/evidence/2026-09-25-multimodal/`](../16-
 - On phones the floating feedback rail (− / +) and "Jump to latest" cover
   assistant text (`08-matrix-mobile-390x844-portrait.png`). This was already
   there before this program and is out of scope here.
-- The file list's `?ingestionStatus=` filter still matches the stored column, so
-  a placeholder video appears under `COMPLETED` while it is shown as `PROCESSING`.
+- ~~The file list's `?ingestionStatus=` filter still matches the stored column.~~
+  Fixed 2026-09-25: `effectiveIngestionStatusWhere` filters on the effective
+  status (query-level, no migration); an equivalence spec proves filter = view.
+- ~~A silent video track ends `TRANSCRIPTION_FAILED`.~~ Fixed 2026-09-25:
+  `volumedetect` before the paid step → `NO_SPEECH`, no hold.
+- ~~gpt-image-1 charged the 1024x1024 price at every size.~~ Fixed 2026-09-25:
+  sized price rows `gpt-image-1@<w>x<h>` (routing seed v7), unknown size → the
+  dearest row. dall-e-3 `hd` is still charged the standard price.
+- ~~`image.failed` (RabbitMQ) did not name the AUTO successor.~~ Fixed
+  2026-09-25: optional `supersededById` on `ImageFailedPayload`.
+- These four fixes are unit-gated only; not yet run live.
 - ~~A paid synthesis whose store fails is charged with no audio saved.~~ Fixed
   2026-09-25: the hold stays open across the store; a failed store releases it.
 - ~~image-service finalized the hold before `storeImage`, so a failed image

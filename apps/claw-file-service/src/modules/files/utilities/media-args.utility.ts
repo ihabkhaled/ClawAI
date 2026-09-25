@@ -1,4 +1,5 @@
 import {
+  MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST,
   MEDIA_FORMAT_WHITELIST,
   MEDIA_PROTOCOL_WHITELIST,
   VIDEO_AUDIO_BITRATE,
@@ -89,6 +90,39 @@ export function buildAudioExtractArgs(
     VIDEO_AUDIO_FORMAT,
     '-y',
     outputPath,
+  ];
+}
+
+/**
+ * `volumedetect` over the DERIVED track (our own MP3 in the temp dir): decode
+ * once, discard the output (`-f null`), and let the filter print `max_volume`
+ * to stderr. `-loglevel info` because the filter reports at info; `-nostats`
+ * keeps the progress line out of the capped stderr head. The format whitelist
+ * is `mp3` only — this input is never the user's container.
+ */
+export function buildVolumeDetectArgs(audioPath: string): string[] {
+  return [
+    '-nostdin',
+    '-hide_banner',
+    '-nostats',
+    '-loglevel',
+    'info',
+    '-protocol_whitelist',
+    MEDIA_PROTOCOL_WHITELIST,
+    '-format_whitelist',
+    MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST,
+    '-i',
+    audioPath,
+    '-map',
+    '0:a:0',
+    '-vn',
+    '-sn',
+    '-dn',
+    '-af',
+    'volumedetect',
+    '-f',
+    'null',
+    '-',
   ];
 }
 

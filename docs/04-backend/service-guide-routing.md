@@ -187,7 +187,11 @@ advisory lock `740_040_003`, a `SeedExecution` ledger row on
 (`model-cost-list-prices-2026-v3`, version), and a checksum. Editing a price
 without bumping the version is a `CHECKSUM_MISMATCH` warning that writes
 nothing. Batch 2 bumped the seed name/version from v2 to v3 so the new rows
-apply to installs that already ran v2.
+apply to installs that already ran v2. v4 priced OpenAI images per image, v5
+`whisper-1` per second, v6 TTS per character, and v7 (2026-09-25) added
+size-keyed `gpt-image-1@<w>x<h>` rows (1024x1024 $0.167, 1024x1536 / 1536x1024
+$0.25) that image-service meters against — one immutable row per priced size,
+never a price constant in image-service.
 
 Seeded rows are `source: SEED, confidence: ESTIMATED, isAdminOverride: false`,
 so an automated sync may refresh them later. The seed only ever **fills a gap** —

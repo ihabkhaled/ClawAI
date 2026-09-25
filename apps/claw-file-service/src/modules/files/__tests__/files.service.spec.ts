@@ -297,12 +297,17 @@ describe('FilesService', () => {
         {
           userId: 'user-1',
           ingestionStatus: FileIngestionStatus.COMPLETED,
+          // The clock the effective-status filter AND the shown status share.
+          now: expect.any(Number),
           search: 'test',
           parentFileId: null,
         },
         1,
         20,
       );
+      const listed = filesRepo.findAll.mock.calls[0]?.[0];
+      const counted = filesRepo.countAll.mock.calls[0]?.[0];
+      expect(counted).toEqual(listed);
     });
 
     it("lists an archive's children when a parent is named", async () => {

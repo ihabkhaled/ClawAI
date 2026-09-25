@@ -301,9 +301,13 @@ export class FilesService {
     this.logger.debug(
       `getFiles: listing files for user ${userId} — page=${String(query.page)}, limit=${String(query.limit)}, search=${query.search ?? 'none'}, parentId=${query.parentId ?? 'none'}`,
     );
+    // One clock for the status filter and the status shown, so a row near the
+    // placeholder ceiling cannot be filtered as one status and shown as another.
+    const now = Date.now();
     const filters = {
       userId,
       ingestionStatus: query.ingestionStatus,
+      now,
       search: query.search,
       parentFileId: query.parentId ?? null,
     };
@@ -324,7 +328,7 @@ export class FilesService {
       // reports (rule 42 items 12/15), bounded so a lost job never pins the
       // list's poll open forever.
       data: files.map((file) => ({
-        ...withOwnerFacingIngestionStatus(file),
+        ...withOwnerFacingIngestionStatus(file, now),
         childCount: childCounts.get(file.id) ?? 0,
       })),
       meta: {
