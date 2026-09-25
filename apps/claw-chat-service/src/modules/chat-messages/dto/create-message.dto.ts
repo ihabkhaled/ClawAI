@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { RoutingMode } from '../../../generated/prisma';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
+import { attachmentFields } from './attachment-fields.dto';
+import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
 // Canonical research-mode schema for every chat DTO. Replaces the inline
 // OFF/SEARCH_ONLY/SEARCH_THEN_FETCH/SEARCH_FETCH_EXTRACT string union that
@@ -11,31 +13,32 @@ import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.util
 // source of truth) is exported from src/common/enums and re-used here.
 export const researchModeSchema = z.nativeEnum(ResearchMode);
 
-export const createMessageSchema = z.object({
-  threadId: z.string().max(255, 'Thread ID must be at most 255 characters'),
-  // Stripped BEFORE the length checks so a payload of nothing but NUL bytes is
-  // rejected as empty rather than reaching Postgres and 500ing the thread.
-  content: z
-    .string()
-    .transform(stripNulBytes)
-    .pipe(
-      z
-        .string()
-        .min(1, 'Content must not be empty')
-        .max(100000, 'Content must be at most 100000 characters'),
-    ),
-  clientIntent: z.string().max(20000, 'Client intent must be at most 20000 characters').optional(),
-  routingMode: z.nativeEnum(RoutingMode).optional(),
-  provider: z.string().max(50, 'Provider must be at most 50 characters').optional(),
-  model: z.string().max(255, 'Model must be at most 255 characters').optional(),
-  modelDisplayName: z
-    .string()
-    .max(255, 'Model display name must be at most 255 characters')
-    .optional(),
-  fileIds: z.array(z.string().max(255)).max(10, 'Maximum 10 files per message').optional(),
-  researchMode: researchModeSchema.optional(),
-  researchProviderId: z.string().max(64, 'Research provider id too long').optional(),
-});
+export const createMessageSchema = z
+  .object({
+    threadId: z.string().max(255, 'Thread ID must be at most 255 characters'),
+    // Stripped BEFORE the length checks so a payload of nothing but NUL bytes is
+    // rejected as empty rather than reaching Postgres and 500ing the thread.
+    // Empty is allowed when files are attached — see requireContentOrAttachments.
+    content: z
+      .string()
+      .transform(stripNulBytes)
+      .pipe(z.string().max(100000, 'Content must be at most 100000 characters')),
+    clientIntent: z
+      .string()
+      .max(20000, 'Client intent must be at most 20000 characters')
+      .optional(),
+    routingMode: z.nativeEnum(RoutingMode).optional(),
+    provider: z.string().max(50, 'Provider must be at most 50 characters').optional(),
+    model: z.string().max(255, 'Model must be at most 255 characters').optional(),
+    modelDisplayName: z
+      .string()
+      .max(255, 'Model display name must be at most 255 characters')
+      .optional(),
+    ...attachmentFields,
+    researchMode: researchModeSchema.optional(),
+    researchProviderId: z.string().max(64, 'Research provider id too long').optional(),
+  })
+  .superRefine(requireContentOrAttachments());
 
 export type CreateMessageDto = z.infer<typeof createMessageSchema>;
 // Re-export the enum value-type for downstream consumers. Phase 2 will

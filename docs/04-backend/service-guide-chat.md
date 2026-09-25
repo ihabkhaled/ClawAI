@@ -126,6 +126,16 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
 5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
+   - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
+     no text (every send schema uses `requireContentOrAttachments`). The row is
+     stored with empty `content`; `message.created` carries
+     `ATTACHMENT_ONLY_ROUTING_HINT` instead (routing-service drops empty
+     content); research is skipped. When the prompt is built, a final user turn
+     that is empty or punctuation-only, with files attached, is replaced — per
+     request, never in storage — by `buildAttachmentOnlyInstruction`: answer
+     what a voice note said, describe an image/video, summarize a document and
+     offer next steps, reply in the attachment's language. Log line to grep:
+     `userTurnText: attachment-only turn — files=N mimeTypes=[…]`.
 6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)

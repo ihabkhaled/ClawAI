@@ -50,6 +50,14 @@ describe('resolveAutoResearchMode', () => {
 });
 
 describe('resolveEffectiveResearchMode', () => {
+  it.each([ResearchMode.AUTO, ResearchMode.SEARCH, ResearchMode.SEARCH_FETCH])(
+    'resolves %s to NONE when there is no typed text (attachment-only send)',
+    (mode) => {
+      expect(resolveEffectiveResearchMode(mode, '')).toBe(ResearchMode.NONE);
+      expect(resolveEffectiveResearchMode(mode, ' . ')).toBe(ResearchMode.NONE);
+    },
+  );
+
   it('never lets AUTO reach the research call', () => {
     expect(resolveEffectiveResearchMode(ResearchMode.AUTO, 'latest news')).toBe(
       ResearchMode.SEARCH,

@@ -21,6 +21,7 @@ import { EventPattern } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { RepairType } from '../../../common/enums/repair-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
+import { ATTACHMENT_ONLY_ROUTING_HINT } from '../constants/attachment-only-turn.constants';
 
 const mockThread = {
   id: 'thread-1',
@@ -296,6 +297,33 @@ describe('ChatMessagesService', () => {
           threadId: 'thread-1',
           userId: 'user-1',
         }),
+      );
+    });
+
+    // routing-service drops a message.created with empty content, so an
+    // attachment-only send used to be stored and never answered.
+    it('stores an attachment-only send empty but routes it on a hint', async () => {
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.createUserMessageWithinDailyLimit.mockResolvedValue({
+        ...mockMessage,
+        content: '',
+        metadata: { fileIds: ['file-1'] },
+      });
+
+      await service.createMessage(
+        'user-1',
+        { threadId: 'thread-1', content: '', fileIds: ['file-1'] },
+        '',
+      );
+
+      expect(messagesRepo.createUserMessageWithinDailyLimit).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ content: '' }),
+        12,
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ content: ATTACHMENT_ONLY_ROUTING_HINT }),
       );
     });
 

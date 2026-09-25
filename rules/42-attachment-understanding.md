@@ -210,6 +210,37 @@ Full reasoning:
     `frame-src`. A working download proves nothing about playback:
     `<a download>` is a navigation that no CSP directive governs.
 
+18. **An attachment sent with no words is a request, and the model is told so.**
+    A voice note sent with "." as its text got _"Is there something I can help
+    you with?"_ from gemini-2.5-pro on 2026-09-25. The transcript was in the
+    prompt, framed as speech (§12) — but in the system message, while the final
+    user turn, the part a model answers, said ".". When the user's text is empty
+    or only whitespace/punctuation (`isTrivialUserText`) and at least one file
+    is attached, `ContextAssemblyManager` replaces **that turn, for that request
+    only**, with `buildAttachmentOnlyInstruction`
+    (`utilities/attachment-only-turn.utility.ts`): answer what a voice note
+    SAID, describe/respond to an image or video, summarize a document and offer
+    next steps, and reply in the attachment's language. It lives in the three
+    builders (`buildChatMessages`, `buildGeminiChatMessages`,
+    `buildPromptString`) because every surface — chat, the three compare lanes,
+    all seven labs — reaches a model through `callProvider`, which uses them.
+    A per-mode copy is the defect this rule exists to prevent. The **stored**
+    message stays empty: never persist invented text; the UI shows the
+    attachments alone.
+
+19. **Every send surface accepts empty text when files ride with it, and still
+    refuses it when nothing does.** Each send schema drops its `min(1)` for
+    `requireContentOrAttachments(minLength)`
+    (`validators/content-or-attachments.validator.ts`), and every file list is
+    `attachmentFields` (`MAX_ATTACHMENTS_PER_REQUEST = 10`). The frontend
+    mirrors the cap as `MAX_ATTACHMENTS_PER_MESSAGE` and refuses the eleventh
+    file in the composer with a translated message — a server "Validation
+    failed" is not an answer a user can act on. An attachment-only send also
+    (a) publishes `ATTACHMENT_ONLY_ROUTING_HINT` as the `message.created`
+    content, because routing-service drops an event with empty content and the
+    turn would never be answered, and (b) runs no web research: there is no
+    text to search for.
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -227,6 +258,8 @@ Full reasoning:
 | 16      | `attachment-delivery.utility.spec.ts` "video" (strategy per state, plan refusal, duration limit); `video-frame-selection.utility.spec.ts` (timestamp case table); `video-context.utility.spec.ts` (block format, delimiters); `video-delivery.manager.spec.ts` (seeing / blind / plan-off / no helper / frames down / one fetch per turn / helper cap / 8k window / content-free log); `context-assembly-window-fit.spec.ts` (8k blind lane with transcript + 4 frame descriptions fits); `judge-referee-attachments.spec.ts` (judge rebuild keeps the video document); `video-attachment-routing.utility.spec.ts` (never throws) |
 | 14      | `attachment-delivery.utility.spec.ts` (resolver matrix); `context-assembly-media-delivery.spec.ts` (non-vision payload has no `image_url` and carries the honest note; video placeholder never in a prompt); `chat-execution-media-delivery.spec.ts` (the chokepoint's body and `fileDelivery` agree); `parallel-execution-media-delivery.spec.ts` (two lanes, two records)                                                                                                                                                                                                                                                       |
 | 17      | `content-security-policy.test.ts` "lets <audio>/<video> play an attachment from a blob: URL" and "keeps blob: out of connect-src and frame-src"; `use-attachment-file-preview.test.ts` and `use-file-viewer.test.ts` assert the text preview never calls `fetch`                                                                                                                                                                                                                                                                                                                                                                  |
+| 18      | `context-assembly-attachment-only-turn.spec.ts` — all three builders rewrite only the final trivial turn, only with files attached; `attachment-only-turn.utility.spec.ts` pins what counts as "no words" and each kind's instruction                                                                                                       |
+| 19      | `attachment-only-send.dto.spec.ts` — every send schema × (empty + files → valid, empty + no files → invalid, 11 files → invalid, whitespace fuzz); `chat-messages.service.spec.ts` "stores an attachment-only send empty but routes it on a hint"; frontend `composer-attachment.constants.test.ts` pins the cap to chat-service's constant |
 
 ## Runbook
 

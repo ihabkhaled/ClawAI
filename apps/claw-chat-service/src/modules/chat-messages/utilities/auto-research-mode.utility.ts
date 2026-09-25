@@ -4,6 +4,7 @@ import {
   AUTO_RESEARCH_REQUEST_MARKERS,
 } from '../../../common/constants/auto-research.constants';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
+import { isTrivialUserText } from './attachment-only-turn.utility';
 
 /**
  * What research this prompt needs, when the user has not said.
@@ -51,7 +52,10 @@ export function resolveEffectiveResearchMode(
   mode: ResearchMode | undefined,
   prompt: string,
 ): ResearchMode {
-  if (mode === undefined) {
+  // An attachment-only send ("" or ".") has no text to search for, whatever
+  // mode was selected: the attachment is the question, and a search on
+  // nothing spends the user's allowance to hand the model noise.
+  if (mode === undefined || isTrivialUserText(prompt)) {
     return ResearchMode.NONE;
   }
   return mode === ResearchMode.AUTO ? resolveAutoResearchMode(prompt) : mode;

@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { attachmentFields } from './attachment-fields.dto';
 import { researchFields } from './research-fields.dto';
+import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
 const escalationStepSchema = z.object({
   provider: z.string().min(1).max(50),
@@ -11,11 +13,13 @@ const escalationStepSchema = z.object({
 export const escalationChainMessageSchema = z
   .object({
     threadId: z.string().max(255).optional(),
-    content: z.string().min(1).max(100_000),
+    // Empty is allowed when files are attached — see requireContentOrAttachments.
+    content: z.string().max(100_000),
     chain: z.array(escalationStepSchema).min(2).max(5),
-    fileIds: z.array(z.string().max(255)).max(10).optional(),
+    ...attachmentFields,
   })
   .superRefine((data, ctx) => {
+    requireContentOrAttachments()(data, ctx);
     const seen = new Set<string>();
     for (const [idx, step] of data.chain.entries()) {
       const key = `${step.provider}:${step.model}`;

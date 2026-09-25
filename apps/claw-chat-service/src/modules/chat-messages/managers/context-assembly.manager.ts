@@ -93,6 +93,7 @@ import {
   formatDerivedImageBlock,
   visionHelperNoteFor,
 } from '../utilities/vision-helper.utility';
+import { resolveUserTurnText } from '../utilities/attachment-only-turn.utility';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -579,7 +580,11 @@ ${evidence.snippet}`);
     }
     parts.push(
       ...this.formatFileBlocks(context),
-      ...this.formatMessageLines(relevantMessages, this.hasResearchGrounding(context)),
+      ...this.formatMessageLines(
+        relevantMessages,
+        this.hasResearchGrounding(context),
+        context.fileContents,
+      ),
     );
     const crossThreadBlock = this.formatCrossThreadBlock(context);
     if (crossThreadBlock) parts.push(crossThreadBlock);
@@ -658,6 +663,7 @@ ${evidence.snippet}`);
   private formatMessageLines(
     messages: AssembledContext['threadMessages'],
     grounded = false,
+    fileContents: AssembledContext['fileContents'] = [],
   ): string[] {
     const lastUserIndex = messages.reduce(
       (found, message, index) => (this.mapRole(message) === 'user' ? index : found),
@@ -665,12 +671,33 @@ ${evidence.snippet}`);
     );
     return messages.map((message, index) => {
       const role = this.mapRole(message).toUpperCase();
-      const content =
-        grounded && index === lastUserIndex
-          ? this.withResearchGrounding(message.content)
-          : message.content;
-      return `${role}: ${content}`;
+      if (index !== lastUserIndex) {
+        return `${role}: ${message.content}`;
+      }
+      const turnText = this.userTurnText(message.content, fileContents);
+      return `${role}: ${grounded ? this.withResearchGrounding(turnText) : turnText}`;
     });
+  }
+
+  /**
+   * The final user turn as the model reads it.
+   *
+   * An attachment sent with no words — or with "." — used to reach the model
+   * as exactly that, and the model answered the "." ("Is there something I
+   * can help you with?") while the voice note it was sent sat unread in the
+   * system message. When the user typed nothing meaningful and attached
+   * something, the attachment is the request, and this says so. Per request
+   * only: the stored row stays what the user sent. Rule 42 §18.
+   */
+  private userTurnText(content: string, fileContents: AssembledContext['fileContents']): string {
+    const resolved = resolveUserTurnText(content, fileContents);
+    if (resolved !== content) {
+      this.logger.log(
+        `userTurnText: attachment-only turn — files=${String(fileContents.length)} ` +
+          `mimeTypes=[${fileContents.map((file) => file.mimeType).join(',')}]`,
+      );
+    }
+    return resolved;
   }
 
   private formatWorkspaceCitations(
@@ -822,8 +849,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // The reminder rides on the final user turn, which is the part of the
       // prompt a model attends to most. Never persisted — this is assembled
       // per request, so the stored message stays exactly what the user typed.
-      const content =
-        isLastUser && grounded ? this.withResearchGrounding(msg.content) : msg.content;
+      const turnText = isLastUser ? this.userTurnText(msg.content, context.fileContents) : '';
+      const groundedTurn = grounded ? this.withResearchGrounding(turnText) : turnText;
+      const content = isLastUser ? groundedTurn : msg.content;
       if (isLastUser && (mediaFiles.length > 0 || frameParts.length > 0)) {
         messages.push({
           role,

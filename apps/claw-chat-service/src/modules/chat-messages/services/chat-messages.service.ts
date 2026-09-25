@@ -130,6 +130,10 @@ import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
 import { fileWriterField, rerouteFileFollowUp } from '../utilities/file-writer.utility';
+import {
+  isTrivialUserText,
+  resolveRoutingContent,
+} from '../utilities/attachment-only-turn.utility';
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -387,6 +391,14 @@ export class ChatMessagesService implements OnModuleInit {
     // No research_started here. AUTO is only decided inside runResearchForIntent,
     // and announcing a start that then resolves to NONE leaves the UI showing
     // "researching" forever — there is no completion event to follow it.
+    //
+    // An attachment-only send has nothing to search for: the voice note or
+    // document IS the question, and a web search on "" or "." would only
+    // spend a research run and hand the model noise.
+    if (isTrivialUserText(dto.content)) {
+      this.logger.log(`research: skipped for thread ${threadId} — no typed text to research`);
+      return null;
+    }
     return this.runResearchForIntent(userId, userToken, threadId, dto.content, {
       mode: dto.researchMode,
       providerId: dto.researchProviderId,
@@ -987,7 +999,7 @@ export class ChatMessagesService implements OnModuleInit {
       // The user's question, never the model's previous answer: routing scores
       // this text, so sending the answer made every regeneration route on the
       // wrong input.
-      content: target.content,
+      content: resolveRoutingContent(target.content, target.metadata),
       routingMode: regenRoutingMode,
       forcedProvider: regenProvider,
       forcedModel: regenModel,
@@ -1126,7 +1138,7 @@ export class ChatMessagesService implements OnModuleInit {
       messageId: message.id,
       threadId: message.threadId,
       userId,
-      content,
+      content: resolveRoutingContent(content, message.metadata),
       routingMode: forcedProvider && forcedModel ? RoutingMode.MANUAL_MODEL : message.routingMode,
       forcedProvider,
       forcedModel,
@@ -2397,7 +2409,9 @@ export class ChatMessagesService implements OnModuleInit {
       messageId: message.id,
       threadId: message.threadId,
       userId,
-      content: message.content,
+      // routing-service drops a message.created with empty content, so an
+      // attachment-only send would never be routed. The stored row stays empty.
+      content: resolveRoutingContent(message.content, message.metadata),
       routingMode,
       forcedProvider,
       forcedModel,
