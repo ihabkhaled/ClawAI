@@ -157,6 +157,26 @@ than `STALE_PROCESSING_TIMEOUT_MS` (10 min) as FAILED.
 XLSX used to be `buffer.toString('utf-8')` over a ZIP container, and PPTX was
 accepted for upload with no extractor at all.
 
+## Antivirus scan (ClamAV) and its outage behaviour
+
+Every upload path (single-shot, chunked completion, internal upload, generated
+image/audio, archive entries) runs `FileSecurityManager.runAllChecks`, whose
+antivirus step is `ClamavClient.scan` (`src/infrastructure/clamav/`).
+
+| clamd state                    | Result                                                                           |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| answers `OK`                   | `clean` — file accepted                                                          |
+| answers `<sig> FOUND`          | 422 `FILE_SECURITY_CHECK_FAILED`                                                 |
+| restarting / refusing (≤ 90 s) | retried with backoff 1→2→4→8 s; upload is slow, not failed                       |
+| still unreachable after 90 s   | **fail closed**: 503 `ANTIVIRUS_UNAVAILABLE`, "The virus scanner is restarting…" |
+| `CLAMAV_ENABLED=false`         | scan skipped (`disabled`)                                                        |
+
+The frontend maps `ANTIVIRUS_UNAVAILABLE` to `files.antivirusUnavailable` (13
+locales). `GET /api/v1/health` includes `services.clamav` from a real clamd
+`zPING` → `PONG` (2 s timeout); clamd down makes the service `degraded`, HTTP 200.
+Constants: `src/common/constants/clamav.constants.ts`. Runbook:
+[`runbook-clamav-unreachable.md`](../11-runbooks/runbook-clamav-unreachable.md).
+
 ## Storage
 
 Files are stored on the local filesystem at the path configured by `FILE_STORAGE_PATH`. The directory structure uses user ID subdirectories:

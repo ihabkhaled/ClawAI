@@ -1031,6 +1031,7 @@ export const en: TranslationDictionary = {
     noFilesDesc: 'Upload files to use as AI context',
     fileUploaded: 'File uploaded',
     fileUploadFailed: 'Failed to upload file',
+    antivirusUnavailable: 'The virus scanner is restarting. Please try again in a minute.',
     fileDeleted: 'File deleted',
     fileDeleteFailed: 'Failed to delete file',
     uploadFailed: 'Failed to upload file',

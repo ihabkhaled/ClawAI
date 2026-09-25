@@ -7,3 +7,4 @@ export {
   InvalidRefreshTokenException,
 } from './business.exception';
 export { MediaSourceUnreadableError } from './media-source-unreadable.error';
+export { ClamavSocketError } from './clamav-socket.error';

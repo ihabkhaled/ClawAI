@@ -20,6 +20,7 @@ const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   [ApiErrorCode.SUPER_ADMIN_IMMUTABLE, 'admin.errors.superAdminImmutable'],
   [ApiErrorCode.SUPER_ADMIN_SELF_LOCKED, 'admin.errors.superAdminSelfLocked'],
   [ApiErrorCode.SUPER_ADMIN_REQUIRED, 'admin.errors.superAdminRequired'],
+  [ApiErrorCode.ANTIVIRUS_UNAVAILABLE, 'files.antivirusUnavailable'],
 ]);
 
 export function resolveApiErrorMessage(

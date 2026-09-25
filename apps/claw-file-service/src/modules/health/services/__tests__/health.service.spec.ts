@@ -1,13 +1,15 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HealthService } from '../health.service';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { RedisService } from '../../../../infrastructure/redis/redis.service';
+import { ClamavClient } from '../../../../infrastructure/clamav/clamav.client';
 import { HealthCheckStatus, ServiceStatus } from '../../../../common/enums';
 
 describe('HealthService', () => {
   let prismaMock: { $queryRaw: Mock };
   let redisMock: { getClient: Mock };
+  let clamavMock: { ping: Mock };
 
   const buildService = async (): Promise<HealthService> => {
     const module: TestingModule = await Test.createTestingModule({
@@ -15,6 +17,7 @@ describe('HealthService', () => {
         HealthService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: RedisService, useValue: redisMock },
+        { provide: ClamavClient, useValue: clamavMock },
       ],
     }).compile();
     return module.get<HealthService>(HealthService);
@@ -27,6 +30,42 @@ describe('HealthService', () => {
         ping: vi.fn().mockResolvedValue('PONG'),
       }),
     };
+    clamavMock = { ping: vi.fn().mockResolvedValue(true) };
+  });
+
+  // Contract read by health-service's fan-out (antivirus status component).
+  it('reports clamav UP when clamd answers PONG', async () => {
+    const service = await buildService();
+    const result = await service.check();
+    expect(result.status).toBe(HealthCheckStatus.OK);
+    expect(result.services).toEqual({
+      database: ServiceStatus.UP,
+      redis: ServiceStatus.UP,
+      clamav: ServiceStatus.UP,
+    });
+  });
+
+  it('is DEGRADED (never DOWN, never throws) when only clamd is unreachable', async () => {
+    clamavMock.ping.mockResolvedValue(false);
+    const service = await buildService();
+    const result = await service.check();
+    expect(result.status).toBe(HealthCheckStatus.DEGRADED);
+    expect(result.services.clamav).toBe(ServiceStatus.DOWN);
+  });
+
+  it('reports clamav DISABLED (and stays OK) when scanning is turned off', async () => {
+    clamavMock.ping.mockResolvedValue(null);
+    const service = await buildService();
+    const result = await service.check();
+    expect(result.status).toBe(HealthCheckStatus.OK);
+    expect(result.services.clamav).toBe(ServiceStatus.DISABLED);
+  });
+
+  it('carries no host, port or error text in the payload', async () => {
+    clamavMock.ping.mockResolvedValue(false);
+    const service = await buildService();
+    const body = JSON.stringify(await service.check());
+    expect(body).not.toMatch(/\d+\.\d+\.\d+\.\d+|3310|ECONN/);
   });
 
   it('returns OK when both up', async () => {

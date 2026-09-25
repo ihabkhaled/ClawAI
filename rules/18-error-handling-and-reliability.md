@@ -37,11 +37,27 @@ poll/stream/mutation paths.
    from `@claw/shared-utilities`, not a local copy. Enforced by
    `tools/__tests__/exception-filter-client-errors.test.mjs` (TD-032).
 
+9. **A restarting dependency is retried to a deadline, then fails closed with a
+   stable code.** When a hard dependency restarts (ClamAV reloading its database
+   for ~60 s after an OOM kill), transient socket errors (`ECONNREFUSED`,
+   `ECONNRESET`, `ETIMEDOUT`, `EPIPE`, closed-without-reply) are retried with
+   bounded exponential backoff up to a wall-clock deadline constant, then the
+   request fails CLOSED with a machine code (`ANTIVIRUS_UNAVAILABLE`, 503) and a
+   host-free message the frontend translates. The raw socket message
+   (`connect ECONNREFUSED 172.18.0.6:3310`) names an internal IP and is never
+   returned or logged — log the error `code`. Every proxy hop in front of the
+   request must time out above the deadline (nginx `/api/v1/files` 150 s vs
+   file-service `CLAMAV_SCAN_DEADLINE_MS` 90 s). Reference:
+   `apps/claw-file-service/src/infrastructure/clamav/clamav.client.ts`,
+   [`docs/11-runbooks/runbook-clamav-unreachable.md`](../docs/11-runbooks/runbook-clamav-unreachable.md).
+
 ## Prohibited patterns
 
 - `catch (e) {}` or `catch (e) { return null }` with no log.
 - A background failure that emits SSE but stores no DB record (UI spins forever).
 - An unbounded retry/poll loop with no ceiling.
+- Returning a dependency's raw socket error (with its internal IP) to the client,
+  or accepting an unscanned upload because the scanner was unreachable.
 - Throwing a plain `Error`/string for a domain condition instead of a typed exception.
 - An exception filter whose last branch turns every non-`HttpException` into a
   500, including body-parser's 4xx.

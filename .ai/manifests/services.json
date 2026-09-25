@@ -232,7 +232,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 52,
+      "testFiles": 56,
       "testRunner": "vitest"
     },
     {

@@ -162,6 +162,29 @@ describe('apiClient', () => {
     }
   });
 
+  it('keeps a 503 code (a dependency is restarting) but still masks the message', async () => {
+    mockError(503, {
+      message: 'connect ECONNREFUSED 172.18.0.6:3310',
+      code: 'ANTIVIRUS_UNAVAILABLE',
+    });
+
+    const error: unknown = await apiClient
+      .post('/files/upload', {})
+      .catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiClientError);
+    const apiError = error as ApiClientError;
+    expect(apiError.status).toBe(503);
+    expect(apiError.code).toBe('ANTIVIRUS_UNAVAILABLE');
+    expect(apiError.message).not.toContain('172.18');
+  });
+
+  it('still suppresses the code of any other 5xx', async () => {
+    mockError(500, { message: 'boom', code: 'INTERNAL_THING' });
+
+    const error: unknown = await apiClient.get('/x').catch((caught: unknown) => caught);
+    expect((error as ApiClientError).code).toBeUndefined();
+  });
+
   it('returns network error when no response object', async () => {
     mockHandlers.push({ error: {} });
 

@@ -1002,6 +1002,7 @@ export type TranslationDictionary = {
     noFilesDesc: string;
     fileUploaded: string;
     fileUploadFailed: string;
+    antivirusUnavailable: string;
     fileDeleted: string;
     fileDeleteFailed: string;
     uploadFailed: string;

@@ -14,6 +14,7 @@ import * as zlib from 'node:zlib';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { FilesService } from '../files.service';
 import { FileSecurityManager } from '../../managers/file-security.manager';
+import { ClamavClient } from '../../../../infrastructure/clamav/clamav.client';
 import { type FilesRepository } from '../../repositories/files.repository';
 import { type FileChunksRepository } from '../../repositories/file-chunks.repository';
 import { type FileProcessingContract } from '../../types/zip-expansion.types';
@@ -83,7 +84,7 @@ describe('FilesService archive uploads (magic-byte routing)', () => {
       filesRepository as FilesRepository,
       {} as FileChunksRepository,
       rabbitMQ as RabbitMQService,
-      new FileSecurityManager(),
+      new FileSecurityManager(new ClamavClient()),
       {
         init: vi.fn(),
         receiveChunk: vi.fn(),

@@ -1049,6 +1049,7 @@ export const it: TranslationDictionary = {
     noFilesDesc: 'Carica file da usare come contesto IA',
     fileUploaded: 'File caricato',
     fileUploadFailed: 'Caricamento file non riuscito',
+    antivirusUnavailable: 'L’antivirus si sta riavviando. Riprova tra un minuto.',
     fileDeleted: 'File eliminato',
     fileDeleteFailed: 'Eliminazione file non riuscita',
     uploadFailed: 'Caricamento file non riuscito',

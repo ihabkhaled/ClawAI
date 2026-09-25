@@ -1,4 +1,8 @@
-export { API_BASE_URL, AUTH_REFRESH_EXEMPT_PATHS } from './api.constants';
+export {
+  API_BASE_URL,
+  API_CODE_PASSTHROUGH_SERVER_STATUSES,
+  AUTH_REFRESH_EXEMPT_PATHS,
+} from './api.constants';
 export { COUNTRY_DIAL_CODES, DEFAULT_COUNTRY_ISO2 } from './country-dial-codes.constants';
 export { SUGGESTED_PROMPTS } from './suggested-prompts.constants';
 export { THREAD_DATE_GROUP_LABEL_KEYS } from './thread-date-group.constants';

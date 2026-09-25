@@ -12,7 +12,12 @@ export function useUploadFile() {
 
   const mutation = useMutation({
     mutationFn: (data: UploadFileRequest) => {
-      logger.info({ component: 'files', action: 'upload-file', message: 'Uploading file', details: { filename: data.filename, mimeType: data.mimeType, sizeBytes: data.sizeBytes } });
+      logger.info({
+        component: 'files',
+        action: 'upload-file',
+        message: 'Uploading file',
+        details: { filename: data.filename, mimeType: data.mimeType, sizeBytes: data.sizeBytes },
+      });
       return filesRepository.uploadFile(data);
     },
     onSuccess: () => {
@@ -24,7 +29,7 @@ export function useUploadFile() {
     },
     onError: (error: Error) => {
       logger.error({ component: 'files', action: 'upload-file-error', message: error.message });
-      showToast.apiError(error, t('files.fileUploadFailed'));
+      showToast.apiError(error, t('files.fileUploadFailed'), { translate: t });
     },
   });
 

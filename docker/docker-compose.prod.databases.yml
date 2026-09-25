@@ -481,6 +481,13 @@ services:
     image: clamav/clamav-debian:stable
     container_name: claw-clamav
     restart: unless-stopped
+    # When the host runs short of memory the kernel OOM killer picks the
+    # largest process, and clamd (~1 GB resident) always won: uploads then
+    # fail closed until clamd reloads its database (~60 s). -900 makes the
+    # kernel reclaim from other, self-restarting containers first. It does
+    # not make clamd unkillable (-1000 would); the watchdog below still covers
+    # the case where it dies anyway. See runbook-clamav-unreachable.md.
+    oom_score_adj: -900
     ports:
       - '${CLAMAV_PORT:-3310}:3310'
     volumes:

@@ -21,7 +21,7 @@ describe('HealthController', () => {
     const expected = {
       status: HealthCheckStatus.OK,
       timestamp: '2026-04-26T20:00:00.000Z',
-      services: { database: ServiceStatus.UP, redis: ServiceStatus.UP },
+      services: { database: ServiceStatus.UP, redis: ServiceStatus.UP, clamav: ServiceStatus.UP },
     };
     serviceMock.check.mockResolvedValue(expected);
     expect(await controller.check()).toBe(expected);

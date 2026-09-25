@@ -32,3 +32,12 @@ export const AUTH_REFRESH_EXEMPT_PATHS: ReadonlyArray<string> = [
   '/auth/refresh',
   '/client-logs/batch',
 ] as const;
+
+/**
+ * 5xx statuses whose machine `code` is kept (the MESSAGE is still replaced by
+ * the generic one). 503 is "a dependency is temporarily down": the code is a
+ * stable identifier such as ANTIVIRUS_UNAVAILABLE or TTS_UNAVAILABLE that the
+ * UI translates into "try again in a minute" — dropping it left users with
+ * "An unexpected server error occurred". Other 5xx codes stay suppressed.
+ */
+export const API_CODE_PASSTHROUGH_SERVER_STATUSES: ReadonlySet<number> = new Set([503]);

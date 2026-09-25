@@ -23,6 +23,10 @@ import {
 import { EXTRACTION_REQUIRED_MIME_TYPES } from '../constants/file-processing.constants';
 import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
 import {
+  ANTIVIRUS_UNAVAILABLE_ERROR_CODE,
+  ANTIVIRUS_UNAVAILABLE_MESSAGE,
+} from '../../../common/constants/clamav.constants';
+import {
   VIDEO_PLACEHOLDER_PREFIX,
   VIDEO_PROCESSING_STALE_MS,
 } from '../constants/video-processing.constants';
@@ -270,6 +274,16 @@ export class FilesService {
     buffer: Buffer,
   ): Promise<void> {
     const result = await this.fileSecurityManager.runAllChecks(filename, mimeType, buffer);
+    if (result.antivirusUnavailable) {
+      // Fail closed, but say so as a retryable outage, not as a verdict on the
+      // file — and never with the raw socket error, which names an internal IP.
+      this.logger.warn(`runSecurityChecks: REFUSED "${filename}" — antivirus unavailable`);
+      throw new BusinessException(
+        ANTIVIRUS_UNAVAILABLE_MESSAGE,
+        ANTIVIRUS_UNAVAILABLE_ERROR_CODE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
     if (!result.passed) {
       const failedChecks = result.checks.filter((c) => !c.passed);
       const reasons = failedChecks.map((c) => `${c.name}: ${c.reason}`).join('; ');

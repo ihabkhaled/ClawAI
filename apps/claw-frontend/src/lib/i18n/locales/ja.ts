@@ -1038,6 +1038,8 @@ export const ja: TranslationDictionary = {
     noFilesDesc: 'AI コンテキストとして使用するファイルをアップロードします',
     fileUploaded: 'ファイルがアップロードされました',
     fileUploadFailed: 'ファイルのアップロードに失敗しました',
+    antivirusUnavailable:
+      'ウイルススキャナーを再起動しています。1分ほどしてからもう一度お試しください。',
     fileDeleted: 'ファイルが削除されました',
     fileDeleteFailed: 'ファイルの削除に失敗しました',
     uploadFailed: 'ファイルのアップロードに失敗しました',

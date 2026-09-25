@@ -1036,6 +1036,8 @@ export const hi: TranslationDictionary = {
     noFilesDesc: 'AI कॉन्टेक्स्ट के रूप में उपयोग करने के लिए फ़ाइलें अपलोड करें',
     fileUploaded: 'फ़ाइल अपलोड हुई',
     fileUploadFailed: 'फ़ाइल अपलोड करने में विफल',
+    antivirusUnavailable:
+      'वायरस स्कैनर फिर से शुरू हो रहा है। कृपया एक मिनट बाद फिर से कोशिश करें।',
     fileDeleted: 'फ़ाइल हटाई गई',
     fileDeleteFailed: 'फ़ाइल हटाने में विफल',
     uploadFailed: 'फ़ाइल अपलोड करने में विफल',

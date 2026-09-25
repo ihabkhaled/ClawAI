@@ -1050,6 +1050,8 @@ export const de: TranslationDictionary = {
     noFilesDesc: 'Laden Sie Dateien hoch, um sie als KI-Kontext zu verwenden',
     fileUploaded: 'Datei hochgeladen',
     fileUploadFailed: 'Datei konnte nicht hochgeladen werden',
+    antivirusUnavailable:
+      'Der Virenscanner wird gerade neu gestartet. Bitte versuche es in einer Minute erneut.',
     fileDeleted: 'Datei gelöscht',
     fileDeleteFailed: 'Datei konnte nicht gelöscht werden',
     uploadFailed: 'Datei konnte nicht hochgeladen werden',

@@ -1043,6 +1043,8 @@ export const es: TranslationDictionary = {
     noFilesDesc: 'Sube archivos para usarlos como contexto de la IA',
     fileUploaded: 'Archivo subido',
     fileUploadFailed: 'Error al subir el archivo',
+    antivirusUnavailable:
+      'El analizador de virus se está reiniciando. Inténtalo de nuevo en un minuto.',
     fileDeleted: 'Archivo eliminado',
     fileDeleteFailed: 'Error al eliminar el archivo',
     uploadFailed: 'Error al subir el archivo',

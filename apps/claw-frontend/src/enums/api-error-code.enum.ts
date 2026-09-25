@@ -50,4 +50,8 @@ export enum ApiErrorCode {
   TTS_NOTHING_TO_READ = 'TTS_NOTHING_TO_READ',
   TTS_UNAVAILABLE = 'TTS_UNAVAILABLE',
   TTS_FAILED = 'TTS_FAILED',
+  // file-service: the virus scanner (ClamAV) could not be reached within 90 s,
+  // usually because it is restarting. The upload failed closed; retrying in a
+  // minute works. 503, never a verdict on the file.
+  ANTIVIRUS_UNAVAILABLE = 'ANTIVIRUS_UNAVAILABLE',
 }

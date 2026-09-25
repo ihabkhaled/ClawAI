@@ -82,7 +82,7 @@ export function useComposerAttachments({
           action: 'composer-attachment-error',
           message: (error as Error).message,
         });
-        showToast.apiError(error, t('files.fileUploadFailed'));
+        showToast.apiError(error, t('files.fileUploadFailed'), { translate: t });
       } finally {
         pendingRef.current = Math.max(0, pendingRef.current - 1);
         setPendingUploads((list) => list.filter((item) => item.key !== pending.key));

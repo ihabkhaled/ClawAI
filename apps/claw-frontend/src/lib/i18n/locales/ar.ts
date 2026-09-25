@@ -1023,6 +1023,7 @@ export const ar: TranslationDictionary = {
     noFilesDesc: 'ارفع ملفات لاستخدامها كسياق للذكاء الاصطناعي',
     fileUploaded: 'تم رفع الملف',
     fileUploadFailed: 'فشل رفع الملف',
+    antivirusUnavailable: 'ماسح الفيروسات قيد إعادة التشغيل. يرجى المحاولة مرة أخرى بعد دقيقة.',
     fileDeleted: 'تم حذف الملف',
     fileDeleteFailed: 'فشل حذف الملف',
     uploadFailed: 'فشل رفع الملف',

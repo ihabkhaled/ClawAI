@@ -1043,6 +1043,7 @@ export const ru: TranslationDictionary = {
     noFilesDesc: 'Загрузите файлы для использования в качестве контекста ИИ',
     fileUploaded: 'Файл загружен',
     fileUploadFailed: 'Не удалось загрузить файл',
+    antivirusUnavailable: 'Антивирусный сканер перезапускается. Повторите попытку через минуту.',
     fileDeleted: 'Файл удалён',
     fileDeleteFailed: 'Не удалось удалить файл',
     uploadFailed: 'Не удалось загрузить файл',

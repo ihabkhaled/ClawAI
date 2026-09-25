@@ -1033,6 +1033,8 @@ export const fa: TranslationDictionary = {
     noFilesDesc: 'فایل ها را برای استفاده به عنوان زمینه هوش مصنوعی آپلود کنید',
     fileUploaded: 'فایل آپلود شد',
     fileUploadFailed: 'فایل آپلود نشد',
+    antivirusUnavailable:
+      'اسکنر ویروس در حال راه‌اندازی مجدد است. لطفاً یک دقیقه دیگر دوباره تلاش کنید.',
     fileDeleted: 'فایل حذف شد',
     fileDeleteFailed: 'فایل حذف نشد',
     uploadFailed: 'فایل آپلود نشد',

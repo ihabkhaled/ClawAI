@@ -7607,7 +7607,7 @@
           "file": "rules/17-rabbitmq-events-and-jobs.md"
         },
         {
-          "bytes": 3635,
+          "bytes": 4801,
           "file": "rules/18-error-handling-and-reliability.md"
         },
         {
@@ -8155,7 +8155,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5434
+        "value": 5435
       },
       "localeCount": 13,
       "locales": [
@@ -10149,7 +10149,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 52
+        "testFiles": 56
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10931,7 +10931,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1594,
+    "totalTestFiles": 1598,
     "workspaceCount": 25
   }
 }

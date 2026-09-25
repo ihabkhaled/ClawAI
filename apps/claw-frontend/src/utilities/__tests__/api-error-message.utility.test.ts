@@ -33,4 +33,16 @@ describe('resolveApiErrorMessage', () => {
     expect(message).toBe(`translated:${key}`);
     expect(message).not.toContain(error.message);
   });
+
+  it('maps ANTIVIRUS_UNAVAILABLE (503) to the translated "scanner restarting" message', () => {
+    const error = new ApiClientError({
+      message: 'An unexpected server error occurred. Please try again later.',
+      status: 503,
+      code: 'ANTIVIRUS_UNAVAILABLE',
+    });
+
+    const message = resolveApiErrorMessage(error, (key) => `translated:${key}`, 'fallback');
+
+    expect(message).toBe('translated:files.antivirusUnavailable');
+  });
 });

@@ -1048,6 +1048,7 @@ export const fr: TranslationDictionary = {
     noFilesDesc: 'Téléversez des fichiers à utiliser comme contexte IA',
     fileUploaded: 'Fichier téléversé',
     fileUploadFailed: 'Échec du téléversement du fichier',
+    antivirusUnavailable: 'L’analyseur antivirus redémarre. Veuillez réessayer dans une minute.',
     fileDeleted: 'Fichier supprimé',
     fileDeleteFailed: 'Échec de la suppression du fichier',
     uploadFailed: 'Échec du téléversement du fichier',

@@ -53,6 +53,33 @@ other format); `ooxml-parser.utility.ts` guards the in-memory XLSX and PPTX
 path. An `.xlsx` is a ZIP and is user input. Do not add another way to open an
 archive without bounds of its own.
 
+## ClamAV: retried to a deadline, then fail closed (2026-09-25)
+
+Every scan goes through ONE `ClamavClient` (`src/infrastructure/clamav/`,
+`@Global` `ClamavModule`). `common/utilities/clamav-scanner.utility.ts` is the
+wire protocol only (INSTREAM, PING); never open a clamd socket anywhere else.
+
+- **Transient socket errors are retried**, bounded exponential backoff, until
+  `CLAMAV_SCAN_DEADLINE_MS` (90 s — a restarted clamd needs ~60 s to load its
+  database). Then the scan is `ClamScanOutcome.UNAVAILABLE` and the upload
+  **fails closed**: 503 `ANTIVIRUS_UNAVAILABLE`, host-free message. An
+  unscanned file is never stored.
+- `ANTIVIRUS_UNAVAILABLE` is thrown only when the scanner is the SOLE failing
+  check (`FileSecurityCheckResult.antivirusUnavailable`). A file that also fails
+  magic bytes / blocklist is still `FILE_SECURITY_CHECK_FAILED`.
+- **Never log or return the socket `message`** — Node puts the container IP in
+  it. Log `clamErrorCode(error)`.
+- After a scan exhausts the deadline, scans for the next 30 s try once
+  (`CLAMAV_FAIL_FAST_WINDOW_MS`), so archive expansion cannot stack deadlines.
+- `/api/v1/health` PINGs clamd (2 s) and reports `services.clamav`
+  (`up`/`down`/`disabled`). clamd down is `degraded` with HTTP 200 — never let it
+  fail the container healthcheck; restarting file-service does not fix clamd.
+  health-service reads that key for the "Antivirus scanner" status component.
+- nginx `/api/v1/files` `proxy_read_timeout 150s` must stay above the deadline.
+
+Runbook: [`runbook-clamav-unreachable.md`](../../docs/11-runbooks/runbook-clamav-unreachable.md) ·
+rule: [`rules/18`](../../rules/18-error-handling-and-reliability.md) item 9.
+
 ## An archive's text is its manifest (2026-09-23)
 
 An attached archive (`.zip`, and since A2 every format below) reaches the model through its own `extractedText`, which

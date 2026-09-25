@@ -1,3 +1,4 @@
+import { API_CODE_PASSTHROUGH_SERVER_STATUSES } from '@/constants/api.constants';
 import { httpClient } from '@/lib/http-client';
 import type { ApiClientDeleteOptions, ApiClientRequestOptions, ApiResponse } from '@/types';
 
@@ -133,11 +134,13 @@ function toApiClientError(error: unknown): ApiClientError {
         : (axiosError.response?.data?.message ?? 'An unexpected error occurred'),
       status,
       errors: isServerError ? undefined : axiosError.response?.data?.errors,
-      // 5xx codes (if any) are intentionally suppressed alongside details so
-      // we never leak internals via the `code` field either.
-      code: isServerError
-        ? undefined
-        : (axiosError.response?.data?.errorCode ?? axiosError.response?.data?.code),
+      // 5xx codes are suppressed alongside details so we never leak internals
+      // via the `code` field either — except a 503's, which is a stable
+      // "temporarily unavailable" identifier the UI translates.
+      code:
+        isServerError && !API_CODE_PASSTHROUGH_SERVER_STATUSES.has(status)
+          ? undefined
+          : (axiosError.response?.data?.errorCode ?? axiosError.response?.data?.code),
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

@@ -1007,6 +1007,7 @@ export const zh: TranslationDictionary = {
     noFilesDesc: '上传文件以用作 AI 上下文',
     fileUploaded: '文件已上传',
     fileUploadFailed: '上传文件失败',
+    antivirusUnavailable: '病毒扫描程序正在重启，请一分钟后重试。',
     fileDeleted: '文件已删除',
     fileDeleteFailed: '删除文件失败',
     uploadFailed: '上传文件失败',

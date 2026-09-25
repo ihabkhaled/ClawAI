@@ -1043,6 +1043,7 @@ export const pt: TranslationDictionary = {
     noFilesDesc: 'Envie arquivos para usar como contexto da IA',
     fileUploaded: 'Arquivo enviado',
     fileUploadFailed: 'Falha ao enviar arquivo',
+    antivirusUnavailable: 'O verificador de vírus está reiniciando. Tente novamente em um minuto.',
     fileDeleted: 'Arquivo excluído',
     fileDeleteFailed: 'Falha ao excluir arquivo',
     uploadFailed: 'Falha ao enviar arquivo',

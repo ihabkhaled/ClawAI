@@ -11,6 +11,7 @@ import type { IncomingMessage } from 'node:http';
 import { AppConfig } from './config/app.config';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
+import { ClamavModule } from '../infrastructure/clamav/clamav.module';
 
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -37,10 +38,7 @@ import { HealthModule } from '../modules/health/health.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -68,6 +66,7 @@ import { HealthModule } from '../modules/health/health.module';
     }),
     PrismaModule,
     RedisModule,
+    ClamavModule,
     ScheduleModule.forRoot(),
     FilesModule,
     HealthModule,

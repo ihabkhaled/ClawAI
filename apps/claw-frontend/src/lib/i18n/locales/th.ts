@@ -1022,6 +1022,7 @@ export const th: TranslationDictionary = {
     noFilesDesc: 'อัปโหลดไฟล์เพื่อใช้เป็นบริบท AI',
     fileUploaded: 'อัปโหลดไฟล์แล้ว',
     fileUploadFailed: 'ล้มเหลวในการอัปโหลดไฟล์',
+    antivirusUnavailable: 'ตัวสแกนไวรัสกำลังเริ่มระบบใหม่ โปรดลองอีกครั้งในอีกหนึ่งนาที',
     fileDeleted: 'ลบไฟล์แล้ว',
     fileDeleteFailed: 'ไม่สามารถลบไฟล์ได้',
     uploadFailed: 'ล้มเหลวในการอัปโหลดไฟล์',
