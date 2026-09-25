@@ -19,4 +19,7 @@ export enum ImageFailureCode {
   PROVIDER_UNAVAILABLE = 'IMAGE_PROVIDER_UNAVAILABLE',
   CONNECTOR_NOT_CONFIGURED = 'IMAGE_CONNECTOR_NOT_CONFIGURED',
   STORAGE_FAILED = 'IMAGE_STORAGE_FAILED',
+  // A retry whose stored reference image could not be read back (deleted,
+  // file-service down). Generating without it would silently drop the edit.
+  REFERENCE_UNAVAILABLE = 'IMAGE_REFERENCE_UNAVAILABLE',
 }

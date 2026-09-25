@@ -38,9 +38,11 @@ export class ImageGenerationController {
     return this.imageService.listByUser(user.id, query);
   }
 
+  // Owner only; carries `supersededById` and `latest` (the chain head), so a
+  // card restored after a refresh shows what a fallback or alternate produced.
   @Get(':id')
   async getById(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): Promise<unknown> {
-    return this.imageService.getByIdForUser(id, user.id);
+    return this.imageService.getWithLatestForUser(id, user.id);
   }
 
   // Owner only: retry used to accept any id, so user A could re-run (and bill)

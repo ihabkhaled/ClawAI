@@ -1,6 +1,7 @@
-import { type TokenUsage } from '@claw/shared-types';
+import { type RuntimeProgressStage, type TokenUsage } from '@claw/shared-types';
 
-import { type ImageGenerationStatus } from '../../../generated/prisma';
+import { type ImageAssetRole, type ImageGenerationStatus } from '../../../generated/prisma';
+import { type ImageProgressCallback } from './image-progress.types';
 
 export type ImageGenerationRecord = {
   id: string;
@@ -22,9 +23,105 @@ export type ImageGenerationRecord = {
   startedAt: Date | null;
   completedAt: Date | null;
   latencyMs: number | null;
+  /** The row that took this job over (auto-fallback or retry-alternate), or null. */
+  supersededById: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** OUTPUT assets only — the reference image is never listed here. */
   assets: ImageGenerationAssetRecord[];
+};
+
+/**
+ * The newest row reached by following `supersededById` from the one asked
+ * for — what the user actually got. Equal to the asked-for row when nothing
+ * superseded it.
+ */
+export type ImageGenerationLatestSummary = {
+  id: string;
+  status: ImageGenerationStatus;
+  provider: string;
+  model: string;
+  errorCode: string | null;
+  errorMessage: string | null;
+  supersededById: string | null;
+  assets: ImageGenerationAssetRecord[];
+};
+
+/** `GET /images/:id`: the row asked for, plus the head of its chain. */
+export type ImageGenerationView = ImageGenerationRecord & {
+  latest: ImageGenerationLatestSummary;
+};
+
+/** What a new row is created from — a fresh send, a fallback or an alternate. */
+export type CreateImageGenerationData = {
+  userId: string;
+  threadId?: string;
+  userMessageId?: string;
+  assistantMessageId?: string;
+  prompt: string;
+  provider: string;
+  model: string;
+  width?: number;
+  height?: number;
+  quality?: string;
+  style?: string;
+};
+
+/** A stored reference image: the file-service id it lives under, and its type. */
+export type ImageReferenceAssetInput = {
+  generationId: string;
+  fileId: string;
+  mimeType: string;
+};
+
+/** The slice of file-service's `GET /internal/files/:id/content` a retry reads. */
+export type ImageReferenceFileResponse = {
+  mimeType: string;
+  /** base64 of the stored bytes (never extracted text). */
+  content: string | null;
+};
+
+/** Reference bytes ready for a provider call. */
+export type ImageReference = {
+  base64: string;
+  mimeType?: string;
+};
+
+/**
+ * Hands a failed attempt to the next one. Returns the successor's id, or
+ * undefined when the chain ends here.
+ */
+export type ImageSuccessorSpawner = (
+  failed: ImageGenerationRecord,
+  described: ImageFailureDescription,
+) => Promise<string | undefined>;
+
+/** One run of `processJob`. */
+export type ImageAttemptOptions = {
+  /** In-memory reference from the send; absent on a retry, which reads the stored one. */
+  reference?: ImageReference;
+  /** AUTO only: creates and links the next attempt when this one fails. */
+  spawnSuccessor?: ImageSuccessorSpawner;
+};
+
+/** Mutable state of one AUTO fallback walk, owned by that walk alone. */
+export type ImageFallbackChainState = {
+  attempts: number;
+  paidBlocked: boolean;
+};
+
+/**
+ * The observed part of a runtime-progress envelope forwarded over SSE: the
+ * stage, plus only the numbers the runtime itself reported. A percentage is
+ * included only when the runtime measured it (`EXACT` / `RUNTIME_REPORTED`),
+ * never an estimate.
+ */
+export type ImageProgressSnapshot = {
+  stage: RuntimeProgressStage;
+  currentStep?: number;
+  totalSteps?: number;
+  elapsedMs?: number;
+  progressPercent?: number;
 };
 
 export type ImageGenerationAssetRecord = {
@@ -37,6 +134,7 @@ export type ImageGenerationAssetRecord = {
   width: number | null;
   height: number | null;
   sizeBytes: number | null;
+  role: ImageAssetRole;
   createdAt: Date;
 };
 
@@ -55,6 +153,12 @@ export type GenerateImageParams = {
   isAutoMode?: boolean;
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
+  /**
+   * file-service id of the reference image, when it came from an upload.
+   * Stored as a REFERENCE asset so a retry can read it back (owner-checked by
+   * file-service) instead of silently generating without it.
+   */
+  referenceFileId?: string;
 };
 
 /**
@@ -85,6 +189,8 @@ export type ExecuteImageInput = {
   style?: string;
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
+  /** Receives local-runtime progress (ComfyUI, SD WebUI) while the call runs. */
+  onProgress?: ImageProgressCallback;
 };
 
 export type ImageProviderResponse = {
@@ -150,6 +256,13 @@ export type ImageGenerationEventPayload = {
   }>;
   errorCode?: string | null;
   errorMessage?: string | null;
+  /**
+   * Set on the event that hands this job to another row. A listener switches
+   * to that id; FAILED alongside it is not the end of the job.
+   */
+  supersededById?: string;
+  /** Live runtime stage + observed metrics, on GENERATING events only. */
+  runtimeProgress?: ImageProgressSnapshot;
 };
 
 export const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELLED'] as const;

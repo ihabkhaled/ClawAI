@@ -17,8 +17,17 @@ import {
   type ExecuteImageInput,
   type GenerateImageResult,
   type ImageProviderResponse,
+  type ImageReference,
+  type ImageReferenceFileResponse,
   type StoreImageResponse,
 } from '../types/image-generation.types';
+import { type ImageProgressCallback } from '../types/image-progress.types';
+import {
+  IMAGE_REFERENCE_CONTENT_PATH,
+  IMAGE_REFERENCE_FETCH_TIMEOUT_MS,
+  IMAGE_REFERENCE_MAX_BASE64_LENGTH,
+} from '../constants/image-reference.constants';
+import { SD_DEFAULT_STEPS } from '../constants/stable-diffusion.constants';
 import { generateWithOpenAI } from '../adapters/openai-image.adapter';
 import { generateWithGemini } from '../adapters/gemini-image.adapter';
 import { generateWithStableDiffusion } from '../adapters/stable-diffusion.adapter';
@@ -28,6 +37,7 @@ import { imageFailure } from '../adapter.utilities/provider-error.utility';
 import { ImageFailureCode } from '../../../common/enums';
 import { randomUUID } from 'node:crypto';
 import { ComfyUIProgressAdapter } from '../../runtime-progress/adapters/comfyui-progress.adapter';
+import { StableDiffusionWebuiProgressAdapter } from '../../runtime-progress/adapters/stable-diffusion-webui-progress.adapter';
 import { buildSd15MinimalWorkflow } from '../../runtime-progress/workflows/sd15-minimal.workflow';
 import {
   IMAGE_PROVIDER_CONNECTORS,
@@ -44,6 +54,7 @@ export class ImageExecutionManager {
   constructor(
     private readonly comfyAdapter: ComfyUIProgressAdapter,
     private readonly payg: PaygMeter,
+    private readonly sdProgressAdapter: StableDiffusionWebuiProgressAdapter,
   ) {}
 
   async execute(params: ExecuteImageInput): Promise<GenerateImageResult> {
@@ -85,12 +96,14 @@ export class ImageExecutionManager {
       this.logger.debug(
         `callProvider: routing to local Stable Diffusion provider — hasReference=${String(Boolean(params.referenceImageBase64))}`,
       );
-      return this.callLocalProvider(
-        prompt,
-        w,
-        h,
-        params.referenceImageBase64,
-        params.referenceImageMimeType,
+      return this.observeSdProgress(params.onProgress, async () =>
+        this.callLocalProvider(
+          prompt,
+          w,
+          h,
+          params.referenceImageBase64,
+          params.referenceImageMimeType,
+        ),
       );
     }
 
@@ -98,7 +111,7 @@ export class ImageExecutionManager {
       this.logger.debug(
         `callProvider: routing to local ComfyUI provider — model=${model} size=${String(w)}x${String(h)}`,
       );
-      return this.callComfyUIProvider(prompt, w, h, model);
+      return this.callComfyUIProvider(prompt, w, h, model, params.onProgress);
     }
 
     const connectorProvider = IMAGE_PROVIDER_CONNECTORS.get(provider);
@@ -420,6 +433,7 @@ export class ImageExecutionManager {
     width: number,
     height: number,
     checkpointName: string | undefined,
+    onProgress?: ImageProgressCallback,
   ): Promise<ImageProviderResponse> {
     const config = AppConfig.get();
     const baseUrl = config.COMFYUI_BASE_URL;
@@ -439,7 +453,10 @@ export class ImageExecutionManager {
         runId,
         baseUrl,
         workflow,
-        onEvent: () => {},
+        // Every WebSocket-derived envelope goes to the generation's SSE
+        // stream. It used to be dropped here, so the card sat on
+        // "Generating" with no stage while ComfyUI reported every node.
+        onEvent: (event) => onProgress?.(event),
       });
       this.logger.debug(
         `callComfyUIProvider: completed promptId=${result.promptId} filename=${result.filename} nodes=${String(result.nodeTimings.length)}`,
@@ -479,6 +496,89 @@ export class ImageExecutionManager {
       // provider — the usual cause, and one only an administrator can fix.
       this.logger.error(`fetchConnectorConfig: failed to fetch config for ${provider}`);
       throw imageFailure(ImageFailureCode.CONNECTOR_NOT_CONFIGURED, provider);
+    }
+  }
+
+  /**
+   * Reads a stored reference image back from file-service for a retry.
+   *
+   * file-service checks that `userId` owns the file and answers 404 otherwise,
+   * so a reference is only ever re-read for the generation's owner. Any miss —
+   * deleted file, service down, no bytes, over the size cap — is a
+   * `REFERENCE_UNAVAILABLE` failure: generating without the image would
+   * silently turn an edit into an unrelated new picture.
+   */
+  async loadStoredReference(fileId: string, userId: string): Promise<ImageReference> {
+    const config = AppConfig.get();
+    const url = `${config.FILE_SERVICE_URL}${IMAGE_REFERENCE_CONTENT_PATH}/${encodeURIComponent(fileId)}/content?userId=${encodeURIComponent(userId)}`;
+    let file: ImageReferenceFileResponse;
+    try {
+      file = await httpGet<ImageReferenceFileResponse>(url, {
+        timeout: IMAGE_REFERENCE_FETCH_TIMEOUT_MS,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+      });
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`loadStoredReference: file-service refused fileId=${fileId} — ${detail}`);
+      throw imageFailure(ImageFailureCode.REFERENCE_UNAVAILABLE, detail);
+    }
+    const base64 = file.content ?? '';
+    if (base64.length === 0 || base64.length > IMAGE_REFERENCE_MAX_BASE64_LENGTH) {
+      this.logger.warn(
+        `loadStoredReference: unusable reference fileId=${fileId} base64Len=${String(base64.length)}`,
+      );
+      throw imageFailure(
+        ImageFailureCode.REFERENCE_UNAVAILABLE,
+        'reference bytes missing or too large',
+      );
+    }
+    this.logger.debug(`loadStoredReference: fileId=${fileId} base64Len=${String(base64.length)}`);
+    return { base64, mimeType: file.mimeType };
+  }
+
+  /**
+   * Runs a synchronous SD WebUI call while polling its progress endpoint.
+   *
+   * The poll is bounded three ways: it stops in `finally` the moment the call
+   * settles (the txt2img request itself has `SD_TIMEOUT_MS`), the adapter gives
+   * up after `SD_PROGRESS_MAX_CONSECUTIVE_ERRORS`, and it never runs faster than
+   * `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS` (Zod floor 300 ms). An envelope that
+   * lands after the call settled is dropped, so a late poll cannot drag the
+   * card back to "generating" after it moved on.
+   */
+  private async observeSdProgress(
+    onProgress: ImageProgressCallback | undefined,
+    run: () => Promise<ImageProviderResponse>,
+  ): Promise<ImageProviderResponse> {
+    if (!onProgress) {
+      return run();
+    }
+    const config = AppConfig.get();
+    const session = this.sdProgressAdapter.start({
+      sdUrl: config.STABLE_DIFFUSION_URL,
+      runId: randomUUID(),
+      totalSteps: SD_DEFAULT_STEPS,
+      intervalMs: config.CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS,
+      preview: false,
+    });
+    const state = { active: true };
+    const pump = async (): Promise<void> => {
+      for await (const event of session.events) {
+        if (!state.active) {
+          return;
+        }
+        onProgress(event);
+      }
+    };
+    void pump().catch((error: unknown) => {
+      const msg = error instanceof Error ? error.message : 'progress pump failed';
+      this.logger.warn(`observeSdProgress: progress stream ended early — ${msg}`);
+    });
+    try {
+      return await run();
+    } finally {
+      state.active = false;
+      session.stop();
     }
   }
 }

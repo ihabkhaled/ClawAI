@@ -29,13 +29,23 @@ const failedRecord = {
   startedAt: null,
   completedAt: null,
   latencyMs: null,
+  supersededById: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   assets: [],
 };
 
 type Mocks = {
-  repo: Record<'findById' | 'create' | 'updateStatus' | 'createEvent' | 'createAsset', Mock>;
+  repo: Record<
+    | 'findById'
+    | 'create'
+    | 'createSuccessor'
+    | 'updateStatus'
+    | 'createEvent'
+    | 'createAsset'
+    | 'findReferenceAsset',
+    Mock
+  >;
   execute: Mock;
   publish: Mock;
   rabbitPublish: Mock;
@@ -45,6 +55,8 @@ const build = (found: typeof failedRecord | null): { service: ImageGenerationSer
   const repo = {
     findById: vi.fn().mockResolvedValue(found),
     create: vi.fn().mockResolvedValue({ ...failedRecord, id: 'img-2', status: 'QUEUED' }),
+    createSuccessor: vi.fn().mockResolvedValue({ ...failedRecord, id: 'img-2', status: 'QUEUED' }),
+    findReferenceAsset: vi.fn().mockResolvedValue(null),
     updateStatus: vi.fn().mockResolvedValue(failedRecord),
     createEvent: vi.fn().mockResolvedValue(undefined),
     createAsset: vi.fn(),
@@ -75,6 +87,7 @@ const expectNothingStarted = (m: Mocks): void => {
   expect(m.repo.updateStatus).not.toHaveBeenCalled();
   expect(m.repo.createEvent).not.toHaveBeenCalled();
   expect(m.repo.create).not.toHaveBeenCalled();
+  expect(m.repo.createSuccessor).not.toHaveBeenCalled();
   expect(m.publish).not.toHaveBeenCalled();
   expect(m.execute).not.toHaveBeenCalled();
 };
@@ -136,7 +149,8 @@ describe('ImageGenerationService — ownership on the user-facing retry routes',
         'gpt-image-1',
       );
       expect(result.id).toBe('img-2');
-      expect(m.repo.create).toHaveBeenCalledWith(
+      expect(m.repo.createSuccessor).toHaveBeenCalledWith(
+        'img-1',
         expect.objectContaining({ userId: OWNER, provider: 'IMAGE_OPENAI', model: 'gpt-image-1' }),
       );
     });

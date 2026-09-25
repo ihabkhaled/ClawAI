@@ -726,6 +726,9 @@ export type {
   ImageGeneration,
   ImageGenerationAsset,
   ImageGenerationEventPayload,
+  ImageGenerationFollowState,
+  ImageGenerationLatest,
+  ImageRuntimeProgress,
 } from './image-generation.types';
 export type {
   FileGeneration,

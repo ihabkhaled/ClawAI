@@ -39,20 +39,33 @@ The image service orchestrates AI image generation across multiple providers (Op
 | errorCode          | String?               | Error identifier                                                                           |
 | errorMessage       | String?               | Human-readable error                                                                       |
 | latencyMs          | Int?                  | Generation time                                                                            |
+| supersededById     | String? (indexed)     | Row that took this job over (AUTO fallback or retry-alternate); null on a chain head       |
+
+`threadId` / `userMessageId` are filled from chat-service's dispatch since
+2026-09-25 (batch 10a); they were always null before. `assistantMessageId`
+stays null from chat: the assistant message is stored from the generate call's
+own answer, so its id does not exist at dispatch (the assistant message's
+`metadata.generationId` links the other way).
 
 ### ImageGenerationAsset
 
-| Column       | Type   | Notes                       |
-| ------------ | ------ | --------------------------- |
-| id           | String | CUID primary key            |
-| generationId | String | FK to ImageGeneration       |
-| storageKey   | String | Local storage key           |
-| url          | String | Public URL                  |
-| downloadUrl  | String | Direct download URL         |
-| mimeType     | String | image/png, image/jpeg, etc. |
-| width        | Int?   | Actual generated width      |
-| height       | Int?   | Actual generated height     |
-| sizeBytes    | Int?   | File size                   |
+| Column       | Type           | Notes                             |
+| ------------ | -------------- | --------------------------------- |
+| id           | String         | CUID primary key                  |
+| generationId | String         | FK to ImageGeneration             |
+| storageKey   | String         | Local storage key                 |
+| url          | String         | Public URL                        |
+| downloadUrl  | String         | Direct download URL               |
+| mimeType     | String         | image/png, image/jpeg, etc.       |
+| width        | Int?           | Actual generated width            |
+| height       | Int?           | Actual generated height           |
+| sizeBytes    | Int?           | File size                         |
+| role         | ImageAssetRole | `OUTPUT` (default) or `REFERENCE` |
+
+Every read that feeds a response includes OUTPUT assets only
+(`IMAGE_OUTPUT_ASSETS_INCLUDE`), so the card's `assets[0]` is never the
+user's own reference image. Migration
+`20260925235000_add_image_supersession_and_reference_role`.
 
 ### ImageGenerationEvent
 
@@ -113,18 +126,18 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 
 All paths are under `/api/v1`. Verified against the controllers 2026-09-25.
 
-| Method | Path                                             | Auth                                                | Ownership                                                 | Description                       |
-| ------ | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
-| GET    | `/images`                                        | Bearer                                              | scoped to caller                                          | List the caller's generations     |
-| GET    | `/images/:id`                                    | Bearer                                              | `getByIdForUser` → 404 if not owner                       | Generation details + assets       |
-| POST   | `/images/:id/retry`                              | Bearer                                              | `retryGenerationForUser` → 404 if not owner               | Re-queue the same row             |
-| POST   | `/images/:id/retry-alternate`                    | Bearer                                              | `retryWithAlternateModelForUser` → 404                    | Clone onto another provider/model |
-| GET    | `/images/:id/events` (SSE)                       | Bearer header (`connectSse`)                        | `ImageGenerationOwnerGuard` → 404 before the stream opens | Live status events                |
-| POST   | `/internal/images/generate`                      | `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` | caller is trusted (chat-service)                          | Enqueue a generation              |
-| GET    | `/internal/images/:generationId`                 | Service token                                       | —                                                         | Read any generation               |
-| POST   | `/internal/images/:generationId/retry`           | Service token                                       | —                                                         | Retry                             |
-| POST   | `/internal/images/:generationId/retry-alternate` | Service token                                       | —                                                         | Alternate-model retry             |
-| GET    | `/internal/images/:generationId/events` (SSE)    | Service token                                       | —                                                         | Live status events                |
+| Method | Path                                             | Auth                                                | Ownership                                                 | Description                                    |
+| ------ | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------- |
+| GET    | `/images`                                        | Bearer                                              | scoped to caller                                          | List the caller's generations                  |
+| GET    | `/images/:id`                                    | Bearer                                              | `getWithLatestForUser` → 404 if not owner                 | Row + `supersededById` + `latest` (chain head) |
+| POST   | `/images/:id/retry`                              | Bearer                                              | `retryGenerationForUser` → 404 if not owner               | Re-queue the same row                          |
+| POST   | `/images/:id/retry-alternate`                    | Bearer                                              | `retryWithAlternateModelForUser` → 404                    | Clone onto another provider/model              |
+| GET    | `/images/:id/events` (SSE)                       | Bearer header (`connectSse`)                        | `ImageGenerationOwnerGuard` → 404 before the stream opens | Live status events                             |
+| POST   | `/internal/images/generate`                      | `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` | caller is trusted (chat-service)                          | Enqueue a generation                           |
+| GET    | `/internal/images/:generationId`                 | Service token                                       | —                                                         | Read any generation                            |
+| POST   | `/internal/images/:generationId/retry`           | Service token                                       | —                                                         | Retry                                          |
+| POST   | `/internal/images/:generationId/retry-alternate` | Service token                                       | —                                                         | Alternate-model retry                          |
+| GET    | `/internal/images/:generationId/events` (SSE)    | Service token                                       | —                                                         | Live status events                             |
 
 ### Ownership and auth invariants (2026-09-25)
 
@@ -133,14 +146,60 @@ All paths are under `/api/v1`. Verified against the controllers 2026-09-25.
 - **`/internal/images/*` is `@UseGuards(ServiceTokenGuard)`.** The per-route `@Public()` only skips the user-JWT guard. chat-service's `callImageService` sends `buildInterServiceAuthHeader()`; a caller without it gets `401 Service token required`.
 - The trusting methods (`retryGeneration`, `retryWithAlternateModel`, `getById`) exist for the service-token lane only. A new user-facing route must use a `…ForUser` method.
 
+## Supersession chain (batch 10a, 2026-09-25)
+
+An AUTO fallback attempt and a user's retry-alternate each continue a job on a
+**new row**. Before 10a the original row stayed FAILED with nothing pointing
+onward, so a fallback that succeeded was invisible (live and after refresh)
+and a retry-alternate's result vanished on refresh.
+
+- **One writer:** `ImageGenerationRepository.createSuccessor(predecessorId, data)`
+  creates the successor, sets `predecessor.supersededById`, and copies the
+  REFERENCE asset — in one transaction.
+- **AUTO fallback:** `processJob` takes an `ImageSuccessorSpawner`; on failure the
+  row is stored FAILED, `spawnFallback` creates and links the next attempt
+  (credit latch, chain-terminal codes, `IMAGE_AUTO_FALLBACK_MAX_ATTEMPTS` = 2),
+  and only THEN is the FAILED SSE event published — carrying
+  `supersededById`. A live listener switches before it closes.
+- **Retry-alternate:** `cloneAsAlternate` → `createSuccessor`, then
+  `publishSuperseded` emits `{generationId: old, supersededById: new}` on the
+  old row's stream.
+- **Only a chain head can be retried.** `retry` / `retry-alternate` on a row
+  with `supersededById` answer `409 IMAGE_GENERATION_SUPERSEDED` and run
+  nothing — a second branch would be billed and pointed at by nothing.
+- **Read:** `GET /images/:id` → `getWithLatestForUser` returns the row plus
+  `latest` (id, status, provider, model, errorCode, errorMessage,
+  supersededById, assets). The walk follows at most
+  `IMAGE_SUPERSESSION_MAX_HOPS` (8) links and is owner-checked on every hop; a
+  link to a missing or foreign row ends the walk at the last owned row and is
+  reported as `null` (no foreign id leaks). A walk cut by the hop bound keeps
+  its link so a reader can continue from `latest`.
+- **Frontend:** `useImageGenerationListener` follows `supersededById` from SSE
+  and `latest` from GET, at most `IMAGE_GENERATION_MAX_FOLLOW_HOPS` (8) times;
+  FAILED is terminal only when not superseded. Retries target the row the card
+  shows.
+- **PAYG unchanged:** the link never calls a provider — one hold per attempt,
+  per row, each with a fresh `requestId`.
+
 ## Reference Image Support
 
-Users can attach reference images to influence generation:
+A reference image comes from chat-service as base64 **plus**
+`referenceFileId` (the file-service upload it came from):
 
-1. Images are uploaded via the file-service first
-2. File IDs are passed in the generation request
-3. The adapter downloads the reference image and includes it in the provider API call
-4. Currently supported by Gemini (native) and Stable Diffusion (img2img)
+1. The first attempt uses the in-memory bytes; AUTO fallback attempts reuse
+   them too.
+2. `enqueueGeneration` stores the reference as an `ImageGenerationAsset` with
+   `role = REFERENCE` and `storageKey = fileId` — the id only, never the bytes.
+   `createSuccessor` copies it to every successor.
+3. A later retry / retry-alternate has no bytes in memory, so `processJob` reads
+   the REFERENCE asset and `ImageExecutionManager.loadStoredReference`
+   fetches `GET /api/v1/internal/files/:id/content?userId=` with the
+   service token (file-service owner-checks). Missing, refused, empty or over
+   `IMAGE_REFERENCE_MAX_BASE64_LENGTH` → `IMAGE_REFERENCE_UNAVAILABLE`
+   (chain-terminal). It never silently generates without the reference.
+4. A caller that sends bare base64 with no `referenceFileId` gets it used on
+   that send only; nothing is stored.
+5. Used by Gemini (native) and Stable Diffusion (img2img); OpenAI / xAI ignore it.
 
 ## Retry with Model Picker
 
@@ -149,6 +208,29 @@ When generation fails with one provider, the service can:
 1. Try an alternate model from the same provider
 2. Fall back to a different provider entirely
 3. As a last resort, try local Stable Diffusion
+
+## Runtime progress (batch 10a)
+
+Local runtimes report progress through the existing per-generation SSE stream
+(`ImageGenerationEventsService`) — no second progress system.
+
+- **ComfyUI:** `callComfyUIProvider` forwards every adapter envelope
+  (`onEvent`, previously `() => {}`) to `ExecuteImageInput.onProgress`.
+- **SD WebUI:** `observeSdProgress` starts `StableDiffusionWebuiProgressAdapter`
+  only when someone listens, polls at `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS`
+  (Zod floor 300 ms) with `preview: false`, stops in `finally` when txt2img
+  settles (`SD_TIMEOUT_MS`), gives up after
+  `SD_PROGRESS_MAX_CONSECUTIVE_ERRORS`, and drops any envelope that lands after
+  the call settled.
+- The service publishes `{status: 'GENERATING', runtimeProgress}` built by
+  `toImageProgressSnapshot`: stage, `currentStep` / `totalSteps` /
+  `elapsedMs` when reported, and `progressPercent` **only** at `EXACT` /
+  `RUNTIME_REPORTED` confidence. No preview frame, no runtime URL. Not
+  persisted to `image_generation_events`.
+- The chat card shows the translated stage (`chat.imageStage.*`, 13 locales)
+  plus "Step x of y" in an `aria-live="polite"` region.
+- Cloud providers (OpenAI, Gemini, xAI) report no progress; their cards show
+  status only.
 
 ## Plan gate (ADR-122, 2026-09-25)
 
@@ -183,18 +265,19 @@ turns a thrown provider error into one, from the HTTP status and the message
 text (Gemini answers a bad key with `400`, not `401`, so status alone
 under-classifies auth failures).
 
-| Code                             | Meaning                                                                                                                                           | Retryable via AUTO fallback?                                                                                                                                                               |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PROVIDER_FAILURE`               | Unclassified — the pre-existing generic code                                                                                                      | Yes                                                                                                                                                                                        |
-| `IMAGE_PROVIDER_AUTH_FAILED`     | 401/403, or "API key not valid"                                                                                                                   | Yes (different provider may have a valid key)                                                                                                                                              |
-| `IMAGE_PROVIDER_QUOTA_EXCEEDED`  | 402/429                                                                                                                                           | Yes                                                                                                                                                                                        |
-| `IMAGE_PROVIDER_REJECTED`        | Other 4xx the provider gave a reason for                                                                                                          | Yes                                                                                                                                                                                        |
-| `IMAGE_MODEL_UNAVAILABLE`        | 404, or "does not exist" / "not found" in the message (e.g. a retired OpenAI DALL-E id, or a Gemini `imagen-*` id that 404s on `generateContent`) | Yes                                                                                                                                                                                        |
-| `IMAGE_CONTENT_REJECTED`         | Safety/content-policy refusal                                                                                                                     | Yes, but expect the same refusal from any provider                                                                                                                                         |
-| `IMAGE_NO_IMAGE_RETURNED`        | 200 with no image in the payload                                                                                                                  | Yes                                                                                                                                                                                        |
-| `IMAGE_PROVIDER_UNAVAILABLE`     | 5xx or a transport error (`ECONNREFUSED`, `ETIMEDOUT`, …)                                                                                         | Yes                                                                                                                                                                                        |
-| `IMAGE_CONNECTOR_NOT_CONFIGURED` | No connector row for the chat provider this capability borrows from                                                                               | Yes (a different capability may have its connector configured)                                                                                                                             |
-| `IMAGE_STORAGE_FAILED`           | The provider produced the image but `POST /internal/files/store-image` on file-service failed                                                     | **No** — `isChainTerminalFailureCode` stops `runAutoFallbackChain`; storage is shared by every provider, so paying another provider for an image just to lose it the same way wastes money |
+| Code                             | Meaning                                                                                                                                           | Retryable via AUTO fallback?                                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PROVIDER_FAILURE`               | Unclassified — the pre-existing generic code                                                                                                      | Yes                                                                                                                                                                                 |
+| `IMAGE_PROVIDER_AUTH_FAILED`     | 401/403, or "API key not valid"                                                                                                                   | Yes (different provider may have a valid key)                                                                                                                                       |
+| `IMAGE_PROVIDER_QUOTA_EXCEEDED`  | 402/429                                                                                                                                           | Yes                                                                                                                                                                                 |
+| `IMAGE_PROVIDER_REJECTED`        | Other 4xx the provider gave a reason for                                                                                                          | Yes                                                                                                                                                                                 |
+| `IMAGE_MODEL_UNAVAILABLE`        | 404, or "does not exist" / "not found" in the message (e.g. a retired OpenAI DALL-E id, or a Gemini `imagen-*` id that 404s on `generateContent`) | Yes                                                                                                                                                                                 |
+| `IMAGE_CONTENT_REJECTED`         | Safety/content-policy refusal                                                                                                                     | Yes, but expect the same refusal from any provider                                                                                                                                  |
+| `IMAGE_NO_IMAGE_RETURNED`        | 200 with no image in the payload                                                                                                                  | Yes                                                                                                                                                                                 |
+| `IMAGE_PROVIDER_UNAVAILABLE`     | 5xx or a transport error (`ECONNREFUSED`, `ETIMEDOUT`, …)                                                                                         | Yes                                                                                                                                                                                 |
+| `IMAGE_CONNECTOR_NOT_CONFIGURED` | No connector row for the chat provider this capability borrows from                                                                               | Yes (a different capability may have its connector configured)                                                                                                                      |
+| `IMAGE_STORAGE_FAILED`           | The provider produced the image but `POST /internal/files/store-image` on file-service failed                                                     | **No** — `isChainTerminalFailureCode` stops `spawnFallback`; storage is shared by every provider, so paying another provider for an image just to lose it the same way wastes money |
+| `IMAGE_REFERENCE_UNAVAILABLE`    | A retry's stored reference could not be read back from file-service (deleted, not the owner's, service down, empty, too large)                    | **No** — every provider would be sent the same missing reference                                                                                                                    |
 
 ## Events
 

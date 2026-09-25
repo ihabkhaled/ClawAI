@@ -27,6 +27,7 @@ const mockRecord = {
   startedAt: null,
   completedAt: null,
   latencyMs: null,
+  supersededById: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   assets: [],
@@ -34,6 +35,9 @@ const mockRecord = {
 
 const mockRepo = (): Partial<Record<keyof ImageGenerationRepository, Mock>> => ({
   create: vi.fn().mockResolvedValue(mockRecord),
+  createSuccessor: vi.fn().mockResolvedValue(mockRecord),
+  findReferenceAsset: vi.fn().mockResolvedValue(null),
+  createReferenceAsset: vi.fn().mockResolvedValue(undefined),
   findById: vi.fn().mockResolvedValue({ ...mockRecord, status: 'COMPLETED', assets: [] }),
   findByUserId: vi.fn().mockResolvedValue([mockRecord]),
   countByUserId: vi.fn().mockResolvedValue(1),

@@ -45,6 +45,7 @@ import {
   type ConnectorConfigResponse,
   type FileGenerateResponse,
   type GeminiNativeChatRequest,
+  type ImageGenerateRequest,
   type ImageGenerateResponse,
   type LlmResponse,
   type MessageRoutedData,
@@ -4710,6 +4711,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
     let referenceImageBase64: string | undefined;
     let referenceImageMimeType: string | undefined;
+    let referenceFileId: string | undefined;
 
     if (imageFiles.length > 0) {
       this.logger.log(
@@ -4721,6 +4723,9 @@ export class ChatExecutionManager implements OnModuleInit {
       if (firstImage?.content) {
         referenceImageBase64 = firstImage.content;
         referenceImageMimeType = firstImage.mimeType;
+        // The upload's id, so image-service can re-read the same image on a
+        // retry instead of silently regenerating without it.
+        referenceFileId = firstImage.id;
         this.logger.debug(
           `callImageService: reference image attached — mimeType=${firstImage.mimeType} base64Len=${String(firstImage.content.length)}`,
         );
@@ -4736,21 +4741,28 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(
       `callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`,
     );
+    // The turn's ids, so the ImageGeneration row is linked to its thread and
+    // user message (these columns were always null). The assistant message is
+    // stored from this call's answer, so its id does not exist yet.
+    const body: ImageGenerateRequest = {
+      prompt,
+      provider,
+      model,
+      userId,
+      isAutoMode,
+      threadId: lastUserMsg?.threadId,
+      userMessageId: lastUserMsg?.id,
+      referenceImageBase64,
+      referenceImageMimeType,
+      referenceFileId,
+    };
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
       method: 'POST',
       // image-service's internal routes are ServiceTokenGuard-protected; without
       // this header every chat image request is refused with 401.
       headers: { Authorization: buildInterServiceAuthHeader() },
-      body: {
-        prompt,
-        provider,
-        model,
-        userId,
-        isAutoMode,
-        referenceImageBase64,
-        referenceImageMimeType,
-      },
+      body,
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
 

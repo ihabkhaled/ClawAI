@@ -18,6 +18,14 @@ enum ImageGenerationStatus {
   CANCELLED
 }
 
+/// What an asset row is for its generation. OUTPUT is the picture the job
+/// produced; REFERENCE is the user's attached image the job was asked to edit
+/// or match, kept as a file-service id so a retry can send it again.
+enum ImageAssetRole {
+  OUTPUT
+  REFERENCE
+}
+
 model ImageGeneration {
   id                 String                @id @default(cuid())
   userId             String                @map("user_id")
@@ -38,6 +46,10 @@ model ImageGeneration {
   startedAt          DateTime?             @map("started_at")
   completedAt        DateTime?             @map("completed_at")
   latencyMs          Int?                  @map("latency_ms")
+  /// The row that took this job over: an auto-fallback attempt or a user's
+  /// retry-alternate. Null on the head of a chain. Follow it (bounded hops,
+  /// owner-checked every hop) to find what the user actually got.
+  supersededById     String?               @map("superseded_by_id")
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
 
@@ -48,20 +60,22 @@ model ImageGeneration {
   @@index([threadId])
   @@index([status, createdAt])
   @@index([assistantMessageId])
+  @@index([supersededById])
   @@map("image_generations")
 }
 
 model ImageGenerationAsset {
-  id           String   @id @default(cuid())
-  generationId String   @map("generation_id")
-  storageKey   String   @map("storage_key")
+  id           String         @id @default(cuid())
+  generationId String         @map("generation_id")
+  storageKey   String         @map("storage_key")
   url          String
-  downloadUrl  String   @map("download_url")
-  mimeType     String   @map("mime_type")
+  downloadUrl  String         @map("download_url")
+  mimeType     String         @map("mime_type")
   width        Int?
   height       Int?
-  sizeBytes    Int?     @map("size_bytes")
-  createdAt    DateTime @default(now()) @map("created_at")
+  sizeBytes    Int?           @map("size_bytes")
+  role         ImageAssetRole @default(OUTPUT)
+  createdAt    DateTime       @default(now()) @map("created_at")
 
   generation ImageGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
 

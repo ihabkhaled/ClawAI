@@ -4,7 +4,6 @@ import { ImageLoadingState } from '@/components/chat/image-loading-state';
 import { ImageGenerationStatus } from '@/enums';
 import { useAuthenticatedImage } from '@/hooks/chat/use-authenticated-image';
 import { useImageGenerationBubbleState } from '@/hooks/chat/use-image-generation-bubble-state';
-import { useImageGenerationListener } from '@/hooks/chat/use-image-generation-listener';
 import { useTranslation } from '@/lib/i18n';
 import { getImageStatusLabel, isInProgressImageStatus } from '@/utilities';
 
@@ -18,10 +17,8 @@ export function ImageGenerationBubble({
   isAutoMode?: boolean;
 }) {
   const { t } = useTranslation();
-  const { activeGenId, handleRetry, handleRetryWithModel } = useImageGenerationBubbleState({
-    generationId,
-  });
-  const generation = useImageGenerationListener(activeGenId);
+  const { generation, stageText, handleRetry, handleRetryWithModel } =
+    useImageGenerationBubbleState({ generationId });
   const firstAsset = generation?.assets?.[0];
   const blobUrl = useAuthenticatedImage(
     generation?.status === ImageGenerationStatus.COMPLETED ? firstAsset?.url : undefined,
@@ -35,6 +32,7 @@ export function ImageGenerationBubble({
           prompt={prompt}
           provider={generation?.provider}
           model={generation?.model}
+          stageText={stageText}
         />
       ) : null}
       {generation?.status === ImageGenerationStatus.FAILED ||
@@ -50,8 +48,8 @@ export function ImageGenerationBubble({
         />
       ) : null}
       {generation?.status === ImageGenerationStatus.CANCELLED ? (
-        <div className="rounded-xl border border-border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
+        <div className="border-border rounded-xl border p-4">
+          <div className="text-muted-foreground text-sm font-medium">
             {t('chat.generationCancelled')}
           </div>
         </div>

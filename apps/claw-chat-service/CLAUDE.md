@@ -171,6 +171,25 @@ Rules:
 
 See `docs/03-architecture/universal-token-accounting.md` for the full picture.
 
+## Image generation dispatch contract (batch 10a, 2026-09-25)
+
+`callImageService` → image-service `POST /api/v1/internal/images/generate`
+with `Authorization: buildInterServiceAuthHeader()` and an
+`ImageGenerateRequest` body (`types/execution.types.ts`):
+
+- `threadId` / `userMessageId` from the turn's last USER message — the
+  `ImageGeneration` row's thread/message columns were always null before.
+- `referenceFileId` = the attached image's file-service id, sent with the
+  base64 so image-service can re-read the same image on a retry (it stores the
+  id, never the bytes).
+- `assistantMessageId` is **not** sent: the assistant message is stored from
+  this call's answer, so it has no id yet. The link runs the other way
+  (`metadata.generationId` on the assistant message).
+
+The contract is asserted on both sides: chat's
+`chat-execution.manager.spec.ts` ("image-service generate contract") and
+image-service's `dto/__tests__/generate-image.dto.spec.ts`.
+
 ## Local-runtime rich-progress wiring (PR1-5 — **IMPLEMENTED** 2026-05-31)
 
 The cloud rich-progress stack in this service (`ChatStreamService` +

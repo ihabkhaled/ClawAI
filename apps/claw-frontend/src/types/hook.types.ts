@@ -57,6 +57,7 @@ import type {
 import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { ImageGeneration } from './image-generation.types';
 import type { NarrationEntry } from './narration.types';
 import type { PasswordStrengthResult } from './password-strength.types';
 import type { CountryDialCode } from './phone.types';
@@ -547,7 +548,11 @@ export type UseImageGenerationBubbleStateParams = {
 };
 
 export type UseImageGenerationBubbleStateReturn = {
+  /** The row the card is showing — the chain head after a fallback or alternate. */
   activeGenId: string;
+  generation: ImageGeneration | null;
+  /** Translated runtime stage (+ step count when reported), or undefined. */
+  stageText: string | undefined;
   handleRetry: () => void;
   handleRetryWithModel: (provider: string, model: string) => void;
 };

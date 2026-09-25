@@ -15,6 +15,7 @@ const buildServiceMock = (): {
   enqueueGeneration: Mock;
   getById: Mock;
   getByIdForUser: Mock;
+  getWithLatestForUser: Mock;
   listByUser: Mock;
   retryGeneration: Mock;
   retryGenerationForUser: Mock;
@@ -24,6 +25,7 @@ const buildServiceMock = (): {
   enqueueGeneration: vi.fn(),
   getById: vi.fn(),
   getByIdForUser: vi.fn(),
+  getWithLatestForUser: vi.fn(),
   listByUser: vi.fn(),
   retryGeneration: vi.fn(),
   retryGenerationForUser: vi.fn(),
@@ -57,9 +59,11 @@ describe('ImageGenerationController', () => {
     expect(serviceMock.listByUser).toHaveBeenCalledWith('u1', { page: 1, limit: 20 });
   });
 
-  it('getById forwards id and user.id', async () => {
+  // The owner-scoped read that also resolves the chain head (`latest`), so a
+  // card restored after a refresh shows what a fallback produced.
+  it('getById forwards id and user.id to the chain-resolving owner read', async () => {
     await controller.getById('g1', user as never);
-    expect(serviceMock.getByIdForUser).toHaveBeenCalledWith('g1', 'u1');
+    expect(serviceMock.getWithLatestForUser).toHaveBeenCalledWith('g1', 'u1');
   });
 
   // IDOR fix: the user route must go through the owner-scoped method, never the

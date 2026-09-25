@@ -7,6 +7,7 @@ import { ImageExecutionManager } from './managers/image-execution.manager';
 import { ImagePlanGateManager } from './managers/image-plan-gate.manager';
 import { ImageGenerationRepository } from './repositories/image-generation.repository';
 import { ComfyUIProgressAdapter } from '../runtime-progress/adapters/comfyui-progress.adapter';
+import { StableDiffusionWebuiProgressAdapter } from '../runtime-progress/adapters/stable-diffusion-webui-progress.adapter';
 
 @Module({
   controllers: [ImageGenerationController, InternalImageController],
@@ -17,6 +18,7 @@ import { ComfyUIProgressAdapter } from '../runtime-progress/adapters/comfyui-pro
     ImagePlanGateManager,
     ImageGenerationRepository,
     ComfyUIProgressAdapter,
+    StableDiffusionWebuiProgressAdapter,
   ],
   exports: [ImageGenerationService],
 })

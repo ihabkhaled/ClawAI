@@ -1102,6 +1102,8 @@ export type ImageLoadingStateProps = {
   prompt: string;
   provider?: string;
   model?: string;
+  /** Live runtime stage, announced politely to screen readers. */
+  stageText?: string;
 };
 
 export type ImageErrorStateProps = {

@@ -1,51 +1,70 @@
 import { Injectable } from '@nestjs/common';
-import { type ImageGenerationStatus, type Prisma } from '../../../generated/prisma';
+import { ImageAssetRole, type ImageGenerationStatus, type Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { IMAGE_OUTPUT_ASSETS_INCLUDE } from '../constants/image-supersession.constants';
 import {
+  type CreateImageGenerationData,
   type ImageGenerationAssetRecord,
   type ImageGenerationRecord,
+  type ImageReferenceAssetInput,
 } from '../types/image-generation.types';
 
 @Injectable()
 export class ImageGenerationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: {
-    userId: string;
-    threadId?: string;
-    userMessageId?: string;
-    assistantMessageId?: string;
-    prompt: string;
-    provider: string;
-    model: string;
-    width?: number;
-    height?: number;
-    quality?: string;
-    style?: string;
-  }): Promise<ImageGenerationRecord> {
+  async create(data: CreateImageGenerationData): Promise<ImageGenerationRecord> {
     return this.prisma.imageGeneration.create({
-      data: {
-        userId: data.userId,
-        threadId: data.threadId,
-        userMessageId: data.userMessageId,
-        assistantMessageId: data.assistantMessageId,
-        prompt: data.prompt,
-        provider: data.provider,
-        model: data.model,
-        width: data.width ?? 1024,
-        height: data.height ?? 1024,
-        quality: data.quality,
-        style: data.style,
-        status: 'QUEUED',
-      },
-      include: { assets: true },
+      data: this.toCreateInput(data),
+      include: IMAGE_OUTPUT_ASSETS_INCLUDE,
+    });
+  }
+
+  /**
+   * THE one place a row takes over from another: an AUTO fallback attempt or
+   * a user's retry-alternate.
+   *
+   * One transaction creates the successor, points the predecessor at it and
+   * carries the stored reference image across, so a reader following
+   * `supersededById` can never land on a row that does not exist yet, and a
+   * retry of the successor still has the image it was asked to edit.
+   */
+  async createSuccessor(
+    predecessorId: string,
+    data: CreateImageGenerationData,
+  ): Promise<ImageGenerationRecord> {
+    return this.prisma.$transaction(async (tx) => {
+      const successor = await tx.imageGeneration.create({
+        data: this.toCreateInput(data),
+        include: IMAGE_OUTPUT_ASSETS_INCLUDE,
+      });
+      await tx.imageGeneration.update({
+        where: { id: predecessorId },
+        data: { supersededById: successor.id },
+      });
+      const reference = await tx.imageGenerationAsset.findFirst({
+        where: { generationId: predecessorId, role: ImageAssetRole.REFERENCE },
+      });
+      if (reference) {
+        await tx.imageGenerationAsset.create({
+          data: {
+            generationId: successor.id,
+            role: ImageAssetRole.REFERENCE,
+            storageKey: reference.storageKey,
+            url: reference.url,
+            downloadUrl: reference.downloadUrl,
+            mimeType: reference.mimeType,
+          },
+        });
+      }
+      return successor;
     });
   }
 
   async findById(id: string): Promise<ImageGenerationRecord | null> {
     return this.prisma.imageGeneration.findUnique({
       where: { id },
-      include: { assets: true },
+      include: IMAGE_OUTPUT_ASSETS_INCLUDE,
     });
   }
 
@@ -59,7 +78,7 @@ export class ImageGenerationRepository {
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { assets: true },
+      include: IMAGE_OUTPUT_ASSETS_INCLUDE,
     });
   }
 
@@ -82,7 +101,7 @@ export class ImageGenerationRepository {
     return this.prisma.imageGeneration.update({
       where: { id },
       data: { status, ...extra },
-      include: { assets: true },
+      include: IMAGE_OUTPUT_ASSETS_INCLUDE,
     });
   }
 
@@ -104,7 +123,30 @@ export class ImageGenerationRepository {
     height?: number;
     sizeBytes?: number;
   }): Promise<ImageGenerationAssetRecord> {
-    return this.prisma.imageGenerationAsset.create({ data });
+    return this.prisma.imageGenerationAsset.create({
+      data: { ...data, role: ImageAssetRole.OUTPUT },
+    });
+  }
+
+  /** Stores the user's reference image as a file-service id — never the bytes. */
+  async createReferenceAsset(input: ImageReferenceAssetInput): Promise<ImageGenerationAssetRecord> {
+    const url = `/api/v1/files/download/${input.fileId}`;
+    return this.prisma.imageGenerationAsset.create({
+      data: {
+        generationId: input.generationId,
+        role: ImageAssetRole.REFERENCE,
+        storageKey: input.fileId,
+        url,
+        downloadUrl: url,
+        mimeType: input.mimeType,
+      },
+    });
+  }
+
+  async findReferenceAsset(generationId: string): Promise<ImageGenerationAssetRecord | null> {
+    return this.prisma.imageGenerationAsset.findFirst({
+      where: { generationId, role: ImageAssetRole.REFERENCE },
+    });
   }
 
   async findActiveByThreadId(threadId: string): Promise<ImageGenerationRecord[]> {
@@ -113,8 +155,25 @@ export class ImageGenerationRepository {
         threadId,
         status: { in: ['QUEUED', 'STARTING', 'GENERATING', 'FINALIZING'] },
       },
-      include: { assets: true },
+      include: IMAGE_OUTPUT_ASSETS_INCLUDE,
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  private toCreateInput(data: CreateImageGenerationData): Prisma.ImageGenerationCreateInput {
+    return {
+      userId: data.userId,
+      threadId: data.threadId,
+      userMessageId: data.userMessageId,
+      assistantMessageId: data.assistantMessageId,
+      prompt: data.prompt,
+      provider: data.provider,
+      model: data.model,
+      width: data.width ?? 1024,
+      height: data.height ?? 1024,
+      quality: data.quality,
+      style: data.style,
+      status: 'QUEUED',
+    };
   }
 }

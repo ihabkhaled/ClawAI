@@ -11,6 +11,7 @@ import { generateWithXai } from '../../adapters/xai-image.adapter';
 import { XAI_DEFAULT_BASE_URL } from '../../constants/xai-image.constants';
 import { ImageExecutionManager } from '../image-execution.manager';
 import type { ComfyUIProgressAdapter } from '../../../runtime-progress/adapters/comfyui-progress.adapter';
+import type { StableDiffusionWebuiProgressAdapter } from '../../../runtime-progress/adapters/stable-diffusion-webui-progress.adapter';
 import type { ExecuteImageInput } from '../../types/image-generation.types';
 
 vi.mock('@common/utilities');
@@ -31,7 +32,11 @@ const comfy: Pick<ComfyUIProgressAdapter, 'streamGenerate'> = { streamGenerate: 
 function build(): ImageExecutionManager {
   // The manager only calls these three meter methods and never touches comfy on
   // a cloud path, so the narrowed doubles are sufficient.
-  return new ImageExecutionManager(comfy as ComfyUIProgressAdapter, meter as PaygMeter);
+  return new ImageExecutionManager(
+    comfy as ComfyUIProgressAdapter,
+    meter as PaygMeter,
+    {} as StableDiffusionWebuiProgressAdapter,
+  );
 }
 
 const input = (overrides: Partial<ExecuteImageInput> = {}): ExecuteImageInput => ({

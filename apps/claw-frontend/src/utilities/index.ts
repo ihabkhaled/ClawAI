@@ -125,6 +125,9 @@ export {
   resolveImageUrl,
   isTerminalImageStatus,
   isInProgressImageStatus,
+  getImageRuntimeStageKey,
+  getSupersedingGenerationId,
+  toLatestImageGeneration,
 } from './image-generation.utility';
 export {
   getFileStatusLabel,

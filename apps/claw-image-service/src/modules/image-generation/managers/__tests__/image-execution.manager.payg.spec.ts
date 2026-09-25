@@ -74,6 +74,7 @@ const build = (payg: MeterMock): ImageExecutionManager =>
   new ImageExecutionManager(
     { streamGenerate: vi.fn() } as unknown as ComfyUIProgressAdapter,
     payg as unknown as PaygMeter,
+    {} as never,
   );
 
 describe('ImageExecutionManager — PAYG metering (U3)', () => {

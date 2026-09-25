@@ -430,6 +430,28 @@ export type CreateAssistantMessageData = {
   usedFallback: boolean;
 };
 
+/**
+ * Body of image-service `POST /api/v1/internal/images/generate`.
+ *
+ * `threadId` / `userMessageId` tie the generation row to the chat turn that
+ * asked for it; `referenceFileId` names the upload the reference bytes came
+ * from, so image-service can re-read it on a retry. The assistant message does
+ * not exist yet at dispatch (it is stored from this call's answer), so
+ * `assistantMessageId` is never sent from here.
+ */
+export type ImageGenerateRequest = {
+  prompt: string;
+  provider: string;
+  model: string;
+  userId: string;
+  isAutoMode?: boolean;
+  threadId?: string;
+  userMessageId?: string;
+  referenceImageBase64?: string;
+  referenceImageMimeType?: string;
+  referenceFileId?: string;
+};
+
 export type ImageGenerateResponse = {
   generationId: string;
   status: string;

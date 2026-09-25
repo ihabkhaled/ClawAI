@@ -52,6 +52,10 @@ export const IMAGE_FAILURE_MESSAGES: ReadonlyMap<ImageFailureCode, string> = new
     ImageFailureCode.STORAGE_FAILED,
     'The image was generated but could not be saved. Try again in a moment.',
   ],
+  [
+    ImageFailureCode.REFERENCE_UNAVAILABLE,
+    'The attached reference image could not be read any more, so the edit was not retried. Attach the image again and resend.',
+  ],
 ]);
 
 /** The fixed sentence for a code, or the generic fallback for one this map does not carry. */
@@ -72,6 +76,8 @@ export function imageFailureMessage(code: ImageFailureCode): string {
  */
 export const IMAGE_CHAIN_TERMINAL_FAILURE_CODES: readonly string[] = [
   ImageFailureCode.STORAGE_FAILED,
+  // Every provider would be sent the same missing reference.
+  ImageFailureCode.REFERENCE_UNAVAILABLE,
 ];
 
 /** Lower-cased fragments that mark a provider refusal as a content-policy block. */

@@ -1,3 +1,9 @@
+import type { RuntimeProgressStage } from '@claw/shared-types';
+
+import {
+  IMAGE_RUNTIME_STAGE_FALLBACK_KEY,
+  IMAGE_RUNTIME_STAGE_LABEL_KEYS,
+} from '@/constants/image.constants';
 import { ImageGenerationStatus } from '@/enums';
 import type { ImageGeneration } from '@/types/image-generation.types';
 
@@ -47,4 +53,41 @@ export function isInProgressImageStatus(status: ImageGenerationStatus): boolean 
     ImageGenerationStatus.GENERATING,
     ImageGenerationStatus.FINALIZING,
   ].includes(status);
+}
+
+/** The i18n key for a runtime stage, or the generic "working" line for one not mapped. */
+export function getImageRuntimeStageKey(stage: RuntimeProgressStage): string {
+  return IMAGE_RUNTIME_STAGE_LABEL_KEYS.get(stage) ?? IMAGE_RUNTIME_STAGE_FALLBACK_KEY;
+}
+
+/**
+ * The row that took this job over, when the server resolved one other than
+ * the row asked for. A FAILED row with a successor is not the end of the job.
+ */
+export function getSupersedingGenerationId(generation: ImageGeneration): string | undefined {
+  const latestId = generation.latest?.id;
+  return latestId !== undefined && latestId !== generation.id ? latestId : undefined;
+}
+
+/**
+ * The asked-for row presented as its chain head, so the card shows what the
+ * fallback or alternate produced while the head's own stream is opened.
+ */
+export function toLatestImageGeneration(generation: ImageGeneration): ImageGeneration {
+  const latest = generation.latest;
+  if (!latest || latest.id === generation.id) {
+    return generation;
+  }
+  return {
+    ...generation,
+    id: latest.id,
+    status: latest.status,
+    provider: latest.provider,
+    model: latest.model,
+    errorCode: latest.errorCode ?? null,
+    errorMessage: latest.errorMessage ?? null,
+    supersededById: latest.supersededById ?? null,
+    assets: latest.assets,
+    runtimeProgress: null,
+  };
 }

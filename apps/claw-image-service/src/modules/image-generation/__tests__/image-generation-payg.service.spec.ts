@@ -4,39 +4,16 @@ import { BillingErrorCode } from '@claw/shared-types';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 
 import { BusinessException } from '../../../common/errors';
-import { ImageGenerationStatus } from '../../../generated/prisma';
 import { IMAGE_CREDIT_FAILURE_MESSAGE } from '../constants/image-payg.constants';
 import { ImageGenerationService } from '../services/image-generation.service';
 import type { ImageExecutionManager } from '../managers/image-execution.manager';
 import type { ImageGenerationEventsService } from '../services/image-generation-events.service';
 import type { ImageGenerationRepository } from '../repositories/image-generation.repository';
-import type { ImageGenerationRecord } from '../types/image-generation.types';
-
-const baseRecord = (overrides: Partial<ImageGenerationRecord> = {}): ImageGenerationRecord => ({
-  id: 'img-1',
-  userId: 'user-1',
-  threadId: null,
-  userMessageId: null,
-  assistantMessageId: null,
-  prompt: 'a cute cat',
-  revisedPrompt: null,
-  provider: 'IMAGE_GEMINI',
-  model: 'gemini-2.5-flash-image',
-  width: 1024,
-  height: 1024,
-  quality: null,
-  style: null,
-  status: ImageGenerationStatus.QUEUED,
-  errorCode: null,
-  errorMessage: null,
-  startedAt: null,
-  completedAt: null,
-  latencyMs: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  assets: [],
-  ...overrides,
-});
+import {
+  buildInMemoryImageRepo,
+  flushImageJobs as flush,
+  type InMemoryImageRepo,
+} from './fixtures/in-memory-image-repo.fixture';
 
 const creditRefusal = (): BusinessException =>
   new BusinessException(
@@ -45,92 +22,14 @@ const creditRefusal = (): BusinessException =>
     HttpStatus.PAYMENT_REQUIRED,
   );
 
-type RepoMock = {
-  create: Mock;
-  findById: Mock;
-  updateStatus: Mock;
-  createEvent: Mock;
-  createAsset: Mock;
-  findByUserId: Mock;
-  countByUserId: Mock;
-};
-
-/**
- * A repository stand-in that behaves like the real one for the only property
- * these tests care about: what `findById` returns AFTER `updateStatus` has run.
- * The auto-fallback chain reads the row back to decide whether to keep going, so
- * a mock that always answers the same record would make the chain untestable.
- */
-const buildRepo = (): RepoMock => {
-  const rows = new Map<string, ImageGenerationRecord>();
-  rows.set('img-1', baseRecord());
-  let nextId = 2;
-
-  return {
-    create: vi.fn((data: { provider: string; model: string; userId: string }) => {
-      const id = `img-${String(nextId)}`;
-      nextId += 1;
-      const row = baseRecord({ id, provider: data.provider, model: data.model });
-      rows.set(id, row);
-      return Promise.resolve(row);
-    }),
-    findById: vi.fn((id: string) => Promise.resolve(rows.get(id) ?? null)),
-    updateStatus: vi.fn(
-      (
-        id: string,
-        status: ImageGenerationRecord['status'],
-        extra?: { errorCode?: string; errorMessage?: string },
-      ) => {
-        const current = rows.get(id) ?? baseRecord({ id });
-        const updated = baseRecord({
-          ...current,
-          status,
-          errorCode: extra?.errorCode ?? current.errorCode,
-          errorMessage: extra?.errorMessage ?? current.errorMessage,
-        });
-        rows.set(id, updated);
-        return Promise.resolve(updated);
-      },
-    ),
-    createEvent: vi.fn().mockResolvedValue(undefined),
-    createAsset: vi.fn().mockResolvedValue({
-      id: 'asset-1',
-      url: '/api/v1/files/download/file-1',
-      downloadUrl: '/api/v1/files/download/file-1',
-      mimeType: 'image/png',
-      width: null,
-      height: null,
-      sizeBytes: null,
-    }),
-    findByUserId: vi.fn().mockResolvedValue([]),
-    countByUserId: vi.fn().mockResolvedValue(0),
-  };
-};
-
-/**
- * Drains the fire-and-forget job started by `void this.processJobWithFallback`.
- *
- * `setImmediate` rather than `Promise.resolve` because each attempt in the
- * chain awaits ~10 times and a microtask-only flush would return while the
- * second attempt was still in flight — which is exactly the assertion these
- * tests make.
- */
-const flush = async (): Promise<void> => {
-  for (let i = 0; i < 12; i += 1) {
-    await new Promise<void>((resolve) => {
-      setImmediate(resolve);
-    });
-  }
-};
-
 describe('ImageGenerationService — PAYG credit failures (U4)', () => {
-  let repo: RepoMock;
+  let repo: InMemoryImageRepo;
   let execute: Mock;
   let events: { publish: Mock; subscribe: Mock };
   let service: ImageGenerationService;
 
   beforeEach(() => {
-    repo = buildRepo();
+    repo = buildInMemoryImageRepo();
     execute = vi.fn();
     events = { publish: vi.fn(), subscribe: vi.fn() };
     service = new ImageGenerationService(

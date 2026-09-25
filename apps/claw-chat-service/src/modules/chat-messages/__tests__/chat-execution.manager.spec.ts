@@ -1028,6 +1028,89 @@ describe('ChatExecutionManager', () => {
     expect(result.imageGenerationId).toBe('img-1');
   });
 
+  // Contract chat → image-service `POST /internal/images/generate`. The
+  // ImageGeneration row's thread/message columns were always null because
+  // these ids were never sent; image-service's generateImageSchema spec
+  // asserts it accepts exactly this body.
+  describe('image-service generate contract', () => {
+    const imageAccepted = {
+      ok: true,
+      status: 201,
+      data: { generationId: 'img-1', status: 'QUEUED', provider: 'IMAGE_GEMINI', model: 'g' },
+    };
+
+    beforeEach(() => {
+      AppConfig.get.mockReturnValue({
+        ...DEFAULT_APP_CONFIG,
+        IMAGE_SERVICE_URL: 'http://image-service:4012',
+      });
+    });
+
+    it('sends method, path, service token and the turn ids — exactly once', async () => {
+      httpRequest.mockResolvedValueOnce(imageAccepted);
+
+      await manager.callProvider(
+        'IMAGE_GEMINI',
+        'gemini-2.5-flash-image',
+        makeContext('generate an image of a lighthouse'),
+        Date.now(),
+        false,
+      );
+
+      expect(httpRequest).toHaveBeenCalledTimes(1);
+      const request = httpRequest.mock.calls[0]?.[0] as {
+        url: string;
+        method: string;
+        headers: Record<string, string>;
+        body: Record<string, unknown>;
+      };
+      expect(request.url).toBe('http://image-service:4012/api/v1/internal/images/generate');
+      expect(request.method).toBe('POST');
+      expect(request.headers).toEqual({ Authorization: 'Service test-token' });
+      expect(request.body).toMatchObject({
+        provider: 'IMAGE_GEMINI',
+        model: 'gemini-2.5-flash-image',
+        userId: 'user-1',
+        threadId: 'thread-1',
+        userMessageId: 'msg-1',
+      });
+      // The assistant message is stored from this call's answer — no id yet.
+      expect(request.body).not.toHaveProperty('assistantMessageId');
+      expect(request.body['referenceFileId']).toBeUndefined();
+    });
+
+    it('names the uploaded reference file so image-service can re-read it on a retry', async () => {
+      httpRequest.mockResolvedValueOnce(imageAccepted);
+      const visionHop = vi
+        .spyOn(Object.getPrototypeOf(manager), 'buildImagePromptFromVision')
+        .mockResolvedValue('a blue lighthouse');
+      const context = {
+        ...makeContext('make this lighthouse blue'),
+        fileContents: [
+          { id: 'file-ref', filename: 'l.png', mimeType: 'image/png', content: 'aGVsbG8=' },
+        ],
+      };
+
+      await manager.callProvider(
+        'IMAGE_GEMINI',
+        'gemini-2.5-flash-image',
+        context,
+        Date.now(),
+        false,
+      );
+
+      const request = httpRequest.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+      expect(request.body).toMatchObject({
+        referenceFileId: 'file-ref',
+        referenceImageBase64: 'aGVsbG8=',
+        referenceImageMimeType: 'image/png',
+        threadId: 'thread-1',
+        userMessageId: 'msg-1',
+      });
+      visionHop.mockRestore();
+    });
+  });
+
   // ADR-122: image generation / edit is a paid feature. A free plan's image
   // turn is answered with a notice the chat translates — never a raw error —
   // and nothing is spent: no vision hop, no image-service call, no hold.

@@ -649,6 +649,18 @@ export type TranslationDictionary = {
     judge: string;
     live: string;
     loadingImage: string;
+    /** Live runtime stage on a chat image card (ComfyUI / SD WebUI). */
+    imageStage: {
+      queued: string;
+      connecting: string;
+      loadingModel: string;
+      warmingUp: string;
+      generating: string;
+      runningWorkflow: string;
+      postProcessing: string;
+      saving: string;
+      working: string;
+    };
     loadingMessages: string;
     loadingMoreThreads: string;
     loadingOlderMessages: string;

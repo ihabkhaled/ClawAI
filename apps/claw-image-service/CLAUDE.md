@@ -48,6 +48,25 @@ Image generation microservice for the Claw platform. Orchestrates image generati
    `503 ENTITLEMENTS_UNAVAILABLE`; `PLAN_TRIAL_EXPIRED` passes through. ADMIN
    bypasses. A new generation entry point must call it too.
 
+7. **A job that moves to a new row links to it** (batch 10a). AUTO fallback and
+   retry-alternate create the successor ONLY through
+   `ImageGenerationRepository.createSuccessor` (one transaction: new row +
+   `predecessor.supersededById` + REFERENCE asset copy). The AUTO chain spawns
+   the successor BEFORE publishing FAILED, so that event carries
+   `supersededById`. Only a chain head may be retried (409,
+   `IMAGE_GENERATION_SUPERSEDED`). `GET /images/:id` returns `latest`, walking at
+   most `IMAGE_SUPERSESSION_MAX_HOPS` links, owner-checked every hop; a foreign
+   or missing link ends the walk and reads as `null`. Supersession never takes
+   a PAYG hold — one hold per attempt, as before.
+
+8. **A reference image is stored as a file-service id, never bytes** (batch
+   10a). chat-service sends `referenceFileId` with the base64; it becomes an
+   `ImageGenerationAsset` with `role = REFERENCE`. Retries read it back through
+   `ImageExecutionManager.loadStoredReference` (owner-checked by file-service);
+   an unreadable reference fails `IMAGE_REFERENCE_UNAVAILABLE` rather than
+   silently generating without it. Response reads include OUTPUT assets only
+   (`IMAGE_OUTPUT_ASSETS_INCLUDE`).
+
 Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 
 ## Tech Stack
@@ -180,6 +199,19 @@ After completing any implementation task on this service, produce:
 6. **Evidence**: typecheck output, lint output, test output
 
 ## Runtime-progress adapters (PR3 + PR4 — shipped 2026-05-31)
+
+> **Wiring status (batch 10a, 2026-09-25).** Until 10a neither adapter reached
+> a user: ComfyUI's `onEvent` was `() => {}` and the SD WebUI adapter had no
+> caller. Now `ExecuteImageInput.onProgress` carries both into the existing
+> per-generation SSE stream: ComfyUI forwards every envelope, and
+> `ImageExecutionManager.observeSdProgress` polls SD WebUI (bounded: stops when
+> txt2img settles, `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS`, error cap, late
+> envelopes dropped). `ImageGenerationService.publishProgress` sends
+> `runtimeProgress` = `toImageProgressSnapshot(event)` — stage + reported
+> steps/elapsed, percent only at `EXACT` / `RUNTIME_REPORTED`. The chat card
+> shows it via `ImageLoadingState` (`chat.imageStage.*`, `aria-live="polite"`).
+> `ImageGenerationProgressPanel` / `ComfyUINodeTimeline` below are still NOT
+> rendered by the chat image card, and cancel is still not wired to a route.
 
 This service hosts the two image-runtime adapters that emit
 `ClawRuntimeProgressEvent` envelopes for in-flight image generation jobs.

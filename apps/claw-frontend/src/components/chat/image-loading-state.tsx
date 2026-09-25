@@ -7,19 +7,23 @@ export function ImageLoadingState({
   prompt,
   provider,
   model,
+  stageText,
 }: ImageLoadingStateProps): React.ReactElement {
   return (
-    <div className="rounded-xl border border-border bg-muted/30 p-4">
-      <div className="mb-3 flex aspect-square max-h-64 w-full items-center justify-center rounded-lg bg-muted">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    <div className="border-border bg-muted/30 rounded-xl border p-4">
+      <div className="bg-muted mb-3 flex aspect-square max-h-64 w-full items-center justify-center rounded-lg">
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
       <div className="text-sm font-medium">{status}</div>
+      <div role="status" aria-live="polite" className="text-muted-foreground mt-0.5 text-xs">
+        {stageText}
+      </div>
       {provider ? (
-        <div className="mt-0.5 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-0.5 text-xs">
           {provider} / {model}
         </div>
       ) : null}
-      <div className="mt-1 truncate text-xs text-muted-foreground">{prompt}</div>
+      <div className="text-muted-foreground mt-1 truncate text-xs">{prompt}</div>
     </div>
   );
 }

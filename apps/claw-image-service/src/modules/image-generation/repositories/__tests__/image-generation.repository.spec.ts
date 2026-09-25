@@ -14,7 +14,8 @@ describe('ImageGenerationRepository', () => {
       update: Mock;
     };
     imageGenerationEvent: { create: Mock };
-    imageGenerationAsset: { create: Mock };
+    imageGenerationAsset: { create: Mock; findFirst: Mock };
+    $transaction: Mock;
   };
 
   beforeEach(async () => {
@@ -27,7 +28,12 @@ describe('ImageGenerationRepository', () => {
         update: vi.fn().mockResolvedValue({ id: 'g1', status: 'COMPLETED' }),
       },
       imageGenerationEvent: { create: vi.fn().mockResolvedValue({ id: 'e1' }) },
-      imageGenerationAsset: { create: vi.fn().mockResolvedValue({ id: 'a1' }) },
+      imageGenerationAsset: {
+        create: vi.fn().mockResolvedValue({ id: 'a1' }),
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+      // The interactive transaction runs its callback against the same client.
+      $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(prismaMock)),
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [ImageGenerationRepository, { provide: PrismaService, useValue: prismaMock }],
@@ -48,7 +54,7 @@ describe('ImageGenerationRepository', () => {
     expect(args.data.status).toBe('QUEUED');
     expect(args.data.width).toBe(1024);
     expect(args.data.height).toBe(1024);
-    expect(args.include.assets).toBe(true);
+    expect(args.include).toEqual({ assets: { where: { role: 'OUTPUT' } } });
   });
 
   it('create respects explicit width/height/quality/style', async () => {
@@ -74,7 +80,7 @@ describe('ImageGenerationRepository', () => {
     await repository.findById('g1');
     expect(prismaMock.imageGeneration.findUnique).toHaveBeenCalledWith({
       where: { id: 'g1' },
-      include: { assets: true },
+      include: { assets: { where: { role: 'OUTPUT' } } },
     });
   });
 
@@ -122,7 +128,7 @@ describe('ImageGenerationRepository', () => {
     expect(prismaMock.imageGenerationEvent.create).toHaveBeenCalled();
   });
 
-  it('createAsset persists via prisma', async () => {
+  it('createAsset stores a generated picture as an OUTPUT asset', async () => {
     await repository.createAsset({
       generationId: 'g1',
       storageKey: 'sk',
@@ -130,7 +136,73 @@ describe('ImageGenerationRepository', () => {
       downloadUrl: 'd',
       mimeType: 'image/png',
     });
-    expect(prismaMock.imageGenerationAsset.create).toHaveBeenCalled();
+    expect(prismaMock.imageGenerationAsset.create.mock.calls[0]?.[0].data.role).toBe('OUTPUT');
+  });
+
+  describe('supersession and reference', () => {
+    const data = { userId: 'u1', prompt: 'cat', provider: 'IMAGE_OPENAI', model: 'gpt-image-1' };
+
+    it('createSuccessor creates the new row and points the predecessor at it in ONE transaction', async () => {
+      prismaMock.imageGeneration.create.mockResolvedValue({ id: 'g2', status: 'QUEUED' });
+
+      const successor = await repository.createSuccessor('g1', data);
+
+      expect(successor.id).toBe('g2');
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(prismaMock.imageGeneration.update).toHaveBeenCalledWith({
+        where: { id: 'g1' },
+        data: { supersededById: 'g2' },
+      });
+      expect(prismaMock.imageGenerationAsset.create).not.toHaveBeenCalled();
+    });
+
+    it('createSuccessor carries the stored reference image across to the successor', async () => {
+      prismaMock.imageGeneration.create.mockResolvedValue({ id: 'g2', status: 'QUEUED' });
+      prismaMock.imageGenerationAsset.findFirst.mockResolvedValue({
+        storageKey: 'file-ref',
+        url: '/api/v1/files/download/file-ref',
+        downloadUrl: '/api/v1/files/download/file-ref',
+        mimeType: 'image/jpeg',
+      });
+
+      await repository.createSuccessor('g1', data);
+
+      expect(prismaMock.imageGenerationAsset.findFirst).toHaveBeenCalledWith({
+        where: { generationId: 'g1', role: 'REFERENCE' },
+      });
+      expect(prismaMock.imageGenerationAsset.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          generationId: 'g2',
+          role: 'REFERENCE',
+          storageKey: 'file-ref',
+          mimeType: 'image/jpeg',
+        }),
+      });
+    });
+
+    it('createReferenceAsset stores the file-service id, never bytes', async () => {
+      await repository.createReferenceAsset({
+        generationId: 'g1',
+        fileId: 'f1',
+        mimeType: 'image/png',
+      });
+      const args = prismaMock.imageGenerationAsset.create.mock.calls[0]?.[0];
+      expect(args.data).toEqual({
+        generationId: 'g1',
+        role: 'REFERENCE',
+        storageKey: 'f1',
+        url: '/api/v1/files/download/f1',
+        downloadUrl: '/api/v1/files/download/f1',
+        mimeType: 'image/png',
+      });
+    });
+
+    it('findReferenceAsset reads only the REFERENCE row', async () => {
+      await repository.findReferenceAsset('g1');
+      expect(prismaMock.imageGenerationAsset.findFirst).toHaveBeenCalledWith({
+        where: { generationId: 'g1', role: 'REFERENCE' },
+      });
+    });
   });
 
   it('findActiveByThreadId queries non-terminal statuses ordered by createdAt asc', async () => {

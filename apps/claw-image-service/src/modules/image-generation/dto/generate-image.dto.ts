@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+import {
+  IMAGE_REFERENCE_FILE_ID_MAX_LENGTH,
+  IMAGE_REFERENCE_MAX_BASE64_LENGTH,
+} from '../constants/image-reference.constants';
+
+/**
+ * Body of `POST /internal/images/generate` (service token only).
+ *
+ * `threadId` / `userMessageId` / `assistantMessageId` tie the row to the chat
+ * turn that asked for it; chat-service sends the ids it has at dispatch.
+ * `referenceFileId` names the file-service upload the reference bytes came
+ * from, so a retry can read the same image back.
+ */
 export const generateImageSchema = z.object({
   prompt: z.string().min(1).max(4000),
   provider: z.string().min(1).max(50),
@@ -13,11 +26,9 @@ export const generateImageSchema = z.object({
   quality: z.string().max(20).optional(),
   style: z.string().max(20).optional(),
   isAutoMode: z.boolean().optional(),
-  referenceImageBase64: z
-    .string()
-    .max(Math.ceil((25 * 1024 * 1024 * 4) / 3) + 4)
-    .optional(),
+  referenceImageBase64: z.string().max(IMAGE_REFERENCE_MAX_BASE64_LENGTH).optional(),
   referenceImageMimeType: z.string().max(50).optional(),
+  referenceFileId: z.string().min(1).max(IMAGE_REFERENCE_FILE_ID_MAX_LENGTH).optional(),
 });
 
 export type GenerateImageDto = z.infer<typeof generateImageSchema>;

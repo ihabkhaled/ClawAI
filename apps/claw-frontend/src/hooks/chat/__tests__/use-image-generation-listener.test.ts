@@ -85,6 +85,104 @@ describe('useImageGenerationListener', () => {
     expect(captured?.shouldReconnectAfterClose?.()).toBe(false);
   });
 
+  // Defect 1: an AUTO fallback continues the job on a NEW row and the FAILED
+  // event on the original row names it. The card must follow, not stop.
+  it('follows a live supersession instead of stopping on FAILED', async () => {
+    mockGetById.mockImplementation(async (id: string) =>
+      id === 'img-2'
+        ? { ...generating, id: 'img-2', provider: 'IMAGE_OPENAI', status: 'GENERATING' }
+        : generating,
+    );
+    const { result } = renderHook(() => useImageGenerationListener('img-1'));
+    await waitFor(() => expect(captured).toBeDefined());
+    const firstStream = captured;
+
+    act(() => {
+      firstStream?.onMessage(
+        JSON.stringify({ generationId: 'img-1', status: 'FAILED', supersededById: 'img-2' }),
+      );
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe('img-2'));
+    expect(close).toHaveBeenCalled();
+    await waitFor(() => expect(mockConnectSse).toHaveBeenCalledTimes(2));
+    expect(String(mockConnectSse.mock.calls[1]?.[0])).toMatch(/\/images\/img-2\/events$/);
+    expect(result.current?.status).not.toBe('FAILED');
+  });
+
+  // Defects 1 + 2 after a refresh: the stored id is the ORIGINAL row; GET
+  // resolves `latest`, and the card renders what the fallback / alternate made.
+  it('restores the chain head after a refresh', async () => {
+    const asset = { id: 'a', url: '/api/v1/files/download/f' };
+    mockGetById.mockImplementation(async (id: string) =>
+      id === 'img-1'
+        ? {
+            ...generating,
+            status: 'FAILED',
+            supersededById: 'img-3',
+            latest: {
+              id: 'img-3',
+              status: 'COMPLETED',
+              provider: 'IMAGE_OPENAI',
+              model: 'gpt-image-1',
+              assets: [asset],
+            },
+          }
+        : { ...generating, id, status: 'COMPLETED', provider: 'IMAGE_OPENAI', assets: [asset] },
+    );
+
+    const { result } = renderHook(() => useImageGenerationListener('img-1'));
+
+    await waitFor(() => expect(result.current?.id).toBe('img-3'));
+    expect(result.current?.status).toBe('COMPLETED');
+    await waitFor(() => expect(mockGetById).toHaveBeenCalledWith('img-3'));
+    expect(mockConnectSse).not.toHaveBeenCalled();
+  });
+
+  it('stops following after the hop limit instead of chasing a chain forever', async () => {
+    mockGetById.mockImplementation(async (id: string) => {
+      const next = `img-${String(Number(id.replace('img-', '')) + 1)}`;
+      return {
+        ...generating,
+        id,
+        status: 'FAILED',
+        supersededById: next,
+        latest: { id: next, status: 'FAILED', provider: 'p', model: 'm', assets: [] },
+      };
+    });
+
+    renderHook(() => useImageGenerationListener('img-1'));
+
+    await waitFor(() => expect(mockGetById).toHaveBeenCalledWith('img-9'));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mockGetById).not.toHaveBeenCalledWith('img-10');
+    expect(mockGetById.mock.calls.length).toBeLessThanOrEqual(9);
+  });
+
+  it('keeps the last runtime stage while generating and clears it when the job moves on', async () => {
+    const { result } = renderHook(() => useImageGenerationListener('img-1'));
+    await waitFor(() => expect(captured).toBeDefined());
+
+    act(() => {
+      captured?.onMessage(
+        JSON.stringify({
+          generationId: 'img-1',
+          status: 'GENERATING',
+          runtimeProgress: { stage: 'EXECUTING_NODE', currentStep: 3, totalSteps: 20 },
+        }),
+      );
+    });
+    expect(result.current?.runtimeProgress).toMatchObject({
+      stage: 'EXECUTING_NODE',
+      currentStep: 3,
+    });
+
+    act(() => {
+      captured?.onMessage(JSON.stringify({ generationId: 'img-1', status: 'FINALIZING' }));
+    });
+    expect(result.current?.runtimeProgress).toBeNull();
+  });
+
   it('falls back to polling when the stream is refused (e.g. 401/404)', async () => {
     renderHook(() => useImageGenerationListener('img-1'));
     await waitFor(() => expect(captured).toBeDefined());

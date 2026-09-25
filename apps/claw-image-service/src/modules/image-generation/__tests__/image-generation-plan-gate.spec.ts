@@ -70,6 +70,7 @@ const record = (overrides: Partial<ImageGenerationRecord> = {}): ImageGeneration
   startedAt: null,
   completedAt: null,
   latencyMs: null,
+  supersededById: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   assets: [],
@@ -113,7 +114,11 @@ const build = (answer: () => Promise<UserEntitlements>): Harness => {
   const reserve = vi.fn();
   const fetchSpy = vi.fn();
   vi.stubGlobal('fetch', fetchSpy);
-  const executionManager = new ImageExecutionManager({} as never, { reserve } as never);
+  const executionManager = new ImageExecutionManager(
+    {} as never,
+    { reserve } as never,
+    {} as never,
+  );
   const execute = vi.spyOn(executionManager, 'execute');
   const create = vi.fn().mockResolvedValue(record({ status: ImageGenerationStatus.QUEUED }));
   const updateStatus = vi.fn().mockResolvedValue(record());
@@ -122,6 +127,8 @@ const build = (answer: () => Promise<UserEntitlements>): Harness => {
     updateStatus,
     findById: vi.fn().mockResolvedValue(record({ status: ImageGenerationStatus.QUEUED })),
     createEvent: vi.fn().mockResolvedValue(undefined),
+    findReferenceAsset: vi.fn().mockResolvedValue(null),
+    createSuccessor: create,
     createAsset: vi.fn().mockResolvedValue({
       id: 'asset-1',
       url: '/api/v1/files/download/file-1',
