@@ -3,7 +3,8 @@ import {
   extractTranscriptionErrorMessage,
   isAudioModalityRejection,
 } from '../transcription-error.utility';
-import { TranscriptionFailureKind } from '../../../../common/enums';
+import { TranscriptionFailureKind, TranscriptionResponseIssue } from '../../../../common/enums';
+import { TranscriptionResponseError } from '../../../../common/errors';
 
 const axiosLikeError = (status: number, data: unknown): unknown => {
   const error = new Error(`Request failed with status code ${String(status)}`) as Error & {
@@ -151,6 +152,25 @@ describe('classifyTranscriptionFailure', () => {
     );
     expect(
       classifyTranscriptionFailure(axiosLikeError(400, { error: { message: 'Invalid body' } })),
+    ).toBe(TranscriptionFailureKind.TERMINAL);
+  });
+});
+
+// A 200 that is not a transcript is classified by its typed issue, never by
+// string-matching the message.
+describe('classifyTranscriptionFailure — a 200 that is not a transcript', () => {
+  it.each([
+    [TranscriptionResponseIssue.EMPTY, TranscriptionFailureKind.EMPTY_RESPONSE],
+    [TranscriptionResponseIssue.THOUGHT_ONLY, TranscriptionFailureKind.EMPTY_RESPONSE],
+    [TranscriptionResponseIssue.TRUNCATED, TranscriptionFailureKind.INCOMPLETE_RESPONSE],
+    [TranscriptionResponseIssue.BLOCKED, TranscriptionFailureKind.TERMINAL],
+  ])('%s → %s', (issue, kind) => {
+    expect(classifyTranscriptionFailure(new TranscriptionResponseError(issue, 'x'))).toBe(kind);
+  });
+
+  it('keeps a plain Error with the empty-transcript text TERMINAL (only the typed error retries)', () => {
+    expect(
+      classifyTranscriptionFailure(new Error('The provider returned an empty transcript.')),
     ).toBe(TranscriptionFailureKind.TERMINAL);
   });
 });

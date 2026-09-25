@@ -154,6 +154,54 @@ export const TRANSCRIPTION_QUOTA_EXHAUSTED_CODES: readonly string[] = ['insuffic
 /** Thrown by the manager when a provider answers with whitespace. */
 export const TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR = 'The provider returned an empty transcript.';
 
+// ---- Gemini generation settings and response reading (2026-09-25) ----
+
+/**
+ * Transcription is not creative: temperature 0 on every Gemini call, so a
+ * retry of the same audio is not a dice roll.
+ */
+export const GEMINI_TRANSCRIPTION_TEMPERATURE = 0;
+
+/** `thinkingConfig.thinkingBudget` that switches Gemini 2.5 thinking OFF. */
+export const GEMINI_THINKING_BUDGET_OFF = 0;
+
+/**
+ * Model-name prefixes (after `models/` is stripped, lower-cased) that ACCEPT
+ * `thinkingBudget: 0`. Gemini 2.5 Flash and Flash-Lite (and their dated
+ * previews) do; 2.5 Pro rejects 0 with a 400 (its minimum is 128); 2.0 has no
+ * thinking and 3.x uses `thinkingLevel`, so for anything not listed the field
+ * is NOT sent — an unknown model must never 400 on a setting we guessed at.
+ *
+ * Live 2026-09-25: 2.5 Flash spent 1002 completion tokens on a clip another
+ * run did in 453, and once came back 200 with 0 characters of transcript.
+ * Thinking buys nothing for verbatim transcription and eats the hold ceiling.
+ */
+export const GEMINI_THINKING_OFF_MODEL_PREFIXES: readonly string[] = ['gemini-2.5-flash'];
+
+/** Gemini `finishReason` for a response cut off at `maxOutputTokens`. */
+export const GEMINI_FINISH_REASON_MAX_TOKENS = 'MAX_TOKENS';
+
+/**
+ * Gemini `finishReason` values that mean the provider BLOCKED the output
+ * (safety, recitation, policy, PII). Terminal: a second model under the same
+ * policy would block again, and the user is told why instead of "empty".
+ */
+export const GEMINI_BLOCKED_FINISH_REASONS: readonly string[] = [
+  'SAFETY',
+  'RECITATION',
+  'PROHIBITED_CONTENT',
+  'BLOCKLIST',
+  'SPII',
+  'IMAGE_SAFETY',
+];
+
+/** Log-side reasons carried by `TranscriptionResponseError` (never shown raw to a user). */
+export const TRANSCRIPTION_THOUGHT_ONLY_ERROR =
+  'The provider returned only reasoning parts and no transcript.';
+export const TRANSCRIPTION_TRUNCATED_ERROR =
+  'The provider stopped at the output-token ceiling (MAX_TOKENS) before the transcript finished.';
+export const TRANSCRIPTION_BLOCKED_ERROR_PREFIX = 'The provider blocked the response';
+
 // ---- What the USER is told ----
 // Stored in `extractionError` and relayed by chat-service to the model, which
 // answers in the user's language. Never a raw transport string: the old
@@ -171,6 +219,17 @@ export const TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE =
 /** Every model tried refused the audio — a catalog problem for an administrator. */
 export const TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE =
   'Audio transcription is unavailable: none of the configured models accepted this recording. Ask an administrator to check the transcription connectors.';
+
+/**
+ * The provider declined under its content policy (SAFETY, RECITATION, …).
+ * Terminal: another model under the same policy would decline again.
+ */
+export const TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE =
+  'Audio transcription failed: the transcription service declined to transcribe this recording under its content policy.';
+
+/** Every answer we got was cut off at the output ceiling. */
+export const TRANSCRIPTION_INCOMPLETE_MESSAGE =
+  'Audio transcription failed: the transcription service stopped before the transcript was complete. Try a shorter recording.';
 
 /** Any other provider failure. */
 export const TRANSCRIPTION_PROVIDER_FAILED_MESSAGE =

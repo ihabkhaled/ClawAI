@@ -200,6 +200,8 @@ export interface TranscriptionWalkState {
   calls: number;
   /** Whether the one backoff this job may take has been taken. */
   backoffUsed: boolean;
+  /** Whether the one same-model retry after an empty 200 has been taken. */
+  emptyRetryUsed: boolean;
   /** Providers that must not be called again (quota gone, or rate-limited twice). */
   blockedProviders: Set<string>;
   /** Calls made per provider, for the request-id suffix. */
@@ -214,12 +216,45 @@ export interface TranscriptionWalkState {
 // The adapters live in `*.adapter.ts`, where ESLint forbids inline interface
 // declarations, so the shapes they parse are owned here.
 
+/** `thought: true` marks a reasoning part — never transcript text. */
 export interface GeminiPart {
   text?: string;
+  thought?: boolean;
 }
 
 export interface GeminiCandidate {
   content?: { parts?: GeminiPart[] };
+  /** `STOP`, `MAX_TOKENS`, `SAFETY`, `RECITATION`, … — Gemini's own vocabulary. */
+  finishReason?: string;
+}
+
+/** Set when Gemini refused the PROMPT itself; then there are no candidates. */
+export interface GeminiPromptFeedback {
+  blockReason?: string;
+}
+
+/** Gemini 2.5 thinking control. Sent only where the model accepts it. */
+export interface GeminiThinkingConfig {
+  thinkingBudget: number;
+}
+
+/** The `generationConfig` the transcription adapter sends. */
+export interface GeminiGenerationConfig {
+  temperature: number;
+  maxOutputTokens?: number;
+  thinkingConfig?: GeminiThinkingConfig;
+}
+
+/**
+ * What the adapter read out of one `generateContent` answer, before deciding
+ * whether it is a transcript. `text` joins non-thought parts only.
+ */
+export interface GeminiResponseReading {
+  text: string;
+  /** Characters that were in `thought: true` parts — counted, never logged. */
+  thoughtCharacters: number;
+  finishReason?: string;
+  blockReason?: string;
 }
 
 /** Gemini's `usageMetadata`. `candidatesTokenCount` EXCLUDES thinking tokens. */
@@ -233,6 +268,7 @@ export interface GeminiUsageMetadata {
 export interface GeminiGenerateContentResponse {
   candidates?: GeminiCandidate[];
   usageMetadata?: GeminiUsageMetadata;
+  promptFeedback?: GeminiPromptFeedback;
 }
 
 /** `response_format: verbose_json` — `duration` is the clip length in seconds. */

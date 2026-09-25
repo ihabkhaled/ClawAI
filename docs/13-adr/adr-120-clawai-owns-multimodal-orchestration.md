@@ -221,8 +221,54 @@ Rejected: synthesising on file-service (it does not own the reply's text or its
 ownership); streaming audio without storing it (every replay would be a paid
 call); a token estimate for `gpt-4o-mini-tts` (a guess on the money path).
 Known gaps: fixed provider hosts (a connector base URL pointing at a proxy is
-not used for speech); a synthesis whose store fails after the paid call is
-charged with nothing saved; one fixed voice per provider.
+not used for speech); one fixed voice per provider. (Fixed 2026-09-25: a store
+that fails after the paid call releases the hold. Superseded 2026-09-25 by
+Addendum 2: the 4,000-character synchronous request.)
+
+## Addendum 2 — read aloud is asynchronous and progressive (2026-09-25)
+
+Measured live (`docs/16-quality-engineering/evidence/2026-09-25-multimodal/latency-before.json`,
+N=3): Gemini `gemini-2.5-flash-preview-tts` renders ~36 characters/s. A ~200-char
+reply took 10.6 s, ~1,000 chars 27.9 s (2/3), ~4,000 chars **0/3** — every one a
+504 at the 40 s attempt timeout. No synchronous request under nginx's 60 s can
+read a reply over ~1,200 characters. Our overhead was 82–216 ms: the fix is the
+shape of the request, not its speed.
+
+Decision:
+
+1. **Async.** `POST /chat-messages/:id/speech` answers 200 READY (stored reading of
+   the same text) or 202 GENERATING and starts a background job; `GET` on the same
+   path is the poll. No speech request waits on a provider.
+2. **Segments.** The speakable text is split on sentence boundaries (first ≤ 160
+   chars for fast first audio, then ≤ 600; never mid-word; Arabic/CJK marks), each
+   segment its own provider call, hold and stored file. The cap rises from 4,000 to
+   12,000 characters (≤ 21 segments, ~2 min at concurrency 3), `truncated` still
+   honest.
+3. **One job per reply across replicas.** A Redis `SET NX PX` lock (TTL = 3-minute
+   job deadline + 30 s). Redis down → 503, nothing paid. A second POST while a job
+   runs returns the same job — never a second set of holds.
+4. **Billing per segment** (supersedes item 4's requestId): `PaygSurface.TTS`,
+   requestId `tts:<msg>:<hash>:g<generation>:seg<n>:<attempt>`, reserve → provider →
+   store → record → finalize; a failed store releases; a credit refusal stops every
+   segment (rule 37 items 15, 17, 18). A timed-out segment is retried once on the
+   same candidate, then the next candidate.
+5. **PARTIAL is a real outcome.** Stored segments play and are charged; failed
+   ones were released and the player says so in visible text. A stale GENERATING
+   state (dead replica) reads as PARTIAL/FAILED and the next POST resumes only the
+   missing segments under a new generation.
+6. **State** lives in `metadata.speech` (version 2: status, generation, startedAt,
+   totalSegments, segments[{index, fileId, …}], errorCode) — never bytes. A v1
+   value reads as READY with one segment.
+7. **Player.** Polls every 700 ms while GENERATING (bounded by the job deadline,
+   stopped on unmount), plays segments in order as they arrive, preloads the next.
+
+Rejected: raising nginx's timeout for the route (a 4,000-char reading still takes
+~110 s and ties a socket per listener; 12,000 chars would need 6 minutes);
+streaming audio over SSE (no stored file to replay, and a dropped stream re-pays);
+one job per replica with in-process dedupe (prod runs 4 chat replicas).
+Known gaps: a GENERATING job is not cancelled when the user closes the player
+(its segments are stored and charged, so a replay is free); no download of the
+whole reading as one file.
 
 ## Alternatives rejected
 

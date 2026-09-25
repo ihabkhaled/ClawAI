@@ -1,5 +1,8 @@
 import type { SpeechUnavailableReason } from '@claw/shared-types';
+import type { RefObject } from 'react';
 
+import type { MessageSpeechJobStatus } from '@/enums/message-speech-job-status.enum';
+import type { MessageSpeechPlaybackPhase } from '@/enums/message-speech-playback-phase.enum';
 import type { MessageSpeechStatus } from '@/enums/message-speech-status.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
@@ -9,27 +12,44 @@ export type SpeechAvailability = {
   reason: SpeechUnavailableReason | null;
 };
 
-/**
- * `POST /chat-messages/:messageId/speech`. The audio is an ordinary
- * user-owned file: it is fetched through the authenticated download path,
- * never a public URL. `cached` means the backend replayed an earlier synthesis
- * for free.
- */
-export type SynthesizedSpeech = {
+/** One synthesised part of a reply: an ordinary user-owned audio file. */
+export type MessageSpeechSegment = {
+  /** 0-based playback position. */
+  index: number;
   fileId: string;
   mimeType: string;
-  filename: string;
-  truncated: boolean;
   characters: number;
-  cached: boolean;
+};
+
+/**
+ * `POST` / `GET /chat-messages/:messageId/speech`. Segments arrive in index
+ * order while the job is GENERATING; a PARTIAL reading plays what exists.
+ */
+export type MessageSpeechState = {
+  status: MessageSpeechJobStatus;
+  segments: MessageSpeechSegment[];
+  totalSegments: number;
+  truncated: boolean;
+  errorCode: string | null;
 };
 
 /** Inputs for deciding what the read-aloud button currently is. */
 export type MessageSpeechStatusInput = {
   isPending: boolean;
   isOpen: boolean;
-  isSuccess: boolean;
   isError: boolean;
+  state: MessageSpeechState | undefined;
+};
+
+/** Inputs for deciding what the player is doing. */
+export type MessageSpeechPhaseInput = {
+  state: MessageSpeechState | undefined;
+  currentIndex: number;
+  hasCurrentAudio: boolean;
+  isPaused: boolean;
+  isFinished: boolean;
+  hasPlaybackError: boolean;
+  isPollingExpired: boolean;
 };
 
 export type MessageSpeechActionProps = {
@@ -38,12 +58,6 @@ export type MessageSpeechActionProps = {
 
 export type MessageSpeechPlayerProps = {
   messageId: string;
-};
-
-export type MessageSpeechAudioProps = {
-  fileId: string;
-  filename: string;
-  mimeType: string;
 };
 
 export type UseMessageSpeechAvailabilityReturn = {
@@ -55,6 +69,12 @@ export type UseMessageSpeechAvailabilityReturn = {
 export type UseMessageSpeechOpenFlagReturn = {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
+};
+
+export type UseMessageSpeechStateReturn = {
+  state: MessageSpeechState | undefined;
+  /** True once the poll cap is reached while the job still says GENERATING. */
+  isPollingExpired: boolean;
 };
 
 export type UseMessageSpeechReturn = {
@@ -71,27 +91,60 @@ export type UseMessageSpeechReturn = {
   toggle: () => void;
 };
 
+export type UseSpeechSegmentBlobsReturn = {
+  /** Object URLs by segment index, for the current and the next segment only. */
+  urls: Readonly<Partial<Record<number, string>>>;
+  /** True when the current segment's audio could not be fetched. */
+  hasError: boolean;
+};
+
 export type UseMessageSpeechPlayerReturn = {
   t: TranslateFunction;
-  isOpen: boolean;
-  isLoading: boolean;
-  speech: SynthesizedSpeech | null;
+  phase: MessageSpeechPlaybackPhase;
+  /** The localized aria-live status line. */
+  statusText: string;
+  audioRef: RefObject<HTMLAudioElement | null>;
+  /** The object URL of the segment being played, or null while it is not here yet. */
+  currentUrl: string | null;
+  isPaused: boolean;
+  /** Play/pause is meaningful only once a segment is loaded. */
+  canTogglePause: boolean;
+  togglePause: () => void;
+  stop: () => void;
+  onEnded: () => void;
+  onPlay: () => void;
+  onPause: () => void;
+  onAudioError: () => void;
+  /** Waiting for audio (the first part, or the next one): spinner + aria-busy. */
+  isBusy: boolean;
+  isTruncated: boolean;
+  isPartial: boolean;
+  /** i18n key of the failure to show, or null. */
   errorKey: string | null;
 };
 
-export type UseMessageSpeechAudioReturn = {
-  t: TranslateFunction;
-  blobUrl: string | null;
-  isLoading: boolean;
-  hasError: boolean;
-  download: () => void;
-};
-
-/** The latest synthesize mutation for one message, as useMutationState sees it. */
+/** The latest start mutation for one message, as useMutationState sees it. */
 export type MessageSpeechMutationSnapshot = {
   isPending: boolean;
   isSuccess: boolean;
   isError: boolean;
   data: unknown;
   error: unknown;
+};
+
+/** What can have gone wrong for the player, most specific first. */
+export type MessageSpeechPlayerErrorInput = {
+  /** The start request's error, or null. */
+  startError: unknown;
+  state: MessageSpeechState | undefined;
+  isPollingExpired: boolean;
+  hasPlaybackError: boolean;
+};
+
+/** How a component observes the job's state: the player polls, the button only reads. */
+export type UseMessageSpeechStateOptions = {
+  /** Fetch at all (the player is open and a reading was started or is cached). */
+  enabled: boolean;
+  /** Poll while GENERATING. Exactly one observer per reply polls, so there is one timer. */
+  poll: boolean;
 };

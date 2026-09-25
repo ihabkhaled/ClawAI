@@ -5,13 +5,12 @@ import { SpeechProviderError } from '../../../../common/errors';
 import {
   geminiSpeechOutputTokens,
   measuredSpeechUsage,
-  readStoredSpeech,
+  segmentTimeoutMs,
   speechFilename,
   speechReleaseReason,
   speechRequestId,
   speechSettlement,
   toSpeechCandidates,
-  withStoredSpeech,
 } from '../speech.utility';
 
 const row = (provider: string, modelAlias: string, timeoutMs = 60_000) => ({
@@ -52,8 +51,8 @@ describe('toSpeechCandidates', () => {
     ]);
     // Both land on the provider window: nginx 60 s - 10 s headroom - 10 s store
     // reserve - 5 s settlement reserve (the hold is settled after the store).
-    expect(long?.timeoutMs).toBe(35_000);
-    expect(missing?.timeoutMs).toBe(35_000);
+    expect(long?.timeoutMs).toBe(40_000);
+    expect(missing?.timeoutMs).toBe(40_000);
   });
 });
 
@@ -108,16 +107,32 @@ describe('speechSettlement - measured units, captured before the store', () => {
 });
 
 describe('speechRequestId', () => {
-  it('is distinct per attempt, per generation and per spoken text', () => {
+  it('is distinct per attempt, segment, generation and spoken text', () => {
     const ids = new Set([
-      speechRequestId('m1', 'hash-a', 1, 0),
-      speechRequestId('m1', 'hash-a', 1, 1),
-      speechRequestId('m1', 'hash-a', 2, 0),
-      speechRequestId('m1', 'hash-b', 1, 0),
-      speechRequestId('m2', 'hash-a', 1, 0),
+      speechRequestId('m1', 'hash-a', 1, 0, 1),
+      speechRequestId('m1', 'hash-a', 1, 0, 2),
+      speechRequestId('m1', 'hash-a', 1, 1, 1),
+      speechRequestId('m1', 'hash-a', 2, 0, 1),
+      speechRequestId('m1', 'hash-b', 1, 0, 1),
+      speechRequestId('m2', 'hash-a', 1, 0, 1),
     ]);
-    expect(ids.size).toBe(5);
-    expect(speechRequestId('m1', 'hash-a', 1, 0)).toBe('tts:m1:hash-a:g1:1');
+    expect(ids.size).toBe(6);
+    expect(speechRequestId('m1', 'hash-a', 1, 0, 1)).toBe('tts:m1:hash-a:g1:seg1:1');
+  });
+
+  it('fits the meter requestId limit (128) for the longest message id', () => {
+    expect(speechRequestId('x'.repeat(64), 'a'.repeat(16), 999, 99, 9).length).toBeLessThanOrEqual(
+      128,
+    );
+  });
+});
+
+describe('segmentTimeoutMs', () => {
+  it('is 12 s plus 60 ms per character, capped at 40 s', () => {
+    expect(segmentTimeoutMs(0)).toBe(12_000);
+    expect(segmentTimeoutMs(160)).toBe(21_600);
+    expect(segmentTimeoutMs(600)).toBe(40_000);
+    expect(segmentTimeoutMs(10_000)).toBe(40_000);
   });
 });
 
@@ -148,44 +163,9 @@ describe('speechReleaseReason', () => {
 });
 
 describe('speechFilename', () => {
-  it('names the file by message and container', () => {
-    expect(speechFilename('cm1abc', 'audio/wav')).toBe('reply-cm1abc.wav');
-    expect(speechFilename('cm1abc', 'audio/mpeg')).toBe('reply-cm1abc.mp3');
-    expect(speechFilename('../etc/passwd', 'audio/wav')).toBe('reply-etcpasswd.wav');
-  });
-});
-
-describe('readStoredSpeech / withStoredSpeech', () => {
-  const speech = {
-    fileId: 'f1',
-    filename: 'reply-m1.wav',
-    mimeType: 'audio/wav',
-    provider: 'GEMINI',
-    model: 'gemini-2.5-flash-preview-tts',
-    characters: 12,
-    truncated: false,
-    contentHash: 'abc',
-    generation: 2,
-  };
-
-  it('round-trips and keeps every other metadata key', () => {
-    const merged = withStoredSpeech({ fileIds: ['a'], paygClamped: false }, speech);
-    expect(merged).toEqual({ fileIds: ['a'], paygClamped: false, speech });
-    expect(readStoredSpeech(merged)).toEqual(speech);
-  });
-
-  it('starts from an empty object when metadata is null or not an object', () => {
-    expect(withStoredSpeech(null, speech)).toEqual({ speech });
-    expect(withStoredSpeech(['x'], speech)).toEqual({ speech });
-  });
-
-  it.each([
-    ['null metadata', null],
-    ['no speech key', { other: 1 }],
-    ['speech without a fileId', { speech: { contentHash: 'abc' } }],
-    ['speech without a hash', { speech: { fileId: 'f1' } }],
-    ['speech as a string', { speech: 'f1' }],
-  ])('reads nothing from %s', (_label, metadata) => {
-    expect(readStoredSpeech(metadata)).toBeNull();
+  it('names one file per segment by message, 1-based position and container', () => {
+    expect(speechFilename('cm1abc', 'audio/wav', 0)).toBe('reply-cm1abc-1.wav');
+    expect(speechFilename('cm1abc', 'audio/mpeg', 2)).toBe('reply-cm1abc-3.mp3');
+    expect(speechFilename('../etc/passwd', 'audio/wav', 0)).toBe('reply-etcpasswd-1.wav');
   });
 });

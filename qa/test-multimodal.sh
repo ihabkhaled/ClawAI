@@ -361,22 +361,31 @@ code="$(api GET /chat-messages/speech/availability "$PAID_TOKEN")"
 if is_2xx "$code" && [ "$(resp '.available')" = "true" ]; then
   pass "paid speech availability = available"
   if [ -n "${ASSIST_ID[paid]:-}" ]; then
-    code="$(API_MAX_TIME=120 api POST "/chat-messages/${ASSIST_ID[paid]}/speech" "$PAID_TOKEN")"
-    if is_2xx "$code" && [ -n "$(resp '.fileId // empty')" ]; then
-      TTS_FILE="$(resp '.fileId')"
-      TTS_MIME="$(resp '.mimeType')"
-      pass "paid read-aloud → fileId $TTS_FILE ($TTS_MIME, $(resp '.characters') chars)"
+    # Progressive read aloud (2026-09-25): POST answers 202 GENERATING (or 200
+    # READY) at once; poll GET until a final state. Bounded: 120 x 2 s.
+    code="$(api POST "/chat-messages/${ASSIST_ID[paid]}/speech" "$PAID_TOKEN")"
+    tts_status="$(resp '.status // empty')"
+    for _ in $(seq 1 120); do
+      case "$tts_status" in READY | PARTIAL | FAILED) break ;; esac
+      sleep 2
+      code="$(api GET "/chat-messages/${ASSIST_ID[paid]}/speech" "$PAID_TOKEN")"
+      tts_status="$(resp '.status // empty')"
+    done
+    if is_2xx "$code" && [ "$tts_status" = "READY" ] && [ -n "$(resp '.segments[0].fileId // empty')" ]; then
+      TTS_FILE="$(resp '.segments[0].fileId')"
+      TTS_MIME="$(resp '.segments[0].mimeType')"
+      pass "paid read-aloud → READY, $(resp '.segments | length')/$(resp '.totalSegments') segments, first $TTS_FILE ($TTS_MIME)"
       before="$(ledger_count "$PAID_TOKEN" TTS CONSUMPTION)"
-      code="$(API_MAX_TIME=120 api POST "/chat-messages/${ASSIST_ID[paid]}/speech" "$PAID_TOKEN")"
-      [ "$(resp '.fileId')" = "$TTS_FILE" ] && [ "$(resp '.cached')" = "true" ] &&
-        pass "second read-aloud replays the same fileId (cached=true)" ||
-        fail "second read-aloud → HTTP $code fileId $(resp '.fileId') cached $(resp '.cached')"
+      code="$(api POST "/chat-messages/${ASSIST_ID[paid]}/speech" "$PAID_TOKEN")"
+      [ "$code" = 200 ] && [ "$(resp '.status')" = "READY" ] && [ "$(resp '.segments[0].fileId')" = "$TTS_FILE" ] &&
+        pass "second read-aloud replays READY with the same first segment (HTTP 200)" ||
+        fail "second read-aloud → HTTP $code status $(resp '.status') fileId $(resp '.segments[0].fileId')"
       after="$(ledger_count "$PAID_TOKEN" TTS CONSUMPTION)"
       [ "$before" != "-1" ] && [ "$before" = "$after" ] &&
         pass "replay added no TTS CONSUMPTION row ($before → $after)" ||
         fail "TTS CONSUMPTION rows around the replay: $before → $after"
     else
-      fail "paid read-aloud → HTTP $code $(head -c 200 "$TMP/resp")"
+      fail "paid read-aloud → HTTP $code status ${tts_status:-none} $(head -c 200 "$TMP/resp")"
     fi
   else
     skip "paid read-aloud (no paid assistant message from the image lane)"

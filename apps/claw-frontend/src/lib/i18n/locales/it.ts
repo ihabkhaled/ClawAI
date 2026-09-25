@@ -368,7 +368,14 @@ export const it: TranslationDictionary = {
       stop: 'Interrompi la lettura ad alta voce',
       loading: 'Preparazione dell’audio…',
       playerLabel: 'Audio della lettura ad alta voce',
-      download: 'Scarica l’audio',
+      play: 'Riproduci',
+      pause: 'Pausa',
+      paused: 'In pausa.',
+      progress: 'Lettura della parte {current} di {total}…',
+      waitingNext: 'Preparazione della parte successiva…',
+      finished: 'Lettura ad alta voce terminata.',
+      partial:
+        'Alcune parti di questa risposta non sono state lette ad alta voce e non sono state addebitate.',
       truncated: 'È stata letta ad alta voce solo la prima parte di questa risposta.',
       unavailable: {
         planDisabled: 'La lettura ad alta voce non è inclusa nel tuo piano.',
@@ -384,6 +391,7 @@ export const it: TranslationDictionary = {
         failed: 'Il servizio vocale non è riuscito a leggere questa risposta. Riprova.',
         generic: 'Impossibile leggere ad alta voce questa risposta. Riprova.',
         playback: 'Impossibile caricare l’audio.',
+        timedOut: 'La lettura ad alta voce ha richiesto troppo tempo. Riprova.',
       },
     },
     edit: {

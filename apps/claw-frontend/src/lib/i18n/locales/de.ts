@@ -371,7 +371,14 @@ export const de: TranslationDictionary = {
       stop: 'Vorlesen beenden',
       loading: 'Audio wird vorbereitet…',
       playerLabel: 'Vorgelesenes Audio',
-      download: 'Audio herunterladen',
+      play: 'Abspielen',
+      pause: 'Pausieren',
+      paused: 'Pausiert.',
+      progress: 'Lese Teil {current} von {total} vor…',
+      waitingNext: 'Der nächste Teil wird vorbereitet…',
+      finished: 'Vorlesen beendet.',
+      partial:
+        'Einige Teile dieser Antwort konnten nicht vorgelesen werden und wurden nicht berechnet.',
       truncated: 'Nur der erste Teil dieser Antwort wurde vorgelesen.',
       unavailable: {
         planDisabled: 'Vorlesen ist in deinem Tarif nicht enthalten.',
@@ -387,6 +394,7 @@ export const de: TranslationDictionary = {
         failed: 'Der Sprachdienst konnte diese Antwort nicht vorlesen. Versuche es erneut.',
         generic: 'Diese Antwort konnte nicht vorgelesen werden. Versuche es erneut.',
         playback: 'Das Audio konnte nicht geladen werden.',
+        timedOut: 'Das Vorlesen hat zu lange gedauert. Versuche es erneut.',
       },
     },
     edit: {

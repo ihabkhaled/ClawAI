@@ -4,7 +4,8 @@ import {
   TRANSCRIPTION_MODALITY_REJECTION_MARKERS,
   TRANSCRIPTION_QUOTA_EXHAUSTED_CODES,
 } from '../constants/transcription.constants';
-import { TranscriptionFailureKind } from '../../../common/enums';
+import { TranscriptionFailureKind, TranscriptionResponseIssue } from '../../../common/enums';
+import { TranscriptionResponseError } from '../../../common/errors';
 import { type ProviderErrorShape } from '../types/transcription-error.types';
 
 function asErrorShape(error: unknown): ProviderErrorShape {
@@ -60,11 +61,33 @@ function isQuotaExhausted(error: unknown): boolean {
 }
 
 /**
+ * A 200 that carried no usable transcript. Empty and reasoning-only answers
+ * earn the one same-model retry; a MAX_TOKENS cut-off moves to the next
+ * candidate (the same ceiling would cut again); a content-policy block is
+ * terminal (another model under the same policy would block again).
+ */
+function classifyResponseIssue(issue: TranscriptionResponseIssue): TranscriptionFailureKind {
+  switch (issue) {
+    case TranscriptionResponseIssue.EMPTY:
+    case TranscriptionResponseIssue.THOUGHT_ONLY:
+      return TranscriptionFailureKind.EMPTY_RESPONSE;
+    case TranscriptionResponseIssue.TRUNCATED:
+      return TranscriptionFailureKind.INCOMPLETE_RESPONSE;
+    case TranscriptionResponseIssue.BLOCKED:
+      return TranscriptionFailureKind.TERMINAL;
+  }
+}
+
+/**
  * Which class of failure one provider call ended in — the input to the
- * candidate walk's "may I call again, and where?" decision. Reads the HTTP
+ * candidate walk's "may I call again, and where?" decision. Reads the typed
+ * response issue for a 200 that was not a transcript, otherwise the HTTP
  * status and the provider's own body, never the axios transport message.
  */
 export function classifyTranscriptionFailure(error: unknown): TranscriptionFailureKind {
+  if (error instanceof TranscriptionResponseError) {
+    return classifyResponseIssue(error.issue);
+  }
   const status = asErrorShape(error).response?.status;
   if (status === TRANSCRIPTION_HTTP_STATUS_TOO_MANY_REQUESTS) {
     return isQuotaExhausted(error)

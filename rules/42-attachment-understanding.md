@@ -264,7 +264,13 @@ Full reasoning:
     `insufficient_quota` gets none, and a provider that 429s twice is skipped.
     `TRANSCRIPTION_MAX_PROVIDER_CALLS` (4) bounds the whole job, each call is
     its own PAYG hold (`…:PROVIDER`, then `…:PROVIDER:2`), and a 5xx /
-    network error / empty transcript still stops the walk. `extractionError`
+    network error / content-policy block (Gemini `SAFETY`, `RECITATION`, …)
+    still stops the walk. A 200 with no transcript text (empty, or only
+    `thought: true` parts) gets ONE same-model retry per job under the next
+    request id, then the next model; a `MAX_TOKENS` cut-off goes straight to
+    the next model. Gemini transcription is sent `temperature: 0` and, only
+    for models that accept it (2.5 Flash / Flash-Lite), `thinkingBudget: 0`
+    (added 2026-09-25 after a 200 with 0 characters). `extractionError`
     carries a fixed sentence ("busy — try again in a minute", "temporarily
     unavailable", "no configured model accepted this recording"), never
     axios's "Request failed with status code 429". connector-service's

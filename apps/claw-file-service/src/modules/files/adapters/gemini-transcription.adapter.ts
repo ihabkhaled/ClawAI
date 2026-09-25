@@ -12,6 +12,11 @@ import {
   stripGeminiModelsPrefix,
   toGeminiNativeBaseUrl,
 } from '../utilities/transcription-format.utility';
+import {
+  buildGeminiGenerationConfig,
+  geminiResponseFailure,
+  readGeminiResponse,
+} from '../utilities/gemini-transcription-response.utility';
 
 const logger = new Logger('GeminiTranscriptionAdapter');
 
@@ -25,12 +30,17 @@ const logger = new Logger('GeminiTranscriptionAdapter');
  * the caller falls back to the reserved estimate rather than to $0.
  *
  * `maxOutputTokens` is the GRANTED ceiling from the PAYG hold (rule 37 item 2),
- * never the one the caller asked for. Gemini 2.5 counts thinking tokens inside
- * it, which the hold's output estimate already leaves headroom for.
+ * never the one the caller asked for. It rides in one `generationConfig` with
+ * `temperature: 0` and, for models that accept it, `thinkingBudget: 0`
+ * (`buildGeminiGenerationConfig`) — Gemini 2.5 counts thinking tokens inside
+ * the ceiling, and thinking buys nothing for a verbatim transcript.
  *
- * THROWS on a transport or shape failure rather than returning something
- * empty, so the caller records a real reason instead of storing a provider's
- * refusal as though it were the transcript.
+ * Only non-`thought` parts are transcript text. THROWS a
+ * `TranscriptionResponseError` when the 200 is not a transcript — blocked
+ * (SAFETY, RECITATION, promptFeedback.blockReason, …), cut off at MAX_TOKENS,
+ * or reasoning-only — so the caller records the precise reason instead of
+ * "empty transcript". A plainly empty answer is returned as '' and the
+ * manager's own empty check handles it. Never logs transcript text.
  */
 export const transcribeWithGemini = async (
   baseUrl: string,
@@ -64,7 +74,7 @@ export const transcribeWithGemini = async (
         ],
       },
     ],
-    ...(maxOutputTokens === undefined ? {} : { generationConfig: { maxOutputTokens } }),
+    generationConfig: buildGeminiGenerationConfig(model, maxOutputTokens),
   };
 
   const response = await httpPost<GeminiGenerateContentResponse>(
@@ -79,28 +89,33 @@ export const transcribeWithGemini = async (
     declaredHost(nativeBase),
   );
 
-  const parts = response.candidates?.[0]?.content?.parts ?? [];
-  const transcript = parts
-    .map((part) => part.text ?? '')
-    .join('')
-    .trim();
-  if (response.usageMetadata === undefined) {
-    logger.debug(
-      `transcribeWithGemini: received ${String(transcript.length)} characters, no usageMetadata`,
-    );
-    return { text: transcript };
-  }
-  const reported = extractGeminiUsage(response);
+  const reading = readGeminiResponse(response);
+  const reported = response.usageMetadata === undefined ? undefined : extractGeminiUsage(response);
+  const usageText =
+    reported === undefined
+      ? 'no usageMetadata'
+      : `prompt=${String(reported.promptTokens)} completion=${String(reported.completionTokens)} reasoning=${String(reported.reasoningTokens)}`;
+  const finishReason = reading.finishReason ?? 'none';
+  // Counts and reasons only — the transcript itself never reaches a log line.
   logger.debug(
-    `transcribeWithGemini: received ${String(transcript.length)} characters — prompt=${String(reported.promptTokens)} completion=${String(reported.completionTokens)}`,
+    `transcribeWithGemini: model=${model} received ${String(reading.text.length)} characters finishReason=${finishReason} thoughtChars=${String(reading.thoughtCharacters)} ${usageText}`,
   );
-  return {
-    text: transcript,
-    usage: {
-      promptTokens: reported.promptTokens,
-      completionTokens: reported.completionTokens,
-      cachedPromptTokens: reported.cachedPromptTokens,
-      reasoningTokens: reported.reasoningTokens,
-    },
-  };
+  const failure = geminiResponseFailure(reading);
+  if (failure !== null) {
+    logger.warn(
+      `transcribeWithGemini: model=${model} issue=${failure.issue} finishReason=${finishReason} blockReason=${reading.blockReason ?? 'none'} — ${failure.message}`,
+    );
+    throw failure;
+  }
+  return reported === undefined
+    ? { text: reading.text }
+    : {
+        text: reading.text,
+        usage: {
+          promptTokens: reported.promptTokens,
+          completionTokens: reported.completionTokens,
+          cachedPromptTokens: reported.cachedPromptTokens,
+          reasoningTokens: reported.reasoningTokens,
+        },
+      };
 };

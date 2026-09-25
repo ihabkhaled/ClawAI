@@ -14,7 +14,8 @@ const mockSynthesize = vi.fn();
 vi.mock('@/repositories/chat/message-speech.repository', () => ({
   messageSpeechRepository: {
     getAvailability: (...args: unknown[]) => mockGetAvailability(...args),
-    synthesize: (...args: unknown[]) => mockSynthesize(...args),
+    start: (...args: unknown[]) => mockSynthesize(...args),
+    getState: vi.fn(),
   },
 }));
 vi.mock('@/lib/i18n', () => ({
@@ -22,12 +23,11 @@ vi.mock('@/lib/i18n', () => ({
 }));
 
 const SPEECH = {
-  fileId: 'file-1',
-  mimeType: 'audio/wav',
-  filename: 'reply.wav',
+  status: 'READY',
+  segments: [{ index: 0, fileId: 'file-1', mimeType: 'audio/wav', characters: 120 }],
+  totalSegments: 1,
   truncated: false,
-  characters: 120,
-  cached: false,
+  errorCode: null,
 };
 
 function makeWrapper(): (props: { children: ReactNode }) => React.ReactElement {
@@ -69,6 +69,38 @@ describe('useMessageSpeech', () => {
     await waitFor(() => expect(result.current.isPlayerOpen).toBe(false));
     expect(result.current.status).toBe(MessageSpeechStatus.IDLE);
     expect(mockSynthesize).toHaveBeenCalledTimes(1);
+
+    // A READY reading in the cache replays with no request at all.
+    act(() => result.current.toggle());
+    await waitFor(() => expect(result.current.status).toBe(MessageSpeechStatus.PLAYING));
+    expect(mockSynthesize).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays loading while the job has produced no segment yet', async () => {
+    mockSynthesize.mockResolvedValue({ ...SPEECH, status: 'GENERATING', segments: [] });
+    const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+    await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+
+    act(() => result.current.toggle());
+
+    await waitFor(() => expect(mockSynthesize).toHaveBeenCalledTimes(1));
+    expect(result.current.status).toBe(MessageSpeechStatus.LOADING);
+    expect(result.current.label).toBe('chat.speech.loading');
+  });
+
+  it('retries with a new start after an error instead of closing', async () => {
+    mockSynthesize
+      .mockRejectedValueOnce(new ApiClientError({ message: 'x', status: 502, code: 'TTS_FAILED' }))
+      .mockResolvedValueOnce(SPEECH);
+    const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+    await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+
+    act(() => result.current.toggle());
+    await waitFor(() => expect(result.current.status).toBe(MessageSpeechStatus.ERROR));
+    act(() => result.current.toggle());
+
+    await waitFor(() => expect(result.current.status).toBe(MessageSpeechStatus.PLAYING));
+    expect(mockSynthesize).toHaveBeenCalledTimes(2);
   });
 
   it('exposes the mapped error key when synthesis is refused', async () => {

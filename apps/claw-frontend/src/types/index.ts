@@ -1205,15 +1205,19 @@ export type {
 } from './grafana-access.types';
 export type {
   SpeechAvailability,
-  SynthesizedSpeech,
+  MessageSpeechSegment,
+  MessageSpeechState,
   MessageSpeechStatusInput,
+  MessageSpeechPhaseInput,
+  MessageSpeechPlayerErrorInput,
   MessageSpeechActionProps,
   MessageSpeechPlayerProps,
-  MessageSpeechAudioProps,
   MessageSpeechMutationSnapshot,
   UseMessageSpeechAvailabilityReturn,
   UseMessageSpeechOpenFlagReturn,
+  UseMessageSpeechStateReturn,
+  UseMessageSpeechStateOptions,
   UseMessageSpeechReturn,
+  UseSpeechSegmentBlobsReturn,
   UseMessageSpeechPlayerReturn,
-  UseMessageSpeechAudioReturn,
 } from './message-speech.types';

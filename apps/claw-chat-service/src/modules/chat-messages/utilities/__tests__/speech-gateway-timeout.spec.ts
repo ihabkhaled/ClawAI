@@ -6,11 +6,12 @@ import { describe, expect, it } from 'vitest';
 import {
   NGINX_CHAT_MESSAGES_READ_TIMEOUT_MS,
   SPEECH_FILE_STORE_RESERVE_MS,
-  SPEECH_GATEWAY_HEADROOM_MS,
+  SPEECH_JOB_DEADLINE_MS,
+  SPEECH_JOB_LOCK_TTL_MS,
   SPEECH_MAX_TIMEOUT_MS,
   SPEECH_MIN_ATTEMPT_MS,
   SPEECH_POST_PROVIDER_RESERVE_MS,
-  SPEECH_REQUEST_BUDGET_MS,
+  SPEECH_SEGMENT_MAX_TIMEOUT_MS,
   SPEECH_SETTLEMENT_RESERVE_MS,
 } from '../../constants/speech.constants';
 import { ENTITLEMENTS_TIMEOUT_MS } from '../../../../common/constants';
@@ -49,16 +50,19 @@ describe('TTS end-to-end deadline vs the nginx read timeout', () => {
     );
   });
 
-  it('ends the WHOLE request (provider walk + audio store) comfortably before nginx', () => {
-    expect(SPEECH_REQUEST_BUDGET_MS).toBeLessThan(NGINX_CHAT_MESSAGES_READ_TIMEOUT_MS);
-    expect(NGINX_CHAT_MESSAGES_READ_TIMEOUT_MS - SPEECH_REQUEST_BUDGET_MS).toBeGreaterThanOrEqual(
-      SPEECH_GATEWAY_HEADROOM_MS,
+  it('keeps even the slowest single attempt plus its store and settlement inside the nginx window', () => {
+    // POST answers 202 at once; synthesis runs in a background job. The
+    // longest single provider attempt plus its store and settlement still
+    // fits well inside the nginx window — defence in depth, not the contract.
+    expect(SPEECH_MAX_TIMEOUT_MS).toBe(SPEECH_SEGMENT_MAX_TIMEOUT_MS);
+    expect(SPEECH_SEGMENT_MAX_TIMEOUT_MS + SPEECH_POST_PROVIDER_RESERVE_MS).toBeLessThan(
+      NGINX_CHAT_MESSAGES_READ_TIMEOUT_MS,
     );
-    expect(SPEECH_GATEWAY_HEADROOM_MS).toBeGreaterThanOrEqual(10_000);
-    // The slowest single candidate plus the store AND settlement reserves still fits.
-    expect(SPEECH_MAX_TIMEOUT_MS + SPEECH_POST_PROVIDER_RESERVE_MS).toBeLessThanOrEqual(
-      SPEECH_REQUEST_BUDGET_MS,
-    );
+  });
+
+  it('bounds the background job, and the lock outlives it so a finished job writes under it', () => {
+    expect(SPEECH_JOB_DEADLINE_MS).toBeLessThanOrEqual(180_000);
+    expect(SPEECH_JOB_LOCK_TTL_MS).toBeGreaterThan(SPEECH_JOB_DEADLINE_MS);
   });
 
   it('keeps room after the store for the one meter call that settles the hold', () => {
@@ -71,23 +75,27 @@ describe('TTS end-to-end deadline vs the nginx read timeout', () => {
   });
 });
 
-describe('speechAttemptTimeoutMs — the provider window is the deadline minus store + settlement', () => {
+describe('speechAttemptTimeoutMs — the provider window is the job deadline minus store + settlement', () => {
   const deadlineAt = 100_000;
   const windowEnd = deadlineAt - SPEECH_POST_PROVIDER_RESERVE_MS;
 
   it("uses the candidate's own timeout while the window allows", () => {
-    expect(speechAttemptTimeoutMs(20_000, deadlineAt, 50_000)).toBe(20_000);
+    expect(speechAttemptTimeoutMs(20_000, 1_000, deadlineAt, 50_000)).toBe(20_000);
+  });
+
+  it("cuts to the segment's own timeout (12 s + 60 ms/char) when that is shorter", () => {
+    expect(speechAttemptTimeoutMs(40_000, 100, deadlineAt, 50_000)).toBe(18_000);
   });
 
   it('cuts a candidate to what is left of the window, leaving the store its reserve', () => {
-    expect(speechAttemptTimeoutMs(40_000, deadlineAt, windowEnd - 20_000)).toBe(20_000);
+    expect(speechAttemptTimeoutMs(40_000, 1_000, deadlineAt, windowEnd - 20_000)).toBe(20_000);
   });
 
   it('starts no paid attempt that would leave the store no time', () => {
-    expect(speechAttemptTimeoutMs(40_000, deadlineAt, windowEnd - SPEECH_MIN_ATTEMPT_MS + 1)).toBe(
-      null,
-    );
-    expect(speechAttemptTimeoutMs(40_000, deadlineAt, windowEnd + 1)).toBe(null);
+    expect(
+      speechAttemptTimeoutMs(40_000, 1_000, deadlineAt, windowEnd - SPEECH_MIN_ATTEMPT_MS + 1),
+    ).toBe(null);
+    expect(speechAttemptTimeoutMs(40_000, 1_000, deadlineAt, windowEnd + 1)).toBe(null);
   });
 });
 

@@ -1,6 +1,7 @@
 import { SpeechUnavailableReason } from '@claw/shared-types';
 
 import { ApiErrorCode } from '@/enums/api-error-code.enum';
+import { MessageSpeechPlaybackPhase } from '@/enums/message-speech-playback-phase.enum';
 import { MessageSpeechStatus } from '@/enums/message-speech-status.enum';
 import type { MessageSpeechMutationSnapshot } from '@/types/message-speech.types';
 
@@ -8,13 +9,27 @@ import type { MessageSpeechMutationSnapshot } from '@/types/message-speech.types
 export const MESSAGE_SPEECH_AVAILABILITY_STALE_MS = 60_000;
 
 /**
- * Synthesis of a long reply outlasts the 30s default HTTP timeout; a cut-off
- * request would still be billed server-side while the user saw a failure.
+ * POST and GET only read or start the job (the synthesis runs in the
+ * background since 2026-09-25), so neither needs more than a short timeout.
  */
-export const MESSAGE_SPEECH_REQUEST_TIMEOUT_MS = 120_000;
+export const MESSAGE_SPEECH_REQUEST_TIMEOUT_MS = 15_000;
 
-/** Authenticated download path prefix; the fileId is appended. */
-export const MESSAGE_SPEECH_DOWNLOAD_PATH_PREFIX = '/api/v1/files/download/';
+/** A segment's audio, relative to the API base; the fileId is appended. */
+export const MESSAGE_SPEECH_FILE_PATH_PREFIX = '/files/download/';
+
+/** How often the player asks for the job's state while it is GENERATING. */
+export const MESSAGE_SPEECH_POLL_INTERVAL_MS = 700;
+
+/** The job's own backend deadline (3 minutes); polling never outlives it. */
+export const MESSAGE_SPEECH_POLL_DEADLINE_MS = 180_000;
+
+/** The hard cap on polls for one reading: deadline / interval, rounded up. */
+export const MESSAGE_SPEECH_MAX_POLLS = Math.ceil(
+  MESSAGE_SPEECH_POLL_DEADLINE_MS / MESSAGE_SPEECH_POLL_INTERVAL_MS,
+);
+
+/** Shown when the job is still GENERATING after the polling cap. */
+export const MESSAGE_SPEECH_TIMED_OUT_ERROR_KEY = 'chat.speech.errors.timedOut';
 
 /** Shown for any failure the backend did not name with a known code. */
 export const MESSAGE_SPEECH_GENERIC_ERROR_KEY = 'chat.speech.errors.generic';
@@ -53,6 +68,16 @@ export const MESSAGE_SPEECH_LABEL_KEYS: Readonly<Record<MessageSpeechStatus, str
   [MessageSpeechStatus.LOADING]: 'chat.speech.loading',
   [MessageSpeechStatus.PLAYING]: 'chat.speech.stop',
   [MessageSpeechStatus.ERROR]: 'chat.speech.action',
+};
+
+/** What the player's live status line says in each phase. */
+export const MESSAGE_SPEECH_PHASE_KEYS: Readonly<Record<MessageSpeechPlaybackPhase, string>> = {
+  [MessageSpeechPlaybackPhase.PREPARING]: 'chat.speech.loading',
+  [MessageSpeechPlaybackPhase.PLAYING]: 'chat.speech.progress',
+  [MessageSpeechPlaybackPhase.PAUSED]: 'chat.speech.paused',
+  [MessageSpeechPlaybackPhase.WAITING]: 'chat.speech.waitingNext',
+  [MessageSpeechPlaybackPhase.FINISHED]: 'chat.speech.finished',
+  [MessageSpeechPlaybackPhase.FAILED]: 'chat.speech.errors.generic',
 };
 
 /** The latest synthesis for a message that has never been read aloud. */

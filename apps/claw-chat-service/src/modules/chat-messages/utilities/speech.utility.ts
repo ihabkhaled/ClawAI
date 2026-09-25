@@ -3,7 +3,6 @@ import type { PaygReleaseReason } from '@claw/shared-entitlements';
 import { SpeechProvider } from '../../../common/enums';
 import { SpeechProviderError } from '../../../common/errors';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
-import type { Prisma } from '../../../generated/prisma';
 import {
   GEMINI_TTS_MODEL_MARKER,
   GEMINI_TTS_OUTPUT_TOKENS_PER_CHARACTER,
@@ -17,15 +16,16 @@ import {
   SPEECH_MIN_ATTEMPT_MS,
   SPEECH_POST_PROVIDER_RESERVE_MS,
   SPEECH_PROVIDER_BY_NAME,
+  SPEECH_SEGMENT_BASE_TIMEOUT_MS,
+  SPEECH_SEGMENT_MAX_TIMEOUT_MS,
+  SPEECH_SEGMENT_TIMEOUT_PER_CHARACTER_MS,
   SPEECH_SETTLEMENT_RESERVE_MS,
 } from '../constants/speech.constants';
 import type {
-  MessageSpeechResponse,
   SpeechCandidate,
   SpeechHold,
   SpeechSettlement,
   SpeechTokenUsage,
-  StoredSpeech,
   TtsVoiceCandidateWire,
 } from '../types/speech.types';
 
@@ -67,18 +67,20 @@ export function isPerCharacterPriced(candidate: SpeechCandidate): boolean {
 
 /**
  * One key per PAID CALL (rule 37 item 15): the message, the exact text
- * spoken, the synthesis generation (a re-synthesis after the stored audio
- * expired is a new call) and the candidate attempt (a fall-through is a
- * second paid call). A retried HTTP request for the same synthesis reuses its
- * hold, which is the point of idempotency.
+ * spoken, the synthesis generation (a new job — a retry after FAILED/PARTIAL,
+ * a stale job, an expired file — is a new call and never reuses a settled
+ * hold), the segment, and the attempt inside that segment's walk (a timeout
+ * retry or a fall-through is a second paid call). A second POST while a job
+ * runs starts no job at all, so it makes no key.
  */
 export function speechRequestId(
   messageId: string,
   contentHash: string,
   generation: number,
-  attemptIndex: number,
+  segmentIndex: number,
+  attemptNumber: number,
 ): string {
-  return `tts:${messageId}:${contentHash}:g${String(generation)}:${String(attemptIndex + 1)}`;
+  return `tts:${messageId}:${contentHash}:g${String(generation)}:seg${String(segmentIndex + 1)}:${String(attemptNumber)}`;
 }
 
 /** Output ceiling to reserve for a Gemini synthesis of `characters`, within the admin's cap. */
@@ -138,83 +140,38 @@ export function isSpeechTimeout(error: unknown): boolean {
   return error instanceof SpeechProviderError && error.timedOut;
 }
 
-/** `reply-<messageId>.wav|.mp3` — the name the player's Download saves. */
-export function speechFilename(messageId: string, mimeType: string): string {
+/** `reply-<messageId>-<n>.wav|.mp3` — one stored file per segment, 1-based. */
+export function speechFilename(messageId: string, mimeType: string, segmentIndex: number): string {
   const safeId = messageId.replaceAll(/[^A-Za-z0-9_-]/g, '');
-  return `${SPEECH_FILENAME_PREFIX}${safeId}.${mimeType === SPEECH_MIME_MP3 ? 'mp3' : 'wav'}`;
+  const extension = mimeType === SPEECH_MIME_MP3 ? 'mp3' : 'wav';
+  return `${SPEECH_FILENAME_PREFIX}${safeId}-${String(segmentIndex + 1)}.${extension}`;
 }
 
-/** `metadata.speech` from a stored message, or null when absent or malformed. */
-export function readStoredSpeech(metadata: unknown): StoredSpeech | null {
-  if (!isRecord(metadata) || !isRecord(metadata['speech'])) {
-    return null;
-  }
-  const speech = metadata['speech'];
-  const text = (key: string): string | null =>
-    typeof speech[key] === 'string' ? speech[key] : null;
-  const count = (key: string): number | null =>
-    typeof speech[key] === 'number' && Number.isInteger(speech[key]) ? speech[key] : null;
-  const fileId = text('fileId');
-  const contentHash = text('contentHash');
-  return fileId === null || contentHash === null
-    ? null
-    : {
-        fileId,
-        contentHash,
-        filename: text('filename') ?? '',
-        mimeType: text('mimeType') ?? '',
-        provider: text('provider') ?? '',
-        model: text('model') ?? '',
-        characters: count('characters') ?? 0,
-        truncated: speech['truncated'] === true,
-        generation: count('generation') ?? 1,
-      };
-}
-
-/** The message's metadata with `speech` replaced; every other key kept. */
-export function withStoredSpeech(
-  metadata: Prisma.JsonValue | null,
-  speech: StoredSpeech,
-): Prisma.InputJsonObject {
-  const kept: Prisma.JsonObject = isJsonObject(metadata) ? metadata : {};
-  return { ...kept, speech };
-}
-
-function isJsonObject(value: Prisma.JsonValue | null): value is Prisma.JsonObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** What the client is told about a stored synthesis. `cached` = replayed, not charged. */
-export function toSpeechResponse(speech: StoredSpeech, cached: boolean): MessageSpeechResponse {
-  return {
-    fileId: speech.fileId,
-    mimeType: speech.mimeType,
-    filename: speech.filename,
-    truncated: speech.truncated,
-    characters: speech.characters,
-    cached,
-  };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+/** A segment's own provider timeout: 12 s + 60 ms per character, at most 40 s. */
+export function segmentTimeoutMs(characters: number): number {
+  return Math.min(
+    SPEECH_SEGMENT_MAX_TIMEOUT_MS,
+    SPEECH_SEGMENT_BASE_TIMEOUT_MS + characters * SPEECH_SEGMENT_TIMEOUT_PER_CHARACTER_MS,
+  );
 }
 
 /**
- * The timeout one candidate may use: its own, cut to what is left of the
- * provider window, i.e. the request deadline minus the store AND settlement
- * reserves (SPEECH_POST_PROVIDER_RESERVE_MS). Null when too little is left to
- * start one, which also means no paid attempt starts that would leave the
- * store or the settlement no time: the walk ends with the service's own
- * TTS_FAILED rather than a gateway 504.
+ * The timeout one attempt may use: the smallest of the candidate's own, the
+ * segment's (sized to its length) and what is left of the job window once
+ * the store AND settlement reserves are kept free. Null when too little is
+ * left to start one: no paid attempt starts that could not be stored and
+ * settled before the job's deadline.
  */
 export function speechAttemptTimeoutMs(
   candidateTimeoutMs: number,
-  requestDeadlineAt: number,
+  segmentCharacters: number,
+  jobDeadlineAt: number,
   now: number,
 ): number | null {
-  const remaining = requestDeadlineAt - SPEECH_POST_PROVIDER_RESERVE_MS - now;
-  return remaining < SPEECH_MIN_ATTEMPT_MS ? null : Math.min(candidateTimeoutMs, remaining);
+  const remaining = jobDeadlineAt - SPEECH_POST_PROVIDER_RESERVE_MS - now;
+  return remaining < SPEECH_MIN_ATTEMPT_MS
+    ? null
+    : Math.min(candidateTimeoutMs, segmentTimeoutMs(segmentCharacters), remaining);
 }
 
 /**

@@ -45,7 +45,10 @@ const POLL_MS = 500;
 const STT_DEADLINE_MS = 180_000;
 const VIDEO_DEADLINE_MS = 300_000;
 const CHAT_DEADLINE_MS = 240_000;
-const TTS_CLIENT_TIMEOUT_MS = 90_000;
+const TTS_CLIENT_TIMEOUT_MS = 15_000;
+// The progressive job's own deadline (chat-service SPEECH_JOB_DEADLINE_MS) + slack.
+const TTS_JOB_DEADLINE_MS = 200_000;
+const TTS_FINAL = new Set(['READY', 'PARTIAL', 'FAILED']);
 const TTS_SIZES = [200, 1000, 4000];
 const STT_SECONDS = [5, 30, 120];
 const VIDEO_SECONDS = [10, 60];
@@ -230,21 +233,58 @@ async function assistantReply(token, text, echo) {
 
 // ─── 1. TTS ─────────────────────────────────────────────────────────────────
 
+// Progressive read aloud (2026-09-25): POST answers 200 READY or 202 GENERATING
+// at once; the job then fills `segments` in the background. Measured: the POST
+// itself, time to the FIRST playable segment (what the user waits for), and
+// time to the final state. Polling is bounded by TTS_JOB_DEADLINE_MS.
 async function timeSpeech(token, messageId) {
   const t0 = performance.now();
+  const since = () => Math.round(performance.now() - t0);
   try {
     const r = await withTimeout(
       api('POST', `/chat-messages/${messageId}/speech`, token),
       TTS_CLIENT_TIMEOUT_MS,
       'speech',
     );
-    const ms = Math.round(performance.now() - t0);
-    if (r.status >= 300 || !r.json?.fileId) {
-      return { ok: false, ms, status: r.status, reason: `${r.status} ${(r.json?.code ?? r.json?.errorCode ?? r.text).toString().slice(0, 120)}` };
+    const postMs = since();
+    if (r.status >= 300 || !r.json?.status) {
+      return { ok: false, ms: postMs, postMs, status: r.status, reason: `${r.status} ${(r.json?.code ?? r.json?.errorCode ?? r.text).toString().slice(0, 120)}` };
     }
-    return { ok: true, ms, status: r.status, fileId: r.json.fileId, mimeType: r.json.mimeType, characters: r.json.characters, cached: r.json.cached === true };
+    let state = r.json;
+    let firstAudioMs = state.segments?.length > 0 ? postMs : null;
+    const cached = r.status === 200 && state.status === 'READY';
+    const deadline = Date.now() + TTS_JOB_DEADLINE_MS;
+    let polls = 0;
+    while (!TTS_FINAL.has(state.status) && Date.now() < deadline) {
+      await sleep(POLL_MS);
+      const g = await api('GET', `/chat-messages/${messageId}/speech`, token);
+      polls += 1;
+      if (g.status < 300 && g.json?.status) state = g.json;
+      if (firstAudioMs === null && state.segments?.length > 0) firstAudioMs = since();
+    }
+    const segments = state.segments ?? [];
+    const characters = segments.reduce((sum, seg) => sum + (seg.characters ?? 0), 0);
+    return {
+      ok: state.status === 'READY',
+      ms: since(),
+      postMs,
+      firstAudioMs,
+      polls,
+      status: r.status,
+      jobStatus: state.status,
+      errorCode: state.errorCode ?? null,
+      totalSegments: state.totalSegments,
+      segmentsStored: segments.length,
+      truncated: state.truncated === true,
+      fileId: segments[0]?.fileId,
+      fileIds: segments.map((seg) => seg.fileId),
+      mimeType: segments[0]?.mimeType,
+      characters,
+      cached,
+      ...(state.status === 'READY' ? {} : { reason: `job ${state.status} ${state.errorCode ?? ''}`.trim() }),
+    };
   } catch (e) {
-    return { ok: false, ms: Math.round(performance.now() - t0), status: 0, reason: e.message };
+    return { ok: false, ms: since(), status: 0, reason: e.message };
   }
 }
 
@@ -263,7 +303,7 @@ async function ttsLane(token, echo) {
       } catch (e) {
         Object.assign(row, { ok: false, reason: `setup: ${e.message}` });
       }
-      log(`tts size=${size} run=${run} ok=${row.ok} ms=${row.ms ?? '-'} chars=${row.characters ?? row.replyChars ?? '-'} ${row.reason ?? ''}`);
+      log(`tts size=${size} run=${run} ok=${row.ok} post=${row.postMs ?? '-'}ms firstAudio=${row.firstAudioMs ?? '-'}ms ready=${row.ms ?? '-'}ms segments=${row.segmentsStored ?? '-'}/${row.totalSegments ?? '-'} chars=${row.characters ?? row.replyChars ?? '-'} ${row.reason ?? ''}`);
       runs.push(row);
     }
   }
@@ -283,9 +323,11 @@ async function buildFixtures(token, ttsRuns) {
   const cdir = '/tmp/qa-mmbench';
   docker(['exec', FILE_CONTAINER, 'sh', '-c', `rm -rf ${cdir} && mkdir -p ${cdir}`]);
   const list = [];
-  for (const [i, r] of ok.entries()) {
-    const bytes = await download(token, r.fileId);
-    const ext = (r.mimeType ?? '').includes('mpeg') ? 'mp3' : 'wav';
+  // One stored file per segment since 2026-09-25: every segment, in order.
+  const clips = ok.flatMap((r) => (r.fileIds ?? [r.fileId]).map((fileId) => ({ fileId, mimeType: r.mimeType })));
+  for (const [i, clip] of clips.entries()) {
+    const bytes = await download(token, clip.fileId);
+    const ext = (clip.mimeType ?? '').includes('mpeg') ? 'mp3' : 'wav';
     const local = path.join(WORK, `tts-${i}.${ext}`);
     fs.writeFileSync(local, bytes);
     docker(['cp', local, `${FILE_CONTAINER}:${cdir}/tts-${i}.${ext}`]);

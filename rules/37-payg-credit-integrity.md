@@ -149,7 +149,7 @@ paid model, rule 1 applies to it like anything else.
     stores its output (TTS audio, a generated file) keeps the hold open until the
     store succeeds, finalizes then on the units measured from the provider
     response, and releases on a failed store — never charge for output the user
-    did not receive (references: chat-service `MessageSpeechService`,
+    did not receive (references: chat-service `SpeechJobManager` — per TTS segment,
     image-service `ImageGenerationService.persistAsset`). Mechanism:
     [`docs/03-architecture/payg-credit.md` § Unit metering](../docs/03-architecture/payg-credit.md#unit-metering--surfaces-that-are-not-priced-by-tokens).
 18. **A credit refusal ends a candidate walk; it is never a reason to try the next

@@ -478,18 +478,39 @@ through `whisper-1`.
 
 ### Candidate walk (rule 42 item 20, 2026-09-25)
 
-| Step                              | Decided by                                        | Behaviour                                                                                                                                                                                                                 |
-| --------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rank                              | `selectTranscriptionCandidates`                   | Provider priority GEMINI → OPENAI; ≤2 models per provider (OpenAI once); `flash-lite` → `flash` → other; EXPOSED first; preview / image / tts / live / embedding / non-transcription rows only when nothing stable exists |
-| Model refused (modality 400, 404) | `classifyTranscriptionFailure` → `MODEL_REJECTED` | Next candidate — the same provider's next model first                                                                                                                                                                     |
-| Transient 429                     | `RATE_LIMITED`                                    | One `TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS` retry per job; a second 429 skips the provider                                                                                                                                  |
-| OpenAI `insufficient_quota`       | `QUOTA_EXHAUSTED`                                 | Skip the provider, no retry                                                                                                                                                                                               |
-| 5xx, network, empty transcript    | `TERMINAL`                                        | Stop                                                                                                                                                                                                                      |
-| Ceiling                           | `TRANSCRIPTION_MAX_PROVIDER_CALLS` = 4            | Retries included                                                                                                                                                                                                          |
+| Step                               | Decided by                                        | Behaviour                                                                                                                                                                                                                 |
+| ---------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rank                               | `selectTranscriptionCandidates`                   | Provider priority GEMINI → OPENAI; ≤2 models per provider (OpenAI once); `flash-lite` → `flash` → other; EXPOSED first; preview / image / tts / live / embedding / non-transcription rows only when nothing stable exists |
+| Model refused (modality 400, 404)  | `classifyTranscriptionFailure` → `MODEL_REJECTED` | Next candidate — the same provider's next model first                                                                                                                                                                     |
+| Transient 429                      | `RATE_LIMITED`                                    | One `TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS` retry per job; a second 429 skips the provider                                                                                                                                  |
+| OpenAI `insufficient_quota`        | `QUOTA_EXHAUSTED`                                 | Skip the provider, no retry                                                                                                                                                                                               |
+| 200, no text / reasoning-only      | `EMPTY_RESPONSE`                                  | ONE same-model retry per job under the next request id (`…:GEMINI:2`), then the next candidate; provider not skipped                                                                                                      |
+| 200 cut off at `MAX_TOKENS`        | `INCOMPLETE_RESPONSE`                             | Next candidate, no same-model retry (same ceiling, same cut)                                                                                                                                                              |
+| 5xx, network, content-policy block | `TERMINAL`                                        | Stop; a block records `TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE`                                                                                                                                                             |
+| Ceiling                            | `TRANSCRIPTION_MAX_PROVIDER_CALLS` = 4            | Retries included                                                                                                                                                                                                          |
 
 `extractionError` is always a fixed `TRANSCRIPTION_*_MESSAGE` sentence
 (busy / temporarily unavailable / no model accepted it / service error); the
-raw provider text is logged as `runCandidates: … kind=<KIND> — <raw>`.
+raw provider text is logged as `runCandidates: … kind=<KIND> — <raw>`. When
+the walk runs dry after empty answers the sentence is "Audio transcription
+failed: The provider returned an empty transcript." (event `EMPTY_TRANSCRIPT`);
+after cut-offs, `TRANSCRIPTION_INCOMPLETE_MESSAGE`.
+
+### Gemini request and response (2026-09-25)
+
+- `generationConfig` = `temperature: 0` + the granted `maxOutputTokens` +
+  `thinkingConfig: { thinkingBudget: 0 }` only for `gemini-2.5-flash*`
+  (Flash and Flash-Lite, with or without `models/`). 2.5 Pro rejects 0; other
+  and unknown models get no thinking field.
+- Transcript = the first candidate's non-`thought` parts, joined in order.
+  `finishReason` / `promptFeedback.blockReason` are read and logged with token
+  counts, never with transcript text. A block, a `MAX_TOKENS` cut-off or a
+  reasoning-only answer throws `TranscriptionResponseError` with a typed
+  `TranscriptionResponseIssue`, classified per the table above.
+- Known gap: a silent video track still ends `TRANSCRIPTION_FAILED` — an
+  honest `SILENT` status needs a `@claw/shared-types` `VideoAudioStatus` edit
+  (all 18 services affected), so `volumedetect` was not added.
+
 Runbook: [`runbook-voice-note-transcription-failed.md`](../11-runbooks/runbook-voice-note-transcription-failed.md).
 
 ### PAYG metering (multimodal batch 4)
@@ -511,7 +532,8 @@ image-service's `callMeteredCloudProvider`); `PaygMeter` comes from the global
   before the next is taken.
 - Gemini is sent `hold.maxOutputTokens`, the GRANTED ceiling (rule 37 item 2).
 - Release on a provider throw (`PROVIDER_ERROR`), an axios timeout
-  (`TIMEOUT`) or an empty transcript.
+  (`TIMEOUT`) or an empty / blocked / cut-off answer — the empty-answer retry
+  is a fresh hold under the next `providerAttempt`, released the same way.
 - Refusals are results, not throws, and stop the candidate loop. They are
   recorded in `extractionError` with a readable message and published as
   `file.transcribe_failed` with `reasonCode` `INSUFFICIENT_CREDIT` (402, or a

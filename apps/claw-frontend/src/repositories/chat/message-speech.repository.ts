@@ -1,12 +1,15 @@
-import { MESSAGE_SPEECH_REQUEST_TIMEOUT_MS } from '@/constants/message-speech.constants';
+import {
+  MESSAGE_SPEECH_FILE_PATH_PREFIX,
+  MESSAGE_SPEECH_REQUEST_TIMEOUT_MS,
+} from '@/constants/message-speech.constants';
 import { apiClient } from '@/services/shared/api-client';
-import type { SpeechAvailability, SynthesizedSpeech } from '@/types/message-speech.types';
+import type { MessageSpeechState, SpeechAvailability } from '@/types/message-speech.types';
 
 /**
- * Read aloud (text-to-speech, multimodal batch 9). Availability is asked once
- * per page; synthesis returns a user-owned audio file that is played through
- * the authenticated download path. A second request for the same reply is
- * replayed by the backend for free.
+ * Read aloud (text-to-speech; progressive since 2026-09-25). Availability is
+ * asked once per page. `start` never waits on a voice model: the backend
+ * answers READY (a stored reading, replayed free) or GENERATING (a background
+ * job is synthesising segment by segment), and `getState` is the poll.
  */
 export const messageSpeechRepository = {
   async getAvailability(): Promise<SpeechAvailability> {
@@ -14,11 +17,24 @@ export const messageSpeechRepository = {
     return response.data;
   },
 
-  async synthesize(messageId: string): Promise<SynthesizedSpeech> {
-    const response = await apiClient.post<SynthesizedSpeech>(
+  async start(messageId: string): Promise<MessageSpeechState> {
+    const response = await apiClient.post<MessageSpeechState>(
       `/chat-messages/${messageId}/speech`,
       undefined,
       { timeout: MESSAGE_SPEECH_REQUEST_TIMEOUT_MS },
+    );
+    return response.data;
+  },
+
+  async getState(messageId: string): Promise<MessageSpeechState> {
+    const response = await apiClient.get<MessageSpeechState>(`/chat-messages/${messageId}/speech`);
+    return response.data;
+  },
+
+  /** One segment's audio: an ordinary user-owned file, through the authenticated client. */
+  async getSegmentAudio(fileId: string): Promise<Blob> {
+    const response = await apiClient.getBlob(
+      `${MESSAGE_SPEECH_FILE_PATH_PREFIX}${encodeURIComponent(fileId)}`,
     );
     return response.data;
   },

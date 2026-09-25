@@ -23,6 +23,8 @@ import { VideoDeliveryManager } from './managers/video-delivery.manager';
 import { ChatSpeechController } from './controllers/chat-speech.controller';
 import { MessageSpeechService } from './services/message-speech.service';
 import { SpeechSynthesisManager } from './managers/speech-synthesis.manager';
+import { SpeechJobManager } from './managers/speech-job.manager';
+import { SpeechJobLockStore } from './repositories/speech-job-lock.store';
 import { TtsVoiceCandidatesClient } from './clients/tts-voice-candidates.client';
 import { SpeechConnectorClient } from './clients/speech-connector.client';
 import { SpeechProviderClient } from './clients/speech-provider.client';
@@ -108,6 +110,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     SpeechProviderClient,
     SpeechFileStoreClient,
     SpeechSynthesisManager,
+    SpeechJobManager,
+    SpeechJobLockStore,
     MessageSpeechService,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,

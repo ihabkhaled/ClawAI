@@ -17,7 +17,9 @@ import {
   TranscriptionAttemptStatus,
   TranscriptionFailureKind,
   TranscriptionReserveStatus,
+  TranscriptionResponseIssue,
 } from '../../../common/enums';
+import { TranscriptionResponseError } from '../../../common/errors';
 import { transcribeWithGemini } from '../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
 import {
@@ -27,7 +29,9 @@ import {
   OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL,
   OPENAI_TRANSCRIPTION_MODEL,
   TRANSCRIPTION_CALLS_PER_CANDIDATE,
+  TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE,
   TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR,
+  TRANSCRIPTION_INCOMPLETE_MESSAGE,
   TRANSCRIPTION_MAX_PROVIDER_CALLS,
   TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
   TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE,
@@ -324,8 +328,14 @@ export class TranscriptionManager implements OnModuleInit {
    *    provider is skipped, never looped on.
    *  - QUOTA_EXHAUSTED (OpenAI `insufficient_quota`): that key cannot pay.
    *    Skip the provider without retrying.
-   *  - TERMINAL (5xx, network, empty transcript): stop. It may have been
-   *    processed, and paying a second provider for it would be a guess.
+   *  - EMPTY_RESPONSE (a 200 with no text, or reasoning-only parts): one
+   *    retry of the same model, once per JOB, under the next request id
+   *    (`…:GEMINI:2`); after that the next candidate. The provider is not
+   *    blocked — another of its models may hear the audio.
+   *  - INCOMPLETE_RESPONSE (a 200 cut off at MAX_TOKENS): the next candidate,
+   *    no same-model retry — the same ceiling would cut at the same place.
+   *  - TERMINAL (5xx, network, a SAFETY/RECITATION block): stop. It may have
+   *    been processed, or another model would block it too.
    *
    * `TRANSCRIPTION_MAX_PROVIDER_CALLS` bounds the whole walk, retries
    * included. A PAYG refusal is a `REFUSED` result, not a throw, and ends the
@@ -344,6 +354,7 @@ export class TranscriptionManager implements OnModuleInit {
     const walk: TranscriptionWalkState = {
       calls: 0,
       backoffUsed: false,
+      emptyRetryUsed: false,
       blockedProviders: new Set<string>(),
       providerCalls: new Map<string, number>(),
       seen: new Set<TranscriptionFailureKind>(),
@@ -368,8 +379,10 @@ export class TranscriptionManager implements OnModuleInit {
 
   /**
    * At most `TRANSCRIPTION_CALLS_PER_CANDIDATE` calls on one candidate: the
-   * first, plus the single job-wide 429 retry. Returns the final outcome, or
-   * null when the walk should move to the next candidate.
+   * first, plus one retry (the job-wide 429 retry or the job-wide empty-answer
+   * retry). Each call takes the next `providerAttempt`, so a retry is its own
+   * hold under its own request id. Returns the final outcome, or null when the
+   * walk should move to the next candidate.
    */
   private async tryCandidate(
     context: TranscriptionRequestContext,
@@ -401,7 +414,7 @@ export class TranscriptionManager implements OnModuleInit {
           );
           return {
             status: TranscriptionAttemptStatus.FAILED,
-            reason: this.terminalReason(raw),
+            reason: this.terminalReason(error),
             capability,
             model,
           };
@@ -410,12 +423,10 @@ export class TranscriptionManager implements OnModuleInit {
         this.logger.warn(
           `runCandidates: fileId=${context.fileId} provider=${provider} model=${model} kind=${kind} — ${raw}`,
         );
-        if (kind === TranscriptionFailureKind.RATE_LIMITED && !walk.backoffUsed) {
-          walk.backoffUsed = true;
-          await waitForTranscriptionBackoff(TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS);
+        if (await this.retrySameCandidate(kind, walk)) {
           continue;
         }
-        if (kind !== TranscriptionFailureKind.MODEL_REJECTED) {
+        if (this.blocksProvider(kind)) {
           walk.blockedProviders.add(provider);
         }
         return null;
@@ -424,10 +435,54 @@ export class TranscriptionManager implements OnModuleInit {
     return null;
   }
 
-  /** The user-facing reason when every candidate failed recoverably. Busy beats the rest. */
+  /**
+   * Whether the SAME candidate gets one more call: the job's one backoff
+   * retry after a transient 429, or its one retry after an empty 200. Both
+   * are once per job, so the walk can never spin on one model.
+   */
+  private async retrySameCandidate(
+    kind: TranscriptionFailureKind,
+    walk: TranscriptionWalkState,
+  ): Promise<boolean> {
+    if (kind === TranscriptionFailureKind.RATE_LIMITED && !walk.backoffUsed) {
+      walk.backoffUsed = true;
+      await waitForTranscriptionBackoff(TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS);
+      return true;
+    }
+    if (kind === TranscriptionFailureKind.EMPTY_RESPONSE && !walk.emptyRetryUsed) {
+      // No delay: an empty answer is not a rate signal.
+      walk.emptyRetryUsed = true;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * A rate limit or an exhausted quota belongs to the KEY, so every model of
+   * that provider is skipped. A refused model, an empty answer and a cut-off
+   * answer belong to the MODEL, so the provider's next model still gets a turn.
+   */
+  private blocksProvider(kind: TranscriptionFailureKind): boolean {
+    return (
+      kind === TranscriptionFailureKind.RATE_LIMITED ||
+      kind === TranscriptionFailureKind.QUOTA_EXHAUSTED
+    );
+  }
+
+  /**
+   * The user-facing reason when every candidate failed recoverably. Busy beats
+   * the rest; then what the recording itself told us (nothing heard, or cut
+   * off); then a key out of quota; then a catalog that offered no usable model.
+   */
   private exhaustedReason(seen: ReadonlySet<TranscriptionFailureKind>): string {
     if (seen.has(TranscriptionFailureKind.RATE_LIMITED)) {
       return TRANSCRIPTION_PROVIDER_BUSY_MESSAGE;
+    }
+    if (seen.has(TranscriptionFailureKind.EMPTY_RESPONSE)) {
+      return `Audio transcription failed: ${TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR}`;
+    }
+    if (seen.has(TranscriptionFailureKind.INCOMPLETE_RESPONSE)) {
+      return TRANSCRIPTION_INCOMPLETE_MESSAGE;
     }
     return seen.has(TranscriptionFailureKind.QUOTA_EXHAUSTED)
       ? TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE
@@ -435,13 +490,14 @@ export class TranscriptionManager implements OnModuleInit {
   }
 
   /**
-   * An empty transcript is our own finding and says something true about the
-   * recording, so it is kept; any other raw reason is a transport string and
-   * stays in the log.
+   * A content-policy block is the provider's own finding about the recording,
+   * so the user is told; any other raw reason is a transport string and stays
+   * in the log.
    */
-  private terminalReason(raw: string): string {
-    return raw === TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR
-      ? `Audio transcription failed: ${raw}`
+  private terminalReason(error: unknown): string {
+    return error instanceof TranscriptionResponseError &&
+      error.issue === TranscriptionResponseIssue.BLOCKED
+      ? TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE
       : TRANSCRIPTION_PROVIDER_FAILED_MESSAGE;
   }
 
@@ -501,7 +557,10 @@ export class TranscriptionManager implements OnModuleInit {
       // pass every "has a transcript" check while telling the user nothing.
       transcript = result.text.trim();
       if (transcript.length === 0) {
-        throw new Error(TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR);
+        throw new TranscriptionResponseError(
+          TranscriptionResponseIssue.EMPTY,
+          TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR,
+        );
       }
     } catch (error: unknown) {
       // The user got no transcript, so the hold goes back rather than being

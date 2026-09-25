@@ -432,6 +432,82 @@ language.
 
 Runbook: [`docs/11-runbooks/runbook-voice-note-transcription-failed.md`](../docs/11-runbooks/runbook-voice-note-transcription-failed.md).
 
+## Solved: Gemini answered 200 with 0 characters, and one empty answer ended the job (2026-09-25)
+
+Measured live: Gemini 2.5 Flash spent 1002 completion tokens on a clip another
+run did in 453 (thinking), and once returned HTTP 200 with
+`received 0 characters — prompt=207 completion=158`. An empty transcript was
+`TERMINAL`, so the video's `audioStatus` went `TRANSCRIPTION_FAILED` on the
+first try.
+
+1. **Thinking off, temperature 0.** `buildGeminiGenerationConfig`
+   (`utilities/gemini-transcription-response.utility.ts`) puts
+   `temperature: 0`, the granted `maxOutputTokens` and — only for
+   `GEMINI_THINKING_OFF_MODEL_PREFIXES` (`gemini-2.5-flash*`, so Flash and
+   Flash-Lite) — `thinkingConfig: { thinkingBudget: 0 }` in ONE
+   `generationConfig`. 2.5 Pro 400s on 0; 2.0 / 3.x / unknown models get no
+   thinking field. Adding a model family = one prefix in that constant, plus a
+   case in `gemini-transcription-response.utility.spec.ts`.
+2. **Read the response part by part.** Only non-`thought` parts are
+   transcript. `finishReason` and `promptFeedback.blockReason` are read and
+   logged with token counts (never the text). A block
+   (`GEMINI_BLOCKED_FINISH_REASONS`) → `TranscriptionResponseError`
+   `BLOCKED` → `TERMINAL`, user reads `TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE`.
+   `MAX_TOKENS` → `TRUNCATED` → `INCOMPLETE_RESPONSE`: next model, no
+   same-model retry (same ceiling, same cut). Reasoning-only → `THOUGHT_ONLY`
+   → treated as empty.
+3. **One retry on an empty answer.** `EMPTY_RESPONSE` gets ONE same-model
+   retry per JOB (`walk.emptyRetryUsed`, like `backoffUsed`, no delay). The
+   retry is the next `providerAttempt`, so its request id is `…:GEMINI:2` —
+   the existing per-call suffix, not a new scheme — and a fresh hold; the
+   empty one was already released in `attemptCandidate`'s catch. Then the
+   walk moves to the next candidate (provider NOT blocked). All inside
+   `TRANSCRIPTION_MAX_PROVIDER_CALLS`. A credit refusal on the retry still
+   ends the walk (rule 37 item 18).
+
+Classification lives in ONE place: `classifyTranscriptionFailure` reads the
+typed `issue`, never the message. A plain `Error` with the empty-transcript
+text stays `TERMINAL` — only the typed error retries.
+
+**Deliberately not done — silence detection for video.** `volumedetect` is
+cheap, but the honest outcome needs a new `VideoAudioStatus` in
+`@claw/shared-types` (all 18 services affected), and reusing `TRANSCRIBED`
+with no provider would mislead the UI and the model. A silent track still ends
+`TRANSCRIPTION_FAILED` after two released holds.
+
+Tests: `gemini-transcription.adapter.spec.ts` (config per model, parts,
+finish reasons), `gemini-transcription-response.utility.spec.ts`,
+`transcription-error.utility.spec.ts`, the "a 200 that is not a transcript"
+block of `transcription.manager.spec.ts`, and the empty / credit-refusal
+cases of `transcription-metering.spec.ts`.
+
+## Speech OUT: read aloud is a background job, not a request (2026-09-25)
+
+Transcription is speech in; "Read aloud" is speech out and lives in
+chat-service, but the two are benchmarked together
+(`scripts/qa-lab/media-latency-bench.mjs`) and fail in the same way when forced
+through one synchronous request. Measured: Gemini TTS renders ~36 chars/s, so
+any reply over ~1,200 characters died at nginx's 60 s.
+
+When you touch read aloud:
+
+1. **Never make a speech request wait on a provider.** `POST
+/chat-messages/:id/speech` answers 200 READY / 202 GENERATING;
+   `SpeechJobManager` does the work; `GET` is the poll.
+2. **Segment, then meter per segment.** `segmentSpeakableText` (first ≤ 160,
+   rest ≤ 600, sentence → clause → space). One hold per attempt per segment,
+   requestId `tts:<msg>:<hash>:g<gen>:seg<n>:<attempt>`; store before finalize;
+   release on a failed store; a credit refusal stops every segment.
+3. **One job per reply across replicas** via `SpeechJobLockStore` (Redis
+   `SET NX PX`). Do not replace it with an in-process map — prod runs 4 replicas.
+4. **Bounded everything.** Job deadline 3 min; per-attempt timeout 12 s + 60
+   ms/char (≤ 40 s), one timeout retry per segment; the player polls every 700 ms
+   for at most 258 polls and only from the mounted player.
+5. **Prove it** with `node scripts/qa-lab/media-latency-bench.mjs` (it now
+   records `postMs`, `firstAudioMs` and time-to-READY per size) and
+   `qa/test-multimodal.sh` (polls to READY, replay must be HTTP 200 with no new
+   `TTS` CONSUMPTION row).
+
 ## Verify
 
 ```bash

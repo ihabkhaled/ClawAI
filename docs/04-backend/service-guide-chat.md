@@ -793,45 +793,85 @@ used" note. Still-processing and failed videos say so (plan limits named).
   digest. Details: `apps/claw-chat-service/CLAUDE.md`, rule 42 item 16, rule 51
   item 13, ADR-120 addendum.
 
-## "Read aloud" — text-to-speech of a reply (multimodal batch 9, 2026-09-25)
+## "Read aloud" — progressive text-to-speech of a reply (batch 9; async since 2026-09-25)
 
 Its own capability, endpoint, player and PAYG surface — never mixed with
-transcription (ADR-120 addendum).
+transcription (ADR-120 addenda). **Asynchronous and segmented since
+2026-09-25**: measured live, Gemini `gemini-2.5-flash-preview-tts` renders
+~36 characters/s, so a synchronous reading of any reply over ~1,200
+characters could never finish inside nginx's 60 s (4,000 chars: 0/3, every
+one a 504). Our own overhead was 82–216 ms.
 
-- **Routes** (`ChatSpeechController`, JWT): `GET /chat-messages/speech/availability`
-  → `{ available, reason: SpeechUnavailableReason | null }` (plan off →
-  `PLAN_DISABLED`; no enabled TTS_VOICE candidate with a connector key →
-  `NO_VOICE_CONFIGURED`; entitlements unreadable → `TEMPORARILY_UNAVAILABLE`), and
-  `POST /chat-messages/:id/speech` (Zod params, id `^[A-Za-z0-9_-]{1,64}$`) →
-  `{ fileId, mimeType, filename, truncated, characters, cached }`.
-- **Order** (`MessageSpeechService`): owner else 404 (same as a missing id) →
-  `assertTextToSpeechAccess` 403 `PLAN_FEATURE_DISABLED` before any hold → speakable
-  text (`speakable-text.utility.ts`: code dropped, links to their text, URLs to
-  their host, markers stripped; capped at 4,000 code points at a sentence end,
-  `truncated`) → replay `metadata.speech` when its content hash matches and the
-  file still exists (no hold, no call; an unanswerable existence check replays) →
-  `SpeechSynthesisManager` → store via file-service
-  `POST /internal/files/store-generated-audio` → `metadata.speech` (never bytes).
-  Concurrent requests for one reply on a replica share one synthesis.
-- **Candidates**: `TtsVoiceCandidatesClient` (routing TTS_VOICE, 60 s cache).
-  `toSpeechCandidates` keeps only Gemini `…-tts` models and OpenAI `tts-1` /
-  `tts-1-hd` — models it can meter exactly. A provider with no connector key
-  (`SpeechConnectorClient`, key fetched fresh, only yes/no cached) is skipped
-  BEFORE any hold.
-- **Metering** (`PaygSurface.TTS`, one hold per provider attempt, requestId
-  `tts:<msg>:<contentHash>:g<generation>:<n>`): OpenAI reserves / finalizes
-  `ttsCharacters`; Gemini reserves text tokens + 16 and 4 output tokens per
-  character (≤ the admin ceiling), sends `hold.maxOutputTokens`, finalizes on
-  `usageMetadata`. Provider rejection / outage → release PROVIDER_ERROR, next
-  candidate. 402, clamped hold (released CANCELLED), unreachable meter (503) and a
-  deadline (released TIMEOUT, 504) END the walk. None configured → 503
-  `TTS_UNAVAILABLE`; all failed → 502 `TTS_FAILED`; nothing speakable / not an
-  assistant reply → 422 `TTS_NOTHING_TO_READ`.
-- **Audio**: Gemini PCM (`audio/L16;rate=24000`) wrapped by `pcm16ToWav` (canonical
-  44-byte RIFF header); OpenAI MP3 via `httpPostBinary`. Fixed provider hosts, not
-  the connector base URL.
-- Log line per attempt: `ttsAttempt {messageId, provider, model, requestId,
-outcome, latencyMs}` — no text, no key.
+- **Routes** (`ChatSpeechController`, JWT; Zod params, id `^[A-Za-z0-9_-]{1,64}$`):
+  - `GET /chat-messages/speech/availability` → `{ available, reason }` (unchanged).
+  - `POST /chat-messages/:id/speech` → **200** `{status: READY, …}` when a stored
+    reading of the same text exists, else **202** `{status: GENERATING, …}` and a
+    background job starts. Never waits on a provider.
+  - `GET /chat-messages/:id/speech` → the poll. Owner-only (404 like a missing
+    id), free, never locks/reserves.
+  - Body (both): `{ status: SpeechJobStatus (NONE|GENERATING|READY|PARTIAL|FAILED),
+segments: [{index, fileId, mimeType, characters}], totalSegments, truncated,
+errorCode }`. `NONE` = never read, or the stored reading is of other text.
+- **Order** (`MessageSpeechService.start`): owner else 404 → `assertTextToSpeechAccess`
+  403 before anything paid → speakable text (`speakable-text.utility.ts`, capped at
+  **12,000** code points at a sentence end, `truncated`) → READY + same content hash
+  - first file still exists → 200 replay (no lock, no hold) → GENERATING and not
+    stale → 202 as is (never a second job) → **Redis job lock**
+    (`SpeechJobLockStore`, `SET NX PX`, key `claw:chat:speech:job:<messageId>`, TTL
+    = job deadline + 30 s, compare-and-delete release) → lost the lock → 202
+    GENERATING (a sibling replica owns it) → won → re-read, write GENERATING state
+    under a **new generation**, `void SpeechJobManager.run(...)`, 202. Redis
+    unreachable → 503 `TTS_FAILED`, nothing paid (prod runs 4 chat replicas; a job
+    that cannot prove it is alone does not start).
+- **Segments** (`speech-segments.utility.ts`): first ≤ 160 code points (first audio
+  in ~4 s), then ≤ 600; cut at the last sentence end / line break, else a clause
+  break (`, ; : ، ؛ 、 ，` or a spaced dash), else a space — never mid-word; only a
+  break-less run (CJK without marks) is cut at the limit. Deterministic, so a
+  resumed job's indices match the stored ones.
+- **Job** (`SpeechJobManager`): at most `SPEECH_SEGMENT_CONCURRENCY` = 3 provider
+  calls in flight, segment 1 queued first. Per segment: `SpeechSynthesisManager`
+  walk → store the WAV/MP3 (`reply-<msg>-<n>.wav`) via file-service
+  `POST /internal/files/store-generated-audio` → append to `metadata.speech.segments`
+  (index order; writes are chained and re-read the message so other metadata keys
+  survive) → **finalize** on the measured units. A store/record failure
+  **releases** that hold (CANCELLED, log `reason=STORE_FAILED`). A provider
+  failure fails only its segment; a credit refusal / clamp / meter down / no voice
+  / deadline stops every worker (rule 37 item 18). End state: READY, **PARTIAL**
+  (stored segments play and are charged; failed ones were released — the player
+  says so), or FAILED; then the lock is released. The job never throws; a meter
+  error in settlement is logged (`outcome=FINALIZE_FAILED|RELEASE_FAILED`).
+- **Deadline**: `SPEECH_JOB_DEADLINE_MS` = 180 s from `startedAt`. No attempt starts
+  unless it, its store (10 s) and its settlement (5 s) fit. A GENERATING state
+  older than the lock TTL is **stale**: GET reports PARTIAL/FAILED with
+  `TTS_FAILED`, the next POST resumes (keeps stored segments, new generation).
+- **Walk per segment** (`SpeechSynthesisManager.synthesize`): candidates from
+  routing `TTS_VOICE` (60 s cache; Gemini `…-tts` and OpenAI `tts-1`/`tts-1-hd`
+  only). Per-attempt timeout = min(candidate, 12 s + 60 ms/char capped at 40 s,
+  job window). A **timeout is retried once on the same candidate**, then the next
+  candidate; a rejection moves on at once. A key-less provider is skipped before
+  any hold.
+- **Metering** (`PaygSurface.TTS`, one hold per attempt, requestId
+  `tts:<msg>:<contentHash>:g<generation>:seg<n>:<attempt>`, ≤ 128 chars): OpenAI
+  reserves / finalizes the segment's `ttsCharacters`; Gemini reserves text tokens
+  - 16 and 4 output tokens per character (≤ admin ceiling), sends
+    `hold.maxOutputTokens`, finalizes on `usageMetadata`. A second POST while a job
+    runs makes no hold at all.
+- **Legacy**: a v1 `metadata.speech` (one `fileId`, before segmenting) reads as a
+  READY one-segment state — old readings still replay free.
+- **Logs**: `speech: job started messageId=… generation=… segments=… kept=…`,
+  `ttsAttempt {messageId, segment, provider, model, requestId, outcome, latencyMs}`,
+  `ttsSegment … failed code=… stop=…`, `ttsSettlement reservationId=… outcome=…`,
+  `ttsJob messageId=… status=… segments=x/y ms=…`. Never a user id or a balance.
+- **Frontend**: `useMessageSpeech` (button) POSTs once and seeds the
+  `queryKeys.speech.state` cache; a cached READY replays with no request.
+  `MessageSpeechPlayer` mounts `MessageSpeechPlayback` only while open;
+  `useMessageSpeechPlayer` is the ONLY observer that polls (700 ms, while
+  GENERATING, capped at 258 polls = 3 min) and plays segments in index order via
+  `useSpeechSegmentBlobs` (authenticated `getSegmentAudio`, current + next
+  preloaded, each fetched once, URLs revoked). Tests:
+  `message-speech.service.spec.ts`, `speech-segments.utility.spec.ts`,
+  `speech-job-state.utility.spec.ts`, `speech-gateway-timeout.spec.ts`,
+  frontend `message-speech-player.test.tsx`.
 
 ## Reasoning never reaches the answer (rule 56, 2026-09-25)
 

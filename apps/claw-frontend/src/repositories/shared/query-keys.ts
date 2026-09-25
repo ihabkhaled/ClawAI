@@ -208,13 +208,16 @@ export const queryKeys = {
   },
   // Read aloud (text-to-speech, multimodal batch 9). `availability` is ONE
   // query for the whole page — every bubble reads the same entry. `synthesize`
-  // is a MUTATION key, so the player can find the button's request through
-  // useMutationState without prop-drilling; `player` holds the per-message
-  // open flag in the cache instead of module-level state.
+  // is a MUTATION key (the POST that starts a reading), so the player can find
+  // the button's request through useMutationState without prop-drilling;
+  // `state` is the progressive job's state (seeded by that POST, then polled
+  // while GENERATING); `player` holds the per-message open flag in the cache
+  // instead of module-level state.
   speech: {
     all: ['speech'] as const,
     availability: () => [...queryKeys.speech.all, 'availability'] as const,
     synthesize: (messageId: string) => [...queryKeys.speech.all, 'synthesize', messageId] as const,
+    state: (messageId: string) => [...queryKeys.speech.all, 'state', messageId] as const,
     player: (messageId: string) => [...queryKeys.speech.all, 'player', messageId] as const,
   },
   files: {

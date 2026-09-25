@@ -8,6 +8,7 @@ import { SpeechConnectorClient } from '../clients/speech-connector.client';
 import { SpeechProviderClient } from '../clients/speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../clients/tts-voice-candidates.client';
 import {
+  SPEECH_SEGMENT_TIMEOUT_RETRIES,
   SPEECH_STORE_FAILED_LOG_REASON,
   SPEECH_STORE_FAILED_RELEASE_REASON,
   SPEECH_UNIT_PRICED_OUTPUT_TOKENS,
@@ -43,8 +44,9 @@ import {
 } from '../utilities/speech.utility';
 
 /**
- * Walks the admin's TTS_VOICE candidates for one "Read aloud" (multimodal
- * batch 9) and meters every paid attempt on `PaygSurface.TTS`:
+ * Walks the admin's TTS_VOICE candidates for ONE SEGMENT of a progressive
+ * "Read aloud" (multimodal batch 9; segmented 2026-09-25) and meters every
+ * paid attempt on `PaygSurface.TTS`:
  *
  *   key check -> reserve (expected units) -> provider call -> [caller
  *   stores the audio] -> settle: finalize (measured units) | release
@@ -61,8 +63,9 @@ import {
  * - A provider with no connector key is skipped BEFORE any hold.
  * - A provider rejection or outage releases its hold and moves on under a
  *   distinct requestId; a credit refusal, a clamped hold or an unverifiable
- *   meter ENDS the walk (rule 37 item 18); a deadline releases and ends it
- *   too, so the user waits for one timeout, not one per candidate.
+ *   meter ENDS the walk (rule 37 item 18). A timed-out attempt is released
+ *   (TIMEOUT) and retried ONCE on the same candidate under a new requestId,
+ *   then the walk moves on; no attempt starts past the job deadline.
  */
 @Injectable()
 export class SpeechSynthesisManager {
@@ -90,36 +93,42 @@ export class SpeechSynthesisManager {
     return false;
   }
 
+  /**
+   * One SEGMENT through the candidate walk. Per candidate: an attempt, and on
+   * a timeout ONE retry on the same candidate (a new requestId, a new hold)
+   * before the next candidate. A provider rejection moves on at once. A credit
+   * refusal / clamp / unverifiable meter throws from `reserve` and ends the
+   * walk (rule 37 item 18); so does the job deadline.
+   */
   async synthesize(input: SpeechSynthesisInput): Promise<SpeechSynthesisResult> {
     const candidates = await this.candidates();
     const attempts: SpeechAttemptRecord[] = [];
-    // The request's one deadline (set at entry, below nginx's read timeout),
-    // minus the store reserve: the user always gets this service's
-    // TTS_FAILED, never a gateway 504, and a paid attempt never starts
-    // without time left to store its audio.
-    for (const [index, candidate] of candidates.entries()) {
-      const timeoutMs = speechAttemptTimeoutMs(candidate.timeoutMs, input.deadlineAt, Date.now());
-      if (timeoutMs === null) {
-        throw new BusinessException(
-          TTS_FAILED_MESSAGE,
-          TTS_FAILED_CODE,
-          HttpStatus.GATEWAY_TIMEOUT,
+    for (const candidate of candidates) {
+      for (let retry = 0; retry <= SPEECH_SEGMENT_TIMEOUT_RETRIES; retry += 1) {
+        const timeoutMs = speechAttemptTimeoutMs(
+          candidate.timeoutMs,
+          input.segment.characters,
+          input.deadlineAt,
+          Date.now(),
         );
-      }
-      const result = await this.attempt(input, { ...candidate, timeoutMs }, index);
-      attempts.push(result.record);
-      this.logger.log(
-        `ttsAttempt ${JSON.stringify({ messageId: input.messageId, ...result.record })}`,
-      );
-      if (result.delivered !== undefined) {
-        return { ...result.delivered, candidate, attempts };
-      }
-      if (result.record.outcome === SpeechAttemptOutcome.TIMED_OUT) {
-        throw new BusinessException(
-          TTS_FAILED_MESSAGE,
-          TTS_FAILED_CODE,
-          HttpStatus.GATEWAY_TIMEOUT,
+        if (timeoutMs === null) {
+          throw new BusinessException(
+            TTS_FAILED_MESSAGE,
+            TTS_FAILED_CODE,
+            HttpStatus.GATEWAY_TIMEOUT,
+          );
+        }
+        const result = await this.attempt(input, { ...candidate, timeoutMs }, attempts.length + 1);
+        attempts.push(result.record);
+        this.logger.log(
+          `ttsAttempt ${JSON.stringify({ messageId: input.messageId, segment: input.segment.index + 1, ...result.record })}`,
         );
+        if (result.delivered !== undefined) {
+          return { ...result.delivered, candidate, attempts };
+        }
+        if (result.record.outcome !== SpeechAttemptOutcome.TIMED_OUT) {
+          break;
+        }
       }
     }
     const nothingTried = attempts.every(
@@ -137,7 +146,7 @@ export class SpeechSynthesisManager {
   private async attempt(
     input: SpeechSynthesisInput,
     candidate: SpeechCandidate,
-    index: number,
+    attemptNumber: number,
   ): Promise<SpeechAttemptResult> {
     const started = Date.now();
     const record = (
@@ -155,16 +164,16 @@ export class SpeechSynthesisManager {
       return { record: record(SpeechAttemptOutcome.NOT_CONFIGURED, null) };
     }
     // Throws the terminal 402 / 503 itself: a refusal never reaches the next candidate.
-    const held = await this.reserve(input, candidate, index);
+    const held = await this.reserve(input, candidate, attemptNumber);
     try {
       const audio = await this.provider.synthesize({
         candidate,
-        text: input.speakable.text,
+        text: input.segment.text,
         apiKey,
         maxOutputTokens: held.hold.maxOutputTokens,
       });
       // Measured now, settled after the store: the hold stays open until then.
-      const settlement = speechSettlement(held, candidate, input.speakable.characters, audio.usage);
+      const settlement = speechSettlement(held, candidate, input.segment.characters, audio.usage);
       return {
         record: record(SpeechAttemptOutcome.SUCCEEDED, held.requestId),
         delivered: { audio, settlement },
@@ -182,21 +191,22 @@ export class SpeechSynthesisManager {
   private async reserve(
     input: SpeechSynthesisInput,
     candidate: SpeechCandidate,
-    index: number,
+    attemptNumber: number,
   ): Promise<SpeechHold> {
     const perCharacter = isPerCharacterPriced(candidate);
     const requestId = speechRequestId(
       input.messageId,
-      input.speakable.contentHash,
+      input.contentHash,
       input.generation,
-      index,
+      input.segment.index,
+      attemptNumber,
     );
     const promptTokens = perCharacter
       ? 0
-      : geminiSpeechPromptTokens(estimateTextTokens(input.speakable.text));
+      : geminiSpeechPromptTokens(estimateTextTokens(input.segment.text));
     const outputTokens = perCharacter
       ? SPEECH_UNIT_PRICED_OUTPUT_TOKENS
-      : geminiSpeechOutputTokens(input.speakable.characters, candidate.maxTokens);
+      : geminiSpeechOutputTokens(input.segment.characters, candidate.maxTokens);
     let hold: SpeechHold['hold'];
     try {
       hold = await this.accessControl.reserveCredit({
@@ -208,7 +218,7 @@ export class SpeechSynthesisManager {
         promptTokens,
         cachedPromptTokens: 0,
         requestedMaxOutputTokens: outputTokens,
-        ...(perCharacter ? { ttsCharacters: input.speakable.characters } : {}),
+        ...(perCharacter ? { ttsCharacters: input.segment.characters } : {}),
       });
     } catch (error: unknown) {
       this.logger.warn(`reserve: TTS hold refused requestId=${requestId}`);

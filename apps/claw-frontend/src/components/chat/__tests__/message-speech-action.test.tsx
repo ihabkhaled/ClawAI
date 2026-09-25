@@ -11,7 +11,8 @@ const mockSynthesize = vi.fn();
 vi.mock('@/repositories/chat/message-speech.repository', () => ({
   messageSpeechRepository: {
     getAvailability: (...args: unknown[]) => mockGetAvailability(...args),
-    synthesize: (...args: unknown[]) => mockSynthesize(...args),
+    start: (...args: unknown[]) => mockSynthesize(...args),
+    getState: vi.fn(),
   },
 }));
 vi.mock('@/lib/i18n', () => ({
@@ -65,12 +66,11 @@ describe('MessageSpeechAction', () => {
 
   it('asks for speech once when available and pressed', async () => {
     mockSynthesize.mockResolvedValue({
-      fileId: 'file-1',
-      mimeType: 'audio/wav',
-      filename: 'reply.wav',
+      status: 'READY',
+      segments: [{ index: 0, fileId: 'file-1', mimeType: 'audio/wav', characters: 20 }],
+      totalSegments: 1,
       truncated: false,
-      characters: 20,
-      cached: true,
+      errorCode: null,
     });
     renderAction();
     await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());

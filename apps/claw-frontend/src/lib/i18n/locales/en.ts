@@ -364,7 +364,13 @@ export const en: TranslationDictionary = {
       stop: 'Stop reading aloud',
       loading: 'Preparing audio…',
       playerLabel: 'Read-aloud audio',
-      download: 'Download audio',
+      play: 'Play',
+      pause: 'Pause',
+      paused: 'Paused.',
+      progress: 'Reading part {current} of {total}…',
+      waitingNext: 'Preparing the next part…',
+      finished: 'Finished reading aloud.',
+      partial: 'Some parts of this reply could not be read aloud and were not charged.',
       truncated: 'Only the first part of this reply was read aloud.',
       unavailable: {
         planDisabled: 'Read aloud is not included in your plan.',
@@ -379,6 +385,7 @@ export const en: TranslationDictionary = {
         failed: 'The voice service could not read this reply. Try again.',
         generic: 'Could not read this reply aloud. Try again.',
         playback: 'The audio could not be loaded.',
+        timedOut: 'Read aloud took too long. Try again.',
       },
     },
     edit: {

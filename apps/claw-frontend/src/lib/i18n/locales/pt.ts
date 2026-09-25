@@ -365,7 +365,14 @@ export const pt: TranslationDictionary = {
       stop: 'Parar a leitura em voz alta',
       loading: 'Preparando o áudio…',
       playerLabel: 'Áudio da leitura em voz alta',
-      download: 'Baixar áudio',
+      play: 'Reproduzir',
+      pause: 'Pausar',
+      paused: 'Pausado.',
+      progress: 'Lendo a parte {current} de {total}…',
+      waitingNext: 'Preparando a próxima parte…',
+      finished: 'Leitura em voz alta concluída.',
+      partial:
+        'Algumas partes desta resposta não puderam ser lidas em voz alta e não foram cobradas.',
       truncated: 'Apenas a primeira parte desta resposta foi lida em voz alta.',
       unavailable: {
         planDisabled: 'A leitura em voz alta não está incluída no seu plano.',
@@ -381,6 +388,7 @@ export const pt: TranslationDictionary = {
         failed: 'O serviço de voz não conseguiu ler esta resposta. Tente novamente.',
         generic: 'Não foi possível ler esta resposta em voz alta. Tente novamente.',
         playback: 'Não foi possível carregar o áudio.',
+        timedOut: 'A leitura em voz alta demorou demais. Tente novamente.',
       },
     },
     edit: {

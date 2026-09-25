@@ -284,7 +284,7 @@ describe('TranscriptionManager — PAYG metering', () => {
     expect(h.wire()[1]?.body).toEqual({ reservationId: 'res-1', reason: 'TIMEOUT' });
   });
 
-  it('an empty transcript releases the hold instead of charging for silence', async () => {
+  it('an empty transcript releases the hold instead of charging for silence — retry included', async () => {
     mockedGemini.mockResolvedValue({ text: '  ' });
     const h = await buildHarness(buildFile(), [GEMINI], () =>
       Promise.resolve(jsonResponse(200, heldReply(1_048))),
@@ -292,8 +292,39 @@ describe('TranscriptionManager — PAYG metering', () => {
 
     await h.manager.handleJob({ fileId: 'file-1', userId: 'uploader-1' });
 
-    expect(paths(h)).toEqual(['reserve', 'release']);
+    // One same-model retry after an empty 200, under its own request id; both
+    // holds go back.
+    expect(paths(h)).toEqual(['reserve', 'release', 'reserve', 'release']);
+    const reserveIds = h
+      .wire()
+      .filter((c) => c.path === 'reserve')
+      .map((c) => c.body.requestId);
+    expect(reserveIds).toEqual(['transcription:file-1:GEMINI', 'transcription:file-1:GEMINI:2']);
     expect(failedPayload(h).reasonCode).toBe('EMPTY_TRANSCRIPT');
+  });
+
+  it('a credit refusal on the empty-answer retry still ends the walk (rule 37 item 18)', async () => {
+    mockedGemini.mockResolvedValue({ text: '' });
+    mockedOpenAi.mockResolvedValue({ text: 'must never be called', durationSeconds: 1 });
+    let n = 0;
+    const h = await buildHarness(buildFile(), [GEMINI, OPENAI], () => {
+      n += 1;
+      return Promise.resolve(
+        n === 1
+          ? jsonResponse(200, heldReply(1_048))
+          : jsonResponse(402, {
+              errorCode: BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
+              availableMicroUsd: 0,
+            }),
+      );
+    });
+
+    await h.manager.handleJob({ fileId: 'file-1', userId: 'uploader-1' });
+
+    expect(mockedGemini).toHaveBeenCalledTimes(1);
+    expect(mockedOpenAi).not.toHaveBeenCalled();
+    expect(paths(h)).toEqual(['reserve', 'release', 'reserve']);
+    expect(failedPayload(h).reasonCode).toBe('INSUFFICIENT_CREDIT');
   });
 
   it('modality fall-through takes a SECOND hold under a distinct requestId, the first released', async () => {

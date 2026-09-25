@@ -367,7 +367,13 @@ export const ja: TranslationDictionary = {
       stop: '読み上げを停止',
       loading: '音声を準備しています…',
       playerLabel: '読み上げ音声',
-      download: '音声をダウンロード',
+      play: '再生',
+      pause: '一時停止',
+      paused: '一時停止中。',
+      progress: '{total} 件中 {current} 件目を読み上げています…',
+      waitingNext: '次の部分を準備しています…',
+      finished: '読み上げが終わりました。',
+      partial: 'この回答の一部は読み上げできず、その分は課金されていません。',
       truncated: 'この回答は最初の部分だけが読み上げられました。',
       unavailable: {
         planDisabled: '読み上げはご利用のプランに含まれていません。',
@@ -383,6 +389,7 @@ export const ja: TranslationDictionary = {
         failed: '音声サービスがこの回答を読み上げられませんでした。もう一度お試しください。',
         generic: 'この回答を読み上げられませんでした。もう一度お試しください。',
         playback: '音声を読み込めませんでした。',
+        timedOut: '読み上げに時間がかかりすぎました。もう一度お試しください。',
       },
     },
     edit: {

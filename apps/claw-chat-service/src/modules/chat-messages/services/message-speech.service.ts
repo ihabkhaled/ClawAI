@@ -1,54 +1,57 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { SpeechUnavailableReason } from '@claw/shared-types';
 
+import { SpeechJobStatus } from '../../../common/enums';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { MessageRole } from '../../../generated/prisma';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { SpeechFileStoreClient } from '../clients/speech-file-store.client';
 import {
   SPEECH_MAX_CHARACTERS,
-  SPEECH_REQUEST_BUDGET_MS,
+  SPEECH_STATE_VERSION,
   TEXT_TO_SPEECH_PLAN_FEATURE,
   TTS_FAILED_CODE,
-  TTS_FAILED_MESSAGE,
+  TTS_JOB_LOCK_UNAVAILABLE_MESSAGE,
   TTS_NOTHING_TO_READ_CODE,
   TTS_NOTHING_TO_READ_MESSAGE,
 } from '../constants/speech.constants';
+import { SpeechJobManager } from '../managers/speech-job.manager';
 import { SpeechSynthesisManager } from '../managers/speech-synthesis.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
+import { SpeechJobLockStore } from '../repositories/speech-job-lock.store';
 import type {
-  MessageSpeechResponse,
+  MessageSpeechStartResult,
+  MessageSpeechStateResponse,
   SpeakableText,
   SpeechAvailability,
+  SpeechJobState,
   SpeechSourceMessage,
-  SpeechSynthesisResult,
-  StoredSpeech,
 } from '../types/speech.types';
-import { prepareSpeakableText } from '../utilities/speakable-text.utility';
 import {
-  readStoredSpeech,
-  speechFilename,
-  speechStoreTimeoutMs,
-  toSpeechResponse,
-  withStoredSpeech,
-} from '../utilities/speech.utility';
+  isStaleSpeechJob,
+  readSpeechJobState,
+  toSpeechStateResponse,
+  withSpeechJobState,
+} from '../utilities/speech-job-state.utility';
+import { segmentSpeakableText } from '../utilities/speech-segments.utility';
+import { prepareSpeakableText } from '../utilities/speakable-text.utility';
 import { AccessControlService } from './access-control.service';
 
 /**
- * "Read aloud" — text-to-speech of one assistant reply (multimodal batch 9).
+ * "Read aloud" — progressive text-to-speech of one assistant reply
+ * (multimodal batch 9; asynchronous since 2026-09-25, ADR-120 addendum).
  *
- * Order is load-bearing: ownership (404 for a stranger, like a missing id) →
- * plan gate (403 before anything paid) → replay a stored synthesis of the
- * SAME text for free → synthesise (metered, `SpeechSynthesisManager`; the hold
- * stays OPEN) → store the audio as the owner's file → record `metadata.speech`
- * (never the bytes) → finalize the hold. A store or record failure RELEASES
- * the hold instead: the user never pays for audio they did not receive.
- * Concurrent requests for the same reply on one replica share one synthesis.
+ * `start` (POST) never waits on a provider. Order is load-bearing: ownership
+ * (404 for a stranger, like a missing id) → plan gate (403 before anything
+ * paid) → speakable text → a READY reading of the SAME text replays for free
+ * (200) → a running job is reported, never doubled (202) → otherwise the
+ * reply's Redis job lock is taken, `metadata.speech` is written GENERATING
+ * and `SpeechJobManager` runs in the background (202). A losing replica
+ * answers the state as it is. `getState` (GET) is the poll: owner-only, free.
  */
 @Injectable()
 export class MessageSpeechService {
   private readonly logger = new Logger(MessageSpeechService.name);
-  private readonly inFlight = new Map<string, Promise<MessageSpeechResponse>>();
 
   constructor(
     private readonly messages: ChatMessagesRepository,
@@ -56,6 +59,8 @@ export class MessageSpeechService {
     private readonly accessControl: AccessControlService,
     private readonly synthesis: SpeechSynthesisManager,
     private readonly files: SpeechFileStoreClient,
+    private readonly jobs: SpeechJobManager,
+    private readonly lock: SpeechJobLockStore,
   ) {}
 
   async getAvailability(userId: string): Promise<SpeechAvailability> {
@@ -73,11 +78,173 @@ export class MessageSpeechService {
       : { available: false, reason: SpeechUnavailableReason.NO_VOICE_CONFIGURED };
   }
 
-  async synthesize(userId: string, messageId: string): Promise<MessageSpeechResponse> {
-    // ONE end-to-end deadline: replay check, provider attempts and the store.
-    const deadlineAt = Date.now() + SPEECH_REQUEST_BUDGET_MS;
+  /** The poll: the reading of the reply's CURRENT text, as stored. Owner-only; nothing paid. */
+  async getState(userId: string, messageId: string): Promise<MessageSpeechStateResponse> {
+    const message = await this.loadOwnedReply(userId, messageId);
+    const speakable = this.speakable(message);
+    return toSpeechStateResponse(
+      readSpeechJobState(message.metadata),
+      speakable.contentHash,
+      Date.now(),
+    );
+  }
+
+  async start(userId: string, messageId: string): Promise<MessageSpeechStartResult> {
     const message = await this.loadOwnedReply(userId, messageId);
     await this.accessControl.assertTextToSpeechAccess(userId);
+    const speakable = this.speakable(message);
+    const now = Date.now();
+    const stored = readSpeechJobState(message.metadata);
+    const current = stored?.contentHash === speakable.contentHash ? stored : null;
+    if (current !== null && (await this.isReplayable(current, userId))) {
+      this.logger.log(
+        `speech: replay messageId=${messageId} segments=${String(current.segments.length)}`,
+      );
+      return this.answer(HttpStatus.OK, current, speakable, now);
+    }
+    if (current?.status === SpeechJobStatus.GENERATING && !isStaleSpeechJob(current, now)) {
+      return this.answer(HttpStatus.ACCEPTED, current, speakable, now);
+    }
+    // A READY reading we could not replay (its file is gone) is redone in full.
+    return this.launch(
+      userId,
+      messageId,
+      speakable,
+      now,
+      current?.status === SpeechJobStatus.READY,
+    );
+  }
+
+  /** Takes the reply's job lock and starts the background job, or reports the sibling's. */
+  private async launch(
+    userId: string,
+    messageId: string,
+    speakable: SpeakableText,
+    now: number,
+    discardReady: boolean,
+  ): Promise<MessageSpeechStartResult> {
+    const lockToken = await this.acquireLock(messageId);
+    if (lockToken === null) {
+      // A sibling replica (or a concurrent request) owns the job: report, never double.
+      return this.answer(HttpStatus.ACCEPTED, await this.reload(messageId), speakable, now, true);
+    }
+    let state: SpeechJobState;
+    try {
+      state = await this.beginJob(messageId, speakable, now, discardReady);
+    } catch (error: unknown) {
+      await this.lock.release(messageId, lockToken).catch(() => {});
+      throw error;
+    }
+    if (state.status === SpeechJobStatus.READY) {
+      // Finished by a sibling between our read and our lock.
+      await this.lock.release(messageId, lockToken).catch(() => {});
+      return this.answer(HttpStatus.OK, state, speakable, now);
+    }
+    void this.jobs.run({
+      userId,
+      messageId,
+      lockToken,
+      speakable,
+      segments: segmentSpeakableText(speakable.text),
+      state,
+    });
+    return this.answer(HttpStatus.ACCEPTED, state, speakable, now);
+  }
+
+  /**
+   * Under the lock: re-read (a sibling may just have finished), keep the
+   * segments a PARTIAL / FAILED / stale run already stored and charged, and
+   * write the new GENERATING state under a NEW generation — every requestId of
+   * this job is new, so no settled hold is ever reused (rule 37 item 15).
+   */
+  private async beginJob(
+    messageId: string,
+    speakable: SpeakableText,
+    now: number,
+    discardReady: boolean,
+  ): Promise<SpeechJobState> {
+    const message = await this.messages.findById(messageId);
+    if (message === null) {
+      throw new EntityNotFoundException('ChatMessage', messageId);
+    }
+    const latest = readSpeechJobState(message.metadata);
+    const sameText = latest?.contentHash === speakable.contentHash;
+    if (sameText && latest.status === SpeechJobStatus.READY && !discardReady) {
+      return latest;
+    }
+    const keep = sameText && latest.status !== SpeechJobStatus.READY ? latest.segments : [];
+    const state: SpeechJobState = {
+      version: SPEECH_STATE_VERSION,
+      status: SpeechJobStatus.GENERATING,
+      contentHash: speakable.contentHash,
+      generation: (latest?.generation ?? 0) + 1,
+      startedAt: new Date(now).toISOString(),
+      totalSegments: segmentSpeakableText(speakable.text).length,
+      characters: speakable.characters,
+      truncated: speakable.truncated,
+      segments: keep,
+      errorCode: null,
+    };
+    await this.messages.updateMetadata(messageId, withSpeechJobState(message.metadata, state));
+    this.logger.log(
+      `speech: job started messageId=${messageId} generation=${String(state.generation)} segments=${String(state.totalSegments)} kept=${String(keep.length)} characters=${String(state.characters)}`,
+    );
+    return state;
+  }
+
+  /**
+   * A READY reading whose first file still exists (null = file-service could
+   * not say; replay rather than charge twice).
+   */
+  private async isReplayable(state: SpeechJobState, userId: string): Promise<boolean> {
+    const first = state.segments.at(0);
+    return state.status !== SpeechJobStatus.READY || first === undefined
+      ? false
+      : (await this.files.exists(first.fileId, userId)) !== false;
+  }
+
+  /** The reply's Redis job lock, or null when a sibling owns it. Redis down → 503, nothing paid. */
+  private async acquireLock(messageId: string): Promise<string | null> {
+    try {
+      return await this.lock.acquire(messageId);
+    } catch {
+      this.logger.error(`speech: job lock unavailable messageId=${messageId}`);
+      throw new BusinessException(
+        TTS_JOB_LOCK_UNAVAILABLE_MESSAGE,
+        TTS_FAILED_CODE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  private async reload(messageId: string): Promise<SpeechJobState | null> {
+    const message = await this.messages.findById(messageId);
+    return message === null ? null : readSpeechJobState(message.metadata);
+  }
+
+  /**
+   * The state for this text. `generating` = a sibling owns the job but may
+   * not have written GENERATING yet: say so rather than NONE, so the client
+   * keeps polling instead of POSTing again.
+   */
+  private answer(
+    httpStatus: number,
+    state: SpeechJobState | null,
+    speakable: SpeakableText,
+    now: number,
+    generating = false,
+  ): MessageSpeechStartResult {
+    const body = toSpeechStateResponse(state, speakable.contentHash, now);
+    return {
+      httpStatus,
+      body:
+        generating && body.status === SpeechJobStatus.NONE
+          ? { ...body, status: SpeechJobStatus.GENERATING, truncated: speakable.truncated }
+          : body,
+    };
+  }
+
+  private speakable(message: SpeechSourceMessage): SpeakableText {
     const speakable = prepareSpeakableText(message.content, SPEECH_MAX_CHARACTERS);
     if (speakable.characters === 0) {
       throw new BusinessException(
@@ -86,16 +253,7 @@ export class MessageSpeechService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    const key = `${userId}:${messageId}:${speakable.contentHash}`;
-    const running = this.inFlight.get(key);
-    if (running !== undefined) {
-      return running;
-    }
-    const work = this.replayOrSynthesize(userId, message, speakable, deadlineAt).finally(() => {
-      this.inFlight.delete(key);
-    });
-    this.inFlight.set(key, work);
-    return work;
+    return speakable;
   }
 
   /** The assistant reply, or the same 404 a missing id gets (rules/16 IDOR). */
@@ -113,84 +271,5 @@ export class MessageSpeechService {
       );
     }
     return { id: message.id, content: message.content, metadata: message.metadata };
-  }
-
-  private async replayOrSynthesize(
-    userId: string,
-    message: SpeechSourceMessage,
-    speakable: SpeakableText,
-    deadlineAt: number,
-  ): Promise<MessageSpeechResponse> {
-    const stored = readStoredSpeech(message.metadata);
-    // null = file-service could not say; replay rather than charge twice.
-    if (
-      stored?.contentHash === speakable.contentHash &&
-      (await this.files.exists(stored.fileId, userId)) !== false
-    ) {
-      this.logger.log(`synthesize: replay messageId=${message.id} fileId=${stored.fileId}`);
-      return toSpeechResponse(stored, true);
-    }
-    const generation = (stored?.generation ?? 0) + 1;
-    const result = await this.synthesis.synthesize({
-      userId,
-      messageId: message.id,
-      speakable,
-      generation,
-      deadlineAt,
-    });
-    let speech: StoredSpeech;
-    try {
-      speech = await this.storeAudio(userId, message.id, speakable, result, generation, deadlineAt);
-      await this.messages.updateMetadata(message.id, withStoredSpeech(message.metadata, speech));
-    } catch (error: unknown) {
-      await this.synthesis.releaseUnstored(result.settlement);
-      throw error instanceof BusinessException
-        ? error
-        : new BusinessException(TTS_FAILED_MESSAGE, TTS_FAILED_CODE, HttpStatus.BAD_GATEWAY);
-    }
-    // Settled only now, on the units measured from the provider response.
-    await this.synthesis.settle(result.settlement);
-    return toSpeechResponse(speech, false);
-  }
-
-  /** The audio as the owner's file; what `metadata.speech` records about it. */
-  private async storeAudio(
-    userId: string,
-    messageId: string,
-    speakable: SpeakableText,
-    result: SpeechSynthesisResult,
-    generation: number,
-    deadlineAt: number,
-  ): Promise<StoredSpeech> {
-    const filename = speechFilename(messageId, result.audio.mimeType);
-    // The provider call is paid but its hold is still OPEN here. A store that
-    // fails or runs out of time answers TTS_FAILED, saves no audio, and the
-    // caller RELEASES the hold (chat-service CLAUDE.md, "Read aloud").
-    const timeoutMs = speechStoreTimeoutMs(deadlineAt, Date.now());
-    if (timeoutMs === null) {
-      this.logger.error(
-        `storeAudio: no time left to store the audio messageId=${messageId} provider=${result.candidate.provider} model=${result.candidate.model}`,
-      );
-      throw new BusinessException(TTS_FAILED_MESSAGE, TTS_FAILED_CODE, HttpStatus.GATEWAY_TIMEOUT);
-    }
-    const fileId = await this.files.store({
-      userId,
-      filename,
-      mimeType: result.audio.mimeType,
-      bytes: result.audio.bytes,
-      transcript: speakable.text,
-      timeoutMs,
-    });
-    return {
-      fileId,
-      filename,
-      mimeType: result.audio.mimeType,
-      provider: result.candidate.provider,
-      model: result.candidate.model,
-      characters: speakable.characters,
-      truncated: speakable.truncated,
-      contentHash: speakable.contentHash,
-      generation,
-    };
   }
 }

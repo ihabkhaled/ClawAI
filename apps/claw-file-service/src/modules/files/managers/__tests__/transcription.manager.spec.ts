@@ -19,8 +19,13 @@ import { PaygMeter } from '@claw/shared-entitlements';
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
 import { transcribeWithGemini } from '../../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../../adapters/openai-transcription.adapter';
+import { TranscriptionResponseIssue } from '../../../../common/enums';
+import { TranscriptionResponseError } from '../../../../common/errors';
 import {
   MAX_TRANSCRIBABLE_AUDIO_BYTES,
+  TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE,
+  TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR,
+  TRANSCRIPTION_INCOMPLETE_MESSAGE,
   TRANSCRIPTION_MAX_PROVIDER_CALLS,
   TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
   TRANSCRIPTION_NO_USABLE_MODEL_MESSAGE,
@@ -661,6 +666,186 @@ describe('TranscriptionManager', () => {
       });
 
       expect(outcome).toEqual({ status: 'FAILED', reason: TRANSCRIPTION_PROVIDER_BUSY_MESSAGE });
+    });
+
+    // Live 2026-09-25: Gemini 2.5 Flash answered 200 with 0 characters and the
+    // video's audioStatus went TRANSCRIPTION_FAILED on the first try.
+    describe('a 200 that is not a transcript', () => {
+      const EMPTY_REASON = `Audio transcription failed: ${TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR}`;
+      const responseError = (issue: TranscriptionResponseIssue): Error =>
+        new TranscriptionResponseError(issue, `test ${issue}`);
+      const twoGeminiThenOpenAi = [
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash-lite' },
+        { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+        { provider: 'OPENAI', model: 'gpt-4o-audio' },
+      ];
+
+      it('retries an empty answer ONCE on the same model under a new request id, then walks on', async () => {
+        mockedGemini
+          .mockResolvedValueOnce({ text: '' })
+          .mockResolvedValueOnce({ text: '   ' })
+          .mockResolvedValueOnce({ text: 'the next model heard it' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(twoGeminiThenOpenAi);
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        expect(mockedGemini.mock.calls.map((call) => call[4])).toEqual([
+          'models/gemini-2.5-flash-lite',
+          'models/gemini-2.5-flash-lite',
+          'models/gemini-2.5-flash',
+        ]);
+        expect(reserveIds(harness)).toEqual([
+          'transcription:file-1:GEMINI',
+          'transcription:file-1:GEMINI:2',
+          'transcription:file-1:GEMINI:3',
+        ]);
+        // Both empty holds went back; the third was settled.
+        expect(releaseCount(harness)).toBe(2);
+        expect(mockedBackoff).not.toHaveBeenCalled();
+        expect(mockedOpenAi).not.toHaveBeenCalled();
+        expect(publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED).model).toBe(
+          'models/gemini-2.5-flash',
+        );
+      });
+
+      it('takes the empty retry once per JOB, not once per model', async () => {
+        mockedGemini.mockResolvedValue({ text: '' });
+        mockedOpenAi.mockResolvedValue({ text: '' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(twoGeminiThenOpenAi);
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        // lite, lite (the retry), flash, whisper: four calls, four released holds.
+        expect(mockedGemini).toHaveBeenCalledTimes(3);
+        expect(mockedOpenAi).toHaveBeenCalledTimes(1);
+        expect(releaseCount(harness)).toBe(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+        const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+        expect(failed.reason).toBe(EMPTY_REASON);
+        expect(failed.reasonCode).toBe('EMPTY_TRANSCRIPT');
+      });
+
+      it('stays within TRANSCRIPTION_MAX_PROVIDER_CALLS when every model answers empty', async () => {
+        mockedGemini.mockResolvedValue({ text: '' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(
+          ['a', 'b', 'c', 'd', 'e', 'f'].map((suffix) => ({
+            provider: 'GEMINI',
+            model: `models/gemini-2.5-flash-${suffix}`,
+          })),
+        );
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        expect(mockedGemini).toHaveBeenCalledTimes(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+        expect(reserveIds(harness)).toHaveLength(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+        expect(new Set(reserveIds(harness)).size).toBe(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+        expect(releaseCount(harness)).toBe(TRANSCRIPTION_MAX_PROVIDER_CALLS);
+        expect(publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED).reason).toBe(
+          EMPTY_REASON,
+        );
+      });
+
+      it('treats a reasoning-only answer like an empty one: same-model retry', async () => {
+        mockedGemini
+          .mockRejectedValueOnce(responseError(TranscriptionResponseIssue.THOUGHT_ONLY))
+          .mockResolvedValueOnce({ text: 'heard on the retry' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(twoGeminiThenOpenAi);
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        expect(mockedGemini.mock.calls.map((call) => call[4])).toEqual([
+          'models/gemini-2.5-flash-lite',
+          'models/gemini-2.5-flash-lite',
+        ]);
+        expect(reserveIds(harness)).toEqual([
+          'transcription:file-1:GEMINI',
+          'transcription:file-1:GEMINI:2',
+        ]);
+        expect(releaseCount(harness)).toBe(1);
+        expect(publishedPatterns(harness.rabbit)).toContain(EventPattern.FILE_TRANSCRIBE_COMPLETED);
+      });
+
+      it('moves a MAX_TOKENS cut-off to the NEXT model without a same-model retry', async () => {
+        mockedGemini
+          .mockRejectedValueOnce(responseError(TranscriptionResponseIssue.TRUNCATED))
+          .mockResolvedValueOnce({ text: 'the bigger sibling finished it' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(twoGeminiThenOpenAi);
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        expect(mockedGemini.mock.calls.map((call) => call[4])).toEqual([
+          'models/gemini-2.5-flash-lite',
+          'models/gemini-2.5-flash',
+        ]);
+        expect(releaseCount(harness)).toBe(1);
+        expect(publishedPatterns(harness.rabbit)).toContain(EventPattern.FILE_TRANSCRIBE_COMPLETED);
+      });
+
+      it('says "incomplete" — not "empty" — when every answer was cut off', async () => {
+        mockedGemini.mockRejectedValue(responseError(TranscriptionResponseIssue.TRUNCATED));
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(twoGeminiThenOpenAi.slice(0, 2));
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        expect(mockedGemini).toHaveBeenCalledTimes(2);
+        const failed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_FAILED);
+        expect(failed.reason).toBe(TRANSCRIPTION_INCOMPLETE_MESSAGE);
+        expect(failed.reasonCode).toBe('PROVIDER_ERROR');
+      });
+
+      it('stops on a SAFETY block with the precise reason, no second model or provider', async () => {
+        mockedGemini.mockRejectedValue(responseError(TranscriptionResponseIssue.BLOCKED));
+        mockedOpenAi.mockResolvedValue({ text: 'must never be called' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+        harness.capability.findCapableModels.mockResolvedValue(twoGeminiThenOpenAi);
+
+        await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+        expect(mockedGemini).toHaveBeenCalledTimes(1);
+        expect(mockedOpenAi).not.toHaveBeenCalled();
+        expect(releaseCount(harness)).toBe(1);
+        expect(harness.filesRepository.saveExtractionResult).toHaveBeenCalledWith('file-1', {
+          extractedText: AUDIO_PLACEHOLDER,
+          extractionError: TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE,
+          status: FileIngestionStatus.COMPLETED,
+        });
+      });
+
+      it("hands a video's derived track the honest empty reason after the retry", async () => {
+        mockedGemini.mockResolvedValue({ text: '' });
+        const harness = buildHarness(buildFile());
+        spyRelease(harness);
+
+        const outcome = await harness.manager.transcribeDerivedAudio({
+          fileId: 'video-1',
+          userId: 'user-1',
+          audioBase64: 'YXVkaW8=',
+          mimeType: 'audio/wav',
+          sizeBytes: 1024,
+          audioSeconds: 10,
+          requestScope: 'video-audio',
+          instruction: 'timestamped',
+        });
+
+        expect(mockedGemini).toHaveBeenCalledTimes(2);
+        expect(reserveIds(harness)).toEqual([
+          'transcription:video-1:video-audio:GEMINI',
+          'transcription:video-1:video-audio:GEMINI:2',
+        ]);
+        expect(outcome).toEqual({ status: 'FAILED', reason: EMPTY_REASON });
+      });
     });
   });
 });

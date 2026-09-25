@@ -348,7 +348,13 @@ export const zh: TranslationDictionary = {
       stop: '停止朗读',
       loading: '正在准备音频…',
       playerLabel: '朗读音频',
-      download: '下载音频',
+      play: '播放',
+      pause: '暂停',
+      paused: '已暂停。',
+      progress: '正在朗读第 {current} 部分，共 {total} 部分…',
+      waitingNext: '正在准备下一部分…',
+      finished: '朗读完毕。',
+      partial: '此回复的部分内容无法朗读，这些部分未计费。',
       truncated: '仅朗读了这条回复的开头部分。',
       unavailable: {
         planDisabled: '您的套餐不包含朗读功能。',
@@ -363,6 +369,7 @@ export const zh: TranslationDictionary = {
         failed: '语音服务无法朗读这条回复，请重试。',
         generic: '无法朗读这条回复，请重试。',
         playback: '无法加载音频。',
+        timedOut: '朗读耗时过长，请重试。',
       },
     },
     edit: {

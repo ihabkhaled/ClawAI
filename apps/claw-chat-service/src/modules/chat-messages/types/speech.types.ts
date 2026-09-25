@@ -1,7 +1,7 @@
 import type { PaygFinalizeCalls, PaygFinalizeUsage, PaygHold } from '@claw/shared-entitlements';
 import type { SpeechUnavailableReason } from '@claw/shared-types';
 
-import type { SpeechAttemptOutcome, SpeechProvider } from '../../../common/enums';
+import type { SpeechAttemptOutcome, SpeechJobStatus, SpeechProvider } from '../../../common/enums';
 import type { Prisma } from '../../../generated/prisma';
 
 /** routing-service's `GET internal/assistant-models/TTS_VOICE/candidates` row. */
@@ -59,13 +59,24 @@ export type SpeechProviderRequest = {
   maxOutputTokens: number;
 };
 
+/** One piece of the speakable text, synthesised as its own provider call and hold. */
+export type SpeechTextSegment = {
+  /** 0-based position; playback order. */
+  index: number;
+  text: string;
+  /** Code points, the unit OpenAI bills. */
+  characters: number;
+};
+
+/** One segment's synthesis: the walk over the TTS_VOICE candidates for that text. */
 export type SpeechSynthesisInput = {
   userId: string;
   messageId: string;
-  speakable: SpeakableText;
+  contentHash: string;
   /** Increments each time this message is synthesised anew, so a new call never reuses a settled hold. */
   generation: number;
-  /** Epoch ms: the request's end-to-end deadline (SPEECH_REQUEST_BUDGET_MS from entry). */
+  segment: SpeechTextSegment;
+  /** Epoch ms: the job's wall-clock deadline (`SPEECH_JOB_DEADLINE_MS` from `startedAt`). */
   deadlineAt: number;
 };
 
@@ -85,17 +96,30 @@ export type SpeechSynthesisResult = {
   settlement: SpeechSettlement;
 };
 
-/** `metadata.speech` on the assistant message — never the audio bytes. */
-export type StoredSpeech = {
+/** One stored, charged segment in `metadata.speech.segments` — never the audio bytes. */
+export type StoredSpeechSegment = {
+  index: number;
   fileId: string;
-  filename: string;
   mimeType: string;
+  characters: number;
   provider: string;
   model: string;
-  characters: number;
-  truncated: boolean;
+};
+
+/** `metadata.speech` (version 2) on the assistant message — the job's durable state. */
+export type SpeechJobState = {
+  version: number;
+  status: SpeechJobStatus;
   contentHash: string;
   generation: number;
+  /** ISO time the current job started; a GENERATING state older than the deadline is stale. */
+  startedAt: string;
+  totalSegments: number;
+  characters: number;
+  truncated: boolean;
+  /** In index order. */
+  segments: StoredSpeechSegment[];
+  errorCode: string | null;
 };
 
 export type StoreSpeechFileInput = {
@@ -104,19 +128,44 @@ export type StoreSpeechFileInput = {
   mimeType: string;
   bytes: Buffer;
   transcript: string;
-  /** Cut from the request deadline by `speechStoreTimeoutMs`. */
+  /** Cut from the job deadline by `speechStoreTimeoutMs`. */
   timeoutMs: number;
 };
 
-/** `POST /chat-messages/:id/speech` response. */
-export type MessageSpeechResponse = {
+/** A segment as the client sees it: enough to fetch and play it in order. */
+export type SpeechSegmentResponse = {
+  index: number;
   fileId: string;
   mimeType: string;
-  filename: string;
-  truncated: boolean;
   characters: number;
-  /** True when an earlier synthesis was replayed — no provider call, no charge. */
-  cached: boolean;
+};
+
+/** `GET` and `POST /chat-messages/:id/speech` response. */
+export type MessageSpeechStateResponse = {
+  status: SpeechJobStatus;
+  segments: SpeechSegmentResponse[];
+  /** 0 until a job has split the text. */
+  totalSegments: number;
+  truncated: boolean;
+  errorCode: string | null;
+};
+
+/** What `MessageSpeechService.start` answers: the state, and 200 (READY) or 202 (running). */
+export type MessageSpeechStartResult = {
+  httpStatus: number;
+  body: MessageSpeechStateResponse;
+};
+
+/** Everything one background job needs; built by `MessageSpeechService.start`. */
+export type SpeechJobInput = {
+  userId: string;
+  messageId: string;
+  /** Owned by the caller's Redis lock; released by the job when it ends. */
+  lockToken: string;
+  speakable: SpeakableText;
+  segments: readonly SpeechTextSegment[];
+  /** The state as written when the job started (segments kept from a PARTIAL run included). */
+  state: SpeechJobState;
 };
 
 /** `GET /chat-messages/speech/availability` response. */
@@ -168,4 +217,15 @@ export type SpeechSettlement = {
 export type SpeechAttemptResult = {
   record: SpeechAttemptRecord;
   delivered?: { audio: SynthesizedAudio; settlement: SpeechSettlement };
+};
+
+/** A running job's mutable bookkeeping; lives only inside `SpeechJobManager.run`. */
+export type SpeechJobProgress = {
+  state: SpeechJobState;
+  /** Set once: every worker stops taking segments (credit refusal, no voice, deadline). */
+  stopCode: string | null;
+  /** The last segment failure's code, for a PARTIAL / FAILED state. */
+  errorCode: string | null;
+  /** Metadata writes, chained so two segments finishing together never interleave. */
+  writes: Promise<void>;
 };

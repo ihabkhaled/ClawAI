@@ -249,3 +249,29 @@ export function useFilesPage(): FilesPageReturn {
 8. **Query hooks use query key factory** from `src/repositories/shared/query-keys.ts`
 9. **Mutation hooks invalidate caches** via `queryClient.invalidateQueries()`
 10. **Error handling uses `showToast.apiError()`** for user-visible errors
+
+## 5. Polling a backend job — bounded, one observer, stops on unmount
+
+Reference: progressive "Read aloud" (`hooks/chat/use-message-speech-state.ts`,
+2026-09-25). The rules every polling hook follows:
+
+- **One polling observer per resource.** Pass `refetchInterval` only from the
+  component that needs live updates (`useMessageSpeechPlayer`); every other
+  reader (the button) observes the same query key with `enabled: false` and no
+  interval, so two components never run two timers.
+- **Bounded by a count, not a hope.** `refetchInterval` is a function returning
+  `false` unless the state is still in progress AND the poll count is under the
+  cap (`MESSAGE_SPEECH_MAX_POLLS` = job deadline / interval). The poll count is
+  the query's `dataUpdateCount + errorUpdateCount`; `retry: false`.
+- **Seed from the mutation.** The POST that starts the job writes its answer
+  with `setQueryData`, and the query is `enabled` only once that POST settled —
+  no GET races the POST. `staleTime: Infinity`: a finished result in the cache
+  replays with no request.
+- **Re-render at the cap.** Identical poll answers are structurally shared, so a
+  hook that reads only `data` never re-renders to notice the cap; set
+  `notifyOnChangeProps: ['data', 'dataUpdatedAt', 'errorUpdatedAt']`.
+- **Stop on unmount by mounting only while needed.** The player component
+  renders the polling child only while open; closing it unmounts the observer
+  (polling stops) and the blob hook revokes its object URLs.
+- **Test it with fake timers**: advance past the cap and assert the request
+  count stops growing (`message-speech-player.test.tsx`).

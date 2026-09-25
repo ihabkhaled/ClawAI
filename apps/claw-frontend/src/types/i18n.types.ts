@@ -333,7 +333,13 @@ export type TranslationDictionary = {
       stop: string;
       loading: string;
       playerLabel: string;
-      download: string;
+      play: string;
+      pause: string;
+      paused: string;
+      progress: string;
+      waitingNext: string;
+      finished: string;
+      partial: string;
       truncated: string;
       unavailable: {
         planDisabled: string;
@@ -348,6 +354,7 @@ export type TranslationDictionary = {
         failed: string;
         generic: string;
         playback: string;
+        timedOut: string;
       };
     };
     edit: {
