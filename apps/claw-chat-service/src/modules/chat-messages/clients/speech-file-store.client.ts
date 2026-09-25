@@ -24,9 +24,9 @@ export class SpeechFileStoreClient {
   private readonly logger = new Logger(SpeechFileStoreClient.name);
 
   /**
-   * Called AFTER a paid synthesis whose hold is already finalized. Every
-   * failure, including running out of `input.timeoutMs` (cut from the
-   * request's end-to-end deadline), is the service's own TTS_FAILED: 504 for
+   * Called AFTER a paid synthesis whose hold is still OPEN; the caller
+   * releases it on any throw from here. Every failure, including running out
+   * of `input.timeoutMs` (cut from the request's end-to-end deadline), is the service's own TTS_FAILED: 504 for
    * the timeout, 502 otherwise. Never a raw error, never nginx's 504.
    */
   async store(input: StoreSpeechFileInput): Promise<string> {
@@ -59,7 +59,7 @@ export class SpeechFileStoreClient {
     } catch (error: unknown) {
       const timedOut = error instanceof Error && error.name === 'AbortError';
       this.logger.error(
-        `store: file-service ${timedOut ? 'timed out' : 'unreachable'} after a paid synthesis (timeoutMs=${String(input.timeoutMs)})`,
+        `store: file-service ${timedOut ? 'timed out' : 'unreachable'} after a synthesis (timeoutMs=${String(input.timeoutMs)})`,
       );
       throw new BusinessException(
         TTS_FAILED_MESSAGE,

@@ -132,7 +132,12 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
       },
     });
 
-    await build(payg).execute(input());
+    const manager = build(payg);
+    const result = await manager.execute(input());
+    // The hold stays OPEN through execute: the caller settles it only after
+    // the asset row is persisted (rule 37 item 17).
+    expect(payg.finalize).not.toHaveBeenCalled();
+    await manager.settle(result.settlement);
 
     expect(payg.release).not.toHaveBeenCalled();
     expect(payg.finalize).toHaveBeenCalledWith(
@@ -161,7 +166,9 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
       mimeType: 'image/png',
     });
 
-    await build(payg).execute(input({ provider: 'IMAGE_OPENAI', model: 'dall-e-3' }));
+    const manager = build(payg);
+    const result = await manager.execute(input({ provider: 'IMAGE_OPENAI', model: 'dall-e-3' }));
+    await manager.settle(result.settlement);
 
     expect(payg.reserve).toHaveBeenCalledWith(expect.objectContaining({ provider: 'OPENAI' }));
     expect(payg.finalize).toHaveBeenCalledWith(
@@ -178,7 +185,9 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
     utilities.httpGet.mockResolvedValue({ provider: 'OPENAI', apiKey: 'k' });
     openai.generateWithOpenAI.mockResolvedValue({ imageBase64: 'AAA', mimeType: 'image/png' });
 
-    await build(payg).execute(input({ provider: 'IMAGE_OPENAI', model: 'gpt-image-1' }));
+    const manager = build(payg);
+    const result = await manager.execute(input({ provider: 'IMAGE_OPENAI', model: 'gpt-image-1' }));
+    await manager.settle(result.settlement);
 
     expect(payg.reserve).toHaveBeenCalledTimes(1);
     expect(payg.reserve).toHaveBeenCalledWith(
@@ -250,16 +259,36 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
     expect(payg.finalize).not.toHaveBeenCalled();
   });
 
-  it('releases the hold when storing the generated image fails', async () => {
+  // Rule 37 item 17: the user never pays for an image that was not saved.
+  // Before 2026-09-25 the hold was finalized before the store, so a
+  // file-service outage charged the user for a picture they never got.
+  it('releases the hold exactly once (never finalizes) when storing the generated image fails', async () => {
     const payg = meter();
     gemini.generateWithGemini.mockResolvedValue({ imageBase64: 'AAA', mimeType: 'image/png' });
     utilities.httpPost.mockRejectedValue(new Error('file-service down'));
 
-    await expect(build(payg).execute(input())).rejects.toThrow('file-service down');
+    const error = await build(payg)
+      .execute(input())
+      .catch((thrown: unknown) => thrown);
 
-    // The image was produced, so the hold is FINALIZED, not released — the money
-    // was genuinely spent at the provider even though the user never got a file.
-    expect(payg.finalize).toHaveBeenCalledTimes(1);
+    expect(error).toBeInstanceOf(BusinessException);
+    expect((error as BusinessException).code).toBe('IMAGE_STORAGE_FAILED');
+    expect(payg.finalize).not.toHaveBeenCalled();
+    expect(payg.release).toHaveBeenCalledTimes(1);
+    expect(payg.release).toHaveBeenCalledWith(
+      expect.objectContaining({ reservationId: 'res-image-1' }),
+      'CANCELLED',
+    );
+  });
+
+  it('settle and releaseUnpersisted are no-ops for an attempt with no hold (local provider)', async () => {
+    const payg = meter();
+    const manager = build(payg);
+
+    await manager.settle(undefined);
+    await manager.releaseUnpersisted(undefined);
+
+    expect(payg.finalize).not.toHaveBeenCalled();
     expect(payg.release).not.toHaveBeenCalled();
   });
 
@@ -287,8 +316,11 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
       mimeType: 'image/png',
     });
 
-    await build(payg).execute(input({ provider: 'IMAGE_LOCAL', model: 'sdxl-turbo' }));
+    const result = await build(payg).execute(
+      input({ provider: 'IMAGE_LOCAL', model: 'sdxl-turbo' }),
+    );
 
+    expect(result.settlement).toBeUndefined();
     expect(payg.reserve).not.toHaveBeenCalled();
     expect(payg.finalize).not.toHaveBeenCalled();
     expect(payg.release).not.toHaveBeenCalled();

@@ -1,4 +1,15 @@
+import { type PaygReleaseReason } from '@claw/shared-entitlements';
 import { BillingErrorCode } from '@claw/shared-types';
+
+/**
+ * The wire reason for a hold released because the generated image could not be
+ * persisted (file store or asset row). auth-service's release DTO accepts
+ * PROVIDER_ERROR | CANCELLED | TIMEOUT only, and the delivery was abandoned, so
+ * CANCELLED; the log line names the cause (`reason=STORE_FAILED`).
+ */
+export const IMAGE_STORE_FAILED_RELEASE_REASON: PaygReleaseReason = 'CANCELLED';
+/** What the settlement log line says caused that release. */
+export const IMAGE_STORE_FAILED_LOG_REASON = 'STORE_FAILED';
 
 /**
  * The output ceiling this service reserves against for one image.

@@ -9,9 +9,11 @@ import { ImagePlanGateManager } from '../managers/image-plan-gate.manager';
 import { ImageGenerationEventsService } from './image-generation-events.service';
 import {
   type GenerateImageParams,
+  type GenerateImageResult,
   type ImageAttemptOptions,
   type ImageFailureDescription,
   type ImageFallbackChainState,
+  type ImageGenerationAssetRecord,
   type ImageGenerationLatestSummary,
   type ImageGenerationRecord,
   type ImageGenerationView,
@@ -25,6 +27,8 @@ import {
   isCreditFailureCode,
 } from '../utilities/image-failure.utility';
 import { toImageProgressSnapshot } from '../utilities/image-progress.utility';
+import { imageFailure } from '../adapter.utilities/provider-error.utility';
+import { ImageFailureCode } from '../../../common/enums';
 import { successorDataFrom, toLatestSummary } from '../utilities/image-supersession.utility';
 import { type ListImagesQueryDto } from '../dto/generate-image.dto';
 import { BusinessException } from '../../../common/errors';
@@ -516,17 +520,10 @@ export class ImageGenerationService {
       },
     });
 
-    await this.transitionStatus(generationId, 'FINALIZING', generation.provider, generation.model);
-
-    const downloadUrl = `/api/v1/files/download/${result.fileId}`;
-    const asset = await this.repository.createAsset({
-      generationId,
-      storageKey: result.fileId,
-      url: downloadUrl,
-      downloadUrl,
-      mimeType: 'image/png',
-      sizeBytes: undefined,
-    });
+    const asset = await this.persistAsset(generationId, generation, result);
+    // Settled only now, on the units measured from the provider response: the
+    // user is charged for an image that exists as a file AND an asset row.
+    await this.executionManager.settle(result.settlement);
 
     const completedGen = await this.repository.updateStatus(generationId, 'COMPLETED', {
       revisedPrompt: result.revisedPrompt ?? undefined,
@@ -536,6 +533,41 @@ export class ImageGenerationService {
 
     await this.publishCompletionEvents(generationId, generation, completedGen, asset, result);
     this.logger.log(`image_generation.completed id=${generationId}`);
+  }
+
+  /**
+   * The asset row for a stored image. The paid hold is still OPEN here; when
+   * this fails the hold is RELEASED and the attempt fails as
+   * IMAGE_STORAGE_FAILED (chain-terminal: storage is shared, so another
+   * provider would lose its image the same way).
+   */
+  private async persistAsset(
+    generationId: string,
+    generation: ImageGenerationRecord,
+    result: GenerateImageResult,
+  ): Promise<ImageGenerationAssetRecord> {
+    try {
+      await this.transitionStatus(
+        generationId,
+        'FINALIZING',
+        generation.provider,
+        generation.model,
+      );
+      const downloadUrl = `/api/v1/files/download/${result.fileId}`;
+      return await this.repository.createAsset({
+        generationId,
+        storageKey: result.fileId,
+        url: downloadUrl,
+        downloadUrl,
+        mimeType: 'image/png',
+        sizeBytes: undefined,
+      });
+    } catch (error: unknown) {
+      await this.executionManager.releaseUnpersisted(result.settlement);
+      const detail = error instanceof Error ? error.message : 'unknown error';
+      this.logger.error(`persistAsset: asset row not written id=${generationId} — ${detail}`);
+      throw imageFailure(ImageFailureCode.STORAGE_FAILED);
+    }
   }
 
   /**

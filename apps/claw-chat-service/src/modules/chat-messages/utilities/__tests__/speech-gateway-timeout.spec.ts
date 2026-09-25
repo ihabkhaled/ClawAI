@@ -9,8 +9,11 @@ import {
   SPEECH_GATEWAY_HEADROOM_MS,
   SPEECH_MAX_TIMEOUT_MS,
   SPEECH_MIN_ATTEMPT_MS,
+  SPEECH_POST_PROVIDER_RESERVE_MS,
   SPEECH_REQUEST_BUDGET_MS,
+  SPEECH_SETTLEMENT_RESERVE_MS,
 } from '../../constants/speech.constants';
+import { ENTITLEMENTS_TIMEOUT_MS } from '../../../../common/constants';
 import { speechAttemptTimeoutMs, speechStoreTimeoutMs } from '../speech.utility';
 
 // Found live 2026-09-25 (docs/16-quality-engineering/evidence/2026-09-25-multimodal,
@@ -52,16 +55,25 @@ describe('TTS end-to-end deadline vs the nginx read timeout', () => {
       SPEECH_GATEWAY_HEADROOM_MS,
     );
     expect(SPEECH_GATEWAY_HEADROOM_MS).toBeGreaterThanOrEqual(10_000);
-    // The slowest single candidate plus the store reserve still fits the budget.
-    expect(SPEECH_MAX_TIMEOUT_MS + SPEECH_FILE_STORE_RESERVE_MS).toBeLessThanOrEqual(
+    // The slowest single candidate plus the store AND settlement reserves still fits.
+    expect(SPEECH_MAX_TIMEOUT_MS + SPEECH_POST_PROVIDER_RESERVE_MS).toBeLessThanOrEqual(
       SPEECH_REQUEST_BUDGET_MS,
+    );
+  });
+
+  it('keeps room after the store for the one meter call that settles the hold', () => {
+    // The hold is finalized (or released) only AFTER the store, so that call
+    // must fit inside the budget too: exactly the meter's own request timeout.
+    expect(SPEECH_SETTLEMENT_RESERVE_MS).toBe(ENTITLEMENTS_TIMEOUT_MS);
+    expect(SPEECH_POST_PROVIDER_RESERVE_MS).toBe(
+      SPEECH_FILE_STORE_RESERVE_MS + SPEECH_SETTLEMENT_RESERVE_MS,
     );
   });
 });
 
-describe('speechAttemptTimeoutMs — the provider window is the deadline minus the store reserve', () => {
+describe('speechAttemptTimeoutMs — the provider window is the deadline minus store + settlement', () => {
   const deadlineAt = 100_000;
-  const windowEnd = deadlineAt - SPEECH_FILE_STORE_RESERVE_MS;
+  const windowEnd = deadlineAt - SPEECH_POST_PROVIDER_RESERVE_MS;
 
   it("uses the candidate's own timeout while the window allows", () => {
     expect(speechAttemptTimeoutMs(20_000, deadlineAt, 50_000)).toBe(20_000);
@@ -82,12 +94,15 @@ describe('speechAttemptTimeoutMs — the provider window is the deadline minus t
 describe('speechStoreTimeoutMs', () => {
   const deadlineAt = 100_000;
 
-  it('is the reserve while the deadline allows, and what is left after that', () => {
+  it('is the reserve while the deadline allows, and what is left after the settlement reserve', () => {
     expect(speechStoreTimeoutMs(deadlineAt, 50_000)).toBe(SPEECH_FILE_STORE_RESERVE_MS);
-    expect(speechStoreTimeoutMs(deadlineAt, deadlineAt - 3_000)).toBe(3_000);
+    expect(
+      speechStoreTimeoutMs(deadlineAt, deadlineAt - SPEECH_SETTLEMENT_RESERVE_MS - 3_000),
+    ).toBe(3_000);
   });
 
-  it('is null once the deadline has passed', () => {
+  it('is null once only the settlement reserve is left', () => {
+    expect(speechStoreTimeoutMs(deadlineAt, deadlineAt - SPEECH_SETTLEMENT_RESERVE_MS)).toBe(null);
     expect(speechStoreTimeoutMs(deadlineAt, deadlineAt)).toBe(null);
   });
 });

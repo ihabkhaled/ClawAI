@@ -1,5 +1,6 @@
-import type { PlanFeature } from '@claw/shared-entitlements';
+import type { PaygReleaseReason, PlanFeature } from '@claw/shared-entitlements';
 
+import { ENTITLEMENTS_TIMEOUT_MS } from '../../../common/constants';
 import { SpeechProvider } from '../../../common/enums';
 
 /**
@@ -96,14 +97,34 @@ export const SPEECH_REQUEST_BUDGET_MS =
   NGINX_CHAT_MESSAGES_READ_TIMEOUT_MS - SPEECH_GATEWAY_HEADROOM_MS;
 /**
  * Reserved out of the request budget for storing the audio. The provider walk
- * ends by `deadline - this`, so no attempt starts unless the store still fits
- * after it; it is also the store call's own timeout.
+ * ends by `deadline - SPEECH_POST_PROVIDER_RESERVE_MS`, so no attempt starts
+ * unless the store AND the settlement still fit after it; it is also the store
+ * call's own timeout.
  */
 export const SPEECH_FILE_STORE_RESERVE_MS = 10_000;
+/**
+ * Kept free after the store for settling the hold: the hold stays OPEN until
+ * the audio is stored, then ONE meter call finalizes (or releases) it. That
+ * call is bounded by the meter's own request timeout, so reserving exactly
+ * that keeps settlement inside the request budget, never past it.
+ */
+export const SPEECH_SETTLEMENT_RESERVE_MS = ENTITLEMENTS_TIMEOUT_MS;
+/** Everything after the provider call: store the audio, then settle the hold. */
+export const SPEECH_POST_PROVIDER_RESERVE_MS =
+  SPEECH_FILE_STORE_RESERVE_MS + SPEECH_SETTLEMENT_RESERVE_MS;
+/**
+ * The wire reason for a hold released because the audio could not be stored.
+ * auth-service's release DTO accepts PROVIDER_ERROR | CANCELLED | TIMEOUT only,
+ * and the delivery was abandoned, so CANCELLED; the log line names the cause
+ * (`reason=STORE_FAILED`).
+ */
+export const SPEECH_STORE_FAILED_RELEASE_REASON: PaygReleaseReason = 'CANCELLED';
+/** What the settlement log line says caused that release. */
+export const SPEECH_STORE_FAILED_LOG_REASON = 'STORE_FAILED';
 /** A candidate is not started with less than this left of the provider window — it could not finish. */
 export const SPEECH_MIN_ATTEMPT_MS = 5_000;
 /** Per-candidate timeout when the admin row has none, and the clamp on one that is longer. */
-export const SPEECH_DEFAULT_TIMEOUT_MS = SPEECH_REQUEST_BUDGET_MS - SPEECH_FILE_STORE_RESERVE_MS;
+export const SPEECH_DEFAULT_TIMEOUT_MS = SPEECH_REQUEST_BUDGET_MS - SPEECH_POST_PROVIDER_RESERVE_MS;
 export const SPEECH_MAX_TIMEOUT_MS = SPEECH_DEFAULT_TIMEOUT_MS;
 
 // ── Sibling services ───────────────────────────────────────────────────────

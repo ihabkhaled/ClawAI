@@ -1,4 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 import { type Mock, vi } from 'vitest';
 import type { PaygHold } from '@claw/shared-entitlements';
 import { PaygSurface, SpeechUnavailableReason } from '@claw/shared-types';
@@ -238,6 +238,10 @@ describe('MessageSpeechService.synthesize', () => {
     expect(harness.exists).toHaveBeenCalledWith('file-old', USER);
     expect(harness.reserveCredit).not.toHaveBeenCalled();
     expect(harness.providerSynthesize).not.toHaveBeenCalled();
+    expect(harness.finalizeCredit).not.toHaveBeenCalled();
+    expect(harness.releaseCredit).not.toHaveBeenCalled();
+    expect(harness.store).not.toHaveBeenCalled();
+    expect(harness.ledger).toEqual([]);
   });
 
   it('re-synthesises under a NEW generation when the stored file is gone', async () => {
@@ -294,6 +298,11 @@ describe('MessageSpeechService.synthesize', () => {
       generation: 1,
     });
     expect(JSON.stringify(metadata)).not.toContain('RIFF');
+    // CONSUMPTION only once the audio is stored AND metadata.speech written.
+    const finalizedAt = harness.finalizeCredit.mock.invocationCallOrder[0] ?? 0;
+    expect(harness.store.mock.invocationCallOrder[0]).toBeLessThan(finalizedAt);
+    expect(harness.updateMetadata.mock.invocationCallOrder[0]).toBeLessThan(finalizedAt);
+    expect(harness.releaseCredit).not.toHaveBeenCalled();
   });
 
   it('OpenAI path: RESERVATION then CONSUMPTION on ttsCharacters, zero tokens', async () => {
@@ -318,6 +327,9 @@ describe('MessageSpeechService.synthesize', () => {
       expect.anything(),
       { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
       { toolCalls: 0, ttsCharacters: characters },
+    );
+    expect(harness.store.mock.invocationCallOrder[0]).toBeLessThan(
+      harness.finalizeCredit.mock.invocationCallOrder[0] ?? 0,
     );
   });
 
@@ -365,7 +377,7 @@ describe('MessageSpeechService.synthesize', () => {
 
   // Found live 2026-09-25: the provider timeout equalled nginx's read timeout,
   // so a hung TTS surfaced as a gateway 504. The walk now has one budget
-  // (SPEECH_REQUEST_BUDGET_MS, nginx − 15 s) and never starts a candidate
+  // (SPEECH_REQUEST_BUDGET_MS, nginx − 10 s) and never starts a candidate
   // that could not finish inside it.
   it('a slow failure that spends the budget ends the walk with its own 504 TTS_FAILED', async () => {
     let now = 1_000_000;
@@ -373,17 +385,18 @@ describe('MessageSpeechService.synthesize', () => {
     try {
       const harness = build();
       harness.providerSynthesize.mockImplementationOnce(async () => {
-        now += 36_000;
+        now += 31_000;
         throw new SpeechProviderError('down', 503, false);
       });
 
       await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 504);
 
-      // 50 s request budget − 10 s store reserve = a 40 s provider window; after
-      // 36 s only 4 s remain, under the 5 s floor, so no second PAID attempt starts.
+      // 50 s request budget - 10 s store - 5 s settlement = a 35 s provider
+      // window; after 31 s only 4 s remain, under the 5 s floor, so no second
+      // PAID attempt starts.
       expect(harness.providerSynthesize).toHaveBeenCalledTimes(1);
       expect(harness.providerSynthesize).toHaveBeenCalledWith(
-        expect.objectContaining({ candidate: expect.objectContaining({ timeoutMs: 40_000 }) }),
+        expect.objectContaining({ candidate: expect.objectContaining({ timeoutMs: 35_000 }) }),
       );
       expect(harness.releaseCredit).toHaveBeenCalledTimes(1);
       expect(harness.store).not.toHaveBeenCalled();
@@ -398,7 +411,7 @@ describe('MessageSpeechService.synthesize', () => {
     try {
       const harness = build();
       harness.providerSynthesize.mockImplementationOnce(async () => {
-        now += 38_000;
+        now += 30_000;
         return WAV;
       });
 
@@ -410,19 +423,98 @@ describe('MessageSpeechService.synthesize', () => {
     }
   });
 
-  it('a store that fails after a PAID call answers TTS_FAILED; the finalized charge stands', async () => {
-    const harness = build();
+  // The hold stays OPEN across the store: a store that fails means the user
+  // received nothing, so nothing is charged; the platform absorbs the provider
+  // cost. Before 2026-09-25 the hold was finalized first and the user paid
+  // for audio they never got, and paid again on retry.
+  it('a store failure after a PAID call releases exactly once: no CONSUMPTION, no metadata, TTS_FAILED', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    try {
+      const harness = build({ candidates: [GEMINI_ROW] });
+      harness.store.mockRejectedValueOnce(
+        new BusinessException('The voice model could not read this reply.', 'TTS_FAILED', 502),
+      );
+
+      await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 502);
+
+      expect(harness.ledger.map((row) => row.kind)).toEqual(['RESERVATION', 'RESERVATION_RELEASE']);
+      expect(harness.releaseCredit).toHaveBeenCalledTimes(1);
+      expect(harness.releaseCredit).toHaveBeenCalledWith(expect.anything(), 'CANCELLED');
+      expect(harness.finalizeCredit).not.toHaveBeenCalled();
+      expect(harness.updateMetadata).not.toHaveBeenCalled();
+      const line = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((text) => text.startsWith('ttsSettlement'));
+      expect(line).toMatch(
+        /reservationId=res-tts:msg-1:[0-9a-f]{16}:g1:1 outcome=RELEASED reason=STORE_FAILED/,
+      );
+      expect(line).not.toContain(USER);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('a store timeout releases the hold and answers its 504 TTS_FAILED', async () => {
+    const harness = build({ candidates: [OPENAI_ROW] });
+    harness.providerSynthesize.mockResolvedValue(MP3);
     harness.store.mockRejectedValueOnce(
       new BusinessException('The voice model could not read this reply.', 'TTS_FAILED', 504),
     );
 
     await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 504);
 
-    // Documented in chat-service CLAUDE.md: the hold was finalized before the
-    // store, nothing is released or refunded, and no metadata points at audio.
-    expect(harness.finalizeCredit).toHaveBeenCalledTimes(1);
-    expect(harness.releaseCredit).not.toHaveBeenCalled();
+    expect(harness.releaseCredit).toHaveBeenCalledTimes(1);
+    expect(harness.finalizeCredit).not.toHaveBeenCalled();
     expect(harness.updateMetadata).not.toHaveBeenCalled();
+  });
+
+  it('a provider answer at the deadline edge leaves no store time: release, 504, no store call', async () => {
+    let now = 1_000_000;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      const harness = build({ candidates: [GEMINI_ROW] });
+      harness.providerSynthesize.mockImplementationOnce(async () => {
+        // Past (deadline - settlement reserve): a store now would eat the time
+        // the release itself needs, so it is not attempted.
+        now += 45_000;
+        return WAV;
+      });
+
+      await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 504);
+
+      expect(harness.store).not.toHaveBeenCalled();
+      expect(harness.releaseCredit).toHaveBeenCalledTimes(1);
+      expect(harness.releaseCredit).toHaveBeenCalledWith(expect.anything(), 'CANCELLED');
+      expect(harness.finalizeCredit).not.toHaveBeenCalled();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('a metadata write that fails after the store releases too and maps to TTS_FAILED', async () => {
+    const harness = build({ candidates: [OPENAI_ROW] });
+    harness.providerSynthesize.mockResolvedValue(MP3);
+    harness.updateMetadata.mockRejectedValueOnce(new Error('connection reset'));
+
+    await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 502);
+
+    expect(harness.releaseCredit).toHaveBeenCalledTimes(1);
+    expect(harness.finalizeCredit).not.toHaveBeenCalled();
+  });
+
+  it('logs the settlement by reservation id, never with a user id or a balance', async () => {
+    const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    try {
+      const harness = build({ candidates: [GEMINI_ROW] });
+      await harness.service.synthesize(USER, MESSAGE_ID);
+      const line = log.mock.calls
+        .map((call) => String(call[0]))
+        .find((text) => text.startsWith('ttsSettlement'));
+      expect(line).toMatch(/reservationId=res-tts:msg-1:[0-9a-f]{16}:g1:1 outcome=FINALIZED$/);
+      expect(line).not.toContain(USER);
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it('a 402 from the meter ends the walk: no fall-through, no provider call', async () => {

@@ -15,11 +15,15 @@ import {
   SPEECH_MAX_TIMEOUT_MS,
   SPEECH_MIME_MP3,
   SPEECH_MIN_ATTEMPT_MS,
+  SPEECH_POST_PROVIDER_RESERVE_MS,
   SPEECH_PROVIDER_BY_NAME,
+  SPEECH_SETTLEMENT_RESERVE_MS,
 } from '../constants/speech.constants';
 import type {
   MessageSpeechResponse,
   SpeechCandidate,
+  SpeechHold,
+  SpeechSettlement,
   SpeechTokenUsage,
   StoredSpeech,
   TtsVoiceCandidateWire,
@@ -99,6 +103,33 @@ export function measuredSpeechUsage(
   };
 }
 
+/**
+ * What the hold will settle on, captured from the provider response the
+ * moment it arrives: characters sent (OpenAI, per-character) or Gemini's
+ * usageMetadata (the reserved estimate when it reported none). Settled only
+ * after the audio is stored (rule 37 item 17), still on these measured units.
+ */
+export function speechSettlement(
+  held: SpeechHold,
+  candidate: SpeechCandidate,
+  characters: number,
+  usage: SpeechTokenUsage | null,
+): SpeechSettlement {
+  if (isPerCharacterPriced(candidate)) {
+    return {
+      held,
+      usage: { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
+      calls: { toolCalls: 0, ttsCharacters: characters },
+    };
+  }
+  const measured = measuredSpeechUsage(usage, held.promptTokens, held.outputTokens);
+  return {
+    held,
+    usage: { ...measured, cachedPromptTokens: 0, reasoningTokens: 0 },
+    calls: { toolCalls: 0 },
+  };
+}
+
 export function speechReleaseReason(error: unknown): PaygReleaseReason {
   return error instanceof SpeechProviderError && error.timedOut ? 'TIMEOUT' : 'PROVIDER_ERROR';
 }
@@ -171,25 +202,27 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /**
  * The timeout one candidate may use: its own, cut to what is left of the
- * provider window, i.e. the request deadline minus the store reserve
- * (SPEECH_FILE_STORE_RESERVE_MS). Null when too little is left to start one,
- * which also means no paid attempt starts that would leave the store no time:
- * the walk ends with the service's own TTS_FAILED rather than a gateway 504.
+ * provider window, i.e. the request deadline minus the store AND settlement
+ * reserves (SPEECH_POST_PROVIDER_RESERVE_MS). Null when too little is left to
+ * start one, which also means no paid attempt starts that would leave the
+ * store or the settlement no time: the walk ends with the service's own
+ * TTS_FAILED rather than a gateway 504.
  */
 export function speechAttemptTimeoutMs(
   candidateTimeoutMs: number,
   requestDeadlineAt: number,
   now: number,
 ): number | null {
-  const remaining = requestDeadlineAt - SPEECH_FILE_STORE_RESERVE_MS - now;
+  const remaining = requestDeadlineAt - SPEECH_POST_PROVIDER_RESERVE_MS - now;
   return remaining < SPEECH_MIN_ATTEMPT_MS ? null : Math.min(candidateTimeoutMs, remaining);
 }
 
 /**
  * The store call's timeout: the reserve, cut to what is left of the request
- * deadline. Null when nothing is left, and the caller answers TTS_FAILED at once.
+ * deadline once the settlement reserve is kept free. Null when nothing is
+ * left, and the caller releases the hold and answers TTS_FAILED at once.
  */
 export function speechStoreTimeoutMs(requestDeadlineAt: number, now: number): number | null {
-  const remaining = requestDeadlineAt - now;
+  const remaining = requestDeadlineAt - SPEECH_SETTLEMENT_RESERVE_MS - now;
   return remaining <= 0 ? null : Math.min(SPEECH_FILE_STORE_RESERVE_MS, remaining);
 }

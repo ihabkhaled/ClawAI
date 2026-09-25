@@ -60,6 +60,8 @@ const mockExecManager = (): Partial<Record<keyof ImageExecutionManager, Mock>> =
     revisedPrompt: 'A photorealistic cute tabby cat',
     latencyMs: 3500,
   }),
+  settle: vi.fn().mockResolvedValue(undefined),
+  releaseUnpersisted: vi.fn().mockResolvedValue(undefined),
 });
 
 const mockEventsService = (): Partial<Record<keyof ImageGenerationEventsService, Mock>> => ({

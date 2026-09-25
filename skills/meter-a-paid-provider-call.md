@@ -245,6 +245,12 @@ Per-character reference: `apps/claw-chat-service/src/modules/chat-messages/manag
 (OpenAI tts-1 reserves and finalizes `ttsCharacters` = code points sent; Gemini
 TTS settles on `usageMetadata`; the requestId carries the content hash and a
 generation so a re-synthesis never reuses a settled hold).
+**A surface that stores its output settles only after the store** (rule 37
+item 17): capture the measured units from the provider response, keep the hold
+open, finalize once the file is saved, release if the store fails. Reference:
+`MessageSpeechService.replayOrSynthesize` + `SpeechSynthesisManager.settle` /
+`releaseUnstored`; image-service `ImageExecutionManager.settle` /
+`releaseUnpersisted`, called by `ImageGenerationService` around the asset row.
 Per-second reference: `apps/claw-file-service/src/modules/files/managers/transcription-meter.manager.ts`
 (whisper-1 `audioSeconds` from `verbose_json` `duration`; Gemini on
 `usageMetadata`; a credit refusal returned as a result so the candidate loop
@@ -280,6 +286,7 @@ being bad rather than the wallet being empty.
 | A local chat debits credit                       | You classified locally instead of asking the meter, or a paid provider reached the zero-rate fallback. **Serious** — see rule 37 #6.   |
 | One generation debited twice                     | Both the dispatching service and the executing service took a hold.                                                                    |
 | Users see a truncated answer with no explanation | `hold.clamped` never reached the UI.                                                                                                   |
+| Charged, but no file was saved                   | The hold was finalized before the output was stored. Keep it open across the store; release on a failed store.                         |
 | An image / transcription / speech call costs $0  | It finalized on zero tokens with no unit count, or its price row has no per-unit rate. See "Meter a per-unit surface".                 |
 
 ## Validation commands

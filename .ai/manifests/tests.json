@@ -66,7 +66,7 @@
     },
     "claw-image-service": {
       "runner": "vitest",
-      "testFiles": 28
+      "testFiles": 29
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1605
+  "total": 1606
 }

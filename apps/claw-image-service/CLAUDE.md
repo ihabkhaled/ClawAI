@@ -29,11 +29,22 @@ Image generation microservice for the Claw platform. Orchestrates image generati
 
 5. **An OpenAI image is metered per IMAGE, not per token** (rule 37 item 17).
    `reserveImageHold` sends `imageUnits: IMAGE_PAYG_IMAGES_PER_REQUEST` (1 — the
-   adapter hard-codes `n: 1`); `finalizeImageHold` sends the images actually
-   returned (`countReturnedImages`). OpenAI's `/images/generations` reports no
+   adapter hard-codes `n: 1`); settlement sends the images actually
+   returned (`countReturnedImages`, via `imageSettlement`). OpenAI's `/images/generations` reports no
    usage, so a zero-token finalize settled every OpenAI image at $0 until
    2026-09-25. Gemini still settles on its `usageMetadata` tokens (its rows have
    no per-image rate). One hold per paid call; a provider throw releases it.
+   **The hold settles only after the image is persisted (2026-09-25).**
+   `execute` returns the hold OPEN as `result.settlement` (units measured from
+   the provider response). `ImageGenerationService` writes the asset row, then
+   calls `ImageExecutionManager.settle`. A failed `storeImage` (inside
+   `execute`) or a failed asset row (`persistAsset`) calls
+   `releaseUnpersisted` instead (wire reason `CANCELLED`; auth's release DTO
+   has no STORE_FAILED) and the row fails as `IMAGE_STORAGE_FAILED`, which is
+   chain-terminal, so AUTO spawns no paid fallback. The user never pays for an
+   image that was not saved; the platform absorbs the provider cost. Log:
+   `imageSettlement reservationId=<id> outcome=FINALIZED|RELEASED reason=STORE_FAILED`.
+   Local providers carry no settlement; both calls are no-ops.
    **Known under-charge:** the price row is gpt-image-1 `high` 1024x1024
    ($0.167) and dall-e-3 `standard` ($0.040). Chat sends no size or quality, so
    it is covered; a direct API caller asking for 1536x1024/`high` ($0.25) or
@@ -311,13 +322,13 @@ The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and re
 Every OpenAI and Gemini image generation is metered. Local Stable Diffusion and
 ComfyUI are not — they run on hardware the operator already owns.
 
-| Where                                  | What                                                                                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `app.module.ts`                        | `EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL })` — `@Global()`, provides `PaygMeter` by CLASS token |
-| `managers/image-execution.manager.ts`  | `callMeteredCloudProvider` — the single chokepoint. `reserve` → provider → `finalize`, `release` on throw                             |
-| `constants/image-payg.constants.ts`    | the reservation ceiling, the prompt-token figure, and the credit failure codes                                                        |
-| `utilities/image-failure.utility.ts`   | tells a wallet refusal apart from a provider error so the stored row can say which                                                    |
-| `services/image-generation.service.ts` | mints a per-attempt `requestId`, stores the credit reason, latches the fallback chain to local-only after a refusal                   |
+| Where                                  | What                                                                                                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.module.ts`                        | `EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL })` — `@Global()`, provides `PaygMeter` by CLASS token                                  |
+| `managers/image-execution.manager.ts`  | `callMeteredCloudProvider` — the single chokepoint. `reserve` → provider → OPEN hold (`release` on throw); `settle` / `releaseUnpersisted` after the store             |
+| `constants/image-payg.constants.ts`    | the reservation ceiling, the prompt-token figure, and the credit failure codes                                                                                         |
+| `utilities/image-failure.utility.ts`   | tells a wallet refusal apart from a provider error so the stored row can say which                                                                                     |
+| `services/image-generation.service.ts` | mints a per-attempt `requestId`, stores the credit reason, latches the fallback chain to local-only after a refusal; settles only after the asset row (`persistAsset`) |
 
 **Five things that will bite you here.**
 

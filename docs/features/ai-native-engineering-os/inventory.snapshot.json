@@ -7683,7 +7683,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 25462,
+          "bytes": 25889,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -8049,7 +8049,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 17077,
+          "bytes": 17722,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -10165,7 +10165,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 28
+        "testFiles": 29
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10935,7 +10935,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1605,
+    "totalTestFiles": 1606,
     "workspaceCount": 25
   }
 }

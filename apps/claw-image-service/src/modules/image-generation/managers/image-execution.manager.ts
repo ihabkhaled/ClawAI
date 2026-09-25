@@ -9,16 +9,20 @@ import {
   IMAGE_PAYG_IMAGES_PER_REQUEST,
   IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
   IMAGE_PAYG_PROMPT_TOKENS,
+  IMAGE_STORE_FAILED_LOG_REASON,
+  IMAGE_STORE_FAILED_RELEASE_REASON,
 } from '../constants/image-payg.constants';
-import { countReturnedImages } from '../utilities/image-unit-count.utility';
+import { imageSettlement } from '../utilities/image-settlement.utility';
 import { providerImageDownloadHosts } from '../utilities/provider-image-download.utility';
 import {
   type ConnectorConfigResponse,
   type ExecuteImageInput,
   type GenerateImageResult,
+  type ImageProviderOutcome,
   type ImageProviderResponse,
   type ImageReference,
   type ImageReferenceFileResponse,
+  type ImageSettlement,
   type StoreImageResponse,
 } from '../types/image-generation.types';
 import { type ImageProgressCallback } from '../types/image-progress.types';
@@ -68,13 +72,21 @@ export class ImageExecutionManager {
     );
 
     this.logger.debug('execute: calling provider');
-    const providerResponse = await this.callProvider(params);
+    const { response: providerResponse, settlement } = await this.callProvider(params);
     this.logger.debug(
       `execute: provider returned — hasBase64=${String(Boolean(providerResponse.imageBase64))} hasUrl=${String(Boolean(providerResponse.imageUrl))} mimeType=${providerResponse.mimeType}`,
     );
 
     this.logger.debug('execute: storing generated image');
-    const fileId = await this.storeImage(params, providerResponse);
+    let fileId: string;
+    try {
+      fileId = await this.storeImage(params, providerResponse);
+    } catch (error: unknown) {
+      // The hold is still OPEN: no file means no image for the user, so the
+      // user pays nothing and the platform absorbs the provider cost.
+      await this.releaseUnpersisted(settlement);
+      throw error;
+    }
     const latencyMs = Date.now() - startTime;
 
     this.logger.log(`execute: completed — fileId=${fileId} latencyMs=${String(latencyMs)}`);
@@ -83,10 +95,40 @@ export class ImageExecutionManager {
       fileId,
       revisedPrompt: providerResponse.revisedPrompt ?? null,
       latencyMs,
+      ...(settlement === undefined ? {} : { settlement }),
     };
   }
 
-  private async callProvider(params: ExecuteImageInput): Promise<ImageProviderResponse> {
+  /**
+   * Finalizes a paid attempt on its measured units. Called by the caller only
+   * AFTER the generated image is persisted (file stored AND asset row written).
+   * A local attempt carries no settlement and this is a no-op.
+   */
+  async settle(settlement: ImageSettlement | undefined): Promise<void> {
+    if (settlement === undefined) {
+      return;
+    }
+    await this.payg.finalize(settlement.hold, settlement.usage, settlement.calls);
+    this.logger.log(
+      `imageSettlement reservationId=${String(settlement.hold.reservationId)} outcome=FINALIZED imageUnits=${String(settlement.calls.imageUnits ?? 0)}`,
+    );
+  }
+
+  /**
+   * Gives a paid attempt's hold back when its image could not be persisted.
+   * Idempotent on the auth side (rule 37 item 11): a second release is a no-op.
+   */
+  async releaseUnpersisted(settlement: ImageSettlement | undefined): Promise<void> {
+    if (settlement === undefined) {
+      return;
+    }
+    await this.payg.release(settlement.hold, IMAGE_STORE_FAILED_RELEASE_REASON);
+    this.logger.warn(
+      `imageSettlement reservationId=${String(settlement.hold.reservationId)} outcome=RELEASED reason=${IMAGE_STORE_FAILED_LOG_REASON}`,
+    );
+  }
+
+  private async callProvider(params: ExecuteImageInput): Promise<ImageProviderOutcome> {
     this.logger.debug(`callProvider: dispatching to ${params.provider}/${params.model}`);
     const { provider, model, prompt, width, height } = params;
     const w = width ?? 1024;
@@ -96,22 +138,24 @@ export class ImageExecutionManager {
       this.logger.debug(
         `callProvider: routing to local Stable Diffusion provider — hasReference=${String(Boolean(params.referenceImageBase64))}`,
       );
-      return this.observeSdProgress(params.onProgress, async () =>
-        this.callLocalProvider(
-          prompt,
-          w,
-          h,
-          params.referenceImageBase64,
-          params.referenceImageMimeType,
+      return {
+        response: await this.observeSdProgress(params.onProgress, async () =>
+          this.callLocalProvider(
+            prompt,
+            w,
+            h,
+            params.referenceImageBase64,
+            params.referenceImageMimeType,
+          ),
         ),
-      );
+      };
     }
 
     if (provider === IMAGE_PROVIDER_LOCAL_COMFYUI) {
       this.logger.debug(
         `callProvider: routing to local ComfyUI provider — model=${model} size=${String(w)}x${String(h)}`,
       );
-      return this.callComfyUIProvider(prompt, w, h, model, params.onProgress);
+      return { response: await this.callComfyUIProvider(prompt, w, h, model, params.onProgress) };
     }
 
     const connectorProvider = IMAGE_PROVIDER_CONNECTORS.get(provider);
@@ -127,7 +171,10 @@ export class ImageExecutionManager {
   }
 
   /**
-   * One paid image generation, wrapped in reserve → finalize / release.
+   * One paid image generation: reserve → provider call → an OPEN hold carrying
+   * the measured units. A provider throw releases here; otherwise the hold is
+   * settled by the caller once the image is persisted (`settle`), or released
+   * when persisting fails (`releaseUnpersisted`) — rule 37 item 17.
    *
    * Reached only after the two local branches above have returned, so nothing
    * that runs on the operator's own GPU ever pays for a round trip to the meter.
@@ -141,7 +188,7 @@ export class ImageExecutionManager {
     connectorProvider: string,
     width: number,
     height: number,
-  ): Promise<ImageProviderResponse> {
+  ): Promise<ImageProviderOutcome> {
     this.logger.debug(`callMeteredCloudProvider: fetching config for ${connectorProvider}`);
     const config = await this.fetchConnectorConfig(connectorProvider);
     const hold = await this.reserveImageHold(params, connectorProvider);
@@ -154,8 +201,10 @@ export class ImageExecutionManager {
       // clamp (D6) to land in, so for this surface the clamp only sizes the hold
       // — it cannot physically bound the answer the way it does for text.
       const response = await this.dispatchCloudProvider(params, config, width, height);
-      await this.finalizeImageHold(hold, response, connectorProvider);
-      return response;
+      this.logger.debug(
+        `callMeteredCloudProvider: provider=${connectorProvider} returned — hold stays open until the image is persisted`,
+      );
+      return { response, settlement: imageSettlement(hold, response) };
     } catch (error: unknown) {
       // The user got no image, so the hold goes back rather than being settled.
       // Release is idempotent on the auth side: a double release is a no-op,
@@ -251,40 +300,6 @@ export class ImageExecutionManager {
       this.logger.error('reserveImageHold: unexpected meter failure');
       throw error;
     }
-  }
-
-  /**
-   * Settles the hold on what the provider actually produced.
-   *
-   * Two signals, and the rate row decides which one carries the cost:
-   *  - TOKENS, when the provider reports them. Gemini answers with real
-   *    `usageMetadata` and is priced per token (no per-image rate).
-   *  - IMAGES RETURNED, always. OpenAI's `/images/generations` reports no usage
-   *    at all, so its rows are priced per image (`imagePerUnitMicroUsd`) and
-   *    this count is the whole charge. Settling on zero tokens alone is what
-   *    used to make every OpenAI image cost $0 (rule 37: a non-token surface
-   *    finalizes on measured units, never on zero tokens).
-   */
-  private async finalizeImageHold(
-    hold: PaygHold,
-    response: ImageProviderResponse,
-    connectorProvider: string,
-  ): Promise<void> {
-    const usage = response.usage;
-    const imageUnits = countReturnedImages(response);
-    this.logger.debug(
-      `finalizeImageHold: provider=${connectorProvider} imageUnits=${String(imageUnits)} reportedUsage=${String(usage !== undefined)}`,
-    );
-    await this.payg.finalize(
-      hold,
-      {
-        promptTokens: usage?.promptTokens ?? 0,
-        completionTokens: usage?.completionTokens ?? 0,
-        cachedPromptTokens: usage?.cachedPromptTokens ?? 0,
-        reasoningTokens: usage?.reasoningTokens ?? 0,
-      },
-      { toolCalls: 0, imageUnits },
-    );
   }
 
   private async callLocalProvider(

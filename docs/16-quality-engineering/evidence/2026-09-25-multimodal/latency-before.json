@@ -1,0 +1,881 @@
+{
+  "generatedAt": "2026-09-25T14:36:54.924Z",
+  "runStart": "2026-09-25T14:31:28.215Z",
+  "base": "https://claw.local/api/v1",
+  "n": 3,
+  "plan": "pro",
+  "echoModel": {
+    "provider": "GEMINI",
+    "model": "models/gemini-2.5-flash"
+  },
+  "speechAvailability": {
+    "available": true,
+    "reason": null
+  },
+  "fixtureError": null,
+  "fixtures": {
+    "speechSecondsAvailable": 159.774792,
+    "sourceClips": 5,
+    "voice": [
+      {
+        "target": 5,
+        "run": 1,
+        "durationS": 5.008,
+        "bytes": 21892
+      },
+      {
+        "target": 5,
+        "run": 2,
+        "durationS": 5.008,
+        "bytes": 21835
+      },
+      {
+        "target": 5,
+        "run": 3,
+        "durationS": 5.008,
+        "bytes": 22294
+      },
+      {
+        "target": 30,
+        "run": 1,
+        "durationS": 30.008,
+        "bytes": 130041
+      },
+      {
+        "target": 30,
+        "run": 2,
+        "durationS": 30.008,
+        "bytes": 129957
+      },
+      {
+        "target": 30,
+        "run": 3,
+        "durationS": 30.008,
+        "bytes": 129941
+      },
+      {
+        "target": 120,
+        "run": 1,
+        "durationS": 120.008,
+        "bytes": 521860
+      },
+      {
+        "target": 120,
+        "run": 2,
+        "durationS": 120.008,
+        "bytes": 521893
+      },
+      {
+        "target": 120,
+        "run": 3,
+        "durationS": 120.008,
+        "bytes": 521975
+      }
+    ],
+    "video": [
+      {
+        "target": 10,
+        "run": 1,
+        "durationS": 10,
+        "bytes": 229603
+      },
+      {
+        "target": 10,
+        "run": 2,
+        "durationS": 10,
+        "bytes": 230039
+      },
+      {
+        "target": 10,
+        "run": 3,
+        "durationS": 10,
+        "bytes": 229557
+      },
+      {
+        "target": 60,
+        "run": 1,
+        "durationS": 60,
+        "bytes": 1489852
+      },
+      {
+        "target": 60,
+        "run": 2,
+        "durationS": 60,
+        "bytes": 1490704
+      },
+      {
+        "target": 60,
+        "run": 3,
+        "durationS": 60,
+        "bytes": 1488826
+      }
+    ]
+  },
+  "summary": [
+    {
+      "label": "TTS ~200 chars",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 7774,
+      "median": 10645,
+      "max": 10903,
+      "failures": [],
+      "providerMs": {
+        "min": 7692,
+        "median": 10561,
+        "max": 10799
+      },
+      "notes": "spoken chars med 206; provider med 10.6s"
+    },
+    {
+      "label": "TTS ~1000 chars",
+      "n": 3,
+      "ok": 2,
+      "successRate": 0.6666666666666666,
+      "min": 27605,
+      "median": 27890,
+      "max": 28174,
+      "failures": ["504 TTS_FAILED"],
+      "providerMs": {
+        "min": 27389,
+        "median": 27683,
+        "max": 27976
+      },
+      "notes": "spoken chars med 1019; provider med 27.7s"
+    },
+    {
+      "label": "TTS ~4000 chars",
+      "n": 3,
+      "ok": 0,
+      "successRate": 0,
+      "min": null,
+      "median": null,
+      "max": null,
+      "failures": ["504 TTS_FAILED", "504 TTS_FAILED", "504 TTS_FAILED"],
+      "providerMs": {
+        "min": null,
+        "median": null,
+        "max": null
+      },
+      "notes": "spoken chars med 4023; provider med —"
+    },
+    {
+      "label": "TTS cached replay",
+      "n": 1,
+      "ok": 1,
+      "min": 46,
+      "median": 46,
+      "max": 46,
+      "failures": [],
+      "notes": "cached=true"
+    },
+    {
+      "label": "STT ~5s voice note",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 1640,
+      "median": 1647,
+      "max": 1678,
+      "failures": [],
+      "queueWaitMs": {
+        "min": 16,
+        "median": 23,
+        "max": 43
+      },
+      "jobMs": {
+        "min": 1169,
+        "median": 1399,
+        "max": 1426
+      },
+      "notes": "audio 5s; transcript chars med 77; queue→hold med 23ms; job med 1399ms"
+    },
+    {
+      "label": "STT ~30s voice note",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 2206,
+      "median": 2212,
+      "max": 2237,
+      "failures": [],
+      "queueWaitMs": {
+        "min": 13,
+        "median": 13,
+        "max": 16
+      },
+      "jobMs": {
+        "min": 1893,
+        "median": 2000,
+        "max": 2131
+      },
+      "notes": "audio 30s; transcript chars med 501; queue→hold med 13ms; job med 2000ms"
+    },
+    {
+      "label": "STT ~120s voice note",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 3989,
+      "median": 4513,
+      "max": 6119,
+      "failures": [],
+      "queueWaitMs": {
+        "min": 16,
+        "median": 20,
+        "max": 23
+      },
+      "jobMs": {
+        "min": 3688,
+        "median": 4319,
+        "max": 5871
+      },
+      "notes": "audio 120s; transcript chars med 2067; queue→hold med 20ms; job med 4319ms"
+    },
+    {
+      "label": "Video 10s mp4",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 1714,
+      "median": 2759,
+      "max": 2785,
+      "failures": [],
+      "processingMs": {
+        "min": 1606,
+        "median": 2316,
+        "max": 2487
+      },
+      "notes": "processingMs med 2316; audio TRANSCRIBED"
+    },
+    {
+      "label": "Video 60s mp4",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 3595,
+      "median": 3618,
+      "max": 3651,
+      "failures": [],
+      "processingMs": {
+        "min": 3068,
+        "median": 3099,
+        "max": 3111
+      },
+      "notes": "processingMs med 3099; audio TRANSCRIBED"
+    }
+  ],
+  "tts": {
+    "runs": [
+      {
+        "size": 200,
+        "run": 1,
+        "requestedChars": 206,
+        "messageId": "cmuh26z6p001pd8vuz2zk6vhb",
+        "replyChars": 206,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 7774,
+        "status": 200,
+        "fileId": "cmuh275gc0011a4o3uz0ftcwf",
+        "mimeType": "audio/wav",
+        "characters": 206,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 7692
+          }
+        ],
+        "providerMs": 7692,
+        "overheadMs": 82
+      },
+      {
+        "size": 200,
+        "run": 2,
+        "requestedChars": 256,
+        "messageId": "cmuh27670001td8vuckkdzdqn",
+        "replyChars": 256,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 10903,
+        "status": 200,
+        "fileId": "cmuh27f2v0012a4o3mlut6rur",
+        "mimeType": "audio/wav",
+        "characters": 256,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 10799
+          }
+        ],
+        "providerMs": 10799,
+        "overheadMs": 104
+      },
+      {
+        "size": 200,
+        "run": 3,
+        "requestedChars": 199,
+        "messageId": "cmuh27fug001xd8vur59skfy3",
+        "replyChars": 199,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 10645,
+        "status": 200,
+        "fileId": "cmuh27ojq0013a4o34gkmfkvo",
+        "mimeType": "audio/wav",
+        "characters": 199,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 10561
+          }
+        ],
+        "providerMs": 10561,
+        "overheadMs": 84
+      },
+      {
+        "size": 1000,
+        "run": 1,
+        "requestedChars": 1020,
+        "messageId": "cmuh27ppi0021d8vud7l2vh64",
+        "replyChars": 1020,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": false,
+        "ms": 40034,
+        "status": 504,
+        "reason": "504 TTS_FAILED",
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "TIMED_OUT",
+            "latencyMs": 40017
+          }
+        ],
+        "providerMs": 40017
+      },
+      {
+        "size": 1000,
+        "run": 2,
+        "requestedChars": 1009,
+        "messageId": "cmuh28mi70025d8vub973d65d",
+        "replyChars": 1009,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 27605,
+        "status": 200,
+        "fileId": "cmuh298cl0014a4o3ks0xu3t6",
+        "mimeType": "audio/wav",
+        "characters": 1009,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 27389
+          }
+        ],
+        "providerMs": 27389,
+        "overheadMs": 216
+      },
+      {
+        "size": 1000,
+        "run": 3,
+        "requestedChars": 1019,
+        "messageId": "cmuh299l80029d8vu360vujl1",
+        "replyChars": 1019,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 28174,
+        "status": 200,
+        "fileId": "cmuh29vc10015a4o3x9bminmu",
+        "mimeType": "audio/wav",
+        "characters": 1019,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 27976
+          }
+        ],
+        "providerMs": 27976,
+        "overheadMs": 198
+      },
+      {
+        "size": 4000,
+        "run": 1,
+        "requestedChars": 4028,
+        "messageId": "cmuh29y6o002dd8vuuxtrc3t8",
+        "replyChars": 4028,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": false,
+        "ms": 40038,
+        "status": 504,
+        "reason": "504 TTS_FAILED",
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "TIMED_OUT",
+            "latencyMs": 40014
+          }
+        ],
+        "providerMs": 40014
+      },
+      {
+        "size": 4000,
+        "run": 2,
+        "requestedChars": 4020,
+        "messageId": "cmuh2awmm002hd8vuc9xvgc02",
+        "replyChars": 4020,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": false,
+        "ms": 40049,
+        "status": 504,
+        "reason": "504 TTS_FAILED",
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "TIMED_OUT",
+            "latencyMs": 40027
+          }
+        ],
+        "providerMs": 40027
+      },
+      {
+        "size": 4000,
+        "run": 3,
+        "requestedChars": 4023,
+        "messageId": "cmuh2bv2w002ld8vumk795ud5",
+        "replyChars": 4023,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": false,
+        "ms": 40042,
+        "status": 504,
+        "reason": "504 TTS_FAILED",
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "TIMED_OUT",
+            "latencyMs": 40019
+          }
+        ],
+        "providerMs": 40019
+      }
+    ],
+    "replay": {
+      "size": 1000,
+      "messageId": "cmuh299l80029d8vu360vujl1",
+      "ok": true,
+      "ms": 46,
+      "status": 200,
+      "fileId": "cmuh29vc10015a4o3x9bminmu",
+      "mimeType": "audio/wav",
+      "characters": 1019,
+      "cached": true,
+      "logged": true
+    }
+  },
+  "stt": [
+    {
+      "target": 5,
+      "run": 1,
+      "durationS": 5,
+      "bytes": 21892,
+      "ok": true,
+      "fileId": "cmuh2czjc0016a4o3gso2ac3f",
+      "uploadMs": 29,
+      "totalMs": 1640,
+      "polls": 4,
+      "status": "COMPLETED",
+      "transcriptChars": 81,
+      "nonEmpty": true,
+      "sample": "By the time the train reached the city, the sun had come out. Two children raced.",
+      "queueWaitMs": 43,
+      "jobMs": 1399
+    },
+    {
+      "target": 5,
+      "run": 2,
+      "durationS": 5,
+      "bytes": 21835,
+      "ok": true,
+      "fileId": "cmuh2d0ss0018a4o3yblqqgyg",
+      "uploadMs": 25,
+      "totalMs": 1647,
+      "polls": 4,
+      "status": "COMPLETED",
+      "transcriptChars": 65,
+      "nonEmpty": true,
+      "sample": "Two children raced each other to the fountain and laughed loudly.",
+      "queueWaitMs": 16,
+      "jobMs": 1426
+    },
+    {
+      "target": 5,
+      "run": 3,
+      "durationS": 5,
+      "bytes": 22294,
+      "ok": true,
+      "fileId": "cmuh2d22i001aa4o35ffijqjd",
+      "uploadMs": 25,
+      "totalMs": 1678,
+      "polls": 4,
+      "status": "COMPLETED",
+      "transcriptChars": 77,
+      "nonEmpty": true,
+      "sample": "and laughed loudly. The morning train left the station a few minutes after 7.",
+      "queueWaitMs": 23,
+      "jobMs": 1169
+    },
+    {
+      "target": 30,
+      "run": 1,
+      "durationS": 30,
+      "bytes": 130041,
+      "ok": true,
+      "fileId": "cmuh2d3dc001ca4o3kbtwmgor",
+      "uploadMs": 39,
+      "totalMs": 2237,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 501,
+      "nonEmpty": true,
+      "sample": "By the time the train reached the city, the sun had come out. Two children raced each other to the f",
+      "queueWaitMs": 13,
+      "jobMs": 1893
+    },
+    {
+      "target": 30,
+      "run": 2,
+      "durationS": 30,
+      "bytes": 129957,
+      "ok": true,
+      "fileId": "cmuh2d53l001ea4o3jprumftk",
+      "uploadMs": 42,
+      "totalMs": 2206,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 502,
+      "nonEmpty": true,
+      "sample": "come out. Two children raced each other to the fountain and laughed loudly. The morning train left t",
+      "queueWaitMs": 16,
+      "jobMs": 2000
+    },
+    {
+      "target": 30,
+      "run": 3,
+      "durationS": 30,
+      "bytes": 129941,
+      "ok": true,
+      "fileId": "cmuh2d6t3001ga4o3c11jpc6p",
+      "uploadMs": 49,
+      "totalMs": 2212,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 494,
+      "nonEmpty": true,
+      "sample": "and laughed loudly. The morning train left the station a few minutes after 7:00. People hurried acro",
+      "queueWaitMs": 13,
+      "jobMs": 2131
+    },
+    {
+      "target": 120,
+      "run": 1,
+      "durationS": 120,
+      "bytes": 521860,
+      "ok": true,
+      "fileId": "cmuh2d8jj001ia4o3yw4rk3tg",
+      "uploadMs": 99,
+      "totalMs": 3989,
+      "polls": 8,
+      "status": "COMPLETED",
+      "transcriptChars": 2067,
+      "nonEmpty": true,
+      "sample": "By the time the train reached the city, the sun had come out. Two children raced each other to the f",
+      "queueWaitMs": 23,
+      "jobMs": 3688
+    },
+    {
+      "target": 120,
+      "run": 2,
+      "durationS": 120,
+      "bytes": 521893,
+      "ok": true,
+      "fileId": "cmuh2dblr001ka4o3nqfw23v5",
+      "uploadMs": 78,
+      "totalMs": 6119,
+      "polls": 12,
+      "status": "COMPLETED",
+      "transcriptChars": 2116,
+      "nonEmpty": true,
+      "sample": "come out. Two children raced each other to the fountain and laughed loudly. The morning train left t",
+      "queueWaitMs": 20,
+      "jobMs": 5871
+    },
+    {
+      "target": 120,
+      "run": 3,
+      "durationS": 120,
+      "bytes": 521975,
+      "ok": true,
+      "fileId": "cmuh2dgbu001ma4o3ai9b0zx2",
+      "uploadMs": 87,
+      "totalMs": 4513,
+      "polls": 9,
+      "status": "COMPLETED",
+      "transcriptChars": 2061,
+      "nonEmpty": true,
+      "sample": "and laughed loudly. The morning train left the station a few minutes after 7:00. People hurried acro",
+      "queueWaitMs": 16,
+      "jobMs": 4319
+    }
+  ],
+  "video": [
+    {
+      "target": 10,
+      "run": 1,
+      "durationS": 10,
+      "bytes": 229603,
+      "ok": true,
+      "fileId": "cmuh2djsk001oa4o3l6uof9b7",
+      "uploadMs": 46,
+      "totalMs": 2759,
+      "polls": 6,
+      "status": "COMPLETED",
+      "transcriptChars": 371,
+      "nonEmpty": true,
+      "sample": "Video \"video-10s-r1.mp4\" — length 00:10, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 207,
+      "jobMs": null,
+      "processingMs": 2487,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 4,
+      "videoQueueWaitMs": 0,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh2djsk001oa4o3l6uof9b7 provider=GEMINI model=models/gemini-2.5-flash chars=200"
+    },
+    {
+      "target": 10,
+      "run": 2,
+      "durationS": 10,
+      "bytes": 230039,
+      "ok": true,
+      "fileId": "cmuh2dlxk001qa4o31nisfycv",
+      "uploadMs": 65,
+      "totalMs": 1714,
+      "polls": 4,
+      "status": "COMPLETED",
+      "transcriptChars": 367,
+      "nonEmpty": true,
+      "sample": "Video \"video-10s-r2.mp4\" — length 00:10, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 214,
+      "jobMs": null,
+      "processingMs": 1606,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 3,
+      "videoQueueWaitMs": 0,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh2dlxk001qa4o31nisfycv provider=GEMINI model=models/gemini-2.5-flash chars=202"
+    },
+    {
+      "target": 10,
+      "run": 3,
+      "durationS": 10,
+      "bytes": 229557,
+      "ok": true,
+      "fileId": "cmuh2dn96001sa4o31qx66wa1",
+      "uploadMs": 57,
+      "totalMs": 2785,
+      "polls": 6,
+      "status": "COMPLETED",
+      "transcriptChars": 358,
+      "nonEmpty": true,
+      "sample": "Video \"video-10s-r3.mp4\" — length 00:10, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 208,
+      "jobMs": null,
+      "processingMs": 2316,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 3,
+      "videoQueueWaitMs": 1,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh2dn96001sa4o31qx66wa1 provider=GEMINI model=models/gemini-2.5-flash chars=193"
+    },
+    {
+      "target": 60,
+      "run": 1,
+      "durationS": 60,
+      "bytes": 1489852,
+      "ok": true,
+      "fileId": "cmuh2dphr001ua4o31pmxlsur",
+      "uploadMs": 224,
+      "totalMs": 3651,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1405,
+      "nonEmpty": true,
+      "sample": "Video \"video-60s-r1.mp4\" — length 01:00, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 317,
+      "jobMs": null,
+      "processingMs": 3099,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 16,
+      "videoQueueWaitMs": 6,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh2dphr001ua4o31pmxlsur provider=GEMINI model=models/gemini-2.5-flash chars=1162"
+    },
+    {
+      "target": 60,
+      "run": 2,
+      "durationS": 60,
+      "bytes": 1490704,
+      "ok": true,
+      "fileId": "cmuh2ds9y001wa4o3m74bo6w3",
+      "uploadMs": 171,
+      "totalMs": 3595,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1407,
+      "nonEmpty": true,
+      "sample": "Video \"video-60s-r2.mp4\" — length 01:00, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 315,
+      "jobMs": null,
+      "processingMs": 3111,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 16,
+      "videoQueueWaitMs": 1,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh2ds9y001wa4o3m74bo6w3 provider=GEMINI model=models/gemini-2.5-flash chars=1164"
+    },
+    {
+      "target": 60,
+      "run": 3,
+      "durationS": 60,
+      "bytes": 1488826,
+      "ok": true,
+      "fileId": "cmuh2dv1s001ya4o3d6rtf1ut",
+      "uploadMs": 176,
+      "totalMs": 3618,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1404,
+      "nonEmpty": true,
+      "sample": "Video \"video-60s-r3.mp4\" — length 01:00, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 307,
+      "jobMs": null,
+      "processingMs": 3068,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 16,
+      "videoQueueWaitMs": 4,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh2dv1s001ya4o3d6rtf1ut provider=GEMINI model=models/gemini-2.5-flash chars=1161"
+    }
+  ],
+  "logs": {
+    "fileService": {
+      "emptyTranscript": 0,
+      "http429": 0,
+      "timeouts": 0,
+      "transcriptionFailedStatus": 0,
+      "videoFailed": 0,
+      "candidateFailureReasons": {},
+      "geminiReceived": [
+        {
+          "chars": 81,
+          "prompt": 202,
+          "completion": 19
+        },
+        {
+          "chars": 65,
+          "prompt": 202,
+          "completion": 12
+        },
+        {
+          "chars": 77,
+          "prompt": 202,
+          "completion": 17
+        },
+        {
+          "chars": 501,
+          "prompt": 1002,
+          "completion": 111
+        },
+        {
+          "chars": 502,
+          "prompt": 1002,
+          "completion": 144
+        },
+        {
+          "chars": 494,
+          "prompt": 1002,
+          "completion": 142
+        },
+        {
+          "chars": 2067,
+          "prompt": 3882,
+          "completion": 453
+        },
+        {
+          "chars": 2116,
+          "prompt": 3882,
+          "completion": 1002
+        },
+        {
+          "chars": 2061,
+          "prompt": 3882,
+          "completion": 454
+        },
+        {
+          "chars": 200,
+          "prompt": 398,
+          "completion": 218
+        },
+        {
+          "chars": 202,
+          "prompt": 398,
+          "completion": 60
+        },
+        {
+          "chars": 193,
+          "prompt": 398,
+          "completion": 230
+        },
+        {
+          "chars": 1162,
+          "prompt": 1998,
+          "completion": 340
+        },
+        {
+          "chars": 1164,
+          "prompt": 1998,
+          "completion": 337
+        },
+        {
+          "chars": 1161,
+          "prompt": 1998,
+          "completion": 340
+        }
+      ],
+      "geminiZeroCharWithCompletionTokens": 0
+    },
+    "chatService": {
+      "ttsAttemptOutcomes": {
+        "SUCCEEDED": 5,
+        "TIMED_OUT": 4
+      },
+      "ttsFailed": 0,
+      "ttsHoldRefused": 0,
+      "http429": 0,
+      "ttsReleased": 0
+    }
+  }
+}

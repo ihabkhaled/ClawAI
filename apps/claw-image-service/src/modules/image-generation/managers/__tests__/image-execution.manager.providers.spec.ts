@@ -120,9 +120,11 @@ describe('ImageExecutionManager — cloud providers', () => {
     await expect(
       build().execute(input({ provider: 'IMAGE_GEMINI', model: 'gemini-2.5-flash-image' })),
     ).rejects.toMatchObject({ code: ImageFailureCode.STORAGE_FAILED });
-    // The provider call itself succeeded, so its hold was settled, not released.
-    expect(finalize).toHaveBeenCalledTimes(1);
-    expect(release).not.toHaveBeenCalled();
+    // The provider call succeeded but no image was saved, so the still-open
+    // hold is RELEASED, never settled (rule 37 item 17).
+    expect(finalize).not.toHaveBeenCalled();
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledWith(expect.anything(), 'CANCELLED');
   });
 
   it('reports a missing connector as CONNECTOR_NOT_CONFIGURED', async () => {

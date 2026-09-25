@@ -25,16 +25,20 @@ const creditRefusal = (): BusinessException =>
 describe('ImageGenerationService — PAYG credit failures (U4)', () => {
   let repo: InMemoryImageRepo;
   let execute: Mock;
+  let settle: Mock;
+  let releaseUnpersisted: Mock;
   let events: { publish: Mock; subscribe: Mock };
   let service: ImageGenerationService;
 
   beforeEach(() => {
     repo = buildInMemoryImageRepo();
     execute = vi.fn();
+    settle = vi.fn().mockResolvedValue(undefined);
+    releaseUnpersisted = vi.fn().mockResolvedValue(undefined);
     events = { publish: vi.fn(), subscribe: vi.fn() };
     service = new ImageGenerationService(
       repo as unknown as ImageGenerationRepository,
-      { execute } as unknown as ImageExecutionManager,
+      { execute, settle, releaseUnpersisted } as unknown as ImageExecutionManager,
       events as unknown as ImageGenerationEventsService,
       { publish: vi.fn().mockResolvedValue(undefined) } as unknown as RabbitMQService,
       { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,
@@ -54,6 +58,80 @@ describe('ImageGenerationService — PAYG credit failures (U4)', () => {
     expect(first?.requestId).toContain('img-1:');
     expect(second?.requestId).toContain('img-1:');
     expect(first?.requestId).not.toBe(second?.requestId);
+  });
+
+  // Rule 37 item 17: the paid hold settles only once the image exists as a
+  // file AND an asset row; a failed persist releases it and the row says why.
+  const SETTLEMENT = {
+    hold: { metered: true, reservationId: 'res-image-1' },
+    usage: { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
+    calls: { toolCalls: 0, imageUnits: 1 },
+  };
+
+  it('settles the open hold only AFTER the asset row is persisted', async () => {
+    execute.mockResolvedValue({
+      fileId: 'file-1',
+      revisedPrompt: null,
+      latencyMs: 10,
+      settlement: SETTLEMENT,
+    });
+
+    await service.retryGeneration('img-1');
+    await flush();
+
+    expect(settle).toHaveBeenCalledTimes(1);
+    expect(settle).toHaveBeenCalledWith(SETTLEMENT);
+    expect(releaseUnpersisted).not.toHaveBeenCalled();
+    expect(repo.createAsset.mock.invocationCallOrder[0]).toBeLessThan(
+      settle.mock.invocationCallOrder[0] ?? 0,
+    );
+    expect(repo.rows.get('img-1')?.status).toBe('COMPLETED');
+  });
+
+  it('an asset row that cannot be written releases exactly once, never settles, and fails the row as IMAGE_STORAGE_FAILED', async () => {
+    execute.mockResolvedValue({
+      fileId: 'file-1',
+      revisedPrompt: null,
+      latencyMs: 10,
+      settlement: SETTLEMENT,
+    });
+    repo.createAsset.mockRejectedValueOnce(new Error('connection reset'));
+
+    await service.retryGeneration('img-1');
+    await flush();
+
+    expect(releaseUnpersisted).toHaveBeenCalledTimes(1);
+    expect(releaseUnpersisted).toHaveBeenCalledWith(SETTLEMENT);
+    expect(settle).not.toHaveBeenCalled();
+    expect(repo.updateStatus).toHaveBeenCalledWith(
+      'img-1',
+      'FAILED',
+      expect.objectContaining({ errorCode: 'IMAGE_STORAGE_FAILED' }),
+    );
+    expect(repo.updateStatus).not.toHaveBeenCalledWith('img-1', 'COMPLETED', expect.anything());
+  });
+
+  it('a storage failure in AUTO mode spawns no paid fallback (storage is shared)', async () => {
+    execute.mockResolvedValue({
+      fileId: 'file-1',
+      revisedPrompt: null,
+      latencyMs: 10,
+      settlement: SETTLEMENT,
+    });
+    repo.createAsset.mockRejectedValue(new Error('db down'));
+
+    await service.enqueueGeneration({
+      prompt: 'a cute cat',
+      provider: 'IMAGE_GEMINI',
+      model: 'gemini-2.5-flash-image',
+      userId: 'user-1',
+      isAutoMode: true,
+    });
+    await flush();
+
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(releaseUnpersisted).toHaveBeenCalledTimes(1);
+    expect(settle).not.toHaveBeenCalled();
   });
 
   it('stores the credit errorCode on the row instead of the generic provider failure', async () => {

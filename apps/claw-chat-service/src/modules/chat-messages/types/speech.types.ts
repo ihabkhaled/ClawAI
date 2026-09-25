@@ -1,4 +1,4 @@
-import type { PaygHold } from '@claw/shared-entitlements';
+import type { PaygFinalizeCalls, PaygFinalizeUsage, PaygHold } from '@claw/shared-entitlements';
 import type { SpeechUnavailableReason } from '@claw/shared-types';
 
 import type { SpeechAttemptOutcome, SpeechProvider } from '../../../common/enums';
@@ -81,6 +81,8 @@ export type SpeechSynthesisResult = {
   audio: SynthesizedAudio;
   candidate: SpeechCandidate;
   attempts: readonly SpeechAttemptRecord[];
+  /** The winning attempt's hold, still OPEN: settled only after the audio is stored. */
+  settlement: SpeechSettlement;
 };
 
 /** `metadata.speech` on the assistant message — never the audio bytes. */
@@ -155,8 +157,15 @@ export type SpeechHold = {
   outputTokens: number;
 };
 
+/** An open hold plus the measured units it will finalize on. */
+export type SpeechSettlement = {
+  held: SpeechHold;
+  usage: PaygFinalizeUsage;
+  calls: PaygFinalizeCalls;
+};
+
 /** One candidate attempt's result inside the walk. */
 export type SpeechAttemptResult = {
   record: SpeechAttemptRecord;
-  audio?: SynthesizedAudio;
+  delivered?: { audio: SynthesizedAudio; settlement: SpeechSettlement };
 };

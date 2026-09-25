@@ -343,7 +343,21 @@ per audio token. whisper-1's $0.006/min is `100` micro-USD per second.
 
 Prices live only in `ModelCostVersion` rows (seeded list prices in
 `model-cost-seed.constants.ts`, seed v4 for the OpenAI image rows, seed v5 for
-whisper-1, seed v6 for tts-1 / tts-1-hd / gemini-2.5-flash-preview-tts). A transcription credit refusal (402, clamped hold, meter down,
+whisper-1, seed v6 for tts-1 / tts-1-hd / gemini-2.5-flash-preview-tts).
+
+**Settle after the deliverable is persisted.** The measured units are captured
+from the provider response at once, but the hold is finalized only after the
+deliverable is saved. TTS keeps its hold OPEN until the audio file is stored
+and `metadata.speech` written; a store that fails or runs out of the request
+deadline RELEASES the hold (wire reason `CANCELLED`, logged
+`reason=STORE_FAILED`), so the user never pays for audio they did not receive
+and the platform absorbs that provider cost. The 50 s TTS request budget keeps
+`SPEECH_SETTLEMENT_RESERVE_MS` (the meter's 5 s timeout) free after the store
+for that one call. image-service follows the same rule: the image hold settles
+after the file is stored and the asset row written, and a failed persist
+releases it (row `IMAGE_STORAGE_FAILED`).
+
+A transcription credit refusal (402, clamped hold, meter down,
 unpriced model) is a recorded RESULT on the file row — `INSUFFICIENT_CREDIT` or
 `CREDIT_CHECK_UNAVAILABLE` — and never falls through to a second paid provider. Runbook for
 a new per-unit surface:

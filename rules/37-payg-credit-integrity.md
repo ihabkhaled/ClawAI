@@ -145,7 +145,12 @@ paid model, rule 1 applies to it like anything else.
     OpenAI image at $0 and released the whole hold. A model whose response
     reports neither usage nor a unit the row prices (OpenAI `gpt-4o-mini-tts`)
     is not called at all — the TTS candidate filter skips it rather than settle
-    on a guess. Mechanism:
+    on a guess. **Settle after the deliverable is persisted:** a surface that
+    stores its output (TTS audio, a generated file) keeps the hold open until the
+    store succeeds, finalizes then on the units measured from the provider
+    response, and releases on a failed store — never charge for output the user
+    did not receive (references: chat-service `MessageSpeechService`,
+    image-service `ImageGenerationService.persistAsset`). Mechanism:
     [`docs/03-architecture/payg-credit.md` § Unit metering](../docs/03-architecture/payg-credit.md#unit-metering--surfaces-that-are-not-priced-by-tokens).
 18. **A credit refusal ends a candidate walk; it is never a reason to try the next
     provider.** A loop over provider candidates (transcription's modality

@@ -54,7 +54,12 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
     publish = vi.fn();
     service = new ImageGenerationService(
       repo as unknown as ImageGenerationRepository,
-      { execute, loadStoredReference } as unknown as ImageExecutionManager,
+      {
+        execute,
+        loadStoredReference,
+        settle: vi.fn().mockResolvedValue(undefined),
+        releaseUnpersisted: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ImageExecutionManager,
       { publish } as unknown as ImageGenerationEventsService,
       { publish: vi.fn().mockResolvedValue(undefined) } as unknown as RabbitMQService,
       { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,

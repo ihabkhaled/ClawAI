@@ -1,3 +1,8 @@
+import {
+  type PaygFinalizeCalls,
+  type PaygFinalizeUsage,
+  type PaygHold,
+} from '@claw/shared-entitlements';
 import { type RuntimeProgressStage, type TokenUsage } from '@claw/shared-types';
 
 import { type ImageAssetRole, type ImageGenerationStatus } from '../../../generated/prisma';
@@ -216,6 +221,26 @@ export type GenerateImageResult = {
   fileId: string;
   revisedPrompt: string | null;
   latencyMs: number;
+  /**
+   * A paid attempt's hold, still OPEN: the caller settles it
+   * (`ImageExecutionManager.settle`) only once the asset row is persisted, or
+   * releases it (`releaseUnpersisted`) when that fails. Absent for a local
+   * provider, which never touches the meter.
+   */
+  settlement?: ImageSettlement;
+};
+
+/** An open PAYG hold plus the units measured from the provider response. */
+export type ImageSettlement = {
+  hold: PaygHold;
+  usage: PaygFinalizeUsage;
+  calls: PaygFinalizeCalls;
+};
+
+/** What the provider produced, plus the open hold it will settle on (paid providers only). */
+export type ImageProviderOutcome = {
+  response: ImageProviderResponse;
+  settlement?: ImageSettlement;
 };
 
 /**

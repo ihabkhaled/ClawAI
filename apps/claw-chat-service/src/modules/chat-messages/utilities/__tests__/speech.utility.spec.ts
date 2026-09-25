@@ -9,6 +9,7 @@ import {
   speechFilename,
   speechReleaseReason,
   speechRequestId,
+  speechSettlement,
   toSpeechCandidates,
   withStoredSpeech,
 } from '../speech.utility';
@@ -49,9 +50,60 @@ describe('toSpeechCandidates', () => {
       row('OPENAI', 'tts-1', 900_000),
       row('OPENAI', 'tts-1', 0),
     ]);
-    // Both land on the provider window: nginx 60 s − 10 s headroom − 10 s store reserve.
-    expect(long?.timeoutMs).toBe(40_000);
-    expect(missing?.timeoutMs).toBe(40_000);
+    // Both land on the provider window: nginx 60 s - 10 s headroom - 10 s store
+    // reserve - 5 s settlement reserve (the hold is settled after the store).
+    expect(long?.timeoutMs).toBe(35_000);
+    expect(missing?.timeoutMs).toBe(35_000);
+  });
+});
+
+describe('speechSettlement - measured units, captured before the store', () => {
+  const held = {
+    hold: {
+      metered: true,
+      maxOutputTokens: 16_000,
+      clamped: false,
+      reservationId: 'res-1',
+      heldMicroUsd: 1_000,
+      availableAfterMicroUsd: 0,
+      reason: null,
+    },
+    requestId: 'tts:m:h:g1:1',
+    promptTokens: 30,
+    outputTokens: 900,
+  };
+
+  it('settles OpenAI on the characters sent, zero tokens', () => {
+    const openai = { provider: SpeechProvider.OPENAI, model: 'tts-1', timeoutMs: 1, maxTokens: 1 };
+    expect(speechSettlement(held, openai, 1_234, null)).toEqual({
+      held,
+      usage: { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
+      calls: { toolCalls: 0, ttsCharacters: 1_234 },
+    });
+  });
+
+  it('settles Gemini on usageMetadata, or the reserved estimate when it reported none', () => {
+    const gemini = {
+      provider: SpeechProvider.GEMINI,
+      model: 'gemini-2.5-flash-preview-tts',
+      timeoutMs: 1,
+      maxTokens: 1,
+    };
+    expect(
+      speechSettlement(held, gemini, 50, { promptTokens: 21, completionTokens: 740 }).usage,
+    ).toEqual({
+      promptTokens: 21,
+      completionTokens: 740,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
+    });
+    expect(speechSettlement(held, gemini, 50, null).usage).toEqual({
+      promptTokens: 30,
+      completionTokens: 900,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
+    });
+    expect(speechSettlement(held, gemini, 50, null).calls).toEqual({ toolCalls: 0 });
   });
 });
 

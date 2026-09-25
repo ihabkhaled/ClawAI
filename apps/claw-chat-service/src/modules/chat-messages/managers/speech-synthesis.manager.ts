@@ -8,6 +8,8 @@ import { SpeechConnectorClient } from '../clients/speech-connector.client';
 import { SpeechProviderClient } from '../clients/speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../clients/tts-voice-candidates.client';
 import {
+  SPEECH_STORE_FAILED_LOG_REASON,
+  SPEECH_STORE_FAILED_RELEASE_REASON,
   SPEECH_UNIT_PRICED_OUTPUT_TOKENS,
   TTS_CLAMPED_CODE,
   TTS_CLAMPED_MESSAGE,
@@ -24,19 +26,19 @@ import type {
   SpeechAttemptResult,
   SpeechCandidate,
   SpeechHold,
+  SpeechSettlement,
   SpeechSynthesisInput,
   SpeechSynthesisResult,
-  SpeechTokenUsage,
 } from '../types/speech.types';
 import {
   geminiSpeechOutputTokens,
   geminiSpeechPromptTokens,
   isPerCharacterPriced,
   isSpeechTimeout,
-  measuredSpeechUsage,
   speechAttemptTimeoutMs,
   speechReleaseReason,
   speechRequestId,
+  speechSettlement,
   toSpeechCandidates,
 } from '../utilities/speech.utility';
 
@@ -44,8 +46,14 @@ import {
  * Walks the admin's TTS_VOICE candidates for one "Read aloud" (multimodal
  * batch 9) and meters every paid attempt on `PaygSurface.TTS`:
  *
- *   key check -> reserve (expected units) -> provider call -> finalize
- *   (measured units) | release
+ *   key check -> reserve (expected units) -> provider call -> [caller
+ *   stores the audio] -> settle: finalize (measured units) | release
+ *
+ * The winning hold is returned OPEN with the units measured from the
+ * provider response. The caller finalizes it (`settle`) only once the audio
+ * is stored and `metadata.speech` written, and releases it
+ * (`releaseUnstored`) when that fails: the user never pays for audio they did
+ * not receive; the provider cost is absorbed by the platform.
  *
  * - OpenAI tts-1 / tts-1-hd reserve and settle `ttsCharacters` (priced per
  *   character); Gemini TTS reserves a token estimate and settles on
@@ -103,8 +111,8 @@ export class SpeechSynthesisManager {
       this.logger.log(
         `ttsAttempt ${JSON.stringify({ messageId: input.messageId, ...result.record })}`,
       );
-      if (result.audio !== undefined) {
-        return { audio: result.audio, candidate, attempts };
+      if (result.delivered !== undefined) {
+        return { ...result.delivered, candidate, attempts };
       }
       if (result.record.outcome === SpeechAttemptOutcome.TIMED_OUT) {
         throw new BusinessException(
@@ -155,8 +163,12 @@ export class SpeechSynthesisManager {
         apiKey,
         maxOutputTokens: held.hold.maxOutputTokens,
       });
-      await this.finalize(held, candidate, input, audio.usage);
-      return { record: record(SpeechAttemptOutcome.SUCCEEDED, held.requestId), audio };
+      // Measured now, settled after the store: the hold stays open until then.
+      const settlement = speechSettlement(held, candidate, input.speakable.characters, audio.usage);
+      return {
+        record: record(SpeechAttemptOutcome.SUCCEEDED, held.requestId),
+        delivered: { audio, settlement },
+      };
     } catch (error: unknown) {
       await this.accessControl.releaseCredit(held.hold, speechReleaseReason(error));
       const outcome = isSpeechTimeout(error)
@@ -220,26 +232,29 @@ export class SpeechSynthesisManager {
     return { hold, requestId, promptTokens, outputTokens };
   }
 
-  /** Settles on what was measured: characters sent (OpenAI) or usageMetadata (Gemini). */
-  private async finalize(
-    held: SpeechHold,
-    candidate: SpeechCandidate,
-    input: SpeechSynthesisInput,
-    usage: SpeechTokenUsage | null,
-  ): Promise<void> {
-    if (isPerCharacterPriced(candidate)) {
-      await this.accessControl.finalizeCredit(
-        held.hold,
-        { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
-        { toolCalls: 0, ttsCharacters: input.speakable.characters },
-      );
-      return;
-    }
-    const measured = measuredSpeechUsage(usage, held.promptTokens, held.outputTokens);
+  /** Finalizes a delivered synthesis on its measured units — only after the audio is stored. */
+  async settle(settlement: SpeechSettlement): Promise<void> {
     await this.accessControl.finalizeCredit(
-      held.hold,
-      { ...measured, cachedPromptTokens: 0, reasoningTokens: 0 },
-      { toolCalls: 0 },
+      settlement.held.hold,
+      settlement.usage,
+      settlement.calls,
+    );
+    this.logger.log(
+      `ttsSettlement reservationId=${String(settlement.held.hold.reservationId)} outcome=FINALIZED`,
+    );
+  }
+
+  /**
+   * Gives the hold back when the audio could not be stored: the user gets no
+   * audio, so the user pays nothing. Idempotent on the auth side (rule 37 item 11).
+   */
+  async releaseUnstored(settlement: SpeechSettlement): Promise<void> {
+    await this.accessControl.releaseCredit(
+      settlement.held.hold,
+      SPEECH_STORE_FAILED_RELEASE_REASON,
+    );
+    this.logger.warn(
+      `ttsSettlement reservationId=${String(settlement.held.hold.reservationId)} outcome=RELEASED reason=${SPEECH_STORE_FAILED_LOG_REASON}`,
     );
   }
 }

@@ -39,8 +39,10 @@ import { AccessControlService } from './access-control.service';
  *
  * Order is load-bearing: ownership (404 for a stranger, like a missing id) →
  * plan gate (403 before anything paid) → replay a stored synthesis of the
- * SAME text for free → synthesise (metered, `SpeechSynthesisManager`) → store
- * the audio as the owner's file → record `metadata.speech` (never the bytes).
+ * SAME text for free → synthesise (metered, `SpeechSynthesisManager`; the hold
+ * stays OPEN) → store the audio as the owner's file → record `metadata.speech`
+ * (never the bytes) → finalize the hold. A store or record failure RELEASES
+ * the hold instead: the user never pays for audio they did not receive.
  * Concurrent requests for the same reply on one replica share one synthesis.
  */
 @Injectable()
@@ -136,15 +138,18 @@ export class MessageSpeechService {
       generation,
       deadlineAt,
     });
-    const speech = await this.storeAudio(
-      userId,
-      message.id,
-      speakable,
-      result,
-      generation,
-      deadlineAt,
-    );
-    await this.messages.updateMetadata(message.id, withStoredSpeech(message.metadata, speech));
+    let speech: StoredSpeech;
+    try {
+      speech = await this.storeAudio(userId, message.id, speakable, result, generation, deadlineAt);
+      await this.messages.updateMetadata(message.id, withStoredSpeech(message.metadata, speech));
+    } catch (error: unknown) {
+      await this.synthesis.releaseUnstored(result.settlement);
+      throw error instanceof BusinessException
+        ? error
+        : new BusinessException(TTS_FAILED_MESSAGE, TTS_FAILED_CODE, HttpStatus.BAD_GATEWAY);
+    }
+    // Settled only now, on the units measured from the provider response.
+    await this.synthesis.settle(result.settlement);
     return toSpeechResponse(speech, false);
   }
 
@@ -158,13 +163,13 @@ export class MessageSpeechService {
     deadlineAt: number,
   ): Promise<StoredSpeech> {
     const filename = speechFilename(messageId, result.audio.mimeType);
-    // The provider call is already paid and its hold FINALIZED here. A store
-    // that fails or runs out of time answers TTS_FAILED and saves no audio;
-    // the charge stands (no refund path; chat-service CLAUDE.md, "Read aloud").
+    // The provider call is paid but its hold is still OPEN here. A store that
+    // fails or runs out of time answers TTS_FAILED, saves no audio, and the
+    // caller RELEASES the hold (chat-service CLAUDE.md, "Read aloud").
     const timeoutMs = speechStoreTimeoutMs(deadlineAt, Date.now());
     if (timeoutMs === null) {
       this.logger.error(
-        `storeAudio: no time left to store paid audio messageId=${messageId} provider=${result.candidate.provider} model=${result.candidate.model}`,
+        `storeAudio: no time left to store the audio messageId=${messageId} provider=${result.candidate.provider} model=${result.candidate.model}`,
       );
       throw new BusinessException(TTS_FAILED_MESSAGE, TTS_FAILED_CODE, HttpStatus.GATEWAY_TIMEOUT);
     }

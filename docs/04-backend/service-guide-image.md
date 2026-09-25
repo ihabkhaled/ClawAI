@@ -92,7 +92,10 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 - Returns: base64 or URL — and **no token usage**
 - PAYG: metered **per image** (rule 37 item 17). Reserve sends `imageUnits: 1`
   (`n: 1` is hard-coded); finalize sends the images actually returned
-  (`countReturnedImages`). The price is `ModelCostVersion.imagePerUnitMicroUsd`
+  (`countReturnedImages`). The hold stays OPEN until the image is stored AND its
+  asset row written, then finalizes; a failed store or asset row releases it
+  (`CANCELLED`, logged `reason=STORE_FAILED`) and the row fails as
+  `IMAGE_STORAGE_FAILED` — the user is never charged for an unsaved image. The price is `ModelCostVersion.imagePerUnitMicroUsd`
   (seed v4: gpt-image-1 $0.167 = `high` 1024x1024, the worst case of the
   `auto` quality chat sends; dall-e-3 $0.040 standard; dall-e-2 $0.020), with a
   zero output token rate. Before 2026-09-25 these rows carried a fake token rate
