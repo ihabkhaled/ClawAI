@@ -17,6 +17,15 @@ that, and no new strategy may (rule 50, prohibited list).
 ## Enable a shipped sidecar (Crawl4AI, FlareSolverr, Firecrawl)
 
 1. Add it to `CLAW_SCRAPER_PROFILES` in `.env` (e.g. `crawl4ai,flaresolverr`).
+   **Crawl4AI only:** `CRAWL4AI_API_TOKEN` must be set in the same `.env`
+   (installers generate it; by hand `openssl rand -hex 32` on the host —
+   never paste one from a chat or a log). Crawl4AI ≥ 0.9.2 binds `0.0.0.0`
+   and requires `Authorization: Bearer` only when it is set; without it the
+   sidecar listens on its own loopback, the healthcheck still passes, and
+   research-service gets `ECONNREFUSED`. research-service must be recreated
+   too (it reads the token from `.env` at boot): `service:recreate`, not
+   restart. Proof: `docker logs claw-crawl4ai` no longer says "ephemeral
+   token for this loopback session".
 2. `./scripts/claw.sh up` — creates only the named sidecars, on the isolated
    `claw-scrapers` network. Wait for `docker ps` to show it healthy.
 3. Enable it DB-level as an admin:

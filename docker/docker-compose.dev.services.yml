@@ -933,7 +933,6 @@ services:
     networks:
       - claw-network
 
-
   # ---------------------------------------------------------------------------
   # Scraping sidecars for research-service's fetch escalation chain (ADR-121)
   # ---------------------------------------------------------------------------
@@ -963,8 +962,14 @@ services:
     shm_size: '1gb'
     mem_limit: 4g
     pids_limit: 512
+    # No env_file on purpose: this container sees only its own settings.
+    # CRAWL4AI_API_TOKEN is what makes 0.9.x bind 0.0.0.0 and require
+    # `Authorization: Bearer` on every route but /health. Unset, it listens on
+    # its own loopback only and research-service gets ECONNREFUSED. The same
+    # value reaches research-service through ../.env (installers generate it).
     environment:
       CRAWL4AI_MAX_TIMEOUT_MS: '60000'
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-}
     healthcheck:
       test: ['CMD', 'curl', '-fs', 'http://localhost:11235/health']
       interval: 30s
@@ -1051,7 +1056,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          "node -e \"fetch('http://localhost:3002/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+          'node -e "fetch(''http://localhost:3002/'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
         ]
       interval: 30s
       timeout: 10s

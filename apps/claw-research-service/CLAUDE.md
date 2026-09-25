@@ -40,6 +40,9 @@ Controller → Service → Repository (data access)
 - Tiers: official API → plain → impit (TLS impersonation) → Patchright →
   Crawl4AI/FlareSolverr/Firecrawl sidecars (compose profiles via
   `CLAW_SCRAPER_PROFILES`, DB-disabled by default) → Jina Reader → Wayback.
+- Crawl4AI needs `CRAWL4AI_API_TOKEN` (AppConfig) — the same secret the
+  `crawl4ai` container gets. It is sent as `Authorization: Bearer`, never
+  logged; missing → `supports()` false, the tier is skipped with one warning.
 - 401/451 stop the chain; captcha/429/404/robots-unreachable → archive only;
   FlareSolverr only after a JS interstitial. ≤ 6 attempts, ≤ 60 s.
 - Any HTTP an adapter does itself goes through `followRedirectsSafely` (each

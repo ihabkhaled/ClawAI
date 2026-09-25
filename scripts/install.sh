@@ -768,6 +768,7 @@ INTER_SERVICE_AUTH_TOKEN=$(gen_secret_hex)
 GITHUB_WEBHOOK_SECRET=$(gen_secret_hex)
 FIRECRAWL_POSTGRES_PASSWORD=$(gen_secret_hex)
 FIRECRAWL_BULL_AUTH_KEY=$(gen_secret_hex)
+CRAWL4AI_API_TOKEN=$(gen_secret_hex)
 GITLAB_WEBHOOK_SECRET=$(gen_secret_hex)
 SLACK_SIGNING_SECRET=$(gen_secret_hex)
 JIRA_WEBHOOK_SECRET=$(gen_secret_hex)
@@ -820,6 +821,11 @@ if [ -f "$ENV_FILE" ]; then
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_GRAFANA_SECRET_KEY="$(get_env_value "GRAFANA_SECRET_KEY" "$ENV_FILE")"
+  PREV_CRAWL4AI_API_TOKEN="$(get_env_value "CRAWL4AI_API_TOKEN" "$ENV_FILE")"
+  if [ -n "$PREV_CRAWL4AI_API_TOKEN" ]; then
+    CRAWL4AI_API_TOKEN="$PREV_CRAWL4AI_API_TOKEN"
+    ok "Preserved CRAWL4AI_API_TOKEN from existing .env"
+  fi
   if [ -n "$PREV_GRAFANA_SECRET_KEY" ]; then
     GRAFANA_SECRET_KEY="$PREV_GRAFANA_SECRET_KEY"
     ok "Preserved GRAFANA_SECRET_KEY from existing .env (changing it would orphan anything Grafana encrypted)"
@@ -1636,6 +1642,9 @@ RESEARCH_HEADLESS_RENDER_ENABLED=true
 CLAW_SCRAPER_PROFILES=
 FIRECRAWL_POSTGRES_PASSWORD=${FIRECRAWL_POSTGRES_PASSWORD}
 FIRECRAWL_BULL_AUTH_KEY=${FIRECRAWL_BULL_AUTH_KEY}
+# Crawl4AI sidecar Bearer token: makes it bind 0.0.0.0 and require auth.
+# Shared by the crawl4ai container and research-service. Secret.
+CRAWL4AI_API_TOKEN=${CRAWL4AI_API_TOKEN}
 
 # Workspace scheduled sync (Stream 01 Phase 5)
 WORKSPACE_SCHEDULER_ENABLED=true

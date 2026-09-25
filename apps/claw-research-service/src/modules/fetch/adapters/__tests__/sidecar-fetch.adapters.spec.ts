@@ -1,8 +1,16 @@
-import { vi } from 'vitest';
+import { Logger } from '@nestjs/common';
+import { type Mock, vi } from 'vitest';
+import { AppConfig } from '../../../../app/config/app.config';
 import { FetchStrategyKind } from '../../../../generated/prisma';
 import { Crawl4AiFetchAdapter } from '../crawl4ai-fetch.adapter';
 import { FirecrawlFetchAdapter } from '../firecrawl-fetch.adapter';
 import { FlareSolverrFetchAdapter } from '../flaresolverr-fetch.adapter';
+
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: vi.fn() },
+}));
+
+const CRAWL4AI_TOKEN = 'test-crawl4ai-token-value-0123456789abcdef';
 
 function jsonResponse(payload: unknown, status = 200): Record<string, unknown> {
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
@@ -21,16 +29,80 @@ function jsonResponse(payload: unknown, status = 200): Record<string, unknown> {
 const ARTICLE =
   '<html><head><title>Sidecar page</title></head><body><p>Rendered by a sidecar</p></body></html>';
 
-function lastRequest(): { url: string; body: Record<string, unknown> } {
+function lastRequest(): {
+  url: string;
+  body: Record<string, unknown>;
+  headers: Record<string, string>;
+} {
   const [url, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1) as [
     string,
-    { body: string },
+    { body: string; headers: Record<string, string> },
   ];
-  return { url, body: JSON.parse(init.body) as Record<string, unknown> };
+  return { url, body: JSON.parse(init.body) as Record<string, unknown>, headers: init.headers };
 }
 
 describe('sidecar fetch adapters', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    (AppConfig.get as Mock).mockReturnValue({ CRAWL4AI_API_TOKEN: CRAWL4AI_TOKEN });
+  });
+
   describe('Crawl4AiFetchAdapter', () => {
+    it('sends the Crawl4AI API token as a Bearer header', async () => {
+      global.fetch = vi.fn().mockResolvedValue(
+        jsonResponse({
+          success: true,
+          results: [
+            { url: 'https://example.com/', success: true, status_code: 200, html: ARTICLE },
+          ],
+        }),
+      );
+
+      await new Crawl4AiFetchAdapter().fetchPage({ url: 'https://example.com/' });
+
+      expect(lastRequest().headers['Authorization']).toBe(`Bearer ${CRAWL4AI_TOKEN}`);
+    });
+
+    it('reports itself unavailable, without a request, when no token is configured', async () => {
+      (AppConfig.get as Mock).mockReturnValue({ CRAWL4AI_API_TOKEN: undefined });
+      const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+      global.fetch = vi.fn();
+      const adapter = new Crawl4AiFetchAdapter();
+
+      expect(adapter.supports('https://example.com/')).toBe(false);
+      expect(adapter.supports('https://example.org/')).toBe(false);
+      await expect(adapter.fetchPage({ url: 'https://example.com/' })).rejects.toThrow(
+        /CRAWL4AI_API_TOKEN/u,
+      );
+      expect(global.fetch).not.toHaveBeenCalled();
+      // One clear line per process, not one per fetch.
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.[0])).toMatch(/CRAWL4AI_API_TOKEN/u);
+    });
+
+    it('is available when a token is configured', () => {
+      expect(new Crawl4AiFetchAdapter().supports('https://example.com/')).toBe(true);
+    });
+
+    it('never puts the token in a log line or an error message', async () => {
+      const spies = (['log', 'warn', 'error', 'debug', 'verbose'] as const).map((level) =>
+        vi.spyOn(Logger.prototype, level).mockImplementation(() => {}),
+      );
+      global.fetch = vi.fn().mockResolvedValue(jsonResponse({ detail: 'Unauthorized' }, 401));
+      const adapter = new Crawl4AiFetchAdapter();
+
+      adapter.supports('https://example.com/');
+      const failure = await adapter
+        .fetchPage({ url: 'https://example.com/' })
+        .catch((error: unknown) => error);
+
+      expect(String(failure)).not.toContain(CRAWL4AI_TOKEN);
+      expect(String(failure)).toMatch(/HTTP 401/u);
+      for (const spy of spies) {
+        expect(JSON.stringify(spy.mock.calls)).not.toContain(CRAWL4AI_TOKEN);
+      }
+    });
+
     it('posts to /crawl on the internal default and extracts the returned HTML', async () => {
       global.fetch = vi.fn().mockResolvedValue(
         jsonResponse({
@@ -109,6 +181,8 @@ describe('sidecar fetch adapters', () => {
 
       expect(lastRequest().url).toBe('http://flaresolverr:8191/v1');
       expect(lastRequest().body).toMatchObject({ cmd: 'request.get', url: 'https://example.com/' });
+      // The Crawl4AI token is Crawl4AI's alone — never handed to another sidecar.
+      expect(lastRequest().headers['Authorization']).toBeUndefined();
       expect(result.content).toContain('Rendered by a sidecar');
     });
 

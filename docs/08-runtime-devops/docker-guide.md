@@ -326,7 +326,10 @@ They publish no port, have no nginx route, and sit only on the compose-managed
 networks, so a sidecar cannot reach any other service or database. A running
 sidecar is still unused until its tier is enabled DB-level
 (`PATCH /api/v1/research/fetch-strategies/<KIND>`); see
-`skills/add-a-fetch-strategy.md`.
+`skills/add-a-fetch-strategy.md`. `crawl4ai` also needs `CRAWL4AI_API_TOKEN`
+in `.env`: without it Crawl4AI 0.9.x binds only its own loopback, so
+research-service gets `ECONNREFUSED` while the healthcheck (which curls
+`localhost` inside the container) still reports healthy.
 
 ---
 

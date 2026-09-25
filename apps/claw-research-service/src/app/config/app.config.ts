@@ -53,6 +53,20 @@ const appConfigSchema = z.object({
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
+  // Bearer token for the Crawl4AI sidecar (ADR-121, compose profile
+  // `crawl4ai`). The SAME value is passed to the crawl4ai container: from
+  // 0.9.2 on, Crawl4AI binds 0.0.0.0 and requires `Authorization: Bearer`
+  // only when CRAWL4AI_API_TOKEN is set — without it the server listens on
+  // the container's own loopback and every call is ECONNREFUSED. A secret,
+  // so env is correct (rule 15). Blank means unset: the CRAWL4AI tier then
+  // reports itself unavailable and the chain skips it.
+  CRAWL4AI_API_TOKEN: z
+    .string()
+    .optional()
+    .transform((value) => {
+      const trimmed = value?.trim() ?? '';
+      return trimmed.length > 0 ? trimmed : undefined;
+    }),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

@@ -713,6 +713,10 @@ $interServiceToken = New-SecretHex
 $githubWebhookSecret = New-SecretHex
 $firecrawlPostgresPassword = New-SecretHex
 $firecrawlBullAuthKey = New-SecretHex
+# Crawl4AI sidecar Bearer token (0.9.x binds 0.0.0.0 only when it is set).
+# Reused across re-runs so a running sidecar and research-service stay paired.
+$crawl4aiApiToken = Get-EnvValue -Path $envFile -Key 'CRAWL4AI_API_TOKEN'
+if ([string]::IsNullOrWhiteSpace($crawl4aiApiToken)) { $crawl4aiApiToken = New-SecretHex }
 $gitlabWebhookSecret = New-SecretHex
 $slackSigningSecret = New-SecretHex
 $jiraWebhookSecret = New-SecretHex
@@ -1471,6 +1475,9 @@ RESEARCH_HEADLESS_RENDER_ENABLED=true
 CLAW_SCRAPER_PROFILES=
 FIRECRAWL_POSTGRES_PASSWORD=$firecrawlPostgresPassword
 FIRECRAWL_BULL_AUTH_KEY=$firecrawlBullAuthKey
+# Crawl4AI sidecar Bearer token: makes it bind 0.0.0.0 and require auth.
+# Shared by the crawl4ai container and research-service. Secret.
+CRAWL4AI_API_TOKEN=$crawl4aiApiToken
 
 # Workspace scheduled sync (Stream 01 Phase 5)
 WORKSPACE_SCHEDULER_ENABLED=true

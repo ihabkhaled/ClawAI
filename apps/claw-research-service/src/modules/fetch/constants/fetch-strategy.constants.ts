@@ -61,6 +61,13 @@ export const SIDECAR_DEFAULT_BASE_URL: Readonly<Partial<Record<FetchStrategyKind
   [FetchStrategyKind.READER_PROXY]: 'https://r.jina.ai/',
 };
 
+/**
+ * Logged once per process, and thrown by a direct call, when the Crawl4AI
+ * tier is enabled but no token is configured. Names the variable, never a value.
+ */
+export const CRAWL4AI_TOKEN_MISSING_MESSAGE =
+  'CRAWL4AI strategy unavailable: CRAWL4AI_API_TOKEN is not set, so the crawl4ai sidecar only listens on its own loopback. Skipping this tier.';
+
 /** Strategies that send a request to the target site (directly or via a renderer). */
 export const STRATEGIES_TOUCHING_ORIGIN: ReadonlySet<FetchStrategyKind> = new Set([
   FetchStrategyKind.OFFICIAL_API,

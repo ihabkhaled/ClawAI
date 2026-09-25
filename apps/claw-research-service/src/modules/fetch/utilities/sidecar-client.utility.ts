@@ -21,12 +21,17 @@ import type { SidecarPage } from '../types/sidecar.types';
  * The sidecar's base URL is an internal compose name, so it is not run
  * through the outbound SSRF guard (it IS a private host, on purpose) — but
  * it may never be a cloud-metadata address, whatever an admin typed.
+ *
+ * `extraHeaders` carries a sidecar's own credential (Crawl4AI's Bearer
+ * token). It is sent and nothing else: no error or log line built here
+ * ever includes a header value.
  */
 export async function postSidecarJson<T>(
   baseUrl: string,
   path: string,
   body: unknown,
   timeoutMs: number,
+  extraHeaders: Readonly<Record<string, string>> = {},
 ): Promise<T> {
   const endpoint = new URL(path, baseUrl);
   if (isCloudMetadataHost(endpoint.hostname)) {
@@ -37,7 +42,11 @@ export async function postSidecarJson<T>(
     method: 'POST',
     redirect: 'error',
     signal: AbortSignal.timeout(timeoutMs),
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: {
+      ...extraHeaders,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
     body: JSON.stringify(body),
   });
   const bytes = await readLimitedBody(response.body, SIDECAR_MAX_RESPONSE_BYTES);
