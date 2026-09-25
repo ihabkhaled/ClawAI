@@ -7668,7 +7668,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 13704,
+          "bytes": 14176,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -7704,7 +7704,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 3411,
+          "bytes": 3611,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -7730,7 +7730,7 @@
       ],
       "skills": [
         {
-          "bytes": 30232,
+          "bytes": 30511,
           "file": "skills/00-index.md"
         },
         {
@@ -7780,6 +7780,10 @@
         {
           "bytes": 3703,
           "file": "skills/add-a-grafana-dashboard.md"
+        },
+        {
+          "bytes": 7418,
+          "file": "skills/add-a-helper-model-role.md"
         },
         {
           "bytes": 4925,
@@ -8108,7 +8112,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5392
+        "value": 5394
       },
       "localeCount": 13,
       "locales": [
@@ -10086,7 +10090,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 179
+        "testFiles": 182
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10884,7 +10888,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1533,
+    "totalTestFiles": 1536,
     "workspaceCount": 25
   }
 }

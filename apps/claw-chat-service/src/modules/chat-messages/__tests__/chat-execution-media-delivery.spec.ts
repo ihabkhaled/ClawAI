@@ -10,6 +10,11 @@ import type { ChatMessage } from '../../../generated/prisma';
 import { AttachmentDeliveryManager } from '../managers/attachment-delivery.manager';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
+import { VisionHelperManager } from '../managers/vision-helper.manager';
+import { PaygSurface } from '@claw/shared-types';
+import { HelperExecutionKind } from '../../../common/enums/helper-execution-kind.enum';
+import { VisionHelperOutcome } from '../../../common/enums/vision-helper-outcome.enum';
+import { PAYG_WORKFLOW_VISION_HELPER } from '../constants/payg.constants';
 import type { AssembledContext } from '../types/context.types';
 import type { ModelMediaCapabilities } from '../types/model-capability.types';
 import {
@@ -96,7 +101,10 @@ function contextWithImage(): AssembledContext {
   };
 }
 
-function build(): ChatExecutionManager {
+function build(
+  access = createFakePaygAccessControl({ metered: false }),
+  visionHelper?: VisionHelperManager,
+): ChatExecutionManager {
   const assembly = new ContextAssemblyManager({} as never, {} as never, {} as never, {} as never);
   return new ChatExecutionManager(
     assembly,
@@ -108,16 +116,17 @@ function build(): ChatExecutionManager {
       startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
     } as never,
     { run: vi.fn() } as never,
-    asAccessControlService(createFakePaygAccessControl({ metered: false })),
+    asAccessControlService(access),
     { uploadFile: vi.fn(), getCachedOrUpload: vi.fn() } as never,
     undefined,
     undefined,
     undefined,
     new AttachmentDeliveryManager(capabilityClient as never),
+    visionHelper,
   );
 }
 
-function answerWith(provider: string): void {
+function answerWith(provider: string, content = 'ok'): void {
   httpRequest
     .mockResolvedValueOnce({
       ok: true,
@@ -129,9 +138,7 @@ function answerWith(provider: string): void {
       status: 200,
       data: {
         id: 'c1',
-        choices: [
-          { index: 0, message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' },
-        ],
+        choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
         usage: { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 },
       },
     });
@@ -207,5 +214,83 @@ describe('callProvider resolves attachments for the lane it dials', () => {
 
     expect(providerBody()).toContain('image_url');
     expect(response.fileDelivery?.[0]?.mode).toBe(FileDeliveryMode.NATIVE_IMAGE);
+  });
+});
+
+// ADR-120 batch 5 through the real chokepoint: the helper call is its own
+// metered surface at the granted ceiling, and the lane that cannot see gets
+// the description — while the answer stays the lane's own model's.
+describe('callProvider upgrades a blind lane with the vision helper', () => {
+  beforeEach(() => {
+    httpRequest.mockReset();
+    appConfigGet.mockReturnValue({
+      CONNECTOR_SERVICE_URL: 'http://connector:4003',
+      OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
+    });
+  });
+
+  it('meters the helper on VISION_HELPER, sends it the granted ceiling, and keeps the lane model', async () => {
+    const access = createFakePaygAccessControl({ maxOutputTokens: 321 });
+    const helper = new VisionHelperManager(
+      {
+        resolve: vi.fn(async () => [
+          { provider: 'OPENAI', modelAlias: 'gpt-4o', timeoutMs: 30_000, maxTokens: 1_024 },
+        ]),
+      } as never,
+      capabilityClient as never,
+      asAccessControlService(access),
+    );
+    // Helper first (connector config + completion), then the lane itself.
+    answerWith('OPENAI', 'A bar chart. Visible text: "Q3 revenue 1.2M".');
+    answerWith('DEEPSEEK', 'Revenue was 1.2M, based on a description of the chart.');
+
+    const response = await build(access, helper).callProvider(
+      'DEEPSEEK',
+      'deepseek-chat',
+      { ...contextWithImage(), turnId: 'turn-9' },
+      Date.now(),
+      false,
+    );
+
+    const helperBody = JSON.stringify(httpRequest.mock.calls[1]?.[0].body);
+    const laneBody = JSON.stringify(httpRequest.mock.calls[3]?.[0].body);
+    expect(helperBody).toContain(`data:image/png;base64,${IMAGE_BYTES}`);
+    expect(helperBody).toContain('321');
+    expect(laneBody).toContain('DERIVED IMAGE OBSERVATIONS');
+    expect(laneBody).toContain('OPENAI/gpt-4o');
+    expect(laneBody).not.toContain(IMAGE_BYTES);
+    expect(laneBody).not.toContain('image_url');
+
+    expect(access.reserveCredit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        surface: PaygSurface.VISION_HELPER,
+        workflow: PAYG_WORKFLOW_VISION_HELPER,
+        requestId: 'turn-9:vision:img-1',
+        requestedMaxOutputTokens: 1_024,
+      }),
+    );
+    // Helper hold + lane hold, both settled.
+    expect(access.finalizeCredit).toHaveBeenCalledTimes(2);
+
+    expect(response.provider).toBe('DEEPSEEK');
+    expect(response.model).toBe('deepseek-chat');
+    expect(response.fileDelivery?.[0]).toEqual(
+      expect.objectContaining({
+        mode: FileDeliveryMode.DERIVED_IMAGE_TEXT,
+        provider: 'DEEPSEEK',
+        model: 'deepseek-chat',
+        helperProvider: 'OPENAI',
+        helperModel: 'gpt-4o',
+      }),
+    );
+    expect(response.helperExecutions).toEqual([
+      expect.objectContaining({
+        kind: HelperExecutionKind.VISION,
+        provider: 'OPENAI',
+        model: 'gpt-4o',
+        fileId: 'img-1',
+        outcome: VisionHelperOutcome.SUCCEEDED,
+      }),
+    ]);
   });
 });

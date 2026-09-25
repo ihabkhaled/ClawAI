@@ -1,4 +1,5 @@
 import type { FileDeliveryEntry } from './file-delivery.types';
+import type { DerivedImageObservation, HelperExecution } from './vision-helper.types';
 
 /**
  * One file's delivery to one lane: the recorded mode, and whether its bytes
@@ -15,6 +16,14 @@ export type AttachmentDeliveryPlan = {
   provider: string;
   model: string;
   decisions: AttachmentDeliveryDecision[];
+  /**
+   * Helper-vision descriptions for this lane's DERIVED_IMAGE_TEXT decisions,
+   * already fitted to the file share of the window (rule 51 item 4). Set only
+   * once `VisionHelperManager` has run for the lane.
+   */
+  derivedImages?: DerivedImageObservation[];
+  /** Every helper attempt behind those descriptions (no content). */
+  helperExecutions?: HelperExecution[];
 };
 
 export type AttachmentDeliveryOptions = {

@@ -92,6 +92,7 @@
 | Add an Answer Export Format              | `add-an-answer-export-format.md`               | A new "Download as" format on chat answers: browser vs server build, Prisma enum + migration, converter magic-byte spec, 13 locales, live download proof (ADR-105)                     |
 | Debug a Random Sign-Out                  | `debug-a-sign-out.md`                          | Users logged out with two tabs, after sleep, or in VS Code: reproduce with the session probe + two Playwright tabs, read the grace log, know which defence covers which race (ADR-106) |
 | Run the File-Model Matrix                | `run-the-file-model-matrix.md`                 | Which models write which formats: every model × format × N real files through chat → writer → render → download, checked per format; restores FILE_WRITER; resumable (F4)              |
+| Add a Helper Model Role                  | `add-a-helper-model-role.md`                   | A model beside the chosen one (gate, file writer, vision helper): role + migration + seed, candidates client, per-turn metering, admin tab (rule 51 §7)                                |
 
 ---
 

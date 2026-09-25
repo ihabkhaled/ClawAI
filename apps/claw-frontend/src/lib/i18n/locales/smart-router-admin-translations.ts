@@ -73,6 +73,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       fileWriterDescription:
         'The models that write the content of a file the AI generates (PDF, DOCX, spreadsheet...). Tried in order; give them a large token budget, because a file is a whole document.',
       fileWriterEmpty: 'No file writer configured: file requests will fail until you add one.',
+      visionHelperTitle: 'Vision helper',
+      visionHelperDescription:
+        'The vision models that describe an attached image when the chosen model cannot see. The answer is still written by the chosen model, which is told the description came from a helper. Tried in order; each description is billed to the user as its own line.',
+      visionHelperEmpty:
+        'No vision helper configured: models that cannot see get only the text read from an image (OCR).',
       researchGateTitle: 'Research gate',
       researchGateDescription:
         'The model asked whether a turn needs the web, before any answering model runs. Candidates are tried in order.',
@@ -238,6 +243,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       fileWriterDescription:
         'النماذج التي تكتب محتوى الملف الذي يولّده الذكاء الاصطناعي (PDF وDOCX وجداول البيانات...). تُجرَّب بالترتيب؛ امنحها ميزانية رموز كبيرة لأن الملف مستند كامل.',
       fileWriterEmpty: 'لا يوجد كاتب ملفات مُعدّ: ستفشل طلبات الملفات حتى تضيف واحدًا.',
+      visionHelperTitle: 'مساعد الرؤية',
+      visionHelperDescription:
+        'نماذج الرؤية التي تصف الصورة المرفقة عندما لا يستطيع النموذج المختار رؤيتها. يظل النموذج المختار هو من يكتب الإجابة، ويُبلَّغ بأن الوصف جاء من مساعد. تُجرَّب بالترتيب، ويُحتسب كل وصف على المستخدم كبند مستقل.',
+      visionHelperEmpty:
+        'لا يوجد مساعد رؤية مُعدّ: النماذج التي لا ترى الصور تحصل فقط على النص المقروء منها (OCR).',
       researchGateTitle: 'بوابة البحث',
       researchGateDescription:
         'النموذج الذي يُسأل إن كانت الرسالة تحتاج إلى الإنترنت، قبل تشغيل أي نموذج مُجيب. تُجرَّب المرشحات بالترتيب.',
@@ -400,6 +410,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Die Modelle, die den Inhalt einer von der KI erzeugten Datei schreiben (PDF, DOCX, Tabelle...). Werden der Reihe nach versucht; gib ihnen ein großes Token-Budget, denn eine Datei ist ein ganzes Dokument.',
       fileWriterEmpty:
         'Kein Dateischreiber eingerichtet: Dateianfragen schlagen fehl, bis du einen hinzufügst.',
+      visionHelperTitle: 'Vision-Helfer',
+      visionHelperDescription:
+        'Die Vision-Modelle, die ein angehängtes Bild beschreiben, wenn das gewählte Modell nicht sehen kann. Die Antwort schreibt weiterhin das gewählte Modell; es erfährt, dass die Beschreibung von einem Helfer stammt. Werden der Reihe nach versucht; jede Beschreibung wird dem Nutzer als eigener Posten berechnet.',
+      visionHelperEmpty:
+        'Kein Vision-Helfer konfiguriert: Modelle ohne Bildverständnis erhalten nur den aus dem Bild gelesenen Text (OCR).',
       researchGateTitle: 'Recherche-Gate',
       researchGateDescription:
         'Das Modell, das gefragt wird, ob eine Nachricht das Web braucht, bevor ein antwortendes Modell läuft. Kandidaten werden der Reihe nach versucht.',
@@ -571,6 +586,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Los modelos que escriben el contenido de un archivo que genera la IA (PDF, DOCX, hoja de cálculo...). Se prueban en orden; dales un presupuesto de tokens amplio, porque un archivo es un documento completo.',
       fileWriterEmpty:
         'No hay ningún redactor de archivos configurado: las solicitudes de archivos fallarán hasta que añadas uno.',
+      visionHelperTitle: 'Asistente de visión',
+      visionHelperDescription:
+        'Los modelos de visión que describen una imagen adjunta cuando el modelo elegido no puede verla. La respuesta la sigue escribiendo el modelo elegido, al que se le indica que la descripción procede de un asistente. Se prueban en orden; cada descripción se cobra al usuario como una partida propia.',
+      visionHelperEmpty:
+        'No hay asistente de visión configurado: los modelos que no ven imágenes solo reciben el texto leído de ellas (OCR).',
       researchGateTitle: 'Puerta de investigación',
       researchGateDescription:
         'El modelo al que se pregunta si un mensaje necesita la web, antes de que se ejecute cualquier modelo que responda. Los candidatos se prueban en orden.',
@@ -741,6 +761,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'مدل‌هایی که محتوای فایلی را که هوش مصنوعی تولید می‌کند می‌نویسند (PDF، DOCX، صفحه‌گسترده...). به ترتیب امتحان می‌شوند؛ به آن‌ها بودجه توکن زیادی بدهید، چون فایل یک سند کامل است.',
       fileWriterEmpty:
         'هیچ نویسنده فایلی تنظیم نشده است: درخواست‌های فایل تا زمانی که یکی اضافه کنید ناموفق خواهند بود.',
+      visionHelperTitle: 'دستیار بینایی',
+      visionHelperDescription:
+        'مدل‌های بینایی که وقتی مدل انتخاب‌شده نمی‌تواند تصویر پیوست را ببیند، آن را توصیف می‌کنند. پاسخ همچنان توسط مدل انتخاب‌شده نوشته می‌شود و به آن گفته می‌شود که توصیف از یک دستیار آمده است. به ترتیب امتحان می‌شوند؛ هزینهٔ هر توصیف به‌صورت یک ردیف جداگانه از کاربر کسر می‌شود.',
+      visionHelperEmpty:
+        'هیچ دستیار بینایی تنظیم نشده است: مدل‌هایی که تصویر را نمی‌بینند فقط متن خوانده‌شده از آن (OCR) را دریافت می‌کنند.',
       researchGateTitle: 'دروازه پژوهش',
       researchGateDescription:
         'مدلی که پرسیده می‌شود آیا این پیام به وب نیاز دارد، پیش از اجرای هر مدل پاسخ‌دهنده. نامزدها به ترتیب آزموده می‌شوند.',
@@ -909,6 +934,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         "Les modèles qui rédigent le contenu d'un fichier généré par l'IA (PDF, DOCX, tableur...). Essayés dans l'ordre ; donnez-leur un large budget de jetons, car un fichier est un document entier.",
       fileWriterEmpty:
         "Aucun rédacteur de fichiers configuré : les demandes de fichiers échoueront tant que vous n'en ajoutez pas un.",
+      visionHelperTitle: 'Assistant de vision',
+      visionHelperDescription:
+        "Les modèles de vision qui décrivent une image jointe lorsque le modèle choisi ne peut pas la voir. La réponse reste rédigée par le modèle choisi, qui est informé que la description vient d'un assistant. Essayés dans l'ordre ; chaque description est facturée à l'utilisateur sur une ligne distincte.",
+      visionHelperEmpty:
+        "Aucun assistant de vision configuré : les modèles qui ne voient pas les images ne reçoivent que le texte lu dans l'image (OCR).",
       researchGateTitle: 'Filtre de recherche',
       researchGateDescription:
         "Le modèle auquel on demande si un message nécessite le web, avant l'exécution de tout modèle de réponse. Les candidats sont essayés dans l'ordre.",
@@ -1080,6 +1110,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'वे मॉडल जो AI द्वारा बनाई गई फ़ाइल (PDF, DOCX, स्प्रेडशीट...) की सामग्री लिखते हैं। क्रम से आज़माए जाते हैं; इन्हें बड़ा टोकन बजट दें, क्योंकि फ़ाइल एक पूरा दस्तावेज़ होती है।',
       fileWriterEmpty:
         'कोई फ़ाइल लेखक सेट नहीं है: जब तक आप एक नहीं जोड़ते, फ़ाइल अनुरोध विफल होंगे।',
+      visionHelperTitle: 'विज़न सहायक',
+      visionHelperDescription:
+        'विज़न मॉडल जो संलग्न छवि का वर्णन करते हैं जब चुना गया मॉडल उसे देख नहीं सकता। उत्तर अब भी चुना गया मॉडल ही लिखता है, और उसे बताया जाता है कि विवरण एक सहायक से आया है। क्रम से आज़माए जाते हैं; हर विवरण उपयोगकर्ता से एक अलग मद के रूप में लिया जाता है।',
+      visionHelperEmpty:
+        'कोई विज़न सहायक कॉन्फ़िगर नहीं है: जो मॉडल छवि नहीं देख सकते उन्हें केवल उससे पढ़ा गया टेक्स्ट (OCR) मिलता है।',
       researchGateTitle: 'शोध गेट',
       researchGateDescription:
         'वह मॉडल जिससे पूछा जाता है कि क्या किसी संदेश को वेब की आवश्यकता है, किसी भी उत्तर देने वाले मॉडल के चलने से पहले। उम्मीदवारों को क्रम में आज़माया जाता है।',
@@ -1247,6 +1282,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         "I modelli che scrivono il contenuto di un file generato dall'IA (PDF, DOCX, foglio di calcolo...). Provati in ordine; assegna loro un ampio budget di token, perché un file è un documento intero.",
       fileWriterEmpty:
         'Nessuno scrittore di file configurato: le richieste di file falliranno finché non ne aggiungi uno.',
+      visionHelperTitle: 'Assistente visivo',
+      visionHelperDescription:
+        "I modelli di visione che descrivono un'immagine allegata quando il modello scelto non può vederla. La risposta resta scritta dal modello scelto, che viene informato che la descrizione proviene da un assistente. Provati in ordine; ogni descrizione è addebitata all'utente come voce separata.",
+      visionHelperEmpty:
+        "Nessun assistente visivo configurato: i modelli che non vedono le immagini ricevono solo il testo letto dall'immagine (OCR).",
       researchGateTitle: 'Filtro di ricerca',
       researchGateDescription:
         'Il modello a cui si chiede se un messaggio richiede il web, prima che venga eseguito qualsiasi modello di risposta. I candidati vengono provati in ordine.',
@@ -1416,6 +1456,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'AI が生成するファイル（PDF、DOCX、スプレッドシートなど）の内容を書くモデルです。順番に試されます。ファイルは文書全体なので、大きなトークン予算を設定してください。',
       fileWriterEmpty:
         'ファイル作成モデルが設定されていません。追加するまでファイルの依頼は失敗します。',
+      visionHelperTitle: 'ビジョンヘルパー',
+      visionHelperDescription:
+        '選択したモデルが画像を見られないときに、添付画像を説明するビジョンモデル。回答は引き続き選択したモデルが書き、その説明がヘルパーによるものだと伝えられます。上から順に試され、各説明は個別の項目としてユーザーに課金されます。',
+      visionHelperEmpty:
+        'ビジョンヘルパーが未設定です：画像を見られないモデルには、画像から読み取ったテキスト（OCR）だけが渡されます。',
       researchGateTitle: 'リサーチゲート',
       researchGateDescription:
         '回答するモデルを実行する前に、その発言がウェブを必要とするかを尋ねるモデルです。候補は順に試されます。',
@@ -1580,6 +1625,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Os modelos que escrevem o conteúdo de um arquivo gerado pela IA (PDF, DOCX, planilha...). Tentados em ordem; dê a eles um orçamento de tokens grande, pois um arquivo é um documento inteiro.',
       fileWriterEmpty:
         'Nenhum redator de arquivos configurado: os pedidos de arquivos falharão até você adicionar um.',
+      visionHelperTitle: 'Assistente de visão',
+      visionHelperDescription:
+        'Os modelos de visão que descrevem uma imagem anexada quando o modelo escolhido não consegue vê-la. A resposta continua sendo escrita pelo modelo escolhido, que é informado de que a descrição veio de um assistente. Testados em ordem; cada descrição é cobrada do usuário como um item separado.',
+      visionHelperEmpty:
+        'Nenhum assistente de visão configurado: modelos que não veem imagens recebem apenas o texto lido delas (OCR).',
       researchGateTitle: 'Porta de pesquisa',
       researchGateDescription:
         'O modelo a que se pergunta se uma mensagem precisa da web, antes de qualquer modelo de resposta ser executado. Os candidatos são tentados por ordem.',
@@ -1750,6 +1800,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Модели, которые пишут содержимое файла, создаваемого ИИ (PDF, DOCX, таблица...). Пробуются по порядку; дайте им большой лимит токенов, ведь файл — это целый документ.',
       fileWriterEmpty:
         'Автор файлов не настроен: запросы файлов будут завершаться ошибкой, пока вы его не добавите.',
+      visionHelperTitle: 'Помощник зрения',
+      visionHelperDescription:
+        'Модели зрения, которые описывают прикреплённое изображение, когда выбранная модель не может его увидеть. Ответ по-прежнему пишет выбранная модель, и ей сообщается, что описание получено от помощника. Пробуются по порядку; каждое описание списывается с пользователя отдельной строкой.',
+      visionHelperEmpty:
+        'Помощник зрения не настроен: модели, которые не видят изображения, получают только распознанный из него текст (OCR).',
       researchGateTitle: 'Фильтр исследования',
       researchGateDescription:
         'Модель, у которой спрашивают, нужен ли сообщению интернет, прежде чем запустится отвечающая модель. Кандидаты пробуются по порядку.',
@@ -1916,6 +1971,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       fileWriterDescription:
         'โมเดลที่เขียนเนื้อหาของไฟล์ที่ AI สร้าง (PDF, DOCX, สเปรดชีต...) ลองตามลำดับ ให้งบโทเค็นจำนวนมากเพราะไฟล์คือเอกสารทั้งฉบับ',
       fileWriterEmpty: 'ยังไม่ได้ตั้งค่าผู้เขียนไฟล์: คำขอไฟล์จะล้มเหลวจนกว่าคุณจะเพิ่ม',
+      visionHelperTitle: 'ผู้ช่วยด้านภาพ',
+      visionHelperDescription:
+        'โมเดลด้านภาพที่อธิบายรูปภาพที่แนบมาเมื่อโมเดลที่เลือกมองไม่เห็นรูปภาพ คำตอบยังคงเขียนโดยโมเดลที่เลือก และโมเดลจะได้รับแจ้งว่าคำอธิบายมาจากผู้ช่วย ลองตามลำดับ และแต่ละคำอธิบายจะถูกเรียกเก็บจากผู้ใช้เป็นรายการแยก',
+      visionHelperEmpty:
+        'ยังไม่ได้ตั้งค่าผู้ช่วยด้านภาพ: โมเดลที่มองไม่เห็นรูปภาพจะได้รับเฉพาะข้อความที่อ่านจากรูป (OCR)',
       researchGateTitle: 'ประตูการค้นคว้า',
       researchGateDescription:
         'โมเดลที่ถูกถามว่าข้อความนี้ต้องใช้เว็บหรือไม่ ก่อนที่โมเดลผู้ตอบจะทำงาน ตัวเลือกจะถูกลองตามลำดับ',
@@ -2079,6 +2139,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       fileWriterDescription:
         '撰写 AI 生成文件（PDF、DOCX、电子表格等）内容的模型。按顺序尝试；请给它们较大的令牌预算，因为文件是一整份文档。',
       fileWriterEmpty: '尚未配置文件撰写模型：在添加之前，文件请求都会失败。',
+      visionHelperTitle: '视觉助手',
+      visionHelperDescription:
+        '当所选模型无法查看附加图片时，由这些视觉模型描述图片。回答仍由所选模型撰写，并会告知它描述来自助手。按顺序尝试；每次描述都会作为单独一项向用户计费。',
+      visionHelperEmpty:
+        '尚未配置视觉助手：无法查看图片的模型只会收到从图片中识别出的文字（OCR）。',
       researchGateTitle: '研究门控',
       researchGateDescription:
         '在任何回答模型运行之前，用于判断该消息是否需要联网的模型。候选模型按顺序依次尝试。',

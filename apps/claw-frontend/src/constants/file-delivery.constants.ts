@@ -22,6 +22,7 @@ export const FILE_DELIVERY_MODE_LABEL_KEYS: Readonly<Record<FileDeliveryMode, st
   [FileDeliveryMode.STILL_PROCESSING]: 'compare.delivery.stillProcessing',
   [FileDeliveryMode.FAILED_PROCESSING]: 'compare.delivery.failedProcessing',
   [FileDeliveryMode.NATIVE_VIDEO]: 'compare.delivery.nativeVideo',
+  [FileDeliveryMode.DERIVED_IMAGE_TEXT]: 'compare.delivery.derivedImageText',
 };
 
 // Which FileDeliveryCounts bucket each mode increments. Exhaustive for the
@@ -38,6 +39,7 @@ export const FILE_DELIVERY_MODE_COUNT_KEYS: Readonly<
   [FileDeliveryMode.STILL_PROCESSING]: 'processing',
   [FileDeliveryMode.FAILED_PROCESSING]: 'failed',
   [FileDeliveryMode.NATIVE_VIDEO]: 'video',
+  [FileDeliveryMode.DERIVED_IMAGE_TEXT]: 'described',
 };
 
 // Zeroed counts. Spread it — never mutate it.
@@ -51,6 +53,7 @@ export const FILE_DELIVERY_EMPTY_COUNTS: Readonly<FileDeliveryCounts> = {
   video: 0,
   processing: 0,
   failed: 0,
+  described: 0,
 };
 
 // Badge render order for AttachmentDeliveryChip. Every badge carries a text
@@ -59,6 +62,7 @@ export const FILE_DELIVERY_EMPTY_COUNTS: Readonly<FileDeliveryCounts> = {
 export const FILE_DELIVERY_BADGE_SPECS: readonly FileDeliveryBadgeSpec[] = [
   { countKey: 'extracted', mode: FileDeliveryMode.EXTRACTED_TEXT, icon: '📄' },
   { countKey: 'image', mode: FileDeliveryMode.NATIVE_IMAGE, icon: '🖼️' },
+  { countKey: 'described', mode: FileDeliveryMode.DERIVED_IMAGE_TEXT, icon: '🔎' },
   { countKey: 'video', mode: FileDeliveryMode.NATIVE_VIDEO, icon: '🎬' },
   { countKey: 'transcript', mode: FileDeliveryMode.TRANSCRIPT, icon: '🎙️' },
   { countKey: 'skipped', mode: FileDeliveryMode.OMITTED_NO_VISION, icon: '🚫' },

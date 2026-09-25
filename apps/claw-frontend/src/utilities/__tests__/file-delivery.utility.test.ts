@@ -5,6 +5,7 @@ import { FileDeliveryMode } from '@/enums';
 import type { FileDeliveryEntry } from '@/types';
 import {
   buildFileDeliveryBadges,
+  buildFileDeliveryTooltip,
   countFileDeliveriesByMode,
   getFileDeliveryModeLabel,
   isFileDeliveryMode,
@@ -72,6 +73,21 @@ describe('getFileDeliveryModeLabel', () => {
       'compare.delivery.failedProcessing',
     );
   });
+
+  // ADR-120 batch 5: an image a helper described has its own label, never
+  // "native image" (the model did not see it) and never "truncated".
+  it('labels a helper-described image as described, not seen', () => {
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.DERIVED_IMAGE_TEXT, identity)).toBe(
+      'compare.delivery.derivedImageText',
+    );
+    const badges = buildFileDeliveryBadges(
+      countFileDeliveriesByMode([entry(FileDeliveryMode.DERIVED_IMAGE_TEXT)]),
+      identity,
+    );
+    expect(badges.map((badge) => [badge.countKey, badge.label, badge.count])).toEqual([
+      ['described', 'compare.delivery.derivedImageText', 1],
+    ]);
+  });
 });
 
 describe('countFileDeliveriesByMode', () => {
@@ -87,6 +103,7 @@ describe('countFileDeliveriesByMode', () => {
       entry(FileDeliveryMode.NATIVE_VIDEO),
       entry(FileDeliveryMode.STILL_PROCESSING),
       entry(FileDeliveryMode.FAILED_PROCESSING),
+      entry(FileDeliveryMode.DERIVED_IMAGE_TEXT),
     ]);
     expect(counts).toEqual({
       extracted: 1,
@@ -98,6 +115,7 @@ describe('countFileDeliveriesByMode', () => {
       video: 1,
       processing: 1,
       failed: 1,
+      described: 1,
     });
   });
 
@@ -150,6 +168,34 @@ describe('readFileDeliveryFromMetadata', () => {
       FileDeliveryMode.FAILED_PROCESSING,
     ]);
     expect(entries?.[3]?.reason).toBe('decode failed');
+  });
+
+  it('keeps the helper that described an image, and names it in the tooltip', () => {
+    const entries = readFileDeliveryFromMetadata({
+      fileDelivery: [
+        {
+          ...base,
+          filename: 'shot.png',
+          mimeType: 'image/png',
+          provider: 'DEEPSEEK',
+          model: 'deepseek-chat',
+          mode: 'DERIVED_IMAGE_TEXT',
+          helperProvider: 'GEMINI',
+          helperModel: 'gemini-2.5-flash',
+        },
+      ],
+    });
+    expect(entries?.[0]).toEqual(
+      expect.objectContaining({
+        mode: FileDeliveryMode.DERIVED_IMAGE_TEXT,
+        provider: 'DEEPSEEK',
+        helperProvider: 'GEMINI',
+        helperModel: 'gemini-2.5-flash',
+      }),
+    );
+    expect(buildFileDeliveryTooltip(entries ?? [], identity)).toContain(
+      'shot.png (compare.delivery.derivedImageText) — GEMINI/gemini-2.5-flash',
+    );
   });
 
   it('still rejects garbage', () => {

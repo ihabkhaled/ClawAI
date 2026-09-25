@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -81,6 +83,11 @@ import {
 } from '../constants/attachment-delivery.constants';
 import { IMAGE_FILE_PLACEHOLDER_PREFIX } from '../constants/media-placeholder.constants';
 import { isSentNatively } from '../utilities/attachment-delivery.utility';
+import {
+  derivedObservationFor,
+  formatDerivedImageBlock,
+  visionHelperNoteFor,
+} from '../utilities/vision-helper.utility';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -216,6 +223,12 @@ export class ContextAssemblyManager {
       modelBudget,
       conversationManifest: selected.manifest,
       crossThread,
+      // Shared by every lane / judge / critic that spreads this context, so a
+      // helper-vision description is computed and paid for once per turn.
+      turnId: randomUUID(),
+      ...(routingMode === RoutingMode.LOCAL_ONLY || routingMode === RoutingMode.PRIVACY_FIRST
+        ? { mediaLocalOnly: true }
+        : {}),
     };
   }
 
@@ -596,9 +609,18 @@ ${evidence.snippet}`);
     file: FileContentResponse,
     includeVideo: boolean,
   ): string {
-    return this.isImageFile(file) && !isSentNatively(context, file, includeVideo)
-      ? this.describeImageForBlindLane(file)
-      : this.decodeFileContent(file);
+    if (!this.isImageFile(file) || isSentNatively(context, file, includeVideo)) {
+      return this.decodeFileContent(file);
+    }
+    // The helper's description when it produced one (DERIVED_IMAGE_TEXT),
+    // framed as another model's observations; otherwise OCR + honest note.
+    const derived = derivedObservationFor(context, file.id);
+    if (derived !== undefined) {
+      return formatDerivedImageBlock(derived);
+    }
+    const note = visionHelperNoteFor(context, file.id);
+    const blind = this.describeImageForBlindLane(file);
+    return note === undefined ? blind : `${blind}\n${note}`;
   }
 
   /**
@@ -1464,7 +1486,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    * that did not happen, and the model would answer about a picture it never
    * received. OCR text when there is any, framed as extracted text rather than
    * as the image itself; otherwise a plain statement that it cannot see it.
-   * Batch 3's helper-vision description slots in ahead of this.
+   * Batch 5's helper-vision description slots in ahead of this.
    */
   private describeImageForBlindLane(file: FileContentResponse): string {
     const extracted = file.extractedText?.trim();

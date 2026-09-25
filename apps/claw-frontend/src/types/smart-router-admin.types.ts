@@ -385,6 +385,7 @@ export type UseSmartRouterSelectableDeploymentsResult = {
 /** A model job that runs beside routing rather than inside it. */
 export const ASSISTANT_MODEL_ROLE_RESEARCH_GATE = 'RESEARCH_GATE';
 export const ASSISTANT_MODEL_ROLE_FILE_WRITER = 'FILE_WRITER';
+export const ASSISTANT_MODEL_ROLE_VISION_HELPER = 'VISION_HELPER';
 
 /** One configured candidate for an assistant model role. */
 export type AssistantModelRecord = {

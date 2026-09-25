@@ -14,6 +14,10 @@ export type FileDeliveryEntry = {
   mode: FileDeliveryMode;
   // Optional i18n key or human-readable string explaining OMITTED / TRUNCATED.
   reason?: string;
+  // DERIVED_IMAGE_TEXT only: the vision helper that described the image. The
+  // entry's provider/model stay the answering model's.
+  helperProvider?: string;
+  helperModel?: string;
 };
 
 // Aggregated counts per delivery mode. Produced by
@@ -29,6 +33,7 @@ export type FileDeliveryCounts = {
   video: number;
   processing: number;
   failed: number;
+  described: number;
 };
 
 // One bucket name of FileDeliveryCounts.

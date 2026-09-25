@@ -14,4 +14,8 @@ export type FileDeliveryEntry = {
   // Human / i18n key explaining WHY the file was OMITTED or TRUNCATED.
   // Left undefined for EXTRACTED_TEXT / NATIVE_IMAGE successes.
   reason?: string;
+  // DERIVED_IMAGE_TEXT only: the helper that described the image (ADR-120
+  // batch 5). The entry's provider/model stay the lane's own model.
+  helperProvider?: string;
+  helperModel?: string;
 };

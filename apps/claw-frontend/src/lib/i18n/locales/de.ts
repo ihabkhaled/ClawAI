@@ -1990,6 +1990,7 @@ export const de: TranslationDictionary = {
       truncatedText: 'Gekürzt',
       transcript: 'Transkript',
       nativeVideo: 'Video',
+      derivedImageText: 'Von Helfer beschrieben',
       stillProcessing: 'Wird noch verarbeitet',
       failedProcessing: 'Verarbeitung fehlgeschlagen',
       tooltip: 'Zustellungsübersicht pro Modell',
@@ -4599,6 +4600,7 @@ export const de: TranslationDictionary = {
         WORKSPACE_ACTION: 'Workspace-Aktion',
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Transkription',
+        VISION_HELPER: 'Bildbeschreibungs-Helfer',
       },
       kind: {
         PLAN_GRANT: 'Tarif-Kontingent',

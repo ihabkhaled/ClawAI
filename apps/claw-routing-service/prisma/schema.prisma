@@ -270,6 +270,9 @@ enum AssistantModelRole {
   RESEARCH_GATE
   /// Writes the content of an AI-generated file (F0, 2026-09-19).
   FILE_WRITER
+  /// Describes an attached image for a lane whose model cannot see (ADR-120,
+  /// multimodal batch 5). Its output is framed as derived observations.
+  VISION_HELPER
 }
 
 enum RouterChainEntryRole {

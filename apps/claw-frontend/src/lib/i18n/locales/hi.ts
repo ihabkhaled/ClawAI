@@ -1953,6 +1953,7 @@ export const hi: TranslationDictionary = {
       truncatedText: 'काटा गया',
       transcript: 'ट्रांसक्रिप्ट',
       nativeVideo: 'वीडियो',
+      derivedImageText: 'सहायक द्वारा वर्णित',
       stillProcessing: 'अभी प्रोसेस हो रहा है',
       failedProcessing: 'प्रोसेसिंग विफल',
       tooltip: 'प्रति-मॉडल डिलीवरी सारांश',
@@ -4531,6 +4532,7 @@ export const hi: TranslationDictionary = {
         WORKSPACE_ACTION: 'वर्कस्पेस क्रिया',
         ROUTING: 'रूटिंग',
         TRANSCRIPTION: 'ट्रांसक्रिप्शन',
+        VISION_HELPER: 'छवि विवरण सहायक',
       },
       kind: {
         PLAN_GRANT: 'प्लान भत्ता',

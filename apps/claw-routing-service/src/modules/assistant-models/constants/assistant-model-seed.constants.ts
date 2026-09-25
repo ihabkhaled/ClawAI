@@ -84,4 +84,26 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
     timeoutMs: 120_000,
     maxTokens: 8_192,
   },
+  // VISION_HELPER: describes an attached image for a lane whose model cannot
+  // see (ADR-120, multimodal batch 5). chat-service only tries a candidate the
+  // connector catalog marks vision-SUPPORTED, so a provider the install has not
+  // configured is skipped rather than failing the turn. Gemini first because it
+  // is the connector a typical install actually has; OpenAI second. A bounded
+  // budget: observations are a description, not an answer.
+  {
+    role: AssistantModelRole.VISION_HELPER,
+    order: 1,
+    provider: RouterProvider.GEMINI,
+    modelAlias: 'gemini-2.5-flash',
+    timeoutMs: 30_000,
+    maxTokens: 1_024,
+  },
+  {
+    role: AssistantModelRole.VISION_HELPER,
+    order: 2,
+    provider: RouterProvider.OPENAI,
+    modelAlias: 'gpt-4.1-mini',
+    timeoutMs: 30_000,
+    maxTokens: 1_024,
+  },
 ]);

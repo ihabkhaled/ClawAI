@@ -1481,7 +1481,7 @@ describe('ChatMessagesService', () => {
       timestamp: new Date().toISOString(),
     };
 
-    const arrange = (fileDelivery?: unknown[]): void => {
+    const arrange = (fileDelivery?: unknown[], helperExecutions?: unknown[]): void => {
       messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
       threadsRepo.findById!.mockResolvedValue(mockThread);
       executionManager.execute!.mockResolvedValue({
@@ -1491,6 +1491,7 @@ describe('ChatMessagesService', () => {
         latencyMs: 500,
         usedFallback: false,
         ...(fileDelivery === undefined ? {} : { fileDelivery }),
+        ...(helperExecutions === undefined ? {} : { helperExecutions }),
       });
       messagesRepo.create.mockResolvedValue({ ...mockMessage, role: 'ASSISTANT' as const });
     };
@@ -1515,6 +1516,45 @@ describe('ChatMessagesService', () => {
         expect.objectContaining({
           role: 'ASSISTANT',
           metadata: expect.objectContaining({ fileDelivery }),
+        }),
+      );
+    });
+
+    // ADR-120 batch 5: the helper that described the image is recorded beside
+    // the delivery, and the message's provider/model stay the lane's own.
+    it('records helperExecutions without replacing the message provider/model', async () => {
+      const fileDelivery = [
+        {
+          fileId: 'img-1',
+          filename: 'receipt.png',
+          mimeType: 'image/png',
+          provider: 'DEEPSEEK',
+          model: 'deepseek-chat',
+          mode: 'DERIVED_IMAGE_TEXT',
+          helperProvider: 'GEMINI',
+          helperModel: 'gemini-2.5-flash',
+        },
+      ];
+      const helperExecutions = [
+        {
+          kind: 'VISION',
+          provider: 'GEMINI',
+          model: 'gemini-2.5-flash',
+          fileId: 'img-1',
+          latencyMs: 812,
+          outcome: 'SUCCEEDED',
+        },
+      ];
+      arrange(fileDelivery, helperExecutions);
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'ASSISTANT',
+          provider: 'DEEPSEEK',
+          model: 'deepseek-chat',
+          metadata: expect.objectContaining({ fileDelivery, helperExecutions }),
         }),
       );
     });

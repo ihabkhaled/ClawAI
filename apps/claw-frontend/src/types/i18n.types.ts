@@ -1891,6 +1891,7 @@ export type TranslationDictionary = {
       truncatedText: string;
       transcript: string;
       nativeVideo: string;
+      derivedImageText: string;
       stillProcessing: string;
       failedProcessing: string;
       tooltip: string;
@@ -4506,6 +4507,7 @@ export type TranslationDictionary = {
         WORKSPACE_ACTION: string;
         ROUTING: string;
         TRANSCRIPTION: string;
+        VISION_HELPER: string;
       };
       kind: {
         PLAN_GRANT: string;
@@ -6022,6 +6024,9 @@ export type SmartRouterAdminLocaleTranslation = {
     fileWriterTitle: string;
     fileWriterDescription: string;
     fileWriterEmpty: string;
+    visionHelperTitle: string;
+    visionHelperDescription: string;
+    visionHelperEmpty: string;
     researchGateTitle: string;
     researchGateDescription: string;
     emptyMeansDisabled: string;

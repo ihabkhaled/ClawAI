@@ -16,6 +16,8 @@ import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
 import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
+import { VisionHelperManager } from './managers/vision-helper.manager';
+import { VisionHelperCandidatesClient } from './clients/vision-helper-candidates.client';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
@@ -87,6 +89,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ModelContextWindowClient,
     ModelCapabilityClient,
     AttachmentDeliveryManager,
+    VisionHelperCandidatesClient,
+    VisionHelperManager,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,
     ContextComposerManager,

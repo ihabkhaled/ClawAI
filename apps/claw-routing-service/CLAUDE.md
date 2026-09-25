@@ -322,6 +322,26 @@ proxied, so without that block the route 404s in Docker while working on
   names stay SOFT and only pdf/docx/xlsx/xls/pptx/csv count as a bare leading
   word — see rule 51 §9–12 before adding a word.
 
+## Assistant model role VISION_HELPER (ADR-120 batch 5, 2026-09-25)
+
+`AssistantModelRole.VISION_HELPER` names the vision models chat-service uses to
+describe an attached image for a lane whose model cannot see. Admin-managed on
+the Smart Router "Assistant models" tab like `RESEARCH_GATE` and `FILE_WRITER`
+(rule 51 item 7: a helper model gets a role, never a constant).
+
+- **Migration**: `20260925150000_add_vision_helper_role`
+  (`ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'VISION_HELPER'`).
+  Deploy it before the new image boots, or `seedOnce` fails on an unknown label.
+- **Seed** (`assistant-model-seed.constants.ts`, fills the role only while it
+  has no rows): `GEMINI gemini-2.5-flash` order 1, `OPENAI gpt-4.1-mini`
+  order 2, both enabled, `timeoutMs` 30 000, `maxTokens` 1 024. chat-service
+  skips any candidate the connector catalog does not mark vision-SUPPORTED, so
+  an unconfigured provider is simply not tried.
+- **Endpoints**: unchanged — `GET/PUT /routing/assistant-models/VISION_HELPER`
+  (admin) and `GET /internal/assistant-models/VISION_HELPER/candidates`.
+- Metering happens in chat-service (`PaygSurface.VISION_HELPER`), not here.
+- Runbook: [`skills/add-a-helper-model-role.md`](../../skills/add-a-helper-model-role.md).
+
 ## Image-generation model ids (2026-09-25)
 
 `IMAGE_MODEL_OPENAI` in `src/modules/routing/constants/routing.constants.ts` is

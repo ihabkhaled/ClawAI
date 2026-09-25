@@ -2,6 +2,7 @@ import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
+import type { HelperExecution } from './vision-helper.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type { AnthropicMessage } from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
@@ -195,6 +196,12 @@ export type LlmResponse = {
    * message's `metadata.fileDelivery`, the shape compare already writes.
    */
   fileDelivery?: FileDeliveryEntry[];
+  /**
+   * Helper models that worked for this lane (today: the vision helper). The
+   * response's own provider/model stay the conversational model's. Persisted
+   * as `metadata.helperExecutions`.
+   */
+  helperExecutions?: HelperExecution[];
 };
 
 export type OllamaGenerateRequest = {

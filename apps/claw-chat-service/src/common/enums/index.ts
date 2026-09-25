@@ -20,6 +20,8 @@ export { ProgressActorType } from './progress-actor-type.enum';
 export { ModelSelectionMode } from './model-selection-mode.enum';
 export { FileDeliveryMode } from './file-delivery-mode.enum';
 export { MediaCapabilityState } from './media-capability-state.enum';
+export { VisionHelperOutcome } from './vision-helper-outcome.enum';
+export { HelperExecutionKind } from './helper-execution-kind.enum';
 export { OllamaToolPhase } from './ollama-tool-phase.enum';
 export { OrchestrationStageStatus } from './orchestration-stage-status.enum';
 export { GeminiUploadPhase } from './gemini-upload-phase.enum';

@@ -1975,6 +1975,7 @@ export const ru: TranslationDictionary = {
       truncatedText: 'Усечено',
       transcript: 'Расшифровка',
       nativeVideo: 'Видео',
+      derivedImageText: 'Описано помощником',
       stillProcessing: 'Ещё обрабатывается',
       failedProcessing: 'Ошибка обработки',
       tooltip: 'Сводка доставки по моделям',
@@ -4565,6 +4566,7 @@ export const ru: TranslationDictionary = {
         WORKSPACE_ACTION: 'Действие рабочей области',
         ROUTING: 'Маршрутизация',
         TRANSCRIPTION: 'Транскрипция',
+        VISION_HELPER: 'Помощник описания изображений',
       },
       kind: {
         PLAN_GRANT: 'Лимит тарифа',

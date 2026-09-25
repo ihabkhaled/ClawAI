@@ -5,6 +5,7 @@ import type { CompareJudgeVerdict } from './compare-judge.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { JudgeReviewPayload } from './judge-referee.types';
 import type { ResearchTranscript } from './research-transcript.types';
+import type { HelperExecution } from './vision-helper.types';
 
 export type ParallelModelTarget = {
   provider: string;
@@ -45,6 +46,9 @@ export type ParallelModelResponse = {
   // native image, or was omitted. Mirrored verbatim into the assistant
   // message metadata.fileDelivery JSON for the FE + judge/critic.
   attachmentDelivery?: FileDeliveryEntry[];
+  // Helper-vision calls behind this lane's DERIVED_IMAGE_TEXT files. One call
+  // per image per turn, so the same execution appears on every lane it served.
+  helperExecutions?: HelperExecution[];
   // Shared enricher transcript persisted on every assistant message produced
   // by this lane. Identical across all lanes by construction — the enricher
   // is invoked ONCE before fan-out and the transcript is replayed onto every

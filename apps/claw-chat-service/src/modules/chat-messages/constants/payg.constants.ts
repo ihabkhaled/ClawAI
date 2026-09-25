@@ -79,6 +79,8 @@ export const PAYG_CLAMPED_STAGE_ID = 'payg:clamped';
 
 /** Workflow tags for the paths whose surface cannot be derived from the ledger context. */
 export const PAYG_WORKFLOW_VISION_PROMPT = 'vision-prompt';
+/** The helper that describes an image for a lane that cannot see (PaygSurface.VISION_HELPER). */
+export const PAYG_WORKFLOW_VISION_HELPER = 'vision-helper';
 export const PAYG_WORKFLOW_FILE_CONTENT = 'file-content';
 export const PAYG_WORKFLOW_CODING_AGENT = 'runtime-v2';
 export const PAYG_WORKFLOW_CODING_AGENT_REPAIR = 'runtime-v2-repair';

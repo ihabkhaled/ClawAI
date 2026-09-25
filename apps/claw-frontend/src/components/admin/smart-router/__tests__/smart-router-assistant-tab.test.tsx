@@ -45,4 +45,55 @@ describe('SmartRouterAssistantTab', () => {
     expect(screen.getByText('gpt-oss:120b')).toBeInTheDocument();
     expect(screen.getByText('smartRouterAdmin.assistant.emptyMeansDisabled')).toBeInTheDocument();
   });
+
+  // ADR-120 batch 5: the image-describing helper is an admin choice too (rule 51
+  // item 7: a new helper model gets a role, not a constant).
+  it('shows the vision helper section, reading its own role', () => {
+    useAssistantModels.mockImplementation((role: string) => ({
+      entries:
+        role === 'VISION_HELPER'
+          ? [
+              {
+                id: 'v1',
+                order: 1,
+                provider: 'GEMINI',
+                modelAlias: 'gemini-2.5-flash',
+                enabled: true,
+                timeoutMs: 30000,
+                maxTokens: 1024,
+                deploymentId: null,
+              },
+            ]
+          : [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      replace: vi.fn(),
+      isReplacePending: false,
+    }));
+
+    render(<SmartRouterAssistantTab t={t} />);
+
+    expect(useAssistantModels).toHaveBeenCalledWith('VISION_HELPER');
+    expect(screen.getByText('smartRouterAdmin.assistant.visionHelperTitle')).toBeInTheDocument();
+    expect(
+      screen.getByText('smartRouterAdmin.assistant.visionHelperDescription'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('gemini-2.5-flash')).toBeInTheDocument();
+  });
+
+  it('says what happens when no vision helper is configured', () => {
+    useAssistantModels.mockImplementation(() => ({
+      entries: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      replace: vi.fn(),
+      isReplacePending: false,
+    }));
+
+    render(<SmartRouterAssistantTab t={t} />);
+
+    expect(screen.getByText('smartRouterAdmin.assistant.visionHelperEmpty')).toBeInTheDocument();
+  });
 });

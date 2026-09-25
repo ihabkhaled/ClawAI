@@ -658,6 +658,9 @@ export class ParallelExecutionManager {
         status: 'completed',
         errorMessage: null,
         attachmentDelivery,
+        ...(llmResponse.helperExecutions === undefined
+          ? {}
+          : { helperExecutions: llmResponse.helperExecutions }),
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -822,6 +825,9 @@ export class ParallelExecutionManager {
       // files reached which lane, and consumed by the judge prompt builder.
       ...(response.attachmentDelivery && response.attachmentDelivery.length > 0
         ? { fileDelivery: response.attachmentDelivery }
+        : {}),
+      ...(response.helperExecutions && response.helperExecutions.length > 0
+        ? { helperExecutions: response.helperExecutions }
         : {}),
       routeRoadmap: this.buildParallelRouteRoadmap(response),
       progressSummary: this.buildParallelProgressSummary(response),

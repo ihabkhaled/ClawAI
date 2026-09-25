@@ -1949,6 +1949,7 @@ export const en: TranslationDictionary = {
       truncatedText: 'Truncated',
       transcript: 'Transcript',
       nativeVideo: 'Video',
+      derivedImageText: 'Described by helper',
       stillProcessing: 'Still processing',
       failedProcessing: 'Processing failed',
       tooltip: 'Per-model delivery summary',
@@ -4509,6 +4510,7 @@ export const en: TranslationDictionary = {
         WORKSPACE_ACTION: 'Workspace action',
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Transcription',
+        VISION_HELPER: 'Image description helper',
       },
       kind: {
         PLAN_GRANT: 'Plan allowance',

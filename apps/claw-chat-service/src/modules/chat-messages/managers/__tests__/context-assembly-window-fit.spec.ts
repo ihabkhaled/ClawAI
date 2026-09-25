@@ -8,6 +8,11 @@ import { ChatContextGatewayManager } from '../chat-context-gateway.manager';
 import { ChatSurface } from '../../../../common/enums/chat-surface.enum';
 import { CONSERVATIVE_CONTEXT_WINDOW_TOKENS } from '../../constants/context-composer.constants';
 import type { AssembledContext } from '../../types/context.types';
+import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.enum';
+import { HelperExecutionKind } from '../../../../common/enums/helper-execution-kind.enum';
+import { VisionHelperOutcome } from '../../../../common/enums/vision-helper-outcome.enum';
+import { DELIVERY_REASON_NO_VISION } from '../../constants/attachment-delivery.constants';
+import { applyVisionHelperResults, fitLaneFileShare } from '../../utilities/vision-helper.utility';
 
 const { appConfigGet, httpRequest } = vi.hoisted(() => ({
   appConfigGet: vi.fn(),
@@ -51,18 +56,20 @@ function wireOversizedSources(): void {
     if (url.includes('/ingestion-state')) {
       return Promise.resolve({ ok: true, status: 200, data: { status: 'READY' } });
     }
-    return url.includes('/internal/files/') ? Promise.resolve({
-        ok: true,
-        status: 200,
-        data: {
-          id: 'f1',
-          filename: 'huge.txt',
-          mimeType: 'text/plain',
-          content: Buffer.from('bytes').toString('base64'),
-          extractedText: BIG,
-          ingestionStatus: 'READY',
-        },
-      }) : Promise.resolve({ ok: true, status: 200, data: [] });
+    return url.includes('/internal/files/')
+      ? Promise.resolve({
+          ok: true,
+          status: 200,
+          data: {
+            id: 'f1',
+            filename: 'huge.txt',
+            mimeType: 'text/plain',
+            content: Buffer.from('bytes').toString('base64'),
+            extractedText: BIG,
+            ingestionStatus: 'READY',
+          },
+        })
+      : Promise.resolve({ ok: true, status: 200, data: [] });
   });
 }
 
@@ -152,6 +159,95 @@ describe('ContextAssemblyManager fits every source to the model window', () => {
     expect(context.researchEvidence.length).toBeGreaterThan(0);
     expect(context.memories.length).toBeGreaterThan(0);
     expect(context.fileContents[0]?.extractedText?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // Rule 51 item 4: helper-vision observations are a prompt source too. They
+  // spend the FILE share, so an 8k lane with a long document AND a huge
+  // description still fits.
+  it('fits helper-vision observations inside the window through the file share', async () => {
+    const assembled = await manager().assemble(
+      'u1',
+      history as never,
+      { contextWindowTokens: 8_192, maxTokens: 1_024 } as never,
+      ['pack-1'],
+      ['f1'],
+    );
+    const shot = {
+      id: 'img-1',
+      filename: 'shot.png',
+      mimeType: 'image/png',
+      content: Buffer.from('png').toString('base64'),
+      extractedText: 'ocr',
+    };
+    const lane: AssembledContext = {
+      ...assembled,
+      fileContents: [...assembled.fileContents, shot],
+    };
+    const observation = {
+      fileId: 'img-1',
+      filename: 'shot.png',
+      helperProvider: 'GEMINI',
+      helperModel: 'gemini-2.5-flash',
+      text: BIG,
+    };
+    const fit = fitLaneFileShare(lane, [observation]);
+    const plan = applyVisionHelperResults(
+      {
+        provider: 'DEEPSEEK',
+        model: 'deepseek-chat',
+        decisions: [
+          {
+            fileId: 'img-1',
+            filename: 'shot.png',
+            mimeType: 'image/png',
+            provider: 'DEEPSEEK',
+            model: 'deepseek-chat',
+            mode: FileDeliveryMode.OMITTED_NO_VISION,
+            sendNative: false,
+            reason: DELIVERY_REASON_NO_VISION,
+          },
+        ],
+      },
+      [
+        {
+          fileId: 'img-1',
+          outcome: VisionHelperOutcome.SUCCEEDED,
+          observation,
+          executions: [
+            {
+              kind: HelperExecutionKind.VISION,
+              provider: 'GEMINI',
+              model: 'gemini-2.5-flash',
+              fileId: 'img-1',
+              latencyMs: 1,
+              outcome: VisionHelperOutcome.SUCCEEDED,
+            },
+          ],
+        },
+      ],
+      [],
+      fit.derivedImages,
+    );
+    const described: AssembledContext = {
+      ...lane,
+      fileContents: fit.fileContents,
+      attachmentDelivery: plan,
+    };
+
+    const promptTokens = estimateTokensFromText(
+      manager()
+        .buildChatMessages(described)
+        .map((message) =>
+          typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
+        )
+        .join('\n'),
+    );
+
+    expect(plan.decisions[0]?.mode).toBe(FileDeliveryMode.DERIVED_IMAGE_TEXT);
+    expect(JSON.stringify(manager().buildChatMessages(described))).toContain(
+      'DERIVED IMAGE OBSERVATIONS',
+    );
+    expect(promptTokens).toBeLessThanOrEqual(8_192);
   });
 
   it('keeps everything whole when the window is big enough', async () => {

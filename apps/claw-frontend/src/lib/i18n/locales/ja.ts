@@ -1957,6 +1957,7 @@ export const ja: TranslationDictionary = {
       truncatedText: '切り詰められた',
       transcript: '文字起こし',
       nativeVideo: '動画',
+      derivedImageText: 'ヘルパーが説明',
       stillProcessing: '処理中',
       failedProcessing: '処理に失敗しました',
       tooltip: 'モデルごとの配信概要',
@@ -4546,6 +4547,7 @@ export const ja: TranslationDictionary = {
         WORKSPACE_ACTION: 'ワークスペース操作',
         ROUTING: 'ルーティング',
         TRANSCRIPTION: '文字起こし',
+        VISION_HELPER: '画像説明ヘルパー',
       },
       kind: {
         PLAN_GRANT: 'プラン付与',

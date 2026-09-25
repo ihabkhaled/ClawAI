@@ -29,4 +29,8 @@ export enum FileDeliveryMode {
   FAILED_PROCESSING = 'FAILED_PROCESSING',
   // Video bytes sent natively to a model that accepts video input.
   NATIVE_VIDEO = 'NATIVE_VIDEO',
+  // The model cannot see; ClawAI's vision helper described the image and the
+  // model received that description as derived observations (ADR-120 batch 5).
+  // The entry names the helper in helperProvider / helperModel.
+  DERIVED_IMAGE_TEXT = 'DERIVED_IMAGE_TEXT',
 }

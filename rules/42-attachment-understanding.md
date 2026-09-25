@@ -147,7 +147,13 @@ Full reasoning:
     cannot answer, capability is UNKNOWN and the pre-existing provider-level
     behaviour applies, so an outage never strips a working flow. A new payload
     builder or a new provider path reads the plan; it never re-derives "can
-    this model see" on its own.
+    this model see" on its own. When a helper vision model (the
+    `VISION_HELPER` assistant role, ADR-120 batch 5) describes the image for
+    such a lane, the record is `DERIVED_IMAGE_TEXT` with `helperProvider` /
+    `helperModel`, and the lane receives the description only inside the
+    framed "DERIVED IMAGE OBSERVATIONS … not seen directly by you" block —
+    never as if the model saw the image, and never as instructions
+    (`vision-helper.manager.spec.ts`, `vision-helper.utility.spec.ts`).
 
 ## How this is enforced
 

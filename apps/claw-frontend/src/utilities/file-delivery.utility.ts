@@ -73,7 +73,11 @@ export function buildFileDeliveryTooltip(
   const lines = delivery.map((entry) => {
     const modeLabel = getFileDeliveryModeLabel(entry.mode, t);
     const reasonSuffix = entry.reason && entry.reason.length > 0 ? ` — ${entry.reason}` : '';
-    return `${entry.filename} (${modeLabel})${reasonSuffix}`;
+    const helperSuffix =
+      entry.helperProvider !== undefined && entry.helperModel !== undefined
+        ? ` — ${entry.helperProvider}/${entry.helperModel}`
+        : '';
+    return `${entry.filename} (${modeLabel})${helperSuffix}${reasonSuffix}`;
   });
   return [header, ...lines].join('\n');
 }
@@ -108,6 +112,8 @@ export function readFileDeliveryFromMetadata(
     const provider = candidate['provider'];
     const model = candidate['model'];
     const reason = candidate['reason'];
+    const helperProvider = candidate['helperProvider'];
+    const helperModel = candidate['helperModel'];
     if (
       typeof fileId !== 'string' ||
       typeof filename !== 'string' ||
@@ -125,6 +131,9 @@ export function readFileDeliveryFromMetadata(
       model,
       mode,
       ...(typeof reason === 'string' ? { reason } : {}),
+      ...(typeof helperProvider === 'string' && typeof helperModel === 'string'
+        ? { helperProvider, helperModel }
+        : {}),
     });
   }
   return entries.length > 0 ? entries : undefined;

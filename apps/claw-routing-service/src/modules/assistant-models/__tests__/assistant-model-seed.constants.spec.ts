@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { AssistantModelRole, RouterProvider } from '../../../generated/prisma';
 import { ASSISTANT_MODEL_SEED_ENTRIES } from '../constants/assistant-model-seed.constants';
 
@@ -68,5 +71,38 @@ describe('assistant model seed', () => {
       'glm-5.1',
     ]);
     expect(writers.map((entry) => entry.order)).toEqual([1, 2, 3]);
+  });
+
+  // ADR-120 batch 5: a lane that cannot see gets a helper's description. Gemini
+  // first because it is the connector a typical install has; both are hosted
+  // vision models, and the budget is a description's, not a document's.
+  it('seeds a bounded vision helper, Gemini first then OpenAI', () => {
+    const helpers = ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (candidate) => candidate.role === AssistantModelRole.VISION_HELPER,
+    );
+
+    expect(helpers.map((entry) => [entry.order, entry.provider, entry.modelAlias])).toEqual([
+      [1, RouterProvider.GEMINI, 'gemini-2.5-flash'],
+      [2, RouterProvider.OPENAI, 'gpt-4.1-mini'],
+    ]);
+    for (const entry of helpers) {
+      expect(entry.maxTokens).toBeLessThanOrEqual(2_048);
+      expect(entry.timeoutMs).toBeLessThanOrEqual(60_000);
+    }
+  });
+
+  // A new enum value is a Postgres ALTER TYPE; without the migration every
+  // replica's boot seed fails on an unknown enum label.
+  it('ships the migration that adds the VISION_HELPER role', () => {
+    const sql = readFileSync(
+      join(
+        __dirname,
+        '../../../../prisma/migrations/20260925150000_add_vision_helper_role/migration.sql',
+      ),
+      'utf8',
+    );
+    expect(sql).toContain(
+      `ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'VISION_HELPER'`,
+    );
   });
 });

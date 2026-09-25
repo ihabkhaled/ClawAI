@@ -205,8 +205,11 @@ import {
   PAYG_WORKFLOW_INTERNAL_GENERATE,
   PAYG_WORKFLOW_TOOL_LOOP,
   PAYG_WORKFLOW_TOOL_LOOP_WRAPUP,
+  PAYG_WORKFLOW_VISION_HELPER,
   PAYG_WORKFLOW_VISION_PROMPT,
 } from '../constants/payg.constants';
+import type { HelperExecution, VisionHelperInvoker } from '../types/vision-helper.types';
+import { VisionHelperManager } from './vision-helper.manager';
 import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
 import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
 import type { FileContentCandidate, FileContentCandidateOptions } from '../types/file-writer.types';
@@ -249,7 +252,38 @@ export class ChatExecutionManager implements OnModuleInit {
     // shape; without it every lane keeps the provider-level behaviour that
     // predates per-model capability (ADR-120). Nest always supplies it.
     @Optional() private readonly attachmentDelivery?: AttachmentDeliveryManager,
+    // Optional for the same reason. Without it a lane that cannot see keeps
+    // the OCR text + honest note (ADR-120 batch 5).
+    @Optional() private readonly visionHelper?: VisionHelperManager,
   ) {}
+
+  /**
+   * The helper vision call, through this chokepoint with the hold the helper
+   * manager took: `hold.maxOutputTokens` goes to the provider, finalize on
+   * measured usage, release on a throw. Its own surface, never the lane's.
+   */
+  private readonly invokeVisionHelper: VisionHelperInvoker = async (call) =>
+    this.callProvider(
+      call.provider,
+      call.model,
+      call.context,
+      Date.now(),
+      false,
+      undefined,
+      undefined,
+      {
+        fastPathEnabled: false,
+        applyShortResponseConstraint: false,
+        maxOutputTokens: call.hold.maxOutputTokens,
+      },
+      TokenLedgerContext.CHAT,
+      {
+        surface: PaygSurface.VISION_HELPER,
+        workflow: PAYG_WORKFLOW_VISION_HELPER,
+        requestId: call.requestId,
+        hold: call.hold,
+      },
+    );
 
   onModuleInit(): void {
     this.judgeRefereeManager.setExecutionManager(this);
@@ -2032,9 +2066,19 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string,
     model: string,
   ): Promise<AssembledContext> {
-    return this.attachmentDelivery === undefined ||
+    if (
+      this.attachmentDelivery === undefined ||
       provider === FILE_GENERATION_PROVIDER ||
-      provider.startsWith(IMAGE_PROVIDER_PREFIX) ? context : this.attachmentDelivery.applyToContext(context, provider, model);
+      provider.startsWith(IMAGE_PROVIDER_PREFIX)
+    ) {
+      return context;
+    }
+    const planned = await this.attachmentDelivery.applyToContext(context, provider, model);
+    // A lane that cannot see gets the helper's description of each image
+    // instead of only its OCR text (ADR-120 batch 5).
+    return this.visionHelper === undefined
+      ? planned
+      : this.visionHelper.upgradeContext(planned, this.invokeVisionHelper);
   }
 
   /** `fileDelivery` for the response, from the plan the payload was built from. */
@@ -2042,11 +2086,16 @@ export class ChatExecutionManager implements OnModuleInit {
     context: AssembledContext,
     provider: string,
     model: string,
-  ): { fileDelivery?: FileDeliveryEntry[] } {
+  ): { fileDelivery?: FileDeliveryEntry[]; helperExecutions?: HelperExecution[] } {
     const plan = context.attachmentDelivery;
-    return plan?.provider === provider && plan.model === model && plan.decisions.length > 0
-      ? { fileDelivery: deliveryEntriesOf(plan.decisions) }
-      : {};
+    if (plan?.provider !== provider || plan.model !== model || plan.decisions.length === 0) {
+      return {};
+    }
+    const helperExecutions = plan.helperExecutions ?? [];
+    return {
+      fileDelivery: deliveryEntriesOf(plan.decisions),
+      ...(helperExecutions.length > 0 ? { helperExecutions } : {}),
+    };
   }
 
   /**

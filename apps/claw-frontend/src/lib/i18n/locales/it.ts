@@ -1980,6 +1980,7 @@ export const it: TranslationDictionary = {
       truncatedText: 'Troncato',
       transcript: 'Trascrizione',
       nativeVideo: 'Video',
+      derivedImageText: 'Descritta da assistente',
       stillProcessing: 'Elaborazione in corso',
       failedProcessing: 'Elaborazione non riuscita',
       tooltip: 'Riepilogo consegna per modello',
@@ -4582,6 +4583,7 @@ export const it: TranslationDictionary = {
         WORKSPACE_ACTION: 'Azione workspace',
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Trascrizione',
+        VISION_HELPER: 'Assistente descrizione immagini',
       },
       kind: {
         PLAN_GRANT: 'Quota del piano',

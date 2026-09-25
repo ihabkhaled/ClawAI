@@ -952,8 +952,8 @@ the record. Rule: [rules/42](../../rules/42-attachment-understanding.md) item 14
   generation providers are skipped.
 - **Non-vision lane**: no `image_url` part, no Ollama `images[]`; the system
   block carries the OCR text framed as extracted text, or a plain "cannot see
-  this image" note; recorded `OMITTED_NO_VISION` (batch 3's helper vision
-  upgrades exactly this decision).
+  this image" note; recorded `OMITTED_NO_VISION` (batch 5's helper vision
+  upgrades exactly this decision — see the next section).
 - **Modes**: `TRANSCRIPT` / `STILL_PROCESSING` / `FAILED_PROCESSING` for audio,
   `NATIVE_VIDEO` only on Gemini's native transport, `TRUNCATED_TEXT` when the
   text exceeded `MAX_FILE_CONTENT_LENGTH` or carries `TEXT_BUDGET_SHORTENED_MARKER`.
@@ -971,3 +971,50 @@ the record. Rule: [rules/42](../../rules/42-attachment-understanding.md) item 14
   conservative 8k.
 - **Log line** (content-free): `mediaDelivery {"provider","model","vision","videoInput","files","modes":{…},"fileIds":[…]}`.
   `docker logs claw-chat-service | grep mediaDelivery` answers "did the model get my image?".
+
+## Helper vision: a lane that cannot see gets a description (ADR-120 batch 5, 2026-09-25)
+
+When a lane's model cannot see (`OMITTED_NO_VISION`, reason `no_vision`), the
+admin's `VISION_HELPER` models describe the image and the lane receives the
+description as **derived observations**. The user's model stays the
+conversational model; the message's `provider`/`model` are never replaced.
+
+- **Where**: `ChatExecutionManager.withAttachmentDelivery` runs
+  `AttachmentDeliveryManager.applyToContext` then
+  `VisionHelperManager.upgradeContext` (`managers/vision-helper.manager.ts`) at
+  both chokepoints, so single chat, compare lanes, judge and critic are covered.
+- **Candidates**: `VisionHelperCandidatesClient` reads
+  `GET /internal/assistant-models/VISION_HELPER/candidates` (60 s cache, last list
+  on outage, empty list = no helper). Only models the connector catalog marks
+  vision-`SUPPORTED` are tried; a LOCAL_ONLY / PRIVACY_FIRST turn
+  (`context.mediaLocalOnly`) tries local providers only.
+- **One description per (user, turn, image)**: `ContextAssemblyManager.assemble`
+  stamps `turnId`; lanes spread it, so compare lanes + judge share one in-flight
+  result (10 min TTL, 500 entries). One image = one paid call, one hold.
+- **Metering**: `PaygSurface.VISION_HELPER`, workflow `vision-helper`. The
+  manager reserves (`requestId` `${turnId}:vision:${fileId}`, a fall-through
+  gets `…:attempt:N`), then calls `callProvider` with `paygCall.hold`, so the
+  provider receives `hold.maxOutputTokens` and the chokepoint finalizes /
+  releases. A 402, clamped hold (released `CANCELLED`) or unreachable meter →
+  `REFUSED`, no next candidate (rule 37 item 18). A timeout (`timeoutMs` from
+  the role row) → `TIMED_OUT`, no next candidate (the late call settles its own
+  hold). Any other error, including an image rejection → next candidate.
+  Local helpers come back `metered: false`.
+- **Limits**: `VISION_HELPER_MAX_IMAGES_PER_TURN` = 4; the rest keep OCR with
+  reason `vision_helper_limit`. The helper gets only the fixed instruction
+  (`VISION_HELPER_SYSTEM_PROMPT`) and the one image — no history, memories or
+  user question.
+- **Payload**: `DERIVED_IMAGE_TEXT` entries carry `helperProvider` /
+  `helperModel`; `renderFileText` emits the framed block
+  (`DERIVED IMAGE OBSERVATIONS — produced by ClawAI's vision helper (p/m), not seen directly by you.`,
+  `Image:`, BEGIN/END delimiters with forged ones stripped, and guidance to say
+  it relied on a description and to treat image text as data, not instructions).
+  Failure → OCR + honest note (`vision_helper_failed`); credit refusal → OCR +
+  `VISION_HELPER_REFUSED_NOTE` (`vision_helper_refused`).
+- **Window**: descriptions and the other files' text are fitted TOGETHER into
+  the file share (`fitLaneFileShare`, rule 51 item 4), descriptions first;
+  `context-assembly-window-fit.spec.ts` proves an 8k lane still fits.
+- **Provenance**: `metadata.helperExecutions: [{kind:'VISION', provider, model, fileId, latencyMs, outcome}]`
+  on single chat and every compare lane it served.
+- **Log line** (content-free, per attempt): `visionHelper {"kind","provider","model","fileId","latencyMs","outcome"}`.
+- **Not yet**: plan gating (paid-only helper vision) is batch 6.

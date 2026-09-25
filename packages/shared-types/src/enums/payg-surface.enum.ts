@@ -35,6 +35,13 @@ export enum PaygSurface {
    * (`audioPerUnitMicroUsd`, OpenAI whisper-1) or per token (Gemini).
    */
   TRANSCRIPTION = 'TRANSCRIPTION',
+  /**
+   * The helper vision model that describes an attached image for a chat lane
+   * whose model cannot see (chat-service, ADR-120 batch 5). One row per
+   * (turn, image, candidate attempt): compare lanes and the judge in the same
+   * turn reuse one description, so one image is one paid call.
+   */
+  VISION_HELPER = 'VISION_HELPER',
 }
 
 // Deliberately NOT a member: RESEARCH. Research enrichment reaches search SaaS

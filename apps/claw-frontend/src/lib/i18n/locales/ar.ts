@@ -1930,6 +1930,7 @@ export const ar: TranslationDictionary = {
       truncatedText: 'تم الاقتطاع',
       transcript: 'نص مُفرَّغ',
       nativeVideo: 'فيديو',
+      derivedImageText: 'موصوفة بواسطة مساعد',
       stillProcessing: 'قيد المعالجة',
       failedProcessing: 'فشلت المعالجة',
       tooltip: 'ملخص التسليم لكل نموذج',
@@ -4472,6 +4473,7 @@ export const ar: TranslationDictionary = {
         WORKSPACE_ACTION: 'إجراء مساحة عمل',
         ROUTING: 'توجيه',
         TRANSCRIPTION: 'النسخ الصوتي',
+        VISION_HELPER: 'مساعد وصف الصور',
       },
       kind: {
         PLAN_GRANT: 'مخصّص الخطة',

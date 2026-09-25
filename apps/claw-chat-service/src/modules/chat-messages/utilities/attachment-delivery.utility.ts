@@ -40,7 +40,7 @@ import type { ModelMediaCapabilities } from '../types/model-capability.types';
  *   audio → TRANSCRIPT / STILL_PROCESSING / FAILED_PROCESSING (never bytes)
  *   video → NATIVE_VIDEO when the lane really sends it, else OMITTED_UNSUPPORTED
  *   image → NATIVE_IMAGE when the model can see, else OMITTED_NO_VISION (no
- *           bytes; the OCR text and an honest note instead). Batch 3's helper
+ *           bytes; the OCR text and an honest note instead). Batch 5's helper
  *           vision upgrades exactly this OMITTED_NO_VISION decision.
  *   text  → EXTRACTED_TEXT / TRUNCATED_TEXT / STILL_PROCESSING / FAILED_PROCESSING
  *   other → OMITTED_UNSUPPORTED

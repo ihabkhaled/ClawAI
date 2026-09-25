@@ -12,7 +12,7 @@ export enum FileDeliveryMode {
   NATIVE_IMAGE = 'NATIVE_IMAGE',
   // Image attached, but the target provider+model has no vision support. The
   // bytes are NOT sent; the model is told honestly it cannot see the image and
-  // gets its OCR text when there is any (ADR-120). Batch 3's helper-vision
+  // gets its OCR text when there is any (ADR-120). Batch 5's helper-vision
   // step upgrades this mode when a helper describes the image.
   OMITTED_NO_VISION = 'OMITTED_NO_VISION',
   // The mime type is unrecognised / binary / oversize and we have no path to
@@ -32,4 +32,9 @@ export enum FileDeliveryMode {
   FAILED_PROCESSING = 'FAILED_PROCESSING',
   // Video bytes sent natively to a lane whose model accepts video input.
   NATIVE_VIDEO = 'NATIVE_VIDEO',
+  // Image the lane's model cannot see, described instead by ClawAI's vision
+  // helper (VISION_HELPER role, ADR-120 batch 5). The model received DERIVED
+  // OBSERVATIONS framed as another model's description — never the bytes.
+  // The entry names the helper in `helperProvider` / `helperModel`.
+  DERIVED_IMAGE_TEXT = 'DERIVED_IMAGE_TEXT',
 }

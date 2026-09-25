@@ -1932,6 +1932,7 @@ export const th: TranslationDictionary = {
       truncatedText: 'ถูกตัดทอน',
       transcript: 'บทถอดเสียง',
       nativeVideo: 'วิดีโอ',
+      derivedImageText: 'อธิบายโดยผู้ช่วย',
       stillProcessing: 'กำลังประมวลผล',
       failedProcessing: 'การประมวลผลล้มเหลว',
       tooltip: 'สรุปการส่งมอบต่อรุ่น',
@@ -4489,6 +4490,7 @@ export const th: TranslationDictionary = {
         WORKSPACE_ACTION: 'การทำงานเวิร์กสเปซ',
         ROUTING: 'การกำหนดเส้นทาง',
         TRANSCRIPTION: 'การถอดเสียง',
+        VISION_HELPER: 'ผู้ช่วยอธิบายรูปภาพ',
       },
       kind: {
         PLAN_GRANT: 'โควตาจากแพ็กเกจ',

@@ -36,8 +36,10 @@ model was sent a 16.7k-token prompt.
    (`routerModelFromAttempts`). A new routing path that returns a decision
    without it hides who routed.
 7. **Never hard-code a model that writes for the user.** File writers are the
-   `FILE_WRITER` assistant role. A new helper model gets a role, not a
-   constant.
+   `FILE_WRITER` assistant role; the model that describes an image for a lane
+   that cannot see is the `VISION_HELPER` role (ADR-120 batch 5). A new helper
+   model gets a role, not a constant — runbook
+   [`skills/add-a-helper-model-role.md`](../skills/add-a-helper-model-role.md).
 8. **File intent needs a file word.** Change `detectFileIntent` only together
    with its case table (`file-intent.utility.spec.ts`), and add any new false
    positive to it first.

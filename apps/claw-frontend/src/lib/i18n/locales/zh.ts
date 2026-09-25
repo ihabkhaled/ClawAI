@@ -1901,6 +1901,7 @@ export const zh: TranslationDictionary = {
       truncatedText: '截断的',
       transcript: '转录文本',
       nativeVideo: '视频',
+      derivedImageText: '由助手描述',
       stillProcessing: '仍在处理',
       failedProcessing: '处理失败',
       tooltip: '每个型号的交付摘要',
@@ -4380,6 +4381,7 @@ export const zh: TranslationDictionary = {
         WORKSPACE_ACTION: '工作区操作',
         ROUTING: '路由',
         TRANSCRIPTION: '语音转写',
+        VISION_HELPER: '图像描述助手',
       },
       kind: {
         PLAN_GRANT: '套餐额度',

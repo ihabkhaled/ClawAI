@@ -151,6 +151,20 @@ export type AssembledContext = {
    * where the builders keep the provider-level behaviour.
    */
   attachmentDelivery?: AttachmentDeliveryPlan;
+  /**
+   * One id per assembled turn, shared by every lane, the judge and the critic
+   * because they spread this context. Keys the helper-vision reuse, so one
+   * image is described (and paid for) once per turn. Absent on hand-built
+   * contexts, which then simply do not share a description.
+   */
+  turnId?: string;
+  /**
+   * LOCAL_ONLY / PRIVACY_FIRST: an attachment may only be read by a model on
+   * the operator's own hardware, so a helper model must be local too.
+   */
+  mediaLocalOnly?: boolean;
+  /** Set on the helper's own call, so it can never recurse into another helper. */
+  visionHelperCall?: boolean;
 };
 
 export type ResearchEvidenceCitation = {

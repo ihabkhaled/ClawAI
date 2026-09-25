@@ -9,6 +9,12 @@ export const DELIVERY_REASON_NO_IMAGE_BYTES = 'file_delivery.reason.no_image_byt
 export const DELIVERY_REASON_STILL_PROCESSING = 'file_delivery.reason.still_processing';
 export const DELIVERY_REASON_FAILED_PROCESSING = 'file_delivery.reason.failed_processing';
 export const DELIVERY_REASON_TRUNCATED = 'file_delivery.reason.truncated';
+/** A no-vision image whose helper description failed; the lane got OCR + the honest note. */
+export const DELIVERY_REASON_VISION_HELPER_FAILED = 'file_delivery.reason.vision_helper_failed';
+/** The helper call was refused for credit (rule 37 item 18); no second helper was tried. */
+export const DELIVERY_REASON_VISION_HELPER_REFUSED = 'file_delivery.reason.vision_helper_refused';
+/** Past the per-turn image cap (`VISION_HELPER_MAX_IMAGES_PER_TURN`); not described. */
+export const DELIVERY_REASON_VISION_HELPER_LIMIT = 'file_delivery.reason.vision_helper_limit';
 
 /** Base64 carries 3 bytes in every 4 characters. */
 export const BASE64_DECODED_BYTES_PER_CHAR = 0.75;
@@ -16,7 +22,7 @@ export const BASE64_DECODED_BYTES_PER_CHAR = 0.75;
 /**
  * What a lane whose model cannot see images is told. Honest, and useful where
  * possible: OCR text of a screenshot or an invoice usually answers the
- * question. Batch 3 adds a helper-vision description in front of this.
+ * question. Batch 5's helper vision replaces it with a described image (DERIVED_IMAGE_TEXT).
  */
 export const NO_VISION_IMAGE_WITH_OCR_FRAME =
   'The user attached an image this model cannot view directly. Text extracted from it (OCR):';

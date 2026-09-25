@@ -1986,6 +1986,7 @@ export const fr: TranslationDictionary = {
       truncatedText: 'Tronqué',
       transcript: 'Transcription',
       nativeVideo: 'Vidéo',
+      derivedImageText: 'Décrite par un assistant',
       stillProcessing: 'Traitement en cours',
       failedProcessing: 'Échec du traitement',
       tooltip: 'Résumé de livraison par modèle',
@@ -4605,6 +4606,7 @@ export const fr: TranslationDictionary = {
         WORKSPACE_ACTION: 'Action d’espace',
         ROUTING: 'Routage',
         TRANSCRIPTION: 'Transcription',
+        VISION_HELPER: "Assistant de description d'images",
       },
       kind: {
         PLAN_GRANT: 'Allocation du forfait',

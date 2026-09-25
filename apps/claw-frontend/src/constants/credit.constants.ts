@@ -95,6 +95,7 @@ export const PAYG_SURFACE_LABEL_KEYS: Record<PaygSurface, string> = {
   [PaygSurface.WORKSPACE_ACTION]: 'billing.credit.surface.WORKSPACE_ACTION',
   [PaygSurface.ROUTING]: 'billing.credit.surface.ROUTING',
   [PaygSurface.TRANSCRIPTION]: 'billing.credit.surface.TRANSCRIPTION',
+  [PaygSurface.VISION_HELPER]: 'billing.credit.surface.VISION_HELPER',
 };
 
 /** Why a ledger row exists, in the user's words. One entry per CreditLedgerKind. */

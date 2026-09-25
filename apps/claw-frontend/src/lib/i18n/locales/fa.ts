@@ -1949,6 +1949,7 @@ export const fa: TranslationDictionary = {
       truncatedText: 'کوتاه شده',
       transcript: 'رونوشت',
       nativeVideo: 'ویدیو',
+      derivedImageText: 'توصیف‌شده توسط دستیار',
       stillProcessing: 'در حال پردازش',
       failedProcessing: 'پردازش ناموفق بود',
       tooltip: 'خلاصه تحویل هر مدل',
@@ -4530,6 +4531,7 @@ export const fa: TranslationDictionary = {
         WORKSPACE_ACTION: 'اقدام فضای کاری',
         ROUTING: 'مسیریابی',
         TRANSCRIPTION: 'رونویسی صوتی',
+        VISION_HELPER: 'دستیار توصیف تصویر',
       },
       kind: {
         PLAN_GRANT: 'سهمیهٔ پلن',

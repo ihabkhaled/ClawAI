@@ -1693,10 +1693,17 @@ export class ChatMessagesService implements OnModuleInit {
   // `metadata.fileDelivery` shape compare writes (ADR-120). Single chat used to
   // record nothing, so "did the model see my image?" had no answer after the
   // fact. Absent on turns with no attachments.
+  // `helperExecutions` names the helper models that worked for the lane (the
+  // vision helper, ADR-120 batch 5). The message's provider/model stay the
+  // conversational model's; they are never overwritten by a helper.
   private buildFileDeliveryMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    return llmResponse.fileDelivery === undefined || llmResponse.fileDelivery.length === 0
-      ? {}
-      : { fileDelivery: llmResponse.fileDelivery };
+    const helperExecutions = llmResponse.helperExecutions ?? [];
+    return {
+      ...(llmResponse.fileDelivery === undefined || llmResponse.fileDelivery.length === 0
+        ? {}
+        : { fileDelivery: llmResponse.fileDelivery }),
+      ...(helperExecutions.length > 0 ? { helperExecutions } : {}),
+    };
   }
 
   // Records that the answer was shortened to fit the user's remaining

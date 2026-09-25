@@ -259,6 +259,7 @@ change together.
 | `WORKSPACE_ACTION` | workspace | AI actions, multi-model review, chain NL draft, IMPL handoff                                                       | U8–U10, U12 |
 | `ROUTING`          | routing   | The cloud router's own paid calls — **one hold per attempt**                                                       | U5, U6      |
 | `TRANSCRIPTION`    | file      | Speech-to-text of an uploaded audio file / voice note — **one hold per provider attempt**, charged to the uploader | —           |
+| `VISION_HELPER`    | chat      | Helper vision for a lane that cannot see — **one hold per image per turn** (lanes + judge share it)                | —           |
 
 There is **no `RESEARCH` member**: research-service reaches search SaaS, never a
 paid model, and is metered through `FeatureUsageRecord` (see "Not metered", below).
@@ -273,7 +274,10 @@ and bypassed the chokepoint; it now goes through `callProvider` at
 `${traceId}:${entryId}:${attemptNumber}` because a retry inside an entry is a
 second paid call and sharing the key would silently under-charge it.
 Transcription keys `transcription:${fileId}:${provider}`: stable across a
-redelivered job, distinct per provider so a modality fall-through is its own hold. See
+redelivered job, distinct per provider so a modality fall-through is its own hold.
+The vision helper keys `${turnId}:vision:${fileId}` (`…:attempt:N` for a
+fall-through): compare lanes and the judge of one turn reuse ONE description,
+so one image is one paid call, not one per lane (ADR-120 batch 5). See
 [`skills/meter-a-paid-provider-call.md`](../../skills/meter-a-paid-provider-call.md).
 
 ### Not metered, and why
