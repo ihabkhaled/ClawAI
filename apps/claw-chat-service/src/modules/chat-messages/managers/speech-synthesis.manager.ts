@@ -8,6 +8,7 @@ import { SpeechConnectorClient } from '../clients/speech-connector.client';
 import { SpeechProviderClient } from '../clients/speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../clients/tts-voice-candidates.client';
 import {
+  SPEECH_RATE_LIMIT_RETRIES,
   SPEECH_SEGMENT_TIMEOUT_RETRIES,
   SPEECH_STORE_FAILED_LOG_REASON,
   SPEECH_STORE_FAILED_RELEASE_REASON,
@@ -42,6 +43,11 @@ import {
   speechSettlement,
   toSpeechCandidates,
 } from '../utilities/speech.utility';
+import {
+  isSpeechRateLimited,
+  rateLimitBackoffMs,
+  waitMs,
+} from '../utilities/speech-rate-limit.utility';
 
 /**
  * Walks the admin's TTS_VOICE candidates for ONE SEGMENT of a progressive
@@ -66,6 +72,11 @@ import {
  *   meter ENDS the walk (rule 37 item 18). A timed-out attempt is released
  *   (TIMEOUT) and retried ONCE on the same candidate under a new requestId,
  *   then the walk moves on; no attempt starts past the job deadline.
+ * - A RATE_LIMITED attempt (429 / RESOURCE_EXHAUSTED) is released, the job
+ *   is told (`onRateLimited`: it drops to one call in flight), and the SAME
+ *   candidate is retried after the provider's hint or 1.5 s / 3 s / 6 s with
+ *   jitter (each wait ≤ 10 s), at most 3 times, never past the deadline —
+ *   then the walk moves on.
  */
 @Injectable()
 export class SpeechSynthesisManager {
@@ -94,41 +105,20 @@ export class SpeechSynthesisManager {
   }
 
   /**
-   * One SEGMENT through the candidate walk. Per candidate: an attempt, and on
-   * a timeout ONE retry on the same candidate (a new requestId, a new hold)
-   * before the next candidate. A provider rejection moves on at once. A credit
-   * refusal / clamp / unverifiable meter throws from `reserve` and ends the
-   * walk (rule 37 item 18); so does the job deadline.
+   * One SEGMENT through the candidate walk. Per candidate: an attempt; on a
+   * timeout ONE retry, on a rate limit up to `SPEECH_RATE_LIMIT_RETRIES`
+   * retries after a bounded wait — each a new requestId and a new hold —
+   * before the next candidate. A provider rejection moves on at once. A
+   * credit refusal / clamp / unverifiable meter throws from `reserve` and ends
+   * the walk (rule 37 item 18); so does the job deadline.
    */
   async synthesize(input: SpeechSynthesisInput): Promise<SpeechSynthesisResult> {
     const candidates = await this.candidates();
     const attempts: SpeechAttemptRecord[] = [];
     for (const candidate of candidates) {
-      for (let retry = 0; retry <= SPEECH_SEGMENT_TIMEOUT_RETRIES; retry += 1) {
-        const timeoutMs = speechAttemptTimeoutMs(
-          candidate.timeoutMs,
-          input.segment.characters,
-          input.deadlineAt,
-          Date.now(),
-        );
-        if (timeoutMs === null) {
-          throw new BusinessException(
-            TTS_FAILED_MESSAGE,
-            TTS_FAILED_CODE,
-            HttpStatus.GATEWAY_TIMEOUT,
-          );
-        }
-        const result = await this.attempt(input, { ...candidate, timeoutMs }, attempts.length + 1);
-        attempts.push(result.record);
-        this.logger.log(
-          `ttsAttempt ${JSON.stringify({ messageId: input.messageId, segment: input.segment.index + 1, ...result.record })}`,
-        );
-        if (result.delivered !== undefined) {
-          return { ...result.delivered, candidate, attempts };
-        }
-        if (result.record.outcome !== SpeechAttemptOutcome.TIMED_OUT) {
-          break;
-        }
+      const delivered = await this.walkCandidate(input, candidate, attempts);
+      if (delivered !== null) {
+        return delivered;
       }
     }
     const nothingTried = attempts.every(
@@ -141,6 +131,94 @@ export class SpeechSynthesisManager {
           HttpStatus.SERVICE_UNAVAILABLE,
         )
       : new BusinessException(TTS_FAILED_MESSAGE, TTS_FAILED_CODE, HttpStatus.BAD_GATEWAY);
+  }
+
+  /**
+   * Attempts on ONE candidate until it delivers or gives up. Bounded: at most
+   * 1 + `SPEECH_SEGMENT_TIMEOUT_RETRIES` + `SPEECH_RATE_LIMIT_RETRIES` calls.
+   */
+  private async walkCandidate(
+    input: SpeechSynthesisInput,
+    candidate: SpeechCandidate,
+    attempts: SpeechAttemptRecord[],
+  ): Promise<SpeechSynthesisResult | null> {
+    let timeoutRetries = 0;
+    let rateLimitRetries = 0;
+    let again = true;
+    while (again) {
+      const timeoutMs = speechAttemptTimeoutMs(
+        candidate.timeoutMs,
+        input.segment.characters,
+        input.deadlineAt,
+        Date.now(),
+      );
+      if (timeoutMs === null) {
+        throw new BusinessException(
+          TTS_FAILED_MESSAGE,
+          TTS_FAILED_CODE,
+          HttpStatus.GATEWAY_TIMEOUT,
+        );
+      }
+      const result = await this.attempt(input, { ...candidate, timeoutMs }, attempts.length + 1);
+      attempts.push(result.record);
+      this.logger.log(
+        `ttsAttempt ${JSON.stringify({ messageId: input.messageId, segment: input.segment.index + 1, ...result.record })}`,
+      );
+      if (result.delivered !== undefined) {
+        return { ...result.delivered, candidate, attempts };
+      }
+      const outcome = result.record.outcome;
+      if (outcome === SpeechAttemptOutcome.TIMED_OUT) {
+        timeoutRetries += 1;
+        again = timeoutRetries <= SPEECH_SEGMENT_TIMEOUT_RETRIES;
+      } else if (outcome === SpeechAttemptOutcome.RATE_LIMITED) {
+        rateLimitRetries += 1;
+        again = await this.waitForRateLimitRetry(
+          input,
+          candidate,
+          rateLimitRetries,
+          result.retryAfterMs ?? null,
+        );
+      } else {
+        again = false;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Tells the job (it drops to one call in flight), then waits out the
+   * backoff when a retry is still allowed AND its attempt would still fit the
+   * job window after the wait. False = move on to the next candidate; a retry
+   * that cannot fit is never started.
+   */
+  private async waitForRateLimitRetry(
+    input: SpeechSynthesisInput,
+    candidate: SpeechCandidate,
+    retryNumber: number,
+    hintMs: number | null,
+  ): Promise<boolean> {
+    input.onRateLimited?.();
+    const wait =
+      retryNumber > SPEECH_RATE_LIMIT_RETRIES
+        ? null
+        : rateLimitBackoffMs(retryNumber, hintMs, Math.random());
+    const fits =
+      wait !== null &&
+      speechAttemptTimeoutMs(
+        candidate.timeoutMs,
+        input.segment.characters,
+        input.deadlineAt,
+        Date.now() + wait,
+      ) !== null;
+    this.logger.warn(
+      `ttsAttempt outcome=${SpeechAttemptOutcome.RATE_LIMITED} messageId=${input.messageId} segment=${String(input.segment.index + 1)} provider=${candidate.provider} retry=${String(retryNumber)}/${String(SPEECH_RATE_LIMIT_RETRIES)} hintMs=${String(hintMs)} retryInMs=${fits ? String(wait) : 'none'}`,
+    );
+    if (wait === null || !fits) {
+      return false;
+    }
+    await waitMs(wait);
+    return true;
   }
 
   private async attempt(
@@ -179,7 +257,14 @@ export class SpeechSynthesisManager {
         delivered: { audio, settlement },
       };
     } catch (error: unknown) {
+      // Released, never finalized: a rejected / rate-limited / timed-out call is never charged.
       await this.accessControl.releaseCredit(held.hold, speechReleaseReason(error));
+      if (isSpeechRateLimited(error)) {
+        return {
+          record: record(SpeechAttemptOutcome.RATE_LIMITED, held.requestId),
+          retryAfterMs: error.retryAfterMs,
+        };
+      }
       const outcome = isSpeechTimeout(error)
         ? SpeechAttemptOutcome.TIMED_OUT
         : SpeechAttemptOutcome.FAILED;

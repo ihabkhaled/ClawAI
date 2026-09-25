@@ -78,6 +78,8 @@ export type SpeechSynthesisInput = {
   segment: SpeechTextSegment;
   /** Epoch ms: the job's wall-clock deadline (`SPEECH_JOB_DEADLINE_MS` from `startedAt`). */
   deadlineAt: number;
+  /** Told on every RATE_LIMITED attempt, so the job can lower its concurrency. */
+  onRateLimited?: () => void;
 };
 
 export type SpeechAttemptRecord = {
@@ -187,6 +189,19 @@ export type GeminiSpeechResponse = {
     content?: { parts?: ReadonlyArray<{ inlineData?: { mimeType?: string; data?: string } }> };
   }>;
   usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+  /** A google.rpc error body (a 429 carries `RESOURCE_EXHAUSTED` and a RetryInfo detail). */
+  error?: GeminiSpeechErrorBody;
+};
+
+export type GeminiSpeechErrorBody = {
+  status?: string;
+  details?: ReadonlyArray<GeminiSpeechErrorDetail>;
+};
+
+/** One `error.details[]` entry; RetryInfo carries `retryDelay` as a Duration string ("7s"). */
+export type GeminiSpeechErrorDetail = {
+  '@type'?: string;
+  retryDelay?: string;
 };
 
 export type ConnectorKeyResponse = {
@@ -217,6 +232,8 @@ export type SpeechSettlement = {
 export type SpeechAttemptResult = {
   record: SpeechAttemptRecord;
   delivered?: { audio: SynthesizedAudio; settlement: SpeechSettlement };
+  /** A RATE_LIMITED attempt's provider hint, in ms; null when it gave none. */
+  retryAfterMs?: number | null;
 };
 
 /** A running job's mutable bookkeeping; lives only inside `SpeechJobManager.run`. */
@@ -228,4 +245,8 @@ export type SpeechJobProgress = {
   errorCode: string | null;
   /** Metadata writes, chained so two segments finishing together never interleave. */
   writes: Promise<void>;
+  /** Provider calls allowed in flight; drops to 1 after the job's first RATE_LIMITED attempt. */
+  concurrency: number;
+  /** Segments currently between `synthesize` and `settle`. */
+  inFlight: number;
 };

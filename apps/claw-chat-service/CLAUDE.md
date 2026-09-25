@@ -1236,6 +1236,21 @@ errorCode }`. `NONE` = never read, or the stored reading is of other text.
   job window). A **timeout is retried once on the same candidate**, then the next
   candidate; a rejection moves on at once. A key-less provider is skipped before
   any hold.
+- **Rate limits** (2026-09-25; live: Gemini 429 in 339 ms with 3 segments in
+  flight, OpenAI fallback out of quota, segment dropped → PARTIAL). A Gemini 429 /
+  `RESOURCE_EXHAUSTED` or an OpenAI 429 that is not `insufficient_quota` is
+  `RATE_LIMITED` (`SpeechProviderError.rateLimited`): hold **released**
+  (`PROVIDER_ERROR`, never charged), then the **same candidate** is retried after
+  the provider hint (Gemini `RetryInfo.retryDelay`, OpenAI `Retry-After`) or
+  1.5 s / 3 s / 6 s ±20 % jitter, each wait ≤ 10 s (a longer hint → move on), at
+  most `SPEECH_RATE_LIMIT_RETRIES` = 3, never when the attempt would no longer fit
+  the job window. Each retry is a new requestId / hold (rule 37 item 15). Only
+  then the next candidate; a credit refusal still ends everything (item 18). The
+  job's first 429 drops it to **one call in flight** (in-flight calls finish;
+  segment order kept). OpenAI `insufficient_quota` is a plain FAILED — waiting
+  never fixes a billing quota. Helpers: `speech-rate-limit.utility.ts`. Log:
+  `ttsAttempt outcome=RATE_LIMITED … retry=n/3 hintMs=… retryInMs=<ms|none>`,
+  `ttsJob … rateLimited concurrency=1`.
 - **Metering** (`PaygSurface.TTS`, one hold per attempt, requestId
   `tts:<msg>:<contentHash>:g<generation>:seg<n>:<attempt>`, ≤ 128 chars): OpenAI
   reserves / finalizes the segment's `ttsCharacters`; Gemini reserves text tokens

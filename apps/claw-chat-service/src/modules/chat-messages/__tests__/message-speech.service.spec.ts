@@ -687,6 +687,172 @@ describe('SpeechJobManager — per segment: reserve → store → record → fin
   });
 });
 
+// Found live 2026-09-25: Gemini answered 429 in 339 ms with 3 segments in
+// flight, OpenAI's fallback was out of quota, and the segment was dropped.
+describe('SpeechJobManager — rate limits: wait, retry the same provider, slow down', () => {
+  const rateLimited = (hintMs: number | null = null): SpeechProviderError =>
+    new SpeechProviderError('busy', 429, false, true, hintMs);
+
+  /** POST, then run every timer (backoff waits) until the job has finished. */
+  async function startAndDrain(harness: Harness): Promise<void> {
+    await harness.service.start(USER, MESSAGE_ID);
+    await vi.runAllTimersAsync();
+    await Promise.all(harness.jobRuns.mock.results.map((entry) => entry.value));
+  }
+
+  let random: MockInstance<typeof Math.random>;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+  });
+  afterEach(() => {
+    random.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('429 then success on the SAME provider: READY, one CONSUMPTION, the 429 released', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    try {
+      const harness = build({ candidates: [GEMINI_ROW, OPENAI_ROW] });
+      harness.providerSynthesize.mockRejectedValueOnce(rateLimited()).mockResolvedValueOnce(WAV);
+      await startAndDrain(harness);
+
+      const calls = harness.reserveCredit.mock.calls.map(
+        (call) => call[0] as { requestId: string; provider: string },
+      );
+      expect(calls.map((call) => call.provider)).toEqual(['GEMINI', 'GEMINI']);
+      expect(calls[0]?.requestId).toMatch(/:g1:seg1:1$/);
+      expect(calls[1]?.requestId).toMatch(/:g1:seg1:2$/);
+      expect(harness.ledger.map((row) => [row.kind, row.requestId.slice(-2)])).toEqual([
+        ['RESERVATION', ':1'],
+        ['RESERVATION_RELEASE', ':1'],
+        ['RESERVATION', ':2'],
+        ['CONSUMPTION', ':2'],
+      ]);
+      expect(harness.releaseCredit).toHaveBeenCalledWith(expect.anything(), 'PROVIDER_ERROR');
+      expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+      const line = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((text) => text.startsWith('ttsAttempt outcome=RATE_LIMITED'));
+      expect(line).toMatch(/retry=1\/3 hintMs=null retryInMs=1500$/);
+      expect(line).not.toContain(USER);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("honours the provider's retry hint: no retry before it elapses", async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    harness.providerSynthesize.mockRejectedValueOnce(rateLimited(7_000)).mockResolvedValueOnce(WAV);
+    await harness.service.start(USER, MESSAGE_ID);
+    await vi.advanceTimersByTimeAsync(6_999);
+    expect(harness.providerSynthesize).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(harness.providerSynthesize).toHaveBeenCalledTimes(2);
+    await vi.runAllTimersAsync();
+    await Promise.all(harness.jobRuns.mock.results.map((entry) => entry.value));
+    expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+  });
+
+  it('after 3 rate-limit retries the walk falls through to the next candidate', async () => {
+    const harness = build({ candidates: [GEMINI_ROW, OPENAI_ROW] });
+    harness.providerSynthesize
+      .mockRejectedValueOnce(rateLimited())
+      .mockRejectedValueOnce(rateLimited())
+      .mockRejectedValueOnce(rateLimited())
+      .mockRejectedValueOnce(rateLimited())
+      .mockResolvedValueOnce(MP3);
+    await startAndDrain(harness);
+
+    const providers = harness.reserveCredit.mock.calls.map(
+      (call) => (call[0] as { provider: string }).provider,
+    );
+    expect(providers).toEqual(['GEMINI', 'GEMINI', 'GEMINI', 'GEMINI', 'OPENAI']);
+    const requestIds = harness.reserveCredit.mock.calls.map(
+      (call) => (call[0] as { requestId: string }).requestId,
+    );
+    expect(new Set(requestIds).size).toBe(5);
+    // Four 429s: four releases, none charged; only the OpenAI call is consumed.
+    expect(harness.ledger.filter((row) => row.kind === 'RESERVATION_RELEASE')).toHaveLength(4);
+    expect(harness.ledger.filter((row) => row.kind === 'CONSUMPTION')).toHaveLength(1);
+    expect(harness.speech().segments[0]?.provider).toBe('OPENAI');
+  });
+
+  it('a hint longer than the 10 s cap is not waited out: straight to the next candidate', async () => {
+    const harness = build({ candidates: [GEMINI_ROW, OPENAI_ROW] });
+    harness.providerSynthesize
+      .mockRejectedValueOnce(rateLimited(45_000))
+      .mockResolvedValueOnce(MP3);
+    await startAndDrain(harness);
+    const providers = harness.reserveCredit.mock.calls.map(
+      (call) => (call[0] as { provider: string }).provider,
+    );
+    expect(providers).toEqual(['GEMINI', 'OPENAI']);
+    expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+  });
+
+  it('after the first 429 the job runs ONE call at a time; calls in flight finish', async () => {
+    const harness = build({ candidates: [GEMINI_ROW], content: LONG_REPLY });
+    const segments = segmentSpeakableText(
+      prepareSpeakableText(LONG_REPLY, SPEECH_MAX_CHARACTERS).text,
+    );
+    const limitedText = segments[1]?.text;
+    let limited = false;
+    let inFlight = 0;
+    let peakBefore = 0;
+    const startedBefore = new Set<string>();
+    let newSegmentsBesideOthers = 0;
+    harness.providerSynthesize.mockImplementation(async (request: SpeechProviderRequest) => {
+      if (limited && !startedBefore.has(request.text) && inFlight > 0) {
+        newSegmentsBesideOthers += 1;
+      }
+      if (!limited) {
+        startedBefore.add(request.text);
+      }
+      inFlight += 1;
+      peakBefore = limited ? peakBefore : Math.max(peakBefore, inFlight);
+      try {
+        if (request.text === limitedText && !limited) {
+          // 429 after 10 ms, while segments 1 and 3 are still rendering (50 ms).
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          limited = true;
+          throw rateLimited();
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return WAV;
+      } finally {
+        inFlight -= 1;
+      }
+    });
+    await startAndDrain(harness);
+
+    expect(peakBefore).toBe(3);
+    // Segments 1 and 3 (in flight at the 429) finished; segment 4 started alone.
+    expect(startedBefore.size).toBe(3);
+    expect(segments.length).toBeGreaterThan(3);
+    expect(newSegmentsBesideOthers).toBe(0);
+    expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+    expect(harness.speech().segments).toHaveLength(segments.length);
+    expect(harness.finalizeCredit).toHaveBeenCalledTimes(segments.length);
+  });
+
+  it('never starts a retry that cannot fit the job deadline', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    harness.providerSynthesize.mockImplementation(async () => {
+      // The 429 lands with 10 s left: after the store + settle reserve and a
+      // 1.5 s wait, nothing is left for an attempt — so no retry starts.
+      vi.setSystemTime(Date.now() + 170_000);
+      throw rateLimited();
+    });
+    await startAndDrain(harness);
+
+    expect(harness.reserveCredit).toHaveBeenCalledTimes(1);
+    expect(harness.providerSynthesize).toHaveBeenCalledTimes(1);
+    expect(harness.finalizeCredit).not.toHaveBeenCalled();
+    expect(harness.speech()).toMatchObject({ status: SpeechJobStatus.FAILED, segments: [] });
+  });
+});
+
 describe('MessageSpeechService — resume and poll', () => {
   it('a stale GENERATING job reads as PARTIAL, and a POST resumes only the missing segments', async () => {
     const segments = segmentSpeakableText(

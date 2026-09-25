@@ -73,6 +73,8 @@ export type HttpBinaryResponse = {
   status: number;
   ok: boolean;
   body: Buffer;
+  /** The `Retry-After` header, when the answer carried one (a 429's wait hint). */
+  retryAfter?: string | null;
 };
 
 export type HttpBinaryStreamOptions = AllowedHostsOption & {

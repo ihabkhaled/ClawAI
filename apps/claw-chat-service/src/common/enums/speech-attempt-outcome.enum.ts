@@ -8,6 +8,12 @@ export enum SpeechAttemptOutcome {
   NOT_CONFIGURED = 'NOT_CONFIGURED',
   /** The provider rejected the request or was unavailable; hold released, next candidate. */
   FAILED = 'FAILED',
+  /**
+   * The provider answered 429 / RESOURCE_EXHAUSTED — hold released (never
+   * charged), retried on the SAME candidate after a bounded wait, then the
+   * walk moves on. The job drops to one call in flight.
+   */
+  RATE_LIMITED = 'RATE_LIMITED',
   /** Credit refused, clamped or unverifiable — terminal, never a reason to try the next. */
   REFUSED = 'REFUSED',
   /** Past the candidate's deadline — hold released, terminal (bounded latency). */

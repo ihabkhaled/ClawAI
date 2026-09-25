@@ -99,6 +99,43 @@ describe('SpeechProviderClient', () => {
     expect((error as SpeechProviderError).timedOut).toBe(false);
   });
 
+  it('Gemini: a 429 RESOURCE_EXHAUSTED is a rate limit carrying RetryInfo.retryDelay', async () => {
+    request.mockResolvedValue({
+      ok: false,
+      status: 429,
+      data: {
+        error: {
+          status: 'RESOURCE_EXHAUSTED',
+          details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '7s' }],
+        },
+      },
+    } as never);
+    const error: unknown = await new SpeechProviderClient()
+      .synthesize({ candidate: GEMINI, text: 'Hi.', apiKey: 'k', maxOutputTokens: 10 })
+      .catch((caught: unknown) => caught);
+    expect(error).toMatchObject({ status: 429, rateLimited: true, retryAfterMs: 7_000 });
+  });
+
+  it('OpenAI: a 429 rate limit honours Retry-After; an exhausted quota is a plain failure', async () => {
+    const call = async (): Promise<unknown> =>
+      new SpeechProviderClient()
+        .synthesize({ candidate: OPENAI, text: 'Hi.', apiKey: 'k', maxOutputTokens: 1 })
+        .catch((caught: unknown) => caught);
+    postBinary.mockResolvedValue({
+      ok: false,
+      status: 429,
+      body: Buffer.from('{"error":{"code":"rate_limit_exceeded"}}'),
+      retryAfter: '2',
+    });
+    expect(await call()).toMatchObject({ rateLimited: true, retryAfterMs: 2_000 });
+    postBinary.mockResolvedValue({
+      ok: false,
+      status: 429,
+      body: Buffer.from('{"error":{"code":"insufficient_quota"}}'),
+    });
+    expect(await call()).toMatchObject({ status: 429, rateLimited: false, retryAfterMs: null });
+  });
+
   it('OpenAI: posts to /audio/speech and returns the MP3 bytes with no usage', async () => {
     postBinary.mockResolvedValue({ ok: true, status: 200, body: Buffer.from('ID3mp3') });
     const audio = await new SpeechProviderClient().synthesize({

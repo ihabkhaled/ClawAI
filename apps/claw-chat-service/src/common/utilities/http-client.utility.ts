@@ -153,7 +153,12 @@ export async function httpPostBinary(options: HttpPostBinaryOptions): Promise<Ht
       redirect: 'error',
     });
     const bytes = Buffer.from(await response.arrayBuffer());
-    return { status: response.status, ok: response.ok, body: bytes };
+    return {
+      status: response.status,
+      ok: response.ok,
+      body: bytes,
+      retryAfter: response.headers.get('retry-after'),
+    };
   } finally {
     clearTimeout(timer);
   }

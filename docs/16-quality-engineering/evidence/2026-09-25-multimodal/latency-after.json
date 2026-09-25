@@ -1,0 +1,1163 @@
+{
+  "generatedAt": "2026-09-25T15:24:32.587Z",
+  "runStart": "2026-09-25T15:18:52.730Z",
+  "base": "https://claw.local/api/v1",
+  "n": 3,
+  "plan": "pro",
+  "echoModel": {
+    "provider": "GEMINI",
+    "model": "models/gemini-2.5-flash"
+  },
+  "speechAvailability": {
+    "available": true,
+    "reason": null
+  },
+  "fixtureError": null,
+  "fixtures": {
+    "speechSecondsAvailable": 926.387375,
+    "sourceClips": 8,
+    "voice": [
+      {
+        "target": 5,
+        "run": 1,
+        "durationS": 5.008,
+        "bytes": 23709
+      },
+      {
+        "target": 5,
+        "run": 2,
+        "durationS": 5.008,
+        "bytes": 22237
+      },
+      {
+        "target": 5,
+        "run": 3,
+        "durationS": 5.008,
+        "bytes": 22089
+      },
+      {
+        "target": 30,
+        "run": 1,
+        "durationS": 30.008,
+        "bytes": 131656
+      },
+      {
+        "target": 30,
+        "run": 2,
+        "durationS": 30.008,
+        "bytes": 130032
+      },
+      {
+        "target": 30,
+        "run": 3,
+        "durationS": 30.008,
+        "bytes": 129854
+      },
+      {
+        "target": 120,
+        "run": 1,
+        "durationS": 120.008,
+        "bytes": 525178
+      },
+      {
+        "target": 120,
+        "run": 2,
+        "durationS": 120.008,
+        "bytes": 523692
+      },
+      {
+        "target": 120,
+        "run": 3,
+        "durationS": 120.008,
+        "bytes": 523438
+      }
+    ],
+    "video": [
+      {
+        "target": 10,
+        "run": 1,
+        "durationS": 10,
+        "bytes": 230105
+      },
+      {
+        "target": 10,
+        "run": 2,
+        "durationS": 10,
+        "bytes": 228993
+      },
+      {
+        "target": 10,
+        "run": 3,
+        "durationS": 10,
+        "bytes": 230440
+      },
+      {
+        "target": 60,
+        "run": 1,
+        "durationS": 60,
+        "bytes": 1488532
+      },
+      {
+        "target": 60,
+        "run": 2,
+        "durationS": 60,
+        "bytes": 1486326
+      },
+      {
+        "target": 60,
+        "run": 3,
+        "durationS": 60,
+        "bytes": 1488732
+      }
+    ]
+  },
+  "summary": [
+    {
+      "label": "TTS ~200 chars",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 5364,
+      "median": 5866,
+      "max": 6390,
+      "failures": [],
+      "providerMs": {
+        "min": 8904,
+        "median": 9575,
+        "max": 10810
+      },
+      "notes": "spoken chars med 205; provider med 9.6s"
+    },
+    {
+      "label": "TTS ~1000 chars",
+      "n": 3,
+      "ok": 2,
+      "successRate": 0.6666666666666666,
+      "min": 21288,
+      "median": 25002,
+      "max": 28716,
+      "failures": ["job PARTIAL TTS_FAILED"],
+      "providerMs": {
+        "min": 42404,
+        "median": 43883,
+        "max": 45362
+      },
+      "notes": "spoken chars med 1017; provider med 43.9s"
+    },
+    {
+      "label": "TTS ~4000 chars",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 53105,
+      "median": 58479,
+      "max": 61120,
+      "failures": [],
+      "providerMs": {
+        "min": 140195,
+        "median": 155153,
+        "max": 158765
+      },
+      "notes": "spoken chars med 4015; provider med 155.2s"
+    },
+    {
+      "label": "TTS cached replay",
+      "n": 1,
+      "ok": 1,
+      "min": 33,
+      "median": 33,
+      "max": 33,
+      "failures": [],
+      "notes": "cached=true"
+    },
+    {
+      "label": "STT ~5s voice note",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 1653,
+      "median": 2173,
+      "max": 2186,
+      "failures": [],
+      "queueWaitMs": {
+        "min": 15,
+        "median": 17,
+        "max": 54
+      },
+      "jobMs": {
+        "min": 1557,
+        "median": 1586,
+        "max": 1628
+      },
+      "notes": "audio 5s; transcript chars med 83; queue→hold med 17ms; job med 1586ms"
+    },
+    {
+      "label": "STT ~30s voice note",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 2200,
+      "median": 2230,
+      "max": 2233,
+      "failures": [],
+      "queueWaitMs": {
+        "min": 14,
+        "median": 16,
+        "max": 19
+      },
+      "jobMs": {
+        "min": 1821,
+        "median": 1941,
+        "max": 2055
+      },
+      "notes": "audio 30s; transcript chars med 452; queue→hold med 16ms; job med 1941ms"
+    },
+    {
+      "label": "STT ~120s voice note",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 3435,
+      "median": 3946,
+      "max": 4476,
+      "failures": [],
+      "queueWaitMs": {
+        "min": 15,
+        "median": 22,
+        "max": 26
+      },
+      "jobMs": {
+        "min": 3201,
+        "median": 3341,
+        "max": 4056
+      },
+      "notes": "audio 120s; transcript chars med 1967; queue→hold med 22ms; job med 3341ms"
+    },
+    {
+      "label": "Video 10s mp4",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 2255,
+      "median": 2259,
+      "max": 2266,
+      "failures": [],
+      "processingMs": {
+        "min": 1694,
+        "median": 1840,
+        "max": 1909
+      },
+      "notes": "processingMs med 1840; audio TRANSCRIBED"
+    },
+    {
+      "label": "Video 60s mp4",
+      "n": 3,
+      "ok": 3,
+      "successRate": 1,
+      "min": 3586,
+      "median": 3627,
+      "max": 3655,
+      "failures": [],
+      "processingMs": {
+        "min": 2834,
+        "median": 3016,
+        "max": 3082
+      },
+      "notes": "processingMs med 3016; audio TRANSCRIBED"
+    }
+  ],
+  "tts": {
+    "runs": [
+      {
+        "size": 200,
+        "run": 1,
+        "requestedChars": 206,
+        "messageId": "cmuh3vxyg000td9qqkr3sbkcr",
+        "replyChars": 206,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 5364,
+        "postMs": 45,
+        "firstAudioMs": 4296,
+        "polls": 10,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 2,
+        "segmentsStored": 2,
+        "truncated": false,
+        "fileId": "cmuh3w2f20001a9qnohd7elmr",
+        "fileIds": ["cmuh3w2f20001a9qnohd7elmr", "cmuh3w1b90000a9qnjjoxb8dx"],
+        "mimeType": "audio/wav",
+        "characters": 205,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 3725
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 5179
+          }
+        ],
+        "providerMs": 8904,
+        "overheadMs": -3540
+      },
+      {
+        "size": 200,
+        "run": 2,
+        "requestedChars": 256,
+        "messageId": "cmuh3w3b2000xd9qqa28lvhcq",
+        "replyChars": 256,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 5866,
+        "postMs": 25,
+        "firstAudioMs": 5866,
+        "polls": 11,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 2,
+        "segmentsStored": 2,
+        "truncated": false,
+        "fileId": "cmuh3w7va0002a9qnz0w5pe90",
+        "fileIds": ["cmuh3w7va0002a9qnz0w5pe90", "cmuh3w8160003a9qnty523ut4"],
+        "mimeType": "audio/wav",
+        "characters": 255,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 5298
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 5512
+          }
+        ],
+        "providerMs": 10810,
+        "overheadMs": -4944
+      },
+      {
+        "size": 200,
+        "run": 3,
+        "requestedChars": 199,
+        "messageId": "cmuh3w94m0011d9qq1a3w6g9r",
+        "replyChars": 199,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 6390,
+        "postMs": 21,
+        "firstAudioMs": 3734,
+        "polls": 12,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 2,
+        "segmentsStored": 2,
+        "truncated": false,
+        "fileId": "cmuh3we7m0005a9qn5n2qsuj5",
+        "fileIds": ["cmuh3we7m0005a9qn5n2qsuj5", "cmuh3wc9h0004a9qnaqal9njn"],
+        "mimeType": "audio/wav",
+        "characters": 198,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 3529
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 6046
+          }
+        ],
+        "providerMs": 9575,
+        "overheadMs": -3185
+      },
+      {
+        "size": 1000,
+        "run": 1,
+        "requestedChars": 1020,
+        "messageId": "cmuh3wfi90015d9qqgcn2phgg",
+        "replyChars": 1020,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 28716,
+        "postMs": 24,
+        "firstAudioMs": 6401,
+        "polls": 54,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 3,
+        "segmentsStored": 3,
+        "truncated": false,
+        "fileId": "cmuh3wkcu0006a9qn44pi4h0m",
+        "fileIds": [
+          "cmuh3wkcu0006a9qn44pi4h0m",
+          "cmuh3x1mz0008a9qn0fsh7qkz",
+          "cmuh3wo6v0007a9qn2rizznmm"
+        ],
+        "mimeType": "audio/wav",
+        "characters": 1018,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 6026
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 10978
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 28358
+          }
+        ],
+        "providerMs": 45362,
+        "overheadMs": -16646
+      },
+      {
+        "size": 1000,
+        "run": 2,
+        "requestedChars": 1009,
+        "messageId": "cmuh3x3la0019d9qqfl15dtzh",
+        "replyChars": 1009,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": false,
+        "ms": 13296,
+        "postMs": 27,
+        "firstAudioMs": 7462,
+        "polls": 25,
+        "status": 202,
+        "jobStatus": "PARTIAL",
+        "errorCode": "TTS_FAILED",
+        "totalSegments": 3,
+        "segmentsStored": 2,
+        "truncated": false,
+        "fileId": "cmuh3x9mc0009a9qnq1ym8hgw",
+        "fileIds": ["cmuh3x9mc0009a9qnq1ym8hgw", "cmuh3xe9c000aa9qn2y34gcjd"],
+        "mimeType": "audio/wav",
+        "characters": 469,
+        "cached": false,
+        "reason": "job PARTIAL TTS_FAILED",
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "FAILED",
+            "latencyMs": 412
+          },
+          {
+            "provider": "OPENAI",
+            "model": "tts-1",
+            "outcome": "FAILED",
+            "latencyMs": 1340
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 6936
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 12930
+          }
+        ],
+        "providerMs": 21618
+      },
+      {
+        "size": 1000,
+        "run": 3,
+        "requestedChars": 1019,
+        "messageId": "cmuh3xgai001dd9qqxda68vgi",
+        "replyChars": 1019,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 21288,
+        "postMs": 26,
+        "firstAudioMs": 6945,
+        "polls": 40,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 3,
+        "segmentsStored": 3,
+        "truncated": false,
+        "fileId": "cmuh3xm0j000ba9qn0y1cl7w1",
+        "fileIds": [
+          "cmuh3xm0j000ba9qn0y1cl7w1",
+          "cmuh3xxao000da9qnf6v6y8hs",
+          "cmuh3xsfk000ca9qntxg3wgih"
+        ],
+        "mimeType": "audio/wav",
+        "characters": 1017,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 6508
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 14800
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 21096
+          }
+        ],
+        "providerMs": 42404,
+        "overheadMs": -21116
+      },
+      {
+        "size": 4000,
+        "run": 1,
+        "requestedChars": 4028,
+        "messageId": "cmuh3y00j001hd9qq99jsrir6",
+        "replyChars": 4028,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 58479,
+        "postMs": 20,
+        "firstAudioMs": 5869,
+        "polls": 110,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 9,
+        "segmentsStored": 9,
+        "truncated": false,
+        "fileId": "cmuh3y5ay000ea9qnijzqjd6n",
+        "fileIds": [
+          "cmuh3y5ay000ea9qnijzqjd6n",
+          "cmuh3yf93000ga9qn3havnzm4",
+          "cmuh3yduk000fa9qn3utlxrik",
+          "cmuh3ytci000ia9qncecpifcl",
+          "cmuh3yrjw000ha9qn711eq276",
+          "cmuh3yxjz000ja9qnq0njreps",
+          "cmuh3z7hk000la9qny1qypady",
+          "cmuh3z9vr000ma9qnp6t61krf",
+          "cmuh3z0wo000ka9qn7o707qgk"
+        ],
+        "mimeType": "audio/wav",
+        "characters": 4020,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 5564
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 16601
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 18418
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 17582
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 30994
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 23519
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 4266
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20523
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 21298
+          }
+        ],
+        "providerMs": 158765,
+        "overheadMs": -100286
+      },
+      {
+        "size": 4000,
+        "run": 2,
+        "requestedChars": 4020,
+        "messageId": "cmuh3zd3z001ld9qq6n66i8ck",
+        "replyChars": 4020,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 53105,
+        "postMs": 23,
+        "firstAudioMs": 6365,
+        "polls": 100,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 9,
+        "segmentsStored": 9,
+        "truncated": false,
+        "fileId": "cmuh3zian000na9qn7miduqzq",
+        "fileIds": [
+          "cmuh3zian000na9qn7miduqzq",
+          "cmuh3zt1o000pa9qnnuo8rhl2",
+          "cmuh3zsg7000oa9qnfu566pq0",
+          "cmuh3zwee000qa9qn3vqxcuyu",
+          "cmuh408ls000sa9qnbut1bpyv",
+          "cmuh407h1000ra9qnnbqxtpz1",
+          "cmuh40c23000ua9qnzdfc4umn",
+          "cmuh40igz000va9qnd7porcti",
+          "cmuh40bdz000ta9qn2ya7go66"
+        ],
+        "mimeType": "audio/wav",
+        "characters": 4012,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 5935
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 19041
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 19821
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 18187
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 18567
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20816
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 3538
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20169
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 14121
+          }
+        ],
+        "providerMs": 140195,
+        "overheadMs": -87090
+      },
+      {
+        "size": 4000,
+        "run": 3,
+        "requestedChars": 4023,
+        "messageId": "cmuh40lhb001pd9qqqm150dmk",
+        "replyChars": 4023,
+        "replyModel": "GEMINI/models/gemini-2.5-flash",
+        "ok": true,
+        "ms": 61120,
+        "postMs": 23,
+        "firstAudioMs": 6385,
+        "polls": 115,
+        "status": 202,
+        "jobStatus": "READY",
+        "errorCode": null,
+        "totalSegments": 9,
+        "segmentsStored": 9,
+        "truncated": false,
+        "fileId": "cmuh40r0s000wa9qnpld79d4l",
+        "fileIds": [
+          "cmuh40r0s000wa9qnpld79d4l",
+          "cmuh41262000ya9qn947z97ik",
+          "cmuh411yk000xa9qnaz5dqsmy",
+          "cmuh417bw000za9qn1jbmhorh",
+          "cmuh41i2m0010a9qnzy65r9vc",
+          "cmuh41jva0011a9qntreeocss",
+          "cmuh41l3g0012a9qnygugyv31",
+          "cmuh41x110014a9qn12gkd77b",
+          "cmuh41p8b0013a9qndhgc19pr"
+        ],
+        "mimeType": "audio/wav",
+        "characters": 4015,
+        "cached": false,
+        "ttsAttempts": [
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 6151
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20254
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20555
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20983
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 20682
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 22750
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 17688
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 6855
+          },
+          {
+            "provider": "GEMINI",
+            "model": "gemini-2.5-flash-preview-tts",
+            "outcome": "SUCCEEDED",
+            "latencyMs": 19235
+          }
+        ],
+        "providerMs": 155153,
+        "overheadMs": -94033
+      }
+    ],
+    "replay": {
+      "size": 4000,
+      "messageId": "cmuh40lhb001pd9qqqm150dmk",
+      "ok": true,
+      "ms": 33,
+      "postMs": 33,
+      "firstAudioMs": 33,
+      "polls": 0,
+      "status": 200,
+      "jobStatus": "READY",
+      "errorCode": null,
+      "totalSegments": 9,
+      "segmentsStored": 9,
+      "truncated": false,
+      "fileId": "cmuh40r0s000wa9qnpld79d4l",
+      "fileIds": [
+        "cmuh40r0s000wa9qnpld79d4l",
+        "cmuh41262000ya9qn947z97ik",
+        "cmuh411yk000xa9qnaz5dqsmy",
+        "cmuh417bw000za9qn1jbmhorh",
+        "cmuh41i2m0010a9qnzy65r9vc",
+        "cmuh41jva0011a9qntreeocss",
+        "cmuh41l3g0012a9qnygugyv31",
+        "cmuh41x110014a9qn12gkd77b",
+        "cmuh41p8b0013a9qndhgc19pr"
+      ],
+      "mimeType": "audio/wav",
+      "characters": 4015,
+      "cached": true,
+      "logged": false
+    }
+  },
+  "stt": [
+    {
+      "target": 5,
+      "run": 1,
+      "durationS": 5,
+      "bytes": 23709,
+      "ok": true,
+      "fileId": "cmuh42a2k0015a9qnnmfdk0nx",
+      "uploadMs": 38,
+      "totalMs": 2173,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 81,
+      "nonEmpty": true,
+      "sample": "Near the back, a small group of students talked about their exams. Office workers",
+      "queueWaitMs": 54,
+      "jobMs": 1586
+    },
+    {
+      "target": 5,
+      "run": 2,
+      "durationS": 5,
+      "bytes": 22237,
+      "ok": true,
+      "fileId": "cmuh42bqp0017a9qns8oqvg2t",
+      "uploadMs": 25,
+      "totalMs": 1653,
+      "polls": 4,
+      "status": "COMPLETED",
+      "transcriptChars": 86,
+      "nonEmpty": true,
+      "sample": "their exams. Office workers queued for coffee while checking messages on their phones.",
+      "queueWaitMs": 17,
+      "jobMs": 1557
+    },
+    {
+      "target": 5,
+      "run": 3,
+      "durationS": 5,
+      "bytes": 22089,
+      "ok": true,
+      "fileId": "cmuh42d0m0019a9qnr308bt86",
+      "uploadMs": 26,
+      "totalMs": 2186,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 83,
+      "nonEmpty": true,
+      "sample": "while checking messages on their phones. Someone had left a handwritten note inside",
+      "queueWaitMs": 15,
+      "jobMs": 1628
+    },
+    {
+      "target": 30,
+      "run": 1,
+      "durationS": 30,
+      "bytes": 131656,
+      "ok": true,
+      "fileId": "cmuh42epi001ba9qnzg4b3l2t",
+      "uploadMs": 39,
+      "totalMs": 2200,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 464,
+      "nonEmpty": true,
+      "sample": "Near the back, a small group of students talked about their exams. Office workers queued for coffee ",
+      "queueWaitMs": 16,
+      "jobMs": 1821
+    },
+    {
+      "target": 30,
+      "run": 2,
+      "durationS": 30,
+      "bytes": 130032,
+      "ok": true,
+      "fileId": "cmuh42gf3001da9qncwco3l05",
+      "uploadMs": 53,
+      "totalMs": 2230,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 449,
+      "nonEmpty": true,
+      "sample": "their exams. Office workers queued for coffee while checking messages on their phones. Someone had l",
+      "queueWaitMs": 19,
+      "jobMs": 1941
+    },
+    {
+      "target": 30,
+      "run": 3,
+      "durationS": 30,
+      "bytes": 129854,
+      "ok": true,
+      "fileId": "cmuh42i55001fa9qn811loov2",
+      "uploadMs": 57,
+      "totalMs": 2233,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 452,
+      "nonEmpty": true,
+      "sample": "while checking messages on their phones. Someone had left a handwritten note inside a book about old",
+      "queueWaitMs": 14,
+      "jobMs": 2055
+    },
+    {
+      "target": 120,
+      "run": 1,
+      "durationS": 120,
+      "bytes": 525178,
+      "ok": true,
+      "fileId": "cmuh42jvr001ha9qnfile5kwt",
+      "uploadMs": 96,
+      "totalMs": 3435,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1967,
+      "nonEmpty": true,
+      "sample": "Near the back, a small group of students talked about their exams. Office workers queued for coffee ",
+      "queueWaitMs": 15,
+      "jobMs": 3201
+    },
+    {
+      "target": 120,
+      "run": 2,
+      "durationS": 120,
+      "bytes": 523692,
+      "ok": true,
+      "fileId": "cmuh42mit001ja9qnll2wlh3j",
+      "uploadMs": 77,
+      "totalMs": 3946,
+      "polls": 8,
+      "status": "COMPLETED",
+      "transcriptChars": 1967,
+      "nonEmpty": true,
+      "sample": "their exams. Office workers queued for coffee while checking messages on their phones. Someone had l",
+      "queueWaitMs": 22,
+      "jobMs": 3341
+    },
+    {
+      "target": 120,
+      "run": 3,
+      "durationS": 120,
+      "bytes": 523438,
+      "ok": true,
+      "fileId": "cmuh42pl1001la9qntcjzbs50",
+      "uploadMs": 99,
+      "totalMs": 4476,
+      "polls": 9,
+      "status": "COMPLETED",
+      "transcriptChars": 1963,
+      "nonEmpty": true,
+      "sample": "checking messages on their phones. Someone had left a handwritten note inside a book about old maps.",
+      "queueWaitMs": 26,
+      "jobMs": 4056
+    }
+  ],
+  "video": [
+    {
+      "target": 10,
+      "run": 1,
+      "durationS": 10,
+      "bytes": 230105,
+      "ok": true,
+      "fileId": "cmuh42t0d001na9qn3ik667t7",
+      "uploadMs": 51,
+      "totalMs": 2259,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 360,
+      "nonEmpty": true,
+      "sample": "Video \"video-10s-r1.mp4\" — length 00:10, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 238,
+      "jobMs": null,
+      "processingMs": 1840,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 3,
+      "videoQueueWaitMs": 2,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh42t0d001na9qn3ik667t7 provider=GEMINI model=models/gemini-2.5-flash-lite chars=195"
+    },
+    {
+      "target": 10,
+      "run": 2,
+      "durationS": 10,
+      "bytes": 228993,
+      "ok": true,
+      "fileId": "cmuh42ure001pa9qnzcpcwg01",
+      "uploadMs": 61,
+      "totalMs": 2255,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 377,
+      "nonEmpty": true,
+      "sample": "Video \"video-10s-r2.mp4\" — length 00:10, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 225,
+      "jobMs": null,
+      "processingMs": 1909,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 5,
+      "videoQueueWaitMs": 0,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh42ure001pa9qnzcpcwg01 provider=GEMINI model=models/gemini-2.5-flash-lite chars=200"
+    },
+    {
+      "target": 10,
+      "run": 3,
+      "durationS": 10,
+      "bytes": 230440,
+      "ok": true,
+      "fileId": "cmuh42whx001ra9qnquk4wybs",
+      "uploadMs": 59,
+      "totalMs": 2266,
+      "polls": 5,
+      "status": "COMPLETED",
+      "transcriptChars": 332,
+      "nonEmpty": true,
+      "sample": "Video \"video-10s-r3.mp4\" — length 00:10, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 210,
+      "jobMs": null,
+      "processingMs": 1694,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 3,
+      "videoQueueWaitMs": -1,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh42whx001ra9qnquk4wybs provider=GEMINI model=models/gemini-2.5-flash-lite chars=167"
+    },
+    {
+      "target": 60,
+      "run": 1,
+      "durationS": 60,
+      "bytes": 1488532,
+      "ok": true,
+      "fileId": "cmuh42ybs001ta9qn4fk16tyk",
+      "uploadMs": 206,
+      "totalMs": 3655,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1323,
+      "nonEmpty": true,
+      "sample": "Video \"video-60s-r1.mp4\" — length 01:00, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 312,
+      "jobMs": null,
+      "processingMs": 3082,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 15,
+      "videoQueueWaitMs": 4,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh42ybs001ta9qn4fk16tyk provider=GEMINI model=models/gemini-2.5-flash-lite chars=1086"
+    },
+    {
+      "target": 60,
+      "run": 2,
+      "durationS": 60,
+      "bytes": 1486326,
+      "ok": true,
+      "fileId": "cmuh4315n001va9qn6qigtbph",
+      "uploadMs": 224,
+      "totalMs": 3627,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1333,
+      "nonEmpty": true,
+      "sample": "Video \"video-60s-r2.mp4\" — length 01:00, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 330,
+      "jobMs": null,
+      "processingMs": 2834,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 15,
+      "videoQueueWaitMs": 1,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh4315n001va9qn6qigtbph provider=GEMINI model=models/gemini-2.5-flash-lite chars=1096"
+    },
+    {
+      "target": 60,
+      "run": 3,
+      "durationS": 60,
+      "bytes": 1488732,
+      "ok": true,
+      "fileId": "cmuh433x4001xa9qns8dkecov",
+      "uploadMs": 180,
+      "totalMs": 3586,
+      "polls": 7,
+      "status": "COMPLETED",
+      "transcriptChars": 1326,
+      "nonEmpty": true,
+      "sample": "Video \"video-60s-r3.mp4\" — length 01:00, 320×240, 10 fps, h264, audio: aac.\nTranscript of the audio ",
+      "queueWaitMs": 313,
+      "jobMs": null,
+      "processingMs": 3016,
+      "audioStatus": "TRANSCRIBED",
+      "segments": 15,
+      "videoQueueWaitMs": 2,
+      "derivedAudio": "transcribeDerivedAudio: fileId=cmuh433x4001xa9qns8dkecov provider=GEMINI model=models/gemini-2.5-flash-lite chars=1089"
+    }
+  ],
+  "logs": {
+    "fileService": {
+      "emptyTranscript": 0,
+      "http429": 0,
+      "timeouts": 0,
+      "transcriptionFailedStatus": 0,
+      "videoFailed": 0,
+      "candidateFailureReasons": {},
+      "geminiReceived": [],
+      "geminiZeroCharWithCompletionTokens": 0
+    },
+    "chatService": {
+      "ttsAttemptOutcomes": {
+        "SUCCEEDED": 41,
+        "FAILED": 2
+      },
+      "ttsFailed": 1,
+      "ttsHoldRefused": 0,
+      "http429": 2,
+      "ttsReleased": 0
+    }
+  }
+}

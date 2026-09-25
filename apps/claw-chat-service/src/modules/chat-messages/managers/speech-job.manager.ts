@@ -5,6 +5,7 @@ import { BusinessException } from '../../../common/errors';
 import { SpeechFileStoreClient } from '../clients/speech-file-store.client';
 import {
   SPEECH_JOB_DEADLINE_MS,
+  SPEECH_RATE_LIMITED_CONCURRENCY,
   SPEECH_SEGMENT_CONCURRENCY,
   TTS_FAILED_CODE,
   TTS_FAILED_MESSAGE,
@@ -31,7 +32,8 @@ import { SpeechSynthesisManager } from './speech-synthesis.manager';
  * The background half of a progressive "Read aloud" (2026-09-25). Started by
  * `MessageSpeechService.start` under the reply's Redis job lock, it
  * synthesises the missing segments with at most `SPEECH_SEGMENT_CONCURRENCY`
- * provider calls in flight, segment 1 first. Per segment:
+ * provider calls in flight, segment 1 first — dropping to one in flight for
+ * the rest of the job after its first rate-limited attempt. Per segment:
  *
  *   reserve → provider → store the audio in file-service →
  *   record it in `metadata.speech.segments` (index order) → finalize
@@ -64,6 +66,8 @@ export class SpeechJobManager {
       stopCode: null,
       errorCode: null,
       writes: Promise.resolve(),
+      concurrency: SPEECH_SEGMENT_CONCURRENCY,
+      inFlight: 0,
     };
     try {
       const done = new Set(input.state.segments.map((segment) => segment.index));
@@ -88,18 +92,45 @@ export class SpeechJobManager {
     }
   }
 
-  /** Takes segments off the shared queue until it is empty or the job must stop. Bounded by the queue. */
+  /**
+   * Takes segments off the shared queue until it is empty, the job must stop,
+   * or the job's concurrency dropped below the calls already in flight (after
+   * a rate limit): that worker retires, and the last call to finish always
+   * sees room, so the queue never strands. Bounded by the queue.
+   */
   private async worker(
     input: SpeechJobInput,
     progress: SpeechJobProgress,
     queue: SpeechTextSegment[],
     deadlineAt: number,
   ): Promise<void> {
-    let segment = queue.shift();
-    while (segment !== undefined && progress.stopCode === null) {
-      await this.runSegment(input, progress, segment, deadlineAt);
-      segment = queue.shift();
+    while (
+      queue.length > 0 &&
+      progress.stopCode === null &&
+      progress.inFlight < progress.concurrency
+    ) {
+      const segment = queue.shift();
+      if (segment === undefined) {
+        return;
+      }
+      progress.inFlight += 1;
+      try {
+        await this.runSegment(input, progress, segment, deadlineAt);
+      } finally {
+        progress.inFlight -= 1;
+      }
     }
+  }
+
+  /** The job's first rate limit drops it to one provider call in flight; in-flight calls finish. */
+  private onRateLimited(input: SpeechJobInput, progress: SpeechJobProgress): void {
+    if (progress.concurrency === SPEECH_RATE_LIMITED_CONCURRENCY) {
+      return;
+    }
+    progress.concurrency = SPEECH_RATE_LIMITED_CONCURRENCY;
+    this.logger.warn(
+      `ttsJob messageId=${input.messageId} rateLimited concurrency=${String(SPEECH_RATE_LIMITED_CONCURRENCY)}`,
+    );
   }
 
   private async runSegment(
@@ -117,6 +148,7 @@ export class SpeechJobManager {
         generation: input.state.generation,
         segment,
         deadlineAt,
+        onRateLimited: () => this.onRateLimited(input, progress),
       });
     } catch (error: unknown) {
       this.onSegmentFailure(input, progress, segment, error);

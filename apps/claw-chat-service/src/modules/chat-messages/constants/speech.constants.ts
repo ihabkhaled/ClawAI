@@ -133,6 +133,39 @@ export const SPEECH_SEGMENT_MAX_TIMEOUT_MS = 40_000;
 /** A timed-out segment is retried this many times on the SAME candidate before the next one. */
 export const SPEECH_SEGMENT_TIMEOUT_RETRIES = 1;
 /**
+ * Rate limits (2026-09-25, found live: a 1,000-char job ended PARTIAL when
+ * Gemini answered 429 in 339 ms with 3 segments in flight, and the OpenAI
+ * fallback was out of quota). A RATE_LIMITED attempt is released (never
+ * charged) and retried on the SAME candidate after a wait, at most this many
+ * times per candidate per segment, before the walk moves on.
+ */
+export const SPEECH_RATE_LIMIT_RETRIES = 3;
+/** Backoff when the provider gives no hint: 1.5 s, 3 s, 6 s (× jitter). */
+export const SPEECH_RATE_LIMIT_BASE_BACKOFF_MS = 1_500;
+/** Jitter spreads concurrent retries: the wait is scaled by 1 ± this share. */
+export const SPEECH_RATE_LIMIT_JITTER_RATIO = 0.2;
+/**
+ * No single rate-limit wait is longer than this. A provider hint above it
+ * cannot be honoured inside a read-aloud job, so the segment moves on to the
+ * next candidate instead of retrying early into a certain second 429.
+ */
+export const SPEECH_RATE_LIMIT_MAX_WAIT_MS = 10_000;
+/** A job's provider calls in flight once any of its attempts was rate limited. */
+export const SPEECH_RATE_LIMITED_CONCURRENCY = 1;
+/** HTTP 429 Too Many Requests. */
+export const HTTP_TOO_MANY_REQUESTS = 429;
+/** Gemini's (google.rpc) status on a 429 body, and the detail type carrying `retryDelay`. */
+export const GEMINI_RESOURCE_EXHAUSTED_STATUS = 'RESOURCE_EXHAUSTED';
+export const GEMINI_RETRY_INFO_TYPE = 'type.googleapis.com/google.rpc.RetryInfo';
+/**
+ * OpenAI answers 429 for an exhausted BILLING quota too. That is not a rate
+ * limit — no wait makes it succeed — so it is a plain provider failure.
+ */
+export const OPENAI_QUOTA_EXHAUSTED_CODE = 'insufficient_quota';
+/** `"7s"`, `"1.5s"` (google.protobuf.Duration JSON) or a bare-seconds Retry-After (`"7"`). */
+export const SPEECH_RETRY_SECONDS_PATTERN = /^\s*(\d+(?:\.\d+)?)s?\s*$/;
+export const MS_PER_SECOND = 1_000;
+/**
  * Reserved after a provider call for storing that segment's audio; also the
  * store call's own timeout.
  */

@@ -20,12 +20,20 @@ import type {
   SpeechProviderRequest,
   SynthesizedAudio,
 } from '../types/speech.types';
+import {
+  geminiRetryDelayMs,
+  isGeminiRateLimited,
+  isOpenAiRateLimited,
+  parseRetryDelayMs,
+} from '../utilities/speech-rate-limit.utility';
 import { pcm16ToWav, pcmSampleRate } from '../utilities/wav-audio.utility';
 
 /**
  * The two text-to-speech adapters (multimodal batch 9). Each returns audio a
- * browser plays, or throws `SpeechProviderError` carrying only the status and
- * whether the deadline fired — never the text, never the key. Metering is
+ * browser plays, or throws `SpeechProviderError` carrying only the status,
+ * whether the deadline fired, and whether it was a rate limit (Gemini 429 /
+ * RESOURCE_EXHAUSTED, OpenAI 429 that is not `insufficient_quota`) with the
+ * provider's retry hint — never the text, never the key. Metering is
  * the caller's (`SpeechSynthesisManager`); this class only speaks HTTP.
  *
  * Fixed provider hosts, not the connector's base URL: the speech endpoints
@@ -55,6 +63,15 @@ export class SpeechProviderClient {
         allowedHosts: declaredHost(OPENAI_SPEECH_URL),
       }),
     );
+    if (!response.ok && isOpenAiRateLimited(response.status, response.body)) {
+      throw new SpeechProviderError(
+        'OpenAI speech rate limited',
+        response.status,
+        false,
+        true,
+        parseRetryDelayMs(response.retryAfter, Date.now()),
+      );
+    }
     if (!response.ok || response.body.length === 0) {
       throw new SpeechProviderError('OpenAI speech returned no audio', response.status, false);
     }
@@ -81,6 +98,15 @@ export class SpeechProviderClient {
         allowedHosts: declaredHost(GEMINI_TTS_BASE_URL),
       }),
     );
+    if (!response.ok && isGeminiRateLimited(response.status, response.data.error)) {
+      throw new SpeechProviderError(
+        'Gemini speech rate limited',
+        response.status,
+        false,
+        true,
+        geminiRetryDelayMs(response.data.error),
+      );
+    }
     const inline = response.ok
       ? response.data.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data)
           ?.inlineData
