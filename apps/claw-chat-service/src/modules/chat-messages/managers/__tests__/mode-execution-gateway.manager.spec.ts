@@ -160,4 +160,22 @@ describe('ModeExecutionGatewayManager', () => {
 
     expect(calls[0]?.context.threadMessages).toHaveLength(1);
   });
+
+  it('does not repeat the user turn when the mode prompt IS that turn', async () => {
+    // A lab passes the user's request as its prompt, and the gateway has
+    // already put that request (or, for an attachment-only send, the spelled
+    // out instruction) on the last user row. Appending it again sent the same
+    // words twice as two consecutive user turns.
+    const { manager, calls, bundle } = harness();
+
+    await manager.run({
+      bundle,
+      prompt: 'earlier turn',
+      provider: 'OPENAI',
+      model: 'gpt-5',
+      ledgerContext: TokenLedgerContext.BEST_OF_N,
+    });
+
+    expect(calls[0]?.context.threadMessages.map((m) => m.content)).toEqual(['earlier turn']);
+  });
 });

@@ -3753,6 +3753,9 @@ export const es: TranslationDictionary = {
       'No hay vista previa disponible para este tipo de archivo. Usa Descargar para abrirlo localmente.',
     download: 'Descargar',
     close: 'Cerrar',
+    pdfOpensInNewTab:
+      'Los PDF se abren en el visor de PDF de tu navegador en una pestaña nueva. También puedes descargar el archivo.',
+    openInNewTab: 'Abrir en una pestaña nueva',
   },
   search: {
     page: {

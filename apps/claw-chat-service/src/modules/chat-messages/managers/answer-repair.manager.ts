@@ -11,6 +11,7 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -72,11 +73,15 @@ export class AnswerRepairManager {
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
-      content: `Repair request: ${originalContent.slice(0, 100)}...`,
+      // An attachment-only repair stores no invented text: the bubble shows
+      // the attachments, and the gateway spells the request out per call.
+      content:
+        originalContent.length > 0 ? `Repair request: ${originalContent.slice(0, 100)}...` : '',
       metadata: {
         repairRequest: true,
         repairTypes: dto.repairTypes,
         modelSelection: selection,
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
       },
     });
 
@@ -158,7 +163,8 @@ export class AnswerRepairManager {
       });
       const repairedContent = await this.callRepairLlm(
         bundle,
-        originalContent,
+        // Rule 42 §18: an attachment-only repair's request is the attachment.
+        resolveContextTurnText(originalContent, bundle.context),
         repairTypes,
         resolvedSelection,
       );
@@ -344,6 +350,10 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
       if (message) {
         return message.content;
       }
+    }
+    // The schema accepts files alone; the attachment is then what is repaired.
+    if ((dto.fileIds?.length ?? 0) > 0) {
+      return '';
     }
     throw new Error('Could not resolve original content to repair');
   }

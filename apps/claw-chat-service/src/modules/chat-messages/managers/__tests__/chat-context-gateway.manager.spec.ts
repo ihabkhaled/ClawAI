@@ -5,6 +5,7 @@ import { type ChatThreadsRepository } from '../../../chat-threads/repositories/c
 import { type ModelContextWindowClient } from '../../clients/model-context-window.client';
 import { type ContextAssemblyManager } from '../context-assembly.manager';
 import { ChatContextGatewayManager } from '../chat-context-gateway.manager';
+import { ATTACHMENT_ONLY_TURN_MARKER } from '../../constants/attachment-only-turn.constants';
 
 /**
  * The gateway exists because every surface needed the same answer and each one
@@ -34,6 +35,7 @@ function harness(options: {
   messages?: ChatMessage[];
   thread?: Partial<ChatThread> | null;
   contextWindowTokens?: number;
+  fileContents?: Array<{ id: string; mimeType: string; filename: string }>;
 }) {
   const calls: AssembleCall[] = [];
   const rows = options.messages ?? [];
@@ -79,6 +81,8 @@ function harness(options: {
             : null,
           memories: [],
           crossThread: null,
+          threadMessages: messages,
+          fileContents: options.fileContents ?? [],
         };
       },
     } as unknown as ContextAssemblyManager,
@@ -284,5 +288,64 @@ describe('ChatContextGatewayManager', () => {
     await manager.build({ userId: 'user-1', threadId: 'thread-1', surface: ChatSurface.PIPELINE });
 
     expect(calls[0]?.contextPackIds).toEqual(['pack-1']);
+  });
+
+  describe('an attachment-only send', () => {
+    // A lab stage, a judge or a synthesis appends its own prompt after the
+    // user's turn, so the builders' final-turn rewrite never reached the
+    // user's empty row: stages got an empty user message and never learned the
+    // attachment was the question. The gateway spells it out for everyone.
+    const video = { id: 'f-1', mimeType: 'video/mp4', filename: 'clip.mp4' };
+
+    function emptyTurn(id: string): ChatMessage {
+      return { ...message(id, 'USER', { fileIds: ['f-1'] }), content: '' } as ChatMessage;
+    }
+
+    it('rewrites the empty user turn every lane and stage will read', async () => {
+      const { manager } = harness({
+        messages: [message('m1', 'USER'), message('m2', 'ASSISTANT'), emptyTurn('m3')],
+        fileContents: [video],
+      });
+
+      const bundle = await manager.build({
+        userId: 'user-1',
+        threadId: 'thread-1',
+        surface: ChatSurface.COMPARE,
+      });
+
+      const last = bundle.context.threadMessages.at(-1);
+      expect(last?.content).toContain(ATTACHMENT_ONLY_TURN_MARKER);
+      expect(last?.content).toContain('For a video');
+      expect(bundle.context.threadMessages[0]?.content).toBe('content of m1');
+      // The history the caller gets back stays what is stored.
+      expect(bundle.messages.at(-1)?.content).toBe('');
+    });
+
+    it('leaves a typed request alone', async () => {
+      const { manager } = harness({
+        messages: [message('m1', 'USER')],
+        fileContents: [video],
+      });
+
+      const bundle = await manager.build({
+        userId: 'user-1',
+        threadId: 'thread-1',
+        surface: ChatSurface.CONSENSUS,
+      });
+
+      expect(bundle.context.threadMessages.at(-1)?.content).toBe('content of m1');
+    });
+
+    it('leaves an empty turn alone when no attachment reached the context', async () => {
+      const { manager } = harness({ messages: [emptyTurn('m1')] });
+
+      const bundle = await manager.build({
+        userId: 'user-1',
+        threadId: 'thread-1',
+        surface: ChatSurface.PIPELINE,
+      });
+
+      expect(bundle.context.threadMessages.at(-1)?.content).toBe('');
+    });
   });
 });

@@ -16,6 +16,7 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -72,7 +73,12 @@ export class VerifierManager {
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { verifyRequest: true, maxRevisions: dto.maxRevisions, modelSelection: selection },
+      metadata: {
+        verifyRequest: true,
+        maxRevisions: dto.maxRevisions,
+        modelSelection: selection,
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+      },
     });
 
     void this.executeInBackground(
@@ -135,13 +141,16 @@ export class VerifierManager {
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
+      // Rule 42 §18: an attachment-only send's request IS the attachment —
+      // spelled out once here for every stage below, never stored.
+      const request = resolveContextTurnText(content, bundle.context);
       this.safeEmitStage(threadId, {
         label: 'Generating',
         status: OrchestrationStageStatus.ACTIVE,
         detail: `${resolvedSelection.actualProvider}/${resolvedSelection.actualModel}`,
         stageId: 'verifier:draft',
       });
-      const draft = await this.generateDraft(bundle, content, resolvedSelection);
+      const draft = await this.generateDraft(bundle, request, resolvedSelection);
       this.safeEmitStage(threadId, {
         label: 'Generating',
         status: OrchestrationStageStatus.COMPLETED,
@@ -154,7 +163,7 @@ export class VerifierManager {
         detail: 'Scoring factuality / completeness / safety / formatting',
         stageId: 'verifier:check:0',
       });
-      const checkResult = await this.runVerifierCheck(bundle, content, draft, resolvedSelection);
+      const checkResult = await this.runVerifierCheck(bundle, request, draft, resolvedSelection);
       this.safeEmitStage(threadId, {
         label: 'Verifier judging',
         status: OrchestrationStageStatus.COMPLETED,
@@ -189,7 +198,7 @@ export class VerifierManager {
       const { finalDraft, finalCheck, revisionCount } = await this.runRevisions(
         bundle,
         threadId,
-        content,
+        request,
         draft,
         checkResult,
         maxRevisions,

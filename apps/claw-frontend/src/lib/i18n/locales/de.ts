@@ -3766,6 +3766,9 @@ export const de: TranslationDictionary = {
       'Für diesen Dateityp ist keine Vorschau verfügbar. Nutzen Sie Herunterladen, um sie lokal zu öffnen.',
     download: 'Herunterladen',
     close: 'Schließen',
+    pdfOpensInNewTab:
+      'PDFs werden im PDF-Viewer Ihres Browsers in einem neuen Tab geöffnet. Sie können die Datei auch herunterladen.',
+    openInNewTab: 'In neuem Tab öffnen',
   },
   search: {
     page: {

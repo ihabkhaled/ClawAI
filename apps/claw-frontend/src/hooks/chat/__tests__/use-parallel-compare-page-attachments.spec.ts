@@ -141,4 +141,47 @@ describe('useParallelComparePage — fileIds round-trip', () => {
       expect(result.current.selectedFileIds).toEqual([]);
     });
   });
+
+  it('sends an attachment with no text — the file is the request', async () => {
+    const { result } = renderHook(() => useParallelComparePage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('');
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setSelectedFileIds(['file-1']);
+    });
+
+    expect(result.current.canSend).toBe(true);
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = sendParallelMock.mock.calls[0]?.[0] as ParallelRequest;
+    expect(payload.content).toBe('');
+    expect(payload.fileIds).toEqual(['file-1']);
+  });
+
+  it('refuses empty text when nothing is attached', () => {
+    const { result } = renderHook(() => useParallelComparePage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('   ');
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+    });
+
+    expect(result.current.canSend).toBe(false);
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    expect(sendParallelMock).not.toHaveBeenCalled();
+  });
 });

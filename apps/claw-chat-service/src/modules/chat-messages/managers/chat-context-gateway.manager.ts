@@ -11,6 +11,7 @@ import {
   type ContextLaneTarget,
 } from '../types/chat-context-gateway.types';
 import { type ThreadSettings } from '../types/execution.types';
+import { withAttachmentOnlyUserTurn } from '../utilities/attachment-only-turn.utility';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 import { ContextAssemblyManager } from './context-assembly.manager';
 
@@ -92,7 +93,7 @@ export class ChatContextGatewayManager {
     // precisely how the judge stopped knowing what the user had asked the
     // model to be.
     const withEvidence = injectResearchEvidenceIntoContext(
-      context,
+      this.withAttachmentOnlyTurn(context),
       request.researchEvidenceInstruction ?? '',
     );
 
@@ -229,6 +230,22 @@ export class ChatContextGatewayManager {
   private latestUserMetadata(messages: ChatMessage[]): Record<string, unknown> | null {
     const latest = [...messages].reverse().find((message) => message.role === 'USER');
     return (latest?.metadata as Record<string, unknown> | null) ?? null;
+  }
+
+  /**
+   * The user's empty turn, spelled out as the request it is.
+   *
+   * Every lab stage, judge and synthesis appends its own prompt after the
+   * user's turn, so the builders' final-turn rewrite (rule 42 §18) never saw
+   * an attachment-only send: the stage read an empty user message and never
+   * learned the attachment was the question. Rewritten here, once, for every
+   * surface — never in storage (`messages` stays what is stored).
+   */
+  private withAttachmentOnlyTurn(
+    context: ChatContextBundle['context'],
+  ): ChatContextBundle['context'] {
+    const threadMessages = withAttachmentOnlyUserTurn(context.threadMessages, context);
+    return threadMessages === context.threadMessages ? context : { ...context, threadMessages };
   }
 
   private withPersona(

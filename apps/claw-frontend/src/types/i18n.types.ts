@@ -2668,6 +2668,8 @@ export type TranslationDictionary = {
     unsupported: string;
     download: string;
     close: string;
+    pdfOpensInNewTab: string;
+    openInNewTab: string;
   };
   search: {
     page: {

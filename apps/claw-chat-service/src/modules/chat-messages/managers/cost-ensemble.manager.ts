@@ -15,6 +15,7 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -85,7 +86,11 @@ export class CostEnsembleManager {
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { costEnsembleRequest: true, modelSelection: selection },
+      metadata: {
+        costEnsembleRequest: true,
+        modelSelection: selection,
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+      },
     });
 
     void this.executeInBackground(
@@ -145,13 +150,16 @@ export class CostEnsembleManager {
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
+      // Rule 42 §18: an attachment-only send's request IS the attachment —
+      // spelled out once here for every stage below, never stored.
+      const request = resolveContextTurnText(content, bundle.context);
       this.safeEmitStage(threadId, {
         label: 'Classifying task',
         status: OrchestrationStageStatus.ACTIVE,
         detail: 'Scoring complexity, risk, ambiguity',
         stageId: 'cost-ensemble:classify',
       });
-      const rawClassification = await this.classifyTask(bundle, content, resolvedSelection);
+      const rawClassification = await this.classifyTask(bundle, request, resolvedSelection);
       const tier = this.determineTier(rawClassification);
       const classification: CostClassification = { tier, ...rawClassification };
       this.safeEmitStage(threadId, {
@@ -161,14 +169,14 @@ export class CostEnsembleManager {
         stageId: 'cost-ensemble:classify',
       });
 
-      const candidates = await this.runEnsemble(threadId, bundle, content, tier, resolvedSelection);
+      const candidates = await this.runEnsemble(threadId, bundle, request, tier, resolvedSelection);
       this.safeEmitStage(threadId, {
         label: 'Cost selection',
         status: OrchestrationStageStatus.ACTIVE,
         detail: `Picking best of ${String(candidates.length)} candidate(s)`,
         stageId: 'cost-ensemble:select',
       });
-      const { selectedIndex, best } = this.selectBest(candidates, content);
+      const { selectedIndex, best } = this.selectBest(candidates, request);
       this.safeEmitStage(threadId, {
         label: 'Cost selection',
         status: OrchestrationStageStatus.COMPLETED,

@@ -6,7 +6,10 @@ import { vi } from 'vitest';
 // compare lanes and all seven labs reach a model via callProvider, which uses
 // exactly these — so it is asserted here, not per mode.
 import { ContextAssemblyManager } from '../context-assembly.manager';
-import { ATTACHMENT_ONLY_TURN_MARKER } from '../../constants/attachment-only-turn.constants';
+import {
+  ATTACHMENT_ONLY_TURN_MARKER,
+  ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION,
+} from '../../constants/attachment-only-turn.constants';
 import { type ChatMessage } from '../../../../generated/prisma';
 import { type AssembledContext, type FileContentResponse } from '../../types/context.types';
 
@@ -26,6 +29,16 @@ const image: FileContentResponse = {
   mimeType: 'image/png',
   content: 'iVBORw0KGgo=',
   extractedText: null,
+  ingestionStatus: 'COMPLETED',
+  extractionError: null,
+};
+
+const video: FileContentResponse = {
+  id: 'f-video',
+  filename: 'clip.mp4',
+  mimeType: 'video/mp4',
+  content: 'AAAAIGZ0eXBpc29t',
+  extractedText: 'TRANSCRIPT (timestamped) [00:01] Is this the right way to hold a racket?',
   ingestionStatus: 'COMPLETED',
   extractionError: null,
 };
@@ -131,5 +144,42 @@ describe('ContextAssemblyManager attachment-only turns', () => {
 
     expect(messages.map((message) => message.content)).toContain('.');
     expect(lastContent(messages)).toBe('and now?');
+  });
+
+  describe('a video sent with no text', () => {
+    it('asks the Gemini-native lane (which watches the video) to describe and answer it', () => {
+      const messages = manager.buildGeminiChatMessages(
+        contextWith([row('m1', 'USER', '')], [video]),
+      );
+
+      const text = lastContent(messages);
+      expect(text).toContain(ATTACHMENT_ONLY_TURN_MARKER);
+      expect(text).toContain('For a video');
+      expect(text).toContain('"clip.mp4"');
+    });
+
+    it('asks a lane that reads the transcript and frames the same thing', () => {
+      const messages = manager.buildChatMessages(contextWith([row('m1', 'USER', '.')], [video]));
+
+      expect(lastContent(messages)).toContain('For a video');
+      expect(lastContent(messages)).toContain('timestamped transcript and sampled frames');
+    });
+
+    it('says so plainly when the video had nothing readable yet, on every path', () => {
+      const pending = {
+        ...contextWith([row('m1', 'USER', '')], []),
+        requestedAttachmentCount: 1,
+      };
+
+      expect(lastContent(manager.buildChatMessages(pending))).toBe(
+        ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION,
+      );
+      expect(lastContent(manager.buildGeminiChatMessages(pending))).toBe(
+        ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION,
+      );
+      expect(manager.buildPromptString(pending)).toContain(
+        `USER: ${ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION}`,
+      );
+    });
   });
 });

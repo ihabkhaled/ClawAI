@@ -342,6 +342,9 @@ describe('JudgeRefereeManager', () => {
           { role: 'ASSISTANT', content: 'Sure.' },
         ],
         systemPrompt: 'system',
+        // Required by AssembledContext; the judge reads it to spell out an
+        // attachment-only question (rule 42 §18).
+        fileContents: [],
       } as any;
 
       const config: JudgeRefereeConfig = {

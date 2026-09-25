@@ -29,25 +29,22 @@ export default function WorkspaceInboxPage(): ReactElement {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <PageHeader
-        title={t('inbox.page.title')}
-        description={t('inbox.page.description')}
-      />
+      <PageHeader title={t('inbox.page.title')} description={t('inbox.page.description')} />
 
       <InboxFilterBar filter={filter} onChange={setFilter} t={t} />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('inbox.page.loading')}</p>
+        <p className="text-muted-foreground text-sm">{t('inbox.page.loading')}</p>
       ) : null}
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
           {error?.message ?? t('inbox.page.error')}
         </p>
       ) : null}
 
       {!isLoading && !isError && items.length === 0 ? (
-        <p className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+        <p className="border-border bg-muted/20 text-muted-foreground rounded-lg border p-6 text-center text-sm">
           {t('inbox.page.empty')}
         </p>
       ) : null}
@@ -83,12 +80,15 @@ export default function WorkspaceInboxPage(): ReactElement {
         isLoading={fileViewer.isLoading}
         error={fileViewer.error}
         onClose={fileViewer.close}
+        onOpenInNewTab={fileViewer.openInNewTab}
         labels={{
           loading: t('fileViewer.loading'),
           error: t('fileViewer.error'),
           unsupported: t('fileViewer.unsupported'),
           download: t('fileViewer.download'),
           close: t('fileViewer.close'),
+          pdfOpensInNewTab: t('fileViewer.pdfOpensInNewTab'),
+          openInNewTab: t('fileViewer.openInNewTab'),
         }}
       />
     </div>

@@ -136,6 +136,14 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      what a voice note said, describe an image/video, summarize a document and
      offer next steps, reply in the attachment's language. Log line to grep:
      `assemble: attachment-only turn — files=N mimeTypes=[…]`.
+     Labs and Compare: `ChatContextGatewayManager.build` rewrites the bundle's
+     latest USER row the same way (`withAttachmentOnlyUserTurn`), so a stage
+     that appends its own prompt never sends an empty user message, and every
+     lab that quotes the user's text (classifier, verifier, decompose merge,
+     consensus synthesis, judge) quotes `resolveContextTurnText(...)`. Lab
+     user rows store `metadata.fileIds`. Files attached but none readable
+     (a video still processing): `ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION`,
+     logged as `assemble: attachment-only turn with no readable file`.
 6. **LLM execution** -- `ChatExecutionManager` calls the selected provider via connector-service
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)

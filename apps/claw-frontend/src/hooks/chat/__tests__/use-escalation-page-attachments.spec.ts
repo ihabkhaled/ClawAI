@@ -103,6 +103,49 @@ describe('useEscalationPage — fileIds round-trip', () => {
     expect(payload.fileIds).toEqual(['file-1', 'file-2']);
   });
 
+  it('sends an attachment with no text — the file is the request', async () => {
+    const { result } = renderHook(() => useEscalationPage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('');
+      result.current.setSelectedModel(MODEL);
+      result.current.handleAddModel('OPENAI', 'gpt-4o');
+      result.current.composer.setSelectedFileIds(['file-1']);
+    });
+
+    expect(result.current.canSubmit).toBe(true);
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    await waitFor(() => {
+      expect(sendMock).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = sendMock.mock.calls[0]?.[0] as EscalationChainRequest;
+    expect(payload.content).toBe('');
+    expect(payload.fileIds).toEqual(['file-1']);
+  });
+
+  it('refuses empty text when nothing is attached', () => {
+    const { result } = renderHook(() => useEscalationPage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('   ');
+      result.current.setSelectedModel(MODEL);
+      result.current.handleAddModel('OPENAI', 'gpt-4o');
+    });
+
+    expect(result.current.canSubmit).toBe(false);
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
   it('clears the selection after a send so the next run does not re-send it', async () => {
     const { result } = renderHook(() => useEscalationPage(), { wrapper });
 

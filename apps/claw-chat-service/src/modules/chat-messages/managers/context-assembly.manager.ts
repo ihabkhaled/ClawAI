@@ -93,7 +93,11 @@ import {
   formatDerivedImageBlock,
   visionHelperNoteFor,
 } from '../utilities/vision-helper.utility';
-import { isTrivialUserText, resolveUserTurnText } from '../utilities/attachment-only-turn.utility';
+import {
+  isTrivialUserText,
+  resolveContextTurnText,
+} from '../utilities/attachment-only-turn.utility';
+import { type AttachmentTurnContext } from '../types/attachment-only-turn.types';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -144,7 +148,7 @@ export class ContextAssemblyManager {
       userId,
     );
     const retrievalMs = Date.now() - retrievalStartedAt;
-    this.logAttachmentOnlyTurn(lastUserContent, filteredFileContents);
+    this.logAttachmentOnlyTurn(lastUserContent, filteredFileContents, fileIds?.length ?? 0);
     this.fitFixedContext(fetched, filteredFileContents, threadSettings);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const researchEvidence = this.fitResearchEvidence(
@@ -230,6 +234,11 @@ export class ContextAssemblyManager {
       modelBudget,
       conversationManifest: selected.manifest,
       crossThread,
+      // An attachment-only turn whose files had nothing readable yet still
+      // tells the model a file was sent (rule 42 §18).
+      ...(fileIds !== undefined && fileIds.length > 0
+        ? { requestedAttachmentCount: fileIds.length }
+        : {}),
       // Shared by every lane / judge / critic that spreads this context, so a
       // helper-vision description is computed and paid for once per turn.
       turnId: randomUUID(),
@@ -581,11 +590,7 @@ ${evidence.snippet}`);
     }
     parts.push(
       ...this.formatFileBlocks(context),
-      ...this.formatMessageLines(
-        relevantMessages,
-        this.hasResearchGrounding(context),
-        context.fileContents,
-      ),
+      ...this.formatMessageLines(relevantMessages, this.hasResearchGrounding(context), context),
     );
     const crossThreadBlock = this.formatCrossThreadBlock(context);
     if (crossThreadBlock) parts.push(crossThreadBlock);
@@ -625,12 +630,14 @@ ${evidence.snippet}`);
    * still-processing / failed statement. Never the bytes, never a placeholder.
    */
   private renderVideoText(context: AssembledContext, file: FileContentResponse): string {
-    return !hasVideoDocument(file) ? describeUnprocessedVideo(file) : formatVideoContextBlock({
-      filename: file.filename,
-      media: file.media,
-      document: file.extractedText ?? '',
-      frameSet: context.attachmentDelivery?.videoFrames?.find((set) => set.fileId === file.id),
-    });
+    return !hasVideoDocument(file)
+      ? describeUnprocessedVideo(file)
+      : formatVideoContextBlock({
+          filename: file.filename,
+          media: file.media,
+          document: file.extractedText ?? '',
+          frameSet: context.attachmentDelivery?.videoFrames?.find((set) => set.fileId === file.id),
+        });
   }
 
   /** The text a lane is given for one file that does not ride the payload natively. */
@@ -664,7 +671,7 @@ ${evidence.snippet}`);
   private formatMessageLines(
     messages: AssembledContext['threadMessages'],
     grounded = false,
-    fileContents: AssembledContext['fileContents'] = [],
+    attachments: AttachmentTurnContext = { fileContents: [] },
   ): string[] {
     const lastUserIndex = messages.reduce(
       (found, message, index) => (this.mapRole(message) === 'user' ? index : found),
@@ -675,7 +682,7 @@ ${evidence.snippet}`);
       if (index !== lastUserIndex) {
         return `${role}: ${message.content}`;
       }
-      const turnText = this.userTurnText(message.content, fileContents);
+      const turnText = this.userTurnText(message.content, attachments);
       return `${role}: ${grounded ? this.withResearchGrounding(turnText) : turnText}`;
     });
   }
@@ -690,17 +697,24 @@ ${evidence.snippet}`);
    * something, the attachment is the request, and this says so. Per request
    * only: the stored row stays what the user sent. Rule 42 §18.
    */
-  private userTurnText(content: string, fileContents: AssembledContext['fileContents']): string {
+  private userTurnText(content: string, attachments: AttachmentTurnContext): string {
     // Logged once per turn in assemble(), not here: the builders run several
     // times per turn (token estimates, then the real call).
-    return resolveUserTurnText(content, fileContents);
+    return resolveContextTurnText(content, attachments);
   }
 
   private logAttachmentOnlyTurn(
     lastUserContent: string,
     fileContents: AssembledContext['fileContents'],
+    requestedCount: number,
   ): void {
-    if (fileContents.length === 0 || !isTrivialUserText(lastUserContent)) {
+    if (requestedCount === 0 || !isTrivialUserText(lastUserContent)) {
+      return;
+    }
+    if (fileContents.length === 0) {
+      this.logger.warn(
+        `assemble: attachment-only turn with no readable file — requested=${String(requestedCount)}`,
+      );
       return;
     }
     this.logger.log(
@@ -858,7 +872,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // The reminder rides on the final user turn, which is the part of the
       // prompt a model attends to most. Never persisted — this is assembled
       // per request, so the stored message stays exactly what the user typed.
-      const turnText = isLastUser ? this.userTurnText(msg.content, context.fileContents) : '';
+      const turnText = isLastUser ? this.userTurnText(msg.content, context) : '';
       const groundedTurn = grounded ? this.withResearchGrounding(turnText) : turnText;
       const content = isLastUser ? groundedTurn : msg.content;
       if (isLastUser && (mediaFiles.length > 0 || frameParts.length > 0)) {

@@ -11,6 +11,7 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -69,7 +70,11 @@ export class PipelineManager {
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { pipelineRequest: true, modelSelection: selection },
+      metadata: {
+        pipelineRequest: true,
+        modelSelection: selection,
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+      },
     });
 
     void this.executeInBackground(threadId, dto.content, dto, userId, selection, userToken);
@@ -133,7 +138,10 @@ export class PipelineManager {
           : {}),
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
       });
-      const stageResults = await this.runAllStages(threadId, stages, content, bundle);
+      // Rule 42 §18: an attachment-only send's request IS the attachment —
+      // spelled out once here for every stage below, never stored.
+      const request = resolveContextTurnText(content, bundle.context);
+      const stageResults = await this.runAllStages(threadId, stages, request, bundle);
       const finalOutput = stageResults.at(-1)?.output ?? content;
       const resolvedModel = resolvedSelection.actualModel;
 

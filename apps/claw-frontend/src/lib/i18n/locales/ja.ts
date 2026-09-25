@@ -3718,6 +3718,9 @@ export const ja: TranslationDictionary = {
       'このファイル タイプではプレビューを利用できません。ダウンロードを使用してローカルで開きます。',
     download: 'ダウンロード',
     close: '閉じる',
+    pdfOpensInNewTab:
+      'PDF はブラウザの PDF ビューアーで新しいタブに開きます。ファイルをダウンロードすることもできます。',
+    openInNewTab: '新しいタブで開く',
   },
   search: {
     page: {

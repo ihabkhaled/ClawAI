@@ -3652,6 +3652,9 @@ export const ar: TranslationDictionary = {
     unsupported: 'المعاينة غير متاحة لهذا النوع من الملفات. استخدم التنزيل لفتحه محليًا.',
     download: 'تنزيل',
     close: 'إغلاق',
+    pdfOpensInNewTab:
+      'تُفتح ملفات PDF في عارض PDF الخاص بمتصفحك في علامة تبويب جديدة. يمكنك أيضًا تنزيل الملف.',
+    openInNewTab: 'فتح في علامة تبويب جديدة',
   },
   search: {
     page: {

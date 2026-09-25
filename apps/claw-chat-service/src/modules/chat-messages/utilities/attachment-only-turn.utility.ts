@@ -6,11 +6,13 @@ import {
   ATTACHMENT_ONLY_ROUTING_HINT,
   ATTACHMENT_ONLY_TURN_LEAD,
   ATTACHMENT_ONLY_TURN_MARKER,
+  ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION,
   TRIVIAL_USER_TEXT_PATTERN,
 } from '../constants/attachment-only-turn.constants';
 import {
   type AttachmentDescriptor,
   type AttachmentOnlyKind,
+  type AttachmentTurnContext,
 } from '../types/attachment-only-turn.types';
 
 /** True when the text carries no request: empty, whitespace or punctuation only. */
@@ -48,10 +50,60 @@ export function buildAttachmentOnlyInstruction(files: readonly AttachmentDescrip
 export function resolveUserTurnText(
   content: string,
   files: readonly AttachmentDescriptor[],
+  requestedCount: number = files.length,
 ): string {
-  return files.length > 0 && isTrivialUserText(content)
-    ? buildAttachmentOnlyInstruction(files)
-    : content;
+  if (!isTrivialUserText(content)) {
+    return content;
+  }
+  if (files.length > 0) {
+    return buildAttachmentOnlyInstruction(files);
+  }
+  // Attached, but nothing readable arrived — a video still processing, a
+  // failed extraction. An empty turn here got a generic greeting (or a
+  // provider's "empty message" refusal); the user must hear that the file
+  // could not be read instead.
+  return requestedCount > 0 ? ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION : content;
+}
+
+/** `resolveUserTurnText` for an assembled context: its files and what was asked for. */
+export function resolveContextTurnText(content: string, context: AttachmentTurnContext): string {
+  return resolveUserTurnText(
+    content,
+    context.fileContents,
+    context.requestedAttachmentCount ?? context.fileContents.length,
+  );
+}
+
+/**
+ * The history a lab stage or a judge reads, with the attachment-only turn
+ * spelled out.
+ *
+ * The builders already rewrite the FINAL user turn, but a lab mode appends its
+ * own prompt after it (a sub-task, a rubric, a synthesis request), so the
+ * user's empty row stops being final: it reached the model as an empty user
+ * message — which Anthropic and Gemini reject outright — and the stage never
+ * learned the attachment was the question. Rewriting the latest USER row here,
+ * per request and never in storage, gives every stage the same request the
+ * chat lane sees. Returns the input array unchanged when there is nothing to do.
+ */
+export function withAttachmentOnlyUserTurn<T extends { role: string; content: string }>(
+  messages: T[],
+  context: AttachmentTurnContext,
+): T[] {
+  const index = messages.reduce(
+    (found, message, position) => (message.role === 'USER' ? position : found),
+    -1,
+  );
+  const latest = index < 0 ? null : messages.at(index);
+  if (latest === null || latest === undefined) {
+    return messages;
+  }
+  const content = resolveContextTurnText(latest.content, context);
+  if (content === latest.content) {
+    return messages;
+  }
+  const rewritten = { ...latest, content };
+  return messages.map((message, position) => (position === index ? rewritten : message));
 }
 
 /** The `content` routing-service scores for a stored user row. */

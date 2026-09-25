@@ -3768,6 +3768,9 @@ export const fr: TranslationDictionary = {
       "Aperçu indisponible pour ce type de fichier. Utilisez Télécharger pour l'ouvrir en local.",
     download: 'Télécharger',
     close: 'Fermer',
+    pdfOpensInNewTab:
+      "Les PDF s'ouvrent dans la visionneuse PDF de votre navigateur, dans un nouvel onglet. Vous pouvez aussi télécharger le fichier.",
+    openInNewTab: 'Ouvrir dans un nouvel onglet',
   },
   search: {
     page: {

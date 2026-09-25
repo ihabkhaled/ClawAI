@@ -51,6 +51,7 @@ import type {
 import type { ParsedJudgeModel } from '../../../common/types';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 
 @Injectable()
 export class JudgeRefereeManager {
@@ -1028,8 +1029,12 @@ export class JudgeRefereeManager {
       : `Critic raised ${String(feedback.length)} note(s); see details for the full list.`;
   }
 
+  /**
+   * The question the judge and critic score against. An attachment-only turn
+   * (rule 42 §18) is spelled out, or the judge scores relevance to "".
+   */
   private extractUserPrompt(context: AssembledContext): string {
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    return lastUserMsg?.content ?? '';
+    return resolveContextTurnText(lastUserMsg?.content ?? '', context);
   }
 }

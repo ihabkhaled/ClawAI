@@ -22,8 +22,26 @@ export const ATTACHMENT_ONLY_TURN_LEAD =
 export const ATTACHMENT_ONLY_AUDIO_LINE =
   'For a voice note: respond to what the speaker said — answer their question, act on their request, or reply to their message, as if they had said it to you in person. Do not merely transcribe or summarise it unless that is what they asked for.';
 
+/**
+ * Covers both video paths: a lane that watches the video natively (Gemini),
+ * and one that reads it as a timestamped transcript plus sampled frames. The
+ * last sentence is for a video whose document is not ready: the context then
+ * says it is still processing, and the model must say so, not invent scenes.
+ */
 export const ATTACHMENT_ONLY_VIDEO_LINE =
-  'For a video: describe what it shows and respond to anything said or asked in it.';
+  'For a video: describe what it shows and respond to anything said or asked in it. You may receive the video itself, or its timestamped transcript and sampled frames — use whatever you were given. If its content has not reached you yet, say so plainly instead of guessing.';
+
+/**
+ * The turn when files were attached but NONE had readable content — a video
+ * still being processed, a failed extraction, a file removed mid-send. The old
+ * empty turn got a generic greeting, or a provider's "empty message" refusal,
+ * which the user saw as silence.
+ */
+export const ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION = [
+  ATTACHMENT_ONLY_TURN_MARKER,
+  'The user sent attachment(s) with no typed message, but none of them could be read yet (still processing, or the extraction failed).',
+  'Tell the user plainly that you could not open the attachment yet, and ask them to try again in a moment or to say what they need from it. Do not reply with a generic greeting, and do not guess its contents.',
+].join('\n');
 
 export const ATTACHMENT_ONLY_IMAGE_LINE =
   'For an image: describe what it shows and respond to any question, text or task visible in it.';

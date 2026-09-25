@@ -15,6 +15,7 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -90,7 +91,11 @@ export class TaskDecompositionManager {
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { decompositionRequest: true, modelSelection: selection },
+      metadata: {
+        decompositionRequest: true,
+        modelSelection: selection,
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+      },
     });
 
     void this.executeInBackground(
@@ -165,7 +170,10 @@ export class TaskDecompositionManager {
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
-      const subTasks = await this.decomposeContent(content, maxSubTasks, resolvedSelection, bundle);
+      // Rule 42 §18: an attachment-only send's request IS the attachment —
+      // spelled out once here for every stage below, never stored.
+      const request = resolveContextTurnText(content, bundle.context);
+      const subTasks = await this.decomposeContent(request, maxSubTasks, resolvedSelection, bundle);
       this.safeEmitStage(threadId, {
         label: 'Decomposing prompt',
         status: OrchestrationStageStatus.COMPLETED,
@@ -191,7 +199,7 @@ export class TaskDecompositionManager {
         stageId: 'decompose:aggregate',
       });
       const mergedContent = await this.mergeResults(
-        content,
+        request,
         subTaskResults,
         resolvedSelection,
         bundle,

@@ -62,4 +62,34 @@ describe('useFileViewer', () => {
     expect(result.current.textPreview).toBeNull();
     expect(result.current.renderKind).toBe(FileViewerRenderKind.PDF);
   });
+
+  it('opens a PDF in a new tab instead of framing it — the CSP has no blob: in frame-src', async () => {
+    const openMock = vi.fn();
+    vi.stubGlobal('open', openMock);
+    mockFetchContent.mockResolvedValue(contentOf('%PDF-1.4', 'application/pdf'));
+
+    const { result } = renderHook(() => useFileViewer());
+    act(() => {
+      result.current.open('obj-3', 'report.pdf');
+    });
+    await waitFor(() => expect(result.current.content).not.toBeNull());
+
+    act(() => {
+      result.current.openInNewTab();
+    });
+
+    expect(openMock).toHaveBeenCalledWith('blob:mock-object', '_blank', 'noopener');
+  });
+
+  it('does nothing when asked to open a tab before any file is loaded', () => {
+    const openMock = vi.fn();
+    vi.stubGlobal('open', openMock);
+
+    const { result } = renderHook(() => useFileViewer());
+    act(() => {
+      result.current.openInNewTab();
+    });
+
+    expect(openMock).not.toHaveBeenCalled();
+  });
 });

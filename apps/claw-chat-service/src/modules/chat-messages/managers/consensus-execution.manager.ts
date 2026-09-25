@@ -29,6 +29,7 @@ import type { ThreadSettings } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { ResearchEnricherManager } from './research-enricher.manager';
@@ -135,7 +136,9 @@ export class ConsensusExecutionManager {
         stageId: 'consensus:judge',
       });
       const synthesis = await this.synthesize(
-        content,
+        // Rule 42 §18: the synthesis reads no history, so an attachment-only
+        // send's request has to be spelled out here or it synthesises "".
+        resolveContextTurnText(content, context),
         completedResponses,
         models,
         userId,

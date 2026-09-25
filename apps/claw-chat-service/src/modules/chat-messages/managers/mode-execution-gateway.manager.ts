@@ -73,6 +73,12 @@ export class ModeExecutionGatewayManager {
     if (prompt === undefined || prompt.trim().length === 0) {
       return context;
     }
+    // The mode's prompt is often the user's own request, which is already the
+    // last user row (spelled out by the gateway for an attachment-only send).
+    const last = context.threadMessages.at(-1);
+    if (last?.role === 'USER' && last.content.trim() === prompt.trim()) {
+      return context;
+    }
     const synthetic = {
       id: `mode-prompt-${String(context.threadMessages.length)}`,
       threadId: context.threadMessages.at(-1)?.threadId ?? '',

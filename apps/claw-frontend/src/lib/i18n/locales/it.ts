@@ -3748,6 +3748,9 @@ export const it: TranslationDictionary = {
       'Anteprima non disponibile per questo tipo di file. Usa Scarica per aprirlo in locale.',
     download: 'Scarica',
     close: 'Chiudi',
+    pdfOpensInNewTab:
+      'I PDF si aprono nel visualizzatore PDF del browser in una nuova scheda. Puoi anche scaricare il file.',
+    openInNewTab: 'Apri in una nuova scheda',
   },
   search: {
     page: {

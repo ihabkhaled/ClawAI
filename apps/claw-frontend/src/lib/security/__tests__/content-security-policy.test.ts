@@ -92,6 +92,18 @@ describe('buildContentSecurityPolicy', () => {
     expect(frameSrc).not.toContain('blob:');
   });
 
+  it("keeps object-src 'none' — a PDF opens in a new tab rather than an <object>/<embed>", () => {
+    // Inline PDF would need blob: in frame-src (iframe) or object-src
+    // (<object>/<embed>). Both would let ANY same-origin blob — including one
+    // built from an attacker-sent inbox attachment — be framed on every page.
+    // The workspace viewer opens PDFs in a new tab instead (frontend-security-headers.md).
+    for (const adsenseEnabled of [false, true]) {
+      const csp = buildContentSecurityPolicy({ ...baseOptions, adsenseEnabled });
+      const objectSrc = csp.split(';').find((d) => d.trim().startsWith('object-src')) ?? '';
+      expect(objectSrc.trim()).toBe(`object-src 'none'`);
+    }
+  });
+
   it('adds upgrade-insecure-requests only for production HTTPS requests', () => {
     expect(buildContentSecurityPolicy(baseOptions)).toContain('upgrade-insecure-requests');
     expect(buildContentSecurityPolicy({ ...baseOptions, isDev: true })).not.toContain(

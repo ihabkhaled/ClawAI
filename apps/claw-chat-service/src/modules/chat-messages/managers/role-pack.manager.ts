@@ -12,6 +12,7 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
+import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -66,7 +67,11 @@ export class RolePackManager {
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { rolePackRequest: true, modelSelection: selection },
+      metadata: {
+        rolePackRequest: true,
+        modelSelection: selection,
+        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+      },
     });
 
     void this.executeInBackground(
@@ -130,7 +135,10 @@ export class RolePackManager {
           : {}),
         ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
       });
-      const results = await this.runAllMembers(threadId, resolvedMembers, content, bundle);
+      // Rule 42 §18: an attachment-only send's request IS the attachment —
+      // spelled out once here for every stage below, never stored.
+      const request = resolveContextTurnText(content, bundle.context);
+      const results = await this.runAllMembers(threadId, resolvedMembers, request, bundle);
       const allFailed = results.every((r) => r.output === 'Role failed');
       if (allFailed) {
         throw new Error('All role pack members failed to produce output');
@@ -349,12 +357,14 @@ export class RolePackManager {
     members: RoleMember[],
     selection: AdvancedModelSelectionResolution,
   ): Promise<RoleMember[]> {
-    return selection.modelSelectionMode === 'MANUAL_MODEL' ? members.map((member) => ({ ...member, model: selection.actualModel })) : Promise.all(
-      members.map(async (member) => ({
-        ...member,
-        model: await this.resolveModel(member.model),
-      })),
-    );
+    return selection.modelSelectionMode === 'MANUAL_MODEL'
+      ? members.map((member) => ({ ...member, model: selection.actualModel }))
+      : Promise.all(
+          members.map(async (member) => ({
+            ...member,
+            model: await this.resolveModel(member.model),
+          })),
+        );
   }
 
   private selectBestOutput(results: RoleMemberResult[], pack: string): string {
@@ -403,27 +413,31 @@ export class RolePackManager {
     if (model && model !== 'AUTO') {
       return model;
     }
-    return DEFAULT_ROLE_PACK_MODEL !== 'AUTO' ? DEFAULT_ROLE_PACK_MODEL : this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+    return DEFAULT_ROLE_PACK_MODEL !== 'AUTO'
+      ? DEFAULT_ROLE_PACK_MODEL
+      : (this.localModelSelection?.resolveDefaultModel() ?? 'AUTO');
   }
 
   private async resolveSelection(
     dto: RolePackMessageDto,
   ): Promise<AdvancedModelSelectionResolution> {
-    return this.advancedModelSelectionService ? this.advancedModelSelectionService.resolveSelection(
-        {
-          modelSelectionMode: dto.modelSelectionMode,
-          requestedProvider: dto.requestedProvider,
-          requestedModel: dto.requestedModel,
+    return this.advancedModelSelectionService
+      ? this.advancedModelSelectionService.resolveSelection(
+          {
+            modelSelectionMode: dto.modelSelectionMode,
+            requestedProvider: dto.requestedProvider,
+            requestedModel: dto.requestedModel,
+            requestedDisplayName: dto.requestedDisplayName,
+            selectedModelSource: dto.selectedModelSource,
+          },
+          await this.resolveModel(),
+        )
+      : this.buildAutoSelection({
+          requestedProvider: dto.requestedProvider ?? null,
+          requestedModel: dto.requestedModel ?? null,
           requestedDisplayName: dto.requestedDisplayName,
-          selectedModelSource: dto.selectedModelSource,
-        },
-        await this.resolveModel(),
-      ) : this.buildAutoSelection({
-      requestedProvider: dto.requestedProvider ?? null,
-      requestedModel: dto.requestedModel ?? null,
-      requestedDisplayName: dto.requestedDisplayName,
-      selectedModelSource: dto.selectedModelSource ?? null,
-    });
+          selectedModelSource: dto.selectedModelSource ?? null,
+        });
   }
 
   private async buildAutoSelection(

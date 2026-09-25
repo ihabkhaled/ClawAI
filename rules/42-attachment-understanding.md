@@ -227,6 +227,17 @@ Full reasoning:
     `connect-src` request, and `blob:` stays out of `connect-src` and
     `frame-src`. A working download proves nothing about playback:
     `<a download>` is a navigation that no CSP directive governs.
+    **A PDF is never framed inline.** `<iframe src=blob:>` needs `blob:` in
+    `frame-src`, `<object>`/`<embed>` needs it in `object-src` (which stays
+    `'none'` — Lighthouse's `csp-xss` audit and every strict-CSP baseline
+    require it). Either would let any same-origin blob, including one minted
+    from an attacker-sent inbox attachment, be framed on every page, because
+    Next's client navigation keeps the first document's policy and so a
+    route-scoped exception is not possible. The workspace file viewer
+    (`FileViewerModal`) shows a translated "PDFs open in your browser's PDF
+    viewer in a new tab" line with **Open in new tab** (`openBlobInNewTab`, a
+    top-level navigation no fetch directive governs) beside **Download** —
+    the same path chat attachments already use.
 
 18. **An attachment sent with no words is a request, and the model is told so.**
     A voice note sent with "." as its text got _"Is there something I can help
@@ -245,6 +256,27 @@ Full reasoning:
     A per-mode copy is the defect this rule exists to prevent. The **stored**
     message stays empty: never persist invented text; the UI shows the
     attachments alone.
+    The builders only see the FINAL user turn, and a lab appends its own
+    prompt after it — so two more places carry the same resolution:
+    (a) `ChatContextGatewayManager.build` rewrites the latest USER row of the
+    bundle's `threadMessages` (`withAttachmentOnlyUserTurn`), so a stage never
+    reads an empty user message (which Anthropic/Gemini reject) and the
+    compare judge and critic see the request; `ModeExecutionGatewayManager`
+    does not re-append a prompt equal to that row. (b) Every lab that QUOTES
+    the user's text in its own prompt (Cost-Ensemble `Task:`, Verify
+    `Question:`, Decompose plan/merge, Pipeline stage 1, Role Pack, Best-of-N,
+    Repair, the Consensus synthesis, the judge's `User question:`) quotes
+    `resolveContextTurnText(content, bundle.context)` instead of `content`.
+    Lab user rows store `metadata.fileIds` so the bubble shows the files.
+    Video: one line covers both paths — the Gemini lane that watches the video
+    and the transcript + sampled-frames lane — and forbids guessing when the
+    content has not reached the model. When files were attached but NONE had
+    readable content (a video still processing, a failed extraction), the
+    turn becomes `ATTACHMENT_ONLY_UNREADABLE_INSTRUCTION` (via
+    `AssembledContext.requestedAttachmentCount`): the model tells the user it
+    could not open the file yet, instead of greeting an empty message. The
+    old `VIDEO_ATTACHMENT_*` refusals are not raised any more (§16); the
+    frontend still maps them to translated text.
 
 19. **Every send surface accepts empty text when files ride with it, and still
     refuses it when nothing does.** Each send schema drops its `min(1)` for
@@ -320,9 +352,9 @@ Full reasoning:
 | 15      | `video-processing.manager.spec.ts` (plan 59/60/61 s, 0, null, auth down; no-audio; refused transcription; idempotent redelivery; temp dir removed; probe failure matrix); `files.service-extraction.spec.ts` "a video row still carrying its placeholder"; `media-args.utility.spec.ts` + `media-process.utility.spec.ts` (whitelists, no shell, SIGKILL, stdout cap)                                                                                                                                                                                                                                                             |
 | 16      | `attachment-delivery.utility.spec.ts` "video" (strategy per state, plan refusal, duration limit); `video-frame-selection.utility.spec.ts` (timestamp case table); `video-context.utility.spec.ts` (block format, delimiters); `video-delivery.manager.spec.ts` (seeing / blind / plan-off / no helper / frames down / one fetch per turn / helper cap / 8k window / content-free log); `context-assembly-window-fit.spec.ts` (8k blind lane with transcript + 4 frame descriptions fits); `judge-referee-attachments.spec.ts` (judge rebuild keeps the video document); `video-attachment-routing.utility.spec.ts` (never throws) |
 | 14      | `attachment-delivery.utility.spec.ts` (resolver matrix); `context-assembly-media-delivery.spec.ts` (non-vision payload has no `image_url` and carries the honest note; video placeholder never in a prompt); `chat-execution-media-delivery.spec.ts` (the chokepoint's body and `fileDelivery` agree); `parallel-execution-media-delivery.spec.ts` (two lanes, two records)                                                                                                                                                                                                                                                       |
-| 17      | `content-security-policy.test.ts` "lets <audio>/<video> play an attachment from a blob: URL" and "keeps blob: out of connect-src and frame-src"; `use-attachment-file-preview.test.ts` and `use-file-viewer.test.ts` assert the text preview never calls `fetch`                                                                                                                                                                                                                                                                                                                                                                  |
-| 18      | `context-assembly-attachment-only-turn.spec.ts` — all three builders rewrite only the final trivial turn, only with files attached; `attachment-only-turn.utility.spec.ts` pins what counts as "no words" and each kind's instruction                                                                                                                                                                                                                                                                                                                                                                                             |
-| 19      | `attachment-only-send.dto.spec.ts` — every send schema × (empty + files → valid, empty + no files → invalid, 11 files → invalid, whitespace fuzz); `chat-messages.service.spec.ts` "stores an attachment-only send empty but routes it on a hint"; frontend `composer-attachment.constants.test.ts` pins the cap to chat-service's constant                                                                                                                                                                                                                                                                                       |
+| 17      | `content-security-policy.test.ts` "lets <audio>/<video> play an attachment from a blob: URL", "keeps blob: out of connect-src and frame-src" and "keeps object-src 'none'"; `file-viewer-modal.test.tsx` (no iframe/object/embed, Open in new tab + Download); `use-attachment-file-preview.test.ts` and `use-file-viewer.test.ts` assert the text preview never calls `fetch`                                                                                                                                                                                                                                                    |
+| 18      | `context-assembly-attachment-only-turn.spec.ts` — all three builders rewrite only the final trivial turn, only with files attached, a video on both paths, the unreadable case; `chat-context-gateway.manager.spec.ts` + `mode-execution-gateway.manager.spec.ts` (bundle rewrite, no duplicate turn); `attachment-only-labs.spec.ts` (7 labs) + `consensus-execution.manager.spec.ts` (synthesis); `attachment-only-turn.utility.spec.ts` pins what counts as "no words" and each kind's instruction                                                                                                                             |
+| 19      | `attachment-only-send.dto.spec.ts` — every send schema × (empty + files → valid, empty + no files → invalid, 11 files → invalid, whitespace fuzz); `chat-messages.service.spec.ts` "stores an attachment-only send empty but routes it on a hint"; frontend `composer-attachment.constants.test.ts` pins the cap to chat-service's constant; `use-*-page-attachments.spec.ts` (all 9 labs), `use-parallel-compare-page-attachments.spec.ts` and `use-in-thread-compare.test.tsx` send files with empty text and refuse empty text alone                                                                                           |
 | 21      | file-service video cancellation specs (flag between steps, child kill, conditional save, stale re-queue skips a cancelled row); chat `attachment-delivery.utility.spec.ts` (cancelled video → `FAILED_PROCESSING`, reason `video_processing_cancelled`, never native); frontend `composer-attachment.utility.test.ts` (Cancelled state)                                                                                                                                                                                                                                                                                           |
 | 20      | `transcription-candidates.utility.spec.ts` (a 19-row sample of prod's GEMINI rows → stable flash-lite first, preview never first, OpenAI once, preview only when nothing stable); `transcription-error.utility.spec.ts` "classifyTranscriptionFailure" (real 429 / 404 / modality bodies); `transcription.manager.spec.ts` "bounded candidate walk" (same-provider fall-through, prod replay, one backoff, provider skip, busy message, call ceiling, one hold per call); connector `models-snapshot.manager.spec.ts` "stale GEMINI rows synced before the fail-closed heuristic"                                                 |
 

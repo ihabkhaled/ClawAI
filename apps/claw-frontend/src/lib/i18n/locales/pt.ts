@@ -3737,6 +3737,9 @@ export const pt: TranslationDictionary = {
       'Pré-visualização indisponível para este tipo de arquivo. Use Baixar para abri-lo localmente.',
     download: 'Baixar',
     close: 'Fechar',
+    pdfOpensInNewTab:
+      'Os PDFs abrem no visualizador de PDF do seu navegador, em uma nova aba. Você também pode baixar o arquivo.',
+    openInNewTab: 'Abrir em nova aba',
   },
   search: {
     page: {

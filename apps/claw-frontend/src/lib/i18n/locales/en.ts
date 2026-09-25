@@ -3686,6 +3686,9 @@ export const en: TranslationDictionary = {
     unsupported: 'Preview not available for this file type. Use Download to open it locally.',
     download: 'Download',
     close: 'Close',
+    pdfOpensInNewTab:
+      "PDFs open in your browser's PDF viewer in a new tab. You can also download the file.",
+    openInNewTab: 'Open in new tab',
   },
   search: {
     page: {

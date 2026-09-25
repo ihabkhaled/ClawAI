@@ -59,6 +59,13 @@ export type AssembledContext = {
   memories: MemoryRecordResponse[];
   contextPackItems: Array<{ content: string | null; type: string }>;
   fileContents: FileContentResponse[];
+  /**
+   * How many files the turn attached. Can exceed `fileContents.length`: a file
+   * with nothing readable yet (a video still processing) is not delivered, and
+   * an attachment-only turn must still tell the model a file was sent
+   * (rule 42 §18). Absent when nothing was attached.
+   */
+  requestedAttachmentCount?: number;
   workspaceCitations: WorkspaceCitation[];
   /** Evidence items produced by a research run (web search, fetch, etc). */
   researchEvidence: ResearchEvidenceCitation[];

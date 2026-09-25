@@ -16,6 +16,12 @@ export type UseFileViewerResult = {
   openObjectId: string | null;
   open: (objectId: string, title: string) => void;
   close: () => void;
+  /**
+   * Opens the loaded file in the browser's own viewer in a new tab. A PDF is
+   * never framed inline: that needs blob: in frame-src or object-src, which the
+   * CSP deliberately withholds (frontend-security-headers.md).
+   */
+  openInNewTab: () => void;
 
   title: string;
   content: WorkspaceObjectContent | null;
@@ -34,11 +40,14 @@ export type FileViewerModalProps = {
   isLoading: boolean;
   error: Error | null;
   onClose: () => void;
+  onOpenInNewTab: () => void;
   labels: {
     loading: string;
     error: string;
     unsupported: string;
     download: string;
     close: string;
+    pdfOpensInNewTab: string;
+    openInNewTab: string;
   };
 };

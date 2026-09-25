@@ -23,6 +23,7 @@ export function FileViewerModal({
   isLoading,
   error,
   onClose,
+  onOpenInNewTab,
   labels,
 }: FileViewerModalProps): ReactElement {
   return (
@@ -44,11 +45,15 @@ export function FileViewerModal({
           {!isLoading && error === null && content !== null ? (
             <>
               {renderKind === FileViewerRenderKind.PDF ? (
-                <iframe
-                  title={content.filename}
-                  src={content.blobUrl}
-                  className="border-border h-[60vh] w-full rounded border"
-                />
+                // Not an <iframe>/<object>: both need blob: in frame-src /
+                // object-src, which the CSP withholds on purpose. The
+                // browser's own PDF viewer opens it in a new tab.
+                <div className="border-border bg-muted/20 flex flex-col items-start gap-3 rounded border p-4">
+                  <p className="text-muted-foreground text-sm">{labels.pdfOpensInNewTab}</p>
+                  <Button type="button" onClick={onOpenInNewTab}>
+                    {labels.openInNewTab}
+                  </Button>
+                </div>
               ) : null}
 
               {renderKind === FileViewerRenderKind.IMAGE ? (

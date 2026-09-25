@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileViewerRenderKind } from '@/enums/file-viewer-render-kind.enum';
 import { fetchWorkspaceObjectContent } from '@/repositories/workspace/workspace-object-content.repository';
 import type { UseFileViewerResult, WorkspaceObjectContent } from '@/types/file-viewer.types';
+import { openBlobInNewTab } from '@/utilities/download-blob.utility';
 import { clampTextPreview, resolveRenderKind } from '@/utilities/file-viewer.utility';
 
 // v3 round 11 (2026-05-14) — Prompt 08: controller hook for the file
@@ -64,6 +65,14 @@ export function useFileViewer(): UseFileViewerResult {
     [revoke],
   );
 
+  // A top-level navigation to our own blob: URL — governed by no fetch
+  // directive, so the CSP keeps frame-src and object-src free of blob:.
+  const openInNewTab = useCallback((): void => {
+    if (content !== null) {
+      openBlobInNewTab(content.blobUrl);
+    }
+  }, [content]);
+
   // Revoke any outstanding object URL when the component unmounts.
   useEffect(() => revoke, [revoke]);
 
@@ -71,6 +80,7 @@ export function useFileViewer(): UseFileViewerResult {
     openObjectId,
     open,
     close,
+    openInNewTab,
     title,
     content,
     textPreview,

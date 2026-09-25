@@ -549,4 +549,56 @@ describe('ConsensusExecutionManager', () => {
       );
     });
   });
+
+  // Rule 42 §18. The synthesis call reads no conversation — only the prompt it
+  // is handed — so an attachment-only send synthesised against "". It now gets
+  // the spelled-out request.
+  describe('an attachment-only send', () => {
+    it('synthesises against the attachment request, not an empty prompt', async () => {
+      const bodies: string[] = [];
+      globalThis.fetch = vi.fn(async (_url: unknown, init?: { body?: unknown }) => {
+        bodies.push(String(init?.body ?? ''));
+        throw new Error('Ollama unavailable');
+      }) as typeof fetch;
+      mockContextAssemblyManager.assemble.mockResolvedValue({
+        ...mockContext,
+        fileContents: [
+          {
+            id: 'f-1',
+            filename: 'clip.mp4',
+            mimeType: 'video/mp4',
+            content: null,
+            extractedText: 'TRANSCRIPT [00:01] hello',
+            ingestionStatus: 'COMPLETED',
+            extractionError: null,
+          },
+        ],
+      });
+      const callProvider = vi.fn(async (provider: string, model: string) => ({
+        provider,
+        model,
+        content: `${model} describes the clip`,
+        latencyMs: 10,
+        inputTokens: 1,
+        outputTokens: 1,
+      }));
+      const isolated = new ConsensusExecutionManager(
+        { callProvider } as never,
+        mockChatContextGateway as never,
+        mockChatMessagesRepository as never,
+        mockChatStreamService as never,
+        mockResearchEnricherManager as never,
+        createFakePaygAccessControl() as never,
+      );
+
+      await isolated.executeConsensus('user-1', 'thread-1', '', sampleModels, ['f-1']);
+      await vi.waitFor(() => {
+        expect(bodies.length).toBeGreaterThan(0);
+      });
+
+      expect(bodies[0]).toContain('[Attachment-only message]');
+      expect(bodies[0]).toContain('For a video');
+      globalThis.fetch = undefined as never;
+    });
+  });
 });

@@ -56,13 +56,26 @@ Chat attachments are fetched with a Bearer header and shown through a `blob:`
 object URL. `'self'` never matches `blob:`, so each consumer needs its own
 directive — and a missing one fails silently for the user:
 
-| Consumer                                | Directive     | Policy                                                                                            |
-| --------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| Image thumbnails (`<img src=blob:>`)    | `img-src`     | `blob:` allowed                                                                                   |
-| Voice/video notes (`<audio>`/`<video>`) | `media-src`   | `'self' blob:` — without it the note sits at 0:00 with `MEDIA_ELEMENT_ERROR 4` (fixed 2026-09-25) |
-| Text previews                           | `connect-src` | **no `blob:`** — read the `Blob` with `blob.text()`, never `fetch(blobUrl)`                       |
-| PDF iframe in the workspace file viewer | `frame-src`   | **no `blob:`** — the inline iframe is blocked; open PDFs in a new tab instead (chat already does) |
-| Download (`<a download href=blob:>`)    | none          | always works, so it proves nothing about playback                                                 |
+| Consumer                                | Directive                  | Policy                                                                                                                            |
+| --------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Image thumbnails (`<img src=blob:>`)    | `img-src`                  | `blob:` allowed                                                                                                                   |
+| Voice/video notes (`<audio>`/`<video>`) | `media-src`                | `'self' blob:` — without it the note sits at 0:00 with `MEDIA_ELEMENT_ERROR 4` (fixed 2026-09-25)                                 |
+| Text previews                           | `connect-src`              | **no `blob:`** — read the `Blob` with `blob.text()`, never `fetch(blobUrl)`                                                       |
+| PDF in the workspace file viewer        | `frame-src` / `object-src` | **no `blob:`, `object-src 'none'`** — no inline iframe/object/embed; the viewer offers **Open in new tab** + **Download** (below) |
+| Download (`<a download href=blob:>`)    | none                       | always works, so it proves nothing about playback                                                                                 |
+
+### Why the PDF viewer does not frame the file (2026-09-25)
+
+The inbox file viewer used `<iframe src="blob:…">`, which the browser blocked
+(`frame-src` has no `blob:`), leaving an empty frame. Options weighed:
+
+| Option                                    | Cost                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frame-src blob:`                         | Any same-origin blob can then be framed on **every** page. The viewer's blobs are built from inbox attachments strangers send; a mislabelled one is attacker bytes inside our origin.                                                                                                 |
+| `<object>`/`<embed>` + `object-src blob:` | Same exposure, and it drops `object-src 'none'`, which strict-CSP baselines and Lighthouse's `csp-xss` audit require.                                                                                                                                                                 |
+| Route-scoped CSP                          | Not possible: Next's client-side navigation keeps the first document's policy, so a `/workspace/inbox` exception would not apply when the user arrives from another page (or would leak to every page after it).                                                                      |
+| pdf.js (canvas)                           | A large new dependency plus worker for one dialog (rule 47).                                                                                                                                                                                                                          |
+| **Open in new tab + Download**            | **Chosen.** A top-level navigation to our own `blob:` URL is governed by no fetch directive; the browser's PDF viewer renders it. The blob's type is the response's `application/pdf`, the same value that picked the PDF branch. No directive is widened; `script-src` is untouched. |
 
 See [rule 42 §17](../../rules/42-attachment-understanding.md).
 

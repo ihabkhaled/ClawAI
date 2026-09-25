@@ -243,4 +243,38 @@ describe('useInThreadCompare — panel visibility is externally controlled', () 
 
     expect(result.current.selectedFileIds).toEqual([]);
   });
+
+  it('sends an attachment with no text from the in-thread panel', async () => {
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setSelectedFileIds(['file-1']);
+    });
+    act(() => {
+      result.current.handleCompare('');
+    });
+
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]?.[0] as ParallelRequest;
+    expect(payload.content).toBe('');
+    expect(payload.fileIds).toEqual(['file-1']);
+  });
+
+  it('refuses an empty in-thread compare with nothing attached', () => {
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+    });
+    act(() => {
+      result.current.handleCompare('  ');
+    });
+
+    expect(sendParallelMock).not.toHaveBeenCalled();
+  });
 });

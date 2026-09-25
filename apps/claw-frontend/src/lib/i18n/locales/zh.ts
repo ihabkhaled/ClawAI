@@ -3577,6 +3577,8 @@ export const zh: TranslationDictionary = {
     unsupported: '预览不适用于此文件类型。使用“下载”在本地打开它。',
     download: '下载',
     close: '关闭',
+    pdfOpensInNewTab: 'PDF 会在新标签页中用浏览器自带的 PDF 查看器打开。你也可以下载该文件。',
+    openInNewTab: '在新标签页中打开',
   },
   search: {
     page: {

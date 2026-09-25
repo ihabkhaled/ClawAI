@@ -3664,6 +3664,9 @@ export const th: TranslationDictionary = {
     unsupported: 'ดูตัวอย่างไม่พร้อมใช้งานสำหรับไฟล์ประเภทนี้ใช้ดาวน์โหลดเพื่อเปิดในเครื่อง',
     download: 'ดาวน์โหลด',
     close: 'ปิด',
+    pdfOpensInNewTab:
+      'ไฟล์ PDF จะเปิดในโปรแกรมดู PDF ของเบราว์เซอร์ในแท็บใหม่ คุณสามารถดาวน์โหลดไฟล์ได้เช่นกัน',
+    openInNewTab: 'เปิดในแท็บใหม่',
   },
   search: {
     page: {
