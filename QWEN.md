@@ -8,6 +8,10 @@ to canonical sources. **Canonical wins on conflict** (see below).
 ClawAI: 18 NestJS services + Next.js 16 frontend + 6 shared packages (npm
 workspaces). RabbitMQ `claw.events`; nginx proxies `/api/v1/*`.
 
+Product: **"Every AI, one workspace."** Positioning is canonical in
+`docs/01-executive-context/product-vision.md`; flagships, traced to code, in
+`docs/02-business-product/flagship-features.md` (ADR-126). Link, never restate.
+
 ## Canonical authority (higher wins)
 
 1. `CLAUDE.md` 2. `rules/00-non-negotiable-rules.md` 3. `context/architecture-map.md`

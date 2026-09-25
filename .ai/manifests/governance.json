@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 33953,
+      "bytes": 34644,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 6646,
+      "bytes": 6872,
       "file": "CODEX.md"
     },
     {
-      "bytes": 28182,
+      "bytes": 28408,
       "file": "cursor.md"
     },
     {
-      "bytes": 10239,
+      "bytes": 10473,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 3414,
+      "bytes": 3583,
       "file": ".cursorrules"
     }
   ],
@@ -329,7 +329,7 @@
   ],
   "skills": [
     {
-      "bytes": 31069,
+      "bytes": 31438,
       "file": "skills/00-index.md"
     },
     {
@@ -479,6 +479,10 @@
     {
       "bytes": 5500,
       "file": "skills/change-a-transactional-email.md"
+    },
+    {
+      "bytes": 4962,
+      "file": "skills/change-the-product-positioning.md"
     },
     {
       "bytes": 4242,

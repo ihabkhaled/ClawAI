@@ -9,7 +9,10 @@
 
 ## What ClawAI is
 
-A **local-first AI orchestration platform**. It routes chat, image, file, and
+Product: **"Every AI, one workspace"** — positioning is canonical in
+[`docs/01-executive-context/product-vision.md`](../docs/01-executive-context/product-vision.md)
+([ADR-126](../docs/13-adr/adr-126-every-ai-one-workspace-positioning.md)).
+Architecturally, a **local-first AI orchestration platform**. It routes chat, image, file, and
 research work across cloud AI providers and local runtimes (Ollama, llama.cpp,
 ComfyUI, Stable Diffusion), with memory, context packs, workspace connectors,
 and a desktop agent — all behind one authenticated gateway.

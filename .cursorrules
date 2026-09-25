@@ -1,5 +1,8 @@
 # ClawAI — Cursor rules (compact router)
 
+Product: "Every AI, one workspace." — positioning in docs/01-executive-context/product-vision.md,
+flagships in docs/02-business-product/flagship-features.md (ADR-126).
+
 Do NOT invent repository facts. Before editing, run:
   npm run knowledge:context -- --task="<task>"
 and read .ai/local/current-context.md.

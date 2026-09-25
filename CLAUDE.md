@@ -12,6 +12,9 @@ moved to.
 
 ## Identity
 
+**"Every AI, one workspace."** Positioning: [`docs/01-executive-context/product-vision.md`](docs/01-executive-context/product-vision.md) ·
+flagships: [`docs/02-business-product/flagship-features.md`](docs/02-business-product/flagship-features.md) ([ADR-126](docs/13-adr/adr-126-every-ai-one-workspace-positioning.md)).
+
 Local-first AI orchestration platform. 18 NestJS services + Next.js 16 frontend +
 6 shared packages (npm workspaces). 14 PostgreSQL (pgvector) + MongoDB + Redis +
 RabbitMQ (`claw.events`, topic exchange) + Ollama. Nginx terminates TLS on 443 and
@@ -221,6 +224,7 @@ Full checklist with rationale: [`rules/05-infra-rules.md`](rules/05-infra-rules.
 | Model catalog                                                   | [`docs/03-architecture/model-catalog-architecture.md`](docs/03-architecture/model-catalog-architecture.md)                                                                                                                                                                                                   |
 | Runtime progress / SSE                                          | [`docs/03-architecture/runtime-progress.md`](docs/03-architecture/runtime-progress.md)                                                                                                                                                                                                                       |
 | Billing, subscriptions, quotas, threat model                    | [`docs/03-architecture/billing-threat-model.md`](docs/03-architecture/billing-threat-model.md)                                                                                                                                                                                                               |
+| Product positioning, flagships, requirements, drift             | [`docs/01-executive-context/product-vision.md`](docs/01-executive-context/product-vision.md) · [`docs/02-business-product/flagship-features.md`](docs/02-business-product/flagship-features.md) · [`skills/change-the-product-positioning.md`](skills/change-the-product-positioning.md)                     |
 | The money NUMBERS: plan allowances, margin, credit terms        | [`docs/business/`](docs/business/README.md)                                                                                                                                                                                                                                                                  |
 | Operational metrics, Prometheus, what is up right now           | [`docs/08-runtime-devops/metrics-and-dashboards.md`](docs/08-runtime-devops/metrics-and-dashboards.md) · [ADR-113](docs/13-adr/adr-113-prometheus-for-operational-metrics.md)                                                                                                                                |
 | Nginx reference                                                 | [`docs/08-runtime-devops/nginx-reference.md`](docs/08-runtime-devops/nginx-reference.md)                                                                                                                                                                                                                     |

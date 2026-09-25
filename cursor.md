@@ -2,6 +2,10 @@
 
 ## Scope
 
+Product: **"Every AI, one workspace."** Positioning is canonical in
+`docs/01-executive-context/product-vision.md`; flagships, traced to code, in
+`docs/02-business-product/flagship-features.md` (ADR-126). Link, never restate.
+
 This file is the authoritative guide for **Cursor** (and any other IDE-integrated AI coding agent) working on the ClawAI codebase. It mirrors the rules in `CLAUDE.md` but is optimized for Cursor's editing-focused surface.
 
 If you are Cursor, read this file BEFORE making any change. Also read the root `CLAUDE.md` — the rules there apply to every AI agent equally. Differences between the two files are tooling-specific only; the engineering standards, mindsets, and constraints are identical.

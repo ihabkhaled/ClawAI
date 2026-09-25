@@ -76,3 +76,32 @@ number. Link the ADR from the memory entry that lives with its consequences.
 
 **Related.** [`../docs/13-adr/`](../docs/13-adr/);
 [`../docs/exceptions/README.md`](../docs/exceptions/README.md).
+
+---
+
+### Positioning copy drifts silently, and commit subjects overclaim (2026-09-26)
+
+**What happened.** The owner repositioned ClawAI as "Every AI, one workspace"
+(ADR-126). The old positioning lived in eight places — the README, the vision,
+`CLAUDE.md`, every router, the generated bootstrap, the docs hubs — each a
+separate copy, the oldest still saying the product "does not browse the web".
+Auditing the flagships against the code (not the commit log) changed the
+wording of a third of them: whole-thread export is Markdown only, one-hour
+download expiry covers AI-made files only, the scraper sidecars are off by
+default, key-credit preflight is OpenRouter only, and "teams" has no SSO and no
+multi-member account. The same audit found an unchecked-membership hole in the
+coding-agent fleet API (REQ-SEC-001).
+
+**The durable lesson.** A product claim is a fact with one home and an evidence
+path. A commit subject says what someone meant to ship, not what is wired.
+
+**How to apply.** Change positioning with
+[`skills/change-the-product-positioning.md`](../skills/change-the-product-positioning.md):
+audit each claim to a caller, write the canonical homes, then link from
+everywhere else. Record what is missing in the requirements register instead of
+softening it into the copy.
+
+**Related.** [ADR-126](../docs/13-adr/adr-126-every-ai-one-workspace-positioning.md) ·
+[flagship catalog](../docs/02-business-product/flagship-features.md) ·
+[requirements register](../docs/02-business-product/requirements-register.md) ·
+[drift log](../docs/02-business-product/drift-log.md).
