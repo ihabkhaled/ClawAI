@@ -331,7 +331,11 @@ describe('InThreadComparePanel — voice/video recorder', () => {
     expect(screen.getByTestId('voice-video-recorder-video')).toBeEnabled();
   });
 
-  it('dims the triggers only when EVERY selected model lacks the capability', () => {
+  // Batch 10: the recorder no longer asks the selected lanes. A text-only lane
+  // still gets a voice note (transcribed out of band) and a video (frames +
+  // transcript), so both triggers stay live while the catalog can transcribe
+  // and the plan allows video.
+  it('keeps both triggers live for a text-only lane when transcription exists', () => {
     render(
       withQueryClient(
         <InThreadComparePanel
@@ -342,8 +346,8 @@ describe('InThreadComparePanel — voice/video recorder', () => {
         />,
       ),
     );
-    expect(screen.getByTestId('voice-video-recorder-audio')).toBeDisabled();
-    expect(screen.getByTestId('voice-video-recorder-video')).toBeDisabled();
+    expect(screen.getByTestId('voice-video-recorder-audio')).toBeEnabled();
+    expect(screen.getByTestId('voice-video-recorder-video')).toBeEnabled();
   });
 
   it('opens the consent dialog — it ships inside the recorder, not the panel', async () => {

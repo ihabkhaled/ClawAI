@@ -42,8 +42,9 @@ export type WindowWithWebkitAudioContext = typeof globalThis & {
 };
 
 /**
- * What the currently selected model can be handed. Both default to TRUE when
- * the model is unknown — see useModelMediaCapabilities.
+ * Whether the composer's recorder may produce each kind of note. Not a
+ * property of the selected chat model any more — see useModelMediaCapabilities.
+ * Both default to TRUE when the answer is unknown.
  */
 export type ModelMediaCapabilities = {
   canSendAudio: boolean;

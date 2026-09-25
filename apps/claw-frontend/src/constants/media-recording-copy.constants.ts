@@ -13,10 +13,17 @@ export const MEDIA_RECORDING_ERROR_MESSAGE_KEYS: Readonly<Record<MediaRecordingE
   [MediaRecordingError.EmptyRecording]: 'chat.recorder.errorEmptyRecording',
 };
 
-/** Why a recorder trigger is dimmed. Dimmed, never hidden — see the component. */
+/**
+ * Why a recorder trigger is dimmed. Dimmed, never hidden — see the component.
+ *
+ * Neither reason is about the selected chat model (ADR-120 batch 10): audio is
+ * always transcribed out of band, so the mic dims only when no transcription
+ * provider exists; video is processed for any model, so the camera dims only
+ * when the plan's `maxVideoSeconds` is 0.
+ */
 export const MEDIA_RECORDING_UNSUPPORTED_KEY = 'chat.recorder.unsupportedBrowser';
-export const MEDIA_RECORDING_AUDIO_BLOCKED_KEY = 'chat.recorder.audioNotSupportedByModel';
-export const MEDIA_RECORDING_VIDEO_BLOCKED_KEY = 'chat.recorder.videoNotSupportedByModel';
+export const MEDIA_RECORDING_AUDIO_BLOCKED_KEY = 'mediaUi.recorder.noTranscription';
+export const MEDIA_RECORDING_VIDEO_BLOCKED_KEY = 'mediaUi.recorder.videoDisabledByPlan';
 
 /**
  * Consent-dialog copy, per recording kind.

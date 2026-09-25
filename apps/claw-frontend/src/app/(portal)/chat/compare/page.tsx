@@ -23,7 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
-import { useCompareMediaCapabilities } from '@/hooks/chat/use-compare-media-capabilities';
+import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
 
 export default function ComparePage() {
@@ -64,9 +64,9 @@ export default function ComparePage() {
     clearUpgradeFeature,
   } = useParallelComparePage();
 
-  // Multi-model gating: see useCompareMediaCapabilities. The recording goes to
-  // every lane, so it stays enabled unless no selected model can read it.
-  const mediaCapabilities = useCompareMediaCapabilities(selectedModels);
+  // Recorder gating is model-independent: see useModelMediaCapabilities. The
+  // recording goes to every lane and each lane gets the transcript / frames.
+  const mediaCapabilities = useModelMediaCapabilities();
   const planFeatures = usePlanFeatures();
   const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);

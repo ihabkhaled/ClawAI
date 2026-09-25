@@ -5,6 +5,10 @@ import {
   FILE_DELIVERY_MODE_LABEL_KEYS,
   FILE_DELIVERY_MODES,
 } from '@/constants';
+import {
+  FILE_DELIVERY_REASON_FALLBACK_KEY,
+  FILE_DELIVERY_REASON_LABEL_KEYS,
+} from '@/constants/file-delivery-reason.constants';
 import type { FileDeliveryMode } from '@/enums';
 import type {
   ChatMessage,
@@ -63,6 +67,13 @@ export function buildFileDeliveryBadges(
   return badges;
 }
 
+// The localized sentence for a backend `file_delivery.reason.*` key. A reason
+// this build does not know (a newer chat-service) gets the generic fallback —
+// the raw key never reaches the user.
+export function getFileDeliveryReasonLabel(reason: string, t: FileDeliveryTranslator): string {
+  return t(FILE_DELIVERY_REASON_LABEL_KEYS.get(reason) ?? FILE_DELIVERY_REASON_FALLBACK_KEY);
+}
+
 // Build the multi-line `title` tooltip text for the chip strip: first line is
 // the localised header, subsequent lines list each file with its mode label
 // and optional reason. Returns a single newline-joined string suitable for
@@ -74,7 +85,10 @@ export function buildFileDeliveryTooltip(
   const header = t('compare.delivery.tooltip');
   const lines = delivery.map((entry) => {
     const modeLabel = getFileDeliveryModeLabel(entry.mode, t);
-    const reasonSuffix = entry.reason && entry.reason.length > 0 ? ` — ${entry.reason}` : '';
+    const reasonSuffix =
+      entry.reason !== undefined && entry.reason.length > 0
+        ? ` — ${getFileDeliveryReasonLabel(entry.reason, t)}`
+        : '';
     const helperSuffix =
       entry.helperProvider !== undefined && entry.helperModel !== undefined
         ? ` — ${entry.helperProvider}/${entry.helperModel}`

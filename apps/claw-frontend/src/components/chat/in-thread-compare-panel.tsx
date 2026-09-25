@@ -11,7 +11,7 @@ import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useCompareMediaCapabilities } from '@/hooks/chat/use-compare-media-capabilities';
+import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import type { InThreadComparePanelProps } from '@/types';
 
 export function InThreadComparePanel({
@@ -47,9 +47,9 @@ export function InThreadComparePanel({
   onIngestFiles,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
-  // Multi-model gating: see useCompareMediaCapabilities. One recording goes to
-  // every lane, so the buttons stay live unless no selected model can read it.
-  const mediaCapabilities = useCompareMediaCapabilities(selectedModels);
+  // Recorder gating is model-independent: see useModelMediaCapabilities. The
+  // recording goes to every lane and each lane gets the transcript / frames.
+  const mediaCapabilities = useModelMediaCapabilities();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

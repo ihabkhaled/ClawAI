@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -604,8 +605,6 @@ export const hi: TranslationDictionary = {
     recorder: {
       recordVoice: 'वॉइस नोट रिकॉर्ड करें',
       recordVideo: 'वीडियो नोट रिकॉर्ड करें',
-      audioNotSupportedByModel: 'चयनित मॉडल ऑडियो नहीं पढ़ सकता',
-      videoNotSupportedByModel: 'चयनित मॉडल वीडियो नहीं पढ़ सकता',
       unsupportedBrowser: 'यह ब्राउज़र ऑडियो या वीडियो रिकॉर्ड नहीं कर सकता',
       recordingGroupLabel: 'रिकॉर्डिंग नियंत्रण',
       recordingElapsed: 'रिकॉर्डिंग {time}',
@@ -4011,6 +4010,7 @@ export const hi: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
   narration: NARRATION_TRANSLATIONS.hi,
+  mediaUi: MEDIA_UI_TRANSLATIONS.hi,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.hi,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.hi,
   adminBilling: {

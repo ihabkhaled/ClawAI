@@ -172,16 +172,25 @@ per-chunk. `FilesService.uploadFile` and `completeChunkedUpload` now share one
 
 Three decisions that will look arbitrary later:
 
-- **A model that cannot take audio gets a DIMMED button, not a hidden one.**
-  Hiding a control teaches nothing; a dimmed one with a reason in its
-  `title`/`aria-label` says why the model in front of you will not listen.
-- **Unknown capability means ENABLED.** A local Ollama model is not a connector
-  row at all, so its flags are absent rather than false. Dimming on absence
-  would disable the button for most local setups for no visible reason; a clear
-  server error beats a control that is greyed out and unexplained.
-- **`canSendVideo` comes from `supportsVision`.** There is no `supportsVideo`
-  anywhere in the stack — native video understanding rides on the vision flag,
-  which is already how routing treats it.
+- **The recorder does NOT ask the selected chat model (batch 10b).** Every chat
+  model takes a voice note (audio is transcribed out of band, the transcript is
+  framed as speech) and every model takes a video (native on video-capable
+  Gemini, else frames + transcript). So `useModelMediaCapabilities()` takes no
+  arguments and serves chat, the nine labs and both Compare surfaces
+  (`useCompareMediaCapabilities` was deleted):
+  - mic: enabled while ANY `available-models` row has `supportsAudio` (or the
+    list is empty / unavailable); dimmed reason `mediaUi.recorder.noTranscription`;
+  - camera: enabled unless the plan's `maxVideoSeconds === 0` (read from the
+    existing `useEntitlements` query, never a second fetch); dimmed reason
+    `mediaUi.recorder.videoDisabledByPlan`. `supportsVision` plays no part.
+    The rule lives in `utilities/media-capabilities.utility.ts#resolveMediaCapabilities`.
+- **A blocked control is DIMMED, not hidden.** Hiding a control teaches
+  nothing; a dimmed one with a reason in its `title`/`aria-label` says why.
+- **Unknown means ENABLED.** An empty catalog, a row without the flag, or
+  entitlements still loading all leave the button live; a clear server error
+  beats a control that is greyed out and unexplained.
+- **The catalog's video flag is `supportsVideoInput`** (connector-service,
+  batch 7). It drives the model-picker "Video" badge, not the recorder.
 
 **The recording length is capped** (`MEDIA_RECORDING_MAX_MS`, 5 minutes) — in
 the browser only. The real limits, in order:

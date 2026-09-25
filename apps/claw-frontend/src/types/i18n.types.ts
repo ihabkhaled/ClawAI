@@ -557,8 +557,6 @@ export type TranslationDictionary = {
     recorder: {
       recordVoice: string;
       recordVideo: string;
-      audioNotSupportedByModel: string;
-      videoNotSupportedByModel: string;
       unsupportedBrowser: string;
       recordingGroupLabel: string;
       recordingElapsed: string;
@@ -3854,6 +3852,7 @@ export type TranslationDictionary = {
   };
   routerTrace: RouterTraceLocaleTranslation;
   narration: NarrationLocaleTranslation;
+  mediaUi: MediaUiLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
   adminDeployment: {
@@ -6214,4 +6213,70 @@ export type UseTranslationReturn = {
   t: TranslateFunction;
   locale: Locale;
   dir: Direction;
+};
+
+/**
+ * Multimodal composer + picker copy (see media-ui-translations.ts): recorder
+ * dim reasons, model capability badges, attachment chip states, file-delivery
+ * reasons, image-card status and the video thumbnail.
+ */
+export type MediaUiLocaleTranslation = {
+  recorder: {
+    noTranscription: string;
+    videoDisabledByPlan: string;
+  };
+  capability: {
+    listLabel: string;
+    vision: string;
+    audioInput: string;
+    videoInput: string;
+    imageOutput: string;
+  };
+  attachmentState: {
+    listLabel: string;
+    uploading: string;
+    uploaded: string;
+    processing: string;
+    ready: string;
+    failed: string;
+    unsupported: string;
+    processingHint: string;
+    uploadFailedReason: string;
+    processingFailedReason: string;
+    unsupportedReason: string;
+    remove: string;
+  };
+  deliveryReason: {
+    noVision: string;
+    unsupportedMime: string;
+    noVideoInput: string;
+    noImageBytes: string;
+    stillProcessing: string;
+    failedProcessing: string;
+    truncated: string;
+    visionHelperFailed: string;
+    visionHelperRefused: string;
+    helperVisionPlan: string;
+    visionHelperLimit: string;
+    videoPlanLimit: string;
+    videoFramesUnavailable: string;
+    videoFramesNoHelper: string;
+    videoFramesHelperPlan: string;
+    unknown: string;
+  };
+  imageStatus: {
+    queued: string;
+    starting: string;
+    generating: string;
+    finalizing: string;
+    completed: string;
+    failed: string;
+    timedOut: string;
+    cancelled: string;
+    preparing: string;
+  };
+  video: {
+    thumbnailAlt: string;
+    duration: string;
+  };
 };

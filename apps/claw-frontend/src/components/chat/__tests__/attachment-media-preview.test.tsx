@@ -22,6 +22,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: false,
       error: null,
       hasStarted: false,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play,
     });
 
@@ -40,6 +43,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: false,
       error: null,
       hasStarted: false,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play: vi.fn(),
     });
 
@@ -57,6 +63,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: false,
       error: null,
       hasStarted: true,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play: vi.fn(),
     });
 
@@ -78,6 +87,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: false,
       error: null,
       hasStarted: true,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play: vi.fn(),
     });
 
@@ -98,6 +110,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: true,
       error: null,
       hasStarted: true,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play: vi.fn(),
     });
 
@@ -115,6 +130,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: false,
       error: new Error('boom'),
       hasStarted: false,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play: vi.fn(),
     });
 
@@ -136,6 +154,9 @@ describe('AttachmentMediaPreview', () => {
       isLoading: false,
       error: null,
       hasStarted: true,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
       play: vi.fn(),
       download,
     });
@@ -159,6 +180,69 @@ describe('AttachmentMediaPreview', () => {
       'f1',
       'voice-note.webm',
       'audio/webm',
+      undefined,
     );
+  });
+
+  it('shows a processed video thumbnail and length before playback, with Play over it', () => {
+    mockUseAttachmentMediaPreview.mockReturnValue({
+      t,
+      blobUrl: null,
+      isLoading: false,
+      error: null,
+      hasStarted: false,
+      posterSrc: 'data:image/jpeg;base64,dGh1bWI=',
+      durationLabel: 'mediaUi.video.duration',
+      posterAlt: 'mediaUi.video.thumbnailAlt',
+      play: vi.fn(),
+      download: vi.fn(),
+    });
+    const media = { durationMs: 42_000, thumbnailBase64: 'dGh1bWI=' };
+
+    render(
+      <AttachmentMediaPreview
+        fileId="f1"
+        filename="clip.mp4"
+        kind={AttachmentPreviewKind.Video}
+        media={media}
+      />,
+    );
+
+    const poster = screen.getByTestId('attachment-video-poster');
+    expect(poster).toHaveAttribute('src', 'data:image/jpeg;base64,dGh1bWI=');
+    expect(poster).toHaveAttribute('alt', 'mediaUi.video.thumbnailAlt');
+    expect(screen.getByTestId('attachment-video-duration')).toHaveTextContent(
+      'mediaUi.video.duration',
+    );
+    expect(screen.getByRole('button', { name: 'chat.attachment.play' })).toBeInTheDocument();
+    expect(screen.queryByTestId('attachment-media-preview')).not.toBeInTheDocument();
+    expect(mockUseAttachmentMediaPreview).toHaveBeenLastCalledWith(
+      'f1',
+      'clip.mp4',
+      undefined,
+      media,
+    );
+  });
+
+  it('falls back to the plain play card when a video has no thumbnail', () => {
+    mockUseAttachmentMediaPreview.mockReturnValue({
+      t,
+      blobUrl: null,
+      isLoading: false,
+      error: null,
+      hasStarted: false,
+      posterSrc: null,
+      durationLabel: null,
+      posterAlt: '',
+      play: vi.fn(),
+      download: vi.fn(),
+    });
+
+    render(
+      <AttachmentMediaPreview fileId="f1" filename="clip.mp4" kind={AttachmentPreviewKind.Video} />,
+    );
+
+    expect(screen.queryByTestId('attachment-video-thumbnail')).not.toBeInTheDocument();
+    expect(screen.getByTestId('attachment-media-preview')).toBeInTheDocument();
   });
 });

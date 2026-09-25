@@ -55,6 +55,7 @@ export function MessageAttachmentItem({ fileId }: MessageAttachmentItemProps): R
         filename={meta.file.filename}
         mimeType={meta.file.mimeType}
         kind={kind}
+        media={meta.file.extractionMetadata?.media}
       />
     );
   }

@@ -38,6 +38,7 @@ export function groupedModelsToPickerGroups(
     options: group.models.map((model) => ({
       value: encodeModelValue(model.provider, model.model),
       label: model.displayName,
+      capabilities: model.capabilities,
       specifications: buildModelSpecifications(
         model.provider,
         model.specifications,

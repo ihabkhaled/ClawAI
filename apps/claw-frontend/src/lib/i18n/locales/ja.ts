@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -608,8 +609,6 @@ export const ja: TranslationDictionary = {
     recorder: {
       recordVoice: '音声メモを録音',
       recordVideo: '動画メモを録画',
-      audioNotSupportedByModel: '選択したモデルは音声を読み取れません',
-      videoNotSupportedByModel: '選択したモデルは動画を読み取れません',
       unsupportedBrowser: 'このブラウザーは音声や動画を録画できません',
       recordingGroupLabel: '録音コントロール',
       recordingElapsed: '録音中 {time}',
@@ -4025,6 +4024,7 @@ export const ja: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   narration: NARRATION_TRANSLATIONS.ja,
+  mediaUi: MEDIA_UI_TRANSLATIONS.ja,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ja,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ja,
   adminBilling: {

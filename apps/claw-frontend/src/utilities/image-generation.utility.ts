@@ -1,33 +1,22 @@
 import type { RuntimeProgressStage } from '@claw/shared-types';
 
 import {
+  IMAGE_STATUS_LABEL_KEYS,
+  IMAGE_STATUS_PREPARING_KEY,
+} from '@/constants/image-generation-status.constants';
+import {
   IMAGE_RUNTIME_STAGE_FALLBACK_KEY,
   IMAGE_RUNTIME_STAGE_LABEL_KEYS,
 } from '@/constants/image.constants';
 import { ImageGenerationStatus } from '@/enums';
 import type { ImageGeneration } from '@/types/image-generation.types';
 
-export function getImageStatusLabel(status?: ImageGeneration['status']): string {
-  switch (status) {
-    case ImageGenerationStatus.QUEUED:
-      return 'Queued';
-    case ImageGenerationStatus.STARTING:
-      return 'Starting';
-    case ImageGenerationStatus.GENERATING:
-      return 'Generating image';
-    case ImageGenerationStatus.FINALIZING:
-      return 'Finalizing image';
-    case ImageGenerationStatus.FAILED:
-      return 'Generation failed';
-    case ImageGenerationStatus.TIMED_OUT:
-      return 'Generation timed out';
-    case ImageGenerationStatus.CANCELLED:
-      return 'Generation cancelled';
-    case ImageGenerationStatus.COMPLETED:
-      return 'Completed';
-    default:
-      return 'Preparing image';
-  }
+/**
+ * The translation key for the image card's status line. Returns a KEY, not
+ * text: the card calls `t()` on it, so every locale gets its own words.
+ */
+export function getImageStatusLabelKey(status?: ImageGeneration['status']): string {
+  return status === undefined ? IMAGE_STATUS_PREPARING_KEY : IMAGE_STATUS_LABEL_KEYS[status];
 }
 
 export function resolveImageUrl(url: string, apiBaseUrl: string): string {

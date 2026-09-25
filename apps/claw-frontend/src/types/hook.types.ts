@@ -23,6 +23,10 @@ import type { ProfileIdentityFormValues } from '@/lib/validation/profile.schema'
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type { LoginFailureCopy } from '@/types/auth.types';
+import type {
+  ComposerUploadEntry,
+  UseComposerAttachmentChipsReturn,
+} from '@/types/composer-attachment.types';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
 import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
@@ -527,6 +531,10 @@ export type UseComposerAttachmentsReturn = {
   pendingCount: number;
   /** The most recently uploading file's percent/ETA/speed, null when idle. */
   progress: UploadProgressSnapshot | null;
+  /** One entry per ingested file — what the per-attachment chips are built from. */
+  uploads: ComposerUploadEntry[];
+  /** Drop a failed / unsupported upload's chip. */
+  dismissUpload: (localId: string) => void;
 };
 
 export type UseComposerDropzoneParams = {
@@ -599,6 +607,8 @@ export type UseMessageComposerReturn = {
   onFormSubmit: (e: React.FormEvent) => void;
   onIngestFiles: (files: FileList | File[]) => void;
   toolbarProps: ComposerToolbarProps;
+  /** One chip per attachment: uploading → processing → ready, or failed. */
+  attachmentChips: UseComposerAttachmentChipsReturn;
 };
 
 export type UseMessageComposerStateReturn = {
@@ -620,6 +630,8 @@ export type UseMessageComposerStateReturn = {
   ingestFiles: (files: FileList | File[]) => void;
   isUploadingAttachment: boolean;
   attachmentUploadProgress: UploadProgressSnapshot | null;
+  attachmentUploads: ComposerUploadEntry[];
+  dismissAttachmentUpload: (localId: string) => void;
 };
 
 // Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.

@@ -184,3 +184,5 @@ export { MediaRecordingError } from './media-recording-error.enum';
 export { AttachmentPreviewKind } from './attachment-preview-kind.enum';
 export { AttachmentPendingAction } from './attachment-pending-action.enum';
 export { MessageSpeechStatus } from './message-speech-status.enum';
+export { ModelCapabilityBadge } from './model-capability-badge.enum';
+export { ComposerAttachmentState } from './composer-attachment-state.enum';

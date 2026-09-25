@@ -28,6 +28,9 @@ vi.mock('@/components/chat/daily-token-indicator', () => ({
 vi.mock('@/hooks/chat/use-available-connector-models', () => ({
   useAvailableConnectorModels: () => ({ models: [], isLoading: false }),
 }));
+vi.mock('@/hooks/plans/use-entitlements', () => ({
+  useEntitlements: () => ({ entitlements: null, isLoading: false }),
+}));
 vi.mock('@/hooks/auth/use-plan-features', () => ({
   usePlanFeatures: () => ({ has: () => true, isAdmin: false, isLoading: false }),
 }));

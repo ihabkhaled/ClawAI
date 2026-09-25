@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 
 const mockUpload = vi.fn();
@@ -122,5 +123,57 @@ describe('useComposerAttachments', () => {
       expect(result.current.isUploading).toBe(false);
     });
     expect(onChange).toHaveBeenCalledWith(['file-1', 'file-2']);
+  });
+
+  it('tracks each file: Uploading, then Uploaded with its id', async () => {
+    mockUpload.mockResolvedValue('file-7');
+    const { result } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: [], onChange: vi.fn(), disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('shot.png')]);
+    });
+    expect(result.current.uploads).toEqual([
+      expect.objectContaining({
+        filename: 'shot.png',
+        state: ComposerAttachmentState.Uploading,
+        fileId: null,
+      }),
+    ]);
+
+    await waitFor(() => {
+      expect(result.current.uploads[0]).toEqual(
+        expect.objectContaining({ state: ComposerAttachmentState.Uploaded, fileId: 'file-7' }),
+      );
+    });
+  });
+
+  it('keeps a failed upload as a Failed entry WITH its reason until dismissed', async () => {
+    mockUpload.mockRejectedValue(new Error('network error'));
+    const { result } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: [], onChange: vi.fn(), disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('shot.png')]);
+    });
+    await waitFor(() => {
+      expect(result.current.uploads[0]).toEqual(
+        expect.objectContaining({
+          state: ComposerAttachmentState.Failed,
+          reason: 'network error',
+          fileId: null,
+        }),
+      );
+    });
+
+    const localId = result.current.uploads[0]?.localId ?? '';
+    act(() => {
+      result.current.dismissUpload(localId);
+    });
+    expect(result.current.uploads).toEqual([]);
   });
 });

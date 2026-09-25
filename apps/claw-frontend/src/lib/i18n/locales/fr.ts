@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -613,8 +614,6 @@ export const fr: TranslationDictionary = {
     recorder: {
       recordVoice: 'Enregistrer une note vocale',
       recordVideo: 'Enregistrer une note vidéo',
-      audioNotSupportedByModel: 'Le modèle sélectionné ne peut pas lire l’audio',
-      videoNotSupportedByModel: 'Le modèle sélectionné ne peut pas lire la vidéo',
       unsupportedBrowser: 'Ce navigateur ne peut pas enregistrer d’audio ni de vidéo',
       recordingGroupLabel: 'Commandes d’enregistrement',
       recordingElapsed: 'Enregistrement {time}',
@@ -4077,6 +4076,7 @@ export const fr: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   narration: NARRATION_TRANSLATIONS.fr,
+  mediaUi: MEDIA_UI_TRANSLATIONS.fr,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fr,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fr,
   adminBilling: {

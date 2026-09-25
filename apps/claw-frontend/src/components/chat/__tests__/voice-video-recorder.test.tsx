@@ -57,27 +57,27 @@ beforeEach(() => {
 });
 
 describe('VoiceVideoRecorder', () => {
-  it('dims and disables the microphone when the model cannot take audio', () => {
+  it('dims and disables the microphone when no transcription is available', () => {
     render(<VoiceVideoRecorder canSendAudio={false} canSendVideo onRecorded={vi.fn()} />);
 
     const mic = screen.getByTestId('voice-video-recorder-audio');
     expect(mic).toBeDisabled();
     expect(mic.classList.contains('opacity-50')).toBe(true);
     // The reason is stated, not implied by absence.
-    expect(mic).toHaveAttribute('title', 'chat.recorder.audioNotSupportedByModel');
-    expect(mic).toHaveAttribute('aria-label', 'chat.recorder.audioNotSupportedByModel');
+    expect(mic).toHaveAttribute('title', 'mediaUi.recorder.noTranscription');
+    expect(mic).toHaveAttribute('aria-label', 'mediaUi.recorder.noTranscription');
 
     // The control is still THERE — dimmed, never hidden.
     expect(screen.getByTestId('voice-video-recorder-video')).toBeEnabled();
   });
 
-  it('dims and disables the camera when the model cannot take video', () => {
+  it('dims and disables the camera when the plan disables video', () => {
     render(<VoiceVideoRecorder canSendAudio canSendVideo={false} onRecorded={vi.fn()} />);
 
     const camera = screen.getByTestId('voice-video-recorder-video');
     expect(camera).toBeDisabled();
     expect(camera.classList.contains('opacity-50')).toBe(true);
-    expect(camera).toHaveAttribute('title', 'chat.recorder.videoNotSupportedByModel');
+    expect(camera).toHaveAttribute('title', 'mediaUi.recorder.videoDisabledByPlan');
     expect(screen.getByTestId('voice-video-recorder-audio')).toBeEnabled();
   });
 

@@ -73,6 +73,31 @@ reads as "there is more this way". It costs no height, has an RTL counterpart,
 and uses `mask-image` rather than a gradient overlay because an overlay would
 need the card's own background colour and that changes with the theme.
 
+### Attachment chips (multimodal batch 10b)
+
+`ComposerAttachmentChips` sits above the textarea and shows ONE chip per
+attachment: **Uploading → Uploaded → Processing → Ready**, or **Failed** /
+**Not supported**. Every chip spells its state out in words next to a distinct
+glyph (colour only repeats it), a failure shows its reason as visible text
+(`"The file could not be processed: <backend detail>"`), Processing says
+sending is still allowed, and the strip is `aria-live="polite"`.
+
+- `useComposerAttachments` now keeps a per-file ledger
+  (`useComposerUploadEntries`: `uploads` + `dismissUpload`) instead of only a
+  pending count. A failed / unsupported (HTTP 415, or refused by
+  `uploadFileSchema`) upload stays as a chip until dismissed.
+- Selected files take their state from `useFiles()` — the SAME query the
+  paperclip picker mounts, polling only while a file is PENDING/PROCESSING.
+  No second poller. An id not on the first page reads **Uploaded**, nothing more.
+- **Sending while Processing is allowed and must stay allowed.** chat-service
+  waits (bounded) or tells the model the file is still processing; blocking the
+  send here would recreate the voice-note race. The chip only reports it.
+- Pure join + copy: `utilities/composer-attachment.utility.ts`. The strip wraps
+  (never scrolls) so a reason is readable at 360px; chips use logical padding
+  (`ps-`/`pe-`) for RTL.
+- Only the main chat composer renders the strip today; labs and Compare still
+  show the count badge + progress bar.
+
 The decorative globe beside the research select is hidden below `sm`. It is
 `aria-hidden` and the select next to it says "No research" in words; it was
 worth 20px of a 375px row.
@@ -121,6 +146,24 @@ and pushed the footer out through the bottom of the sheet, so the credit
 disclaimer read "Local models draw from" and stopped. The wrapper around the
 command box must also be a flex column — as a block it gave the box nothing to
 stretch against, so the box sized to its content and had its footer clipped.
+
+**Capability badges come from the row, never the provider (batch 10b).** Each
+connector row carries `capabilities: ModelCapabilityBadge[]`, derived by
+`getConnectorModelCapabilityBadges` from that row's own `supportsVision`,
+`supportsAudio` and `supportsVideoInput` (a flag must be literally `true`); the
+image-generation entries carry `ImageOutput`. `ModelCapabilityBadges` renders
+them icon-sized after the label — a distinct glyph each, a localized `title`
+tooltip and `sr-only` text (`mediaUi.capability.*`). A vision provider's
+text-only model shows no Vision badge. Local models carry none (no flags).
+
+**Delivery reasons and the video thumbnail.** The compare delivery tooltip maps
+every chat-service `file_delivery.reason.*` key through
+`FILE_DELIVERY_REASON_LABEL_KEYS` (unknown → `mediaUi.deliveryReason.unknown`,
+never the raw key; a test reads chat-service's constants file so a new backend
+reason without copy fails CI). A processed video under a sent message shows
+`extractionMetadata.media.thumbnailBase64` (already on the owner's
+`GET /files/:id` row, validated by `toVideoPosterSrc`: image MIME allow-list,
+base64 alphabet, ≤ 96 KB) with its length; otherwise the plain play card.
 
 ## The header
 

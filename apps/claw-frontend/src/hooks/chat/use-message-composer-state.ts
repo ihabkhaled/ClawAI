@@ -38,6 +38,8 @@ export const useMessageComposerState = ({
     ingestFiles,
     isUploading: isUploadingAttachment,
     progress: attachmentUploadProgress,
+    uploads: attachmentUploads,
+    dismissUpload: dismissAttachmentUpload,
   } = useComposerAttachments({
     selectedFileIds,
     onChange: setSelectedFileIds,
@@ -207,5 +209,7 @@ export const useMessageComposerState = ({
     ingestFiles,
     isUploadingAttachment,
     attachmentUploadProgress,
+    attachmentUploads,
+    dismissAttachmentUpload,
   };
 };

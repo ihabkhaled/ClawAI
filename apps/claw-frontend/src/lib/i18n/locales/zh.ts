@@ -2,6 +2,7 @@
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -581,8 +582,6 @@ export const zh: TranslationDictionary = {
     recorder: {
       recordVoice: '录制语音备注',
       recordVideo: '录制视频备注',
-      audioNotSupportedByModel: '所选模型无法读取音频',
-      videoNotSupportedByModel: '所选模型无法读取视频',
       unsupportedBrowser: '此浏览器无法录制音频或视频',
       recordingGroupLabel: '录制控件',
       recordingElapsed: '正在录制 {time}',
@@ -3874,6 +3873,7 @@ export const zh: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   narration: NARRATION_TRANSLATIONS.zh,
+  mediaUi: MEDIA_UI_TRANSLATIONS.zh,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.zh,
   adminBilling: {

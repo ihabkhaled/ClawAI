@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import type { ConnectorModel } from '@/types';
 
@@ -268,5 +269,50 @@ describe('useAvailableModels image capabilities', () => {
     const providers = providersFor([]);
 
     expect(providers).toContain('IMAGE_LOCAL');
+  });
+});
+
+describe('useAvailableModels capability badges', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseLocalModels.mockReturnValue({ models: [], isLoading: false });
+    mockUseFrontierCatalog.mockReturnValue({ data: { data: [] } });
+  });
+
+  it('badges each row from its OWN flags — never from the provider', () => {
+    mockUseAllModels.mockReturnValue({
+      models: [
+        {
+          provider: 'GEMINI',
+          modelKey: 'gemini-2.5-pro',
+          displayName: 'Gemini 2.5 Pro',
+          supportsVision: true,
+          supportsAudio: true,
+          supportsVideoInput: true,
+        },
+        {
+          provider: 'GEMINI',
+          modelKey: 'gemini-embedding',
+          displayName: 'Gemini Embedding',
+          supportsVision: false,
+          supportsAudio: false,
+          supportsVideoInput: false,
+        },
+      ],
+      isLoading: false,
+    });
+    const { result } = renderHook(() => useAvailableModels());
+    const gemini = result.current.groupedModels.find((group) => group.provider === 'GEMINI');
+
+    expect(gemini?.models.find((m) => m.model === 'gemini-2.5-pro')?.capabilities).toEqual([
+      ModelCapabilityBadge.Vision,
+      ModelCapabilityBadge.AudioInput,
+      ModelCapabilityBadge.VideoInput,
+    ]);
+    // Same (vision-capable) provider, text-only row: no Vision badge.
+    expect(gemini?.models.find((m) => m.model === 'gemini-embedding')?.capabilities).toEqual([]);
+    // Image-generation entries say they output images.
+    const image = result.current.groupedModels.find((group) => group.provider === 'IMAGE_GEMINI');
+    expect(image?.models[0]?.capabilities).toEqual([ModelCapabilityBadge.ImageOutput]);
   });
 });

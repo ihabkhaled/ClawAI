@@ -33,6 +33,10 @@ export type ConnectorModel = {
   // row, and the column has existed since audio capability landed. It was
   // simply never declared here, so the composer could not gate on it.
   supportsAudio: boolean;
+  // Native video understanding (video-capable Gemini). Spread onto the wire
+  // by `getAvailableModels` like the two above; optional because a row from a
+  // connector-service that predates the column carries no such field.
+  supportsVideoInput?: boolean;
   maxContextTokens: number | null;
   syncedAt: string;
 };

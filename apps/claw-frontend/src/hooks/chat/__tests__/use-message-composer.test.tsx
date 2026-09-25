@@ -20,6 +20,13 @@ vi.mock('@/hooks/auth/use-plan-features', () => ({
 
 // The recorder's capability gate hits the connector catalog query; this suite
 // is about layout, so the catalog is stubbed rather than wrapped in a provider.
+vi.mock('@/hooks/chat/use-composer-attachment-chips', () => ({
+  useComposerAttachmentChips: () => ({
+    chips: [],
+    listLabel: 'Attached files',
+    onRemove: () => undefined,
+  }),
+}));
 vi.mock('@/hooks/chat/use-model-media-capabilities', () => ({
   useModelMediaCapabilities: (): { canSendAudio: boolean; canSendVideo: boolean } => ({
     canSendAudio: true,

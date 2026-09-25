@@ -121,7 +121,7 @@ export {
   storeTheme,
 } from './theme.utility';
 export {
-  getImageStatusLabel,
+  getImageStatusLabelKey,
   resolveImageUrl,
   isTerminalImageStatus,
   isInProgressImageStatus,

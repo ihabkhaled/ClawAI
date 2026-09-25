@@ -5,7 +5,7 @@ import { ImageGenerationStatus } from '@/enums';
 import { useAuthenticatedImage } from '@/hooks/chat/use-authenticated-image';
 import { useImageGenerationBubbleState } from '@/hooks/chat/use-image-generation-bubble-state';
 import { useTranslation } from '@/lib/i18n';
-import { getImageStatusLabel, isInProgressImageStatus } from '@/utilities';
+import { getImageStatusLabelKey, isInProgressImageStatus } from '@/utilities';
 
 export function ImageGenerationBubble({
   generationId,
@@ -28,7 +28,7 @@ export function ImageGenerationBubble({
     <div className="my-2">
       {!generation || isInProgressImageStatus(generation.status) ? (
         <ImageLoadingState
-          status={getImageStatusLabel(generation?.status)}
+          status={t(getImageStatusLabelKey(generation?.status))}
           prompt={prompt}
           provider={generation?.provider}
           model={generation?.model}
@@ -38,7 +38,7 @@ export function ImageGenerationBubble({
       {generation?.status === ImageGenerationStatus.FAILED ||
       generation?.status === ImageGenerationStatus.TIMED_OUT ? (
         <ImageErrorState
-          status={getImageStatusLabel(generation.status)}
+          status={t(getImageStatusLabelKey(generation.status))}
           error={generation.errorMessage}
           provider={generation.provider}
           model={generation.model}

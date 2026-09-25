@@ -52,7 +52,7 @@ const delivery: FileDeliveryEntry[] = [
     provider: 'OPENAI',
     model: 'gpt-4o-mini',
     mode: FileDeliveryMode.OMITTED_NO_VISION,
-    reason: 'model has no vision capability',
+    reason: 'file_delivery.reason.no_vision',
   },
 ];
 
@@ -84,8 +84,10 @@ describe('AttachmentDeliveryChip', () => {
     expect(tooltip).toContain('notes.txt');
     expect(tooltip).toContain('spec.md');
     expect(tooltip).toContain('diagram.png');
-    // OMITTED_NO_VISION entry carries a reason — it must appear after the em-dash.
-    expect(tooltip).toContain('model has no vision capability');
+    // OMITTED_NO_VISION carries a backend reason KEY — shown as its localized
+    // sentence after the em-dash, never as the raw key.
+    expect(tooltip).toContain('— mediaUi.deliveryReason.noVision');
+    expect(tooltip).not.toContain('file_delivery.reason');
   });
 
   it('exposes an aria-label so screen readers announce the chip group', () => {

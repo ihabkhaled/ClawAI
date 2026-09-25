@@ -358,6 +358,7 @@ export type {
   UseModelPickerResult,
   ModelPickerGroup,
   ModelPickerItemProps,
+  ModelCapabilityBadgesProps,
   ModelPickerProps,
   ModelSelectorProps,
   UseModelSelectorResult,

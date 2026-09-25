@@ -1,5 +1,6 @@
 import { Send } from 'lucide-react';
 
+import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { ComposerToolbar } from '@/components/chat/composer-toolbar';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
@@ -40,6 +41,8 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
         data-rail-obstacle=""
         className="border-border/60 bg-card shadow-soft focus-within:border-primary/40 focus-within:ring-primary/15 duration-fast flex flex-col gap-1 rounded-2xl border p-2 transition-colors focus-within:ring-1 sm:p-2.5"
       >
+        <ComposerAttachmentChips {...composer.attachmentChips} />
+
         <RichPromptTextarea
           value={composer.content}
           onChange={composer.onValueChange}

@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 
+import { ModelCapabilityBadges } from '@/components/chat/model-capability-badges';
 import { CommandItem } from '@/components/ui/command';
 import type { ModelPickerItemProps } from '@/types';
 import { cn } from '@/utilities';
@@ -22,6 +23,9 @@ export function ModelPickerItem({
     >
       <Check className={cn('h-3.5 w-3.5 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
       <span className="min-w-0 flex-1 truncate">{option.label}</span>
+      {option.capabilities !== undefined ? (
+        <ModelCapabilityBadges capabilities={option.capabilities} />
+      ) : null}
       {option.specifications !== undefined && option.specifications.length > 0 ? (
         <span className="flex shrink-0 flex-wrap justify-end gap-1">
           {option.specifications.map((specification) => (

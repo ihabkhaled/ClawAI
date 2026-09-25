@@ -1,6 +1,6 @@
 import type { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum';
 
-import type { UploadedFile } from './file.types';
+import type { UploadedFile, VideoMediaSummary } from './file.types';
 import type { TranslateFunction } from './i18n.types';
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
@@ -30,6 +30,12 @@ export type UseAttachmentMediaPreviewReturn = {
   play: () => void;
   /** Saves the loaded note under its real name and extension. */
   download: () => void;
+  /** `data:` URL of the video's stored thumbnail; null when absent or unsafe. */
+  posterSrc: string | null;
+  /** Localized length label ("Length 00:42"); null when the duration is unknown. */
+  durationLabel: string | null;
+  /** Localized alt text for the poster. */
+  posterAlt: string;
 };
 
 export type UseAttachmentThumbnailReturn = {
@@ -63,6 +69,8 @@ export type AttachmentMediaPreviewProps = {
   filename: string;
   mimeType?: string;
   kind: AttachmentPreviewKind.Audio | AttachmentPreviewKind.Video;
+  /** A processed video's probe facts; drives the poster thumbnail + length label. */
+  media?: VideoMediaSummary | null;
 };
 
 export type AttachmentFilePreviewProps = {

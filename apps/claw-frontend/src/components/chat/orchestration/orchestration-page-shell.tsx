@@ -66,7 +66,7 @@ export function OrchestrationPageShell({
   t,
   className,
 }: OrchestrationPageShellProps): React.ReactElement {
-  const mediaCapabilities = useModelMediaCapabilities(selectedModel);
+  const mediaCapabilities = useModelMediaCapabilities();
   // Same gate as the chat composer (use-message-composer.ts): research is a
   // paid feature, and a lab is not an exception to that.
   const planFeatures = usePlanFeatures();

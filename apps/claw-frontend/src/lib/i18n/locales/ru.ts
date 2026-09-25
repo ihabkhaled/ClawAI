@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -609,8 +610,6 @@ export const ru: TranslationDictionary = {
     recorder: {
       recordVoice: 'Записать голосовую заметку',
       recordVideo: 'Записать видеозаметку',
-      audioNotSupportedByModel: 'Выбранная модель не может читать аудио',
-      videoNotSupportedByModel: 'Выбранная модель не может читать видео',
       unsupportedBrowser: 'Этот браузер не может записывать аудио или видео',
       recordingGroupLabel: 'Управление записью',
       recordingElapsed: 'Запись {time}',
@@ -4044,6 +4043,7 @@ export const ru: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   narration: NARRATION_TRANSLATIONS.ru,
+  mediaUi: MEDIA_UI_TRANSLATIONS.ru,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ru,
   adminBilling: {

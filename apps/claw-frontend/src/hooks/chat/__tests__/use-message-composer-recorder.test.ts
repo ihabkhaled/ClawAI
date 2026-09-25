@@ -15,6 +15,13 @@ vi.mock('@/hooks/auth/use-plan-features', () => ({
 vi.mock('@/hooks/ui/use-media-query', () => ({
   useMediaQuery: () => true,
 }));
+vi.mock('@/hooks/chat/use-composer-attachment-chips', () => ({
+  useComposerAttachmentChips: () => ({
+    chips: [],
+    listLabel: 'Attached files',
+    onRemove: () => undefined,
+  }),
+}));
 vi.mock('@/hooks/chat/use-model-media-capabilities', () => ({
   useModelMediaCapabilities: () => ({ canSendAudio: false, canSendVideo: true }),
 }));

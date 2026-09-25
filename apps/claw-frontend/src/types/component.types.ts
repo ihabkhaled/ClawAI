@@ -4,6 +4,7 @@ import type { UseFormReturn } from 'react-hook-form';
 
 import type { SidebarItem } from '@/constants';
 import type {
+  ModelCapabilityBadge,
   SseConnectionHealth,
   AiReasoningVisibility,
   AiStreamStage,
@@ -760,6 +761,8 @@ export type ModelSelection = {
   model: string;
   displayName: string;
   specifications?: string[];
+  /** From this row's own catalog flags only — see ModelCapabilityBadge. */
+  capabilities?: ModelCapabilityBadge[];
 };
 
 // Normalized shape the shared searchable ModelPicker renders — every one of
@@ -775,6 +778,11 @@ export type ModelPickerOption = {
   // what made the selected model invisible on a phone.
   shortLabel?: string;
   specifications?: string[];
+  capabilities?: ModelCapabilityBadge[];
+};
+
+export type ModelCapabilityBadgesProps = {
+  capabilities: ModelCapabilityBadge[];
 };
 
 export type ModelPickerGroup = {

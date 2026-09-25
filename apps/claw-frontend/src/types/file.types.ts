@@ -2,6 +2,22 @@ import type { FileIngestionStatus } from '@/enums';
 
 import type { ArchiveExtractionSummary } from './archive.types';
 
+/**
+ * The owner-facing slice of file-service's `extractionMetadata.media` for a
+ * processed video (VideoMediaMetadata there). GET /files/:id returns the whole
+ * row to its owner; only what the chat UI reads is typed here. The thumbnail
+ * is ≤ 480 px / ≤ 96 KB, written once by the video pipeline.
+ */
+export type VideoMediaSummary = {
+  durationMs?: number;
+  thumbnailBase64?: string | null;
+  thumbnailMimeType?: string | null;
+};
+
+export type FileExtractionMetadata = ArchiveExtractionSummary & {
+  media?: VideoMediaSummary | null;
+};
+
 export type UploadedFile = {
   id: string;
   userId: string;
@@ -18,7 +34,7 @@ export type UploadedFile = {
   childCount?: number;
   /** `CODE: reason` when extraction failed or skipped part of an archive. */
   extractionError?: string | null;
-  extractionMetadata?: ArchiveExtractionSummary | null;
+  extractionMetadata?: FileExtractionMetadata | null;
   createdAt: string;
   updatedAt: string;
   retentionExpiresAt?: string | null;

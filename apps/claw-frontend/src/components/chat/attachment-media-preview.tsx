@@ -15,12 +15,10 @@ export function AttachmentMediaPreview({
   filename,
   mimeType,
   kind,
+  media,
 }: AttachmentMediaPreviewProps): React.ReactElement {
-  const { t, blobUrl, isLoading, error, play, download } = useAttachmentMediaPreview(
-    fileId,
-    filename,
-    mimeType,
-  );
+  const { t, blobUrl, isLoading, error, play, download, posterSrc, durationLabel, posterAlt } =
+    useAttachmentMediaPreview(fileId, filename, mimeType, media);
   const kindLabel = t(
     kind === AttachmentPreviewKind.Audio
       ? 'chat.attachment.voiceNote'
@@ -55,6 +53,7 @@ export function AttachmentMediaPreview({
             controlsList="nodownload"
             autoPlay
             src={blobUrl}
+            poster={posterSrc ?? undefined}
             data-testid="attachment-video-player"
           >
             <track kind="captions" label={t('chat.attachment.noCaptionsAvailable')} />
@@ -72,6 +71,54 @@ export function AttachmentMediaPreview({
           <Download className="h-3.5 w-3.5" aria-hidden="true" />
           {t('chat.attachment.download')}
         </Button>
+      </div>
+    );
+  }
+
+  // A processed video: its stored thumbnail, the length, and Play over it.
+  if (kind === AttachmentPreviewKind.Video && posterSrc !== null) {
+    return (
+      <div
+        className="border-border bg-muted relative flex w-56 max-w-full flex-col overflow-hidden rounded-lg border"
+        data-testid="attachment-video-thumbnail"
+      >
+        <img
+          src={posterSrc}
+          alt={posterAlt}
+          className="aspect-video w-full object-cover"
+          data-testid="attachment-video-poster"
+        />
+        <div className="flex min-w-0 items-center justify-between gap-2 p-1.5">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={play}
+            disabled={isLoading}
+            aria-label={t('chat.attachment.play')}
+            className="touch:min-h-11 min-w-0 gap-1.5"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Play className="h-4 w-4" aria-hidden="true" />
+            )}
+            <span className="truncate">{isLoading ? t('chat.attachment.loading') : kindLabel}</span>
+          </Button>
+          {durationLabel === null ? null : (
+            <span
+              className="text-muted-foreground shrink-0 text-xs tabular-nums"
+              data-testid="attachment-video-duration"
+            >
+              {durationLabel}
+            </span>
+          )}
+        </div>
+        {error === null ? null : (
+          <span className="text-destructive px-2 pb-1.5 text-[10px]">
+            {t('chat.attachment.previewFailed')}
+          </span>
+        )}
       </div>
     );
   }

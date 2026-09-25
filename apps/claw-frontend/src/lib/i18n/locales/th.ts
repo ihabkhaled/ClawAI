@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -593,8 +594,6 @@ export const th: TranslationDictionary = {
     recorder: {
       recordVoice: 'บันทึกข้อความเสียง',
       recordVideo: 'บันทึกข้อความวิดีโอ',
-      audioNotSupportedByModel: 'โมเดลที่เลือกอ่านเสียงไม่ได้',
-      videoNotSupportedByModel: 'โมเดลที่เลือกอ่านวิดีโอไม่ได้',
       unsupportedBrowser: 'เบราว์เซอร์นี้บันทึกเสียงหรือวิดีโอไม่ได้',
       recordingGroupLabel: 'ตัวควบคุมการบันทึก',
       recordingElapsed: 'กำลังบันทึก {time}',
@@ -3972,6 +3971,7 @@ export const th: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   narration: NARRATION_TRANSLATIONS.th,
+  mediaUi: MEDIA_UI_TRANSLATIONS.th,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.th,
   adminBilling: {

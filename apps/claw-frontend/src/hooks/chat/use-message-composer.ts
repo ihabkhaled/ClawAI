@@ -8,6 +8,7 @@ import {
 import { MEDIA_QUERY_LG_UP } from '@/constants/media-query.constants';
 import { ComposerControlVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
+import { useComposerAttachmentChips } from '@/hooks/chat/use-composer-attachment-chips';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
@@ -28,7 +29,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
   const { t } = useTranslation();
   const planFeatures = usePlanFeatures();
   const isWideViewport = useMediaQuery(MEDIA_QUERY_LG_UP);
-  const mediaCapabilities = useModelMediaCapabilities(props.selectedModel);
+  const mediaCapabilities = useModelMediaCapabilities();
   const state = useMessageComposerState({
     onSend: props.onSend,
     isPending: props.isPending,
@@ -37,6 +38,13 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     // under a stable key, so a message typed before the thread exists survives
     // a refresh too.
     threadId: props.threadId ?? NEW_THREAD_DRAFT_KEY,
+  });
+
+  const attachmentChips = useComposerAttachmentChips({
+    selectedFileIds: state.selectedFileIds,
+    onSelectedFileIdsChange: state.setSelectedFileIds,
+    uploads: state.attachmentUploads,
+    onDismissUpload: state.dismissAttachmentUpload,
   });
 
   const hasContent = state.content.trim().length > 0;
@@ -57,6 +65,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     onSubmitValue: state.submit,
     onFormSubmit: state.handleSubmit,
     onIngestFiles: state.ingestFiles,
+    attachmentChips,
     toolbarProps: {
       selectedModel: props.selectedModel,
       onModelChange: props.onModelChange,
