@@ -17,6 +17,7 @@ export function useAuthenticatedFileBlob(
   autoLoad: boolean,
 ): UseAuthenticatedFileBlobReturn {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const previousUrlRef = useRef<string | null>(null);
@@ -40,12 +41,13 @@ export function useAuthenticatedFileBlob(
         }
         return response.blob();
       })
-      .then((blob) => {
+      .then((fetchedBlob) => {
         if (previousUrlRef.current) {
           URL.revokeObjectURL(previousUrlRef.current);
         }
-        const objectUrl = URL.createObjectURL(blob);
+        const objectUrl = URL.createObjectURL(fetchedBlob);
         previousUrlRef.current = objectUrl;
+        setBlob(fetchedBlob);
         setBlobUrl(objectUrl);
       })
       .catch((fetchError: unknown) => {
@@ -77,5 +79,5 @@ export function useAuthenticatedFileBlob(
     };
   }, [autoLoad, load]);
 
-  return { blobUrl, isLoading, error, load };
+  return { blobUrl, blob, isLoading, error, load };
 }

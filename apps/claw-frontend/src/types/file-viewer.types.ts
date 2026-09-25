@@ -3,6 +3,8 @@
 import type { FileViewerRenderKind } from '@/enums/file-viewer-render-kind.enum';
 
 export type WorkspaceObjectContent = {
+  /** The bytes themselves — read text with `blob.text()`, never `fetch(blobUrl)`. */
+  blob: Blob;
   blobUrl: string;
   mimeType: string;
   filename: string;

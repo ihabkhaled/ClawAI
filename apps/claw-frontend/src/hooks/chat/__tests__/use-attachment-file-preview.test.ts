@@ -5,6 +5,7 @@ import { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum';
 import { useAttachmentFilePreview } from '@/hooks/chat/use-attachment-file-preview';
 
 let mockBlobUrl: string | null;
+let mockBlob: Blob | null;
 const mockLoad = vi.fn(() => {
   mockBlobUrl = 'blob:mock-file';
 });
@@ -14,6 +15,7 @@ const mockTriggerBrowserDownload = vi.fn();
 vi.mock('@/hooks/chat/use-authenticated-file-blob', () => ({
   useAuthenticatedFileBlob: () => ({
     blobUrl: mockBlobUrl,
+    blob: mockBlob,
     isLoading: false,
     error: null,
     load: mockLoad,
@@ -30,6 +32,7 @@ vi.mock('@/lib/i18n', () => ({
 describe('useAttachmentFilePreview', () => {
   beforeEach(() => {
     mockBlobUrl = null;
+    mockBlob = null;
     mockLoad.mockClear();
     mockOpenBlobInNewTab.mockClear();
     mockTriggerBrowserDownload.mockClear();
@@ -99,7 +102,11 @@ describe('useAttachmentFilePreview', () => {
   it('loads and truncates a text-like preview once the blob resolves', async () => {
     mockBlobUrl = 'blob:text-file';
     const longText = 'x'.repeat(2000);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ text: async () => longText }));
+    mockBlob = new Blob([longText], { type: 'text/plain' });
+    // The preview reads the Blob itself. fetch(blob:) is a connect-src request
+    // and the CSP (rightly) has no blob: there, so it failed in every browser.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
 
     const { result } = renderHook(() =>
       useAttachmentFilePreview('f1', 'notes.txt', AttachmentPreviewKind.Text),
@@ -108,10 +115,12 @@ describe('useAttachmentFilePreview', () => {
     await waitFor(() => expect(result.current.previewText).not.toBeNull());
     expect(result.current.previewText?.length).toBe(800);
     expect(result.current.isPreviewTruncated).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('does not attempt a text preview for a PDF or generic file', () => {
     mockBlobUrl = 'blob:pdf-file';
+    mockBlob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 

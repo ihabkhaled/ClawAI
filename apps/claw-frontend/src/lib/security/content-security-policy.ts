@@ -178,6 +178,12 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     `style-src 'self' 'unsafe-inline'`,
     `img-src ${imgSrc.join(' ')}`,
     `font-src 'self' data:`,
+    // Voice/video notes play from a blob: URL (the bytes are fetched with a
+    // Bearer header, so the <audio>/<video> cannot point at the API). With no
+    // media-src the browser falls back to default-src 'self', which does not
+    // match blob:, and every note sat at 0:00 while Download still worked.
+    // blob: URLs are only ever minted by this origin's own scripts.
+    `media-src 'self' blob:`,
     `connect-src ${connectSrc.join(' ')}`,
     `frame-src ${frameSrc.join(' ')}`,
     `object-src 'none'`,

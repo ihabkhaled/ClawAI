@@ -26,6 +26,7 @@ export async function fetchWorkspaceObjectContent(
   const filename = match?.[1] ?? objectId;
   const blob = await response.blob();
   return {
+    blob,
     blobUrl: URL.createObjectURL(blob),
     mimeType,
     filename,

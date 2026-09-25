@@ -73,6 +73,25 @@ describe('buildContentSecurityPolicy', () => {
     expect(csp).toContain(`frame-ancestors 'none'`);
   });
 
+  it('lets <audio>/<video> play an attachment from a blob: URL in every environment', () => {
+    // Without an explicit media-src the browser falls back to default-src
+    // 'self', which does NOT match blob:, and rejects every voice/video note
+    // with MEDIA_ELEMENT_ERROR 4 while Download (an <a download>) still works.
+    for (const isDev of [false, true]) {
+      const csp = buildContentSecurityPolicy({ ...baseOptions, isDev });
+      const mediaSrc = csp.split(';').find((d) => d.trim().startsWith('media-src')) ?? '';
+      expect(mediaSrc.trim()).toBe(`media-src 'self' blob:`);
+    }
+  });
+
+  it('keeps blob: out of connect-src and frame-src (text previews read the Blob directly)', () => {
+    const csp = buildContentSecurityPolicy(baseOptions);
+    const connectSrc = csp.split(';').find((d) => d.trim().startsWith('connect-src')) ?? '';
+    const frameSrc = csp.split(';').find((d) => d.trim().startsWith('frame-src')) ?? '';
+    expect(connectSrc).not.toContain('blob:');
+    expect(frameSrc).not.toContain('blob:');
+  });
+
   it('adds upgrade-insecure-requests only for production HTTPS requests', () => {
     expect(buildContentSecurityPolicy(baseOptions)).toContain('upgrade-insecure-requests');
     expect(buildContentSecurityPolicy({ ...baseOptions, isDev: true })).not.toContain(

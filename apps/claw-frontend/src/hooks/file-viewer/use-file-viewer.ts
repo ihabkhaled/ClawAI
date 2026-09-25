@@ -48,7 +48,9 @@ export function useFileViewer(): UseFileViewerResult {
           lastBlobUrl.current = fetched.blobUrl;
           setContent(fetched);
           if (resolveRenderKind(fetched.mimeType) === FileViewerRenderKind.TEXT) {
-            const raw = await fetch(fetched.blobUrl).then((r) => r.text());
+            // blob.text(), not fetch(blobUrl): the CSP has no blob: in
+            // connect-src, so fetching the object URL threw for every file.
+            const raw = await fetched.blob.text();
             setTextPreview(clampTextPreview(raw));
           }
         })
@@ -73,9 +75,7 @@ export function useFileViewer(): UseFileViewerResult {
     content,
     textPreview,
     renderKind:
-      content === null
-        ? FileViewerRenderKind.UNSUPPORTED
-        : resolveRenderKind(content.mimeType),
+      content === null ? FileViewerRenderKind.UNSUPPORTED : resolveRenderKind(content.mimeType),
     isLoading,
     error,
   };

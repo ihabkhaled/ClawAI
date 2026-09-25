@@ -22,7 +22,7 @@ export function useAttachmentFilePreview(
   mimeType?: string,
 ): UseAttachmentFilePreviewReturn {
   const { t } = useTranslation();
-  const { blobUrl, isLoading, error, load } = useAuthenticatedFileBlob(
+  const { blobUrl, blob, isLoading, error, load } = useAuthenticatedFileBlob(
     `/api/v1/files/download/${fileId}`,
     false,
   );
@@ -31,12 +31,14 @@ export function useAttachmentFilePreview(
   const pendingActionRef = useRef<AttachmentPendingAction | null>(null);
 
   useEffect(() => {
-    if (kind !== AttachmentPreviewKind.Text || blobUrl === null) {
+    if (kind !== AttachmentPreviewKind.Text || blob === null) {
       return;
     }
     let cancelled = false;
-    void fetch(blobUrl)
-      .then((response) => response.text())
+    // Read the Blob directly: fetch(blobUrl) is a connect-src request, which
+    // the CSP blocks for blob:, so the inline preview never appeared.
+    void blob
+      .text()
       .then((text) => {
         if (cancelled) {
           return;
@@ -52,7 +54,7 @@ export function useAttachmentFilePreview(
     return () => {
       cancelled = true;
     };
-  }, [blobUrl, kind]);
+  }, [blob, kind]);
 
   useEffect(() => {
     if (blobUrl === null || pendingActionRef.current === null) {

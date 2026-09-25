@@ -13,6 +13,9 @@ export type UseAttachmentFileMetaReturn = {
 
 export type UseAuthenticatedFileBlobReturn = {
   blobUrl: string | null;
+  /** The fetched bytes. Read text with `blob.text()` — never `fetch(blobUrl)`,
+   * which is a connect-src request the CSP does not (and should not) allow. */
+  blob: Blob | null;
   isLoading: boolean;
   error: Error | null;
   load: () => void;

@@ -197,6 +197,19 @@ Full reasoning:
     `VIDEO_FRAME` executions. Choosing a model that cannot watch video is no
     longer an error — `resolveVideoAttachmentCandidates` does not throw.
 
+17. **The user must be able to open what they sent — and the CSP is part of
+    that path.** A sent attachment's bytes are fetched with a Bearer header and
+    handed to the page as a `blob:` URL, so every in-page consumer of that URL
+    is gated by a CSP directive that `'self'` does NOT satisfy.
+    `media-src 'self' blob:` is required for `<audio>`/`<video>`: without it
+    the browser falls back to `default-src 'self'` and rejects the note with
+    `MEDIA_ELEMENT_ERROR 4 "URL safety check"` while Download still works —
+    the 2026-09-25 "video note stuck at 0:00" report. Text previews read the
+    `Blob` with `blob.text()`; they never `fetch(blobUrl)`, which is a
+    `connect-src` request, and `blob:` stays out of `connect-src` and
+    `frame-src`. A working download proves nothing about playback:
+    `<a download>` is a navigation that no CSP directive governs.
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -213,6 +226,7 @@ Full reasoning:
 | 15      | `video-processing.manager.spec.ts` (plan 59/60/61 s, 0, null, auth down; no-audio; refused transcription; idempotent redelivery; temp dir removed; probe failure matrix); `files.service-extraction.spec.ts` "a video row still carrying its placeholder"; `media-args.utility.spec.ts` + `media-process.utility.spec.ts` (whitelists, no shell, SIGKILL, stdout cap)                                                                                                                                                                                                                                                             |
 | 16      | `attachment-delivery.utility.spec.ts` "video" (strategy per state, plan refusal, duration limit); `video-frame-selection.utility.spec.ts` (timestamp case table); `video-context.utility.spec.ts` (block format, delimiters); `video-delivery.manager.spec.ts` (seeing / blind / plan-off / no helper / frames down / one fetch per turn / helper cap / 8k window / content-free log); `context-assembly-window-fit.spec.ts` (8k blind lane with transcript + 4 frame descriptions fits); `judge-referee-attachments.spec.ts` (judge rebuild keeps the video document); `video-attachment-routing.utility.spec.ts` (never throws) |
 | 14      | `attachment-delivery.utility.spec.ts` (resolver matrix); `context-assembly-media-delivery.spec.ts` (non-vision payload has no `image_url` and carries the honest note; video placeholder never in a prompt); `chat-execution-media-delivery.spec.ts` (the chokepoint's body and `fileDelivery` agree); `parallel-execution-media-delivery.spec.ts` (two lanes, two records)                                                                                                                                                                                                                                                       |
+| 17      | `content-security-policy.test.ts` "lets <audio>/<video> play an attachment from a blob: URL" and "keeps blob: out of connect-src and frame-src"; `use-attachment-file-preview.test.ts` and `use-file-viewer.test.ts` assert the text preview never calls `fetch`                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Runbook
 

@@ -54,6 +54,21 @@ describe('useAuthenticatedFileBlob', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it('exposes the fetched Blob itself, so a text preview never has to fetch its own blob: URL', async () => {
+    const bytes = new Blob(['hello'], { type: 'text/plain' });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, blob: async () => bytes }));
+
+    const { result } = renderHook(() =>
+      useAuthenticatedFileBlob('/api/v1/files/download/f1', false),
+    );
+    expect(result.current.blob).toBeNull();
+    await act(async () => {
+      result.current.load();
+    });
+
+    await waitFor(() => expect(result.current.blob).toBe(bytes));
+  });
+
   it('load() is a no-op once already started — never re-downloads the same file', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob(['x']) });
     vi.stubGlobal('fetch', fetchMock);

@@ -8,7 +8,7 @@ header is set, why, and how to change the policy safely.
 
 | Header                                    | Set in                                  | Why there                                                                                                                                                                                              |
 | ----------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Content-Security-Policy`                 | `src/middleware.ts` (per request)       | Carries a per-request nonce; must vary per response                                                                                                                                                    |
+| `Content-Security-Policy`                 | `src/proxy.ts` (per request)            | Carries a per-request nonce; must vary per response                                                                                                                                                    |
 | `Strict-Transport-Security`               | `next.config.mjs` `headers()`           | Static; whole stack is HTTPS (mkcert / real certs)                                                                                                                                                     |
 | `X-Content-Type-Options: nosniff`         | `next.config.mjs`                       | Static                                                                                                                                                                                                 |
 | `X-Frame-Options: DENY`                   | `next.config.mjs`                       | Static (CSP `frame-ancestors 'none'` is the modern equivalent; both are sent)                                                                                                                          |
@@ -16,11 +16,11 @@ header is set, why, and how to change the policy safely.
 | `Referrer-Policy`                         | `next.config.mjs`                       | Static                                                                                                                                                                                                 |
 | `Permissions-Policy`                      | `next.config.mjs`, `infra/nginx/*.conf` | Static; `camera=(self), microphone=(self)` — the chat recorder needs same-origin `getUserMedia`; `()` blocked it outright (QA 2026-09-23). `browsing-topics` stays disabled. Keep both copies in step. |
 | `Cross-Origin-Opener-Policy: same-origin` | `next.config.mjs`                       | Static                                                                                                                                                                                                 |
-| `X-Robots-Tag`                            | `src/middleware.ts`                     | Non-public paths tagged `noindex`                                                                                                                                                                      |
+| `X-Robots-Tag`                            | `src/proxy.ts`                          | Non-public paths tagged `noindex`                                                                                                                                                                      |
 
 ## The CSP nonce flow
 
-1. `middleware.ts` calls `generateCspNonce()` (Web Crypto, Edge-safe) once per request.
+1. `proxy.ts` (Next 16's renamed middleware) calls `generateCspNonce()` (Web Crypto, Edge-safe) once per request.
 2. It builds the policy with `buildContentSecurityPolicy()` and sets the CSP on
    **both** the forwarded request headers and the response headers, plus an
    `x-nonce` request header.
@@ -49,6 +49,22 @@ manifest) don't use the layout and stay fully static.
 are widened to the Google ad hosts. Script hosts are never listed — the
 nonce-trusted loader plus `'strict-dynamic'` covers them. With AdSense off
 (the default), the strictest policy ships.
+
+## `blob:` URLs (attachments)
+
+Chat attachments are fetched with a Bearer header and shown through a `blob:`
+object URL. `'self'` never matches `blob:`, so each consumer needs its own
+directive — and a missing one fails silently for the user:
+
+| Consumer                                | Directive     | Policy                                                                                            |
+| --------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
+| Image thumbnails (`<img src=blob:>`)    | `img-src`     | `blob:` allowed                                                                                   |
+| Voice/video notes (`<audio>`/`<video>`) | `media-src`   | `'self' blob:` — without it the note sits at 0:00 with `MEDIA_ELEMENT_ERROR 4` (fixed 2026-09-25) |
+| Text previews                           | `connect-src` | **no `blob:`** — read the `Blob` with `blob.text()`, never `fetch(blobUrl)`                       |
+| PDF iframe in the workspace file viewer | `frame-src`   | **no `blob:`** — the inline iframe is blocked; open PDFs in a new tab instead (chat already does) |
+| Download (`<a download href=blob:>`)    | none          | always works, so it proves nothing about playback                                                 |
+
+See [rule 42 §17](../../rules/42-attachment-understanding.md).
 
 ## Changing the policy
 

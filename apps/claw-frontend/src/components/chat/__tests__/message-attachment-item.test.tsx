@@ -29,6 +29,7 @@ let mockBlobError: Error | null = null;
 vi.mock('@/hooks/chat/use-authenticated-file-blob', () => ({
   useAuthenticatedFileBlob: () => ({
     blobUrl: null,
+    blob: null,
     isLoading: false,
     error: mockBlobError,
     load: vi.fn(),
