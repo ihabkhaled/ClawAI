@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
-import { resolveImageCapabilityProvider } from '../utilities/image-generation-target.utility';
+import { resolveImageCapabilityProvider } from '@claw/shared-utilities';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -2552,7 +2552,7 @@ export class ChatMessagesService implements OnModuleInit {
    * OPENAI) to the `IMAGE_*` capability that actually generates a picture.
    *
    * The connector catalog has no model kind for "this is an image model" (see
-   * `IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR`), so the composer offers these
+   * `IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR` in `@claw/shared-utilities`), so the composer offers these
    * under their ordinary chat connector and a manual pick reached
    * `/chat/completions`, which every provider refuses for an image model —
    * xAI answers `"grok-imagine-image is an image model and is therefore not

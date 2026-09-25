@@ -127,7 +127,7 @@ Full reasoning:
     (`gemini-2.5-flash`, `gemini-2.5-pro`) — correct, and matching
     routing-service's real `supportsVideoInput` data for both models. But the
     Gemini connector catalog keys every model with a `models/` prefix (see
-    `image-generation-target.constants.ts`'s `^(models/)?...` pattern), and the
+    `image-output-model.constants.ts`'s `^(models/)?...` pattern), and the
     frontend passes that catalog id straight through. A user told to "Choose
     Gemini/gemini-2.5-flash" who did exactly that got rejected for the same
     reason, because `models/gemini-2.5-flash` never matched the bare-keyed set.

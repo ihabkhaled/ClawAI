@@ -9,11 +9,15 @@
  * `/chat/completions`, which every provider refuses for an image model —
  * xAI answers `"grok-imagine-image is an image model and is therefore not
  * available on this endpoint"`; Gemini and OpenAI answer with a completion that
- * contains no picture, which chat-service could not distinguish from a slow
- * response and reported as "Every available AI provider failed to respond".
+ * contains no picture.
  *
- * Video models (`grok-imagine-video*`) are deliberately NOT matched: this
- * service has no video-generation capability to redirect them to.
+ * Shared by routing-service (so the routing decision — and the charge — names
+ * the model the user picked) and chat-service (so the executed call reaches
+ * image-service). Two copies drifted once: routing sent a manual
+ * `grok-imagine-image` pick to Gemini (2026-09-25).
+ *
+ * Video models (`grok-imagine-video*`) are deliberately NOT matched: there is
+ * no video-generation capability to redirect them to.
  */
 export const IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR: ReadonlyMap<string, RegExp> = new Map([
   ['GEMINI', /^(models\/)?(gemini-[\w.-]*-image[\w.-]*|imagen-[\w.-]+)$/iu],

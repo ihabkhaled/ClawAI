@@ -565,6 +565,103 @@ describe('RoutingManager', () => {
       expect(result.selectedModel).toBe('gpt-image-1');
     });
 
+    // Live 2026-09-25: GROK/grok-imagine-image + "Generate an image of …" was
+    // routed to IMAGE_GEMINI/gemini-2.5-flash-image and billed as Gemini.
+    describe('an explicitly picked image-output model is honoured', () => {
+      const imageConnectors = { GEMINI: true, OPENAI: true, GROK: true };
+
+      it.each([
+        ['GROK', 'grok-imagine-image', 'IMAGE_GROK', 'grok-imagine-image'],
+        ['OPENAI', 'gpt-image-1', 'IMAGE_OPENAI', 'gpt-image-1'],
+        ['GEMINI', 'models/gemini-2.5-flash-image', 'IMAGE_GEMINI', 'gemini-2.5-flash-image'],
+      ])('%s/%s + image request → %s/%s', async (forcedProvider, forcedModel, provider, model) => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'Generate an image of a lighthouse at dusk.',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider,
+          forcedModel,
+        });
+
+        expect(result.selectedProvider).toBe(provider);
+        expect(result.selectedModel).toBe(model);
+        expect(result.routingMode).toBe(RoutingMode.MANUAL_MODEL);
+        expect(result.confidence).toBe(1.0);
+        expect(result.reasonTags).toEqual(['user_forced', 'image_generation']);
+        expect(result.fallbackChain.some((e) => e.provider === provider)).toBe(false);
+      });
+
+      it('sends an image model to image generation even without image keywords', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'a lighthouse at dusk',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider: 'GROK',
+          forcedModel: 'grok-imagine-image',
+        });
+
+        expect(result.selectedProvider).toBe('IMAGE_GROK');
+        expect(result.selectedModel).toBe('grok-imagine-image');
+      });
+
+      it('infers IMAGE_GROK when the pick carries no provider', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: 'a lighthouse at dusk',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedModel: 'grok-imagine-image',
+        });
+
+        expect(result.selectedProvider).toBe('IMAGE_GROK');
+      });
+
+      it('still sends a picked chat model image request to the best image provider', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'draw a cat',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider: 'ANTHROPIC',
+          forcedModel: 'claude-sonnet-4',
+        });
+
+        expect(result.selectedProvider).toBe('IMAGE_GEMINI');
+        expect(result.selectedModel).toBe('gemini-2.5-flash-image');
+        expect(result.routingMode).toBe(RoutingMode.MANUAL_MODEL);
+      });
+
+      it.each([
+        ['GROK', 'grok-4'],
+        ['GEMINI', 'models/gemini-2.5-flash'],
+      ])('keeps chat model %s/%s on chat', async (forcedProvider, forcedModel) => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: 'a lighthouse at dusk',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider,
+          forcedModel,
+        });
+
+        expect(result.selectedProvider).toBe(forcedProvider);
+        expect(result.selectedModel).toBe(forcedModel);
+        expect(result.reasonTags).toEqual(['user_forced']);
+      });
+
+      it('leaves AUTO image routing unchanged', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'Generate an image of a lighthouse at dusk.',
+          userMode: RoutingMode.AUTO,
+        });
+
+        expect(result.selectedProvider).toBe('IMAGE_GEMINI');
+        expect(result.selectedModel).toBe('gemini-2.5-flash-image');
+      });
+    });
+
     it('does not let AUTO policy override manual model selection', async () => {
       policiesRepo.findActivePolicies?.mockResolvedValue([
         { id: 'p-1', name: 'Auto Routing', priority: 0, routingMode: RoutingMode.AUTO },
@@ -1731,6 +1828,23 @@ describe('RoutingManager', () => {
 
     it('infers GROK for GROK-3 uppercase model', () => {
       expect(manager['inferProvider']('GROK-3')).toBe('GROK');
+    });
+
+    it.each([
+      ['grok-imagine-image', 'IMAGE_GROK'],
+      ['grok-imagine-image-quality', 'IMAGE_GROK'],
+      ['models/gemini-2.5-flash-image', 'IMAGE_GEMINI'],
+      ['gemini-3-pro-image', 'IMAGE_GEMINI'],
+      ['gpt-image-1', 'IMAGE_OPENAI'],
+      ['imagen-4.0-generate-001', 'IMAGE_GEMINI'],
+      // False positives the image rule must not claim.
+      ['grok-4', 'GROK'],
+      ['grok-imagine-video', 'GROK'],
+      ['gemini-2.5-flash', 'GEMINI'],
+      ['models/gemini-2.5-flash', 'GEMINI'],
+      ['gpt-4o', 'OPENAI'],
+    ])('infers %s as %s', (model, provider) => {
+      expect(manager['inferProvider'](model)).toBe(provider);
     });
 
     it('does not infer GROK for non-grok models', () => {

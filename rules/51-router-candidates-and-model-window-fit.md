@@ -109,3 +109,13 @@ model was sent a 16.7k-token prompt.
     wording gets a pattern in `PROVIDER_OUTPUT_LIMIT_PATTERNS` and a verbatim
     case in `provider-http-failure.utility.spec.ts`; a catalog that publishes
     an output limit gets read in `fromOpenAIEntry` (or its adapter).
+
+## Added 2026-09-25 (pack §90 — an explicit image model is the user's choice)
+
+17. **Never replace a picked image-output model with the "best" image
+    provider.** MANUAL_MODEL `GROK/grok-imagine-image` routes to
+    `IMAGE_GROK/grok-imagine-image`, not Gemini — the user is charged for what
+    routing records. Only a picked CHAT model that asks for an image goes to the
+    best image provider. Recognise image-output models with
+    `@claw/shared-utilities` `resolveImageCapabilityProvider` only; routing and
+    chat must never keep separate tables.

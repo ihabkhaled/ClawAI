@@ -335,6 +335,14 @@ proxied, so without that block the route 404s in Docker while working on
   user's provider/model), published on `message.routed`.
 - Skipped for Runtime V2 (`RoutingContext.runtimeV2`), for a manual image or
   file provider, and for MANUAL_MODEL without a model (AUTO detects itself).
+- **An explicitly picked image-output model is honoured (pack §90).**
+  `resolveManualPick` maps a chat-connector image model (`GROK/grok-imagine-image`,
+  `GEMINI/models/gemini-*-image`, `OPENAI/gpt-image-1`) to its own `IMAGE_*`
+  provider — with or without image keywords, `models/` dropped. Never replace
+  it with the "best" image provider: the user is billed for what routing picks.
+  Only a picked CHAT model asking for an image goes to the best image provider.
+  The predicate is `@claw/shared-utilities` `resolveImageCapabilityProvider` —
+  the same one chat-service applies; never fork a local copy.
 - `detectFileIntent` is Unicode-aware (`Intl.Segmenter`) with create/delivery
   verbs, negations and the word "file" in all 13 UI locales. Ambiguous format
   names stay SOFT and only pdf/docx/xlsx/xls/pptx/csv count as a bare leading

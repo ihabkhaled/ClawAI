@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
+import {
+  inferImageCapabilityProvider,
+  resolveImageCapabilityProvider,
+} from '@claw/shared-utilities';
 import { RouterProvider, RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { matchKeyword, recordGet } from '../../../common/utilities';
@@ -55,6 +59,7 @@ import {
   IMAGE_MODEL_OPENAI,
   IMAGE_MODEL_SD_LOCAL,
   IMAGE_PROVIDER_GEMINI,
+  IMAGE_PROVIDER_GROK,
   IMAGE_PROVIDER_LOCAL,
   IMAGE_PROVIDER_OPENAI,
   INFRASTRUCTURE_KEYWORDS,
@@ -64,6 +69,7 @@ import {
   LOGISTICS_KEYWORDS,
   MEDIA_KEYWORDS,
   MEDICAL_KEYWORDS,
+  MODEL_RESOURCE_PREFIX_PATTERN,
   MULTI_INTENT_CONFIDENCE_DOUBLE,
   MULTI_INTENT_CONFIDENCE_MULTI,
   MULTI_INTENT_CONFIDENCE_SINGLE,
@@ -203,8 +209,30 @@ export class RoutingManager {
 
   /** The picked provider/model of a MANUAL_MODEL send, or null without a model. */
   private manualFileWriter(context: RoutingContext): FallbackEntry | null {
+    return this.resolveManualPick(context);
+  }
+
+  /**
+   * The provider/model a MANUAL_MODEL send actually asked for. An image-OUTPUT
+   * model offered under its chat connector (`GROK/grok-imagine-image`,
+   * `GEMINI/models/gemini-2.5-flash-image`, `OPENAI/gpt-image-1`) is moved to
+   * its `IMAGE_*` capability here, so the decision — and the charge — name the
+   * model the user picked. Before this, an image request under GROK was sent to
+   * the "best" image provider (Gemini) and billed as Gemini (2026-09-25). The
+   * predicate is `@claw/shared-utilities`, the one chat-service applies too.
+   */
+  private resolveManualPick(context: RoutingContext): FallbackEntry | null {
     const model = context.forcedModel;
-    return !model ? null : { provider: context.forcedProvider ?? this.inferProvider(model), model };
+    if (!model) return null;
+    const provider = context.forcedProvider ?? this.inferProvider(model);
+    const imageProvider = resolveImageCapabilityProvider(provider, model) ?? provider;
+    if (!imageProvider.startsWith('IMAGE_')) return { provider, model };
+    if (imageProvider !== provider) {
+      this.logger.log(
+        `resolveManualPick: ${provider}/${model} is an image-output model → ${imageProvider} (user's pick kept)`,
+      );
+    }
+    return { provider: imageProvider, model: model.replace(MODEL_RESOURCE_PREFIX_PATTERN, '') };
   }
 
   /** Runtime V2, a manual pick with no model, or a generation provider: leave alone. */
@@ -226,6 +254,11 @@ export class RoutingManager {
     localOnly: boolean,
   ): RoutingDecisionResult | null {
     if (this.imageDetection.detect(context.message).matched) {
+      if (context.forcedModel && context.userMode === RoutingMode.MANUAL_MODEL) {
+        this.logger.log(
+          `detectExplicitModeArtifact: picked chat model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel} cannot generate images → best available image provider`,
+        );
+      }
       if (!localOnly) return this.buildImageDecisionForBestProvider(context);
       const local = this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
       return {
@@ -350,16 +383,15 @@ export class RoutingManager {
     // 'ANTHROPIC' not found" for users without an Anthropic connector
     // configured. Fall through to AUTO so the router actually picks something
     // appropriate for the message + connector availability.
-    if (!context.forcedModel) {
+    const primary = this.resolveManualPick(context);
+    if (!primary) {
       this.logger.warn(
         `handleManualModel: MANUAL_MODEL with no forcedModel — falling through to AUTO (forcedProvider=${context.forcedProvider ?? 'none'})`,
       );
       return this.handleAuto(context);
     }
-    const model = context.forcedModel;
-    const provider = context.forcedProvider ?? this.inferProvider(model);
+    const { provider, model } = primary;
     this.logger.debug(`handleManualModel: forced provider=${provider} model=${model}`);
-    const primary = { provider, model };
     const fallback = this.buildFallbackChain(primary, context);
     this.logger.debug(`handleManualModel: fallback chain length=${String(fallback.length)}`);
 
@@ -368,7 +400,9 @@ export class RoutingManager {
       selectedModel: model,
       routingMode: RoutingMode.MANUAL_MODEL,
       confidence: 1.0,
-      reasonTags: ['user_forced'],
+      reasonTags: provider.startsWith('IMAGE_')
+        ? ['user_forced', 'image_generation']
+        : ['user_forced'],
       privacyClass: 'unknown',
       costClass: 'unknown',
       fallbackChain: fallback,
@@ -939,7 +973,12 @@ export class RoutingManager {
 
   private inferProvider(model: string): string {
     this.logger.debug(`inferProvider: inferring provider for model="${model}"`);
-    const lower = model.toLowerCase().replace(/^models\//, '');
+    const lower = model.toLowerCase().replace(MODEL_RESOURCE_PREFIX_PATTERN, '');
+    // Image-output models first, by the predicate chat-service shares — the
+    // chat rules below would claim `grok-imagine-image` for GROK chat and
+    // `gemini-2.5-flash-image` for GEMINI chat.
+    const imageProvider = inferImageCapabilityProvider(lower);
+    if (imageProvider !== undefined) return imageProvider;
 
     for (const rule of PROVIDER_INFERENCE_RULES) {
       if (this.matchesProviderRule(lower, rule)) {
@@ -1613,6 +1652,9 @@ export class RoutingManager {
     }
     if (provider === IMAGE_PROVIDER_OPENAI) {
       return [provider, CLOUD_PROVIDER_OPENAI];
+    }
+    if (provider === IMAGE_PROVIDER_GROK) {
+      return [provider, CLOUD_PROVIDER_GROK];
     }
     return provider === IMAGE_PROVIDER_GEMINI ? [provider, CLOUD_PROVIDER_GEMINI] : [provider];
   }

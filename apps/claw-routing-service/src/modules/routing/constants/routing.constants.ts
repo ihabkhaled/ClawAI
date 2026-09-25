@@ -28,6 +28,12 @@ export const CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash';
 export const IMAGE_PROVIDER_OPENAI = 'IMAGE_OPENAI';
 export const IMAGE_PROVIDER_GEMINI = 'IMAGE_GEMINI';
 export const IMAGE_PROVIDER_LOCAL = 'IMAGE_LOCAL';
+// xAI Grok Imagine — reached only when the user picks a `grok-imagine-image*`
+// model; AUTO never selects it. Must match image-service's IMAGE_GROK.
+export const IMAGE_PROVIDER_GROK = 'IMAGE_GROK';
+// Google's ListModels prefix (`models/gemini-2.5-flash-image`), dropped from an
+// image decision's model so the recorded model is the id image-service bills.
+export const MODEL_RESOURCE_PREFIX_PATTERN = /^models\//u;
 // OpenAI's current image model. NOT dall-e-3: OpenAI retired DALL-E for new
 // keys ("The model 'dall-e-3' does not exist"). Must match image-service's
 // IMAGE_MODEL_OPENAI (apps/claw-image-service/src/common/constants/image.constants.ts).

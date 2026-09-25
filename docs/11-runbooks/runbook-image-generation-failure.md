@@ -34,8 +34,8 @@ If you see `callProvider: routing to cloud provider` for a model matching
 `apps/claw-chat-service/src/modules/chat-messages/services/chat-messages.service.ts`
 (`detectImageOutputModel` → `resolveImageCapabilityProvider`) either isn't
 deployed yet or its pattern in
-`apps/claw-chat-service/src/modules/chat-messages/constants/image-generation-target.constants.ts`
-doesn't match the new model id — add it there, it's a per-connector regex.
+`packages/shared-utilities/src/image-output-model/image-output-model.constants.ts`
+doesn't match the new model id — add it there, it's a per-connector regex (shared: routing-service uses the same one, so rebuild the package and restart both services).
 
 **A row exists with `status = FAILED`** → read `error_code`. Every code is
 documented in the "Failure taxonomy" table of
@@ -94,7 +94,7 @@ Pick each one in the composer (or via `POST /api/v1/chat-messages` with
 
 - `claw-image-service` — any adapter/manager/failure-taxonomy change
 - `claw-chat-service-1` (or all chat-service replicas in prod) — any change to
-  `image-generation-target.{utility,constants}.ts` or
+  `@claw/shared-utilities` `image-output-model/` (also restart `claw-routing-service`) or
   `chat-execution.manager.ts`'s image dispatch
 
 Both are `docker restart` (dev) — the dev entrypoint runs `tsgo --watch` over a

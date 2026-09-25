@@ -7748,7 +7748,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 35563,
+          "bytes": 35558,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -7784,7 +7784,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 6524,
+          "bytes": 7081,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -10166,7 +10166,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 43
+        "testFiles": 44
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10182,7 +10182,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 217
+        "testFiles": 216
       },
       "claw-client-logs-service": {
         "runner": "vitest",

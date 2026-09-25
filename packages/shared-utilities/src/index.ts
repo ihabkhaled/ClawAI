@@ -18,3 +18,4 @@ export * from './model-match-key';
 export * from './connector-presets';
 export * from './client-http-error';
 export * from './content-disposition';
+export * from './image-output-model';

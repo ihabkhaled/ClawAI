@@ -210,6 +210,20 @@ Evidence: [`docs/16-quality-engineering/evidence/2026-09-25-multimodal/`](../16-
 5. **Role labels in English under Arabic.** `MESSAGE_ROLE_LABELS` became
    `MESSAGE_ROLE_LABEL_KEYS` (`chat.messageRole.*`) and is resolved with `t()`,
    with keys in all 13 locales and `i18n.types.ts`.
+6. **Picked Grok image model answered and billed as Gemini (pack §90).**
+   MANUAL_MODEL `GROK/grok-imagine-image` + "Generate an image of a lighthouse
+   at dusk." logged `Routing decision: IMAGE_GEMINI/gemini-2.5-flash-image`:
+   `explicitModeMayGenerate` skipped only an `IMAGE_*` provider, so the image
+   keyword sent the send to `buildImageDecisionForBestProvider` (Gemini first).
+   routing-service now resolves an image-output pick to its own `IMAGE_*`
+   capability first (`resolveManualPick`): `IMAGE_GROK/grok-imagine-image`,
+   confidence 1.0, `['user_forced','image_generation']`, with or without image
+   keywords; `models/` is dropped from the model. A picked CHAT model asking for
+   an image still goes to the best image provider, now with an explicit log line.
+   The predicate moved from chat-service to `@claw/shared-utilities`
+   (`image-output-model/`), so both services use one table. Tests:
+   `routing.manager.spec.ts` "an explicitly picked image-output model is
+   honoured" + `inferProvider` table; `image-output-model.utility.spec.ts`.
 
 ### Open gaps after this run
 
