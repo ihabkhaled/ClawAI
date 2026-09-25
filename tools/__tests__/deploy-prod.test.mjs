@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
@@ -169,7 +171,7 @@ test('deploy-prod.sh only calls record_deployment after health has been verified
   );
 });
 
-test('deploy-prod.sh bounds unused Docker build cache only after health succeeds', () => {
+test('deploy-prod.sh bounds unused Docker build cache before building and after a healthy rollout', () => {
   const body = script.split('main() {')[1] ?? '';
   const healthIndex = body.lastIndexOf('wait_for_service_health');
   const cleanupIndex = body.lastIndexOf('cleanup_build_cache');
@@ -183,6 +185,138 @@ test('deploy-prod.sh bounds unused Docker build cache only after health succeeds
   assert.ok(healthIndex > -1 && cleanupIndex > -1 && recordIndex > -1);
   assert.ok(healthIndex < cleanupIndex, 'build cache cleanup appears before health verification');
   assert.ok(cleanupIndex < recordIndex, 'deployment is recorded before build cache cleanup runs');
+
+  // Before the build as well: a string of failed deploys filled the disk with
+  // 236 GB of cache on 2026-09-25, because the only prune was post-health.
+  const preBuild = body.indexOf('cleanup_build_cache');
+  const build = body.indexOf('if ! build_services; then');
+  assert.ok(preBuild > -1 && preBuild < build, 'the cache must be bounded before the build');
+  assert.ok(body.indexOf('BUILD_ATTEMPTED=1') < build);
+});
+
+test('deploy-prod.sh bounds the build cache from the EXIT trap after a failed or aborted build', () => {
+  const trap = bashFunction('cleanup');
+  assert.match(
+    trap,
+    /if \[ "\$BUILD_ATTEMPTED" = "1" \] && \[ "\$BUILD_CACHE_BOUNDED" != "1" \]; then\n\s+cleanup_build_cache \|\| true/u,
+  );
+  // Before the lock is released, so the next deployment cannot race the prune.
+  assert.ok(trap.indexOf('cleanup_build_cache') < trap.indexOf('LOCK_DIR_HELD'));
+  // Best-effort and bounded: never fails the deploy, never holds the lock forever.
+  const prune = bashFunction('cleanup_build_cache');
+  assert.match(prune, /timeout --kill-after=30 "\$BUILD_CACHE_PRUNE_TIMEOUT_SECONDS"/u);
+  assert.match(prune, /return 0\n\}/u);
+});
+
+const pythonBin = ['python3', 'python'].find(
+  (candidate) =>
+    spawnSync(candidate, ['-c', 'import json, sys'], { encoding: 'utf8' }).status === 0,
+);
+
+function versionOnly(before, after) {
+  const dir = mkdtempSync(join(tmpdir(), 'claw-version-only-'));
+  try {
+    writeFileSync(join(dir, 'before.json'), JSON.stringify(before, null, 2));
+    writeFileSync(join(dir, 'after.json'), JSON.stringify(after, null, 2));
+    const result = spawnSync(
+      'bash',
+      [
+        '-c',
+        `${bashFunction('manifest_differs_only_in_versions')}\nmanifest_differs_only_in_versions "$1" "$2" "$3"`,
+        'bash',
+        pythonBin ?? 'python3',
+        join(dir, 'before.json').replaceAll('\\', '/'),
+        join(dir, 'after.json').replaceAll('\\', '/'),
+      ],
+      { encoding: 'utf8' },
+    );
+    return result.status;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test(
+  'a manifest that changed only its release versions is not a change (ADR-123)',
+  { skip: pythonBin ? false : 'python is not installed on this machine' },
+  () => {
+    const root = (version, extra = {}) => ({ name: 'claw', version, private: true, ...extra });
+    assert.equal(versionOnly(root('1.137.0'), root('1.138.0')), 0, 'root version bump');
+
+    // The shape of 37c813f5e: shared-utilities pins its siblings exactly.
+    const utilities = (version, lodash = '^4.17.21') => ({
+      name: '@claw/shared-utilities',
+      version,
+      dependencies: {
+        '@claw/shared-constants': version,
+        '@claw/shared-types': version,
+        lodash,
+      },
+    });
+    assert.equal(versionOnly(utilities('1.137.0'), utilities('1.138.0')), 0, 'internal pins');
+    assert.equal(
+      versionOnly(utilities('1.137.0'), utilities('1.138.0', '^4.18.0')),
+      1,
+      'a third-party dependency moving alongside the bump is a real change',
+    );
+
+    const star = { name: 'svc', version: '1.0.0', dependencies: { '@claw/shared-types': '*' } };
+    const pinned = {
+      name: 'svc',
+      version: '1.0.1',
+      dependencies: { '@claw/shared-types': '1.0.1' },
+    };
+    assert.equal(versionOnly(star, pinned), 1, 'a `*` pin becoming exact is a real change');
+    assert.equal(
+      versionOnly(root('1.0.0'), root('1.0.1', { scripts: { build: 'x' } })),
+      1,
+      'a script change is a real change',
+    );
+
+    const lock = (version, leftPad = '1.0.0') => ({
+      name: 'claw',
+      version,
+      lockfileVersion: 3,
+      requires: true,
+      packages: {
+        '': { name: 'claw', version, workspaces: ['apps/*', 'packages/*'] },
+        'apps/claw-auth-service': {
+          name: 'claw-auth-service',
+          version,
+          dependencies: { '@claw/shared-types': version },
+        },
+        'node_modules/@claw/shared-types': { resolved: 'packages/shared-types', link: true },
+        'node_modules/left-pad': {
+          version: leftPad,
+          resolved: `https://r/left-pad-${leftPad}.tgz`,
+        },
+      },
+    });
+    assert.equal(versionOnly(lock('1.137.0'), lock('1.138.0')), 0, 'lockfile workspace versions');
+    assert.equal(
+      versionOnly(lock('1.137.0'), lock('1.138.0', '1.0.1')),
+      1,
+      'a real dependency upgrade in the lockfile stays broad impact',
+    );
+
+    assert.equal(versionOnly(root('1.0.0'), 'not json'), 1, 'shape change is a change');
+  },
+);
+
+test('drop_version_only_changes runs on the real diff, before planning, and spares baked manifests', () => {
+  const body = script.split('main() {')[1] ?? '';
+  const diff = body.indexOf('git diff --name-only --no-renames');
+  const drop = body.indexOf('drop_version_only_changes "$old_sha" "$new_sha"');
+  const plan = body.indexOf('compute_plan');
+  assert.ok(diff > -1 && drop > diff && drop < plan);
+  // The frontend inlines its package.json version as APP_VERSION.
+  assert.match(script, /VERSION_BAKED_MANIFESTS=\(\n\s+'apps\/claw-frontend\/package\.json'\n\)/u);
+  assert.match(bashFunction('drop_version_only_changes'), /! is_version_baked_manifest "\$file"/u);
+  // Without python the filter must fail SAFE: every manifest stays a change.
+  assert.match(
+    bashFunction('drop_version_only_changes'),
+    /python3 is unavailable; every changed manifest counts as a real change/u,
+  );
 });
 
 test('deploy-prod.sh validates the target argument as a hex commit SHA before doing anything else', () => {

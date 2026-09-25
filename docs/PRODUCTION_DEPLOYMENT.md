@@ -123,6 +123,24 @@ session. An operator may set the standard Compose variable
 `COMPOSE_PARALLEL_LIMIT` to an integer from `1` through `4` for a single deploy;
 values outside that safety range are rejected before the build starts.
 
+BuildKit cache is bounded to 20 GB (`docker builder prune --all --force
+--keep-storage 20GB`, capped at 900 s) **before every build, after a healthy
+rollout, and from the exit trap after a failed or aborted one**. It is
+best-effort: a prune failure is logged and never changes the outcome. Until
+2026-09-25 it ran only after a healthy rollout, so a string of failed deploys
+grew the cache to 236 GB. The operator should also enable the daemon's own
+garbage collection as a second bound (host change, not made by the script):
+
+```json
+// /etc/docker/daemon.json — then `sudo systemctl restart docker`
+{ "builder": { "gc": { "enabled": true, "defaultKeepStorage": "20GB" } } }
+```
+
+`nice`/`ionice` on the deploy script would not help: the build runs inside
+`dockerd`/BuildKit, not in the compose client process. Diagnosis for an
+overloaded or full host:
+[runbook-server-overloaded-by-builds.md](11-runbooks/runbook-server-overloaded-by-builds.md).
+
 ### 2.6 Frontend maintenance response
 
 The frontend catch-all intercepts upstream 502, 503, and 504 responses and
@@ -296,6 +314,19 @@ that same commit is handled correctly. Rules, in order:
   `scripts/docker-entrypoint.prod.sh`, `docker-compose.prod.services.yml`, or
   any `tsconfig*.json` → every application service (these reach every image's
   build context).
+- **Except a release-version-only manifest change** ([ADR-123](13-adr/adr-123-release-version-bumps-are-not-deploy-changes.md)).
+  Every `chore(release)` commit rewrites `"version"` in ~25 manifests. Any
+  `package.json` / `package-lock.json` whose only differences between the
+  deployed and target SHA are release versions — the document's own
+  `version`, each workspace entry's `version` in the lockfile, and exact
+  `@claw/*` pins — is dropped from the plan before mapping. `python3` compares
+  the two JSON documents; without it every manifest counts as changed (fail
+  safe). The deploy log lists them under _Release-version-only manifest
+  changes_. One exception: `apps/claw-frontend/package.json` still rebuilds the
+  frontend, because Next inlines its version as `APP_VERSION` (sidebar, auth
+  pages, marketing footer); skipping it would show the previous release
+  number. Before 2026-09-25 every release rebuilt all ~20 images; now a
+  release rebuilds the frontend plus whatever its feature commits touched.
 - `docker-compose.prod.databases.yml`, `docker-compose.prod.ollama*.yml`, or a
   GPU overlay → reported as **manual** (never auto-applied; databases and the
   local-AI runtime are out of scope for this script — see §6).

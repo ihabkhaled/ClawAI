@@ -54,6 +54,20 @@ change to `log-shipper` and asserts it is recreated and never built.
 Background: [`docs/implementation/observability-plan.md`](../docs/implementation/observability-plan.md),
 which found this while planning the metrics stack.
 
+### A release version bump rebuilds nothing — unless the image bakes the version
+
+`scripts/deploy-prod.sh` drops a `package.json` / `package-lock.json` whose
+only differences are release versions (ADR-123), so a release does not rebuild
+every image on the production host. **A workspace that compiles its manifest
+`version` into its output (today only the frontend's `APP_VERSION`) MUST be
+listed in `VERSION_BAKED_MANIFESTS`**, or production shows the previous
+release number. The BuildKit cache is bounded before every build and on every
+exit; keep it that way.
+
+**Enforcement**: `tools/__tests__/deploy-prod.test.mjs` (normaliser cases) and
+`deploy-prod-e2e.sh` (a release-only commit builds only the frontend).
+Runbook: [runbook-server-overloaded-by-builds](../docs/11-runbooks/runbook-server-overloaded-by-builds.md).
+
 ## A dev service mounts its BUILD INPUTS, not only its source
 
 Every service block in `docker-compose.dev.services.yml` mounts, read-only:

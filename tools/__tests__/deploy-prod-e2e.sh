@@ -445,6 +445,82 @@ reset_docker_log
 out="$(CLAW_DEPLOY_TRIGGER=auto deploy "$SHA_PAYMENT")"
 assert_contains "no switch file means the lane is on" "$out" "Deployment successful"
 
+# ─── A release commit that only re-versions manifests (ADR-123) ─────────────
+# Every `chore(release)` commit rewrites "version" in ~25 manifests. The root
+# package.json was broad impact, so each release rebuilt every image: 15 full
+# rebuilds on 2026-09-24, clamd OOM-killed, production unreachable. Only the
+# frontend, which inlines its own package.json version, may rebuild now.
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import json' >/dev/null 2>&1; then
+  write_manifests() {
+    local v="$1" pad="${2:-1.0.0}"
+    printf '{\n  "name": "claw-e2e",\n  "version": "%s"\n}\n' "$v" >"$SRC/package.json"
+    printf '{\n  "name": "@claw/shared-auth",\n  "version": "%s",\n  "dependencies": { "@claw/shared-types": "%s" }\n}\n' "$v" "$v" \
+      >"$SRC/packages/shared-auth/package.json"
+    printf '{\n  "name": "claw-payment-service",\n  "version": "%s"\n}\n' "$v" \
+      >"$SRC/apps/claw-payment-service/package.json"
+    printf '{\n  "name": "claw-frontend",\n  "version": "%s"\n}\n' "$v" >"$SRC/apps/claw-frontend/package.json"
+    printf '{\n  "name": "claw-e2e",\n  "version": "%s",\n  "lockfileVersion": 3,\n  "packages": {\n    "": { "name": "claw-e2e", "version": "%s" },\n    "node_modules/left-pad": { "version": "%s" }\n  }\n}\n' \
+      "$v" "$v" "$pad" >"$SRC/package-lock.json"
+  }
+  commit_all() {
+    git -C "$SRC" add -A >/dev/null
+    git -C "$SRC" commit --quiet --no-verify -m "$1" >/dev/null
+    git -C "$SRC" push --quiet origin HEAD:refs/heads/main >/dev/null 2>&1
+    git -C "$SRC" rev-parse HEAD
+  }
+
+  write_manifests 9.8.7
+  SHA_VERSIONED="$(commit_all 'versioned manifests')"
+  # Recorded, not deployed: the scenario starts from a box already on it.
+  printf '%s\n' "$SHA_VERSIONED" >"$PROD/.deploy/deployed-sha"
+
+  write_manifests 9.8.8
+  SHA_RELEASE="$(commit_all 'chore(release): Deployment Release v9.8.8')"
+  reset_docker_log
+  out="$(deploy "$SHA_RELEASE")"
+  assert_contains "a release-only deployment succeeds" "$out" "Deployment successful"
+  assert_contains "the version-only manifests are named" "$out" "Release-version-only manifest changes (no rebuild):"
+  for manifest in package.json package-lock.json packages/shared-auth/package.json apps/claw-payment-service/package.json; do
+    assert_contains "$manifest is recognised as version-only" "$out" "  $manifest"
+  done
+  assert_not_contains "a release-only commit is not broad impact" "$out" "broad-impact change"
+  build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
+  assert_equals "a release-only commit rebuilds only the frontend (baked APP_VERSION)" "${build_line##* build }" "frontend"
+  assert_contains "the deployment status carries the new version" "$(cat "$PROD/.deploy/status.json")" '"version":"9.8.8"'
+  assert_equals "the release-only deployment is recorded" "$(deployed_sha)" "$SHA_RELEASE"
+
+  # A real dependency change in the lockfile stays broad impact.
+  write_manifests 9.8.8 1.0.1
+  SHA_DEP="$(commit_all 'bump left-pad')"
+  reset_docker_log
+  out="$(deploy "$SHA_DEP")"
+  assert_contains "a real lockfile change is broad impact" "$out" "broad-impact change: package-lock.json"
+  build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
+  assert_contains "a real lockfile change rebuilds auth-service" "$build_line" "auth-service"
+  assert_contains "a real lockfile change rebuilds payment-service" "$build_line" "payment-service"
+else
+  ok "release-version filter rehearsal (skipped — python3 unavailable)"
+fi
+
+# ─── Build cache is bounded on every outcome ─────────────────────────────────
+# Until 2026-09-25 the prune ran only after a HEALTHY rollout; failed deploys
+# never pruned and the cache reached 236 GB.
+printf '%s\n' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
+reset_docker_log
+out="$(CLAW_STUB_BUILD_FAIL=1 deploy "$SHA_PAYMENT")"
+assert_contains "a failed build still fails" "$out" "docker compose build failed"
+assert_equals "a failed build prunes before AND after the build" \
+  "$(grep -c 'builder prune --all --force --keep-storage 20GB' "$CLAW_STUB_LOG")" "2"
+reset_docker_log
+out="$(CLAW_STUB_HEALTH=unhealthy deploy "$SHA_PAYMENT")"
+assert_contains "an unhealthy rollout still fails" "$out" "health verification failed"
+assert_equals "an unhealthy rollout prunes before the build and on exit" \
+  "$(grep -c 'builder prune' "$CLAW_STUB_LOG")" "2"
+reset_docker_log
+out="$(deploy "$SHA_PAYMENT")"
+assert_equals "a healthy rollout prunes before the build and once after health" \
+  "$(grep -c 'builder prune' "$CLAW_STUB_LOG")" "2"
+
 # Restore the invariant the deploy-lock and orphan-guard blocks below assume:
 # SHA_BASE recorded as deployed, so deploying SHA_PAYMENT is real work rather
 # than an instant no-op that finishes before either guard can act.

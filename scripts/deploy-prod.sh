@@ -68,14 +68,20 @@
 #     forward only (scripts/docker-entrypoint.prod.sh)
 #   * print .env or any secret
 #
-# After every successful application deployment, unused BuildKit cache is
-# bounded to 20 GB. This does not remove images, containers, networks, or
-# volumes; it only evicts rebuildable cache after every selected service is
-# healthy.
+# Unused BuildKit cache is bounded to 20 GB before every image build and again
+# after it, whether the deployment succeeded or failed. This does not remove
+# images, containers, networks, or volumes; it only evicts rebuildable cache.
+# Until 2026-09-25 the prune ran only after a HEALTHY rollout, so a run of
+# failed deploys grew the cache to 236 GB and filled the production disk.
+#
+# A release commit re-versions every workspace manifest. A package.json or
+# package-lock.json whose only differences are those release versions is not
+# a change (ADR-123): python3 compares the two JSON documents with the version
+# fields removed. Without python3 every changed manifest counts as real.
 #
 # Requires bash 4.4+ (empty-array expansion under `set -u`), git, docker,
 # docker compose v2. flock is used when present; a POSIX mkdir lock is the
-# fallback.
+# fallback. python3 is optional (see above).
 # =============================================================================
 
 set -Eeuo pipefail
@@ -167,6 +173,24 @@ BROAD_IMPACT_PATHS=(
   "$SVC_COMPOSE_REL"
 )
 
+# Manifests whose "version" is compiled INTO an image, so a version-only change
+# to them still changes that image. The frontend inlines
+# apps/claw-frontend/package.json's version as APP_VERSION (the sidebar, the
+# auth pages and the marketing footer show it), so skipping its rebuild would
+# leave production displaying the previous release number. No backend reads
+# its manifest version at runtime.
+VERSION_BAKED_MANIFESTS=(
+  'apps/claw-frontend/package.json'
+)
+# Changed manifests dropped from the plan because only release versions moved.
+VERSION_ONLY_FILES=()
+
+# Build-cache bookkeeping for the EXIT trap: a deployment that started an image
+# build bounds the cache on the way out unless the success path already did.
+BUILD_ATTEMPTED=0
+BUILD_CACHE_BOUNDED=0
+BUILD_CACHE_PRUNE_TIMEOUT_SECONDS=900
+
 TMP_DIR=""
 LOCK_DIR_HELD=0
 SELF_COPY=""
@@ -209,6 +233,11 @@ cleanup() {
   stop_orphan_guard
   if [ "$status" -ne 0 ] && [ "$DEPLOYMENT_STATUS_ACTIVE" = "1" ]; then
     record_failed_deployment || true
+  fi
+  # Every outcome, not only a healthy one: a failed or aborted build leaves
+  # just as much BuildKit cache behind, and nothing else ever evicts it.
+  if [ "$BUILD_ATTEMPTED" = "1" ] && [ "$BUILD_CACHE_BOUNDED" != "1" ]; then
+    cleanup_build_cache || true
   fi
   if [ "$LOCK_DIR_HELD" = "1" ]; then
     rm -f "$LOCK_DIR/pid" 2>/dev/null || true
@@ -1365,16 +1394,131 @@ record_deployment() {
 # Docker Compose builds can create hundreds of gigabytes of short-lived
 # BuildKit layers during a multi-service release. Keep a useful warm cache for
 # the next deployment without allowing those rebuildable layers to consume the
-# host disk. Cleanup is deliberately post-health and excludes every persistent
-# Docker resource. A cleanup failure is loud but must not turn a healthy
-# production rollout into a failed deployment.
+# host disk. It runs before every build (a no-op while the cache is under the
+# bound), after a healthy rollout, and from the EXIT trap after a failed one.
+# It excludes every persistent Docker resource. It is best-effort: a cleanup
+# failure is loud but never changes the deployment's outcome, and it is bounded
+# so a wedged prune cannot hold the deploy lock.
 cleanup_build_cache() {
   section "Cleaning Docker build cache..."
-  if docker builder prune --all --force --keep-storage 20GB 200>&-; then
+  if timeout --kill-after=30 "$BUILD_CACHE_PRUNE_TIMEOUT_SECONDS" \
+    docker builder prune --all --force --keep-storage 20GB 200>&-; then
     log "Docker build cache is bounded to 20 GB."
   else
-    err "WARNING: Docker build cache cleanup failed; production remains healthy."
+    err "WARNING: Docker build cache cleanup failed; the deployment outcome is unchanged."
   fi
+  return 0
+}
+
+# =============================================================================
+# Release-version filter (ADR-123)
+# =============================================================================
+# The first interpreter that can actually run Python. `command -v` alone is not
+# enough: Windows ships a python3 alias that only opens the Store.
+resolve_python() {
+  local candidate
+  for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 &&
+      "$candidate" -c 'import json, sys' >/dev/null 2>&1; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+is_version_baked_manifest() {
+  local candidate
+  for candidate in "${VERSION_BAKED_MANIFESTS[@]}"; do
+    [ "$1" = "$candidate" ] && return 0
+  done
+  return 1
+}
+
+# Exit 0 only when two copies of one manifest differ in nothing but release
+# versions: the document's own "version", every workspace entry's "version" in
+# a lockfile (the "" root and each apps/* or packages/* key), and an EXACT
+# semver pin on an internal @claw/* dependency — which tools/release/version.mjs
+# rewrites together with the version. A `*` pin changing to a number, or any
+# third-party dependency moving, is a real change. Exit 1 = real change, 2 =
+# unreadable input (the caller treats both as a change).
+manifest_differs_only_in_versions() {
+  local python_bin="$1" before="$2" after="$3"
+  "$python_bin" - "$before" "$after" <<'PY'
+import json
+import re
+import sys
+
+EXACT_PIN = re.compile(r'^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]*)?$')
+DEPENDENCY_MAPS = ('dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies')
+
+
+def mask_internal_pins(entry):
+    for field in DEPENDENCY_MAPS:
+        deps = entry.get(field)
+        if not isinstance(deps, dict):
+            continue
+        for name, spec in list(deps.items()):
+            if name.startswith('@claw/') and isinstance(spec, str) and EXACT_PIN.match(spec):
+                deps[name] = '<release>'
+
+
+def normalise(document):
+    if not isinstance(document, dict):
+        return document
+    document.pop('version', None)
+    mask_internal_pins(document)
+    packages = document.get('packages')
+    if 'lockfileVersion' in document and isinstance(packages, dict):
+        for key, entry in packages.items():
+            if isinstance(entry, dict) and not key.startswith('node_modules') and '/node_modules/' not in key:
+                entry.pop('version', None)
+                mask_internal_pins(entry)
+    return document
+
+
+try:
+    with open(sys.argv[1], encoding='utf-8') as before, open(sys.argv[2], encoding='utf-8') as after:
+        same = normalise(json.load(before)) == normalise(json.load(after))
+except Exception:
+    sys.exit(2)
+sys.exit(0 if same else 1)
+PY
+}
+
+# Removes from CHANGED_FILES_FILE every manifest the release commit merely
+# re-versioned, and lists them in VERSION_ONLY_FILES. Before 2026-09-25 each
+# release bumped ~25 manifests, the root package.json counted as broad impact,
+# and every release rebuilt all ~20 images on an 8-CPU host — 15 full rebuilds
+# in one day, clamd OOM-killed, production unreachable.
+drop_version_only_changes() {
+  local old="$1" new="$2"
+  local python_bin file
+  local kept="$TMP_DIR/changed.kept"
+  local before="$TMP_DIR/manifest.before"
+  local after="$TMP_DIR/manifest.after"
+  VERSION_ONLY_FILES=()
+  if ! python_bin="$(resolve_python)"; then
+    log "NOTE: python3 is unavailable; every changed manifest counts as a real change."
+    return 0
+  fi
+  : >"$kept"
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    case "$file" in
+      package.json | package-lock.json | */package.json | */package-lock.json)
+        if ! is_version_baked_manifest "$file" &&
+          git show "$old:$file" >"$before" 2>/dev/null &&
+          git show "$new:$file" >"$after" 2>/dev/null &&
+          manifest_differs_only_in_versions "$python_bin" "$before" "$after"; then
+          VERSION_ONLY_FILES+=("$file")
+          continue
+        fi
+        ;;
+    esac
+    printf '%s\n' "$file" >>"$kept"
+  done <"$CHANGED_FILES_FILE"
+  mv -f "$kept" "$CHANGED_FILES_FILE"
 }
 
 # =============================================================================
@@ -1580,6 +1724,7 @@ main() {
     # --no-renames so a moved file reports BOTH paths; a rename across a
     # workspace boundary has to mark the source service as well as the target.
     git diff --name-only --no-renames "$old_sha" "$new_sha" >"$CHANGED_FILES_FILE"
+    drop_version_only_changes "$old_sha" "$new_sha"
   fi
 
   # ─── Affected services ─────────────────────────────────────────────────────
@@ -1614,6 +1759,10 @@ main() {
     if [ "$total" -gt 50 ]; then
       log "  ... and $((total - 50)) more"
     fi
+  fi
+  if [ "${#VERSION_ONLY_FILES[@]}" -gt 0 ]; then
+    section "Release-version-only manifest changes (no rebuild):"
+    printf '  %s\n' "${VERSION_ONLY_FILES[@]}"
   fi
 
   section "Affected services:"
@@ -1692,6 +1841,10 @@ main() {
   # release can fan out to all application services and exhaust VPS CPU long
   # enough for the controlling SSH connection to time out. Keep the default
   # deliberately conservative; operators may choose a value from 1 to 4.
+  # Bound the cache BEFORE building too: a string of failed deploys must never
+  # leave this build with a full disk (236 GB of cache on 2026-09-25).
+  cleanup_build_cache
+  BUILD_ATTEMPTED=1
   if ! build_services; then
     err ""
     err "Build failed. No container was recreated; production is still serving"
@@ -1774,6 +1927,7 @@ main() {
 
   set_deployment_phase "finalizing"
   cleanup_build_cache
+  BUILD_CACHE_BOUNDED=1
   record_deployment "$new_sha" "${PLAN_SERVICES[*]} ${PLAN_IMAGE_SERVICES[*]}"
 
   log ""
