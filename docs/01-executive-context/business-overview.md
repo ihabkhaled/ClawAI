@@ -2,6 +2,16 @@
 
 This document describes the business context, user personas, rules, workflows, and domain terminology for ClawAI. It is written for product owners, QA engineers, and new team members who need to understand the "why" and "what" before the "how."
 
+> **Positioning (2026-09-26): "Every AI, one workspace."** ClawAI is sold as a full
+> AI workspace — pay as you go, for individuals and teams, hosted or on your own
+> hardware. The canonical statement and its four pillars are in
+> [product-vision.md](product-vision.md); the flagships, each traced to code, are in
+> [flagship-features.md](../02-business-product/flagship-features.md); the decision is
+> [ADR-126](../13-adr/adr-126-every-ai-one-workspace-positioning.md). Prices and
+> allowances are in [`docs/business/`](../business/README.md). Parts of the personas
+> and rules below predate the repositioning and describe the self-hosted,
+> single-organisation deployment.
+
 ---
 
 ## Business Problem
@@ -32,7 +42,10 @@ The AI tooling market in 2025-2026 is characterized by:
 - **Local model viability.** Open-source models (Llama, Gemma, Phi) running on commodity hardware are now capable enough for many production tasks.
 - **Vendor diversification.** Single-provider strategies create risk (outages, pricing changes, policy changes). Organizations want optionality.
 
-ClawAI is positioned for organizations that recognize these trends and want a self-hosted, multi-provider, privacy-aware AI platform they control.
+- **Usage-based buying.** Buyers resist a subscription per provider per seat; metered, pay-as-you-go credit matches spend to use.
+- **Work beyond chat.** Real tasks arrive as audio, video, archives and links and end as documents, spreadsheets and decks.
+
+ClawAI is positioned as one AI workspace for individuals, teams and business customers who want every model, pay-as-you-go pricing, and the option to run it all on their own hardware.
 
 ---
 

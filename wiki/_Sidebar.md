@@ -4,7 +4,17 @@
 - [[Getting-Started]]
 - [[Repository-Map]]
 
+**Product**
+
+- [[Product-Vision]]
+- [[Flagship-Features]]
+- [[Business-Overview]]
+- [[Requirements-Register]]
+- [[Drift-Log]]
+- [[ADR-Index]]
+
 **Architecture**
+
 - [[System-at-a-Glance]]
 - [[Architecture-Map]]
 - [[System-Architecture]]
@@ -15,6 +25,7 @@
 - [[Security-Architecture]]
 
 **Platform**
+
 - [[Backend-Services]]
 - [[Frontend-Architecture]]
 - [[Shared-Packages]]
@@ -25,6 +36,7 @@
 - [[File-Support-Architecture]]
 
 **Runtime & Ops**
+
 - [[Docker-Guide]]
 - [[Nginx-Reference]]
 - [[CI-CD-Pipeline]]
@@ -33,6 +45,7 @@
 - [[Troubleshooting]]
 
 **Quality**
+
 - [[Testing-Standards]]
 - [[Testing-Strategy]]
 - [[Quality-Gates]]
@@ -41,6 +54,7 @@
 - [[Reviewer-Roles]]
 
 **Engineering OS**
+
 - [[AI-Native-Engineering-OS]]
 - [[Generated-Manifests]]
 - [[Rules-Catalog]]
@@ -53,6 +67,7 @@
 - [[Extended-Work-Skills]]
 
 **Agents**
+
 - [[Agent-CLI]]
 - [[Coding-Agent]]
 - [[Coding-Agent-Architecture]]
@@ -60,6 +75,7 @@
 - [[Coding-Agent-Testing]]
 
 **Reference**
+
 - [[ADR-Index]]
 - [[Risk-Register]]
 - [[Technical-Debt]]

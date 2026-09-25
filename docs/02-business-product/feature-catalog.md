@@ -4,6 +4,11 @@ Complete catalog of every feature in the platform with status, description, and 
 
 Last updated: 2026-04-11
 
+> **Superseded as the headline list.** The current flagships, each traced to wired
+> code, are in [flagship-features.md](flagship-features.md) (audited 2026-09-26,
+> [ADR-126](../13-adr/adr-126-every-ai-one-workspace-positioning.md)). This catalog
+> remains the broad per-feature list and is not re-verified.
+
 ---
 
 ## Feature Status Legend

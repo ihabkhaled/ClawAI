@@ -2,7 +2,9 @@
 
 ## What Is ClawAI?
 
-ClawAI is a local-first AI orchestration platform that routes conversations to the best AI provider automatically. It now runs 17 NestJS backend services behind a Next.js frontend, supports 7 routing modes (from fully automatic to privacy-first), adds advanced orchestration workflows, and keeps sensitive data local via Ollama. Three roles (Admin, Operator, Viewer), eight languages, full audit trail, workspace grounding, and local agent-assisted workflows are all part of the active platform.
+**Every AI, one workspace.** ClawAI puts every frontier AI model in one workspace that sees, hears, researches and builds — pay as you go, bring your team, or run it on your own hardware ([product vision](../01-executive-context/product-vision.md), [flagship features](../02-business-product/flagship-features.md)).
+
+Architecturally it is a local-first AI orchestration platform that routes conversations to the best AI provider automatically. _The rest of this paragraph predates 2026-09 and undercounts; the flagship catalog is current._ It runs 17 NestJS backend services behind a Next.js frontend, supports 7 routing modes (from fully automatic to privacy-first), adds advanced orchestration workflows, and keeps sensitive data local via Ollama. Three roles (Admin, Operator, Viewer), eight languages, full audit trail, workspace grounding, and local agent-assisted workflows are all part of the active platform.
 
 ---
 

@@ -44,6 +44,8 @@ install has been tuned. Read the table before assuming.
 
 ## Related
 
+- [`docs/01-executive-context/product-vision.md`](../01-executive-context/product-vision.md) — the positioning these numbers serve: "Every AI, one workspace", pay-as-you-go first ([ADR-126](../13-adr/adr-126-every-ai-one-workspace-positioning.md)). Positioning changes no number in this directory.
+- Not yet documented here (mechanisms exist, business write-up missing): display currency vs settlement currency — see [ADR-097](../13-adr/adr-097-display-fx-separate-from-settlement-fx.md); admin plan grants (1–60 months, reason required) — see [flagship 12](../02-business-product/flagship-features.md#12-teams-and-administration--partial).
 - [`docs/02-business-product/payg-credit-spec.md`](../02-business-product/payg-credit-spec.md) — intent and acceptance criteria
 - [`docs/03-architecture/payg-credit.md`](../03-architecture/payg-credit.md) — the mechanism
 - [`docs/06-data/plan-and-quota-specification.md`](../06-data/plan-and-quota-specification.md) — the technical quota contract

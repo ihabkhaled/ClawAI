@@ -2,133 +2,152 @@
 
 # Product Vision
 
-ClawAI is a local-first AI orchestration platform that gives organizations intelligent, transparent, and privacy-aware access to multiple AI providers through a single interface.
+> **Canonical home for ClawAI's positioning** — slogan, description, pillars,
+> users and non-goals. Everything else links here: the README, the wiki,
+> `CLAUDE.md` and every agent router. Decided in
+> [ADR-126](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-126-every-ai-one-workspace-positioning.md) (2026-09-26);
+> the change of direction is [DRIFT-001](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/drift-log.md).
+> The flagship list, each traced to code, is
+> [flagship-features.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/flagship-features.md).
+
+## Every AI, one workspace.
+
+**Every frontier AI model in one workspace that sees, hears, researches and
+builds. Pay as you go, bring your team, or run it on your own hardware.**
+
+_Replaced 2026-09-26: "Every Frontier AI Model, One Subscription"._
 
 ---
 
 ## Mission Statement
 
-Democratize access to AI by providing a unified orchestration layer that automatically routes conversations to the best available model while keeping sensitive data local and costs under control.
+Put every capable AI model — cloud and local — behind one workspace where the
+work actually happens: talk to it, show it files, audio and video, let it
+research the web and write the documents, and pay only for what you use.
+
+---
+
+## The Four Pillars
+
+| Pillar                      | Promise                                                                                                                                                                                                 | What makes it true                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **One workspace**           | Not a chat box: the AI sees images and video, hears voice notes, reads archives, researches and crawls the web, compares and orchestrates models, and writes PDF, Word, Excel, PowerPoint and Zip files | Flagships 1–8 and 10                                                                    |
+| **Pay as you go**           | Connector credit metered per use across every surface, shown in the visitor's own currency                                                                                                              | Flagship 9; numbers in [`docs/business/`](https://github.com/ihabkhaled/ClawAI/blob/main/docs/business/README.md)                        |
+| **Bring your team**         | Admin-managed users, roles and permissions, plan grants, per-user usage, and coding agents an organisation can govern                                                                                   | Flagships 11–12, **with the gaps listed there** — no SSO and no shared team billing yet |
+| **Local-first and private** | Run the whole stack on your own hardware, with Ollama, llama.cpp and local image models; virus-scanned uploads; retention and memory controls                                                           | Flagships 13–15                                                                         |
 
 ---
 
 ## Problem Being Solved
 
-Organizations today face a fragmented AI landscape:
-
-1. **Provider lock-in.** Teams adopt one AI provider and miss the strengths of others. Claude is better at coding, Gemini is better at multimodal tasks, local models are better for privacy -- but switching between them is manual and slow.
-
-2. **Privacy uncertainty.** Sensitive data gets sent to cloud APIs with no guardrails. Compliance teams cannot verify which data went where. There is no automated way to keep private data on local infrastructure.
-
-3. **Cost opacity.** AI usage is distributed across providers with no central visibility. Teams overspend on expensive models for simple tasks that a smaller model could handle equally well.
-
-4. **No institutional memory.** Every conversation starts from scratch. Context from previous interactions, user preferences, and organizational knowledge is lost between sessions.
-
-5. **Operational blindness.** There is no audit trail, no usage analytics, and no way to enforce organizational policies on AI usage.
+1. **One model is never enough, and switching is manual.** Each provider is
+   strongest at something different; people keep several subscriptions and
+   copy between tabs.
+2. **Chat is too small for the work.** Real tasks arrive as voice notes, videos,
+   zip files and links, and end as a spreadsheet, a deck or a PDF. Most assistants
+   handle one end of that.
+3. **Subscriptions charge for capacity, not use.** A light month costs the same
+   as a heavy one, per seat, per provider.
+4. **Privacy is all-or-nothing.** Either everything goes to a cloud API, or you
+   run a local model with none of the tooling around it.
+5. **Teams have no control plane.** No shared user management, usage view or
+   audit trail across the AI tools people already use.
 
 ---
 
 ## Target Users
 
-| User Type                   | Primary Need                                                                                                               |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **IT Administrators**       | Control which AI providers are available, enforce policies, manage users and roles, audit AI usage across the organization |
-| **Software Developers**     | Fast access to coding-optimized AI, file analysis, context-aware conversations that remember past decisions                |
-| **Data Analysts**           | Upload datasets for AI-assisted analysis, generate reports, use multimodal models for charts and visualizations            |
-| **Privacy-Conscious Teams** | Guarantee that sensitive conversations never leave local infrastructure, with verifiable routing transparency              |
-| **Cost-Conscious Managers** | Route simple tasks to cheap or free local models, reserve expensive cloud models for complex work, track spending          |
+| User                                | Primary need                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Individual professionals**        | The best model for each task, files in and files out, paying only for what they use             |
+| **Teams and business customers**    | Admin-managed users and roles, usage visibility, plan grants, governed coding agents            |
+| **Developers**                      | A coding agent in VS Code, research that reads the docs for them, every provider behind one key |
+| **Privacy-conscious organisations** | The whole stack on their own hardware, local models, verifiable routing                         |
+| **Administrators and operators**    | Status, uptime, logs and metrics without shell access to production                             |
+
+Personas in detail: [user-personas.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/user-personas.md).
 
 ---
 
 ## Value Proposition
 
-### For the Organization
+### For a team or organisation
 
-- **One platform, all providers.** Connect OpenAI, Anthropic, Google Gemini, DeepSeek, and local Ollama models. Add or remove providers without changing workflows.
-- **Automatic intelligent routing.** The system analyzes each message and routes it to the best model for the task. Coding goes to Claude, image analysis goes to Gemini, simple Q&A stays local.
-- **Privacy by architecture.** Sensitive conversations are automatically routed to local Ollama models. Data classification happens before routing, not after.
-- **Full audit trail.** Every message, every routing decision, every model invocation is logged. Compliance teams get verifiable records.
-- **Cost control.** Usage dashboards, per-provider spending, and routing policies that prefer cheaper models when appropriate.
+- **Every provider behind one workspace** — 22 usable providers, cloud and local,
+  routed by task, modality and context window.
+- **Pay for use** — metered credit instead of a seat per provider.
+- **Control** — users, roles, permissions, plan grants, per-user statistics,
+  audit trail, and an admin status page with Grafana and Prometheus behind it.
+- **Your hardware if you want it** — one installer, GPU overlay chosen for you.
 
-### For the Individual User
+### For the individual
 
-- **It just works.** Type a message and get the best answer. No need to know which model to use.
-- **Persistent memory.** The system extracts facts, preferences, and instructions from conversations and applies them to future interactions.
-- **Context packs.** Attach curated knowledge (documentation, code samples, business rules) to any conversation.
-- **File analysis.** Upload CSVs, JSON, Markdown, or text files and ask questions about them.
-- **Transparency.** See exactly which model answered, why it was chosen, and how confident the routing decision was.
+- **It hears and sees** — voice and video notes, images, PDFs, archives.
+- **It researches** — an AI plans the web work, narrates each step, opens every
+  link you paste, and crawls a site when asked.
+- **It builds** — files written by the AI, named by the AI, in the format asked for.
+- **It remembers** — memory, context packs and cross-thread context.
+- **Power tools** — compare models with a judge, branch, edit and rerun, find in
+  a conversation, read aloud.
 
 ---
 
 ## Product Goals
 
-### Goals
-
-1. **Intelligent routing that improves over time.** The AUTO routing mode should select the right provider for the task at least 85% of the time, as measured by user feedback (thumbs up/down on messages).
-
-2. **Sub-second routing decisions.** Routing should add no more than 1 second of overhead to any request. The Ollama router has a 10-second timeout with heuristic fallback to ensure this.
-
-3. **Zero-configuration privacy.** Privacy-sensitive content should be automatically detected and routed locally without requiring the user to select a routing mode manually.
-
-4. **Organizational memory.** After 30 days of use, the memory system should surface relevant context in at least 50% of conversations where it is applicable.
-
-5. **Full operational visibility.** Every AI interaction must produce an audit record. Usage dashboards must show cost, latency, and provider distribution in real time.
-
-6. **Self-hosted and portable.** The entire platform runs on a single machine with Docker Compose. No cloud dependencies required (Ollama provides local AI capability).
-
-7. **Multi-language accessibility.** The interface must be fully localized in 9 languages with RTL support for Arabic.
+1. **The workspace is the product.** Every orchestration mode takes files and
+   research; every model gets media it can use, or a helper that describes it.
+2. **Every AI surface is metered, and every meter is honest.** Integer money,
+   reservation before the call, settlement after
+   ([rules/28](https://github.com/ihabkhaled/ClawAI/blob/main/rules/28-billing-integrity-and-api-contracts.md),
+   [rules/37](https://github.com/ihabkhaled/ClawAI/blob/main/rules/37-payg-credit-integrity.md)).
+3. **Routing picks a model that can actually do the task** — right modality,
+   prompt fits the window, provider not out of credit.
+4. **Self-hosted and portable.** The whole platform runs on one machine with
+   Docker Compose; cloud providers are optional.
+5. **Full operational visibility** — health, uptime, logs, metrics, audit.
+6. **Localised in 13 languages**, including right-to-left.
 
 ### Non-Goals
 
-1. **Training or fine-tuning models.** ClawAI orchestrates existing models; it does not train new ones.
+1. **Training or fine-tuning models.** ClawAI orchestrates existing models.
+2. **Replacing each provider's native product.** ClawAI is one workspace across
+   providers, not a clone of any single one.
+3. **Real-time collaborative editing** of a conversation.
 
-2. **Replacing provider-specific features.** ClawAI provides a unified chat interface, not a full replacement for each provider's native UI (no Artifacts, no Canvas, no Playground).
-
-3. **Multi-tenant SaaS.** ClawAI is designed for single-organization deployment. Multi-tenancy is not a current objective.
-
-4. **Real-time collaboration.** Conversations are single-user. Shared threads or collaborative editing are not in scope.
-
-5. **Agentic tool use.** ClawAI routes messages to AI providers and returns responses. It does not execute code, browse the web, or take actions on behalf of the user (beyond image and file generation).
+_Removed 2026-09-26 because they are no longer true:_ "does not browse the web
+or take actions" (it researches, crawls and runs a coding agent) and
+"conversations are single-user, no sharing" (public share links exist).
+Multi-tenant team accounts are **not** a non-goal — they are an open requirement
+([REQ-POS-005](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/requirements-register.md#req-pos-005)).
 
 ---
 
 ## Success Metrics / KPIs
 
-| Metric                    | Target                                               | How Measured                              |
-| ------------------------- | ---------------------------------------------------- | ----------------------------------------- |
-| **Routing accuracy**      | >= 85% positive feedback on AUTO-routed messages     | `ChatMessage.feedback` field aggregation  |
-| **Routing latency**       | < 1 second for 95th percentile                       | `RoutingDecision` timestamps              |
-| **System availability**   | 99.5% uptime during business hours                   | Health service aggregation                |
-| **Memory relevance**      | >= 50% of surfaced memories rated useful             | User feedback on memory suggestions       |
-| **Cost reduction**        | >= 30% reduction vs. using a single premium provider | Usage ledger comparison (local vs. cloud) |
-| **Onboarding time**       | New engineer productive in < 1 day                   | Time from clone to first merged PR        |
-| **Audit completeness**    | 100% of AI interactions have audit records           | Audit log count vs. message count         |
-| **Localization coverage** | 100% of user-facing text in all 9 languages          | i18n key coverage report                  |
+| Metric                    | Target                                          | How measured                           |
+| ------------------------- | ----------------------------------------------- | -------------------------------------- |
+| **Routing accuracy**      | ≥ 85% positive feedback on AUTO-routed messages | `ChatMessage.feedback` aggregation     |
+| **System availability**   | 99.5%                                           | Status page (Prometheus-backed uptime) |
+| **Metering completeness** | 100% of paid AI calls reserve and settle credit | PAYG ledger vs provider calls          |
+| **Audit completeness**    | 100% of AI interactions have audit records      | Audit log count vs message count       |
+| **Localisation coverage** | 100% of user-facing text in all 13 locales      | i18n key coverage                      |
+
+_Unknown - ask the owner and record the answer._ — the commercial KPIs for the
+repositioning (pay-as-you-go conversion, team-customer count, self-hosted
+installs) have no targets yet.
 
 ---
 
 ## Competitive Positioning
 
-### What Makes ClawAI Different
+| Dimension      | Typical AI assistant  | ClawAI                                                 |
+| -------------- | --------------------- | ------------------------------------------------------ |
+| **Models**     | One provider          | 22 usable providers, cloud and local                   |
+| **Inputs**     | Text and some files   | Voice, video, images, PDFs, archives, links            |
+| **Outputs**    | Text                  | Text, images, PDF, Word, Excel, PowerPoint, Zip        |
+| **Web**        | Search snippets       | AI-planned research, narrated, robots-respecting crawl |
+| **Pricing**    | Subscription per seat | Pay as you go, shown in your currency                  |
+| **Deployment** | Their cloud           | Hosted, or the whole stack on your hardware            |
+| **Control**    | Basic                 | Roles, permissions, plan grants, usage, status page    |
 
-| Dimension          | Typical AI Chat App        | ClawAI                                                               |
-| ------------------ | -------------------------- | -------------------------------------------------------------------- |
-| **Providers**      | Single provider            | 5 providers + local Ollama                                           |
-| **Routing**        | Manual model selection     | 7 automated routing modes                                            |
-| **Privacy**        | All data goes to cloud     | Local-first with automatic privacy routing                           |
-| **Memory**         | Per-conversation only      | Cross-conversation extraction (facts, preferences, instructions)     |
-| **Deployment**     | Cloud-hosted SaaS          | Self-hosted, single Docker Compose                                   |
-| **Audit**          | Minimal or none            | Full audit trail with usage analytics                                |
-| **Access control** | Single user or basic teams | RBAC with 3 roles (Admin, Operator, Viewer)                          |
-| **Localization**   | English only or limited    | 9 languages including RTL Arabic                                     |
-| **Transparency**   | Black box                  | Routing confidence, reason tags, cost/privacy class on every message |
-
-### Strategic Position
-
-ClawAI occupies the intersection of three trends:
-
-1. **Multi-model AI** -- no single provider is best at everything, so orchestration creates value.
-2. **Data sovereignty** -- organizations increasingly require that sensitive data stays on their infrastructure.
-3. **AI cost management** -- as AI usage scales, routing simple tasks to cheaper models produces significant savings.
-
-The platform is designed for organizations that need AI access but cannot or will not send all data to a single cloud provider.
+Market detail: [competitive-analysis.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/01-executive-context/competitive-analysis.md).

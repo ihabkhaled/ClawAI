@@ -9,67 +9,110 @@
 
 # ClawAI
 
-**Local-first AI orchestration platform.**
+**Every AI, one workspace.**
 
-ClawAI is an open-source platform for orchestrating AI models across multiple providers -- cloud and local -- through a unified interface. It routes prompts intelligently, manages provider connections securely, and keeps your data under your control.
+Every frontier AI model in one workspace that sees, hears, researches and builds.
+Pay as you go, bring your team, or run it on your own hardware.
+
+> Positioning is canonical in [docs/01-executive-context/product-vision.md](docs/01-executive-context/product-vision.md)
+> ([ADR-126](docs/13-adr/adr-126-every-ai-one-workspace-positioning.md)). Every
+> feature below is traced to the code that runs it, with its limits, in
+> [docs/02-business-product/flagship-features.md](docs/02-business-product/flagship-features.md).
 
 ---
 
-## Key Features
+## Why ClawAI
 
-- **Multi-provider routing** -- OpenAI, Anthropic, Google Gemini, AWS Bedrock, DeepSeek, xAI, and local models via Ollama
-- **Intelligent model routing** -- A local judge model selects the best provider/model for each request based on task characteristics, connector health, and learned priors from routing telemetry and replay data
-- **Local-first architecture** -- Run entirely on your own hardware with Ollama; cloud providers are optional
-- **Microservices backend** -- 17 independent NestJS services with fault isolation and independent scaling
-- **Secure secret management** -- Connector API keys encrypted at rest with AES-256-GCM
-- **Chat interface** -- Threaded conversations with full message history
-- **Memory and context packs** -- Persistent memory and embeddings for contextual conversations
-- **File processing** -- Upload, chunk, and index files for retrieval-augmented generation
-- **Advanced chat orchestration** -- Parallel compare, consensus, escalation chains, repair, best-of-n, verification, role packs, and pipelines
-- **Routing replay and judge review** -- Replay Lab and judge/referee flows help tune routing quality over time
-- **Workspace grounding** -- External connector sync, search, and approval-style actions through the workspace service
-- **Desktop agent runtime** -- Local CLI sessions, human-approved terminal commands, repository registration, and file-system event reporting
-- **Image and file generation** -- Dedicated services for image output and downloadable document/file generation
-- **Operational visibility** -- Aggregated health, audit logging, usage ledgers, client logs, and server logs
-- **Role-based access control** -- Admin, operator, and viewer roles with JWT authentication
-- **Monorepo structure** -- Frontend, 18 backend services, and 6 shared packages using npm workspaces
-- **Multilingual discovery** -- URL-authoritative routing across 13 locales,
-  reviewed-only hreflang, chunked sitemap discovery, and bounded localized RSS
+| Pillar                      | What you get                                                                                                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **One workspace**           | Not a chat box. The AI hears voice notes, watches video, reads PDFs and archives, researches the web, compares models, and writes the PDF, Word, Excel or PowerPoint file you asked for. |
+| **Pay as you go**           | Credit metered per use across every AI surface, shown in your own currency. Monthly, quarterly, semiannual and yearly plans too.                                                         |
+| **Bring your team**         | Admins create and manage users, assign roles and permissions, grant plans, and see per-user usage. Coding agents follow an organisation policy.                                          |
+| **Local-first and private** | Run the whole stack on your own hardware with Ollama, llama.cpp and local image models. Every upload is virus-scanned; retention and memory controls are yours.                          |
+
+Not built yet, so not claimed: single sign-on (SSO) and a shared team account
+with pooled billing — see the [requirements register](docs/02-business-product/requirements-register.md).
+
+---
+
+## Flagship Features
+
+1. **Multimodal AI** — voice and video notes, transcription, helper vision that
+   describes images for text-only models, videos delivered to every model, and
+   AUTO routing that picks a model able to handle the media. Send a file with no
+   text and it is answered.
+2. **Files from chat** — the AI writes PDF (typeset by Typst), Word, Excel,
+   PowerPoint and Zip bundles, names them itself, within a daily allowance per
+   plan. Download any answer in eight formats.
+3. **Smart attachments** — ZIP, 7z, RAR, TAR and more expand as a tree, with a
+   password retry in the chat; drop files anywhere; owner-only downloads of
+   AI-made files that expire after an hour; ClamAV scanning on every upload.
+4. **Narrated AI research and crawling** — an AI plans each turn's web work and
+   narrates every step; pasted links are opened (up to 10 per message); site
+   crawls up to 200 pages; fetches escalate from official APIs through TLS
+   impersonation and a headless browser to optional Crawl4AI, FlareSolverr and
+   Firecrawl sidecars and an archive snapshot — and robots.txt is respected.
+5. **Orchestration labs** — Compare 2–5 models with a judge that ranks every
+   answer, plus nine labs: Consensus, Escalation, Repair, Decompose, Best-of-N,
+   Verify, Pipeline, Cost Ensemble and Role Pack — all with files and research.
+6. **Conversation power tools** — branch from any message, edit and rerun, find
+   in a conversation, export to Markdown, cross-thread context, prompt history.
+7. **Read aloud** — metered, plan-gated text-to-speech that starts on the first
+   segment and can be cancelled.
+8. **Images** — generate with OpenAI, Gemini, xAI Grok or local Stable Diffusion
+   and ComfyUI; shared conversation pages keep their images.
+9. **Pay-as-you-go credit** — metered on 12 surfaces, prices shown in the
+   visitor's currency while the charge settles separately.
+10. **22 usable providers** — OpenAI, Anthropic, Gemini, DeepSeek, xAI, Ollama,
+    llama.cpp and 15 OpenAI-compatible presets (OpenRouter, Groq, Mistral, Kimi,
+    GLM, Qwen, Cohere and more), the real model catalog, modality- and
+    context-aware AUTO routing, and a shared provider circuit breaker.
+11. **Coding Agent for VS Code** — a separate extension that signs in through the
+    browser and obeys an organisation policy served by ClawAI.
+12. **Teams and administration** — user management, roles and permissions, plan
+    grants, per-user usage statistics.
+13. **Observability** — an admin status page with uptime and incidents, Grafana
+    and Prometheus, every container's log in one store, read-only ops tokens.
+14. **Local-first and privacy** — Ollama, llama.cpp, local image generation, GPU
+    overlay picked automatically, retention and memory controls.
+15. **Reliability** — chat-service scales horizontally, dropped streams resume,
+    Stop works across replicas, rolling deploys.
+
+Also: memory and context packs, workspace connectors and automations, routing
+transparency on every answer, audit logging, and 13 interface languages with
+right-to-left support.
 
 ---
 
 ## Quick Start
 
+The installer checks prerequisites (Docker, Node.js 22+, Git), generates secrets,
+writes `.env`, sets up local TLS, and starts the stack. Re-running it resumes.
+
 ```bash
-# 1. Clone the repository
+# Linux / macOS
 git clone <repo-url> claw && cd claw
-
-# 2. Copy environment files for all services
-bash scripts/setup.sh
-# Or manually: copy .env.example to .env
-
-# 3. Start all containers (infrastructure + services)
-./scripts/claw.sh up
-
-# 4. Wait for services to start (~60 seconds), then verify
-curl http://localhost:4000/api/v1/health
-
-# 5. Open the frontend
-open http://localhost:3000
+bash scripts/install.sh
 ```
 
-### Default Credentials
+```powershell
+# Windows (PowerShell)
+git clone <repo-url> claw; cd claw
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+```
 
-| Field    | Value            |
-| -------- | ---------------- |
-| Email    | admin@claw.local |
-| Password | ClawAdmin123!    |
+Then open **https://claw.local** (the TLS step adds it to your hosts file) and
+sign in with the admin email and password you chose during install (default
+email `admin@claw.local`).
 
-You will be prompted to change your password on first login.
+Afterwards, `./scripts/claw.sh up -d` is the only supported way to start the
+stack — it stitches the split compose files and picks the right GPU overlay.
+Local AI (Ollama, llama.cpp, local image models) is opt-in: see the
+[installation guide](docs/00-start-here/installation.md).
 
-The auth service automatically runs database migrations and seeds the default admin user on first start. If users already exist, the seed is skipped (idempotent).
-
-The frontend is available at `http://localhost:3000` and all API traffic routes through Nginx at `http://localhost:4000`.
+```bash
+curl https://claw.local/api/v1/health   # aggregated service health
+```
 
 Human-facing URLs use a locale prefix (for example `/en`, `/fa/features`, and
 `/ja/chat`). Machine routes such as `/api/*`, `/robots.txt`, and `/sitemap.xml`
@@ -110,6 +153,7 @@ Nginx Reverse Proxy (:4000)
   +--> Research (:4016) ---------> PostgreSQL claw_research (:5452)
   +--> Workspace (:4014) --------> PostgreSQL claw_workspace (:5450)
   +--> Llamacpp (:4017) ---------> PostgreSQL claw_llamacpp (:5440)
+  +--> Payment (:4018) ----------> PostgreSQL claw_payments (:5453)
                                    + llamacpp-data volume (binary + GGUF weights)
 
 Shared infrastructure:
@@ -140,20 +184,21 @@ Shared infrastructure:
 | Research        | 4016 | PostgreSQL `claw_research` (5452)         | Dynamic search, fetch, scrape, evidence orchestration                                                                                                                                                                                                                 |
 | Workspace       | 4014 | PostgreSQL `claw_workspace` (5450)        | External workspace context, sync, actions                                                                                                                                                                                                                             |
 | Llamacpp        | 4017 | PostgreSQL `claw_llamacpp` (5440)         | Frontier open-weight LLMs (Kimi K2.6, GLM-5.1, DeepSeek V3.2/V4) via vanilla `llama.cpp`. Auto-installs binary, manages HF downloads, supervises a single resident model. Multi-vendor GPU passthrough (NVIDIA / AMD ROCm / Intel-Vulkan) auto-detected by `claw.sh`. |
+| Payment         | 4018 | PostgreSQL `claw_payments` (5453)         | Checkout, subscriptions, invoices, pay-as-you-go top-ups, display currency                                                                                                                                                                                            |
 
 ### Infrastructure
 
-| Component      | Host Port(s) | Internal Port | Purpose                        |
-| -------------- | ------------ | ------------- | ------------------------------ |
-| Nginx          | 4000         | 80            | Reverse proxy / API gateway    |
-| PostgreSQL x12 | 5441-5452    | 5432          | Per-service relational storage |
-| MongoDB        | 27018        | 27017         | Audit and log storage          |
-| Redis          | 6380         | 6379          | Caching and ephemeral state    |
-| RabbitMQ       | 5672         | 5672          | Async inter-service messaging  |
-| RabbitMQ UI    | 15672        | 15672         | Management console             |
-| Ollama         | 11434        | 11434         | Local model inference          |
-| ClamAV         | 3310         | 3310          | File antivirus scanning        |
-| Frontend       | 3000         | 3000          | Next.js UI                     |
+| Component      | Host Port(s)  | Internal Port | Purpose                                      |
+| -------------- | ------------- | ------------- | -------------------------------------------- |
+| Nginx          | 443, 80, 4000 | 443, 80       | TLS termination, reverse proxy / API gateway |
+| PostgreSQL x14 | 5440-5453     | 5432          | Per-service relational storage               |
+| MongoDB        | 27018         | 27017         | Audit and log storage                        |
+| Redis          | 6380          | 6379          | Caching and ephemeral state                  |
+| RabbitMQ       | 5672          | 5672          | Async inter-service messaging                |
+| RabbitMQ UI    | 15672         | 15672         | Management console                           |
+| Ollama         | 11434         | 11434         | Local model inference                        |
+| ClamAV         | 3310          | 3310          | File antivirus scanning                      |
+| Frontend       | 3000          | 3000          | Next.js UI                                   |
 
 ---
 
@@ -179,12 +224,15 @@ claw/
 │   ├── claw-agent-service/           # Local agent runtime backend (:4015)
 │   ├── claw-workspace-service/       # Workspace grounding and actions (:4014)
 │   ├── claw-research-service/        # Dynamic search and evidence orchestration (:4016)
-│   └── claw-llamacpp-service/        # Frontier open-weight LLMs via llama.cpp (:4017)
+│   ├── claw-llamacpp-service/        # Frontier open-weight LLMs via llama.cpp (:4017)
+│   ├── claw-payment-service/         # Payments, subscriptions, PAYG top-ups (:4018)
+│   └── claw-coding-agent/            # VS Code Coding Agent (submodule, separate repository)
 ├── packages/
 │   ├── shared-types/                 # @claw/shared-types
 │   ├── shared-constants/             # @claw/shared-constants
 │   ├── shared-rabbitmq/              # @claw/shared-rabbitmq
 │   ├── shared-auth/                  # @claw/shared-auth
+│   ├── shared-entitlements/          # @claw/shared-entitlements
 │   └── shared-utilities/             # @claw/shared-utilities
 ├── docs/                             # Documentation and ADRs
 ├── infra/                            # Docker, nginx, and deployment configs
@@ -218,6 +266,8 @@ claw/
 
 ## Documentation
 
+- [Product Vision — positioning](docs/01-executive-context/product-vision.md)
+- [Flagship Features — traced to code](docs/02-business-product/flagship-features.md)
 - [Installation Guide](docs/00-start-here/installation.md)
 - [Environment Variables](docs/06-data/environment-variables.md)
 - [Architecture Overview](docs/ARCHITECTURE.md)

@@ -2,7 +2,7 @@
 
 # System at a Glance
 
-ClawAI is a local-first AI orchestration platform built as a monorepo of 17 NestJS backend services, a Next.js frontend, and supporting infrastructure. This document is the single-page reference for understanding the current system.
+ClawAI ("Every AI, one workspace" — see [product vision](https://github.com/ihabkhaled/ClawAI/blob/main/docs/01-executive-context/product-vision.md)) is a local-first AI orchestration platform built as a monorepo of 17 NestJS backend services, a Next.js frontend, and supporting infrastructure. This document is the single-page reference for understanding the current system.
 
 ---
 

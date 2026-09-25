@@ -1,6 +1,6 @@
 # ADR-087: Cross-thread retrieval, and why it is off by default
 
-**Status**: Accepted
+**Status**: Accepted — default amended 2026-09-17 (see the addendum at the end)
 **Date**: 2026-08-30
 **Deciders**: ClawAI core team
 **Slice**: Conversational intelligence (context flagship, Batch 2)
@@ -170,3 +170,13 @@ summarisation lands it becomes a better input to both stages.
 - [ADR-086](adr-086-conversational-context-composer.md) — the composer this budgets against
 - [`docs/03-architecture/conversational-context.md`](../03-architecture/conversational-context.md)
 - `scripts/qa-lab/cross-thread-experiment.mjs` — the verification above
+
+## Addendum (2026-09-17, recorded 2026-09-26): on by default
+
+The default flipped. Commit `26f3a6003` and migration
+`20260917000000_cross_thread_context_on_by_default` set
+`useCrossThreadContext @default(true)` and order candidates newest first. The
+guarantees above still hold: reads are limited to the user's own threads, and a
+thread with the setting turned off reads no other thread. The title and D1 describe the
+original decision; this addendum is the current state. Found during the
+[ADR-126](adr-126-every-ai-one-workspace-positioning.md) flagship audit.

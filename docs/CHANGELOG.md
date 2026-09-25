@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **New positioning: "Every AI, one workspace."** ClawAI is now described as a
+  full AI workspace — every frontier model, in one place that sees, hears,
+  researches and builds; pay as you go, bring your team, or run it on your own
+  hardware. The README, the product vision and the docs carry the new wording
+  and a flagship list where every feature is traced to the code that runs it,
+  with its limits and the gaps (no SSO or shared team billing yet). No price or
+  plan changed. ([ADR-126](13-adr/adr-126-every-ai-one-workspace-positioning.md))
+
 ### Added
 
 - **Download any answer as a file.** Every AI answer has a "Download as" menu:

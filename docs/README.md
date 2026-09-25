@@ -1,19 +1,21 @@
 # ClawAI Documentation Hub
 
-> **Local-first AI orchestration platform** -- 17 NestJS backend services + Next.js frontend + 13 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
+> **Every AI, one workspace.** Every frontier AI model in one workspace that sees, hears, researches and builds — pay as you go, bring your team, or run it on your own hardware. Positioning: [Product Vision](01-executive-context/product-vision.md) · flagships: [Flagship Features](02-business-product/flagship-features.md).
+>
+> Architecture: a local-first AI orchestration platform -- 18 NestJS backend services + Next.js frontend + 14 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
 
 ---
 
 ## Quick Start by Role
 
-| Role              | Start Here                                                    | Then Read                                                                                                              |
-| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **New Engineer**  | [Onboarding (5 min)](00-start-here/onboarding-5-minutes.md)   | [System at a Glance](00-start-here/system-at-a-glance.md) -> [Backend Services](04-backend/services-index.md)          |
-| **Product Owner** | [Product Vision](01-executive-context/product-vision.md)      | [Feature Inventory](02-business-product/feature-inventory.md) -> [User Journeys](02-business-product/user-journeys.md) |
-| **QA / Tester**   | [Testing Strategy](09-testing/testing-strategy.md)            | [UAT Guide](10-uat-acceptance/uat-guide.md) -> [API Reference](12-reference/api-reference.md)                          |
-| **DevOps**        | [Docker Guide](08-runtime-devops/docker-guide.md)             | [Nginx Reference](08-runtime-devops/nginx-reference.md) -> [Troubleshooting](11-runbooks/troubleshooting.md)           |
-| **AI Agent**      | [AI Context Pack](15-ai-context/ai-context-pack.md)           | [Codebase Navigation](15-ai-context/codebase-navigation.md) -> [Services Index](04-backend/services-index.md)          |
-| **Architect**     | [System Architecture](03-architecture/system-architecture.md) | [Message Flow](03-architecture/message-flow.md) -> [ADRs](13-adr/adr-index.md)                                         |
+| Role              | Start Here                                                    | Then Read                                                                                                                                                                               |
+| ----------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **New Engineer**  | [Onboarding (5 min)](00-start-here/onboarding-5-minutes.md)   | [System at a Glance](00-start-here/system-at-a-glance.md) -> [Backend Services](04-backend/services-index.md)                                                                           |
+| **Product Owner** | [Product Vision](01-executive-context/product-vision.md)      | [Flagship Features](02-business-product/flagship-features.md) -> [Feature Inventory](02-business-product/feature-inventory.md) -> [User Journeys](02-business-product/user-journeys.md) |
+| **QA / Tester**   | [Testing Strategy](09-testing/testing-strategy.md)            | [UAT Guide](10-uat-acceptance/uat-guide.md) -> [API Reference](12-reference/api-reference.md)                                                                                           |
+| **DevOps**        | [Docker Guide](08-runtime-devops/docker-guide.md)             | [Nginx Reference](08-runtime-devops/nginx-reference.md) -> [Troubleshooting](11-runbooks/troubleshooting.md)                                                                            |
+| **AI Agent**      | [AI Context Pack](15-ai-context/ai-context-pack.md)           | [Codebase Navigation](15-ai-context/codebase-navigation.md) -> [Services Index](04-backend/services-index.md)                                                                           |
+| **Architect**     | [System Architecture](03-architecture/system-architecture.md) | [Message Flow](03-architecture/message-flow.md) -> [ADRs](13-adr/adr-index.md)                                                                                                          |
 
 ---
 
@@ -29,14 +31,17 @@
 
 ### Layer B: Business & Product Context
 
-| Document                                                       | Purpose                                                                                                       |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| [Product Vision](01-executive-context/product-vision.md)       | Mission, goals, KPIs, positioning                                                                             |
-| [Business Overview](01-executive-context/business-overview.md) | Problem, market, personas, business rules, glossary                                                           |
-| [Business Numbers](business/README.md)                         | Plan allowances, margin model, credit terms, top-up pricing, refund policy — the authoritative dollar figures |
-| [User Personas](02-business-product/user-personas.md)          | 5 personas with workflows and RBAC mapping                                                                    |
-| [Feature Inventory](02-business-product/feature-inventory.md)  | Current feature domains with stories and acceptance criteria                                                  |
-| [User Journeys](02-business-product/user-journeys.md)          | End-to-end user journeys with error paths                                                                     |
+| Document                                                              | Purpose                                                                                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| [Product Vision](01-executive-context/product-vision.md)              | Mission, goals, KPIs, positioning                                                                             |
+| [Business Overview](01-executive-context/business-overview.md)        | Problem, market, personas, business rules, glossary                                                           |
+| [Business Numbers](business/README.md)                                | Plan allowances, margin model, credit terms, top-up pricing, refund policy — the authoritative dollar figures |
+| [Flagship Features](02-business-product/flagship-features.md)         | The 15 flagships, each traced to wired code, with limits and gaps (canonical)                                 |
+| [Requirements Register](02-business-product/requirements-register.md) | Positioning and cross-cutting requirements: current, changed, missing, dropped                                |
+| [Drift Log](02-business-product/drift-log.md)                         | Every change of product or business direction, append-only                                                    |
+| [User Personas](02-business-product/user-personas.md)                 | 5 personas with workflows and RBAC mapping                                                                    |
+| [Feature Inventory](02-business-product/feature-inventory.md)         | Current feature domains with stories and acceptance criteria                                                  |
+| [User Journeys](02-business-product/user-journeys.md)                 | End-to-end user journeys with error paths                                                                     |
 
 ### Layer C: Technical Architecture
 
