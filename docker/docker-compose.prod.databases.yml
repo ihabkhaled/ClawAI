@@ -487,6 +487,26 @@ services:
       - clamav-data:/var/lib/clamav
     environment:
       - CLAMAV_NO_FRESHCLAMD=false
+    # The image's /init ends in `exec tail -f /dev/null`, so when the kernel
+    # OOM-killed clamd (prod, 2026-09-24) the container stayed "running" and
+    # every upload failed ECONNREFUSED :3310 for ~10h — Docker never restarts
+    # a merely-unhealthy container. This wrapper exits once clamd stops
+    # answering, so `restart: unless-stopped` brings it back.
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        trap 'kill "$$init_pid" 2>/dev/null; exit 0' TERM INT
+        /init &
+        init_pid=$$!
+        until clamdscan --ping 1 >/dev/null 2>&1; do
+          kill -0 "$$init_pid" 2>/dev/null || exit 1
+          sleep 5 & wait $$!
+        done
+        while clamdscan --ping 5:2 >/dev/null 2>&1; do
+          sleep 30 & wait $$!
+        done
+        echo "clamd stopped answering; exiting so Docker restarts the container" >&2
+        exit 1
     healthcheck:
       test: ['CMD-SHELL', 'clamdscan --ping 1 || exit 1']
       interval: 30s
