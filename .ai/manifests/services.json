@@ -117,7 +117,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 53,
+      "endpointCount": 55,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 213,
+      "testFiles": 217,
       "testRunner": "vitest"
     },
     {

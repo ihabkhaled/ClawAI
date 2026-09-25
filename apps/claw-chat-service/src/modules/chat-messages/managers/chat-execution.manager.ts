@@ -258,8 +258,9 @@ export class ChatExecutionManager implements OnModuleInit {
   // Key-credit pre-flight (OpenRouter 402). A plain instance like the other
   // per-request clients; it makes no call for a provider without credit endpoints.
   private readonly providerCreditHeadroom = new ProviderCreditHeadroomClient();
-  // Process-wide state (static); a plain instance like the clients above.
-  private readonly providerBreaker = new ProviderCircuitBreakerManager();
+  // In-memory-only breaker for hand-built instances (specs); Nest injects the
+  // Redis-shared one below (ADR-125 addendum).
+  private readonly localProviderBreaker = new ProviderCircuitBreakerManager();
 
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
@@ -290,7 +291,14 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it there is no output-ceiling
     // pre-clamp; an output-limit refusal is still retried once (ADR-125).
     @Optional() private readonly modelOutputLimits?: ModelOutputLimitClient,
+    // Optional for the same reason. Without it the account-exhaustion breaker
+    // is per replica, in memory (the pre-addendum behaviour).
+    @Optional() private readonly sharedProviderBreaker?: ProviderCircuitBreakerManager,
   ) {}
+
+  private get providerBreaker(): ProviderCircuitBreakerManager {
+    return this.sharedProviderBreaker ?? this.localProviderBreaker;
+  }
 
   /**
    * The helper vision call, through this chokepoint with the hold the helper
@@ -2138,16 +2146,16 @@ export class ChatExecutionManager implements OnModuleInit {
       call: PaygCallOptions | undefined,
     ) => Promise<LlmResponse>,
   ): Promise<LlmResponse> {
-    if (!this.providerBreaker.allowsCall(provider)) {
+    if (!(await this.providerBreaker.allowsCall(provider))) {
       this.logger.warn(
         `withProviderRecovery: ${provider} skipped — its account is out of credit (breaker open)`,
       );
       throw new ProviderCreditExhaustedException(undefined, true);
     }
     try {
-      return this.trackBreaker(provider, await attempt(executionOptions, paygCall));
+      return await this.trackBreaker(provider, await attempt(executionOptions, paygCall));
     } catch (error: unknown) {
-      this.providerBreaker.recordOutcome(provider, isAccountExhaustion(error));
+      await this.providerBreaker.recordOutcome(provider, isAccountExhaustion(error));
       const plan = providerRetryPlan(error);
       if (plan === undefined) {
         throw error;
@@ -2158,16 +2166,19 @@ export class ChatExecutionManager implements OnModuleInit {
           ? executionOptions
           : withOutputCeiling(executionOptions, plan.ceiling);
       try {
-        return this.trackBreaker(provider, await attempt(retryOptions, retryPaygCall(paygCall)));
+        return await this.trackBreaker(
+          provider,
+          await attempt(retryOptions, retryPaygCall(paygCall)),
+        );
       } catch (retryError: unknown) {
-        this.providerBreaker.recordOutcome(provider, isAccountExhaustion(retryError));
+        await this.providerBreaker.recordOutcome(provider, isAccountExhaustion(retryError));
         throw retryError;
       }
     }
   }
 
-  private trackBreaker(provider: string, response: LlmResponse): LlmResponse {
-    this.providerBreaker.recordOutcome(provider, false);
+  private async trackBreaker(provider: string, response: LlmResponse): Promise<LlmResponse> {
+    await this.providerBreaker.recordOutcome(provider, false);
     return response;
   }
 

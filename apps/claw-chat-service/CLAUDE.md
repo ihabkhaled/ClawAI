@@ -716,8 +716,14 @@ text>)` again. Credit refusals → `ProviderCreditExhaustedException`
   - per-replica learned map) then the key-credit cap, before the PAYG hold.
     `ModelOutputLimitClient` is an `@Optional()` constructor param; hand-built
     specs without it get no pre-clamp.
-- `ProviderCircuitBreakerManager` (static, per replica): account exhaustion ⇒
-  provider refused for 10 min with no hold/call, then one probe.
+- `ProviderCircuitBreakerManager`: account exhaustion ⇒ provider refused for
+  10 min with no hold/call, then ONE probe fleet-wide. State is in Redis
+  (`ProviderBreakerStore`, Lua scripts in `constants/provider-breaker.constants.ts`,
+  probe = `SET NX PX`), on the fail-fast connection with a 250 ms deadline; if
+  Redis fails the replica uses its in-memory copy. Injected `@Optional()` into
+  `ChatExecutionManager` (hand-built specs get in-memory only). Admin:
+  `GET/DELETE /chat-messages/admin/provider-breakers[/:provider]` (ADMIN,
+  ADR-125 addendum), shown on `/connectors`.
 - Compare / consensus lanes store `userFacingErrorText(error)` — never
   `error.message` raw. Spec: `__tests__/provider-recovery-chokepoint.spec.ts`.
 
@@ -1331,7 +1337,9 @@ model's private notes run into its reply.
   panel shows it; `metadata.reasoning` stores it.
 - The "reasoned but produced no answer" error now also fires when the only
   thing before a bare `</think>` was reasoning.
-- Known gap: Ollama Cloud is always a buffered replay, so it is covered; a
-  provider that TRULY streams GLM-style output over SSE (e.g. via OpenRouter)
-  still leaks in the live scanner, because the text before a bare `</think>`
-  is emitted before the tag arrives. See rule 56 "Known gap".
+- True streams (OpenRouter, OpenAI-compatible presets) use the SAME class:
+  `StreamingReasoningSplitter` (`utilities/reasoning-splitter.utility.ts`)
+  holds the first ≤512 chars (`THINKING_STREAM_HOLD_MAX_CHARS`) until a tag or
+  a reasoning-field delta decides; `splitBufferedReasoning` is that class with
+  an unbounded hold. Past the hold, `resplitLeakedReasoning` keeps the STORED
+  answer clean. Never add a second splitter (rule 56 §5–7).

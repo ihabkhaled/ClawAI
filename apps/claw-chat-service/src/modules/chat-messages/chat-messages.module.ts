@@ -26,6 +26,10 @@ import { MessageSpeechService } from './services/message-speech.service';
 import { SpeechSynthesisManager } from './managers/speech-synthesis.manager';
 import { SpeechJobManager } from './managers/speech-job.manager';
 import { SpeechJobCancelStore } from './repositories/speech-job-cancel.store';
+import { ProviderBreakerStore } from './repositories/provider-breaker.store';
+import { ProviderCircuitBreakerManager } from './managers/provider-circuit-breaker.manager';
+import { ProviderBreakerAdminService } from './services/provider-breaker-admin.service';
+import { ProviderBreakerAdminController } from './controllers/provider-breaker-admin.controller';
 import { SpeechJobLockStore } from './repositories/speech-job-lock.store';
 import { TtsVoiceCandidatesClient } from './clients/tts-voice-candidates.client';
 import { SpeechConnectorClient } from './clients/speech-connector.client';
@@ -80,6 +84,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ChatStreamController,
     ChatInternalController,
     ChatSpeechController,
+    ProviderBreakerAdminController,
     RuntimeV2RunController,
     RuntimeV2CommandController,
   ],
@@ -116,6 +121,9 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     SpeechJobManager,
     SpeechJobLockStore,
     SpeechJobCancelStore,
+    ProviderBreakerStore,
+    ProviderCircuitBreakerManager,
+    ProviderBreakerAdminService,
     MessageSpeechService,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,

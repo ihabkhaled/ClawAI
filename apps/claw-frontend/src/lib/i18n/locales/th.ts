@@ -5,6 +5,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const th: TranslationDictionary = {
@@ -4009,6 +4010,7 @@ export const th: TranslationDictionary = {
   mediaUi: MEDIA_UI_TRANSLATIONS.th,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.th,
+  skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.th,
   adminBilling: {
     credit: {
       packageCreated: 'สร้างแพ็กเกจเครดิตแล้ว',

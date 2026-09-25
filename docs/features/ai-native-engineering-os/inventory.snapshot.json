@@ -1163,6 +1163,16 @@
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/chat-messages/admin/provider-breakers",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/provider-breaker-admin.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/chat-messages/admin/provider-breakers/:provider",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/provider-breaker-admin.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/chat-messages/best-of-n",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
@@ -7794,7 +7804,7 @@
           "file": "rules/55-akinator-station-discipline.md"
         },
         {
-          "bytes": 4010,
+          "bytes": 6404,
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
@@ -8194,7 +8204,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5463
+        "value": 5464
       },
       "localeCount": 13,
       "locales": [
@@ -10172,7 +10182,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 213
+        "testFiles": 217
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10192,7 +10202,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 599
+        "testFiles": 601
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10958,7 +10968,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 698,
+    "endpointCount": 700,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -10970,7 +10980,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1640,
+    "totalTestFiles": 1646,
     "workspaceCount": 25
   }
 }

@@ -1,6 +1,6 @@
 import { FILE_GENERATION_PROVIDER, LOCAL_ONLY_ROUTING_MODES } from '../../../common/constants';
 import { isGenerationProvider } from './generation-provider.utility';
-import { ThinkingFragmentScanner } from './thinking-fragment-scanner.utility';
+import { splitBufferedReasoning } from './buffered-reasoning.utility';
 import { ROUTING_TO_CHAT_PROVIDER } from '../constants/file-writer.constants';
 import type { MessageRoutedData } from '../types/execution.types';
 import type {
@@ -100,8 +100,8 @@ export function rerouteFileFollowUp(payload: MessageRoutedData): MessageRoutedDa
  * file is never silently empty.
  */
 export function stripWriterReasoning(content: string): string {
-  const scanner = new ThinkingFragmentScanner();
-  const answer = `${scanner.push(content).content}${scanner.flush().content}`.trim();
+  // The shared rule-56 split, so a GLM writer's bare `</think>` is caught too.
+  const answer = splitBufferedReasoning(content).content.trim();
   return answer === '' ? content : answer;
 }
 

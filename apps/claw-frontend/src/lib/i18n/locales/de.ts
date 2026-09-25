@@ -5,6 +5,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const de: TranslationDictionary = {
@@ -4114,6 +4115,7 @@ export const de: TranslationDictionary = {
   mediaUi: MEDIA_UI_TRANSLATIONS.de,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.de,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.de,
+  skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.de,
   adminBilling: {
     credit: {
       packageCreated: 'Guthaben-Paket erstellt.',

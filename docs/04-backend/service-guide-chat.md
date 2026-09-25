@@ -950,10 +950,15 @@ model's private notes run into its reply.
   panel shows it; `metadata.reasoning` stores it.
 - The "reasoned but produced no answer" error now also fires when the only
   thing before a bare `</think>` was reasoning.
-- Known gap: Ollama Cloud is always a buffered replay, so it is covered; a
-  provider that TRULY streams GLM-style output over SSE (e.g. via OpenRouter)
-  still leaks in the live scanner, because the text before a bare `</think>`
-  is emitted before the tag arrives. See rule 56 "Known gap".
+- **True streams (added the same day).** OpenRouter and OpenAI-compatible
+  presets stream token by token, so the text before a bare `</think>` used to
+  be emitted before the tag arrived. `StreamingReasoningSplitter` — the one
+  split every path uses — holds the start of the answer (≤512 chars) until a
+  closing tag, an opening tag, a `reasoning` / `reasoning_content` field delta,
+  or the end of the stream decides. A normal answer waits at most for that
+  prefix; one after a reasoning field is not held. Reasoning longer than the
+  hold is removed from the STORED answer at the end of the stream
+  (`resplitLeakedReasoning`, logged as a warning). Rule 56 §5–7.
 
 ## Provider-key credit and provider error text (ADR-124, 2026-09-25)
 
@@ -1000,5 +1005,14 @@ Gemini "out of credit" — some as raw JSON from compare / consensus lanes.
 - **Rate limits.** One retry after 1.5 s; then the translated
   `chat.errors.providerRateLimited` sentence and AUTO moves on.
 - **Account out of credit.** Translated `PROVIDER_CREDIT_EXHAUSTED`; the
-  provider is skipped for 10 minutes per replica (half-open probe after).
+  provider is skipped for 10 minutes on EVERY replica (half-open: one probe
+  fleet-wide). State lives in Redis (`claw:chat:provider-breaker:*`); when
+  Redis is down or slower than 250 ms, each replica falls back to its own
+  in-memory copy (ADR-125 addendum).
+- **Admin view.** `GET /api/v1/chat-messages/admin/provider-breakers` →
+  `{ source: REDIS|MEMORY, providers: [{ provider, reason, skippedUntil,
+trippedAt, probing }] }`; `DELETE …/provider-breakers/:provider` → 200
+  `{ provider, cleared }`. ADMIN only (global `RolesGuard`). The `/connectors`
+  page shows the list to admins, joined to their connectors by provider, with
+  a Clear button.
 - **Lanes.** Compare and consensus store only our sentence for a failed lane.

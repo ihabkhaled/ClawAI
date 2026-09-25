@@ -17,7 +17,7 @@ export type ProviderStreamFinalTimings = {
 // Provider-agnostic fragments produced by the stream reader after normalizing
 // a raw OpenAI-SSE or Ollama-NDJSON frame. Reasoning here is PROVIDER-NATIVE
 // (e.g. OpenAI delta.reasoning_content, Ollama `thinking`); model-emitted
-// <think> tags inside content are split downstream by ThinkingFragmentScanner.
+// <think> tags inside content are split downstream by StreamingReasoningSplitter (rule 56).
 //
 // The terminal `done` fragment optionally carries `finalTimings` for runtimes
 // that report nanosecond-precision durations (Ollama). The executor uses it

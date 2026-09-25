@@ -3,7 +3,8 @@ import { AiReasoningVisibility, AiStreamProtocol, AiStreamStage } from '../../..
 import { httpStream } from '../../../common/utilities';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { ProviderStreamReader } from '../utilities/provider-stream-reader.utility';
-import { ThinkingFragmentScanner } from '../utilities/thinking-fragment-scanner.utility';
+import { StreamingReasoningSplitter } from '../utilities/reasoning-splitter.utility';
+import { splitBufferedReasoning } from '../utilities/buffered-reasoning.utility';
 import { StreamProgressTracker } from '../utilities/stream-progress-tracker.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { computeFinalStreamMetrics } from '../utilities/final-metrics.utility';
@@ -96,7 +97,7 @@ export class ProviderStreamExecutor {
       input.promptTokensEstimate,
       input.maxOutputTokens,
     );
-    const scanner = new ThinkingFragmentScanner();
+    const scanner = new StreamingReasoningSplitter();
     const state = this.newState();
 
     this.transitionStage(ctx, state, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
@@ -137,7 +138,7 @@ export class ProviderStreamExecutor {
     state: LoopState,
   ): Promise<StreamExecutionResult> {
     const reader = new ProviderStreamReader(input.protocol);
-    const scanner = new ThinkingFragmentScanner();
+    const scanner = new StreamingReasoningSplitter();
     const tracker = new StreamProgressTracker(
       input.provider,
       input.model,
@@ -158,14 +159,42 @@ export class ProviderStreamExecutor {
     }
 
     this.drainScanner(scanner, ctx, tracker, state);
+    this.resplitLeakedReasoning(scanner, ctx, state);
     this.finalize(ctx, tracker, state);
     return this.toResult(state);
+  }
+
+  /**
+   * Rule 56 backstop for a TRUE stream. When the start-of-stream hold ran out
+   * with no tag and no reasoning field, the text was released as an answer;
+   * a bare `</think>` that arrives after that is GLM reasoning longer than the
+   * hold. The live preview already showed it, but the STORED answer must not
+   * carry it: the accumulated content gets the same buffered split, and the
+   * recovered reasoning goes to the reasoning channel.
+   */
+  private resplitLeakedReasoning(
+    scanner: StreamingReasoningSplitter,
+    ctx: EmitCtx,
+    state: LoopState,
+  ): void {
+    if (!scanner.releasedWithoutEvidence) {
+      return;
+    }
+    const split = splitBufferedReasoning(state.content);
+    if (split.reasoning.length === 0) {
+      return;
+    }
+    this.logger.warn(
+      `resplitLeakedReasoning: ${ctx.provider}/${ctx.model} closed its reasoning past the hold; moved ${String(split.reasoning.length)} chars out of the stored answer`,
+    );
+    state.content = split.content;
+    this.applyReasoning(split.reasoning, AiReasoningVisibility.MODEL_EMITTED, ctx, state);
   }
 
   private handleFragment(
     fragment: NormalizedStreamFragment,
     ctx: EmitCtx,
-    scanner: ThinkingFragmentScanner,
+    scanner: StreamingReasoningSplitter,
     tracker: StreamProgressTracker,
     state: LoopState,
   ): void {
@@ -176,6 +205,11 @@ export class ProviderStreamExecutor {
       return;
     }
     if (fragment.kind === 'reasoning') {
+      // A reasoning FIELD: this provider separates reasoning from the answer,
+      // so any content held at the start is answer text (rule 56).
+      const released = scanner.noteReasoningChannel();
+      this.applyReasoning(released.reasoning, AiReasoningVisibility.MODEL_EMITTED, ctx, state);
+      this.applyContent(released.content, ctx, tracker, state);
       this.applyReasoning(fragment.text, fragment.visibility, ctx, state);
       return;
     }
@@ -258,7 +292,7 @@ export class ProviderStreamExecutor {
   }
 
   private drainScanner(
-    scanner: ThinkingFragmentScanner,
+    scanner: StreamingReasoningSplitter,
     ctx: EmitCtx,
     tracker: StreamProgressTracker,
     state: LoopState,

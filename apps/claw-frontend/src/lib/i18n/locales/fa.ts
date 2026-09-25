@@ -5,6 +5,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const fa: TranslationDictionary = {
@@ -4049,6 +4050,7 @@ export const fa: TranslationDictionary = {
   mediaUi: MEDIA_UI_TRANSLATIONS.fa,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fa,
+  skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.fa,
   adminBilling: {
     credit: {
       packageCreated: 'بستهٔ اعتبار ایجاد شد.',

@@ -5,6 +5,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ru: TranslationDictionary = {
@@ -4083,6 +4084,7 @@ export const ru: TranslationDictionary = {
   mediaUi: MEDIA_UI_TRANSLATIONS.ru,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ru,
+  skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.ru,
   adminBilling: {
     credit: {
       packageCreated: 'Пакет кредита создан.',

@@ -1,4 +1,4 @@
-import { vi, type Mocked, describe, expect, it } from 'vitest';
+import { describe, expect, it, type Mocked, vi } from 'vitest';
 import { AppConfig } from '../../../app/config/app.config';
 import type { RedisClientPort } from '../types/redis-client.types';
 import { RuntimeV2RedisOperation } from '../enums/runtime-v2-redis-operation.enum';
@@ -85,6 +85,22 @@ describe('RedisService atomic boundary', () => {
     expect(runtimeV2Client.quit.mock.invocationCallOrder[0]).toBeLessThan(
       redisClient.quit.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
     );
+  });
+
+  it('evalFailFast runs on the fail-fast client when there is one, else the main client', async () => {
+    const redisClient = client();
+    const failFast = client();
+    failFast.eval.mockResolvedValue(2);
+    redisClient.eval.mockResolvedValue(0);
+
+    await expect(
+      new RedisService(redisClient, failFast).evalFailFast('return 2', ['k1', 'k2'], ['a']),
+    ).resolves.toBe(2);
+    expect(failFast.eval).toHaveBeenCalledWith('return 2', 2, 'k1', 'k2', 'a');
+    expect(redisClient.eval).not.toHaveBeenCalled();
+
+    await expect(new RedisService(redisClient).evalFailFast('return 0', [], [])).resolves.toBe(0);
+    expect(redisClient.eval).toHaveBeenCalledWith('return 0', 0);
   });
 
   it('does not close the same client twice when it serves both roles', async () => {

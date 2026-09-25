@@ -32,6 +32,22 @@ this was found on) · [rules/54](54-evidence-and-completion-honesty.md).
    replay scanner fixes the live preview and still stores the leak.
 4. **Content with no tag is returned byte-for-byte.** A closing tag quoted in
    inline code (`` `</think>` ``) is text, not a delimiter.
+5. **One implementation for every path.** `StreamingReasoningSplitter`
+   (`chat-messages/utilities/reasoning-splitter.utility.ts`) is the split for a
+   true stream, a simulated replay and a buffered response
+   (`splitBufferedReasoning` is the same class with an unbounded hold;
+   `stripWriterReasoning` for AI-written files uses it too). Never add a
+   second splitter.
+6. **A true stream holds the start of the answer back** until it can tell:
+   a closing tag (orphan → reasoning), an opening tag, a reasoning-FIELD delta
+   (`reasoning` / `reasoning_content` / `thinking` → the provider separates
+   channels, release at once), the end of the stream, or
+   `THINKING_STREAM_HOLD_MAX_CHARS` (512) chars. A normal answer is delayed by
+   at most that prefix; an answer after a reasoning field is not delayed.
+7. **The stored answer is re-split when the hold ran out without evidence.**
+   GLM reasoning longer than the hold reaches the live preview, but
+   `ProviderStreamExecutor.resplitLeakedReasoning` moves it out of the stored
+   `content` into `reasoning` at the end of the stream.
 
 ## Why
 
@@ -45,18 +61,17 @@ reply.
 
 ## How this is enforced
 
-| Item | Mechanism                                                                                                                                                                                                                   |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2, 4 | `utilities/__tests__/buffered-reasoning.utility.spec.ts` — the captured prod payload, every tag spelling, unterminated tag, empty block, quoted tag, reasoning-only                                                         |
-| 1, 3 | `__tests__/chat-execution-native-tools.manager.spec.ts` "Ollama Cloud reasoning never reaches the answer" — prod payload and `message.thinking` through `callProvider`                                                      |
-| 3    | `__tests__/chat-execution.manager.spec.ts` "replays GLM reasoning to the reasoning panel and stores a clean answer" — `runSimulated` gets clean `fullContent` + `reasoningContent`, the returned `LlmResponse` carries both |
+| Item | Mechanism                                                                                                                                                                                                                                                                                                                                                                  |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2, 4 | `utilities/__tests__/buffered-reasoning.utility.spec.ts` — the captured prod payload, every tag spelling, unterminated tag, empty block, quoted tag, reasoning-only                                                                                                                                                                                                        |
+| 1, 3 | `__tests__/chat-execution-native-tools.manager.spec.ts` "Ollama Cloud reasoning never reaches the answer" — prod payload and `message.thinking` through `callProvider`                                                                                                                                                                                                     |
+| 3    | `__tests__/chat-execution.manager.spec.ts` "replays GLM reasoning to the reasoning panel and stores a clean answer" — `runSimulated` gets clean `fullContent` + `reasoningContent`, the returned `LlmResponse` carries both                                                                                                                                                |
+| 5, 6 | `utilities/__tests__/reasoning-splitter.utility.spec.ts` — GLM chunks with the tag split across chunks, open+close, reasoning field before/after content, no reasoning (released exactly at the bound), quoted tag                                                                                                                                                         |
+| 6, 7 | `__tests__/provider-stream-executor-reasoning.spec.ts` — captured OpenAI-compatible SSE shapes: closing-tag-only (no content delta carries reasoning), open+close, `reasoning`/`reasoning_content` field deltas (streamed without a hold), no reasoning (first delta = the 512-char prefix, then chunk by chunk), GLM reasoning longer than the hold (stored answer clean) |
 
-## Known gap
+## Remaining limit (2026-09-25)
 
-The live SSE scanner (`ThinkingFragmentScanner`) still cannot recognise a
-bare `</think>` on a TRUE stream: by the time the closing tag arrives the text
-before it has already been emitted as content. Every Ollama Cloud chat is a
-buffered replay today, so this rule's fix covers it; a provider that streams
-GLM over OpenAI-compatible SSE would need the scanner to hold content back
-until it has seen either an opening tag or enough text to rule a closing one
-out.
+GLM reasoning LONGER than 512 chars on a true stream is still visible in the
+live preview until the turn ends; the stored answer (what a reload shows) is
+clean. Raising the hold trades first-token latency for every answer on every
+provider — do not raise it without measuring both.

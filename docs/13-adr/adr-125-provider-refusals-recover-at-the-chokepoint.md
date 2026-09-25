@@ -52,7 +52,7 @@ hop (`⚠️ {…}`, fixed by ADR-124) and the compare / consensus lanes, which 
    Not a routing table: `router_model_registry` has no GROQ/OPENROUTER rows in
    production; `connector_models` has every provider.
 4. **Circuit breaker for account exhaustion.** `ProviderCircuitBreakerManager`
-   (in-process, per replica): an account-wide exhaustion opens the provider for
+   (in-process, per replica at first; shared in Redis since the addendum): an account-wide exhaustion opens the provider for
    10 minutes; the chokepoint then refuses it with `PROVIDER_CREDIT_EXHAUSTED`
    (503) — no hold, no call — so AUTO moves on instantly. Half-open: one probe
    after the window; success closes, another exhaustion re-opens; an abandoned
@@ -67,13 +67,50 @@ hop (`⚠️ {…}`, fixed by ADR-124) and the compare / consensus lanes, which 
 - The reported Groq / Ollama output-limit failures recover in-turn and do not
   recur for that model; OpenAI/Anthropic/Gemini credit outages cost one failed
   call per replica per 10 minutes instead of one per turn.
-- Breaker state is per replica and lost on restart — bounded, and nothing
-  fails when Redis is slow. It is visible only in logs
-  (`recordOutcome: … skipping it`); no admin page yet.
+- Breaker state was per replica and lost on restart, visible only in logs.
+  Superseded by the breaker addendum below: shared in Redis, admin page on
+  `/connectors`, in-memory only as the Redis-down fallback.
 - Ollama (local and Cloud) publishes no output ceiling, so its ceiling is
   learned from the first refusal (addendum below). Gemini's is now read at sync.
 - The Ollama Cloud crawl-retrieval tool loop bypasses the chokepoint and so
   gets neither the pre-clamp nor the retry.
+
+## Addendum (2026-09-25): the breaker is shared, and admins can see it
+
+**Why.** Prod runs 4 chat-service replicas. With a per-replica Map an
+exhausted account was still dialled (and failed) once per replica per window,
+probed up to 4 times per half-open, forgotten on every restart, and invisible
+to operators.
+
+**Decision.**
+
+- State moves to Redis, the same instance the stream bus and Stop already use.
+  `claw:chat:provider-breaker:state:<provider>` holds
+  `{openUntil, reason, trippedAt}` with a PX TTL of 3 windows (it fails open:
+  a breaker nobody touches expires, it never skips forever);
+  `…:probe:<provider>` is the half-open probe, taken with `SET NX PX` inside
+  the admission Lua script, so exactly one call probes across the fleet (live
+  check against the dev Redis: 4 concurrent admissions → `[2,1,1,1]`);
+  `…:index` lists providers for the admin view.
+- Every script runs on the fail-fast Redis connection (no offline queue) with
+  a 250 ms deadline. On any Redis error the replica answers from its own
+  in-memory copy — the pre-addendum behaviour. The breaker never hangs a
+  model call.
+- An ordinary answered call costs no Redis write; only a probe's (or a
+  locally known breaker's) success closes the shared breaker.
+- Admin endpoints on chat-service (ADMIN role only):
+  `GET /chat-messages/admin/provider-breakers` and
+  `DELETE /chat-messages/admin/provider-breakers/:provider`. The `/connectors`
+  page renders them for admins ("Skipped providers", 13 locales), joining each
+  provider to the admin's connectors of that provider.
+
+**Deviation from the request.** The breaker stays keyed by PROVIDER, not by
+connector id: the chokepoint only knows the provider, and account exhaustion
+is per provider key. Connector names are resolved in the frontend.
+
+**Consequences.** A `source: MEMORY` listing means Redis was unavailable and
+the answering replica reported only itself; the page says so. Restarting
+chat-service no longer clears a breaker — use Clear.
 
 ## Related
 

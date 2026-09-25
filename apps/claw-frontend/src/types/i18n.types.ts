@@ -3887,6 +3887,7 @@ export type TranslationDictionary = {
   mediaUi: MediaUiLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
+  skippedProviders: SkippedProvidersLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;
@@ -5967,6 +5968,33 @@ export type RouterTraceLocaleTranslation = {
  * SmartRouterAdminLocaleTranslation below — so a locale that forgets a key is
  * a compile error rather than a raw key rendered beside a dollar amount.
  */
+/**
+ * "Skipped providers" on /connectors (admin only, ADR-125 addendum): which
+ * providers chat-service's credit breaker is skipping, with a manual clear.
+ */
+export type SkippedProvidersLocaleTranslation = {
+  title: string;
+  description: string;
+  loading: string;
+  error: string;
+  empty: string;
+  partial: string;
+  provider: string;
+  connectors: string;
+  reason: string;
+  skippedUntil: string;
+  noConnector: string;
+  probing: string;
+  clear: string;
+  clearProvider: string;
+  clearing: string;
+  cleared: string;
+  clearFailed: string;
+  reasons: {
+    accountCreditExhausted: string;
+  };
+};
+
 export type AdminModelCostsLocaleTranslation = {
   title: string;
   description: string;

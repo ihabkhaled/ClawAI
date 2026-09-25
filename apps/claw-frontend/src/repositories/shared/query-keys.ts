@@ -131,6 +131,8 @@ export const queryKeys = {
     userPlanOverview: (userId: string) => ['admin', 'users', 'plan-overview', userId] as const,
     userSubscriptionStatistics: (userId: string) =>
       ['admin', 'users', 'subscription-statistics', userId] as const,
+    // Providers chat-service's credit breaker is skipping (ADR-125 addendum).
+    providerBreakers: ['admin', 'provider-breakers'] as const,
   },
   adminPlans: {
     all: ['adminPlans'] as const,

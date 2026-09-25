@@ -7,8 +7,10 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { ConnectorCard } from '@/components/connectors/connector-card';
 import { ConnectorForm } from '@/components/connectors/connector-form';
+import { SkippedProvidersCard } from '@/components/connectors/skipped-providers-card';
 import { Button } from '@/components/ui/button';
 import { useConnectorsPage } from '@/hooks/connectors/use-connectors-page';
+import { useSkippedProviders } from '@/hooks/connectors/use-skipped-providers';
 import { useTranslation } from '@/lib/i18n';
 import type { Connector } from '@/types';
 
@@ -94,6 +96,7 @@ export default function ConnectorsPage() {
   } = useConnectorsPage();
 
   const { t } = useTranslation();
+  const skipped = useSkippedProviders(connectors);
 
   if (isError) {
     return (
@@ -118,6 +121,18 @@ export default function ConnectorsPage() {
           </Button>
         }
       />
+
+      {skipped.isVisible ? (
+        <SkippedProvidersCard
+          rows={skipped.rows}
+          isLoading={skipped.isLoading}
+          isError={skipped.isError}
+          isPartial={skipped.isPartial}
+          clearingProvider={skipped.clearingProvider}
+          onClear={skipped.clear}
+          t={t}
+        />
+      ) : null}
 
       <ConnectorsContent
         isLoading={isLoading}

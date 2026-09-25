@@ -5,6 +5,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ar: TranslationDictionary = {
@@ -3993,6 +3994,7 @@ export const ar: TranslationDictionary = {
   mediaUi: MEDIA_UI_TRANSLATIONS.ar,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ar,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ar,
+  skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.ar,
   adminBilling: {
     credit: {
       packageCreated: 'تم إنشاء باقة الرصيد.',

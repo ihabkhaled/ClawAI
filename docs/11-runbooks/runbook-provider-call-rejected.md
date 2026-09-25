@@ -113,14 +113,19 @@ Since ADR-125 (OpenAI "no credits remaining", Anthropic "credit balance is too
 low", Gemini "exceeded your current quota", DeepSeek "Insufficient Balance",
 xAI "spending limit"): the user reads the translated
 `PROVIDER_CREDIT_EXHAUSTED` sentence, AUTO moves to the next provider, and the
-provider is **skipped for 10 minutes** per replica (then one probe):
+provider is **skipped for 10 minutes** on every replica (then one probe,
+fleet-wide — ADR-125 addendum). See it as an admin on `/connectors`
+("Skipped providers"), or:
 
 ```bash
-docker logs claw-chat-service-1 --since 30m 2>&1 | grep -E "recordOutcome|breaker open|half-open"
+curl -sk -H "Authorization: Bearer $ADMIN_TOKEN" https://claw.local/api/v1/chat-messages/admin/provider-breakers
+docker logs claw-chat-service-1 --since 30m 2>&1 | grep -E "recordOutcome|breaker open|half-open|shared breaker unavailable"
 ```
 
-After topping up, the breaker closes on the first successful probe (≤10 min);
-restarting chat-service clears it at once.
+After topping up, the breaker closes on the first successful probe (≤10 min),
+or at once with **Clear** on `/connectors`
+(`DELETE /api/v1/chat-messages/admin/provider-breakers/<PROVIDER>`).
+Restarting chat-service does NOT clear it any more (the state is in Redis).
 
 ### 2c. Output-length refusals (ADR-125)
 

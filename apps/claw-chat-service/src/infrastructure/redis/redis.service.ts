@@ -35,6 +35,19 @@ export class RedisService implements OnModuleDestroy, RuntimeV2RedisPort {
     await this.client.del(key);
   }
 
+  /**
+   * One Lua script on the FAIL-FAST connection (no offline queue, bounded
+   * connect/command timeout) when it exists. For callers that must fall back
+   * rather than wait while Redis is down — the main client queues forever.
+   */
+  async evalFailFast(
+    script: string,
+    keys: readonly string[],
+    args: readonly string[],
+  ): Promise<unknown> {
+    return (this.runtimeV2Client ?? this.client).eval(script, keys.length, ...keys, ...args);
+  }
+
   async executeRuntimeV2(command: RuntimeV2RedisCommand): Promise<unknown> {
     return (this.runtimeV2Client ?? this.client).evalRuntimeV2(
       RUNTIME_V2_REDIS_SCRIPTS[command.operation],
