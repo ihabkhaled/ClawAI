@@ -13,6 +13,7 @@ import {
   RESEARCH_GATE_CANDIDATES_TIMEOUT_MS,
   RESEARCH_GATE_CANDIDATES_TTL_MS,
   RESEARCH_GATE_SYSTEM_PROMPT,
+  RESEARCH_PLANNER_ATTACHMENT_DIGEST_LABEL,
   RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
   RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
   RESEARCH_PLANNER_SYSTEM_PROMPT,
@@ -184,17 +185,27 @@ export class ResearchGateService {
    * Never throws. With no model reachable it falls back to what the user's own
    * text proves: a URL they wrote is crawled, anything else is answered
    * directly, so a planner outage never costs a pasted link its page.
+   *
+   * `attachmentDigest` (multimodal batch 8) is a short, already-bounded
+   * excerpt of the attachments' derived text — a clip's transcript, an
+   * image's OCR — so "listen to this and research the person mentioned" can
+   * be planned. It is framed as data, and URLs inside it are never crawled on
+   * their own: only the user's message is scanned for links.
    */
-  async plan(message: string): Promise<ResearchPlan> {
+  async plan(message: string, attachmentDigest = ''): Promise<ResearchPlan> {
     const userUrls = detectPromptUrls(message);
     const candidates = await this.resolveCandidates();
+    const digestBlock =
+      attachmentDigest.length > 0
+        ? `\n\n${RESEARCH_PLANNER_ATTACHMENT_DIGEST_LABEL}\n${attachmentDigest}`
+        : '';
     for (const candidate of candidates) {
       const raw = await this.generate(
         candidate,
         `${RESEARCH_PLANNER_SYSTEM_PROMPT}
 
 User message:
-${message}`,
+${message}${digestBlock}`,
         RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
       );
       const plan = raw === null ? null : parseResearchPlan(raw, userUrls);

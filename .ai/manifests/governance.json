@@ -263,7 +263,7 @@
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
-      "bytes": 15856,
+      "bytes": 21440,
       "file": "rules/42-attachment-understanding.md"
     },
     {
@@ -299,7 +299,7 @@
       "file": "rules/50-agentic-research-loop-and-narration.md"
     },
     {
-      "bytes": 3611,
+      "bytes": 4745,
       "file": "rules/51-router-candidates-and-model-window-fit.md"
     },
     {
@@ -545,7 +545,7 @@
       "file": "skills/debug-a-stuck-scheduled-job.md"
     },
     {
-      "bytes": 7663,
+      "bytes": 10786,
       "file": "skills/debug-a-video-the-model-cannot-read.md"
     },
     {

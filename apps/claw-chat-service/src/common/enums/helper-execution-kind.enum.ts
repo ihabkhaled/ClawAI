@@ -3,4 +3,6 @@
 // helper work is recorded separately in `metadata.helperExecutions`.
 export enum HelperExecutionKind {
   VISION = 'VISION',
+  // One sampled video frame described for a lane that cannot see (batch 8).
+  VIDEO_FRAME = 'VIDEO_FRAME',
 }

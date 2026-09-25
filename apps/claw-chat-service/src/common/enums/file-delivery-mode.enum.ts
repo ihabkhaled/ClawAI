@@ -37,4 +37,10 @@ export enum FileDeliveryMode {
   // OBSERVATIONS framed as another model's description — never the bytes.
   // The entry names the helper in `helperProvider` / `helperModel`.
   DERIVED_IMAGE_TEXT = 'DERIVED_IMAGE_TEXT',
+  // Video the lane cannot watch natively (multimodal batch 8, HYBRID): the
+  // lane received the timestamped transcript document PLUS sampled frames —
+  // as native image parts when it can see, as the vision helper's derived
+  // observations when it cannot, or none (transcript only, stated honestly)
+  // when no helper could run. `frameDelivery` / `frameTimestampsMs` say which.
+  VIDEO_FRAMES_AND_TRANSCRIPT = 'VIDEO_FRAMES_AND_TRANSCRIPT',
 }

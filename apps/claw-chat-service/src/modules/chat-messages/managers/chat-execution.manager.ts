@@ -210,6 +210,7 @@ import {
 } from '../constants/payg.constants';
 import type { HelperExecution, VisionHelperInvoker } from '../types/vision-helper.types';
 import { VisionHelperManager } from './vision-helper.manager';
+import { VideoDeliveryManager } from './video-delivery.manager';
 import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
 import { FileWriterCandidatesClient } from '../clients/file-writer-candidates.client';
 import type { FileContentCandidate, FileContentCandidateOptions } from '../types/file-writer.types';
@@ -260,6 +261,10 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it a lane that cannot see keeps
     // the OCR text + honest note (ADR-120 batch 5).
     @Optional() private readonly visionHelper?: VisionHelperManager,
+    // Optional for the same reason. Without it a video on the frames +
+    // transcript strategy gets its transcript and the honest "frames could
+    // not be viewed" note (multimodal batch 8).
+    @Optional() private readonly videoDelivery?: VideoDeliveryManager,
   ) {}
 
   /**
@@ -2081,9 +2086,17 @@ export class ChatExecutionManager implements OnModuleInit {
     const planned = await this.attachmentDelivery.applyToContext(context, provider, model);
     // A lane that cannot see gets the helper's description of each image
     // instead of only its OCR text (ADR-120 batch 5).
-    return this.visionHelper === undefined
-      ? planned
-      : this.visionHelper.upgradeContext(planned, this.invokeVisionHelper);
+    const described =
+      this.visionHelper === undefined
+        ? planned
+        : await this.visionHelper.upgradeContext(planned, this.invokeVisionHelper);
+    // A video this lane does not watch natively gets sampled frames beside its
+    // timestamped transcript — images for a seeing lane, the helper's
+    // observations for a blind one (multimodal batch 8). Runs after images so
+    // the per-turn helper cap is spent on attached images first.
+    return this.videoDelivery === undefined
+      ? described
+      : this.videoDelivery.upgradeContext(described, this.invokeVisionHelper);
   }
 
   /** `fileDelivery` for the response, from the plan the payload was built from. */

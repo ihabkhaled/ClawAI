@@ -90,6 +90,44 @@ describe('getFileDeliveryModeLabel', () => {
   });
 });
 
+// Multimodal batch 8: a video the model could not watch natively, served as
+// its timestamped transcript plus sampled frames.
+describe('VIDEO_FRAMES_AND_TRANSCRIPT', () => {
+  it('has its own label, never the native-video one', () => {
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT, identity)).toBe(
+      'compare.delivery.videoFramesAndTranscript',
+    );
+  });
+
+  it('reads the sampled frame times from metadata and lists them in the tooltip', () => {
+    const entries = readFileDeliveryFromMetadata({
+      fileDelivery: [
+        {
+          ...entry(FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT),
+          filename: 'clip.mp4',
+          frameTimestampsMs: [5_000, 83_000, 'x', -1, 1.5],
+        },
+      ],
+    });
+
+    expect(entries?.[0]?.frameTimestampsMs).toEqual([5_000, 83_000]);
+    const tooltip = buildFileDeliveryTooltip(entries ?? [], (key, params) =>
+      params === undefined ? key : `${key}:${String(params['times'])}`,
+    );
+    expect(tooltip).toContain(
+      'clip.mp4 (compare.delivery.videoFramesAndTranscript) — compare.delivery.videoFramesAt:00:05, 01:23',
+    );
+  });
+
+  it('adds no frames suffix for a transcript-only delivery', () => {
+    const tooltip = buildFileDeliveryTooltip(
+      [entry(FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT)],
+      identity,
+    );
+    expect(tooltip).not.toContain('videoFramesAt');
+  });
+});
+
 describe('countFileDeliveriesByMode', () => {
   it('counts every mode into its own bucket', () => {
     const counts = countFileDeliveriesByMode([
@@ -104,6 +142,7 @@ describe('countFileDeliveriesByMode', () => {
       entry(FileDeliveryMode.STILL_PROCESSING),
       entry(FileDeliveryMode.FAILED_PROCESSING),
       entry(FileDeliveryMode.DERIVED_IMAGE_TEXT),
+      entry(FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT),
     ]);
     expect(counts).toEqual({
       extracted: 1,
@@ -116,6 +155,7 @@ describe('countFileDeliveriesByMode', () => {
       processing: 1,
       failed: 1,
       described: 1,
+      videoFrames: 1,
     });
   });
 

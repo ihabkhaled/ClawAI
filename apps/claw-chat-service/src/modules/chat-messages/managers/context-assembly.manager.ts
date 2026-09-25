@@ -79,10 +79,15 @@ import {
 import {
   NO_VISION_IMAGE_WITH_OCR_FRAME,
   NO_VISION_IMAGE_WITHOUT_TEXT_NOTE,
-  UNSUPPORTED_VIDEO_NOTE,
 } from '../constants/attachment-delivery.constants';
 import { IMAGE_FILE_PLACEHOLDER_PREFIX } from '../constants/media-placeholder.constants';
-import { isSentNatively } from '../utilities/attachment-delivery.utility';
+import { isSentNatively, nativeVideoFrames } from '../utilities/attachment-delivery.utility';
+import {
+  describeUnprocessedVideo,
+  formatVideoContextBlock,
+  hasVideoDocument,
+  videoFrameImageLabel,
+} from '../utilities/video-context.utility';
 import {
   derivedObservationFor,
   formatDerivedImageBlock,
@@ -596,11 +601,30 @@ ${evidence.snippet}`);
     // still-transcribing / failed message) — wrapping it in the generic
     // "ATTACHED FILE" prefix buried that label behind a wrapper that never
     // says the word "voice" or "audio" at all.
-    return context.fileContents.map((file) =>
-      this.isAudioFile(file)
-        ? this.decodeFileContent(file)
-        : `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.renderFileText(context, file, false)}`,
-    );
+    // A video's block is self-labelled too ("VIDEO: … TRANSCRIPT (timestamped)").
+    return context.fileContents.map((file) => {
+      if (this.isAudioFile(file)) {
+        return this.decodeFileContent(file);
+      }
+      return this.isVideoFile(file) && !isSentNatively(context, file, false)
+        ? this.renderVideoText(context, file)
+        : `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.renderFileText(context, file, false)}`;
+    });
+  }
+
+  /**
+   * The temporal block for a video this lane does not watch natively
+   * (multimodal batch 8): header, timestamped transcript, and whatever the
+   * lane got of the sampled frames — or, with no document yet, the
+   * still-processing / failed statement. Never the bytes, never a placeholder.
+   */
+  private renderVideoText(context: AssembledContext, file: FileContentResponse): string {
+    return !hasVideoDocument(file) ? describeUnprocessedVideo(file) : formatVideoContextBlock({
+      filename: file.filename,
+      media: file.media,
+      document: file.extractedText ?? '',
+      frameSet: context.attachmentDelivery?.videoFrames?.find((set) => set.fileId === file.id),
+    });
   }
 
   /** The text a lane is given for one file that does not ride the payload natively. */
@@ -788,6 +812,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     const mediaFiles = context.fileContents.filter((file) =>
       isSentNatively(context, file, includeVideo),
     );
+    // A seeing lane on the frames + transcript strategy also gets each sampled
+    // frame as an image, preceded by a label naming its timestamp.
+    const frameParts = this.buildVideoFrameParts(context);
     const grounded = this.hasResearchGrounding(context);
     for (const msg of relevantMessages) {
       const role = this.mapRole(msg);
@@ -797,8 +824,11 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // per request, so the stored message stays exactly what the user typed.
       const content =
         isLastUser && grounded ? this.withResearchGrounding(msg.content) : msg.content;
-      if (isLastUser && mediaFiles.length > 0) {
-        messages.push({ role, content: this.buildMultimodalUserParts(content, mediaFiles) });
+      if (isLastUser && (mediaFiles.length > 0 || frameParts.length > 0)) {
+        messages.push({
+          role,
+          content: [...this.buildMultimodalUserParts(content, mediaFiles), ...frameParts],
+        });
       } else {
         messages.push({ role, content });
       }
@@ -849,11 +879,15 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // Same reasoning as formatFileBlocks: an audio file's decoded block
       // already carries its own voice-note framing (or the still-transcribing
       // / failed message) — the generic "attached file" wrapper would bury it.
-      parts.push(
-        this.isAudioFile(file)
-          ? this.decodeFileContent(file)
-          : `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.renderFileText(context, file, includeVideo)}`,
-      );
+      if (this.isAudioFile(file)) {
+        parts.push(this.decodeFileContent(file));
+      } else if (this.isVideoFile(file)) {
+        parts.push(this.renderVideoText(context, file));
+      } else {
+        parts.push(
+          `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.renderFileText(context, file, includeVideo)}`,
+        );
+      }
     }
     return parts;
   }
@@ -872,6 +906,17 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       }
     }
     return parts;
+  }
+
+  /** `Frame of video "x" at 01:23:` + the frame, for every native frame of this lane. */
+  private buildVideoFrameParts(context: AssembledContext): OpenAiContentPart[] {
+    return nativeVideoFrames(context).flatMap(({ filename, frame }) => [
+      { type: 'text', text: videoFrameImageLabel(filename, frame.timestampMs) },
+      {
+        type: 'image_url',
+        image_url: { url: `data:${frame.mimeType};base64,${frame.base64}` },
+      },
+    ]);
   }
 
   private isImageFile(file: FileContentResponse): boolean {
@@ -1424,11 +1469,19 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     // Also before the extracted-text branch, for the same reason as audio:
     // file-service writes `[Video file: <name>]` into a video row's
     // extractedText, and the generic branch used to hand that placeholder to
-    // the model as if it were the video's content. A video has no text until
-    // batch 6 adds frames + a transcript, and its bytes must never be decoded
-    // into the prompt; a lane that watches it natively never reaches here.
+    // the model as if it were the video's content. Once file-service writes
+    // the timestamped document (batch 7) it is framed as a VIDEO block; until
+    // then the lane is told it is still processing (or why it failed). The
+    // bytes are never decoded into the prompt; a native lane never reaches here.
     if (this.isVideoFile(file)) {
-      return `[Video file "${file.filename}" (${file.mimeType}) — video has no text to extract. ${UNSUPPORTED_VIDEO_NOTE}]`;
+      return hasVideoDocument(file)
+        ? formatVideoContextBlock({
+            filename: file.filename,
+            media: file.media,
+            document: file.extractedText ?? '',
+            frameSet: undefined,
+          })
+        : describeUnprocessedVideo(file);
     }
 
     const extracted = file.extractedText?.trim();

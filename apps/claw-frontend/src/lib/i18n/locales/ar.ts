@@ -1934,6 +1934,8 @@ export const ar: TranslationDictionary = {
       transcript: 'نص مُفرَّغ',
       nativeVideo: 'فيديو',
       derivedImageText: 'موصوفة بواسطة مساعد',
+      videoFramesAndTranscript: 'فيديو: لقطات + نص مفرغ',
+      videoFramesAt: 'لقطات عند {times}',
       stillProcessing: 'قيد المعالجة',
       failedProcessing: 'فشلت المعالجة',
       tooltip: 'ملخص التسليم لكل نموذج',

@@ -16,24 +16,35 @@ task_keywords:
     file.video_process_requested,
     cannot see the video,
   ]
-applies_to: [apps/claw-file-service, packages/shared-types]
+applies_to:
+  [apps/claw-file-service, apps/claw-chat-service, apps/claw-routing-service, packages/shared-types]
 required_rules:
   [
     42-attachment-understanding,
     37-payg-credit-integrity,
     13-external-library-wrappers-and-adapters,
     21-security-and-secrets,
+    51-router-candidates-and-model-window-fit,
   ]
 required_context: [event-flow-map, service-catalog]
-affected_workspaces: [apps/claw-file-service]
+affected_workspaces: [apps/claw-file-service, apps/claw-chat-service, apps/claw-routing-service]
 required_tests:
   [
     video-processing.manager.spec,
     media-process.utility.spec,
     media-args.utility.spec,
     video-frames.service.spec,
+    video-delivery.manager.spec,
+    video-frame-selection.utility.spec,
+    cloud-router-candidates.utility.spec,
   ]
-required_docs: [docs/04-backend/service-guide-file.md, apps/claw-file-service/CLAUDE.md]
+required_docs:
+  [
+    docs/04-backend/service-guide-file.md,
+    apps/claw-file-service/CLAUDE.md,
+    docs/04-backend/service-guide-chat.md,
+    apps/claw-chat-service/CLAUDE.md,
+  ]
 validation_lane: cd apps/claw-file-service && npm run typecheck && npm run lint && npm test && npm run build
 ---
 
@@ -44,7 +55,8 @@ file stays "processing", or the reply says the audio was not transcribed.
 
 **Start from the row, not the model** — the same discipline as
 [`debug-an-attachment-the-model-cannot-read.md`](./debug-an-attachment-the-model-cannot-read.md).
-The video pipeline (multimodal batch 7) lives entirely in file-service:
+The video pipeline (multimodal batch 7) lives in file-service; how each chat
+lane receives the result (batch 8) is §8–10:
 [`apps/claw-file-service/CLAUDE.md`](../apps/claw-file-service/CLAUDE.md) ·
 [`docs/04-backend/service-guide-file.md`](../docs/04-backend/service-guide-file.md#video-processing-multimodal-batch-7) ·
 rule [42 item 15](../rules/42-attachment-understanding.md).
@@ -70,7 +82,7 @@ docker exec claw-pg-files psql -U claw -d claw_files -c \
 | `FAILED`, `failure` = `VIDEO_TOO_LONG_FOR_PLAN` / `VIDEO_DISABLED_FOR_PLAN`                                        | Plan limit — correct behaviour, the message names it                 | 4               |
 | `FAILED`, `CORRUPT_CONTAINER` / `PROBE_TIMEOUT` / `NO_VIDEO_STREAM` / `DIMENSIONS_TOO_LARGE` / `DURATION_TOO_LONG` | Global policy refused the file                                       | 5               |
 | `COMPLETED`, text starts `Video "…"`, `audio` ≠ `TRANSCRIBED`                                                      | Video fine, audio not transcribed — the reason is in the document    | 6               |
-| `COMPLETED`, `audio` = `TRANSCRIBED`, model still blind                                                            | File-service is done; the problem is chat-service assembly (batch 8) | chat            |
+| `COMPLETED`, `audio` = `TRANSCRIBED`, model still blind                                                            | File-service is done; the problem is chat-service assembly (batch 8) | 8               |
 
 ## 2. Did the job run?
 
@@ -134,6 +146,49 @@ curl -s -X POST "http://localhost:4006/api/v1/internal/files/<id>/video-frames" 
 404 = wrong owner or id; 409 = not processed / processing failed; 400 = a
 timestamp past `durationMs` or 0/9+ timestamps; 401 = no service token. Frames
 are never stored — only cached in Redis for 10 minutes.
+
+## 8. Chat side: what did THIS lane get? (batch 8)
+
+```bash
+docker logs claw-chat-service --since 30m 2>&1 | grep -E "mediaDelivery|videoDelivery|visionHelper|fetchFrames"
+```
+
+`videoDelivery {"provider","model","fileId","strategy","frameDelivery","frames","latencyMs","reason"}`
+is one line per video per lane:
+
+| `strategy` / `frameDelivery`                          | Meaning                                                                    |
+| ----------------------------------------------------- | -------------------------------------------------------------------------- |
+| `NATIVE_VIDEO`                                        | bytes rode the Gemini request                                              |
+| `VIDEO_FRAMES_AND_TRANSCRIPT` / `NATIVE_IMAGES`       | transcript + N frames as images                                            |
+| `VIDEO_FRAMES_AND_TRANSCRIPT` / `HELPER_OBSERVATIONS` | transcript + helper descriptions (`visionHelper {"kind":"VIDEO_FRAME",…}`) |
+| `VIDEO_FRAMES_AND_TRANSCRIPT` / `NONE`                | transcript only — `reason` says why (below)                                |
+| `STILL_PROCESSING` / `FAILED_PROCESSING`              | no document yet / processing failed — go to §1                             |
+
+`reason` for a transcript-only lane: `video_frames_unavailable` (frames endpoint
+failed — `fetchFrames: … unavailable (status_409|AbortError…)` — or no
+`media.durationMs` on `/content`), `video_frames_helper_plan` (blind lane, plan
+without `allowHelperVision` — correct), `video_frames_no_helper` (no
+VISION_HELPER candidate the catalog marks vision-SUPPORTED), `vision_helper_limit`
+(attached images used the 4-per-turn cap), `vision_helper_refused` (credit).
+
+## 9. Which moments were sampled?
+
+`metadata.fileDelivery[].frameTimestampsMs` on the assistant message (and the
+chip tooltip "frames at …"). They come from `selectVideoFrameTimestamps`: a time
+the user named (`2:35`, `at 95s`, `around 1 minute 30`) clusters ±4 s around it;
+a named time past the end is dropped. If a phrasing was not read, add it to the
+case table in `video-frame-selection.utility.spec.ts` FIRST, then the pattern in
+`video-timestamp.constants.ts`. A seeing 8k model gets one frame on purpose
+(`nativeFrameCap`).
+
+## 10. AUTO picked a text-only model for a video
+
+Expected when no video-capable model is exposed, healthy and on the plan: the
+model answers from frames + transcript. Check the decision's `reasonTags` for
+`modalityFit:transformed` and the routing log
+`resolveEligibleDeployments: … required=VIDEO_INPUT fit=DIRECT,TRANSFORMED,…`.
+No `required=` value → chat-service did not send the modalities (look for
+`AttachmentInfoClient` warnings). Rule 51 item 13.
 
 ## Never
 

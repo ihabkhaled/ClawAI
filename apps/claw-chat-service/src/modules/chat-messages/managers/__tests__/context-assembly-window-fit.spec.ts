@@ -13,6 +13,12 @@ import { HelperExecutionKind } from '../../../../common/enums/helper-execution-k
 import { VisionHelperOutcome } from '../../../../common/enums/vision-helper-outcome.enum';
 import { DELIVERY_REASON_NO_VISION } from '../../constants/attachment-delivery.constants';
 import { applyVisionHelperResults, fitLaneFileShare } from '../../utilities/vision-helper.utility';
+import { VideoFrameDelivery } from '../../../../common/enums/video-frame-delivery.enum';
+import {
+  applyVideoOutcomes,
+  describedFrameSet,
+  fitVideoObservations,
+} from '../../utilities/video-delivery.utility';
 
 const { appConfigGet, httpRequest } = vi.hoisted(() => ({
   appConfigGet: vi.fn(),
@@ -247,6 +253,89 @@ describe('ContextAssemblyManager fits every source to the model window', () => {
     expect(JSON.stringify(manager().buildChatMessages(described))).toContain(
       'DERIVED IMAGE OBSERVATIONS',
     );
+    expect(promptTokens).toBeLessThanOrEqual(8_192);
+  });
+
+  // Rule 51 item 4, multimodal batch 8: a video's timestamped transcript AND
+  // its frame descriptions are prompt sources too. They spend the same FILE
+  // share as every other file, so an 8k blind lane with a long document, a
+  // long transcript and four long frame descriptions still fits.
+  it('fits a video transcript and its frame observations inside the window through the file share', async () => {
+    const assembled = await manager().assemble(
+      'u1',
+      history as never,
+      { contextWindowTokens: 8_192, maxTokens: 1_024 } as never,
+      ['pack-1'],
+      ['f1'],
+    );
+    const clip = {
+      id: 'vid-1',
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      content: null,
+      extractedText: `Video "clip.mp4" — length 10:00.\n[00:00–10:00] ${BIG}`,
+      ingestionStatus: 'COMPLETED' as const,
+      extractionError: null,
+      media: { durationMs: 600_000, width: 640, height: 360, hasAudio: true, failureReason: null },
+    };
+    const lane: AssembledContext = {
+      ...assembled,
+      fileContents: [...assembled.fileContents, clip],
+    };
+    const plan = {
+      provider: 'DEEPSEEK',
+      model: 'deepseek-chat',
+      laneSeesImages: false,
+      decisions: [
+        {
+          fileId: 'vid-1',
+          filename: 'clip.mp4',
+          mimeType: 'video/mp4',
+          provider: 'DEEPSEEK',
+          model: 'deepseek-chat',
+          mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+          sendNative: false,
+        },
+      ],
+    };
+    const timestamps = [500, 200_000, 400_000, 599_500];
+    const set = describedFrameSet('vid-1', 'clip.mp4', timestamps, {
+      onPlan: true,
+      helperAvailable: true,
+      framesLoaded: true,
+      results: timestamps.map((timestampMs) => ({
+        fileId: `vid-1@${String(timestampMs)}`,
+        outcome: VisionHelperOutcome.SUCCEEDED,
+        observation: {
+          fileId: `vid-1@${String(timestampMs)}`,
+          filename: 'clip.mp4',
+          helperProvider: 'GEMINI',
+          helperModel: 'gemini-2.5-flash',
+          text: BIG,
+        },
+        executions: [],
+      })),
+    });
+    const fit = fitVideoObservations(lane, plan, [set]);
+    const described: AssembledContext = {
+      ...lane,
+      fileContents: fit.fileContents,
+      attachmentDelivery: applyVideoOutcomes(plan, [], fit.sets, fit.derivedImages),
+    };
+
+    const serializedMessages = JSON.stringify(manager().buildChatMessages(described));
+    const promptTokens = estimateTokensFromText(
+      manager()
+        .buildChatMessages(described)
+        .map((message) =>
+          typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
+        )
+        .join('\n'),
+    );
+
+    expect(fit.sets[0]?.frameDelivery).toBe(VideoFrameDelivery.HELPER_OBSERVATIONS);
+    expect(serializedMessages).toContain('TRANSCRIPT (timestamped):');
+    expect(serializedMessages).toContain('FRAME AT 03:20');
     expect(promptTokens).toBeLessThanOrEqual(8_192);
   });
 

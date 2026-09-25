@@ -42,7 +42,7 @@ export class ResearchOrchestratorManager {
   ) {}
 
   async run(input: ResearchOrchestrationInput): Promise<ResearchRunResponse | null> {
-    const plan = await this.planner.plan(input.intent);
+    const plan = await this.planner.plan(input.intent, input.attachmentDigest ?? '');
     await this.narrateThought(input.threadId, plan.thinking);
     if (plan.narration.length > 0) {
       await this.narration.append(input.threadId, {

@@ -1994,6 +1994,8 @@ export const de: TranslationDictionary = {
       transcript: 'Transkript',
       nativeVideo: 'Video',
       derivedImageText: 'Von Helfer beschrieben',
+      videoFramesAndTranscript: 'Video: Einzelbilder + Transkript',
+      videoFramesAt: 'Einzelbilder bei {times}',
       stillProcessing: 'Wird noch verarbeitet',
       failedProcessing: 'Verarbeitung fehlgeschlagen',
       tooltip: 'Zustellungsübersicht pro Modell',

@@ -1,7 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
-
 import { GEMINI_VIDEO_CAPABLE_MODELS } from '../../../../common/constants';
-import { BusinessException } from '../../../../common/errors';
 import { MediaCapabilityState } from '../../../../common/enums/media-capability-state.enum';
 import type { AssembledContext } from '../../types/context.types';
 import type { MessageRoutedData } from '../../types/execution.types';
@@ -71,14 +68,19 @@ describe('resolveVideoAttachmentCandidates', () => {
     expect(candidates).toEqual(fallbackCandidates);
   });
 
-  it('routes AUTO video requests exclusively to the canonical Gemini video model', () => {
-    const candidates = resolveVideoAttachmentCandidates(
-      makePayload('AUTO', 'local-ollama', 'qwen3:1.7b'),
-      makeContext('video/mp4'),
-      fallbackCandidates,
-    );
-
-    expect(candidates).toEqual([{ provider: 'GEMINI', model: 'gemini-2.5-flash' }]);
+  // Multimodal batch 8 (behaviour changed on purpose): AUTO is no longer forced
+  // onto a hardcoded Gemini model. routing-service ranks by modality fit and
+  // respects exposure, health and plan; a routed model that cannot watch the
+  // video gets frames + transcript at the chokepoint.
+  it('keeps the routed AUTO chain for a video instead of forcing Gemini', () => {
+    expect(
+      resolveVideoAttachmentCandidates(
+        makePayload('AUTO', 'local-ollama', 'qwen3:1.7b'),
+        makeContext('video/mp4'),
+        fallbackCandidates,
+        { selected: MediaCapabilityState.UNSUPPORTED, capableModels: null },
+      ),
+    ).toEqual(fallbackCandidates);
   });
 
   it.each(['gemini-2.5-flash', 'gemini-2.5-pro'])(
@@ -97,61 +99,61 @@ describe('resolveVideoAttachmentCandidates', () => {
     },
   );
 
-  it('fails clearly before dispatching a manually selected provider that cannot read video', () => {
-    expect(() =>
+  // Behaviour changed on purpose: this used to throw
+  // VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED. The user's model now answers from
+  // the video's transcript and sampled frames.
+  it.each([
+    ['a non-Gemini model', 'OPENAI', 'gpt-4o'],
+    ['a Gemini model that is not video-capable', 'GEMINI', 'text-embedding-004'],
+  ])('never refuses %s — the chain is kept for frames + transcript', (_label, provider, model) => {
+    const chain = [{ provider, model }, ...fallbackCandidates];
+    expect(
       resolveVideoAttachmentCandidates(
-        makePayload('MANUAL_MODEL', 'OPENAI', 'gpt-4o'),
+        makePayload('MANUAL_MODEL', provider, model),
         makeContext('video/mp4'),
-        fallbackCandidates,
+        chain,
       ),
-    ).toThrow(
-      // Vitest compares the whole thrown object where Jest compared only the
-      // message, so the expected exception carries the same status and
-      // messageKey the utility actually raises.
-      new BusinessException(
-        'The selected provider/model OPENAI/gpt-4o cannot process video attachments. Choose Gemini/gemini-2.5-flash, Gemini/gemini-2.5-pro, or use Auto.',
-        'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
-        HttpStatus.BAD_REQUEST,
-        'chat.errors.videoAttachmentProviderUnsupported',
-      ),
-    );
+    ).toEqual(chain);
   });
 
-  it.each([
-    ['MANUAL_MODEL', 'OPENAI', 'gpt-4o', 'chat.errors.videoAttachmentProviderUnsupported'],
-    [
-      'LOCAL_ONLY',
-      'local-ollama',
-      'qwen3:1.7b',
-      'chat.errors.videoAttachmentLocalModelUnavailable',
-    ],
-  ])(
-    'includes a localizable message key for %s video routing failures',
-    (routingMode, provider, model, messageKey) => {
-      try {
-        resolveVideoAttachmentCandidates(
-          makePayload(routingMode, provider, model),
-          makeContext('video/mp4'),
-          fallbackCandidates,
-        );
-        throw new Error('Expected video routing to fail');
-      } catch (error: unknown) {
-        expect(error).toBeInstanceOf(BusinessException);
-        expect((error as BusinessException).getResponse()).toEqual(
-          expect.objectContaining({ messageKey }),
-        );
-      }
+  // Behaviour changed on purpose: this used to throw
+  // VIDEO_ATTACHMENT_LOCAL_MODEL_UNAVAILABLE. The local model gets the
+  // transcript (and frames only through a LOCAL helper); nothing goes to cloud.
+  it.each(['LOCAL_ONLY', 'PRIVACY_FIRST'])(
+    'keeps the local chain in %s mode and never adds a cloud video model',
+    (routingMode) => {
+      const local = [{ provider: 'local-ollama', model: 'qwen3:1.7b' }];
+      const candidates = resolveVideoAttachmentCandidates(
+        makePayload(routingMode, 'local-ollama', 'qwen3:1.7b'),
+        makeContext('video/mp4'),
+        local,
+        {
+          selected: MediaCapabilityState.UNSUPPORTED,
+          capableModels: [{ provider: 'GEMINI', model: 'gemini-2.5-flash' }],
+        },
+      );
+
+      expect(candidates).toEqual(local);
+      expect(candidates.some((candidate) => candidate.provider === 'GEMINI')).toBe(false);
     },
   );
 
-  it('fails clearly when the manually selected Gemini model is not video-capable', () => {
-    expect(() =>
-      resolveVideoAttachmentCandidates(
-        makePayload('MANUAL_MODEL', 'GEMINI', 'text-embedding-004'),
-        makeContext('video/mp4'),
-        [{ provider: 'GEMINI', model: 'text-embedding-004' }],
-      ),
-    ).toThrow('GEMINI/text-embedding-004 cannot process video attachments');
+  it('never throws for any routing mode or model', () => {
+    for (const mode of ['AUTO', 'MANUAL_MODEL', 'MANUAL_PROVIDER', 'LOCAL_ONLY', 'PRIVACY_FIRST']) {
+      for (const [provider, model] of [
+        ['OPENAI', 'gpt-4o'],
+        ['GEMINI', 'gemini-2.5-flash'],
+        ['local-ollama', 'qwen3:1.7b'],
+      ] as const) {
+        expect(() =>
+          resolveVideoAttachmentCandidates(
+            makePayload(mode, provider, model),
+            makeContext('video/mp4'),
+            fallbackCandidates,
+          ),
+        ).not.toThrow();
+      }
+    }
   });
 
   it.each(['gemini-2.5-flash', 'gemini-2.5-pro'])(
@@ -167,68 +169,29 @@ describe('resolveVideoAttachmentCandidates', () => {
     },
   );
 
-  it('never rejects a model while recommending that same model as the fix', () => {
-    // Bug reproduction: production rejected exactly the models it told the
-    // user to switch to (gemini-2.5-flash rejected while recommended). This
-    // proves the rejection check and the suggestion text are both derived
-    // from the same GEMINI_VIDEO_CAPABLE_MODELS data, so they can never
-    // disagree again — for every model this codebase considers video
-    // capable, resolving it never throws, and for both the bare and the
-    // catalog `models/`-prefixed id shapes.
+  it('routes every statically video-capable Gemini id natively, bare or prefixed', () => {
     for (const model of GEMINI_VIDEO_CAPABLE_MODELS) {
       for (const candidateModel of [model, `models/${model}`]) {
-        expect(() =>
+        expect(
           resolveVideoAttachmentCandidates(
             makePayload('MANUAL_MODEL', 'GEMINI', candidateModel),
             makeContext('video/mp4'),
             [{ provider: 'GEMINI', model: candidateModel }],
           ),
-        ).not.toThrow();
+        ).toEqual([{ provider: 'GEMINI', model }]);
       }
     }
   });
 
-  it('builds the suggested-alternatives text from the same capability set it just rejected against', () => {
-    try {
-      resolveVideoAttachmentCandidates(
-        makePayload('MANUAL_MODEL', 'OPENAI', 'gpt-4o'),
-        makeContext('video/mp4'),
-        fallbackCandidates,
-      );
-      throw new Error('Expected video routing to fail');
-    } catch (error: unknown) {
-      expect(error).toBeInstanceOf(BusinessException);
-      const message = (error as BusinessException).message;
-      for (const model of GEMINI_VIDEO_CAPABLE_MODELS) {
-        expect(message).toContain(`Gemini/${model}`);
-      }
-    }
-  });
-
-  it.each(['LOCAL_ONLY', 'PRIVACY_FIRST'])(
-    'never exfiltrates video from the %s routing mode',
-    (routingMode) => {
-      expect(() =>
-        resolveVideoAttachmentCandidates(
-          makePayload(routingMode, 'local-ollama', 'qwen3:1.7b'),
-          makeContext('video/mp4'),
-          fallbackCandidates,
-        ),
-      ).toThrow(
-        `Video attachments cannot be processed in ${routingMode} mode because no local video-capable model is configured.`,
-      );
-    },
-  );
-
-  // ADR-120: eligibility comes from the connector catalog's VIDEO_INPUT flag;
-  // the static set is only the fallback when the catalog cannot answer.
+  // ADR-120: native eligibility comes from the connector catalog's VIDEO_INPUT
+  // flag; the static set is only the fallback when the catalog cannot answer.
   describe('driven by per-model capability', () => {
     const catalog = [
       { provider: 'GEMINI', model: 'gemini-3.1-pro' },
       { provider: 'GEMINI', model: 'gemini-2.5-flash' },
     ];
 
-    it('accepts a model the catalog says takes video even if the static set lacks it', () => {
+    it('goes native for a model the catalog says takes video even if the static set lacks it', () => {
       const candidates = resolveVideoAttachmentCandidates(
         makePayload('MANUAL_MODEL', 'GEMINI', 'models/gemini-3.1-pro'),
         makeContext('video/mp4'),
@@ -239,55 +202,16 @@ describe('resolveVideoAttachmentCandidates', () => {
       expect(candidates).toEqual([{ provider: 'GEMINI', model: 'gemini-3.1-pro' }]);
     });
 
-    it('rejects a model the catalog says cannot take video even if the static set has it', () => {
-      expect(() =>
+    it('keeps the chain (frames + transcript) for a model the catalog says cannot take video', () => {
+      const chain = [{ provider: 'GEMINI', model: 'gemini-2.5-pro' }];
+      expect(
         resolveVideoAttachmentCandidates(
           makePayload('MANUAL_MODEL', 'GEMINI', 'gemini-2.5-pro'),
           makeContext('video/mp4'),
-          [],
+          chain,
           { selected: MediaCapabilityState.UNSUPPORTED, capableModels: catalog },
         ),
-      ).toThrow('Choose Gemini/gemini-3.1-pro, Gemini/gemini-2.5-flash, or use Auto.');
-    });
-
-    it('never suggests the model it just rejected, and only suggests catalog models', () => {
-      try {
-        resolveVideoAttachmentCandidates(
-          makePayload('MANUAL_MODEL', 'GEMINI', 'models/gemini-2.5-flash'),
-          makeContext('video/mp4'),
-          [],
-          { selected: MediaCapabilityState.UNSUPPORTED, capableModels: catalog },
-        );
-        throw new Error('Expected video routing to fail');
-      } catch (error: unknown) {
-        const message = (error as BusinessException).message;
-        const suggested = message.slice(message.indexOf('Choose'));
-        expect(suggested).not.toContain('gemini-2.5-flash');
-        expect(suggested).toContain('Gemini/gemini-3.1-pro');
-        expect(suggested).not.toContain('gemini-2.5-pro');
-      }
-    });
-
-    it('sends AUTO to a catalog video model, preferring the default when it is listed', () => {
-      expect(
-        resolveVideoAttachmentCandidates(
-          makePayload('AUTO', 'local-ollama', 'qwen3:1.7b'),
-          makeContext('video/mp4'),
-          fallbackCandidates,
-          { selected: MediaCapabilityState.UNSUPPORTED, capableModels: catalog },
-        ),
-      ).toEqual([{ provider: 'GEMINI', model: 'gemini-2.5-flash' }]);
-      expect(
-        resolveVideoAttachmentCandidates(
-          makePayload('AUTO', 'local-ollama', 'qwen3:1.7b'),
-          makeContext('video/mp4'),
-          fallbackCandidates,
-          {
-            selected: MediaCapabilityState.UNSUPPORTED,
-            capableModels: [{ provider: 'GEMINI', model: 'gemini-3.1-pro' }],
-          },
-        ),
-      ).toEqual([{ provider: 'GEMINI', model: 'gemini-3.1-pro' }]);
+      ).toEqual(chain);
     });
 
     it('falls back to the static set when the catalog is unavailable', () => {
@@ -301,28 +225,21 @@ describe('resolveVideoAttachmentCandidates', () => {
           unknown,
         ),
       ).toEqual([{ provider: 'GEMINI', model: 'gemini-2.5-pro' }]);
-      expect(() =>
-        resolveVideoAttachmentCandidates(
-          makePayload('MANUAL_MODEL', 'OPENAI', 'gpt-4o'),
-          makeContext('video/mp4'),
-          [],
-          unknown,
-        ),
-      ).toThrow('Choose Gemini/gemini-2.5-flash, Gemini/gemini-2.5-pro, or use Auto.');
     });
 
-    it('never offers a non-Gemini model, which has no transport that carries video', () => {
-      expect(() =>
+    it('never treats a non-Gemini model as native, even if the catalog flags it', () => {
+      const chain = [{ provider: 'OPENAI', model: 'gpt-4o' }];
+      expect(
         resolveVideoAttachmentCandidates(
           makePayload('MANUAL_MODEL', 'OPENAI', 'gpt-4o'),
           makeContext('video/mp4'),
-          [],
+          chain,
           {
             selected: MediaCapabilityState.SUPPORTED,
             capableModels: [{ provider: 'OPENAI', model: 'gpt-4o' }, ...catalog],
           },
         ),
-      ).toThrow('Choose Gemini/gemini-3.1-pro, Gemini/gemini-2.5-flash, or use Auto.');
+      ).toEqual(chain);
     });
   });
 });

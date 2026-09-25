@@ -18,6 +18,8 @@ import { ModelCapabilityClient } from './clients/model-capability.client';
 import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
 import { VisionHelperManager } from './managers/vision-helper.manager';
 import { VisionHelperCandidatesClient } from './clients/vision-helper-candidates.client';
+import { VideoFramesClient } from './clients/video-frames.client';
+import { VideoDeliveryManager } from './managers/video-delivery.manager';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
@@ -91,6 +93,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     AttachmentDeliveryManager,
     VisionHelperCandidatesClient,
     VisionHelperManager,
+    VideoFramesClient,
+    VideoDeliveryManager,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,
     ContextComposerManager,

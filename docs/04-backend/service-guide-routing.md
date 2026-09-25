@@ -498,3 +498,19 @@ the Smart Router "Assistant models" tab like `RESEARCH_GATE` and `FILE_WRITER`
   (admin) and `GET /internal/assistant-models/VISION_HELPER/candidates`.
 - Metering happens in chat-service (`PaygSurface.VISION_HELPER`), not here.
 - Runbook: [`skills/add-a-helper-model-role.md`](../../skills/add-a-helper-model-role.md).
+
+## AUTO ranks candidates by modality fit (multimodal batch 8, 2026-09-25)
+
+`message.created` now carries the turn's attachment needs
+(`attachmentMimeTypes`, `requiredModalities`, `transformableModalities`).
+`CloudRouterEligibilityManager` passes them to `selectCloudRouterCandidates`,
+which — after the unchanged exposure, health and plan filters — orders
+candidates DIRECT (reads the attachments) → TRANSFORMED (text-only, chat
+converts: audio → transcript, video → frames + transcript, image → helper
+vision on plans that have it) → DEGRADED (only when nothing else is left).
+Each tier keeps the old ACTIVE-first, one-per-provider round-robin, so a turn
+without attachments ranks exactly as before. The router prompt names the
+attachments and each candidate's fit; the decision carries
+`modalityFit:<fit>` in `reasonTags`. Code: `utilities/modality-fit.utility.ts`,
+`utilities/attachment-modality.utility.ts`, `constants/modality-fit.constants.ts`,
+`common/enums/modality-fit.enum.ts`. Rule 51 item 13.

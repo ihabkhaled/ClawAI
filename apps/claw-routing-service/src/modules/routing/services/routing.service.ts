@@ -72,6 +72,7 @@ import type {
   RouterTopicProfileRecord,
   RoutingEducationSnapshot,
 } from '../types/routing-education.types';
+import { parseAttachmentModality } from '../utilities/attachment-modality.utility';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -454,6 +455,9 @@ export class RoutingService implements OnModuleInit {
     } = parsed;
 
     this.logMessageCreatedConsumed(messageId, threadId);
+    // Multimodal batch 8: what the attachments need, so AUTO ranks candidates
+    // by modality fit (rule 51 item 13). Empty for a turn without attachments.
+    const attachments = parseAttachmentModality(payload);
 
     const context = {
       ...this.buildRoutingContext(
@@ -467,6 +471,7 @@ export class RoutingService implements OnModuleInit {
       allowedModels,
       modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
       runtimeV2,
+      ...attachments,
     };
     const rawDecision = await this.routingManager.evaluateRoute(context);
     const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
@@ -475,6 +480,7 @@ export class RoutingService implements OnModuleInit {
       content,
       routingMode ?? calibrated.decision.routingMode,
       runtimeV2,
+      attachments.attachmentMimeTypes,
     );
     // Phase C — AUTO-mode plan gate: never let the router land on a model the
     // user's plan forbids. Only a plan explicitly in ALLOW_ALL mode is
@@ -599,6 +605,7 @@ export class RoutingService implements OnModuleInit {
     message: string,
     routingMode: RoutingMode,
     runtimeV2: boolean,
+    attachmentMimeTypes: string[] = [],
   ): RoutingDecisionResult {
     try {
       const selection = this.liveWorkflowSelector.selectWorkflow({
@@ -607,7 +614,7 @@ export class RoutingService implements OnModuleInit {
         runtimeV2,
         semanticIntent: null,
         keywordSignals: [],
-        attachmentMimeTypes: [],
+        attachmentMimeTypes,
       });
       return {
         ...decision,

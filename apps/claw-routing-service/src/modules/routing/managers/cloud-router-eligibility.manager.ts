@@ -50,12 +50,16 @@ export class CloudRouterEligibilityManager {
       allowed,
       connectorHealth: context.connectorHealth ?? {},
       max: CLOUD_ROUTER_MAX_CANDIDATES,
+      requiredModalities: context.requiredModalities ?? [],
+      transformableModalities: context.transformableModalities ?? [],
     });
     this.logger.debug(
       `resolveEligibleDeployments: thread=${context.threadId ?? 'none'} routable=${String(routable.length)} ` +
         `exposed=${exposed === null ? 'unavailable' : String(exposed.size)} ` +
         `planRestricted=${String(allowed !== null)} eligible=${String(eligible.length)} ` +
-        `providers=${[...new Set(eligible.map((entry) => entry.provider))].join(',')}`,
+        `providers=${[...new Set(eligible.map((entry) => entry.provider))].join(',')} ` +
+        `required=${(context.requiredModalities ?? []).join(',')} ` +
+        `fit=${eligible.map((entry) => entry.modalityFit ?? '-').join(',')}`,
     );
     return eligible;
   }

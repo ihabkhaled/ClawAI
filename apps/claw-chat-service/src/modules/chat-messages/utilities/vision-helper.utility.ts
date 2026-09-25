@@ -109,12 +109,19 @@ export function isImageRejectionError(error: unknown): boolean {
 export function fitLaneFileShare(
   context: Pick<AssembledContext, 'modelBudget' | 'fileContents'>,
   observations: readonly DerivedImageObservation[],
+  reservedChars = 0,
 ): LaneFileShareFit {
   const inputTokens = Math.max(
     0,
     context.modelBudget.contextWindowTokens - context.modelBudget.reservedOutputTokens,
   );
-  const share = Math.floor(inputTokens * APPROX_CHARS_PER_TOKEN * FILE_FIT_BUDGET_SHARE);
+  // `reservedChars` is framing the caller adds around the fitted texts (the
+  // per-frame headers and delimiters of a video block) — it spends the same
+  // share, so the texts get what is left.
+  const share = Math.max(
+    0,
+    Math.floor(inputTokens * APPROX_CHARS_PER_TOKEN * FILE_FIT_BUDGET_SHARE) - reservedChars,
+  );
   const describedIds = new Set(observations.map((observation) => observation.fileId));
   const others = context.fileContents.filter(
     (file) => !describedIds.has(file.id) && (file.extractedText ?? '').length > 0,

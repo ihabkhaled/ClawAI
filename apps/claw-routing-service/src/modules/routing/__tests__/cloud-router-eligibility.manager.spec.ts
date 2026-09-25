@@ -1,5 +1,7 @@
 import { vi } from 'vitest';
-import { RouterProvider } from '../../../generated/prisma';
+import { RequiredModality } from '@claw/shared-types';
+import { ModalityFit } from '../../../common/enums/modality-fit.enum';
+import { ModalityKind, RouterProvider } from '../../../generated/prisma';
 import { CloudRouterEligibilityManager } from '../managers/cloud-router-eligibility.manager';
 import { type RoutingContext } from '../types/routing.types';
 
@@ -103,6 +105,31 @@ describe('CloudRouterEligibilityManager.resolveEligibleDeployments', () => {
     const result = await build(null).resolveEligibleDeployments(baseContext);
 
     expect(result.map((d) => d.id).sort()).toEqual(['g1', 'g2']);
+  });
+
+  // Multimodal batch 8: the context's attachment needs reach the ranking.
+  it('ranks by the attachment modalities chat-service sent', async () => {
+    const withModalities = [
+      {
+        ...row('o1', RouterProvider.OPENAI, 'gpt-5.5', 'ACTIVE'),
+        modalitiesIn: [ModalityKind.TEXT],
+      },
+      {
+        ...row('g1', RouterProvider.GEMINI, 'models/gemini-3.6-flash'),
+        modalitiesIn: [ModalityKind.TEXT, ModalityKind.VIDEO_INPUT],
+      },
+    ];
+    const result = await build(EXPOSED, withModalities).resolveEligibleDeployments({
+      ...baseContext,
+      attachmentMimeTypes: ['video/mp4'],
+      requiredModalities: [RequiredModality.VIDEO_INPUT],
+      transformableModalities: [RequiredModality.VIDEO_INPUT],
+    });
+
+    expect(result.map((d) => [d.id, d.modalityFit])).toEqual([
+      ['g1', ModalityFit.DIRECT],
+      ['o1', ModalityFit.TRANSFORMED],
+    ]);
   });
 
   it('returns an empty list when nothing qualifies, rather than throwing', async () => {

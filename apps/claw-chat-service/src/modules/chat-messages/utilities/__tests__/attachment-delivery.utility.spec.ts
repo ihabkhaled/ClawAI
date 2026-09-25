@@ -3,10 +3,13 @@
 
 import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.enum';
 import { MediaCapabilityState } from '../../../../common/enums/media-capability-state.enum';
+import { VideoFrameDelivery } from '../../../../common/enums/video-frame-delivery.enum';
+import { VideoProcessingFailureReason } from '@claw/shared-types';
 import { TEXT_BUDGET_SHORTENED_MARKER } from '../../constants/evidence-fit.constants';
 import { MAX_FILE_CONTENT_LENGTH } from '../../constants/file-content.constants';
 import type { FileContentResponse } from '../../types/context.types';
 import type { ModelMediaCapabilities } from '../../types/model-capability.types';
+import type { VideoPlanGate } from '../../types/attachment-delivery.types';
 import {
   countDeliveryModes,
   isSentNatively,
@@ -15,6 +18,9 @@ import {
 } from '../attachment-delivery.utility';
 
 const { SUPPORTED, UNSUPPORTED, UNKNOWN } = MediaCapabilityState;
+
+const PAID: VideoPlanGate = { available: true, limitSeconds: 600 };
+const UNLIMITED: VideoPlanGate = { available: true, limitSeconds: null };
 
 const caps = (
   vision: MediaCapabilityState,
@@ -40,11 +46,13 @@ const one = (
   capabilities: ModelMediaCapabilities,
   provider = 'OPENAI',
   nativeVideoTransport = false,
+  videoPlan?: VideoPlanGate,
 ) => {
   const [decision] = resolveAttachmentDelivery([f], capabilities, {
     provider,
     model: 'm',
     nativeVideoTransport,
+    ...(videoPlan === undefined ? {} : { videoPlan }),
   });
   if (decision === undefined) {
     throw new Error('the resolver returned no decision for one file');
@@ -133,24 +141,184 @@ describe('resolveAttachmentDelivery', () => {
       extractedText: '[Video file: clip.mp4]',
     });
 
-    it('is NATIVE_VIDEO only on a transport that carries video, for a model that accepts it', () => {
-      expect(one(video, caps(SUPPORTED, SUPPORTED), 'GEMINI', true)).toMatchObject({
+    // Changed on purpose (plan-gate fix): a video still processing has no
+    // measured duration, so it can never ride natively — not even to Gemini.
+    it('never sends a still-processing video natively, even to a video model', () => {
+      expect(one(video, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID)).toMatchObject({
+        mode: FileDeliveryMode.STILL_PROCESSING,
+        sendNative: false,
+      });
+    });
+
+    // Multimodal batch 8 (behaviour changed on purpose): a lane that cannot
+    // watch the video is no longer "OMITTED_UNSUPPORTED". Until the document
+    // lands it is STILL_PROCESSING; once it exists, frames + transcript.
+    it('is STILL_PROCESSING for a non-native lane while the document has not landed', () => {
+      expect(one(video, caps(SUPPORTED, UNSUPPORTED), 'GEMINI', true)).toMatchObject({
+        mode: FileDeliveryMode.STILL_PROCESSING,
+        sendNative: false,
+        reason: 'file_delivery.reason.still_processing',
+      });
+      expect(one(video, caps(SUPPORTED, SUPPORTED), 'OPENAI', false).sendNative).toBe(false);
+    });
+
+    const processed = file({
+      id: 'v',
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      extractedText: 'Video "clip.mp4" — length 00:42.\n[00:00–00:05] hello',
+      media: { durationMs: 42_000, width: 640, height: 360, hasAudio: true, failureReason: null },
+    });
+
+    it('is VIDEO_FRAMES_AND_TRANSCRIPT once the timestamped document exists', () => {
+      expect(one(processed, caps(UNSUPPORTED, UNSUPPORTED), 'DEEPSEEK', false)).toMatchObject({
+        mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+        sendNative: false,
+      });
+      expect(one(processed, caps(SUPPORTED, UNSUPPORTED), 'GEMINI', true).mode).toBe(
+        FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+      );
+    });
+
+    it('keeps a native lane native when the video is processed and inside the limits', () => {
+      expect(one(processed, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID)).toMatchObject({
         mode: FileDeliveryMode.NATIVE_VIDEO,
         sendNative: true,
       });
       // Catalog down: the Gemini transport keeps its pre-ADR-120 behaviour.
-      expect(one(video, caps(UNKNOWN, UNKNOWN), 'GEMINI', true).mode).toBe(
+      expect(one(processed, caps(UNKNOWN, UNKNOWN), 'GEMINI', true, PAID).mode).toBe(
         FileDeliveryMode.NATIVE_VIDEO,
       );
     });
 
-    it('is OMITTED_UNSUPPORTED for a model or transport that cannot take it', () => {
-      expect(one(video, caps(SUPPORTED, UNSUPPORTED), 'GEMINI', true)).toMatchObject({
+    // The plan gate on native video (ADR-122): measured duration AND the
+    // uploader's maxVideoSeconds, read for this turn; fails closed.
+    describe('plan gate on native delivery', () => {
+      const clipOf = (durationMs: number): FileContentResponse =>
+        file({
+          ...processed,
+          media: { durationMs, width: 640, height: 360, hasAudio: true, failureReason: null },
+        });
+      const FREE: VideoPlanGate = { available: true, limitSeconds: 60 };
+
+      it('never sends a 61 s video natively on a 60 s free plan', () => {
+        expect(one(clipOf(61_000), caps(SUPPORTED, SUPPORTED), 'GEMINI', true, FREE)).toMatchObject(
+          { mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT, sendNative: false },
+        );
+        // 60.4 s is refused too, like file-service's own comparison.
+        expect(one(clipOf(60_400), caps(SUPPORTED, SUPPORTED), 'GEMINI', true, FREE).mode).toBe(
+          FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+        );
+      });
+
+      it('sends a 59 s video natively on a video-capable lane', () => {
+        expect(one(clipOf(59_000), caps(SUPPORTED, SUPPORTED), 'GEMINI', true, FREE)).toMatchObject(
+          { mode: FileDeliveryMode.NATIVE_VIDEO, sendNative: true },
+        );
+      });
+
+      it('fails closed when entitlements are down: no bytes, the transcript path', () => {
+        expect(
+          one(clipOf(10_000), caps(SUPPORTED, SUPPORTED), 'GEMINI', true, {
+            available: false,
+            limitSeconds: null,
+          }),
+        ).toMatchObject({ mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT, sendNative: false });
+        // No plan answer supplied at all is the same.
+        expect(one(clipOf(10_000), caps(SUPPORTED, SUPPORTED), 'GEMINI', true).mode).toBe(
+          FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+        );
+      });
+
+      it('honours null = unlimited and 0 = disabled', () => {
+        expect(
+          one(clipOf(30 * 60_000), caps(SUPPORTED, SUPPORTED), 'GEMINI', true, {
+            available: true,
+            limitSeconds: null,
+          }).mode,
+        ).toBe(FileDeliveryMode.NATIVE_VIDEO);
+        expect(
+          one(clipOf(1_000), caps(SUPPORTED, SUPPORTED), 'GEMINI', true, {
+            available: true,
+            limitSeconds: 0,
+          }).mode,
+        ).toBe(FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT);
+      });
+
+      it('never sends a video with no measured duration natively', () => {
+        const unmeasured = file({ ...processed, media: undefined });
+        expect(one(unmeasured, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID).sendNative).toBe(
+          false,
+        );
+      });
+    });
+
+    it('falls back to frames + transcript past the native (provider) duration limit', () => {
+      const long = file({
+        ...processed,
+        media: {
+          durationMs: 2 * 60 * 60_000,
+          width: 640,
+          height: 360,
+          hasAudio: true,
+          failureReason: null,
+        },
+      });
+      expect(one(long, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, UNLIMITED).mode).toBe(
+        FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+      );
+    });
+
+    it.each(['VIDEO_TOO_LONG_FOR_PLAN', 'VIDEO_DISABLED_FOR_PLAN'] as const)(
+      'refuses native delivery too when the plan refused the video (%s)',
+      (failureReason) => {
+        const refused = file({
+          id: 'v',
+          mimeType: 'video/mp4',
+          extractedText: '[Video file: clip.mp4]',
+          ingestionStatus: 'FAILED',
+          extractionError: 'your plan processes videos up to 60 seconds',
+          media: {
+            durationMs: 90_000,
+            width: null,
+            height: null,
+            hasAudio: null,
+            failureReason: VideoProcessingFailureReason[failureReason],
+          },
+        });
+        expect(one(refused, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID)).toMatchObject({
+          mode: FileDeliveryMode.FAILED_PROCESSING,
+          sendNative: false,
+          reason: 'file_delivery.reason.video_plan_limit',
+        });
+      },
+    );
+
+    it('is FAILED_PROCESSING with the generic reason for any other failure', () => {
+      const broken = file({
+        id: 'v',
+        mimeType: 'video/mp4',
+        extractedText: '[Video file: clip.mp4]',
+        ingestionStatus: 'FAILED',
+        extractionError: 'The video could not be read.',
+      });
+      expect(one(broken, caps(UNSUPPORTED, UNSUPPORTED), 'OPENAI', false)).toMatchObject({
+        mode: FileDeliveryMode.FAILED_PROCESSING,
+        reason: 'file_delivery.reason.failed_processing',
+      });
+    });
+
+    it('is OMITTED_UNSUPPORTED only for a row with no text and no status at all', () => {
+      const legacy = file({
+        id: 'v',
+        mimeType: 'video/mp4',
+        extractedText: null,
+        ingestionStatus: undefined,
+      });
+      expect(one(legacy, caps(UNSUPPORTED, UNSUPPORTED), 'OPENAI', false)).toMatchObject({
         mode: FileDeliveryMode.OMITTED_UNSUPPORTED,
-        sendNative: false,
         reason: 'file_delivery.reason.no_video_input',
       });
-      expect(one(video, caps(SUPPORTED, SUPPORTED), 'OPENAI', false).sendNative).toBe(false);
     });
   });
 
@@ -185,7 +353,7 @@ describe('resolveAttachmentDelivery', () => {
         file({ id: 'doc' }),
         image(),
         file({ id: 'a', mimeType: 'audio/mpeg', extractedText: 'hi' }),
-        file({ id: 'v', mimeType: 'video/mp4' }),
+        file({ id: 'v', mimeType: 'video/mp4', extractedText: '[Video file: v.mp4]' }),
         file({ id: 'font', mimeType: 'font/woff2' }),
       ],
       caps(UNSUPPORTED, UNSUPPORTED),
@@ -196,7 +364,7 @@ describe('resolveAttachmentDelivery', () => {
       ['doc', FileDeliveryMode.EXTRACTED_TEXT],
       ['img', FileDeliveryMode.OMITTED_NO_VISION],
       ['a', FileDeliveryMode.TRANSCRIPT],
-      ['v', FileDeliveryMode.OMITTED_UNSUPPORTED],
+      ['v', FileDeliveryMode.STILL_PROCESSING],
       ['font', FileDeliveryMode.OMITTED_UNSUPPORTED],
     ]);
     expect(decisions.every((decision) => !decision.sendNative)).toBe(true);
@@ -204,7 +372,8 @@ describe('resolveAttachmentDelivery', () => {
       [FileDeliveryMode.EXTRACTED_TEXT]: 1,
       [FileDeliveryMode.OMITTED_NO_VISION]: 1,
       [FileDeliveryMode.TRANSCRIPT]: 1,
-      [FileDeliveryMode.OMITTED_UNSUPPORTED]: 2,
+      [FileDeliveryMode.STILL_PROCESSING]: 1,
+      [FileDeliveryMode.OMITTED_UNSUPPORTED]: 1,
     });
   });
 });
@@ -224,6 +393,38 @@ describe('isSentNatively / nativeImageContents', () => {
 
     expect(isSentNatively(context, img, false)).toBe(false);
     expect(nativeImageContents(context)).toEqual([]);
+  });
+
+  it("adds a seeing lane's native video frames to the images a local runtime receives", () => {
+    const img = image();
+    const context = {
+      fileContents: [img],
+      attachmentDelivery: {
+        provider: 'local-ollama',
+        model: 'llava:7b',
+        decisions: [],
+        videoFrames: [
+          {
+            fileId: 'v',
+            filename: 'clip.mp4',
+            timestampsMs: [1_000],
+            frameDelivery: VideoFrameDelivery.NATIVE_IMAGES,
+            frames: [{ timestampMs: 1_000, mimeType: 'image/jpeg', base64: 'RlJBTUU=' }],
+            observations: [],
+          },
+          {
+            fileId: 'w',
+            filename: 'other.mp4',
+            timestampsMs: [],
+            frameDelivery: VideoFrameDelivery.NONE,
+            frames: [],
+            observations: [],
+          },
+        ],
+      },
+    };
+
+    expect(nativeImageContents(context)).toEqual([img.content, 'RlJBTUU=']);
   });
 
   it('keeps the pre-ADR-120 behaviour with no plan: every image is sent', () => {

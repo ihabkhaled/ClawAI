@@ -1,6 +1,7 @@
 import { VIDEO_MIME_PREFIX } from '../../../common/constants/execution.constants';
 import { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
 import { MediaCapabilityState } from '../../../common/enums/media-capability-state.enum';
+import { VideoFrameDelivery } from '../../../common/enums/video-frame-delivery.enum';
 import {
   BASE64_DECODED_BYTES_PER_CHAR,
   DELIVERY_REASON_FAILED_PROCESSING,
@@ -10,7 +11,9 @@ import {
   DELIVERY_REASON_STILL_PROCESSING,
   DELIVERY_REASON_TRUNCATED,
   DELIVERY_REASON_UNSUPPORTED_MIME,
+  DELIVERY_REASON_VIDEO_PLAN_LIMIT,
 } from '../constants/attachment-delivery.constants';
+import { NATIVE_VIDEO_MAX_DURATION_MS } from '../constants/video-delivery.constants';
 import { TEXT_BUDGET_SHORTENED_MARKER } from '../constants/evidence-fit.constants';
 import { MAX_FILE_CONTENT_LENGTH } from '../constants/file-content.constants';
 import {
@@ -25,20 +28,30 @@ import {
   IMAGE_FILE_PLACEHOLDER_PREFIX,
 } from '../constants/media-placeholder.constants';
 import { AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX } from '../constants/voice-note.constants';
+import { SECOND_MS } from '../constants/video-timestamp.constants';
 import type {
   AttachmentDeliveryDecision,
   AttachmentDeliveryOptions,
+  VideoPlanGate,
 } from '../types/attachment-delivery.types';
 import type { AssembledContext, FileContentResponse } from '../types/context.types';
 import type { FileDeliveryEntry } from '../types/file-delivery.types';
 import type { ModelMediaCapabilities } from '../types/model-capability.types';
+import type { VideoFrameImage } from '../types/video-delivery.types';
+import {
+  hasVideoDocument,
+  isVideoPlanRefusal,
+  videoInFlight,
+  videoProcessingFailed,
+} from './video-context.utility';
 
 /**
  * How each attachment reaches ONE lane — the single classifier behind both the
  * provider payload and the `FileDeliveryMode` record (ADR-120).
  *
  *   audio → TRANSCRIPT / STILL_PROCESSING / FAILED_PROCESSING (never bytes)
- *   video → NATIVE_VIDEO when the lane really sends it, else OMITTED_UNSUPPORTED
+ *   video → NATIVE_VIDEO when the lane really sends it, else
+ *           VIDEO_FRAMES_AND_TRANSCRIPT / STILL_PROCESSING / FAILED_PROCESSING
  *   image → NATIVE_IMAGE when the model can see, else OMITTED_NO_VISION (no
  *           bytes; the OCR text and an honest note instead). Batch 5's helper
  *           vision upgrades exactly this OMITTED_NO_VISION decision.
@@ -115,24 +128,85 @@ function resolveAudioMode(file: FileContentResponse): FileDeliveryMode {
   return failed ? FileDeliveryMode.FAILED_PROCESSING : FileDeliveryMode.STILL_PROCESSING;
 }
 
+/**
+ * Video, per lane (multimodal batch 8):
+ *
+ *   1. NATIVE_VIDEO — the lane's transport carries video bytes, the model
+ *      accepts video (or the catalog cannot say), the bytes are here, AND
+ *      file-service has finished with the video: its duration is MEASURED
+ *      (`media.durationMs`), inside the provider limit and inside the
+ *      uploader's plan `maxVideoSeconds` as read for this turn (null
+ *      unlimited, 0 disabled). A video still processing, one with no measured
+ *      duration, or a turn whose plan could not be read never rides natively —
+ *      a plan limit is never bypassed by picking a model that watches video
+ *      (ADR-122; fails closed).
+ *   2. VIDEO_FRAMES_AND_TRANSCRIPT — file-service's timestamped document
+ *      exists; `VideoDeliveryManager` adds sampled frames for the lane.
+ *   3. FAILED_PROCESSING — processing ended with a reason (plan limits named).
+ *   4. STILL_PROCESSING — the document has not landed yet.
+ *   5. OMITTED_UNSUPPORTED — only a row with no text and no status at all
+ *      (predates the batch-7 pipeline); the lane is told nothing could be read.
+ */
 function resolveVideo(
   file: FileContentResponse,
   capabilities: ModelMediaCapabilities,
   options: AttachmentDeliveryOptions,
 ): AttachmentDeliveryDecision {
+  const planRefused = isVideoPlanRefusal(file.media);
   const native =
     options.nativeVideoTransport &&
     capabilities.videoInput !== MediaCapabilityState.UNSUPPORTED &&
-    hasBytes(file);
-  return native
-    ? decide(file, options, FileDeliveryMode.NATIVE_VIDEO, true)
-    : decide(
-        file,
-        options,
-        FileDeliveryMode.OMITTED_UNSUPPORTED,
-        false,
-        DELIVERY_REASON_NO_VIDEO_INPUT,
-      );
+    hasBytes(file) &&
+    !planRefused &&
+    nativeVideoAllowed(file, options.videoPlan);
+  if (native) {
+    return decide(file, options, FileDeliveryMode.NATIVE_VIDEO, true);
+  }
+  if (hasVideoDocument(file)) {
+    return decide(file, options, FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT, false);
+  }
+  if (videoProcessingFailed(file)) {
+    return decide(
+      file,
+      options,
+      FileDeliveryMode.FAILED_PROCESSING,
+      false,
+      planRefused ? DELIVERY_REASON_VIDEO_PLAN_LIMIT : DELIVERY_REASON_FAILED_PROCESSING,
+    );
+  }
+  if (videoInFlight(file)) {
+    return decide(file, options, FileDeliveryMode.STILL_PROCESSING, false);
+  }
+  // A row with no text and no status (predates batch 7): nothing of it can be
+  // read, and the lane is told so.
+  return decide(
+    file,
+    options,
+    FileDeliveryMode.OMITTED_UNSUPPORTED,
+    false,
+    DELIVERY_REASON_NO_VIDEO_INPUT,
+  );
+}
+
+/**
+ * The duration half of the native gate: measured (file-service finished its
+ * probe), inside the provider limit, and inside a plan limit that was
+ * actually read. Same comparison file-service uses (`durationMs > limit ×
+ * 1000` is refused), so 60.4 s on a 60 s plan is not native.
+ */
+export function nativeVideoAllowed(
+  file: FileContentResponse,
+  plan: VideoPlanGate | undefined,
+): boolean {
+  const durationMs = file.media?.durationMs ?? null;
+  if (durationMs === null || durationMs <= 0 || plan?.available !== true) {
+    return false;
+  }
+  if (durationMs > NATIVE_VIDEO_MAX_DURATION_MS || videoInFlight(file)) {
+    return false;
+  }
+  const limit = plan.limitSeconds;
+  return limit === null || (limit > 0 && durationMs <= limit * SECOND_MS);
 }
 
 function resolveImage(
@@ -268,7 +342,7 @@ export function isSentNatively(
 export function nativeImageContents(
   context: Pick<AssembledContext, 'attachmentDelivery' | 'fileContents'>,
 ): string[] {
-  return context.fileContents
+  const images = context.fileContents
     .filter(
       (file) =>
         (file.mimeType ?? '').toLowerCase().startsWith(IMAGE_MIME_PREFIX) &&
@@ -276,4 +350,21 @@ export function nativeImageContents(
     )
     .map((file) => file.content)
     .filter((content): content is string => content !== null && content.length > 0);
+  return [...images, ...nativeVideoFrames(context).map((entry) => entry.frame.base64)];
+}
+
+/**
+ * Every sampled video frame this lane receives as an image (a seeing lane on
+ * the VIDEO_FRAMES_AND_TRANSCRIPT strategy), in attachment then time order,
+ * with the video it came from — so each image can be labelled with its
+ * timestamp. Empty for a blind lane: it gets the helper's observations.
+ */
+export function nativeVideoFrames(
+  context: Pick<AssembledContext, 'attachmentDelivery'>,
+): Array<{ filename: string; frame: VideoFrameImage }> {
+  return (context.attachmentDelivery?.videoFrames ?? []).flatMap((set) =>
+    set.frameDelivery === VideoFrameDelivery.NATIVE_IMAGES
+      ? set.frames.map((frame) => ({ filename: set.filename, frame }))
+      : [],
+  );
 }

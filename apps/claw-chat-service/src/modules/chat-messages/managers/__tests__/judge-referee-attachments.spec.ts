@@ -331,4 +331,56 @@ describe('JudgeRefereeManager — attachments injection', () => {
     expect(judgeMsg).toContain('1 OMITTED_NO_VISION');
     expect(judgeMsg).not.toContain('NATIVE_IMAGE');
   });
+
+  // Multimodal batch 8, item 6: when the lane answered from a video's frames +
+  // transcript, the judge's rebuilt context carries the SAME video document —
+  // so the chokepoint resolves it again for the judge's own model (frames
+  // shared per turn) — and the judge is told how the lane received it.
+  it('rebuilds the judge context with the same video document the lane used', async () => {
+    callProviderMock.mockResolvedValueOnce(judgeAcceptResponse);
+    const video = buildFile({
+      id: 'vid-1',
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      content: null,
+      extractedText: ['Video "clip.mp4" — length 00:42.', '[00:18–00:24] Meet Ada Lovelace.'].join(
+        '\n',
+      ),
+      ingestionStatus: 'COMPLETED',
+      media: { durationMs: 42_000, width: 640, height: 360, hasAudio: true, failureReason: null },
+    });
+
+    await manager.evaluate(
+      buildResponse({
+        provider: 'DEEPSEEK',
+        model: 'deepseek-chat',
+        fileDelivery: [
+          {
+            fileId: 'vid-1',
+            filename: 'clip.mp4',
+            mimeType: 'video/mp4',
+            provider: 'DEEPSEEK',
+            model: 'deepseek-chat',
+            mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+          },
+        ],
+      }),
+      { ...buildContext([video]), turnId: 'turn-1' },
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+      },
+      buildPayload(),
+    );
+
+    const judgeCtx = callProviderMock.mock.calls[0]?.[2] as AssembledContext;
+    const judgeMsg = judgeCtx.threadMessages.at(-1)?.content ?? '';
+    expect(judgeCtx.fileContents).toEqual([video]);
+    expect(judgeCtx.turnId).toBe('turn-1');
+    expect(judgeMsg).toContain('mimeType: video/mp4');
+    expect(judgeMsg).toContain('Meet Ada Lovelace');
+    expect(judgeMsg).toContain('1 VIDEO_FRAMES_AND_TRANSCRIPT');
+  });
 });

@@ -407,7 +407,10 @@ describe('ChatExecutionManager', () => {
     expect(completionRequest.messages[0]?.content).toContain('Respond briefly in 2-4 sentences');
   });
 
-  it('routes an AUTO video attachment to Gemini and sends native video data', async () => {
+  // Multimodal batch 8 (changed on purpose): chat no longer overrides AUTO's
+  // pick with a hardcoded Gemini model — routing-service ranks video-capable
+  // models first. When AUTO lands on one, the bytes ride natively.
+  it('sends native video data when AUTO routed the video to a video-capable Gemini model', async () => {
     const videoPrompt =
       'Provide a comprehensive frame-by-frame analysis of this video and identify important events.';
     const context = makeContext(videoPrompt);
@@ -472,8 +475,8 @@ describe('ChatExecutionManager', () => {
       {
         messageId: 'msg-video',
         threadId: 'thread-1',
-        selectedProvider: 'local-ollama',
-        selectedModel: 'qwen3:1.7b',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
         routingMode: 'AUTO',
         fallbackChain: [{ provider: 'OPENAI', model: 'gpt-4o' }],
         timestamp: new Date().toISOString(),
@@ -587,35 +590,66 @@ describe('ChatExecutionManager', () => {
     expect(releaseCancellation).toHaveBeenCalledWith('thread-cancel');
   });
 
-  it('rejects a manually selected non-video provider before making a request', async () => {
+  // Multimodal batch 8 (changed on purpose): this used to throw
+  // VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED before any request. The user's model
+  // now answers from the video's transcript + frames; the bytes never ride.
+  it('answers with a manually selected non-video provider, never sending the video bytes', async () => {
     const context = makeContext('Describe this video.');
+    const videoBase64 = Buffer.from('video').toString('base64');
     context.fileContents = [
       {
         id: 'video-1',
         filename: 'demo.mp4',
         mimeType: 'video/mp4',
-        content: Buffer.from('video').toString('base64'),
+        content: videoBase64,
       },
     ];
-
-    await expect(
-      manager.execute(
-        {
-          messageId: 'msg-video',
-          threadId: 'thread-1',
-          selectedProvider: 'OPENAI',
-          selectedModel: 'gpt-4o',
-          routingMode: 'MANUAL_MODEL',
-          timestamp: new Date().toISOString(),
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider: 'OPENAI', apiKey: 'test-key', baseUrl: 'https://api.openai.com/v1' },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          id: 'chatcmpl-1',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'From the transcript: a demo.' },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 },
         },
-        context,
-      ),
-    ).rejects.toThrow('OPENAI/gpt-4o cannot process video attachments');
-    expect(httpRequest).not.toHaveBeenCalled();
+      });
+
+    const result = await manager.execute(
+      {
+        messageId: 'msg-video',
+        threadId: 'thread-1',
+        selectedProvider: 'OPENAI',
+        selectedModel: 'gpt-4o',
+        routingMode: 'MANUAL_MODEL',
+        timestamp: new Date().toISOString(),
+      },
+      context,
+    );
+
+    expect(result.provider).toBe('OPENAI');
+    expect(result.model).toBe('gpt-4o');
+    expect(JSON.stringify(httpRequest.mock.calls)).not.toContain(
+      `data:video/mp4;base64,${videoBase64}`,
+    );
   });
 
+  // Multimodal batch 8 (changed on purpose): this used to throw
+  // VIDEO_ATTACHMENT_LOCAL_MODEL_UNAVAILABLE. The local model answers; the
+  // cloud Gemini fallback is never tried for a local-only turn.
   it.each(['LOCAL_ONLY', 'PRIVACY_FIRST'])(
-    'rejects video in %s mode instead of falling back to a cloud provider',
+    'answers a video in %s mode on the local model, never on a cloud provider',
     async (routingMode) => {
       const context = makeContext('Describe this video.');
       context.fileContents = [
@@ -626,22 +660,33 @@ describe('ChatExecutionManager', () => {
           content: Buffer.from('video').toString('base64'),
         },
       ];
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          model: 'qwen3:1.7b',
+          response: 'local answer from the transcript',
+          done: true,
+          promptEvalCount: 9,
+          evalCount: 6,
+        },
+      });
 
-      await expect(
-        manager.execute(
-          {
-            messageId: 'msg-video',
-            threadId: 'thread-1',
-            selectedProvider: 'local-ollama',
-            selectedModel: 'qwen3:1.7b',
-            routingMode,
-            fallbackChain: [{ provider: 'GEMINI', model: 'gemini-2.5-flash' }],
-            timestamp: new Date().toISOString(),
-          },
-          context,
-        ),
-      ).rejects.toThrow(`Video attachments cannot be processed in ${routingMode} mode`);
-      expect(httpRequest).not.toHaveBeenCalled();
+      const result = await manager.execute(
+        {
+          messageId: 'msg-video',
+          threadId: 'thread-1',
+          selectedProvider: 'local-ollama',
+          selectedModel: 'qwen3:1.7b',
+          routingMode,
+          fallbackChain: [{ provider: 'GEMINI', model: 'gemini-2.5-flash' }],
+          timestamp: new Date().toISOString(),
+        },
+        context,
+      );
+
+      expect(result.provider).toBe('local-ollama');
+      expect(JSON.stringify(httpRequest.mock.calls)).not.toContain('generativelanguage');
     },
   );
 

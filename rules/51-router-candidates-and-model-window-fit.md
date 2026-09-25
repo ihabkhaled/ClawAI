@@ -63,3 +63,20 @@ model was sent a 16.7k-token prompt.
     xlsx, xls, pptx, csv) count as a bare leading word. One token cannot be
     both the format and the verb ("zip codes"). Add a "stays in chat" case to
     `file-intent.utility.spec.ts` with every new word.
+
+## Added 2026-09-25 (multimodal batch 8, ADR-120 addendum)
+
+13. **AUTO ranks by modality fit; a transformable text-only model stays
+    eligible.** chat-service sends the attachments' real mime types,
+    `requiredModalities` and `transformableModalities` on `message.created`
+    (never `attachmentMimeTypes: []` for a turn that has attachments). The
+    cloud router's candidates are filtered by exposure, health and plan FIRST
+    (items 1, 3 unchanged), then ordered DIRECT → TRANSFORMED; a DEGRADED model
+    (misses an input chat cannot transform for this user) is offered only when
+    nothing else survived, so AUTO never goes dark. No attachments → identical
+    order. The decision carries `modalityFit:<fit>`; `routerModel` provenance
+    (item 6) is untouched. A new modality gets a `RequiredModality` value, a
+    `modalityFitOf` branch and a case in `modality-fit.utility.spec.ts`. Chat
+    never overrides AUTO's pick for media any more — the ranking lives here.
+    Video frames and frame descriptions are prompt sources under item 4: they
+    spend the file share, framing reserved, native frames capped per window.

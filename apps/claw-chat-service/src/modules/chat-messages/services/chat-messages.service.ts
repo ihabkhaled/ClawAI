@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { resolveImageCapabilityProvider } from '../utilities/image-generation-target.utility';
@@ -10,8 +10,20 @@ import {
   type RouterTraceEvent,
   TokenLedgerContext,
 } from '@claw/shared-types';
-import { allowedModelKeys, type PlanFeature, resolvePlanLimit } from '@claw/shared-entitlements';
+import {
+  allowedModelKeys,
+  hasPlanFeature,
+  type PlanFeature,
+  resolvePlanLimit,
+} from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
+import { AttachmentInfoClient } from '../clients/attachment-info.client';
+import { IMAGE_MIME_PREFIX } from '../constants/file-delivery.constants';
+import type { AttachmentModalityFields } from '../types/attachment-modality.types';
+import {
+  attachmentModalityFields,
+  buildAttachmentDigest,
+} from '../utilities/attachment-modality.utility';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { NarrationKind } from '../../../common/enums/narration-kind.enum';
 import { NarrationService } from './narration.service';
@@ -102,7 +114,10 @@ import { THREAD_TITLE_SCAN_LIMIT } from '../../chat-threads/constants/thread-tit
 import { deriveThreadTitle } from '../../chat-threads/utilities/derive-thread-title.utility';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
-import { PLAN_FEATURE_REFUSAL_METADATA_TYPE } from '../constants/plan-feature-refusal.constants';
+import {
+  HELPER_VISION_PLAN_FEATURE,
+  PLAN_FEATURE_REFUSAL_METADATA_TYPE,
+} from '../constants/plan-feature-refusal.constants';
 import {
   MESSAGE_EDIT_UNCHANGED_CODE,
   MESSAGE_EDIT_UNCHANGED_MESSAGE_KEY,
@@ -144,6 +159,9 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly runtimeV2LoopManager: RuntimeV2LoopManager,
     private readonly researchOrchestrator: ResearchOrchestratorManager,
     private readonly narration: NarrationService,
+    // Optional so hand-built specs keep their shape. Without it a turn is
+    // routed with no attachment signal — exactly the pre-batch-8 behaviour.
+    @Optional() private readonly attachmentInfo?: AttachmentInfoClient,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -218,6 +236,13 @@ export class ChatMessagesService implements OnModuleInit {
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
     this.logMessageCreated(userId, dto.threadId, message.id);
+    // What the attachments need a model to read, so AUTO ranks by modality
+    // fit (multimodal batch 8). Bounded; no attachments → no fields.
+    const modality = await this.resolveAttachmentModality(userId, dto.fileIds, async () =>
+      Promise.resolve(
+        entitlements === null ? false : hasPlanFeature(entitlements, HELPER_VISION_PLAN_FEATURE),
+      ),
+    );
     const publish = (): void =>
       this.publishMessageCreated(
         message,
@@ -227,6 +252,7 @@ export class ChatMessagesService implements OnModuleInit {
         forcedModel,
         allowedModels,
         modelAccessMode,
+        modality,
       );
 
     if (dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE) {
@@ -366,6 +392,7 @@ export class ChatMessagesService implements OnModuleInit {
       providerId: dto.researchProviderId,
       forcedProvider,
       forcedModel,
+      fileIds: dto.fileIds,
     });
   }
 
@@ -385,11 +412,19 @@ export class ChatMessagesService implements OnModuleInit {
     userToken: string,
     threadId: string,
     intent: string,
-    options: { providerId?: string; forcedProvider?: string; forcedModel?: string },
+    options: {
+      providerId?: string;
+      forcedProvider?: string;
+      forcedModel?: string;
+      fileIds?: readonly string[];
+    },
   ): Promise<ResearchRunResponse | null> {
     if (!(await this.accessControlService.hasResearchAccess(userId))) {
       return null;
     }
+    // "Listen to this clip and research the person mentioned": the planner
+    // sees a SHORT digest of the attachments' derived text (multimodal batch 8).
+    const attachmentDigest = await this.attachmentDigest(userId, options.fileIds);
     const run = await this.researchOrchestrator.run({
       userId,
       userToken,
@@ -398,6 +433,7 @@ export class ChatMessagesService implements OnModuleInit {
       providerId: options.providerId,
       forcedProvider: options.forcedProvider,
       forcedModel: options.forcedModel,
+      ...(attachmentDigest.length > 0 ? { attachmentDigest } : {}),
     });
     if (run !== null) {
       const bundle = this.extractResearchBundle(run);
@@ -421,6 +457,7 @@ export class ChatMessagesService implements OnModuleInit {
       providerId?: string;
       forcedProvider?: string;
       forcedModel?: string;
+      fileIds?: readonly string[];
     },
   ): Promise<ResearchRunResponse | null> {
     if (options.mode === undefined || options.mode === ResearchMode.NONE) {
@@ -942,6 +979,7 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.log(
       `regenerateMessage: publishing message.created for ${target.id} (requested via ${id}) mode=${regenRoutingMode}`,
     );
+    const modality = await this.resolveRerunAttachmentModality(userId, target);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: target.id,
       threadId: target.threadId,
@@ -954,6 +992,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider: regenProvider,
       forcedModel: regenModel,
       regenerate: true,
+      ...modality,
       timestamp: new Date().toISOString(),
     });
 
@@ -1082,6 +1121,7 @@ export class ChatMessagesService implements OnModuleInit {
 
     const forcedProvider = thread.preferredProvider ?? undefined;
     const forcedModel = thread.preferredModel ?? undefined;
+    const modality = await this.resolveRerunAttachmentModality(userId, message);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
       threadId: message.threadId,
@@ -1093,6 +1133,7 @@ export class ChatMessagesService implements OnModuleInit {
       // The same flag regeneration uses: routing must not bill this as a new
       // turn against the daily message ceiling, because it is the same turn.
       regenerate: true,
+      ...modality,
       timestamp: new Date().toISOString(),
     });
   }
@@ -2350,6 +2391,7 @@ export class ChatMessagesService implements OnModuleInit {
     forcedModel: string | undefined,
     allowedModels: string[],
     modelAccessMode: string | undefined,
+    modality: AttachmentModalityFields,
   ): void {
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -2364,8 +2406,54 @@ export class ChatMessagesService implements OnModuleInit {
       // other plan an empty list grants nothing, so the mode has to travel too.
       allowedModels,
       modelAccessMode,
+      ...modality,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  /**
+   * The attachment half of `message.created` (multimodal batch 8): real mime
+   * types, the inputs they need, and which of those chat-service can turn into
+   * text. Never throws and never blocks longer than one bounded lookup; an
+   * unreadable attachment is left out.
+   */
+  private async resolveAttachmentModality(
+    userId: string,
+    fileIds: readonly string[] | undefined,
+    helperVisionOnPlan: () => Promise<boolean>,
+  ): Promise<AttachmentModalityFields> {
+    if (this.attachmentInfo === undefined || fileIds === undefined || fileIds.length === 0) {
+      return {};
+    }
+    const mimeTypes = await this.attachmentInfo.mimeTypes(fileIds, userId);
+    // Only an attached image makes the plan matter; an outage reads as "no".
+    const needsPlan = mimeTypes.some((mime) => mime.toLowerCase().startsWith(IMAGE_MIME_PREFIX));
+    const onPlan = needsPlan ? await helperVisionOnPlan().catch(() => false) : false;
+    return attachmentModalityFields(mimeTypes, onPlan);
+  }
+
+  /** The same fields for a re-run turn, whose plan was not resolved on this path. */
+  private async resolveRerunAttachmentModality(
+    userId: string,
+    message: ChatMessage,
+  ): Promise<AttachmentModalityFields> {
+    // No attachments → resolveAttachmentModality returns {} without a lookup.
+    return this.resolveAttachmentModality(
+      userId,
+      this.extractFileIdsFromMessages([message]),
+      async () => this.accessControlService.hasPlanFeatureFor(userId, HELPER_VISION_PLAN_FEATURE),
+    );
+  }
+
+  /** A short digest of the attachments' derived text for the research planner. */
+  private async attachmentDigest(
+    userId: string,
+    fileIds: readonly string[] | undefined,
+  ): Promise<string> {
+    const info = this.attachmentInfo;
+    return info === undefined || fileIds === undefined || fileIds.length === 0
+      ? ''
+      : buildAttachmentDigest(await info.textOnly(fileIds, userId));
   }
 
   private validateOwnership(thread: ChatThread, userId: string): void {

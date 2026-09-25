@@ -153,10 +153,16 @@ describe('buildFileDeliveryEntries', () => {
       ).toBe(FileDeliveryMode.STILL_PROCESSING);
     });
 
-    it('records video as NATIVE_VIDEO only on the Gemini transport', () => {
-      expect(modeOf(file({ mimeType: 'video/mp4' }), 'GEMINI')).toBe(FileDeliveryMode.NATIVE_VIDEO);
+    // Multimodal batch 8: a processed video on a lane that does not take it
+    // natively gets its timestamped document + frames, not "dropped". This
+    // record-only path knows no plan, so it never claims NATIVE_VIDEO — the
+    // native gate fails closed without a plan answer (ADR-122).
+    it('records a processed video as frames + transcript when no plan answer is held', () => {
+      expect(modeOf(file({ mimeType: 'video/mp4' }), 'GEMINI')).toBe(
+        FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+      );
       expect(modeOf(file({ mimeType: 'video/mp4' }), 'OPENAI')).toBe(
-        FileDeliveryMode.OMITTED_UNSUPPORTED,
+        FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
       );
     });
   });

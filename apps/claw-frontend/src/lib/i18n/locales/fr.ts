@@ -1990,6 +1990,8 @@ export const fr: TranslationDictionary = {
       transcript: 'Transcription',
       nativeVideo: 'Vidéo',
       derivedImageText: 'Décrite par un assistant',
+      videoFramesAndTranscript: 'Vidéo : images + transcription',
+      videoFramesAt: 'images à {times}',
       stillProcessing: 'Traitement en cours',
       failedProcessing: 'Échec du traitement',
       tooltip: 'Résumé de livraison par modèle',

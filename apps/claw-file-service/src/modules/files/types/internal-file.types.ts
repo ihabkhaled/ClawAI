@@ -1,3 +1,4 @@
+import { type VideoProcessingFailureReason } from '@claw/shared-types';
 import { type FileIngestionStatus } from '../../../generated/prisma';
 
 export type CreateInternalFileBody = {
@@ -30,6 +31,28 @@ export type InternalFileContentResponse = {
   extractedText: string | null;
   ingestionStatus: FileIngestionStatus;
   extractionError: string | null;
+  /**
+   * Multimodal batch 8 — a processed video's probe facts, so chat-service can
+   * sample frames inside the real duration and label the timestamped block.
+   * Present only for a video whose job wrote `extractionMetadata.media`; the
+   * key is absent for every other file, so the contract for text and images
+   * is unchanged.
+   */
+  media?: InternalFileMediaSummary;
+};
+
+/** The slice of `extractionMetadata.media` another service may read. Never the thumbnail. */
+export type InternalFileMediaSummary = {
+  durationMs: number | null;
+  width: number | null;
+  height: number | null;
+  hasAudio: boolean | null;
+  failureReason: VideoProcessingFailureReason | null;
+};
+
+/** `getFileContent` options. `includeContent: false` leaves the base64 bytes out. */
+export type FileContentOptions = {
+  includeContent: boolean;
 };
 
 /**

@@ -14,6 +14,8 @@ import type {
   FileDeliveryTranslator,
 } from '@/types';
 
+import { formatMediaClock } from './format-duration.utility';
+
 // Type guard over the single FILE_DELIVERY_MODES allow-list. Both the
 // metadata reader and the file-delivery repository narrow through this, so a
 // wire value the FE does not know is dropped in one place, not two.
@@ -77,7 +79,12 @@ export function buildFileDeliveryTooltip(
       entry.helperProvider !== undefined && entry.helperModel !== undefined
         ? ` — ${entry.helperProvider}/${entry.helperModel}`
         : '';
-    return `${entry.filename} (${modeLabel})${helperSuffix}${reasonSuffix}`;
+    const frames = entry.frameTimestampsMs ?? [];
+    const framesSuffix =
+      frames.length > 0
+        ? ` — ${t('compare.delivery.videoFramesAt', { times: frames.map(formatMediaClock).join(', ') })}`
+        : '';
+    return `${entry.filename} (${modeLabel})${framesSuffix}${helperSuffix}${reasonSuffix}`;
   });
   return [header, ...lines].join('\n');
 }
@@ -114,6 +121,7 @@ export function readFileDeliveryFromMetadata(
     const reason = candidate['reason'];
     const helperProvider = candidate['helperProvider'];
     const helperModel = candidate['helperModel'];
+    const frameTimestampsMs = readTimestamps(candidate['frameTimestampsMs']);
     if (
       typeof fileId !== 'string' ||
       typeof filename !== 'string' ||
@@ -134,9 +142,19 @@ export function readFileDeliveryFromMetadata(
       ...(typeof helperProvider === 'string' && typeof helperModel === 'string'
         ? { helperProvider, helperModel }
         : {}),
+      ...(frameTimestampsMs.length > 0 ? { frameTimestampsMs } : {}),
     });
   }
   return entries.length > 0 ? entries : undefined;
+}
+
+// Non-negative integer timestamps only; anything else on the wire is dropped.
+function readTimestamps(value: unknown): number[] {
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is number => typeof item === 'number' && Number.isInteger(item) && item >= 0,
+      )
+    : [];
 }
 
 // Inline-metadata first-step of the dual-read file-delivery resolution path.

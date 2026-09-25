@@ -1981,6 +1981,8 @@ export const pt: TranslationDictionary = {
       transcript: 'Transcrição',
       nativeVideo: 'Vídeo',
       derivedImageText: 'Descrita por assistente',
+      videoFramesAndTranscript: 'Vídeo: quadros + transcrição',
+      videoFramesAt: 'quadros em {times}',
       stillProcessing: 'Ainda em processamento',
       failedProcessing: 'Falha no processamento',
       tooltip: 'Resumo de entrega por modelo',

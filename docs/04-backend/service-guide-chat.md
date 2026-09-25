@@ -743,3 +743,42 @@ conversational model; the message's `provider`/`model` are never replaced.
   keeps OCR + the honest note, reason `file_delivery.reason.helper_vision_plan`;
   no candidate lookup, no hold, no call. Asked only when an image is blind, so
   ordinary chat never pays for or fails on the check.
+
+## Video a lane cannot watch: frames + transcript (multimodal batch 8, 2026-09-25)
+
+A lane that cannot take the video bytes natively no longer gets "cannot watch
+this video". Once file-service has written the timestamped document, the lane
+receives `FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT`: a framed block
+
+```
+VIDEO: clip.mp4 (duration 01:23, 1280x720, audio: yes)
+TRANSCRIPT (timestamped):
+[00:00–00:04] …
+FRAMES: sampled at 00:05, 00:20 — attached as images …   (or: FRAME AT mm:ss + derived observations)
+Cite moments by their timestamps …
+```
+
+plus the sampled frames — `image_url` parts labelled with their time for a
+lane that can see, the VISION_HELPER role's timestamped descriptions for one
+that cannot, or the honest "frames could not be viewed; only its transcript was
+used" note. Still-processing and failed videos say so (plan limits named).
+
+- Pieces: `resolveAttachmentDelivery` (strategy, pure) → `VideoDeliveryManager`
+  (frames, after `VisionHelperManager`) → `ContextAssemblyManager`
+  (`renderVideoText`, `buildVideoFrameParts`). Frame timestamps:
+  `selectVideoFrameTimestamps` (question-biased, deterministic). Frames:
+  `VideoFramesClient` (one fetch per user/turn/video). Descriptions:
+  `VisionHelperManager.describeVideoFrames` (plan-gated, metered, VIDEO_FRAME).
+- Budget: everything textual shares the file share; native frames capped by
+  `nativeFrameCap`; framing reserved.
+- Provenance: `fileDelivery[].frameDelivery` + `frameTimestampsMs` (+ helper);
+  `helperExecutions[]` kind `VIDEO_FRAME` with `timestampMs`; `videoDelivery`
+  log line (no transcript, no frames).
+- `resolveVideoAttachmentCandidates` no longer throws
+  (`VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED` / `…_LOCAL_MODEL_UNAVAILABLE` are
+  never raised now) and no longer forces AUTO onto Gemini — routing-service
+  ranks by modality fit instead.
+- `message.created` carries `attachmentMimeTypes` / `requiredModalities` /
+  `transformableModalities`; AUTO research's planner sees a short attachment
+  digest. Details: `apps/claw-chat-service/CLAUDE.md`, rule 42 item 16, rule 51
+  item 13, ADR-120 addendum.

@@ -13,6 +13,17 @@ export function formatDuration(ms: number): string {
   return `${String(hours)}h ${String(remainingMinutes)}m`;
 }
 
+// A position inside a media file: 83_000 → `01:23`, 3_723_000 → `1:02:03`.
+// The same clock chat-service writes into a video's timestamped block.
+export function formatMediaClock(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const mmss = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  return hours > 0 ? `${String(hours)}:${mmss}` : mmss;
+}
+
 export function formatSpeed(bytesPerSec: number): string {
   if (bytesPerSec <= 0) {
     return '0 MB/s';

@@ -38,6 +38,8 @@ export type HelperExecution = {
   fileId: string;
   latencyMs: number;
   outcome: VisionHelperOutcome;
+  /** VIDEO_FRAME only: the frame's position in the video, in ms. */
+  timestampMs?: number;
 };
 
 /** The description a blind lane receives for one image. */
@@ -78,6 +80,7 @@ export type VisionHelperAttemptInput = {
   context: AssembledContext;
   imageContext: AssembledContext;
   fileId: string;
+  target: VisionHelperTarget;
   candidate: VisionHelperCandidate;
   requestId: string;
   invoke: VisionHelperInvoker;
@@ -102,4 +105,32 @@ export type VisionHelperAttemptResult = {
 export type LaneFileShareFit = {
   derivedImages: DerivedImageObservation[];
   fileContents: FileContentResponse[];
+};
+
+/**
+ * What the helper is describing: an attached image, or one sampled frame of a
+ * video (multimodal batch 8). A frame is recorded as `VIDEO_FRAME` against the
+ * VIDEO's file id, with its timestamp.
+ */
+export type VisionHelperTarget = {
+  kind: HelperExecutionKind;
+  /** The file id the execution is recorded against. */
+  fileId: string;
+  /** The (possibly synthetic) image the helper is shown. */
+  image: FileContentResponse;
+  timestampMs?: number;
+};
+
+/**
+ * Helper descriptions of a video's frames for one blind lane. `onPlan` false
+ * means the plan has no helper vision; null means entitlements could not be
+ * read; `results` is empty when no helper candidate exists.
+ */
+export type VideoFrameDescriptionBatch = {
+  onPlan: boolean | null;
+  /** At least one VISION_HELPER candidate the catalog says can see. */
+  helperAvailable: boolean;
+  /** The frames loader returned at least one frame. */
+  framesLoaded: boolean;
+  results: VisionHelperResult[];
 };

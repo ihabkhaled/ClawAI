@@ -72,13 +72,24 @@ describe('FilesInternalController', () => {
     });
     const result = await controller.getContent('f1', { userId: 'user-1' });
 
-    expect(serviceMock.getFileContent).toHaveBeenCalledWith('f1', 'user-1');
+    expect(serviceMock.getFileContent).toHaveBeenCalledWith('f1', 'user-1', {
+      includeContent: true,
+    });
     expect(filesRepoMock.findById).not.toHaveBeenCalled();
     expect(result).toEqual({
       id: 'f1',
       filename: 'a.pdf',
       mimeType: 'application/pdf',
       content: 'hello',
+    });
+  });
+
+  it('getContent leaves the bytes out when the caller asks for text only', async () => {
+    serviceMock.getFileContent.mockResolvedValue({ id: 'f1', content: null });
+    await controller.getContent('f1', { userId: 'user-1', includeContent: 'false' });
+
+    expect(serviceMock.getFileContent).toHaveBeenCalledWith('f1', 'user-1', {
+      includeContent: false,
     });
   });
 

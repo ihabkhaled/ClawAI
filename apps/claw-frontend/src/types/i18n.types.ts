@@ -1895,6 +1895,8 @@ export type TranslationDictionary = {
       transcript: string;
       nativeVideo: string;
       derivedImageText: string;
+      videoFramesAndTranscript: string;
+      videoFramesAt: string;
       stillProcessing: string;
       failedProcessing: string;
       tooltip: string;

@@ -25,13 +25,17 @@ import {
 import { AccessControlService } from '../services/access-control.service';
 import type { AssembledContext, FileContentResponse } from '../types/context.types';
 import type {
+  VideoFrameDescriptionBatch,
   VisionHelperAttemptInput,
   VisionHelperAttemptResult,
   VisionHelperCacheEntry,
   VisionHelperCandidate,
   VisionHelperInvoker,
   VisionHelperResult,
+  VisionHelperTarget,
 } from '../types/vision-helper.types';
+import type { VideoFrameImage } from '../types/video-delivery.types';
+import { videoFrameAsImageFile } from '../utilities/video-context.utility';
 import { raceDeadline } from '../utilities/deadline.utility';
 import { normalizePaygProvider } from '../utilities/payg-metering.utility';
 import {
@@ -105,9 +109,18 @@ export class VisionHelperManager {
     const described = blind.slice(0, VISION_HELPER_MAX_IMAGES_PER_TURN);
     const turnKey = context.turnId ?? randomUUID();
     const results = await Promise.all(
-      described.map(async (decision) =>
-        this.describeOnce(context, turnKey, decision.fileId, candidates, invoke),
-      ),
+      described.map(async (decision): Promise<VisionHelperResult> => {
+        const image = context.fileContents.find((candidate) => candidate.id === decision.fileId);
+        return image === undefined
+          ? { fileId: decision.fileId, outcome: VisionHelperOutcome.FAILED, executions: [] }
+          : this.describeOnce(
+              context,
+              turnKey,
+              { kind: HelperExecutionKind.VISION, fileId: decision.fileId, image },
+              candidates,
+              invoke,
+            );
+      }),
     );
     const fit = fitLaneFileShare(
       context,
@@ -123,6 +136,60 @@ export class VisionHelperManager {
         fit.derivedImages,
       ),
     };
+  }
+
+  /**
+   * Describes a video's sampled frames for a lane that cannot see (multimodal
+   * batch 8). The same plan gate (ADR-122), candidates, metering and per-turn
+   * sharing as an image: each frame is one helper image, described once per
+   * (user, turn, frame) whatever the number of lanes, and recorded as a
+   * `VIDEO_FRAME` execution against the video's id with its timestamp.
+   *
+   * The frames are LOADED only once the plan and a helper candidate allow a
+   * description, so a free plan's text-only lane never makes file-service
+   * decode frames it could not use. The loader decides how many frames (the
+   * caller spends `VISION_HELPER_MAX_IMAGES_PER_TURN`).
+   */
+  async describeVideoFrames(
+    context: AssembledContext,
+    video: FileContentResponse,
+    loadFrames: () => Promise<readonly VideoFrameImage[]>,
+    invoke: VisionHelperInvoker,
+  ): Promise<VideoFrameDescriptionBatch> {
+    const none = { helperAvailable: false, framesLoaded: false, results: [] };
+    if (context.visionHelperCall === true || context.userId.length === 0) {
+      return { onPlan: null, ...none };
+    }
+    const onPlan = await this.helperVisionOnPlan(context.userId);
+    if (onPlan !== true) {
+      return { onPlan, ...none };
+    }
+    const candidates = await this.eligibleCandidates(context);
+    if (candidates.length === 0) {
+      return { onPlan, ...none };
+    }
+    const frames = await loadFrames();
+    if (frames.length === 0) {
+      return { onPlan, helperAvailable: true, framesLoaded: false, results: [] };
+    }
+    const turnKey = context.turnId ?? randomUUID();
+    const results = await Promise.all(
+      frames.map(async (frame) =>
+        this.describeOnce(
+          context,
+          turnKey,
+          {
+            kind: HelperExecutionKind.VIDEO_FRAME,
+            fileId: video.id,
+            image: videoFrameAsImageFile(video, frame),
+            timestampMs: frame.timestampMs,
+          },
+          candidates,
+          invoke,
+        ),
+      ),
+    );
+    return { onPlan, helperAvailable: true, framesLoaded: true, results };
   }
 
   /**
@@ -155,22 +222,23 @@ export class VisionHelperManager {
     return checked.filter((candidate): candidate is VisionHelperCandidate => candidate !== null);
   }
 
-  /** The turn's one description of this image, computed on first use. */
+  /** The turn's one description of this image (or frame), computed on first use. */
   private async describeOnce(
     context: AssembledContext,
     turnKey: string,
-    fileId: string,
+    target: VisionHelperTarget,
     candidates: readonly VisionHelperCandidate[],
     invoke: VisionHelperInvoker,
   ): Promise<VisionHelperResult> {
     const now = Date.now();
     this.evict(now);
+    const fileId = target.image.id;
     const key = `${context.userId}:${turnKey}:${fileId}`;
     const hit = this.results.get(key);
     if (hit !== undefined) {
       return hit.result;
     }
-    const result = this.walk(context, turnKey, fileId, candidates, invoke).catch(
+    const result = this.walk(context, turnKey, target, candidates, invoke).catch(
       (): VisionHelperResult => ({ fileId, outcome: VisionHelperOutcome.FAILED, executions: [] }),
     );
     this.results.set(key, { result, expiresAt: now + VISION_HELPER_RESULT_TTL_MS });
@@ -180,14 +248,15 @@ export class VisionHelperManager {
   private async walk(
     context: AssembledContext,
     turnKey: string,
-    fileId: string,
+    target: VisionHelperTarget,
     candidates: readonly VisionHelperCandidate[],
     invoke: VisionHelperInvoker,
   ): Promise<VisionHelperResult> {
-    const file = context.fileContents.find((candidate) => candidate.id === fileId);
-    const imageContext = file === undefined ? null : this.helperContext(context, file);
+    const file = target.image;
+    const fileId = file.id;
+    const imageContext = this.helperContext(context, file);
     const executions: VisionHelperResult['executions'] = [];
-    if (file === undefined || imageContext === null) {
+    if (imageContext === null) {
       return { fileId, outcome: VisionHelperOutcome.FAILED, executions };
     }
     for (const [index, candidate] of candidates.entries()) {
@@ -195,6 +264,7 @@ export class VisionHelperManager {
         context,
         imageContext,
         fileId,
+        target,
         candidate,
         requestId: visionHelperRequestId(turnKey, fileId, index),
         invoke,
@@ -298,12 +368,13 @@ export class VisionHelperManager {
     text?: string,
   ): VisionHelperAttemptResult {
     const execution = {
-      kind: HelperExecutionKind.VISION,
+      kind: input.target.kind,
       provider: input.candidate.provider,
       model: input.candidate.model,
-      fileId: input.fileId,
+      fileId: input.target.fileId,
       latencyMs: Date.now() - started,
       outcome,
+      ...(input.target.timestampMs === undefined ? {} : { timestampMs: input.target.timestampMs }),
     };
     this.logger.log(`visionHelper ${JSON.stringify(execution)}`);
     return text === undefined ? { outcome, execution } : { outcome, text, execution };

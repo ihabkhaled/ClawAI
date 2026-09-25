@@ -42,6 +42,7 @@ const assembly = new ContextAssemblyManager(
 /** A catalog that answers per model, the way the connector snapshot does. */
 function deliveryWith(
   table: Record<string, Partial<ModelMediaCapabilities>>,
+  maxVideoSecondsFor: () => Promise<number | null> = async () => Promise.resolve(600),
 ): AttachmentDeliveryManager {
   const client = {
     resolve: async (provider: string, model: string): Promise<ModelMediaCapabilities> => ({
@@ -52,7 +53,7 @@ function deliveryWith(
     }),
     listVideoCapableModels: async () => null,
   };
-  return new AttachmentDeliveryManager(client as never);
+  return new AttachmentDeliveryManager(client as never, { maxVideoSecondsFor } as never);
 }
 
 const receipt: FileContentResponse = {
@@ -170,28 +171,87 @@ describe('a video placeholder never reaches the model as content', () => {
     extractionError: null,
   };
 
-  it('is replaced by an honest note on a lane that cannot watch video', async () => {
+  // Multimodal batch 8 (changed on purpose): while its document has not
+  // landed, a video on a non-native lane is STILL_PROCESSING — "try again in a
+  // moment" — no longer the permanent "cannot watch" of OMITTED_UNSUPPORTED.
+  it('is replaced by an honest still-processing note on a lane that cannot watch video', async () => {
     const lane = await deliveryWith({}).applyToContext(contextWith([clip]), 'OPENAI', 'gpt-4o');
     const payload = serialized(lane);
     const prompt = assembly.buildPromptString(lane);
 
-    expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(FileDeliveryMode.OMITTED_UNSUPPORTED);
+    expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(FileDeliveryMode.STILL_PROCESSING);
     for (const text of [payload, prompt]) {
       expect(text).not.toContain('[Video file: clip.mp4]');
-      expect(text).toContain('cannot watch');
+      expect(text).toContain('is still being processed');
+      expect(text).not.toContain(clip.content ?? 'never');
     }
   });
 
-  it('rides natively, with no placeholder text, on a Gemini lane that accepts video', async () => {
-    const lane = await deliveryWith({
-      'GEMINI/gemini-2.5-flash': { videoInput: SUPPORTED },
-    }).applyToContext(contextWith([clip]), 'GEMINI', 'gemini-2.5-flash');
+  // Plan-gate fix: native only once processed and inside the plan limit.
+  const processed: FileContentResponse = {
+    ...clip,
+    extractedText: 'Video "clip.mp4" — length 00:59.\n[00:00–00:05] hello',
+    media: { durationMs: 59_000, width: 640, height: 360, hasAudio: true, failureReason: null },
+  };
+  const gemini = { 'GEMINI/gemini-2.5-flash': { videoInput: SUPPORTED } };
+
+  it('rides natively, with no placeholder text, once processed and inside the plan', async () => {
+    const lane = await deliveryWith(gemini, async () => Promise.resolve(60)).applyToContext(
+      contextWith([processed]),
+      'GEMINI',
+      'gemini-2.5-flash',
+    );
     const payload = JSON.stringify(assembly.buildGeminiChatMessages(lane));
 
     expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(FileDeliveryMode.NATIVE_VIDEO);
     expect(payload).toContain('data:video/mp4;base64,');
     expect(payload).not.toContain('[Video file: clip.mp4]');
     expect(payload).not.toContain('cannot watch');
+  });
+
+  it('never rides natively while still processing, even on a video lane', async () => {
+    const lane = await deliveryWith(gemini).applyToContext(
+      contextWith([clip]),
+      'GEMINI',
+      'gemini-2.5-flash',
+    );
+    const payload = JSON.stringify(assembly.buildGeminiChatMessages(lane));
+
+    expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(FileDeliveryMode.STILL_PROCESSING);
+    expect(payload).not.toContain('data:video/mp4;base64,');
+    expect(payload).toContain('is still being processed');
+  });
+
+  it('never rides natively past the free plan limit (61 s on 60 s)', async () => {
+    const long = {
+      ...processed,
+      media: { durationMs: 61_000, width: 640, height: 360, hasAudio: true, failureReason: null },
+    };
+    const lane = await deliveryWith(gemini, async () => Promise.resolve(60)).applyToContext(
+      contextWith([long]),
+      'GEMINI',
+      'gemini-2.5-flash',
+    );
+
+    expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(
+      FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+    );
+    expect(JSON.stringify(assembly.buildGeminiChatMessages(lane))).not.toContain(
+      'data:video/mp4;base64,',
+    );
+  });
+
+  it('fails closed when entitlements are down: no video bytes', async () => {
+    const lane = await deliveryWith(gemini, async () =>
+      Promise.reject(new Error('auth-service down')),
+    ).applyToContext(contextWith([processed]), 'GEMINI', 'gemini-2.5-flash');
+
+    expect(lane.attachmentDelivery?.decisions[0]?.mode).toBe(
+      FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+    );
+    expect(JSON.stringify(assembly.buildGeminiChatMessages(lane))).not.toContain(
+      'data:video/mp4;base64,',
+    );
   });
 
   it('is withheld from a Gemini model the catalog says cannot take video', async () => {
@@ -201,7 +261,7 @@ describe('a video placeholder never reaches the model as content', () => {
     const payload = JSON.stringify(assembly.buildGeminiChatMessages(lane));
 
     expect(payload).not.toContain('data:video/mp4;base64,');
-    expect(payload).toContain('cannot watch');
+    expect(payload).toContain('is still being processed');
   });
 });
 

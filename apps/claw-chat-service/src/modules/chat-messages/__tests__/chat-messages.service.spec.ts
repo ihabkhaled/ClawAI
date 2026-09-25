@@ -20,6 +20,7 @@ import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { RepairType } from '../../../common/enums/repair-type.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 
 const mockThread = {
   id: 'thread-1',
@@ -181,6 +182,89 @@ describe('ChatMessagesService', () => {
         read: vi.fn().mockResolvedValue([]),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[21],
     );
+  });
+
+  // Multimodal batch 8: message.created carries the attachments' real mime
+  // types and the modalities they need, so AUTO ranks by modality fit; the
+  // AUTO research planner sees a short digest of their derived text.
+  describe('attachment modality on message.created', () => {
+    const attachmentInfo = {
+      mimeTypes: vi.fn(async () => Promise.resolve(['video/mp4', 'image/png'])),
+      textOnly: vi.fn(async () =>
+        Promise.resolve([
+          {
+            id: 'vid-1',
+            filename: 'clip.mp4',
+            mimeType: 'video/mp4',
+            content: null,
+            extractedText: '[00:00–00:05] Meet Ada Lovelace.',
+          },
+        ]),
+      ),
+    };
+
+    beforeEach(() => {
+      attachmentInfo.mimeTypes.mockClear();
+      attachmentInfo.textOnly.mockClear();
+      Object.assign(service, { attachmentInfo });
+      threadsRepo.findById?.mockResolvedValue(mockThread);
+    });
+
+    it('publishes the mime types, the required modalities and what chat can transform', async () => {
+      await service.createMessage(
+        'user-1',
+        { threadId: 'thread-1', content: 'What happens at 0:20?', fileIds: ['vid-1', 'img-1'] },
+        '',
+      );
+
+      expect(attachmentInfo.mimeTypes).toHaveBeenCalledWith(['vid-1', 'img-1'], 'user-1');
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({
+          attachmentMimeTypes: ['video/mp4', 'image/png'],
+          requiredModalities: ['IMAGE_INPUT', 'VIDEO_INPUT'],
+          // The mocked plan has no helper vision: the image is not transformable.
+          transformableModalities: ['VIDEO_INPUT'],
+        }),
+      );
+    });
+
+    it('publishes exactly the old event when there are no attachments', async () => {
+      await service.createMessage('user-1', { threadId: 'thread-1', content: 'Hello' }, '');
+
+      expect(attachmentInfo.mimeTypes).not.toHaveBeenCalled();
+      const [, payload] = (rabbitMQ.publish?.mock.calls[0] ?? []) as [
+        string,
+        Record<string, unknown>,
+      ];
+      expect(payload).not.toHaveProperty('attachmentMimeTypes');
+      expect(payload).not.toHaveProperty('requiredModalities');
+    });
+
+    it('hands the AUTO research planner a short digest of the attachments', async () => {
+      const orchestrator = { run: vi.fn().mockResolvedValue(null) };
+      Object.assign(service, { researchOrchestrator: orchestrator });
+
+      await service.createMessage(
+        'user-1',
+        {
+          threadId: 'thread-1',
+          content: 'Listen to this clip and research the person mentioned',
+          fileIds: ['vid-1'],
+          researchMode: ResearchMode.AUTO,
+        },
+        'token',
+      );
+
+      await vi.waitFor(() => {
+        expect(orchestrator.run).toHaveBeenCalledWith(
+          expect.objectContaining({
+            attachmentDigest: expect.stringContaining('Meet Ada Lovelace') as string,
+          }),
+        );
+      });
+      expect(attachmentInfo.textOnly).toHaveBeenCalledWith(['vid-1'], 'user-1');
+    });
   });
 
   describe('createMessage', () => {

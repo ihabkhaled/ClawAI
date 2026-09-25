@@ -11,6 +11,7 @@ import {
   type MemorySensitivity,
   type MemorySuggestionStatus,
   type MemoryType,
+  type RequiredModality,
   type RoutingMode,
   type UserRole,
   type VideoAudioStatus,
@@ -96,6 +97,21 @@ export interface MessageCreatedPayload extends BaseEventPayload {
   routingMode?: RoutingMode;
   forcedProvider?: string;
   forcedModel?: string;
+  /**
+   * Multimodal batch 8 — the attachments' real mime types (at most 10), so
+   * AUTO can rank models by what they can read. Absent or empty = no
+   * attachments, and routing behaves exactly as before.
+   */
+  attachmentMimeTypes?: string[];
+  /** The non-text inputs those attachments need (derived from the mime types). */
+  requiredModalities?: RequiredModality[];
+  /**
+   * The subset chat-service can turn into text for a model that cannot read
+   * it directly (audio → transcript, video → frames + transcript, image →
+   * helper vision when the plan includes it). A text-only model stays
+   * eligible in AUTO only for these.
+   */
+  transformableModalities?: RequiredModality[];
 }
 
 export interface MessageRoutedPayload extends BaseEventPayload {

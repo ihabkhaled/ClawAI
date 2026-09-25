@@ -1961,6 +1961,8 @@ export const ja: TranslationDictionary = {
       transcript: '文字起こし',
       nativeVideo: '動画',
       derivedImageText: 'ヘルパーが説明',
+      videoFramesAndTranscript: '動画: フレーム + 文字起こし',
+      videoFramesAt: '{times} のフレーム',
       stillProcessing: '処理中',
       failedProcessing: '処理に失敗しました',
       tooltip: 'モデルごとの配信概要',

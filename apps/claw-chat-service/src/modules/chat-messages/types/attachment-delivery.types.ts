@@ -1,4 +1,5 @@
 import type { FileDeliveryEntry } from './file-delivery.types';
+import type { VideoFrameSet } from './video-delivery.types';
 import type { DerivedImageObservation, HelperExecution } from './vision-helper.types';
 
 /**
@@ -24,6 +25,17 @@ export type AttachmentDeliveryPlan = {
   derivedImages?: DerivedImageObservation[];
   /** Every helper attempt behind those descriptions (no content). */
   helperExecutions?: HelperExecution[];
+  /**
+   * Whether this lane's model can see images (catalog answer, with the
+   * documented UNKNOWN fallback). Decides whether a video's sampled frames
+   * ride the payload or go to the vision helper (multimodal batch 8).
+   */
+  laneSeesImages?: boolean;
+  /**
+   * The sampled frames of every VIDEO_FRAMES_AND_TRANSCRIPT video, as THIS
+   * lane received them. Set once `VideoDeliveryManager` has run for the lane.
+   */
+  videoFrames?: VideoFrameSet[];
 };
 
 export type AttachmentDeliveryOptions = {
@@ -34,4 +46,18 @@ export type AttachmentDeliveryOptions = {
    * Gemini native request does (`buildGeminiChatMessages`).
    */
   nativeVideoTransport: boolean;
+  /**
+   * The uploader's plan limit for video, read for this turn (ADR-122). Native
+   * video requires it to be KNOWN and the measured duration inside it; absent
+   * or unavailable fails closed — the lane gets the transcript path, never the
+   * bytes (multimodal batch 8).
+   */
+  videoPlan?: VideoPlanGate;
+};
+
+/** `maxVideoSeconds` for native delivery: `available: false` = entitlements could not be read. */
+export type VideoPlanGate = {
+  available: boolean;
+  /** `null` unlimited, `0` disabled. Meaningless when `available` is false. */
+  limitSeconds: number | null;
 };

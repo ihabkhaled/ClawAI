@@ -85,6 +85,7 @@ import {
 import type { InstalledModelInfo } from '../types/installed-model.types';
 import { detectFileIntent } from '../utilities/file-intent.utility';
 import { routerModelFromAttempts } from '../utilities/router-model-label.utility';
+import { modalityFitReasonTag } from '../utilities/modality-fit.utility';
 import {
   type FallbackEntry,
   type HeuristicState,
@@ -214,7 +215,9 @@ export class RoutingManager {
   ): boolean {
     if (context.runtimeV2 === true) return false;
     if (!manual) return true;
-    return writer === null ? false : !writer.provider.startsWith('IMAGE_') && writer.provider !== FILE_GENERATION_PROVIDER;
+    return writer === null
+      ? false
+      : !writer.provider.startsWith('IMAGE_') && writer.provider !== FILE_GENERATION_PROVIDER;
   }
 
   /** Image first, then file — the order handleAuto uses. */
@@ -330,9 +333,9 @@ export class RoutingManager {
       const confirmed =
         Number(this.isConnectorConfirmedHealthy(b.provider, context)) -
         Number(this.isConnectorConfirmedHealthy(a.provider, context));
-      return confirmed !== 0 ? confirmed : (
-        this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context)
-      );
+      return confirmed !== 0
+        ? confirmed
+        : this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context);
     });
 
     const chain = [...cloudFallbacks, ...localFallbacks];
@@ -697,7 +700,13 @@ export class RoutingManager {
       selectedModel: selected.providerModelId,
       routingMode: RoutingMode.AUTO,
       confidence: decision.confidence,
-      reasonTags: ['auto', 'cloud_router', ...decision.reasonCodes],
+      reasonTags: [
+        'auto',
+        'cloud_router',
+        ...decision.reasonCodes,
+        // Multimodal batch 8: how the chosen model fits the attachments.
+        ...(selected.modalityFit === undefined ? [] : [modalityFitReasonTag(selected.modalityFit)]),
+      ],
       privacyClass: isLocal ? 'local' : 'cloud',
       costClass: isLocal ? 'free' : 'medium',
       fallbackChain: this.buildFallbackChain(primary, context),
@@ -941,7 +950,9 @@ export class RoutingManager {
   }
 
   private matchesProviderRule(lower: string, rule: ProviderInferenceRule): boolean {
-    return rule.startsWith?.some((p) => lower.startsWith(p)) ? true : rule.includes?.some((p) => lower.includes(p)) ?? false;
+    return rule.startsWith?.some((p) => lower.startsWith(p))
+      ? true
+      : (rule.includes?.some((p) => lower.includes(p)) ?? false);
   }
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
@@ -957,7 +968,9 @@ export class RoutingManager {
     if (this.isConnectorHealthy('GEMINI', context)) {
       return this.buildImageDecision(IMAGE_PROVIDER_GEMINI, IMAGE_MODEL_IMAGEN, context);
     }
-    return this.isConnectorHealthy('OPENAI', context) ? this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_OPENAI, context) : this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
+    return this.isConnectorHealthy('OPENAI', context)
+      ? this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_OPENAI, context)
+      : this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
   }
 
   private buildImageDecision(

@@ -1953,6 +1953,8 @@ export const en: TranslationDictionary = {
       transcript: 'Transcript',
       nativeVideo: 'Video',
       derivedImageText: 'Described by helper',
+      videoFramesAndTranscript: 'Video: frames + transcript',
+      videoFramesAt: 'frames at {times}',
       stillProcessing: 'Still processing',
       failedProcessing: 'Processing failed',
       tooltip: 'Per-model delivery summary',

@@ -37,11 +37,13 @@ import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
 import {
   type CreateInternalFileBody,
+  type FileContentOptions,
   type FileIngestionState,
   type InternalFileContentResponse,
 } from '../types/internal-file.types';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
 import { FileProcessingManager } from '../managers/file-processing.manager';
+import { readVideoMediaSummary } from '../utilities/video-media-summary.utility';
 import { type FileProcessingContract } from '../types/zip-expansion.types';
 import { type FileListRow } from '../types/archive-entries.types';
 
@@ -323,21 +325,27 @@ export class FilesService {
     return file;
   }
 
-  async getFileContent(id: string, userId: string): Promise<InternalFileContentResponse> {
+  async getFileContent(
+    id: string,
+    userId: string,
+    options: FileContentOptions = { includeContent: true },
+  ): Promise<InternalFileContentResponse> {
     this.logger.debug(`getFileContent: fetching owned content for file ${id}, user ${userId}`);
     const file = await this.filesRepository.findById(id);
     if (file?.userId !== userId) {
       throw new EntityNotFoundException('File', id);
     }
     const status = this.healLegacyRowIfNeeded(file);
+    const media = readVideoMediaSummary(file.mimeType, file.extractionMetadata);
     return {
       id: file.id,
       filename: file.filename,
       mimeType: file.mimeType,
-      content: file.content,
+      content: options.includeContent ? file.content : null,
       extractedText: file.extractedText,
       ingestionStatus: status,
       extractionError: file.extractionError,
+      ...(media === null ? {} : { media }),
     };
   }
 

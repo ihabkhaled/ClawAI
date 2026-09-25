@@ -342,6 +342,31 @@ the Smart Router "Assistant models" tab like `RESEARCH_GATE` and `FILE_WRITER`
 - Metering happens in chat-service (`PaygSurface.VISION_HELPER`), not here.
 - Runbook: [`skills/add-a-helper-model-role.md`](../../skills/add-a-helper-model-role.md).
 
+## AUTO ranks by modality fit (multimodal batch 8, rule 51 item 13)
+
+chat-service sends `attachmentMimeTypes`, `requiredModalities` and
+`transformableModalities` on `message.created`
+(`parseAttachmentModality` validates: ≤ 10 mime types, known values only,
+transformable ⊆ required). They land on `RoutingContext` and reach
+`selectCloudRouterCandidates` through `CloudRouterEligibilityManager`.
+
+- Fit per deployment (`modalityFitOf`, pure): `DIRECT` reads every required
+  modality (definition `modalitiesIn`, synced from connector-service;
+  `ModelDeployment.supportsVision` overrides for images) · `TRANSFORMED`
+  misses only transformable ones · `DEGRADED` misses one chat cannot transform.
+- Order: exposure/health/plan filters FIRST (unchanged), then tiers DIRECT →
+  TRANSFORMED, each with the old round-robin (ACTIVE first, one model per
+  provider). DEGRADED is offered only when nothing else survived — AUTO never
+  goes dark. No attachments → every row DIRECT → identical order.
+- The cloud router prompt gets an `ATTACHMENTS:` line and a fit note per
+  candidate; the decision gets `modalityFit:direct|transformed|degraded` in
+  `reasonTags`. `routerModel` provenance and the plan gate are untouched.
+- Only the cloud-router path ranks by fit. The keyword capability router, the
+  Ollama-assisted path and the heuristic fallback do not (chat still serves any
+  model honestly — frames + transcript, OCR, transcript).
+- `findRoutableForCloudRouting` now also selects `supportsVision` and
+  `definition.modalitiesIn`.
+
 ## Image-generation model ids (2026-09-25)
 
 `IMAGE_MODEL_OPENAI` in `src/modules/routing/constants/routing.constants.ts` is

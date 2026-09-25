@@ -1,4 +1,5 @@
 import { type Mock, vi } from 'vitest';
+import { ModalityFit } from '../../../common/enums/modality-fit.enum';
 import { RoutingManager } from '../managers/routing.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
@@ -13,7 +14,7 @@ import { RouterProvider, RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { type RoutingContext } from '../types/routing.types';
-import { LocalModelRole } from '@claw/shared-types';
+import { LocalModelRole, RequiredModality } from '@claw/shared-types';
 
 const mockPoliciesRepo = (): Partial<Record<keyof RoutingPoliciesRepository, Mock>> => ({
   findActivePolicies: vi.fn().mockResolvedValue([]),
@@ -1910,6 +1911,31 @@ describe('RoutingManager', () => {
       expect(result.reasonTags).toContain('cloud_router');
       expect(result.reasonTags).toContain('strong_match');
       expect(ollamaRouter.route).not.toHaveBeenCalled();
+      // No attachments: no modality tag, the decision is exactly as before.
+      expect(result.reasonTags.some((tag) => tag.startsWith('modalityFit:'))).toBe(false);
+    });
+
+    // Multimodal batch 8: the decision names how the chosen model fits the
+    // attachments, so a text-only pick for a video is visible as such.
+    it.each([
+      [ModalityFit.DIRECT, 'modalityFit:direct'],
+      [ModalityFit.TRANSFORMED, 'modalityFit:transformed'],
+    ])("tags the decision with the chosen model's modality fit (%s)", async (fit, tag) => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([
+        { ...eligibleDeployment, modalityFit: fit },
+      ]);
+      cloudRouter.route.mockResolvedValue(availableDecision);
+
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is the capital of France?',
+        userMode: RoutingMode.AUTO,
+        attachmentMimeTypes: ['video/mp4'],
+        requiredModalities: [RequiredModality.VIDEO_INPUT],
+        transformableModalities: [RequiredModality.VIDEO_INPUT],
+      });
+
+      expect(result.reasonTags).toContain(tag);
     });
 
     it('passes the traceId and eligible deployment ids the eligibility filter resolved', async () => {

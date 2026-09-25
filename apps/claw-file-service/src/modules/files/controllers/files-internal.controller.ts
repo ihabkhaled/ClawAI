@@ -58,7 +58,9 @@ export class FilesInternalController {
     @Query(new ZodValidationPipe(internalFileContentQuerySchema))
     query: InternalFileContentQueryDto,
   ): Promise<InternalFileContentResponse> {
-    return this.filesService.getFileContent(fileId, query.userId);
+    return this.filesService.getFileContent(fileId, query.userId, {
+      includeContent: query.includeContent !== 'false',
+    });
   }
 
   /**

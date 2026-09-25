@@ -1979,6 +1979,8 @@ export const ru: TranslationDictionary = {
       transcript: 'Расшифровка',
       nativeVideo: 'Видео',
       derivedImageText: 'Описано помощником',
+      videoFramesAndTranscript: 'Видео: кадры + расшифровка',
+      videoFramesAt: 'кадры на {times}',
       stillProcessing: 'Ещё обрабатывается',
       failedProcessing: 'Ошибка обработки',
       tooltip: 'Сводка доставки по моделям',

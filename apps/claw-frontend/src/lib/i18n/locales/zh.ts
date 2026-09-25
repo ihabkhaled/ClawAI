@@ -1905,6 +1905,8 @@ export const zh: TranslationDictionary = {
       transcript: '转录文本',
       nativeVideo: '视频',
       derivedImageText: '由助手描述',
+      videoFramesAndTranscript: '视频：画面帧 + 转录文本',
+      videoFramesAt: '{times} 的画面帧',
       stillProcessing: '仍在处理',
       failedProcessing: '处理失败',
       tooltip: '每个型号的交付摘要',

@@ -348,6 +348,14 @@ temp dir is removed in `finally`. Every limit lives in
 request + Redis cache (`file:video-frame:<id>:<ms>`, 10 min). Response capped
 at 3 MB.
 
+**Media facts on `/content` (batch 8)** — `GET /internal/files/:id/content`
+adds `media: { durationMs, width, height, hasAudio, failureReason }` for a
+video whose job wrote `extractionMetadata.media` (`readVideoMediaSummary`,
+re-validated with `videoContentMediaSchema`; never the thumbnail or segments;
+key absent for every other file). `?includeContent=false` returns `content:
+null` — chat-service's research digest reads the transcript without pulling
+the video bytes.
+
 ffmpeg is installed in BOTH images (`Dockerfile.dev`, `Dockerfile` runner) with
 a build-time `ffmpeg -version` check. Runbook:
 [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).

@@ -418,6 +418,41 @@ describe('AccessControlService', () => {
     });
   });
 
+  // Multimodal batch 8: native video is gated on the plan's maxVideoSeconds.
+  describe('maxVideoSecondsFor', () => {
+    const planWith = (maxVideoSeconds: number | null) =>
+      ent({
+        plan: {
+          id: 'p1',
+          slug: 'free',
+          name: 'Free',
+          featureGates: {},
+          limits: { maxVideoSeconds },
+        },
+      });
+
+    it('reads the plan limit: 60 s free, null unlimited, 0 disabled', async () => {
+      getEntitlements.mockResolvedValueOnce(planWith(60));
+      await expect(service.maxVideoSecondsFor('u1')).resolves.toBe(60);
+      getEntitlements.mockResolvedValueOnce(planWith(null));
+      await expect(service.maxVideoSecondsFor('u1')).resolves.toBeNull();
+      getEntitlements.mockResolvedValueOnce(planWith(0));
+      await expect(service.maxVideoSecondsFor('u1')).resolves.toBe(0);
+    });
+
+    it('is unlimited for ADMIN', async () => {
+      getEntitlements.mockResolvedValueOnce(ent({ isAdmin: true, role: 'ADMIN' }));
+      await expect(service.maxVideoSecondsFor('u1')).resolves.toBeNull();
+    });
+
+    it('throws when entitlements are unreachable, so the caller fails closed', async () => {
+      getEntitlements.mockRejectedValueOnce(new Error('auth down'));
+      await expect(service.maxVideoSecondsFor('u1')).rejects.toMatchObject({
+        code: 'ENTITLEMENTS_UNAVAILABLE',
+      });
+    });
+  });
+
   describe('feature reservations', () => {
     it('passes the auth-service decision through', async () => {
       reserveFeatureUsage.mockResolvedValueOnce({

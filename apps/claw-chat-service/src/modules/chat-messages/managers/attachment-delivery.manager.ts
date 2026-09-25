@@ -1,14 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 
-import { GEMINI_PROVIDER } from '../../../common/constants/execution.constants';
+import { GEMINI_PROVIDER, VIDEO_MIME_PREFIX } from '../../../common/constants/execution.constants';
 import { ModelCapabilityClient } from '../clients/model-capability.client';
-import type { AttachmentDeliveryPlan } from '../types/attachment-delivery.types';
+import { AccessControlService } from '../services/access-control.service';
+import type { AttachmentDeliveryPlan, VideoPlanGate } from '../types/attachment-delivery.types';
 import type { AssembledContext } from '../types/context.types';
 import type { FileDeliveryEntry } from '../types/file-delivery.types';
 import type { VideoRoutingCapability } from '../types/model-capability.types';
 import {
   countDeliveryModes,
   deliveryEntriesOf,
+  laneSupportsVision,
   resolveAttachmentDelivery,
 } from '../utilities/attachment-delivery.utility';
 
@@ -30,7 +32,12 @@ import {
 export class AttachmentDeliveryManager {
   private readonly logger = new Logger(AttachmentDeliveryManager.name);
 
-  constructor(private readonly capabilities: ModelCapabilityClient) {}
+  constructor(
+    private readonly capabilities: ModelCapabilityClient,
+    // Optional so hand-built specs keep their shape. Without it the video plan
+    // is unknown, so no video ever rides natively (fails closed, ADR-122).
+    @Optional() private readonly accessControl?: AccessControlService,
+  ) {}
 
   /**
    * The context this lane's payload is built from. Unchanged when there are no
@@ -72,18 +79,45 @@ export class AttachmentDeliveryManager {
     return { selected: capabilities.videoInput, capableModels };
   }
 
+  /**
+   * The uploader's `maxVideoSeconds` for native video, read only when a video
+   * is attached to a lane that could carry it. An entitlements outage is
+   * `available: false`: no bytes, the transcript path instead (fails closed).
+   */
+  private async videoPlan(context: AssembledContext): Promise<VideoPlanGate | undefined> {
+    const hasVideo = context.fileContents.some((file) =>
+      file.mimeType.toLowerCase().startsWith(VIDEO_MIME_PREFIX),
+    );
+    if (!hasVideo || this.accessControl === undefined || context.userId.length === 0) {
+      return hasVideo ? { available: false, limitSeconds: null } : undefined;
+    }
+    try {
+      return {
+        available: true,
+        limitSeconds: await this.accessControl.maxVideoSecondsFor(context.userId),
+      };
+    } catch (error: unknown) {
+      this.logger.warn(
+        `videoPlan: entitlements unavailable, no native video user=${context.userId} — ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return { available: false, limitSeconds: null };
+    }
+  }
+
   private async plan(
     context: AssembledContext,
     provider: string,
     model: string,
   ): Promise<AttachmentDeliveryPlan> {
     const capabilities = await this.capabilities.resolve(provider, model);
+    // Only Gemini's native request carries video bytes today; every other
+    // transport would have to decode them into the prompt, which is banned.
+    const nativeVideoTransport = provider.toUpperCase() === GEMINI_PROVIDER;
     const decisions = resolveAttachmentDelivery(context.fileContents, capabilities, {
       provider,
       model,
-      // Only Gemini's native request carries video bytes today; every other
-      // transport would have to decode them into the prompt, which is banned.
-      nativeVideoTransport: provider.toUpperCase() === GEMINI_PROVIDER,
+      nativeVideoTransport,
+      videoPlan: nativeVideoTransport ? await this.videoPlan(context) : undefined,
     });
     // Structured, content-free: ids and counts only, never filenames or text.
     this.logger.log(
@@ -97,6 +131,11 @@ export class AttachmentDeliveryManager {
         fileIds: decisions.map((decision) => decision.fileId),
       })}`,
     );
-    return { provider, model, decisions };
+    return {
+      provider,
+      model,
+      decisions,
+      laneSeesImages: laneSupportsVision(provider, capabilities.vision),
+    };
   }
 }

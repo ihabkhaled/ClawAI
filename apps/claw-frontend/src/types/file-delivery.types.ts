@@ -18,6 +18,9 @@ export type FileDeliveryEntry = {
   // entry's provider/model stay the answering model's.
   helperProvider?: string;
   helperModel?: string;
+  // VIDEO_FRAMES_AND_TRANSCRIPT only: the moments (ms from the start) whose
+  // frames reached the model. Empty/absent = transcript only.
+  frameTimestampsMs?: number[];
 };
 
 // Aggregated counts per delivery mode. Produced by
@@ -34,6 +37,7 @@ export type FileDeliveryCounts = {
   processing: number;
   failed: number;
   described: number;
+  videoFrames: number;
 };
 
 // One bucket name of FileDeliveryCounts.

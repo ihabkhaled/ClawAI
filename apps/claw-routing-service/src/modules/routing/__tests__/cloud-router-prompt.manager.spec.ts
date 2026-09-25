@@ -1,6 +1,8 @@
 import { RouterProvider } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { CloudRouterPromptManager } from '../managers/cloud-router-prompt.manager';
+import { RequiredModality } from '@claw/shared-types';
+import { ModalityFit } from '../../../common/enums/modality-fit.enum';
 import { type EligibleDeploymentRecord } from '../types/model-deployment.types';
 import { type RoutingContext } from '../types/routing.types';
 
@@ -50,6 +52,39 @@ describe('CloudRouterPromptManager.buildPrompt', () => {
     const prompt = manager.buildPrompt(context, eligible);
 
     expect(prompt).toContain(ComplexityClass.EXPERT);
+  });
+
+  // Multimodal batch 8: with attachments the router is told what they need and
+  // how each candidate fits them; without, the prompt is unchanged.
+  it("names the attachments and each candidate's modality fit", () => {
+    const manager = new CloudRouterPromptManager();
+    const ranked: EligibleDeploymentRecord[] = [
+      { ...eligible[0], modalityFit: ModalityFit.DIRECT } as EligibleDeploymentRecord,
+      { ...eligible[1], modalityFit: ModalityFit.TRANSFORMED } as EligibleDeploymentRecord,
+    ];
+
+    const prompt = manager.buildPrompt(
+      {
+        ...baseContext,
+        attachmentMimeTypes: ['video/mp4'],
+        requiredModalities: [RequiredModality.VIDEO_INPUT],
+        transformableModalities: [RequiredModality.VIDEO_INPUT],
+      },
+      ranked,
+    );
+
+    expect(prompt).toContain('ATTACHMENTS: video/mp4 (needs VIDEO_INPUT)');
+    expect(prompt).toContain('dep_1 (GEMINI: gemini-2.5-flash) — reads the attachments directly');
+    expect(prompt).toContain(
+      'dep_2 (OLLAMA_CLOUD: qwen3:32b) — cannot read every attachment itself',
+    );
+  });
+
+  it('adds no attachment line and no fit notes when nothing is attached', () => {
+    const prompt = new CloudRouterPromptManager().buildPrompt(baseContext, eligible);
+
+    expect(prompt).not.toContain('ATTACHMENTS:');
+    expect(prompt).not.toContain('reads the attachments');
   });
 
   it('omits a complexity line entirely when the context carries none', () => {

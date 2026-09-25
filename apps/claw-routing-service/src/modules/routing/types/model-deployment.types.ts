@@ -1,4 +1,7 @@
-import type { RouterProvider } from '../../../generated/prisma';
+import type { RequiredModality } from '@claw/shared-types';
+
+import type { ModalityFit } from '../../../common/enums/modality-fit.enum';
+import type { ModalityKind, RouterProvider } from '../../../generated/prisma';
 
 /**
  * A deployment allowed onto the cloud router's candidate set: privacy class
@@ -11,6 +14,11 @@ export interface EligibleDeploymentRecord {
   id: string;
   provider: RouterProvider;
   providerModelId: string;
+  /**
+   * How this candidate fits the turn's attachments (multimodal batch 8). Set
+   * by the cloud router's candidate selection; absent on other paths.
+   */
+  modalityFit?: ModalityFit;
 }
 
 /**
@@ -30,7 +38,18 @@ export interface SelectableDeploymentRecord {
 /** A candidate before filtering, with the state ranking reads. */
 export interface RoutableDeploymentRecord extends EligibleDeploymentRecord {
   activationState: string;
+  /**
+   * The definition's input modalities (synced from connector-service's
+   * snapshot) — what modality-fit ranking reads. Optional: a row read without
+   * them ranks as "no known modality".
+   */
+  modalitiesIn?: readonly ModalityKind[];
+  /** Per-endpoint vision override; null/absent inherits the definition. */
+  supportsVision?: boolean | null;
 }
+
+/** A candidate after modality-fit classification, before the round-robin. */
+export type RankedDeploymentRecord = RoutableDeploymentRecord & { modalityFit: ModalityFit };
 
 /** What the AUTO router may pick from for one request. */
 export interface CloudRouterCandidateFilter {
@@ -40,6 +59,10 @@ export interface CloudRouterCandidateFilter {
   allowed: ReadonlySet<string> | null;
   connectorHealth: Readonly<Record<string, boolean>>;
   max: number;
+  /** The turn's attachment needs (multimodal batch 8); empty/absent = none. */
+  requiredModalities?: readonly RequiredModality[];
+  /** Of those, what chat-service can transform for a model that cannot read it. */
+  transformableModalities?: readonly RequiredModality[];
 }
 
 /** One model row from connector-service's snapshot, the fields routing reads. */

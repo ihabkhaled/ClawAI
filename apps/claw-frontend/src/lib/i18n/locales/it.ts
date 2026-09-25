@@ -1984,6 +1984,8 @@ export const it: TranslationDictionary = {
       transcript: 'Trascrizione',
       nativeVideo: 'Video',
       derivedImageText: 'Descritta da assistente',
+      videoFramesAndTranscript: 'Video: fotogrammi + trascrizione',
+      videoFramesAt: 'fotogrammi a {times}',
       stillProcessing: 'Elaborazione in corso',
       failedProcessing: 'Elaborazione non riuscita',
       tooltip: 'Riepilogo consegna per modello',

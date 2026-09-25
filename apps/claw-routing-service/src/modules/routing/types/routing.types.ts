@@ -1,3 +1,4 @@
+import type { RequiredModality } from '@claw/shared-types';
 import {
   type Prisma,
   type ComplexityClass as PrismaComplexityClass,
@@ -44,6 +45,16 @@ export interface RoutingContext {
    * the caller *knows*, so it should not be re-guessed from prose.
    */
   requiresToolCalling?: boolean;
+  /**
+   * Multimodal batch 8 — the turn's attachments as chat-service saw them on
+   * `message.created`: their mime types, the non-text inputs they need, and
+   * the subset chat-service can turn into text for a model that cannot read
+   * them. Absent/empty = no attachments, and AUTO ranks exactly as before.
+   * Read by the cloud router's candidate ranking (rule 51 item 13).
+   */
+  attachmentMimeTypes?: string[];
+  requiredModalities?: RequiredModality[];
+  transformableModalities?: RequiredModality[];
   /**
    * V6 learning evolution (ADR-070) — opaque reference to claw-workspace-
    * service's Workspace. Optional and, today, always undefined: no current

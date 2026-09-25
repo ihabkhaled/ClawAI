@@ -376,6 +376,40 @@ describe('FilesService', () => {
       });
     });
 
+    it("adds a processed video's probe facts, never its thumbnail, and can omit the bytes", async () => {
+      filesRepo.findById.mockResolvedValue({
+        ...mockFile,
+        mimeType: 'video/mp4',
+        filename: 'clip.mp4',
+        content: 'dmlkZW8=',
+        ingestionStatus: 'COMPLETED',
+        extractedText: 'Video "clip.mp4" — length 00:42.',
+        extractionMetadata: {
+          media: {
+            durationMs: 42_000,
+            width: 1280,
+            height: 720,
+            hasAudio: true,
+            thumbnailBase64: 'dGh1bWI=',
+            sizeBytes: 10,
+            processedAt: '2026-09-25T00:00:00.000Z',
+          },
+        },
+      });
+
+      const result = await service.getFileContent('file-1', 'user-1', { includeContent: false });
+
+      expect(result.content).toBeNull();
+      expect(result.media).toEqual({
+        durationMs: 42_000,
+        width: 1280,
+        height: 720,
+        hasAudio: true,
+        failureReason: null,
+      });
+      expect(JSON.stringify(result)).not.toContain('dGh1bWI=');
+    });
+
     it('hides an existing file from a different tenant', async () => {
       filesRepo.findById.mockResolvedValue(mockFile);
 

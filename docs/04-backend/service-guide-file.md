@@ -544,6 +544,13 @@ extracted per request in a temp dir and cached in Redis for 10 minutes keyed by
 409 until processed (or when processing failed), 400 past `durationMs`, 401
 without the service token. chat-service calls it in batch 8.
 
+**Media facts for chat (batch 8).** The internal `GET /internal/files/:id/content`
+adds `media: { durationMs, width, height, hasAudio, failureReason }` for a
+processed video (never the thumbnail; absent for every other file), so
+chat-service samples frames inside the real duration and tells a plan refusal
+apart. `?includeContent=false` omits the base64 bytes — chat's research digest
+reads a transcript without transferring the video.
+
 Runbook: [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).
 
 ## OCR pipeline (Slice D foundation 3)

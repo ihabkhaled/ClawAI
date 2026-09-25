@@ -1040,3 +1040,68 @@ the turn entry — ordinary chat must not 403 because a plan lacks media.
   `file_delivery.reason.helper_vision_plan`; no candidate lookup, no hold, no
   call. Outage → same free path but reason stays `no_vision`.
 - Test doubles: `createFakePaygAccessControl({ lockedPlanFeatures: [...] })`.
+
+## Video a lane cannot watch: frames + transcript (multimodal batch 8, 2026-09-25)
+
+A video reaches every lane (single chat, each compare lane, judge, critic) by
+the strategy its OWN model allows — rule 42 item 16, ADR-120 addendum
+"video strategy + AUTO modality fit". The resolver
+(`resolveAttachmentDelivery`, pure) decides; `VideoDeliveryManager`
+(`managers/video-delivery.manager.ts`) runs at the chokepoint AFTER
+`VisionHelperManager` (images spend the per-turn helper cap first).
+
+| Video state / lane                                                                                                                                                                                             | `FileDeliveryMode`            | The lane receives                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Gemini transport, `videoInput` ≠ UNSUPPORTED, bytes, processed with a MEASURED duration ≤ 60 min AND ≤ plan `maxVideoSeconds` (`AccessControlService.maxVideoSecondsFor`, per turn; unreadable → never native) | `NATIVE_VIDEO`                | the bytes                                                                                                                   |
+| document exists, lane can see                                                                                                                                                                                  | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + frames as `image_url` parts, each preceded by `Frame of video "x" at mm:ss:` (`frameDelivery: NATIVE_IMAGES`) |
+| document exists, lane blind, helper on plan                                                                                                                                                                    | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + `FRAME AT mm:ss` derived observations (`HELPER_OBSERVATIONS`, `helperProvider/Model`)                         |
+| document exists, no helper / not on plan / frames failed                                                                                                                                                       | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + "the video's frames could not be viewed; only its transcript was used" (`NONE` + reason)                      |
+| placeholder / PENDING / PROCESSING                                                                                                                                                                             | `STILL_PROCESSING`            | "is still being processed … send again in a moment"                                                                         |
+| FAILED                                                                                                                                                                                                         | `FAILED_PROCESSING`           | file-service's reason; `file_delivery.reason.video_plan_limit` for a plan refusal                                           |
+| no text and no status at all (pre-batch-7 row)                                                                                                                                                                 | `OMITTED_UNSUPPORTED`         | "video has no text to extract"                                                                                              |
+
+- **Media facts**: file-service's internal `/content` now carries `media`
+  (`durationMs, width, height, hasAudio, failureReason`) for a processed video
+  (`FileContentResponse.media`).
+- **Frame choice**: `selectVideoFrameTimestamps(durationMs, question, maxFrames)`
+  (`utilities/video-frame-selection.utility.ts`, deterministic, case table in
+  its spec). Named times (`2:35`, `1:02:03`, `at 95s`, `around 1 minute 30`,
+  `minute 4`, Arabic-Indic digits, `الدقيقة ٣`) → clusters t, t-4 s, t+4 s …;
+  none → uniform begin/middle/end 0.5 s in from each edge. Ratios (`3:1`,
+  `16:9`), decimals, `10:30 am`, and unit numbers without a cue ("a 5 minute
+  video") never match. ≤ 6 frames per video, ≤ 8 per turn (`allocateTurnFrames`).
+- **Fetch**: `VideoFramesClient` → `POST /internal/files/:id/video-frames`,
+  service token, 15 s, never throws. ONE fetch per (user, turn, video) shared
+  by every lane, the judge and the critic (`turnId`, 10 min cache).
+- **Seeing lane**: frames capped by window — `nativeFrameCap` (half the file
+  share at 800 tokens/frame; an 8k model gets 1). `nativeImageContents` adds
+  them to Ollama `images[]` too.
+- **Blind lane**: `VisionHelperManager.describeVideoFrames` — same plan gate
+  (`allowHelperVision`), candidates, PAYG hold (`PaygSurface.VISION_HELPER`,
+  requestId `${turnId}:vision:${fileId}@${ms}`), one description per frame per
+  turn. Frames are LOADED only after the plan and a candidate allow it.
+  `metadata.helperExecutions` gets `{kind:'VIDEO_FRAME', fileId, timestampMs, …}`.
+- **Budget**: transcript + frame descriptions + image descriptions + other
+  files share the FILE share (rule 51 item 4); per-frame/per-block framing is
+  reserved (`VIDEO_FRAME_FRAMING_CHARS`, `VIDEO_BLOCK_FRAMING_CHARS`).
+- **Routing**: `resolveVideoAttachmentCandidates` never throws any more and
+  never overrides AUTO — a manual video-capable Gemini pick is still sent
+  natively, everything else keeps its routed chain.
+- **Log line** (content-free): `videoDelivery {"provider","model","fileId","strategy","frameDelivery","frames","latencyMs","reason"}`.
+- Runbook: [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md) §8–10.
+
+## Chat → routing: attachment modalities on message.created (batch 8)
+
+`createMessage`, `regenerateMessage` and edit-and-rerun add
+`attachmentMimeTypes`, `requiredModalities` (`RequiredModality` from
+`@claw/shared-types`: IMAGE_INPUT / VIDEO_INPUT / AUDIO_INPUT) and
+`transformableModalities` (audio + video always; image only when the plan has
+`allowHelperVision`) — via `AttachmentInfoClient.mimeTypes` (file-service
+`ingestion-state`, 2 s, never throws). No attachments → no fields, the event is
+unchanged. Routing ranks AUTO candidates by it (rule 51 item 13).
+
+AUTO research (`runAutoResearch`) also hands the planner a SHORT digest of the
+attachments' derived text (`buildAttachmentDigest`, ≤ 600 chars/file, ≤ 1 500
+total, placeholders skipped) read with `AttachmentInfoClient.textOnly`
+(`/content?includeContent=false`, no bytes). Framed as data; links inside it
+are never crawled. A video still processing at send time contributes nothing.

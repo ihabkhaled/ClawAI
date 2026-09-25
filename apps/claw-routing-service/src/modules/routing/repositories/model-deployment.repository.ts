@@ -43,14 +43,26 @@ export class ModelDeploymentRepository {
    * routes and cannot answer a chat turn.
    */
   async findRoutableForCloudRouting(): Promise<RoutableDeploymentRecord[]> {
-    return this.prisma.modelDeployment.findMany({
+    const rows = await this.prisma.modelDeployment.findMany({
       where: {
         privacyClass: { in: [...CLOUD_ROUTER_ELIGIBLE_PRIVACY_CLASSES] },
         activationState: { in: [...CLOUD_ROUTER_SELECTABLE_STATES] },
         provider: { notIn: [...CLOUD_ROUTER_NON_ANSWERING_PROVIDERS] },
       },
-      select: { id: true, provider: true, providerModelId: true, activationState: true },
+      select: {
+        id: true,
+        provider: true,
+        providerModelId: true,
+        activationState: true,
+        // Multimodal batch 8: what modality-fit ranking reads (rule 51 item 13).
+        supportsVision: true,
+        definition: { select: { modalitiesIn: true } },
+      },
     });
+    return rows.map(({ definition, ...row }) => ({
+      ...row,
+      modalitiesIn: definition.modalitiesIn,
+    }));
   }
 
   /**

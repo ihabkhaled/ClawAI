@@ -25,7 +25,7 @@ export { extractTextFromReactNode } from './react-node-text.utility';
 export { getConfidenceLabel, getConfidenceClass } from './confidence.utility';
 export { formatBytes } from './format-bytes.utility';
 export { getLevelBadgeClass, formatLogLatency } from './log-stats.utility';
-export { formatDuration, formatSpeed } from './format-duration.utility';
+export { formatDuration, formatMediaClock, formatSpeed } from './format-duration.utility';
 export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
 export { splitHighlightSegments } from './highlight.utility';

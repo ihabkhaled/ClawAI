@@ -130,6 +130,61 @@ Rejected for helper vision: replacing the user's model with a vision model
 paid calls for one image in compare); letting the helper answer the question
 (its words would reach the user as the chosen model's).
 
+## Addendum — video strategy + AUTO modality fit (batch 8, 2026-09-25)
+
+**Video per lane.** The strategy table's HYBRID row lands. For each lane the
+pure resolver picks, in order: `NATIVE_VIDEO` (Gemini transport, `videoInput`
+not UNSUPPORTED, bytes present, AND processing finished with a MEASURED
+duration that is ≤ 60 min and inside the uploader's `maxVideoSeconds` read for
+this turn — null unlimited, 0 disabled; entitlements unreadable → no native,
+fails closed) → `VIDEO_FRAMES_AND_TRANSCRIPT` (file-service's timestamped document
+exists) → `FAILED_PROCESSING` (reason; `video_plan_limit` for
+`VIDEO_TOO_LONG_FOR_PLAN` / `VIDEO_DISABLED_FOR_PLAN`) → `STILL_PROCESSING`.
+`OMITTED_UNSUPPORTED` survives only for a row with no text and no status.
+
+1. **Frames + transcript.** `VideoDeliveryManager` (after helper vision at the
+   chokepoint) samples frames with `selectVideoFrameTimestamps` — deterministic,
+   clustered ±4 s around times named in the question (`2:35`, `1:02:03`,
+   `at 95s`, `around 1 minute 30`, Arabic-Indic digits), uniform
+   begin/middle/end otherwise; ≤ 6 per video, ≤ 8 per turn — and fetches them
+   ONCE per (user, turn, video) from file-service. A seeing lane gets them as
+   image parts labelled with their timestamp (capped by its window); a blind
+   lane gets the VISION_HELPER's timestamped observations (plan-gated,
+   metered, `VIDEO_FRAME` executions, the helper's per-turn cap shared with
+   images, frames loaded only when a description is allowed); otherwise the
+   transcript and an honest note. One framed `VIDEO:` block, never an
+   unattributed blob; all text spends the file share with framing reserved.
+2. **No refusal.** `resolveVideoAttachmentCandidates` no longer throws for a
+   model that cannot take video bytes, nor for LOCAL_ONLY / PRIVACY_FIRST
+   (local lanes get the transcript; frames only through a local helper), and
+   no longer forces AUTO onto a hardcoded Gemini model. There is no "no safe
+   route" left: every video state has an honest delivery.
+3. **AUTO modality fit.** chat-service sends the real attachment mime types,
+   `requiredModalities` and `transformableModalities` (`RequiredModality` in
+   `@claw/shared-types`) on `message.created`. routing-service ranks cloud
+   candidates DIRECT → TRANSFORMED (→ DEGRADED only when nothing else is left)
+   AFTER exposure, health and plan, reads `modalitiesIn` (+ the endpoint's
+   `supportsVision`), names the fit in the router prompt and tags the decision
+   `modalityFit:<fit>`. Rule 51 item 13.
+4. **Research.** AUTO research's planner sees a ≤ 1 500-char digest of the
+   attachments' derived text (file-service `/content?includeContent=false`).
+
+Rejected for batch 8: a model call to choose frame timestamps (non-deterministic
+and paid for every video question); per-lane frame fetches (N× ffmpeg for one
+turn); keeping chat's AUTO→Gemini override (it bypassed exposure, health and
+plan — routing now owns the preference); treating a text-only model as
+ineligible for video (it answers well from the transcript, and filtering it
+turned "no video model exposed" into no answer).
+
+Plan gate on native (closed before ship): a video is never sent natively
+while processing, without a measured duration, past the plan limit, or when
+the plan cannot be read (`nativeVideoAllowed`, `AccessControlService.maxVideoSecondsFor`).
+
+Known gaps: only the cloud-router
+AUTO path ranks by fit (keyword capability, Ollama-assisted and heuristic paths
+do not); a video still processing at send time adds nothing to the research
+digest; frame image tokens are estimated (800/frame), not measured.
+
 ## Alternatives rejected
 
 - **Keep the provider-level list.** It is the defect: it calls `gpt-4o-audio`

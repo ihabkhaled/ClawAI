@@ -3,6 +3,7 @@ import type { ToolTurn } from './tool-turn.types';
 import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
 import type { CrossThreadRetrievalResult } from './cross-thread-retrieval.types';
 import type { AttachmentDeliveryPlan } from './attachment-delivery.types';
+import type { FileMediaSummary } from './video-delivery.types';
 
 export type FileChunkResponse = {
   id: string;
@@ -33,6 +34,11 @@ export type FileContentResponse = {
   extractedText?: string | null;
   ingestionStatus?: FileIngestionState;
   extractionError?: string | null;
+  /**
+   * A processed video's probe facts (multimodal batch 8). Absent for every
+   * other file and from a file-service that predates the field.
+   */
+  media?: FileMediaSummary;
 };
 
 export type FileIngestionState = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';

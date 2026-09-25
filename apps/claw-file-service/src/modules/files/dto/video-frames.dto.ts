@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { VideoProcessingFailureReason } from '@claw/shared-types';
 import {
   VIDEO_FRAMES_MAX_TIMESTAMPS,
   VIDEO_MAX_DURATION_MS,
@@ -27,5 +28,20 @@ export const videoFramesMetadataSchema = z.object({
   media: z.object({
     durationMs: z.number().int().positive(),
     failureReason: z.string().nullable().optional(),
+  }),
+});
+
+/**
+ * The slice of `extractionMetadata.media` the internal content endpoint
+ * exposes (multimodal batch 8). Every field optional and re-validated on read:
+ * the column is JSON, and a malformed row yields no summary rather than a 500.
+ */
+export const videoContentMediaSchema = z.object({
+  media: z.object({
+    durationMs: z.number().int().nonnegative().optional(),
+    width: z.number().int().nonnegative().optional(),
+    height: z.number().int().nonnegative().optional(),
+    hasAudio: z.boolean().optional(),
+    failureReason: z.nativeEnum(VideoProcessingFailureReason).nullable().optional(),
   }),
 });

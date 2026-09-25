@@ -1936,6 +1936,8 @@ export const th: TranslationDictionary = {
       transcript: 'บทถอดเสียง',
       nativeVideo: 'วิดีโอ',
       derivedImageText: 'อธิบายโดยผู้ช่วย',
+      videoFramesAndTranscript: 'วิดีโอ: เฟรม + คำถอดเสียง',
+      videoFramesAt: 'เฟรมที่ {times}',
       stillProcessing: 'กำลังประมวลผล',
       failedProcessing: 'การประมวลผลล้มเหลว',
       tooltip: 'สรุปการส่งมอบต่อรุ่น',

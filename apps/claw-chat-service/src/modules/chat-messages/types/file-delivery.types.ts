@@ -1,4 +1,5 @@
 import type { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
+import type { VideoFrameDelivery } from '../../../common/enums/video-frame-delivery.enum';
 
 // Per-file delivery telemetry, persisted on the ASSISTANT message's
 // metadata.fileDelivery JSON and mirrored on ParallelModelResponse.
@@ -18,4 +19,9 @@ export type FileDeliveryEntry = {
   // batch 5). The entry's provider/model stay the lane's own model.
   helperProvider?: string;
   helperModel?: string;
+  // VIDEO_FRAMES_AND_TRANSCRIPT only (multimodal batch 8): how the sampled
+  // frames reached the lane, and the timestamps (ms) that were sampled. The
+  // helper fields name the vision helper when it described the frames.
+  frameDelivery?: VideoFrameDelivery;
+  frameTimestampsMs?: number[];
 };

@@ -24,6 +24,7 @@ import {
   type PlanFeature,
   type ResearchUsageFeature,
   type ReservedFeature,
+  resolvePlanLimit,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
 import { PaygSurface, Permission, QuotaWindow } from '@claw/shared-types';
@@ -296,6 +297,17 @@ export class AccessControlService {
   async hasPlanFeatureFor(userId: string, feature: PlanFeature): Promise<boolean> {
     const ent = await this.resolve(userId);
     return hasPlanFeature(ent, feature);
+  }
+
+  /**
+   * The longest video the user's plan processes, in seconds (ADR-122):
+   * `null` unlimited (admin included), `0` disabled. Throws the same 503 as
+   * every plan gate when entitlements cannot be read — the caller (native
+   * video delivery) fails closed on it.
+   */
+  async maxVideoSecondsFor(userId: string): Promise<number | null> {
+    const ent = await this.resolve(userId);
+    return resolvePlanLimit(ent, (limits) => limits.maxVideoSeconds);
   }
 
   private assertFeaturesEnabled(

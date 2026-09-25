@@ -33,4 +33,9 @@ export enum FileDeliveryMode {
   // model received that description as derived observations (ADR-120 batch 5).
   // The entry names the helper in helperProvider / helperModel.
   DERIVED_IMAGE_TEXT = 'DERIVED_IMAGE_TEXT',
+  // The model cannot watch the video natively; it received the video's
+  // timestamped transcript plus sampled frames (as images, or as the vision
+  // helper's descriptions) — multimodal batch 8. `frameTimestampsMs` says
+  // which moments were sampled.
+  VIDEO_FRAMES_AND_TRANSCRIPT = 'VIDEO_FRAMES_AND_TRANSCRIPT',
 }
