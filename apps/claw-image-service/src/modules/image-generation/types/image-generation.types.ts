@@ -227,6 +227,12 @@ export type ImageProviderResponse = {
    * priced per image (`imageUnits` on finalize) rather than per token.
    */
   usage?: TokenUsage;
+  /**
+   * xAI's own price for the call, `usage.cost_in_usd_ticks`, raw. Logged next
+   * to our charge at settlement for RECONCILIATION only — never billed from:
+   * the charge comes from the seeded per-image row (rule 37 item 13).
+   */
+  providerCostTicks?: number;
 };
 
 export type GenerateImageResult = {
@@ -247,6 +253,8 @@ export type ImageSettlement = {
   hold: PaygHold;
   usage: PaygFinalizeUsage;
   calls: PaygFinalizeCalls;
+  /** The provider's self-reported cost (xAI ticks), for the reconciliation log only. */
+  providerCostTicks?: number;
 };
 
 /** What the provider produced, plus the open hold it will settle on (paid providers only). */

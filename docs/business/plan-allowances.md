@@ -115,6 +115,9 @@ Why each one is paid:
   Ten minutes on every paid tier, **including Unlimited**: ffmpeg frame
   extraction is local CPU that no PAYG surface prices yet, so no tier is
   uncapped until it is. Enforced by the video batches.
+  **Owner decision (2026-09-25): `maxVideoSeconds` = 600 for every paid plan,
+  Unlimited included — never `null`.** Revisit only if ffmpeg CPU becomes a
+  PAYG-metered surface.
 
 Stored as `Plan` columns (`allow_image_generation`, `allow_helper_vision`,
 `allow_text_to_speech`, `max_video_seconds`), edited in the admin plan editor.

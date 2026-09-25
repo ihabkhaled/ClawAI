@@ -49,6 +49,17 @@ export interface ModelCostSeedEntry {
    * alone.
    */
   supersedesSeededPrice?: boolean;
+  /**
+   * Set when this entry FILLS a gap for a model that was already callable
+   * before the row existed, and so was priced by routing's provider-fallback
+   * rate (the dearest TOKEN row of its provider). auth-service caches that
+   * fallback answer for up to 300 s under this exact (provider, model) key, so
+   * a freshly inserted row would otherwise be ignored until the TTL. When the
+   * gap is filled this run, the model is reported in `repriced` and its
+   * `routing.model_cost.published` event busts that cached fallback. Seed v8:
+   * the Grok image rows, which fell back to `grok-4` and settled at $0.
+   */
+  replacesFallbackRate?: boolean;
 }
 
 /** One model the seed re-priced, so the caller can bust downstream rate caches. */
@@ -78,6 +89,11 @@ export interface ModelCostSeedResult {
   outcome: SeedApplyOutcome;
   inserted: number;
   skipped: number;
-  /** Models whose seeded price was superseded by a new version this run. */
+  /**
+   * Models whose EFFECTIVE price changed this run, so the caller busts
+   * downstream rate caches for each: a seeded price superseded by a new
+   * version, or a gap filled over a cached provider-fallback rate
+   * (`replacesFallbackRate`).
+   */
   repriced: readonly ModelCostSeedRepricedModel[];
 }

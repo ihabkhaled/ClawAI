@@ -34,7 +34,10 @@ import {
  *    a model whose earlier SEEDED price this run superseded
  *    (`supersedesSeededPrice`): auth may hold the old rate for up to 300 s, so
  *    that model's event IS published, fire-and-forget. A lost event only
- *    means the old rate survives until the cache TTL.
+ *    means the old rate survives until the cache TTL. The same holds for a
+ *    gap filled over a PROVIDER-FALLBACK rate (`replacesFallbackRate`, seed
+ *    v8's Grok image rows): the model was callable before, auth cached the
+ *    fallback answer, so its event is published too.
  */
 @Injectable()
 export class ModelCostSeedService implements OnModuleInit {

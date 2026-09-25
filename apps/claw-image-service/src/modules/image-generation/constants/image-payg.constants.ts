@@ -125,3 +125,22 @@ export const OPENAI_GPT_IMAGE_PRICED_SIZES: readonly string[] = [
  * size this service did not expect is billed as the dearest one.
  */
 export const OPENAI_GPT_IMAGE_WORST_CASE_SIZE = '1536x1024';
+
+/**
+ * xAI Grok Imagine models that have their OWN per-image price row (routing
+ * model-cost seed v8: `grok-imagine-image` $0.02, `grok-imagine-image-2.0`
+ * $0.08). The prices live only in those rows (rule 37 item 13); this list only
+ * says which model ids ARE a row.
+ */
+export const GROK_PER_IMAGE_PRICED_MODELS: readonly string[] = [
+  'grok-imagine-image',
+  'grok-imagine-image-2.0',
+];
+
+/**
+ * The row an UNKNOWN Grok image model (`grok-imagine-image-quality`, a future
+ * release) is metered on: the dearest Grok image row. Without it the model has
+ * no row, routing's provider fallback prices it at `grok-4`'s TOKEN rate, and a
+ * zero-token finalize settles the image at $0. Never under-charge.
+ */
+export const GROK_IMAGE_WORST_CASE_MODEL = 'grok-imagine-image-2.0';

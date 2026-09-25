@@ -132,7 +132,19 @@ describe('generateWithXai over HTTP', () => {
       imageUrl: undefined,
       revisedPrompt: undefined,
       mimeType: 'image/jpeg',
+      // xAI's own price (200,000,000 ticks = $0.02), carried for the
+      // reconciliation log only — never billed from.
+      providerCostTicks: 200000000,
     });
+  });
+
+  it('omits providerCostTicks when xAI sends no usage block', async () => {
+    handler = () => ({ status: 200, body: { data: [{ b64_json: '/9j/XAI' }] } });
+
+    const result = await generateWithXai(`${baseUrl}/v1`, 'k', 'p', 'grok-imagine-image');
+
+    expect(result.providerCostTicks).toBeUndefined();
+    expect(result.mimeType).toBe('image/jpeg');
   });
 
   it('turns an xAI refusal into a classified failure', async () => {

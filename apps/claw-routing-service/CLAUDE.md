@@ -196,6 +196,17 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   image against the row for the size it sends (unknown size → the dearest row).
   New keys fill gaps, so no `routing.model_cost.published` event is needed
   (auth caches only rates it found). The v4 `gpt-image-1` row is untouched.
+- **Grok Imagine per image** (seed **v8**, `model-cost-list-prices-2026-v8`,
+  2026-09-25, owner-approved from docs.x.ai/developers/models as of
+  2026-08-07): `GROK:grok-imagine-image` $0.02, `GROK:grok-imagine-image-2.0`
+  $0.08 (top tier — image-service sends no quality/resolution), token rates 0.
+  Before v8 they had no row, so `providerFallbackSnapshot` priced them at
+  `grok-4`'s TOKEN rate and every Grok image settled at $0 — a per-unit model
+  must never be left to the token fallback. Both entries set
+  **`replacesFallbackRate: true`**: a filled gap over a model that was already
+  callable is reported in `repriced` (version 1), so the seed publishes
+  `routing.model_cost.published` and auth drops the cached fallback rate. Use
+  that flag for any future per-unit model that was reachable before its row.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
   (never an override, never a synced row) and whose rates differ gets that row

@@ -301,6 +301,35 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(7);
   });
 
+  // Grok Imagine (v8): xAI's image endpoint reports no tokens, so without a
+  // per-image row the provider fallback priced these at grok-4's TOKEN rate and
+  // every Grok image settled at $0. Owner decision 2026-09-25.
+  it('prices Grok Imagine images per image: $0.02 and the 2.0 top tier $0.08', () => {
+    const find = (modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'GROK' && e.modelKey === modelKey);
+    expect(find('grok-imagine-image')).toMatchObject({
+      imagePerUnitMicroUsd: 20_000,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+      replacesFallbackRate: true,
+    });
+    expect(find('grok-imagine-image-2.0')).toMatchObject({
+      imagePerUnitMicroUsd: 80_000,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+      replacesFallbackRate: true,
+    });
+    // Fills gaps — there was never a seeded Grok image row to supersede.
+    for (const key of ['grok-imagine-image', 'grok-imagine-image-2.0']) {
+      expect(find(key)?.supersedesSeededPrice ?? false).toBe(false);
+    }
+  });
+
+  it('is version 8, so installs that ran v7 pick up the Grok image prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(8);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v8');
+  });
+
   // Money is integer micro-USD everywhere in this platform. A float here would
   // reach a BigInt column and throw at insert time, on first boot.
   it('holds every rate as a non-negative integer', () => {
@@ -595,6 +624,55 @@ describe('ModelCostSeedRepository', () => {
 
       expect(transaction.modelCostVersion.findUnique).not.toHaveBeenCalled();
       expect(transaction.modelCostVersion.update).not.toHaveBeenCalled();
+    });
+
+    it('announces a gap filled over a provider-fallback rate as a re-price (version 1)', async () => {
+      transaction.modelCostVersion.findMany.mockResolvedValue([]);
+      const grokEntry = MODEL_COST_SEED_ENTRIES.find(
+        (e) => e.provider === 'GROK' && e.modelKey === 'grok-imagine-image',
+      );
+      expect(grokEntry).toBeDefined();
+      const entries = grokEntry === undefined ? [] : [grokEntry];
+
+      const result = await repository.applyOnce(seedInput({ entries }));
+
+      expect(result).toEqual({
+        outcome: SeedApplyOutcome.APPLIED,
+        inserted: 1,
+        skipped: 0,
+        repriced: [{ provider: 'GROK', modelKey: 'grok-imagine-image', version: 1 }],
+      });
+      const [args] = transaction.modelCostVersion.createMany.mock.calls[0] as [
+        { data: Array<Record<string, unknown>> },
+      ];
+      expect(args.data[0]).toMatchObject({
+        provider: 'GROK',
+        modelKey: 'grok-imagine-image',
+        version: 1,
+        imagePerUnitMicroUsd: 20_000n,
+        inputPerMillionMicroUsd: 0n,
+        outputPerMillionMicroUsd: 0n,
+        source: ModelCostSource.SEED,
+        isAdminOverride: false,
+        activeKey: 'GROK:grok-imagine-image',
+      });
+      // A fill never retires anything.
+      expect(transaction.modelCostVersion.update).not.toHaveBeenCalled();
+    });
+
+    it('does not announce a fallback-flagged model that already carries a price', async () => {
+      transaction.modelCostVersion.findMany.mockResolvedValue([
+        { provider: 'GROK', modelKey: 'grok-imagine-image-2.0' },
+      ]);
+      const entry = MODEL_COST_SEED_ENTRIES.find(
+        (e) => e.provider === 'GROK' && e.modelKey === 'grok-imagine-image-2.0',
+      );
+      const entries = entry === undefined ? [] : [entry];
+
+      const result = await repository.applyOnce(seedInput({ entries }));
+
+      expect(result).toMatchObject({ inserted: 0, skipped: 1, repriced: [] });
+      expect(transaction.modelCostVersion.createMany).not.toHaveBeenCalled();
     });
 
     it('writes the per-image price on a fresh install (gap fill)', async () => {

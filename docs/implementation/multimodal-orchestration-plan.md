@@ -106,12 +106,21 @@ matrix once the stack runs this code
 ### Open gaps collected across batches
 
 - **Deploy order is load-bearing:** auth → routing → file → image → chat (routing
-  seed v7 must land before image-service meters on sized `gpt-image-1@…` keys); dev
+  seed v7/v8 must land before image-service meters on sized `gpt-image-1@…` and
+  Grok per-image keys); dev
   containers need `service:rebuild` (shared packages, file-service `ffmpeg`), not a restart.
 - Transcription (4): local STT has no path; gpt-4o-(mini-)transcribe unseeded.
 - Video (7/8): no audit-service consumer for the `file.video_process_*` events;
-  ffmpeg CPU not PAYG-metered (so `unlimited` stays capped at 600 s); frame image
-  tokens estimated; research digest empty for a video still processing at send.
+  ffmpeg CPU not PAYG-metered; frame image tokens estimated; research digest
+  empty for a video still processing at send. **Video cap decided (owner,
+  2026-09-25):** `maxVideoSeconds` = 600 for every paid plan including
+  Unlimited, never `null` (`docs/business/plan-allowances.md`).
+- ~~Grok images settled at $0~~ — closed 2026-09-25: routing seed v8 prices
+  `grok-imagine-image` $0.02 and `grok-imagine-image-2.0` $0.08 per image
+  (unknown Grok image model → the 2.0 row); xAI `cost_in_usd_ticks` is logged
+  next to our charge for reconciliation. Deploy routing before image-service.
+- OpenAI live verification: **deferred — owner, no OpenAI credit** on the dev
+  key. Not a failure; gpt-image-1 / whisper-1 / tts-1 stay unit-gated only.
 - AUTO (8): modality-fit ranking only on the cloud-router path.
 - TTS (9): connector base URL not used for speech; no voice picker. (Fixed
   2026-09-25: a paid synthesis whose store fails now RELEASES its hold.)

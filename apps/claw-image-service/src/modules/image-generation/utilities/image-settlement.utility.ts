@@ -14,7 +14,9 @@ import { countReturnedImages } from './image-unit-count.utility';
  *  - IMAGES RETURNED, always. OpenAI's `/images/generations` reports no usage
  *    at all, so its rows are priced per image (`imagePerUnitMicroUsd`) and
  *    this count is the whole charge. Settling on zero tokens alone is what
- *    used to make every OpenAI image cost $0.
+ *    used to make every OpenAI image cost $0. xAI Grok reports no tokens
+ *    either (only its own `cost_in_usd_ticks`), so it is priced per image too
+ *    (routing seed v8); the ticks ride along for the reconciliation log.
  */
 export function imageSettlement(hold: PaygHold, response: ImageProviderResponse): ImageSettlement {
   const usage = response.usage;
@@ -27,5 +29,8 @@ export function imageSettlement(hold: PaygHold, response: ImageProviderResponse)
       reasoningTokens: usage?.reasoningTokens ?? 0,
     },
     calls: { toolCalls: 0, imageUnits: countReturnedImages(response) },
+    ...(response.providerCostTicks === undefined
+      ? {}
+      : { providerCostTicks: response.providerCostTicks }),
   };
 }

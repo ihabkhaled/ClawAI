@@ -10200,7 +10200,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 32
+        "testFiles": 33
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10970,7 +10970,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1634,
+    "totalTestFiles": 1635,
     "workspaceCount": 25
   }
 }

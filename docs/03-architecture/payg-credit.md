@@ -332,18 +332,27 @@ per audio token. whisper-1's $0.006/min is `100` micro-USD per second.
   per-image row is neither refused as "free local" nor used to price an unknown
   chat model's output at $0.
 
-| Surface                            | Model rows priced by                | Reserve units                                 | Finalize units                        |
-| ---------------------------------- | ----------------------------------- | --------------------------------------------- | ------------------------------------- |
-| `IMAGE` (OpenAI)                   | `imagePerUnitMicroUsd`              | `imageUnits: 1`                               | images returned                       |
-| `IMAGE` (Gemini)                   | tokens (`usageMetadata`)            | `imageUnits: 1` (no per-image rate → adds 0)  | images returned + tokens              |
-| `TRANSCRIPTION` (OpenAI whisper-1) | `audioPerUnitMicroUsd` (100 µUSD/s) | `audioSeconds`: ceil(bytes / 1,000), ≤ 7,200  | `verbose_json` `duration`, rounded up |
-| `TRANSCRIPTION` (Gemini)           | tokens (`usageMetadata`)            | `promptTokens` 32/s + 128; output 8/s + 1,024 | reported tokens                       |
-| `TTS` (OpenAI tts-1 / tts-1-hd)    | `ttsPerCharacterMicroUsd` (15 / 30) | `ttsCharacters`: code points sent, ≤ 4,000    | characters sent                       |
-| `TTS` (Gemini `…-tts`)             | tokens (`usageMetadata`)            | prompt = text + 16; output 4/char (≤ ceiling) | reported tokens                       |
+| Surface                            | Model rows priced by                 | Reserve units                                 | Finalize units                        |
+| ---------------------------------- | ------------------------------------ | --------------------------------------------- | ------------------------------------- |
+| `IMAGE` (OpenAI)                   | `imagePerUnitMicroUsd`               | `imageUnits: 1`                               | images returned                       |
+| `IMAGE` (Gemini)                   | tokens (`usageMetadata`)             | `imageUnits: 1` (no per-image rate → adds 0)  | images returned + tokens              |
+| `IMAGE` (xAI Grok Imagine)         | `imagePerUnitMicroUsd` ($0.02/$0.08) | `imageUnits: 1`                               | images returned                       |
+| `TRANSCRIPTION` (OpenAI whisper-1) | `audioPerUnitMicroUsd` (100 µUSD/s)  | `audioSeconds`: ceil(bytes / 1,000), ≤ 7,200  | `verbose_json` `duration`, rounded up |
+| `TRANSCRIPTION` (Gemini)           | tokens (`usageMetadata`)             | `promptTokens` 32/s + 128; output 8/s + 1,024 | reported tokens                       |
+| `TTS` (OpenAI tts-1 / tts-1-hd)    | `ttsPerCharacterMicroUsd` (15 / 30)  | `ttsCharacters`: code points sent, ≤ 4,000    | characters sent                       |
+| `TTS` (Gemini `…-tts`)             | tokens (`usageMetadata`)             | prompt = text + 16; output 4/char (≤ ceiling) | reported tokens                       |
 
 Prices live only in `ModelCostVersion` rows (seeded list prices in
 `model-cost-seed.constants.ts`, seed v4 for the OpenAI image rows, seed v5 for
-whisper-1, seed v6 for tts-1 / tts-1-hd / gemini-2.5-flash-preview-tts).
+whisper-1, seed v6 for tts-1 / tts-1-hd / gemini-2.5-flash-preview-tts, seed
+v7 for the sized `gpt-image-1@<w>x<h>` rows, seed v8 for Grok Imagine:
+`grok-imagine-image` $0.02, `grok-imagine-image-2.0` $0.08 — its top tier,
+since image-service pins no xAI quality/resolution; an unknown Grok image model
+is metered on the 2.0 row). Before v8 Grok images had no row, the provider
+fallback priced them at `grok-4`'s TOKEN rate, and a zero-token finalize settled
+them at $0. A row that fills a gap over such a cached fallback rate is flagged
+`replacesFallbackRate`, so the seed publishes `routing.model_cost.published`
+for it and auth drops the cached fallback answer.
 
 **Settle after the deliverable is persisted.** The measured units are captured
 from the provider response at once, but the hold is finalized only after the

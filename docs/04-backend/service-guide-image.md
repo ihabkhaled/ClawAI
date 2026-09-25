@@ -122,7 +122,8 @@ cancel) and is absorbing: no later write overwrites it. See
 - Endpoint: POST `https://api.x.ai/v1/images/generations` (no admin base URL configured — falls back to `XAI_DEFAULT_BASE_URL`)
 - Body: `{ model, prompt, n: 1, response_format: 'b64_json' }` — `size`, `quality`, `style` are OpenAI-only and never sent
 - Response: `{ data: [{ b64_json, mime_type: "image/jpeg" }], usage: { cost_in_usd_ticks } }` — verified live against `grok-imagine-image`, `grok-imagine-image-2.0`, `grok-imagine-image-quality` on 2026-09-23
-- `usage.cost_in_usd_ticks` is a price, not a token count. Finalize carries `imageUnits: 1`, but no Grok image model has a per-image price row yet, so a Grok image still settles at zero tokens — seed an `imagePerUnitMicroUsd` row for it to charge (open gap)
+- `usage.cost_in_usd_ticks` is a price, not a token count (1 tick = $1e-10; 200,000,000 = $0.02). It is carried as `providerCostTicks` and logged on the settlement line (`imageSettlement … heldMicroUsd=<our charge> providerCostTicks=<xAI>`) for reconciliation only — never billed from
+- Metered per image (routing seed v8, 2026-09-25): reserve `imageUnits: 1` against `GROK:grok-imagine-image` ($0.02) or `GROK:grok-imagine-image-2.0` ($0.08, top tier — no quality/resolution is sent, so xAI picks); finalize on images returned. `meteredImageModelKey` sends any OTHER Grok image model (`grok-imagine-image-quality`, a future id) to the dearest row, `grok-imagine-image-2.0`. Before v8 there was no row: routing's provider fallback priced Grok images at `grok-4`'s token rate and the zero-token finalize settled them at $0. No row at all → auth refuses `PAYG_MODEL_UNPRICED` (402 on the row), never a $0 image. Deploy routing before image-service
 
 ### Stable Diffusion (Local)
 

@@ -191,7 +191,14 @@ apply to installs that already ran v2. v4 priced OpenAI images per image, v5
 `whisper-1` per second, v6 TTS per character, and v7 (2026-09-25) added
 size-keyed `gpt-image-1@<w>x<h>` rows (1024x1024 $0.167, 1024x1536 / 1536x1024
 $0.25) that image-service meters against — one immutable row per priced size,
-never a price constant in image-service.
+never a price constant in image-service. v8 (2026-09-25) priced xAI Grok
+Imagine per image: `GROK:grok-imagine-image` $0.02 and
+`GROK:grok-imagine-image-2.0` $0.08 (top tier; source docs.x.ai/developers/models
+as of 2026-08-07), token rates 0. They fill gaps, but are flagged
+`replacesFallbackRate`: the models were callable before and priced by the
+provider fallback (grok-4 tokens → $0 on a zero-token image finalize), which
+auth may still cache, so the seed publishes `routing.model_cost.published` for
+each filled row (identity + version 1, never a rate).
 
 Seeded rows are `source: SEED, confidence: ESTIMATED, isAdminOverride: false`,
 so an automated sync may refresh them later. The seed only ever **fills a gap** —

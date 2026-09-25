@@ -26,8 +26,16 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// reserves against the row for the size it sends (an unknown size against the
 /// dearest row), so a portrait/landscape image is no longer charged the square
 /// price. New keys — they fill gaps; the v4 `gpt-image-1` row is untouched.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v7';
-export const MODEL_COST_SEED_VERSION = 7;
+///
+/// v8 (2026-09-25): xAI Grok Imagine images priced PER IMAGE
+/// (`imagePerUnitMicroUsd`): `grok-imagine-image` $0.02, `grok-imagine-image-2.0`
+/// $0.08 (its top tier — image-service pins neither quality nor resolution for
+/// xAI). Until now neither had a row, so the provider fallback priced them at
+/// `grok-4`'s TOKEN rate and a zero-token finalize settled every Grok image at
+/// $0. New keys fill gaps, flagged `replacesFallbackRate` so auth's cached
+/// fallback answer for them is busted by `routing.model_cost.published`.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v8';
+export const MODEL_COST_SEED_VERSION = 8;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -269,6 +277,56 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     reasoningPerMillionMicroUsd: 500_000,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.CHEAP,
+  }),
+  // ── xAI Grok Imagine images: PER-IMAGE list price (unit metering, seed v8) ─
+  //
+  // Source: xAI's public model/pricing docs, as of 2026-08-07, researched and
+  // approved by the owner on 2026-09-25 and NOT re-fetched here:
+  //   https://docs.x.ai/developers/models/grok-imagine-image
+  //   https://docs.x.ai/developers/models
+  // grok-imagine-image is $0.02 per output image at both 1K and 2K.
+  // grok-imagine-image-2.0 is $0.04 (low/1K) … $0.08 (medium/2K) per image.
+  //
+  // WHICH TIER. image-service sends xAI only `model`, `prompt`, `n: 1` and
+  // `response_format` — no quality and no resolution (xAI documents neither as
+  // an OpenAI-style parameter), so the tier is xAI's choice. 2.0 is priced at
+  // its TOP tier ($0.08) so it is never under-charged.
+  //
+  // WHY PER IMAGE, TOKEN RATES 0. `/images/generations` on xAI returns no token
+  // usage (only `usage.cost_in_usd_ticks`, which image-service logs next to our
+  // charge for reconciliation and never bills from). Token rates are
+  // published-and-zero, not unknown; the per-image column carries the money.
+  //
+  // WHY `replacesFallbackRate`. Both models were callable before this row
+  // existed, so routing priced them by the provider fallback (grok-4, a TOKEN
+  // row) and auth may hold that answer in its 300 s cache. The flag publishes
+  // `routing.model_cost.published` for them when the gap is filled.
+  //
+  // An UNKNOWN Grok image model (e.g. grok-imagine-image-quality) is metered by
+  // image-service against the dearest row here, grok-imagine-image-2.0.
+  Object.freeze({
+    provider: 'GROK',
+    modelKey: 'grok-imagine-image',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    imagePerUnitMicroUsd: 20_000,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GROK',
+    modelKey: 'grok-imagine-image-2.0',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 80_000,
+    replacesFallbackRate: true,
   }),
 
   // ── Image generation ─────────────────────────────────────────────────────

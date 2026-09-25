@@ -363,7 +363,7 @@ The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and re
 
 ## PAYG credit metering (C4 — U3/U4)
 
-Every OpenAI and Gemini image generation is metered. Local Stable Diffusion and
+Every OpenAI, Gemini and xAI Grok image generation is metered. Local Stable Diffusion and
 ComfyUI are not — they run on hardware the operator already owns.
 
 | Where                                  | What                                                                                                                                                                   |
@@ -397,16 +397,9 @@ ComfyUI are not — they run on hardware the operator already owns.
    latches and `findNextFallback` returns only `IMAGE_LOCAL_PROVIDERS` entries —
    PAYG is blocked, local keeps working.
 
-**Known pricing gap (reported, not worked around).** An image has no token
-usage on OpenAI, so `finalize` settles at zero tokens and the per-unit rate is
-supposed to carry the cost — but `calculateCostMicroUsd` in
-`packages/shared-utilities/src/weighted-tokens/weighted-tokens.utility.ts` does
-not sum `imagePerUnitMicroUsd`, and `RawTokenBreakdown` has no field to carry an
-image count. Separately, `hasUsablePricing` requires a non-null input AND output
-per-million rate, so a model priced only per image is refused with
-`PAYG_MODEL_UNPRICED` rather than charged. Until both are fixed, a DALL-E image
-either costs $0 or is blocked; a Gemini image bills correctly off its real
-`usageMetadata`.
+**Pricing gap closed (2026-09-25).** `calculateCostMicroUsd` now sums
+`imageUnits x imagePerUnitMicroUsd` and auth accepts a per-unit-only row, so
+OpenAI and Grok images bill per image and Gemini off its `usageMetadata`.
 
 ## Cloud providers and the connector-borrowing pattern (2026-09-23)
 
@@ -478,6 +471,32 @@ same row. The OpenAI call itself still names `gpt-image-1`.
 - Tests: `image-price-key.utility.spec.ts`,
   `image-execution.manager.payg.spec.ts` (each size → its key; finalize settles
   the reserve's own hold).
+
+## Grok per-image pricing (2026-09-25)
+
+**Decision (owner):** xAI Grok Imagine is billed per image from routing
+model-cost seed **v8**: `GROK:grok-imagine-image` $0.02 (1K and 2K),
+`GROK:grok-imagine-image-2.0` $0.08 — its top tier (medium/2K), because
+`generateWithXai` sends no quality or resolution. Source:
+docs.x.ai/developers/models and docs.x.ai/developers/models/grok-imagine-image,
+as of 2026-08-07.
+
+- **Why it settled $0 before:** no row existed, routing's provider fallback
+  priced the model at `grok-4`'s TOKEN rate, and xAI reports no tokens, so the
+  `imageUnits: 1` finalize met a null per-image rate = $0.
+- `meteredImageModelKey(provider, model, w, h)`: for `IMAGE_GROK`, a model in
+  `GROK_PER_IMAGE_PRICED_MODELS` meters on its own row; any other Grok image
+  model on `GROK_IMAGE_WORST_CASE_MODEL` (`grok-imagine-image-2.0`) — never the
+  token fallback. The provider call still names the picked model.
+- No row at all → auth refuses `PAYG_MODEL_UNPRICED` → 402 stored on the row.
+- `usage.cost_in_usd_ticks` (1 tick = $1e-10) rides as `providerCostTicks` into
+  the settlement log: `imageSettlement … heldMicroUsd=<ours> providerCostTicks=<xAI>`.
+  Reconciliation only; never billed from.
+- Deploy order: routing (seed v8) BEFORE image-service.
+- Tests: `image-price-key.utility.spec.ts`,
+  `image-execution.manager.grok-payg.spec.ts` (reserve imageUnits 1 on the
+  grok row → 20,000 µUSD consumption; unknown model → 2.0 row; unpriced → 402),
+  `provider-adapters.http.spec.ts` (ticks passthrough).
 
 ## `image.failed` carries `supersededById` (2026-09-25)
 

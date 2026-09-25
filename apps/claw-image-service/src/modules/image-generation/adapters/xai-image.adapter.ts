@@ -62,10 +62,13 @@ export const generateWithXai = async (
   logger.log(
     `generateWithXai: image generated — model=${model} hasBase64=${String(first.b64_json !== undefined)} costTicks=${String(response.usage?.cost_in_usd_ticks ?? 'n/a')}`,
   );
+  const costTicks = response.usage?.cost_in_usd_ticks;
   return {
     imageBase64: first.b64_json,
     imageUrl: first.url,
     revisedPrompt: first.revised_prompt,
     mimeType: first.mime_type ?? XAI_DEFAULT_IMAGE_MIME_TYPE,
+    // Reconciliation only: the charge comes from the seeded per-image row.
+    ...(costTicks === undefined ? {} : { providerCostTicks: costTicks }),
   };
 };

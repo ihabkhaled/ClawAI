@@ -126,8 +126,11 @@ export class ImageExecutionManager {
       return;
     }
     await this.payg.finalize(settlement.hold, settlement.usage, settlement.calls);
+    // `providerCostTicks` is xAI's self-reported price, logged for
+    // reconciliation against our charge (the hold = imageUnits x the seeded
+    // per-image rate). It is never billed from.
     this.logger.log(
-      `imageSettlement reservationId=${String(settlement.hold.reservationId)} outcome=FINALIZED imageUnits=${String(settlement.calls.imageUnits ?? 0)}`,
+      `imageSettlement reservationId=${String(settlement.hold.reservationId)} outcome=FINALIZED imageUnits=${String(settlement.calls.imageUnits ?? 0)} heldMicroUsd=${String(settlement.hold.heldMicroUsd)} providerCostTicks=${String(settlement.providerCostTicks ?? 'n/a')}`,
     );
   }
 
@@ -274,7 +277,7 @@ export class ImageExecutionManager {
     const hold = await this.reserveImageHold(
       params,
       connectorProvider,
-      meteredImageModelKey(params.model, width, height),
+      meteredImageModelKey(params.provider, params.model, width, height),
     );
 
     try {
@@ -358,14 +361,15 @@ export class ImageExecutionManager {
         requestId: params.requestId,
         provider: connectorProvider,
         // The PRICE row, not the provider model: `gpt-image-1@1536x1024` for a
-        // size-priced model (seed v7), the model id otherwise. Finalize settles
-        // on this same reservation, so reserve and finalize price identically.
+        // size-priced model (seed v7), the dearest Grok row for an unknown Grok
+        // image model (seed v8), the model id otherwise. Finalize settles on
+        // this same reservation, so reserve and finalize price identically.
         model: meteredModel,
         surface: PaygSurface.IMAGE,
         promptTokens: IMAGE_PAYG_PROMPT_TOKENS,
         cachedPromptTokens: 0,
         requestedMaxOutputTokens: IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
-        // EXPECTED images. On a per-image price (OpenAI) this is what the hold
+        // EXPECTED images. On a per-image price (OpenAI, Grok) this is what the hold
         // is made of; on a token price (Gemini) the rate row has no per-image
         // column and it adds nothing.
         imageUnits: IMAGE_PAYG_IMAGES_PER_REQUEST,

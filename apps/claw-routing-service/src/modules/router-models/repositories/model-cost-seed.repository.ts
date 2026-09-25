@@ -98,7 +98,7 @@ export class ModelCostSeedRepository {
         });
       }
 
-      const repriced = await ModelCostSeedRepository.supersedeSeededPrices(
+      const superseded = await ModelCostSeedRepository.supersedeSeededPrices(
         transaction,
         input.entries.filter(
           (entry) =>
@@ -107,19 +107,26 @@ export class ModelCostSeedRepository {
         ),
       );
 
+      // A filled gap whose model was priced by the provider fallback until now:
+      // auth may still hold that fallback rate, so it is announced like a
+      // re-price (identity + version 1, never a rate).
+      const filledOverFallback: ModelCostSeedRepricedModel[] = missing
+        .filter((entry) => entry.replacesFallbackRate === true)
+        .map(({ provider, modelKey }) => ({ provider, modelKey, version: 1 }));
+
       await transaction.seedExecution.update({
         where: { name_version: { name: input.name, version: input.version } },
         data: { status: SEED_STATUS_COMPLETED, completedAt: new Date(), error: null },
       });
 
       this.logger.log(
-        `applyOnce: inserted ${String(missing.length)} price(s), superseded ${String(repriced.length)} seeded price(s), left the rest of ${String(alreadyPriced.size)} already-priced model(s) untouched for ${input.name} v${String(input.version)}`,
+        `applyOnce: inserted ${String(missing.length)} price(s) (${String(filledOverFallback.length)} over a fallback rate), superseded ${String(superseded.length)} seeded price(s), left the rest of ${String(alreadyPriced.size)} already-priced model(s) untouched for ${input.name} v${String(input.version)}`,
       );
       return {
         outcome: SeedApplyOutcome.APPLIED,
         inserted: missing.length,
-        skipped: input.entries.length - missing.length - repriced.length,
-        repriced,
+        skipped: input.entries.length - missing.length - superseded.length,
+        repriced: [...superseded, ...filledOverFallback],
       };
     });
   }

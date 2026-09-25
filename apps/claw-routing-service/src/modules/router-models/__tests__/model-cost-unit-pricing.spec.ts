@@ -75,6 +75,39 @@ describe('ModelCostSeedService — re-priced models', () => {
     });
   });
 
+  it('publishes for a Grok image row filled over a cached fallback rate', async () => {
+    const publish = vi.fn().mockResolvedValue(undefined);
+    const module = await Test.createTestingModule({
+      providers: [
+        ModelCostSeedService,
+        {
+          provide: ModelCostSeedRepository,
+          useValue: {
+            applyOnce: vi.fn().mockResolvedValue({
+              outcome: SeedApplyOutcome.APPLIED,
+              inserted: 2,
+              skipped: 0,
+              repriced: [
+                { provider: 'GROK', modelKey: 'grok-imagine-image', version: 1 },
+                { provider: 'GROK', modelKey: 'grok-imagine-image-2.0', version: 1 },
+              ],
+            }),
+          },
+        },
+        { provide: RabbitMQService, useValue: { publish } },
+      ],
+    }).compile();
+
+    await module.get(ModelCostSeedService).seed();
+
+    expect(publish).toHaveBeenCalledTimes(2);
+    expect(publish).toHaveBeenCalledWith(EventPattern.ROUTING_MODEL_COST_PUBLISHED, {
+      provider: 'GROK',
+      modelKey: 'grok-imagine-image-2.0',
+      version: 1,
+    });
+  });
+
   it('survives a broker failure — the price is already committed', async () => {
     const module = await Test.createTestingModule({
       providers: [
