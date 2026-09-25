@@ -3592,6 +3592,13 @@
           "docker/docker-compose.dev.services.yml",
           "docker/docker-compose.prod.services.yml"
         ],
+        "name": "crawl4ai"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
         "name": "file-generation-service"
       },
       {
@@ -3600,6 +3607,48 @@
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "file-service"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "firecrawl-api"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "firecrawl-playwright"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "firecrawl-postgres"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "firecrawl-rabbitmq"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "firecrawl-redis"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "flaresolverr"
       },
       {
         "files": [
@@ -4078,6 +4127,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "CLAW_SCRAPER_PROFILES"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "CLIENT_LOGS_MONGODB_URI"
       },
       {
@@ -4324,6 +4378,16 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "FILE_STORAGE_PATH"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "FIRECRAWL_BULL_AUTH_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "FIRECRAWL_POSTGRES_PASSWORD"
       },
       {
         "confidence": "verified",
@@ -10807,9 +10871,9 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 44,
+    "dockerServiceCount": 51,
     "endpointCount": 687,
-    "envVarCount": 356,
+    "envVarCount": 359,
     "eventCount": 181,
     "frontendRouteCount": 155,
     "localeCount": 13,

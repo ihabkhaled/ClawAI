@@ -766,6 +766,8 @@ RABBIT_PASS=$(gen_password)
 ADMIN_PASS=$(gen_password)
 INTER_SERVICE_AUTH_TOKEN=$(gen_secret_hex)
 GITHUB_WEBHOOK_SECRET=$(gen_secret_hex)
+FIRECRAWL_POSTGRES_PASSWORD=$(gen_secret_hex)
+FIRECRAWL_BULL_AUTH_KEY=$(gen_secret_hex)
 GITLAB_WEBHOOK_SECRET=$(gen_secret_hex)
 SLACK_SIGNING_SECRET=$(gen_secret_hex)
 JIRA_WEBHOOK_SECRET=$(gen_secret_hex)
@@ -1627,6 +1629,13 @@ LLAMACPP_PORT=4017
 
 # Research service: headless-browser fallback (ADR-094).
 RESEARCH_HEADLESS_RENDER_ENABLED=true
+
+# Research fetch escalation sidecars (ADR-121): comma-separated subset of
+# crawl4ai,flaresolverr,firecrawl. Empty = none. Starting one does not enable
+# it — enable the strategy DB-level afterwards. See .env.example.
+CLAW_SCRAPER_PROFILES=
+FIRECRAWL_POSTGRES_PASSWORD=${FIRECRAWL_POSTGRES_PASSWORD}
+FIRECRAWL_BULL_AUTH_KEY=${FIRECRAWL_BULL_AUTH_KEY}
 
 # Workspace scheduled sync (Stream 01 Phase 5)
 WORKSPACE_SCHEDULER_ENABLED=true

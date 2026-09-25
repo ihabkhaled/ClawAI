@@ -313,6 +313,21 @@ customer billing, and admin billing. Distributed deployments set
 `CLAW_PAYMENT_ORIGIN`; neither configuration exposes `/api/v1/internal/payments`
 or any other internal payment contract.
 
+### Scraping sidecars (`claw-scrapers` network, ADR-121)
+
+research-service's fetch escalation chain can use three optional sidecars,
+each behind its own compose profile in `docker-compose.{dev,prod}.services.yml`:
+`crawl4ai` (~4 GB), `flaresolverr` (~1.5 GB) and `firecrawl` (API + Playwright
+service + private Redis/RabbitMQ/Postgres, 8-12 GB). `CLAW_SCRAPER_PROFILES`
+in `.env` (e.g. `crawl4ai,flaresolverr`) decides which exist; `scripts/claw.sh`
+adds them to `COMPOSE_PROFILES`, and `down`/`status` always include all three.
+They publish no port, have no nginx route, and sit only on the compose-managed
+`claw-scrapers` bridge — research-service is the one ClawAI container on both
+networks, so a sidecar cannot reach any other service or database. A running
+sidecar is still unused until its tier is enabled DB-level
+(`PATCH /api/v1/research/fetch-strategies/<KIND>`); see
+`skills/add-a-fetch-strategy.md`.
+
 ---
 
 ## Resource Requirements

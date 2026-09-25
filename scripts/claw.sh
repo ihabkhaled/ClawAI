@@ -73,6 +73,32 @@ if [ "$LOCAL_AI" = "true" ]; then
   export COMPOSE_PROFILES=local-ai
 fi
 
+# ─── Scraping sidecars (ADR-121) ─────────────────────────────────────────────
+# CLAW_SCRAPER_PROFILES names which research-service scraping sidecars exist:
+# a comma-separated subset of crawl4ai,flaresolverr,firecrawl (default: none).
+# Each is a compose profile, so an unnamed one is never created. Starting a
+# profile does not enable the strategy — that is DB-level, per ADR-121.
+# Precedence: CLAW_SCRAPER_PROFILES env > .env > none.
+ALL_SCRAPER_PROFILES="crawl4ai,flaresolverr,firecrawl"
+SCRAPER_PROFILES_RAW="${CLAW_SCRAPER_PROFILES:-}"
+if [ -z "$SCRAPER_PROFILES_RAW" ] && [ -f "$PROJECT_ROOT/.env" ]; then
+  SCRAPER_PROFILES_RAW="$(grep -E '^CLAW_SCRAPER_PROFILES=' "$PROJECT_ROOT/.env" | tail -1 | cut -d= -f2- | tr -d '\r')"
+fi
+SCRAPER_PROFILES=""
+IFS=',' read -r -a _requested_scrapers <<< "$SCRAPER_PROFILES_RAW"
+for _scraper in "${_requested_scrapers[@]}"; do
+  _scraper="$(echo "$_scraper" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+  case "$_scraper" in
+    crawl4ai|flaresolverr|firecrawl)
+      SCRAPER_PROFILES="${SCRAPER_PROFILES:+$SCRAPER_PROFILES,}$_scraper" ;;
+    "") ;;
+    *) echo "WARNING: ignoring unknown CLAW_SCRAPER_PROFILES entry '$_scraper'" >&2 ;;
+  esac
+done
+if [ -n "$SCRAPER_PROFILES" ]; then
+  export COMPOSE_PROFILES="${COMPOSE_PROFILES:+$COMPOSE_PROFILES,}$SCRAPER_PROFILES"
+fi
+
 # Compose files for this mode
 if [ "$MODE" = "prod" ]; then
   DB_FILE="$PROJECT_ROOT/docker/docker-compose.prod.databases.yml"
@@ -308,7 +334,8 @@ case "$1" in
     # Force the local-ai profile for teardown so any local runtime containers
     # started in a previous `--local-ai up` are removed even when this `down`
     # was invoked without the flag. Harmless when nothing profiled is running.
-    export COMPOSE_PROFILES=local-ai
+    # Scraper profiles too (ADR-121), so sidecars from an earlier run go as well.
+    export COMPOSE_PROFILES="local-ai,$ALL_SCRAPER_PROFILES"
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     # shellcheck disable=SC2086
@@ -484,7 +511,7 @@ case "$1" in
   status)
     detect_gpu
     # Force the profile so the status view includes any running local runtime.
-    export COMPOSE_PROFILES=local-ai
+    export COMPOSE_PROFILES="local-ai,$ALL_SCRAPER_PROFILES"
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "=== ClawAI Status ($MODE mode, gpu=$GPU_VENDOR, local-ai=$LOCAL_AI) ==="

@@ -711,6 +711,8 @@ if ([string]::IsNullOrWhiteSpace($rabbitPass)) { $rabbitPass = New-Password }
 $adminPass = New-Password
 $interServiceToken = New-SecretHex
 $githubWebhookSecret = New-SecretHex
+$firecrawlPostgresPassword = New-SecretHex
+$firecrawlBullAuthKey = New-SecretHex
 $gitlabWebhookSecret = New-SecretHex
 $slackSigningSecret = New-SecretHex
 $jiraWebhookSecret = New-SecretHex
@@ -1462,6 +1464,13 @@ LLAMACPP_PORT=4017
 
 # Research service: headless-browser fallback (ADR-094).
 RESEARCH_HEADLESS_RENDER_ENABLED=true
+
+# Research fetch escalation sidecars (ADR-121): comma-separated subset of
+# crawl4ai,flaresolverr,firecrawl. Empty = none. Starting one does not enable
+# it - enable the strategy DB-level afterwards. See .env.example.
+CLAW_SCRAPER_PROFILES=
+FIRECRAWL_POSTGRES_PASSWORD=$firecrawlPostgresPassword
+FIRECRAWL_BULL_AUTH_KEY=$firecrawlBullAuthKey
 
 # Workspace scheduled sync (Stream 01 Phase 5)
 WORKSPACE_SCHEDULER_ENABLED=true

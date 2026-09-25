@@ -64,6 +64,13 @@
         "docker/docker-compose.dev.services.yml",
         "docker/docker-compose.prod.services.yml"
       ],
+      "name": "crawl4ai"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
       "name": "file-generation-service"
     },
     {
@@ -72,6 +79,48 @@
         "docker/docker-compose.prod.services.yml"
       ],
       "name": "file-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "firecrawl-api"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "firecrawl-playwright"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "firecrawl-postgres"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "firecrawl-rabbitmq"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "firecrawl-redis"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "flaresolverr"
     },
     {
       "files": [

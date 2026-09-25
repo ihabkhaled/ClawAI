@@ -678,6 +678,8 @@ services:
       start_period: 45s
     networks:
       - claw-network
+      # The only ClawAI container on the isolated scraper network (ADR-121).
+      - claw-scrapers
 
   # ---------------------------------------------------------------------------
   payment-service:
@@ -931,7 +933,210 @@ services:
     networks:
       - claw-network
 
+
+  # ---------------------------------------------------------------------------
+  # Scraping sidecars for research-service's fetch escalation chain (ADR-121)
+  # ---------------------------------------------------------------------------
+  # Each sits behind its OWN compose profile and is never created unless
+  # CLAW_SCRAPER_PROFILES in .env names it (scripts/claw.sh maps that to
+  # COMPOSE_PROFILES), e.g. CLAW_SCRAPER_PROFILES=crawl4ai,flaresolverr.
+  #
+  # Internal-only: no published port, no nginx route, and attached ONLY to the
+  # isolated `claw-scrapers` network — no route to any ClawAI service,
+  # database, Redis or RabbitMQ. research-service is the one container on both
+  # networks. Starting a profile does NOT turn the strategy on: enablement is
+  # DB-level (FetchStrategyConfig, seeded DISABLED) — start the profile, then
+  # PATCH /api/v1/research/fetch-strategies/<KIND> {"enabled": true}.
+  # Firecrawl's own Redis/RabbitMQ/Postgres live here (not in the databases
+  # file) because they are private to it and must share its compose run for
+  # depends_on to work.
+  crawl4ai:
+    labels:
+      claw.service: crawl4ai
+    logging: *claw-logging
+    profiles: ['crawl4ai']
+    # Never older than 0.9.4 (2026-09-23): it closed two SSRF paths (robots.txt
+    # fetch, link preview) and an env leak through untrusted config.
+    image: unclecode/crawl4ai:0.9.4
+    container_name: claw-crawl4ai
+    restart: unless-stopped
+    shm_size: '1gb'
+    mem_limit: 4g
+    pids_limit: 512
+    environment:
+      CRAWL4AI_MAX_TIMEOUT_MS: '60000'
+    healthcheck:
+      test: ['CMD', 'curl', '-fs', 'http://localhost:11235/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - claw-scrapers
+
+  flaresolverr:
+    labels:
+      claw.service: flaresolverr
+    logging: *claw-logging
+    profiles: ['flaresolverr']
+    # Used ONLY after a JS-interstitial signal on a robots-allowed URL; the
+    # escalation policy never sends a captcha, 401, 451 or disallow here.
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
+    container_name: claw-flaresolverr
+    restart: unless-stopped
+    mem_limit: 1536m
+    environment:
+      LOG_LEVEL: info
+      TZ: UTC
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fs http://localhost:8191/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - claw-scrapers
+
+  # Firecrawl self-host: API + its Playwright service + its own Redis,
+  # RabbitMQ and Postgres. Together 8-12 GB of RAM — the heaviest profile.
+  # Images pinned by digest (Firecrawl publishes no semver tags).
+  firecrawl-api:
+    labels:
+      claw.service: firecrawl-api
+    logging: *claw-logging
+    profiles: ['firecrawl']
+    image: ghcr.io/firecrawl/firecrawl:latest@sha256:9679231e2e5b1433a1dec02d60eed2c573bff9d2478655561687b696b1e1857d
+    container_name: claw-firecrawl-api
+    restart: unless-stopped
+    command: ['node', 'dist/src/harness.js', '--start-docker']
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    mem_limit: 8g
+    environment:
+      HOST: '0.0.0.0'
+      PORT: '3002'
+      EXTRACT_WORKER_PORT: '3004'
+      WORKER_PORT: '3005'
+      ENV: local
+      USE_DB_AUTHENTICATION: 'false'
+      REDIS_URL: redis://firecrawl-redis:6379
+      REDIS_RATE_LIMIT_URL: redis://firecrawl-redis:6379
+      PLAYWRIGHT_MICROSERVICE_URL: http://firecrawl-playwright:3000/scrape
+      NUQ_RABBITMQ_URL: amqp://firecrawl-rabbitmq:5672
+      POSTGRES_HOST: firecrawl-postgres
+      POSTGRES_PORT: '5432'
+      POSTGRES_USER: firecrawl
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-firecrawl-internal}
+      POSTGRES_DB: firecrawl
+      BULL_AUTH_KEY: ${FIRECRAWL_BULL_AUTH_KEY:-}
+      NUM_WORKERS_PER_QUEUE: '4'
+      CRAWL_CONCURRENT_REQUESTS: '5'
+      MAX_CONCURRENT_JOBS: '3'
+      BROWSER_POOL_SIZE: '3'
+      HARNESS_STARTUP_TIMEOUT_MS: '60000'
+    depends_on:
+      firecrawl-redis:
+        condition: service_healthy
+      firecrawl-rabbitmq:
+        condition: service_healthy
+      firecrawl-postgres:
+        condition: service_healthy
+      firecrawl-playwright:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "node -e \"fetch('http://localhost:3002/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    networks:
+      - claw-scrapers
+
+  firecrawl-playwright:
+    labels:
+      claw.service: firecrawl-playwright
+    logging: *claw-logging
+    profiles: ['firecrawl']
+    image: ghcr.io/firecrawl/playwright-service:latest@sha256:df1a393ce8bfc3801570a826a9b0dcc400ae48789adb4a0ad9d6cbf0229b059b
+    container_name: claw-firecrawl-playwright
+    restart: unless-stopped
+    mem_limit: 4g
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp/.cache:noexec,nosuid,size=1g
+    environment:
+      PORT: '3000'
+      BLOCK_MEDIA: 'true'
+      MAX_CONCURRENT_PAGES: '4'
+    networks:
+      - claw-scrapers
+
+  firecrawl-redis:
+    labels:
+      claw.service: firecrawl-redis
+    logging: *claw-logging
+    profiles: ['firecrawl']
+    image: redis:7-alpine
+    container_name: claw-firecrawl-redis
+    restart: unless-stopped
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-scrapers
+
+  firecrawl-rabbitmq:
+    labels:
+      claw.service: firecrawl-rabbitmq
+    logging: *claw-logging
+    profiles: ['firecrawl']
+    image: rabbitmq:3-management-alpine
+    container_name: claw-firecrawl-rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'rabbitmq-diagnostics -q check_running']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - claw-scrapers
+
+  firecrawl-postgres:
+    labels:
+      claw.service: firecrawl-postgres
+    logging: *claw-logging
+    profiles: ['firecrawl']
+    image: ghcr.io/firecrawl/nuq-postgres:latest@sha256:9b638af78d99873bc0ba2b57c9cbcd01df6ce96efeaa72d36cfbe0f76521e8fc
+    container_name: claw-firecrawl-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: firecrawl
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-firecrawl-internal}
+      POSTGRES_DB: firecrawl
+    volumes:
+      - firecrawl-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U firecrawl -d firecrawl']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - claw-scrapers
+
 volumes:
+  firecrawl-postgres-data:
+    driver: local
   grafana-data:
     driver: local
   prometheus-data:
@@ -953,3 +1158,7 @@ networks:
   claw-network:
     external: true
     name: claw-network
+  # Isolated bridge for the scraping sidecars (ADR-121): internet egress,
+  # no route to ClawAI services. Compose-managed, created on first use.
+  claw-scrapers:
+    name: claw-scrapers
