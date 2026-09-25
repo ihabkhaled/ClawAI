@@ -75,3 +75,27 @@ describe('messageSpeechRepository', () => {
     await expect(messageSpeechRepository.start('msg-7')).rejects.toThrow('refused');
   });
 });
+
+describe('messageSpeechRepository.cancel', () => {
+  beforeEach(() => {
+    mockPost.mockReset();
+  });
+
+  it('POSTs the owner Stop with no body and a short timeout, and returns the resulting state', async () => {
+    const state = {
+      status: 'CANCELLED',
+      segments: [{ index: 0, fileId: 'file-1', mimeType: 'audio/wav', characters: 160 }],
+      totalSegments: 4,
+      truncated: false,
+      errorCode: null,
+    };
+    mockPost.mockResolvedValue({ data: state, status: 200 });
+
+    const result = await messageSpeechRepository.cancel('msg-7');
+
+    expect(mockPost).toHaveBeenCalledWith('/chat-messages/msg-7/speech/cancel', undefined, {
+      timeout: MESSAGE_SPEECH_REQUEST_TIMEOUT_MS,
+    });
+    expect(result).toEqual(state);
+  });
+});

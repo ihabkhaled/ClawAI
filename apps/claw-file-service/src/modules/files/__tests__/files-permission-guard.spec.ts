@@ -1,9 +1,8 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Reflector } from '@nestjs/core';
 import { Permission, UserRole } from '@claw/shared-types';
 import { PermissionGuard, REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 import { FilesController } from '../controllers/files.controller';
-import { type FilesService } from '../services/files.service';
 
 // Slice C — permission gate proof for the user-facing file endpoints.
 // FilesController carries @RequirePermissions(Permission.FILES_USE) at the
@@ -111,13 +110,25 @@ describe('FilesController @RequirePermissions(Permission.FILES_USE) gate', () =>
       downloadFile: vi.fn(),
       getChunks: vi.fn(),
     };
-    const controller = new FilesController(serviceMock as unknown as FilesService);
+    const controller = new FilesController(
+      serviceMock as never,
+      { cancelProcessing: vi.fn() } as never,
+    );
     const result = await controller.findAll(
       { id: 'user-with-files' } as never,
       { page: 1, limit: 20 } as never,
     );
     expect(result).toEqual({ data: [], meta: { total: 0, page: 1 } });
     expect(serviceMock.getFiles).toHaveBeenCalledWith('user-with-files', { page: 1, limit: 20 });
+  });
+
+  it('the video cancel route sits under the same class-level FILES_USE gate (pack section 72)', () => {
+    expect(Reflect.getMetadata(REQUIRE_PERMISSIONS_KEY, FilesController)).toEqual([
+      Permission.FILES_USE,
+    ]);
+    expect(
+      Reflect.getMetadata(REQUIRE_PERMISSIONS_KEY, FilesController.prototype.cancelProcessing),
+    ).toBeUndefined();
   });
 
   it('ADMIN → guard bypasses permission check via JWT role claim (RBAC hierarchy)', async () => {

@@ -6,6 +6,7 @@ import {
   VIDEO_MAX_DURATION_MS,
   VIDEO_NO_AUDIO_LINE,
   VIDEO_NO_SPEECH_LINE,
+  VIDEO_PROCESSING_CANCELLED_MESSAGE,
   VIDEO_TRANSCRIPT_MAX_SEGMENTS,
   VIDEO_TRANSCRIPT_SEGMENT_MAX_CHARS,
 } from '../constants/video-processing.constants';
@@ -210,5 +211,7 @@ export function describeVideoFailure(
       return 'The file row no longer exists.';
     case VideoProcessingFailureReason.PROCESSING_ERROR:
       return `Video processing failed: ${detail.message ?? 'unknown error'}.`;
+    case VideoProcessingFailureReason.PROCESSING_CANCELLED:
+      return VIDEO_PROCESSING_CANCELLED_MESSAGE;
   }
 }

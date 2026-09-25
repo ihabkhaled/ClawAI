@@ -173,6 +173,22 @@ paid model, rule 1 applies to it like anything else.
     balance is too low", Gemini "exceeded your current quota") opens a
     10-minute breaker: that provider is refused with no hold and no call
     ([ADR-125](../docs/13-adr/adr-125-provider-refusals-recover-at-the-chokepoint.md)).
+20. **A user cancel releases the in-flight hold; it never finalizes it.** When
+    the owner stops a paid job (pack §72 — read aloud, image generation, video
+    transcription), a provider call already in flight is aborted locally where
+    the HTTP client supports a signal, and its hold is RELEASED
+    (`PaygReleaseReason` `CANCELLED`) even when the provider answers anyway —
+    that result is discarded, never stored, never charged. Output already
+    persisted and finalized before the cancel landed stays charged (the user
+    has it). The cancel flag lives in a store every replica reads (Redis, or
+    the owning row itself) and is checked before each paid step and right
+    after each provider call, so a cancel on replica A stops a job on replica
+    B. A cancel is never a reason to try the next candidate (item 18), and it
+    never claims the provider stopped when the provider has no cancel API.
+    References: chat-service `SpeechJobManager` / `SpeechSynthesisManager`,
+    image-service `ImageExecutionManager`, file-service `VideoCancellationManager` +
+    `TranscriptionMeterManager`
+    ([ADR-120 addendum 3](../docs/13-adr/adr-120-clawai-owns-multimodal-orchestration.md#addendum-3--user-cancellation-pack-72-2026-09-25)).
 
 ## Prohibited patterns
 
@@ -202,6 +218,8 @@ paid model, rule 1 applies to it like anything else.
 - One `requestId` shared across the lanes of a fan-out.
 - Finalizing an image, transcription or speech call with zero tokens and no unit
   count, or pricing one with a fake per-token rate ("$/image ÷ 8192").
+- Finalizing (or storing) the result of a call the owner cancelled while it was
+  in flight, or falling through to the next candidate after a cancel.
 
 ## Correct pattern
 
@@ -257,6 +275,7 @@ rather than claiming a check that is not there.
 | 14 — attributed adjustments            | **Unit test** — an adjustment without actor or reason is refused; one above the cap is refused.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 15 — non-colliding `requestId`         | **Unit test** per fan-out surface asserting N distinct holds for N lanes/attempts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 16 — clamp is visible                  | **Unit test** asserting the clamp string is **rendered and visible**, not merely mounted (frontend).                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 20 — cancel releases, never finalizes  | **Unit tests** — chat `message-speech.service.spec.ts` "MessageSpeechService.cancel" (a late answer → RELEASE `CANCELLED`, no CONSUMPTION; watcher abort across replicas), image-service cancel specs (mid-flight → hold released, asset not stored, no successor), file-service video cancellation specs (transcription hold released, no next provider).                                                                                                                                                                                         |
 | 17 — units, not zero tokens            | **Unit tests** — `credit-unit-metering.spec.ts` (auth: RESERVATION then non-zero CONSUMPTION for an OpenAI image), `unit-metering.spec.ts` (shared-utilities: BigInt sums), `image-execution.manager.payg.spec.ts` (image: `imageUnits` on reserve and finalize), `model-cost-seed.spec.ts` (routing: per-image seed prices). **Review checklist** for new per-unit surfaces.                                                                                                                                                                      |
 
 Plus the standing gates: **CI job** (lint → typecheck → test → build per touched
@@ -294,5 +313,7 @@ this rule is unreachable from an index).
 - [ ] A clamped answer is proven visible to the user.
 - [ ] A non-token surface reserves expected units and finalizes measured units
       against a per-unit rate row.
+- [ ] A user-cancellable paid job releases (never finalizes) the hold of a call
+      that was in flight when the owner cancelled, and discards its result.
 - [ ] The ADRs, the runbook and `docs/business/` are current with any change to the
       numbers or the policy.

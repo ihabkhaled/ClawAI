@@ -370,6 +370,7 @@ export const en: TranslationDictionary = {
       progress: 'Reading part {current} of {total}…',
       waitingNext: 'Preparing the next part…',
       finished: 'Finished reading aloud.',
+      cancelled: 'Reading stopped.',
       partial: 'Some parts of this reply could not be read aloud and were not charged.',
       truncated: 'Only the first part of this reply was read aloud.',
       unavailable: {
@@ -386,6 +387,7 @@ export const en: TranslationDictionary = {
         generic: 'Could not read this reply aloud. Try again.',
         playback: 'The audio could not be loaded.',
         timedOut: 'Read aloud took too long. Try again.',
+        cancelPending: 'Read aloud is still stopping. Try again in a moment.',
       },
     },
     edit: {
@@ -707,6 +709,9 @@ export const en: TranslationDictionary = {
     fileGenerationCancelled: 'File generation cancelled',
     fileGenerationFailedRetry: 'File generation failed. Retry?',
     generationCancelled: 'Generation cancelled',
+    imageCancel: 'Cancel',
+    imageCancelling: 'Cancelling…',
+    imageCancelAria: 'Cancel image generation',
     imageGenerationFailedRetry: 'Image generation failed. Retry?',
     judge: 'Judge',
     live: 'Live',

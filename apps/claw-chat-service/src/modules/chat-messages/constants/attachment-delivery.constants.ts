@@ -29,6 +29,15 @@ export const DELIVERY_REASON_VISION_HELPER_LIMIT = 'file_delivery.reason.vision_
  * bypassed by picking a model that watches video.
  */
 export const DELIVERY_REASON_VIDEO_PLAN_LIMIT = 'file_delivery.reason.video_plan_limit';
+/**
+ * The owner stopped this video's processing (file-service FAILED
+ * `PROCESSING_CANCELLED`, pack §72). Named apart from a processing failure so
+ * the lane and the delivery note say "cancelled", not "could not be
+ * processed"; native delivery is refused too — the owner chose not to have it
+ * processed, and a stopped row carries no measured duration.
+ */
+export const DELIVERY_REASON_VIDEO_PROCESSING_CANCELLED =
+  'file_delivery.reason.video_processing_cancelled';
 /** The frames endpoint failed or the duration is unknown: transcript only. */
 export const DELIVERY_REASON_VIDEO_FRAMES_UNAVAILABLE =
   'file_delivery.reason.video_frames_unavailable';

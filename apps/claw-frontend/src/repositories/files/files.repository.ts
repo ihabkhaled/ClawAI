@@ -7,6 +7,7 @@ import type {
   InitChunkedUploadRequest,
 } from '@/types';
 import type { ArchiveEntryListing, PaginatedFiles } from '@/types/archive.types';
+import type { FileProcessingCancelResult } from '@/types/file.types';
 
 export const filesRepository = {
   /** One page of top-level files (or of one archive's files, with `parentId`) and its meta. */
@@ -31,6 +32,18 @@ export const filesRepository = {
     const response = await apiClient.post<ArchiveEntryListing>(`/files/${id}/archive-password`, {
       password,
     });
+    return response.data;
+  },
+
+  /**
+   * Stops a video's processing (pack §72). Owner-only; always 200. `cancelled`
+   * is false when there was nothing to stop (already ready, failed or
+   * cancelled). The file stays stored and attachable.
+   */
+  async cancelProcessing(id: string): Promise<FileProcessingCancelResult> {
+    const response = await apiClient.post<FileProcessingCancelResult>(
+      `/files/${id}/processing/cancel`,
+    );
     return response.data;
   },
 

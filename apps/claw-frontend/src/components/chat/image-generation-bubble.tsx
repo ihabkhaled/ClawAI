@@ -1,3 +1,4 @@
+import { ImageCancelledState } from '@/components/chat/image-cancelled-state';
 import { ImageCompletedState } from '@/components/chat/image-completed-state';
 import { ImageErrorState } from '@/components/chat/image-error-state';
 import { ImageLoadingState } from '@/components/chat/image-loading-state';
@@ -17,8 +18,15 @@ export function ImageGenerationBubble({
   isAutoMode?: boolean;
 }) {
   const { t } = useTranslation();
-  const { generation, stageText, handleRetry, handleRetryWithModel } =
-    useImageGenerationBubbleState({ generationId });
+  const {
+    generation,
+    stageText,
+    handleRetry,
+    handleRetryWithModel,
+    canCancel,
+    isCancelling,
+    handleCancel,
+  } = useImageGenerationBubbleState({ generationId });
   const firstAsset = generation?.assets?.[0];
   const blobUrl = useAuthenticatedImage(
     generation?.status === ImageGenerationStatus.COMPLETED ? firstAsset?.url : undefined,
@@ -33,6 +41,10 @@ export function ImageGenerationBubble({
           provider={generation?.provider}
           model={generation?.model}
           stageText={stageText}
+          onCancel={canCancel ? handleCancel : undefined}
+          cancelLabel={t(isCancelling ? 'chat.imageCancelling' : 'chat.imageCancel')}
+          cancelAriaLabel={t('chat.imageCancelAria')}
+          isCancelling={isCancelling}
         />
       ) : null}
       {generation?.status === ImageGenerationStatus.FAILED ||
@@ -48,11 +60,11 @@ export function ImageGenerationBubble({
         />
       ) : null}
       {generation?.status === ImageGenerationStatus.CANCELLED ? (
-        <div className="border-border rounded-xl border p-4">
-          <div className="text-muted-foreground text-sm font-medium">
-            {t('chat.generationCancelled')}
-          </div>
-        </div>
+        <ImageCancelledState
+          label={t('chat.generationCancelled')}
+          retryLabel={t('common.retry')}
+          onRetry={handleRetry}
+        />
       ) : null}
       {generation?.status === ImageGenerationStatus.COMPLETED && blobUrl ? (
         <ImageCompletedState blobUrl={blobUrl} prompt={prompt} />

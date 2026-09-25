@@ -6,6 +6,7 @@ import {
 import { type RuntimeProgressStage, type TokenUsage } from '@claw/shared-types';
 
 import { type ImageAssetRole, type ImageGenerationStatus } from '../../../generated/prisma';
+import { type ImageCancellationProbe } from './image-cancel.types';
 import { type ImageProgressCallback } from './image-progress.types';
 
 export type ImageGenerationRecord = {
@@ -180,6 +181,11 @@ export type ExecuteImageInput = {
   model: string;
   userId: string;
   /**
+   * The generation row this attempt runs for. Keys the in-process ComfyUI
+   * prompt-id registry a targeted cancel reads.
+   */
+  generationId?: string;
+  /**
    * Idempotency key for the PAYG hold — one per PAID ATTEMPT.
    *
    * `reserve` is idempotent on `(userId, requestId)`, so reusing the generation
@@ -196,6 +202,12 @@ export type ExecuteImageInput = {
   referenceImageMimeType?: string;
   /** Receives local-runtime progress (ComfyUI, SD WebUI) while the call runs. */
   onProgress?: ImageProgressCallback;
+  /**
+   * Checked before the provider call and again the moment it returns. True →
+   * the attempt is abandoned: no provider call / no stored file, and any PAYG
+   * hold is RELEASED (reason CANCELLED), never finalized.
+   */
+  isCancelled?: ImageCancellationProbe;
 };
 
 export type ImageProviderResponse = {

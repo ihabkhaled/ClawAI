@@ -1,7 +1,7 @@
 import type { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum';
 import type { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import type { FileIngestionStatus } from '@/enums/file-ingestion-status.enum';
-import type { UploadedFile } from '@/types/file.types';
+import type { FileExtractionMetadata, UploadedFile } from '@/types/file.types';
 import type { UploadProgressSnapshot } from '@/types/upload-progress.types';
 import type { getFileTypeDescriptor } from '@/utilities/file-type-icon.utility';
 
@@ -50,6 +50,8 @@ export type ComposerAttachmentChipDraft = {
   localId: string | null;
   /** Backend or upload detail behind a failure, shown after the reason. */
   detail: string | null;
+  /** A selected VIDEO still processing: its owner may stop the processing. */
+  canCancelProcessing: boolean;
 };
 
 export type ComposerAttachmentChip = ComposerAttachmentChipDraft & {
@@ -66,6 +68,16 @@ export type ComposerAttachmentFileStatus = {
   filename: string;
   ingestionStatus: FileIngestionStatus;
   extractionError?: string | null;
+  mimeType?: string;
+  extractionMetadata?: FileExtractionMetadata | null;
+};
+
+/** The "Stop processing" action of one attached video, ready to render. */
+export type ComposerProcessingCancel = {
+  label: string;
+  ariaLabel: string;
+  isCancelling: boolean;
+  onCancel: () => void;
 };
 
 export type ResolveComposerAttachmentChipsInput = {
@@ -85,9 +97,14 @@ export type UseComposerAttachmentChipsReturn = {
   chips: ComposerAttachmentChip[];
   listLabel: string;
   onRemove: (chip: ComposerAttachmentChip) => void;
+  /** Per selected file id: the Stop action of a video still processing. */
+  processingCancelByFileId: ReadonlyMap<string, ComposerProcessingCancel>;
 };
 
-export type ComposerAttachmentChipsProps = UseComposerAttachmentChipsReturn;
+export type ComposerAttachmentChipsProps = Omit<
+  UseComposerAttachmentChipsReturn,
+  'processingCancelByFileId'
+>;
 
 export type ComposerAttachmentChipProps = {
   chip: ComposerAttachmentChip;
@@ -119,6 +136,8 @@ export type ComposerAttachmentTrayProps = {
    * file is listed once, with its preview AND its state.
    */
   statusByFileId?: ReadonlyMap<string, string>;
+  /** The Stop action of each attached video still processing (pack §72). */
+  processingCancelByFileId?: ReadonlyMap<string, ComposerProcessingCancel>;
 };
 
 export type ComposerAttachmentTileProps = {
@@ -126,6 +145,7 @@ export type ComposerAttachmentTileProps = {
   onRemove: (fileId: string) => void;
   disabled?: boolean;
   status?: string;
+  processingCancel?: ComposerProcessingCancel;
 };
 
 export type ComposerPendingAttachmentTileProps = {

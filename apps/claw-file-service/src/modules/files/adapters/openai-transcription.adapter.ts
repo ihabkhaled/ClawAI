@@ -31,6 +31,7 @@ export const transcribeWithOpenAi = async (
   base64: string,
   mimeType: string,
   model: string,
+  signal?: AbortSignal,
 ): Promise<TranscriptionProviderResult> => {
   const base = normalizeBaseUrl(baseUrl);
   const url = `${base}/audio/transcriptions`;
@@ -50,6 +51,8 @@ export const transcribeWithOpenAi = async (
       // and a hand-written header without one makes the API reject the body.
       headers: { Authorization: `Bearer ${apiKey}` },
       timeout: TRANSCRIPTION_PROVIDER_TIMEOUT_MS,
+      // A video cancel aborts the in-flight request (axios CanceledError).
+      signal,
     },
     declaredHost(base),
   );

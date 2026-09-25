@@ -1,3 +1,5 @@
+import type { VideoProcessingFailureReason } from '@claw/shared-types';
+
 import type { FileIngestionStatus } from '@/enums';
 
 import type { ArchiveExtractionSummary } from './archive.types';
@@ -12,6 +14,8 @@ export type VideoMediaSummary = {
   durationMs?: number;
   thumbnailBase64?: string | null;
   thumbnailMimeType?: string | null;
+  /** Why processing ended FAILED; `PROCESSING_CANCELLED` when the owner stopped it. */
+  failureReason?: VideoProcessingFailureReason | null;
 };
 
 export type FileExtractionMetadata = ArchiveExtractionSummary & {
@@ -73,4 +77,13 @@ export type InitChunkedUploadRequest = {
   mimeType: string;
   sizeBytes: number;
   totalChunks: number;
+};
+
+/** `POST /files/:id/processing/cancel` answer (file-service, pack §72). */
+export type FileProcessingCancelResult = {
+  fileId: string;
+  /** The owner-facing effective status after the call (FAILED once cancelled). */
+  ingestionStatus: FileIngestionStatus;
+  /** False when there was nothing to stop. */
+  cancelled: boolean;
 };

@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import {
   type ClawRuntimeProgressEvent,
   RuntimeProgressEventType,
@@ -9,10 +9,7 @@ import {
 
 import { ComfyUIProgressAdapter } from '../adapters/comfyui-progress.adapter';
 import { buildSd15MinimalWorkflow } from '../workflows/sd15-minimal.workflow';
-import type {
-  ComfyUIWebSocketLike,
-  ComfyUIWorkflowPayload,
-} from '../types/comfyui.types';
+import type { ComfyUIWebSocketLike, ComfyUIWorkflowPayload } from '../types/comfyui.types';
 
 // A controllable fake WebSocket so we can drive the adapter through
 // every WS event class deterministically without spinning up a real WS
@@ -75,6 +72,7 @@ type ScenarioOptions = {
 function createAdapter(opts: ScenarioOptions): {
   adapter: ComfyUIProgressAdapter;
   workflow: ComfyUIWorkflowPayload;
+  httpPostStub: Mock;
 } {
   let wsOpenAttempt = 0;
   const ws = new FakeWebSocket();
@@ -104,10 +102,7 @@ function createAdapter(opts: ScenarioOptions): {
     if (url.includes('/interrupt')) {
       return {};
     }
-    if (opts.scenario === 'prompt_post_invalid') {
-      return { node_errors: { '3': { type: 'bad_input' } } };
-    }
-    return { prompt_id: 'prompt-1', number: 1 };
+    return opts.scenario === 'prompt_post_invalid' ? { node_errors: { '3': { type: 'bad_input' } } } : { prompt_id: 'prompt-1', number: 1 };
   });
 
   const httpGetStub = vi.fn(async (url: string) => {
@@ -126,10 +121,7 @@ function createAdapter(opts: ScenarioOptions): {
     if (url.includes('/view')) {
       return new TextEncoder().encode('fakeimage').buffer;
     }
-    if (url.includes('/system_stats')) {
-      return { devices: [{ name: 'cpu' }] };
-    }
-    return {};
+    return url.includes('/system_stats') ? { devices: [{ name: 'cpu' }] } : {};
   });
 
   const adapter = new ComfyUIProgressAdapter({
@@ -142,7 +134,7 @@ function createAdapter(opts: ScenarioOptions): {
     width: 256,
     height: 256,
   });
-  return { adapter, workflow };
+  return { adapter, workflow, httpPostStub };
 }
 
 function driveScenario(ws: FakeWebSocket, scenario: ScenarioOptions['scenario']): void {
@@ -296,9 +288,28 @@ describe('ComfyUIProgressAdapter', () => {
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
-  it('cancel posts /interrupt and reports success', async () => {
-    const { adapter } = createAdapter({ scenario: 'success' });
-    const result = await adapter.cancel('http://comfy:8188');
+  it('cancel posts a TARGETED /interrupt carrying prompt_id and reports success', async () => {
+    const { adapter, httpPostStub } = createAdapter({ scenario: 'success' });
+    const result = await adapter.cancel('http://comfy:8188', 'prompt-1');
     expect(result).toBe(true);
+    expect(httpPostStub).toHaveBeenCalledWith(
+      'http://comfy:8188/interrupt',
+      { prompt_id: 'prompt-1' },
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('streamGenerate hands the accepted prompt id to onPromptAccepted', async () => {
+    const { adapter, workflow } = createAdapter({ scenario: 'success' });
+    const accepted: string[] = [];
+    await adapter.streamGenerate({
+      runId: 'run-accepted',
+      baseUrl: 'http://comfy:8188',
+      workflow,
+      onEvent: vi.fn(),
+      onPromptAccepted: (promptId) => accepted.push(promptId),
+    });
+    expect(accepted).toEqual(['prompt-1']);
   });
 });

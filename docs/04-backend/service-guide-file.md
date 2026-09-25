@@ -61,15 +61,16 @@ The file service handles file uploads, local storage, content extraction, and ch
 
 ## API Endpoints
 
-| Method | Path                 | Auth   | Description                                                                    |
-| ------ | -------------------- | ------ | ------------------------------------------------------------------------------ |
-| POST   | /                    | Bearer | Upload file (multipart/form-data)                                              |
-| GET    | /                    | Bearer | List user's files (paginated) — top-level rows only unless `parentId` is given |
-| GET    | /:id                 | Bearer | Get file metadata                                                              |
-| GET    | /:id/download        | Bearer | Download file content                                                          |
-| GET    | /:id/chunks          | Bearer | Get file chunks                                                                |
-| GET    | /:id/archive-entries | Bearer | Every entry of an uploaded archive, extracted or skipped, with its status      |
-| DELETE | /:id                 | Bearer | Delete file and chunks                                                         |
+| Method | Path                   | Auth   | Description                                                                                    |
+| ------ | ---------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| POST   | /                      | Bearer | Upload file (multipart/form-data)                                                              |
+| GET    | /                      | Bearer | List user's files (paginated) — top-level rows only unless `parentId` is given                 |
+| GET    | /:id                   | Bearer | Get file metadata                                                                              |
+| GET    | /:id/download          | Bearer | Download file content                                                                          |
+| GET    | /:id/chunks            | Bearer | Get file chunks                                                                                |
+| GET    | /:id/archive-entries   | Bearer | Every entry of an uploaded archive, extracted or skipped, with its status                      |
+| DELETE | /:id                   | Bearer | Delete file and chunks                                                                         |
+| POST   | /:id/processing/cancel | Bearer | Cancel a video still processing (owner-only; idempotent) — see Video processing → Cancellation |
 
 `GET /` answers with `{ data, meta }` as usual; every row also carries
 `childCount` (files extracted from it — above 0 marks an archive) and, when it
@@ -620,6 +621,31 @@ processed video (never the thumbnail; absent for every other file), so
 chat-service samples frames inside the real duration and tells a plan refusal
 apart. `?includeContent=false` omits the base64 bytes — chat's research digest
 reads a transcript without transferring the video.
+
+### Cancellation (pack section 72, 2026-09-25)
+
+`POST /files/:id/processing/cancel` (Bearer, `FILES_USE`, owner-only — a
+stranger's id and a missing id both get the same 404) →
+`200 { fileId: string, ingestionStatus: FileIngestionStatus, cancelled: boolean }`.
+`ingestionStatus` is the owner-facing effective status after the call.
+Idempotent: a file that is not a video, or not processing (ready, failed,
+already cancelled), answers `cancelled: false` with its current status.
+
+| Piece                         | What it does                                                                                                                                                                                                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Decided state                 | `FAILED` + `VideoProcessingFailureReason.PROCESSING_CANCELLED`, `extractionError` "Processing was cancelled.", `file.video_process_failed` once. The upload stays downloadable.                                                                                      |
+| Why not COMPLETED-with-a-note | COMPLETED tells chat-service the document is ready and would route the note to a model as content. chat-service's FAILED_PROCESSING mode already handles a FAILED video. `media` carries no probe facts, so no measured `durationMs` can open the native-video gate. |
+| Redis flag                    | `claw:file:video:cancel:<fileId>`, TTL = the video lock TTL (15 min). Set by the route; read by the job on any replica.                                                                                                                                              |
+| Route write                   | While the row is still the `[Video file: …]` placeholder, the route writes the cancelled result itself — conditional, so it cannot clobber a document that just landed.                                                                                              |
+| Job                           | Checks the flag between every step (probe → thumbnail → plan → audio extract → volume detect → transcription → save) and polls it every 1 s (bounded, cleared in `finally`) while a child or the provider call runs.                                                 |
+| ffmpeg                        | The poll aborts the job's `AbortSignal`; `runMediaProcess` SIGKILLs the child (`ABORTED`); the temp dir is removed in `withWorkspace`'s `finally`.                                                                                                                   |
+| Provider call                 | Aborted through axios `signal`. The PAYG hold is RELEASED with reason `CANCELLED`, never finalized — also when the answer raced the cancel. A cancel ends the candidate walk; it never tries the next provider.                                                      |
+| Final write                   | `saveVideoExtractionResult` is conditional on the placeholder and returns whether it wrote. The loser (late job or late cancel) writes nothing and publishes nothing.                                                                                                |
+| Stale re-queue                | Never re-queues a cancelled row (it carries `extractionError`).                                                                                                                                                                                                      |
+
+Log line: `videoCancel fileId=… step=… outcome=CANCELLED|NOOP holdReleased=… childKilled=…`
+(no transcript text, no balance). We do not pretend to cancel anything at the
+provider: a call that already answered is simply not charged to the user.
 
 Runbook: [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).
 

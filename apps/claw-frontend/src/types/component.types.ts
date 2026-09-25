@@ -1124,6 +1124,18 @@ export type ImageLoadingStateProps = {
   model?: string;
   /** Live runtime stage, announced politely to screen readers. */
   stageText?: string;
+  /** Present while the owner may cancel: renders the Cancel button. */
+  onCancel?: () => void;
+  cancelLabel?: string;
+  /** Accessible name, naming what is cancelled. */
+  cancelAriaLabel?: string;
+  isCancelling?: boolean;
+};
+
+export type ImageCancelledStateProps = {
+  label: string;
+  retryLabel: string;
+  onRetry: () => void;
 };
 
 export type ImageErrorStateProps = {

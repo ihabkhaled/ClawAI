@@ -122,6 +122,8 @@ export interface TranscriptionRequestContext {
   audioSeconds?: number;
   requestScope?: string;
   instruction?: string;
+  /** A video cancel: aborts the provider call and releases (never finalizes) the hold. */
+  signal?: AbortSignal;
 }
 
 /** A readable credit refusal, recorded on the row instead of a transcript. */
@@ -172,9 +174,15 @@ export interface TranscriptionAttemptRefused extends TranscriptionCreditRefusal 
   status: TranscriptionAttemptStatus.REFUSED;
 }
 
+/** The caller's AbortSignal fired. `holdReleased`: a hold existed and went back as CANCELLED. */
+export interface TranscriptionAttemptCancelled {
+  status: TranscriptionAttemptStatus.CANCELLED;
+  holdReleased: boolean;
+}
+
 /** How one candidate attempt ended when it did not throw. */
 export type TranscriptionAttemptOutcome =
-  TranscriptionAttemptCompleted | TranscriptionAttemptRefused;
+  TranscriptionAttemptCompleted | TranscriptionAttemptRefused | TranscriptionAttemptCancelled;
 
 /** Which candidate the loop ended on, for the event and the log. */
 export interface TranscriptionRunTarget {
@@ -189,6 +197,7 @@ export interface TranscriptionRunTarget {
 export type TranscriptionRunOutcome =
   | (TranscriptionRunTarget & TranscriptionAttemptCompleted)
   | (TranscriptionRunTarget & TranscriptionAttemptRefused)
+  | (TranscriptionRunTarget & TranscriptionAttemptCancelled)
   | (TranscriptionRunTarget & { status: TranscriptionAttemptStatus.FAILED; reason: string });
 
 /**

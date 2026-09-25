@@ -262,6 +262,27 @@ If `hold.clamped` is true the answer was shortened to fit the balance. Propagate
 to something the user actually sees. A silently shortened reply reads as the model
 being bad rather than the wallet being empty.
 
+### 7. Make the paid job cancellable (pack §72)
+
+When the owner can stop the job (read aloud, image generation, video
+transcription — rule 37 item 20, ADR-120 addendum 3):
+
+1. Put the cancel flag where **every replica** reads it — Redis keyed per job (and
+   per generation when the job can be restarted), or a conditional update on the
+   row the job already owns. Write it BEFORE any user-visible state.
+2. Read it before each paid step and right after each provider call; poll it
+   (bounded interval, cleared in `finally`) while a call runs and abort the
+   local request through an `AbortSignal`.
+3. On cancel: `release(hold, 'CANCELLED')` — never finalize — discard the
+   answer, and stop the walk (no next candidate, no fallback).
+4. Make every later write conditional so a late job cannot overwrite the
+   cancelled state.
+5. Tests: cancel before start (no reserve, no call), cancel mid-flight (answer
+   arrives → RELEASE `CANCELLED`, no CONSUMPTION, nothing stored), cancel after
+   finish (no-op), double cancel, non-owner 404, flag written by a second store
+   instance (replica safety). Reference: chat-service
+   `message-speech.service.spec.ts` "MessageSpeechService.cancel".
+
 ## Security considerations
 
 - The internal credit endpoints require `buildInterServiceAuthHeader`. They move

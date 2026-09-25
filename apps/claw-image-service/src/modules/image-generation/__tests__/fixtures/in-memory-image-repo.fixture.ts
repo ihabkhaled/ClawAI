@@ -37,6 +37,13 @@ export const baseRecord = (
   ...overrides,
 });
 
+const ACTIVE: readonly ImageGenerationRecord['status'][] = [
+  ImageGenerationStatus.QUEUED,
+  ImageGenerationStatus.STARTING,
+  ImageGenerationStatus.GENERATING,
+  ImageGenerationStatus.FINALIZING,
+];
+
 export type InMemoryImageRepo = {
   rows: Map<string, ImageGenerationRecord>;
   references: Map<string, ImageGenerationAssetRecord>;
@@ -44,6 +51,9 @@ export type InMemoryImageRepo = {
   createSuccessor: Mock;
   findById: Mock;
   updateStatus: Mock;
+  cancelIfActive: Mock;
+  findStatus: Mock;
+  deleteAsset: Mock;
   createEvent: Mock;
   createAsset: Mock;
   createReferenceAsset: Mock;
@@ -126,6 +136,10 @@ export const buildInMemoryImageRepo = (
         extra?: { errorCode?: string; errorMessage?: string },
       ) => {
         const current = rows.get(id) ?? baseRecord({ id });
+        // Same guard as the real conditional write: CANCELLED is never overwritten.
+        if (current.status === ImageGenerationStatus.CANCELLED) {
+          return Promise.resolve(null);
+        }
         const updated = baseRecord({
           ...current,
           status,
@@ -136,6 +150,17 @@ export const buildInMemoryImageRepo = (
         return Promise.resolve(updated);
       },
     ),
+    cancelIfActive: vi.fn((id: string) => {
+      const current = rows.get(id);
+      if (!current || !ACTIVE.includes(current.status)) {
+        return Promise.resolve(null);
+      }
+      const cancelled = { ...current, status: ImageGenerationStatus.CANCELLED };
+      rows.set(id, cancelled);
+      return Promise.resolve(cancelled);
+    }),
+    findStatus: vi.fn((id: string) => Promise.resolve(rows.get(id)?.status ?? null)),
+    deleteAsset: vi.fn().mockResolvedValue(undefined),
     createEvent: vi.fn().mockResolvedValue(undefined),
     createAsset: vi.fn().mockResolvedValue({
       id: 'asset-1',

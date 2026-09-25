@@ -80,6 +80,45 @@ Image generation microservice for the Claw platform. Orchestrates image generati
 
 Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 
+## Cancellation (`POST /images/:id/cancel`, 2026-09-25)
+
+Owner only (`cancelGenerationForUser`, same 404 as a missing id), always 200
+`{ generationId, status }` = status after the call; idempotent (terminal rows
+are a NOOP returning their status, never 409).
+
+1. **CANCELLED is absorbing.** `repository.updateStatus` is a conditional
+   `updateMany … status <> CANCELLED` returning `null` on no match. Every job
+   write (STARTING, GENERATING, FINALIZING, COMPLETED, FAILED) goes through it;
+   `null` → `discardCancelled` (no asset, no settle, no FAILED, no AUTO
+   successor, no bus event). The cancel itself is `cancelIfActive`
+   (`status IN IMAGE_ACTIVE_STATUSES`). DB row = shared store → replica-safe.
+2. **Money:** `ExecuteImageInput.isCancelled` is checked before the provider
+   call and right after it — a cancelled result is dropped BEFORE file-service
+   stores it and the hold goes back via `releaseCancelled` (reason `CANCELLED`,
+   log `reason=USER_CANCELLED`). COMPLETED is written BEFORE `settle`, so a
+   late cancel either wins (released, asset row deleted) or loses (COMPLETED,
+   finalized, cancel returns COMPLETED). Never finalize a cancelled attempt.
+3. **Upstream: never stop another user's job.** `requestProviderCancel`
+   sends ONLY a targeted ComfyUI `POST /interrupt { prompt_id }`, and only
+   when this process holds this generation's prompt id (in-process
+   `comfyPromptIds`, set on `onPromptAccepted`, cleared when the call
+   settles) → `providerCancel=requested`. Unknown id (other replica, not yet
+   accepted, already settled) → no call. SD WebUI `/sdapi/v1/interrupt` has no
+   job target and nothing proves ours is the running job (SD calls are not
+   serialized, no job id) → **never called**. Cloud has no cancel. Every
+   no-call case logs `providerCancel=unsupported` and discards only.
+4. **Retry of a CANCELLED row creates a successor** (same provider/model);
+   the cancelled row is never re-queued, because its abandoned call may still
+   return.
+5. **No `image.failed` on cancel** — no service consumes image.failed /
+   image.generated today; CANCELLED goes to SSE + `image_generation_events`.
+6. Log: `imageCancel generationId=… fromStatus=… outcome=CANCELLED|NOOP|DISCARDED holdReleased=… providerCancel=…`.
+
+Gaps: file stored just before a late cancel is orphaned in file-service; SD
+WebUI and cross-replica ComfyUI runs keep computing upstream (discard only);
+frontend button not wired. Details:
+[`service-guide-image.md`](../../docs/04-backend/service-guide-image.md#cancellation-post-imagesidcancel-2026-09-25).
+
 ## Tech Stack
 
 - **Runtime**: NestJS 10 with TypeScript (strict mode enabled)
@@ -222,7 +261,9 @@ After completing any implementation task on this service, produce:
 > steps/elapsed, percent only at `EXACT` / `RUNTIME_REPORTED`. The chat card
 > shows it via `ImageLoadingState` (`chat.imageStage.*`, `aria-live="polite"`).
 > `ImageGenerationProgressPanel` / `ComfyUINodeTimeline` below are still NOT
-> rendered by the chat image card, and cancel is still not wired to a route.
+> rendered by the chat image card. Cancel IS wired to a route since
+> 2026-09-25 (`POST /images/:id/cancel`, see "Cancellation" above); the
+> frontend panels' Cancel buttons are not.
 
 This service hosts the two image-runtime adapters that emit
 `ClawRuntimeProgressEvent` envelopes for in-flight image generation jobs.
@@ -238,9 +279,10 @@ Location:
 - **Wire format**: synchronous `POST /sdapi/v1/txt2img` for the actual job;
   background polling of `GET /sdapi/v1/progress` (optionally with
   `skip_current_image=true` when previews are disabled).
-- **Cancel endpoint**: `POST /sdapi/v1/interrupt` — invoked from
-  `adapter.cancel()`. Frontend Cancel button on
-  `ImageGenerationProgressPanel` wires straight to this.
+- **Cancel endpoint**: `POST /sdapi/v1/interrupt` exists on
+  `adapter.cancel()` but is **never called** by the user-cancel route: it has
+  no job target, so on a shared runtime it could stop another user's job
+  (see "Cancellation").
 - **Emitted events**: `STEP_PROGRESS` (per poll, with `currentStep` /
   `totalSteps` / `progressPercent` / `eta` derived from the
   `/sdapi/v1/progress` response), `ARTIFACT_SAVED` on completion, and the
@@ -265,7 +307,9 @@ Location: `src/modules/runtime-progress/adapters/comfyui-progress.adapter.ts`.
   `/ws?clientId=…` WebSocket frames (`status`, `executing`, `progress`,
   `executed`, `execution_cached`, `execution_error`); finalize with
   `GET /history/:promptId` to resolve the output artifact node.
-- **Cancel endpoint**: `DELETE /queue` (documented mechanism — wiring is
+- **Cancel endpoint**: `adapter.cancel(baseUrl, promptId)` = TARGETED
+  `POST /interrupt { prompt_id }` (the only form; used by the user-cancel
+  route). Older note, superseded: `DELETE /queue` (documented mechanism — wiring is
   in place; live confirmation deferred to a follow-up probe).
 - **Emitted events**: `EXECUTING_NODE` / `NODE_PROGRESS` / `NODE_COMPLETED`
   (with `nodeId` + `nodeName` resolved via

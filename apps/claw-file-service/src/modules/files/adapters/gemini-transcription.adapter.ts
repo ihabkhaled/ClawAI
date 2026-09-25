@@ -50,6 +50,7 @@ export const transcribeWithGemini = async (
   model: string,
   maxOutputTokens?: number,
   instruction: string = TRANSCRIPTION_INSTRUCTION,
+  signal?: AbortSignal,
 ): Promise<TranscriptionProviderResult> => {
   const nativeBase = toGeminiNativeBaseUrl(baseUrl);
   // `model` is the connector catalog's key, which already carries a `models/`
@@ -85,6 +86,8 @@ export const transcribeWithGemini = async (
       // log and proxy trace between here and Google.
       headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
       timeout: TRANSCRIPTION_PROVIDER_TIMEOUT_MS,
+      // A video cancel aborts the in-flight request (axios CanceledError).
+      signal,
     },
     declaredHost(nativeBase),
   );

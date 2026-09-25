@@ -339,6 +339,7 @@ export type TranslationDictionary = {
       progress: string;
       waitingNext: string;
       finished: string;
+      cancelled: string;
       partial: string;
       truncated: string;
       unavailable: {
@@ -355,6 +356,7 @@ export type TranslationDictionary = {
         generic: string;
         playback: string;
         timedOut: string;
+        cancelPending: string;
       };
     };
     edit: {
@@ -655,6 +657,9 @@ export type TranslationDictionary = {
     fileGenerationCancelled: string;
     fileGenerationFailedRetry: string;
     generationCancelled: string;
+    imageCancel: string;
+    imageCancelling: string;
+    imageCancelAria: string;
     imageGenerationFailedRetry: string;
     judge: string;
     live: string;
@@ -6265,6 +6270,11 @@ export type MediaUiLocaleTranslation = {
     processingFailedReason: string;
     unsupportedReason: string;
     remove: string;
+    cancelled: string;
+    cancelledHint: string;
+    cancelProcessing: string;
+    cancelProcessingAria: string;
+    cancelling: string;
   };
   deliveryReason: {
     noVision: string;
@@ -6279,6 +6289,7 @@ export type MediaUiLocaleTranslation = {
     helperVisionPlan: string;
     visionHelperLimit: string;
     videoPlanLimit: string;
+    videoProcessingCancelled: string;
     videoFramesUnavailable: string;
     videoFramesNoHelper: string;
     videoFramesHelperPlan: string;

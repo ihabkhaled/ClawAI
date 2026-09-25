@@ -61,6 +61,19 @@ export type ComfyUIStreamGenerateOptions = {
   workflow: ComfyUIWorkflowPayload;
   onEvent: (event: ClawRuntimeProgressEvent) => void;
   signal?: AbortSignal;
+  /**
+   * Called once ComfyUI accepts the workflow, with ITS prompt id — the only
+   * handle a targeted `POST /interrupt { prompt_id }` can use.
+   */
+  onPromptAccepted?: (promptId: string) => void;
+};
+
+/**
+ * `POST /interrupt` body. With `prompt_id`, ComfyUI interrupts only when that
+ * prompt is the one executing — never another user's job on a shared runtime.
+ */
+export type ComfyUIInterruptBody = {
+  prompt_id: string;
 };
 
 export type ComfyUIHistoryImage = {

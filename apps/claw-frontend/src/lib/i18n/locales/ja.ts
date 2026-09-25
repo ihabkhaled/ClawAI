@@ -373,6 +373,7 @@ export const ja: TranslationDictionary = {
       progress: '{total} 件中 {current} 件目を読み上げています…',
       waitingNext: '次の部分を準備しています…',
       finished: '読み上げが終わりました。',
+      cancelled: '読み上げを停止しました。',
       partial: 'この回答の一部は読み上げできず、その分は課金されていません。',
       truncated: 'この回答は最初の部分だけが読み上げられました。',
       unavailable: {
@@ -390,6 +391,7 @@ export const ja: TranslationDictionary = {
         generic: 'この回答を読み上げられませんでした。もう一度お試しください。',
         playback: '音声を読み込めませんでした。',
         timedOut: '読み上げに時間がかかりすぎました。もう一度お試しください。',
+        cancelPending: '読み上げを停止しています。少し待ってからもう一度お試しください。',
       },
     },
     edit: {
@@ -712,6 +714,9 @@ export const ja: TranslationDictionary = {
     fileGenerationCancelled: 'ファイル生成がキャンセルされました',
     fileGenerationFailedRetry: 'ファイルの生成に失敗しました。リトライ？',
     generationCancelled: '生成がキャンセルされました',
+    imageCancel: 'キャンセル',
+    imageCancelling: 'キャンセル中…',
+    imageCancelAria: '画像の生成をキャンセル',
     imageGenerationFailedRetry: 'イメージの生成に失敗しました。リトライ？',
     judge: '裁判官',
     live: 'ライブ',

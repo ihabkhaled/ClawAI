@@ -139,9 +139,15 @@ export async function httpReadBinaryBase64(options: HttpBinaryReadOptions): Prom
  * can tell "the provider said no" from "the provider never answered".
  */
 export async function httpPostBinary(options: HttpPostBinaryOptions): Promise<HttpBinaryResponse> {
-  const { url, headers, body, timeoutMs, allowedHosts } = options;
+  const { url, headers, body, timeoutMs, allowedHosts, signal } = options;
   const safeUrl = assertSafeRequestUrl(url, allowedHosts);
   const controller = new AbortController();
+  const onExternalAbort = (): void => controller.abort();
+  if (signal?.aborted === true) {
+    controller.abort();
+  } else {
+    signal?.addEventListener('abort', onExternalAbort, { once: true });
+  }
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(safeUrl, {
@@ -161,6 +167,7 @@ export async function httpPostBinary(options: HttpPostBinaryOptions): Promise<Ht
     };
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', onExternalAbort);
   }
 }
 

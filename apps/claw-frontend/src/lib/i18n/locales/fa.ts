@@ -371,6 +371,7 @@ export const fa: TranslationDictionary = {
       progress: 'در حال خواندن بخش {current} از {total}…',
       waitingNext: 'در حال آماده‌سازی بخش بعدی…',
       finished: 'خواندن با صدای بلند تمام شد.',
+      cancelled: 'خواندن متوقف شد.',
       partial: 'برخی بخش‌های این پاسخ با صدای بلند خوانده نشد و هزینه‌ای برای آن‌ها کسر نشد.',
       truncated: 'فقط بخش اول این پاسخ با صدای بلند خوانده شد.',
       unavailable: {
@@ -387,6 +388,7 @@ export const fa: TranslationDictionary = {
         generic: 'خواندن این پاسخ با صدای بلند ممکن نشد. دوباره امتحان کنید.',
         playback: 'بارگذاری صدا ممکن نشد.',
         timedOut: 'خواندن با صدای بلند بیش از حد طول کشید. دوباره تلاش کنید.',
+        cancelPending: 'خواندن با صدا هنوز در حال توقف است. لحظه‌ای دیگر دوباره تلاش کنید.',
       },
     },
     edit: {
@@ -708,6 +710,9 @@ export const fa: TranslationDictionary = {
     fileGenerationCancelled: 'تولید فایل لغو شد',
     fileGenerationFailedRetry: 'تولید فایل انجام نشد.دوباره امتحان کنید؟',
     generationCancelled: 'نسل لغو شد',
+    imageCancel: 'لغو',
+    imageCancelling: 'در حال لغو…',
+    imageCancelAria: 'لغو ساخت تصویر',
     imageGenerationFailedRetry: 'تولید تصویر ناموفق بود.دوباره امتحان کنید؟',
     judge: 'قاضی',
     live: 'زندگی کنید',

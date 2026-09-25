@@ -3,6 +3,7 @@ import {
   type DerivedTranscriptionStatus,
   type MediaProcessStatus,
   type VideoPlanDecision,
+  type VideoProcessingStep,
 } from '../../../common/enums';
 import { type FileIngestionStatus } from '../../../generated/prisma';
 
@@ -17,6 +18,11 @@ export type MediaProcessRequest = {
   timeoutMs: number;
   maxStdoutBytes: number;
   maxStderrBytes: number;
+  /**
+   * A user cancel. When it fires the child is SIGKILLed and the run ends
+   * `ABORTED`; an already-aborted signal never spawns at all.
+   */
+  signal?: AbortSignal;
 };
 
 export type MediaProcessResult = {
@@ -125,6 +131,9 @@ export type VideoAnalysis =
       thumbnail: Buffer | null;
     };
 
+/** The failed half of `VideoAnalysis`: what the job's FAILED write records. */
+export type VideoFailure = Extract<VideoAnalysis, { ok: false }>;
+
 /** A derived audio buffer (a video's track) handed to the transcription path. */
 export type DerivedAudioTranscriptionInput = {
   /** The PARENT file id — the video row. The meter charges its uploader. */
@@ -138,6 +147,8 @@ export type DerivedAudioTranscriptionInput = {
   /** Inserted into the PAYG request id so it never collides with an audio upload. */
   requestScope: string;
   instruction: string;
+  /** The video job's cancel signal: aborts the provider HTTP call, releases the hold. */
+  signal?: AbortSignal;
 };
 
 export type DerivedAudioTranscriptionOutcome =
@@ -148,7 +159,8 @@ export type DerivedAudioTranscriptionOutcome =
       provider: string;
       model: string;
     }
-  | { status: DerivedTranscriptionStatus.FAILED; reason: string };
+  | { status: DerivedTranscriptionStatus.FAILED; reason: string }
+  | { status: DerivedTranscriptionStatus.CANCELLED; holdReleased: boolean };
 
 /** One on-demand frame returned by the internal frames endpoint. */
 export type VideoFrame = {
@@ -168,4 +180,35 @@ export type VideoFailureDetail = {
 export type TranscriptLineStart = {
   startMs: number;
   text: string;
+};
+
+/**
+ * One running video job's view of the cancel flag (pack section 72). Created
+ * when the job starts and stopped in its `finally`; the poll timer re-reads the
+ * Redis flag while a child or a provider call is in flight, so a cancel made on
+ * another replica aborts it.
+ */
+export type VideoCancelWatch = {
+  fileId: string;
+  controller: AbortController;
+  timer: ReturnType<typeof setInterval> | null;
+  polls: number;
+  pollInFlight: boolean;
+  /** The step the job is on (or about to run). */
+  step: VideoProcessingStep;
+  /** Latched true once the flag was seen; never goes back. */
+  cancelled: boolean;
+  /** The abort fired while an ffmpeg/ffprobe step was running. */
+  childKilled: boolean;
+  /** A transcription hold was released with reason CANCELLED. */
+  holdReleased: boolean;
+};
+
+/** `POST /files/:id/processing/cancel` response body. */
+export type VideoCancelResult = {
+  fileId: string;
+  /** The owner-facing effective status after the call. */
+  ingestionStatus: FileIngestionStatus;
+  /** True only when THIS call turned a processing video into a cancelled one. */
+  cancelled: boolean;
 };

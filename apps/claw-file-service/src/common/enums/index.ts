@@ -14,3 +14,5 @@ export { DerivedTranscriptionStatus } from './derived-transcription-status.enum'
 export { TranscriptionFailureKind } from './transcription-failure-kind.enum';
 export { ClamScanOutcome } from './clam-scan-outcome.enum';
 export { TranscriptionResponseIssue } from './transcription-response-issue.enum';
+export { VideoProcessingStep } from './video-processing-step.enum';
+export { VideoCancelOutcome } from './video-cancel-outcome.enum';

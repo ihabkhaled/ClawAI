@@ -354,6 +354,7 @@ export const zh: TranslationDictionary = {
       progress: '正在朗读第 {current} 部分，共 {total} 部分…',
       waitingNext: '正在准备下一部分…',
       finished: '朗读完毕。',
+      cancelled: '已停止朗读。',
       partial: '此回复的部分内容无法朗读，这些部分未计费。',
       truncated: '仅朗读了这条回复的开头部分。',
       unavailable: {
@@ -370,6 +371,7 @@ export const zh: TranslationDictionary = {
         generic: '无法朗读这条回复，请重试。',
         playback: '无法加载音频。',
         timedOut: '朗读耗时过长，请重试。',
+        cancelPending: '朗读仍在停止中，请稍后再试。',
       },
     },
     edit: {
@@ -680,6 +682,9 @@ export const zh: TranslationDictionary = {
     fileGenerationCancelled: '文件生成已取消',
     fileGenerationFailedRetry: '文件生成失败。重试？',
     generationCancelled: '一代取消',
+    imageCancel: '取消',
+    imageCancelling: '正在取消…',
+    imageCancelAria: '取消图片生成',
     imageGenerationFailedRetry: '图像生成失败。重试？',
     judge: '法官',
     live: '居住',

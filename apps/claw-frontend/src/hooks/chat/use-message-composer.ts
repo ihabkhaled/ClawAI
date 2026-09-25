@@ -56,7 +56,8 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
   // got an id — failed or not supported. In-flight uploads are tray tiles.
   const attachmentChips = useMemo(
     () => ({
-      ...chipState,
+      listLabel: chipState.listLabel,
+      onRemove: chipState.onRemove,
       chips: chipState.chips.filter(
         (chip) => chip.fileId === null && chip.state !== ComposerAttachmentState.Uploading,
       ),
@@ -107,6 +108,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
       onRemove: state.removeAttachment,
       disabled: props.isPending,
       statusByFileId,
+      processingCancelByFileId: chipState.processingCancelByFileId,
     },
     toolbarProps: {
       selectedModel: props.selectedModel,

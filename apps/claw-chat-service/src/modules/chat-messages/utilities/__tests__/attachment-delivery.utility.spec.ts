@@ -294,6 +294,29 @@ describe('resolveAttachmentDelivery', () => {
       },
     );
 
+    it('a video whose processing the owner stopped is never native and names the cancel', () => {
+      const stopped = file({
+        id: 'v',
+        mimeType: 'video/mp4',
+        extractedText: null,
+        ingestionStatus: 'FAILED',
+        extractionError: 'Processing was cancelled.',
+        media: {
+          // Even with a measured duration (belt and braces): the owner said stop.
+          durationMs: 10_000,
+          width: null,
+          height: null,
+          hasAudio: null,
+          failureReason: VideoProcessingFailureReason.PROCESSING_CANCELLED,
+        },
+      });
+      expect(one(stopped, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, UNLIMITED)).toMatchObject({
+        mode: FileDeliveryMode.FAILED_PROCESSING,
+        sendNative: false,
+        reason: 'file_delivery.reason.video_processing_cancelled',
+      });
+    });
+
     it('is FAILED_PROCESSING with the generic reason for any other failure', () => {
       const broken = file({
         id: 'v',

@@ -120,6 +120,26 @@ if redis.call('GET', KEYS[1]) == ARGV[1] then
 end
 return 0
 `;
+/**
+ * Owner cancellation (pack §72, ADR-120 addendum "cancellation"). The cancel
+ * route writes this key — per message AND generation, so a later POST's new
+ * job is never cancelled by an old flag — and every replica's job polls it.
+ * Same TTL as the job lock: once the lock is gone no job can read it.
+ */
+export const SPEECH_JOB_CANCEL_KEY_PREFIX = 'claw:chat:speech:cancel:';
+export const SPEECH_JOB_CANCEL_TTL_SECONDS = Math.ceil(SPEECH_JOB_LOCK_TTL_MS / 1_000);
+/**
+ * How often a running job reads the cancel flag. A cancel lands on any of the
+ * 4 replicas while the job runs on one; 1 s bounds how long an in-flight
+ * provider call keeps its local connection after the owner pressed Stop.
+ */
+export const SPEECH_JOB_CANCEL_POLL_INTERVAL_MS = 1_000;
+/** The flag's value; its presence is what counts. */
+export const SPEECH_JOB_CANCEL_FLAG_VALUE = '1';
+/** A cancelled attempt's hold goes back with this wire reason (never finalized). */
+export const SPEECH_CANCELLED_RELEASE_REASON: PaygReleaseReason = 'CANCELLED';
+/** What the settlement log line says caused a release after a cancel. */
+export const SPEECH_CANCELLED_LOG_REASON = 'CANCELLED_BY_OWNER';
 /** Provider calls in flight for one job. Segment 1 is queued first. */
 export const SPEECH_SEGMENT_CONCURRENCY = 3;
 /**
@@ -224,5 +244,11 @@ export const TTS_CREDIT_CHECK_UNAVAILABLE_MESSAGE =
   'Credit checks are temporarily unavailable. Please try again shortly.';
 export const TTS_CLAMPED_CODE = 'PAYG_CREDIT_EXHAUSTED';
 export const TTS_CLAMPED_MESSAGE = 'Not enough credit to read this reply aloud.';
+export const TTS_CANCELLED_CODE = 'TTS_CANCELLED';
+export const TTS_CANCELLED_MESSAGE = 'Read aloud was stopped.';
+/** A POST while the cancelled job is still winding down (it holds the lock for ≤ ~1 s). */
+export const TTS_CANCEL_PENDING_CODE = 'TTS_CANCEL_PENDING';
+export const TTS_CANCEL_PENDING_MESSAGE =
+  'Read aloud is still stopping. Please try again in a moment.';
 export const TTS_JOB_LOCK_UNAVAILABLE_MESSAGE =
   'Read aloud is temporarily unavailable. Please try again shortly.';

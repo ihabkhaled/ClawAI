@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { CircleStop, X } from 'lucide-react';
 
 import { AttachmentMediaPreview } from '@/components/chat/attachment-media-preview';
 import { AttachmentPlaceholder } from '@/components/chat/attachment-placeholder';
@@ -12,13 +12,15 @@ import type { ComposerAttachmentTileProps } from '@/types/composer-attachment.ty
  * voice or video note as a player (nothing downloads until Play), anything
  * else as its type icon, name and size — plus a remove (x) button reachable by
  * keyboard. The remove button sits on the inline-end corner, so it lands on
- * the correct side in RTL without a mirrored twin.
+ * the correct side in RTL without a mirrored twin. A video still processing
+ * also shows a visible "Stop processing" action under its status line.
  */
 export function ComposerAttachmentTile({
   fileId,
   onRemove,
   disabled,
   status,
+  processingCancel,
 }: ComposerAttachmentTileProps): React.ReactElement {
   const tile = useComposerAttachmentTile(fileId);
 
@@ -58,6 +60,22 @@ export function ComposerAttachmentTile({
         >
           {status}
         </p>
+      )}
+      {processingCancel === undefined ? null : (
+        <Button
+          type="button"
+          variant="unstyled"
+          size="unstyled"
+          onClick={processingCancel.onCancel}
+          disabled={processingCancel.isCancelling}
+          aria-label={processingCancel.ariaLabel}
+          aria-busy={processingCancel.isCancelling}
+          className="hover:bg-muted touch:min-h-11 mt-1 flex items-center gap-1 rounded-md border px-2 py-1 text-xs disabled:opacity-60"
+          data-testid="composer-attachment-cancel-processing"
+        >
+          <CircleStop className="h-3 w-3" aria-hidden="true" />
+          {processingCancel.label}
+        </Button>
       )}
       <Button
         type="button"

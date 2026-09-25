@@ -25,7 +25,7 @@ import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type { LoginFailureCopy } from '@/types/auth.types';
 import type {
   ComposerUploadEntry,
-  UseComposerAttachmentChipsReturn,
+  ComposerAttachmentChipsProps,
   ComposerAttachmentTrayProps,
   PendingComposerUpload,
 } from '@/types/composer-attachment.types';
@@ -570,6 +570,11 @@ export type UseImageGenerationBubbleStateReturn = {
   stageText: string | undefined;
   handleRetry: () => void;
   handleRetryWithModel: (provider: string, model: string) => void;
+  /** The shown row is still in progress, so Cancel is offered. */
+  canCancel: boolean;
+  /** A cancel request is in flight (the button is disabled meanwhile). */
+  isCancelling: boolean;
+  handleCancel: () => void;
 };
 
 export type UseMessageComposerStateParams = {
@@ -617,7 +622,7 @@ export type UseMessageComposerReturn = {
   attachmentTray: ComposerAttachmentTrayProps;
   toolbarProps: ComposerToolbarProps;
   /** One chip per attachment: uploading → processing → ready, or failed. */
-  attachmentChips: UseComposerAttachmentChipsReturn;
+  attachmentChips: ComposerAttachmentChipsProps;
 };
 
 export type UseMessageComposerStateReturn = {

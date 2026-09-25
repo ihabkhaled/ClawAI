@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { type Response } from 'express';
 import { Permission } from '@claw/shared-types';
 import { RequirePermissions } from '@claw/shared-entitlements';
@@ -7,6 +18,8 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
 import { FilesService } from '../services/files.service';
+import { VideoCancellationService } from '../services/video-cancellation.service';
+import { type VideoCancelResult } from '../types/video-processing.types';
 import { type UploadFileDto, uploadFileSchema } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto, listFilesQuerySchema } from '../dto/list-files-query.dto';
 import { type FileListRow } from '../types/archive-entries.types';
@@ -28,7 +41,10 @@ import {
 @Controller('files')
 @RequirePermissions(Permission.FILES_USE)
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly videoCancellationService: VideoCancellationService,
+  ) {}
 
   @Post('upload')
   async upload(
@@ -86,6 +102,18 @@ export class FilesController {
   @Get(':id')
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): Promise<File> {
     return this.filesService.getFile(id, user.id);
+  }
+
+  // Pack section 72 — the owner cancels a video still processing. 200 with
+  // `cancelled: false` when there is nothing to cancel (idempotent); a
+  // stranger's id is the same 404 as a missing one.
+  @Post(':id/processing/cancel')
+  @HttpCode(HttpStatus.OK)
+  async cancelProcessing(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<VideoCancelResult> {
+    return this.videoCancellationService.cancelProcessing(id, user.id);
   }
 
   @Delete(':id')

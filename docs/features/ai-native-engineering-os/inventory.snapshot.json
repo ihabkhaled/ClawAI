@@ -1159,6 +1159,11 @@
         },
         {
           "method": "POST",
+          "route": "/chat-messages/:id/speech/cancel",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/chat-messages/best-of-n",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
         },
@@ -1591,6 +1596,11 @@
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/files/:id/processing/cancel",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/files/download/:id",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
@@ -1722,6 +1732,11 @@
         {
           "method": "GET",
           "route": "/images/:id",
+          "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/images/:id/cancel",
           "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
         },
         {
@@ -7698,7 +7713,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 26914,
+          "bytes": 29042,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7718,7 +7733,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 31579,
+          "bytes": 33224,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -8064,7 +8079,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 18189,
+          "bytes": 19382,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -8174,7 +8189,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5451
+        "value": 5456
       },
       "localeCount": 13,
       "locales": [
@@ -10168,11 +10183,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 61
+        "testFiles": 63
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 591
+        "testFiles": 593
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10180,7 +10195,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 30
+        "testFiles": 32
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10938,7 +10953,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 694,
+    "endpointCount": 697,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -10950,7 +10965,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1624,
+    "totalTestFiles": 1630,
     "workspaceCount": 25
   }
 }

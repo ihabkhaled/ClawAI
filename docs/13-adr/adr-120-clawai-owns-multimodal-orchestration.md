@@ -266,9 +266,64 @@ Rejected: raising nginx's timeout for the route (a 4,000-char reading still take
 ~110 s and ties a socket per listener; 12,000 chars would need 6 minutes);
 streaming audio over SSE (no stored file to replay, and a dropped stream re-pays);
 one job per replica with in-process dedupe (prod runs 4 chat replicas).
-Known gaps: a GENERATING job is not cancelled when the user closes the player
-(its segments are stored and charged, so a replay is free); no download of the
-whole reading as one file.
+Known gaps: ~~a GENERATING job is not cancelled when the user closes the player~~
+(closed by addendum 3: Stop cancels it); no download of the whole reading as one
+file.
+
+## Addendum 3 — user cancellation (pack §72, 2026-09-25)
+
+Pack §72: "allow cancellation of generation, long media processing, recording,
+upload where feasible; do not fake provider cancellation if upstream cannot
+cancel; persist correct local state; release PAYG holds where appropriate."
+
+Decision — one semantics on three surfaces, each owner-only (a stranger gets the
+missing-id 404), idempotent, and answering **200** with the state after the call
+(a finished job is a no-op, never a 409):
+
+| Surface                  | Route                                   | Shared store (all replicas)                                                | Ends as                                                               |
+| ------------------------ | --------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Read aloud (chat)        | `POST /chat-messages/:id/speech/cancel` | Redis `claw:chat:speech:cancel:<msg>:<generation>`, then `metadata.speech` | `CANCELLED` (stored segments kept, still charged); later POST resumes |
+| Image generation (image) | `POST /images/:id/cancel`               | the `image_generations` row (conditional update to `CANCELLED`)            | `CANCELLED`; retry creates a successor row                            |
+| Video processing (file)  | `POST /files/:id/processing/cancel`     | Redis `claw:file:video:cancel:<fileId>` + conditional placeholder write    | FAILED `PROCESSING_CANCELLED` (rule 42 item 21); file still attached  |
+
+1. **Checked before every paid step and right after every provider call**, and
+   polled about once a second while a call runs, so a cancel on replica A stops a
+   job on replica B.
+2. **In-flight paid calls are released, never finalized** (rule 37 item 20): the
+   local HTTP request is aborted where the client takes a signal; an answer that
+   lands anyway is discarded (no audio stored, no image asset, no transcript) and
+   its hold goes back with `CANCELLED`. No next candidate, no AUTO fallback
+   successor, no `image.failed`.
+3. **Never claim the provider stopped.** Cloud TTS/image/STT APIs have no cancel;
+   they may finish rendering upstream (the platform absorbs that cost). ComfyUI
+   gets a TARGETED `POST /interrupt {prompt_id}` only when this replica knows the
+   prompt id; SD WebUI is never interrupted (its interrupt cannot name a job and
+   could stop another user's). ffmpeg children are SIGKILLed.
+4. **Late writers lose.** Every status/result write after the cancel is
+   conditional (image: never over `CANCELLED`; video: only while the placeholder
+   is there; speech: never over a newer generation, never CANCELLED → GENERATING).
+5. **Output already delivered stays delivered and charged** — a stored speech
+   segment, an image whose asset landed before the cancel (the row stays
+   COMPLETED and the cancel says so).
+6. **Frontend.** Read-aloud Stop cancels only while GENERATING (then polling stops
+   on the returned state); the chat image card has a Cancel button while in
+   progress and a Retry on the cancelled card; an attached video still
+   processing shows "Stop processing" and then reads "Cancelled". All copy in 13
+   locales.
+
+Recording and upload: the recorder's `cancel` already releases every media track
+(`use-media-recorder.test.ts`). The chunked upload has **no abort** on either side
+(no client signal, no server session delete) — recorded as a gap, not built here.
+
+Rejected: an in-process cancel map (prod runs 4 chat replicas; the cancel lands
+on any of them); a COMPLETED-with-note video (models would read the note as the
+document); a 409 for "already finished" (a double click would read as an error);
+untargeted local-runtime interrupts (cross-user impact).
+Known gaps: an image asset stored in file-service just before a cancel wins can
+be left unreferenced; the image SSE `CANCELLED` event reaches only clients on the
+replica that wrote it (others see it through `GET /images/:id`); Stop pressed
+before the read-aloud POST has answered does not cancel (the job keeps running to
+its deadline, its segments replay free).
 
 ## Alternatives rejected
 

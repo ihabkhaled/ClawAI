@@ -443,6 +443,50 @@ key absent for every other file). `?includeContent=false` returns `content:
 null` — chat-service's research digest reads the transcript without pulling
 the video bytes.
 
+**Cancellation (pack section 72, 2026-09-25)** — `POST /files/:id/processing/cancel`
+(JWT + `FILES_USE`, owner-only; a stranger's id or a missing id is the SAME
+404). Answers 200 `{ fileId, ingestionStatus, cancelled }`, where
+`ingestionStatus` is the owner-facing effective status after the call.
+Idempotent: not a video, or not processing (ready / failed / already
+cancelled) → 200 `cancelled: false` with the current status.
+
+- **Decided state:** a cancelled video ends `FAILED` with
+  `VideoProcessingFailureReason.PROCESSING_CANCELLED`, `extractionError`
+  "Processing was cancelled." (`describeVideoFailure`), `extractedText: null`,
+  and `file.video_process_failed` published once. The upload stays stored and
+  downloadable — FAILED is for the processing. NOT COMPLETED-with-a-note: a
+  COMPLETED row tells chat-service the document is ready and routes the note to
+  a model as content. The cancelled `extractionMetadata.media` carries NO probe
+  facts (thumbnail at most): with no measured `durationMs`, chat-service's
+  native-video gate can never send a cancelled video's bytes to a model.
+- **Mechanics (replica-safe):** `VideoCancellationManager.cancel` sets
+  `claw:file:video:cancel:<fileId>` in Redis (TTL = the lock TTL) AND writes the
+  cancelled result immediately when the row is still the placeholder. The job
+  (on any replica) reads the flag at every step boundary (probe → thumbnail →
+  plan → audio extract → volume detect → transcription → save) and through a
+  bounded poll (`VIDEO_CANCEL_POLL_INTERVAL_MS` = 1 s, at most
+  `VIDEO_CANCEL_MAX_POLLS`, cleared in `finally`). The poll aborts the job's
+  `AbortSignal`: `runMediaProcess` SIGKILLs the running ffmpeg/ffprobe child
+  (`MediaProcessStatus.ABORTED`; an already-aborted signal never spawns), and
+  the provider HTTP call is aborted through axios `signal`.
+- **Money:** an aborted (or cancel-raced) transcription RELEASES its hold with
+  reason `CANCELLED` (`TranscriptionMeterManager.releaseCancelled`), never
+  finalizes; a cancel before the hold takes none. `TranscriptionAttemptStatus.CANCELLED`
+  ends the candidate walk — it never falls through to the next provider.
+- **No overwrite:** `FilesRepository.saveVideoExtractionResult` is conditional
+  (`updateMany` where COMPLETED + `[Video file: …]` + no reason) and returns
+  whether it wrote. Route and job race through it; the loser writes nothing and
+  publishes nothing, so a late job never overwrites a cancelled row and never
+  publishes `file.video_process_completed` after a cancel. The stale re-queue
+  never touches a cancelled row (it has `extractionError`).
+- **Log:** `videoCancel fileId=… step=… outcome=CANCELLED|NOOP holdReleased=… childKilled=…`
+  (`step=REQUESTED` from the route). No transcript text, no balance.
+- **Not faked:** a provider call already answered is not "un-billed" at the
+  provider; we only release OUR hold. Nothing is cancelled at the provider.
+- Tests: `video-cancellation.manager.spec.ts`, `video-cancellation.service.spec.ts`,
+  `video-processing.manager.spec.ts` "cancellation", `transcription-metering.spec.ts`
+  "cancelled video", `media-process.utility.spec.ts` (abort), `files.controller.spec.ts`.
+
 ffmpeg is installed in BOTH images (`Dockerfile.dev`, `Dockerfile` runner) with
 a build-time `ffmpeg -version` check. Runbook:
 [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).

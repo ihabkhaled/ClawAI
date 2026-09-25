@@ -23,9 +23,23 @@ const logger = new Logger('MediaProcess');
 //    in a hostile container does not get to negotiate.
 // 4. stdout is capped in BYTES and the process is killed the moment it passes
 //    the cap; stderr keeps only its head, for a log line.
+// 5. An optional AbortSignal (a user cancel) SIGKILLs the child and ends the
+//    run `ABORTED`; an already-aborted signal never spawns. The listener is
+//    removed when the run settles. The caller's temp dir is removed by its own
+//    `finally` (`VideoMediaManager.withWorkspace`), exactly as on a timeout.
 
 /** Runs one bounded ffprobe/ffmpeg process. Never throws; the status says how it ended. */
 export async function runMediaProcess(request: MediaProcessRequest): Promise<MediaProcessResult> {
+  const { signal } = request;
+  if (signal?.aborted === true) {
+    logger.warn(`runMediaProcess: ${request.command} not started — cancelled`);
+    return {
+      status: MediaProcessStatus.ABORTED,
+      exitCode: null,
+      stdout: Buffer.alloc(0),
+      stderr: '',
+    };
+  }
   return new Promise((resolve) => {
     const stdoutChunks: Buffer[] = [];
     let stdoutBytes = 0;
@@ -57,6 +71,7 @@ export async function runMediaProcess(request: MediaProcessRequest): Promise<Med
       }
       settled = true;
       clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
       resolve({ status, exitCode, stdout: Buffer.concat(stdoutChunks), stderr });
     };
     const kill = (): void => {
@@ -74,6 +89,13 @@ export async function runMediaProcess(request: MediaProcessRequest): Promise<Med
       kill();
       finish(MediaProcessStatus.TIMED_OUT, null);
     }, request.timeoutMs);
+
+    const onAbort = (): void => {
+      logger.warn(`runMediaProcess: ${request.command} cancelled — SIGKILL`);
+      kill();
+      finish(MediaProcessStatus.ABORTED, null);
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
 
     child.stdout?.on('data', (chunk: Buffer) => {
       stdoutBytes += chunk.length;

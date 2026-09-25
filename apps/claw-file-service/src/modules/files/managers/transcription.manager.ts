@@ -230,6 +230,11 @@ export class TranscriptionManager implements OnModuleInit {
       );
       return;
     }
+    if (outcome.status === TranscriptionAttemptStatus.CANCELLED) {
+      // Unreachable for an audio upload (it passes no signal); nothing to write.
+      this.logger.warn(`runTranscription: fileId=${file.id} cancelled — no write`);
+      return;
+    }
     if (outcome.status === TranscriptionAttemptStatus.REFUSED) {
       await this.recordFailure(file, outcome.reason);
       this.publishFailed(
@@ -269,6 +274,9 @@ export class TranscriptionManager implements OnModuleInit {
       this.logger.warn(`transcribeDerivedAudio: fileId=${input.fileId} derived track too large`);
       return { status: DerivedTranscriptionStatus.FAILED, reason: TRANSCRIPTION_TOO_LARGE_MESSAGE };
     }
+    if (input.signal?.aborted === true) {
+      return { status: DerivedTranscriptionStatus.CANCELLED, holdReleased: false };
+    }
     let candidates: TranscriptionCapability[];
     try {
       candidates = await this.capabilityClient.findCapableModels();
@@ -286,6 +294,7 @@ export class TranscriptionManager implements OnModuleInit {
         audioSeconds: input.audioSeconds,
         requestScope: input.requestScope,
         instruction: input.instruction,
+        signal: input.signal,
       },
       candidates,
     );
@@ -294,6 +303,12 @@ export class TranscriptionManager implements OnModuleInit {
         status: DerivedTranscriptionStatus.FAILED,
         reason: TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
       };
+    }
+    if (outcome.status === TranscriptionAttemptStatus.CANCELLED) {
+      this.logger.warn(
+        `transcribeDerivedAudio: fileId=${input.fileId} provider=${outcome.capability.provider} cancelled holdReleased=${String(outcome.holdReleased)}`,
+      );
+      return { status: DerivedTranscriptionStatus.CANCELLED, holdReleased: outcome.holdReleased };
     }
     if (outcome.status !== TranscriptionAttemptStatus.COMPLETED) {
       this.logger.warn(
@@ -361,6 +376,15 @@ export class TranscriptionManager implements OnModuleInit {
       last: firstCandidate,
     };
     for (const capability of candidates) {
+      if (this.isCancelled(context)) {
+        // A cancel ends the walk: never a reason to try the next provider.
+        return {
+          status: TranscriptionAttemptStatus.CANCELLED,
+          holdReleased: false,
+          capability: walk.last,
+          model: this.effectiveModel(walk.last),
+        };
+      }
       if (walk.blockedProviders.has(capability.provider)) {
         continue;
       }
@@ -515,6 +539,10 @@ export class TranscriptionManager implements OnModuleInit {
     providerAttempt: number,
   ): Promise<TranscriptionAttemptOutcome> {
     const model = this.effectiveModel(capability);
+    if (this.isCancelled(context)) {
+      // Cancelled before the hold: nothing reserved, nothing called.
+      return { status: TranscriptionAttemptStatus.CANCELLED, holdReleased: false };
+    }
     const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
     const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
 
@@ -563,12 +591,24 @@ export class TranscriptionManager implements OnModuleInit {
         );
       }
     } catch (error: unknown) {
+      if (this.isCancelled(context)) {
+        // A user cancel aborted the call: RELEASED as CANCELLED, and returned
+        // (not thrown) so the walk cannot read it as a provider failure.
+        await this.meter.releaseCancelled(meterHold);
+        return { status: TranscriptionAttemptStatus.CANCELLED, holdReleased: true };
+      }
       // The user got no transcript, so the hold goes back rather than being
       // settled — a provider error, a timeout and an empty answer alike.
       await this.meter.release(meterHold, error);
       throw error;
     }
 
+    if (this.isCancelled(context)) {
+      // The answer raced the cancel. The user gets no transcript (the video is
+      // recorded cancelled), so the hold is released, never finalized.
+      await this.meter.releaseCancelled(meterHold);
+      return { status: TranscriptionAttemptStatus.CANCELLED, holdReleased: true };
+    }
     await this.meter.finalize(meterHold, result);
     return { status: TranscriptionAttemptStatus.COMPLETED, transcript, result };
   }
@@ -581,7 +621,20 @@ export class TranscriptionManager implements OnModuleInit {
     model: string,
     maxOutputTokens: number,
   ): Promise<TranscriptionProviderResult> {
-    const { base64, mimeType, instruction } = context;
+    const { base64, mimeType, instruction, signal } = context;
+    if (provider === 'GEMINI' && signal !== undefined) {
+      // The video path: cancellable. `instruction` undefined → the adapter default.
+      return transcribeWithGemini(
+        baseUrl,
+        apiKey,
+        base64,
+        mimeType,
+        model,
+        maxOutputTokens,
+        instruction,
+        signal,
+      );
+    }
     if (provider === 'GEMINI') {
       // The GRANTED ceiling from the hold, never the requested one (rule 37 item 2).
       // The instruction is passed only when the caller has its own (a video's
@@ -600,7 +653,9 @@ export class TranscriptionManager implements OnModuleInit {
     }
     if (provider === 'OPENAI') {
       // verbose_json already carries timestamped segments; no instruction needed.
-      return transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model);
+      return signal === undefined
+        ? transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model)
+        : transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model, signal);
     }
     // Unreachable while the capability client filters on
     // TRANSCRIPTION_PROVIDER_PRIORITY; kept so adding a provider there without
@@ -644,6 +699,15 @@ export class TranscriptionManager implements OnModuleInit {
    */
   private effectiveModel(capability: TranscriptionCapability): string {
     return capability.provider === 'OPENAI' ? OPENAI_TRANSCRIPTION_MODEL : capability.model;
+  }
+
+  /**
+   * Whether the caller's cancel signal has fired. A method, not an inline
+   * check, because the signal flips across awaits and an inline read would be
+   * narrowed away by the compiler after the first one.
+   */
+  private isCancelled(context: TranscriptionRequestContext): boolean {
+    return context.signal?.aborted === true;
   }
 
   private defaultBaseUrl(provider: string): string {

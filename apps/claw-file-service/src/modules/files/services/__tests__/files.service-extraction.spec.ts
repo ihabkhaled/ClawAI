@@ -326,6 +326,21 @@ describe('FilesService extraction wiring', () => {
         expect(processing.requestVideoProcessing).toHaveBeenCalledWith(stale);
       });
 
+      it('never re-queues a CANCELLED video, however stale, and reports it FAILED', async () => {
+        filesRepo['findById']?.mockResolvedValue(
+          videoRow({
+            ingestionStatus: 'FAILED',
+            extractedText: null,
+            extractionError: 'Processing was cancelled.',
+            updatedAt: new Date(Date.now() - 60 * 60 * 1000),
+          }),
+        );
+        const state = await service.getIngestionState('file-1', USER_ID);
+        expect(state.ingestionStatus).toBe('FAILED');
+        expect(state.extractionError).toBe('Processing was cancelled.');
+        expect(processing.requestVideoProcessing).not.toHaveBeenCalled();
+      });
+
       it('does not re-queue a video whose processing already FAILED', async () => {
         filesRepo['findById']?.mockResolvedValue(
           videoRow({ ingestionStatus: 'FAILED', extractedText: null, updatedAt: new Date(0) }),

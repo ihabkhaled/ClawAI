@@ -1104,6 +1104,11 @@
       },
       {
         "method": "POST",
+        "route": "/chat-messages/:id/speech/cancel",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/chat-messages/best-of-n",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
@@ -1536,6 +1541,11 @@
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/files/:id/processing/cancel",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/files/download/:id",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
@@ -1667,6 +1677,11 @@
       {
         "method": "GET",
         "route": "/images/:id",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/images/:id/cancel",
         "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
       },
       {
@@ -3508,5 +3523,5 @@
     ]
   },
   "generated": true,
-  "total": 694
+  "total": 697
 }

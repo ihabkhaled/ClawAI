@@ -5,6 +5,7 @@ import { OWNER_PLACEHOLDER_PROCESSING_CEILING_MS } from '../../constants/effecti
 import { VIDEO_PROCESSING_LOCK_TTL_SECONDS } from '../../constants/video-processing.constants';
 import { type EffectiveIngestionRow } from '../../types/effective-ingestion.types';
 import {
+  isVideoAwaitingProcessing,
   resolveEffectiveIngestionStatus,
   withOwnerFacingIngestionStatus,
 } from '../effective-ingestion.utility';
@@ -92,5 +93,27 @@ describe('withOwnerFacingIngestionStatus', () => {
     expect(OWNER_PLACEHOLDER_PROCESSING_CEILING_MS).toBeGreaterThan(
       VIDEO_PROCESSING_LOCK_TTL_SECONDS * 1000,
     );
+  });
+});
+
+describe('a cancelled video (pack section 72)', () => {
+  const cancelled = row({
+    ingestionStatus: FileIngestionStatus.FAILED,
+    extractedText: null,
+    extractionError: 'Processing was cancelled.',
+  });
+
+  it('is FAILED to every reader, owner-facing included', () => {
+    expect(resolveEffectiveIngestionStatus(cancelled)).toBe(FileIngestionStatus.FAILED);
+    expect(withOwnerFacingIngestionStatus(cancelled, NOW).ingestionStatus).toBe(
+      FileIngestionStatus.FAILED,
+    );
+  });
+
+  it('is no longer awaiting processing; the placeholder row is', () => {
+    expect(isVideoAwaitingProcessing(cancelled)).toBe(false);
+    expect(isVideoAwaitingProcessing(row())).toBe(true);
+    expect(isVideoAwaitingProcessing(row({ extractionError: 'x' }))).toBe(false);
+    expect(isVideoAwaitingProcessing(row({ mimeType: 'audio/mpeg' }))).toBe(false);
   });
 });

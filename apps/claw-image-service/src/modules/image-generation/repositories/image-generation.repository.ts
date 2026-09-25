@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ImageAssetRole, type ImageGenerationStatus, type Prisma } from '../../../generated/prisma';
+import { ImageAssetRole, ImageGenerationStatus, type Prisma } from '../../../generated/prisma';
+import { IMAGE_ACTIVE_STATUSES } from '../constants/image-cancel.constants';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { IMAGE_OUTPUT_ASSETS_INCLUDE } from '../constants/image-supersession.constants';
 import {
@@ -86,6 +87,14 @@ export class ImageGenerationRepository {
     return this.prisma.imageGeneration.count({ where: { userId } });
   }
 
+  /**
+   * Moves a row to `status` — unless the user CANCELLED it. CANCELLED is
+   * absorbing: the conditional `updateMany` never matches a cancelled row, so a
+   * provider call that returns after the cancel cannot overwrite it with
+   * FINALIZING / COMPLETED / FAILED, on this replica or any other. Returns null
+   * when nothing was written (cancelled or missing). A retry of a CANCELLED
+   * row goes to a successor row, never back through here.
+   */
   async updateStatus(
     id: string,
     status: ImageGenerationStatus,
@@ -97,12 +106,40 @@ export class ImageGenerationRepository {
       completedAt?: Date;
       latencyMs?: number;
     },
-  ): Promise<ImageGenerationRecord> {
-    return this.prisma.imageGeneration.update({
-      where: { id },
+  ): Promise<ImageGenerationRecord | null> {
+    const { count } = await this.prisma.imageGeneration.updateMany({
+      where: { id, status: { not: ImageGenerationStatus.CANCELLED } },
       data: { status, ...extra },
-      include: IMAGE_OUTPUT_ASSETS_INCLUDE,
     });
+    return count === 0 ? null : this.findById(id);
+  }
+
+  /**
+   * THE cancel write: CANCELLED only while the row is still running
+   * (`IMAGE_ACTIVE_STATUSES`). One conditional statement, so of a cancel and a
+   * completion racing on two replicas exactly one wins. Returns the cancelled
+   * row, or null when it had already finished (or does not exist).
+   */
+  async cancelIfActive(id: string): Promise<ImageGenerationRecord | null> {
+    const { count } = await this.prisma.imageGeneration.updateMany({
+      where: { id, status: { in: [...IMAGE_ACTIVE_STATUSES] } },
+      data: { status: ImageGenerationStatus.CANCELLED, completedAt: new Date() },
+    });
+    return count === 0 ? null : this.findById(id);
+  }
+
+  /** Current status only — the cheap read the execution path polls for a cancel. */
+  async findStatus(id: string): Promise<ImageGenerationStatus | null> {
+    const row = await this.prisma.imageGeneration.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    return row?.status ?? null;
+  }
+
+  /** Removes an OUTPUT asset written just before the row was found CANCELLED. */
+  async deleteAsset(id: string): Promise<void> {
+    await this.prisma.imageGenerationAsset.deleteMany({ where: { id } });
   }
 
   async createEvent(data: {

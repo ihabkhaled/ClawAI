@@ -80,9 +80,21 @@ export function rateLimitBackoffMs(
   return Math.min(SPEECH_RATE_LIMIT_MAX_WAIT_MS, Math.round(exponential * jitter));
 }
 
-/** Waits out a rate-limit backoff. */
-export function waitMs(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+/** Waits out a rate-limit backoff; resolves at once when the job is cancelled (`signal`). */
+export function waitMs(milliseconds: number, signal?: AbortSignal): Promise<void> {
+  return signal?.aborted === true ? Promise.resolve() : abortableWait(milliseconds, signal);
+}
+
+function abortableWait(milliseconds: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const done = (): void => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, milliseconds);
+    signal?.addEventListener('abort', done, { once: true });
+  });
 }
 
 /** A provider answer the walk retries on the same candidate after a wait. */

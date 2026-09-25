@@ -369,6 +369,7 @@ export const hi: TranslationDictionary = {
       progress: 'भाग {current} / {total} पढ़ा जा रहा है…',
       waitingNext: 'अगला भाग तैयार किया जा रहा है…',
       finished: 'पढ़कर सुनाना पूरा हुआ।',
+      cancelled: 'पढ़ना रोक दिया गया।',
       partial: 'इस उत्तर के कुछ भाग पढ़कर नहीं सुनाए जा सके और उनका शुल्क नहीं लिया गया।',
       truncated: 'इस उत्तर का केवल पहला भाग पढ़कर सुनाया गया।',
       unavailable: {
@@ -386,6 +387,7 @@ export const hi: TranslationDictionary = {
         generic: 'यह उत्तर पढ़कर नहीं सुनाया जा सका। फिर कोशिश करें।',
         playback: 'ऑडियो लोड नहीं हो सका।',
         timedOut: 'पढ़कर सुनाने में बहुत समय लगा। फिर से कोशिश करें।',
+        cancelPending: 'पढ़कर सुनाना अभी रुक रहा है। कुछ पल बाद फिर कोशिश करें।',
       },
     },
     edit: {
@@ -710,6 +712,9 @@ export const hi: TranslationDictionary = {
     fileGenerationCancelled: 'फ़ाइल निर्माण रद्द किया गया',
     fileGenerationFailedRetry: 'फ़ाइल निर्माण विफल रहा। पुनः प्रयास करें?',
     generationCancelled: 'निर्माण रद्द किया गया',
+    imageCancel: 'रद्द करें',
+    imageCancelling: 'रद्द किया जा रहा है…',
+    imageCancelAria: 'इमेज बनाना रद्द करें',
     imageGenerationFailedRetry: 'छवि निर्माण विफल रहा। पुनः प्रयास करें?',
     judge: 'निर्णायक',
     live: 'लाइव',

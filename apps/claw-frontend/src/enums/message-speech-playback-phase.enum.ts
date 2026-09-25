@@ -13,4 +13,6 @@ export enum MessageSpeechPlaybackPhase {
   FINISHED = 'FINISHED',
   /** Nothing can be played: the job failed, or its audio could not be loaded. */
   FAILED = 'FAILED',
+  /** The reading was stopped before any part was ready ("Reading stopped."). */
+  CANCELLED = 'CANCELLED',
 }

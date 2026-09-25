@@ -9,19 +9,15 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { EventPattern, VideoAudioStatus, VideoProcessingFailureReason } from '@claw/shared-types';
-import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
 import {
   DerivedTranscriptionStatus,
   MediaProcessStatus,
   VideoPlanDecision,
 } from '../../../../common/enums';
-import { type RedisService } from '../../../../infrastructure/redis/redis.service';
-import { type FilesRepository } from '../../repositories/files.repository';
 import { VideoProcessingManager } from '../video-processing.manager';
 import { VideoMediaManager } from '../video-media.manager';
-import { type VideoPlanLimitManager } from '../video-plan-limit.manager';
-import { type TranscriptionManager } from '../transcription.manager';
+import { VideoCancellationManager } from '../video-cancellation.manager';
 import {
   detectAudioVolume,
   extractAudioTrack,
@@ -120,7 +116,10 @@ interface Harness {
   manager: VideoProcessingManager;
   files: { findById: Mock; saveVideoExtractionResult: Mock; saveExtractionResult: Mock };
   rabbit: { publish: Mock; subscribe: Mock };
-  redis: { setIfAbsent: Mock; del: Mock };
+  redis: { setIfAbsent: Mock; del: Mock; get: Mock; set: Mock };
+  /** The shared Redis every replica reads: the cancel flag lives here. */
+  store: Map<string, string>;
+  cancellation: VideoCancellationManager;
   plan: { check: Mock };
   transcription: { transcribeDerivedAudio: Mock };
   tempDirs: string[];
@@ -129,16 +128,21 @@ interface Harness {
 const buildHarness = (file: File | null): Harness => {
   const files = {
     findById: vi.fn().mockResolvedValue(file),
-    saveVideoExtractionResult: vi.fn().mockResolvedValue(file),
+    saveVideoExtractionResult: vi.fn().mockResolvedValue(true),
     saveExtractionResult: vi.fn(),
   };
   const rabbit = {
     publish: vi.fn().mockResolvedValue(undefined),
     subscribe: vi.fn().mockResolvedValue(undefined),
   };
+  const store = new Map<string, string>();
   const redis = {
     setIfAbsent: vi.fn().mockResolvedValue(true),
     del: vi.fn().mockResolvedValue(undefined),
+    get: vi.fn(async (key: string) => store.get(key) ?? null),
+    set: vi.fn(async (key: string, value: string) => {
+      store.set(key, value);
+    }),
   };
   const plan = {
     check: vi.fn().mockResolvedValue({ decision: VideoPlanDecision.ALLOWED, limitSeconds: 600 }),
@@ -169,15 +173,21 @@ const buildHarness = (file: File | null): Harness => {
     return exited();
   });
   mockedVolume.mockResolvedValue(volumedetect('-8.4'));
-  const manager = new VideoProcessingManager(
-    files as unknown as FilesRepository,
-    rabbit as unknown as RabbitMQService,
-    redis as unknown as RedisService,
-    new VideoMediaManager(),
-    plan as unknown as VideoPlanLimitManager,
-    transcription as unknown as TranscriptionManager,
+  const cancellation = new VideoCancellationManager(
+    files as never,
+    redis as never,
+    rabbit as never,
   );
-  return { manager, files, rabbit, redis, plan, transcription, tempDirs };
+  const manager = new VideoProcessingManager(
+    files as never,
+    rabbit as never,
+    redis as never,
+    new VideoMediaManager(),
+    plan as never,
+    transcription as never,
+    cancellation,
+  );
+  return { manager, files, rabbit, redis, store, cancellation, plan, transcription, tempDirs };
 };
 
 const JOB = { fileId: 'video-1', userId: 'uploader-1' };
@@ -222,6 +232,7 @@ describe('VideoProcessingManager', () => {
       audioSeconds: 12,
       requestScope: 'video-audio',
       instruction: VIDEO_TRANSCRIPTION_INSTRUCTION,
+      signal: expect.any(AbortSignal),
     });
 
     const write = theWrite(harness);
@@ -588,7 +599,13 @@ describe('VideoProcessingManager', () => {
   it('takes the thumbnail ~10% into the clip at <= 480 px wide', async () => {
     const harness = buildHarness(buildFile());
     await harness.manager.handleJob(JOB);
-    expect(mockedFrame).toHaveBeenCalledWith(expect.any(String), expect.any(String), 1_200, 480);
+    expect(mockedFrame).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      1_200,
+      480,
+      expect.any(AbortSignal),
+    );
   });
 
   describe('idempotency', () => {
@@ -652,5 +669,156 @@ describe('VideoProcessingManager', () => {
       VideoProcessingFailureReason.SOURCE_UNREADABLE,
     );
     expect(mockedProbe).not.toHaveBeenCalled();
+  });
+
+  describe('cancellation (pack section 72)', () => {
+    const FLAG = 'claw:file:video:cancel:video-1';
+
+    const expectCancelledWrite = (harness: Harness): Record<string, unknown> => {
+      const write = theWrite(harness);
+      expect(write.status).toBe(FileIngestionStatus.FAILED);
+      expect(write.extractedText).toBeNull();
+      expect(write.extractionError).toBe('Processing was cancelled.');
+      expect(media(write).failureReason).toBe(VideoProcessingFailureReason.PROCESSING_CANCELLED);
+      expect(published(harness, EventPattern.FILE_VIDEO_PROCESS_COMPLETED)).toBeUndefined();
+      return write;
+    };
+
+    it('cancel before the job starts: the route records it, the job runs no ffmpeg and takes no hold', async () => {
+      const file = buildFile();
+      const harness = buildHarness(file);
+
+      const answer = await harness.cancellation.cancel(file);
+      expect(answer).toEqual({
+        fileId: 'video-1',
+        ingestionStatus: FileIngestionStatus.FAILED,
+        cancelled: true,
+      });
+      expect(harness.store.get(FLAG)).toBe('1');
+      expect(harness.redis.set).toHaveBeenCalledWith(FLAG, '1', 900);
+      expectCancelledWrite(harness);
+      expect(published(harness, EventPattern.FILE_VIDEO_PROCESS_FAILED)?.reasonCode).toBe(
+        VideoProcessingFailureReason.PROCESSING_CANCELLED,
+      );
+
+      // The queued job then finds the settled row.
+      harness.files.findById.mockResolvedValue(
+        buildFile({
+          ingestionStatus: FileIngestionStatus.FAILED,
+          extractedText: null,
+          extractionError: 'Processing was cancelled.',
+        }),
+      );
+      await harness.manager.handleJob(JOB);
+      expect(mockedProbe).not.toHaveBeenCalled();
+      expect(harness.transcription.transcribeDerivedAudio).not.toHaveBeenCalled();
+      expect(harness.files.saveVideoExtractionResult).toHaveBeenCalledTimes(1);
+    });
+
+    it('a flag already set when the job starts stops it before any child is spawned', async () => {
+      const harness = buildHarness(buildFile());
+      harness.store.set(FLAG, '1');
+      await harness.manager.handleJob(JOB);
+      expect(mockedProbe).not.toHaveBeenCalled();
+      expect(harness.transcription.transcribeDerivedAudio).not.toHaveBeenCalled();
+      expectCancelledWrite(harness);
+      expect(harness.redis.del).toHaveBeenCalledWith('file:video-process-lock:video-1');
+    });
+
+    it('cancel mid-flight between steps: stops after the thumbnail, FAILED PROCESSING_CANCELLED', async () => {
+      const harness = buildHarness(buildFile());
+      mockedFrame.mockImplementation(async (_input: string, output: string) => {
+        await writeFile(output, THUMBNAIL);
+        harness.store.set(FLAG, '1');
+        return exited();
+      });
+      await harness.manager.handleJob(JOB);
+
+      expect(harness.plan.check).not.toHaveBeenCalled();
+      expect(mockedAudio).not.toHaveBeenCalled();
+      expect(harness.transcription.transcribeDerivedAudio).not.toHaveBeenCalled();
+      const write = expectCancelledWrite(harness);
+      // The thumbnail is kept for the UI; the probe facts are not, so no
+      // measured duration can let chat-service send the video natively.
+      expect(media(write)).toMatchObject({ thumbnailBase64: THUMBNAIL.toString('base64') });
+      expect(media(write)).not.toHaveProperty('durationMs');
+      expect(published(harness, EventPattern.FILE_VIDEO_PROCESS_FAILED)?.reasonCode).toBe(
+        VideoProcessingFailureReason.PROCESSING_CANCELLED,
+      );
+      expect(existsSync(harness.tempDirs[0] ?? '')).toBe(false);
+    });
+
+    it('cancel during transcription: the job records the cancel, never the partial document', async () => {
+      const harness = buildHarness(buildFile());
+      harness.transcription.transcribeDerivedAudio.mockImplementation(async () => {
+        harness.store.set(FLAG, '1');
+        return { status: DerivedTranscriptionStatus.CANCELLED, holdReleased: true };
+      });
+      await harness.manager.handleJob(JOB);
+
+      expect(harness.transcription.transcribeDerivedAudio).toHaveBeenCalledTimes(1);
+      expectCancelledWrite(harness);
+    });
+
+    it('a cancel from ANOTHER replica kills the running ffmpeg child through the poll', async () => {
+      const harness = buildHarness(buildFile());
+      // The route runs on a different instance; only Redis and the row are shared.
+      const otherReplica = new VideoCancellationManager(
+        harness.files as never,
+        harness.redis as never,
+        harness.rabbit as never,
+      );
+      // The route wins the conditional write; the job's later write is a no-op.
+      harness.files.saveVideoExtractionResult.mockResolvedValueOnce(true).mockResolvedValue(false);
+      let seenSignal: AbortSignal | undefined;
+      mockedProbe.mockImplementation(async (inputPath: string, signal?: AbortSignal) => {
+        harness.tempDirs.push(path.dirname(inputPath));
+        seenSignal = signal;
+        await otherReplica.cancel(buildFile());
+        return new Promise<MediaProcessResult>((resolve) => {
+          signal?.addEventListener('abort', () => {
+            resolve({
+              status: MediaProcessStatus.ABORTED,
+              exitCode: null,
+              stdout: Buffer.alloc(0),
+              stderr: '',
+            });
+          });
+        });
+      });
+      await harness.manager.handleJob(JOB);
+
+      expect(seenSignal?.aborted).toBe(true);
+      expect(mockedFrame).not.toHaveBeenCalled();
+      expect(harness.files.saveVideoExtractionResult).toHaveBeenCalledTimes(2);
+      const failedEvents = harness.rabbit.publish.mock.calls.filter(
+        (call) => call[0] === EventPattern.FILE_VIDEO_PROCESS_FAILED,
+      );
+      expect(failedEvents).toHaveLength(1);
+      expect(published(harness, EventPattern.FILE_VIDEO_PROCESS_COMPLETED)).toBeUndefined();
+      expect(existsSync(harness.tempDirs[0] ?? '')).toBe(false);
+    });
+
+    it('a late job cannot overwrite a cancelled row and publishes no completed event', async () => {
+      const harness = buildHarness(buildFile());
+      harness.files.saveVideoExtractionResult.mockResolvedValue(false);
+      await harness.manager.handleJob(JOB);
+      expect(harness.files.saveVideoExtractionResult).toHaveBeenCalledTimes(1);
+      expect(harness.rabbit.publish).not.toHaveBeenCalled();
+    });
+
+    it('a cancel after the document landed is a no-op (cancelled: false, status COMPLETED)', async () => {
+      const done = buildFile({ extractedText: 'Video "a.mp4" — length 00:12, 1280×720.' });
+      const harness = buildHarness(done);
+      const answer = await harness.cancellation.cancel(done);
+      expect(answer).toEqual({
+        fileId: 'video-1',
+        ingestionStatus: FileIngestionStatus.COMPLETED,
+        cancelled: false,
+      });
+      expect(harness.store.has(FLAG)).toBe(false);
+      expect(harness.files.saveVideoExtractionResult).not.toHaveBeenCalled();
+      expect(harness.rabbit.publish).not.toHaveBeenCalled();
+    });
   });
 });

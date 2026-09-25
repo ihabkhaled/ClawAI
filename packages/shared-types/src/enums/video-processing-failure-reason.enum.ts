@@ -30,4 +30,11 @@ export enum VideoProcessingFailureReason {
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
   /** Anything unexpected; the recorded message says what. */
   PROCESSING_ERROR = 'PROCESSING_ERROR',
+  /**
+   * The owner cancelled processing (`POST /files/:id/processing/cancel`).
+   * FAILED, never COMPLETED-with-a-note: a COMPLETED row would tell
+   * chat-service the document is ready and route the note to a model as
+   * content. No PAYG hold is finalized for a cancelled job.
+   */
+  PROCESSING_CANCELLED = 'PROCESSING_CANCELLED',
 }

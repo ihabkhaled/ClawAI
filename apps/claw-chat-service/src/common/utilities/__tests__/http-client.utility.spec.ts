@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { declaredHost } from '@claw/shared-utilities';
 import {
+  httpPostBinary,
   httpReadBinaryBase64,
   httpRequest,
   httpStream,
@@ -109,5 +110,58 @@ describe('http client SSRF refusals', () => {
       expect(written).toHaveLength(0);
       expect(ended).toBe(false);
     });
+  });
+});
+
+describe('httpPostBinary cancellation (Read aloud Stop)', () => {
+  let originalFetch: typeof fetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('aborts the local request when the caller signal fires', async () => {
+    global.fetch = vi.fn(
+      async (_url: string | URL | Request, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('AbortError')), {
+            once: true,
+          });
+        }),
+    );
+    const caller = new AbortController();
+    const pending = httpPostBinary({
+      url: 'https://provider.example/speech',
+      body: { input: 'hi' },
+      timeoutMs: 60_000,
+      allowedHosts: ALLOWED,
+      signal: caller.signal,
+    });
+    caller.abort();
+    await expect(pending).rejects.toThrow('AbortError');
+  });
+
+  it('never sends when the caller signal is already aborted', async () => {
+    let sentSignal: AbortSignal | null | undefined;
+    global.fetch = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      sentSignal = init?.signal;
+      throw new Error('AbortError');
+    });
+    const caller = new AbortController();
+    caller.abort();
+    await expect(
+      httpPostBinary({
+        url: 'https://provider.example/speech',
+        body: {},
+        timeoutMs: 60_000,
+        allowedHosts: ALLOWED,
+        signal: caller.signal,
+      }),
+    ).rejects.toThrow('AbortError');
+    expect(sentSignal?.aborted).toBe(true);
   });
 });

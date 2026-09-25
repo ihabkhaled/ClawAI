@@ -286,6 +286,21 @@ Full reasoning:
     synced before that heuristic cannot advertise audio. Found live
     2026-09-25: every voice note went to `models/antigravity-preview-05-2026`
     (400), then `whisper-1` (429), and users read the raw status code.
+21. **A video whose processing the owner stopped is FAILED
+    `PROCESSING_CANCELLED` — never a COMPLETED row with a note.** `POST
+/files/:id/processing/cancel` (owner-only, idempotent, 200) sets a Redis
+    flag every replica's job reads between steps (and every second while an
+    ffmpeg child runs, which is SIGKILLed), and writes the failure result only
+    while the placeholder is still there; a late job's save is conditional on
+    the placeholder, so it can never overwrite the cancel or publish
+    "completed". A COMPLETED-with-note row would tell chat-service the
+    document is ready and hand the note to models as content; FAILED keeps the
+    one effective-status mapping (item 15) and the honest
+    `FAILED_PROCESSING` delivery, with its own reason
+    `file_delivery.reason.video_processing_cancelled` — and a cancelled video
+    is never sent natively. The upload stays stored and attachable; the
+    composer tile reads "Cancelled". A transcription hold in flight is
+    released (rule 37 item 20).
 
 ## How this is enforced
 
@@ -308,6 +323,7 @@ Full reasoning:
 | 17      | `content-security-policy.test.ts` "lets <audio>/<video> play an attachment from a blob: URL" and "keeps blob: out of connect-src and frame-src"; `use-attachment-file-preview.test.ts` and `use-file-viewer.test.ts` assert the text preview never calls `fetch`                                                                                                                                                                                                                                                                                                                                                                  |
 | 18      | `context-assembly-attachment-only-turn.spec.ts` — all three builders rewrite only the final trivial turn, only with files attached; `attachment-only-turn.utility.spec.ts` pins what counts as "no words" and each kind's instruction                                                                                                                                                                                                                                                                                                                                                                                             |
 | 19      | `attachment-only-send.dto.spec.ts` — every send schema × (empty + files → valid, empty + no files → invalid, 11 files → invalid, whitespace fuzz); `chat-messages.service.spec.ts` "stores an attachment-only send empty but routes it on a hint"; frontend `composer-attachment.constants.test.ts` pins the cap to chat-service's constant                                                                                                                                                                                                                                                                                       |
+| 21      | file-service video cancellation specs (flag between steps, child kill, conditional save, stale re-queue skips a cancelled row); chat `attachment-delivery.utility.spec.ts` (cancelled video → `FAILED_PROCESSING`, reason `video_processing_cancelled`, never native); frontend `composer-attachment.utility.test.ts` (Cancelled state)                                                                                                                                                                                                                                                                                           |
 | 20      | `transcription-candidates.utility.spec.ts` (a 19-row sample of prod's GEMINI rows → stable flash-lite first, preview never first, OpenAI once, preview only when nothing stable); `transcription-error.utility.spec.ts` "classifyTranscriptionFailure" (real 429 / 404 / modality bodies); `transcription.manager.spec.ts` "bounded candidate walk" (same-provider fall-through, prod replay, one backoff, provider skip, busy message, call ceiling, one hold per call); connector `models-snapshot.manager.spec.ts` "stale GEMINI rows synced before the fail-closed heuristic"                                                 |
 
 ## Runbook

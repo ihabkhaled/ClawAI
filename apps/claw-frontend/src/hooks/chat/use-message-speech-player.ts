@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { MESSAGE_SPEECH_PHASE_KEYS } from '@/constants/message-speech.constants';
 import { MessageSpeechJobStatus } from '@/enums/message-speech-job-status.enum';
 import { MessageSpeechPlaybackPhase } from '@/enums/message-speech-playback-phase.enum';
+import { useCancelMessageSpeech } from '@/hooks/chat/use-cancel-message-speech';
 import { useLatestMessageSpeech } from '@/hooks/chat/use-latest-message-speech';
 import { useMessageSpeechOpenFlag } from '@/hooks/chat/use-message-speech-open-flag';
 import { useMessageSpeechState } from '@/hooks/chat/use-message-speech-state';
@@ -24,12 +25,14 @@ import {
  * it, skipping only a part a finished PARTIAL job never produced — and
  * preloads the next segment. Play/pause drive the one audio element; stop
  * closes the player, which unmounts it: polling stops, blobs are revoked,
- * playback ends.
+ * playback ends — and, while the job is still GENERATING, it also asks the
+ * backend to stop it (parts already made stay; nothing more is charged).
  */
 export function useMessageSpeechPlayer(messageId: string): UseMessageSpeechPlayerReturn {
   const { t } = useTranslation();
   const { setOpen } = useMessageSpeechOpenFlag(messageId);
   const latest = useLatestMessageSpeech(messageId);
+  const cancelIfGenerating = useCancelMessageSpeech(messageId);
   const { state, isPollingExpired } = useMessageSpeechState(messageId, {
     enabled: !latest.isPending && !latest.isError,
     poll: true,
@@ -101,8 +104,9 @@ export function useMessageSpeechPlayer(messageId: string): UseMessageSpeechPlaye
   }, []);
 
   const stop = useCallback((): void => {
+    cancelIfGenerating(state);
     setOpen(false);
-  }, [setOpen]);
+  }, [cancelIfGenerating, state, setOpen]);
 
   const hasPlaybackError = hasAudioError || hasFetchError;
   const phase = deriveMessageSpeechPhase({

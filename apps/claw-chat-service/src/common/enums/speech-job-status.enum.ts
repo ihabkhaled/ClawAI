@@ -14,4 +14,11 @@ export enum SpeechJobStatus {
   PARTIAL = 'PARTIAL',
   /** No segment could be stored. Nothing was charged. */
   FAILED = 'FAILED',
+  /**
+   * The owner stopped the job (`POST /chat-messages/:id/speech/cancel`). The
+   * segments stored before the stop stay (and stay charged); an in-flight
+   * provider call's result is discarded and its hold RELEASED. A later POST
+   * resumes the missing segments under a new generation.
+   */
+  CANCELLED = 'CANCELLED',
 }

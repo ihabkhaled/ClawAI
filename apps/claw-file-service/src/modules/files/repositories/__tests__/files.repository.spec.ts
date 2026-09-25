@@ -13,6 +13,7 @@ describe('FilesRepository', () => {
       findUnique: Mock;
       findMany: Mock;
       update: Mock;
+      updateMany: Mock;
       delete: Mock;
       count: Mock;
       groupBy: Mock;
@@ -26,6 +27,7 @@ describe('FilesRepository', () => {
         findUnique: vi.fn().mockResolvedValue({ id: 'f1', chunks: [] }),
         findMany: vi.fn().mockResolvedValue([{ id: 'f1' }, { id: 'f2' }]),
         update: vi.fn().mockResolvedValue({ id: 'f1' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         delete: vi.fn().mockResolvedValue({ id: 'f1' }),
         count: vi.fn().mockResolvedValue(3),
         groupBy: vi.fn().mockResolvedValue([]),
@@ -57,6 +59,36 @@ describe('FilesRepository', () => {
     const args = argsCall?.[0];
     expect(args.where.id).toBe('f1');
     expect(args.include.chunks.orderBy).toEqual({ chunkIndex: 'asc' });
+  });
+
+  describe('saveVideoExtractionResult (conditional, pack section 72)', () => {
+    const write = {
+      extractedText: null,
+      extractionError: 'Processing was cancelled.',
+      status: FileIngestionStatus.FAILED,
+      metadata: { media: { sizeBytes: 1, processedAt: '2026-09-25T00:00:00Z' } },
+    };
+
+    it('writes only while the row is still the awaiting placeholder', async () => {
+      await expect(repository.saveVideoExtractionResult('f1', write)).resolves.toBe(true);
+      const args = prismaMock.file.updateMany.mock.calls[0]?.[0];
+      expect(args.where).toEqual({
+        id: 'f1',
+        ingestionStatus: FileIngestionStatus.COMPLETED,
+        extractionError: null,
+        extractedText: { startsWith: '[Video file: ' },
+      });
+      expect(args.data).toMatchObject({
+        extractionError: 'Processing was cancelled.',
+        ingestionStatus: FileIngestionStatus.FAILED,
+      });
+      expect(prismaMock.file.update).not.toHaveBeenCalled();
+    });
+
+    it('reports false when the row already settled (a late job, or a lost cancel race)', async () => {
+      prismaMock.file.updateMany.mockResolvedValue({ count: 0 });
+      await expect(repository.saveVideoExtractionResult('f1', write)).resolves.toBe(false);
+    });
   });
 
   describe('findAll', () => {

@@ -608,3 +608,78 @@ describe('TranscriptionManager.transcribeDerivedAudio — video audio track', ()
     expect(h.capability.findCapableModels).not.toHaveBeenCalled();
   });
 });
+
+describe('TranscriptionManager.transcribeDerivedAudio — cancelled video (pack section 72)', () => {
+  const derived = (signal: AbortSignal) => ({
+    fileId: 'video-1',
+    userId: 'uploader-1',
+    audioBase64: Buffer.from('mp3').toString('base64'),
+    mimeType: 'audio/mpeg',
+    sizeBytes: 96_000,
+    audioSeconds: 42,
+    requestScope: 'video-audio',
+    instruction: 'TIMESTAMPED',
+    signal,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('a cancel during the provider call: aborts it, RELEASES the hold as CANCELLED, never finalizes, never tries the next provider', async () => {
+    const controller = new AbortController();
+    mockedGemini.mockImplementation(async (...args: unknown[]) => {
+      const signal = args[7] as AbortSignal;
+      controller.abort();
+      expect(signal.aborted).toBe(true);
+      throw Object.assign(new Error('canceled'), { code: 'ERR_CANCELED' });
+    });
+    const h = await buildHarness(buildFile(), [GEMINI, OPENAI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(700))),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(derived(controller.signal));
+
+    expect(outcome).toEqual({ status: DerivedTranscriptionStatus.CANCELLED, holdReleased: true });
+    expect(paths(h)).toEqual(['reserve', 'release']);
+    expect(h.wire()[1]?.body).toEqual({ reservationId: 'res-1', reason: 'CANCELLED' });
+    expect(mockedGemini).toHaveBeenCalledTimes(1);
+    expect(mockedGemini.mock.calls[0]?.[7]).toBe(controller.signal);
+    expect(mockedOpenAi).not.toHaveBeenCalled();
+  });
+
+  it('an answer that races the cancel is released as CANCELLED, not finalized', async () => {
+    const controller = new AbortController();
+    mockedOpenAi.mockImplementation(async () => {
+      controller.abort();
+      return { text: 'hi there', durationSeconds: 41 };
+    });
+    const h = await buildHarness(buildFile(), [OPENAI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(1))),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(derived(controller.signal));
+
+    expect(outcome).toEqual({ status: DerivedTranscriptionStatus.CANCELLED, holdReleased: true });
+    expect(paths(h)).toEqual(['reserve', 'release']);
+    expect(h.wire()[1]?.body).toEqual({ reservationId: 'res-1', reason: 'CANCELLED' });
+  });
+
+  it('cancelled before the call: no lookup, no hold, no provider', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const h = await buildHarness(buildFile(), [GEMINI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(700))),
+    );
+
+    const outcome = await h.manager.transcribeDerivedAudio(derived(controller.signal));
+
+    expect(outcome).toEqual({ status: DerivedTranscriptionStatus.CANCELLED, holdReleased: false });
+    expect(h.wire()).toEqual([]);
+    expect(h.capability.findCapableModels).not.toHaveBeenCalled();
+    expect(mockedGemini).not.toHaveBeenCalled();
+  });
+});

@@ -15,6 +15,20 @@ export function isVideoPlaceholderRow(row: EffectiveIngestionRow): boolean {
   );
 }
 
+/**
+ * A video row whose job has not ended: the stored COMPLETED placeholder with
+ * no reason recorded. Both the job's single write and the cancel route's write
+ * are conditional on exactly this state (`FilesRepository.saveVideoExtractionResult`),
+ * so whichever lands first wins and the other is a no-op.
+ */
+export function isVideoAwaitingProcessing(row: EffectiveIngestionRow): boolean {
+  return (
+    isVideoPlaceholderRow(row) &&
+    row.ingestionStatus === FileIngestionStatus.COMPLETED &&
+    row.extractionError === null
+  );
+}
+
 /** An audio row whose transcript has not landed yet. */
 export function isAudioPlaceholderRow(row: EffectiveIngestionRow): boolean {
   return (

@@ -365,6 +365,7 @@ export const ar: TranslationDictionary = {
       progress: 'جارٍ قراءة الجزء {current} من {total}…',
       waitingNext: 'جارٍ تجهيز الجزء التالي…',
       finished: 'انتهت القراءة بصوت عالٍ.',
+      cancelled: 'توقفت القراءة.',
       partial: 'تعذرت قراءة بعض أجزاء هذا الرد بصوت عالٍ ولم يتم احتسابها.',
       truncated: 'تمت قراءة الجزء الأول فقط من هذا الرد بصوت عالٍ.',
       unavailable: {
@@ -381,6 +382,7 @@ export const ar: TranslationDictionary = {
         generic: 'تعذّرت قراءة هذا الرد بصوت عالٍ. حاول مرة أخرى.',
         playback: 'تعذّر تحميل الصوت.',
         timedOut: 'استغرقت القراءة بصوت عالٍ وقتًا طويلًا. حاول مرة أخرى.',
+        cancelPending: 'لا تزال القراءة الصوتية تتوقف. حاول مرة أخرى بعد لحظة.',
       },
     },
     edit: {
@@ -699,6 +701,9 @@ export const ar: TranslationDictionary = {
     fileGenerationCancelled: 'تم إلغاء إنشاء الملف',
     fileGenerationFailedRetry: 'فشل إنشاء الملف. هل تريد إعادة المحاولة؟',
     generationCancelled: 'تم إلغاء الإنشاء',
+    imageCancel: 'إلغاء',
+    imageCancelling: 'جارٍ الإلغاء…',
+    imageCancelAria: 'إلغاء إنشاء الصورة',
     imageGenerationFailedRetry: 'فشل إنشاء الصورة. هل تريد إعادة المحاولة؟',
     judge: 'مُقيِّم',
     live: 'مباشر',

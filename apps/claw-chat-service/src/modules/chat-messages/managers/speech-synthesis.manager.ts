@@ -8,11 +8,15 @@ import { SpeechConnectorClient } from '../clients/speech-connector.client';
 import { SpeechProviderClient } from '../clients/speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../clients/tts-voice-candidates.client';
 import {
+  SPEECH_CANCELLED_LOG_REASON,
+  SPEECH_CANCELLED_RELEASE_REASON,
   SPEECH_RATE_LIMIT_RETRIES,
   SPEECH_SEGMENT_TIMEOUT_RETRIES,
   SPEECH_STORE_FAILED_LOG_REASON,
   SPEECH_STORE_FAILED_RELEASE_REASON,
   SPEECH_UNIT_PRICED_OUTPUT_TOKENS,
+  TTS_CANCELLED_CODE,
+  TTS_CANCELLED_MESSAGE,
   TTS_CLAMPED_CODE,
   TTS_CLAMPED_MESSAGE,
   TTS_CREDIT_CHECK_UNAVAILABLE_CODE,
@@ -77,6 +81,12 @@ import {
  *   candidate is retried after the provider's hint or 1.5 s / 3 s / 6 s with
  *   jitter (each wait ≤ 10 s), at most 3 times, never past the deadline —
  *   then the walk moves on.
+ * - A CANCELLED job (`input.signal` aborted by the owner's stop) starts no
+ *   new attempt and no rate-limit wait; an attempt in flight has its local
+ *   HTTP request aborted, and its hold — or a hold whose result arrived after
+ *   the stop — is RELEASED (`CANCELLED`), never finalized: the result is
+ *   discarded. The provider may still finish upstream; nothing claims it
+ *   stopped. The walk then throws `TTS_CANCELLED`.
  */
 @Injectable()
 export class SpeechSynthesisManager {
@@ -146,6 +156,7 @@ export class SpeechSynthesisManager {
     let rateLimitRetries = 0;
     let again = true;
     while (again) {
+      this.throwIfCancelled(input);
       const timeoutMs = speechAttemptTimeoutMs(
         candidate.timeoutMs,
         input.segment.characters,
@@ -168,6 +179,9 @@ export class SpeechSynthesisManager {
         return { ...result.delivered, candidate, attempts };
       }
       const outcome = result.record.outcome;
+      if (outcome === SpeechAttemptOutcome.CANCELLED) {
+        this.throwIfCancelled(input);
+      }
       if (outcome === SpeechAttemptOutcome.TIMED_OUT) {
         timeoutRetries += 1;
         again = timeoutRetries <= SPEECH_SEGMENT_TIMEOUT_RETRIES;
@@ -217,8 +231,20 @@ export class SpeechSynthesisManager {
     if (wait === null || !fits) {
       return false;
     }
-    await waitMs(wait);
+    await waitMs(wait, input.signal);
     return true;
+  }
+
+  /** Read fresh at every checkpoint: the owner's stop can land during any await. */
+  private isCancelled(input: SpeechSynthesisInput): boolean {
+    return input.signal?.aborted === true;
+  }
+
+  /** The owner stopped the job: no further attempt, wait or candidate. */
+  private throwIfCancelled(input: SpeechSynthesisInput): void {
+    if (this.isCancelled(input)) {
+      throw new BusinessException(TTS_CANCELLED_MESSAGE, TTS_CANCELLED_CODE, HttpStatus.CONFLICT);
+    }
   }
 
   private async attempt(
@@ -241,6 +267,10 @@ export class SpeechSynthesisManager {
     if (apiKey === null) {
       return { record: record(SpeechAttemptOutcome.NOT_CONFIGURED, null) };
     }
+    if (this.isCancelled(input)) {
+      // Cancelled before any hold: nothing reserved, nothing called.
+      return { record: record(SpeechAttemptOutcome.CANCELLED, null) };
+    }
     // Throws the terminal 402 / 503 itself: a refusal never reaches the next candidate.
     const held = await this.reserve(input, candidate, attemptNumber);
     try {
@@ -249,7 +279,13 @@ export class SpeechSynthesisManager {
         text: input.segment.text,
         apiKey,
         maxOutputTokens: held.hold.maxOutputTokens,
+        signal: input.signal,
       });
+      if (this.isCancelled(input)) {
+        // The answer arrived after the owner's stop: discarded, never charged.
+        await this.releaseCancelled(held);
+        return { record: record(SpeechAttemptOutcome.CANCELLED, held.requestId) };
+      }
       // Measured now, settled after the store: the hold stays open until then.
       const settlement = speechSettlement(held, candidate, input.segment.characters, audio.usage);
       return {
@@ -257,6 +293,11 @@ export class SpeechSynthesisManager {
         delivered: { audio, settlement },
       };
     } catch (error: unknown) {
+      if (this.isCancelled(input)) {
+        // Our own abort (the owner's stop), not the provider's answer.
+        await this.releaseCancelled(held);
+        return { record: record(SpeechAttemptOutcome.CANCELLED, held.requestId) };
+      }
       // Released, never finalized: a rejected / rate-limited / timed-out call is never charged.
       await this.accessControl.releaseCredit(held.hold, speechReleaseReason(error));
       if (isSpeechRateLimited(error)) {
@@ -340,16 +381,25 @@ export class SpeechSynthesisManager {
   }
 
   /**
-   * Gives the hold back when the audio could not be stored: the user gets no
-   * audio, so the user pays nothing. Idempotent on the auth side (rule 37 item 11).
+   * Gives the hold back when the audio could not be stored — or was discarded
+   * because the owner stopped the job first: the user gets no audio, so the
+   * user pays nothing. Idempotent on the auth side (rule 37 item 11).
    */
-  async releaseUnstored(settlement: SpeechSettlement): Promise<void> {
+  async releaseUnstored(settlement: SpeechSettlement, cancelled = false): Promise<void> {
     await this.accessControl.releaseCredit(
       settlement.held.hold,
-      SPEECH_STORE_FAILED_RELEASE_REASON,
+      cancelled ? SPEECH_CANCELLED_RELEASE_REASON : SPEECH_STORE_FAILED_RELEASE_REASON,
     );
     this.logger.warn(
-      `ttsSettlement reservationId=${String(settlement.held.hold.reservationId)} outcome=RELEASED reason=${SPEECH_STORE_FAILED_LOG_REASON}`,
+      `ttsSettlement reservationId=${String(settlement.held.hold.reservationId)} outcome=RELEASED reason=${cancelled ? SPEECH_CANCELLED_LOG_REASON : SPEECH_STORE_FAILED_LOG_REASON}`,
+    );
+  }
+
+  /** A cancelled attempt's hold goes back; never finalized (rule 37 item 17). */
+  private async releaseCancelled(held: SpeechHold): Promise<void> {
+    await this.accessControl.releaseCredit(held.hold, SPEECH_CANCELLED_RELEASE_REASON);
+    this.logger.log(
+      `ttsSettlement reservationId=${String(held.hold.reservationId)} outcome=RELEASED reason=${SPEECH_CANCELLED_LOG_REASON}`,
     );
   }
 }

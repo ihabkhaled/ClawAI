@@ -12,9 +12,10 @@ describe('ImageGenerationRepository', () => {
       findMany: Mock;
       count: Mock;
       update: Mock;
+      updateMany: Mock;
     };
     imageGenerationEvent: { create: Mock };
-    imageGenerationAsset: { create: Mock; findFirst: Mock };
+    imageGenerationAsset: { create: Mock; findFirst: Mock; deleteMany: Mock };
     $transaction: Mock;
   };
 
@@ -26,11 +27,13 @@ describe('ImageGenerationRepository', () => {
         findMany: vi.fn().mockResolvedValue([{ id: 'g1' }]),
         count: vi.fn().mockResolvedValue(2),
         update: vi.fn().mockResolvedValue({ id: 'g1', status: 'COMPLETED' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       imageGenerationEvent: { create: vi.fn().mockResolvedValue({ id: 'e1' }) },
       imageGenerationAsset: {
         create: vi.fn().mockResolvedValue({ id: 'a1' }),
         findFirst: vi.fn().mockResolvedValue(null),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       // The interactive transaction runs its callback against the same client.
       $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(prismaMock)),
@@ -100,11 +103,10 @@ describe('ImageGenerationRepository', () => {
   });
 
   describe('updateStatus', () => {
-    it('updates status without extras', async () => {
+    it('updates status without extras, never matching a CANCELLED row', async () => {
       await repository.updateStatus('g1', 'COMPLETED' as never);
-      const argsCall = prismaMock.imageGeneration.update.mock.calls[0];
-      expect(argsCall).toBeDefined();
-      const args = argsCall?.[0];
+      const args = prismaMock.imageGeneration.updateMany.mock.calls[0]?.[0];
+      expect(args.where).toEqual({ id: 'g1', status: { not: 'CANCELLED' } });
       expect(args.data.status).toBe('COMPLETED');
     });
 
@@ -115,11 +117,50 @@ describe('ImageGenerationRepository', () => {
         errorMessage: 'oops',
         completedAt,
       });
-      const argsCall = prismaMock.imageGeneration.update.mock.calls[0];
-      expect(argsCall).toBeDefined();
-      const args = argsCall?.[0];
+      const args = prismaMock.imageGeneration.updateMany.mock.calls[0]?.[0];
       expect(args.data.errorCode).toBe('PROVIDER_FAILURE');
       expect(args.data.completedAt).toBe(completedAt);
+    });
+
+    it('returns null and reads nothing back when the row is CANCELLED (no match)', async () => {
+      prismaMock.imageGeneration.updateMany.mockResolvedValueOnce({ count: 0 });
+      expect(await repository.updateStatus('g1', 'COMPLETED' as never)).toBeNull();
+      expect(prismaMock.imageGeneration.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelIfActive', () => {
+    it('moves ONLY a running row to CANCELLED, in one conditional write', async () => {
+      const row = await repository.cancelIfActive('g1');
+      const args = prismaMock.imageGeneration.updateMany.mock.calls[0]?.[0];
+      expect(args.where).toEqual({
+        id: 'g1',
+        status: { in: ['QUEUED', 'STARTING', 'GENERATING', 'FINALIZING'] },
+      });
+      expect(args.data.status).toBe('CANCELLED');
+      expect(args.data.completedAt).toBeInstanceOf(Date);
+      expect(row).toEqual({ id: 'g1' });
+    });
+
+    it('returns null when the row had already finished', async () => {
+      prismaMock.imageGeneration.updateMany.mockResolvedValueOnce({ count: 0 });
+      expect(await repository.cancelIfActive('g1')).toBeNull();
+    });
+  });
+
+  it('findStatus selects only the status', async () => {
+    prismaMock.imageGeneration.findUnique.mockResolvedValueOnce({ status: 'CANCELLED' });
+    expect(await repository.findStatus('g1')).toBe('CANCELLED');
+    expect(prismaMock.imageGeneration.findUnique).toHaveBeenCalledWith({
+      where: { id: 'g1' },
+      select: { status: true },
+    });
+  });
+
+  it('deleteAsset removes the one asset by id', async () => {
+    await repository.deleteAsset('a1');
+    expect(prismaMock.imageGenerationAsset.deleteMany).toHaveBeenCalledWith({
+      where: { id: 'a1' },
     });
   });
 

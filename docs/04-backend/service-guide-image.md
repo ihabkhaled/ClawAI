@@ -80,6 +80,10 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
                                                -> CANCELLED
 ```
 
+CANCELLED is reachable from any of QUEUED/STARTING/GENERATING/FINALIZING (user
+cancel) and is absorbing: no later write overwrites it. See
+[Cancellation](#cancellation-post-imagesidcancel-2026-09-25).
+
 ## Provider Adapters
 
 ### OpenAI GPT Image (`gpt-image-1`)
@@ -131,18 +135,19 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 
 All paths are under `/api/v1`. Verified against the controllers 2026-09-25.
 
-| Method | Path                                             | Auth                                                | Ownership                                                 | Description                                    |
-| ------ | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------- |
-| GET    | `/images`                                        | Bearer                                              | scoped to caller                                          | List the caller's generations                  |
-| GET    | `/images/:id`                                    | Bearer                                              | `getWithLatestForUser` → 404 if not owner                 | Row + `supersededById` + `latest` (chain head) |
-| POST   | `/images/:id/retry`                              | Bearer                                              | `retryGenerationForUser` → 404 if not owner               | Re-queue the same row                          |
-| POST   | `/images/:id/retry-alternate`                    | Bearer                                              | `retryWithAlternateModelForUser` → 404                    | Clone onto another provider/model              |
-| GET    | `/images/:id/events` (SSE)                       | Bearer header (`connectSse`)                        | `ImageGenerationOwnerGuard` → 404 before the stream opens | Live status events                             |
-| POST   | `/internal/images/generate`                      | `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` | caller is trusted (chat-service)                          | Enqueue a generation                           |
-| GET    | `/internal/images/:generationId`                 | Service token                                       | —                                                         | Read any generation                            |
-| POST   | `/internal/images/:generationId/retry`           | Service token                                       | —                                                         | Retry                                          |
-| POST   | `/internal/images/:generationId/retry-alternate` | Service token                                       | —                                                         | Alternate-model retry                          |
-| GET    | `/internal/images/:generationId/events` (SSE)    | Service token                                       | —                                                         | Live status events                             |
+| Method | Path                                             | Auth                                                | Ownership                                                 | Description                                         |
+| ------ | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------- |
+| GET    | `/images`                                        | Bearer                                              | scoped to caller                                          | List the caller's generations                       |
+| GET    | `/images/:id`                                    | Bearer                                              | `getWithLatestForUser` → 404 if not owner                 | Row + `supersededById` + `latest` (chain head)      |
+| POST   | `/images/:id/retry`                              | Bearer                                              | `retryGenerationForUser` → 404 if not owner               | Re-queue the same row (a CANCELLED row → successor) |
+| POST   | `/images/:id/cancel`                             | Bearer                                              | `cancelGenerationForUser` → 404 if not owner              | Cancel; 200 `{generationId, status}`, idempotent    |
+| POST   | `/images/:id/retry-alternate`                    | Bearer                                              | `retryWithAlternateModelForUser` → 404                    | Clone onto another provider/model                   |
+| GET    | `/images/:id/events` (SSE)                       | Bearer header (`connectSse`)                        | `ImageGenerationOwnerGuard` → 404 before the stream opens | Live status events                                  |
+| POST   | `/internal/images/generate`                      | `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` | caller is trusted (chat-service)                          | Enqueue a generation                                |
+| GET    | `/internal/images/:generationId`                 | Service token                                       | —                                                         | Read any generation                                 |
+| POST   | `/internal/images/:generationId/retry`           | Service token                                       | —                                                         | Retry                                               |
+| POST   | `/internal/images/:generationId/retry-alternate` | Service token                                       | —                                                         | Alternate-model retry                               |
+| GET    | `/internal/images/:generationId/events` (SSE)    | Service token                                       | —                                                         | Live status events                                  |
 
 ### Ownership and auth invariants (2026-09-25)
 
@@ -205,6 +210,82 @@ A reference image comes from chat-service as base64 **plus**
 4. A caller that sends bare base64 with no `referenceFileId` gets it used on
    that send only; nothing is stored.
 5. Used by Gemini (native) and Stable Diffusion (img2img); OpenAI / xAI ignore it.
+
+## Cancellation (`POST /images/:id/cancel`, 2026-09-25)
+
+Pack §72: never fake a provider cancel, persist the true local state, release
+the PAYG hold.
+
+**Contract.** Owner only (`cancelGenerationForUser` → the same `IMAGE_NOT_FOUND`
+404 for a stranger or a missing id). Always **200** (`@HttpCode(OK)`), body
+`{ generationId: string, status: ImageGenerationStatus }` = the row's status
+AFTER the call. Idempotent: already CANCELLED → 200 `CANCELLED`;
+COMPLETED / FAILED / TIMED_OUT → 200 with that status unchanged (no 409).
+
+| Status at cancel                           | What happens                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QUEUED / STARTING                          | `cancelIfActive` (one conditional `updateMany`, `status IN IMAGE_ACTIVE_STATUSES`) → CANCELLED. No provider call, no hold exists. The job's next guarded transition (STARTING/GENERATING) matches nothing, so `execute` is never called. `providerCancel=not_started`.                                                                                                                                                                                               |
+| GENERATING / FINALIZING                    | Same conditional write. Upstream stop only when it cannot hit another user's job: ComfyUI gets a TARGETED `POST /interrupt { prompt_id }` when this process holds this generation's prompt id → `providerCancel=requested`. Otherwise (ComfyUI id unknown, any SD WebUI run, any cloud provider) no upstream call → `providerCancel=unsupported`; the run finishes upstream and its result is discarded. No local fetch is aborted (adapters take no `AbortSignal`). |
+| COMPLETED / FAILED / TIMED_OUT / CANCELLED | NOOP, status returned unchanged.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+
+**Why the execution path cannot clobber CANCELLED.** `ImageGenerationRepository.updateStatus`
+is a conditional `updateMany … where status <> CANCELLED` and returns `null`
+when nothing matched. Every write in the job — STARTING, GENERATING,
+FINALIZING, COMPLETED, FAILED — goes through it, and a `null` makes the job
+stop (`discardCancelled`): no asset, no settle, no FAILED, no AUTO successor,
+no `image.generated` / `image.failed`. The DB row is the shared store, so a
+cancel taken on any replica is seen (no Redis needed).
+
+**Discarding a result that already came back** (rule 37 item 17):
+
+1. `ExecuteImageInput.isCancelled` (reads the row's status) is checked before
+   the provider call and again the moment it returns — a cancelled result is
+   dropped **before** file-service stores it, and the hold is released
+   (`releaseCancelled`, wire reason `CANCELLED`, log `reason=USER_CANCELLED`).
+2. If the cancel lands during the store: the FINALIZING write fails → hold
+   released, no asset row.
+3. If it lands after the asset row: the guarded COMPLETED write fails → the
+   asset row is deleted, hold released.
+4. COMPLETED is written **before** `settle`, so a cancel either wins (released)
+   or loses (row COMPLETED, hold finalized, cancel answers `COMPLETED`). There
+   is no charged CANCELLED row.
+5. A provider error after the cancel (an interrupted local run ends this way)
+   releases the hold as `PROVIDER_ERROR` in `callMeteredCloudProvider` and the
+   guarded FAILED write leaves the row CANCELLED.
+
+**Retry from CANCELLED** runs as a **successor row** (same provider/model,
+`createSuccessor`), never by re-queuing the cancelled row — its abandoned call
+may still be running, and CANCELLED is what keeps that result out. The
+cancelled row is then superseded, so a second retry of it is 409
+`IMAGE_GENERATION_SUPERSEDED`. Retry-alternate already creates a successor.
+
+**Events.** CANCELLED is published on the per-generation SSE stream (by the
+cancelling request, and again by the execution path when it discards) and
+recorded as an `image_generation_events` row
+(`payloadJson: { fromStatus, providerCancel }`). **No `image.failed` is
+published for a user cancel**: a cancel is not a failure, and no service
+consumes `image.failed` or `image.generated` today (verified by grep
+2026-09-25), so a terminal bus event would have no reader. Add an
+`image.cancelled` pattern when a consumer needs one.
+
+**Log lines.** `imageCancel generationId=… fromStatus=… outcome=CANCELLED|NOOP|DISCARDED holdReleased=true|false providerCancel=not_started|unsupported|requested|n/a`
+— one per route call (`holdReleased=false` there: the route never holds money)
+and one when the job discards (`holdReleased` = whether a paid hold was
+given back). No prompt, no balance.
+
+**Known gaps.** (a) A file stored in file-service just before the cancel
+landed (cases 2–3) is orphaned — the asset row is gone but the file is not
+deleted. (b) Upstream compute is not always stopped: SD WebUI is never
+interrupted (its `/sdapi/v1/interrupt` has no job target and image-service can
+not prove this generation is the one running — SD calls are not serialized
+and there is no job id to check), and ComfyUI is interrupted only by
+`prompt_id` from the replica running the job (the id lives in that process's
+`comfyPromptIds` map, set by `onPromptAccepted` and cleared when the call
+settles). Both fall back to discard-only. (c) SSE is
+an in-process `Subject`: a listener attached to a different replica than the
+one that cancelled sees CANCELLED only via `GET /images/:id` (or when the job's
+own replica discards). (d) The frontend cancel button is not wired to this
+route yet (frontend is owned elsewhere).
 
 ## Retry with Model Picker
 
@@ -286,10 +367,12 @@ under-classifies auth failures).
 
 ## Events
 
-| Event           | Direction | Consumers |
-| --------------- | --------- | --------- |
-| image.generated | Publish   | audit     |
-| image.failed    | Publish   | audit     |
+| Event           | Direction | Consumers                                   |
+| --------------- | --------- | ------------------------------------------- |
+| image.generated | Publish   | none today (no subscriber found 2026-09-25) |
+| image.failed    | Publish   | none today (no subscriber found 2026-09-25) |
+
+A user cancel publishes neither (see Cancellation).
 
 `image.failed` is `ImageFailedPayload` (`@claw/shared-types`): ids, provider,
 model, prompt, error code/message, `timestamp`, and — only when an AUTO

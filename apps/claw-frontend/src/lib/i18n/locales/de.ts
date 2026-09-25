@@ -377,6 +377,7 @@ export const de: TranslationDictionary = {
       progress: 'Lese Teil {current} von {total} vor…',
       waitingNext: 'Der nächste Teil wird vorbereitet…',
       finished: 'Vorlesen beendet.',
+      cancelled: 'Vorlesen gestoppt.',
       partial:
         'Einige Teile dieser Antwort konnten nicht vorgelesen werden und wurden nicht berechnet.',
       truncated: 'Nur der erste Teil dieser Antwort wurde vorgelesen.',
@@ -395,6 +396,7 @@ export const de: TranslationDictionary = {
         generic: 'Diese Antwort konnte nicht vorgelesen werden. Versuche es erneut.',
         playback: 'Das Audio konnte nicht geladen werden.',
         timedOut: 'Das Vorlesen hat zu lange gedauert. Versuche es erneut.',
+        cancelPending: 'Das Vorlesen wird noch beendet. Versuche es gleich noch einmal.',
       },
     },
     edit: {
@@ -723,6 +725,9 @@ export const de: TranslationDictionary = {
     fileGenerationCancelled: 'Dateierstellung abgebrochen',
     fileGenerationFailedRetry: 'Dateierstellung fehlgeschlagen. Erneut versuchen?',
     generationCancelled: 'Generierung abgebrochen',
+    imageCancel: 'Abbrechen',
+    imageCancelling: 'Wird abgebrochen…',
+    imageCancelAria: 'Bildgenerierung abbrechen',
     imageGenerationFailedRetry: 'Bildgenerierung fehlgeschlagen. Erneut versuchen?',
     judge: 'Bewerter',
     live: 'Live',

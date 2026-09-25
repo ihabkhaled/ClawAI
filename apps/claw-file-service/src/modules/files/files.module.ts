@@ -18,6 +18,8 @@ import { VideoProcessingManager } from './managers/video-processing.manager';
 import { VideoMediaManager } from './managers/video-media.manager';
 import { VideoPlanLimitManager } from './managers/video-plan-limit.manager';
 import { VideoFramesService } from './services/video-frames.service';
+import { VideoCancellationManager } from './managers/video-cancellation.manager';
+import { VideoCancellationService } from './services/video-cancellation.service';
 
 @Module({
   controllers: [FilesController, FileArchiveController, FilesInternalController],
@@ -46,6 +48,10 @@ import { VideoFramesService } from './services/video-frames.service';
     VideoMediaManager,
     VideoPlanLimitManager,
     VideoFramesService,
+    // Pack section 72 - user cancellation of a processing video (Redis flag,
+    // replica-safe; see VideoCancellationManager).
+    VideoCancellationManager,
+    VideoCancellationService,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],
 })

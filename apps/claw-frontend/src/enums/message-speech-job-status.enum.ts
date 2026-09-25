@@ -8,4 +8,6 @@ export enum MessageSpeechJobStatus {
   READY = 'READY',
   PARTIAL = 'PARTIAL',
   FAILED = 'FAILED',
+  /** The owner pressed Stop while it was generating; stored parts still play. */
+  CANCELLED = 'CANCELLED',
 }

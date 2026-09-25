@@ -61,8 +61,8 @@ export class VideoMediaManager {
   }
 
   /** ffprobe → facts, or the reason there are none. Never throws. */
-  async probe(workspace: MediaWorkspace): Promise<VideoProbeOutcome> {
-    const result = await probeMediaFile(workspace.inputPath);
+  async probe(workspace: MediaWorkspace, signal?: AbortSignal): Promise<VideoProbeOutcome> {
+    const result = await probeMediaFile(workspace.inputPath, signal);
     const failure = this.classifyProbeFailure(result);
     if (failure !== null) {
       this.logger.warn(`probe: failed reason=${failure} stderr=${result.stderr.slice(0, 200)}`);
@@ -84,7 +84,11 @@ export class VideoMediaManager {
   }
 
   /** One small JPEG ~10% into the clip, or null (a thumbnail is never fatal). */
-  async extractThumbnail(workspace: MediaWorkspace, durationMs: number): Promise<Buffer | null> {
+  async extractThumbnail(
+    workspace: MediaWorkspace,
+    durationMs: number,
+    signal?: AbortSignal,
+  ): Promise<Buffer | null> {
     const at = Math.floor((durationMs * VIDEO_THUMBNAIL_POSITION_PERCENT) / 100);
     return this.extractJpeg(
       workspace,
@@ -92,6 +96,7 @@ export class VideoMediaManager {
       at,
       VIDEO_THUMBNAIL_MAX_WIDTH,
       VIDEO_THUMBNAIL_MAX_BYTES,
+      signal,
     );
   }
 
@@ -107,12 +112,17 @@ export class VideoMediaManager {
   }
 
   /** The first audio track as 16 kHz mono MP3, or null when it could not be pulled out. */
-  async extractAudio(workspace: MediaWorkspace, durationMs: number): Promise<Buffer | null> {
+  async extractAudio(
+    workspace: MediaWorkspace,
+    durationMs: number,
+    signal?: AbortSignal,
+  ): Promise<Buffer | null> {
     const outputPath = mediaTempPath(workspace.dir, VIDEO_AUDIO_TEMP_NAME);
     const result = await extractAudioTrack(
       workspace.inputPath,
       outputPath,
       Math.ceil(durationMs / 1000),
+      signal,
     );
     if (!this.succeeded(result)) {
       this.logger.warn(
@@ -131,8 +141,11 @@ export class VideoMediaManager {
    * caller then transcribes exactly as it did before detection existed.
    * Call only after `extractAudio` returned a track.
    */
-  async measurePeakVolume(workspace: MediaWorkspace): Promise<number | null> {
-    const result = await detectAudioVolume(mediaTempPath(workspace.dir, VIDEO_AUDIO_TEMP_NAME));
+  async measurePeakVolume(workspace: MediaWorkspace, signal?: AbortSignal): Promise<number | null> {
+    const result = await detectAudioVolume(
+      mediaTempPath(workspace.dir, VIDEO_AUDIO_TEMP_NAME),
+      signal,
+    );
     if (!this.succeeded(result)) {
       this.logger.warn(
         `measurePeakVolume: volumedetect failed status=${result.status} exit=${String(result.exitCode)} — proceeding to transcription`,
@@ -154,9 +167,16 @@ export class VideoMediaManager {
     timestampMs: number,
     maxWidth: number,
     maxBytes: number,
+    signal?: AbortSignal,
   ): Promise<Buffer | null> {
     const outputPath = mediaTempPath(workspace.dir, name);
-    const result = await extractVideoFrame(workspace.inputPath, outputPath, timestampMs, maxWidth);
+    const result = await extractVideoFrame(
+      workspace.inputPath,
+      outputPath,
+      timestampMs,
+      maxWidth,
+      signal,
+    );
     if (!this.succeeded(result)) {
       this.logger.warn(
         `extractJpeg: at=${String(timestampMs)}ms status=${result.status} exit=${String(result.exitCode)}`,
@@ -176,6 +196,9 @@ export class VideoMediaManager {
     }
     if (result.status === MediaProcessStatus.TIMED_OUT) {
       return VideoProcessingFailureReason.PROBE_TIMEOUT;
+    }
+    if (result.status === MediaProcessStatus.ABORTED) {
+      return VideoProcessingFailureReason.PROCESSING_CANCELLED;
     }
     return this.succeeded(result) ? null : VideoProcessingFailureReason.CORRUPT_CONTAINER;
   }

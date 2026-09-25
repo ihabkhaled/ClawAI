@@ -12,6 +12,7 @@ import {
   DELIVERY_REASON_TRUNCATED,
   DELIVERY_REASON_UNSUPPORTED_MIME,
   DELIVERY_REASON_VIDEO_PLAN_LIMIT,
+  DELIVERY_REASON_VIDEO_PROCESSING_CANCELLED,
 } from '../constants/attachment-delivery.constants';
 import { NATIVE_VIDEO_MAX_DURATION_MS } from '../constants/video-delivery.constants';
 import { TEXT_BUDGET_SHORTENED_MARKER } from '../constants/evidence-fit.constants';
@@ -41,6 +42,7 @@ import type { VideoFrameImage } from '../types/video-delivery.types';
 import {
   hasVideoDocument,
   isVideoPlanRefusal,
+  isVideoProcessingCancelled,
   videoInFlight,
   videoProcessingFailed,
 } from './video-context.utility';
@@ -153,11 +155,13 @@ function resolveVideo(
   options: AttachmentDeliveryOptions,
 ): AttachmentDeliveryDecision {
   const planRefused = isVideoPlanRefusal(file.media);
+  const cancelled = isVideoProcessingCancelled(file.media);
   const native =
     options.nativeVideoTransport &&
     capabilities.videoInput !== MediaCapabilityState.UNSUPPORTED &&
     hasBytes(file) &&
     !planRefused &&
+    !cancelled &&
     nativeVideoAllowed(file, options.videoPlan);
   if (native) {
     return decide(file, options, FileDeliveryMode.NATIVE_VIDEO, true);
@@ -171,7 +175,7 @@ function resolveVideo(
       options,
       FileDeliveryMode.FAILED_PROCESSING,
       false,
-      planRefused ? DELIVERY_REASON_VIDEO_PLAN_LIMIT : DELIVERY_REASON_FAILED_PROCESSING,
+      failedVideoReason(planRefused, cancelled),
     );
   }
   if (videoInFlight(file)) {
@@ -186,6 +190,14 @@ function resolveVideo(
     false,
     DELIVERY_REASON_NO_VIDEO_INPUT,
   );
+}
+
+/** Why a FAILED video reached the lane as a note: plan, the owner's stop, or a processing failure. */
+function failedVideoReason(planRefused: boolean, cancelled: boolean): string {
+  const otherReason = cancelled
+    ? DELIVERY_REASON_VIDEO_PROCESSING_CANCELLED
+    : DELIVERY_REASON_FAILED_PROCESSING;
+  return planRefused ? DELIVERY_REASON_VIDEO_PLAN_LIMIT : otherReason;
 }
 
 /**

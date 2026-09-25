@@ -17,6 +17,7 @@ import {
   resolveMessageSpeechErrorKey,
   resolveSpeechPlayerErrorKey,
   resolveSpeechUnavailableKey,
+  shouldCancelMessageSpeech,
   toMessageSpeechSnapshot,
 } from '@/utilities/message-speech.utility';
 
@@ -198,6 +199,16 @@ describe('deriveMessageSpeechPhase', () => {
       { state: state(MessageSpeechJobStatus.FAILED, []) },
       MessageSpeechPlaybackPhase.FAILED,
     ],
+    [
+      'stopped before any part',
+      { state: state(MessageSpeechJobStatus.CANCELLED, []) },
+      MessageSpeechPlaybackPhase.CANCELLED,
+    ],
+    [
+      'stopped after a part: that part still plays',
+      { state: state(MessageSpeechJobStatus.CANCELLED, [0]), hasCurrentAudio: true },
+      MessageSpeechPlaybackPhase.PLAYING,
+    ],
   ])('%s', (_label, override, phase) => {
     expect(deriveMessageSpeechPhase({ ...base, ...override })).toBe(phase);
   });
@@ -245,5 +256,39 @@ describe('toMessageSpeechSnapshot', () => {
       isError: true,
       error: boom,
     });
+  });
+});
+
+describe('shouldCancelMessageSpeech — Stop reaches the backend only while it generates', () => {
+  it.each([
+    [MessageSpeechJobStatus.GENERATING, true],
+    [MessageSpeechJobStatus.READY, false],
+    [MessageSpeechJobStatus.PARTIAL, false],
+    [MessageSpeechJobStatus.FAILED, false],
+    [MessageSpeechJobStatus.CANCELLED, false],
+    [MessageSpeechJobStatus.NONE, false],
+  ])('%s → %s', (status, expected) => {
+    expect(shouldCancelMessageSpeech(state(status, []))).toBe(expected);
+  });
+
+  it('nothing loaded yet → no request', () => {
+    expect(shouldCancelMessageSpeech(undefined)).toBe(false);
+  });
+
+  it('a stopped reading with no part leaves the button idle, not loading', () => {
+    expect(
+      deriveMessageSpeechStatus({
+        isPending: false,
+        isOpen: true,
+        isError: false,
+        state: state(MessageSpeechJobStatus.CANCELLED, []),
+      }),
+    ).toBe(MessageSpeechStatus.IDLE);
+  });
+
+  it('a stopped reading stops the poll', () => {
+    expect(nextMessageSpeechPollInterval(state(MessageSpeechJobStatus.CANCELLED, [0]), 1)).toBe(
+      false,
+    );
   });
 });

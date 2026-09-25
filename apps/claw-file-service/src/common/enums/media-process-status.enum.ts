@@ -8,6 +8,8 @@ export enum MediaProcessStatus {
   TIMED_OUT = 'TIMED_OUT',
   /** Killed with SIGKILL for printing more than the stdout cap. */
   OUTPUT_LIMIT_EXCEEDED = 'OUTPUT_LIMIT_EXCEEDED',
+  /** Killed with SIGKILL because the caller's AbortSignal fired (a user cancel). */
+  ABORTED = 'ABORTED',
   /** The binary is missing or could not be started. */
   SPAWN_FAILED = 'SPAWN_FAILED',
 }

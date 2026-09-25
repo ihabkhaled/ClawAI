@@ -395,6 +395,7 @@ export type {
   MessageProvenanceProps,
   ImageLoadingStateProps,
   ImageErrorStateProps,
+  ImageCancelledStateProps,
   ImageCompletedStateProps,
   FileLoadingStateProps,
   FileErrorStateProps,

@@ -1123,15 +1123,15 @@ the strategy its OWN model allows — rule 42 item 16, ADR-120 addendum
 (`managers/video-delivery.manager.ts`) runs at the chokepoint AFTER
 `VisionHelperManager` (images spend the per-turn helper cap first).
 
-| Video state / lane                                                                                                                                                                                             | `FileDeliveryMode`            | The lane receives                                                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Gemini transport, `videoInput` ≠ UNSUPPORTED, bytes, processed with a MEASURED duration ≤ 60 min AND ≤ plan `maxVideoSeconds` (`AccessControlService.maxVideoSecondsFor`, per turn; unreadable → never native) | `NATIVE_VIDEO`                | the bytes                                                                                                                   |
-| document exists, lane can see                                                                                                                                                                                  | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + frames as `image_url` parts, each preceded by `Frame of video "x" at mm:ss:` (`frameDelivery: NATIVE_IMAGES`) |
-| document exists, lane blind, helper on plan                                                                                                                                                                    | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + `FRAME AT mm:ss` derived observations (`HELPER_OBSERVATIONS`, `helperProvider/Model`)                         |
-| document exists, no helper / not on plan / frames failed                                                                                                                                                       | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + "the video's frames could not be viewed; only its transcript was used" (`NONE` + reason)                      |
-| placeholder / PENDING / PROCESSING                                                                                                                                                                             | `STILL_PROCESSING`            | "is still being processed … send again in a moment"                                                                         |
-| FAILED                                                                                                                                                                                                         | `FAILED_PROCESSING`           | file-service's reason; `file_delivery.reason.video_plan_limit` for a plan refusal                                           |
-| no text and no status at all (pre-batch-7 row)                                                                                                                                                                 | `OMITTED_UNSUPPORTED`         | "video has no text to extract"                                                                                              |
+| Video state / lane                                                                                                                                                                                             | `FileDeliveryMode`            | The lane receives                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Gemini transport, `videoInput` ≠ UNSUPPORTED, bytes, processed with a MEASURED duration ≤ 60 min AND ≤ plan `maxVideoSeconds` (`AccessControlService.maxVideoSecondsFor`, per turn; unreadable → never native) | `NATIVE_VIDEO`                | the bytes                                                                                                                             |
+| document exists, lane can see                                                                                                                                                                                  | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + frames as `image_url` parts, each preceded by `Frame of video "x" at mm:ss:` (`frameDelivery: NATIVE_IMAGES`)           |
+| document exists, lane blind, helper on plan                                                                                                                                                                    | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + `FRAME AT mm:ss` derived observations (`HELPER_OBSERVATIONS`, `helperProvider/Model`)                                   |
+| document exists, no helper / not on plan / frames failed                                                                                                                                                       | `VIDEO_FRAMES_AND_TRANSCRIPT` | VIDEO block + "the video's frames could not be viewed; only its transcript was used" (`NONE` + reason)                                |
+| placeholder / PENDING / PROCESSING                                                                                                                                                                             | `STILL_PROCESSING`            | "is still being processed … send again in a moment"                                                                                   |
+| FAILED                                                                                                                                                                                                         | `FAILED_PROCESSING`           | file-service's reason; `…video_plan_limit` for a plan refusal; `…video_processing_cancelled` (never native) when the owner stopped it |
+| no text and no status at all (pre-batch-7 row)                                                                                                                                                                 | `OMITTED_UNSUPPORTED`         | "video has no text to extract"                                                                                                        |
 
 - **Silent audio** (2026-09-25): a video file-service measured as silent
   (`VideoAudioStatus.NO_SPEECH`) has the document body line "No speech detected
@@ -1201,7 +1201,8 @@ one a 504). Our own overhead was 82–216 ms.
     background job starts. Never waits on a provider.
   - `GET /chat-messages/:id/speech` → the poll. Owner-only (404 like a missing
     id), free, never locks/reserves.
-  - Body (both): `{ status: SpeechJobStatus (NONE|GENERATING|READY|PARTIAL|FAILED),
+  - `POST /chat-messages/:id/speech/cancel` → the owner's Stop (see **Cancel**).
+  - Body (all three): `{ status: SpeechJobStatus (NONE|GENERATING|READY|PARTIAL|FAILED|CANCELLED),
 segments: [{index, fileId, mimeType, characters}], totalSegments, truncated,
 errorCode }`. `NONE` = never read, or the stored reading is of other text.
 - **Order** (`MessageSpeechService.start`): owner else 404 → `assertTextToSpeechAccess`
@@ -1265,6 +1266,34 @@ errorCode }`. `NONE` = never read, or the stored reading is of other text.
     runs makes no hold at all.
 - **Legacy**: a v1 `metadata.speech` (one `fileId`, before segmenting) reads as a
   READY one-segment state — old readings still replay free.
+- **Cancel** (owner's Stop, pack §72, ADR-120 addendum 3): `POST
+/chat-messages/:id/speech/cancel` → **200** with the state body (never 201).
+  Owner-only (a stranger gets the missing-id 404). Only a live GENERATING job of
+  the reply's CURRENT text is stopped: the Redis flag
+  `claw:chat:speech:cancel:<messageId>:<generation>` (`SpeechJobCancelStore`,
+  TTL = job-lock TTL, per generation so a later job is never hit) is written
+  FIRST, then `metadata.speech.status = CANCELLED`. Anything else (NONE, READY,
+  PARTIAL, FAILED, already CANCELLED, stale) is a no-op answering the state as
+  it is. Redis down → 503 `TTS_FAILED` and the state stays GENERATING — a stop
+  that cannot reach the job is never claimed. The job (any replica) reads the
+  flag before each segment, right after each provider call, and every
+  `SPEECH_JOB_CANCEL_POLL_INTERVAL_MS` = 1 s; once seen: no new segment starts,
+  in-flight provider requests are aborted LOCALLY (`AbortSignal` through
+  `httpRequest` / `httpPostBinary`; the provider may still render upstream —
+  never claimed stopped), a result that lands anyway is discarded and its hold
+  RELEASED (`CANCELLED`, log `reason=CANCELLED_BY_OWNER`), never finalized; a
+  rate-limit wait is cut short. Segments already stored stay stored and charged
+  (the user heard them). The job ends CANCELLED (READY if every segment had
+  landed), `errorCode: null`. Job writes never replace a newer generation's
+  state and never turn CANCELLED back into GENERATING. A POST while the stopped
+  job still holds the lock → **409 `TTS_CANCEL_PENDING`**; after it, a POST
+  resumes only the missing segments under a new generation. Frontend: Stop
+  (player or button) calls `useCancelMessageSpeech` only while GENERATING, and
+  its answer replaces the cached state, so polling stops; phase `CANCELLED`
+  reads `chat.speech.cancelled`. Tests: `message-speech.service.spec.ts`
+  ("MessageSpeechService.cancel"), `chat-speech.controller.spec.ts`,
+  `speech-rate-limit.utility.spec.ts` (`waitMs`), `http-client.utility.spec.ts`
+  (`httpPostBinary` signal).
 - **Logs**: `speech: job started messageId=… generation=… segments=… kept=…`,
   `ttsAttempt {messageId, segment, provider, model, requestId, outcome, latencyMs}`,
   `ttsSegment … failed code=… stop=…`, `ttsSettlement reservationId=… outcome=…`,

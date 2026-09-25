@@ -1,4 +1,7 @@
+import { VideoProcessingFailureReason } from '@claw/shared-types';
+
 import {
+  COMPOSER_ATTACHMENT_CANCELLED_HINT_KEY,
   COMPOSER_ATTACHMENT_PROCESSING_FAILED_KEY,
   COMPOSER_ATTACHMENT_PROCESSING_HINT_KEY,
   COMPOSER_ATTACHMENT_REMOVE_KEY,
@@ -7,6 +10,7 @@ import {
   COMPOSER_ATTACHMENT_UNSUPPORTED_KEY,
   COMPOSER_ATTACHMENT_UNSUPPORTED_STATUS,
   COMPOSER_ATTACHMENT_UPLOAD_FAILED_KEY,
+  COMPOSER_CANCELLABLE_MIME_PREFIX,
 } from '@/constants/composer-attachment.constants';
 import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import { FileIngestionStatus } from '@/enums/file-ingestion-status.enum';
@@ -14,6 +18,7 @@ import { ApiClientError } from '@/services/shared/api-client';
 import type {
   ComposerAttachmentChip,
   ComposerAttachmentChipDraft,
+  ComposerAttachmentFileStatus,
   ResolveComposerAttachmentChipsInput,
 } from '@/types/composer-attachment.types';
 import type { TranslateFunction } from '@/types/i18n.types';
@@ -46,12 +51,15 @@ export function resolveComposerAttachmentChips({
       fileId: null,
       localId: entry.localId,
       detail: entry.reason,
+      canCancelProcessing: false,
     }));
 
   const selected = selectedFileIds.map((fileId): ComposerAttachmentChipDraft => {
     const file = files.find((candidate) => candidate.id === fileId);
     const upload = uploads.find((entry) => entry.fileId === fileId);
-    const state = resolveSelectedFileState(file?.ingestionStatus);
+    const state = isProcessingCancelled(file)
+      ? ComposerAttachmentState.Cancelled
+      : resolveSelectedFileState(file?.ingestionStatus);
     return {
       key: fileId,
       filename: file?.filename ?? upload?.filename ?? null,
@@ -59,10 +67,22 @@ export function resolveComposerAttachmentChips({
       fileId,
       localId: null,
       detail: state === ComposerAttachmentState.Failed ? (file?.extractionError ?? null) : null,
+      canCancelProcessing:
+        state === ComposerAttachmentState.Processing &&
+        (file?.mimeType ?? '').startsWith(COMPOSER_CANCELLABLE_MIME_PREFIX),
     };
   });
 
   return [...pendingUploads, ...selected];
+}
+
+/** A video whose processing the owner stopped: FAILED with `PROCESSING_CANCELLED`. */
+export function isProcessingCancelled(file: ComposerAttachmentFileStatus | undefined): boolean {
+  return (
+    file?.ingestionStatus === FileIngestionStatus.FAILED &&
+    file.extractionMetadata?.media?.failureReason ===
+      VideoProcessingFailureReason.PROCESSING_CANCELLED
+  );
 }
 
 function resolveSelectedFileState(
@@ -112,6 +132,8 @@ function resolveChipNote(draft: ComposerAttachmentChipDraft, t: TranslateFunctio
   switch (draft.state) {
     case ComposerAttachmentState.Processing:
       return t(COMPOSER_ATTACHMENT_PROCESSING_HINT_KEY);
+    case ComposerAttachmentState.Cancelled:
+      return t(COMPOSER_ATTACHMENT_CANCELLED_HINT_KEY);
     case ComposerAttachmentState.Unsupported:
       return withDetail(t(COMPOSER_ATTACHMENT_UNSUPPORTED_KEY), draft.detail);
     case ComposerAttachmentState.Failed:

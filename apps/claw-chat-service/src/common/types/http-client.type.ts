@@ -67,6 +67,8 @@ export type HttpPostBinaryOptions = AllowedHostsOption & {
   headers?: Record<string, string>;
   body: unknown;
   timeoutMs: number;
+  /** Aborts the local request early (a cancelled job). The provider may still finish upstream. */
+  signal?: AbortSignal;
 };
 
 export type HttpBinaryResponse = {

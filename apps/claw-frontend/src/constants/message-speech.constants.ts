@@ -48,6 +48,7 @@ export const MESSAGE_SPEECH_ERROR_KEYS: Readonly<Partial<Record<ApiErrorCode, st
   [ApiErrorCode.TTS_NOTHING_TO_READ]: 'chat.speech.errors.nothingToRead',
   [ApiErrorCode.TTS_UNAVAILABLE]: 'chat.speech.errors.unavailable',
   [ApiErrorCode.TTS_FAILED]: 'chat.speech.errors.failed',
+  [ApiErrorCode.TTS_CANCEL_PENDING]: 'chat.speech.errors.cancelPending',
   [ApiErrorCode.PAYG_CREDIT_EXHAUSTED]: 'billing.errors.PAYG_CREDIT_EXHAUSTED',
   [ApiErrorCode.PAYG_PROMPT_TOO_EXPENSIVE]: 'billing.errors.PAYG_PROMPT_TOO_EXPENSIVE',
   [ApiErrorCode.PAYG_MODEL_UNPRICED]: 'billing.errors.PAYG_MODEL_UNPRICED',
@@ -78,6 +79,7 @@ export const MESSAGE_SPEECH_PHASE_KEYS: Readonly<Record<MessageSpeechPlaybackPha
   [MessageSpeechPlaybackPhase.WAITING]: 'chat.speech.waitingNext',
   [MessageSpeechPlaybackPhase.FINISHED]: 'chat.speech.finished',
   [MessageSpeechPlaybackPhase.FAILED]: 'chat.speech.errors.generic',
+  [MessageSpeechPlaybackPhase.CANCELLED]: 'chat.speech.cancelled',
 };
 
 /** The latest synthesis for a message that has never been read aloud. */

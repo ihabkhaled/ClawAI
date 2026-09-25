@@ -18,4 +18,6 @@ export enum SpeechAttemptOutcome {
   REFUSED = 'REFUSED',
   /** Past the candidate's deadline — hold released, terminal (bounded latency). */
   TIMED_OUT = 'TIMED_OUT',
+  /** The owner cancelled the job — hold released (never charged), result discarded, terminal. */
+  CANCELLED = 'CANCELLED',
 }

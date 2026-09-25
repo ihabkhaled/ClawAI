@@ -4,15 +4,19 @@ import { SpeechJobStatus } from '../../../common/enums';
 import { BusinessException } from '../../../common/errors';
 import { SpeechFileStoreClient } from '../clients/speech-file-store.client';
 import {
+  SPEECH_JOB_CANCEL_POLL_INTERVAL_MS,
   SPEECH_JOB_DEADLINE_MS,
   SPEECH_RATE_LIMITED_CONCURRENCY,
   SPEECH_SEGMENT_CONCURRENCY,
+  TTS_CANCELLED_CODE,
   TTS_FAILED_CODE,
   TTS_FAILED_MESSAGE,
 } from '../constants/speech.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
+import { SpeechJobCancelStore } from '../repositories/speech-job-cancel.store';
 import { SpeechJobLockStore } from '../repositories/speech-job-lock.store';
 import type {
+  SpeechCancelWatch,
   SpeechJobInput,
   SpeechJobProgress,
   SpeechJobState,
@@ -22,6 +26,7 @@ import type {
 } from '../types/speech.types';
 import {
   finalSpeechStatus,
+  readSpeechJobState,
   withSpeechJobState,
   withStoredSegment,
 } from '../utilities/speech-job-state.utility';
@@ -46,6 +51,16 @@ import { SpeechSynthesisManager } from './speech-synthesis.manager';
  * charged, the rest were released) or FAILED, writes that state, and releases
  * the lock. It never throws, and no provider attempt starts that could not be
  * stored and settled before `SPEECH_JOB_DEADLINE_MS`.
+ *
+ * Cancellation (owner's Stop, pack §72): the job polls the reply's Redis
+ * cancel flag (`SpeechJobCancelStore`, per generation, every
+ * `SPEECH_JOB_CANCEL_POLL_INTERVAL_MS` — the cancel may land on any replica).
+ * Once seen: no new segment starts, in-flight provider requests are aborted
+ * locally, a result that arrives anyway is discarded and its hold RELEASED
+ * (never finalized), and segments already stored stay stored and charged. The
+ * job ends CANCELLED (READY if every segment had already landed). A write
+ * never replaces a newer generation's state, and never turns a CANCELLED
+ * state back into GENERATING.
  */
 @Injectable()
 export class SpeechJobManager {
@@ -56,6 +71,7 @@ export class SpeechJobManager {
     private readonly synthesis: SpeechSynthesisManager,
     private readonly files: SpeechFileStoreClient,
     private readonly lock: SpeechJobLockStore,
+    private readonly cancels: SpeechJobCancelStore,
   ) {}
 
   async run(input: SpeechJobInput): Promise<void> {
@@ -68,8 +84,12 @@ export class SpeechJobManager {
       writes: Promise.resolve(),
       concurrency: SPEECH_SEGMENT_CONCURRENCY,
       inFlight: 0,
+      cancelled: false,
+      abort: new AbortController(),
     };
+    const watch = this.watchCancel(input, progress);
     try {
+      await this.checkCancel(input, progress);
       const done = new Set(input.state.segments.map((segment) => segment.index));
       const queue = input.segments.filter((segment) => !done.has(segment.index));
       const workers = Math.min(SPEECH_SEGMENT_CONCURRENCY, queue.length);
@@ -85,6 +105,7 @@ export class SpeechJobManager {
         `ttsJob: messageId=${input.messageId} ended abnormally — ${error instanceof Error ? error.message : 'unknown'}`,
       );
     } finally {
+      watch.stop();
       await this.releaseLock(input);
       this.logger.log(
         `ttsJob messageId=${input.messageId} generation=${String(input.state.generation)} status=${progress.state.status} segments=${String(progress.state.segments.length)}/${String(input.state.totalSegments)} ms=${String(Date.now() - started)}`,
@@ -109,6 +130,12 @@ export class SpeechJobManager {
       progress.stopCode === null &&
       progress.inFlight < progress.concurrency
     ) {
+      // A fresh read before each segment: a stop never lets a new one start.
+      await this.checkCancel(input, progress);
+      // Re-checked after the await, synchronously with the increment below.
+      if (progress.cancelled || progress.inFlight >= progress.concurrency) {
+        return;
+      }
       const segment = queue.shift();
       if (segment === undefined) {
         return;
@@ -120,6 +147,49 @@ export class SpeechJobManager {
         progress.inFlight -= 1;
       }
     }
+  }
+
+  /**
+   * Reads the cancel flag every `SPEECH_JOB_CANCEL_POLL_INTERVAL_MS` until
+   * `stop()` (the job's `finally`), so it lives exactly as long as the job
+   * (at most its deadline plus grace). One read in flight at a time.
+   */
+  private watchCancel(input: SpeechJobInput, progress: SpeechJobProgress): SpeechCancelWatch {
+    let reading = false;
+    const timer = setInterval(() => {
+      if (reading || progress.cancelled) {
+        return;
+      }
+      reading = true;
+      void this.checkCancel(input, progress).finally(() => {
+        reading = false;
+      });
+    }, SPEECH_JOB_CANCEL_POLL_INTERVAL_MS);
+    return { stop: () => clearInterval(timer) };
+  }
+
+  /** One read of the flag. A Redis hiccup is "not cancelled"; the next tick reads again. */
+  private async checkCancel(input: SpeechJobInput, progress: SpeechJobProgress): Promise<void> {
+    try {
+      if (await this.cancels.isRequested(input.messageId, input.state.generation)) {
+        this.markCancelled(input, progress);
+      }
+    } catch {
+      this.logger.warn(`ttsJob: cancel flag unreadable messageId=${input.messageId}`);
+    }
+  }
+
+  /** Stops every worker and aborts every in-flight provider request. Once. */
+  private markCancelled(input: SpeechJobInput, progress: SpeechJobProgress): void {
+    if (progress.cancelled) {
+      return;
+    }
+    progress.cancelled = true;
+    progress.stopCode = TTS_CANCELLED_CODE;
+    progress.abort.abort();
+    this.logger.log(
+      `ttsJob messageId=${input.messageId} generation=${String(input.state.generation)} cancelled inFlight=${String(progress.inFlight)} stored=${String(progress.state.segments.length)}/${String(input.state.totalSegments)}`,
+    );
   }
 
   /** The job's first rate limit drops it to one provider call in flight; in-flight calls finish. */
@@ -149,9 +219,17 @@ export class SpeechJobManager {
         segment,
         deadlineAt,
         onRateLimited: () => this.onRateLimited(input, progress),
+        signal: progress.abort.signal,
       });
     } catch (error: unknown) {
       this.onSegmentFailure(input, progress, segment, error);
+      return;
+    }
+    // A fresh read after the provider call: a result that lands after the stop is discarded.
+    await this.checkCancel(input, progress);
+    if (progress.cancelled) {
+      // Arrived after the owner's stop: never stored, never charged.
+      await this.settle(input, segment, result, false, true);
       return;
     }
     let delivered = false;
@@ -176,11 +254,12 @@ export class SpeechJobManager {
     segment: SpeechTextSegment,
     result: SpeechSynthesisResult,
     delivered: boolean,
+    cancelled = false,
   ): Promise<void> {
     try {
       await (delivered
         ? this.synthesis.settle(result.settlement)
-        : this.synthesis.releaseUnstored(result.settlement));
+        : this.synthesis.releaseUnstored(result.settlement, cancelled));
     } catch {
       this.logger.error(
         `ttsSettlement messageId=${input.messageId} segment=${String(segment.index + 1)} reservationId=${String(result.settlement.held.hold.reservationId)} outcome=${delivered ? 'FINALIZE_FAILED' : 'RELEASE_FAILED'}`,
@@ -200,6 +279,11 @@ export class SpeechJobManager {
     error: unknown,
   ): void {
     const code = error instanceof BusinessException ? error.code : TTS_FAILED_CODE;
+    if (code === TTS_CANCELLED_CODE || progress.cancelled) {
+      // The owner's stop, not a failure: the state says CANCELLED, not an error.
+      progress.stopCode = TTS_CANCELLED_CODE;
+      return;
+    }
     const deadline =
       error instanceof BusinessException && error.getStatus() === HttpStatus.GATEWAY_TIMEOUT;
     progress.errorCode = code;
@@ -254,12 +338,14 @@ export class SpeechJobManager {
   }
 
   private async finish(input: SpeechJobInput, progress: SpeechJobProgress): Promise<void> {
-    const status = finalSpeechStatus(input.state.totalSegments, progress.state.segments.length);
+    const reached = finalSpeechStatus(input.state.totalSegments, progress.state.segments.length);
+    const status =
+      progress.cancelled && reached !== SpeechJobStatus.READY ? SpeechJobStatus.CANCELLED : reached;
     progress.state = {
       ...progress.state,
       status,
       errorCode:
-        status === SpeechJobStatus.READY
+        status === SpeechJobStatus.READY || status === SpeechJobStatus.CANCELLED
           ? null
           : (progress.stopCode ?? progress.errorCode ?? TTS_FAILED_CODE),
     };
@@ -268,7 +354,10 @@ export class SpeechJobManager {
 
   /**
    * Chains one metadata write after the previous: re-reads the message so a
-   * key another feature wrote meanwhile is kept, then replaces `speech`.
+   * key another feature wrote meanwhile is kept, then replaces `speech` —
+   * unless a newer generation owns it (a later POST's job), and never turning
+   * the cancel route's CANCELLED back into GENERATING (that write also tells
+   * this job it was cancelled, ahead of its next flag read).
    */
   private async enqueueWrite(
     messageId: string,
@@ -280,7 +369,24 @@ export class SpeechJobManager {
       if (message === null) {
         throw new Error('the reply no longer exists');
       }
-      await this.messages.updateMetadata(messageId, withSpeechJobState(message.metadata, state));
+      const stored = readSpeechJobState(message.metadata);
+      if (stored !== null && stored.generation > state.generation) {
+        this.logger.warn(
+          `ttsJob messageId=${messageId} generation=${String(state.generation)} write skipped: generation ${String(stored.generation)} owns the state`,
+        );
+        return;
+      }
+      const cancelledMeanwhile =
+        stored?.generation === state.generation &&
+        stored.status === SpeechJobStatus.CANCELLED &&
+        state.status === SpeechJobStatus.GENERATING;
+      if (cancelledMeanwhile) {
+        progress.cancelled = true;
+        progress.stopCode = TTS_CANCELLED_CODE;
+        progress.abort.abort();
+      }
+      const next = cancelledMeanwhile ? { ...state, status: SpeechJobStatus.CANCELLED } : state;
+      await this.messages.updateMetadata(messageId, withSpeechJobState(message.metadata, next));
     });
     progress.writes = write.catch(() => {});
     await write;

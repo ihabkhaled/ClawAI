@@ -59,4 +59,17 @@ describe('file video-process events', () => {
       'ENTITLEMENTS_UNAVAILABLE',
     ]);
   });
+
+  it('carries a cancellation as its own failure reason (user cancel, pack section 72)', () => {
+    const cancelled = {
+      fileId: 'f1',
+      userId: 'u1',
+      reasonCode: VideoProcessingFailureReason.PROCESSING_CANCELLED,
+      reason: 'Processing was cancelled.',
+      timestamp: new Date().toISOString(),
+    } satisfies FileVideoProcessFailedPayload;
+
+    expect(cancelled.reasonCode).toBe('PROCESSING_CANCELLED');
+    expect(Object.values(VideoProcessingFailureReason)).toContain('PROCESSING_CANCELLED');
+  });
 });

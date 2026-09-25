@@ -111,3 +111,65 @@ describe('ComposerAttachmentTray', () => {
     expect(screen.getByText('42% · 4.0 KB')).toBeInTheDocument();
   });
 });
+
+describe('ComposerAttachmentTray — Stop processing (pack §72)', () => {
+  it('renders a labelled Stop action only for the file that has one, and calls it', () => {
+    const onCancel = vi.fn();
+    render(
+      <ComposerAttachmentTray
+        fileIds={['pdf-1', 'voice-1']}
+        pendingUploads={[]}
+        progress={null}
+        onRemove={vi.fn()}
+        processingCancelByFileId={
+          new Map([
+            [
+              'voice-1',
+              {
+                label: 'Stop processing',
+                ariaLabel: 'Stop processing note.webm',
+                isCancelling: false,
+                onCancel,
+              },
+            ],
+          ])
+        }
+      />,
+    );
+
+    const buttons = screen.getAllByTestId('composer-attachment-cancel-processing');
+    expect(buttons).toHaveLength(1);
+    const stop = screen.getByRole('button', { name: 'Stop processing note.webm' });
+    expect(stop).toHaveTextContent('Stop processing');
+    fireEvent.click(stop);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('is disabled and busy while the stop is in flight', () => {
+    render(
+      <ComposerAttachmentTray
+        fileIds={['voice-1']}
+        pendingUploads={[]}
+        progress={null}
+        onRemove={vi.fn()}
+        processingCancelByFileId={
+          new Map([
+            [
+              'voice-1',
+              {
+                label: 'Stopping…',
+                ariaLabel: 'Stop processing note.webm',
+                isCancelling: true,
+                onCancel: vi.fn(),
+              },
+            ],
+          ])
+        }
+      />,
+    );
+
+    const stop = screen.getByRole('button', { name: 'Stop processing note.webm' });
+    expect(stop).toBeDisabled();
+    expect(stop).toHaveAttribute('aria-busy', 'true');
+  });
+});

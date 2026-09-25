@@ -364,6 +364,7 @@ export const th: TranslationDictionary = {
       progress: 'กำลังอ่านส่วนที่ {current} จาก {total}…',
       waitingNext: 'กำลังเตรียมส่วนถัดไป…',
       finished: 'อ่านออกเสียงเสร็จแล้ว',
+      cancelled: 'หยุดอ่านแล้ว',
       partial: 'บางส่วนของคำตอบนี้อ่านออกเสียงไม่ได้และไม่ถูกเรียกเก็บเงิน',
       truncated: 'อ่านออกเสียงเฉพาะส่วนแรกของคำตอบนี้เท่านั้น',
       unavailable: {
@@ -380,6 +381,7 @@ export const th: TranslationDictionary = {
         generic: 'อ่านออกเสียงคำตอบนี้ไม่สำเร็จ โปรดลองอีกครั้ง',
         playback: 'โหลดเสียงไม่สำเร็จ',
         timedOut: 'การอ่านออกเสียงใช้เวลานานเกินไป ลองอีกครั้ง',
+        cancelPending: 'การอ่านออกเสียงยังหยุดไม่เสร็จ โปรดลองอีกครั้งในอีกสักครู่',
       },
     },
     edit: {
@@ -697,6 +699,9 @@ export const th: TranslationDictionary = {
     fileGenerationCancelled: 'การสร้างไฟล์ถูกยกเลิก',
     fileGenerationFailedRetry: 'การสร้างไฟล์ล้มเหลวลองอีกครั้ง?',
     generationCancelled: 'รุ่นถูกยกเลิก',
+    imageCancel: 'ยกเลิก',
+    imageCancelling: 'กำลังยกเลิก…',
+    imageCancelAria: 'ยกเลิกการสร้างรูปภาพ',
     imageGenerationFailedRetry: 'การสร้างอิมเมจล้มเหลวลองอีกครั้ง?',
     judge: 'ผู้พิพากษา',
     live: 'สด',

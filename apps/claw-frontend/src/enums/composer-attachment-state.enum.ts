@@ -7,6 +7,9 @@
  * page of it). `Processing` is ingestion PENDING / PROCESSING — audio
  * transcription or video processing still running server-side. Sending while
  * processing stays allowed: chat-service waits (bounded) or says so.
+ * `Cancelled` is a video whose processing the owner stopped (file-service
+ * FAILED with `PROCESSING_CANCELLED`): the file is still attached and stored,
+ * and the model is told it was not processed.
  */
 export enum ComposerAttachmentState {
   Uploading = 'UPLOADING',
@@ -15,4 +18,5 @@ export enum ComposerAttachmentState {
   Ready = 'READY',
   Failed = 'FAILED',
   Unsupported = 'UNSUPPORTED',
+  Cancelled = 'CANCELLED',
 }

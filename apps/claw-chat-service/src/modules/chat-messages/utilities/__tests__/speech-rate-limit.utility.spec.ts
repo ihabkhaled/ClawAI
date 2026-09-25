@@ -6,6 +6,7 @@ import {
   isSpeechRateLimited,
   parseRetryDelayMs,
   rateLimitBackoffMs,
+  waitMs,
 } from '../speech-rate-limit.utility';
 
 // Rate-limit helpers for "Read aloud" (2026-09-25): a Gemini 429 in 339 ms
@@ -116,5 +117,30 @@ describe('rateLimitBackoffMs', () => {
     expect(rateLimitBackoffMs(1, 45_001, 0.5)).toBeNull();
     // A spent DAILY quota (seen live 2026-09-25: retryDelay ~29,808 s).
     expect(rateLimitBackoffMs(1, 29_808_000, 0.5)).toBeNull();
+  });
+});
+
+describe('waitMs — a rate-limit wait the owner can cut short', () => {
+  it('resolves at once when the job is already cancelled', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const started = Date.now();
+    await waitMs(45_000, controller.signal);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
+  it('resolves as soon as the job is cancelled mid-wait', async () => {
+    const controller = new AbortController();
+    const started = Date.now();
+    const waiting = waitMs(45_000, controller.signal);
+    setTimeout(() => controller.abort(), 10);
+    await waiting;
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
+  it('still waits the full time without a signal', async () => {
+    const started = Date.now();
+    await waitMs(20);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(15);
   });
 });

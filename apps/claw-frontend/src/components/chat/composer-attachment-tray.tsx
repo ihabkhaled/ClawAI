@@ -20,6 +20,7 @@ export function ComposerAttachmentTray({
   onRemove,
   disabled,
   statusByFileId,
+  processingCancelByFileId,
 }: ComposerAttachmentTrayProps): React.ReactElement | null {
   const { t } = useTranslation();
 
@@ -41,6 +42,7 @@ export function ComposerAttachmentTray({
           onRemove={onRemove}
           disabled={disabled}
           status={statusByFileId?.get(fileId)}
+          processingCancel={processingCancelByFileId?.get(fileId)}
         />
       ))}
       {pendingUploads.map((upload) => (

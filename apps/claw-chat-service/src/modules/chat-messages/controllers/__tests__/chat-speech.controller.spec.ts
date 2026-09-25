@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { vi } from 'vitest';
-import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import { HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { RequestMethod } from '@nestjs/common';
 
 import { SpeechJobStatus } from '../../../../common/enums';
@@ -20,6 +20,7 @@ describe('ChatSpeechController', () => {
     getAvailability: vi.fn(async () => ({ available: true, reason: null })),
     start: vi.fn(async () => ({ httpStatus: 202, body: generating })),
     getState: vi.fn(async () => generating),
+    cancel: vi.fn(async () => ({ ...generating, status: SpeechJobStatus.CANCELLED })),
   };
   const controller = new ChatSpeechController(service as never);
   const user = { id: 'user-1' } as never;
@@ -41,6 +42,24 @@ describe('ChatSpeechController', () => {
   it('state is the poll for the current user', async () => {
     await expect(controller.state({ id: 'msg-1' }, user)).resolves.toEqual(generating);
     expect(service.getState).toHaveBeenCalledWith('user-1', 'msg-1');
+  });
+
+  it('cancel is the owner Stop for the current user and returns the state body', async () => {
+    await expect(controller.cancel({ id: 'msg-1' }, user)).resolves.toEqual({
+      status: SpeechJobStatus.CANCELLED,
+      segments: [],
+      totalSegments: 3,
+      truncated: false,
+      errorCode: null,
+    });
+    expect(service.cancel).toHaveBeenCalledWith('user-1', 'msg-1');
+  });
+
+  it('mounts POST :id/speech/cancel answering 200 (not the POST default 201)', () => {
+    const proto = ChatSpeechController.prototype;
+    expect(Reflect.getMetadata(PATH_METADATA, proto.cancel)).toBe(':id/speech/cancel');
+    expect(Reflect.getMetadata(METHOD_METADATA, proto.cancel)).toBe(RequestMethod.POST);
+    expect(Reflect.getMetadata(HTTP_CODE_METADATA, proto.cancel)).toBe(200);
   });
 
   it('mounts GET speech/availability, POST :id/speech and GET :id/speech under chat-messages', () => {

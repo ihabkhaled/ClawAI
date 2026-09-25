@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { type File, type FileIngestionStatus, Prisma } from '../../../generated/prisma';
+import { type File, FileIngestionStatus, Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type CreateFileData, type FileFilters, type FileWithChunks } from '../types/files.types';
 import { type ChildExtractionState } from '../types/archive-manifest.types';
 import { type ArchiveExtractionMetadata } from '../types/zip-expansion.types';
 import { type ArchiveChildRow, type ArchiveParentRow } from '../types/archive-entries.types';
 import { type VideoExtractionWrite } from '../types/video-processing.types';
+import { VIDEO_PLACEHOLDER_PREFIX } from '../constants/video-processing.constants';
 import { effectiveIngestionStatusWhere } from '../utilities/effective-ingestion-filter.utility';
 
 @Injectable()
@@ -76,10 +77,22 @@ export class FilesRepository {
    * document (or null), the reason, the terminal status and
    * `extractionMetadata.media`, in a single update — rule 42 item 4. A video
    * row carries no archive metadata, so the column is replaced, not merged.
+   *
+   * CONDITIONAL on the row still being the awaiting placeholder (COMPLETED,
+   * `[Video file: …]`, no reason) — the same state `isVideoAwaitingProcessing`
+   * reads. A user cancel and the job race through here: whichever lands first
+   * wins, so a late job can never overwrite a cancelled result and a cancel
+   * can never clobber a document that just landed. Returns whether THIS call
+   * wrote the row; the caller publishes its event only when it did.
    */
-  async saveVideoExtractionResult(id: string, write: VideoExtractionWrite): Promise<File> {
-    return this.prisma.file.update({
-      where: { id },
+  async saveVideoExtractionResult(id: string, write: VideoExtractionWrite): Promise<boolean> {
+    const { count } = await this.prisma.file.updateMany({
+      where: {
+        id,
+        ingestionStatus: FileIngestionStatus.COMPLETED,
+        extractionError: null,
+        extractedText: { startsWith: VIDEO_PLACEHOLDER_PREFIX },
+      },
       data: {
         extractedText: write.extractedText,
         extractionError: write.extractionError,
@@ -87,6 +100,7 @@ export class FilesRepository {
         extractionMetadata: write.metadata,
       },
     });
+    return count === 1;
   }
 
   /**

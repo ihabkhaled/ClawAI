@@ -374,6 +374,7 @@ export const fr: TranslationDictionary = {
       progress: 'Lecture de la partie {current} sur {total}…',
       waitingNext: 'Préparation de la partie suivante…',
       finished: 'Lecture à voix haute terminée.',
+      cancelled: 'Lecture arrêtée.',
       partial:
         'Certaines parties de cette réponse n’ont pas pu être lues à voix haute et n’ont pas été facturées.',
       truncated: 'Seule la première partie de cette réponse a été lue à voix haute.',
@@ -393,6 +394,8 @@ export const fr: TranslationDictionary = {
         generic: 'Impossible de lire cette réponse à voix haute. Réessayez.',
         playback: 'Impossible de charger l’audio.',
         timedOut: 'La lecture à voix haute a pris trop de temps. Réessayez.',
+        cancelPending:
+          'La lecture à voix haute est encore en cours d’arrêt. Réessayez dans un instant.',
       },
     },
     edit: {
@@ -721,6 +724,9 @@ export const fr: TranslationDictionary = {
     fileGenerationCancelled: 'Génération de fichier annulée',
     fileGenerationFailedRetry: 'Échec de la génération du fichier. Réessayer ?',
     generationCancelled: 'Génération annulée',
+    imageCancel: 'Annuler',
+    imageCancelling: 'Annulation…',
+    imageCancelAria: 'Annuler la génération de l’image',
     imageGenerationFailedRetry: "Échec de la génération de l'image. Réessayer ?",
     judge: 'Juge',
     live: 'En direct',

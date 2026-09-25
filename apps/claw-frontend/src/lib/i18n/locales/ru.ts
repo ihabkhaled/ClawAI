@@ -374,6 +374,7 @@ export const ru: TranslationDictionary = {
       progress: 'Читается часть {current} из {total}…',
       waitingNext: 'Готовится следующая часть…',
       finished: 'Чтение вслух завершено.',
+      cancelled: 'Чтение остановлено.',
       partial:
         'Некоторые части этого ответа не удалось прочитать вслух, и за них не списана оплата.',
       truncated: 'Вслух прочитана только первая часть этого ответа.',
@@ -391,6 +392,7 @@ export const ru: TranslationDictionary = {
         generic: 'Не удалось прочитать этот ответ вслух. Попробуйте ещё раз.',
         playback: 'Не удалось загрузить аудио.',
         timedOut: 'Чтение вслух заняло слишком много времени. Попробуйте ещё раз.',
+        cancelPending: 'Чтение вслух ещё останавливается. Попробуйте снова через мгновение.',
       },
     },
     edit: {
@@ -716,6 +718,9 @@ export const ru: TranslationDictionary = {
     fileGenerationCancelled: 'Создание файла отменено',
     fileGenerationFailedRetry: 'Не удалось создать файл. Повторить?',
     generationCancelled: 'Генерация отменена',
+    imageCancel: 'Отменить',
+    imageCancelling: 'Отмена…',
+    imageCancelAria: 'Отменить создание изображения',
     imageGenerationFailedRetry: 'Не удалось создать изображение. Повторить?',
     judge: 'Арбитр',
     live: 'В эфире',

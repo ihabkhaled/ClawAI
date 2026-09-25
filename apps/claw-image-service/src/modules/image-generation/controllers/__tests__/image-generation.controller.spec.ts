@@ -1,6 +1,11 @@
 import { type Mock, vi } from 'vitest';
-import { HttpStatus } from '@nestjs/common';
-import { GUARDS_METADATA } from '@nestjs/common/constants';
+import { HttpStatus, RequestMethod } from '@nestjs/common';
+import {
+  GUARDS_METADATA,
+  HTTP_CODE_METADATA,
+  METHOD_METADATA,
+  PATH_METADATA,
+} from '@nestjs/common/constants';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ImageGenerationController } from '../image-generation.controller';
 import { InternalImageController } from '../internal-image.controller';
@@ -21,6 +26,7 @@ const buildServiceMock = (): {
   retryGenerationForUser: Mock;
   retryWithAlternateModel: Mock;
   retryWithAlternateModelForUser: Mock;
+  cancelGenerationForUser: Mock;
 } => ({
   enqueueGeneration: vi.fn(),
   getById: vi.fn(),
@@ -31,6 +37,7 @@ const buildServiceMock = (): {
   retryGenerationForUser: vi.fn(),
   retryWithAlternateModel: vi.fn(),
   retryWithAlternateModelForUser: vi.fn(),
+  cancelGenerationForUser: vi.fn(),
 });
 
 describe('ImageGenerationController', () => {
@@ -121,6 +128,41 @@ describe('ImageGenerationController', () => {
     );
     serviceMock.retryGenerationForUser.mockRejectedValue(notFound);
     await expect(controller.retry('g1', user as never)).rejects.toBe(notFound);
+  });
+
+  describe('POST /images/:id/cancel', () => {
+    const cancelHandler = (): unknown =>
+      Object.getOwnPropertyDescriptor(ImageGenerationController.prototype, 'cancel')?.value;
+
+    it('is POST images/:id/cancel answering 200 (not the POST default 201), and not @Public', () => {
+      const handler = cancelHandler() ?? {};
+      expect(Reflect.getMetadata(PATH_METADATA, ImageGenerationController)).toBe('images');
+      expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe(':id/cancel');
+      expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(RequestMethod.POST);
+      expect(Reflect.getMetadata(HTTP_CODE_METADATA, handler)).toBe(HttpStatus.OK);
+      expect(Reflect.getMetadata(IS_PUBLIC_KEY, handler)).toBeUndefined();
+    });
+
+    it('makes one owner-scoped service call and returns { generationId, status }', async () => {
+      serviceMock.cancelGenerationForUser.mockResolvedValue({
+        generationId: 'g1',
+        status: 'CANCELLED',
+      });
+      const result = await controller.cancel('g1', user as never);
+      expect(serviceMock.cancelGenerationForUser).toHaveBeenCalledWith('g1', 'u1');
+      expect(result).toEqual({ generationId: 'g1', status: 'CANCELLED' });
+      expect(Object.keys(result).sort()).toEqual(['generationId', 'status']);
+    });
+
+    it('a non-owner cancel surfaces the service 404 unchanged', async () => {
+      const notFound = new BusinessException(
+        'Image generation not found',
+        'IMAGE_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+      serviceMock.cancelGenerationForUser.mockRejectedValue(notFound);
+      await expect(controller.cancel('g1', user as never)).rejects.toBe(notFound);
+    });
   });
 
   it('events is not @Public and is guarded by ImageGenerationOwnerGuard', () => {

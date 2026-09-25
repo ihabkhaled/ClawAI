@@ -44,6 +44,7 @@ import type {
   ComfyUIHistoryImage,
   ComfyUIHttpGetFn,
   ComfyUIHttpPostFn,
+  ComfyUIInterruptBody,
   ComfyUINodeDescriptor,
   ComfyUINodeTiming,
   ComfyUIProbeResult,
@@ -104,13 +105,19 @@ export class ComfyUIProgressAdapter {
     }
   }
 
-  async cancel(baseUrl: string): Promise<boolean> {
+  /**
+   * Targeted interrupt: ComfyUI stops the run only when `promptId` is the one
+   * executing. There is deliberately no untargeted form — a bare `/interrupt`
+   * stops whatever the shared runtime is running, which may be another user's.
+   */
+  async cancel(baseUrl: string, promptId: string): Promise<boolean> {
     const normalized = this.normalizeBase(baseUrl);
-    this.logger.log(`cancel: POST ${normalized}/interrupt`);
+    this.logger.log(`cancel: POST ${normalized}/interrupt promptId=${promptId}`);
+    const body: ComfyUIInterruptBody = { prompt_id: promptId };
     try {
       await this.httpPostImpl<unknown>(
         `${normalized}/interrupt`,
-        {},
+        body,
         { timeout: COMFYUI_INTERRUPT_TIMEOUT_MS },
         declaredHost(normalized),
       );
@@ -193,6 +200,7 @@ export class ComfyUIProgressAdapter {
     }
     state.promptId = promptId;
     this.logger.log(`streamGenerate: prompt accepted — promptId=${promptId}`);
+    options.onPromptAccepted?.(promptId);
 
     try {
       await this.waitForCompletion(state, signal);

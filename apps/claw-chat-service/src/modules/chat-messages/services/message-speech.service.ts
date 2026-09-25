@@ -10,6 +10,8 @@ import {
   SPEECH_MAX_CHARACTERS,
   SPEECH_STATE_VERSION,
   TEXT_TO_SPEECH_PLAN_FEATURE,
+  TTS_CANCEL_PENDING_CODE,
+  TTS_CANCEL_PENDING_MESSAGE,
   TTS_FAILED_CODE,
   TTS_JOB_LOCK_UNAVAILABLE_MESSAGE,
   TTS_NOTHING_TO_READ_CODE,
@@ -18,6 +20,7 @@ import {
 import { SpeechJobManager } from '../managers/speech-job.manager';
 import { SpeechSynthesisManager } from '../managers/speech-synthesis.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
+import { SpeechJobCancelStore } from '../repositories/speech-job-cancel.store';
 import { SpeechJobLockStore } from '../repositories/speech-job-lock.store';
 import type {
   MessageSpeechStartResult,
@@ -28,6 +31,7 @@ import type {
   SpeechSourceMessage,
 } from '../types/speech.types';
 import {
+  isCancellableSpeechJob,
   isStaleSpeechJob,
   readSpeechJobState,
   toSpeechStateResponse,
@@ -48,6 +52,7 @@ import { AccessControlService } from './access-control.service';
  * reply's Redis job lock is taken, `metadata.speech` is written GENERATING
  * and `SpeechJobManager` runs in the background (202). A losing replica
  * answers the state as it is. `getState` (GET) is the poll: owner-only, free.
+ * `cancel` (POST …/speech/cancel) is the owner's Stop: idempotent, never paid.
  */
 @Injectable()
 export class MessageSpeechService {
@@ -61,6 +66,7 @@ export class MessageSpeechService {
     private readonly files: SpeechFileStoreClient,
     private readonly jobs: SpeechJobManager,
     private readonly lock: SpeechJobLockStore,
+    private readonly cancels: SpeechJobCancelStore,
   ) {}
 
   async getAvailability(userId: string): Promise<SpeechAvailability> {
@@ -86,6 +92,41 @@ export class MessageSpeechService {
       readSpeechJobState(message.metadata),
       speakable.contentHash,
       Date.now(),
+    );
+  }
+
+  /**
+   * The owner's Stop (pack §72). Owner-only (a stranger gets the missing-id
+   * 404). Only a live GENERATING job of the reply's CURRENT text is
+   * cancelled: the Redis flag for its generation is set FIRST (so every
+   * replica's job sees it within `SPEECH_JOB_CANCEL_POLL_INTERVAL_MS`), then
+   * `metadata.speech` is written CANCELLED. Segments already stored stay
+   * (they were heard and charged); the job releases any in-flight hold.
+   * Anything else — NONE, READY, PARTIAL, FAILED, already CANCELLED, stale —
+   * is a no-op that answers the state as it is (200, idempotent). Redis down
+   * → 503: a stop that cannot reach the job is never claimed.
+   */
+  async cancel(userId: string, messageId: string): Promise<MessageSpeechStateResponse> {
+    const message = await this.loadOwnedReply(userId, messageId);
+    const speakable = this.speakable(message);
+    const now = Date.now();
+    const stored = readSpeechJobState(message.metadata);
+    const current = stored?.contentHash === speakable.contentHash ? stored : null;
+    if (current === null || !isCancellableSpeechJob(current, now)) {
+      this.logger.log(
+        `speech: cancel messageId=${messageId} outcome=NOOP status=${current?.status ?? SpeechJobStatus.NONE}`,
+      );
+      return toSpeechStateResponse(current, speakable.contentHash, now);
+    }
+    await this.requestCancel(messageId, current.generation);
+    const cancelled = await this.markCancelled(messageId, current.generation);
+    this.logger.log(
+      `speech: cancel messageId=${messageId} generation=${String(current.generation)} outcome=CANCELLED stored=${String((cancelled ?? current).segments.length)}/${String(current.totalSegments)}`,
+    );
+    return toSpeechStateResponse(
+      cancelled ?? { ...current, status: SpeechJobStatus.CANCELLED, errorCode: null },
+      speakable.contentHash,
+      now,
     );
   }
 
@@ -125,8 +166,20 @@ export class MessageSpeechService {
   ): Promise<MessageSpeechStartResult> {
     const lockToken = await this.acquireLock(messageId);
     if (lockToken === null) {
+      const running = await this.reload(messageId);
+      if (
+        running?.status === SpeechJobStatus.CANCELLED &&
+        running.contentHash === speakable.contentHash
+      ) {
+        // The stopped job still holds the lock while it releases its last hold.
+        throw new BusinessException(
+          TTS_CANCEL_PENDING_MESSAGE,
+          TTS_CANCEL_PENDING_CODE,
+          HttpStatus.CONFLICT,
+        );
+      }
       // A sibling replica (or a concurrent request) owns the job: report, never double.
-      return this.answer(HttpStatus.ACCEPTED, await this.reload(messageId), speakable, now, true);
+      return this.answer(HttpStatus.ACCEPTED, running, speakable, now, true);
     }
     let state: SpeechJobState;
     try {
@@ -215,6 +268,47 @@ export class MessageSpeechService {
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
+  }
+
+  /** Sets the cross-replica stop flag. Redis down → 503: a stop is never claimed that cannot reach the job. */
+  private async requestCancel(messageId: string, generation: number): Promise<void> {
+    try {
+      await this.cancels.request(messageId, generation);
+    } catch {
+      this.logger.error(`speech: cancel flag unavailable messageId=${messageId}`);
+      throw new BusinessException(
+        TTS_JOB_LOCK_UNAVAILABLE_MESSAGE,
+        TTS_FAILED_CODE,
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  /**
+   * Writes CANCELLED over the reply's GENERATING state of `generation` (every
+   * other metadata key kept). Null when the job finished or a newer
+   * generation started meanwhile — then the state is left as it is.
+   */
+  private async markCancelled(
+    messageId: string,
+    generation: number,
+  ): Promise<SpeechJobState | null> {
+    const message = await this.messages.findById(messageId);
+    const latest = message === null ? null : readSpeechJobState(message.metadata);
+    if (
+      message === null ||
+      latest?.generation !== generation ||
+      latest.status !== SpeechJobStatus.GENERATING
+    ) {
+      return latest;
+    }
+    const cancelled: SpeechJobState = {
+      ...latest,
+      status: SpeechJobStatus.CANCELLED,
+      errorCode: null,
+    };
+    await this.messages.updateMetadata(messageId, withSpeechJobState(message.metadata, cancelled));
+    return cancelled;
   }
 
   private async reload(messageId: string): Promise<SpeechJobState | null> {

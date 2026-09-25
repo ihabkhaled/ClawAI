@@ -9,7 +9,12 @@ import {
   VideoProcessingFailureReason,
 } from '@claw/shared-types';
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
-import { DerivedTranscriptionStatus, VideoPlanDecision } from '../../../common/enums';
+import {
+  DerivedTranscriptionStatus,
+  VideoCancelOutcome,
+  VideoPlanDecision,
+  VideoProcessingStep,
+} from '../../../common/enums';
 import { MediaSourceUnreadableError } from '../../../common/errors';
 import { RedisService } from '../../../infrastructure/redis/redis.service';
 import { FilesRepository } from '../repositories/files.repository';
@@ -19,7 +24,6 @@ import {
   VIDEO_AUDIO_MIME_TYPE,
   VIDEO_ENTITLEMENTS_UNAVAILABLE_MESSAGE,
   VIDEO_FRAME_MIME_TYPE,
-  VIDEO_PLACEHOLDER_PREFIX,
   VIDEO_PROCESSING_LOCK_KEY_PREFIX,
   VIDEO_PROCESSING_LOCK_TTL_SECONDS,
   VIDEO_TRANSCRIPTION_INSTRUCTION,
@@ -29,11 +33,14 @@ import {
   type MediaWorkspace,
   type VideoAnalysis,
   type VideoAudioOutcome,
+  type VideoCancelWatch,
+  type VideoFailure,
   type VideoFailureDetail,
   type VideoMediaMetadata,
   type VideoProbeSummary,
 } from '../types/video-processing.types';
 import { validateProbeSummary } from '../utilities/video-probe.utility';
+import { isVideoAwaitingProcessing } from '../utilities/effective-ingestion.utility';
 import { isSilentPeak } from '../utilities/volume-detect.utility';
 import {
   boundSegments,
@@ -44,6 +51,7 @@ import {
 import { VideoMediaManager } from './video-media.manager';
 import { VideoPlanLimitManager } from './video-plan-limit.manager';
 import { TranscriptionManager } from './transcription.manager';
+import { VideoCancellationManager } from './video-cancellation.manager';
 
 /**
  * Multimodal batch 7 — turns a stored video into a timestamped document.
@@ -66,6 +74,14 @@ import { TranscriptionManager } from './transcription.manager';
  * no-op, and a per-file Redis lock turns a concurrent duplicate (a redelivery
  * racing the first delivery, or a heal re-queue) into a no-op too — so a
  * video is never transcribed twice.
+ *
+ * Cancellable (pack section 72, `VideoCancellationManager`): the owner's
+ * cancel sets a Redis flag this job reads at every step boundary and through a
+ * bounded poll while a child or the provider call runs. A cancel kills the
+ * running ffmpeg child, aborts the provider call (its hold RELEASED as
+ * CANCELLED), and ends the job FAILED `PROCESSING_CANCELLED`. The single
+ * write is conditional on the placeholder, so a late job never overwrites the
+ * cancelled result and never publishes a completed event after a cancel.
  */
 @Injectable()
 export class VideoProcessingManager implements OnModuleInit {
@@ -78,6 +94,7 @@ export class VideoProcessingManager implements OnModuleInit {
     private readonly videoMedia: VideoMediaManager,
     private readonly planLimit: VideoPlanLimitManager,
     private readonly transcription: TranscriptionManager,
+    private readonly cancellation: VideoCancellationManager,
   ) {}
 
   /**
@@ -108,12 +125,7 @@ export class VideoProcessingManager implements OnModuleInit {
 
   /** A video row still waiting for its document: COMPLETED + placeholder + no reason. */
   static isAwaitingProcessing(file: File): boolean {
-    return (
-      file.mimeType.startsWith('video/') &&
-      file.ingestionStatus === FileIngestionStatus.COMPLETED &&
-      file.extractionError === null &&
-      (file.extractedText ?? '').startsWith(VIDEO_PLACEHOLDER_PREFIX)
-    );
+    return isVideoAwaitingProcessing(file);
   }
 
   /**
@@ -159,11 +171,14 @@ export class VideoProcessingManager implements OnModuleInit {
 
   private async process(file: File): Promise<void> {
     const startedAt = Date.now();
+    const watch = this.cancellation.startWatch(file.id);
     let analysis: VideoAnalysis;
     try {
-      analysis = await this.videoMedia.withWorkspace(file, (workspace) =>
-        this.analyse(file, workspace),
-      );
+      analysis = (await this.cancellation.checkpoint(watch, VideoProcessingStep.PROBE))
+        ? this.cancelled(null, null)
+        : await this.videoMedia.withWorkspace(file, (workspace) =>
+            this.analyse(file, workspace, watch),
+          );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'unknown error';
       const reason =
@@ -172,14 +187,30 @@ export class VideoProcessingManager implements OnModuleInit {
           : VideoProcessingFailureReason.PROCESSING_ERROR;
       this.logger.error(`process: fileId=${file.id} reason=${reason} — ${message}`);
       analysis = this.failure(reason, { message }, null, null);
+    } finally {
+      this.cancellation.stopWatch(watch);
+    }
+    // One last read right before the write: a cancel that arrived after the
+    // final step still wins, and whatever the job found is discarded.
+    if (await this.cancellation.checkpoint(watch, VideoProcessingStep.SAVE)) {
+      await this.saveCancelled(file, analysis, watch);
+      return;
     }
     await (analysis.ok
       ? this.saveSuccess(file, analysis, startedAt)
       : this.saveFailure(file, analysis));
   }
 
-  private async analyse(file: File, workspace: MediaWorkspace): Promise<VideoAnalysis> {
-    const probe = await this.videoMedia.probe(workspace);
+  private async analyse(
+    file: File,
+    workspace: MediaWorkspace,
+    watch: VideoCancelWatch,
+  ): Promise<VideoAnalysis> {
+    const { signal } = watch.controller;
+    const probe = await this.videoMedia.probe(workspace, signal);
+    if (await this.cancellation.checkpoint(watch, VideoProcessingStep.THUMBNAIL)) {
+      return this.cancelled(null, null);
+    }
     if (!probe.ok) {
       return this.failure(probe.reason, { message: probe.detail }, null, null);
     }
@@ -188,7 +219,10 @@ export class VideoProcessingManager implements OnModuleInit {
     if (invalid !== null) {
       return this.failure(invalid, { summary }, summary, null);
     }
-    const thumbnail = await this.videoMedia.extractThumbnail(workspace, summary.durationMs);
+    const thumbnail = await this.videoMedia.extractThumbnail(workspace, summary.durationMs, signal);
+    if (await this.cancellation.checkpoint(watch, VideoProcessingStep.PLAN_CHECK)) {
+      return this.cancelled(summary, thumbnail);
+    }
     const plan = await this.planLimit.check(file.userId, summary.durationMs);
     if (plan.decision === VideoPlanDecision.TOO_LONG) {
       const detail = { summary, limitSeconds: plan.limitSeconds };
@@ -207,23 +241,37 @@ export class VideoProcessingManager implements OnModuleInit {
         thumbnail,
       );
     }
+    if (await this.cancellation.checkpoint(watch, VideoProcessingStep.AUDIO_EXTRACT)) {
+      return this.cancelled(summary, thumbnail);
+    }
     const audio =
       plan.decision === VideoPlanDecision.ENTITLEMENTS_UNAVAILABLE
         ? this.skippedAudio(summary)
-        : await this.transcribeTrack(file, workspace, summary);
-    return { ok: true, summary, thumbnail, audio };
+        : await this.transcribeTrack(file, workspace, summary, watch);
+    return audio === null
+      ? this.cancelled(summary, thumbnail)
+      : { ok: true, summary, thumbnail, audio };
   }
 
-  /** The audio track through the existing metered transcription path. Never throws. */
+  /**
+   * The audio track through the existing metered transcription path. Never
+   * throws. Null = cancelled (between steps, or mid-call with the hold
+   * released) — the caller records the cancel, never a partial document.
+   */
   private async transcribeTrack(
     file: File,
     workspace: MediaWorkspace,
     summary: VideoProbeSummary,
-  ): Promise<VideoAudioOutcome> {
+    watch: VideoCancelWatch,
+  ): Promise<VideoAudioOutcome | null> {
     if (!summary.hasAudio) {
       return this.audioOutcome(VideoAudioStatus.NO_AUDIO_TRACK, null);
     }
-    const track = await this.videoMedia.extractAudio(workspace, summary.durationMs);
+    const { signal } = watch.controller;
+    const track = await this.videoMedia.extractAudio(workspace, summary.durationMs, signal);
+    if (await this.cancellation.checkpoint(watch, VideoProcessingStep.VOLUME_DETECT)) {
+      return null;
+    }
     if (track === null) {
       return this.audioOutcome(
         VideoAudioStatus.EXTRACTION_FAILED,
@@ -233,7 +281,10 @@ export class VideoProcessingManager implements OnModuleInit {
     // Silence gate BEFORE the paid step: a track whose peak is below the
     // silence threshold has no speech, so no hold is taken and no provider is
     // called. An unmeasurable track (null) fails open to transcription.
-    const peakDb = await this.videoMedia.measurePeakVolume(workspace);
+    const peakDb = await this.videoMedia.measurePeakVolume(workspace, signal);
+    if (await this.cancellation.checkpoint(watch, VideoProcessingStep.TRANSCRIPTION)) {
+      return null;
+    }
     if (peakDb !== null && isSilentPeak(peakDb)) {
       this.logger.log(
         `transcribeTrack: fileId=${file.id} silent track (max_volume=${String(peakDb)} dB) — NO_SPEECH, transcription skipped`,
@@ -249,7 +300,12 @@ export class VideoProcessingManager implements OnModuleInit {
       audioSeconds: Math.ceil(summary.durationMs / 1000),
       requestScope: VIDEO_TRANSCRIPTION_REQUEST_SCOPE,
       instruction: VIDEO_TRANSCRIPTION_INSTRUCTION,
+      signal,
     });
+    if (result.status === DerivedTranscriptionStatus.CANCELLED) {
+      watch.holdReleased = result.holdReleased;
+      return null;
+    }
     if (result.status === DerivedTranscriptionStatus.FAILED) {
       return this.audioOutcome(VideoAudioStatus.TRANSCRIPTION_FAILED, result.reason);
     }
@@ -280,12 +336,16 @@ export class VideoProcessingManager implements OnModuleInit {
     return { status, segments: [], reason, provider: null, model: null };
   }
 
+  private cancelled(summary: VideoProbeSummary | null, thumbnail: Buffer | null): VideoFailure {
+    return this.failure(VideoProcessingFailureReason.PROCESSING_CANCELLED, {}, summary, thumbnail);
+  }
+
   private failure(
     reason: VideoProcessingFailureReason,
     detail: VideoFailureDetail,
     summary: VideoProbeSummary | null,
     thumbnail: Buffer | null,
-  ): VideoAnalysis {
+  ): VideoFailure {
     return { ok: false, reason, message: describeVideoFailure(reason, detail), summary, thumbnail };
   }
 
@@ -304,12 +364,17 @@ export class VideoProcessingManager implements OnModuleInit {
       transcriptionModel: audio.model,
       failureReason: null,
     };
-    await this.filesRepository.saveVideoExtractionResult(file.id, {
+    const written = await this.filesRepository.saveVideoExtractionResult(file.id, {
       extractedText: buildVideoDocument({ filename: file.filename, summary, audio }),
       extractionError: null,
       status: FileIngestionStatus.COMPLETED,
       metadata: { media },
     });
+    if (!written) {
+      // A cancel (or another job) recorded the row first: no overwrite, no event.
+      this.logger.warn(`videoProcessed: fileId=${file.id} row already settled — result discarded`);
+      return;
+    }
     const processingMs = Date.now() - startedAt;
     const payload: FileVideoProcessCompletedPayload = {
       fileId: file.id,
@@ -327,24 +392,50 @@ export class VideoProcessingManager implements OnModuleInit {
     );
   }
 
-  private async saveFailure(
-    file: File,
-    analysis: Extract<VideoAnalysis, { ok: false }>,
-  ): Promise<void> {
+  private async saveFailure(file: File, analysis: VideoFailure): Promise<boolean> {
     const media: VideoMediaMetadata = {
       ...this.baseMedia(file, analysis.summary, analysis.thumbnail),
       failureReason: analysis.reason,
     };
     // FAILED for the PROCESSING, not the file: the upload stays stored and
     // downloadable; only the analysis (and any paid step) did not happen.
-    await this.filesRepository.saveVideoExtractionResult(file.id, {
+    const written = await this.filesRepository.saveVideoExtractionResult(file.id, {
       extractedText: null,
       extractionError: analysis.message,
       status: FileIngestionStatus.FAILED,
       metadata: { media },
     });
+    if (!written) {
+      this.logger.warn(`videoFailed: fileId=${file.id} row already settled — result discarded`);
+      return false;
+    }
     this.publishFailed(file.id, file.userId, analysis.reason, analysis.message);
     this.logger.warn(`videoFailed: fileId=${file.id} reason=${analysis.reason}`);
+    return true;
+  }
+
+  /**
+   * The job saw the cancel. Whatever it found is discarded; the row gets the
+   * cancelled failure unless the route already wrote it — the conditional
+   * write decides, so the failed event is published exactly once, by whoever
+   * wrote. The probe facts are dropped on purpose (only the thumbnail is
+   * kept): with no measured `durationMs`, chat-service's native-video gate can
+   * never send a cancelled video's bytes to a model — the same row the route
+   * writes.
+   */
+  private async saveCancelled(
+    file: File,
+    analysis: VideoAnalysis,
+    watch: VideoCancelWatch,
+  ): Promise<void> {
+    await this.saveFailure(file, this.cancelled(null, analysis.thumbnail));
+    this.cancellation.logCancel(
+      file.id,
+      watch.step,
+      VideoCancelOutcome.CANCELLED,
+      watch.holdReleased,
+      watch.childKilled,
+    );
   }
 
   private baseMedia(

@@ -155,6 +155,18 @@ export class TranscriptionMeterManager {
     );
   }
 
+  /**
+   * Gives the hold back because the USER cancelled (a video cancel). Reason
+   * `CANCELLED`, never finalized: whatever the provider did, the user gets no
+   * transcript (rule 37 item 17: never charge for output not received).
+   */
+  async releaseCancelled(meterHold: TranscriptionMeterHold): Promise<void> {
+    await this.payg.release(meterHold.hold, 'CANCELLED');
+    this.logger.warn(
+      `release: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} outcome=RELEASED reason=CANCELLED`,
+    );
+  }
+
   private logFinalize(meterHold: TranscriptionMeterHold, measured: string): void {
     this.logger.log(
       `finalize: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} outcome=FINALIZED ${measured}`,

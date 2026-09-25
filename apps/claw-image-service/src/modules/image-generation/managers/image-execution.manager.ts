@@ -38,8 +38,13 @@ import { generateWithGemini } from '../adapters/gemini-image.adapter';
 import { generateWithStableDiffusion } from '../adapters/stable-diffusion.adapter';
 import { generateWithXai } from '../adapters/xai-image.adapter';
 import { XAI_DEFAULT_BASE_URL } from '../constants/xai-image.constants';
+import {
+  IMAGE_CANCELLED_LOG_REASON,
+  IMAGE_CANCELLED_RELEASE_REASON,
+} from '../constants/image-cancel.constants';
+import { imageCancelled } from '../utilities/image-cancel.utility';
 import { imageFailure } from '../adapter.utilities/provider-error.utility';
-import { ImageFailureCode } from '../../../common/enums';
+import { ImageFailureCode, ImageProviderCancel } from '../../../common/enums';
 import { randomUUID } from 'node:crypto';
 import { ComfyUIProgressAdapter } from '../../runtime-progress/adapters/comfyui-progress.adapter';
 import { StableDiffusionWebuiProgressAdapter } from '../../runtime-progress/adapters/stable-diffusion-webui-progress.adapter';
@@ -55,6 +60,13 @@ import {
 @Injectable()
 export class ImageExecutionManager {
   private readonly logger = new Logger(ImageExecutionManager.name);
+  /**
+   * generationId → ComfyUI prompt id for the runs executing IN THIS PROCESS.
+   * Set when ComfyUI accepts the workflow, removed when the call settles.
+   * A cancel that lands on another replica finds nothing here and does not
+   * interrupt (discard only) — never an untargeted interrupt.
+   */
+  private readonly comfyPromptIds = new Map<string, string>();
 
   constructor(
     private readonly comfyAdapter: ComfyUIProgressAdapter,
@@ -72,8 +84,12 @@ export class ImageExecutionManager {
       `execute: dimensions=${String(params.width ?? 1024)}x${String(params.height ?? 1024)} promptLen=${String(params.prompt.length)}`,
     );
 
+    await this.assertNotCancelled(params, undefined);
     this.logger.debug('execute: calling provider');
     const { response: providerResponse, settlement } = await this.callProvider(params);
+    // A cancel that landed while the provider worked: the result is dropped
+    // BEFORE it is stored, and the hold goes back rather than being settled.
+    await this.assertNotCancelled(params, settlement);
     this.logger.debug(
       `execute: provider returned — hasBase64=${String(Boolean(providerResponse.imageBase64))} hasUrl=${String(Boolean(providerResponse.imageUrl))} mimeType=${providerResponse.mimeType}`,
     );
@@ -129,6 +145,67 @@ export class ImageExecutionManager {
     );
   }
 
+  /**
+   * Gives a paid attempt's hold back because the user cancelled it. Never a
+   * finalize: the user did not receive the image. Returns whether a hold
+   * existed (a local attempt carries none). Idempotent on the auth side.
+   */
+  async releaseCancelled(settlement: ImageSettlement | undefined): Promise<boolean> {
+    if (settlement === undefined) {
+      return false;
+    }
+    await this.payg.release(settlement.hold, IMAGE_CANCELLED_RELEASE_REASON);
+    this.logger.log(
+      `imageSettlement reservationId=${String(settlement.hold.reservationId)} outcome=RELEASED reason=${IMAGE_CANCELLED_LOG_REASON}`,
+    );
+    return true;
+  }
+
+  /**
+   * Best-effort upstream stop for a cancelled in-flight generation — only
+   * when it provably cannot stop anyone else's job.
+   *
+   * - ComfyUI: a TARGETED `POST /interrupt { prompt_id }`, and only when this
+   *   process holds this generation's prompt id. Unknown id → no call.
+   * - SD WebUI: `/sdapi/v1/interrupt` has no job target and image-service
+   *   neither serializes SD calls nor holds a job id it could check, so it
+   *   can never prove this generation is the one running. Never called.
+   * - Cloud (OpenAI/Gemini/xAI): no cancel exists.
+   *
+   * Every no-call case reports UNSUPPORTED; the execution path discards the
+   * result when the call returns.
+   */
+  async requestProviderCancel(
+    generationId: string,
+    provider: string,
+  ): Promise<ImageProviderCancel> {
+    const promptId =
+      provider === IMAGE_PROVIDER_LOCAL_COMFYUI ? this.comfyPromptIds.get(generationId) : undefined;
+    if (promptId === undefined) {
+      this.logger.debug(
+        `requestProviderCancel: no targeted interrupt for provider=${provider} generationId=${generationId}`,
+      );
+      return ImageProviderCancel.UNSUPPORTED;
+    }
+    await this.comfyAdapter.cancel(AppConfig.get().COMFYUI_BASE_URL, promptId);
+    return ImageProviderCancel.REQUESTED;
+  }
+
+  /** Throws the cancel exception (after releasing any open hold) when the row was cancelled. */
+  private async assertNotCancelled(
+    params: ExecuteImageInput,
+    settlement: ImageSettlement | undefined,
+  ): Promise<void> {
+    if (params.isCancelled === undefined || !(await params.isCancelled())) {
+      return;
+    }
+    const holdReleased = await this.releaseCancelled(settlement);
+    this.logger.log(
+      `execute: cancelled — provider=${params.provider} holdReleased=${String(holdReleased)}`,
+    );
+    throw imageCancelled();
+  }
+
   private async callProvider(params: ExecuteImageInput): Promise<ImageProviderOutcome> {
     this.logger.debug(`callProvider: dispatching to ${params.provider}/${params.model}`);
     const { provider, model, prompt, width, height } = params;
@@ -156,7 +233,9 @@ export class ImageExecutionManager {
       this.logger.debug(
         `callProvider: routing to local ComfyUI provider — model=${model} size=${String(w)}x${String(h)}`,
       );
-      return { response: await this.callComfyUIProvider(prompt, w, h, model, params.onProgress) };
+      return {
+        response: await this.callComfyUIProvider(prompt, w, h, model, params),
+      };
     }
 
     const connectorProvider = IMAGE_PROVIDER_CONNECTORS.get(provider);
@@ -457,8 +536,9 @@ export class ImageExecutionManager {
     width: number,
     height: number,
     checkpointName: string | undefined,
-    onProgress?: ImageProgressCallback,
+    params: ExecuteImageInput,
   ): Promise<ImageProviderResponse> {
+    const { generationId, onProgress } = params;
     const config = AppConfig.get();
     const baseUrl = config.COMFYUI_BASE_URL;
     const clientId = `clawai-${randomUUID()}`;
@@ -481,6 +561,11 @@ export class ImageExecutionManager {
         // stream. It used to be dropped here, so the card sat on
         // "Generating" with no stage while ComfyUI reported every node.
         onEvent: (event) => onProgress?.(event),
+        onPromptAccepted: (promptId) => {
+          if (generationId !== undefined) {
+            this.comfyPromptIds.set(generationId, promptId);
+          }
+        },
       });
       this.logger.debug(
         `callComfyUIProvider: completed promptId=${result.promptId} filename=${result.filename} nodes=${String(result.nodeTimings.length)}`,
@@ -499,6 +584,10 @@ export class ImageExecutionManager {
         `ComfyUI image generation failed: ${msg}`,
         'COMFYUI_IMAGE_GENERATION_FAILED',
       );
+    } finally {
+      if (generationId !== undefined) {
+        this.comfyPromptIds.delete(generationId);
+      }
     }
   }
 

@@ -36,6 +36,10 @@ import { pcm16ToWav, pcmSampleRate } from '../utilities/wav-audio.utility';
  * provider's retry hint — never the text, never the key. Metering is
  * the caller's (`SpeechSynthesisManager`); this class only speaks HTTP.
  *
+ * A cancelled job aborts the LOCAL request through `request.signal` (an
+ * `AbortError`, reported like the deadline); the provider may still finish
+ * rendering upstream — nothing here claims it stopped.
+ *
  * Fixed provider hosts, not the connector's base URL: the speech endpoints
  * are not the OpenAI-compatible chat paths a connector base URL points at.
  */
@@ -61,6 +65,7 @@ export class SpeechProviderClient {
         },
         timeoutMs: request.candidate.timeoutMs,
         allowedHosts: declaredHost(OPENAI_SPEECH_URL),
+        signal: request.signal,
       }),
     );
     if (!response.ok && isOpenAiRateLimited(response.status, response.body)) {
@@ -96,6 +101,7 @@ export class SpeechProviderClient {
         },
         timeoutMs: request.candidate.timeoutMs,
         allowedHosts: declaredHost(GEMINI_TTS_BASE_URL),
+        signal: request.signal,
       }),
     );
     if (!response.ok && isGeminiRateLimited(response.status, response.data.error)) {

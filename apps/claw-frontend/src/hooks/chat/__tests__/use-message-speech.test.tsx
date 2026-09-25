@@ -10,11 +10,13 @@ import { ApiClientError } from '@/services/shared/api-client';
 
 const mockGetAvailability = vi.fn();
 const mockSynthesize = vi.fn();
+const mockCancel = vi.fn();
 
 vi.mock('@/repositories/chat/message-speech.repository', () => ({
   messageSpeechRepository: {
     getAvailability: (...args: unknown[]) => mockGetAvailability(...args),
     start: (...args: unknown[]) => mockSynthesize(...args),
+    cancel: (...args: unknown[]) => mockCancel(...args),
     getState: vi.fn(),
   },
 }));
@@ -41,6 +43,37 @@ describe('useMessageSpeech', () => {
   beforeEach(() => {
     mockGetAvailability.mockReset().mockResolvedValue({ available: true, reason: null });
     mockSynthesize.mockReset().mockResolvedValue(SPEECH);
+    mockCancel.mockReset().mockResolvedValue({ ...SPEECH, status: 'CANCELLED' });
+  });
+
+  it('stop while the job is GENERATING also stops the backend job, once', async () => {
+    mockSynthesize.mockResolvedValue({
+      ...SPEECH,
+      status: 'GENERATING',
+      totalSegments: 3,
+    });
+    const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+    await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+    act(() => result.current.toggle());
+    await waitFor(() => expect(result.current.status).toBe(MessageSpeechStatus.PLAYING));
+
+    act(() => result.current.toggle());
+
+    await waitFor(() => expect(mockCancel).toHaveBeenCalledTimes(1));
+    expect(mockCancel).toHaveBeenCalledWith('msg-1');
+    expect(result.current.isPlayerOpen).toBe(false);
+  });
+
+  it('stop of a READY reading closes the player without a cancel request', async () => {
+    const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+    await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+    act(() => result.current.toggle());
+    await waitFor(() => expect(result.current.status).toBe(MessageSpeechStatus.PLAYING));
+
+    act(() => result.current.toggle());
+
+    await waitFor(() => expect(result.current.isPlayerOpen).toBe(false));
+    expect(mockCancel).not.toHaveBeenCalled();
   });
 
   it('loads availability once and starts idle with the read-aloud label', async () => {

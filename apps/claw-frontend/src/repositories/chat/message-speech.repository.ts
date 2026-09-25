@@ -10,6 +10,8 @@ import type { MessageSpeechState, SpeechAvailability } from '@/types/message-spe
  * asked once per page. `start` never waits on a voice model: the backend
  * answers READY (a stored reading, replayed free) or GENERATING (a background
  * job is synthesising segment by segment), and `getState` is the poll.
+ * `cancel` is the owner's Stop: the backend stops the job (parts already
+ * stored stay) and answers the resulting state; a no-op when nothing runs.
  */
 export const messageSpeechRepository = {
   async getAvailability(): Promise<SpeechAvailability> {
@@ -20,6 +22,15 @@ export const messageSpeechRepository = {
   async start(messageId: string): Promise<MessageSpeechState> {
     const response = await apiClient.post<MessageSpeechState>(
       `/chat-messages/${messageId}/speech`,
+      undefined,
+      { timeout: MESSAGE_SPEECH_REQUEST_TIMEOUT_MS },
+    );
+    return response.data;
+  },
+
+  async cancel(messageId: string): Promise<MessageSpeechState> {
+    const response = await apiClient.post<MessageSpeechState>(
+      `/chat-messages/${messageId}/speech/cancel`,
       undefined,
       { timeout: MESSAGE_SPEECH_REQUEST_TIMEOUT_MS },
     );

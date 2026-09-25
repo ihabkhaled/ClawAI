@@ -50,6 +50,8 @@ export enum ApiErrorCode {
   TTS_NOTHING_TO_READ = 'TTS_NOTHING_TO_READ',
   TTS_UNAVAILABLE = 'TTS_UNAVAILABLE',
   TTS_FAILED = 'TTS_FAILED',
+  // A read-aloud start while the job the owner just stopped still winds down (409).
+  TTS_CANCEL_PENDING = 'TTS_CANCEL_PENDING',
   // file-service: the virus scanner (ClamAV) could not be reached within 90 s,
   // usually because it is restarting. The upload failed closed; retrying in a
   // minute works. 503, never a verdict on the file.

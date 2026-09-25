@@ -119,6 +119,35 @@ describe('runMediaProcess', () => {
     expect(result.status).toBe(MediaProcessStatus.SPAWN_FAILED);
   });
 
+  it('a cancel (AbortSignal) SIGKILLs the running child and ends ABORTED', async () => {
+    const controller = new AbortController();
+    const pending = runMediaProcess({ ...REQUEST, signal: controller.signal });
+    controller.abort();
+    child.emit('close', null);
+
+    const result = await pending;
+    expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+    expect(result.status).toBe(MediaProcessStatus.ABORTED);
+    expect(result.exitCode).toBeNull();
+  });
+
+  it('an already-cancelled signal never spawns a child', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const result = await runMediaProcess({ ...REQUEST, signal: controller.signal });
+    expect(mockedSpawn).not.toHaveBeenCalled();
+    expect(result.status).toBe(MediaProcessStatus.ABORTED);
+  });
+
+  it('a normal exit detaches the abort listener: a later cancel kills nothing', async () => {
+    const controller = new AbortController();
+    const pending = runMediaProcess({ ...REQUEST, signal: controller.signal });
+    child.emit('close', 0);
+    expect((await pending).status).toBe(MediaProcessStatus.EXITED);
+    controller.abort();
+    expect(child.kill).not.toHaveBeenCalled();
+  });
+
   it('settles once: a close after a timeout does not overwrite the verdict', async () => {
     vi.useFakeTimers();
     const pending = runMediaProcess(REQUEST);

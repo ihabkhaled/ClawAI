@@ -68,7 +68,19 @@ export function deriveMessageSpeechStatus(input: MessageSpeechStatusInput): Mess
   if (input.state !== undefined && input.state.segments.length > 0) {
     return MessageSpeechStatus.PLAYING;
   }
-  return MessageSpeechStatus.LOADING;
+  // Stopped (here or in another tab) before any part arrived: nothing is loading.
+  return input.state?.status === MessageSpeechJobStatus.CANCELLED
+    ? MessageSpeechStatus.IDLE
+    : MessageSpeechStatus.LOADING;
+}
+
+/**
+ * Whether closing the player must also stop the backend job: only while it is
+ * still GENERATING — a READY / PARTIAL / FAILED / CANCELLED reading has
+ * nothing left to stop, and the cancel route would be a no-op.
+ */
+export function shouldCancelMessageSpeech(state: MessageSpeechState | undefined): boolean {
+  return state?.status === MessageSpeechJobStatus.GENERATING;
 }
 
 /**
@@ -150,6 +162,9 @@ export function deriveMessageSpeechPhase(
   }
   if (input.hasCurrentAudio) {
     return input.isPaused ? MessageSpeechPlaybackPhase.PAUSED : MessageSpeechPlaybackPhase.PLAYING;
+  }
+  if (state?.status === MessageSpeechJobStatus.CANCELLED && state.segments.length === 0) {
+    return MessageSpeechPlaybackPhase.CANCELLED;
   }
   if (input.isPollingExpired) {
     return MessageSpeechPlaybackPhase.FAILED;

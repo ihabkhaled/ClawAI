@@ -78,6 +78,11 @@ export function isStaleSpeechJob(state: SpeechJobState, now: number): boolean {
   return Number.isNaN(started) || now - started > SPEECH_JOB_LOCK_TTL_MS;
 }
 
+/** Only a live job can be stopped: GENERATING and not stale (a stale one has no job left). */
+export function isCancellableSpeechJob(state: SpeechJobState, now: number): boolean {
+  return state.status === SpeechJobStatus.GENERATING && !isStaleSpeechJob(state, now);
+}
+
 /** What the client is told about the reading of the CURRENT text. */
 export function toSpeechStateResponse(
   state: SpeechJobState | null,

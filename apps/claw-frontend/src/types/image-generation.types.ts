@@ -77,3 +77,9 @@ export type ImageGenerationFollowState = {
   rootId: string | undefined;
   trackedId: string | undefined;
 };
+
+/** `POST /images/:id/retry` and `POST /images/:id/cancel` answer: the row acted on and its status after the call. */
+export type ImageGenerationActionResult = {
+  generationId: string;
+  status: ImageGenerationStatus;
+};

@@ -37,6 +37,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'The file could not be processed',
       unsupportedReason: 'This file type cannot be attached',
       remove: 'Remove {name}',
+      cancelled: 'Cancelled',
+      cancelledHint:
+        'Processing was stopped. You can still send it; the model is told it was not processed',
+      cancelProcessing: 'Stop processing',
+      cancelProcessingAria: 'Stop processing {name}',
+      cancelling: 'Stopping…',
     },
     deliveryReason: {
       noVision: 'This model cannot view images',
@@ -53,6 +59,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Your plan does not include image descriptions, so only its text (OCR) was sent',
       visionHelperLimit: 'Too many images in one message; this one was not described',
       videoPlanLimit: 'Your plan does not allow this video (disabled or too long)',
+      videoProcessingCancelled:
+        'Its processing was stopped, so the model was told it was not processed',
       videoFramesUnavailable: 'Video frames were unavailable, so only the transcript was sent',
       videoFramesNoHelper:
         'No model could describe the video frames, so only the transcript was sent',
@@ -101,6 +109,11 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'تعذّرت معالجة الملف',
       unsupportedReason: 'لا يمكن إرفاق هذا النوع من الملفات',
       remove: 'إزالة {name}',
+      cancelled: 'أُلغي',
+      cancelledHint: 'أُوقفت المعالجة. لا يزال بإمكانك إرساله؛ وسيُبلَّغ النموذج بأنه لم يُعالَج',
+      cancelProcessing: 'إيقاف المعالجة',
+      cancelProcessingAria: 'إيقاف معالجة {name}',
+      cancelling: 'جارٍ الإيقاف…',
     },
     deliveryReason: {
       noVision: 'لا يستطيع هذا النموذج رؤية الصور',
@@ -115,6 +128,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       helperVisionPlan: 'خطتك لا تتضمن وصف الصور، لذا أُرسل نصها المستخرج (OCR) فقط',
       visionHelperLimit: 'صور كثيرة في رسالة واحدة؛ لم يتم وصف هذه الصورة',
       videoPlanLimit: 'خطتك لا تسمح بهذا الفيديو (معطّل أو طويل جدًا)',
+      videoProcessingCancelled: 'أُوقفت معالجته، فأُبلغ النموذج بأنه لم يُعالَج',
       videoFramesUnavailable: 'لم تتوفر إطارات الفيديو، لذا أُرسل النص المكتوب فقط',
       videoFramesNoHelper: 'لم يتمكن أي نموذج من وصف إطارات الفيديو، لذا أُرسل النص المكتوب فقط',
       videoFramesHelperPlan: 'خطتك لا تتضمن وصف الإطارات، لذا أُرسل النص المكتوب فقط',
@@ -163,6 +177,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'Le fichier n’a pas pu être traité',
       unsupportedReason: 'Ce type de fichier ne peut pas être joint',
       remove: 'Retirer {name}',
+      cancelled: 'Annulé',
+      cancelledHint:
+        'Le traitement a été arrêté. Vous pouvez quand même l’envoyer ; le modèle est informé qu’il n’a pas été traité',
+      cancelProcessing: 'Arrêter le traitement',
+      cancelProcessingAria: 'Arrêter le traitement de {name}',
+      cancelling: 'Arrêt en cours…',
     },
     deliveryReason: {
       noVision: 'Ce modèle ne peut pas voir les images',
@@ -180,6 +200,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Votre forfait n’inclut pas la description d’images ; seul son texte (OCR) a été envoyé',
       visionHelperLimit: 'Trop d’images dans un même message ; celle-ci n’a pas été décrite',
       videoPlanLimit: 'Votre forfait n’autorise pas cette vidéo (désactivée ou trop longue)',
+      videoProcessingCancelled:
+        'Son traitement a été arrêté ; le modèle a été informé qu’il n’a pas été traité',
       videoFramesUnavailable:
         'Les images de la vidéo étaient indisponibles ; seule la transcription a été envoyée',
       videoFramesNoHelper:
@@ -230,6 +252,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'Non è stato possibile elaborare il file',
       unsupportedReason: 'Questo tipo di file non può essere allegato',
       remove: 'Rimuovi {name}',
+      cancelled: 'Annullato',
+      cancelledHint:
+        'L’elaborazione è stata interrotta. Puoi comunque inviarlo; il modello viene informato che non è stato elaborato',
+      cancelProcessing: 'Interrompi elaborazione',
+      cancelProcessingAria: 'Interrompi l’elaborazione di {name}',
+      cancelling: 'Interruzione…',
     },
     deliveryReason: {
       noVision: 'Questo modello non può vedere le immagini',
@@ -248,6 +276,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Il tuo piano non include la descrizione delle immagini; è stato inviato solo il testo (OCR)',
       visionHelperLimit: 'Troppe immagini in un solo messaggio; questa non è stata descritta',
       videoPlanLimit: 'Il tuo piano non consente questo video (disattivato o troppo lungo)',
+      videoProcessingCancelled:
+        'L’elaborazione è stata interrotta, quindi il modello è stato informato che non è stato elaborato',
       videoFramesUnavailable:
         'I fotogrammi del video non erano disponibili; è stata inviata solo la trascrizione',
       videoFramesNoHelper:
@@ -298,6 +328,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'Die Datei konnte nicht verarbeitet werden',
       unsupportedReason: 'Dieser Dateityp kann nicht angehängt werden',
       remove: '{name} entfernen',
+      cancelled: 'Abgebrochen',
+      cancelledHint:
+        'Die Verarbeitung wurde gestoppt. Du kannst die Datei trotzdem senden; das Modell erfährt, dass sie nicht verarbeitet wurde',
+      cancelProcessing: 'Verarbeitung stoppen',
+      cancelProcessingAria: 'Verarbeitung von {name} stoppen',
+      cancelling: 'Wird gestoppt…',
     },
     deliveryReason: {
       noVision: 'Dieses Modell kann keine Bilder sehen',
@@ -315,6 +351,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Dein Tarif enthält keine Bildbeschreibungen; nur der Text (OCR) wurde gesendet',
       visionHelperLimit: 'Zu viele Bilder in einer Nachricht; dieses wurde nicht beschrieben',
       videoPlanLimit: 'Dein Tarif erlaubt dieses Video nicht (deaktiviert oder zu lang)',
+      videoProcessingCancelled:
+        'Die Verarbeitung wurde gestoppt; das Modell erfuhr, dass die Datei nicht verarbeitet wurde',
       videoFramesUnavailable:
         'Videobilder waren nicht verfügbar; nur das Transkript wurde gesendet',
       videoFramesNoHelper:
@@ -365,6 +403,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'No se pudo procesar el archivo',
       unsupportedReason: 'Este tipo de archivo no se puede adjuntar',
       remove: 'Quitar {name}',
+      cancelled: 'Cancelado',
+      cancelledHint:
+        'Se detuvo el procesamiento. Aún puedes enviarlo; se indica al modelo que no se procesó',
+      cancelProcessing: 'Detener procesamiento',
+      cancelProcessingAria: 'Detener el procesamiento de {name}',
+      cancelling: 'Deteniendo…',
     },
     deliveryReason: {
       noVision: 'Este modelo no puede ver imágenes',
@@ -381,6 +425,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Tu plan no incluye descripciones de imágenes; solo se envió su texto (OCR)',
       visionHelperLimit: 'Demasiadas imágenes en un mensaje; esta no se describió',
       videoPlanLimit: 'Tu plan no permite este vídeo (desactivado o demasiado largo)',
+      videoProcessingCancelled:
+        'Se detuvo su procesamiento, así que se indicó al modelo que no se procesó',
       videoFramesUnavailable:
         'Los fotogramas del vídeo no estaban disponibles; solo se envió la transcripción',
       videoFramesNoHelper:
@@ -430,6 +476,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'Не удалось обработать файл',
       unsupportedReason: 'Этот тип файла нельзя прикрепить',
       remove: 'Удалить {name}',
+      cancelled: 'Отменено',
+      cancelledHint:
+        'Обработка остановлена. Файл всё равно можно отправить; модели сообщат, что он не обработан',
+      cancelProcessing: 'Остановить обработку',
+      cancelProcessingAria: 'Остановить обработку {name}',
+      cancelling: 'Остановка…',
     },
     deliveryReason: {
       noVision: 'Эта модель не видит изображения',
@@ -446,6 +498,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Ваш тариф не включает описание изображений; отправлен только его текст (OCR)',
       visionHelperLimit: 'Слишком много изображений в одном сообщении; это не было описано',
       videoPlanLimit: 'Ваш тариф не разрешает это видео (отключено или слишком длинное)',
+      videoProcessingCancelled:
+        'Обработка была остановлена, поэтому модели сообщили, что файл не обработан',
       videoFramesUnavailable: 'Кадры видео были недоступны; отправлена только расшифровка',
       videoFramesNoHelper: 'Ни одна модель не смогла описать кадры; отправлена только расшифровка',
       videoFramesHelperPlan: 'Ваш тариф не включает описание кадров; отправлена только расшифровка',
@@ -493,6 +547,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'Não foi possível processar o arquivo',
       unsupportedReason: 'Este tipo de arquivo não pode ser anexado',
       remove: 'Remover {name}',
+      cancelled: 'Cancelado',
+      cancelledHint:
+        'O processamento foi interrompido. Você ainda pode enviá-lo; o modelo é informado de que ele não foi processado',
+      cancelProcessing: 'Parar processamento',
+      cancelProcessingAria: 'Parar o processamento de {name}',
+      cancelling: 'Parando…',
     },
     deliveryReason: {
       noVision: 'Este modelo não consegue ver imagens',
@@ -509,6 +569,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Seu plano não inclui descrição de imagens; apenas o texto (OCR) foi enviado',
       visionHelperLimit: 'Imagens demais em uma mensagem; esta não foi descrita',
       videoPlanLimit: 'Seu plano não permite este vídeo (desativado ou longo demais)',
+      videoProcessingCancelled:
+        'O processamento foi interrompido, então o modelo foi informado de que não foi processado',
       videoFramesUnavailable:
         'Os quadros do vídeo não estavam disponíveis; apenas a transcrição foi enviada',
       videoFramesNoHelper:
@@ -558,6 +620,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'फ़ाइल प्रोसेस नहीं हो सकी',
       unsupportedReason: 'इस प्रकार की फ़ाइल संलग्न नहीं की जा सकती',
       remove: '{name} हटाएँ',
+      cancelled: 'रद्द किया गया',
+      cancelledHint:
+        'प्रोसेसिंग रोक दी गई। आप इसे फिर भी भेज सकते हैं; मॉडल को बताया जाता है कि इसे प्रोसेस नहीं किया गया',
+      cancelProcessing: 'प्रोसेसिंग रोकें',
+      cancelProcessingAria: '{name} की प्रोसेसिंग रोकें',
+      cancelling: 'रोका जा रहा है…',
     },
     deliveryReason: {
       noVision: 'यह मॉडल चित्र नहीं देख सकता',
@@ -574,6 +642,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'आपके प्लान में चित्र विवरण शामिल नहीं है, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
       visionHelperLimit: 'एक संदेश में बहुत सारे चित्र; इस चित्र का विवरण नहीं दिया गया',
       videoPlanLimit: 'आपका प्लान इस वीडियो की अनुमति नहीं देता (बंद है या बहुत लंबा है)',
+      videoProcessingCancelled:
+        'इसकी प्रोसेसिंग रोक दी गई, इसलिए मॉडल को बताया गया कि इसे प्रोसेस नहीं किया गया',
       videoFramesUnavailable: 'वीडियो फ़्रेम उपलब्ध नहीं थे, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
       videoFramesNoHelper:
         'कोई भी मॉडल वीडियो फ़्रेम का विवरण नहीं दे सका, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
@@ -622,6 +692,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'ファイルを処理できませんでした',
       unsupportedReason: 'この種類のファイルは添付できません',
       remove: '{name} を削除',
+      cancelled: 'キャンセル済み',
+      cancelledHint:
+        '処理を停止しました。このまま送信できます。未処理であることはモデルに伝えられます',
+      cancelProcessing: '処理を停止',
+      cancelProcessingAria: '{name} の処理を停止',
+      cancelling: '停止中…',
     },
     deliveryReason: {
       noVision: 'このモデルは画像を見ることができません',
@@ -638,6 +714,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'ご利用のプランには画像の説明が含まれないため、テキスト (OCR) のみを送信しました',
       visionHelperLimit: '1 件のメッセージの画像が多すぎるため、この画像は説明されませんでした',
       videoPlanLimit: 'ご利用のプランではこの動画を扱えません (無効または長すぎます)',
+      videoProcessingCancelled: '処理が停止されたため、未処理であることがモデルに伝えられました',
       videoFramesUnavailable: '動画のフレームを取得できなかったため、文字起こしのみを送信しました',
       videoFramesNoHelper: 'フレームを説明できるモデルがなかったため、文字起こしのみを送信しました',
       videoFramesHelperPlan:
@@ -685,6 +762,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'ไม่สามารถประมวลผลไฟล์ได้',
       unsupportedReason: 'ไม่สามารถแนบไฟล์ประเภทนี้ได้',
       remove: 'นำ {name} ออก',
+      cancelled: 'ยกเลิกแล้ว',
+      cancelledHint:
+        'หยุดการประมวลผลแล้ว คุณยังส่งไฟล์นี้ได้ และโมเดลจะได้รับแจ้งว่าไฟล์ยังไม่ได้ประมวลผล',
+      cancelProcessing: 'หยุดประมวลผล',
+      cancelProcessingAria: 'หยุดประมวลผล {name}',
+      cancelling: 'กำลังหยุด…',
     },
     deliveryReason: {
       noVision: 'โมเดลนี้มองเห็นรูปภาพไม่ได้',
@@ -699,6 +782,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       helperVisionPlan: 'แพ็กเกจของคุณไม่รวมการอธิบายรูปภาพ จึงส่งเฉพาะข้อความในภาพ (OCR)',
       visionHelperLimit: 'มีรูปภาพมากเกินไปในข้อความเดียว รูปนี้จึงไม่ได้รับการอธิบาย',
       videoPlanLimit: 'แพ็กเกจของคุณไม่อนุญาตวิดีโอนี้ (ปิดใช้งานหรือยาวเกินไป)',
+      videoProcessingCancelled: 'การประมวลผลถูกหยุด โมเดลจึงได้รับแจ้งว่าไฟล์ยังไม่ได้ประมวลผล',
       videoFramesUnavailable: 'ไม่มีเฟรมวิดีโอ จึงส่งเฉพาะข้อความถอดเสียง',
       videoFramesNoHelper: 'ไม่มีโมเดลใดอธิบายเฟรมวิดีโอได้ จึงส่งเฉพาะข้อความถอดเสียง',
       videoFramesHelperPlan: 'แพ็กเกจของคุณไม่รวมการอธิบายเฟรม จึงส่งเฉพาะข้อความถอดเสียง',
@@ -745,6 +829,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: 'پردازش فایل ممکن نشد',
       unsupportedReason: 'این نوع فایل را نمی‌توان پیوست کرد',
       remove: 'حذف {name}',
+      cancelled: 'لغو شد',
+      cancelledHint:
+        'پردازش متوقف شد. همچنان می‌توانید آن را بفرستید؛ به مدل گفته می‌شود که پردازش نشده است',
+      cancelProcessing: 'توقف پردازش',
+      cancelProcessingAria: 'توقف پردازش {name}',
+      cancelling: 'در حال توقف…',
     },
     deliveryReason: {
       noVision: 'این مدل نمی‌تواند تصویر ببیند',
@@ -759,6 +849,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       helperVisionPlan: 'طرح شما شامل توصیف تصویر نیست، پس فقط متن آن (OCR) فرستاده شد',
       visionHelperLimit: 'تصاویر زیادی در یک پیام بود؛ این تصویر توصیف نشد',
       videoPlanLimit: 'طرح شما اجازهٔ این ویدیو را نمی‌دهد (غیرفعال یا بیش از حد طولانی)',
+      videoProcessingCancelled: 'پردازش آن متوقف شد، بنابراین به مدل گفته شد که پردازش نشده است',
       videoFramesUnavailable: 'فریم‌های ویدیو در دسترس نبود، پس فقط متن پیاده‌شده فرستاده شد',
       videoFramesNoHelper:
         'هیچ مدلی نتوانست فریم‌های ویدیو را توصیف کند، پس فقط متن پیاده‌شده فرستاده شد',
@@ -806,6 +897,11 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       processingFailedReason: '无法处理该文件',
       unsupportedReason: '无法附加此类型的文件',
       remove: '移除 {name}',
+      cancelled: '已取消',
+      cancelledHint: '处理已停止。你仍可发送它；模型会被告知它未经处理',
+      cancelProcessing: '停止处理',
+      cancelProcessingAria: '停止处理 {name}',
+      cancelling: '正在停止…',
     },
     deliveryReason: {
       noVision: '此模型无法查看图片',
@@ -820,6 +916,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       helperVisionPlan: '您的套餐不包含图片描述，因此只发送了其中的文字（OCR）',
       visionHelperLimit: '一条消息中的图片过多；此图片未被描述',
       videoPlanLimit: '您的套餐不允许此视频（已停用或过长）',
+      videoProcessingCancelled: '其处理已被停止，因此已告知模型它未经处理',
       videoFramesUnavailable: '视频画面不可用，因此只发送了转录文本',
       videoFramesNoHelper: '没有模型能够描述视频画面，因此只发送了转录文本',
       videoFramesHelperPlan: '您的套餐不包含画面描述，因此只发送了转录文本',

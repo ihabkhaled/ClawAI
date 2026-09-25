@@ -9,6 +9,7 @@ import { MessageRole } from '../../../generated/prisma';
 import { SPEECH_JOB_LOCK_TTL_MS, SPEECH_MAX_CHARACTERS } from '../constants/speech.constants';
 import { SpeechJobManager } from '../managers/speech-job.manager';
 import { SpeechSynthesisManager } from '../managers/speech-synthesis.manager';
+import { SpeechJobCancelStore } from '../repositories/speech-job-cancel.store';
 import { MessageSpeechService } from '../services/message-speech.service';
 import type {
   MessageSpeechStartResult,
@@ -69,7 +70,33 @@ type Harness = {
   jobRuns: MockInstance<SpeechJobManager['run']>;
   metadata: () => Record<string, unknown>;
   speech: () => SpeechJobState;
+  /** The fake Redis every "replica" shares (cancel flags live here). */
+  redis: FakeRedis;
+  /** A cancel store as ANOTHER replica would build it, over the same Redis. */
+  replicaCancelStore: () => SpeechJobCancelStore;
+  setMetadata: (next: Record<string, unknown>) => void;
 };
+
+type FakeRedis = {
+  values: Map<string, string>;
+  ttls: Map<string, number | undefined>;
+  get: Mock;
+  set: Mock;
+};
+
+function fakeRedis(): FakeRedis {
+  const values = new Map<string, string>();
+  const ttls = new Map<string, number | undefined>();
+  return {
+    values,
+    ttls,
+    get: vi.fn(async (key: string) => values.get(key) ?? null),
+    set: vi.fn(async (key: string, value: string, ttlSeconds?: number) => {
+      values.set(key, value);
+      ttls.set(key, ttlSeconds);
+    }),
+  };
+}
 
 type HarnessOptions = {
   candidates?: TtsVoiceCandidateWire[];
@@ -191,11 +218,14 @@ function build(options: HarnessOptions = {}): Harness {
   });
   const lock = { acquire, release };
   const fileStore = { store, exists };
+  const redis = fakeRedis();
+  const replicaCancelStore = (): SpeechJobCancelStore => new SpeechJobCancelStore(redis as never);
   const jobs = new SpeechJobManager(
     messages as never,
     synthesis,
     fileStore as never,
     lock as never,
+    replicaCancelStore(),
   );
   const jobRuns = vi.spyOn(jobs, 'run');
   const service = new MessageSpeechService(
@@ -206,6 +236,7 @@ function build(options: HarnessOptions = {}): Harness {
     fileStore as never,
     jobs,
     lock as never,
+    replicaCancelStore(),
   );
   return {
     service,
@@ -223,6 +254,11 @@ function build(options: HarnessOptions = {}): Harness {
     jobRuns,
     metadata: () => metadata,
     speech: () => metadata['speech'] as SpeechJobState,
+    redis,
+    replicaCancelStore,
+    setMetadata: (next: Record<string, unknown>) => {
+      metadata = next;
+    },
   };
 }
 
@@ -958,5 +994,260 @@ describe('MessageSpeechService.getAvailability', () => {
       available: false,
       reason: SpeechUnavailableReason.TEMPORARILY_UNAVAILABLE,
     });
+  });
+});
+
+// ── Owner cancellation (pack §72, ADR-120 addendum "cancellation") ──────────
+
+/** ~3,400 characters: enough segments that some are still queued when the stop lands. */
+const LONGER_REPLY = `${LONG_REPLY} ${LONG_REPLY}`;
+
+type ProviderGate = {
+  calls: () => number;
+  aborts: () => number;
+  answerAll: () => void;
+};
+
+/** Provider calls after the first `passFirst` wait for the test — or reject when the job aborts them. */
+function gateProvider(harness: Harness, passFirst = 0): ProviderGate {
+  const waiting: Array<(audio: SynthesizedAudio) => void> = [];
+  let calls = 0;
+  let aborts = 0;
+  harness.providerSynthesize.mockImplementation(async (request: SpeechProviderRequest) => {
+    calls += 1;
+    return calls <= passFirst ? WAV : held(request);
+  });
+  function held(request: SpeechProviderRequest): Promise<SynthesizedAudio> {
+    return new Promise<SynthesizedAudio>((resolve, reject) => {
+      waiting.push(resolve);
+      request.signal?.addEventListener(
+        'abort',
+        () => {
+          aborts += 1;
+          reject(new SpeechProviderError('speech provider deadline', null, true));
+        },
+        { once: true },
+      );
+    });
+  }
+  return {
+    calls: () => calls,
+    aborts: () => aborts,
+    answerAll: () => {
+      for (const resolve of waiting.splice(0)) {
+        resolve(WAV);
+      }
+    },
+  };
+}
+
+/** Waits (bounded) for a condition the background job makes true. */
+async function until(condition: () => boolean, maxTicks = 100): Promise<void> {
+  for (let tick = 0; tick < maxTicks && !condition(); tick += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  expect(condition()).toBe(true);
+}
+
+async function jobsDone(harness: Harness): Promise<void> {
+  await Promise.all(harness.jobRuns.mock.results.map((entry) => entry.value));
+}
+
+function releaseReasons(harness: Harness): unknown[] {
+  return harness.ledger.filter((row) => row.kind === 'RESERVATION_RELEASE').map((row) => row.units);
+}
+
+describe('MessageSpeechService.cancel — the owner stops a reading', () => {
+  it('a stop read before the first segment: no hold, no provider call, CANCELLED', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    // Written by ANOTHER replica's store over the shared Redis (generation 1 is next).
+    await harness.replicaCancelStore().request(MESSAGE_ID, 1);
+
+    await startAndFinish(harness);
+
+    expect(harness.reserveCredit).not.toHaveBeenCalled();
+    expect(harness.providerSynthesize).not.toHaveBeenCalled();
+    expect(harness.ledger).toEqual([]);
+    expect(harness.speech()).toMatchObject({ status: SpeechJobStatus.CANCELLED, errorCode: null });
+    expect(harness.release).toHaveBeenCalled();
+  });
+
+  it('mid-flight: the answer that lands after the stop is discarded, its hold RELEASED, never finalized', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    const gate = gateProvider(harness);
+    await harness.service.start(USER, MESSAGE_ID);
+    await until(() => gate.calls() === 1);
+
+    const body = await harness.service.cancel(USER, MESSAGE_ID);
+    expect(body.status).toBe(SpeechJobStatus.CANCELLED);
+    expect(harness.speech().status).toBe(SpeechJobStatus.CANCELLED);
+
+    gate.answerAll();
+    await jobsDone(harness);
+
+    expect(harness.store).not.toHaveBeenCalled();
+    expect(harness.finalizeCredit).not.toHaveBeenCalled();
+    expect(harness.ledger.map((row) => row.kind)).toEqual(['RESERVATION', 'RESERVATION_RELEASE']);
+    expect(releaseReasons(harness)).toEqual(['CANCELLED']);
+    expect(harness.speech()).toMatchObject({
+      status: SpeechJobStatus.CANCELLED,
+      segments: [],
+      errorCode: null,
+    });
+  });
+
+  it('keeps the segments already stored (heard and charged); starts no new one; releases the rest', async () => {
+    const harness = build({ candidates: [GEMINI_ROW], content: LONGER_REPLY });
+    const gate = gateProvider(harness, 1);
+    await harness.service.start(USER, MESSAGE_ID);
+    await until(() => harness.finalizeCredit.mock.calls.length === 1 && gate.calls() === 4);
+
+    await harness.service.cancel(USER, MESSAGE_ID);
+    gate.answerAll();
+    await jobsDone(harness);
+
+    // Segment 1 stored; 2-4 were in flight (released); the rest never started.
+    expect(harness.reserveCredit).toHaveBeenCalledTimes(4);
+    expect(harness.store).toHaveBeenCalledTimes(1);
+    expect(harness.finalizeCredit).toHaveBeenCalledTimes(1);
+    expect(releaseReasons(harness)).toEqual(['CANCELLED', 'CANCELLED', 'CANCELLED']);
+    expect(harness.speech().totalSegments).toBeGreaterThan(4);
+    expect(harness.speech().status).toBe(SpeechJobStatus.CANCELLED);
+    expect(harness.speech().segments.map((segment) => segment.fileId)).toEqual(['file-1']);
+    await expect(harness.service.getState(USER, MESSAGE_ID)).resolves.toMatchObject({
+      status: SpeechJobStatus.CANCELLED,
+      segments: [expect.objectContaining({ index: 0, fileId: 'file-1' })],
+    });
+  });
+
+  it('aborts the in-flight request when another replica sets the flag (watcher), and releases its hold', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    const gate = gateProvider(harness);
+    await harness.service.start(USER, MESSAGE_ID);
+    await until(() => gate.calls() === 1);
+
+    await harness.replicaCancelStore().request(MESSAGE_ID, 1);
+    await until(() => gate.aborts() === 1, 400);
+    await jobsDone(harness);
+
+    expect(harness.finalizeCredit).not.toHaveBeenCalled();
+    expect(releaseReasons(harness)).toEqual(['CANCELLED']);
+    // Aborted locally once, never retried on the same or the next candidate.
+    expect(harness.providerSynthesize).toHaveBeenCalledTimes(1);
+    expect(harness.speech().status).toBe(SpeechJobStatus.CANCELLED);
+  });
+
+  it('a POST while the stopped job winds down answers 409; after it, a POST resumes the missing segments', async () => {
+    const harness = build({ candidates: [GEMINI_ROW], content: LONGER_REPLY });
+    const gate = gateProvider(harness, 1);
+    await harness.service.start(USER, MESSAGE_ID);
+    await until(() => harness.finalizeCredit.mock.calls.length === 1 && gate.calls() === 4);
+    await harness.service.cancel(USER, MESSAGE_ID);
+
+    await expectCode(harness.service.start(USER, MESSAGE_ID), 'TTS_CANCEL_PENDING', 409);
+
+    gate.answerAll();
+    await jobsDone(harness);
+    harness.providerSynthesize.mockImplementation(async () => WAV);
+    const resumed = await startAndFinish(harness);
+
+    expect(resumed.httpStatus).toBe(202);
+    const total = segmentSpeakableText(
+      prepareSpeakableText(LONGER_REPLY, SPEECH_MAX_CHARACTERS).text,
+    ).length;
+    const secondRun = harness.reserveCredit.mock.calls
+      .slice(4)
+      .map((call) => (call[0] as { requestId: string }).requestId);
+    expect(secondRun).toHaveLength(total - 1);
+    expect(secondRun.every((id) => id.includes(':g2:'))).toBe(true);
+    expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+    expect(harness.speech().segments[0]?.fileId).toBe('file-1');
+  });
+
+  it('after a finished reading it is a no-op: READY stays, no flag, nothing paid', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    await startAndFinish(harness);
+    const ledgerBefore = [...harness.ledger];
+
+    await expect(harness.service.cancel(USER, MESSAGE_ID)).resolves.toMatchObject({
+      status: SpeechJobStatus.READY,
+    });
+    expect(harness.redis.set).not.toHaveBeenCalled();
+    expect(harness.ledger).toEqual(ledgerBefore);
+    expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+  });
+
+  it('is idempotent: a second stop answers CANCELLED again and writes nothing', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    const gate = gateProvider(harness);
+    await harness.service.start(USER, MESSAGE_ID);
+    await until(() => gate.calls() === 1);
+    await harness.service.cancel(USER, MESSAGE_ID);
+    gate.answerAll();
+    await jobsDone(harness);
+    const writes = harness.updateMetadata.mock.calls.length;
+
+    await expect(harness.service.cancel(USER, MESSAGE_ID)).resolves.toMatchObject({
+      status: SpeechJobStatus.CANCELLED,
+    });
+    expect(harness.redis.set).toHaveBeenCalledTimes(1);
+    expect(harness.updateMetadata).toHaveBeenCalledTimes(writes);
+  });
+
+  it('with nothing to stop (NONE) it answers NONE and sets no flag', async () => {
+    const harness = build();
+    await expect(harness.service.cancel(USER, MESSAGE_ID)).resolves.toMatchObject({
+      status: SpeechJobStatus.NONE,
+    });
+    expect(harness.redis.set).not.toHaveBeenCalled();
+  });
+
+  it('is owner-only: a stranger gets the same 404 as a missing id, and nothing is flagged', async () => {
+    const harness = build({ threadOwner: 'someone-else' });
+    await expectCode(harness.service.cancel(USER, MESSAGE_ID), 'ENTITY_NOT_FOUND', 404);
+    await expectCode(harness.service.cancel(USER, 'missing'), 'ENTITY_NOT_FOUND', 404);
+    expect(harness.redis.set).not.toHaveBeenCalled();
+  });
+
+  it('Redis down: 503 and the reading stays GENERATING — a stop is never claimed that cannot reach the job', async () => {
+    const generating: SpeechJobState = {
+      ...readyState(REPLY, 'unused'),
+      status: SpeechJobStatus.GENERATING,
+      segments: [],
+    };
+    const harness = build({ metadata: { speech: generating } });
+    harness.redis.set.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+    await expectCode(harness.service.cancel(USER, MESSAGE_ID), 'TTS_FAILED', 503);
+    expect(harness.speech().status).toBe(SpeechJobStatus.GENERATING);
+  });
+
+  it('flags the generation it stops, with the job-lock TTL, so a later generation is never cancelled', async () => {
+    const generating: SpeechJobState = {
+      ...readyState(REPLY, 'unused', 4),
+      status: SpeechJobStatus.GENERATING,
+      segments: [],
+    };
+    const harness = build({ metadata: { speech: generating } });
+    await harness.service.cancel(USER, MESSAGE_ID);
+
+    const key = `claw:chat:speech:cancel:${MESSAGE_ID}:4`;
+    expect([...harness.redis.values.keys()]).toEqual([key]);
+    expect(harness.redis.ttls.get(key)).toBe(Math.ceil(SPEECH_JOB_LOCK_TTL_MS / 1_000));
+    await expect(harness.replicaCancelStore().isRequested(MESSAGE_ID, 5)).resolves.toBe(false);
+  });
+
+  it('a job never writes over a newer generation that took the reply meanwhile', async () => {
+    const harness = build({ candidates: [GEMINI_ROW] });
+    const gate = gateProvider(harness);
+    await harness.service.start(USER, MESSAGE_ID);
+    await until(() => gate.calls() === 1);
+    const newer = { ...harness.speech(), generation: 7, status: SpeechJobStatus.READY };
+    harness.setMetadata({ speech: newer });
+
+    gate.answerAll();
+    await jobsDone(harness);
+
+    expect(harness.speech()).toMatchObject({ generation: 7, status: SpeechJobStatus.READY });
   });
 });

@@ -1,4 +1,5 @@
 // Multimodal batch 7 — video processing limits (ffprobe / ffmpeg).
+import { VideoProcessingStep } from '../../../common/enums/video-processing-step.enum';
 //
 // Declaration ownership (rules/12): every limit the video pipeline enforces is
 // named here, never inline in a manager, adapter or utility. Nothing here is an
@@ -129,6 +130,32 @@ export const VIDEO_FRAME_CACHE_KEY_PREFIX = 'file:video-frame';
  */
 export const VIDEO_PROCESSING_LOCK_KEY_PREFIX = 'file:video-process-lock';
 export const VIDEO_PROCESSING_LOCK_TTL_SECONDS = 15 * 60;
+
+/**
+ * User cancellation (`POST /files/:id/processing/cancel`, pack section 72).
+ * The route sets `claw:file:video:cancel:<fileId>` in Redis, so a job running
+ * on ANY replica sees it: at every step boundary, and through a bounded poll
+ * while an ffmpeg/ffprobe child or a provider call is in flight. The TTL is
+ * the lock's — a flag never outlives the longest job that could read it.
+ */
+export const VIDEO_CANCEL_FLAG_KEY_PREFIX = 'claw:file:video:cancel';
+export const VIDEO_CANCEL_FLAG_TTL_SECONDS = VIDEO_PROCESSING_LOCK_TTL_SECONDS;
+export const VIDEO_CANCEL_FLAG_VALUE = '1';
+/** How often a running job re-reads the flag while a child or a provider call runs. */
+export const VIDEO_CANCEL_POLL_INTERVAL_MS = 1_000;
+/** The poll stops on its own after the lock TTL, even if nothing stops it. */
+export const VIDEO_CANCEL_MAX_POLLS = Math.ceil(
+  (VIDEO_CANCEL_FLAG_TTL_SECONDS * 1_000) / VIDEO_CANCEL_POLL_INTERVAL_MS,
+);
+/** The job steps that run an ffmpeg/ffprobe child — a cancel during one kills it. */
+export const VIDEO_MEDIA_CHILD_STEPS: ReadonlySet<VideoProcessingStep> = new Set([
+  VideoProcessingStep.PROBE,
+  VideoProcessingStep.THUMBNAIL,
+  VideoProcessingStep.AUDIO_EXTRACT,
+  VideoProcessingStep.VOLUME_DETECT,
+]);
+/** The readable `extractionError` of a cancelled video (reason `PROCESSING_CANCELLED`). */
+export const VIDEO_PROCESSING_CANCELLED_MESSAGE = 'Processing was cancelled.';
 
 /**
  * A video row still carrying the placeholder this long after its last write

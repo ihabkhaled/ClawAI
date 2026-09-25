@@ -57,6 +57,8 @@ export type SpeechProviderRequest = {
   text: string;
   apiKey: string;
   maxOutputTokens: number;
+  /** The job's cancel signal: aborts the local HTTP request, never the provider's work. */
+  signal?: AbortSignal;
 };
 
 /** One piece of the speakable text, synthesised as its own provider call and hold. */
@@ -80,6 +82,8 @@ export type SpeechSynthesisInput = {
   deadlineAt: number;
   /** Told on every RATE_LIMITED attempt, so the job can lower its concurrency. */
   onRateLimited?: () => void;
+  /** Fires when the owner cancels the job: no new attempt starts, an in-flight one is aborted. */
+  signal?: AbortSignal;
 };
 
 export type SpeechAttemptRecord = {
@@ -249,4 +253,13 @@ export type SpeechJobProgress = {
   concurrency: number;
   /** Segments currently between `synthesize` and `settle`. */
   inFlight: number;
+  /** Set once the owner's cancel flag is seen: no new segment starts, a late result is discarded. */
+  cancelled: boolean;
+  /** Aborted with `cancelled`; handed to every provider call of the job. */
+  abort: AbortController;
+};
+
+/** Polls the reply's cross-replica cancel flag while a job runs. */
+export type SpeechCancelWatch = {
+  stop: () => void;
 };

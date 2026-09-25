@@ -4,10 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useImageGenerationBubbleState } from '@/hooks/chat/use-image-generation-bubble-state';
 import type { ImageGeneration } from '@/types/image-generation.types';
 
-const { mockListener, mockRetry, mockRetryAlternate } = vi.hoisted(() => ({
+const { mockListener, mockRetry, mockRetryAlternate, mockCancel } = vi.hoisted(() => ({
   mockListener: vi.fn(),
   mockRetry: vi.fn(),
   mockRetryAlternate: vi.fn(),
+  mockCancel: vi.fn(),
 }));
 
 vi.mock('@/hooks/chat/use-image-generation-listener', () => ({
@@ -15,7 +16,11 @@ vi.mock('@/hooks/chat/use-image-generation-listener', () => ({
 }));
 
 vi.mock('@/repositories/image-generation/image-generation.repository', () => ({
-  imageGenerationRepository: { retry: mockRetry, retryAlternate: mockRetryAlternate },
+  imageGenerationRepository: {
+    retry: mockRetry,
+    retryAlternate: mockRetryAlternate,
+    cancel: mockCancel,
+  },
 }));
 
 vi.mock('@/lib/i18n', () => ({
@@ -42,7 +47,8 @@ const shown = (overrides: Partial<ImageGeneration> = {}): ImageGeneration => ({
 describe('useImageGenerationBubbleState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRetry.mockResolvedValue(undefined);
+    mockRetry.mockResolvedValue({ generationId: 'img-2', status: 'QUEUED' });
+    mockCancel.mockResolvedValue({ generationId: 'img-2', status: 'CANCELLED' });
     mockRetryAlternate.mockResolvedValue({ generationId: 'img-5' });
   });
 
@@ -103,5 +109,72 @@ describe('useImageGenerationBubbleState', () => {
 
     await waitFor(() => expect(mockRetry).toHaveBeenCalled());
     expect(mockListener).toHaveBeenLastCalledWith('img-1', 0);
+  });
+});
+
+describe('useImageGenerationBubbleState — cancel (pack §72)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRetry.mockResolvedValue({ generationId: 'img-9', status: 'QUEUED' });
+    mockCancel.mockResolvedValue({ generationId: 'img-2', status: 'CANCELLED' });
+  });
+
+  it('offers Cancel only while the shown row is in progress', () => {
+    mockListener.mockReturnValue(shown({ status: 'GENERATING' as ImageGeneration['status'] }));
+    const { result, rerender } = renderHook(() =>
+      useImageGenerationBubbleState({ generationId: 'img-1' }),
+    );
+    expect(result.current.canCancel).toBe(true);
+
+    mockListener.mockReturnValue(shown({ status: 'COMPLETED' as ImageGeneration['status'] }));
+    rerender();
+    expect(result.current.canCancel).toBe(false);
+
+    mockListener.mockReturnValue(null);
+    rerender();
+    expect(result.current.canCancel).toBe(false);
+  });
+
+  it('cancels the SHOWN row once, then re-reads it', async () => {
+    mockListener.mockReturnValue(shown({ id: 'img-2' }));
+    const { result } = renderHook(() => useImageGenerationBubbleState({ generationId: 'img-1' }));
+
+    act(() => {
+      result.current.handleCancel();
+      result.current.handleCancel();
+    });
+
+    expect(result.current.isCancelling).toBe(true);
+    expect(mockCancel).toHaveBeenCalledTimes(1);
+    expect(mockCancel).toHaveBeenCalledWith('img-2');
+    await waitFor(() => expect(result.current.isCancelling).toBe(false));
+    expect(mockListener).toHaveBeenLastCalledWith('img-1', 1);
+  });
+
+  it('a refused cancel re-enables the button without throwing', async () => {
+    mockCancel.mockRejectedValue(new Error('404'));
+    mockListener.mockReturnValue(shown());
+    const { result } = renderHook(() => useImageGenerationBubbleState({ generationId: 'img-1' }));
+
+    act(() => {
+      result.current.handleCancel();
+    });
+
+    await waitFor(() => expect(result.current.isCancelling).toBe(false));
+    expect(mockListener).toHaveBeenLastCalledWith('img-1', 0);
+  });
+
+  it('a retry from a CANCELLED row follows the successor image-service returns', async () => {
+    mockListener.mockReturnValue(
+      shown({ id: 'img-2', status: 'CANCELLED' as ImageGeneration['status'] }),
+    );
+    const { result } = renderHook(() => useImageGenerationBubbleState({ generationId: 'img-1' }));
+
+    act(() => {
+      result.current.handleRetry();
+    });
+
+    expect(mockRetry).toHaveBeenCalledWith('img-2');
+    await waitFor(() => expect(mockListener).toHaveBeenLastCalledWith('img-9', 1));
   });
 });

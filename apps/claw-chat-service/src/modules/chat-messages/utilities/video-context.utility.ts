@@ -86,6 +86,11 @@ export function isVideoPlanRefusal(media: FileMediaSummary | undefined): boolean
   );
 }
 
+/** The owner stopped this video's processing (pack §72): never native, reason named apart. */
+export function isVideoProcessingCancelled(media: FileMediaSummary | undefined): boolean {
+  return media?.failureReason === VideoProcessingFailureReason.PROCESSING_CANCELLED;
+}
+
 /** The document minus file-service's own header line, which the block restates from `media`. */
 export function videoTranscriptBody(document: string): string {
   const lines = document.trim().split(/\r?\n/);
@@ -137,10 +142,12 @@ function frameLines(input: VideoContextBlockInput): string[] {
     return [VIDEO_BLOCK_FRAMES_NATIVE.replace('{TIMES}', timesOf(set.frames))];
   }
   return set?.frameDelivery === VideoFrameDelivery.HELPER_OBSERVATIONS &&
-    set.observations.length > 0 ? [
-      VIDEO_BLOCK_FRAMES_DERIVED.replace('{TIMES}', timesOf(set.observations)),
-      ...set.observations.map(formatFrameObservation),
-    ] : [VIDEO_FRAMES_TRANSCRIPT_ONLY_NOTE];
+    set.observations.length > 0
+    ? [
+        VIDEO_BLOCK_FRAMES_DERIVED.replace('{TIMES}', timesOf(set.observations)),
+        ...set.observations.map(formatFrameObservation),
+      ]
+    : [VIDEO_FRAMES_TRANSCRIPT_ONLY_NOTE];
 }
 
 /** One described frame, labelled with its timestamp and the helper that saw it. */

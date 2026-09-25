@@ -19,4 +19,9 @@ export enum TranscriptionAttemptStatus {
   COMPLETED = 'COMPLETED',
   REFUSED = 'REFUSED',
   FAILED = 'FAILED',
+  /**
+   * The caller's AbortSignal fired (a video cancel). Ends the walk: never a
+   * reason to try the next provider, and any hold was RELEASED, not finalized.
+   */
+  CANCELLED = 'CANCELLED',
 }

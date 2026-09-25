@@ -12,6 +12,7 @@ import { ImageExecutionManager } from '../managers/image-execution.manager';
 import { ImagePlanGateManager } from '../managers/image-plan-gate.manager';
 import { ImageGenerationEventsService } from './image-generation-events.service';
 import {
+  type ExecuteImageInput,
   type GenerateImageParams,
   type GenerateImageResult,
   type ImageAttemptOptions,
@@ -32,7 +33,10 @@ import {
 } from '../utilities/image-failure.utility';
 import { toImageProgressSnapshot } from '../utilities/image-progress.utility';
 import { imageFailure } from '../adapter.utilities/provider-error.utility';
-import { ImageFailureCode } from '../../../common/enums';
+import { ImageCancelOutcome, ImageFailureCode, ImageProviderCancel } from '../../../common/enums';
+import { type ImageCancelResult } from '../types/image-cancel.types';
+import { IMAGE_PRE_PROVIDER_STATUSES } from '../constants/image-cancel.constants';
+import { isActiveImageStatus, isImageCancelledError } from '../utilities/image-cancel.utility';
 import { successorDataFrom, toLatestSummary } from '../utilities/image-supersession.utility';
 import { type ListImagesQueryDto } from '../dto/generate-image.dto';
 import { BusinessException } from '../../../common/errors';
@@ -168,6 +172,47 @@ export class ImageGenerationService {
     return this.retryWithAlternateModel(generationId, provider, model);
   }
 
+  /**
+   * `POST /images/:id/cancel` — owner only (a stranger gets the missing-id 404).
+   *
+   * One conditional write (`cancelIfActive`) decides: a row still running
+   * becomes CANCELLED; a finished one is left alone and its status returned
+   * (idempotent, never a 409). An in-flight provider call is not stopped by
+   * this write — the execution path sees CANCELLED when the call returns,
+   * drops the result and releases the hold. Only a local runtime is asked to
+   * interrupt; a cloud provider cannot be, and the log says so.
+   */
+  async cancelGenerationForUser(generationId: string, userId: string): Promise<ImageCancelResult> {
+    const record = await this.getByIdForUser(generationId, userId);
+    const cancelled = isActiveImageStatus(record.status)
+      ? await this.repository.cancelIfActive(generationId)
+      : null;
+    if (cancelled === null) {
+      const current = await this.getById(generationId);
+      this.logCancel(generationId, record.status, ImageCancelOutcome.NOOP, false, 'n/a');
+      return { generationId, status: current.status };
+    }
+    const providerCancel = IMAGE_PRE_PROVIDER_STATUSES.includes(record.status)
+      ? ImageProviderCancel.NOT_STARTED
+      : await this.executionManager.requestProviderCancel(generationId, record.provider);
+    await this.repository.createEvent({
+      generationId,
+      status: ImageGenerationStatus.CANCELLED,
+      payloadJson: { fromStatus: record.status, providerCancel },
+    });
+    this.publishCancelled(cancelled);
+    // No hold is released HERE: a pre-provider row never took one, and an
+    // in-flight one is released by the execution path when the call returns.
+    this.logCancel(
+      generationId,
+      record.status,
+      ImageCancelOutcome.CANCELLED,
+      false,
+      providerCancel,
+    );
+    return { generationId, status: ImageGenerationStatus.CANCELLED };
+  }
+
   async listByUser(
     userId: string,
     query: ListImagesQueryDto,
@@ -197,6 +242,9 @@ export class ImageGenerationService {
     // A retry is a new paid run for the job's owner; a plan that lost the
     // feature since (downgrade, expired trial) must not re-run it.
     await this.planGate.assertCanGenerate(record.userId);
+    if (record.status === ImageGenerationStatus.CANCELLED) {
+      return this.retryCancelled(record);
+    }
 
     await this.repository.updateStatus(generationId, ImageGenerationStatus.QUEUED, {
       errorCode: undefined,
@@ -243,6 +291,21 @@ export class ImageGenerationService {
 
     void this.processJob(newRecord.id);
     return newRecord;
+  }
+
+  /**
+   * A CANCELLED row is never re-opened: its abandoned provider call may still
+   * be running, and CANCELLED is what keeps that call's result out. The retry
+   * runs as a successor row on the same provider/model instead (same
+   * supersession rules as retry-alternate).
+   */
+  private async retryCancelled(record: ImageGenerationRecord): Promise<ImageGenerationRecord> {
+    const successor = await this.cloneAsAlternate(record, record.provider, record.model);
+    this.logger.log(
+      `image_generation.retried id=${record.id} successor=${successor.id} from=CANCELLED`,
+    );
+    void this.processJob(successor.id);
+    return successor;
   }
 
   /**
@@ -476,8 +539,24 @@ export class ImageGenerationService {
       return undefined;
     }
 
-    await this.transitionStatus(generationId, 'STARTING', generation.provider, generation.model);
-    await this.transitionStatus(generationId, 'GENERATING', generation.provider, generation.model);
+    const started =
+      (await this.transitionStatus(
+        generationId,
+        'STARTING',
+        generation.provider,
+        generation.model,
+      )) &&
+      (await this.transitionStatus(
+        generationId,
+        'GENERATING',
+        generation.provider,
+        generation.model,
+      ));
+    if (!started) {
+      // Cancelled before any provider call: no hold was taken, nothing to undo.
+      this.discardCancelled(generation, ImageGenerationStatus.STARTING, false);
+      return undefined;
+    }
 
     try {
       const reference = options.reference ?? (await this.readStoredReference(generation));
@@ -503,11 +582,47 @@ export class ImageGenerationService {
     generation: ImageGenerationRecord,
     reference: ImageReference | undefined,
   ): Promise<void> {
-    const result = await this.executionManager.execute({
+    const result = await this.executionManager.execute(
+      this.buildExecuteInput(generationId, generation, reference),
+    );
+
+    const asset = await this.persistAsset(generationId, generation, result);
+    if (asset === null) {
+      await this.discardWithRelease(generation, ImageGenerationStatus.FINALIZING, result);
+      return;
+    }
+    // COMPLETED is written BEFORE the hold settles and only if the row is not
+    // CANCELLED — so a cancel either wins (asset removed, hold released) or
+    // loses (row COMPLETED, hold finalized); never a charged CANCELLED row.
+    const completedGen = await this.repository.updateStatus(generationId, 'COMPLETED', {
+      revisedPrompt: result.revisedPrompt ?? undefined,
+      completedAt: new Date(),
+      latencyMs: result.latencyMs,
+    });
+    if (completedGen === null) {
+      await this.repository.deleteAsset(asset.id);
+      await this.discardWithRelease(generation, ImageGenerationStatus.FINALIZING, result);
+      return;
+    }
+    // Settled only now, on the units measured from the provider response: the
+    // user is charged for an image that exists as a file AND an asset row.
+    await this.executionManager.settle(result.settlement);
+
+    await this.publishCompletionEvents(generationId, generation, completedGen, asset, result);
+    this.logger.log(`image_generation.completed id=${generationId}`);
+  }
+
+  private buildExecuteInput(
+    generationId: string,
+    generation: ImageGenerationRecord,
+    reference: ImageReference | undefined,
+  ): ExecuteImageInput {
+    return {
       prompt: generation.prompt,
       provider: generation.provider,
       model: generation.model,
       userId: generation.userId,
+      generationId,
       // Fresh per ENTRY into the job, not per generation row. `reserve` is
       // idempotent on (userId, requestId), so reusing the row id would make
       // `POST /images/:id/retry` — which re-runs the SAME row — settle a second
@@ -522,41 +637,80 @@ export class ImageGenerationService {
       onProgress: (event) => {
         this.publishProgress(generation, event);
       },
+      // Read from the DB row, so a cancel taken on any replica is seen here.
+      isCancelled: async () =>
+        (await this.repository.findStatus(generationId)) === ImageGenerationStatus.CANCELLED,
+    };
+  }
+
+  /** The provider already answered but the row was cancelled: hold back, result dropped. */
+  private async discardWithRelease(
+    generation: ImageGenerationRecord,
+    stage: ImageGenerationStatus,
+    result: GenerateImageResult,
+  ): Promise<void> {
+    const holdReleased = await this.executionManager.releaseCancelled(result.settlement);
+    this.discardCancelled(generation, stage, holdReleased);
+  }
+
+  /**
+   * The execution path found its row CANCELLED. Nothing is written over it and
+   * no successor is spawned; CANCELLED is re-published on this replica's SSE
+   * stream so a listener attached here sees it too.
+   */
+  private discardCancelled(
+    generation: ImageGenerationRecord,
+    stage: ImageGenerationStatus,
+    holdReleased: boolean,
+  ): void {
+    this.publishCancelled(generation);
+    this.logCancel(generation.id, stage, ImageCancelOutcome.DISCARDED, holdReleased, 'n/a');
+  }
+
+  private publishCancelled(generation: ImageGenerationRecord): void {
+    this.eventsService.publish({
+      generationId: generation.id,
+      status: ImageGenerationStatus.CANCELLED,
+      provider: generation.provider,
+      model: generation.model,
     });
+  }
 
-    const asset = await this.persistAsset(generationId, generation, result);
-    // Settled only now, on the units measured from the provider response: the
-    // user is charged for an image that exists as a file AND an asset row.
-    await this.executionManager.settle(result.settlement);
-
-    const completedGen = await this.repository.updateStatus(generationId, 'COMPLETED', {
-      revisedPrompt: result.revisedPrompt ?? undefined,
-      completedAt: new Date(),
-      latencyMs: result.latencyMs,
-    });
-
-    await this.publishCompletionEvents(generationId, generation, completedGen, asset, result);
-    this.logger.log(`image_generation.completed id=${generationId}`);
+  /** One line per cancel decision. Never the prompt, never a balance. */
+  private logCancel(
+    generationId: string,
+    fromStatus: ImageGenerationStatus,
+    outcome: ImageCancelOutcome,
+    holdReleased: boolean,
+    providerCancel: string,
+  ): void {
+    this.logger.log(
+      `imageCancel generationId=${generationId} fromStatus=${fromStatus} outcome=${outcome} holdReleased=${String(holdReleased)} providerCancel=${providerCancel}`,
+    );
   }
 
   /**
    * The asset row for a stored image. The paid hold is still OPEN here; when
    * this fails the hold is RELEASED and the attempt fails as
    * IMAGE_STORAGE_FAILED (chain-terminal: storage is shared, so another
-   * provider would lose its image the same way).
+   * provider would lose its image the same way). Null when the row was
+   * CANCELLED before FINALIZING could be written — no asset is created.
    */
   private async persistAsset(
     generationId: string,
     generation: ImageGenerationRecord,
     result: GenerateImageResult,
-  ): Promise<ImageGenerationAssetRecord> {
+  ): Promise<ImageGenerationAssetRecord | null> {
     try {
-      await this.transitionStatus(
+      const finalizing = await this.transitionStatus(
         generationId,
         'FINALIZING',
         generation.provider,
         generation.model,
       );
+      if (!finalizing) {
+        return null;
+      }
       const downloadUrl = `/api/v1/files/download/${result.fileId}`;
       return await this.repository.createAsset({
         generationId,
@@ -662,17 +816,28 @@ export class ImageGenerationService {
     error: unknown,
     spawnSuccessor?: ImageSuccessorSpawner,
   ): Promise<string | undefined> {
+    if (isImageCancelledError(error)) {
+      // execute() already released any hold before throwing.
+      this.discardCancelled(generation, ImageGenerationStatus.GENERATING, false);
+      return undefined;
+    }
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     const described = describeImageFailure(error);
-    this.logger.error(
-      `image_generation.failed id=${generationId} code=${described.errorCode}: ${errorMsg}`,
-    );
-
     const failed = await this.repository.updateStatus(generationId, 'FAILED', {
       errorCode: described.errorCode,
       errorMessage: described.errorMessage,
       completedAt: new Date(),
     });
+    if (failed === null) {
+      // Cancelled while the call was failing (a local interrupt ends that way):
+      // the provider-error path already released the hold; no FAILED, no
+      // image.failed, no AUTO successor.
+      this.discardCancelled(generation, ImageGenerationStatus.GENERATING, false);
+      return undefined;
+    }
+    this.logger.error(
+      `image_generation.failed id=${generationId} code=${described.errorCode}: ${errorMsg}`,
+    );
 
     await this.repository.createEvent({
       generationId,
@@ -742,10 +907,15 @@ export class ImageGenerationService {
     status: ImageGenerationStatus,
     provider: string,
     model: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const extra = status === 'STARTING' ? { startedAt: new Date() } : {};
-    await this.repository.updateStatus(generationId, status, extra);
+    // Null = the row is CANCELLED; the transition (and its event) never happens.
+    const updated = await this.repository.updateStatus(generationId, status, extra);
+    if (updated === null) {
+      return false;
+    }
     await this.repository.createEvent({ generationId, status });
     this.eventsService.publish({ generationId, status, provider, model });
+    return true;
   }
 }

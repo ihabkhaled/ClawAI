@@ -23,6 +23,10 @@ export const FILE_DELIVERY_REASON_LABEL_KEYS: ReadonlyMap<string, string> = new 
   ['file_delivery.reason.vision_helper_limit', 'mediaUi.deliveryReason.visionHelperLimit'],
   ['file_delivery.reason.video_plan_limit', 'mediaUi.deliveryReason.videoPlanLimit'],
   [
+    'file_delivery.reason.video_processing_cancelled',
+    'mediaUi.deliveryReason.videoProcessingCancelled',
+  ],
+  [
     'file_delivery.reason.video_frames_unavailable',
     'mediaUi.deliveryReason.videoFramesUnavailable',
   ],

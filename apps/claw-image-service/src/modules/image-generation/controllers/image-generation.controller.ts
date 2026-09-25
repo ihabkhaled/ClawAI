@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   MessageEvent,
   Param,
   Post,
@@ -16,6 +18,7 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { ImageGenerationEventsService } from '../services/image-generation-events.service';
 import { ImageGenerationOwnerGuard } from '../guards/image-generation-owner.guard';
+import { type ImageCancelResult } from '../types/image-cancel.types';
 import {
   type ListImagesQueryDto,
   listImagesQuerySchema,
@@ -74,6 +77,17 @@ export class ImageGenerationController {
       provider: record.provider,
       model: record.model,
     };
+  }
+
+  // Owner only (stranger = missing-id 404). Idempotent: 200 with the row's
+  // status after the call — CANCELLED, or the unchanged terminal status.
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  async cancel(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ImageCancelResult> {
+    return this.imageService.cancelGenerationForUser(id, user.id);
   }
 
   // Owner only: this stream was @Public(), so anyone holding an id could watch

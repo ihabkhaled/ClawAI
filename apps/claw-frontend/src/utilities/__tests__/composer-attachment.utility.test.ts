@@ -1,3 +1,4 @@
+import { VideoProcessingFailureReason } from '@claw/shared-types';
 import { describe, expect, it } from 'vitest';
 
 import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
@@ -7,6 +8,7 @@ import type { ComposerUploadEntry } from '@/types/composer-attachment.types';
 import {
   classifyUploadError,
   describeComposerAttachmentChip,
+  isProcessingCancelled,
   resolveComposerAttachmentChips,
 } from '@/utilities/composer-attachment.utility';
 
@@ -154,5 +156,56 @@ describe('classifyUploadError', () => {
       ComposerAttachmentState.Failed,
     );
     expect(classifyUploadError(new Error('offline'))).toBe(ComposerAttachmentState.Failed);
+  });
+});
+
+describe('video processing cancellation (pack §72)', () => {
+  function video(
+    ingestionStatus: FileIngestionStatus,
+    failureReason: VideoProcessingFailureReason | null = null,
+  ) {
+    return {
+      id: 'file-1',
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      ingestionStatus,
+      extractionError: failureReason === null ? null : 'Processing was cancelled.',
+      extractionMetadata: { media: { failureReason } },
+    };
+  }
+
+  function draftOf(files: ReturnType<typeof video>[] | ReturnType<typeof file>[]) {
+    return resolveComposerAttachmentChips({ selectedFileIds: ['file-1'], uploads: [], files })[0];
+  }
+
+  it('offers Stop only for a VIDEO still processing', () => {
+    expect(draftOf([video(FileIngestionStatus.PROCESSING)])?.canCancelProcessing).toBe(true);
+    expect(draftOf([video(FileIngestionStatus.PENDING)])?.canCancelProcessing).toBe(true);
+    expect(draftOf([video(FileIngestionStatus.COMPLETED)])?.canCancelProcessing).toBe(false);
+    // An audio note transcribing is one short call: no Stop.
+    expect(draftOf([file(FileIngestionStatus.PROCESSING)])?.canCancelProcessing).toBe(false);
+  });
+
+  it('a video FAILED with PROCESSING_CANCELLED reads Cancelled with its own note, not Failed', () => {
+    const cancelled = video(
+      FileIngestionStatus.FAILED,
+      VideoProcessingFailureReason.PROCESSING_CANCELLED,
+    );
+    expect(isProcessingCancelled(cancelled)).toBe(true);
+    const draft = draftOf([cancelled]);
+    expect(draft?.state).toBe(ComposerAttachmentState.Cancelled);
+    expect(draft?.canCancelProcessing).toBe(false);
+    if (draft === undefined) {
+      throw new Error('expected one chip');
+    }
+    const chip = describeComposerAttachmentChip(draft, t);
+    expect(chip.stateLabel).toBe('mediaUi.attachmentState.cancelled');
+    expect(chip.note).toBe('mediaUi.attachmentState.cancelledHint');
+  });
+
+  it('any other failure stays Failed', () => {
+    const failed = video(FileIngestionStatus.FAILED, VideoProcessingFailureReason.PROBE_TIMEOUT);
+    expect(isProcessingCancelled(failed)).toBe(false);
+    expect(draftOf([failed])?.state).toBe(ComposerAttachmentState.Failed);
   });
 });

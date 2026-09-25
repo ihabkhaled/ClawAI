@@ -5,6 +5,7 @@ import { SPEECH_JOB_LOCK_TTL_MS } from '../../constants/speech.constants';
 import type { SpeechJobState, StoredSpeechSegment } from '../../types/speech.types';
 import {
   finalSpeechStatus,
+  isCancellableSpeechJob,
   isStaleSpeechJob,
   readSpeechJobState,
   toSpeechStateResponse,
@@ -149,5 +150,31 @@ describe('finalSpeechStatus / withStoredSegment', () => {
     const merged = withStoredSegment(withStoredSegment([segment(2)], segment(0)), segment(1));
     expect(merged.map((entry) => entry.index)).toEqual([0, 1, 2]);
     expect(withStoredSegment(merged, { ...segment(1), fileId: 'new' })).toHaveLength(3);
+  });
+});
+
+describe('isCancellableSpeechJob — only a live job can be stopped', () => {
+  it('a fresh GENERATING job can be stopped', () => {
+    expect(isCancellableSpeechJob({ ...STATE, status: SpeechJobStatus.GENERATING }, NOW)).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    SpeechJobStatus.READY,
+    SpeechJobStatus.PARTIAL,
+    SpeechJobStatus.FAILED,
+    SpeechJobStatus.CANCELLED,
+  ])('%s has nothing to stop', (status) => {
+    expect(isCancellableSpeechJob({ ...STATE, status }, NOW)).toBe(false);
+  });
+
+  it('a stale GENERATING job (its replica died) has nothing to stop', () => {
+    const stale = {
+      ...STATE,
+      status: SpeechJobStatus.GENERATING,
+      startedAt: new Date(NOW - SPEECH_JOB_LOCK_TTL_MS - 1).toISOString(),
+    };
+    expect(isCancellableSpeechJob(stale, NOW)).toBe(false);
   });
 });

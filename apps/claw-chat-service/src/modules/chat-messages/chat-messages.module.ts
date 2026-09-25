@@ -25,6 +25,7 @@ import { ChatSpeechController } from './controllers/chat-speech.controller';
 import { MessageSpeechService } from './services/message-speech.service';
 import { SpeechSynthesisManager } from './managers/speech-synthesis.manager';
 import { SpeechJobManager } from './managers/speech-job.manager';
+import { SpeechJobCancelStore } from './repositories/speech-job-cancel.store';
 import { SpeechJobLockStore } from './repositories/speech-job-lock.store';
 import { TtsVoiceCandidatesClient } from './clients/tts-voice-candidates.client';
 import { SpeechConnectorClient } from './clients/speech-connector.client';
@@ -114,6 +115,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     SpeechSynthesisManager,
     SpeechJobManager,
     SpeechJobLockStore,
+    SpeechJobCancelStore,
     MessageSpeechService,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,
