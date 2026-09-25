@@ -101,7 +101,10 @@ cancel) and is absorbing: no later write overwrites it. See
   (`CANCELLED`, logged `reason=STORE_FAILED`) and the row fails as
   `IMAGE_STORAGE_FAILED` — the user is never charged for an unsaved image. The price is `ModelCostVersion.imagePerUnitMicroUsd`
   (seed v4: gpt-image-1 $0.167 = `high` 1024x1024; dall-e-3 $0.040 standard;
-  dall-e-2 $0.020). Since seed v7 gpt-image-1 is metered on a SIZED row,
+  dall-e-2 $0.020). Since seed v9 dall-e-3 is metered by QUALITY:
+  `hd` (or an unrecognised value) → `dall-e-3@hd` ($0.080), `standard` or no
+  quality → `dall-e-3` (the adapter omits an absent quality and OpenAI's
+  dall-e-3 default is `standard`). Since seed v7 gpt-image-1 is metered on a SIZED row,
   `gpt-image-1@<w>x<h>` (1024x1024 $0.167, 1024x1536 / 1536x1024 $0.25; an
   unknown size uses the dearest row) chosen by `meteredImageModelKey`, with a
   zero output token rate. Before 2026-09-25 these rows carried a fake token rate
@@ -274,9 +277,17 @@ consumes `image.failed` or `image.generated` today (verified by grep
 and one when the job discards (`holdReleased` = whether a paid hold was
 given back). No prompt, no balance.
 
-**Known gaps.** (a) A file stored in file-service just before the cancel
-landed (cases 2–3) is orphaned — the asset row is gone but the file is not
-deleted. (b) Upstream compute is not always stopped: SD WebUI is never
+**Orphan cleanup (2026-09-26).** When the image was stored in file-service and
+the cancel then wins (FINALIZING refused, or COMPLETED refused after the asset
+row), `ImageExecutionManager.discardStoredImage` deletes the file through
+file-service's owner-checked `DELETE /api/v1/internal/files/:id?userId=`
+(service token; 404 counts as deleted), bounded by
+`IMAGE_ORPHAN_DELETE_TIMEOUT_MS` (10 s), then the hold is released. Best-effort:
+a failure logs `imageOrphanCleanup generationId=… fileId=… outcome=FAILED` and is
+swallowed; success logs `outcome=DELETED`.
+
+**Known gaps.** (a) A failed orphan delete (file-service down) still leaves the
+file — logged, not retried. (b) Upstream compute is not always stopped: SD WebUI is never
 interrupted (its `/sdapi/v1/interrupt` has no job target and image-service can
 not prove this generation is the one running — SD calls are not serialized
 and there is no job id to check), and ComfyUI is interrupted only by

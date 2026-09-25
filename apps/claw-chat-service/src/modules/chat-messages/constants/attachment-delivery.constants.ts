@@ -47,6 +47,16 @@ export const DELIVERY_REASON_VIDEO_FRAMES_NO_HELPER = 'file_delivery.reason.vide
 export const DELIVERY_REASON_VIDEO_FRAMES_HELPER_PLAN =
   'file_delivery.reason.video_frames_helper_plan';
 
+/**
+ * NATIVE_AUDIO whose transcript had not landed yet: the lane heard the
+ * recording but had no transcription to check the words against.
+ */
+export const DELIVERY_REASON_NATIVE_AUDIO_TRANSCRIPT_PENDING =
+  'file_delivery.reason.native_audio_transcript_pending';
+/** NATIVE_AUDIO whose transcription failed: the recording was the only source of the words. */
+export const DELIVERY_REASON_NATIVE_AUDIO_TRANSCRIPT_FAILED =
+  'file_delivery.reason.native_audio_transcript_failed';
+
 /** Base64 carries 3 bytes in every 4 characters. */
 export const BASE64_DECODED_BYTES_PER_CHAR = 0.75;
 

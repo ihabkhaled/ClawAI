@@ -5,6 +5,8 @@ import { VideoFrameDelivery } from '../../../common/enums/video-frame-delivery.e
 import {
   BASE64_DECODED_BYTES_PER_CHAR,
   DELIVERY_REASON_FAILED_PROCESSING,
+  DELIVERY_REASON_NATIVE_AUDIO_TRANSCRIPT_FAILED,
+  DELIVERY_REASON_NATIVE_AUDIO_TRANSCRIPT_PENDING,
   DELIVERY_REASON_NO_IMAGE_BYTES,
   DELIVERY_REASON_NO_VIDEO_INPUT,
   DELIVERY_REASON_NO_VISION,
@@ -17,6 +19,7 @@ import {
 import { NATIVE_VIDEO_MAX_DURATION_MS } from '../constants/video-delivery.constants';
 import { TEXT_BUDGET_SHORTENED_MARKER } from '../constants/evidence-fit.constants';
 import { MAX_FILE_CONTENT_LENGTH } from '../constants/file-content.constants';
+import { NATIVE_AUDIO_MAX_BYTES } from '../constants/native-audio.constants';
 import {
   EXTRACTABLE_DOCUMENT_MIME_EXACT,
   IMAGE_MIME_PREFIX,
@@ -39,6 +42,7 @@ import type { AssembledContext, FileContentResponse } from '../types/context.typ
 import type { FileDeliveryEntry } from '../types/file-delivery.types';
 import type { ModelMediaCapabilities } from '../types/model-capability.types';
 import type { VideoFrameImage } from '../types/video-delivery.types';
+import { decodedAudioBytes, estimateNativeAudioTokens } from './native-audio.utility';
 import {
   hasVideoDocument,
   isVideoPlanRefusal,
@@ -51,7 +55,10 @@ import {
  * How each attachment reaches ONE lane — the single classifier behind both the
  * provider payload and the `FileDeliveryMode` record (ADR-120).
  *
- *   audio → TRANSCRIPT / STILL_PROCESSING / FAILED_PROCESSING (never bytes)
+ *   audio → NATIVE_AUDIO when the lane's transport carries audio, its model's
+ *           catalog row says audio input SUPPORTED and the recording fits the
+ *           size cap and the window (bytes + transcript, rule 42 item 22);
+ *           else TRANSCRIPT / STILL_PROCESSING / FAILED_PROCESSING (no bytes)
  *   video → NATIVE_VIDEO when the lane really sends it, else
  *           VIDEO_FRAMES_AND_TRANSCRIPT / STILL_PROCESSING / FAILED_PROCESSING
  *   image → NATIVE_IMAGE when the model can see, else OMITTED_NO_VISION (no
@@ -106,7 +113,7 @@ function resolveOne(
 ): AttachmentDeliveryDecision {
   const mime = (file.mimeType ?? '').toLowerCase();
   if (mime.startsWith(AUDIO_MIME_PREFIX)) {
-    return decide(file, options, resolveAudioMode(file), false);
+    return resolveAudio(file, capabilities, options);
   }
   if (mime.startsWith(VIDEO_MIME_PREFIX)) {
     return resolveVideo(file, capabilities, options);
@@ -128,6 +135,45 @@ function resolveAudioMode(file: FileContentResponse): FileDeliveryMode {
     (file.extractionError !== null && file.extractionError !== undefined) ||
     file.ingestionStatus === 'FAILED';
   return failed ? FileDeliveryMode.FAILED_PROCESSING : FileDeliveryMode.STILL_PROCESSING;
+}
+
+/**
+ * Audio, per lane (rule 42 item 22). Native only when ALL hold:
+ *   - the transport carries audio bytes (Gemini's native request);
+ *   - the catalog says the model accepts audio input — SUPPORTED, never
+ *     UNKNOWN (an outage keeps the transcript path that always worked);
+ *   - the bytes are here, within `NATIVE_AUDIO_MAX_BYTES`;
+ *   - the estimated audio tokens fit the lane's audio slice of the file share.
+ * A native recording keeps its transcript beside it (HYBRID). A transcript
+ * still processing or failed does not block the audio — the recording is then
+ * the only source of the words, and the reason says so.
+ */
+function resolveAudio(
+  file: FileContentResponse,
+  capabilities: ModelMediaCapabilities,
+  options: AttachmentDeliveryOptions,
+): AttachmentDeliveryDecision {
+  const transcriptMode = resolveAudioMode(file);
+  const budget = options.nativeAudioTokenBudget;
+  const native =
+    options.nativeAudioTransport === true &&
+    capabilities.audioInput === MediaCapabilityState.SUPPORTED &&
+    hasBytes(file) &&
+    decodedAudioBytes(file) <= NATIVE_AUDIO_MAX_BYTES &&
+    (budget === undefined || estimateNativeAudioTokens(file) <= budget);
+  return native
+    ? decide(file, options, FileDeliveryMode.NATIVE_AUDIO, true, nativeAudioReason(transcriptMode))
+    : decide(file, options, transcriptMode, false);
+}
+
+/** Why a native recording carried the words alone: transcript pending or failed. */
+function nativeAudioReason(transcriptMode: FileDeliveryMode): string | undefined {
+  if (transcriptMode === FileDeliveryMode.STILL_PROCESSING) {
+    return DELIVERY_REASON_NATIVE_AUDIO_TRANSCRIPT_PENDING;
+  }
+  return transcriptMode === FileDeliveryMode.FAILED_PROCESSING
+    ? DELIVERY_REASON_NATIVE_AUDIO_TRANSCRIPT_FAILED
+    : undefined;
 }
 
 /**
@@ -328,22 +374,29 @@ function isTextLikeMime(mime: string): boolean {
  * The lane's delivery plan decides whenever there is one — the same decision
  * the provenance record holds. With no plan (estimates, tests) the behaviour
  * that predates ADR-120 applies: every image, and video only on the
- * Gemini-native transport (`includeVideo`).
+ * Gemini-native transport (`geminiTransport`). Audio rides only on that
+ * transport AND only when the plan says so — never by default, so an
+ * OpenAI / Anthropic / Ollama payload never carries an audio part.
  */
 export function isSentNatively(
   context: Pick<AssembledContext, 'attachmentDelivery'>,
   file: FileContentResponse,
-  includeVideo: boolean,
+  geminiTransport: boolean,
 ): boolean {
   const mime = (file.mimeType ?? '').toLowerCase();
-  const isMedia =
-    mime.startsWith(IMAGE_MIME_PREFIX) || (includeVideo && mime.startsWith(VIDEO_MIME_PREFIX));
-  if (!isMedia) {
-    return false;
-  }
   const decision = context.attachmentDelivery?.decisions.find(
     (candidate) => candidate.fileId === file.id,
   );
+  if (mime.startsWith(AUDIO_MIME_PREFIX)) {
+    return geminiTransport && decision?.mode === FileDeliveryMode.NATIVE_AUDIO
+      ? decision.sendNative
+      : false;
+  }
+  const isMedia =
+    mime.startsWith(IMAGE_MIME_PREFIX) || (geminiTransport && mime.startsWith(VIDEO_MIME_PREFIX));
+  if (!isMedia) {
+    return false;
+  }
   return decision === undefined ? true : decision.sendNative;
 }
 

@@ -2021,6 +2021,7 @@ export const fa: TranslationDictionary = {
       nativeVideo: 'ویدیو',
       derivedImageText: 'توصیف‌شده توسط دستیار',
       videoFramesAndTranscript: 'ویدیو: فریم‌ها + متن گفتار',
+      nativeAudio: 'صدا: شنیده‌شده + متن گفتار',
       videoFramesAt: 'فریم‌ها در {times}',
       stillProcessing: 'در حال پردازش',
       failedProcessing: 'پردازش ناموفق بود',

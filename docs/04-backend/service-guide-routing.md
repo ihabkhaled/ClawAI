@@ -191,7 +191,10 @@ apply to installs that already ran v2. v4 priced OpenAI images per image, v5
 `whisper-1` per second, v6 TTS per character, and v7 (2026-09-25) added
 size-keyed `gpt-image-1@<w>x<h>` rows (1024x1024 $0.167, 1024x1536 / 1536x1024
 $0.25) that image-service meters against — one immutable row per priced size,
-never a price constant in image-service. v8 (2026-09-25) priced xAI Grok
+never a price constant in image-service. v9 (2026-09-26) added
+`OPENAI:dall-e-3@hd` at $0.080 per 1024x1024 image (HD; the v4 `dall-e-3` row
+stays the $0.040 standard price), which image-service meters an `hd` call
+against. v8 (2026-09-25) priced xAI Grok
 Imagine per image: `GROK:grok-imagine-image` $0.02 and
 `GROK:grok-imagine-image-2.0` $0.08 (top tier; source docs.x.ai/developers/models
 as of 2026-08-07), token rates 0. They fill gaps, but are flagged

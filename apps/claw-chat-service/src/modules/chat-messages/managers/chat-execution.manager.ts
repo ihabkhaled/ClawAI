@@ -127,6 +127,10 @@ import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-sha
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
 import {
+  hasNativeAudioDelivery,
+  nativeMediaTokenEstimate,
+} from '../utilities/native-audio.utility';
+import {
   hasVideoAttachment,
   resolveVideoAttachmentCandidates,
 } from '../utilities/video-attachment-routing.utility';
@@ -822,10 +826,31 @@ export class ChatExecutionManager implements OnModuleInit {
     return true;
   }
 
+  /**
+   * Whether this call is sent as Gemini's native generateContent body. A turn
+   * carrying a native tool catalog never is (the native schema subset rejects
+   * the tool schemas), so body, URL, headers and parser all read this one
+   * answer.
+   */
+  private usesGeminiNativeBody(
+    provider: string,
+    context: AssembledContext,
+    executionOptions: ExecutionOptions | undefined,
+  ): boolean {
+    return (
+      !this.hasNativeToolCatalog(executionOptions) &&
+      this.shouldUseGeminiNativeRequest(provider, context)
+    );
+  }
+
   private shouldUseGeminiNativeRequest(provider: string, context: AssembledContext): boolean {
     return (
       provider === GEMINI_PROVIDER &&
-      (AppConfig.get().ENABLE_GEMINI_FILES_API || hasVideoAttachment(context))
+      (AppConfig.get().ENABLE_GEMINI_FILES_API ||
+        hasVideoAttachment(context) ||
+        // A NATIVE_AUDIO decision is only true if the audio really rides the
+        // payload, and only the native request carries it (rule 42 item 22).
+        hasNativeAudioDelivery(context))
     );
   }
 
@@ -893,6 +918,7 @@ export class ChatExecutionManager implements OnModuleInit {
       laneInput,
       candidate.provider,
       candidate.model,
+      executionOptions,
     );
     // A credit refusal arrives as the HTTP status of the stream request, before
     // a single token is emitted, so retrying here cannot duplicate output.
@@ -1496,7 +1522,13 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private estimatePromptTokens(context: AssembledContext): number {
-    return estimateTokensFromText(this.contextAssembly.buildPromptString(context));
+    // Native audio and video are prompt tokens the text estimate cannot see;
+    // the hold is sized to cover them, and the charge is still the provider's
+    // measured usage.
+    return (
+      estimateTokensFromText(this.contextAssembly.buildPromptString(context)) +
+      nativeMediaTokenEstimate(context)
+    );
   }
 
   private async maybeEscalateFastPath(
@@ -2106,7 +2138,7 @@ export class ChatExecutionManager implements OnModuleInit {
   ): Promise<LlmResponse> {
     // Delivery runs once, outside the retry: it can itself be a paid helper
     // call (a vision description), which a credit retry must not repeat.
-    const context = await this.withAttachmentDelivery(laneInput, provider, model);
+    const context = await this.withAttachmentDelivery(laneInput, provider, model, executionOptions);
     const attempt = (
       options: ExecutionOptions | undefined,
       call: PaygCallOptions | undefined,
@@ -2348,6 +2380,7 @@ export class ChatExecutionManager implements OnModuleInit {
     context: AssembledContext,
     provider: string,
     model: string,
+    executionOptions: ExecutionOptions | undefined,
   ): Promise<AssembledContext> {
     if (
       this.attachmentDelivery === undefined ||
@@ -2356,7 +2389,13 @@ export class ChatExecutionManager implements OnModuleInit {
     ) {
       return context;
     }
-    const planned = await this.attachmentDelivery.applyToContext(context, provider, model);
+    // A turn carrying a native tool catalog is built as the OpenAI-compatible
+    // body even on Gemini (`buildCloudProviderRequestBody`), which carries no
+    // audio or video bytes — so the plan must not record NATIVE_AUDIO /
+    // NATIVE_VIDEO for it (rule 42 item 14: record == payload).
+    const planned = await this.attachmentDelivery.applyToContext(context, provider, model, {
+      nativeMediaTransport: !this.hasNativeToolCatalog(executionOptions),
+    });
     // A lane that cannot see gets the helper's description of each image
     // instead of only its OCR text (ADR-120 batch 5).
     const described =
@@ -2404,10 +2443,18 @@ export class ChatExecutionManager implements OnModuleInit {
     requestId: string;
   }): Promise<PaygHold> {
     const requestedMax = this.paygRequestedMaxOutputTokens(args.provider, args.context, undefined);
+    // The lane's own delivery plan (catalog + plan limits only — no paid
+    // helper call), so the hold covers the native audio / video this lane
+    // will really be sent. The lane re-uses nothing from it: the chokepoint
+    // plans again and the plan is identical for the same lane and transport.
+    const planned =
+      this.attachmentDelivery === undefined
+        ? args.context
+        : await this.attachmentDelivery.applyToContext(args.context, args.provider, args.model);
     return this.reservePaygHold({
       provider: args.provider,
       model: args.model,
-      context: args.context,
+      context: planned,
       ledgerContext: TokenLedgerContext.COMPARE,
       requestedMax,
       paygCall: {
@@ -3153,7 +3200,11 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
-    const isNativeGemini = this.shouldUseGeminiNativeRequest(provider, context);
+    // The SAME predicate the body builder uses: a tool-carrying Gemini turn is
+    // the OpenAI-compatible body, so it must also go to the compatible URL,
+    // headers and parser (it used to hit :generateContent with a
+    // chat/completions body whenever a video was attached).
+    const isNativeGemini = this.usesGeminiNativeBody(provider, context, executionOptions);
     const requestBody = await this.buildCloudProviderRequestBody({
       provider,
       model,
@@ -4381,7 +4432,7 @@ export class ChatExecutionManager implements OnModuleInit {
     // `additionalProperties` and `maxLength` — which every Runtime V2
     // inputSchema carries. When tools are in play we must take the
     // OpenAI-compatible branch instead, which accepts the schemas verbatim.
-    return !carriesTools && this.shouldUseGeminiNativeRequest(provider, context)
+    return this.usesGeminiNativeBody(provider, context, executionOptions)
       ? this.buildGeminiNativeRequestBody(
           model,
           context,

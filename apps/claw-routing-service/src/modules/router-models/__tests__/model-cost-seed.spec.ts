@@ -325,9 +325,29 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     }
   });
 
-  it('is version 8, so installs that ran v7 pick up the Grok image prices', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(8);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v8');
+  it('is version 8 or later, so installs that ran v7 pick up the Grok image prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(8);
+  });
+
+  // Quality-aware dall-e-3 (v9): HD was charged the standard $0.04. A new
+  // `dall-e-3@hd` row at $0.08, which image-service meters an `hd` call against.
+  it('prices dall-e-3 HD on its own row at $0.08; standard stays $0.04', () => {
+    const find = (modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'OPENAI' && e.modelKey === modelKey);
+    expect(find('dall-e-3@hd')).toMatchObject({
+      imagePerUnitMicroUsd: 80_000,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+    });
+    // A new key fills a gap; the v4 base row is untouched.
+    expect(find('dall-e-3@hd')?.supersedesSeededPrice ?? false).toBe(false);
+    expect(find('dall-e-3@hd')?.replacesFallbackRate ?? false).toBe(false);
+    expect(find('dall-e-3')).toMatchObject({ imagePerUnitMicroUsd: 40_000 });
+  });
+
+  it('is version 9, so installs that ran v8 pick up the dall-e-3 HD price', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(9);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v9');
   });
 
   // Money is integer micro-USD everywhere in this platform. A float here would

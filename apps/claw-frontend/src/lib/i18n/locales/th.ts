@@ -2002,6 +2002,7 @@ export const th: TranslationDictionary = {
       nativeVideo: 'วิดีโอ',
       derivedImageText: 'อธิบายโดยผู้ช่วย',
       videoFramesAndTranscript: 'วิดีโอ: เฟรม + คำถอดเสียง',
+      nativeAudio: 'เสียง: ฟังโดยตรง + คำถอดเสียง',
       videoFramesAt: 'เฟรมที่ {times}',
       stillProcessing: 'กำลังประมวลผล',
       failedProcessing: 'การประมวลผลล้มเหลว',

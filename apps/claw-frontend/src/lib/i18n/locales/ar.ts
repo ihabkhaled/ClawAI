@@ -2001,6 +2001,7 @@ export const ar: TranslationDictionary = {
       nativeVideo: 'فيديو',
       derivedImageText: 'موصوفة بواسطة مساعد',
       videoFramesAndTranscript: 'فيديو: لقطات + نص مفرغ',
+      nativeAudio: 'صوت: مسموع + نص مفرغ',
       videoFramesAt: 'لقطات عند {times}',
       stillProcessing: 'قيد المعالجة',
       failedProcessing: 'فشلت المعالجة',

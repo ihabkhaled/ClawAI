@@ -34,8 +34,15 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// `grok-4`'s TOKEN rate and a zero-token finalize settled every Grok image at
 /// $0. New keys fill gaps, flagged `replacesFallbackRate` so auth's cached
 /// fallback answer for them is busted by `routing.model_cost.published`.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v8';
-export const MODEL_COST_SEED_VERSION = 8;
+///
+/// v9 (2026-09-26): QUALITY-aware `dall-e-3`. A new key `dall-e-3@hd` at
+/// OpenAI's HD list price, $0.080 per 1024x1024 image. image-service meters a
+/// dall-e-3 call sent at `hd` (or an unrecognised quality) against it; standard
+/// or no quality stays on the v4 `dall-e-3` row ($0.040). Before v9 an HD image
+/// was charged the standard price. New key — it fills a gap; the v4 row is
+/// untouched.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v9';
+export const MODEL_COST_SEED_VERSION = 9;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -402,9 +409,9 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
   // from chat, NO `quality` — so gpt-image-1 runs at `auto`, whose worst case is
   // `high`. Priced at high so an `auto` that resolves high is never
   // under-charged (low $0.011 / medium $0.042 / high $0.167). dall-e-3 without
-  // a quality is `standard` ($0.040; HD is $0.080). A direct API caller asking
-  // for a larger size or HD is a known under-charge — see the image-service
-  // CLAUDE.md.
+  // a quality is `standard` ($0.040; HD is $0.080 — its own `dall-e-3@hd` row
+  // since seed v9). A direct API caller asking for a larger dall-e size is a
+  // known under-charge — see the image-service CLAUDE.md.
   Object.freeze({
     provider: 'OPENAI',
     modelKey: 'dall-e-3',
@@ -416,6 +423,26 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     costClass: CostClass.STANDARD,
     imagePerUnitMicroUsd: 40_000,
     supersedesSeededPrice: true,
+  }),
+  // ── OpenAI dall-e-3 by QUALITY (unit metering, seed v9) ──────────────────
+  //
+  // Source: the same OpenAI pricing page as the v4 rows
+  // (platform.openai.com/docs/pricing, "Image generation"): dall-e-3 HD
+  // 1024x1024 $0.080 per image. image-service keys it `dall-e-3@hd`
+  // (`meteredImageModelKey`) for a call sent at `hd` or an unknown quality;
+  // `standard` / no quality stays on the `dall-e-3` row above. A new key, so it
+  // fills a gap — the key was never requested before v9, so no
+  // `replacesFallbackRate` either.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'dall-e-3@hd',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 80_000,
   }),
   Object.freeze({
     provider: 'OPENAI',

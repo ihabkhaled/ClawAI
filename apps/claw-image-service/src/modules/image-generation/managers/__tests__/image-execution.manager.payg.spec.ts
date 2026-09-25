@@ -236,6 +236,39 @@ describe('ImageExecutionManager — PAYG metering (U3)', () => {
     },
   );
 
+  // dall-e-3 HD is $0.08, standard $0.04 (seed v9 / v4). The hold is taken on
+  // the row for the quality sent; absent quality is omitted from the request,
+  // so OpenAI runs `standard`.
+  it.each([
+    ['hd', 'dall-e-3@hd'],
+    ['standard', 'dall-e-3'],
+    ['ultra', 'dall-e-3@hd'],
+    [undefined, 'dall-e-3'],
+  ])('dall-e-3 at quality %s reserves on %s', async (quality, priceKey) => {
+    const payg = meter();
+    utilities.httpGet.mockImplementation((url: string) =>
+      url.includes('/internal/connectors/config')
+        ? Promise.resolve({ provider: 'OPENAI', apiKey: 'k' })
+        : Promise.resolve(new ArrayBuffer(8)),
+    );
+    openai.generateWithOpenAI.mockResolvedValue({
+      imageUrl: 'https://example.test/i.png',
+      mimeType: 'image/png',
+    });
+
+    const manager = build(payg);
+    const result = await manager.execute(
+      input({ provider: 'IMAGE_OPENAI', model: 'dall-e-3', quality }),
+    );
+    await manager.settle(result.settlement);
+
+    expect(payg.reserve).toHaveBeenCalledWith(expect.objectContaining({ model: priceKey }));
+    // The provider call still names the real model and the caller's quality.
+    expect(openai.generateWithOpenAI.mock.calls[0]?.[3]).toBe('dall-e-3');
+    expect(openai.generateWithOpenAI.mock.calls[0]?.[6]).toBe(quality);
+    expect(payg.finalize).toHaveBeenCalledTimes(1);
+  });
+
   it('releases (never finalizes) when OpenAI refuses the generation', async () => {
     const payg = meter();
     utilities.httpGet.mockResolvedValue({ provider: 'OPENAI', apiKey: 'k' });

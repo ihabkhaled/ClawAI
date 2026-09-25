@@ -131,6 +131,113 @@ describe('resolveAttachmentDelivery', () => {
         ).mode,
       ).toBe(FileDeliveryMode.FAILED_PROCESSING);
     });
+
+    // Rule 42 item 22 — native audio on a lane that can hear it.
+    describe('native audio', () => {
+      const hears: ModelMediaCapabilities = {
+        vision: SUPPORTED,
+        audioInput: SUPPORTED,
+        videoInput: SUPPORTED,
+      };
+      const native = (
+        f: FileContentResponse,
+        capabilities: ModelMediaCapabilities = hears,
+        overrides: { transport?: boolean; budget?: number } = {},
+      ) => {
+        const [decision] = resolveAttachmentDelivery([f], capabilities, {
+          provider: 'GEMINI',
+          model: 'gemini-2.5-flash',
+          nativeVideoTransport: true,
+          nativeAudioTransport: overrides.transport ?? true,
+          nativeAudioTokenBudget: overrides.budget ?? 100_000,
+        });
+        if (decision === undefined) {
+          throw new Error('no decision');
+        }
+        return decision;
+      };
+
+      it('sends a capable lane the recording natively and records NATIVE_AUDIO', () => {
+        expect(native(audio({ extractedText: 'call me tomorrow' }))).toEqual(
+          expect.objectContaining({ mode: FileDeliveryMode.NATIVE_AUDIO, sendNative: true }),
+        );
+        expect(native(audio({ extractedText: 'call me tomorrow' })).reason).toBeUndefined();
+      });
+
+      it('keeps TRANSCRIPT when the catalog says the model cannot hear, or cannot say', () => {
+        for (const audioInput of [UNSUPPORTED, UNKNOWN]) {
+          expect(native(audio({ extractedText: 'hi' }), { ...hears, audioInput })).toMatchObject({
+            mode: FileDeliveryMode.TRANSCRIPT,
+            sendNative: false,
+          });
+        }
+      });
+
+      it('keeps TRANSCRIPT on a transport that cannot carry audio (OpenAI, Anthropic, Ollama)', () => {
+        expect(native(audio({ extractedText: 'hi' }), hears, { transport: false })).toMatchObject({
+          mode: FileDeliveryMode.TRANSCRIPT,
+          sendNative: false,
+        });
+        // No transport flag at all (every pre-existing caller) = no native audio.
+        expect(one(audio({ extractedText: 'hi' }), hears, 'GEMINI', true).mode).toBe(
+          FileDeliveryMode.TRANSCRIPT,
+        );
+      });
+
+      it('falls back to TRANSCRIPT past the size cap', () => {
+        // 16 MB decoded > NATIVE_AUDIO_MAX_BYTES (15 MB).
+        const huge = 'A'.repeat(Math.ceil((16 * 1024 * 1024) / 0.75));
+        expect(
+          native(audio({ extractedText: 'hi', content: huge }), hears, { budget: 10_000_000 }),
+        ).toMatchObject({ mode: FileDeliveryMode.TRANSCRIPT, sendNative: false });
+      });
+
+      it('falls back to TRANSCRIPT when the recording does not fit the window share', () => {
+        // 'aGVsbG8=' → 6 bytes → 1 s → 32 tokens; a 31-token share cannot hold it.
+        expect(native(audio({ extractedText: 'hi' }), hears, { budget: 31 }).mode).toBe(
+          FileDeliveryMode.TRANSCRIPT,
+        );
+        expect(native(audio({ extractedText: 'hi' }), hears, { budget: 32 }).mode).toBe(
+          FileDeliveryMode.NATIVE_AUDIO,
+        );
+      });
+
+      it('still sends the recording while the transcript is processing, and says so', () => {
+        expect(native(audio({ extractedText: '[Audio file: memo.webm]' }))).toMatchObject({
+          mode: FileDeliveryMode.NATIVE_AUDIO,
+          sendNative: true,
+          reason: 'file_delivery.reason.native_audio_transcript_pending',
+        });
+      });
+
+      it('still sends the recording when transcription failed, and says so', () => {
+        expect(
+          native(audio({ extractedText: '[Audio file: memo.webm]', extractionError: 'refused' })),
+        ).toMatchObject({
+          mode: FileDeliveryMode.NATIVE_AUDIO,
+          reason: 'file_delivery.reason.native_audio_transcript_failed',
+        });
+      });
+
+      it('never marks a recording with no bytes as native', () => {
+        expect(native(audio({ extractedText: 'hi', content: null })).mode).toBe(
+          FileDeliveryMode.TRANSCRIPT,
+        );
+      });
+
+      it('resolves compare lanes per model: Gemini hears, OpenAI reads the transcript', () => {
+        const memo = audio({ extractedText: 'hi' });
+        const gemini = native(memo);
+        const [openAi] = resolveAttachmentDelivery([memo], hears, {
+          provider: 'OPENAI',
+          model: 'gpt-4o-audio-preview',
+          nativeVideoTransport: false,
+          nativeAudioTransport: false,
+        });
+        expect(gemini.mode).toBe(FileDeliveryMode.NATIVE_AUDIO);
+        expect(openAi?.mode).toBe(FileDeliveryMode.TRANSCRIPT);
+      });
+    });
   });
 
   describe('video', () => {
@@ -448,6 +555,31 @@ describe('isSentNatively / nativeImageContents', () => {
     };
 
     expect(nativeImageContents(context)).toEqual([img.content, 'RlJBTUU=']);
+  });
+
+  it('sends audio only on the Gemini transport and only when the plan says NATIVE_AUDIO', () => {
+    const memo = file({ id: 'a', filename: 'memo.webm', mimeType: 'audio/webm' });
+    const decisions = resolveAttachmentDelivery(
+      [memo],
+      { vision: SUPPORTED, audioInput: SUPPORTED, videoInput: SUPPORTED },
+      {
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        nativeVideoTransport: true,
+        nativeAudioTransport: true,
+      },
+    );
+    const context = {
+      fileContents: [memo],
+      attachmentDelivery: { provider: 'GEMINI', model: 'gemini-2.5-flash', decisions },
+    };
+
+    expect(isSentNatively(context, memo, true)).toBe(true);
+    // The OpenAI-shaped / Anthropic / Ollama builders pass false: never audio.
+    expect(isSentNatively(context, memo, false)).toBe(false);
+    // No plan: audio is never native, unlike an image.
+    expect(isSentNatively({}, memo, true)).toBe(false);
+    expect(nativeImageContents(context)).toEqual([]);
   });
 
   it('keeps the pre-ADR-120 behaviour with no plan: every image is sent', () => {

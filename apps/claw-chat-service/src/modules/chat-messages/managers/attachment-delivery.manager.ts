@@ -3,7 +3,11 @@ import { Injectable, Logger, Optional } from '@nestjs/common';
 import { GEMINI_PROVIDER, VIDEO_MIME_PREFIX } from '../../../common/constants/execution.constants';
 import { ModelCapabilityClient } from '../clients/model-capability.client';
 import { AccessControlService } from '../services/access-control.service';
-import type { AttachmentDeliveryPlan, VideoPlanGate } from '../types/attachment-delivery.types';
+import type {
+  AttachmentDeliveryPlan,
+  AttachmentLaneTransport,
+  VideoPlanGate,
+} from '../types/attachment-delivery.types';
 import type { AssembledContext } from '../types/context.types';
 import type { FileDeliveryEntry } from '../types/file-delivery.types';
 import type { VideoRoutingCapability } from '../types/model-capability.types';
@@ -13,6 +17,7 @@ import {
   laneSupportsVision,
   resolveAttachmentDelivery,
 } from '../utilities/attachment-delivery.utility';
+import { nativeAudioTokenBudget } from '../utilities/native-audio.utility';
 
 /**
  * Decides, per lane, how every attachment reaches THAT lane's model — and
@@ -41,20 +46,31 @@ export class AttachmentDeliveryManager {
 
   /**
    * The context this lane's payload is built from. Unchanged when there are no
-   * attachments or when the plan already belongs to this exact lane.
+   * attachments or when the plan already belongs to this exact lane AND
+   * transport. `transport.nativeMediaTransport: false` (a tool-carrying Gemini
+   * turn, sent as the OpenAI-compatible body) resolves audio to its transcript
+   * and video to frames + transcript, so the record matches what is sent.
    */
   async applyToContext(
     context: AssembledContext,
     provider: string,
     model: string,
+    transport: AttachmentLaneTransport = { nativeMediaTransport: true },
   ): Promise<AssembledContext> {
     if (context.fileContents.length === 0) {
       return context;
     }
     const existing = context.attachmentDelivery;
-    return existing?.provider === provider && existing.model === model
+    const sameLane =
+      existing?.provider === provider &&
+      existing.model === model &&
+      (existing.nativeMediaTransport ?? true) === transport.nativeMediaTransport;
+    return sameLane
       ? context
-      : { ...context, attachmentDelivery: await this.plan(context, provider, model) };
+      : {
+          ...context,
+          attachmentDelivery: await this.plan(context, provider, model, transport),
+        };
   }
 
   /** The provenance entries for one lane, without its payload flags. */
@@ -108,16 +124,21 @@ export class AttachmentDeliveryManager {
     context: AssembledContext,
     provider: string,
     model: string,
+    transport: AttachmentLaneTransport = { nativeMediaTransport: true },
   ): Promise<AttachmentDeliveryPlan> {
     const capabilities = await this.capabilities.resolve(provider, model);
-    // Only Gemini's native request carries video bytes today; every other
-    // transport would have to decode them into the prompt, which is banned.
-    const nativeVideoTransport = provider.toUpperCase() === GEMINI_PROVIDER;
+    // Only Gemini's native request carries video or audio bytes today; every
+    // other transport would have to decode them into the prompt, which is banned.
+    // A tool-carrying Gemini turn goes out as the OpenAI-compatible body.
+    const geminiTransport =
+      provider.toUpperCase() === GEMINI_PROVIDER && transport.nativeMediaTransport;
     const decisions = resolveAttachmentDelivery(context.fileContents, capabilities, {
       provider,
       model,
-      nativeVideoTransport,
-      videoPlan: nativeVideoTransport ? await this.videoPlan(context) : undefined,
+      nativeVideoTransport: geminiTransport,
+      videoPlan: geminiTransport ? await this.videoPlan(context) : undefined,
+      nativeAudioTransport: geminiTransport,
+      nativeAudioTokenBudget: nativeAudioTokenBudget(context.modelBudget),
     });
     // Structured, content-free: ids and counts only, never filenames or text.
     this.logger.log(
@@ -126,6 +147,7 @@ export class AttachmentDeliveryManager {
         model,
         vision: capabilities.vision,
         videoInput: capabilities.videoInput,
+        audioInput: capabilities.audioInput,
         files: decisions.length,
         modes: countDeliveryModes(decisions),
         fileIds: decisions.map((decision) => decision.fileId),
@@ -134,6 +156,7 @@ export class AttachmentDeliveryManager {
     return {
       provider,
       model,
+      nativeMediaTransport: transport.nativeMediaTransport,
       decisions,
       laneSeesImages: laneSupportsVision(provider, capabilities.vision),
     };

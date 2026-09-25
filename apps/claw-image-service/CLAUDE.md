@@ -46,9 +46,9 @@ Image generation microservice for the Claw platform. Orchestrates image generati
    `imageSettlement reservationId=<id> outcome=FINALIZED|RELEASED reason=STORE_FAILED`.
    Local providers carry no settlement; both calls are no-ops.
    gpt-image-1 is metered on a SIZED price row (see "Size-aware gpt-image
-   pricing" below). **Known under-charge left:** dall-e-3 is priced
-   `standard` ($0.040); a direct API caller asking for `hd` ($0.08) is charged
-   the standard price.
+   pricing" below). dall-e-3 is metered by QUALITY since routing seed v9
+   (see "dall-e-3 quality pricing" below) — HD is no longer charged the
+   standard price.
 
 6. **Image generation and edit are a paid plan feature** (ADR-122).
    `ImagePlanGateManager.assertCanGenerate(userId)` runs FIRST in
@@ -114,7 +114,23 @@ are a NOOP returning their status, never 409).
    image.generated today; CANCELLED goes to SSE + `image_generation_events`.
 6. Log: `imageCancel generationId=… fromStatus=… outcome=CANCELLED|NOOP|DISCARDED holdReleased=… providerCancel=…`.
 
-Gaps: file stored just before a late cancel is orphaned in file-service; SD
+Orphan cleanup: when the image was already stored and the cancel then wins
+(FINALIZING or COMPLETED write refused), `discardStoredImage` deletes it via
+file-service `DELETE /api/v1/internal/files/:id?userId=` (service token, owner
+checked, 404 = deleted), bounded by `IMAGE_ORPHAN_DELETE_TIMEOUT_MS`,
+best-effort (logs `imageOrphanCleanup … outcome=DELETED|FAILED`, never throws),
+then the hold is released.
+
+**One replica in production (verified 2026-09-26).** `docker/docker-compose.prod.services.yml`
+gives `image-service` a fixed `container_name: claw-image-service` and no
+`deploy.replicas`, so Docker cannot scale it (only chat-service scales, via
+`CHAT_SERVICE_REPLICAS`). The cancel SSE event and the in-process ComfyUI
+prompt-id map are therefore always on the replica that wrote them; the
+"other replica" cases above only matter if image-service is ever scaled — then
+drop `container_name`, move `comfyPromptIds` to Redis and fan the SSE event out
+over Redis pub/sub first.
+
+Gaps: a FAILED orphan delete is logged, not retried; SD
 WebUI and cross-replica ComfyUI runs keep computing upstream (discard only);
 frontend button not wired. Details:
 [`service-guide-image.md`](../../docs/04-backend/service-guide-image.md#cancellation-post-imagesidcancel-2026-09-25).
@@ -471,6 +487,21 @@ same row. The OpenAI call itself still names `gpt-image-1`.
 - Tests: `image-price-key.utility.spec.ts`,
   `image-execution.manager.payg.spec.ts` (each size → its key; finalize settles
   the reserve's own hold).
+
+## dall-e-3 quality pricing (2026-09-26)
+
+**Decision:** dall-e-3 is metered on the row for the quality it is sent at
+(routing model-cost seed **v9**): `hd` → `dall-e-3@hd` ($0.080), `standard` →
+`dall-e-3` ($0.040, seed v4). An unrecognised quality → `dall-e-3@hd` (never
+under-charge). Absent/empty quality → the base (standard) row, because
+`generateWithOpenAI` omits `quality` when it is falsy and OpenAI's dall-e-3
+default is `standard`. Values are the `DallE3Quality` enum; the model id is
+`OPENAI_QUALITY_PRICED_IMAGE_MODEL`. gpt-image-1 is unaffected (quality pinned
+`high`, priced by size).
+
+- Deploy order: routing (seed v9) BEFORE image-service.
+- Tests: `image-price-key.utility.spec.ts`,
+  `image-execution.manager.payg.spec.ts` (hd / standard / unknown / absent).
 
 ## Grok per-image pricing (2026-09-25)
 

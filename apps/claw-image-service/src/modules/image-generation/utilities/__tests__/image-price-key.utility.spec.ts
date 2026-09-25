@@ -34,8 +34,41 @@ describe('meteredImageModelKey', () => {
     );
   });
 
-  it('leaves every other model on its own row', () => {
+  // dall-e-3 by quality (seed v9: dall-e-3@hd = $0.08; base row = standard $0.04).
+  it('meters dall-e-3 hd on the @hd row', () => {
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-3', 1024, 1024, 'hd')).toBe('dall-e-3@hd');
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'DALL-E-3', 1024, 1024, 'HD')).toBe('dall-e-3@hd');
+  });
+
+  it('meters dall-e-3 standard on the base row', () => {
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-3', 1024, 1024, 'standard')).toBe(
+      'dall-e-3',
+    );
+  });
+
+  it('meters dall-e-3 at an unknown quality on the dearest (@hd) row', () => {
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-3', 1024, 1024, 'high')).toBe(
+      'dall-e-3@hd',
+    );
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-3', 1024, 1024, 'ultra')).toBe(
+      'dall-e-3@hd',
+    );
+  });
+
+  // The adapter omits an absent/empty quality, and OpenAI's dall-e-3 default is standard.
+  it('meters dall-e-3 with no quality on the base (standard) row', () => {
     expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-3', 1024, 1024)).toBe('dall-e-3');
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-3', 1024, 1024, '')).toBe('dall-e-3');
+  });
+
+  it('ignores quality for gpt-image-1 (pinned high; priced by size)', () => {
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'gpt-image-1', 1024, 1024, 'hd')).toBe(
+      'gpt-image-1@1024x1024',
+    );
+  });
+
+  it('leaves every other model on its own row', () => {
+    expect(meteredImageModelKey('IMAGE_OPENAI', 'dall-e-2', 1024, 1024, 'hd')).toBe('dall-e-2');
     expect(meteredImageModelKey('IMAGE_GEMINI', 'gemini-2.5-flash-image', 1536, 1024)).toBe(
       'gemini-2.5-flash-image',
     );

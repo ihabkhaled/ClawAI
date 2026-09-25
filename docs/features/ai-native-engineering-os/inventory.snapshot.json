@@ -7748,7 +7748,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 35558,
+          "bytes": 36539,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -8208,7 +8208,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5464
+        "value": 5465
       },
       "localeCount": 13,
       "locales": [
@@ -10186,7 +10186,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 216
+        "testFiles": 219
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10984,7 +10984,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1646,
+    "totalTestFiles": 1649,
     "workspaceCount": 25
   }
 }

@@ -24,6 +24,7 @@ export const FILE_DELIVERY_MODE_LABEL_KEYS: Readonly<Record<FileDeliveryMode, st
   [FileDeliveryMode.NATIVE_VIDEO]: 'compare.delivery.nativeVideo',
   [FileDeliveryMode.DERIVED_IMAGE_TEXT]: 'compare.delivery.derivedImageText',
   [FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT]: 'compare.delivery.videoFramesAndTranscript',
+  [FileDeliveryMode.NATIVE_AUDIO]: 'compare.delivery.nativeAudio',
 };
 
 // Which FileDeliveryCounts bucket each mode increments. Exhaustive for the
@@ -42,6 +43,7 @@ export const FILE_DELIVERY_MODE_COUNT_KEYS: Readonly<
   [FileDeliveryMode.NATIVE_VIDEO]: 'video',
   [FileDeliveryMode.DERIVED_IMAGE_TEXT]: 'described',
   [FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT]: 'videoFrames',
+  [FileDeliveryMode.NATIVE_AUDIO]: 'audio',
 };
 
 // Zeroed counts. Spread it — never mutate it.
@@ -57,6 +59,7 @@ export const FILE_DELIVERY_EMPTY_COUNTS: Readonly<FileDeliveryCounts> = {
   failed: 0,
   described: 0,
   videoFrames: 0,
+  audio: 0,
 };
 
 // Badge render order for AttachmentDeliveryChip. Every badge carries a text
@@ -68,6 +71,7 @@ export const FILE_DELIVERY_BADGE_SPECS: readonly FileDeliveryBadgeSpec[] = [
   { countKey: 'described', mode: FileDeliveryMode.DERIVED_IMAGE_TEXT, icon: '🔎' },
   { countKey: 'video', mode: FileDeliveryMode.NATIVE_VIDEO, icon: '🎬' },
   { countKey: 'videoFrames', mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT, icon: '🎞️' },
+  { countKey: 'audio', mode: FileDeliveryMode.NATIVE_AUDIO, icon: '🔊' },
   { countKey: 'transcript', mode: FileDeliveryMode.TRANSCRIPT, icon: '🎙️' },
   { countKey: 'skipped', mode: FileDeliveryMode.OMITTED_NO_VISION, icon: '🚫' },
   { countKey: 'unsupported', mode: FileDeliveryMode.OMITTED_UNSUPPORTED, icon: '🚫' },

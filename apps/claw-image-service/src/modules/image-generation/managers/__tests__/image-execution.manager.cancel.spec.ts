@@ -1,7 +1,8 @@
 import { type Mock, vi } from 'vitest';
+import { Logger } from '@nestjs/common';
 import type { PaygMeter } from '@claw/shared-entitlements';
 
-import { buildInterServiceAuthHeader, httpGet, httpPost } from '@common/utilities';
+import { buildInterServiceAuthHeader, httpDelete, httpGet, httpPost } from '@common/utilities';
 
 import { ImageProviderCancel } from '../../../../common/enums';
 import {
@@ -11,7 +12,10 @@ import {
   IMAGE_PROVIDER_OPENAI,
 } from '../../../../common/constants';
 import { generateWithGemini } from '../../adapters/gemini-image.adapter';
-import { IMAGE_GENERATION_CANCELLED_CODE } from '../../constants/image-cancel.constants';
+import {
+  IMAGE_GENERATION_CANCELLED_CODE,
+  IMAGE_ORPHAN_DELETE_TIMEOUT_MS,
+} from '../../constants/image-cancel.constants';
 import { isImageCancelledError } from '../../utilities/image-cancel.utility';
 import { ImageExecutionManager } from '../image-execution.manager';
 import type { ComfyUIProgressAdapter } from '../../../runtime-progress/adapters/comfyui-progress.adapter';
@@ -29,6 +33,7 @@ vi.mock('../../../../app/config/app.config', () => ({
 
 const httpGetMock = vi.mocked(httpGet);
 const httpPostMock = vi.mocked(httpPost);
+const httpDeleteMock = vi.mocked(httpDelete);
 const geminiMock = vi.mocked(generateWithGemini);
 
 type Harness = {
@@ -163,6 +168,51 @@ describe('ImageExecutionManager — user cancellation', () => {
     expect(await h.manager.releaseCancelled(settlement)).toBe(true);
     expect(h.release).toHaveBeenCalledWith(settlement.hold, 'CANCELLED');
     expect(h.finalize).not.toHaveBeenCalled();
+  });
+
+  // ADR-120 addendum 3: bytes stored, then the cancel won — the file is removed
+  // through file-service's owner-checked internal DELETE, best-effort.
+  describe('discardStoredImage — orphan cleanup after a cancel wins', () => {
+    it('deletes the stored file once via the service-token internal route, owner-scoped and bounded', async () => {
+      const h = harness();
+      httpDeleteMock.mockResolvedValue(undefined);
+
+      await h.manager.discardStoredImage('file-9', 'user-1', 'gen-9');
+
+      expect(httpDeleteMock).toHaveBeenCalledTimes(1);
+      const [url, config] = httpDeleteMock.mock.calls[0] ?? [];
+      expect(url).toBe('http://file-service:4005/api/v1/internal/files/file-9');
+      expect(config).toMatchObject({
+        params: { userId: 'user-1' },
+        headers: { Authorization: 'Service image-token' },
+        timeout: IMAGE_ORPHAN_DELETE_TIMEOUT_MS,
+      });
+      // Already gone counts as deleted; a server error does not.
+      expect(config?.validateStatus?.(204)).toBe(true);
+      expect(config?.validateStatus?.(404)).toBe(true);
+      expect(config?.validateStatus?.(500)).toBe(false);
+      expect(h.release).not.toHaveBeenCalled();
+      expect(h.finalize).not.toHaveBeenCalled();
+    });
+
+    it('logs and swallows a delete failure (never throws into the cancel flow)', async () => {
+      const h = harness();
+      const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {
+        // silenced: the assertion below reads the call
+      });
+      httpDeleteMock.mockRejectedValue(new Error('timeout of 10000ms exceeded'));
+
+      await expect(
+        h.manager.discardStoredImage('file-9', 'user-1', 'gen-9'),
+      ).resolves.toBeUndefined();
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'imageOrphanCleanup generationId=gen-9 fileId=file-9 outcome=FAILED',
+        ),
+      );
+      warn.mockRestore();
+    });
   });
 
   describe("requestProviderCancel — never stops another user's job", () => {

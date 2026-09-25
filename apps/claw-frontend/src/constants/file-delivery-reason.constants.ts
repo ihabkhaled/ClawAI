@@ -32,6 +32,14 @@ export const FILE_DELIVERY_REASON_LABEL_KEYS: ReadonlyMap<string, string> = new 
   ],
   ['file_delivery.reason.video_frames_no_helper', 'mediaUi.deliveryReason.videoFramesNoHelper'],
   ['file_delivery.reason.video_frames_helper_plan', 'mediaUi.deliveryReason.videoFramesHelperPlan'],
+  [
+    'file_delivery.reason.native_audio_transcript_pending',
+    'mediaUi.deliveryReason.nativeAudioTranscriptPending',
+  ],
+  [
+    'file_delivery.reason.native_audio_transcript_failed',
+    'mediaUi.deliveryReason.nativeAudioTranscriptFailed',
+  ],
 ]);
 
 export const FILE_DELIVERY_REASON_FALLBACK_KEY = 'mediaUi.deliveryReason.unknown';

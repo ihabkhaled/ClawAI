@@ -1,5 +1,10 @@
 import { type AxiosRequestConfig } from 'axios';
-import { httpGet as httpGetShared, httpPost as httpPostShared } from '@claw/shared-utilities';
+import {
+  assertSafeRequestUrl,
+  createHttpClient,
+  httpGet as httpGetShared,
+  httpPost as httpPostShared,
+} from '@claw/shared-utilities';
 import { DEFAULT_HTTP_TIMEOUT } from '../constants';
 
 /**
@@ -40,4 +45,19 @@ export async function httpPost<T>(
   allowedHosts?: ReadonlySet<string>,
 ): Promise<T> {
   return httpPostShared<T>(url, data, { timeout: DEFAULT_HTTP_TIMEOUT, ...config }, allowedHosts);
+}
+
+/**
+ * DELETE through the same SSRF chokepoint. `@claw/shared-utilities` has no
+ * `httpDelete`, so this checks the URL with the shared guard and sends through
+ * a shared-client axios instance, with the same no-redirect rule the shared
+ * helpers apply. Resolves on any status `config.validateStatus` accepts.
+ */
+export async function httpDelete(
+  url: string,
+  config?: AxiosRequestConfig,
+  allowedHosts?: ReadonlySet<string>,
+): Promise<void> {
+  assertSafeRequestUrl(url, allowedHosts);
+  await createHttpClient({ timeout: DEFAULT_HTTP_TIMEOUT, maxRedirects: 0 }).delete(url, config);
 }

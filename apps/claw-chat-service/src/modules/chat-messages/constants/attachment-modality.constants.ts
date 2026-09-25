@@ -39,3 +39,11 @@ export const ALWAYS_TRANSFORMABLE_MODALITIES: ReadonlySet<RequiredModality> = ne
 export const RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS = 1_500;
 /** …and at most this much from any one attachment. */
 export const RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS = 600;
+
+/**
+ * The digest line for a video file-service is still processing at send time:
+ * honest "not yet", never silence (a planner that sees nothing plans as if no
+ * video was attached).
+ */
+export const RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE =
+  'video still processing — transcript not yet available';

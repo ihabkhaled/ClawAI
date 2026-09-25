@@ -2020,6 +2020,7 @@ export const en: TranslationDictionary = {
       nativeVideo: 'Video',
       derivedImageText: 'Described by helper',
       videoFramesAndTranscript: 'Video: frames + transcript',
+      nativeAudio: 'Audio: heard + transcript',
       videoFramesAt: 'frames at {times}',
       stillProcessing: 'Still processing',
       failedProcessing: 'Processing failed',

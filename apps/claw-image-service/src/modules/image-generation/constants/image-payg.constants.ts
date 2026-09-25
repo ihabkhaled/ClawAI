@@ -127,6 +127,14 @@ export const OPENAI_GPT_IMAGE_PRICED_SIZES: readonly string[] = [
 export const OPENAI_GPT_IMAGE_WORST_CASE_SIZE = '1536x1024';
 
 /**
+ * The OpenAI image model whose per-image price depends on the QUALITY:
+ * `dall-e-3` standard is the base `dall-e-3` row (seed v4, $0.040) and `hd` is
+ * `dall-e-3@hd` (routing model-cost seed v9, $0.080). The prices live only in
+ * those rows (rule 37 item 13); this only names the model.
+ */
+export const OPENAI_QUALITY_PRICED_IMAGE_MODEL = 'dall-e-3';
+
+/**
  * xAI Grok Imagine models that have their OWN per-image price row (routing
  * model-cost seed v8: `grok-imagine-image` $0.02, `grok-imagine-image-2.0`
  * $0.08). The prices live only in those rows (rule 37 item 13); this list only

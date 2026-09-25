@@ -207,6 +207,14 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   callable is reported in `repriced` (version 1), so the seed publishes
   `routing.model_cost.published` and auth drops the cached fallback rate. Use
   that flag for any future per-unit model that was reachable before its row.
+- **Quality-aware dall-e-3** (seed **v9**, `model-cost-list-prices-2026-v9`,
+  2026-09-26): one NEW key `OPENAI:dall-e-3@hd` $0.080 per image (HD
+  1024x1024; same OpenAI pricing-page source as v4). image-service meters a
+  dall-e-3 call sent at `hd` (or an unrecognised quality) against it;
+  `standard` / no quality stays on the v4 `dall-e-3` row ($0.040). Before v9 an
+  HD image was charged the standard price. Fills a gap; no
+  `replacesFallbackRate` (the key was never requested before v9). Deploy
+  routing BEFORE image-service, or every HD hold is `PAYG_MODEL_UNPRICED`.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
   (never an override, never a synced row) and whose rates differ gets that row

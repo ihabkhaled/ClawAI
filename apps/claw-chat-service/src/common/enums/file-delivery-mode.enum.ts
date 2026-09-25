@@ -43,4 +43,11 @@ export enum FileDeliveryMode {
   // observations when it cannot, or none (transcript only, stated honestly)
   // when no helper could run. `frameDelivery` / `frameTimestampsMs` say which.
   VIDEO_FRAMES_AND_TRANSCRIPT = 'VIDEO_FRAMES_AND_TRANSCRIPT',
+  // Voice note / audio file sent NATIVELY (Gemini inline_data audio part) to a
+  // lane whose model's catalog row says audio input SUPPORTED, within the
+  // size cap and the window's file share. HYBRID: the transcript still rides
+  // as text framed as speech (exact words), the audio adds tone. When the
+  // transcript was not ready or failed, the audio alone carries the words and
+  // `reason` says so (rule 42 item 22).
+  NATIVE_AUDIO = 'NATIVE_AUDIO',
 }

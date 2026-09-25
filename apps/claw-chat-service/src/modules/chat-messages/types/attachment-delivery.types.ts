@@ -16,6 +16,14 @@ export type AttachmentDeliveryDecision = FileDeliveryEntry & {
 export type AttachmentDeliveryPlan = {
   provider: string;
   model: string;
+  /**
+   * Whether this plan allowed media bytes on the lane's transport (false for
+   * a Gemini turn that carries a native tool catalog — that body is the
+   * OpenAI-compatible one, which carries no audio or video). Part of the
+   * plan's identity: a plan made for one transport is never reused for the
+   * other (rule 42 item 14).
+   */
+  nativeMediaTransport?: boolean;
   decisions: AttachmentDeliveryDecision[];
   /**
    * Helper-vision descriptions for this lane's DERIVED_IMAGE_TEXT decisions,
@@ -53,6 +61,17 @@ export type AttachmentDeliveryOptions = {
    * bytes (multimodal batch 8).
    */
   videoPlan?: VideoPlanGate;
+  /**
+   * Whether this lane's transport carries audio bytes (rule 42 item 22).
+   * Today only the Gemini native request does. Absent = no native audio.
+   */
+  nativeAudioTransport?: boolean;
+  /**
+   * Prompt tokens native audio may spend on this lane — the audio slice of the
+   * file share (rule 51 item 4). A recording whose estimated tokens exceed it
+   * reaches the lane as its transcript. Absent = no window limit applied.
+   */
+  nativeAudioTokenBudget?: number;
 };
 
 /** `maxVideoSeconds` for native delivery: `available: false` = entitlements could not be read. */
@@ -60,4 +79,14 @@ export type VideoPlanGate = {
   available: boolean;
   /** `null` unlimited, `0` disabled. Meaningless when `available` is false. */
   limitSeconds: number | null;
+};
+
+/** How a lane's request will be built, as far as media delivery cares. */
+export type AttachmentLaneTransport = {
+  /**
+   * False when the request cannot carry native audio/video bytes even on a
+   * provider that normally could: a Gemini turn with a native tool catalog is
+   * sent as the OpenAI-compatible body. Defaults to true.
+   */
+  nativeMediaTransport: boolean;
 };

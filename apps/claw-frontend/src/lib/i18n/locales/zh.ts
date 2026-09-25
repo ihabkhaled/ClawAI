@@ -1969,6 +1969,7 @@ export const zh: TranslationDictionary = {
       nativeVideo: '视频',
       derivedImageText: '由助手描述',
       videoFramesAndTranscript: '视频：画面帧 + 转录文本',
+      nativeAudio: '音频：直接收听 + 转录文本',
       videoFramesAt: '{times} 的画面帧',
       stillProcessing: '仍在处理',
       failedProcessing: '处理失败',

@@ -329,6 +329,44 @@ before the read-aloud POST has answered does not cancel~~ — closed 2026-09-25:
 the stop is remembered (one flag) and one cancel is sent when the POST answers
 GENERATING.
 
+## Addendum 4 — native audio into chat models (pack §13/§22, 2026-09-26)
+
+Pack: "native audio may be used when supported". Before this, every lane
+received a voice note as its transcript.
+
+Decision — **HYBRID**, not native-only:
+
+1. `FileDeliveryMode.NATIVE_AUDIO` when the lane's transport carries audio
+   (Gemini native request only), the catalog says `audioInput` SUPPORTED
+   (never UNKNOWN; the connector's fail-closed Gemini audio heuristic keeps
+   TTS, preview and transcription-only models out), the recording is ≤ 15 MB
+   (Gemini's inline limit after base64) and its estimated tokens fit half the
+   lane's file share (rule 51 item 4; estimate = bytes ÷ 2,000 B/s × 32
+   tokens/s, deliberately long).
+2. The lane receives the audio as an inline part AND the transcript framed as
+   speech. The transcript is already metered (`TRANSCRIPTION`), costs ~150
+   tokens/min against ~1,920 for the audio, carries the exact words, and keeps
+   every other lane, the judge and memory on the same text. The audio adds
+   tone, emotion and emphasis.
+3. A transcript still processing or failed does not block the audio (better
+   than nothing), with an honest note in the prompt and a reason on the entry.
+4. Billing: the PAYG hold adds the audio estimate; finalize settles on the
+   provider's measured prompt tokens (Gemini `usageMetadata`), so the charge
+   is exact. No new surface — native audio is part of the chat call.
+
+Rejected: native-only (the words would depend on the model's own hearing and
+every non-audio lane would see different content); OpenAI `input_audio` parts
+(`gpt-4o-audio-*` is not a chat model this product routes to, and a second
+transport doubles the payload surface for no user benefit today).
+Closed before ship (2026-09-26): (a) record == payload on both Gemini
+bodies — a turn carrying a native tool catalog is planned with
+`nativeMediaTransport: false` (audio → TRANSCRIPT, video →
+VIDEO_FRAMES_AND_TRANSCRIPT), and one predicate (`usesGeminiNativeBody`) picks
+body, URL, headers and parser; Runtime V2 turns carry no catalog and keep the
+native parts. (b) Compare lanes resolve their plan before reserving, so each
+hold includes the native audio + native video estimate (300 tokens per
+measured second of video).
+
 ## Alternatives rejected
 
 - **Keep the provider-level list.** It is the defect: it calls `gpt-4o-audio`

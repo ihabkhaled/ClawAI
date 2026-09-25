@@ -1958,6 +1958,7 @@ export type TranslationDictionary = {
       nativeVideo: string;
       derivedImageText: string;
       videoFramesAndTranscript: string;
+      nativeAudio: string;
       videoFramesAt: string;
       stillProcessing: string;
       failedProcessing: string;
@@ -6328,6 +6329,8 @@ export type MediaUiLocaleTranslation = {
     videoFramesUnavailable: string;
     videoFramesNoHelper: string;
     videoFramesHelperPlan: string;
+    nativeAudioTranscriptPending: string;
+    nativeAudioTranscriptFailed: string;
     unknown: string;
   };
   imageStatus: {

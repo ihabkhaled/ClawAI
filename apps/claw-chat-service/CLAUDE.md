@@ -1175,6 +1175,73 @@ the strategy its OWN model allows — rule 42 item 16, ADR-120 addendum
 - **Log line** (content-free): `videoDelivery {"provider","model","fileId","strategy","frameDelivery","frames","latencyMs","reason"}`.
 - Runbook: [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md) §8–10.
 
+## Native audio into a chat model (rule 42 item 22, 2026-09-26)
+
+A voice note / audio file reaches a lane as its **bytes AND its transcript**
+(`FileDeliveryMode.NATIVE_AUDIO`, HYBRID) only when ALL hold — decided by the
+pure resolver (`resolveAudio` in `attachment-delivery.utility.ts`):
+
+1. the transport carries audio: Gemini's native request only
+   (`nativeAudioTransport`, set by `AttachmentDeliveryManager` for `GEMINI`;
+   `shouldUseGeminiNativeRequest` also switches on `hasNativeAudioDelivery`);
+2. the catalog row says `audioInput` **SUPPORTED** — UNKNOWN keeps the
+   transcript (connector narrows Gemini audio to the stable flash/pro family,
+   so TTS / preview / transcription-only models never qualify);
+3. bytes present and ≤ `NATIVE_AUDIO_MAX_BYTES` (15 MB, Gemini inline limit);
+4. the estimate (`bytes ÷ 2,000 B/s × 32 tokens/s`, errs long) fits
+   `nativeAudioTokenBudget` = half the lane's file share (rule 51 item 4).
+
+Else `TRANSCRIPT` / `STILL_PROCESSING` / `FAILED_PROCESSING` exactly as before.
+A transcript still processing or failed does NOT block native audio — the
+lane is told the recording alone carries the words, and the entry's reason is
+`…native_audio_transcript_pending` / `…_failed`.
+
+**Why both, not native-only:** the transcript is already paid for (metered
+`TRANSCRIPTION`), costs ~150 tokens/min against ~1,920 for the audio
+(32 tokens/s), gives the model the exact words and keeps compare lanes, the
+judge and memory on the same text; the audio adds tone, emotion and emphasis
+the text drops. Native-only would make every non-audio lane see different
+content from the audio lane.
+
+Payload: `buildMultimodalUserParts` emits a `data:audio/…` part (codec
+parameters stripped, `payloadMediaType`) that `buildGeminiRequestBody` turns
+into `inline_data`; `isSentNatively` returns true for audio only on the Gemini
+transport AND a NATIVE_AUDIO decision, so OpenAI / Anthropic / Ollama bodies
+never carry audio. The system block keeps the voice-note frame +
+`NATIVE_AUDIO_WITH_TRANSCRIPT_NOTE` + the transcript. The PAYG hold adds
+`nativeAudioTokenEstimate`; the charge is the provider's measured usage.
+**Record == payload on every Gemini body.** Runtime V2 turns
+(`RUNTIME_V2_TURN_EXECUTION_OPTIONS`, no tool catalog) use the native body and
+carry the audio / video part. A turn with a native tool catalog is the
+OpenAI-compatible body: `withAttachmentDelivery` plans it with
+`nativeMediaTransport: false`, so audio resolves `TRANSCRIPT` and video
+`VIDEO_FRAMES_AND_TRANSCRIPT`; the plan stores its transport and is never
+reused across transports. One predicate, `usesGeminiNativeBody`, now picks the
+body, URL, headers AND parser (before, a tool turn with a video built the
+compatible body but posted it to `:generateContent`).
+**Compare holds.** `reserveCompareLane` resolves the lane's plan first (catalog
+
+- plan limits only, no paid helper) so each lane's hold includes
+  `nativeMediaTokenEstimate` — native audio (bytes estimate) + native video
+  (measured seconds × `NATIVE_VIDEO_HOLD_TOKENS_PER_SECOND` 300). Tests:
+  `chat-execution-native-media-transport.spec.ts`, `context-assembly-native-audio.spec.ts`,
+  `attachment-delivery.utility.spec.ts` "native audio", `native-audio.utility.spec.ts`,
+  `context-assembly-window-fit.spec.ts` "native audio".
+
+## Media billing decisions (settled 2026-09-26)
+
+- **ffmpeg CPU is not billed.** Probe, thumbnail, frame extraction and audio
+  demux are local compute, the same stance as local models: no `PaygSurface`.
+  The paid steps inside video processing (transcription, helper frame
+  descriptions) are metered on their own surfaces.
+- **Frame and audio tokens are budgeted by ESTIMATE but BILLED on measured
+  usage.** `VIDEO_FRAME_IMAGE_TOKENS` (800/frame) and the native-audio estimate
+  only size the window fit and the hold; finalize settles on the provider's
+  reported prompt tokens, so the charge is exact.
+- **image-service runs one replica in production** (`container_name`, no
+  `replicas`), so the image cancel SSE "same replica" note is moot today —
+  see `apps/claw-image-service/CLAUDE.md` for what to change before scaling it.
+
 ## Chat → routing: attachment modalities on message.created (batch 8)
 
 `createMessage`, `regenerateMessage` and edit-and-rerun add
@@ -1189,7 +1256,10 @@ AUTO research (`runAutoResearch`) also hands the planner a SHORT digest of the
 attachments' derived text (`buildAttachmentDigest`, ≤ 600 chars/file, ≤ 1 500
 total, placeholders skipped) read with `AttachmentInfoClient.textOnly`
 (`/content?includeContent=false`, no bytes). Framed as data; links inside it
-are never crawled. A video still processing at send time contributes nothing.
+are never crawled. A video still processing at send time contributes one
+honest line, `"<name>" (video/…): video still processing — transcript not yet
+available` (`RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE`); a failed video or a voice
+note placeholder contributes nothing.
 
 ## "Read aloud" — progressive text-to-speech of a reply (batch 9; async since 2026-09-25)
 

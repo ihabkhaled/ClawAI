@@ -3,7 +3,7 @@ import { resolveOpenAiImageQuality } from '../utilities/openai-image-quality.uti
 import { isPaygCreditExhaustedError, type PaygHold, PaygMeter } from '@claw/shared-entitlements';
 import { PaygSurface } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
-import { buildInterServiceAuthHeader, httpGet, httpPost } from '@common/utilities';
+import { buildInterServiceAuthHeader, httpDelete, httpGet, httpPost } from '@common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
   IMAGE_PAYG_IMAGES_PER_REQUEST,
@@ -41,6 +41,7 @@ import { XAI_DEFAULT_BASE_URL } from '../constants/xai-image.constants';
 import {
   IMAGE_CANCELLED_LOG_REASON,
   IMAGE_CANCELLED_RELEASE_REASON,
+  IMAGE_ORPHAN_DELETE_TIMEOUT_MS,
 } from '../constants/image-cancel.constants';
 import { imageCancelled } from '../utilities/image-cancel.utility';
 import { imageFailure } from '../adapter.utilities/provider-error.utility';
@@ -165,6 +166,42 @@ export class ImageExecutionManager {
   }
 
   /**
+   * Deletes a generated image that reached file-service but lost the race to a
+   * cancel (the FINALIZING or COMPLETED write was refused because the row is
+   * CANCELLED). Without this the bytes stay in file-service with no asset row
+   * pointing at them (ADR-120 addendum 3).
+   *
+   * Uses file-service's service-token `DELETE /internal/files/:id?userId=`,
+   * which checks the owner, so this can only remove the user's own file. A 404
+   * counts as deleted (idempotent). Bounded by `IMAGE_ORPHAN_DELETE_TIMEOUT_MS`
+   * and best-effort: a failure is logged and swallowed — the cancel has already
+   * won and the hold is released either way. Logs ids only, never content.
+   */
+  async discardStoredImage(fileId: string, userId: string, generationId: string): Promise<void> {
+    const config = AppConfig.get();
+    try {
+      await httpDelete(
+        `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}`,
+        {
+          params: { userId },
+          headers: { Authorization: buildInterServiceAuthHeader() },
+          timeout: IMAGE_ORPHAN_DELETE_TIMEOUT_MS,
+          validateStatus: (status) =>
+            status < HttpStatus.AMBIGUOUS || status === HttpStatus.NOT_FOUND,
+        },
+      );
+      this.logger.log(
+        `imageOrphanCleanup generationId=${generationId} fileId=${fileId} outcome=DELETED`,
+      );
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(
+        `imageOrphanCleanup generationId=${generationId} fileId=${fileId} outcome=FAILED — ${detail}`,
+      );
+    }
+  }
+
+  /**
    * Best-effort upstream stop for a cancelled in-flight generation — only
    * when it provably cannot stop anyone else's job.
    *
@@ -277,7 +314,9 @@ export class ImageExecutionManager {
     const hold = await this.reserveImageHold(
       params,
       connectorProvider,
-      meteredImageModelKey(params.provider, params.model, width, height),
+      // dall-e-3 is metered by the quality it is sent at; `resolveOpenAiImageQuality`
+      // passes the caller's quality through unchanged for dall-e, so this is it.
+      meteredImageModelKey(params.provider, params.model, width, height, params.quality),
     );
 
     try {

@@ -334,6 +334,21 @@ Full reasoning:
     composer tile reads "Cancelled". A transcription hold in flight is
     released (rule 37 item 20).
 
+22. **A voice note rides natively only where it is really heard, and never
+    without its transcript.** `NATIVE_AUDIO` requires the Gemini native
+    transport, a catalog `audioInput` of SUPPORTED (UNKNOWN keeps the
+    transcript), bytes ≤ `NATIVE_AUDIO_MAX_BYTES`, and an estimated audio
+    token cost inside half the lane's file share (rule 51 item 4). The lane
+    then gets the inline audio part AND the transcript framed as speech (tone
+    from the audio, exact words from the text). A transcript still processing
+    or failed does not block the audio; the lane is told the recording alone
+    carries the words and the record's reason says which. Every other lane —
+    and every OpenAI / Anthropic / Ollama body, whatever its catalog row — gets
+    `TRANSCRIPT` exactly as before (`isSentNatively` never returns true for
+    audio off the Gemini transport). Tests:
+    `context-assembly-native-audio.spec.ts`, `attachment-delivery.utility.spec.ts`
+    "native audio".
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |

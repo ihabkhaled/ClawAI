@@ -2047,6 +2047,7 @@ export const ru: TranslationDictionary = {
       nativeVideo: 'Видео',
       derivedImageText: 'Описано помощником',
       videoFramesAndTranscript: 'Видео: кадры + расшифровка',
+      nativeAudio: 'Аудио: прослушано + расшифровка',
       videoFramesAt: 'кадры на {times}',
       stillProcessing: 'Ещё обрабатывается',
       failedProcessing: 'Ошибка обработки',

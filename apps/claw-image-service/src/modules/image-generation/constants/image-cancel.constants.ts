@@ -36,3 +36,11 @@ export const IMAGE_CANCELLED_RELEASE_REASON: PaygReleaseReason = 'CANCELLED';
 
 /** What the settlement log line names as the cause of that release. */
 export const IMAGE_CANCELLED_LOG_REASON = 'USER_CANCELLED';
+
+/**
+ * Upper bound on the best-effort delete of a generated image that was stored in
+ * file-service just before a cancel won (ADR-120 addendum 3). The cancel is
+ * already decided and the hold is released regardless, so this only bounds how
+ * long the job lingers on a slow file-service before giving up and logging.
+ */
+export const IMAGE_ORPHAN_DELETE_TIMEOUT_MS = 10_000;

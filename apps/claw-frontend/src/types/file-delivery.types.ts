@@ -38,6 +38,7 @@ export type FileDeliveryCounts = {
   failed: number;
   described: number;
   videoFrames: number;
+  audio: number;
 };
 
 // One bucket name of FileDeliveryCounts.

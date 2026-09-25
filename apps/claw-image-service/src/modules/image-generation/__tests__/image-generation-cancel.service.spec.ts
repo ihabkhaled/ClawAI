@@ -71,6 +71,7 @@ type ExecutionMock = {
   releaseUnpersisted: Mock;
   releaseCancelled: Mock;
   requestProviderCancel: Mock;
+  discardStoredImage: Mock;
 };
 
 type Replica = {
@@ -87,6 +88,7 @@ const buildExecution = (): ExecutionMock => ({
   releaseUnpersisted: vi.fn().mockResolvedValue(undefined),
   releaseCancelled: vi.fn((settlement: unknown) => Promise.resolve(settlement !== undefined)),
   requestProviderCancel: vi.fn().mockResolvedValue(ImageProviderCancel.UNSUPPORTED),
+  discardStoredImage: vi.fn().mockResolvedValue(undefined),
 });
 
 /** One service instance = one replica. Replicas share ONLY the repository (the DB). */
@@ -263,6 +265,51 @@ describe('ImageGenerationService — user cancellation (POST /images/:id/cancel)
       expect(a.exec.settle).not.toHaveBeenCalled();
       expect(repo.rows.get(id)?.status).toBe(ImageGenerationStatus.CANCELLED);
       expect(busPatterns(a.busPublish)).not.toContain('image.generated');
+    });
+
+    // ADR-120 addendum 3: the bytes reached file-service, then the cancel won the
+    // FINALIZING write. The stored file must not be left unreferenced.
+    it('bytes stored, then the cancel wins before FINALIZING: stored file deleted once, hold released, no asset', async () => {
+      const { id, call } = await startInFlight(a);
+
+      await a.service.cancelGenerationForUser(id, OWNER);
+      call.resolve(PAID_OK);
+      await flush();
+
+      expect(a.exec.discardStoredImage).toHaveBeenCalledTimes(1);
+      expect(a.exec.discardStoredImage).toHaveBeenCalledWith('file-out', OWNER, id);
+      expect(a.exec.releaseCancelled).toHaveBeenCalledWith(SETTLEMENT);
+      expect(a.exec.settle).not.toHaveBeenCalled();
+      expect(repo.createAsset).not.toHaveBeenCalled();
+      expect(repo.rows.get(id)?.status).toBe(ImageGenerationStatus.CANCELLED);
+    });
+
+    it('cancel wins after the asset row: asset row AND stored file both removed, hold released', async () => {
+      const { id, call } = await startInFlight(a);
+      repo.createAsset.mockImplementationOnce(async () => {
+        await a.service.cancelGenerationForUser(id, OWNER);
+        return { id: 'asset-late', url: 'u', downloadUrl: 'u', mimeType: 'image/png' };
+      });
+
+      call.resolve(PAID_OK);
+      await flush();
+
+      expect(repo.deleteAsset).toHaveBeenCalledWith('asset-late');
+      expect(a.exec.discardStoredImage).toHaveBeenCalledTimes(1);
+      expect(a.exec.discardStoredImage).toHaveBeenCalledWith('file-out', OWNER, id);
+      expect(a.exec.releaseCancelled).toHaveBeenCalledWith(SETTLEMENT);
+      expect(a.exec.settle).not.toHaveBeenCalled();
+    });
+
+    it('a completed generation never deletes its stored file', async () => {
+      const { id, call } = await startInFlight(a);
+
+      call.resolve(PAID_OK);
+      await flush();
+
+      expect(repo.rows.get(id)?.status).toBe(ImageGenerationStatus.COMPLETED);
+      expect(a.exec.discardStoredImage).not.toHaveBeenCalled();
+      expect(a.exec.settle).toHaveBeenCalledWith(SETTLEMENT);
     });
   });
 

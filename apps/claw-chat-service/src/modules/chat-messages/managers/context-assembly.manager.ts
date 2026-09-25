@@ -81,7 +81,13 @@ import {
   NO_VISION_IMAGE_WITHOUT_TEXT_NOTE,
 } from '../constants/attachment-delivery.constants';
 import { IMAGE_FILE_PLACEHOLDER_PREFIX } from '../constants/media-placeholder.constants';
+import {
+  NATIVE_AUDIO_TRANSCRIPT_FAILED_NOTE,
+  NATIVE_AUDIO_TRANSCRIPT_PENDING_NOTE,
+  NATIVE_AUDIO_WITH_TRANSCRIPT_NOTE,
+} from '../constants/native-audio.constants';
 import { isSentNatively, nativeVideoFrames } from '../utilities/attachment-delivery.utility';
+import { payloadMediaType } from '../utilities/native-audio.utility';
 import {
   describeUnprocessedVideo,
   formatVideoContextBlock,
@@ -923,15 +929,22 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     ) {
       parts.push(this.formatResearchBlock(context));
     }
+    // A native recording keeps its text block: the transcript (exact words)
+    // rides beside the audio (tone), or the note that says the audio alone
+    // carries the words (rule 42 item 22).
     const textFiles = context.fileContents.filter(
-      (file) => !isSentNatively(context, file, includeVideo),
+      (file) => this.isAudioFile(file) || !isSentNatively(context, file, includeVideo),
     );
     for (const file of textFiles) {
       // Same reasoning as formatFileBlocks: an audio file's decoded block
       // already carries its own voice-note framing (or the still-transcribing
       // / failed message) — the generic "attached file" wrapper would bury it.
       if (this.isAudioFile(file)) {
-        parts.push(this.decodeFileContent(file));
+        parts.push(
+          isSentNatively(context, file, includeVideo)
+            ? this.describeNativeAudio(file)
+            : this.decodeFileContent(file),
+        );
       } else if (this.isVideoFile(file)) {
         parts.push(this.renderVideoText(context, file));
       } else {
@@ -950,13 +963,36 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     const parts: OpenAiContentPart[] = [{ type: 'text', text }];
     for (const file of mediaFiles) {
       if (file.content) {
+        // One data-URL part per native file. The Gemini builder turns it into
+        // an inline_data / file_data part of the same media type — image,
+        // video or audio (audio only ever reaches here on that transport).
         parts.push({
           type: 'image_url',
-          image_url: { url: `data:${file.mimeType};base64,${file.content}` },
+          image_url: { url: `data:${payloadMediaType(file.mimeType)};base64,${file.content}` },
         });
       }
     }
     return parts;
+  }
+
+  /**
+   * The text block beside a recording that rides the payload natively
+   * (rule 42 item 22). With a transcript: the voice-note frame, the note that
+   * the audio is attached for tone, and the exact words. Without one: the
+   * frame and an honest note that the recording alone carries the words.
+   */
+  private describeNativeAudio(file: FileContentResponse): string {
+    const extracted = file.extractedText?.trim() ?? '';
+    const header = `VOICE NOTE "${file.filename}": ${VOICE_NOTE_TRANSCRIPT_FRAME}`;
+    if (extracted.length > 0 && !this.isAudioPlaceholder(extracted)) {
+      return `${header}\n${NATIVE_AUDIO_WITH_TRANSCRIPT_NOTE}\n\n${this.truncateFileText(extracted, file.filename)}`;
+    }
+    const failed =
+      (file.extractionError !== null && file.extractionError !== undefined) ||
+      file.ingestionStatus === 'FAILED';
+    return failed
+      ? `${header}\n${NATIVE_AUDIO_TRANSCRIPT_FAILED_NOTE}`
+      : `${header}\n${NATIVE_AUDIO_TRANSCRIPT_PENDING_NOTE}`;
   }
 
   /** `Frame of video "x" at 01:23:` + the frame, for every native frame of this lane. */

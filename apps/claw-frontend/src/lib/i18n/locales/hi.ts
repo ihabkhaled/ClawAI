@@ -2026,6 +2026,7 @@ export const hi: TranslationDictionary = {
       nativeVideo: 'वीडियो',
       derivedImageText: 'सहायक द्वारा वर्णित',
       videoFramesAndTranscript: 'वीडियो: फ़्रेम + ट्रांसक्रिप्ट',
+      nativeAudio: 'ऑडियो: सुना गया + ट्रांसक्रिप्ट',
       videoFramesAt: '{times} पर फ़्रेम',
       stillProcessing: 'अभी प्रोसेस हो रहा है',
       failedProcessing: 'प्रोसेसिंग विफल',

@@ -6,6 +6,7 @@ import { RequiredModality } from '@claw/shared-types';
 import {
   RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS,
   RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS,
+  RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE,
 } from '../../constants/attachment-modality.constants';
 import type { FileContentResponse } from '../../types/context.types';
 import {
@@ -81,6 +82,30 @@ describe('buildAttachmentDigest', () => {
     expect(
       digest.replaceAll(/"[^"]+" \([^)]+\): /g, '').replaceAll('\n', '').length,
     ).toBeLessThanOrEqual(RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS);
+  });
+
+  it('says a video still processing at send time has no transcript yet, instead of nothing', () => {
+    const digest = buildAttachmentDigest([
+      file({ filename: 'talk.mp4', extractedText: '[Video file: talk.mp4]' }),
+      file({ filename: 'queued.mp4', extractedText: null, ingestionStatus: 'PROCESSING' }),
+    ]);
+
+    expect(digest).toBe(
+      [
+        `"talk.mp4" (video/mp4): ${RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE}`,
+        `"queued.mp4" (video/mp4): ${RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE}`,
+      ].join('\n'),
+    );
+  });
+
+  it('adds no processing line for a failed video or a voice note placeholder', () => {
+    expect(
+      buildAttachmentDigest([
+        file({ extractedText: '[Video file: clip.mp4]', ingestionStatus: 'FAILED' }),
+        file({ extractedText: '[Video file: clip.mp4]', extractionError: 'too long for plan' }),
+        file({ filename: 'memo.webm', mimeType: 'audio/webm', extractedText: '[Audio file: m]' }),
+      ]),
+    ).toBe('');
   });
 
   it('is empty when nothing has derived text yet', () => {

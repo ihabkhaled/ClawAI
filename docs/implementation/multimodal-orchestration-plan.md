@@ -26,7 +26,7 @@ through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
 | Image editing / variation    | PARTIAL              | Reference image works for Gemini + SD img2img. OpenAI edits, masks, inpainting: MISSING.                                                                |
 | Image understanding          | PARTIAL / WRONG      | `image_url` parts go to every model with no per-model vision check. No helper path.                                                                     |
 | Voice notes / transcription  | DONE (unmetered)     | Full pipeline wired; no `PaygSurface` — rule 37 violation.                                                                                              |
-| Native audio into chat model | MISSING              | No provider payload carries audio.                                                                                                                      |
+| Native audio into chat model | MISSING → DONE       | No provider payload carried audio. Closed 2026-09-26: `NATIVE_AUDIO` on Gemini lanes (see Finalization).                                                |
 | TTS                          | MISSING              | No TTS anywhere; built in batch 9 (owner decision).                                                                                                     |
 | Video upload                 | DONE                 | Allowlist, magic bytes, chunked upload, recorder.                                                                                                       |
 | Native video                 | PARTIAL              | Gemini only, via a hardcoded chat-service model set; routing's `supportsVideoInput` is populated but read by nothing.                                   |
@@ -83,25 +83,25 @@ gates per batch, not by a live run. The live evidence comes from
 matrix once the stack runs this code
 ([skills/verify-multimodal-routing-live.md](../../skills/verify-multimodal-routing-live.md)).
 
-| Capability          | Code status     | Live    | Evidence / what is missing                                                                                                               |
-| ------------------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Image analysis      | IMPLEMENTED     | NOT RUN | Per-model vision (2b); blind lanes get helper vision (5, paid) or OCR + honest note (free, ADR-122).                                     |
-| Image generation    | IMPLEMENTED     | NOT RUN | Chat → image-service, plan gate (6), OpenAI per-image price (3), supersession/progress (10a). `assistantMessageId` stays null.           |
-| Image editing       | PARTIAL         | NOT RUN | Reference-image generation only (Gemini, SD img2img, reference reuse on retry). No masks, no inpainting, no OpenAI edits endpoint.       |
-| Audio transcription | IMPLEMENTED     | NOT RUN | Voice notes + video audio track, metered on `PaygSurface.TRANSCRIPTION` (4). Local STT has no path; gpt-4o-(mini-)transcribe not seeded. |
-| Native audio        | NOT IMPLEMENTED | NOT RUN | No provider payload carries audio; every chat model receives the transcript.                                                             |
-| TTS                 | IMPLEMENTED     | NOT RUN | `TTS_VOICE` role, `PaygSurface.TTS`, replay free, player UI (9). One voice per provider; a failed store releases the hold.               |
-| Video upload        | IMPLEMENTED     | NOT RUN | Allowlist, magic bytes, chunked upload, recorder (pre-existing); plan `maxVideoSeconds` enforced (7).                                    |
-| Video analysis      | IMPLEMENTED     | NOT RUN | ffmpeg probe, thumbnail, audio-track transcript with `[mm:ss]` lines (7); question-biased frames (8).                                    |
-| Native video        | IMPLEMENTED     | NOT RUN | `VIDEO_INPUT` models (snapshot) when processed, ≤ 60 min and ≤ plan limit (8); static Gemini set only as UNKNOWN fallback.               |
-| Video fallback      | IMPLEMENTED     | NOT RUN | Frames + transcript → helper-described frames → transcript + note; `STILL_PROCESSING` / `FAILED_PROCESSING` honest modes (8).            |
-| AUTO routing        | PARTIAL         | NOT RUN | `message.created` carries modalities; only the cloud-router AUTO path ranks by modality fit (8). Research digest empty while processing. |
-| Compare             | IMPLEMENTED     | NOT RUN | Per-lane media resolution and per-window budget (2b, 8). Same per-attachment tray + chips as chat (`useComposerAttachmentSurface`).      |
-| Judge               | IMPLEMENTED     | NOT RUN | Judge/critic resolve delivery against their own model; judge rebuild keeps the video document (2b, 8).                                   |
-| PAYG                | IMPLEMENTED     | NOT RUN | IMAGE per-image, TRANSCRIPTION, VISION_HELPER, TTS surfaces, unit metering (3). ffmpeg CPU unmetered; frame image tokens estimated.      |
-| Local models        | PARTIAL         | NOT RUN | Local vision heuristic (gemma3 / qwen-vl / llama4 / mistral-small), local-only helper on LOCAL_ONLY/PRIVACY_FIRST. No local STT or TTS.  |
-| Responsive UX       | IMPLEMENTED     | NOT RUN | 10a/10b components; the device matrix (≥ 3 widths per platform, both orientations, RTL) was not captured.                                |
-| Accessibility       | IMPLEMENTED     | NOT RUN | `aria-live` status lines, sr-only capability badges, localized titles (10a/10b); no axe / Lighthouse pass on these surfaces.             |
+| Capability          | Code status | Live    | Evidence / what is missing                                                                                                               |
+| ------------------- | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Image analysis      | IMPLEMENTED | NOT RUN | Per-model vision (2b); blind lanes get helper vision (5, paid) or OCR + honest note (free, ADR-122).                                     |
+| Image generation    | IMPLEMENTED | NOT RUN | Chat → image-service, plan gate (6), OpenAI per-image price (3), supersession/progress (10a). `assistantMessageId` stays null.           |
+| Image editing       | PARTIAL     | NOT RUN | Reference-image generation only (Gemini, SD img2img, reference reuse on retry). No masks, no inpainting, no OpenAI edits endpoint.       |
+| Audio transcription | IMPLEMENTED | NOT RUN | Voice notes + video audio track, metered on `PaygSurface.TRANSCRIPTION` (4). Local STT has no path; gpt-4o-(mini-)transcribe not seeded. |
+| Native audio        | IMPLEMENTED | NOT RUN | `NATIVE_AUDIO` (2026-09-26): Gemini lanes with catalog audio SUPPORTED get the audio + transcript; every other lane the transcript.      |
+| TTS                 | IMPLEMENTED | NOT RUN | `TTS_VOICE` role, `PaygSurface.TTS`, replay free, player UI (9). One voice per provider; a failed store releases the hold.               |
+| Video upload        | IMPLEMENTED | NOT RUN | Allowlist, magic bytes, chunked upload, recorder (pre-existing); plan `maxVideoSeconds` enforced (7).                                    |
+| Video analysis      | IMPLEMENTED | NOT RUN | ffmpeg probe, thumbnail, audio-track transcript with `[mm:ss]` lines (7); question-biased frames (8).                                    |
+| Native video        | IMPLEMENTED | NOT RUN | `VIDEO_INPUT` models (snapshot) when processed, ≤ 60 min and ≤ plan limit (8); static Gemini set only as UNKNOWN fallback.               |
+| Video fallback      | IMPLEMENTED | NOT RUN | Frames + transcript → helper-described frames → transcript + note; `STILL_PROCESSING` / `FAILED_PROCESSING` honest modes (8).            |
+| AUTO routing        | PARTIAL     | NOT RUN | `message.created` carries modalities; only the cloud-router AUTO path ranks by modality fit (8). Research digest empty while processing. |
+| Compare             | IMPLEMENTED | NOT RUN | Per-lane media resolution and per-window budget (2b, 8). Same per-attachment tray + chips as chat (`useComposerAttachmentSurface`).      |
+| Judge               | IMPLEMENTED | NOT RUN | Judge/critic resolve delivery against their own model; judge rebuild keeps the video document (2b, 8).                                   |
+| PAYG                | IMPLEMENTED | NOT RUN | IMAGE per-image, TRANSCRIPTION, VISION_HELPER, TTS surfaces, unit metering (3). ffmpeg CPU unmetered; frame image tokens estimated.      |
+| Local models        | PARTIAL     | NOT RUN | Local vision heuristic (gemma3 / qwen-vl / llama4 / mistral-small), local-only helper on LOCAL_ONLY/PRIVACY_FIRST. No local STT or TTS.  |
+| Responsive UX       | IMPLEMENTED | NOT RUN | 10a/10b components; the device matrix (≥ 3 widths per platform, both orientations, RTL) was not captured.                                |
+| Accessibility       | IMPLEMENTED | NOT RUN | `aria-live` status lines, sr-only capability badges, localized titles (10a/10b); no axe / Lighthouse pass on these surfaces.             |
 
 ### Open gaps collected across batches
 
@@ -110,9 +110,11 @@ matrix once the stack runs this code
   Grok per-image keys); dev
   containers need `service:rebuild` (shared packages, file-service `ffmpeg`), not a restart.
 - Transcription (4): local STT has no path; gpt-4o-(mini-)transcribe unseeded.
-- Video (7/8): no audit-service consumer for the `file.video_process_*` events;
-  ffmpeg CPU not PAYG-metered; frame image tokens estimated; research digest
-  empty for a video still processing at send. **Video cap decided (owner,
+- Video (7/8): no audit-service consumer for the `file.video_process_*` events.
+  ~~ffmpeg CPU not PAYG-metered; frame image tokens estimated~~ — decided
+  2026-09-26 (Finalization): not billed / billed on measured usage.
+  ~~Research digest empty for a video still processing at send~~ — closed
+  2026-09-26. **Video cap decided (owner,
   2026-09-25):** `maxVideoSeconds` = 600 for every paid plan including
   Unlimited, never `null` (`docs/business/plan-allowances.md`).
 - ~~Grok images settled at $0~~ — closed 2026-09-25: routing seed v8 prices
@@ -127,8 +129,9 @@ matrix once the stack runs this code
 - Image card (10a): `assistantMessageId` null; bare-base64 references without a
   file id not stored; `ImageGenerationProgressPanel` / ComfyUI timeline not
   rendered on the chat card. ~~Runtime cancel not wired~~ — wired (Cancellation).
-- Cancellation (§72): an image asset stored just before a winning cancel can be
-  left unreferenced. ~~Chunked upload has no abort~~ and ~~Stop before the
+- Cancellation (§72): ~~an image asset stored just before a winning cancel can
+  be left unreferenced~~ — closed 2026-09-26 (`discardStoredImage`; a failed
+  delete is logged, not retried). ~~Chunked upload has no abort~~ and ~~Stop before the
   read-aloud POST answers does not cancel~~ — closed 2026-09-25 (see the table
   below).
 - Frontend (10b): `extractionError` detail is backend English; a video processed
@@ -138,7 +141,7 @@ matrix once the stack runs this code
   at 740×360 the rail's − sits on the action rail~~ — closed 2026-09-25 in CSS
   (rule 36 §12). Unit/contract-gated only; the device matrix is not re-run.
 - Image editing: masks, inpainting and OpenAI edits not built.
-- Native audio into chat models: not built.
+- ~~Native audio into chat models: not built.~~ — closed 2026-09-26.
 
 ## Cancellation (pack §72, 2026-09-25)
 
@@ -243,7 +246,8 @@ Evidence: [`docs/16-quality-engineering/evidence/2026-09-25-multimodal/`](../16-
   `volumedetect` before the paid step → `NO_SPEECH`, no hold.
 - ~~gpt-image-1 charged the 1024x1024 price at every size.~~ Fixed 2026-09-25:
   sized price rows `gpt-image-1@<w>x<h>` (routing seed v7), unknown size → the
-  dearest row. dall-e-3 `hd` is still charged the standard price.
+  dearest row. ~~dall-e-3 `hd` is still charged the standard price~~ — closed
+  2026-09-26: seed v9 `dall-e-3@hd` $0.08.
 - ~~`image.failed` (RabbitMQ) did not name the AUTO successor.~~ Fixed
   2026-09-25: optional `supersededById` on `ImageFailedPayload`.
 - These four fixes are unit-gated only; not yet run live.
@@ -260,3 +264,18 @@ Evidence: [`docs/16-quality-engineering/evidence/2026-09-25-multimodal/`](../16-
 Firecrawl's `nuq.*` tables are missing in production, so the research stack
 fails its health check since ADR-121. It blocks a clean prod rollout of any
 batch until fixed; nothing in this program touches Firecrawl.
+
+## Finalization (2026-09-26)
+
+_Unit-gated; live QA not run (dev containers compile the main checkout)._
+
+| Item                        | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native audio (§13/§22)      | `FileDeliveryMode.NATIVE_AUDIO`, HYBRID (audio + transcript), Gemini transport + catalog `audioInput` SUPPORTED + ≤ 15 MB + fits half the file share; transcript pending/failed still sends audio with a note and reason. ADR-120 addendum 4, rule 42 item 22. Frontend label/count/badge + 2 reasons, 13 locales. Record == payload on both Gemini bodies (tool-catalog turns plan `nativeMediaTransport: false`; `usesGeminiNativeBody` picks body/URL/headers/parser, fixing a tool + video turn that posted the compatible body to `:generateContent`); compare holds include the native audio + video estimate. |
+| dall-e-3 HD price           | Routing seed v9 `dall-e-3@hd` 80,000 µUSD/image. image-service price key: `hd` → `@hd`, `standard` or absent (the adapter omits quality; OpenAI defaults to standard) → base row, unknown value → `@hd`. Deploy routing before image-service.                                                                                                                                                                                                                                                                                                                                                                        |
+| Orphan image on cancel race | `discardStoredImage` deletes the stored file through file-service `DELETE /internal/files/:id` (owner-checked, 404 = deleted, 10 s bound, never throws) before the hold is released.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Memory (§59)                | Audit: extraction reads only `MESSAGE_COMPLETED`'s stored user text (typed only) and the stored assistant reply. Transcripts, derived-observation blocks, `VIDEO:` blocks and TTS text are built per request and never stored on a message row, so nothing media-derived becomes memory automatically. No code change; recorded in the memory-service CLAUDE.md.                                                                                                                                                                                                                                                     |
+| Research digest             | A video still processing at send time adds `video still processing — transcript not yet available` instead of nothing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ffmpeg CPU                  | Not billed — local compute, same stance as local models. The paid steps inside video processing (transcription, helper frames) keep their own surfaces.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Frame / audio tokens        | Budgeted by estimate (window fit, hold size); billed on the provider's measured prompt tokens, so the charge is exact.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| image-service replicas      | One in production: `container_name: claw-image-service`, no `replicas` (only chat-service scales). The cancel SSE "same replica" note is moot until it is scaled.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |

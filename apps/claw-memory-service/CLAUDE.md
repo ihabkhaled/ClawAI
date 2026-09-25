@@ -52,6 +52,33 @@ The retrieval endpoint `POST /internal/memories/retrieve` is the canonical entry
 - Soft hints (`password`, `salary`, `medical`, …) → verdict `SENSITIVE` with confidence < 1.
 - Auto-approve from the suggestion queue ONLY fires for verdict `NORMAL` AND confidence ≥ `memory_preferences.autoApproveThreshold` (default 0.85).
 
+## Media-derived text (pack §59)
+
+**Rule (owner decision):** raw voice-note transcripts, `DERIVED IMAGE OBSERVATIONS` blocks
+(`<<<BEGIN/END DERIVED OBSERVATIONS>>>`), `VIDEO:` transcript blocks, TTS spoken text and any
+file `extractedText` are never stored as durable memory automatically. User-authored text stays
+eligible.
+
+**Audit (2026-09-26): holds today with no stripping code.** Auto-extraction has exactly one input:
+the `message.completed` event (`MemoryService.handleMessageCompleted` → `MemoryExtractionManager.extract`).
+It reads only two payload fields:
+
+- `userContent` — the stored `ChatMessage.content` of the last USER row (chat-service
+  `ChatMessagesService.publishMessageCompleted`). That is the typed text only. Attachment-only
+  sends store an empty row; the attachment-only lead, the `VOICE NOTE "<name>": …` frame, the
+  derived-observation block and the `VIDEO:` block are all built per request in
+  `ContextAssemblyManager` / the attachment-only utility and are never persisted to the row.
+- `content` — the stored assistant reply: model-authored text. It may paraphrase or quote a
+  transcript (a legitimate extraction source, same as any reply), but the framed blocks live in
+  the system prompt, not the reply, so a delimiter appears there only if a model echoes it.
+
+Memory-service never receives the assembled prompt or file text: no other service POSTs
+conversation or file text to it, and context-pack items only store a `fileId` reference the user
+added by hand. **If you ever add an extraction input that carries assembled prompts or file text,
+strip the framed media blocks at that input first** (copy the marker literals from chat-service
+`constants/vision-helper.constants.ts`, `voice-note.constants.ts`, `video-delivery.constants.ts`
+with a comment naming the source; no shared-package dependency) and test it.
+
 ## All Standard Backend Rules Apply
 
 See the root CLAUDE.md for the full set of architecture rules, naming conventions, and code quality requirements. Key points:

@@ -128,6 +128,29 @@ describe('VIDEO_FRAMES_AND_TRANSCRIPT', () => {
   });
 });
 
+describe('NATIVE_AUDIO', () => {
+  it('has its own label and badge, never the transcript one', () => {
+    expect(getFileDeliveryModeLabel(FileDeliveryMode.NATIVE_AUDIO, identity)).toBe(
+      'compare.delivery.nativeAudio',
+    );
+    const badges = buildFileDeliveryBadges(
+      countFileDeliveriesByMode([entry(FileDeliveryMode.NATIVE_AUDIO)]),
+      identity,
+    );
+    expect(badges.map((badge) => [badge.countKey, badge.label, badge.count])).toEqual([
+      ['audio', 'compare.delivery.nativeAudio', 1],
+    ]);
+  });
+
+  it('is accepted from message metadata', () => {
+    const entries =
+      readFileDeliveryFromMetadata({
+        fileDelivery: [{ ...entry(FileDeliveryMode.NATIVE_AUDIO), mode: 'NATIVE_AUDIO' }],
+      }) ?? [];
+    expect(entries.map((item) => item.mode)).toEqual([FileDeliveryMode.NATIVE_AUDIO]);
+  });
+});
+
 describe('countFileDeliveriesByMode', () => {
   it('counts every mode into its own bucket', () => {
     const counts = countFileDeliveriesByMode([
@@ -143,6 +166,7 @@ describe('countFileDeliveriesByMode', () => {
       entry(FileDeliveryMode.FAILED_PROCESSING),
       entry(FileDeliveryMode.DERIVED_IMAGE_TEXT),
       entry(FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT),
+      entry(FileDeliveryMode.NATIVE_AUDIO),
     ]);
     expect(counts).toEqual({
       extracted: 1,
@@ -156,6 +180,7 @@ describe('countFileDeliveriesByMode', () => {
       failed: 1,
       described: 1,
       videoFrames: 1,
+      audio: 1,
     });
   });
 

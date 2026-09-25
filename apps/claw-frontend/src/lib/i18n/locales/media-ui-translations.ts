@@ -66,6 +66,9 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'No model could describe the video frames, so only the transcript was sent',
       videoFramesHelperPlan:
         'Your plan does not include frame descriptions, so only the transcript was sent',
+      nativeAudioTranscriptPending:
+        'The model heard the recording; its transcript was not ready yet',
+      nativeAudioTranscriptFailed: 'The model heard the recording; its transcription failed',
       unknown: 'The file was not delivered in full',
     },
     imageStatus: {
@@ -132,6 +135,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoFramesUnavailable: 'لم تتوفر إطارات الفيديو، لذا أُرسل النص المكتوب فقط',
       videoFramesNoHelper: 'لم يتمكن أي نموذج من وصف إطارات الفيديو، لذا أُرسل النص المكتوب فقط',
       videoFramesHelperPlan: 'خطتك لا تتضمن وصف الإطارات، لذا أُرسل النص المكتوب فقط',
+      nativeAudioTranscriptPending: 'استمع النموذج إلى التسجيل؛ لم يكن النص المفرغ جاهزًا بعد',
+      nativeAudioTranscriptFailed: 'استمع النموذج إلى التسجيل؛ فشل تفريغ النص',
       unknown: 'لم يُسلَّم الملف كاملًا',
     },
     imageStatus: {
@@ -208,6 +213,10 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Aucun modèle n’a pu décrire les images de la vidéo ; seule la transcription a été envoyée',
       videoFramesHelperPlan:
         'Votre forfait n’inclut pas la description d’images ; seule la transcription a été envoyée',
+      nativeAudioTranscriptPending:
+        'Le modèle a écouté l’enregistrement ; sa transcription n’était pas encore prête',
+      nativeAudioTranscriptFailed:
+        'Le modèle a écouté l’enregistrement ; sa transcription a échoué',
       unknown: 'Le fichier n’a pas été transmis en entier',
     },
     imageStatus: {
@@ -284,6 +293,10 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Nessun modello ha potuto descrivere i fotogrammi; è stata inviata solo la trascrizione',
       videoFramesHelperPlan:
         'Il tuo piano non include la descrizione dei fotogrammi; è stata inviata solo la trascrizione',
+      nativeAudioTranscriptPending:
+        'Il modello ha ascoltato la registrazione; la trascrizione non era ancora pronta',
+      nativeAudioTranscriptFailed:
+        'Il modello ha ascoltato la registrazione; la trascrizione non è riuscita',
       unknown: 'Il file non è stato consegnato per intero',
     },
     imageStatus: {
@@ -359,6 +372,10 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Kein Modell konnte die Videobilder beschreiben; nur das Transkript wurde gesendet',
       videoFramesHelperPlan:
         'Dein Tarif enthält keine Bildbeschreibungen; nur das Transkript wurde gesendet',
+      nativeAudioTranscriptPending:
+        'Das Modell hat die Aufnahme angehört; das Transkript war noch nicht fertig',
+      nativeAudioTranscriptFailed:
+        'Das Modell hat die Aufnahme angehört; die Transkription ist fehlgeschlagen',
       unknown: 'Die Datei wurde nicht vollständig übermittelt',
     },
     imageStatus: {
@@ -433,6 +450,9 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Ningún modelo pudo describir los fotogramas; solo se envió la transcripción',
       videoFramesHelperPlan:
         'Tu plan no incluye descripciones de fotogramas; solo se envió la transcripción',
+      nativeAudioTranscriptPending:
+        'El modelo escuchó la grabación; su transcripción aún no estaba lista',
+      nativeAudioTranscriptFailed: 'El modelo escuchó la grabación; su transcripción falló',
       unknown: 'El archivo no se entregó completo',
     },
     imageStatus: {
@@ -503,6 +523,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoFramesUnavailable: 'Кадры видео были недоступны; отправлена только расшифровка',
       videoFramesNoHelper: 'Ни одна модель не смогла описать кадры; отправлена только расшифровка',
       videoFramesHelperPlan: 'Ваш тариф не включает описание кадров; отправлена только расшифровка',
+      nativeAudioTranscriptPending: 'Модель прослушала запись; расшифровка ещё не была готова',
+      nativeAudioTranscriptFailed: 'Модель прослушала запись; расшифровка не удалась',
       unknown: 'Файл был передан не полностью',
     },
     imageStatus: {
@@ -577,6 +599,9 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'Nenhum modelo conseguiu descrever os quadros; apenas a transcrição foi enviada',
       videoFramesHelperPlan:
         'Seu plano não inclui descrição de quadros; apenas a transcrição foi enviada',
+      nativeAudioTranscriptPending:
+        'O modelo ouviu a gravação; a transcrição ainda não estava pronta',
+      nativeAudioTranscriptFailed: 'O modelo ouviu a gravação; a transcrição falhou',
       unknown: 'O arquivo não foi entregue por completo',
     },
     imageStatus: {
@@ -649,6 +674,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
         'कोई भी मॉडल वीडियो फ़्रेम का विवरण नहीं दे सका, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
       videoFramesHelperPlan:
         'आपके प्लान में फ़्रेम विवरण शामिल नहीं है, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
+      nativeAudioTranscriptPending: 'मॉडल ने रिकॉर्डिंग सुनी; उसका ट्रांसक्रिप्ट अभी तैयार नहीं था',
+      nativeAudioTranscriptFailed: 'मॉडल ने रिकॉर्डिंग सुनी; उसका ट्रांसक्रिप्शन विफल रहा',
       unknown: 'फ़ाइल पूरी तरह नहीं पहुँचाई गई',
     },
     imageStatus: {
@@ -719,6 +746,9 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoFramesNoHelper: 'フレームを説明できるモデルがなかったため、文字起こしのみを送信しました',
       videoFramesHelperPlan:
         'ご利用のプランにはフレームの説明が含まれないため、文字起こしのみを送信しました',
+      nativeAudioTranscriptPending:
+        'モデルは録音を直接聴きました。文字起こしはまだ完了していませんでした',
+      nativeAudioTranscriptFailed: 'モデルは録音を直接聴きました。文字起こしは失敗しました',
       unknown: 'ファイルは完全には届けられませんでした',
     },
     imageStatus: {
@@ -786,6 +816,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoFramesUnavailable: 'ไม่มีเฟรมวิดีโอ จึงส่งเฉพาะข้อความถอดเสียง',
       videoFramesNoHelper: 'ไม่มีโมเดลใดอธิบายเฟรมวิดีโอได้ จึงส่งเฉพาะข้อความถอดเสียง',
       videoFramesHelperPlan: 'แพ็กเกจของคุณไม่รวมการอธิบายเฟรม จึงส่งเฉพาะข้อความถอดเสียง',
+      nativeAudioTranscriptPending: 'โมเดลฟังไฟล์บันทึกเสียงโดยตรง แต่คำถอดเสียงยังไม่พร้อม',
+      nativeAudioTranscriptFailed: 'โมเดลฟังไฟล์บันทึกเสียงโดยตรง แต่การถอดเสียงล้มเหลว',
       unknown: 'ไฟล์ไม่ได้ถูกส่งครบถ้วน',
     },
     imageStatus: {
@@ -854,6 +886,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoFramesNoHelper:
         'هیچ مدلی نتوانست فریم‌های ویدیو را توصیف کند، پس فقط متن پیاده‌شده فرستاده شد',
       videoFramesHelperPlan: 'طرح شما شامل توصیف فریم نیست، پس فقط متن پیاده‌شده فرستاده شد',
+      nativeAudioTranscriptPending: 'مدل خودِ ضبط را شنید؛ متن پیاده‌شده هنوز آماده نبود',
+      nativeAudioTranscriptFailed: 'مدل خودِ ضبط را شنید؛ پیاده‌سازی متن ناموفق بود',
       unknown: 'فایل به‌طور کامل تحویل داده نشد',
     },
     imageStatus: {
@@ -920,6 +954,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoFramesUnavailable: '视频画面不可用，因此只发送了转录文本',
       videoFramesNoHelper: '没有模型能够描述视频画面，因此只发送了转录文本',
       videoFramesHelperPlan: '您的套餐不包含画面描述，因此只发送了转录文本',
+      nativeAudioTranscriptPending: '模型直接收听了录音；转录文本尚未就绪',
+      nativeAudioTranscriptFailed: '模型直接收听了录音；转录失败',
       unknown: '文件未能完整送达',
     },
     imageStatus: {

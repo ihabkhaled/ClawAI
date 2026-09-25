@@ -5,7 +5,9 @@ import {
   MIME_PREFIX_MODALITIES,
   RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS,
   RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS,
+  RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE,
 } from '../constants/attachment-modality.constants';
+import { VIDEO_MIME_PREFIX } from '../../../common/constants/execution.constants';
 import { AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX } from '../constants/voice-note.constants';
 import {
   IMAGE_FILE_PLACEHOLDER_PREFIX,
@@ -13,6 +15,7 @@ import {
 } from '../constants/media-placeholder.constants';
 import type { AttachmentModalityFields } from '../types/attachment-modality.types';
 import type { FileContentResponse } from '../types/context.types';
+import { videoInFlight, videoProcessingFailed } from './video-context.utility';
 
 /** The non-text inputs these mime types need, in a stable order, no duplicates. */
 export function requiredModalitiesForMimeTypes(mimeTypes: readonly string[]): RequiredModality[] {
@@ -54,26 +57,40 @@ export function attachmentModalityFields(
  * A SHORT digest of what the attachments say, for the research planner
  * (multimodal batch 8) — a transcript's opening words, an image's OCR text.
  * Bounded per file and overall; placeholders and empty rows contribute
- * nothing. Framed by the caller as data, never instructions.
+ * nothing, except a video still processing at send time, which gets an
+ * honest "not yet available" line. Framed by the caller as data, never
+ * instructions.
  */
 export function buildAttachmentDigest(files: readonly FileContentResponse[]): string {
   const parts: string[] = [];
   let used = 0;
   for (const file of files) {
-    const text = (file.extractedText ?? '').replaceAll(/\s+/g, ' ').trim();
-    if (text.length === 0 || isPlaceholder(text)) {
+    const digestText = digestTextOf(file);
+    if (digestText === null) {
       continue;
     }
     const room = RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS - used;
     if (room <= 0) {
       break;
     }
-    const excerpt = text.slice(0, Math.min(RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS, room));
+    const excerpt = digestText.slice(0, Math.min(RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS, room));
     const safeName = file.filename.replaceAll(/[\r\n"]/g, ' ');
     parts.push(`"${safeName}" (${file.mimeType}): ${excerpt}`);
     used += excerpt.length;
   }
   return parts.join('\n');
+}
+
+/** What one attachment adds to the digest, or null for nothing. */
+function digestTextOf(file: FileContentResponse): string | null {
+  const text = (file.extractedText ?? '').replaceAll(/\s+/g, ' ').trim();
+  if (text.length > 0 && !isPlaceholder(text)) {
+    return text;
+  }
+  const isVideo = file.mimeType.toLowerCase().startsWith(VIDEO_MIME_PREFIX);
+  return isVideo && videoInFlight(file) && !videoProcessingFailed(file)
+    ? RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE
+    : null;
 }
 
 function isPlaceholder(text: string): boolean {

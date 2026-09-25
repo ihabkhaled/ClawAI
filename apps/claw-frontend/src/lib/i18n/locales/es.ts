@@ -2055,6 +2055,7 @@ export const es: TranslationDictionary = {
       nativeVideo: 'Vídeo',
       derivedImageText: 'Descrita por asistente',
       videoFramesAndTranscript: 'Vídeo: fotogramas + transcripción',
+      nativeAudio: 'Audio: escuchado + transcripción',
       videoFramesAt: 'fotogramas en {times}',
       stillProcessing: 'Aún en proceso',
       failedProcessing: 'Error de procesamiento',

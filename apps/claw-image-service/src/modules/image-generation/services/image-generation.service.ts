@@ -588,6 +588,12 @@ export class ImageGenerationService {
 
     const asset = await this.persistAsset(generationId, generation, result);
     if (asset === null) {
+      // The bytes are already in file-service; the cancel won before FINALIZING.
+      await this.executionManager.discardStoredImage(
+        result.fileId,
+        generation.userId,
+        generationId,
+      );
       await this.discardWithRelease(generation, ImageGenerationStatus.FINALIZING, result);
       return;
     }
@@ -601,6 +607,11 @@ export class ImageGenerationService {
     });
     if (completedGen === null) {
       await this.repository.deleteAsset(asset.id);
+      await this.executionManager.discardStoredImage(
+        result.fileId,
+        generation.userId,
+        generationId,
+      );
       await this.discardWithRelease(generation, ImageGenerationStatus.FINALIZING, result);
       return;
     }

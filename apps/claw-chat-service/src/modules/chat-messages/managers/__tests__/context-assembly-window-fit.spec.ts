@@ -19,6 +19,13 @@ import {
   describedFrameSet,
   fitVideoObservations,
 } from '../../utilities/video-delivery.utility';
+import { MediaCapabilityState } from '../../../../common/enums/media-capability-state.enum';
+import { resolveAttachmentDelivery } from '../../utilities/attachment-delivery.utility';
+import {
+  estimateNativeAudioTokens,
+  nativeAudioTokenBudget,
+} from '../../utilities/native-audio.utility';
+import { fallbackModelTokenBudget } from '../../utilities/assembled-context.utility';
 
 const { appConfigGet, httpRequest } = vi.hoisted(() => ({
   appConfigGet: vi.fn(),
@@ -439,6 +446,53 @@ describe('compare budgets one shared context for its smallest lane', () => {
 
     expect(bundle.context.modelBudget.contextWindowTokens).toBe(CONSERVATIVE_CONTEXT_WINDOW_TOKENS);
     expect(promptTokensOf(bundle.context)).toBeLessThanOrEqual(CONSERVATIVE_CONTEXT_WINDOW_TOKENS);
+  });
+});
+
+// Rule 51 item 4: native audio is prompt tokens too. It spends half the file
+// share (at an estimate that errs long); a recording past it reaches the lane
+// as its transcript, so the audio never pushes the prompt past the window.
+describe('native audio spends the file share of the lane window', () => {
+  const recording = (bytes: number) => ({
+    id: 'memo',
+    filename: 'memo.webm',
+    mimeType: 'audio/webm',
+    content: 'A'.repeat(Math.ceil((bytes * 4) / 3)),
+    extractedText: 'hello',
+    ingestionStatus: 'COMPLETED' as const,
+    extractionError: null,
+  });
+  const modeOn = (contextWindowTokens: number, bytes: number): FileDeliveryMode | undefined => {
+    const budget = nativeAudioTokenBudget({ ...fallbackModelTokenBudget(), contextWindowTokens });
+    return resolveAttachmentDelivery(
+      [recording(bytes)],
+      {
+        vision: MediaCapabilityState.SUPPORTED,
+        audioInput: MediaCapabilityState.SUPPORTED,
+        videoInput: MediaCapabilityState.SUPPORTED,
+      },
+      {
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        nativeVideoTransport: true,
+        nativeAudioTransport: true,
+        nativeAudioTokenBudget: budget,
+      },
+    )[0]?.mode;
+  };
+
+  it('keeps a one-minute note native on a 1M window and the estimate inside the share', () => {
+    const bytes = 120_000;
+    const share = nativeAudioTokenBudget({
+      ...fallbackModelTokenBudget(),
+      contextWindowTokens: 1_048_576,
+    });
+    expect(estimateNativeAudioTokens(recording(bytes))).toBeLessThanOrEqual(share);
+    expect(modeOn(1_048_576, bytes)).toBe(FileDeliveryMode.NATIVE_AUDIO);
+  });
+
+  it('sends the transcript instead when the recording would overflow a small window', () => {
+    expect(modeOn(CONSERVATIVE_CONTEXT_WINDOW_TOKENS, 120_000)).toBe(FileDeliveryMode.TRANSCRIPT);
   });
 });
 

@@ -38,4 +38,8 @@ export enum FileDeliveryMode {
   // helper's descriptions) — multimodal batch 8. `frameTimestampsMs` says
   // which moments were sampled.
   VIDEO_FRAMES_AND_TRANSCRIPT = 'VIDEO_FRAMES_AND_TRANSCRIPT',
+  // The model heard the recording itself (Gemini native audio) AND received
+  // its transcript as text; `reason` says when the transcript was not ready
+  // or failed and the audio alone carried the words (rule 42 item 22).
+  NATIVE_AUDIO = 'NATIVE_AUDIO',
 }

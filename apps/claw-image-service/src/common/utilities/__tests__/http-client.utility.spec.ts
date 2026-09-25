@@ -1,4 +1,4 @@
-import { httpGet, httpPost } from '../http-client.utility';
+import { httpDelete, httpGet, httpPost } from '../http-client.utility';
 
 /**
  * These wrappers delegate to `@claw/shared-utilities`, so the refusals below
@@ -39,6 +39,20 @@ describe('http-client.utility', () => {
         await expect(httpPost(testCase.url, {})).rejects.toThrow(testCase.message);
       });
     }
+  });
+
+  describe('httpDelete', () => {
+    for (const testCase of REFUSED_URLS) {
+      it(`refuses ${testCase.label}`, async () => {
+        await expect(httpDelete(testCase.url)).rejects.toThrow(testCase.message);
+      });
+    }
+
+    it('forwards allowedHosts to the shared guard', async () => {
+      await expect(
+        httpDelete('https://other.example.com/x', undefined, new Set(['declared.example.com'])),
+      ).rejects.toThrow(/does not call/);
+    });
   });
 
   describe('allowedHosts passthrough', () => {
