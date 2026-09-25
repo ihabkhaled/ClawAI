@@ -15,6 +15,9 @@ qa/*
 # tracked under qa/routing-regression/ per docs/03-architecture/
 # semantic-router-flagship-plan.md §10.
 !qa/routing-regression/
+# Exception: the multimodal live lane named by the multimodal pack §101
+# (skills/verify-multimodal-routing-live.md). It holds no credentials.
+!qa/test-multimodal.sh
 
 # Build output
 dist/

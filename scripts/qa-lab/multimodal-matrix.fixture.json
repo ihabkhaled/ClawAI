@@ -1,0 +1,67 @@
+{
+  "snapshot": {
+    "generatedAt": "2026-09-25T00:00:00.000Z",
+    "models": [
+      {
+        "provider": "OPENAI",
+        "modelKey": "whisper-1",
+        "displayName": "Whisper",
+        "modalitiesIn": ["TEXT", "AUDIO"],
+        "modalitiesOut": ["TEXT"],
+        "exposure": "UNEXPOSED",
+        "kind": "TOOL"
+      },
+      {
+        "provider": "OPENAI",
+        "modelKey": "gpt-4.1-mini",
+        "displayName": "GPT-4.1 mini",
+        "modalitiesIn": ["TEXT", "IMAGE_INPUT", "AUDIO"],
+        "modalitiesOut": ["TEXT"],
+        "exposure": "EXPOSED",
+        "kind": "CHAT"
+      },
+      {
+        "provider": "GEMINI",
+        "modelKey": "gemini-2.5-flash",
+        "displayName": "Gemini 2.5 Flash",
+        "modalitiesIn": ["TEXT", "IMAGE_INPUT", "AUDIO", "VIDEO_INPUT"],
+        "modalitiesOut": ["TEXT"],
+        "exposure": "EXPOSED",
+        "kind": "CHAT"
+      },
+      {
+        "provider": "OLLAMA",
+        "modelKey": "llama3.1:8b",
+        "displayName": "Llama 3.1 8B",
+        "modalitiesIn": ["TEXT"],
+        "modalitiesOut": ["TEXT"],
+        "exposure": "EXPOSED",
+        "kind": "CHAT"
+      },
+      {
+        "provider": "OLLAMA",
+        "modelKey": "nomic-embed-text",
+        "displayName": "Nomic embed",
+        "modalitiesIn": ["TEXT"],
+        "modalitiesOut": ["TEXT"],
+        "exposure": "UNEXPOSED",
+        "kind": "EMBEDDING"
+      }
+    ]
+  },
+  "roles": {
+    "VISION_HELPER": [
+      { "provider": "GEMINI", "modelAlias": "gemini-2.5-flash", "order": 0, "enabled": true },
+      { "provider": "OPENAI", "modelAlias": "gpt-4.1-mini", "order": 1, "enabled": true }
+    ],
+    "TTS_VOICE": [
+      {
+        "provider": "GEMINI",
+        "modelAlias": "gemini-2.5-flash-preview-tts",
+        "order": 0,
+        "enabled": false
+      },
+      { "provider": "OPENAI", "modelAlias": "tts-1", "order": 1, "enabled": true }
+    ]
+  }
+}

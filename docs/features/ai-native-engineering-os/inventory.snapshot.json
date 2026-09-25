@@ -7765,7 +7765,7 @@
       ],
       "skills": [
         {
-          "bytes": 30790,
+          "bytes": 31069,
           "file": "skills/00-index.md"
         },
         {
@@ -8111,6 +8111,10 @@
         {
           "bytes": 5122,
           "file": "skills/verify-a-batch-live.md"
+        },
+        {
+          "bytes": 7969,
+          "file": "skills/verify-multimodal-routing-live.md"
         },
         {
           "bytes": 7332,

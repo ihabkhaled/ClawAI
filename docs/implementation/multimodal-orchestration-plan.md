@@ -62,6 +62,7 @@ through [rules/26](../../rules/26-prompt-pack-intake-protocol.md).
     - 10a **Image card: supersession, turn ids, reference reuse, runtime progress.** _Implemented (2026-09-25):_ `ImageGeneration.supersededById` (indexed) + `ImageAssetRole {OUTPUT, REFERENCE}` on `ImageGenerationAsset.role`, migration `20260925235000_add_image_supersession_and_reference_role`; `ImageGenerationRepository.createSuccessor` is the one writer (new row + link + reference copy, one transaction); AUTO fallback spawns and links its successor BEFORE the FAILED event, which carries `supersededById`; retry-alternate links and emits a superseded event; retry / retry-alternate of a non-head row → 409 `IMAGE_GENERATION_SUPERSEDED`; `GET /images/:id` → `latest` (≤ 8 hops, owner-checked every hop, foreign/missing link reads null); chat sends `threadId` / `userMessageId` / `referenceFileId` (`ImageGenerateRequest`); reference stored as a REFERENCE asset (file id only) and re-read on retry via file-service `/internal/files/:id/content` (owner-checked) or failed `IMAGE_REFERENCE_UNAVAILABLE`; ComfyUI `onEvent` forwarded and SD WebUI progress polled (bounded) into the existing SSE as `runtimeProgress` (stage + observed metrics, percent only when measured); frontend listener follows `supersededById` live and `latest` after refresh (≤ 8 hops), retries target the shown row, bounded status polling (150), card stage line `chat.imageStage.*` (13 locales, `aria-live="polite"`). Open: `assistantMessageId` stays null (the assistant message is stored after dispatch); bare-base64 references without a file id are not stored; `ImageGenerationProgressPanel` / ComfyUI timeline and runtime cancel are still not rendered/wired on the chat card; the pre-existing English `getImageStatusLabel` strings are unchanged; live QA not run (dev containers compile the main checkout).
     - 10b **Recorder, picker badges, attachment chips, reason/status i18n, video thumbnail.** _Implemented (2026-09-25):_ `useModelMediaCapabilities()` (no args; `useCompareMediaCapabilities` deleted) → `resolveMediaCapabilities`: mic enabled while any `available-models` row has `supportsAudio` or the list is empty/unknown (reason `mediaUi.recorder.noTranscription`), camera enabled unless plan `maxVideoSeconds === 0` via the existing `useEntitlements` query (reason `mediaUi.recorder.videoDisabledByPlan`), never tied to the selected model; picker rows carry `capabilities` from the row's own `supportsVision`/`supportsAudio`/`supportsVideoInput` (+ `ImageOutput` on image entries), rendered by `ModelCapabilityBadges` (glyph + localized title + sr-only); `ComposerAttachmentChips` in the chat composer (uploading → uploaded → processing → ready / failed with reason / unsupported on 415 or schema refusal; state from the existing `useFiles` poll, `aria-live=polite`, send while processing still allowed); all 15 chat-service `file_delivery.reason.*` keys + unknown fallback localized in the delivery tooltip (test reads chat-service's constants file); `getImageStatusLabelKey` replaces English `getImageStatusLabel`; processed-video thumbnail + length from the owner's `GET /files/:id` `extractionMetadata.media` (no backend change; validated data URL, fallback to the play card); `mediaUi` namespace in 13 locales (`media-ui-translations.ts`); stale `chat.recorder.*NotSupportedByModel` keys removed. Open: chips only on the main chat composer (labs/Compare keep count + progress bar); ingestion `extractionError` detail is backend English; a video processed after the message rendered shows its thumbnail only after the file-meta cache refreshes; live QA / device-matrix screenshots not run (dev containers compile the main checkout).
 11. **QA automation + knowledge** — `qa/test-multimodal.sh`, capability matrix, skills, runbooks.
+    _Implemented (2026-09-25):_ `qa/test-multimodal.sh` (tracked via a `.gitignore` exception; no credentials — admin from env, free + paid users created with random unprinted passwords, paid on `QA_PAID_PLAN_SLUG` + a $2 admin credit adjustment, or reused from env) covers image → blind model (`DERIVED_IMAGE_TEXT` paid / `OMITTED_NO_VISION` free), TTS (fileId, replay same fileId `cached=true` with no new `TTS` CONSUMPTION row, free 403), voice → transcription + ledger `TRANSCRIPTION` RESERVATION/CONSUMPTION, video job (`extractionMetadata.media`, `[00:` timestamps), frames route unreachable through nginx, video chat (`VIDEO_FRAMES_AND_TRANSCRIPT` / `NATIVE_VIDEO`), chat image generation (paid COMPLETED / free `plan_feature_disabled`), non-owner retry/retry-alternate/GET 404, image + chat SSE without auth 401, text-as-`.mp4` and oversized rejections, and the `mediaDelivery` / `visionHelper` / `videoDelivery` / transcription reserve-finalize / `videoProcessed` log lines; fixtures built at runtime (PNG constant, ffmpeg inside file-service), every wait deadline-bounded, explicit SKIP lines, exit = FAIL count. `scripts/qa-lab/multimodal-capability-matrix.mjs` + pure `multimodal-matrix.mjs` print the per-model matrix from the connector `models-snapshot` (or `available-models` through nginx) + `routing/assistant-models/{VISION_HELPER,TTS_VOICE}`, with `--fixture` offline mode and `tools/__tests__/multimodal-capability-matrix.test.mjs`. Skill `verify-multimodal-routing-live.md`. The script was syntax-checked and its jq filters dry-run offline; **it has not been run against a stack** (see Completion status).
 
 Each batch ships its own knowledge delta (rule 33) and scoped gates (rule 34).
 
@@ -70,3 +71,60 @@ Each batch ships its own knowledge delta (rule 33) and scoped gates (rule 34).
 - Pack §140 batch split: security hardening moved first because the audit found an IDOR.
 - Pack §101 names `qa/test-multimodal.sh`; created in batch 11.
 - Live QA: dev containers compile the **main checkout's** `src`, so worktree code runs live only after it reaches `main` and the main checkout is updated. The main checkout carries unrelated uncommitted WIP, which is not touched.
+
+## Completion status (pack §147, 2026-09-25)
+
+**Live lanes: all NOT RUN.** The dev stack compiles the **main checkout's** `src`
+(bind mount + `tsgo --watch`), and the main checkout is being edited by another
+session and is 34+ commits behind this branch, so the running containers do not
+serve this program's code. Every "code" status below is backed by scoped unit
+gates per batch, not by a live run. The live evidence comes from
+[`qa/test-multimodal.sh`](../../qa/test-multimodal.sh) and the capability
+matrix once the stack runs this code
+([skills/verify-multimodal-routing-live.md](../../skills/verify-multimodal-routing-live.md)).
+
+| Capability          | Code status     | Live    | Evidence / what is missing                                                                                                               |
+| ------------------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Image analysis      | IMPLEMENTED     | NOT RUN | Per-model vision (2b); blind lanes get helper vision (5, paid) or OCR + honest note (free, ADR-122).                                     |
+| Image generation    | IMPLEMENTED     | NOT RUN | Chat → image-service, plan gate (6), OpenAI per-image price (3), supersession/progress (10a). `assistantMessageId` stays null.           |
+| Image editing       | PARTIAL         | NOT RUN | Reference-image generation only (Gemini, SD img2img, reference reuse on retry). No masks, no inpainting, no OpenAI edits endpoint.       |
+| Audio transcription | IMPLEMENTED     | NOT RUN | Voice notes + video audio track, metered on `PaygSurface.TRANSCRIPTION` (4). Local STT has no path; gpt-4o-(mini-)transcribe not seeded. |
+| Native audio        | NOT IMPLEMENTED | NOT RUN | No provider payload carries audio; every chat model receives the transcript.                                                             |
+| TTS                 | IMPLEMENTED     | NOT RUN | `TTS_VOICE` role, `PaygSurface.TTS`, replay free, player UI (9). One voice per provider; paid call whose file store fails is charged.    |
+| Video upload        | IMPLEMENTED     | NOT RUN | Allowlist, magic bytes, chunked upload, recorder (pre-existing); plan `maxVideoSeconds` enforced (7).                                    |
+| Video analysis      | IMPLEMENTED     | NOT RUN | ffmpeg probe, thumbnail, audio-track transcript with `[mm:ss]` lines (7); question-biased frames (8).                                    |
+| Native video        | IMPLEMENTED     | NOT RUN | `VIDEO_INPUT` models (snapshot) when processed, ≤ 60 min and ≤ plan limit (8); static Gemini set only as UNKNOWN fallback.               |
+| Video fallback      | IMPLEMENTED     | NOT RUN | Frames + transcript → helper-described frames → transcript + note; `STILL_PROCESSING` / `FAILED_PROCESSING` honest modes (8).            |
+| AUTO routing        | PARTIAL         | NOT RUN | `message.created` carries modalities; only the cloud-router AUTO path ranks by modality fit (8). Research digest empty while processing. |
+| Compare             | IMPLEMENTED     | NOT RUN | Per-lane media resolution and per-window budget (2b, 8). Attachment chips only on the main composer; Compare keeps count + progress bar. |
+| Judge               | IMPLEMENTED     | NOT RUN | Judge/critic resolve delivery against their own model; judge rebuild keeps the video document (2b, 8).                                   |
+| PAYG                | IMPLEMENTED     | NOT RUN | IMAGE per-image, TRANSCRIPTION, VISION_HELPER, TTS surfaces, unit metering (3). ffmpeg CPU unmetered; frame image tokens estimated.      |
+| Local models        | PARTIAL         | NOT RUN | Local vision heuristic (gemma3 / qwen-vl / llama4 / mistral-small), local-only helper on LOCAL_ONLY/PRIVACY_FIRST. No local STT or TTS.  |
+| Responsive UX       | IMPLEMENTED     | NOT RUN | 10a/10b components; the device matrix (≥ 3 widths per platform, both orientations, RTL) was not captured.                                |
+| Accessibility       | IMPLEMENTED     | NOT RUN | `aria-live` status lines, sr-only capability badges, localized titles (10a/10b); no axe / Lighthouse pass on these surfaces.             |
+
+### Open gaps collected across batches
+
+- **Deploy order is load-bearing:** auth → routing → file → image → chat; dev
+  containers need `service:rebuild` (shared packages, file-service `ffmpeg`), not a restart.
+- Transcription (4): local STT has no path; gpt-4o-(mini-)transcribe unseeded.
+- Video (7/8): no audit-service consumer for the `file.video_process_*` events;
+  ffmpeg CPU not PAYG-metered (so `unlimited` stays capped at 600 s); frame image
+  tokens estimated; research digest empty for a video still processing at send.
+- AUTO (8): modality-fit ranking only on the cloud-router path.
+- TTS (9): connector base URL not used for speech; a paid synthesis whose file
+  store fails is charged with no audio saved; no voice picker.
+- Image card (10a): `assistantMessageId` null; bare-base64 references without a
+  file id not stored; `ImageGenerationProgressPanel` / ComfyUI timeline and
+  runtime cancel not wired on the chat card.
+- Frontend (10b): chips only on the main composer; `extractionError` detail is
+  backend English; a video processed after render shows its thumbnail only after
+  the file-meta cache refreshes.
+- Image editing: masks, inpainting and OpenAI edits not built.
+- Native audio into chat models: not built.
+
+### Production deploy blocker (not this program's code)
+
+Firecrawl's `nuq.*` tables are missing in production, so the research stack
+fails its health check since ADR-121. It blocks a clean prod rollout of any
+batch until fixed; nothing in this program touches Firecrawl.

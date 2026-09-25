@@ -69,7 +69,9 @@ Unit tests are the floor. A feature also needs, per `CLAUDE.md` QE lifecycle and
 - A **QA script** `qa/test-<feature>.sh` (gitignored) — auth + every endpoint
   (happy + 400/401/403/404/409) + DTO validation + DB verification via
   `docker exec … psql -tAc` + Docker log check (0 `UnhandledPromiseRejection` /
-  `FATAL`). 0 failures required.
+  `FATAL`). 0 failures required. Tracked exceptions (re-included in
+  `.gitignore`): `qa/routing-regression/` and `qa/test-multimodal.sh`
+  (free vs paid media lanes — [skills/verify-multimodal-routing-live.md](../skills/verify-multimodal-routing-live.md)).
 - Manual API testing (curl), manual browser UAT (loading/empty/error/success,
   dark mode, Arabic RTL, mobile 375×812), regression, and cross-service flow
   verification.
