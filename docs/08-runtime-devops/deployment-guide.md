@@ -322,3 +322,37 @@ so the bind mount re-resolves.
 Before 2026-09-20 such a container was filtered out of the plan entirely, so
 its config changes never reached production and the run still said
 "Deployment successful".
+
+## Profiled services (2026-09-25)
+
+A compose service with a `profiles:` entry exists on a host only when one of
+its profiles is live there. `scripts/deploy-prod.sh` resolves the live set
+exactly the way `scripts/claw.sh` does, from the production `.env`:
+
+| Profile                                 | Live when                                       |
+| --------------------------------------- | ----------------------------------------------- |
+| `local-ai`                              | `CLAW_LOCAL_AI=true` (env override > `.env`)    |
+| `crawl4ai`, `flaresolverr`, `firecrawl` | named in `CLAW_SCRAPER_PROFILES` (env > `.env`) |
+
+A profiled service whose profiles are all off is dropped from the catalogue
+before any plan is made, so it is never built, created, recreated, health-waited
+on or verified — on a broad-impact or first deployment too. The live set is
+exported as `COMPOSE_PROFILES`, and the run logs `active compose profiles: …`.
+The removed-service report reads the full catalogue, so a switched-off service
+is never reported as removed.
+
+**Incident, 2026-09-25.** The parser only recognised `local-ai`; every other
+profile read as "always on", and the image-only branch ran before the profile
+check. The first deploy after the scraper sidecars shipped (ADR-121) therefore
+started all seven sidecar containers on production, Firecrawl crash-looped,
+verification failed and the release stayed on the previous SHA. The fix and
+its regression tests: `parse_compose_services` keeps every profile,
+`service_profiles_active` gates the catalogue before the image-only branch,
+`tools/__tests__/deploy-prod.test.mjs` runs the real functions on a fixture,
+and `tools/__tests__/deploy-prod-e2e.sh` asserts every sidecar stays out with
+its profile off and exactly the named one deploys with it on (against the old
+script the rehearsal fails 19 assertions).
+
+To add a new profiled service: give it a profile, and if it is not `local-ai`,
+add the profile name to BOTH the `CLAW_SCRAPER_PROFILES` validation in
+`scripts/claw.sh` and `resolve_active_profiles` in `scripts/deploy-prod.sh`.

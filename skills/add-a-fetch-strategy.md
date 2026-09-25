@@ -25,6 +25,13 @@ that, and no new strategy may (rule 50, prohibited list).
 4. Prove it: the next fetch that escalates that far logs
    `fetch.served kind=CRAWL4AI …`.
 
+On production, `CLAW_SCRAPER_PROFILES` in `/srv/clawai/.env` is also what
+`scripts/deploy-prod.sh` reads: an unnamed sidecar is never built, started or
+health-waited by a release. A NEW sidecar profile must be added to the
+accepted list in both `scripts/claw.sh` and `resolve_active_profiles` in
+`scripts/deploy-prod.sh` — the 2026-09-25 incident was a profile the deploy
+script did not know.
+
 Turning one off is the reverse: `{"enabled": false}` first, then drop it from
 the profile list and `claw.sh up`.
 

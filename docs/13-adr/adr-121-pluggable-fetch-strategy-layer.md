@@ -115,6 +115,13 @@ The owner approved a set on 2026-09-25 (see "Per-tool status").
   both proven inside `node:26-bookworm-slim` as the `nestjs` user.
 - `CLAW_SCRAPER_PROFILES` is a new env var: which containers exist has to be
   decided before any service runs, so it cannot be DB-level. Enablement is.
+- The production deploy must honour the same profiles. It did not at first:
+  `deploy-prod.sh` only knew `local-ai`, and the first release after the
+  sidecars shipped started all seven on prod (2026-09-25, Firecrawl
+  crash-looped, the release failed and stayed on the previous SHA). Fixed the
+  same day — a profiled service is deployed only when one of its profiles is
+  live (`CLAW_SCRAPER_PROFILES` from the prod `.env`); see
+  `docs/08-runtime-devops/deployment-guide.md` § Profiled services.
 - health-service does not probe the sidecars: they are optional, off by
   default and on a network health-service is not on; compose healthchecks
   cover them and research-service logs every attempt against them.

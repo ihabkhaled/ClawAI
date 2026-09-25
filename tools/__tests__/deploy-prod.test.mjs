@@ -427,3 +427,130 @@ test('wait_for_container_health judges exactly one container and reports its log
   }
   assert.match(body, /docker logs --tail/u, 'an unhealthy replica must report its log');
 });
+
+/**
+ * Extracts one top-level bash function from deploy-prod.sh, verbatim, so the
+ * tests below run the REAL code rather than a copy of its logic.
+ */
+function bashFunction(name) {
+  const start = script.indexOf(`\n${name}() {`);
+  assert.ok(start > -1, `${name} is missing from deploy-prod.sh`);
+  const end = script.indexOf('\n}\n', start);
+  return script.slice(start + 1, end + 2);
+}
+
+function runBash(source) {
+  const result = spawnSync('bash', ['-c', source], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.replaceAll('\r', '');
+}
+
+const PROFILED_FIXTURE = [
+  'name: claw',
+  'services:',
+  '  api:',
+  '    build:',
+  '      dockerfile: apps/claw-api/Dockerfile',
+  '  ollama-service:',
+  "    profiles: ['local-ai']",
+  '    build:',
+  '      dockerfile: apps/claw-ollama-service/Dockerfile',
+  '  crawl4ai:',
+  "    profiles: ['crawl4ai']",
+  '    image: unclecode/crawl4ai:0.9.4',
+  '  both:',
+  '    profiles: ["crawl4ai", "firecrawl"]',
+  '    image: example/both',
+  '  listed:',
+  '    profiles:',
+  '      - firecrawl',
+  '    image: example/listed',
+  'networks:',
+  '  claw-network:',
+  '    external: true',
+  '',
+].join('\n');
+
+test('parse_compose_services records EVERY profile a service has, not only local-ai', () => {
+  const out = runBash(
+    `${bashFunction('parse_compose_services')}\nparse_compose_services /dev/stdin <<'YAML'\n${PROFILED_FIXTURE}YAML\n`,
+  );
+  assert.deepEqual(out.trim().split('\n'), [
+    'api|apps/claw-api/Dockerfile|',
+    'ollama-service|apps/claw-ollama-service/Dockerfile|local-ai',
+    'crawl4ai||crawl4ai',
+    'both||crawl4ai,firecrawl',
+    'listed||firecrawl',
+  ]);
+});
+
+test('service_profiles_active: an unprofiled service is always on; a profiled one only with a live profile', () => {
+  const check = (activeProfiles, profiles) =>
+    runBash(
+      `${bashFunction('service_profiles_active')}\nACTIVE_PROFILES='${activeProfiles}'\nif service_profiles_active '${profiles}'; then echo on; else echo off; fi\n`,
+    ).trim();
+
+  assert.equal(check('', ''), 'on');
+  assert.equal(check('', 'crawl4ai'), 'off', 'a sidecar with no active profile must stay off');
+  assert.equal(check('', 'local-ai'), 'off');
+  assert.equal(check('crawl4ai', 'crawl4ai'), 'on');
+  assert.equal(check('crawl4ai', 'firecrawl'), 'off');
+  assert.equal(
+    check('local-ai,firecrawl', 'crawl4ai,firecrawl'),
+    'on',
+    'any one live profile is enough',
+  );
+  assert.equal(
+    check('crawl4ai', 'crawl4ai-extra'),
+    'off',
+    'profile names match whole, not by prefix',
+  );
+});
+
+test('resolve_active_profiles reads CLAW_SCRAPER_PROFILES from the prod .env the way claw.sh does', () => {
+  const run = (envFile, override, localAi) =>
+    runBash(
+      [
+        bashFunction('resolve_active_profiles'),
+        `ENV_FILE=$(mktemp)`,
+        `printf '%s' '${envFile}' >"$ENV_FILE"`,
+        override === null
+          ? 'unset CLAW_SCRAPER_PROFILES'
+          : `export CLAW_SCRAPER_PROFILES='${override}'`,
+        `LOCAL_AI='${localAi}'`,
+        'resolve_active_profiles 2>/dev/null',
+        'printf "%s" "$ACTIVE_PROFILES"',
+        'rm -f "$ENV_FILE"',
+      ].join('\n'),
+    );
+
+  assert.equal(run('JWT_SECRET=x\n', null, 'false'), '', 'nothing configured → no profile');
+  assert.equal(run('CLAW_SCRAPER_PROFILES=\n', null, 'false'), '');
+  assert.equal(
+    run('CLAW_SCRAPER_PROFILES=crawl4ai, FlareSolverr\r\n', null, 'false'),
+    'crawl4ai,flaresolverr',
+  );
+  assert.equal(run('CLAW_SCRAPER_PROFILES=crawl4ai\n', null, 'true'), 'local-ai,crawl4ai');
+  assert.equal(
+    run('CLAW_SCRAPER_PROFILES=crawl4ai\n', 'firecrawl', 'false'),
+    'firecrawl',
+    'env overrides .env',
+  );
+  assert.equal(
+    run('CLAW_SCRAPER_PROFILES=bogus,local-ai,crawl4ai\n', null, 'false'),
+    'crawl4ai',
+    'unknown names — and local-ai, which only CLAW_LOCAL_AI controls — are ignored',
+  );
+});
+
+test('compute_plan gates profiled services BEFORE the image-only branch', () => {
+  // The sidecars are image-only. When the profile gate sat after the
+  // `[ -z "$dockerfile" ]` branch, every image-only profiled service was
+  // selected and deployed regardless of its profile (incident 2026-09-25).
+  const body = bashFunction('compute_plan');
+  const gate = body.indexOf('service_profiles_active "$profiles"');
+  const imageOnly = body.indexOf('if [ -z "$dockerfile" ]; then');
+  assert.ok(gate > -1, 'compute_plan no longer applies the profile gate');
+  assert.ok(gate < imageOnly, 'the profile gate must run before the image-only branch');
+  assert.doesNotMatch(script, /\/local-ai\/ \{/u, 'the parser must not special-case local-ai');
+});

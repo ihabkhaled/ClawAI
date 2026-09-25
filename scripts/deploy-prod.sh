@@ -35,6 +35,11 @@
 #   CLAW_LOCAL_AI               true|false override for the local-AI profile;
 #                               default reads the production .env, the same
 #                               precedence rule scripts/claw.sh applies
+#   CLAW_SCRAPER_PROFILES       comma list of scraper sidecar profiles to deploy
+#                               (crawl4ai,flaresolverr,firecrawl); default reads
+#                               the production .env, as scripts/claw.sh does.
+#                               A profiled service whose profile is off is never
+#                               built, created, recreated or waited on.
 #   CLAW_DEPLOY_WORKFLOW_URL     optional https://github.com/... Actions run URL
 #                               recorded as non-secret deployment metadata
 #   CLAW_DEPLOY_TRIGGER         auto|manual — which lane started this rollout.
@@ -168,6 +173,9 @@ SELF_COPY=""
 if [ "${CLAW_DEPLOY_REEXEC:-0}" = "1" ]; then
   SELF_COPY="${BASH_SOURCE[0]}"
 fi
+
+# Compose profiles live on this host (resolve_active_profiles).
+ACTIVE_PROFILES=""
 
 # Plan outputs, populated by compute_plan.
 PLAN_SERVICES=()
@@ -441,23 +449,41 @@ usage() {
 # =============================================================================
 # Service catalogue — derived from the production compose file, never hardcoded
 # =============================================================================
-# Emits one `service|dockerfile|profiled` record per compose service.
-# `dockerfile` is empty for image-only services (nginx); `profiled` is 1 when
-# the service sits behind the `local-ai` compose profile.
+# Emits one `service|dockerfile|profiles` record per compose service.
+# `dockerfile` is empty for image-only services (nginx, the scraper sidecars);
+# `profiles` is the comma-separated list of the service's compose profiles —
+# empty when it has none (always deployed). Until 2026-09-25 this only noticed
+# `local-ai` and every other profile read as "always on", which is how the
+# first deploy after the scraper sidecars shipped started all seven on prod.
 parse_compose_services() {
   awk '
+    function add_profile(name) {
+      gsub(/["'"'"'[:space:]]/, "", name)
+      if (name == "") return
+      profiles = (profiles == "") ? name : profiles "," name
+    }
     /^[^[:space:]#]/ {
       in_services = ($0 ~ /^services:[[:space:]]*$/) ? 1 : 0
       next
     }
     in_services && /^  [A-Za-z0-9_.-]+:[[:space:]]*$/ {
-      if (svc != "") print svc "|" dockerfile "|" profiled
+      if (svc != "") print svc "|" dockerfile "|" profiles
       svc = $0
       sub(/^  /, "", svc)
       sub(/:[[:space:]]*$/, "", svc)
       dockerfile = ""
-      profiled = 0
+      profiles = ""
+      in_profile_list = 0
       next
+    }
+    in_services && svc != "" && in_profile_list && /^[[:space:]]+-[[:space:]]*/ {
+      line = $0
+      sub(/^[[:space:]]+-[[:space:]]*/, "", line)
+      add_profile(line)
+      next
+    }
+    in_services && svc != "" && in_profile_list {
+      in_profile_list = 0
     }
     in_services && svc != "" && /^[[:space:]]+dockerfile:[[:space:]]*/ {
       line = $0
@@ -467,12 +493,20 @@ parse_compose_services() {
       dockerfile = line
       next
     }
-    in_services && svc != "" && /^[[:space:]]+profiles:/ && /local-ai/ {
-      profiled = 1
+    in_services && svc != "" && /^[[:space:]]+profiles:/ {
+      line = $0
+      sub(/^[[:space:]]+profiles:[[:space:]]*/, "", line)
+      if (line == "") {
+        in_profile_list = 1
+        next
+      }
+      gsub(/[][]/, "", line)
+      count = split(line, names, ",")
+      for (i = 1; i <= count; i++) add_profile(names[i])
       next
     }
     END {
-      if (svc != "") print svc "|" dockerfile "|" profiled
+      if (svc != "") print svc "|" dockerfile "|" profiles
     }
   ' "$1"
 }
@@ -563,17 +597,15 @@ dependency_consumers() {
   local workspaces
   workspaces="$(transitive_consumers "$edges" "$@")"
 
-  local ws svc dockerfile profiled dir out=''
+  local ws svc dockerfile profiles dir out=''
   while IFS= read -r ws; do
     [ -n "$ws" ] || continue
     case "$ws" in
       @*) continue ;; # a package, not a deployable workspace
     esac
-    while IFS='|' read -r svc dockerfile profiled; do
+    while IFS='|' read -r svc dockerfile profiles; do
       [ -n "$dockerfile" ] || continue
-      if [ "$profiled" = "1" ] && [ "$LOCAL_AI" != "true" ]; then
-        continue
-      fi
+      service_profiles_active "$profiles" || continue
       dir="${dockerfile%/*}"
       if [ "${dir##*/}" = "$ws" ]; then
         out="${out}${svc}"$'\n'
@@ -610,7 +642,7 @@ compute_plan() {
   parse_compose_services "$COMPOSE_SNAPSHOT" >"$CATALOGUE_FILE"
   [ -s "$CATALOGUE_FILE" ] || die "no services found in $SVC_COMPOSE_REL — refusing to guess"
 
-  local svc dockerfile profiled dir
+  local svc dockerfile profiles dir
   local nginx_present=0
   local dir_map="$TMP_DIR/dir-map"
   local buildable="$TMP_DIR/buildable"
@@ -619,21 +651,24 @@ compute_plan() {
   : >"$buildable"
   : >"$image_only"
 
-  while IFS='|' read -r svc dockerfile profiled; do
+  while IFS='|' read -r svc dockerfile profiles; do
     [ -n "$svc" ] || continue
     if [ "$svc" = "nginx" ]; then
       nginx_present=1
+    fi
+    # A profiled service whose profile is off does not exist on this host, and
+    # a deployment must never bring it into existence — build, create,
+    # recreate or wait on it. This gate runs BEFORE the image-only branch:
+    # the scraper sidecars are image-only, and when the gate sat after it they
+    # were deployed whatever their profile said (incident 2026-09-25).
+    if ! service_profiles_active "$profiles"; then
+      continue
     fi
     if [ -z "$dockerfile" ]; then
       # nginx is recreated by reload_nginx on its own terms; every other
       # image-only container is deployable through CONFIG_DIR_SERVICES.
       [ "$svc" = "nginx" ] || printf '%s
 ' "$svc" >>"$image_only"
-      continue
-    fi
-    if [ "$profiled" = "1" ] && [ "$LOCAL_AI" != "true" ]; then
-      # Profiled service with local-AI disabled: that container does not exist
-      # on this host and a deployment must never bring it into existence.
       continue
     fi
     printf '%s|%s\n' "${dockerfile%/*}" "$svc" >>"$dir_map"
@@ -784,9 +819,12 @@ compute_plan() {
 # drops anything that is not a buildable service there.
 finalize_plan() {
   local nginx_present="$1"
-  local svc dockerfile profiled
-  while IFS='|' read -r svc dockerfile profiled; do
+  local svc dockerfile profiles
+  while IFS='|' read -r svc dockerfile profiles; do
     [ -n "$svc" ] || continue
+    # Belt and braces: nothing selected by any earlier path may outlive its
+    # profile being off.
+    service_profiles_active "$profiles" || continue
     if [ -z "$dockerfile" ]; then
       case "$PLAN_SELECTED" in
         *"|$svc|"*) PLAN_IMAGE_SERVICES+=("$svc") ;;
@@ -814,6 +852,52 @@ resolve_local_ai() {
     true | 1 | yes) LOCAL_AI="true" ;;
     *) LOCAL_AI="false" ;;
   esac
+}
+
+# ACTIVE_PROFILES: the compose profiles live on this host, comma-separated —
+# `local-ai` from LOCAL_AI, plus the scraper sidecars named by
+# CLAW_SCRAPER_PROFILES (env override > production .env > none), validated
+# against the same list scripts/claw.sh accepts. `local-ai` is never taken
+# from CLAW_SCRAPER_PROFILES: only CLAW_LOCAL_AI controls it.
+resolve_active_profiles() {
+  ACTIVE_PROFILES=""
+  if [ "$LOCAL_AI" = "true" ]; then
+    ACTIVE_PROFILES="local-ai"
+  fi
+  local raw="${CLAW_SCRAPER_PROFILES:-}"
+  if [ -z "$raw" ] && [ -f "$ENV_FILE" ]; then
+    raw="$(grep -E '^CLAW_SCRAPER_PROFILES=' "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '\r' || true)"
+  fi
+  local name
+  local -a requested=()
+  IFS=',' read -r -a requested <<<"$raw"
+  for name in "${requested[@]}"; do
+    name="$(printf '%s' "$name" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+    case "$name" in
+      crawl4ai | flaresolverr | firecrawl)
+        ACTIVE_PROFILES="${ACTIVE_PROFILES:+$ACTIVE_PROFILES,}$name"
+        ;;
+      '') ;;
+      *) printf 'WARNING: ignoring unknown CLAW_SCRAPER_PROFILES entry %s\n' "$name" >&2 ;;
+    esac
+  done
+}
+
+# True when a service with this comma-separated profile list is deployable on
+# this host: no profiles (always on), or at least one of them in
+# ACTIVE_PROFILES. Names match whole — `crawl4ai` never matches
+# `crawl4ai-extra`.
+service_profiles_active() {
+  local profiles="$1" profile
+  [ -n "$profiles" ] || return 0
+  local -a names=()
+  IFS=',' read -r -a names <<<"$profiles"
+  for profile in "${names[@]}"; do
+    case ",${ACTIVE_PROFILES:-}," in
+      *",$profile,"*) return 0 ;;
+    esac
+  done
+  return 1
 }
 
 # The GPU overlays exist solely to give llamacpp-service device access, so they
@@ -1328,9 +1412,11 @@ run_plan_mode() {
   DEP_GRAPH_SNAPSHOT="$PROJECT_ROOT/$DEP_GRAPH_REL"
   [ -f "$COMPOSE_SNAPSHOT" ] || die "$COMPOSE_SNAPSHOT not found"
   resolve_local_ai
+  resolve_active_profiles
   compute_plan
 
   log "local-ai: $LOCAL_AI"
+  log "active compose profiles: ${ACTIVE_PROFILES:-none}"
   if [ -n "$PLAN_REASON" ]; then
     log "reason: $PLAN_REASON"
   fi
@@ -1507,6 +1593,7 @@ main() {
   git show "$new_sha:$DEP_GRAPH_REL" >"$DEP_GRAPH_SNAPSHOT" 2>/dev/null || : >"$DEP_GRAPH_SNAPSHOT"
 
   resolve_local_ai
+  resolve_active_profiles
   compute_plan
   warn_removed_services "$old_sha" "$new_sha"
   DEPLOYMENT_SERVICES="${PLAN_SERVICES[*]} ${PLAN_IMAGE_SERVICES[*]}"
@@ -1569,8 +1656,8 @@ main() {
     COMPOSE_ARGS+=(-f "$GPU_OVERLAY_FILE")
     log "GPU overlay: $GPU_VENDOR"
   fi
-  if [ "$LOCAL_AI" = "true" ]; then
-    export COMPOSE_PROFILES=local-ai
+  if [ -n "$ACTIVE_PROFILES" ]; then
+    export COMPOSE_PROFILES="$ACTIVE_PROFILES"
   else
     unset COMPOSE_PROFILES
   fi
@@ -1703,8 +1790,10 @@ warn_removed_services() {
   local old_compose="$TMP_DIR/compose.old.yml"
   git show "$old:$SVC_COMPOSE_REL" >"$old_compose" 2>/dev/null || return 0
 
-  local svc dockerfile profiled removed=''
-  while IFS='|' read -r svc dockerfile profiled; do
+  local svc dockerfile profiles removed=''
+  # Reads the FULL catalogue (profiled services included), so a service whose
+  # profile is off is still "declared" and is never reported as removed.
+  while IFS='|' read -r svc dockerfile profiles; do
     [ -n "$svc" ] || continue
     if ! grep -q "^${svc}|" "$CATALOGUE_FILE"; then
       removed="${removed} ${svc}"

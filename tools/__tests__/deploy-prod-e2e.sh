@@ -108,6 +108,9 @@ case "${1:-}" in
         exit 0
         ;;
       up)
+        # Which compose profiles were live for this `up` — a profiled service
+        # can only come into existence when its profile is active here.
+        printf 'profiles=%s\n' "${COMPOSE_PROFILES:-}" >>"$CLAW_STUB_LOG"
         if [ "${CLAW_STUB_UP_FAIL:-0}" = "1" ]; then exit 1; fi
         exit 0
         ;;
@@ -249,6 +252,16 @@ assert_not_contains "first deployment never runs compose down" "$(cat "$CLAW_STU
 assert_not_contains "first deployment never removes volumes" "$(cat "$CLAW_STUB_LOG")" "volume rm"
 assert_not_contains "first deployment never passes --remove-orphans" "$(cat "$CLAW_STUB_LOG")" "--remove-orphans"
 assert_contains "first deployment recreates with --no-deps" "$(cat "$CLAW_STUB_LOG")" "up -d --no-deps --no-build"
+# Profiled services whose profile is OFF (the default .env: no local-AI, no
+# CLAW_SCRAPER_PROFILES) must not be built, created, recreated or waited on.
+# The 2026-09-25 incident: only `local-ai` counted as a profile, so the first
+# deploy after the scraper sidecars shipped started all seven of them on prod.
+for sidecar in crawl4ai flaresolverr firecrawl-api firecrawl-playwright firecrawl-postgres firecrawl-redis firecrawl-rabbitmq; do
+  assert_not_contains "a profile-off sidecar ($sidecar) never reaches docker" "$(cat "$CLAW_STUB_LOG")" " $sidecar"
+  assert_not_contains "a profile-off sidecar ($sidecar) is not in the plan" "$out" "- $sidecar"
+done
+assert_not_contains "a profile-off local-AI service never reaches docker" "$(cat "$CLAW_STUB_LOG")" " ollama-service"
+assert_not_contains "no scraper profile is exported when none is configured" "$(cat "$CLAW_STUB_LOG")" "profiles=crawl4ai"
 
 # ─── Selective deployment ────────────────────────────────────────────────────
 reset_docker_log
@@ -313,6 +326,31 @@ assert_contains "a broad-impact change still names the image-only service" "$out
 up_line="$(grep -m1 ' up -d .*log-shipper' "$CLAW_STUB_LOG" || true)"
 assert_contains "a broad-impact change still recreates the image-only container" "$up_line" "--force-recreate"
 assert_equals "the broad-impact deployment is recorded" "$(deployed_sha)" "$SHA_BROAD_SHIPPER"
+
+# ─── A non-local-AI profile, switched on in the production .env ─────────────
+# CLAW_SCRAPER_PROFILES in the prod .env (the same source scripts/claw.sh
+# reads) turns on exactly the named sidecar: it is deployed, its profile is
+# exported to compose, and every OTHER profiled sidecar stays out.
+printf 'CLAW_SCRAPER_PROFILES=crawl4ai\n' >>"$PROD/.env"
+printf '# rehearsal broad-impact touch 2\n' >>"$SRC/docker/docker-compose.prod.services.yml"
+git -C "$SRC" add -A >/dev/null
+git -C "$SRC" commit --quiet --no-verify -m 'broad-impact compose edit with crawl4ai profile on' >/dev/null
+git -C "$SRC" push --quiet origin HEAD:refs/heads/main >/dev/null 2>&1
+SHA_PROFILE_ON="$(git -C "$SRC" rev-parse HEAD)"
+
+reset_docker_log
+out="$(deploy "$SHA_PROFILE_ON")"
+assert_contains "a deploy with a scraper profile on succeeds" "$out" "Deployment successful"
+assert_contains "the profile-on sidecar is in the plan" "$out" "- crawl4ai (image only)"
+up_line="$(grep -m1 ' up -d .*crawl4ai' "$CLAW_STUB_LOG" || true)"
+assert_contains "the profile-on sidecar is created" "$up_line" "crawl4ai"
+assert_contains "its profile is exported to compose" "$(cat "$CLAW_STUB_LOG")" "profiles=crawl4ai"
+for sidecar in flaresolverr firecrawl-api firecrawl-playwright firecrawl-postgres; do
+  assert_not_contains "a still-off sidecar ($sidecar) stays out of docker" "$(cat "$CLAW_STUB_LOG")" " $sidecar"
+done
+assert_equals "the profile-on deployment is recorded" "$(deployed_sha)" "$SHA_PROFILE_ON"
+# Back to the default for every later scenario.
+sed -i '/^CLAW_SCRAPER_PROFILES=/d' "$PROD/.env"
 
 # ─── No-op (docs only) ───────────────────────────────────────────────────────
 # Deploy the docs commit on top of the payment commit by rewinding state.
