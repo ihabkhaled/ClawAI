@@ -2,7 +2,9 @@ import { Logger } from '@nestjs/common';
 import { assertSafeRequestUrl } from '@claw/shared-utilities';
 import {
   type HttpBinaryReadOptions,
+  type HttpBinaryResponse,
   type HttpBinaryStreamOptions,
+  type HttpPostBinaryOptions,
   type HttpRequestOptions,
   type HttpResponse,
   type HttpStreamOptions,
@@ -124,6 +126,34 @@ export async function httpReadBinaryBase64(options: HttpBinaryReadOptions): Prom
     const message = error instanceof Error ? error.message : 'unknown error';
     logger.warn(`httpReadBinaryBase64: GET ${url} failed — ${message}`);
     return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * POSTs a JSON body and reads the answer as raw bytes (text-to-speech: OpenAI
+ * `/audio/speech` answers MP3, which `httpRequest` would try to JSON-parse).
+ * Returns the status and bytes for any HTTP answer, error bodies included;
+ * THROWS on a network failure or the deadline (an `AbortError`), so the caller
+ * can tell "the provider said no" from "the provider never answered".
+ */
+export async function httpPostBinary(options: HttpPostBinaryOptions): Promise<HttpBinaryResponse> {
+  const { url, headers, body, timeoutMs, allowedHosts } = options;
+  const safeUrl = assertSafeRequestUrl(url, allowedHosts);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(safeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+      // Same reason as httpRequest: a redirect moves the call to an unchecked host.
+      redirect: 'error',
+    });
+    const bytes = Buffer.from(await response.arrayBuffer());
+    return { status: response.status, ok: response.ok, body: bytes };
   } finally {
     clearTimeout(timer);
   }

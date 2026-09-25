@@ -8,6 +8,9 @@ task_keywords:
     helper model,
     AssistantModelRole,
     VISION_HELPER,
+    TTS_VOICE,
+    text to speech,
+    read aloud,
     FILE_WRITER,
     RESEARCH_GATE,
     assistant-models,
@@ -56,8 +59,13 @@ never a constant (rule 51 item 7). It lives as an `AssistantModelRole` in
 routing-service, is edited on the Smart Router "Assistant models" tab, and is
 read by the consuming service through one internal endpoint.
 
-Existing roles: `RESEARCH_GATE`, `FILE_WRITER`, `VISION_HELPER` (ADR-120 batch 5).
-Reference implementation: the `VISION_HELPER` role end to end.
+Existing roles: `RESEARCH_GATE`, `FILE_WRITER`, `VISION_HELPER` (ADR-120 batch 5),
+`TTS_VOICE` (batch 9, "Read aloud").
+Reference implementations: the `VISION_HELPER` role end to end (a helper inside a
+chat turn); the `TTS_VOICE` role for a helper with its **own endpoint** and a
+**per-unit price** — `SpeechSynthesisManager` (candidate walk + metering),
+`TtsVoiceCandidatesClient`, `toSpeechCandidates` (keeps only models it can meter
+exactly), migration `20260925230000_add_tts_voice_role`.
 
 ## When to use
 
@@ -140,13 +148,14 @@ structured line per attempt (`visionHelper {…}`).
 
 ## Failure modes
 
-| Symptom                                          | Cause                                                              |
-| ------------------------------------------------ | ------------------------------------------------------------------ |
-| routing-service crash-loops on boot after deploy | Enum value added to the schema with no `ALTER TYPE` migration.     |
-| New role is empty on an existing install         | Seed entry missing, or `seedOnce` batch-counted roles (fixed F0).  |
-| Helper "never runs"                              | No candidate passes the capability filter (provider unconfigured). |
-| Compare with 3 lanes bills the helper 3 times    | Result not shared per turn, or `turnId` missing on the context.    |
-| Ledger shows spend with no surface               | `PaygSurface` member missing; the exhaustiveness tool test fails.  |
+| Symptom                                          | Cause                                                                                                                                                             |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| routing-service crash-loops on boot after deploy | Enum value added to the schema with no `ALTER TYPE` migration.                                                                                                    |
+| New role is empty on an existing install         | Seed entry missing, or `seedOnce` batch-counted roles (fixed F0).                                                                                                 |
+| Helper "never runs"                              | No candidate passes the capability filter (provider unconfigured).                                                                                                |
+| Compare with 3 lanes bills the helper 3 times    | Result not shared per turn, or `turnId` missing on the context.                                                                                                   |
+| Ledger shows spend with no surface               | `PaygSurface` member missing; the exhaustiveness tool test fails.                                                                                                 |
+| Helper call settles at $0                        | Model billed per unit but the row has no per-unit rate, or the helper cannot report usage — skip such models in the candidate filter (TTS skips gpt-4o-mini-tts). |
 
 ## Validation
 

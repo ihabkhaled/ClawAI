@@ -37,6 +37,13 @@ vi.mock('@/components/chat/routing-transparency', () => ({
 vi.mock('@/components/chat/context-receipt-button', () => ({
   ContextReceiptButton: () => <div>context-receipt</div>,
 }));
+// Read aloud owns a query and a mutation; this file is about the notice.
+vi.mock('@/components/chat/message-speech-action', () => ({
+  MessageSpeechAction: () => <div>speech-action</div>,
+}));
+vi.mock('@/components/chat/message-speech-player', () => ({
+  MessageSpeechPlayer: () => null,
+}));
 vi.mock('@/lib/markdown', () => ({
   MarkdownRenderer: ({ content }: { content: string }) => <div>{content}</div>,
 }));

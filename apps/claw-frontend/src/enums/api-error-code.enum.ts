@@ -41,4 +41,13 @@ export enum ApiErrorCode {
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
   ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
+  // The generic 404 every service's BusinessException uses for a missing row;
+  // read aloud names it because the reply can be deleted while the player is open.
+  ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
+  // Read aloud (text-to-speech, multimodal batch 9). Three codes because the
+  // remedy differs: nothing to read is the reply, no voice is the admin's
+  // setup, and a failed synthesis is the provider, worth a retry.
+  TTS_NOTHING_TO_READ = 'TTS_NOTHING_TO_READ',
+  TTS_UNAVAILABLE = 'TTS_UNAVAILABLE',
+  TTS_FAILED = 'TTS_FAILED',
 }

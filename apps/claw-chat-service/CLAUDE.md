@@ -1105,3 +1105,43 @@ attachments' derived text (`buildAttachmentDigest`, ≤ 600 chars/file, ≤ 1 50
 total, placeholders skipped) read with `AttachmentInfoClient.textOnly`
 (`/content?includeContent=false`, no bytes). Framed as data; links inside it
 are never crawled. A video still processing at send time contributes nothing.
+
+## "Read aloud" — text-to-speech of a reply (multimodal batch 9, 2026-09-25)
+
+Its own capability, endpoint, player and PAYG surface — never mixed with
+transcription (ADR-120 addendum).
+
+- **Routes** (`ChatSpeechController`, JWT): `GET /chat-messages/speech/availability`
+  → `{ available, reason: SpeechUnavailableReason | null }` (plan off →
+  `PLAN_DISABLED`; no enabled TTS_VOICE candidate with a connector key →
+  `NO_VOICE_CONFIGURED`; entitlements unreadable → `TEMPORARILY_UNAVAILABLE`), and
+  `POST /chat-messages/:id/speech` (Zod params, id `^[A-Za-z0-9_-]{1,64}$`) →
+  `{ fileId, mimeType, filename, truncated, characters, cached }`.
+- **Order** (`MessageSpeechService`): owner else 404 (same as a missing id) →
+  `assertTextToSpeechAccess` 403 `PLAN_FEATURE_DISABLED` before any hold → speakable
+  text (`speakable-text.utility.ts`: code dropped, links to their text, URLs to
+  their host, markers stripped; capped at 4,000 code points at a sentence end,
+  `truncated`) → replay `metadata.speech` when its content hash matches and the
+  file still exists (no hold, no call; an unanswerable existence check replays) →
+  `SpeechSynthesisManager` → store via file-service
+  `POST /internal/files/store-generated-audio` → `metadata.speech` (never bytes).
+  Concurrent requests for one reply on a replica share one synthesis.
+- **Candidates**: `TtsVoiceCandidatesClient` (routing TTS_VOICE, 60 s cache).
+  `toSpeechCandidates` keeps only Gemini `…-tts` models and OpenAI `tts-1` /
+  `tts-1-hd` — models it can meter exactly. A provider with no connector key
+  (`SpeechConnectorClient`, key fetched fresh, only yes/no cached) is skipped
+  BEFORE any hold.
+- **Metering** (`PaygSurface.TTS`, one hold per provider attempt, requestId
+  `tts:<msg>:<contentHash>:g<generation>:<n>`): OpenAI reserves / finalizes
+  `ttsCharacters`; Gemini reserves text tokens + 16 and 4 output tokens per
+  character (≤ the admin ceiling), sends `hold.maxOutputTokens`, finalizes on
+  `usageMetadata`. Provider rejection / outage → release PROVIDER_ERROR, next
+  candidate. 402, clamped hold (released CANCELLED), unreachable meter (503) and a
+  deadline (released TIMEOUT, 504) END the walk. None configured → 503
+  `TTS_UNAVAILABLE`; all failed → 502 `TTS_FAILED`; nothing speakable / not an
+  assistant reply → 422 `TTS_NOTHING_TO_READ`.
+- **Audio**: Gemini PCM (`audio/L16;rate=24000`) wrapped by `pcm16ToWav` (canonical
+  44-byte RIFF header); OpenAI MP3 via `httpPostBinary`. Fixed provider hosts, not
+  the connector base URL.
+- Log line per attempt: `ttsAttempt {messageId, provider, model, requestId,
+outcome, latencyMs}` — no text, no key.

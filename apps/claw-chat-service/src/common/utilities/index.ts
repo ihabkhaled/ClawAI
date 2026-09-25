@@ -4,6 +4,7 @@ export {
   httpRequest,
   httpStream,
   httpStreamBinary,
+  httpPostBinary,
 } from './http-client.utility';
 export { runResearch } from './research-client.utility';
 export { mapResearchModeToWorkflow } from './research-mode-mapping.utility';

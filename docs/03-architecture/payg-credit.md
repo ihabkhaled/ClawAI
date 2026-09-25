@@ -260,6 +260,7 @@ change together.
 | `ROUTING`          | routing   | The cloud router's own paid calls — **one hold per attempt**                                                       | U5, U6      |
 | `TRANSCRIPTION`    | file      | Speech-to-text of an uploaded audio file / voice note — **one hold per provider attempt**, charged to the uploader | —           |
 | `VISION_HELPER`    | chat      | Helper vision for a lane that cannot see — **one hold per image per turn** (lanes + judge share it)                | —           |
+| `TTS`              | chat      | "Read aloud" of an assistant reply — **one hold per provider attempt**; a replay of stored audio is free           | —           |
 
 There is **no `RESEARCH` member**: research-service reaches search SaaS, never a
 paid model, and is metered through `FeatureUsageRecord` (see "Not metered", below).
@@ -337,11 +338,12 @@ per audio token. whisper-1's $0.006/min is `100` micro-USD per second.
 | `IMAGE` (Gemini)                   | tokens (`usageMetadata`)            | `imageUnits: 1` (no per-image rate → adds 0)  | images returned + tokens              |
 | `TRANSCRIPTION` (OpenAI whisper-1) | `audioPerUnitMicroUsd` (100 µUSD/s) | `audioSeconds`: ceil(bytes / 1,000), ≤ 7,200  | `verbose_json` `duration`, rounded up |
 | `TRANSCRIPTION` (Gemini)           | tokens (`usageMetadata`)            | `promptTokens` 32/s + 128; output 8/s + 1,024 | reported tokens                       |
-| TTS                                | per character                       | batch 8                                       | measured length                       |
+| `TTS` (OpenAI tts-1 / tts-1-hd)    | `ttsPerCharacterMicroUsd` (15 / 30) | `ttsCharacters`: code points sent, ≤ 4,000    | characters sent                       |
+| `TTS` (Gemini `…-tts`)             | tokens (`usageMetadata`)            | prompt = text + 16; output 4/char (≤ ceiling) | reported tokens                       |
 
 Prices live only in `ModelCostVersion` rows (seeded list prices in
 `model-cost-seed.constants.ts`, seed v4 for the OpenAI image rows, seed v5 for
-whisper-1). A transcription credit refusal (402, clamped hold, meter down,
+whisper-1, seed v6 for tts-1 / tts-1-hd / gemini-2.5-flash-preview-tts). A transcription credit refusal (402, clamped hold, meter down,
 unpriced model) is a recorded RESULT on the file row — `INSUFFICIENT_CREDIT` or
 `CREDIT_CHECK_UNAVAILABLE` — and never falls through to a second paid provider. Runbook for
 a new per-unit surface:

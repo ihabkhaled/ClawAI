@@ -183,3 +183,4 @@ export { RecordingWaveformVariant } from './recording-waveform-variant.enum';
 export { MediaRecordingError } from './media-recording-error.enum';
 export { AttachmentPreviewKind } from './attachment-preview-kind.enum';
 export { AttachmentPendingAction } from './attachment-pending-action.enum';
+export { MessageSpeechStatus } from './message-speech-status.enum';

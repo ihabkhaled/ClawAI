@@ -11,6 +11,12 @@ export interface CreateFileData {
   // When non-null, the retention sweeper will delete this file's row + on-disk
   // contents once the configured retention window elapses. null/undefined = keep forever.
   retentionExpiresAt?: Date | null;
+  // A file another service GENERATED (a "Read aloud" reply) arrives with its
+  // text already known, so it is stored COMPLETED and never enters the
+  // extraction / transcription pipeline — transcribing our own speech would
+  // charge the user for text they already have.
+  ingestionStatus?: FileIngestionStatus;
+  extractedText?: string | null;
 }
 
 export interface FileFilters {

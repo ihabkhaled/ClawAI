@@ -61,6 +61,7 @@ export { PaygSurface } from './payg-surface.enum';
 export { VideoAudioStatus } from './video-audio-status.enum';
 export { VideoProcessingFailureReason } from './video-processing-failure-reason.enum';
 export { RequiredModality } from './required-modality.enum';
+export { SpeechUnavailableReason } from './speech-unavailable-reason.enum';
 export { CheckoutSessionStatus } from './checkout-session-status.enum';
 export { EntitlementGrantType } from './entitlement-grant-type.enum';
 export { InboxEventStatus } from './inbox-event-status.enum';

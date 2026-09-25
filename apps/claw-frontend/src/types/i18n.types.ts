@@ -328,6 +328,28 @@ export type TranslationDictionary = {
       succeeded: string;
       failed: string;
     };
+    speech: {
+      action: string;
+      stop: string;
+      loading: string;
+      playerLabel: string;
+      download: string;
+      truncated: string;
+      unavailable: {
+        planDisabled: string;
+        noVoice: string;
+        temporarilyUnavailable: string;
+      };
+      errors: {
+        planDisabled: string;
+        notFound: string;
+        nothingToRead: string;
+        unavailable: string;
+        failed: string;
+        generic: string;
+        playback: string;
+      };
+    };
     edit: {
       action: string;
       title: string;
@@ -4517,6 +4539,7 @@ export type TranslationDictionary = {
         ROUTING: string;
         TRANSCRIPTION: string;
         VISION_HELPER: string;
+        TTS: string;
       };
       kind: {
         PLAN_GRANT: string;
@@ -6036,6 +6059,9 @@ export type SmartRouterAdminLocaleTranslation = {
     visionHelperTitle: string;
     visionHelperDescription: string;
     visionHelperEmpty: string;
+    ttsVoiceTitle: string;
+    ttsVoiceDescription: string;
+    ttsVoiceEmpty: string;
     researchGateTitle: string;
     researchGateDescription: string;
     emptyMeansDisabled: string;

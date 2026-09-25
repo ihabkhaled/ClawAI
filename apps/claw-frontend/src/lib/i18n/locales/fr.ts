@@ -362,6 +362,30 @@ export const fr: TranslationDictionary = {
       succeeded: 'Branche créée dans une nouvelle conversation.',
       failed: 'Impossible de créer une branche.',
     },
+    speech: {
+      action: 'Lire à voix haute',
+      stop: 'Arrêter la lecture à voix haute',
+      loading: 'Préparation de l’audio…',
+      playerLabel: 'Audio de lecture à voix haute',
+      download: 'Télécharger l’audio',
+      truncated: 'Seule la première partie de cette réponse a été lue à voix haute.',
+      unavailable: {
+        planDisabled: 'La lecture à voix haute n’est pas incluse dans votre forfait.',
+        noVoice: 'La lecture à voix haute n’est pas encore configurée : aucune voix n’est définie.',
+        temporarilyUnavailable:
+          'La lecture à voix haute est temporairement indisponible. Réessayez plus tard.',
+      },
+      errors: {
+        planDisabled: 'Votre forfait n’inclut pas la lecture à voix haute.',
+        notFound: 'Cette réponse n’existe plus.',
+        nothingToRead: 'Cette réponse ne contient aucun texte à lire à voix haute.',
+        unavailable:
+          'La lecture à voix haute n’est pas disponible pour le moment : aucune voix n’est définie.',
+        failed: 'Le service vocal n’a pas pu lire cette réponse. Réessayez.',
+        generic: 'Impossible de lire cette réponse à voix haute. Réessayez.',
+        playback: 'Impossible de charger l’audio.',
+      },
+    },
     edit: {
       action: 'Modifier et relancer',
       title: 'Modifier ce message',
@@ -4616,6 +4640,7 @@ export const fr: TranslationDictionary = {
         ROUTING: 'Routage',
         TRANSCRIPTION: 'Transcription',
         VISION_HELPER: "Assistant de description d'images",
+        TTS: 'Lecture à voix haute (synthèse vocale)',
       },
       kind: {
         PLAN_GRANT: 'Allocation du forfait',

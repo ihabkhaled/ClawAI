@@ -362,6 +362,29 @@ export const it: TranslationDictionary = {
       succeeded: 'Diramato in una nuova conversazione.',
       failed: 'Impossibile diramare la conversazione.',
     },
+    speech: {
+      action: 'Leggi ad alta voce',
+      stop: 'Interrompi la lettura ad alta voce',
+      loading: 'Preparazione dell’audio…',
+      playerLabel: 'Audio della lettura ad alta voce',
+      download: 'Scarica l’audio',
+      truncated: 'È stata letta ad alta voce solo la prima parte di questa risposta.',
+      unavailable: {
+        planDisabled: 'La lettura ad alta voce non è inclusa nel tuo piano.',
+        noVoice: 'La lettura ad alta voce non è ancora configurata: nessuna voce impostata.',
+        temporarilyUnavailable:
+          'La lettura ad alta voce è temporaneamente non disponibile. Riprova più tardi.',
+      },
+      errors: {
+        planDisabled: 'Il tuo piano non include la lettura ad alta voce.',
+        notFound: 'Questa risposta non esiste più.',
+        nothingToRead: 'Questa risposta non contiene testo da leggere ad alta voce.',
+        unavailable: 'La lettura ad alta voce non è disponibile ora: nessuna voce impostata.',
+        failed: 'Il servizio vocale non è riuscito a leggere questa risposta. Riprova.',
+        generic: 'Impossibile leggere ad alta voce questa risposta. Riprova.',
+        playback: 'Impossibile caricare l’audio.',
+      },
+    },
     edit: {
       action: 'Modifica ed esegui di nuovo',
       title: 'Modifica questo messaggio',
@@ -4593,6 +4616,7 @@ export const it: TranslationDictionary = {
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Trascrizione',
         VISION_HELPER: 'Assistente descrizione immagini',
+        TTS: 'Lettura ad alta voce (sintesi vocale)',
       },
       kind: {
         PLAN_GRANT: 'Quota del piano',

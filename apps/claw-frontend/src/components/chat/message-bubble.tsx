@@ -23,6 +23,8 @@ import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
+import { MessageSpeechAction } from '@/components/chat/message-speech-action';
+import { MessageSpeechPlayer } from '@/components/chat/message-speech-player';
 import { NarrationLog } from '@/components/chat/narration-log';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { PlanFeatureNotice } from '@/components/chat/plan-feature-notice';
@@ -337,6 +339,7 @@ function MessageBubbleBase({
               <>
                 <AnswerExpandDialog content={message.content} t={t} />
                 <AnswerExportMenu content={message.content} t={t} />
+                <MessageSpeechAction messageId={message.id} />
               </>
             ) : null}
             {onRegenerate ? (
@@ -384,6 +387,15 @@ function MessageBubbleBase({
               </>
             ) : null}
           </div>
+        ) : null}
+
+        {/* Outside the hover-hidden row above, so an open player stays visible. */}
+        {!isUser &&
+        hasVisibleAssistantContent &&
+        !isFileGeneration &&
+        !isImageGeneration &&
+        !isNotice ? (
+          <MessageSpeechPlayer messageId={message.id} />
         ) : null}
 
         {!isUser ? <WhyThisModelPanel message={message} /> : null}

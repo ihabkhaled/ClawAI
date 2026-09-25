@@ -1094,6 +1094,11 @@
       },
       {
         "method": "POST",
+        "route": "/chat-messages/:id/speech",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/chat-messages/best-of-n",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
@@ -1156,6 +1161,11 @@
         "method": "POST",
         "route": "/chat-messages/runtime/runs/:runId/steering",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-messages/speech/availability",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
       },
       {
         "method": "POST",
@@ -1593,6 +1603,11 @@
       {
         "method": "DELETE",
         "route": "/internal/files/published-copy/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/files/store-generated-audio",
         "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
       },
       {
@@ -3478,5 +3493,5 @@
     ]
   },
   "generated": true,
-  "total": 688
+  "total": 691
 }

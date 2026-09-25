@@ -251,6 +251,17 @@ export class AccessControlService {
     this.assertFeatureEnabled(ent, 'allowCriticReview', userId);
   }
 
+  /**
+   * "Read aloud" gate (multimodal batch 9, ADR-122): 403 PLAN_FEATURE_DISABLED
+   * when the plan has no text-to-speech. Called BEFORE anything paid — no
+   * hold, no provider call. Fails CLOSED: resolve() raises the 503 every plan
+   * gate raises when entitlements cannot be read.
+   */
+  async assertTextToSpeechAccess(userId: string): Promise<void> {
+    const ent = await this.resolve(userId);
+    this.assertFeatureEnabled(ent, 'allowTextToSpeech', userId);
+  }
+
   // Centralized research-mode gate used by every chat entry point that exposes
   // the `researchMode` DTO field (normal chat + the 9 orchestration modes).
   // Combines the plan-level `allowResearchMode` unlock with the RESEARCH_USE

@@ -361,6 +361,30 @@ export const es: TranslationDictionary = {
       succeeded: 'Ramificado en una conversación nueva.',
       failed: 'No se pudo ramificar la conversación.',
     },
+    speech: {
+      action: 'Leer en voz alta',
+      stop: 'Dejar de leer en voz alta',
+      loading: 'Preparando el audio…',
+      playerLabel: 'Audio de lectura en voz alta',
+      download: 'Descargar audio',
+      truncated: 'Solo se leyó en voz alta la primera parte de esta respuesta.',
+      unavailable: {
+        planDisabled: 'La lectura en voz alta no está incluida en tu plan.',
+        noVoice: 'La lectura en voz alta aún no está configurada: no hay ninguna voz configurada.',
+        temporarilyUnavailable:
+          'La lectura en voz alta no está disponible temporalmente. Inténtalo más tarde.',
+      },
+      errors: {
+        planDisabled: 'Tu plan no incluye la lectura en voz alta.',
+        notFound: 'Esta respuesta ya no existe.',
+        nothingToRead: 'Esta respuesta no tiene texto para leer en voz alta.',
+        unavailable:
+          'La lectura en voz alta no está disponible ahora: no hay ninguna voz configurada.',
+        failed: 'El servicio de voz no pudo leer esta respuesta. Inténtalo de nuevo.',
+        generic: 'No se pudo leer esta respuesta en voz alta. Inténtalo de nuevo.',
+        playback: 'No se pudo cargar el audio.',
+      },
+    },
     edit: {
       action: 'Editar y volver a ejecutar',
       title: 'Editar este mensaje',
@@ -4595,6 +4619,7 @@ export const es: TranslationDictionary = {
         ROUTING: 'Enrutamiento',
         TRANSCRIPTION: 'Transcripción',
         VISION_HELPER: 'Asistente de descripción de imágenes',
+        TTS: 'Lectura en voz alta (texto a voz)',
       },
       kind: {
         PLAN_GRANT: 'Asignación del plan',

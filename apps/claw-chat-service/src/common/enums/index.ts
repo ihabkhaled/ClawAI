@@ -29,3 +29,5 @@ export { GeminiUploadPhase } from './gemini-upload-phase.enum';
 export { ProviderToolDialect } from './provider-tool-dialect.enum';
 export { ToolChoiceMode } from './tool-choice-mode.enum';
 export { MemoryRecordType } from './memory-record-type.enum';
+export { SpeechProvider } from './speech-provider.enum';
+export { SpeechAttemptOutcome } from './speech-attempt-outcome.enum';

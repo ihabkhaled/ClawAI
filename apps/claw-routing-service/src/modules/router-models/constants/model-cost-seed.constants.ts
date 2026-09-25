@@ -14,8 +14,13 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// (`audioPerUnitMicroUsd`), so file-service's PAYG-metered transcription
 /// (PaygSurface.TRANSCRIPTION) settles on real money instead of being blocked
 /// as unpriced. A new model, so it FILLS a gap — no `supersedesSeededPrice`.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v5';
-export const MODEL_COST_SEED_VERSION = 5;
+///
+/// v6 (2026-09-25): text-to-speech ("Read aloud", PaygSurface.TTS, multimodal
+/// batch 9). OpenAI `tts-1` / `tts-1-hd` priced per CHARACTER
+/// (`ttsPerCharacterMicroUsd`); Gemini `gemini-2.5-flash-preview-tts` priced
+/// per token (text in, audio out). New models — they fill gaps.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v6';
+export const MODEL_COST_SEED_VERSION = 6;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -400,6 +405,58 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.CHEAP,
     audioPerUnitMicroUsd: 100,
+  }),
+  // ── Text-to-speech (unit + token metering, seed v6) ─────────────────────
+  //
+  // Source: OpenAI's public pricing page (platform.openai.com/docs/pricing,
+  // "Transcription and speech generation") and Google's Gemini API pricing
+  // page (ai.google.dev/gemini-api/docs/pricing, "Gemini 2.5 Flash Preview
+  // TTS"), figures supplied by the owner on 2026-09-25 and NOT re-fetched
+  // here — verify against an invoice before treating them as margin numbers.
+  //
+  // OpenAI tts-1 is $15 / 1M characters = 15 micro-USD per character, tts-1-hd
+  // $30 / 1M = 30. `/audio/speech` returns bytes and no usage, so chat-service
+  // reserves and finalizes `ttsCharacters` (the characters it sent). Token
+  // rates are published-and-zero, not unknown (rule 37 item 17).
+  //
+  // gemini-2.5-flash-preview-tts is $0.50 / 1M input (text) tokens and $10.00 /
+  // 1M output (audio) tokens; the response carries `usageMetadata`, so it
+  // settles on tokens and carries no per-character rate.
+  //
+  // gpt-4o-mini-tts is NOT seeded: it bills audio-output tokens its speech
+  // endpoint does not report, so it could not be settled exactly. Unpriced
+  // means blocked (rule 37 item 5), and chat-service skips it anyway.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'tts-1',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    ttsPerCharacterMicroUsd: 15,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'tts-1-hd',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    ttsPerCharacterMicroUsd: 30,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-2.5-flash-preview-tts',
+    inputPerMillionMicroUsd: 500_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 10_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
   }),
 
   // ── Connector presets batch 2 (ADR-116/117) ─────────────────────────────

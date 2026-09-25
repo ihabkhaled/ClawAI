@@ -78,6 +78,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'The vision models that describe an attached image when the chosen model cannot see. The answer is still written by the chosen model, which is told the description came from a helper. Tried in order; each description is billed to the user as its own line.',
       visionHelperEmpty:
         'No vision helper configured: models that cannot see get only the text read from an image (OCR).',
+      ttsVoiceTitle: 'Read-aloud voice',
+      ttsVoiceDescription:
+        'The voice models that read an assistant reply aloud when a user presses Read aloud. Tried in order. Gemini TTS models (names ending in -tts) and OpenAI tts-1 / tts-1-hd are supported; any other model is skipped.',
+      ttsVoiceEmpty:
+        'No voice configured: "Read aloud" stays visible but dimmed for every user until you add one.',
       researchGateTitle: 'Research gate',
       researchGateDescription:
         'The model asked whether a turn needs the web, before any answering model runs. Candidates are tried in order.',
@@ -248,6 +253,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'نماذج الرؤية التي تصف الصورة المرفقة عندما لا يستطيع النموذج المختار رؤيتها. يظل النموذج المختار هو من يكتب الإجابة، ويُبلَّغ بأن الوصف جاء من مساعد. تُجرَّب بالترتيب، ويُحتسب كل وصف على المستخدم كبند مستقل.',
       visionHelperEmpty:
         'لا يوجد مساعد رؤية مُعدّ: النماذج التي لا ترى الصور تحصل فقط على النص المقروء منها (OCR).',
+      ttsVoiceTitle: 'صوت القراءة بصوت عالٍ',
+      ttsVoiceDescription:
+        'نماذج الصوت التي تقرأ رد المساعد بصوت عالٍ عندما يضغط المستخدم على «القراءة بصوت عالٍ». تُجرَّب بالترتيب. نماذج Gemini TTS (التي تنتهي أسماؤها بـ ‎-tts) ونموذجا OpenAI tts-1 وtts-1-hd مدعومة؛ ويُتخطّى أي نموذج آخر.',
+      ttsVoiceEmpty:
+        'لا يوجد صوت مُعدّ: يبقى زر «القراءة بصوت عالٍ» ظاهرًا لكنه باهت لجميع المستخدمين حتى تضيف صوتًا.',
       researchGateTitle: 'بوابة البحث',
       researchGateDescription:
         'النموذج الذي يُسأل إن كانت الرسالة تحتاج إلى الإنترنت، قبل تشغيل أي نموذج مُجيب. تُجرَّب المرشحات بالترتيب.',
@@ -415,6 +425,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Die Vision-Modelle, die ein angehängtes Bild beschreiben, wenn das gewählte Modell nicht sehen kann. Die Antwort schreibt weiterhin das gewählte Modell; es erfährt, dass die Beschreibung von einem Helfer stammt. Werden der Reihe nach versucht; jede Beschreibung wird dem Nutzer als eigener Posten berechnet.',
       visionHelperEmpty:
         'Kein Vision-Helfer konfiguriert: Modelle ohne Bildverständnis erhalten nur den aus dem Bild gelesenen Text (OCR).',
+      ttsVoiceTitle: 'Vorlesestimme',
+      ttsVoiceDescription:
+        'Die Sprachmodelle, die eine Assistentenantwort vorlesen, wenn jemand auf „Vorlesen“ drückt. Werden der Reihe nach versucht. Unterstützt werden Gemini-TTS-Modelle (Namen, die auf -tts enden) sowie OpenAI tts-1 / tts-1-hd; jedes andere Modell wird übersprungen.',
+      ttsVoiceEmpty:
+        'Keine Stimme konfiguriert: „Vorlesen“ bleibt für alle Nutzer sichtbar, aber abgeblendet, bis du eine hinzufügst.',
       researchGateTitle: 'Recherche-Gate',
       researchGateDescription:
         'Das Modell, das gefragt wird, ob eine Nachricht das Web braucht, bevor ein antwortendes Modell läuft. Kandidaten werden der Reihe nach versucht.',
@@ -591,6 +606,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Los modelos de visión que describen una imagen adjunta cuando el modelo elegido no puede verla. La respuesta la sigue escribiendo el modelo elegido, al que se le indica que la descripción procede de un asistente. Se prueban en orden; cada descripción se cobra al usuario como una partida propia.',
       visionHelperEmpty:
         'No hay asistente de visión configurado: los modelos que no ven imágenes solo reciben el texto leído de ellas (OCR).',
+      ttsVoiceTitle: 'Voz de lectura en voz alta',
+      ttsVoiceDescription:
+        'Los modelos de voz que leen en voz alta una respuesta del asistente cuando el usuario pulsa «Leer en voz alta». Se prueban en orden. Se admiten los modelos TTS de Gemini (nombres que terminan en -tts) y OpenAI tts-1 / tts-1-hd; cualquier otro modelo se omite.',
+      ttsVoiceEmpty:
+        'No hay ninguna voz configurada: «Leer en voz alta» sigue visible pero atenuado para todos los usuarios hasta que añadas una.',
       researchGateTitle: 'Puerta de investigación',
       researchGateDescription:
         'El modelo al que se pregunta si un mensaje necesita la web, antes de que se ejecute cualquier modelo que responda. Los candidatos se prueban en orden.',
@@ -766,6 +786,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'مدل‌های بینایی که وقتی مدل انتخاب‌شده نمی‌تواند تصویر پیوست را ببیند، آن را توصیف می‌کنند. پاسخ همچنان توسط مدل انتخاب‌شده نوشته می‌شود و به آن گفته می‌شود که توصیف از یک دستیار آمده است. به ترتیب امتحان می‌شوند؛ هزینهٔ هر توصیف به‌صورت یک ردیف جداگانه از کاربر کسر می‌شود.',
       visionHelperEmpty:
         'هیچ دستیار بینایی تنظیم نشده است: مدل‌هایی که تصویر را نمی‌بینند فقط متن خوانده‌شده از آن (OCR) را دریافت می‌کنند.',
+      ttsVoiceTitle: 'صدای بلندخوانی',
+      ttsVoiceDescription:
+        'مدل‌های صوتی که وقتی کاربر «بلندخوانی» را می‌زند، پاسخ دستیار را با صدای بلند می‌خوانند. به ترتیب امتحان می‌شوند. مدل‌های Gemini TTS (نام‌هایی که به ‎-tts ختم می‌شوند) و OpenAI tts-1 / tts-1-hd پشتیبانی می‌شوند؛ هر مدل دیگری نادیده گرفته می‌شود.',
+      ttsVoiceEmpty:
+        'هیچ صدایی تنظیم نشده است: «بلندخوانی» برای همهٔ کاربران دیده می‌شود اما کم‌رنگ می‌ماند تا زمانی که یکی اضافه کنید.',
       researchGateTitle: 'دروازه پژوهش',
       researchGateDescription:
         'مدلی که پرسیده می‌شود آیا این پیام به وب نیاز دارد، پیش از اجرای هر مدل پاسخ‌دهنده. نامزدها به ترتیب آزموده می‌شوند.',
@@ -939,6 +964,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         "Les modèles de vision qui décrivent une image jointe lorsque le modèle choisi ne peut pas la voir. La réponse reste rédigée par le modèle choisi, qui est informé que la description vient d'un assistant. Essayés dans l'ordre ; chaque description est facturée à l'utilisateur sur une ligne distincte.",
       visionHelperEmpty:
         "Aucun assistant de vision configuré : les modèles qui ne voient pas les images ne reçoivent que le texte lu dans l'image (OCR).",
+      ttsVoiceTitle: 'Voix de lecture à voix haute',
+      ttsVoiceDescription:
+        "Les modèles vocaux qui lisent à voix haute une réponse de l'assistant lorsqu'un utilisateur appuie sur « Lire à voix haute ». Essayés dans l'ordre. Les modèles Gemini TTS (noms se terminant par -tts) et OpenAI tts-1 / tts-1-hd sont pris en charge ; tout autre modèle est ignoré.",
+      ttsVoiceEmpty:
+        "Aucune voix configurée : « Lire à voix haute » reste visible mais grisé pour tous les utilisateurs tant que vous n'en ajoutez pas une.",
       researchGateTitle: 'Filtre de recherche',
       researchGateDescription:
         "Le modèle auquel on demande si un message nécessite le web, avant l'exécution de tout modèle de réponse. Les candidats sont essayés dans l'ordre.",
@@ -1115,6 +1145,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'विज़न मॉडल जो संलग्न छवि का वर्णन करते हैं जब चुना गया मॉडल उसे देख नहीं सकता। उत्तर अब भी चुना गया मॉडल ही लिखता है, और उसे बताया जाता है कि विवरण एक सहायक से आया है। क्रम से आज़माए जाते हैं; हर विवरण उपयोगकर्ता से एक अलग मद के रूप में लिया जाता है।',
       visionHelperEmpty:
         'कोई विज़न सहायक कॉन्फ़िगर नहीं है: जो मॉडल छवि नहीं देख सकते उन्हें केवल उससे पढ़ा गया टेक्स्ट (OCR) मिलता है।',
+      ttsVoiceTitle: 'पढ़कर सुनाने की आवाज़',
+      ttsVoiceDescription:
+        'वे वॉइस मॉडल जो उपयोगकर्ता के "पढ़कर सुनाएँ" दबाने पर सहायक का उत्तर पढ़कर सुनाते हैं। क्रम से आज़माए जाते हैं। Gemini TTS मॉडल (जिनके नाम -tts पर ख़त्म होते हैं) और OpenAI tts-1 / tts-1-hd समर्थित हैं; कोई भी अन्य मॉडल छोड़ दिया जाता है।',
+      ttsVoiceEmpty:
+        'कोई आवाज़ कॉन्फ़िगर नहीं है: जब तक आप एक नहीं जोड़ते, "पढ़कर सुनाएँ" हर उपयोगकर्ता को दिखता रहेगा पर धुंधला रहेगा।',
       researchGateTitle: 'शोध गेट',
       researchGateDescription:
         'वह मॉडल जिससे पूछा जाता है कि क्या किसी संदेश को वेब की आवश्यकता है, किसी भी उत्तर देने वाले मॉडल के चलने से पहले। उम्मीदवारों को क्रम में आज़माया जाता है।',
@@ -1287,6 +1322,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         "I modelli di visione che descrivono un'immagine allegata quando il modello scelto non può vederla. La risposta resta scritta dal modello scelto, che viene informato che la descrizione proviene da un assistente. Provati in ordine; ogni descrizione è addebitata all'utente come voce separata.",
       visionHelperEmpty:
         "Nessun assistente visivo configurato: i modelli che non vedono le immagini ricevono solo il testo letto dall'immagine (OCR).",
+      ttsVoiceTitle: 'Voce per la lettura ad alta voce',
+      ttsVoiceDescription:
+        "I modelli vocali che leggono ad alta voce una risposta dell'assistente quando l'utente preme «Leggi ad alta voce». Provati in ordine. Sono supportati i modelli Gemini TTS (nomi che terminano in -tts) e OpenAI tts-1 / tts-1-hd; qualsiasi altro modello viene saltato.",
+      ttsVoiceEmpty:
+        'Nessuna voce configurata: «Leggi ad alta voce» resta visibile ma attenuato per tutti gli utenti finché non ne aggiungi una.',
       researchGateTitle: 'Filtro di ricerca',
       researchGateDescription:
         'Il modello a cui si chiede se un messaggio richiede il web, prima che venga eseguito qualsiasi modello di risposta. I candidati vengono provati in ordine.',
@@ -1461,6 +1501,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         '選択したモデルが画像を見られないときに、添付画像を説明するビジョンモデル。回答は引き続き選択したモデルが書き、その説明がヘルパーによるものだと伝えられます。上から順に試され、各説明は個別の項目としてユーザーに課金されます。',
       visionHelperEmpty:
         'ビジョンヘルパーが未設定です：画像を見られないモデルには、画像から読み取ったテキスト（OCR）だけが渡されます。',
+      ttsVoiceTitle: '読み上げ音声',
+      ttsVoiceDescription:
+        'ユーザーが「読み上げ」を押したときにアシスタントの回答を読み上げる音声モデルです。上から順に試されます。Gemini TTS モデル（名前が -tts で終わるもの）と OpenAI の tts-1 / tts-1-hd に対応しており、それ以外のモデルはスキップされます。',
+      ttsVoiceEmpty:
+        '音声が未設定です：追加するまで、「読み上げ」はすべてのユーザーに表示されますが淡色表示のままになります。',
       researchGateTitle: 'リサーチゲート',
       researchGateDescription:
         '回答するモデルを実行する前に、その発言がウェブを必要とするかを尋ねるモデルです。候補は順に試されます。',
@@ -1630,6 +1675,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Os modelos de visão que descrevem uma imagem anexada quando o modelo escolhido não consegue vê-la. A resposta continua sendo escrita pelo modelo escolhido, que é informado de que a descrição veio de um assistente. Testados em ordem; cada descrição é cobrada do usuário como um item separado.',
       visionHelperEmpty:
         'Nenhum assistente de visão configurado: modelos que não veem imagens recebem apenas o texto lido delas (OCR).',
+      ttsVoiceTitle: 'Voz de leitura em voz alta',
+      ttsVoiceDescription:
+        'Os modelos de voz que leem em voz alta uma resposta do assistente quando o usuário pressiona "Ler em voz alta". Testados em ordem. São compatíveis os modelos Gemini TTS (nomes terminados em -tts) e OpenAI tts-1 / tts-1-hd; qualquer outro modelo é ignorado.',
+      ttsVoiceEmpty:
+        'Nenhuma voz configurada: "Ler em voz alta" continua visível, mas esmaecido, para todos os usuários até você adicionar uma.',
       researchGateTitle: 'Porta de pesquisa',
       researchGateDescription:
         'O modelo a que se pergunta se uma mensagem precisa da web, antes de qualquer modelo de resposta ser executado. Os candidatos são tentados por ordem.',
@@ -1805,6 +1855,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Модели зрения, которые описывают прикреплённое изображение, когда выбранная модель не может его увидеть. Ответ по-прежнему пишет выбранная модель, и ей сообщается, что описание получено от помощника. Пробуются по порядку; каждое описание списывается с пользователя отдельной строкой.',
       visionHelperEmpty:
         'Помощник зрения не настроен: модели, которые не видят изображения, получают только распознанный из него текст (OCR).',
+      ttsVoiceTitle: 'Голос для чтения вслух',
+      ttsVoiceDescription:
+        'Голосовые модели, которые читают ответ ассистента вслух, когда пользователь нажимает «Прочитать вслух». Пробуются по порядку. Поддерживаются модели Gemini TTS (имена, оканчивающиеся на -tts) и OpenAI tts-1 / tts-1-hd; любая другая модель пропускается.',
+      ttsVoiceEmpty:
+        'Голос не настроен: кнопка «Прочитать вслух» остаётся видимой, но приглушённой для всех пользователей, пока вы его не добавите.',
       researchGateTitle: 'Фильтр исследования',
       researchGateDescription:
         'Модель, у которой спрашивают, нужен ли сообщению интернет, прежде чем запустится отвечающая модель. Кандидаты пробуются по порядку.',
@@ -1976,6 +2031,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'โมเดลด้านภาพที่อธิบายรูปภาพที่แนบมาเมื่อโมเดลที่เลือกมองไม่เห็นรูปภาพ คำตอบยังคงเขียนโดยโมเดลที่เลือก และโมเดลจะได้รับแจ้งว่าคำอธิบายมาจากผู้ช่วย ลองตามลำดับ และแต่ละคำอธิบายจะถูกเรียกเก็บจากผู้ใช้เป็นรายการแยก',
       visionHelperEmpty:
         'ยังไม่ได้ตั้งค่าผู้ช่วยด้านภาพ: โมเดลที่มองไม่เห็นรูปภาพจะได้รับเฉพาะข้อความที่อ่านจากรูป (OCR)',
+      ttsVoiceTitle: 'เสียงอ่านออกเสียง',
+      ttsVoiceDescription:
+        'โมเดลเสียงที่อ่านคำตอบของผู้ช่วยออกเสียงเมื่อผู้ใช้กด "อ่านออกเสียง" ลองตามลำดับ รองรับโมเดล Gemini TTS (ชื่อที่ลงท้ายด้วย -tts) และ OpenAI tts-1 / tts-1-hd ส่วนโมเดลอื่นจะถูกข้าม',
+      ttsVoiceEmpty:
+        'ยังไม่ได้ตั้งค่าเสียง: ปุ่ม "อ่านออกเสียง" จะยังแสดงแต่เป็นสีจางสำหรับผู้ใช้ทุกคนจนกว่าคุณจะเพิ่มเสียง',
       researchGateTitle: 'ประตูการค้นคว้า',
       researchGateDescription:
         'โมเดลที่ถูกถามว่าข้อความนี้ต้องใช้เว็บหรือไม่ ก่อนที่โมเดลผู้ตอบจะทำงาน ตัวเลือกจะถูกลองตามลำดับ',
@@ -2144,6 +2204,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         '当所选模型无法查看附加图片时，由这些视觉模型描述图片。回答仍由所选模型撰写，并会告知它描述来自助手。按顺序尝试；每次描述都会作为单独一项向用户计费。',
       visionHelperEmpty:
         '尚未配置视觉助手：无法查看图片的模型只会收到从图片中识别出的文字（OCR）。',
+      ttsVoiceTitle: '朗读语音',
+      ttsVoiceDescription:
+        '用户点击“朗读”时，用于朗读助手回复的语音模型。按顺序尝试。支持 Gemini TTS 模型（名称以 -tts 结尾）以及 OpenAI 的 tts-1 / tts-1-hd；其他模型会被跳过。',
+      ttsVoiceEmpty: '尚未配置语音：在添加之前，“朗读”按钮对所有用户仍然可见，但会显示为灰色。',
       researchGateTitle: '研究门控',
       researchGateDescription:
         '在任何回答模型运行之前，用于判断该消息是否需要联网的模型。候选模型按顺序依次尝试。',

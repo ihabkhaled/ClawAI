@@ -365,6 +365,29 @@ export const de: TranslationDictionary = {
       succeeded: 'In eine neue Unterhaltung verzweigt.',
       failed: 'Die Unterhaltung konnte nicht verzweigt werden.',
     },
+    speech: {
+      action: 'Vorlesen',
+      stop: 'Vorlesen beenden',
+      loading: 'Audio wird vorbereitet…',
+      playerLabel: 'Vorgelesenes Audio',
+      download: 'Audio herunterladen',
+      truncated: 'Nur der erste Teil dieser Antwort wurde vorgelesen.',
+      unavailable: {
+        planDisabled: 'Vorlesen ist in deinem Tarif nicht enthalten.',
+        noVoice: 'Vorlesen ist noch nicht eingerichtet: Es ist keine Stimme konfiguriert.',
+        temporarilyUnavailable:
+          'Vorlesen ist vorübergehend nicht verfügbar. Versuche es später erneut.',
+      },
+      errors: {
+        planDisabled: 'Dein Tarif enthält kein Vorlesen.',
+        notFound: 'Diese Antwort existiert nicht mehr.',
+        nothingToRead: 'Diese Antwort enthält keinen Text zum Vorlesen.',
+        unavailable: 'Vorlesen ist gerade nicht verfügbar: Es ist keine Stimme konfiguriert.',
+        failed: 'Der Sprachdienst konnte diese Antwort nicht vorlesen. Versuche es erneut.',
+        generic: 'Diese Antwort konnte nicht vorgelesen werden. Versuche es erneut.',
+        playback: 'Das Audio konnte nicht geladen werden.',
+      },
+    },
     edit: {
       action: 'Bearbeiten und erneut ausführen',
       title: 'Diese Nachricht bearbeiten',
@@ -4610,6 +4633,7 @@ export const de: TranslationDictionary = {
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Transkription',
         VISION_HELPER: 'Bildbeschreibungs-Helfer',
+        TTS: 'Vorlesen (Text-zu-Sprache)',
       },
       kind: {
         PLAN_GRANT: 'Tarif-Kontingent',

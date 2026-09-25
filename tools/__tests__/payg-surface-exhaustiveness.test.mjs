@@ -28,6 +28,7 @@ const PRODUCERS = [
   'apps/claw-chat-service/src/modules/chat-messages/managers/chat-execution.manager.ts',
   'apps/claw-chat-service/src/modules/chat-messages/managers/parallel-execution.manager.ts',
   'apps/claw-chat-service/src/modules/chat-messages/managers/runtime-v2-loop.manager.ts',
+  'apps/claw-chat-service/src/modules/chat-messages/managers/speech-synthesis.manager.ts',
   'apps/claw-chat-service/src/modules/chat-messages/managers/vision-helper.manager.ts',
   'apps/claw-chat-service/src/modules/chat-messages/services/access-control.service.ts',
   'apps/claw-file-service/src/modules/files/managers/transcription-meter.manager.ts',

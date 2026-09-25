@@ -1199,3 +1199,17 @@ export type {
   GrafanaTabOpener,
   UseOpenGrafanaResult,
 } from './grafana-access.types';
+export type {
+  SpeechAvailability,
+  SynthesizedSpeech,
+  MessageSpeechStatusInput,
+  MessageSpeechActionProps,
+  MessageSpeechPlayerProps,
+  MessageSpeechAudioProps,
+  MessageSpeechMutationSnapshot,
+  UseMessageSpeechAvailabilityReturn,
+  UseMessageSpeechOpenFlagReturn,
+  UseMessageSpeechReturn,
+  UseMessageSpeechPlayerReturn,
+  UseMessageSpeechAudioReturn,
+} from './message-speech.types';

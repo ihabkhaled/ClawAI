@@ -11,7 +11,7 @@ import {
   MODEL_COST_SEED_VERSION,
 } from '../constants/model-cost-seed.constants';
 import { LOCAL_COST_PROVIDERS } from '../constants/model-cost.constants';
-import type { ModelCostSeedInput } from '../types/model-cost-seed.types';
+import type { ModelCostSeedEntry, ModelCostSeedInput } from '../types/model-cost-seed.types';
 
 const seedInput = (overrides: Partial<ModelCostSeedInput> = {}): ModelCostSeedInput => ({
   name: MODEL_COST_SEED_NAME,
@@ -245,6 +245,38 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
 
   it('is version 5 or later, so installs that ran v4 pick up the whisper-1 price', () => {
     expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(5);
+  });
+
+  // "Read aloud" (PaygSurface.TTS, batch 9). /audio/speech returns bytes and
+  // no usage, so OpenAI TTS settles on the characters chat-service sent:
+  // $15 / 1M chars = 15 micro-USD per character, tts-1-hd $30 / 1M = 30.
+  it('prices OpenAI tts-1 and tts-1-hd per character, with zero token rates', () => {
+    const find = (modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'OPENAI' && e.modelKey === modelKey);
+    expect(find('tts-1')).toMatchObject({
+      ttsPerCharacterMicroUsd: 15,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+    });
+    expect(find('tts-1-hd')).toMatchObject({ ttsPerCharacterMicroUsd: 30 });
+    expect(find('gpt-4o-mini-tts')).toBeUndefined();
+  });
+
+  // Gemini TTS reports usageMetadata, so it is token-priced: $0.50 / 1M text
+  // in, $10 / 1M audio out — and carries no per-character rate.
+  it('leaves Gemini TTS token-priced', () => {
+    const gemini = MODEL_COST_SEED_ENTRIES.find(
+      (e) => e.provider === 'GEMINI' && e.modelKey === 'gemini-2.5-flash-preview-tts',
+    );
+    expect(gemini).toMatchObject({
+      inputPerMillionMicroUsd: 500_000,
+      outputPerMillionMicroUsd: 10_000_000,
+    });
+    expect(gemini?.ttsPerCharacterMicroUsd ?? null).toBeNull();
+  });
+
+  it('is version 6 or later, so installs that ran v5 pick up the TTS prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(6);
   });
 
   // Money is integer micro-USD everywhere in this platform. A float here would

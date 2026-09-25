@@ -358,6 +358,28 @@ export const en: TranslationDictionary = {
       succeeded: 'Branched into a new conversation.',
       failed: 'Could not branch the conversation.',
     },
+    speech: {
+      action: 'Read aloud',
+      stop: 'Stop reading aloud',
+      loading: 'Preparing audio…',
+      playerLabel: 'Read-aloud audio',
+      download: 'Download audio',
+      truncated: 'Only the first part of this reply was read aloud.',
+      unavailable: {
+        planDisabled: 'Read aloud is not included in your plan.',
+        noVoice: 'Read aloud is not set up yet: no voice is configured.',
+        temporarilyUnavailable: 'Read aloud is temporarily unavailable. Try again later.',
+      },
+      errors: {
+        planDisabled: 'Your plan does not include read aloud.',
+        notFound: 'This reply no longer exists.',
+        nothingToRead: 'There is no text in this reply to read aloud.',
+        unavailable: 'Read aloud is not available right now: no voice is configured.',
+        failed: 'The voice service could not read this reply. Try again.',
+        generic: 'Could not read this reply aloud. Try again.',
+        playback: 'The audio could not be loaded.',
+      },
+    },
     edit: {
       action: 'Edit and re-run',
       title: 'Edit this message',
@@ -4520,6 +4542,7 @@ export const en: TranslationDictionary = {
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Transcription',
         VISION_HELPER: 'Image description helper',
+        TTS: 'Read aloud (text-to-speech)',
       },
       kind: {
         PLAN_GRANT: 'Plan allowance',

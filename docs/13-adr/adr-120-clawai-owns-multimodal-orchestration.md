@@ -185,6 +185,45 @@ AUTO path ranks by fit (keyword capability, Ollama-assisted and heuristic paths
 do not); a video still processing at send time adds nothing to the research
 digest; frame image tokens are estimated (800/frame), not measured.
 
+## Addendum — text-to-speech "Read aloud" (batch 9, 2026-09-25)
+
+Owner decision: TTS is its own capability, endpoint, player and PAYG surface —
+never mixed with transcription (speech in and speech out are different
+products with different prices).
+
+1. **Role.** The voice model is an admin choice: `AssistantModelRole.TTS_VOICE`
+   (seeded Gemini `gemini-2.5-flash-preview-tts`, then OpenAI `tts-1`). chat-service
+   calls only candidates it can meter exactly — Gemini `…-tts` models (settled on
+   `usageMetadata`) and OpenAI `tts-1` / `tts-1-hd` (priced per character); it
+   skips `gpt-4o-mini-tts`, whose speech endpoint reports no usage.
+2. **Owner service.** chat-service owns the conversation, so it owns the endpoint:
+   `POST /chat-messages/:id/speech` (owner else 404; plan gate `allowTextToSpeech`
+   403 before any hold) and `GET /chat-messages/speech/availability`
+   (`{available, reason}`; the UI dims the control and names the reason).
+3. **Storage.** The audio is an ordinary file owned by the message's owner in
+   file-service (`POST /internal/files/store-generated-audio`): stored COMPLETED
+   with the spoken text as `extractedText`, never extracted or transcribed (that
+   would bill the user for text they already have). `metadata.speech` on the
+   message records file id, provider, model, characters, `truncated`, content
+   hash and generation — never bytes. A request whose content hash matches and
+   whose file still exists is replayed with no provider call and no charge.
+4. **Billing.** `PaygSurface.TTS`, one hold per provider attempt, requestId
+   `tts:<messageId>:<contentHash>:g<generation>:<attempt>` (a new generation after
+   the stored file is gone is a new paid call, never a reused settled hold). A
+   key-less provider is skipped before any hold; a provider rejection releases and
+   falls through; a 402, clamped hold, unreachable meter or deadline ends the walk
+   (rule 37 item 18). Text is capped at 4,000 code points at a sentence boundary,
+   and `truncated: true` is shown as visible text in the player.
+5. **Audio.** Gemini returns 16-bit PCM (`audio/L16;rate=24000`); chat-service
+   wraps it in a canonical 44-byte RIFF/WAVE header. OpenAI returns MP3.
+
+Rejected: synthesising on file-service (it does not own the reply's text or its
+ownership); streaming audio without storing it (every replay would be a paid
+call); a token estimate for `gpt-4o-mini-tts` (a guess on the money path).
+Known gaps: fixed provider hosts (a connector base URL pointing at a proxy is
+not used for speech); a synthesis whose store fails after the paid call is
+charged with nothing saved; one fixed voice per provider.
+
 ## Alternatives rejected
 
 - **Keep the provider-level list.** It is the defect: it calls `gpt-4o-audio`

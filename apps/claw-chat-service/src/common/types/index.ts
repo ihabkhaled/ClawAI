@@ -4,6 +4,8 @@ export type { PaginationParams, PaginatedResult } from './pagination.type';
 export type {
   HttpBinaryReadOptions,
   HttpBinaryStreamOptions,
+  HttpBinaryResponse,
+  HttpPostBinaryOptions,
   HttpRequestOptions,
   HttpResponse,
   HttpStreamOptions,

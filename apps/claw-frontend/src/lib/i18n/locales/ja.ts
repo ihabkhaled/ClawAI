@@ -361,6 +361,29 @@ export const ja: TranslationDictionary = {
       succeeded: '新しい会話に分岐しました。',
       failed: '会話を分岐できませんでした。',
     },
+    speech: {
+      action: '読み上げ',
+      stop: '読み上げを停止',
+      loading: '音声を準備しています…',
+      playerLabel: '読み上げ音声',
+      download: '音声をダウンロード',
+      truncated: 'この回答は最初の部分だけが読み上げられました。',
+      unavailable: {
+        planDisabled: '読み上げはご利用のプランに含まれていません。',
+        noVoice: '読み上げはまだ設定されていません：音声が構成されていません。',
+        temporarilyUnavailable:
+          '読み上げは一時的に利用できません。しばらくしてからもう一度お試しください。',
+      },
+      errors: {
+        planDisabled: 'ご利用のプランには読み上げが含まれていません。',
+        notFound: 'この回答はもう存在しません。',
+        nothingToRead: 'この回答には読み上げるテキストがありません。',
+        unavailable: '読み上げは現在利用できません：音声が構成されていません。',
+        failed: '音声サービスがこの回答を読み上げられませんでした。もう一度お試しください。',
+        generic: 'この回答を読み上げられませんでした。もう一度お試しください。',
+        playback: '音声を読み込めませんでした。',
+      },
+    },
     edit: {
       action: '編集して再実行',
       title: 'このメッセージを編集',
@@ -4557,6 +4580,7 @@ export const ja: TranslationDictionary = {
         ROUTING: 'ルーティング',
         TRANSCRIPTION: '文字起こし',
         VISION_HELPER: '画像説明ヘルパー',
+        TTS: '読み上げ（音声合成）',
       },
       kind: {
         PLAN_GRANT: 'プラン付与',

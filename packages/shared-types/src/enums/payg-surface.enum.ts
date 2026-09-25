@@ -42,6 +42,14 @@ export enum PaygSurface {
    * turn reuse one description, so one image is one paid call.
    */
   VISION_HELPER = 'VISION_HELPER',
+  /**
+   * Text-to-speech of an assistant reply ("Read aloud", chat-service,
+   * multimodal batch 9). One row per PROVIDER ATTEMPT. Priced per character
+   * synthesised on a per-unit row (`ttsPerCharacterMicroUsd`, OpenAI tts-1)
+   * or per token (Gemini TTS). Never mixed with TRANSCRIPTION: speech out and
+   * speech in are different products with different prices.
+   */
+  TTS = 'TTS',
 }
 
 // Deliberately NOT a member: RESEARCH. Research enrichment reaches search SaaS

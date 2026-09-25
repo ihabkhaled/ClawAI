@@ -359,3 +359,18 @@ the video bytes.
 ffmpeg is installed in BOTH images (`Dockerfile.dev`, `Dockerfile` runner) with
 a build-time `ffmpeg -version` check. Runbook:
 [`skills/debug-a-video-the-model-cannot-read.md`](../../skills/debug-a-video-the-model-cannot-read.md).
+
+## Generated audio is stored, never transcribed (multimodal batch 9, 2026-09-25)
+
+`POST /internal/files/store-generated-audio` (service token, Zod
+`storeGeneratedAudioSchema`: `userId`, `filename`, `mimeType` ∈ {`audio/mpeg`,
+`audio/wav`}, base64 ≤ the 50 MB file cap, optional `transcript` ≤ 20,000) stores
+the audio chat-service synthesised for a reply's owner ("Read aloud").
+
+- Same security pipeline as an upload (magic bytes, ClamAV, sanitized name).
+- Stored **COMPLETED** with the spoken text as `extractedText`, and **no**
+  extraction job, transcription event or upload event: transcribing our own
+  speech would charge the user (PaygSurface.TRANSCRIPTION) for text they already
+  have. Do not route generated audio through `upload-internal`, which does.
+- Ordinary file ownership: the owner downloads it through `/files/download/:id`;
+  retention applies; chat-service re-synthesises (new generation) when it is gone.

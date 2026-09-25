@@ -106,4 +106,28 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
     timeoutMs: 30_000,
     maxTokens: 1_024,
   },
+  // TTS_VOICE: reads an assistant reply aloud (multimodal batch 9). Gemini
+  // first because it is the connector a typical install has; its TTS model
+  // is token-priced and returns 24 kHz PCM that chat-service wraps in WAV.
+  // OpenAI `tts-1` second: priced per CHARACTER (ttsPerCharacterMicroUsd), so
+  // the meter settles exactly on what was sent — gpt-4o-mini-tts is not
+  // seeded because its response reports no usage to settle tokens on.
+  // maxTokens is the Gemini audio-output ceiling: 4 tokens per character
+  // covers the 4,000-character cap with room (unused by tts-1).
+  {
+    role: AssistantModelRole.TTS_VOICE,
+    order: 1,
+    provider: RouterProvider.GEMINI,
+    modelAlias: 'gemini-2.5-flash-preview-tts',
+    timeoutMs: 60_000,
+    maxTokens: 16_384,
+  },
+  {
+    role: AssistantModelRole.TTS_VOICE,
+    order: 2,
+    provider: RouterProvider.OPENAI,
+    modelAlias: 'tts-1',
+    timeoutMs: 60_000,
+    maxTokens: 16_384,
+  },
 ]);

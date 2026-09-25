@@ -142,7 +142,10 @@ paid model, rule 1 applies to it like anything else.
     model row carries the matching per-unit rate (`imagePerUnitMicroUsd`,
     `audioPerUnitMicroUsd` = per second of input audio, `ttsPerCharacterMicroUsd`).
     OpenAI's image API reports no usage, so a zero-token finalize settled every
-    OpenAI image at $0 and released the whole hold. Mechanism:
+    OpenAI image at $0 and released the whole hold. A model whose response
+    reports neither usage nor a unit the row prices (OpenAI `gpt-4o-mini-tts`)
+    is not called at all — the TTS candidate filter skips it rather than settle
+    on a guess. Mechanism:
     [`docs/03-architecture/payg-credit.md` § Unit metering](../docs/03-architecture/payg-credit.md#unit-metering--surfaces-that-are-not-priced-by-tokens).
 18. **A credit refusal ends a candidate walk; it is never a reason to try the next
     provider.** A loop over provider candidates (transcription's modality

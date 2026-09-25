@@ -2,6 +2,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   ASSISTANT_MODEL_ROLE_FILE_WRITER,
   ASSISTANT_MODEL_ROLE_RESEARCH_GATE,
+  ASSISTANT_MODEL_ROLE_TTS_VOICE,
   ASSISTANT_MODEL_ROLE_VISION_HELPER,
   type SmartRouterAssistantTabProps,
 } from '@/types/smart-router-admin.types';
@@ -15,6 +16,8 @@ import { SmartRouterAssistantRoleSection } from './smart-router-assistant-role-s
  *   they were hard-coded and failed whenever the admin had not exposed them).
  * - Vision helper: describes an attached image when the chosen model cannot
  *   see (ADR-120 batch 5); the chosen model still writes the answer.
+ * - Read-aloud voice: reads an assistant reply aloud (multimodal batch 9).
+ *   Empty means "Read aloud" stays dimmed for everyone.
  */
 export function SmartRouterAssistantTab({ t }: SmartRouterAssistantTabProps): React.ReactElement {
   return (
@@ -40,6 +43,14 @@ export function SmartRouterAssistantTab({ t }: SmartRouterAssistantTabProps): Re
         titleKey="smartRouterAdmin.assistant.visionHelperTitle"
         descriptionKey="smartRouterAdmin.assistant.visionHelperDescription"
         emptyKey="smartRouterAdmin.assistant.visionHelperEmpty"
+        t={t}
+      />
+      <Separator />
+      <SmartRouterAssistantRoleSection
+        role={ASSISTANT_MODEL_ROLE_TTS_VOICE}
+        titleKey="smartRouterAdmin.assistant.ttsVoiceTitle"
+        descriptionKey="smartRouterAdmin.assistant.ttsVoiceDescription"
+        emptyKey="smartRouterAdmin.assistant.ttsVoiceEmpty"
         t={t}
       />
     </div>

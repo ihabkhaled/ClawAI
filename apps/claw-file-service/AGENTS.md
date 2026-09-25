@@ -20,8 +20,8 @@ npm run dev
 - Port: 4006
 - Database: postgresql
 - Prisma models: File, FileChunk
-- API endpoints: 25 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 50 (vitest)
+- API endpoints: 26 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 52 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

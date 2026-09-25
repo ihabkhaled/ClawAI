@@ -596,3 +596,18 @@ Failure modes:
 The old `filename="${file.filename}"` threw ERR_INVALID_CHAR for any
 character above U+00FF, so every AI file with an Arabic, Chinese or "Wi‑Fi"
 title downloaded as a 500. The F4 file-model matrix found it.
+
+## Generated audio is stored, never transcribed (multimodal batch 9, 2026-09-25)
+
+`POST /internal/files/store-generated-audio` (service token, Zod
+`storeGeneratedAudioSchema`: `userId`, `filename`, `mimeType` ∈ {`audio/mpeg`,
+`audio/wav`}, base64 ≤ the 50 MB file cap, optional `transcript` ≤ 20,000) stores
+the audio chat-service synthesised for a reply's owner ("Read aloud").
+
+- Same security pipeline as an upload (magic bytes, ClamAV, sanitized name).
+- Stored **COMPLETED** with the spoken text as `extractedText`, and **no**
+  extraction job, transcription event or upload event: transcribing our own
+  speech would charge the user (PaygSurface.TRANSCRIPTION) for text they already
+  have. Do not route generated audio through `upload-internal`, which does.
+- Ordinary file ownership: the owner downloads it through `/files/download/:id`;
+  retention applies; chat-service re-synthesises (new generation) when it is gone.

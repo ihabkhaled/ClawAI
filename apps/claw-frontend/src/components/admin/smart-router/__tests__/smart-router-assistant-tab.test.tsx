@@ -96,4 +96,53 @@ describe('SmartRouterAssistantTab', () => {
 
     expect(screen.getByText('smartRouterAdmin.assistant.visionHelperEmpty')).toBeInTheDocument();
   });
+
+  // Multimodal batch 9: the read-aloud voice is an admin choice, and an empty
+  // role is what dims "Read aloud" for every user.
+  it('shows the read-aloud voice section, reading its own role', () => {
+    useAssistantModels.mockImplementation((role: string) => ({
+      entries:
+        role === 'TTS_VOICE'
+          ? [
+              {
+                id: 'tts1',
+                order: 1,
+                provider: 'GEMINI',
+                modelAlias: 'gemini-2.5-flash-preview-tts',
+                enabled: true,
+                timeoutMs: 60000,
+                maxTokens: 4096,
+                deploymentId: null,
+              },
+            ]
+          : [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      replace: vi.fn(),
+      isReplacePending: false,
+    }));
+
+    render(<SmartRouterAssistantTab t={t} />);
+
+    expect(useAssistantModels).toHaveBeenCalledWith('TTS_VOICE');
+    expect(screen.getByText('smartRouterAdmin.assistant.ttsVoiceTitle')).toBeInTheDocument();
+    expect(screen.getByText('smartRouterAdmin.assistant.ttsVoiceDescription')).toBeInTheDocument();
+    expect(screen.getByText('gemini-2.5-flash-preview-tts')).toBeInTheDocument();
+  });
+
+  it('says read aloud stays dimmed when no voice is configured', () => {
+    useAssistantModels.mockImplementation(() => ({
+      entries: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      replace: vi.fn(),
+      isReplacePending: false,
+    }));
+
+    render(<SmartRouterAssistantTab t={t} />);
+
+    expect(screen.getByText('smartRouterAdmin.assistant.ttsVoiceEmpty')).toBeInTheDocument();
+  });
 });

@@ -107,7 +107,10 @@ Why each one is paid:
   image the chat model cannot see. Free still gets the image's OCR text and a
   truthful "this model cannot see it" note.
 - **Text-to-speech** (`allowTextToSpeech`) — per-character provider cost
-  (`ttsPerCharacterMicroUsd`). Gate added now; enforced when TTS ships.
+  (`ttsPerCharacterMicroUsd`: tts-1 $15 / 1M characters) or Gemini TTS audio
+  tokens ($10 / 1M). **Enforced** since batch 9: chat-service's
+  `POST /chat-messages/:id/speech` answers 403 `PLAN_FEATURE_DISABLED` before
+  any hold, and the "Read aloud" control is dimmed with the plan reason.
 - **Max video length** (`maxVideoSeconds`) — `null` unlimited, `0` disabled.
   Ten minutes on every paid tier, **including Unlimited**: ffmpeg frame
   extraction is local CPU that no PAYG surface prices yet, so no tier is

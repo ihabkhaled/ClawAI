@@ -20,6 +20,13 @@ import { VisionHelperManager } from './managers/vision-helper.manager';
 import { VisionHelperCandidatesClient } from './clients/vision-helper-candidates.client';
 import { VideoFramesClient } from './clients/video-frames.client';
 import { VideoDeliveryManager } from './managers/video-delivery.manager';
+import { ChatSpeechController } from './controllers/chat-speech.controller';
+import { MessageSpeechService } from './services/message-speech.service';
+import { SpeechSynthesisManager } from './managers/speech-synthesis.manager';
+import { TtsVoiceCandidatesClient } from './clients/tts-voice-candidates.client';
+import { SpeechConnectorClient } from './clients/speech-connector.client';
+import { SpeechProviderClient } from './clients/speech-provider.client';
+import { SpeechFileStoreClient } from './clients/speech-file-store.client';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
@@ -68,6 +75,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ChatMessagesController,
     ChatStreamController,
     ChatInternalController,
+    ChatSpeechController,
     RuntimeV2RunController,
     RuntimeV2CommandController,
   ],
@@ -95,6 +103,12 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     VisionHelperManager,
     VideoFramesClient,
     VideoDeliveryManager,
+    TtsVoiceCandidatesClient,
+    SpeechConnectorClient,
+    SpeechProviderClient,
+    SpeechFileStoreClient,
+    SpeechSynthesisManager,
+    MessageSpeechService,
     ChatContextGatewayManager,
     ModeExecutionGatewayManager,
     ContextComposerManager,

@@ -12,6 +12,7 @@ import {
   type FileUploadStartedPayload,
 } from '@claw/shared-types';
 import { type File, type FileChunk, FileIngestionStatus } from '../../../generated/prisma';
+import { type StoreGeneratedAudioDto } from '../dto/store-generated-audio.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { resolveUploadMimeType } from '../../../common/utilities/archive-format.utility';
@@ -665,6 +666,36 @@ export class FilesService {
 
     this.logger.log(
       `storeImage: stored ${file.id} "${safeName}" (${String(contentBuffer.length)} bytes, security checks passed)`,
+    );
+    return { fileId: file.id };
+  }
+
+  /**
+   * Stores audio a sibling service synthesised for its owner ("Read aloud",
+   * multimodal batch 9). Same security pipeline as an upload, but stored
+   * COMPLETED with the spoken text as its extracted text, and NO extraction or
+   * transcription job: transcribing our own speech would charge the user for
+   * text they already have. Downloads follow ordinary file ownership.
+   */
+  async storeGeneratedAudio(data: StoreGeneratedAudioDto): Promise<{ fileId: string }> {
+    const buffer = Buffer.from(data.base64Data, 'base64');
+    this.validateFileSize(buffer.length);
+    await this.runSecurityChecks(data.filename, data.mimeType, buffer);
+    const safeName = this.fileSecurityManager.getSanitizedFilename(data.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, buffer);
+    const file = await this.filesRepository.create({
+      userId: data.userId,
+      filename: safeName,
+      mimeType: data.mimeType,
+      sizeBytes: buffer.length,
+      storagePath,
+      content: data.base64Data,
+      retentionExpiresAt: this.computeRetentionExpiry(),
+      ingestionStatus: FileIngestionStatus.COMPLETED,
+      extractedText: data.transcript ?? null,
+    });
+    this.logger.log(
+      `storeGeneratedAudio: stored ${file.id} (${data.mimeType}, ${String(buffer.length)} bytes)`,
     );
     return { fileId: file.id };
   }

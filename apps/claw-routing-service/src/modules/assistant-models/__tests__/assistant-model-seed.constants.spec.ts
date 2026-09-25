@@ -105,4 +105,33 @@ describe('assistant model seed', () => {
       `ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'VISION_HELPER'`,
     );
   });
+
+  // Batch 9: "Read aloud". Gemini first (the typical install's connector),
+  // then OpenAI tts-1, which is priced per character so it settles exactly.
+  it('seeds the TTS voice, Gemini TTS first then OpenAI tts-1', () => {
+    const voices = ASSISTANT_MODEL_SEED_ENTRIES.filter(
+      (candidate) => candidate.role === AssistantModelRole.TTS_VOICE,
+    );
+
+    expect(voices.map((entry) => [entry.order, entry.provider, entry.modelAlias])).toEqual([
+      [1, RouterProvider.GEMINI, 'gemini-2.5-flash-preview-tts'],
+      [2, RouterProvider.OPENAI, 'tts-1'],
+    ]);
+    for (const entry of voices) {
+      // 4,000-char cap x 4 audio tokens per char must fit the ceiling.
+      expect(entry.maxTokens).toBeGreaterThanOrEqual(16_000);
+      expect(entry.timeoutMs).toBeLessThanOrEqual(120_000);
+    }
+  });
+
+  it('ships the migration that adds the TTS_VOICE role', () => {
+    const sql = readFileSync(
+      join(
+        __dirname,
+        '../../../../prisma/migrations/20260925230000_add_tts_voice_role/migration.sql',
+      ),
+      'utf8',
+    );
+    expect(sql).toContain(`ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'TTS_VOICE'`);
+  });
 });

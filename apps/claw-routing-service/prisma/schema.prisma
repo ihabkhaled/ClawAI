@@ -273,6 +273,9 @@ enum AssistantModelRole {
   /// Describes an attached image for a lane whose model cannot see (ADR-120,
   /// multimodal batch 5). Its output is framed as derived observations.
   VISION_HELPER
+  /// Reads an assistant reply aloud (text-to-speech, multimodal batch 9).
+  /// chat-service tries candidates in order; metered on PaygSurface.TTS.
+  TTS_VOICE
 }
 
 enum RouterChainEntryRole {

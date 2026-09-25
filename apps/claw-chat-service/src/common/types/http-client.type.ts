@@ -62,6 +62,19 @@ export type HttpBinaryReadOptions = AllowedHostsOption & {
   timeoutMs?: number;
 };
 
+export type HttpPostBinaryOptions = AllowedHostsOption & {
+  url: string;
+  headers?: Record<string, string>;
+  body: unknown;
+  timeoutMs: number;
+};
+
+export type HttpBinaryResponse = {
+  status: number;
+  ok: boolean;
+  body: Buffer;
+};
+
 export type HttpBinaryStreamOptions = AllowedHostsOption & {
   url: string;
   headers?: Record<string, string>;

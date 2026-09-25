@@ -342,6 +342,28 @@ export const zh: TranslationDictionary = {
       succeeded: '已分支为新的对话。',
       failed: '无法分支该对话。',
     },
+    speech: {
+      action: '朗读',
+      stop: '停止朗读',
+      loading: '正在准备音频…',
+      playerLabel: '朗读音频',
+      download: '下载音频',
+      truncated: '仅朗读了这条回复的开头部分。',
+      unavailable: {
+        planDisabled: '您的套餐不包含朗读功能。',
+        noVoice: '朗读功能尚未设置：未配置任何语音。',
+        temporarilyUnavailable: '朗读功能暂时不可用，请稍后再试。',
+      },
+      errors: {
+        planDisabled: '您当前的套餐不提供朗读。',
+        notFound: '这条回复已不存在。',
+        nothingToRead: '这条回复没有可朗读的文字。',
+        unavailable: '朗读功能当前不可用：未配置任何语音。',
+        failed: '语音服务无法朗读这条回复，请重试。',
+        generic: '无法朗读这条回复，请重试。',
+        playback: '无法加载音频。',
+      },
+    },
     edit: {
       action: '编辑并重新运行',
       title: '编辑此消息',
@@ -4391,6 +4413,7 @@ export const zh: TranslationDictionary = {
         ROUTING: '路由',
         TRANSCRIPTION: '语音转写',
         VISION_HELPER: '图像描述助手',
+        TTS: '朗读（文本转语音）',
       },
       kind: {
         PLAN_GRANT: '套餐额度',

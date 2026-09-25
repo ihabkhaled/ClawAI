@@ -26,6 +26,10 @@ import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
 import { VideoFramesService } from '../services/video-frames.service';
 import { type VideoFramesDto, videoFramesSchema } from '../dto/video-frames.dto';
+import {
+  type StoreGeneratedAudioDto,
+  storeGeneratedAudioSchema,
+} from '../dto/store-generated-audio.dto';
 import { type VideoFrame } from '../types/video-processing.types';
 import type {
   CreateInternalFileBody,
@@ -113,6 +117,21 @@ export class FilesInternalController {
     @Body() body: { userId: string; filename: string; mimeType: string; base64Data: string },
   ): Promise<{ fileId: string }> {
     return this.filesService.storeImage(body);
+  }
+
+  /**
+   * Batch 9 — audio chat-service synthesised for a reply's owner ("Read
+   * aloud"). Stored COMPLETED with no extraction/transcription job; the
+   * owner is named in the body and downloads follow file ownership.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post('store-generated-audio')
+  @HttpCode(HttpStatus.CREATED)
+  async storeGeneratedAudio(
+    @Body(new ZodValidationPipe(storeGeneratedAudioSchema)) body: StoreGeneratedAudioDto,
+  ): Promise<{ fileId: string }> {
+    return this.filesService.storeGeneratedAudio(body);
   }
 
   /**

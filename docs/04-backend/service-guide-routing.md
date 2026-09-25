@@ -514,3 +514,23 @@ attachments and each candidate's fit; the decision carries
 `modalityFit:<fit>` in `reasonTags`. Code: `utilities/modality-fit.utility.ts`,
 `utilities/attachment-modality.utility.ts`, `constants/modality-fit.constants.ts`,
 `common/enums/modality-fit.enum.ts`. Rule 51 item 13.
+
+## Assistant model role TTS_VOICE (multimodal batch 9, 2026-09-25)
+
+`AssistantModelRole.TTS_VOICE` names the voice models chat-service uses for
+"Read aloud" (text-to-speech of a reply).
+
+- **Migration** `20260925230000_add_tts_voice_role`
+  (`ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'TTS_VOICE'`).
+- **Seed**: Gemini `gemini-2.5-flash-preview-tts` (order 1), OpenAI `tts-1`
+  (order 2), 60 s timeout, `maxTokens` 16,384 (Gemini audio-output ceiling: 4
+  tokens per character over the 4,000-character cap). Filled only while the
+  role has no rows.
+- **Prices** (model-cost seed **v6**, `model-cost-list-prices-2026-v6`): `tts-1`
+  `ttsPerCharacterMicroUsd` 15 ($15 / 1M chars), `tts-1-hd` 30, Gemini
+  `gemini-2.5-flash-preview-tts` $0.50 / 1M input + $10 / 1M output tokens
+  (OpenAI + Google pricing pages, owner-supplied 2026-09-25). `gpt-4o-mini-tts`
+  deliberately unpriced (no usage to settle on — blocked, and chat skips it).
+- **Endpoints**: unchanged — `GET/PUT /routing/assistant-models/TTS_VOICE`
+  (admin) and `GET /internal/assistant-models/TTS_VOICE/candidates`.
+- Metering happens in chat-service (`PaygSurface.TTS`), not here.

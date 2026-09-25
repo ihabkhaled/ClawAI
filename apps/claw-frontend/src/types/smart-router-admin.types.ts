@@ -386,6 +386,7 @@ export type UseSmartRouterSelectableDeploymentsResult = {
 export const ASSISTANT_MODEL_ROLE_RESEARCH_GATE = 'RESEARCH_GATE';
 export const ASSISTANT_MODEL_ROLE_FILE_WRITER = 'FILE_WRITER';
 export const ASSISTANT_MODEL_ROLE_VISION_HELPER = 'VISION_HELPER';
+export const ASSISTANT_MODEL_ROLE_TTS_VOICE = 'TTS_VOICE';
 
 /** One configured candidate for an assistant model role. */
 export type AssistantModelRecord = {

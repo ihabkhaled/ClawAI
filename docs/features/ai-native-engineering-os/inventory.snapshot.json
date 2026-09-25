@@ -1149,6 +1149,11 @@
         },
         {
           "method": "POST",
+          "route": "/chat-messages/:id/speech",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/chat-messages/best-of-n",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
         },
@@ -1211,6 +1216,11 @@
           "method": "POST",
           "route": "/chat-messages/runtime/runs/:runId/steering",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/chat-messages/speech/availability",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
         },
         {
           "method": "POST",
@@ -1648,6 +1658,11 @@
         {
           "method": "DELETE",
           "route": "/internal/files/published-copy/:id",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/files/store-generated-audio",
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
         },
         {
@@ -7668,7 +7683,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 25264,
+          "bytes": 25462,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7802,7 +7817,7 @@
           "file": "skills/add-a-grafana-dashboard.md"
         },
         {
-          "bytes": 7418,
+          "bytes": 8698,
           "file": "skills/add-a-helper-model-role.md"
         },
         {
@@ -8030,7 +8045,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 16748,
+          "bytes": 17077,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -8136,7 +8151,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5403
+        "value": 5423
       },
       "localeCount": 13,
       "locales": [
@@ -10114,7 +10129,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 190
+        "testFiles": 197
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10130,11 +10145,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 50
+        "testFiles": 52
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 571
+        "testFiles": 576
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10900,7 +10915,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 688,
+    "endpointCount": 691,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -10912,7 +10927,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1560,
+    "totalTestFiles": 1574,
     "workspaceCount": 25
   }
 }

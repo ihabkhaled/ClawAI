@@ -48,6 +48,26 @@ vi.mock('@/components/chat/context-receipt-button', () => ({
   ContextReceiptButton: () => <div>context-receipt</div>,
 }));
 
+// Read aloud: the REAL button renders over stubbed hooks, so the bubble test
+// proves the control is wired into the assistant action row without a query
+// client. The player is a marker.
+const mockToggle = vi.fn();
+vi.mock('@/hooks/chat/use-message-speech', () => ({
+  useMessageSpeech: () => ({
+    t: (key: string) => key,
+    status: 'IDLE',
+    isUnavailable: false,
+    label: 'chat.speech.action',
+    isPlayerOpen: false,
+    errorKey: null,
+    toggle: mockToggle,
+  }),
+}));
+
+vi.mock('@/components/chat/message-speech-player', () => ({
+  MessageSpeechPlayer: () => <div>speech-player</div>,
+}));
+
 vi.mock('@/lib/markdown', () => ({
   MarkdownRenderer: ({ content }: { content: string }) => <div>{content}</div>,
 }));
@@ -185,5 +205,54 @@ describe('MessageBubble', () => {
 
     expect(screen.queryByText('chat.truncated.title')).not.toBeInTheDocument();
     expect(screen.queryByText('chat.truncated.body')).not.toBeInTheDocument();
+  });
+
+  it('offers read aloud on an assistant reply, with its player below the row', () => {
+    const message: ChatMessage = {
+      id: 'msg-9',
+      threadId: 'thread-1',
+      role: MessageRole.ASSISTANT,
+      content: 'A reply worth hearing.',
+      provider: 'local-ollama',
+      model: 'qwen3:1.7b',
+      routingMode: RoutingMode.AUTO,
+      routerModel: null,
+      usedFallback: false,
+      inputTokens: 10,
+      outputTokens: 5,
+      feedback: null,
+      latencyMs: 900,
+      metadata: null,
+      createdAt: '2026-04-21T12:00:00.000Z',
+    };
+
+    render(<MessageBubble message={message} />);
+
+    expect(screen.getByRole('button', { name: 'chat.speech.action' })).toBeInTheDocument();
+    expect(screen.getByText('speech-player')).toBeInTheDocument();
+  });
+
+  it('does not offer read aloud on a user message', () => {
+    const message: ChatMessage = {
+      id: 'msg-10',
+      threadId: 'thread-1',
+      role: MessageRole.USER,
+      content: 'Read this back to me.',
+      provider: null,
+      model: null,
+      routingMode: RoutingMode.AUTO,
+      routerModel: null,
+      usedFallback: false,
+      inputTokens: 0,
+      outputTokens: 0,
+      feedback: null,
+      latencyMs: null,
+      metadata: null,
+      createdAt: '2026-04-21T12:00:00.000Z',
+    };
+
+    render(<MessageBubble message={message} />);
+
+    expect(screen.queryByRole('button', { name: 'chat.speech.action' })).not.toBeInTheDocument();
   });
 });
