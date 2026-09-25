@@ -1,8 +1,10 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
+import { ORGANIZATION_NOT_FOUND_MESSAGE } from '../constants/organization-access.constants';
 import { OrganizationRepository } from '../repositories/organization.repository';
+import { OrganizationAccessService } from './organization-access.service';
 import { parseSamlResponse, verifySamlSignature } from '../utilities/saml-verifier.utility';
 import { Prisma } from '../../../generated/prisma';
 import type { SamlCallbackDto, SetOrgSsoMetadataDto } from '../dto/saml.dto';
@@ -12,14 +14,21 @@ import type { OrgSsoMetadata, SamlVerificationResult } from '../types/saml.types
 export class SamlService {
   private readonly logger = new Logger(SamlService.name);
 
-  constructor(private readonly orgRepo: OrganizationRepository) {}
+  constructor(
+    private readonly orgRepo: OrganizationRepository,
+    private readonly access: OrganizationAccessService,
+  ) {}
 
-  async setMetadata(slug: string, dto: SetOrgSsoMetadataDto): Promise<void> {
+  /**
+   * Whoever sets the IdP metadata decides who can sign in as the organization,
+   * so it needs an OWNER or ADMIN of that organization (REQ-SEC-001). An
+   * unknown slug and a stranger get the same 404.
+   */
+  async setMetadata(slug: string, userId: string, dto: SetOrgSsoMetadataDto): Promise<void> {
     this.logger.debug(`setMetadata: slug=${slug}`);
     const org = await this.orgRepo.findBySlug(slug);
-    if (org === null) {
-      throw new EntityNotFoundException('Organization', slug);
-    }
+    if (org === null) throw new NotFoundException(ORGANIZATION_NOT_FOUND_MESSAGE);
+    await this.access.requireAdministrator(org.id, userId);
     await this.orgRepo.updateMetadata(org.id, {
       ssoEnabled: true,
       ssoMetadataJson: dto as Prisma.InputJsonValue,

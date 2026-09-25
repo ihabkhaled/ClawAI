@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import type { DeviceMatrixRow } from '../types/device-matrix.types';
-import type {
-  Organization,
-  OrganizationMember,
-  OrganizationPolicy,
-  Prisma,
+import {
+  type Organization,
+  type OrganizationMember,
+  type OrganizationPolicy,
+  OrganizationRole,
+  type Prisma,
 } from '../../../generated/prisma';
 
 @Injectable()
@@ -15,6 +16,19 @@ export class OrganizationRepository {
 
   async create(data: Prisma.OrganizationCreateInput): Promise<Organization> {
     return this.prisma.organization.create({ data });
+  }
+
+  /**
+   * The organization and its first OWNER in one nested write, so a crash
+   * between two statements can never leave an organization nobody administers.
+   */
+  async createWithOwner(
+    data: Omit<Prisma.OrganizationCreateInput, 'members'>,
+    ownerUserId: string,
+  ): Promise<Organization> {
+    return this.prisma.organization.create({
+      data: { ...data, members: { create: { userId: ownerUserId, role: OrganizationRole.OWNER } } },
+    });
   }
 
   async findById(id: string): Promise<Organization | null> {

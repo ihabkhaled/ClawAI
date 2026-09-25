@@ -4,6 +4,8 @@ import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module
 import { FleetController } from './controllers/fleet.controller';
 import { SamlController } from './controllers/saml.controller';
 import { OrganizationRepository } from './repositories/organization.repository';
+import { OrganizationAccessService } from './services/organization-access.service';
+import { OrganizationMembershipService } from './services/organization-membership.service';
 import { OrganizationPolicyService } from './services/organization-policy.service';
 import { SamlService } from './services/saml.service';
 
@@ -23,7 +25,13 @@ import { SamlService } from './services/saml.service';
 @Module({
   imports: [PrismaModule],
   controllers: [FleetController, SamlController],
-  providers: [OrganizationRepository, OrganizationPolicyService, SamlService],
+  providers: [
+    OrganizationRepository,
+    OrganizationAccessService,
+    OrganizationMembershipService,
+    OrganizationPolicyService,
+    SamlService,
+  ],
   exports: [OrganizationRepository, OrganizationPolicyService, SamlService],
 })
 export class FleetModule {}

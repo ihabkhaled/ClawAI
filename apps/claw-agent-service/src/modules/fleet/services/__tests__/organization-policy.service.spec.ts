@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
+import { OrganizationAccessService } from '../organization-access.service';
 import { OrganizationPolicyService } from '../organization-policy.service';
 import { UNCONSTRAINED_POLICY } from '../../constants/organization-policy.constants';
 
@@ -17,6 +18,10 @@ function repository(overrides: Partial<OrganizationRepository> = {}): Organizati
   } as unknown as OrganizationRepository;
 }
 
+function policyService(repo: OrganizationRepository): OrganizationPolicyService {
+  return new OrganizationPolicyService(repo, new OrganizationAccessService(repo));
+}
+
 const storedPolicy = {
   allowedTools: ['workspace.files'],
   allowedModels: [],
@@ -30,13 +35,13 @@ const storedPolicy = {
 describe('OrganizationPolicyService', () => {
   describe('effectiveForUser', () => {
     it('leaves a user in no organization unconstrained', async () => {
-      const service = new OrganizationPolicyService(repository());
+      const service = policyService(repository());
 
       await expect(service.effectiveForUser('user-1')).resolves.toEqual(UNCONSTRAINED_POLICY);
     });
 
     it('intersects every organization the user belongs to', async () => {
-      const service = new OrganizationPolicyService(
+      const service = policyService(
         repository({
           listPoliciesForUser: vi.fn().mockResolvedValue([
             { ...storedPolicy, maximumRisk: 'R4' },
@@ -53,7 +58,7 @@ describe('OrganizationPolicyService', () => {
     // A client does not know which organizations its user belongs to, and a
     // member of two must not learn one's policy from the other's.
     it('never names the organization that imposed a constraint', async () => {
-      const service = new OrganizationPolicyService(
+      const service = policyService(
         repository({
           listPoliciesForUser: vi
             .fn()
@@ -72,7 +77,7 @@ describe('OrganizationPolicyService', () => {
   describe('forOrganization', () => {
     // A member is entitled to know the rules they are held to.
     it('lets a plain member read the policy', async () => {
-      const service = new OrganizationPolicyService(
+      const service = policyService(
         repository({
           findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
           findPolicy: vi.fn().mockResolvedValue(storedPolicy),
@@ -86,7 +91,7 @@ describe('OrganizationPolicyService', () => {
 
     // Telling a non-member that an organization exists is itself a disclosure.
     it('reports not found rather than forbidden to a non-member', async () => {
-      const service = new OrganizationPolicyService(
+      const service = policyService(
         repository({ findMembershipForUser: vi.fn().mockResolvedValue(null) }),
       );
 
@@ -96,7 +101,7 @@ describe('OrganizationPolicyService', () => {
     });
 
     it('returns the unconstrained policy when none has been set', async () => {
-      const service = new OrganizationPolicyService(repository());
+      const service = policyService(repository());
 
       await expect(service.forOrganization('org-1', 'user-1')).resolves.toEqual(
         UNCONSTRAINED_POLICY,
@@ -107,7 +112,7 @@ describe('OrganizationPolicyService', () => {
   describe('update', () => {
     it('lets an owner or admin save a policy', async () => {
       const upsertPolicy = vi.fn().mockResolvedValue(storedPolicy);
-      const service = new OrganizationPolicyService(
+      const service = policyService(
         repository({
           findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.OWNER }),
           upsertPolicy,
@@ -133,7 +138,7 @@ describe('OrganizationPolicyService', () => {
     // Writing a policy is administrative; reading it is not.
     it('refuses a plain member', async () => {
       const upsertPolicy = vi.fn();
-      const service = new OrganizationPolicyService(
+      const service = policyService(
         repository({
           findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
           upsertPolicy,

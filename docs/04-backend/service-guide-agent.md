@@ -33,30 +33,37 @@ wrapped by `CompatAgentGuard`.
 
 ## Endpoints
 
-| Verb  | Path                                   | Auth             |
-| ----- | -------------------------------------- | ---------------- |
-| POST  | /api/v1/agent/auth/pair/init           | public           |
-| POST  | /api/v1/agent/auth/pair/approve        | User JWT         |
-| POST  | /api/v1/agent/auth/pair/deny           | User JWT         |
-| POST  | /api/v1/agent/auth/pair/poll           | public           |
-| POST  | /api/v1/agent/auth/device-code/create  | public           |
-| POST  | /api/v1/agent/auth/device-code/token   | public           |
-| POST  | /api/v1/agent/auth/device-code/approve | User JWT         |
-| POST  | /api/v1/agent/auth/device-code/deny    | User JWT         |
-| POST  | /api/v1/agent/auth/refresh             | public           |
-| GET   | /api/v1/agent/devices                  | User JWT         |
-| GET   | /api/v1/agent/devices/:id              | User JWT         |
-| PATCH | /api/v1/agent/devices/:id              | User JWT         |
-| POST  | /api/v1/agent/devices/:id/revoke       | User JWT         |
-| POST  | /api/v1/agent/sessions                 | User JWT         |
-| GET   | /api/v1/agent/sessions                 | User JWT         |
-| POST  | /api/v1/agent/sessions/:id/heartbeat   | CompatAgentGuard |
-| GET   | /api/v1/agent/commands/pending         | CompatAgentGuard |
-| POST  | /api/v1/agent/commands/:id/complete    | CompatAgentGuard |
-| POST  | /api/v1/agent/events                   | CompatAgentGuard |
-| GET   | /api/v1/agent/organizations/policy/effective | User JWT   |
-| GET   | /api/v1/agent/organizations/:id/policy | User JWT         |
-| PUT   | /api/v1/agent/organizations/:id/policy | User JWT (OWNER/ADMIN) |
+| Verb  | Path                                           | Auth                                             |
+| ----- | ---------------------------------------------- | ------------------------------------------------ |
+| POST  | /api/v1/agent/auth/pair/init                   | public                                           |
+| POST  | /api/v1/agent/auth/pair/approve                | User JWT                                         |
+| POST  | /api/v1/agent/auth/pair/deny                   | User JWT                                         |
+| POST  | /api/v1/agent/auth/pair/poll                   | public                                           |
+| POST  | /api/v1/agent/auth/device-code/create          | public                                           |
+| POST  | /api/v1/agent/auth/device-code/token           | public                                           |
+| POST  | /api/v1/agent/auth/device-code/approve         | User JWT                                         |
+| POST  | /api/v1/agent/auth/device-code/deny            | User JWT                                         |
+| POST  | /api/v1/agent/auth/refresh                     | public                                           |
+| GET   | /api/v1/agent/devices                          | User JWT                                         |
+| GET   | /api/v1/agent/devices/:id                      | User JWT                                         |
+| PATCH | /api/v1/agent/devices/:id                      | User JWT                                         |
+| POST  | /api/v1/agent/devices/:id/revoke               | User JWT                                         |
+| POST  | /api/v1/agent/sessions                         | User JWT                                         |
+| GET   | /api/v1/agent/sessions                         | User JWT                                         |
+| POST  | /api/v1/agent/sessions/:id/heartbeat           | CompatAgentGuard                                 |
+| GET   | /api/v1/agent/commands/pending                 | CompatAgentGuard                                 |
+| POST  | /api/v1/agent/commands/:id/complete            | CompatAgentGuard                                 |
+| POST  | /api/v1/agent/events                           | CompatAgentGuard                                 |
+| GET   | /api/v1/agent/organizations/policy/effective   | User JWT                                         |
+| GET   | /api/v1/agent/organizations/:id/policy         | User JWT                                         |
+| PUT   | /api/v1/agent/organizations/:id/policy         | User JWT (OWNER/ADMIN)                           |
+| POST  | /api/v1/agent/organizations                    | User JWT (caller becomes OWNER)                  |
+| GET   | /api/v1/agent/organizations                    | User JWT (own memberships)                       |
+| GET   | /api/v1/agent/organizations/:id/members        | User JWT (member)                                |
+| POST  | /api/v1/agent/organizations/:id/members        | User JWT (OWNER/ADMIN; OWNER role only by OWNER) |
+| GET   | /api/v1/agent/organizations/:id/devices        | User JWT (OWNER/ADMIN)                           |
+| POST  | /api/v1/agent/organizations/:slug/sso/metadata | User JWT (OWNER/ADMIN)                           |
+| POST  | /api/v1/agent/organizations/:slug/sso/callback | public (IdP-signed)                              |
 
 ### Organization policy
 
@@ -84,7 +91,24 @@ The intersection rules live in
 surprises people: an **empty allowlist means "everything"**, so combining `[]`
 with `['a']` yields `['a']`, not `[]`.
 
-## Prisma models (Phase A additions)
+### Organization access (REQ-SEC-001 / SEC-005)
+
+Every organization check goes through `OrganizationAccessService`
+(`src/modules/fleet/services/organization-access.service.ts`), called from the
+service layer with the caller's own id — never a guard that trusts `:id`.
+
+- **Reads** (members, own policy) need membership. **Mutations** (add member,
+  policy, SSO metadata) and the device matrix need OWNER or ADMIN of THAT
+  organization.
+- A stranger, a missing id and an unknown slug all get the same `404
+Organization not found`. A member without the role gets `403`.
+- **Only an OWNER may grant OWNER.** An ADMIN cannot mint a rank above their own.
+- **Adding an existing member is `409`**, never a role change. That is what
+  closes "re-add myself as OWNER".
+- **Platform roles do not reach in.** A platform `ADMIN` who is not a member is
+  an outsider. No permission in the catalog grants cross-organization access.
+- There is no remove-member, change-role or delete-organization endpoint yet.
+  Whoever adds one must refuse removing or demoting the **last OWNER**.
 
 - `Device(id, userId, orgId?, name, hostname, os, platform, agentVersion,
 scopesCsv, status[ACTIVE|REVOKED], lastSeenAt, lastIp, revokedAt, revokeReason,
@@ -99,10 +123,10 @@ slowDownUntil, offenceCount, status, ...)`
 - `OrganizationPolicy(id, organizationId unique, allowedTools[], allowedModels[],
 maximumRisk, deniedEffects[], requireApproval[], maximumRetentionDays,
 minimumPermissionMode?, createdAt, updatedAt)` — one row per organization,
-created on first write. Every default is the widest possible value, so the
-migration changes nothing until an administrator narrows a field; a migration
-that tightened on arrival would lock out every member of every organization the
-moment it ran.
+  created on first write. Every default is the widest possible value, so the
+  migration changes nothing until an administrator narrows a field; a migration
+  that tightened on arrival would lock out every member of every organization the
+  moment it ran.
 
 ## Events (`claw.events`, topic)
 

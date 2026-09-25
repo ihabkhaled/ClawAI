@@ -39,7 +39,7 @@
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 14,
+      "testFiles": 17,
       "testRunner": "vitest"
     },
     {

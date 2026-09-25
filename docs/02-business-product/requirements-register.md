@@ -106,12 +106,14 @@ _inferred_ until the owner confirms it.
 - **Statement:** Only a member (with a sufficient role) of a coding-agent
   organisation may list its members or devices, add a member, or set its SAML
   metadata.
-- **Status:** missing · **Priority:** high (security)
+- **Status:** done · **Priority:** high (security)
 - **Source:** found by the ADR-126 flagship audit, 2026-09-26.
-- **Current state:** `FleetController.listMembers`, `listDevices` and `addMember`
-  (`apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts`)
-  and `SamlController.setMetadata` do not check that the caller belongs to the
-  organisation. Only `updatePolicy` checks a role. Any signed-in user who knows
-  an organisation id can add a member to it.
+- **Current state:** fixed by `fix(agent): check organization membership on every fleet endpoint`. `OrganizationAccessService`
+  (`apps/claw-agent-service/src/modules/fleet/services/organization-access.service.ts`)
+  checks the caller's own membership in the service layer. Members may read the
+  member list; OWNER/ADMIN may add members, change the policy, set SSO metadata
+  and read the device matrix; only an OWNER may grant OWNER; re-adding an
+  existing member is 409. Outsiders, including platform admins, get 404.
+  Production had 0 organisations when fixed, so nothing was exploited.
 - **Governing rule:** [rules/16](../../rules/16-authentication-and-authorization.md) (IDOR).
-- **History:** 2026-09-26 created; not fixed in the documentation batch that found it.
+- **History:** 2026-09-26 created; fixed the same day.

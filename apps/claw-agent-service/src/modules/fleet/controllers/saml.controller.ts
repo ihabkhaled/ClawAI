@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CurrentUser, Public } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -25,11 +18,11 @@ export class SamlController {
   @Post('metadata')
   @HttpCode(HttpStatus.NO_CONTENT)
   async setMetadata(
-    @CurrentUser() _user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('slug') slug: string,
     @Body(new ZodValidationPipe(setOrgSsoMetadataSchema)) dto: SetOrgSsoMetadataDto,
   ): Promise<void> {
-    return this.service.setMetadata(slug, dto);
+    return this.service.setMetadata(slug, user.id, dto);
   }
 
   /**

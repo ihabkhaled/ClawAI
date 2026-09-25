@@ -53,6 +53,11 @@ Controller → Service → Repository (data access)
   /sessions/attach. ScopeGuard is permissive when deviceContext is absent (legacy path).
 - CompatAgentGuard bridges device tokens to agentSession by reading sessionId from
   query / body / path (/sessions/:id) so existing session-scoped controllers keep working.
+- **Organizations (`agent/organizations/*`) are gated by org membership, not RBAC.** Every
+  fleet/SAML service method calls `OrganizationAccessService.requireMember` (reads) or
+  `requireAdministrator` (writes, device matrix) with the caller's id. Non-members —
+  platform admins included — get 404; only an OWNER grants OWNER; re-adding a member is 409.
+  A new org endpoint that skips this is REQ-SEC-001 again. See `context/permission-map.md`.
 
 ## Phase B — Policy Engine
 
@@ -83,6 +88,7 @@ docker rmi claw-agent-service
 In progress; backbone files landed in this session, full implementation tracked in `docs/15-ai-context/desktop-agent-flagship-implementation-progress.md`.
 
 Files added so far:
+
 - `prisma/schema.prisma` — `CapabilityInvocation` model + 5 new enums + `AccessPolicy` extensions (additive)
 - `prisma/migrations/20260501053343_add_capability_invocation_unify_policy/migration.sql` — applied to `claw-pg-agent` on 2026-05-01
 - `src/common/enums/capability-{class,operation,blast-radius,reversibility,invocation-status}.enum.ts`
@@ -117,4 +123,3 @@ Remaining for next sessions:
 2. Stream 13 — recipe runner orchestration manager.
 3. Streams 20–24 capability providers (browser/screen/clipboard/application/audio).
 4. Stream 30 Tauri shell; 31–32 UX; 40–42 fleet/intelligence/marketplace; 50 QA harness; 60 runbooks.
-

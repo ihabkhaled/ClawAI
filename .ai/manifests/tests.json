@@ -26,7 +26,7 @@
     },
     "claw-agent-service": {
       "runner": "vitest",
-      "testFiles": 14
+      "testFiles": 17
     },
     "claw-audit-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1652
+  "total": 1655
 }

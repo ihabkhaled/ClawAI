@@ -97,11 +97,11 @@ different answers.
 The admin users page is gated on `ADMIN_USERS_MANAGE`, but the two per-row
 statistics panels it opens are **not**:
 
-| Endpoint                                                   | Service | Permission           |
-| ---------------------------------------------------------- | ------- | -------------------- |
-| `GET /api/v1/admin/users/:userId/usage-statistics`          | auth    | `ADMIN_USAGE_VIEW`   |
-| `GET /api/v1/admin/users/:userId/plan-overview`             | auth    | `ADMIN_PLANS_MANAGE` |
-| `GET /api/v1/admin/billing/users/:userId/subscription`      | payment | `ADMIN_PLANS_MANAGE` |
+| Endpoint                                               | Service | Permission           |
+| ------------------------------------------------------ | ------- | -------------------- |
+| `GET /api/v1/admin/users/:userId/usage-statistics`     | auth    | `ADMIN_USAGE_VIEW`   |
+| `GET /api/v1/admin/users/:userId/plan-overview`        | auth    | `ADMIN_PLANS_MANAGE` |
+| `GET /api/v1/admin/billing/users/:userId/subscription` | payment | `ADMIN_PLANS_MANAGE` |
 
 Reading what an account consumed and managing accounts are different powers, so
 they stay different permissions. Two consequences that are easy to get wrong:
@@ -114,3 +114,22 @@ they stay different permissions. Two consequences that are easy to get wrong:
    overrides its controller default to `ADMIN_PLANS_MANAGE` precisely so it
    matches the payment-service half; if they disagreed, the modal would
    half-load for anyone holding only one of the two.
+
+## Coding-agent organizations: membership, not a permission
+
+`agent/organizations/*` in agent-service is gated by **organization membership
+and organization role** (`OWNER`/`ADMIN`/`MEMBER`), not by a catalog
+permission. `OrganizationAccessService` checks it in the service layer
+(REQ-SEC-001, fixed 2026-09-26).
+
+| Action                                         | Who                          |
+| ---------------------------------------------- | ---------------------------- |
+| Create an organization                         | any signed-in user (→ OWNER) |
+| List members, read the org's own policy        | member                       |
+| Add member, update policy, set SSO metadata    | OWNER or ADMIN               |
+| Read the device matrix                         | OWNER or ADMIN               |
+| Grant the OWNER role                           | OWNER only                   |
+| Anything, as a non-member (platform ADMIN too) | 404                          |
+
+Platform RBAC roles grant **no** cross-organization access. A future
+remove/demote endpoint must refuse removing the last OWNER.
