@@ -43,6 +43,85 @@ describe('GeminiAdapter context windows', () => {
     expect(nativeCall[1].headers['x-goog-api-key']).toBe('g-key');
   });
 
+  // ADR-125: Google's native Model resource publishes `outputTokenLimit`
+  // ("Maximum number of output tokens available for this model",
+  // ai.google.dev/api/models). The sync stores it as the authoritative
+  // catalog ceiling; the learned column stays separate and only lowers.
+  it('reads the published output ceiling from the same native list (real Model shape)', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        respond({
+          object: 'list',
+          data: [
+            { id: 'models/gemini-2.5-flash', object: 'model', owned_by: 'google' },
+            { id: 'models/gemini-embedding-001', object: 'model', owned_by: 'google' },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        respond({
+          models: [
+            {
+              name: 'models/gemini-2.5-flash',
+              version: '001',
+              displayName: 'Gemini 2.5 Flash',
+              description: 'Stable version of Gemini 2.5 Flash',
+              inputTokenLimit: 1_048_576,
+              outputTokenLimit: 65_536,
+              supportedGenerationMethods: ['generateContent', 'countTokens'],
+              temperature: 1,
+              topP: 0.95,
+              topK: 64,
+              maxTemperature: 2,
+              thinking: true,
+            },
+            {
+              name: 'models/gemini-embedding-001',
+              version: '001',
+              inputTokenLimit: 2048,
+              outputTokenLimit: 1,
+              supportedGenerationMethods: ['embedContent'],
+            },
+          ],
+          nextPageToken: '',
+        }),
+      );
+
+    const models = await new GeminiAdapter().syncModels(config);
+
+    const flash = models.find((m) => m.modelKey === 'models/gemini-2.5-flash');
+    expect(flash?.capabilities.maxContextTokens).toBe(1_048_576);
+    expect(flash?.capabilities.maxOutputTokens).toBe(65_536);
+    // Google's own number, even when tiny: an embedding model outputs a vector.
+    const embedding = models.find((m) => m.modelKey === 'models/gemini-embedding-001');
+    expect(embedding?.capabilities.maxOutputTokens).toBe(1);
+  });
+
+  it.each([
+    ['missing', {}],
+    ['zero', { outputTokenLimit: 0 }],
+    ['negative', { outputTokenLimit: -5 }],
+    ['non-integer', { outputTokenLimit: 8191.5 }],
+    ['a string', { outputTokenLimit: '8192' }],
+  ])('leaves the output ceiling unknown when outputTokenLimit is %s', async (_label, extra) => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        respond({ object: 'list', data: [{ id: 'models/gemini-3.6-flash', object: 'model' }] }),
+      )
+      .mockResolvedValueOnce(
+        respond({
+          models: [{ name: 'models/gemini-3.6-flash', inputTokenLimit: 1_048_576, ...extra }],
+        }),
+      );
+
+    const models = await new GeminiAdapter().syncModels(config);
+
+    expect(models[0]?.capabilities.maxContextTokens).toBe(1_048_576);
+    expect(models[0]?.capabilities).not.toHaveProperty('maxOutputTokens');
+  });
+
   it('still syncs when the native list fails, just without limits', async () => {
     global.fetch = vi
       .fn()
@@ -55,6 +134,7 @@ describe('GeminiAdapter context windows', () => {
 
     expect(models).toHaveLength(1);
     expect(models[0]?.capabilities.maxContextTokens).toBeUndefined();
+    expect(models[0]?.capabilities.maxOutputTokens).toBeUndefined();
   });
 
   // Live bug this guards against: syncModels used to hardcode

@@ -1,5 +1,5 @@
 import { ServiceStatus } from '@claw/shared-types';
-import { DEPENDENCY_DOWN_ERROR } from '../constants/health.constants';
+import { DEPENDENCY_DISABLED_STATUS, DEPENDENCY_DOWN_ERROR } from '../constants/health.constants';
 import { type DependencyProbe, type ServiceHealthResult } from '../types/health.types';
 
 /**
@@ -50,4 +50,23 @@ export function deriveDependencyResults(
     }
   }
   return results;
+}
+
+/**
+ * Names of the dependencies whose source answered and said `disabled` — an
+ * operator's choice (a scraper sidecar not enabled, ClamAV switched off).
+ * They get no row and no `claw_service_up` series; the status page shows
+ * them as DISABLED rather than as unknown or down.
+ */
+export function deriveDisabledDependencies(
+  probes: readonly DependencyProbe[],
+  bodiesBySource: ReadonlyMap<string, unknown>,
+): string[] {
+  return probes
+    .filter(
+      (probe) =>
+        bodiesBySource.has(probe.source) &&
+        reportedStatus(bodiesBySource.get(probe.source), probe.key) === DEPENDENCY_DISABLED_STATUS,
+    )
+    .map((probe) => probe.name);
 }

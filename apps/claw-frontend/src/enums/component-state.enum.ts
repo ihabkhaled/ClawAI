@@ -4,4 +4,6 @@ export enum ComponentState {
   DEGRADED = 'degraded',
   DOWN = 'down',
   UNKNOWN = 'unknown',
+  /** Switched off on purpose (a scraper sidecar not enabled): never an outage. */
+  DISABLED = 'disabled',
 }

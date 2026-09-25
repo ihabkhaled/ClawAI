@@ -44,26 +44,44 @@ export function stateFromFailures(failed: number, members: number): ComponentSta
 
 /** The whole platform: UP only if every measured component is, DOWN only if every one is. */
 export function overallState(states: readonly ComponentState[]): ComponentState {
-  const measured = states.filter((state) => state !== ComponentState.UNKNOWN);
+  // Unknown is "not measured" and disabled is "switched off on purpose":
+  // neither is evidence of an outage, so neither counts either way.
+  const measured = states.filter(
+    (state) => state !== ComponentState.UNKNOWN && state !== ComponentState.DISABLED,
+  );
   if (measured.length === 0) {
     return ComponentState.UNKNOWN;
   }
   if (measured.every((state) => state === ComponentState.UP)) {
     return ComponentState.UP;
   }
-  return measured.every((state) => state === ComponentState.DOWN) ? ComponentState.DOWN : ComponentState.DEGRADED;
+  return measured.every((state) => state === ComponentState.DOWN)
+    ? ComponentState.DOWN
+    : ComponentState.DEGRADED;
 }
 
-/** Each component's state right now, from the live health fan-out. */
+/**
+ * Each component's state right now, from the live health fan-out. A component
+ * with nothing measured whose every member was reported `disabled` is
+ * DISABLED rather than UNKNOWN.
+ */
 export function currentComponentStates(
   services: readonly ServiceHealthResult[],
+  disabledDependencies: readonly string[] = [],
 ): Map<StatusComponent, ComponentState> {
   const byName = new Map(services.map((service) => [service.name, service.status]));
+  const disabled = new Set(disabledDependencies);
   const states = new Map<StatusComponent, ComponentState>();
   for (const { component, services: members } of COMPONENT_MEMBERS) {
     const measured = members.filter((name) => byName.has(name));
     const failed = measured.filter((name) => byName.get(name) !== ServiceStatus.UP).length;
-    states.set(component, stateFromFailures(failed, measured.length));
+    const allDisabled = members.length > 0 && members.every((name) => disabled.has(name));
+    states.set(
+      component,
+      measured.length === 0 && allDisabled
+        ? ComponentState.DISABLED
+        : stateFromFailures(failed, measured.length),
+    );
   }
   return states;
 }
@@ -197,13 +215,16 @@ export function composeStatusPage(
   history: StatusHistory | null,
   nowMs: number,
 ): StatusPageResponse {
-  const components = COMPONENT_MEMBERS.map(({ component }) => ({
-    component,
-    state: current.get(component) ?? ComponentState.UNKNOWN,
-    uptime:
-      history?.components.find((entry) => entry.component === component)?.uptime ??
-      unmeasuredUptime(),
-  }));
+  const components = COMPONENT_MEMBERS.map(({ component }) => {
+    const state = current.get(component) ?? ComponentState.UNKNOWN;
+    // A disabled component was never meant to be running: an uptime figure
+    // for it (100 % of nothing failing) would be a claim nobody measured.
+    const uptime =
+      state === ComponentState.DISABLED
+        ? undefined
+        : history?.components.find((entry) => entry.component === component)?.uptime;
+    return { component, state, uptime: uptime ?? unmeasuredUptime() };
+  });
   return {
     generatedAt: new Date(nowMs).toISOString(),
     overall: overallState(components.map((entry) => entry.state)),

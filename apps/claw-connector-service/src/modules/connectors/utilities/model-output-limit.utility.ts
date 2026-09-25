@@ -12,3 +12,17 @@ export function effectiveMaxOutputTokens(
   );
   return known.length === 0 ? undefined : Math.min(...known);
 }
+
+/** A finite number above zero: how a provider-published context window is accepted. */
+export function isPositiveNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+/**
+ * A whole number above zero: the only shape a provider-published output
+ * ceiling is trusted in. Anything else (a string, 0, a fraction) leaves the
+ * ceiling unknown rather than storing a guess.
+ */
+export function isPositiveInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}

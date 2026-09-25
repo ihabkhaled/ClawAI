@@ -81,6 +81,33 @@ describe('HealthService', () => {
     });
   });
 
+  // Web scraper sidecars: research-service reports them; a down sidecar makes
+  // research `degraded` (still HTTP 200, so research-service itself stays UP).
+  describe('dependency rows (scraper sidecars via research-service)', () => {
+    const researchBody = (url: string) =>
+      Promise.resolve(
+        url.includes('research-service')
+          ? {
+              status: 'degraded',
+              service: 'research-service',
+              services: { crawl4ai: 'up', flaresolverr: 'down', firecrawl: 'disabled' },
+            }
+          : {},
+      );
+
+    it('adds up/down rows, keeps research UP, and lists the disabled one apart', async () => {
+      mockHttpGet.mockImplementation(researchBody);
+      const result = await service.checkAll();
+      const status = (name: string) => result.services.find((s) => s.name === name)?.status;
+
+      expect(status('research-service')).toBe(ServiceStatus.UP);
+      expect(status('crawl4ai')).toBe(ServiceStatus.UP);
+      expect(status('flaresolverr')).toBe(ServiceStatus.DOWN);
+      expect(result.services.some((s) => s.name === 'firecrawl')).toBe(false);
+      expect(result.disabledDependencies).toEqual(['firecrawl']);
+    });
+  });
+
   describe('checkAll', () => {
     it('returns HEALTHY when every service responds', async () => {
       mockHttpGet.mockResolvedValue({});

@@ -197,6 +197,29 @@ describe('ConnectorModelsRepository', () => {
     expect(args.update.supportsVideoInput).toBe(true);
   });
 
+  // ADR-125: sync writes the provider's authoritative ceiling (Gemini
+  // outputTokenLimit, OpenRouter/Groq max_completion_tokens) into
+  // max_output_tokens and NEVER touches the learned column, so a lower value
+  // learned from a refusal survives every resync (the snapshot takes the min).
+  it('replaceMany writes the synced output ceiling and never touches the learned one', async () => {
+    prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
+    const model = {
+      ...buildModel('models/gemini-2.5-flash'),
+      capabilities: { ...buildModel('x').capabilities, maxOutputTokens: 65_536 },
+    };
+    await repository.replaceMany('c1', 'GEMINI' as never, [model as never]);
+    const args = prismaMock.connectorModel.upsert.mock.calls[0]?.[0] as {
+      create: Record<string, unknown>;
+      update: Record<string, unknown>;
+    };
+    expect(args.create.maxOutputTokens).toBe(65_536);
+    expect(args.update.maxOutputTokens).toBe(65_536);
+    for (const branch of [args.create, args.update]) {
+      expect(branch).not.toHaveProperty('learnedMaxOutputTokens');
+      expect(branch).not.toHaveProperty('learnedMaxOutputAt');
+    }
+  });
+
   it('findByConnectorId orders by displayName asc', async () => {
     await repository.findByConnectorId('c1');
     expect(prismaMock.connectorModel.findMany).toHaveBeenCalledWith({

@@ -161,6 +161,11 @@ describe('OllamaAdapter', () => {
     expect(
       result.find((model) => model.modelKey === 'gemma4:31b')?.capabilities.maxContextTokens,
     ).toBe(256_000);
+    // ADR-125: Ollama publishes no output ceiling. /api/tags carries none and
+    // /api/show's model_info has only `<arch>.context_length` (input); a
+    // Modelfile `num_predict` is a default, not a maximum. So sync leaves it
+    // unknown and the ceiling is learned from the provider's own refusal.
+    expect(result.every((model) => model.capabilities.maxOutputTokens === undefined)).toBe(true);
   });
 
   it('reports health from the Ollama public API', async () => {

@@ -101,19 +101,28 @@ The health service is configured with URLs for all other services, typically via
 | file-gen-service  | http://file-generation-service:4013 |
 | ollama runtime    | http://ollama:11434                 |
 
-## Dependency rows (ClamAV)
+## Dependency rows (ClamAV, scraper sidecars)
 
 Some dependencies are checked by the service that uses them and reported in its
 `/health` body. `DEPENDENCY_PROBES` (`constants/health.constants.ts`) lifts them
 into rows of their own in `checkAll()`:
 
-| Row      | Source       | Body field        | Status component                           |
-| -------- | ------------ | ----------------- | ------------------------------------------ |
-| `clamav` | file-service | `services.clamav` | `antivirus` — "Antivirus scanner (ClamAV)" |
+| Row            | Source           | Body field              | Status component                                         |
+| -------------- | ---------------- | ----------------------- | -------------------------------------------------------- |
+| `clamav`       | file-service     | `services.clamav`       | `antivirus` — "Antivirus scanner (ClamAV)"               |
+| `crawl4ai`     | research-service | `services.crawl4ai`     | `web-scraper-crawl4ai` — "Web scraper: Crawl4AI"         |
+| `flaresolverr` | research-service | `services.flaresolverr` | `web-scraper-flaresolverr` — "Web scraper: FlareSolverr" |
+| `firecrawl`    | research-service | `services.firecrawl`    | `web-scraper-firecrawl` — "Web scraper: Firecrawl"       |
 
 `up` → UP, `down` → DOWN (host-free `error`), anything else or the source down
 → no row (not measured). Each row gets a `claw_service_up` series and uptime
 history like a service. clamd down makes the aggregate `degraded`.
+
+`disabled` is listed in `AggregatedHealth.disabledDependencies` (no row, no
+series). A status component whose every member is disabled and none measured is
+`ComponentState.DISABLED`: shown as "Disabled", no uptime figure, and ignored by
+the overall state like `unknown`. The scraper sidecars are seeded disabled, so
+that is their normal state until an admin enables one (ADR-121 addendum).
 
 ## Timeout and Retry
 

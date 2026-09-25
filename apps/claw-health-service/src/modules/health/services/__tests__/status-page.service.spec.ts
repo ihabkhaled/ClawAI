@@ -29,6 +29,7 @@ const health: AggregatedHealth = {
     },
   ],
   summary: { total: 2, up: 1, down: 1 },
+  disabledDependencies: ['firecrawl'],
 };
 
 const emptyHistory: StatusHistory = { components: [], incidents: [] };
@@ -53,6 +54,9 @@ describe('StatusPageService', () => {
     expect(state(StatusComponent.ACCOUNTS)).toBe(ComponentState.UP);
     expect(state(StatusComponent.PAYMENTS)).toBe(ComponentState.DOWN);
     expect(state(StatusComponent.CHAT)).toBe(ComponentState.UNKNOWN);
+    // research-service reported firecrawl `disabled`: shown as such, not unknown/down.
+    expect(state(StatusComponent.WEB_SCRAPER_FIRECRAWL)).toBe(ComponentState.DISABLED);
+    expect(state(StatusComponent.WEB_SCRAPER_CRAWL4AI)).toBe(ComponentState.UNKNOWN);
     expect(page.historyAvailable).toBe(true);
   });
 

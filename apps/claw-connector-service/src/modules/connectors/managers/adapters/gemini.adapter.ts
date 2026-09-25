@@ -3,6 +3,7 @@ import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import {
   type GeminiModelsResponse,
+  type GeminiNativeModelLimits,
   type GeminiNativeModelsResponse,
 } from '../../types/provider-api.types';
 import { declaredHost } from '@claw/shared-utilities';
@@ -16,6 +17,7 @@ import { GEMINI_DEFAULT_BASE_URL } from '../../constants/gemini.constants';
 import { GEMINI_NATIVE_MODELS_PAGE_SIZE } from '../../constants/model-context-window.constants';
 import { geminiNativeBaseUrl } from '../../utilities/model-context-window.utility';
 import { formatModelDisplayName } from '../../utilities/model-display-name.utility';
+import { isPositiveInteger, isPositiveNumber } from '../../utilities/model-output-limit.utility';
 import { isGeminiAudioCapableModel } from '../../constants/gemini-audio-heuristics.constants';
 import { isGeminiVideoCapableModel } from '../../constants/gemini-video-heuristics.constants';
 
@@ -92,7 +94,7 @@ export class GeminiAdapter implements ProviderAdapter {
     const models = response.data.data ?? [];
     logger.log(`syncModels: received ${String(models.length)} Gemini models`);
 
-    const limits = await this.fetchNativeContextWindows(baseUrl, config.apiKey);
+    const limits = await this.fetchNativeLimits(baseUrl, config.apiKey);
     return models.map((model) => ({
       modelKey: model.id,
       displayName: formatModelDisplayName(model.id),
@@ -110,22 +112,27 @@ export class GeminiAdapter implements ProviderAdapter {
         // confirmed flash/pro family. See gemini-video-heuristics.constants.ts.
         supportsVideoInput: isGeminiVideoCapableModel(model.id),
         supportsStructuredOutput: true,
-        ...(limits.has(model.id) ? { maxContextTokens: limits.get(model.id) } : {}),
+        // Google's published limits (ADR-125). The output ceiling is the
+        // authoritative catalog value; a learned-from-refusal value lives in
+        // its own column and the snapshot publishes the smaller of the two.
+        ...limits.get(model.id),
       },
     }));
   }
 
   /**
-   * Real input limits from Google's native list, keyed like the OpenAI list
-   * (`models/gemini-3.6-flash`). The OpenAI-compatible list the sync reads has
-   * no limits at all, which is why every Gemini model reached chat-service as
-   * a 32k model. Empty on any failure: a sync must not fail over metadata.
+   * Real token limits from Google's native list, keyed like the OpenAI list
+   * (`models/gemini-3.6-flash`): `inputTokenLimit` -> context window,
+   * `outputTokenLimit` -> output ceiling. The OpenAI-compatible list the sync
+   * reads has no limits at all, which is why every Gemini model reached
+   * chat-service as a 32k model. Empty on any failure: a sync must not fail
+   * over metadata.
    */
-  private async fetchNativeContextWindows(
+  private async fetchNativeLimits(
     baseUrl: string,
     apiKey: string,
-  ): Promise<Map<string, number>> {
-    const limits = new Map<string, number>();
+  ): Promise<Map<string, GeminiNativeModelLimits>> {
+    const limits = new Map<string, GeminiNativeModelLimits>();
     // The same operator-configured host as the OpenAI-compatible base: this
     // only strips the trailing `/openai` path segment. Declared from the
     // exact base this call opens rather than from the stored one.
@@ -137,17 +144,25 @@ export class GeminiAdapter implements ProviderAdapter {
         allowedHosts: declaredHost(nativeBaseUrl),
       });
       if (!response.ok) {
-        logger.warn(`fetchNativeContextWindows: HTTP ${String(response.status)}`);
+        logger.warn(`fetchNativeLimits: HTTP ${String(response.status)}`);
         return limits;
       }
       for (const model of response.data.models ?? []) {
-        if (typeof model.inputTokenLimit === 'number' && model.inputTokenLimit > 0) {
-          limits.set(model.name, model.inputTokenLimit);
+        const entry: GeminiNativeModelLimits = {
+          ...(isPositiveNumber(model.inputTokenLimit)
+            ? { maxContextTokens: model.inputTokenLimit }
+            : {}),
+          ...(isPositiveInteger(model.outputTokenLimit)
+            ? { maxOutputTokens: model.outputTokenLimit }
+            : {}),
+        };
+        if (Object.keys(entry).length > 0) {
+          limits.set(model.name, entry);
         }
       }
-      logger.log(`fetchNativeContextWindows: ${String(limits.size)} model limit(s)`);
+      logger.log(`fetchNativeLimits: ${String(limits.size)} model limit(s)`);
     } catch (error: unknown) {
-      logger.warn(`fetchNativeContextWindows: failed - ${(error as Error).message}`);
+      logger.warn(`fetchNativeLimits: failed - ${(error as Error).message}`);
     }
     return limits;
   }

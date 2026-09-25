@@ -1371,6 +1371,7 @@ export type TranslationDictionary = {
         degraded: string;
         down: string;
         unknown: string;
+        disabled: string;
       };
       components: {
         accounts: string;
@@ -1382,6 +1383,9 @@ export type TranslationDictionary = {
         workspaces: string;
         codingAgent: string;
         antivirus: string;
+        webScraperCrawl4ai: string;
+        webScraperFlaresolverr: string;
+        webScraperFirecrawl: string;
         localModels: string;
         platform: string;
       };

@@ -98,3 +98,16 @@ Future phases add: `/research/fetch`, `/research/evidence`, `/research/workflows
 - No inline types/enums/constants in logic files.
 - Every third-party library wrapped in `src/common/utilities/<name>.utility.ts`.
 - Secrets never echoed in API responses (`SanitizedSearchProvider` strips `encryptedSecret`).
+
+## Sidecar health in /health (ADR-121 addendum, 2026-09-25)
+
+- `/api/v1/health` = `ResearchHealthService` → `SidecarHealthService.report()`:
+  `services.crawl4ai|flaresolverr|firecrawl` = `up`/`down`/`disabled`, read from
+  `fetch_strategy_configs` (disabled rows are never probed). Probe routes and
+  timeout live in `SIDECAR_HEALTH_PROBES` / `SIDECAR_HEALTH_TIMEOUT_MS` (2 s);
+  15 s cache. health-service reads these exact keys and values (contract specs
+  on both sides) — renaming one breaks its status-page row.
+- A down sidecar makes `status: 'degraded'`, never an error: keep HTTP 200.
+- A new sidecar strategy: add it to `SIDECAR_HEALTH_PROBES` here AND to
+  health-service `DEPENDENCY_PROBES` + `COMPONENT_MEMBERS` + the frontend
+  `StatusComponent` + 13 locales.

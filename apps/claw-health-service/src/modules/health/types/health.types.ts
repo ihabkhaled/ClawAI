@@ -19,6 +19,11 @@ export interface AggregatedHealth {
   timestamp: string;
   services: ServiceHealthResult[];
   summary: AggregatedHealthSummary;
+  /**
+   * Dependencies their source reported `disabled` (DEPENDENCY_PROBES). Not in
+   * `services`: disabled is neither up nor down, and must never read as an outage.
+   */
+  disabledDependencies: string[];
 }
 
 /**

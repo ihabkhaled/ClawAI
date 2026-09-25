@@ -78,6 +78,9 @@ describe('stateFromFailures / overallState', () => {
     expect(overallState([ComponentState.DOWN, ComponentState.DOWN])).toBe(ComponentState.DOWN);
     expect(overallState([ComponentState.UP, ComponentState.UNKNOWN])).toBe(ComponentState.UP);
     expect(overallState([ComponentState.UNKNOWN])).toBe(ComponentState.UNKNOWN);
+    // Disabled is a choice, not an outage: it never pulls the platform down.
+    expect(overallState([ComponentState.UP, ComponentState.DISABLED])).toBe(ComponentState.UP);
+    expect(overallState([ComponentState.DISABLED])).toBe(ComponentState.UNKNOWN);
   });
 });
 
@@ -111,6 +114,27 @@ describe('currentComponentStates', () => {
 
   it('is unknown for a component none of whose services were measured', () => {
     expect(currentComponentStates([]).get(StatusComponent.ACCOUNTS)).toBe(ComponentState.UNKNOWN);
+  });
+
+  // A scraper sidecar an admin has not enabled is DISABLED: shown as such,
+  // never as down and never as "unknown".
+  it('is disabled for a component whose every member reported disabled', () => {
+    const states = currentComponentStates(
+      [result('crawl4ai', ServiceStatus.UP)],
+      ['flaresolverr', 'firecrawl'],
+    );
+
+    expect(states.get(StatusComponent.WEB_SCRAPER_CRAWL4AI)).toBe(ComponentState.UP);
+    expect(states.get(StatusComponent.WEB_SCRAPER_FLARESOLVERR)).toBe(ComponentState.DISABLED);
+    expect(states.get(StatusComponent.WEB_SCRAPER_FIRECRAWL)).toBe(ComponentState.DISABLED);
+  });
+
+  it('shows the scraper sidecars as their own components, Crawl4AI / FlareSolverr / Firecrawl', () => {
+    const members = (component: StatusComponent) =>
+      COMPONENT_MEMBERS.find((group) => group.component === component)?.services;
+    expect(members(StatusComponent.WEB_SCRAPER_CRAWL4AI)).toEqual(['crawl4ai']);
+    expect(members(StatusComponent.WEB_SCRAPER_FLARESOLVERR)).toEqual(['flaresolverr']);
+    expect(members(StatusComponent.WEB_SCRAPER_FIRECRAWL)).toEqual(['firecrawl']);
   });
 });
 
@@ -217,6 +241,17 @@ describe('composeStatusPage', () => {
     expect(page.components[0]?.uptime.every((entry) => entry.uptimeBasisPoints === null)).toBe(
       true,
     );
+  });
+
+  it('shows no uptime for a disabled component: it was never meant to be running', () => {
+    const history = buildHistory(input({}));
+    const page = composeStatusPage(currentComponentStates([], ['firecrawl']), history, END * 1000);
+    const firecrawl = page.components.find(
+      (entry) => entry.component === StatusComponent.WEB_SCRAPER_FIRECRAWL,
+    );
+
+    expect(firecrawl?.state).toBe(ComponentState.DISABLED);
+    expect(firecrawl?.uptime.every((entry) => entry.uptimeBasisPoints === null)).toBe(true);
   });
 
   // rules/19: the status response names components, never infrastructure.

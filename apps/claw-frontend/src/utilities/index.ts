@@ -41,7 +41,7 @@ export {
   rankModelRecency,
 } from './model-recency.utility';
 export { classifyLoginFailure, resolveLoginFailureCopy } from './login-failure.utility';
-export { getHealthStatusColor } from './health-status.utility';
+export { getHealthStatusColor, untimedServiceLabelKey } from './health-status.utility';
 export {
   getDashboardGreetingKey,
   deriveDashboardOperationalState,

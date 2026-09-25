@@ -57,6 +57,36 @@ export async function postSidecarJson<T>(
 }
 
 /**
+ * Whether a sidecar answers a cheap GET with a 2xx inside `timeoutMs`
+ * (research-service `/health`). Same host guard as `postSidecarJson`; no
+ * credential is sent, no redirect followed, and the body is discarded
+ * unread. Never throws: a refused connection, a timeout, a non-2xx or a
+ * metadata-host base URL is simply `false`.
+ */
+export async function probeSidecarReachable(
+  baseUrl: string,
+  path: string,
+  timeoutMs: number,
+): Promise<boolean> {
+  try {
+    const endpoint = new URL(path, baseUrl);
+    if (isCloudMetadataHost(endpoint.hostname)) {
+      return false;
+    }
+    assertSafeRequestUrl(endpoint.href, declaredHost(baseUrl));
+    const response = await fetch(endpoint.href, {
+      method: 'GET',
+      redirect: 'error',
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    await response.body?.cancel();
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Builds a `FetchResult` from what a sidecar returned. The target URL was
  * SSRF-checked before the call; the sidecar followed its own redirects, so
  * the FINAL URL it reports is checked again here and the page is refused if

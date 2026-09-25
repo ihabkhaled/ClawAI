@@ -38,7 +38,11 @@ export class StatusPageService {
       this.snapshots.current(now),
       this.historyFor(now),
     ]);
-    return composeStatusPage(currentComponentStates(snapshot.health.services), history, now);
+    return composeStatusPage(
+      currentComponentStates(snapshot.health.services, snapshot.health.disabledDependencies),
+      history,
+      now,
+    );
   }
 
   private async historyFor(now: number): Promise<StatusHistory | null> {

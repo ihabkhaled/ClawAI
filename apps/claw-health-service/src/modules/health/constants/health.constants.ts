@@ -31,10 +31,25 @@ export const HEALTH_CHECK_TIMEOUT_MS = 5000;
  * `clamav`: file-service PINGs clamd and answers `services.clamav` =
  * `up`/`down`/`disabled`. A missing key, `disabled`, or file-service itself
  * down means "not measured" — the row is omitted, never reported DOWN.
+ *
+ * `crawl4ai` / `flaresolverr` / `firecrawl`: research-service reads each
+ * scraping sidecar's `fetch_strategy_configs` row and, when it is enabled,
+ * GETs its cheap health route (ADR-121 addendum). Same `up`/`down`/`disabled`
+ * contract; a down sidecar makes research `degraded`, never down.
+ *
+ * A dependency reported `disabled` gets no row and no series (it is not an
+ * outage), but is listed in `AggregatedHealth.disabledDependencies` so the
+ * status page shows it as DISABLED instead of "unknown".
  */
 export const DEPENDENCY_PROBES: readonly DependencyProbe[] = [
   { name: 'clamav', source: 'file-service', key: 'clamav' },
+  { name: 'crawl4ai', source: 'research-service', key: 'crawl4ai' },
+  { name: 'flaresolverr', source: 'research-service', key: 'flaresolverr' },
+  { name: 'firecrawl', source: 'research-service', key: 'firecrawl' },
 ];
+
+/** What a source service reports for a dependency it has switched off on purpose. */
+export const DEPENDENCY_DISABLED_STATUS = 'disabled';
 
 /** The `error` a derived dependency carries when its source reports it down. Host-free. */
 export const DEPENDENCY_DOWN_ERROR = 'dependency not answering (reported by its service)';

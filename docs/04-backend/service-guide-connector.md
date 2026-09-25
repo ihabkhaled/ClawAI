@@ -290,7 +290,10 @@ by truncation (`usdAmountToMicroUsdFloor`).
 
 `connector_models.max_output_tokens` is the catalog's published output limit,
 written by every sync (OpenRouter `top_provider.max_completion_tokens`, Groq
-`max_completion_tokens`). `learned_max_output_tokens` (+ `learned_max_output_at`)
+`max_completion_tokens`, Gemini native `Model.outputTokenLimit` via
+`GeminiAdapter.fetchNativeLimits`). Ollama / Ollama Cloud publish no output
+ceiling (`/api/show` only has the input `context_length`), so theirs stays NULL
+and is learned from the first refusal. `learned_max_output_tokens` (+ `learned_max_output_at`)
 is written by `POST /api/v1/internal/connectors/models/output-limit`
 (`{ provider, model, maxOutputTokens }`, service token) when chat-service sees a
 provider refuse a `max_tokens` — only ever lowered, never touched by sync, and

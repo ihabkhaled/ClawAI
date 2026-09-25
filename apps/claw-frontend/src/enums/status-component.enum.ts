@@ -11,6 +11,10 @@ export enum StatusComponent {
   ANTIVIRUS = 'antivirus',
   IMAGES = 'images',
   RESEARCH = 'research',
+  /** The scraping sidecars (ADR-121): opt-in, so usually DISABLED. */
+  WEB_SCRAPER_CRAWL4AI = 'web-scraper-crawl4ai',
+  WEB_SCRAPER_FLARESOLVERR = 'web-scraper-flaresolverr',
+  WEB_SCRAPER_FIRECRAWL = 'web-scraper-firecrawl',
   PAYMENTS = 'payments',
   WORKSPACES = 'workspaces',
   CODING_AGENT = 'coding-agent',

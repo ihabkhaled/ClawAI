@@ -122,9 +122,8 @@ The owner approved a set on 2026-09-25 (see "Per-tool status").
   same day — a profiled service is deployed only when one of its profiles is
   live (`CLAW_SCRAPER_PROFILES` from the prod `.env`); see
   `docs/08-runtime-devops/deployment-guide.md` § Profiled services.
-- health-service does not probe the sidecars: they are optional, off by
-  default and on a network health-service is not on; compose healthchecks
-  cover them and research-service logs every attempt against them.
+- ~~health-service does not probe the sidecars~~ — superseded by the
+  addendum below: research-service reports them and health-service lifts them.
 
 ## Related
 
@@ -132,3 +131,26 @@ The owner approved a set on 2026-09-25 (see "Per-tool status").
 `rules/50-agentic-research-loop-and-narration.md` · ADR-094 ·
 `rules/13-external-library-wrappers-and-adapters.md` ·
 `rules/15-configuration-and-environment.md`
+
+## Addendum (2026-09-25): sidecar health
+
+health-service still never connects to a sidecar (it is not on
+`claw-scrapers`). research-service, which is, reports them:
+
+- `GET /api/v1/health` answers `{ status: 'ok'|'degraded', service,
+services: { crawl4ai, flaresolverr, firecrawl } }`, each `up`/`down`/`disabled`.
+- `disabled` = the `fetch_strategy_configs` row is off (or missing); it is not
+  probed. An enabled one gets one GET with a 2 s timeout on a route that needs
+  no credential and does no work: Crawl4AI `GET /health`, FlareSolverr `GET /`,
+  Firecrawl `GET /`, against the row's `publicConfig.baseUrl` (metadata hosts
+  refused, no redirects). The report is cached 15 s (`SidecarHealthService`).
+- A down sidecar makes research **degraded**, never down: HTTP stays 200, the
+  escalation chain simply skips that tier.
+- health-service `DEPENDENCY_PROBES` turns them into rows `crawl4ai` /
+  `flaresolverr` / `firecrawl` (`claw_service_up` series, uptime) and the
+  status-page components "Web scraper: Crawl4AI / FlareSolverr / Firecrawl".
+  A disabled one has no row and no series and shows as **Disabled**
+  (`ComponentState.DISABLED`), never as down.
+- Crawl4AI enabled without `CRAWL4AI_API_TOKEN` reads **down**: the sidecar
+  then binds loopback only, so research-service genuinely cannot reach it.
+- Runbook: `docs/11-runbooks/runbook-scraper-sidecar-down.md`.

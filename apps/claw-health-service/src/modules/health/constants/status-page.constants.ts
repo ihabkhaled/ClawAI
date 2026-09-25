@@ -21,6 +21,10 @@ export const COMPONENT_MEMBERS: readonly ComponentMembers[] = [
   { component: StatusComponent.ANTIVIRUS, services: ['clamav'] },
   { component: StatusComponent.IMAGES, services: ['image-service'] },
   { component: StatusComponent.RESEARCH, services: ['research-service'] },
+  // DEPENDENCY_PROBES rows reported by research-service (ADR-121 addendum).
+  { component: StatusComponent.WEB_SCRAPER_CRAWL4AI, services: ['crawl4ai'] },
+  { component: StatusComponent.WEB_SCRAPER_FLARESOLVERR, services: ['flaresolverr'] },
+  { component: StatusComponent.WEB_SCRAPER_FIRECRAWL, services: ['firecrawl'] },
   { component: StatusComponent.PAYMENTS, services: ['payment-service'] },
   { component: StatusComponent.WORKSPACES, services: ['workspace-service'] },
   { component: StatusComponent.CODING_AGENT, services: ['agent-service'] },

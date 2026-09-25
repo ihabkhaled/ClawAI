@@ -107,7 +107,17 @@ export type PresetModelListEntry = {
   isDeprecated?: boolean;
 };
 
-/** Google's native `GET /v1beta/models`, the one that carries token limits. */
+/**
+ * Google's native `GET /v1beta/models`, the one that carries token limits
+ * (ai.google.dev/api/models, `Model.inputTokenLimit` / `Model.outputTokenLimit`).
+ * Typed `unknown` where the value is checked before use: it is Google's JSON.
+ */
 export type GeminiNativeModelsResponse = {
-  models?: Array<{ name: string; inputTokenLimit?: number; outputTokenLimit?: number }>;
+  models?: Array<{ name: string; inputTokenLimit?: unknown; outputTokenLimit?: unknown }>;
+};
+
+/** The token limits the native Gemini list published for one model. */
+export type GeminiNativeModelLimits = {
+  maxContextTokens?: number;
+  maxOutputTokens?: number;
 };

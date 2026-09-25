@@ -279,6 +279,10 @@ export class OllamaAdapter implements ProviderAdapter {
         supportsVideoInput: false,
         supportsStructuredOutput: false,
         ...(metadata.contextTokens > 0 ? { maxContextTokens: metadata.contextTokens } : {}),
+        // No maxOutputTokens, on purpose (ADR-125): Ollama publishes no output
+        // ceiling (/api/tags has none; /api/show model_info only has the input
+        // `<arch>.context_length`; `num_predict` is a default, not a maximum).
+        // Ollama Cloud's ceiling is learned from its own refusal instead.
       },
       usage: metadata.usage,
     };

@@ -12,7 +12,10 @@ import {
   type ServiceCheckOutcome,
   type ServiceHealthResult,
 } from '../types/health.types';
-import { deriveDependencyResults } from '../utilities/dependency-health.utility';
+import {
+  deriveDependencyResults,
+  deriveDisabledDependencies,
+} from '../utilities/dependency-health.utility';
 import { AggregatedHealthStatus } from '../enums/aggregated-health-status.enum';
 
 @Injectable()
@@ -61,6 +64,7 @@ export class HealthService {
         timestamp: new Date().toISOString(),
         services: results,
         summary,
+        disabledDependencies: deriveDisabledDependencies(DEPENDENCY_PROBES, bodiesBySource),
       };
     } catch (error) {
       this.logger.error(`checkAll: failed — ${(error as Error).message}`);

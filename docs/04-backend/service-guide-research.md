@@ -346,6 +346,12 @@ instead of failing every fetch. The token is never logged.
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.
 - `claw-health-service` aggregator now checks the research-service `/api/v1/health` endpoint.
+- `/api/v1/health` reports the scraping sidecars (ADR-121 addendum):
+  `{ status: 'ok'|'degraded', service: 'research-service', services: { crawl4ai,
+flaresolverr, firecrawl } }`, each `up`/`down`/`disabled`. Disabled rows are
+  not probed; enabled ones get one 2 s GET (`/health`, `/`, `/`), cached 15 s
+  (`SidecarHealthService`). A down sidecar = `degraded`, HTTP still 200.
+  Contract spec: `modules/health/__tests__/research-health.service.spec.ts`.
 - All 7 Docker compose files (all-in-one dev, all-in-one prod, dev/prod split databases, dev/prod split services) register `pg-research` (port **5452**) and `research-service` (port **4016**).
 - `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1` seed `PG_RESEARCH_*`, `RESEARCH_PORT`, `RESEARCH_DATABASE_URL`, `RESEARCH_SERVICE_URL`, `RESEARCH_HEADLESS_RENDER_ENABLED`, `CLAW_SCRAPER_PROFILES`, the two `FIRECRAWL_*` secrets and `CRAWL4AI_API_TOKEN` (ADR-121; generated, preserved across re-runs).
 - `packages/shared-constants` exports `RESEARCH_SERVICE` and `RESEARCH_SERVICE_PORT`.

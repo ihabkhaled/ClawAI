@@ -1,4 +1,5 @@
 import { FetchStrategyKind } from '../../../generated/prisma';
+import type { SidecarHealthProbe } from '../types/sidecar.types';
 
 /**
  * Escalation order, lowest tier first (ADR-121). Cheap and polite first:
@@ -60,6 +61,42 @@ export const SIDECAR_DEFAULT_BASE_URL: Readonly<Partial<Record<FetchStrategyKind
   [FetchStrategyKind.FIRECRAWL]: 'http://firecrawl-api:3002',
   [FetchStrategyKind.READER_PROXY]: 'https://r.jina.ai/',
 };
+
+/**
+ * The scraping sidecars research-service `/health` reports (ADR-121 addendum),
+ * and how each is probed: a route it answers without a credential and without
+ * rendering anything. Crawl4AI's `/health` is the one route its token does not
+ * guard; FlareSolverr and Firecrawl answer a readiness line on `/`.
+ */
+export const SIDECAR_HEALTH_PROBES: readonly SidecarHealthProbe[] = [
+  {
+    kind: FetchStrategyKind.CRAWL4AI,
+    key: 'crawl4ai',
+    path: '/health',
+    defaultBaseUrl: SIDECAR_DEFAULT_BASE_URL[FetchStrategyKind.CRAWL4AI],
+  },
+  {
+    kind: FetchStrategyKind.FLARESOLVERR,
+    key: 'flaresolverr',
+    path: '/',
+    defaultBaseUrl: SIDECAR_DEFAULT_BASE_URL[FetchStrategyKind.FLARESOLVERR],
+  },
+  {
+    kind: FetchStrategyKind.FIRECRAWL,
+    key: 'firecrawl',
+    path: '/',
+    defaultBaseUrl: SIDECAR_DEFAULT_BASE_URL[FetchStrategyKind.FIRECRAWL],
+  },
+];
+
+/**
+ * Per-probe timeout, in ms. health-service gives the whole `/health` call 5 s;
+ * the probes run in parallel, so 2 s leaves room for the DB read and the reply.
+ */
+export const SIDECAR_HEALTH_TIMEOUT_MS = 2_000;
+
+/** How long one sidecar report is reused, in ms: `/health` is polled, the probes are not free. */
+export const SIDECAR_HEALTH_CACHE_TTL_MS = 15_000;
 
 /**
  * Logged once per process, and thrown by a direct call, when the Crawl4AI

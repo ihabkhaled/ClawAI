@@ -22,6 +22,7 @@ import { FetchStrategyRegistryService } from './services/fetch-strategy-registry
 import { FetchStrategyStatusService } from './services/fetch-strategy-status.service';
 import { FetchService } from './services/fetch.service';
 import { RobotsPolicyService } from './services/robots-policy.service';
+import { SidecarHealthService } from './services/sidecar-health.service';
 
 @Module({
   controllers: [FetchController, FetchStrategyController],
@@ -45,8 +46,9 @@ import { RobotsPolicyService } from './services/robots-policy.service';
     FetchStrategyStatusService,
     FetchStrategyOrchestratorService,
     RobotsPolicyService,
+    SidecarHealthService,
     FetchService,
   ],
-  exports: [FetchService],
+  exports: [FetchService, SidecarHealthService],
 })
 export class FetchModule {}

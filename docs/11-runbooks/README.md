@@ -9,6 +9,7 @@
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | A service won't start / crash-loops                                                   | [runbook-service-crash.md](runbook-service-crash.md) → check Docker logs, DB reachability, migrations                                                                                            |
 | Uploads rejected: `antivirus_scan … ECONNREFUSED …:3310`                              | [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md) → clamd died (OOM) inside a still-running container; restart, watchdog prevents recurrence                                        |
+| Status page: "Web scraper: Crawl4AI/FlareSolverr/Firecrawl" Down; research degraded   | [runbook-scraper-sidecar-down.md](runbook-scraper-sidecar-down.md) → enabled row but container/profile not started, missing Crawl4AI token, or OOM                                               |
 | Server unreachable / CPU 100% / disk full after deploys                               | [runbook-server-overloaded-by-builds.md](runbook-server-overloaded-by-builds.md) → `docker system df`, `.deploy/history.log`; releases no longer rebuild every image (ADR-123)                   |
 | A new API route 404s as HTML in production                                            | [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) → nginx is pinned to a stale config inode; recreate the container                                                                 |
 | A service fails on a symbol its source declares                                       | [runbook-stale-shared-package-dist.md](runbook-stale-shared-package-dist.md) → the container carries an image-baked `packages/*/dist`; rebuild the image                                         |
@@ -47,6 +48,7 @@
 - [troubleshooting.md](troubleshooting.md) — general troubleshooting
 - [runbook-service-crash.md](runbook-service-crash.md)
 - [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md)
+- [runbook-scraper-sidecar-down.md](runbook-scraper-sidecar-down.md)
 - [runbook-server-overloaded-by-builds.md](runbook-server-overloaded-by-builds.md)
 - [runbook-high-latency.md](runbook-high-latency.md)
 - [runbook-database-recovery.md](runbook-database-recovery.md)

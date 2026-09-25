@@ -139,6 +139,51 @@ describe('ServiceStatusSection', () => {
     expect(within(row).getByText(en.observability.status.states.down)).toBeInTheDocument();
   });
 
+  // ADR-121 addendum: each scraper sidecar is its own row; one an admin has
+  // not enabled reads "Disabled", never "Down" or "Unknown".
+  it('lists the web scraper sidecars, showing a disabled one as Disabled', () => {
+    renderSection({
+      status: {
+        ...status,
+        components: [
+          {
+            component: StatusComponent.WEB_SCRAPER_CRAWL4AI,
+            state: ComponentState.UP,
+            uptime: uptime(10_000),
+          },
+          {
+            component: StatusComponent.WEB_SCRAPER_FLARESOLVERR,
+            state: ComponentState.DOWN,
+            uptime: uptime(9_000),
+          },
+          {
+            component: StatusComponent.WEB_SCRAPER_FIRECRAWL,
+            state: ComponentState.DISABLED,
+            uptime: uptime(null, 0),
+          },
+        ],
+        incidents: [],
+      },
+    });
+    const rows = screen.getAllByRole('listitem') as HTMLElement[];
+    const components = en.observability.status.components;
+    const states = en.observability.status.states;
+    expect(components.webScraperCrawl4ai).toBe('Web scraper: Crawl4AI');
+    expect(
+      within(rows[0] as HTMLElement).getByText(components.webScraperCrawl4ai),
+    ).toBeInTheDocument();
+    expect(within(rows[0] as HTMLElement).getByText(states.up)).toBeInTheDocument();
+    expect(
+      within(rows[1] as HTMLElement).getByText(components.webScraperFlaresolverr),
+    ).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText(states.down)).toBeInTheDocument();
+    expect(
+      within(rows[2] as HTMLElement).getByText(components.webScraperFirecrawl),
+    ).toBeInTheDocument();
+    expect(within(rows[2] as HTMLElement).getByText(states.disabled)).toBeInTheDocument();
+    expect(within(rows[2] as HTMLElement).queryByText(states.down)).toBeNull();
+  });
+
   it('announces a failed load', () => {
     renderSection({ status: undefined, isError: true });
     expect(screen.getByRole('alert')).toHaveTextContent(en.observability.status.failedToLoad);

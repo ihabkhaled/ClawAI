@@ -1,4 +1,4 @@
-import { CircleCheck, CircleHelp, CircleX, TriangleAlert } from 'lucide-react';
+import { CircleCheck, CircleHelp, CircleMinus, CircleX, TriangleAlert } from 'lucide-react';
 
 import { ComponentState, StatusComponent, UptimeWindow } from '@/enums';
 import type { ComponentStateAppearance } from '@/types';
@@ -11,6 +11,10 @@ export const STATUS_COMPONENT_LABEL_KEYS: Readonly<Record<StatusComponent, strin
   [StatusComponent.ANTIVIRUS]: 'observability.status.components.antivirus',
   [StatusComponent.IMAGES]: 'observability.status.components.images',
   [StatusComponent.RESEARCH]: 'observability.status.components.research',
+  [StatusComponent.WEB_SCRAPER_CRAWL4AI]: 'observability.status.components.webScraperCrawl4ai',
+  [StatusComponent.WEB_SCRAPER_FLARESOLVERR]:
+    'observability.status.components.webScraperFlaresolverr',
+  [StatusComponent.WEB_SCRAPER_FIRECRAWL]: 'observability.status.components.webScraperFirecrawl',
   [StatusComponent.PAYMENTS]: 'observability.status.components.payments',
   [StatusComponent.WORKSPACES]: 'observability.status.components.workspaces',
   [StatusComponent.CODING_AGENT]: 'observability.status.components.codingAgent',
@@ -51,6 +55,11 @@ export const COMPONENT_STATE_APPEARANCE: Readonly<
   [ComponentState.UNKNOWN]: {
     labelKey: 'observability.status.states.unknown',
     icon: CircleHelp,
+    className: 'text-muted-foreground',
+  },
+  [ComponentState.DISABLED]: {
+    labelKey: 'observability.status.states.disabled',
+    icon: CircleMinus,
     className: 'text-muted-foreground',
   },
 };

@@ -40,7 +40,8 @@ hop (`⚠️ {…}`, fixed by ADR-124) and the compare / consensus lanes, which 
    (`<requestId>:provider-retry`), no loop.
 3. **Remember output ceilings at the data owner.** `connector_models` gains
    `max_output_tokens` (catalog, overwritten by sync: OpenRouter
-   `top_provider.max_completion_tokens`, Groq `max_completion_tokens`) and
+   `top_provider.max_completion_tokens`, Groq `max_completion_tokens`,
+   Gemini native `Model.outputTokenLimit` — addendum below) and
    `learned_max_output_tokens` (+`_at`), written by
    `POST internal/connectors/models/output-limit` (service token) and only
    ever lowered. The models-snapshot publishes the smaller as `maxOutputTokens`;
@@ -69,8 +70,8 @@ hop (`⚠️ {…}`, fixed by ADR-124) and the compare / consensus lanes, which 
 - Breaker state is per replica and lost on restart — bounded, and nothing
   fails when Redis is slow. It is visible only in logs
   (`recordOutcome: … skipping it`); no admin page yet.
-- Gemini's native `outputTokenLimit` and Ollama `show` are not read at sync yet;
-  their ceilings are learned from the first refusal.
+- Ollama (local and Cloud) publishes no output ceiling, so its ceiling is
+  learned from the first refusal (addendum below). Gemini's is now read at sync.
 - The Ollama Cloud crawl-retrieval tool loop bypasses the chokepoint and so
   gets neither the pre-clamp nor the retry.
 
@@ -79,3 +80,22 @@ hop (`⚠️ {…}`, fixed by ADR-124) and the compare / consensus lanes, which 
 [rule 51](../../rules/51-router-candidates-and-model-window-fit.md) §16 ·
 [rule 37](../../rules/37-payg-credit-integrity.md) §19 ·
 [runbook-provider-call-rejected](../11-runbooks/runbook-provider-call-rejected.md)
+
+## Addendum (2026-09-25): output ceilings at sync
+
+- **Gemini**: the sync already read Google's native `GET /v1beta/models` for
+  `inputTokenLimit`; the same response carries `outputTokenLimit` ("Maximum
+  number of output tokens available for this model", ai.google.dev/api/models).
+  `GeminiAdapter.fetchNativeLimits` now stores it as `max_output_tokens`. Only a
+  positive integer is trusted (`isPositiveInteger`); anything else leaves the
+  ceiling unknown.
+- **Ollama / Ollama Cloud**: nothing trustworthy to read. `/api/tags` has no
+  limits; `/api/show` `model_info` has only `<arch>.context_length` (input);
+  a Modelfile `num_predict` is a generation default, not a maximum. Sync leaves
+  `max_output_tokens` NULL and the learned-from-refusal path stays the source.
+- **Precedence is unchanged**: sync writes only `max_output_tokens` and never the
+  learned column; the snapshot publishes `min(catalog, learned)`, so a lower
+  learned value is never raised by a resync. A repository spec pins that the
+  upsert carries no `learned*` field.
+- Providers with an output ceiling at sync: OpenRouter, Groq, Gemini (plus any
+  OpenAI-compatible preset whose list reports `max_completion_tokens`).

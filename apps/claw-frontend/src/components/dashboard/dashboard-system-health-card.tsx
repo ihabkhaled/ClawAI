@@ -6,7 +6,7 @@ import { HealthStatus, ServiceStatus } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { DashboardSystemHealthCardProps } from '@/types';
-import { getHealthStatusColor } from '@/utilities';
+import { getHealthStatusColor, untimedServiceLabelKey } from '@/utilities';
 
 export function DashboardSystemHealthCard({
   healthStatus,
@@ -81,10 +81,10 @@ export function DashboardSystemHealthCard({
                 />
                 <span className="truncate">{svc.name}</span>
               </div>
-              <span className="shrink-0 text-muted-foreground">
+              <span className="text-muted-foreground shrink-0">
                 {svc.responseTimeMs !== null
                   ? t('dashboard.responseTimeMs', { ms: String(svc.responseTimeMs) })
-                  : t('dashboard.unreachable')}
+                  : t(untimedServiceLabelKey(svc.status))}
               </span>
             </div>
           ))}

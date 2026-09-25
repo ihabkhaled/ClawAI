@@ -12,6 +12,7 @@ const build = () => {
     timestamp: '2026-09-23T00:00:00.000Z',
     services: [],
     summary: { total: 0, up: 0, down: 0 },
+    disabledDependencies: [],
   });
   return { snapshots: new HealthSnapshotService(healthService), checkAll };
 };

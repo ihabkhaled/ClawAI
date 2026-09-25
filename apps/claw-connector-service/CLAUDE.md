@@ -301,4 +301,6 @@ it sits behind `ServiceTokenGuard`.
   `ModelOutputLimitService`); `lowerLearnedMaxOutputTokens` only lowers it.
   Never let a sync write it.
 - Snapshot `maxOutputTokens` = `effectiveMaxOutputTokens(catalog, learned)`.
-- Not read yet: Gemini native `outputTokenLimit`, Ollama `show` — learned instead.
+- Gemini: native `outputTokenLimit` read at sync (`fetchNativeLimits`, positive
+  integers only). Ollama / Ollama Cloud: no trustworthy field exists (`/api/show`
+  has only input `context_length`; `num_predict` is a default) — learned instead.

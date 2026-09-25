@@ -129,7 +129,7 @@ After completing any implementation task on this service, produce:
   at 120/min, `Cache-Control: private, max-age=30`. The public `/api/v1/health`
   is unchanged.
 - **It speaks components, never services.** `COMPONENT_MEMBERS` maps the 17
-  services (plus the `clamav` dependency row) to 11 coarse groups. Nothing in `StatusPageResponse` may carry a
+  services (plus the `clamav` and scraper-sidecar dependency rows) to 14 coarse groups. Nothing in `StatusPageResponse` may carry a
   service name, host, port, version or error text; the redaction spec in
   `status-aggregation.utility.spec.ts` enforces it. Log a failure, never
   return it.
@@ -158,3 +158,14 @@ row of its own, read from that service's `/health` body with no extra request:
   outage. Its `error` is a fixed, host-free string (`DEPENDENCY_DOWN_ERROR`).
 - health-service never opens a socket to clamd; file-service owns that check.
 - Runbook: [`runbook-clamav-unreachable.md`](../../docs/11-runbooks/runbook-clamav-unreachable.md).
+
+## Dependency rows: scraper sidecars via research-service (2026-09-25)
+
+- `crawl4ai` / `flaresolverr` / `firecrawl` ← research-service
+  `services.<key>` (it probes each ENABLED sidecar; ADR-121 addendum). Status
+  components `web-scraper-*`, "Web scraper: Crawl4AI / FlareSolverr / Firecrawl".
+- `disabled` → `AggregatedHealth.disabledDependencies` → `ComponentState.DISABLED`
+  on the status page (no uptime shown, ignored by `overallState`). Never DOWN.
+- A down sidecar is a DOWN row + `claw_service_up{service="crawl4ai"} 0`;
+  research-service itself stays UP (`degraded`, HTTP 200).
+- Runbook: [`runbook-scraper-sidecar-down.md`](../../docs/11-runbooks/runbook-scraper-sidecar-down.md).

@@ -15,6 +15,7 @@ const health = (overrides: Partial<AggregatedHealth> = {}): AggregatedHealth => 
     { name: 'chat-service', status: ServiceStatus.DOWN, responseTimeMs: null, error: 'timeout' },
   ],
   summary: { total: 2, up: 1, down: 1 },
+  disabledDependencies: [],
   ...overrides,
 });
 
