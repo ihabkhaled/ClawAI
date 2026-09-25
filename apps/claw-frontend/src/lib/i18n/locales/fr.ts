@@ -88,7 +88,7 @@ export const fr: TranslationDictionary = {
     passwordPlaceholder: 'Mot de passe',
     signingIn: 'Connexion en cours...',
     loginFailed: 'Échec de la connexion. Veuillez réessayer.',
-    tagline: 'ClawAI — tous les modèles d’IA de pointe, un seul abonnement',
+    tagline: 'ClawAI — Toutes les IA, un seul espace de travail',
     authenticating: 'Authentification...',
     mustChangePasswordTitle: 'Choisissez un nouveau mot de passe',
     mustChangePasswordBody:
@@ -134,9 +134,9 @@ export const fr: TranslationDictionary = {
     confirmEmailChangeInvalidToken: 'Ce lien de confirmation est invalide ou a expiré.',
     confirmEmailChangeBackToLogin: 'Retour à la connexion',
     loginFailedTitle: 'Impossible de vous connecter',
-    brandingHeadline: 'Tous les modèles d’IA de pointe, un seul abonnement',
+    brandingHeadline: 'Toutes les IA, un seul espace de travail',
     brandingSubheadline:
-      'Accédez à Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek et Grok depuis un compte unique, chaque message étant acheminé vers le modèle qui lui convient.',
+      'Tous les modèles d’IA de pointe dans un seul espace de travail qui voit, entend, recherche et construit. Payez à l’usage, amenez votre équipe ou faites-le tourner sur votre propre matériel.',
     featuresAriaLabel: 'Points forts de la plateforme',
     feature1Title: 'Routage intelligent',
     feature1Desc:
@@ -4990,7 +4990,7 @@ export const fr: TranslationDictionary = {
     },
     footer: {
       tagline:
-        "Un seul abonnement, tous les modèles d'IA de pointe. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek et Grok dans un compte unique, avec un routage vers celui qui convient le mieux à la tâche.",
+        'Toutes les IA, un seul espace de travail. Tous les modèles d’IA de pointe dans un seul espace de travail qui voit, entend, recherche et construit — payez à l’usage, amenez votre équipe ou faites-le tourner sur votre propre matériel.',
       enterpriseContact: 'Pour les entreprises',
       pricingHeading: 'Tarifs',
       resourcesHeading: 'Ressources',
@@ -5001,6 +5001,7 @@ export const fr: TranslationDictionary = {
       socialX: 'X',
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
+      featuresHeading: 'Fonctionnalités',
     },
     notFound: {
       title: 'Page introuvable',
@@ -5141,16 +5142,16 @@ export const fr: TranslationDictionary = {
         ctaInstallGuide: "Guide d'installation",
       },
       hero: {
-        title: "Tous les modèles d'IA de pointe, un seul abonnement",
+        title: 'Toutes les IA, un seul espace de travail',
         subtitle:
-          'Créez un compte ClawAI et accédez à Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 et Amazon Bedrock depuis une seule conversation — sans comptes fournisseurs séparés, sans factures séparées, sans jongler avec des clés API. Choisissez un forfait, connectez-vous, et commencez à travailler.',
+          'Tous les modèles d’IA de pointe dans un seul espace de travail qui voit, entend, recherche et construit. Payez à l’usage, amenez votre équipe ou faites-le tourner sur votre propre matériel.',
         ctaOpen: 'Ouvrir ClawAI',
         ctaLogin: 'Se connecter',
         ctaRegister: 'Créez votre compte',
         ctaHowItWorks: 'Découvrir comment ça marche',
         ctaGithub: 'Voir sur GitHub',
         trustNote:
-          'Commencez gratuitement et passez à un forfait supérieur dès que vous avez besoin de plus. Forfaits payants à partir de 5 $ par mois, annulation à tout moment.',
+          'Commencez gratuitement et passez à un forfait supérieur dès que vous avez besoin de plus. Annulation à tout moment.',
         lastReviewed: 'Dernière révision',
       },
       modelRoster: {
@@ -5179,9 +5180,9 @@ export const fr: TranslationDictionary = {
         linkUseCases: 'Découvrir ce que les gens créent avec ClawAI',
       },
       enterprise: {
-        eyebrow: 'Pour les entreprises',
-        title: 'Besoin de ClawAI dans votre propre réseau ?',
-        body: "Les entreprises peuvent faire déployer ClawAI sur leurs propres serveurs, n'exécutant que des modèles locaux, afin qu'aucun prompt, document ou conversation ne quitte jamais leur infrastructure. Il s'agit d'un déploiement sur mesure que nous mettons en place avec vous — parlez-nous-en et nous le dimensionnerons.",
+        eyebrow: 'Local d’abord et privé',
+        title: 'Faites-le tourner sur votre propre matériel',
+        body: 'ClawAI est open source sous licence Apache-2.0 et fonctionne sur vos propres serveurs, avec des modèles locaux servis via Ollama ou llama.cpp et un mode de routage Local uniquement qui garde chaque requête sur du matériel que vous contrôlez. Pour les organisations, nous pouvons définir avec vous un déploiement privé sur mesure.',
         point1Title: 'Fonctionne sur vos serveurs',
         point1Body:
           'Déployé dans votre centre de données ou votre cloud privé, géré par votre équipe, derrière votre pare-feu.',
@@ -5190,7 +5191,7 @@ export const fr: TranslationDictionary = {
           'Des modèles à poids ouverts servis sur votre propre matériel. Aucun appel à un fournisseur externe et aucun traitement de données par un tiers.',
         point3Title: "Vos contrôles, votre journal d'audit",
         point3Body:
-          "SSO, contrôle d'accès basé sur les rôles, règles de rétention et un journal d'audit complet de chaque requête, le tout conservé dans votre environnement.",
+          'Accès basé sur les rôles, règles de conservation et journal d’audit de ce qui s’est passé, le tout conservé dans votre environnement.',
         ctaContact: 'Contactez-nous',
         ctaLearnMore: 'En savoir plus sur les déploiements privés',
       },
@@ -5346,6 +5347,38 @@ export const fr: TranslationDictionary = {
           "Créez un compte et envoyez votre premier message en moins d'une minute. Passez à un forfait supérieur seulement lorsque vous dépassez le quota gratuit.",
         ctaOpen: 'Ouvrir ClawAI',
         ctaGithub: 'Voir le code source sur GitHub',
+      },
+      payg: {
+        eyebrow: 'Paiement à l’usage',
+        title: 'Payez ce que les modèles consomment réellement',
+        body: 'Les modèles cloud sont décomptés d’un portefeuille de crédit au lieu d’être dissimulés dans un forfait fixe. Un forfait payant ajoute une dotation mensuelle de crédit, les recharges n’expirent jamais, et chaque requête est réservée sur votre solde avant son exécution.',
+        point1Title: 'Rechargez seulement quand vous en avez besoin',
+        point1Body:
+          'Le crédit acheté n’expire jamais et reste à vous en cas de passage à un forfait inférieur ou de résiliation — les recharges sont aussi ouvertes sur le forfait gratuit.',
+        point2Title: 'Aucun dépassement surprise',
+        point2Body:
+          'Le coût de chaque requête est réservé avant l’exécution du modèle, et une requête que votre solde ne peut pas couvrir est refusée d’emblée.',
+        point3Title: 'Des prix dans votre devise',
+        point3Body:
+          'Consultez les prix dans votre devise locale avec le montant en dollars américains à côté, et un registre qui montre quelle fonctionnalité a dépensé quoi.',
+        ctaPrimary: 'Comment fonctionne le crédit',
+        ctaSecondary: 'Voir les forfaits',
+      },
+      teams: {
+        eyebrow: 'Équipes et organisations',
+        title: 'Amenez votre équipe, gardez le contrôle',
+        body: 'Déployez ClawAI pour un service, une entreprise ou un laboratoire. Les administrateurs décident qui peut faire quoi, gèrent les comptes et les forfaits depuis une seule console, et peuvent consulter ce qui s’est passé dans le journal d’audit.',
+        point1Title: 'Des rôles que vous pouvez remodeler',
+        point1Body:
+          'Chaque action vérifie une permission nommée, et les administrateurs peuvent créer des rôles et choisir ce que chacun a le droit de faire.',
+        point2Title: 'Comptes et forfaits dans une seule console',
+        point2Body:
+          'Activez des utilisateurs, changez des rôles, définissez des mots de passe temporaires et consultez l’utilisation et le forfait de chacun depuis la console d’administration.',
+        point3Title: 'Une piste d’audit',
+        point3Body:
+          'Les actions sensibles pour la sécurité sont enregistrées dans un journal d’audit que les administrateurs peuvent filtrer et consulter.',
+        ctaPrimary: 'Administration et accès',
+        ctaSecondary: 'Parlez-nous',
       },
     },
     features: {

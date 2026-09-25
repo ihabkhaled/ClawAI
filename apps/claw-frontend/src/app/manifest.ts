@@ -1,12 +1,13 @@
 import type { MetadataRoute } from 'next';
 
+import { SITE_DESCRIPTION, SITE_TITLE } from '@/constants/site-metadata.constants';
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/clawai',
-    name: 'ClawAI — Local-First AI Orchestration',
+    name: SITE_TITLE,
     short_name: 'ClawAI',
-    description:
-      'Local-first AI orchestration platform: local and cloud models, intelligent routing, memory, workspace integrations, and a desktop agent.',
+    description: SITE_DESCRIPTION,
     start_url: '/?source=pwa',
     scope: '/',
     display: 'standalone',

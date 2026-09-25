@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'ClawAI — local-first AI orchestration';
+import { SITE_SLOGAN, SITE_TITLE } from '@/constants/site-metadata.constants';
+
+export const alt = SITE_TITLE;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -45,7 +47,7 @@ export default function OpengraphImage(): ImageResponse {
       </div>
       <div style={{ display: 'flex', fontSize: 64, fontWeight: 700 }}>ClawAI</div>
       <div style={{ display: 'flex', fontSize: 28, color: '#94A3B8', marginTop: 16 }}>
-        Local-first AI orchestration
+        {SITE_SLOGAN}
       </div>
     </div>,
     { ...size },

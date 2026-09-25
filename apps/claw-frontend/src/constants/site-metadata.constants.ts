@@ -1,8 +1,10 @@
-export const SITE_TITLE = 'ClawAI — Every Frontier AI Model, One Subscription';
+/** The brand slogan and description (owner decision, 2026-09-26). */
+export const SITE_SLOGAN = 'Every AI, one workspace';
+export const SITE_TITLE = `ClawAI — ${SITE_SLOGAN}`;
 export const SITE_DESCRIPTION =
-  'Reach Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok from a single account. Intelligent routing picks the right model for each task, metered against one allowance.';
+  'Every frontier AI model in one workspace that sees, hears, researches and builds. Pay as you go, bring your team, or run it on your own hardware.';
 export const SOCIAL_PREVIEW_IMAGE_PATH = '/clawai-social-preview.png';
-export const SOCIAL_PREVIEW_IMAGE_ALT = 'ClawAI — local-first AI orchestration';
+export const SOCIAL_PREVIEW_IMAGE_ALT = SITE_TITLE;
 
 /**
  * Yandex Webmaster domain-ownership token, same reasoning as `INDEXNOW_KEY`.

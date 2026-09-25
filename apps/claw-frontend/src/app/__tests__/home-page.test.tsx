@@ -97,7 +97,7 @@ describe('HomePage', () => {
 describe('HomePage generateMetadata', () => {
   it('returns the registry title/description and a canonical URL', async () => {
     const metadata = await generateMetadata();
-    expect(metadata.title).toBe('One workspace for cloud and local AI');
+    expect(metadata.title).toBe('Every AI, one workspace');
     expect(metadata.description).toBeTruthy();
     expect(metadata.alternates?.canonical).toMatch(/\/en$/);
   });

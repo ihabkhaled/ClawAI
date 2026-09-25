@@ -8,7 +8,7 @@ import {
   getModelFamilyPairSlug,
 } from '@/constants/compare-models.constants';
 import {
-  FEATURES_REVIEW_DATE,
+  getFeatureCapabilityReviewDate,
   FEATURES_CAPABILITY_ORDER,
   getFeatureCapabilityPath,
   getFeatureCapabilitySlug,
@@ -486,7 +486,7 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     feedEligibility: FeedEligibility.PUBLISHABLE,
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['features', 'use-cases', 'pricing'],
-    reviewDate: FEATURES_REVIEW_DATE,
+    reviewDate: getFeatureCapabilityReviewDate(capability),
   })),
   // The /prompts cluster: one hub plus one page per topic, fanned from the
   // order array (ADR-084). Unlike every other cluster, this one is not

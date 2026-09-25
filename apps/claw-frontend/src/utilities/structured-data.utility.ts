@@ -1,4 +1,5 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
+import { SITE_DESCRIPTION, SITE_SLOGAN } from '@/constants/site-metadata.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
 import type { PublicPlan } from '@/types/public-pricing.types';
 import type {
@@ -30,6 +31,8 @@ export function buildOrganizationJsonLd(siteUrl: string): JsonLdObject {
     '@type': 'Organization',
     name: 'ClawAI',
     url: siteUrl,
+    slogan: SITE_SLOGAN,
+    description: SITE_DESCRIPTION,
     sameAs: [MARKETING_GITHUB_URL],
   };
 }
@@ -40,6 +43,7 @@ export function buildSoftwareApplicationJsonLd(siteUrl: string): JsonLdObject {
     '@type': 'SoftwareApplication',
     name: 'ClawAI',
     url: siteUrl,
+    description: SITE_DESCRIPTION,
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Linux, Windows, macOS (self-hosted via Docker)',
   };

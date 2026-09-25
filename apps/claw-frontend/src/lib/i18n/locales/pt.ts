@@ -88,7 +88,7 @@ export const pt: TranslationDictionary = {
     passwordPlaceholder: 'Senha',
     signingIn: 'Entrando...',
     loginFailed: 'Falha no login. Tente novamente.',
-    tagline: 'ClawAI — todos os modelos de IA de fronteira, uma assinatura',
+    tagline: 'ClawAI — Toda IA, um só espaço de trabalho',
     authenticating: 'Autenticando...',
     mustChangePasswordTitle: 'Escolha uma nova palavra-passe',
     mustChangePasswordBody:
@@ -134,9 +134,9 @@ export const pt: TranslationDictionary = {
     confirmEmailChangeInvalidToken: 'Este link de confirmação é inválido ou expirou.',
     confirmEmailChangeBackToLogin: 'Voltar ao início de sessão',
     loginFailedTitle: 'Não conseguimos entrar',
-    brandingHeadline: 'Todos os modelos de IA de fronteira, uma assinatura',
+    brandingHeadline: 'Toda IA, um só espaço de trabalho',
     brandingSubheadline:
-      'Acesse Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek e Grok em uma única conta, com cada mensagem roteada para o modelo mais adequado a ela.',
+      'Todos os modelos de IA de fronteira em um só espaço de trabalho que vê, ouve, pesquisa e cria. Pague conforme o uso, traga sua equipe ou rode tudo no seu próprio hardware.',
     featuresAriaLabel: 'Destaques da plataforma',
     feature1Title: 'Roteamento inteligente',
     feature1Desc:
@@ -4948,7 +4948,7 @@ export const pt: TranslationDictionary = {
     },
     footer: {
       tagline:
-        'Uma assinatura, todos os modelos de IA de fronteira. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek e Grok em uma única conta, roteados para o que melhor se encaixa em cada tarefa.',
+        'Toda IA, um só espaço de trabalho. Todos os modelos de IA de fronteira em um só espaço de trabalho que vê, ouve, pesquisa e cria. Pague conforme o uso, traga sua equipe ou rode tudo no seu próprio hardware.',
       enterpriseContact: 'Para empresas',
       pricingHeading: 'Preços',
       resourcesHeading: 'Recursos',
@@ -4959,6 +4959,7 @@ export const pt: TranslationDictionary = {
       socialX: 'X',
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
+      featuresHeading: 'Recursos',
     },
     notFound: {
       title: 'Página não encontrada',
@@ -5092,16 +5093,16 @@ export const pt: TranslationDictionary = {
         ctaInstallGuide: 'Guia de instalação',
       },
       hero: {
-        title: 'Todos os modelos de IA de fronteira, uma assinatura',
+        title: 'Toda IA, um só espaço de trabalho',
         subtitle:
-          'Crie uma conta ClawAI e acesse Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 e Amazon Bedrock em um único chat — sem contas separadas com fornecedores, sem faturas separadas e sem lidar com chaves de API. Escolha um plano, faça login e comece a trabalhar.',
+          'Todos os modelos de IA de fronteira em um só espaço de trabalho que vê, ouve, pesquisa e cria. Pague conforme o uso, traga sua equipe ou rode tudo no seu próprio hardware.',
         ctaOpen: 'Abrir o ClawAI',
         ctaLogin: 'Iniciar sessão',
         ctaRegister: 'Crie sua conta',
         ctaHowItWorks: 'Veja como funciona',
         ctaGithub: 'Ver no GitHub',
         trustNote:
-          'Comece grátis e faça upgrade sempre que precisar de mais. Planos pagos a partir de $5 por mês, cancele quando quiser.',
+          'Comece grátis e faça upgrade sempre que precisar de mais. Cancele quando quiser.',
         lastReviewed: 'Última revisão',
       },
       modelRoster: {
@@ -5130,9 +5131,9 @@ export const pt: TranslationDictionary = {
         linkUseCases: 'Veja o que as pessoas constroem com o ClawAI',
       },
       enterprise: {
-        eyebrow: 'Para empresas',
-        title: 'Precisa do ClawAI dentro da sua própria rede?',
-        body: 'Empresas podem ter o ClawAI implantado em seus próprios servidores, executando apenas modelos locais, de forma que nenhum prompt, documento ou conversa saia de sua infraestrutura. Essa é uma implantação personalizada que montamos com você — fale conosco e faremos o dimensionamento.',
+        eyebrow: 'Local em primeiro lugar e privado',
+        title: 'Rode no seu próprio hardware',
+        body: 'O ClawAI é código aberto sob a licença Apache-2.0 e roda nos seus próprios servidores, com modelos locais servidos via Ollama ou llama.cpp e um modo de roteamento Somente local que mantém cada solicitação em hardware que você controla. Para organizações, podemos dimensionar com você uma implantação privada.',
         point1Title: 'Roda nos seus servidores',
         point1Body:
           'Implantado no seu data center ou nuvem privada, gerenciado pela sua equipe, atrás do seu firewall.',
@@ -5141,7 +5142,7 @@ export const pt: TranslationDictionary = {
           'Modelos de peso aberto executados no seu próprio hardware. Nenhuma chamada a provedores externos e nenhum processamento de dados por terceiros.',
         point3Title: 'Seus controles, sua trilha de auditoria',
         point3Body:
-          'SSO, acesso baseado em função, regras de retenção e um log de auditoria completo de cada solicitação, tudo mantido dentro do seu ambiente.',
+          'Acesso baseado em funções, regras de retenção e um log de auditoria do que aconteceu, tudo mantido dentro do seu ambiente.',
         ctaContact: 'Fale conosco',
         ctaLearnMore: 'Leia sobre implantações privadas',
       },
@@ -5295,6 +5296,38 @@ export const pt: TranslationDictionary = {
           'Crie uma conta e envie sua primeira mensagem em menos de um minuto. Faça upgrade apenas quando ultrapassar a cota gratuita.',
         ctaOpen: 'Abrir o ClawAI',
         ctaGithub: 'Ver o código-fonte no GitHub',
+      },
+      payg: {
+        eyebrow: 'Pague conforme o uso',
+        title: 'Pague pelo que os modelos realmente usam',
+        body: 'Os modelos em nuvem são medidos contra uma carteira de créditos, em vez de ficarem escondidos dentro de uma taxa fixa. Um plano pago acrescenta um crédito mensal, as recargas nunca expiram e cada solicitação é reservada contra o seu saldo antes de ser executada.',
+        point1Title: 'Recarregue só quando precisar',
+        point1Body:
+          'O crédito comprado nunca expira e continua sendo seu mesmo após um downgrade ou um cancelamento — as recargas também estão disponíveis no plano gratuito.',
+        point2Title: 'Nada de gastos surpresa',
+        point2Body:
+          'O custo de cada solicitação é reservado antes de o modelo rodar, e uma solicitação que o seu saldo não cobre é recusada logo de início.',
+        point3Title: 'Preços na sua moeda',
+        point3Body:
+          'Veja os preços na sua moeda local com o valor em dólares americanos ao lado, e um extrato que mostra qual recurso gastou quanto.',
+        ctaPrimary: 'Como funciona o crédito',
+        ctaSecondary: 'Ver planos',
+      },
+      teams: {
+        eyebrow: 'Equipes e organizações',
+        title: 'Traga sua equipe, mantenha o controle',
+        body: 'Use o ClawAI para um departamento, uma empresa ou um laboratório. Os administradores decidem quem pode fazer o quê, gerenciam contas e planos em um único console e podem revisar o que aconteceu no log de auditoria.',
+        point1Title: 'Funções que você pode remodelar',
+        point1Body:
+          'Cada ação verifica uma permissão nomeada, e os administradores podem criar funções e escolher o que cada uma pode fazer.',
+        point2Title: 'Contas e planos em um só console',
+        point2Body:
+          'Ative usuários, altere funções, defina senhas temporárias e veja o uso e o plano de cada pessoa pelo console de administração.',
+        point3Title: 'Uma trilha de auditoria',
+        point3Body:
+          'As ações relevantes para a segurança ficam registradas em um log de auditoria que os administradores podem filtrar e revisar.',
+        ctaPrimary: 'Administração e acesso',
+        ctaSecondary: 'Fale conosco',
       },
     },
     features: {

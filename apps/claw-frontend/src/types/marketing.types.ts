@@ -54,6 +54,29 @@ export type HomeHeroProps = {
   lastReviewed: string;
 };
 
+export type HomeValueBandLink = {
+  labelKey: string;
+  href: string;
+};
+
+/**
+ * One homepage positioning band (pay-as-you-go, teams). Every string is an
+ * i18n key; every href is a published registry path.
+ */
+export type HomeValueBand = {
+  id: string;
+  eyebrowKey: string;
+  titleKey: string;
+  bodyKey: string;
+  points: ReadonlyArray<{ titleKey: string; bodyKey: string }>;
+  primaryLink: HomeValueBandLink;
+  secondaryLink: HomeValueBandLink;
+};
+
+export type HomeValueBandSectionProps = {
+  band: HomeValueBand;
+};
+
 // Header shared by every dedicated marketing page. Keeps the six topic pages
 // visually identical without each one re-implementing a title block.
 export type MarketingPageHeroProps = {
@@ -117,6 +140,7 @@ export type UsePricingToggleReturn = {
  */
 export type MarketingFooterProps = {
   explorePages: { slug: string; canonicalPath: string; title: string }[];
+  featurePages: { slug: string; canonicalPath: string; title: string }[];
   comparisons: { rival: string; path: string; summary: string }[];
   comparisonsHeading: string;
 };

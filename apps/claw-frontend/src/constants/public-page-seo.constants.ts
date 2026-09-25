@@ -8,9 +8,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
 > = {
   [Locale.EN]: {
     home: {
-      title: 'One workspace for cloud and local AI',
+      title: 'Every AI, one workspace',
       description:
-        'Use cloud and local AI models from one workspace, route each request by task and policy, and keep conversations, files, and orchestration tools together.',
+        'Every frontier AI model in one workspace that sees, hears, researches and builds. Pay as you go, bring your team, or run it on your own hardware.',
       keywords: ['AI workspace', 'model routing', 'local AI'],
     },
     about: {
@@ -182,9 +182,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.AR]: {
     home: {
-      title: 'مساحة عمل واحدة للذكاء الاصطناعي السحابي والمحلي',
+      title: 'كل الذكاء الاصطناعي في مساحة عمل واحدة',
       description:
-        'استخدم نماذج الذكاء الاصطناعي السحابية والمحلية من مساحة عمل واحدة، ووجّه كل طلب وفق المهمة والسياسة، واحتفظ بالمحادثات والملفات وأدوات التنسيق معًا.',
+        'كل نماذج الذكاء الاصطناعي الرائدة في مساحة عمل واحدة ترى وتسمع وتبحث وتبني. ادفع حسب الاستخدام، أو اجلب فريقك، أو شغّلها على أجهزتك الخاصة.',
       keywords: ['مساحة عمل للذكاء الاصطناعي', 'توجيه النماذج', 'ذكاء اصطناعي محلي'],
     },
     about: {
@@ -356,9 +356,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.FR]: {
     home: {
-      title: 'Un espace pour les IA cloud et locales',
+      title: 'Toutes les IA, un seul espace de travail',
       description:
-        'Utilisez des modèles d’IA cloud et locaux dans un même espace, acheminez chaque demande selon la tâche et les règles, puis centralisez échanges, fichiers et outils.',
+        'Tous les modèles d’IA de pointe dans un seul espace de travail qui voit, entend, recherche et construit. Payez à l’usage, amenez votre équipe ou faites-le tourner sur votre propre matériel.',
       keywords: ['espace de travail IA', 'routage de modèles', 'IA locale'],
     },
     about: {
@@ -554,9 +554,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.IT]: {
     home: {
-      title: 'Un solo spazio per IA cloud e locale',
+      title: 'Ogni IA, un solo spazio di lavoro',
       description:
-        'Usa modelli di IA cloud e locali in un unico spazio, instrada ogni richiesta in base al compito e alle regole e riunisci conversazioni, file e strumenti.',
+        'Tutti i modelli IA di frontiera in un unico spazio di lavoro che vede, ascolta, fa ricerca e costruisce. Paga a consumo, porta il tuo team o eseguilo sul tuo hardware.',
       keywords: ['spazio di lavoro IA', 'instradamento modelli', 'IA locale'],
     },
     about: {
@@ -732,9 +732,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.DE]: {
     home: {
-      title: 'Ein Arbeitsbereich für Cloud- und lokale KI',
+      title: 'Jede KI, ein Arbeitsbereich',
       description:
-        'Nutzen Sie Cloud- und lokale KI-Modelle in einem Arbeitsbereich, leiten Sie Anfragen nach Aufgabe und Richtlinie weiter und bündeln Sie Chats, Dateien und Werkzeuge.',
+        'Jedes Spitzenmodell der KI in einem Arbeitsbereich, der sieht, hört, recherchiert und baut. Zahlen Sie nach Verbrauch, holen Sie Ihr Team dazu oder betreiben Sie alles auf Ihrer eigenen Hardware.',
       keywords: ['KI-Arbeitsbereich', 'Modellrouting', 'lokale KI'],
     },
     about: {
@@ -910,9 +910,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.ES]: {
     home: {
-      title: 'Un espacio para IA local y en la nube',
+      title: 'Toda la IA, un solo espacio de trabajo',
       description:
-        'Usa modelos de IA locales y en la nube desde un mismo espacio, dirige cada solicitud según la tarea y las reglas, y reúne conversaciones, archivos y herramientas.',
+        'Todos los modelos de IA de frontera en un solo espacio de trabajo que ve, oye, investiga y construye. Pague según su uso, sume a su equipo o ejecútelo en su propio hardware.',
       keywords: ['espacio de trabajo IA', 'enrutamiento de modelos', 'IA local'],
     },
     about: {
@@ -1128,9 +1128,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.RU]: {
     home: {
-      title: 'Единое пространство для облачного и локального ИИ',
+      title: 'Все ИИ в одном рабочем пространстве',
       description:
-        'Используйте облачные и локальные модели ИИ в одном пространстве, направляйте запросы с учётом задачи и правил и храните диалоги, файлы и инструменты вместе.',
+        'Все передовые ИИ-модели в одном рабочем пространстве, которое видит, слышит, исследует и создаёт. Платите по факту использования, подключайте команду или запускайте на собственном оборудовании.',
       keywords: ['рабочее пространство ИИ', 'маршрутизация моделей', 'локальный ИИ'],
     },
     about: {
@@ -1322,9 +1322,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.PT]: {
     home: {
-      title: 'Um espaço para IA na nuvem e local',
+      title: 'Toda IA, um só espaço de trabalho',
       description:
-        'Use modelos de IA na nuvem e locais em um só espaço, encaminhe cada pedido conforme a tarefa e as regras e reúna conversas, ficheiros e ferramentas.',
+        'Todos os modelos de IA de fronteira em um só espaço de trabalho que vê, ouve, pesquisa e cria. Pague conforme o uso, traga sua equipe ou rode tudo no seu próprio hardware.',
       keywords: ['espaço de trabalho de IA', 'roteamento de modelos', 'IA local'],
     },
     about: {
@@ -1532,9 +1532,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.HI]: {
     home: {
-      title: 'क्लाउड और स्थानीय एआई के लिए एक कार्यक्षेत्र',
+      title: 'हर AI, एक वर्कस्पेस',
       description:
-        'क्लाउड और स्थानीय एआई मॉडल एक ही कार्यक्षेत्र से इस्तेमाल करें, हर अनुरोध को काम और नीति के अनुसार भेजें, तथा बातचीत, फ़ाइलें और ऑर्केस्ट्रेशन उपकरण साथ रखें।',
+        'हर अग्रणी AI मॉडल एक ऐसे वर्कस्पेस में जो देखता है, सुनता है, शोध करता है और बनाता है। जितना इस्तेमाल करें उतना भुगतान करें, अपनी टीम लाएँ, या इसे अपने हार्डवेयर पर चलाएँ।',
       keywords: ['एआई कार्यक्षेत्र', 'मॉडल रूटिंग', 'स्थानीय एआई'],
     },
     about: {
@@ -1706,9 +1706,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.JA]: {
     home: {
-      title: 'クラウドAIとローカルAIを一つの作業空間に',
+      title: 'あらゆる AI を、ひとつのワークスペースで',
       description:
-        'クラウドとローカルのAIモデルを一つの作業空間から利用し、依頼の内容とポリシーに応じて実行先を選択できます。会話、ファイル、各種オーケストレーション機能も同じ場所で管理できます。',
+        '最先端の AI モデルがすべて、見て、聞いて、調べて、つくるひとつのワークスペースに。使った分だけ支払うことも、チームで使うことも、自前のハードウェアで動かすこともできます。',
       keywords: ['AIワークスペース', 'モデルルーティング', 'ローカルAI'],
     },
     about: {
@@ -1880,9 +1880,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.TH]: {
     home: {
-      title: 'พื้นที่เดียวสำหรับ AI บนคลาวด์และในเครื่อง',
+      title: 'AI ทุกตัว ในเวิร์กสเปซเดียว',
       description:
-        'ใช้โมเดล AI บนคลาวด์และในเครื่องจากพื้นที่ทำงานเดียว กำหนดเส้นทางคำขอตามลักษณะงานและนโยบาย พร้อมจัดการบทสนทนา ไฟล์ และเครื่องมือประสานงานไว้ด้วยกัน',
+        'โมเดล AI ชั้นนำทุกตัวในเวิร์กสเปซเดียวที่มองเห็น ได้ยิน ค้นคว้า และสร้างสรรค์ได้ จ่ายตามการใช้งาน ชวนทีมของคุณมาใช้ หรือรันบนฮาร์ดแวร์ของคุณเอง',
       keywords: ['พื้นที่ทำงาน AI', 'การกำหนดเส้นทางโมเดล', 'AI ในเครื่อง'],
     },
     about: {
@@ -2050,9 +2050,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.FA]: {
     home: {
-      title: 'یک فضای کاری برای هوش مصنوعی ابری و محلی',
+      title: 'همه هوش مصنوعی، یک فضای کاری',
       description:
-        'مدل‌های هوش مصنوعی ابری و محلی را از یک فضای کاری به‌کار بگیرید، هر درخواست را بر پایه نوع کار و سیاست هدایت کنید و گفتگوها، فایل‌ها و ابزارها را کنار هم نگه دارید.',
+        'همه مدل‌های پیشرو هوش مصنوعی در یک فضای کاری که می‌بیند، می‌شنود، پژوهش می‌کند و می‌سازد. به اندازه مصرف بپردازید، تیمتان را بیاورید، یا آن را روی سخت‌افزار خودتان اجرا کنید.',
       keywords: ['فضای کاری هوش مصنوعی', 'مسیریابی مدل', 'هوش مصنوعی محلی'],
     },
     about: {
@@ -2220,9 +2220,9 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
   },
   [Locale.ZH]: {
     home: {
-      title: '统一使用云端与本地人工智能',
+      title: '所有 AI，一个工作区',
       description:
-        '在同一个工作空间中使用云端和本地人工智能模型，并根据任务特点与既定策略为每项请求选择执行路径。对话、文件、上下文和编排工具也能在这里集中管理，减少在多个独立工具之间反复切换。',
+        '所有前沿 AI 模型，汇聚在一个能看、能听、能调研、能构建的工作区里。按量付费、带上你的团队，或在你自己的硬件上运行，由智能路由为每一条消息挑选最合适的模型来回答。',
       keywords: ['人工智能工作空间', '模型路由', '本地人工智能'],
     },
     about: {

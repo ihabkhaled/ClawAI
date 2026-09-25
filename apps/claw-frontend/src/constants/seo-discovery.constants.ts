@@ -26,6 +26,10 @@ export const DISCOVERY_RETRY_AFTER_SECONDS = 30;
  * clears today's 1,066 with real headroom for the next cluster or two, rather
  * than raising it to the bare minimum that goes green today.
  *
+ * Raised 3,000 -> 4,000 on 2026-09-26 when the eleven flagship /features pages
+ * took pages to 1,573 (121 x 13); half the new ceiling (2,000) keeps the same
+ * kind of headroom, and pages + the 1,300 chat maximum still fit in full.
+ *
  * `buildGlobalRssResponse` takes ALL pages first and lets chats fill whatever
  * remains, so this cap can only ever truncate chats. It used to sort the merged
  * list by date and slice, which put every chat (live timestamps) ahead of every
@@ -35,7 +39,7 @@ export const DISCOVERY_RETRY_AFTER_SECONDS = 30;
  *
  * The per-locale feeds stay the place to read one language in full.
  */
-export const RSS_GLOBAL_MAX_ITEMS = 3000;
+export const RSS_GLOBAL_MAX_ITEMS = 4000;
 
 export const XML_CONTENT_TYPE = 'application/xml; charset=utf-8';
 export const PLAIN_TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8';

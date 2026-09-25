@@ -88,7 +88,7 @@ export const de: TranslationDictionary = {
     passwordPlaceholder: 'Passwort',
     signingIn: 'Anmeldung läuft...',
     loginFailed: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
-    tagline: 'ClawAI — jedes Spitzenmodell, ein Abonnement',
+    tagline: 'ClawAI — Jede KI, ein Arbeitsbereich',
     authenticating: 'Authentifizierung läuft...',
     mustChangePasswordTitle: 'Neues Passwort wählen',
     mustChangePasswordBody:
@@ -136,9 +136,9 @@ export const de: TranslationDictionary = {
     confirmEmailChangeInvalidToken: 'Dieser Bestätigungslink ist ungültig oder abgelaufen.',
     confirmEmailChangeBackToLogin: 'Zurück zur Anmeldung',
     loginFailedTitle: 'Anmeldung fehlgeschlagen',
-    brandingHeadline: 'Jedes Spitzenmodell, ein Abonnement',
+    brandingHeadline: 'Jede KI, ein Arbeitsbereich',
     brandingSubheadline:
-      'Erreichen Sie Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek und Grok aus einem einzigen Konto – jede Nachricht geht an das Modell, das dazu passt.',
+      'Jedes Spitzenmodell der KI in einem Arbeitsbereich, der sieht, hört, recherchiert und baut. Zahlen Sie nach Verbrauch, holen Sie Ihr Team dazu oder betreiben Sie alles auf Ihrer eigenen Hardware.',
     featuresAriaLabel: 'Plattform-Highlights',
     feature1Title: 'Intelligentes Routing',
     feature1Desc:
@@ -4984,7 +4984,7 @@ export const de: TranslationDictionary = {
     },
     footer: {
       tagline:
-        'Ein Abonnement, jedes Spitzenmodell der KI. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek und Grok in einem einzigen Konto – geleitet an das Modell, das am besten zur Aufgabe passt.',
+        'Jede KI, ein Arbeitsbereich. Jedes Spitzenmodell der KI in einem Arbeitsbereich, der sieht, hört, recherchiert und baut. Zahlen Sie nach Verbrauch, holen Sie Ihr Team dazu oder betreiben Sie alles auf Ihrer eigenen Hardware.',
       enterpriseContact: 'Für Unternehmen',
       pricingHeading: 'Preise',
       resourcesHeading: 'Ressourcen',
@@ -4995,6 +4995,7 @@ export const de: TranslationDictionary = {
       socialX: 'X',
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
+      featuresHeading: 'Funktionen',
     },
     notFound: {
       title: 'Seite nicht gefunden',
@@ -5133,16 +5134,16 @@ export const de: TranslationDictionary = {
         ctaInstallGuide: 'Installationsanleitung',
       },
       hero: {
-        title: 'Jedes Spitzenmodell der KI, ein Abonnement',
+        title: 'Jede KI, ein Arbeitsbereich',
         subtitle:
-          'Erstellen Sie ein ClawAI-Konto und erreichen Sie Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 und Amazon Bedrock aus einem einzigen Chat – keine separaten Anbieterkonten, keine separaten Rechnungen, kein Jonglieren mit API-Schlüsseln. Wählen Sie einen Tarif, melden Sie sich an und legen Sie los.',
+          'Jedes Spitzenmodell der KI in einem Arbeitsbereich, der sieht, hört, recherchiert und baut. Zahlen Sie nach Verbrauch, holen Sie Ihr Team dazu oder betreiben Sie alles auf Ihrer eigenen Hardware.',
         ctaOpen: 'ClawAI öffnen',
         ctaLogin: 'Anmelden',
         ctaRegister: 'Konto erstellen',
         ctaHowItWorks: 'So funktioniert es',
         ctaGithub: 'Auf GitHub ansehen',
         trustNote:
-          'Kostenlos starten und upgraden, wann immer Sie mehr brauchen. Kostenpflichtige Tarife ab 5 $ im Monat, jederzeit kündbar.',
+          'Kostenlos starten und jederzeit upgraden, wenn Sie mehr brauchen. Jederzeit kündbar.',
         lastReviewed: 'Zuletzt geprüft',
       },
       modelRoster: {
@@ -5171,9 +5172,9 @@ export const de: TranslationDictionary = {
         linkUseCases: 'Sehen Sie, was Menschen mit ClawAI umsetzen',
       },
       enterprise: {
-        eyebrow: 'Für Unternehmen',
-        title: 'Brauchen Sie ClawAI innerhalb Ihres eigenen Netzwerks?',
-        body: 'Unternehmen können ClawAI auf ihren eigenen Servern betreiben lassen, ausschließlich mit lokalen Modellen, sodass kein Prompt, Dokument oder Gespräch jemals ihre Infrastruktur verlässt. Das ist eine maßgeschneiderte Bereitstellung, die wir gemeinsam mit Ihnen einrichten – sprechen Sie uns an, und wir stecken den Rahmen ab.',
+        eyebrow: 'Lokal zuerst und privat',
+        title: 'Betreiben Sie es auf Ihrer eigenen Hardware',
+        body: 'ClawAI ist Open Source unter der Apache-2.0-Lizenz und läuft auf Ihren eigenen Servern, mit lokalen Modellen über Ollama oder llama.cpp und einem Nur-lokal-Routing-Modus, der jede Anfrage auf Hardware hält, die Sie kontrollieren. Für Organisationen stimmen wir gemeinsam mit Ihnen eine private Bereitstellung ab.',
         point1Title: 'Läuft auf Ihren Servern',
         point1Body:
           'Bereitgestellt in Ihrem Rechenzentrum oder Ihrer Private Cloud, verwaltet von Ihrem Team, hinter Ihrer Firewall.',
@@ -5182,7 +5183,7 @@ export const de: TranslationDictionary = {
           'Offene Modelle, die auf Ihrer eigenen Hardware laufen. Keine externen Anbieteraufrufe und keine Datenverarbeitung durch Dritte.',
         point3Title: 'Ihre Kontrollen, Ihr Audit-Protokoll',
         point3Body:
-          'SSO, rollenbasierter Zugriff, Aufbewahrungsregeln und ein vollständiges Audit-Protokoll jeder Anfrage – alles innerhalb Ihrer Umgebung.',
+          'Rollenbasierter Zugriff, Aufbewahrungsregeln und ein Audit-Protokoll aller Vorgänge — alles innerhalb Ihrer Umgebung.',
         ctaContact: 'Kontaktieren Sie uns',
         ctaLearnMore: 'Mehr über private Bereitstellungen erfahren',
       },
@@ -5338,6 +5339,38 @@ export const de: TranslationDictionary = {
           'Erstellen Sie ein Konto und senden Sie Ihre erste Nachricht in weniger als einer Minute. Upgraden Sie erst, wenn das kostenlose Kontingent nicht mehr ausreicht.',
         ctaOpen: 'ClawAI öffnen',
         ctaGithub: 'Quellcode auf GitHub ansehen',
+      },
+      payg: {
+        eyebrow: 'Zahlen nach Verbrauch',
+        title: 'Zahlen Sie für das, was die Modelle tatsächlich verbrauchen',
+        body: 'Cloud-Modelle werden gegen eine Guthaben-Wallet abgerechnet, statt in einer Pauschale versteckt zu werden. Ein kostenpflichtiger Plan bringt ein monatliches Guthaben mit, Aufladungen verfallen nie, und jede Anfrage wird vor dem Ausführen auf Ihrem Guthaben reserviert.',
+        point1Title: 'Nur aufladen, wenn Sie es brauchen',
+        point1Body:
+          'Gekauftes Guthaben verfällt nie und bleibt Ihnen auch bei einem Downgrade oder einer Kündigung erhalten — Aufladungen sind auch im kostenlosen Plan möglich.',
+        point2Title: 'Keine bösen Überraschungen',
+        point2Body:
+          'Die Kosten jeder Anfrage werden reserviert, bevor das Modell läuft, und eine Anfrage, die Ihr Guthaben nicht deckt, wird vorab abgelehnt.',
+        point3Title: 'Preise in Ihrer Währung',
+        point3Body:
+          'Sehen Sie Preise in Ihrer Landeswährung mit dem US-Dollar-Betrag daneben, und ein Kontobuch, das zeigt, welche Funktion was verbraucht hat.',
+        ctaPrimary: 'So funktioniert das Guthaben',
+        ctaSecondary: 'Pläne ansehen',
+      },
+      teams: {
+        eyebrow: 'Teams und Organisationen',
+        title: 'Holen Sie Ihr Team dazu, behalten Sie die Kontrolle',
+        body: 'Betreiben Sie ClawAI für eine Abteilung, ein Unternehmen oder ein Labor. Administratoren legen fest, wer was darf, verwalten Konten und Pläne über eine einzige Konsole und können im Audit-Protokoll nachvollziehen, was passiert ist.',
+        point1Title: 'Rollen, die Sie anpassen können',
+        point1Body:
+          'Jede Aktion prüft eine benannte Berechtigung, und Administratoren können Rollen anlegen und festlegen, was jede davon darf.',
+        point2Title: 'Konten und Pläne in einer Konsole',
+        point2Body:
+          'Aktivieren Sie Benutzer, ändern Sie Rollen, setzen Sie temporäre Passwörter und sehen Sie Nutzung und Plan jeder Person in der Admin-Konsole.',
+        point3Title: 'Ein Prüfpfad',
+        point3Body:
+          'Sicherheitsrelevante Aktionen werden in einem Audit-Protokoll erfasst, das Administratoren filtern und prüfen können.',
+        ctaPrimary: 'Verwaltung und Zugriff',
+        ctaSecondary: 'Sprechen Sie uns an',
       },
     },
     features: {

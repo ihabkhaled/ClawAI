@@ -19,6 +19,7 @@ import { getConfiguredSocialLinks } from '@/utilities/social-links.utility';
 // unchanged; only the origin of the data moved.
 export function MarketingFooter({
   explorePages,
+  featurePages,
   comparisons,
   comparisonsHeading,
 }: MarketingFooterProps): React.ReactElement {
@@ -29,7 +30,7 @@ export function MarketingFooter({
   return (
     <footer className="border-border bg-surface-shell border-t">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
           <div className="sm:col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Image src="/claw-logo.png" alt="" width={28} height={28} aria-hidden="true" />
@@ -66,6 +67,21 @@ export function MarketingFooter({
                 </a>
               </li>
               {explorePages.map((page) => (
+                <li key={page.slug}>
+                  <Link href={page.canonicalPath} className="hover:text-foreground">
+                    {page.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="text-foreground text-sm font-semibold">
+              {t('marketing.footer.featuresHeading')}
+            </h2>
+            <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
+              {featurePages.map((page) => (
                 <li key={page.slug}>
                   <Link href={page.canonicalPath} className="hover:text-foreground">
                     {page.title}

@@ -11,26 +11,68 @@ import { PT_FEATURES_CLUSTER_CONTENT } from '@/constants/features-cluster-conten
 import { RU_FEATURES_CLUSTER_CONTENT } from '@/constants/features-cluster-content/ru.constants';
 import { TH_FEATURES_CLUSTER_CONTENT } from '@/constants/features-cluster-content/th.constants';
 import { ZH_FEATURES_CLUSTER_CONTENT } from '@/constants/features-cluster-content/zh.constants';
+import { FEATURES_FLAGSHIP_CONTENT_BY_LOCALE } from '@/constants/features-flagship-content.constants';
 import { Locale } from '@/enums/locale.enum';
 import type { FeaturesClusterContentByLocale } from '@/types/features-cluster.types';
+import { mergeFeaturesClusterDictionary } from '@/utilities/features-cluster-merge.utility';
 
 /**
  * The `/features` cluster's capability-page copy, one dictionary per locale.
  * See `learn-content.constants.ts` for why body copy lives here rather than
- * in the global i18n dictionary.
+ * in the global i18n dictionary. The original six pages and the flagship
+ * pages live in separate per-locale modules and are merged here.
  */
 export const FEATURES_CLUSTER_CONTENT_BY_LOCALE: FeaturesClusterContentByLocale = {
-  [Locale.EN]: EN_FEATURES_CLUSTER_CONTENT,
-  [Locale.AR]: AR_FEATURES_CLUSTER_CONTENT,
-  [Locale.DE]: DE_FEATURES_CLUSTER_CONTENT,
-  [Locale.ES]: ES_FEATURES_CLUSTER_CONTENT,
-  [Locale.FA]: FA_FEATURES_CLUSTER_CONTENT,
-  [Locale.FR]: FR_FEATURES_CLUSTER_CONTENT,
-  [Locale.HI]: HI_FEATURES_CLUSTER_CONTENT,
-  [Locale.IT]: IT_FEATURES_CLUSTER_CONTENT,
-  [Locale.JA]: JA_FEATURES_CLUSTER_CONTENT,
-  [Locale.PT]: PT_FEATURES_CLUSTER_CONTENT,
-  [Locale.RU]: RU_FEATURES_CLUSTER_CONTENT,
-  [Locale.TH]: TH_FEATURES_CLUSTER_CONTENT,
-  [Locale.ZH]: ZH_FEATURES_CLUSTER_CONTENT,
+  [Locale.EN]: mergeFeaturesClusterDictionary(
+    EN_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.EN],
+  ),
+  [Locale.AR]: mergeFeaturesClusterDictionary(
+    AR_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.AR],
+  ),
+  [Locale.DE]: mergeFeaturesClusterDictionary(
+    DE_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.DE],
+  ),
+  [Locale.ES]: mergeFeaturesClusterDictionary(
+    ES_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.ES],
+  ),
+  [Locale.FA]: mergeFeaturesClusterDictionary(
+    FA_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.FA],
+  ),
+  [Locale.FR]: mergeFeaturesClusterDictionary(
+    FR_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.FR],
+  ),
+  [Locale.HI]: mergeFeaturesClusterDictionary(
+    HI_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.HI],
+  ),
+  [Locale.IT]: mergeFeaturesClusterDictionary(
+    IT_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.IT],
+  ),
+  [Locale.JA]: mergeFeaturesClusterDictionary(
+    JA_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.JA],
+  ),
+  [Locale.PT]: mergeFeaturesClusterDictionary(
+    PT_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.PT],
+  ),
+  [Locale.RU]: mergeFeaturesClusterDictionary(
+    RU_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.RU],
+  ),
+  [Locale.TH]: mergeFeaturesClusterDictionary(
+    TH_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.TH],
+  ),
+  [Locale.ZH]: mergeFeaturesClusterDictionary(
+    ZH_FEATURES_CLUSTER_CONTENT,
+    FEATURES_FLAGSHIP_CONTENT_BY_LOCALE[Locale.ZH],
+  ),
 };

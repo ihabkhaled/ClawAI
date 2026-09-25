@@ -2,7 +2,10 @@ import { headers } from 'next/headers';
 
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { FeatureCapabilityCards } from '@/components/marketing/features/feature-capability-cards';
-import { FEATURES_HUB_PATH, FEATURES_REVIEW_DATE } from '@/constants/features-cluster.constants';
+import {
+  FEATURES_FLAGSHIP_REVIEW_DATE,
+  FEATURES_HUB_PATH,
+} from '@/constants/features-cluster.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
@@ -45,7 +48,7 @@ export async function FeaturesCapabilityCardsSection(): Promise<React.ReactEleme
     description,
     canonicalUrl,
     language: getHtmlLanguage(locale),
-    lastReviewed: registryEntry?.lastReviewed ?? FEATURES_REVIEW_DATE,
+    lastReviewed: registryEntry?.lastReviewed ?? FEATURES_FLAGSHIP_REVIEW_DATE,
     items: cards.map((card) => ({
       name: card.title,
       url: new URL(card.href, siteUrl).toString(),

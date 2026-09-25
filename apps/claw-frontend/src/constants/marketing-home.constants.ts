@@ -1,3 +1,4 @@
+import type { HomeValueBand } from '@/types/marketing.types';
 import type { MarketingPageSection } from '@/types/subscription-marketing.types';
 
 // The home page is deliberately an ENTRY POINT, not an encyclopedia: every
@@ -13,6 +14,8 @@ export const MARKETING_HOME_PATHS = {
   FAQ: '/faq',
   CONTACT: '/contact',
   PRICING: '/pricing',
+  PAY_AS_YOU_GO: '/features/pay-as-you-go-credit',
+  ADMINISTRATION: '/features/administration-and-access-control',
 } as const;
 
 // Plan slugs kept when the pricing block is asked for a `compact` render
@@ -70,3 +73,52 @@ export const MARKETING_ENTERPRISE_POINTS: ReadonlyArray<MarketingPageSection> = 
  * the chips is what carries the "there are a lot" message.
  */
 export const MODEL_ROSTER_CHIP_LIMIT = 6;
+
+/**
+ * The pay-as-you-go band: the wallet, not a price. Plan prices and top-up
+ * packages come from versioned price rows, so this band states no amount.
+ */
+export const MARKETING_HOME_PAYG_BAND: HomeValueBand = {
+  id: 'pay-as-you-go',
+  eyebrowKey: 'marketing.home.payg.eyebrow',
+  titleKey: 'marketing.home.payg.title',
+  bodyKey: 'marketing.home.payg.body',
+  points: [
+    { titleKey: 'marketing.home.payg.point1Title', bodyKey: 'marketing.home.payg.point1Body' },
+    { titleKey: 'marketing.home.payg.point2Title', bodyKey: 'marketing.home.payg.point2Body' },
+    { titleKey: 'marketing.home.payg.point3Title', bodyKey: 'marketing.home.payg.point3Body' },
+  ],
+  primaryLink: {
+    labelKey: 'marketing.home.payg.ctaPrimary',
+    href: MARKETING_HOME_PATHS.PAY_AS_YOU_GO,
+  },
+  secondaryLink: {
+    labelKey: 'marketing.home.payg.ctaSecondary',
+    href: MARKETING_HOME_PATHS.PRICING,
+  },
+};
+
+/**
+ * The teams band. Claims only what ships: per-deployment administration
+ * (roles, users, plans, audit log). No seats, invitations or single sign-on —
+ * those do not exist, and the administration page says so.
+ */
+export const MARKETING_HOME_TEAMS_BAND: HomeValueBand = {
+  id: 'teams',
+  eyebrowKey: 'marketing.home.teams.eyebrow',
+  titleKey: 'marketing.home.teams.title',
+  bodyKey: 'marketing.home.teams.body',
+  points: [
+    { titleKey: 'marketing.home.teams.point1Title', bodyKey: 'marketing.home.teams.point1Body' },
+    { titleKey: 'marketing.home.teams.point2Title', bodyKey: 'marketing.home.teams.point2Body' },
+    { titleKey: 'marketing.home.teams.point3Title', bodyKey: 'marketing.home.teams.point3Body' },
+  ],
+  primaryLink: {
+    labelKey: 'marketing.home.teams.ctaPrimary',
+    href: MARKETING_HOME_PATHS.ADMINISTRATION,
+  },
+  secondaryLink: {
+    labelKey: 'marketing.home.teams.ctaSecondary',
+    href: MARKETING_HOME_PATHS.CONTACT,
+  },
+};

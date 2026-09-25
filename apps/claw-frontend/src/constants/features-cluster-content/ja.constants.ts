@@ -1,7 +1,7 @@
 import { FeatureCapability } from '@/enums/feature-capability.enum';
-import type { FeaturesClusterDictionary } from '@/types/features-cluster.types';
+import type { FeaturesClusterFoundationDictionary } from '@/types/features-cluster.types';
 
-export const JA_FEATURES_CLUSTER_CONTENT: FeaturesClusterDictionary = {
+export const JA_FEATURES_CLUSTER_CONTENT: FeaturesClusterFoundationDictionary = {
   labels: {
     onThisPage: 'このページの内容',
     faqTitle: 'よくある質問',

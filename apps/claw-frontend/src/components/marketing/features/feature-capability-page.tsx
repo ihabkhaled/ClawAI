@@ -9,8 +9,8 @@ import { EditorialSectionNav } from '@/components/marketing/shared/editorial-sec
 import {
   FEATURES_HUB_PATH,
   FEATURES_HUB_SLUG,
-  FEATURES_REVIEW_DATE,
   getFeatureCapabilityPath,
+  getFeatureCapabilityReviewDate,
   getFeatureCapabilitySlug,
 } from '@/constants/features-cluster.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
@@ -46,6 +46,7 @@ export async function FeatureCapabilityPage({
   const canonicalUrl = new URL(canonicalPath, siteUrl).toString();
   const hubPath = localisePath(FEATURES_HUB_PATH, locale);
 
+  const reviewDate = getFeatureCapabilityReviewDate(capability);
   const title = registryEntry?.title ?? content.title;
   const summary = registryEntry?.description ?? content.summary;
 
@@ -57,7 +58,7 @@ export async function FeatureCapabilityPage({
     description: summary,
     canonicalUrl,
     language: getHtmlLanguage(locale),
-    lastReviewed: registryEntry?.lastReviewed ?? FEATURES_REVIEW_DATE,
+    lastReviewed: registryEntry?.lastReviewed ?? reviewDate,
     hubUrl: new URL(hubPath, siteUrl).toString(),
     hubName: hubEntry?.title ?? '',
     faq: content.faq,
@@ -80,8 +81,7 @@ export async function FeatureCapabilityPage({
               {labels.backToHub}
             </Link>
             {' · '}
-            {labels.lastReviewed}:{' '}
-            <time dateTime={FEATURES_REVIEW_DATE}>{FEATURES_REVIEW_DATE}</time>
+            {labels.lastReviewed}: <time dateTime={reviewDate}>{reviewDate}</time>
           </p>
 
           {content.sections.map((section) => (

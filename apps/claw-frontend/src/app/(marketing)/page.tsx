@@ -6,9 +6,14 @@ import { CtaSection } from '@/components/marketing/home/cta-section';
 import { EnterpriseBandSection } from '@/components/marketing/home/enterprise-band-section';
 import { FeaturesSection } from '@/components/marketing/home/features-section';
 import { HeroSection } from '@/components/marketing/home/hero-section';
+import { HomeValueBandSection } from '@/components/marketing/home/home-value-band-section';
 import { HowItWorksSection } from '@/components/marketing/home/how-it-works-section';
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
+import {
+  MARKETING_HOME_PAYG_BAND,
+  MARKETING_HOME_TEAMS_BAND,
+} from '@/constants/marketing-home.constants';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
 import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { fetchPublicPricingCatalog } from '@/lib/pricing/public-pricing-api';
@@ -34,9 +39,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // The home page is a SUMMARY and an entry point to a paid account: what you
-// get (the model roster), what it costs (the plan ladder), how it works, a
-// features teaser, and one clearly separated band for organisations that want
-// an on-premise deployment. Every topic links out to its own dedicated page —
+// get (the model roster), what it costs (the plan ladder and the pay-as-you-go
+// wallet), how it works, a features teaser, and three positioning bands — the
+// coding agent, teams, and local-first / on-premise deployment. Every topic links out to its own dedicated page —
 // long-form content lives there, not here.
 export default async function HomePage(): Promise<React.ReactElement> {
   const entry = getPageBySlug('home');
@@ -67,9 +72,11 @@ export default async function HomePage(): Promise<React.ReactElement> {
         className="my-8 px-4 sm:px-6"
       />
       <PricingSection initialPlans={plans} />
+      <HomeValueBandSection band={MARKETING_HOME_PAYG_BAND} />
       <HowItWorksSection />
       <FeaturesSection />
       <CodingAgentBandSection />
+      <HomeValueBandSection band={MARKETING_HOME_TEAMS_BAND} />
       <EnterpriseBandSection />
       <CtaSection />
     </>

@@ -1,7 +1,7 @@
 import { FeatureCapability } from '@/enums/feature-capability.enum';
-import type { FeaturesClusterDictionary } from '@/types/features-cluster.types';
+import type { FeaturesClusterFoundationDictionary } from '@/types/features-cluster.types';
 
-export const TH_FEATURES_CLUSTER_CONTENT: FeaturesClusterDictionary = {
+export const TH_FEATURES_CLUSTER_CONTENT: FeaturesClusterFoundationDictionary = {
   labels: {
     onThisPage: 'ในหน้านี้',
     faqTitle: 'คำถามที่พบบ่อย',

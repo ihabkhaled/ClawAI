@@ -1,7 +1,7 @@
 import { FeatureCapability } from '@/enums/feature-capability.enum';
-import type { FeaturesClusterDictionary } from '@/types/features-cluster.types';
+import type { FeaturesClusterFoundationDictionary } from '@/types/features-cluster.types';
 
-export const RU_FEATURES_CLUSTER_CONTENT: FeaturesClusterDictionary = {
+export const RU_FEATURES_CLUSTER_CONTENT: FeaturesClusterFoundationDictionary = {
   labels: {
     onThisPage: 'На этой странице',
     faqTitle: 'Частые вопросы',

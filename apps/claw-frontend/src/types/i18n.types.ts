@@ -4865,6 +4865,7 @@ export type TranslationDictionary = {
     };
     footer: {
       tagline: string;
+      featuresHeading: string;
       enterpriseContact: string;
       pricingHeading: string;
       resourcesHeading: string;
@@ -5028,6 +5029,32 @@ export type TranslationDictionary = {
         yearlyNote: string;
         linkFaq: string;
         linkUseCases: string;
+      };
+      payg: {
+        eyebrow: string;
+        title: string;
+        body: string;
+        point1Title: string;
+        point1Body: string;
+        point2Title: string;
+        point2Body: string;
+        point3Title: string;
+        point3Body: string;
+        ctaPrimary: string;
+        ctaSecondary: string;
+      };
+      teams: {
+        eyebrow: string;
+        title: string;
+        body: string;
+        point1Title: string;
+        point1Body: string;
+        point2Title: string;
+        point2Body: string;
+        point3Title: string;
+        point3Body: string;
+        ctaPrimary: string;
+        ctaSecondary: string;
       };
       enterprise: {
         eyebrow: string;

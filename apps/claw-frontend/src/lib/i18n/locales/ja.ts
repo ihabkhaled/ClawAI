@@ -88,7 +88,7 @@ export const ja: TranslationDictionary = {
     passwordPlaceholder: 'パスワード',
     signingIn: 'サインイン中...',
     loginFailed: 'ログインに失敗しました。もう一度試してください。',
-    tagline: 'ClawAI — すべてのフロンティア AI モデル、1 つのサブスクリプション',
+    tagline: 'ClawAI — あらゆる AI を、ひとつのワークスペースで',
     authenticating: '認証中...',
     mustChangePasswordTitle: '新しいパスワードを設定してください',
     mustChangePasswordBody:
@@ -135,9 +135,9 @@ export const ja: TranslationDictionary = {
     confirmEmailChangeInvalidToken: 'この確認リンクは無効か、有効期限が切れています。',
     confirmEmailChangeBackToLogin: 'サインインに戻る',
     loginFailedTitle: 'サインインできませんでした',
-    brandingHeadline: 'すべてのフロンティア AI モデル、1 つのサブスクリプション',
+    brandingHeadline: 'あらゆる AI を、ひとつのワークスペースで',
     brandingSubheadline:
-      '1 つのアカウントから Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok にアクセスし、各メッセージがそれに適合するモデルにルーティングされます。',
+      '最先端の AI モデルがすべて、見て、聞いて、調べて、つくるひとつのワークスペースに。使った分だけ支払うことも、チームで使うことも、自前のハードウェアで動かすこともできます。',
     featuresAriaLabel: 'プラットフォームのハイライト',
     feature1Title: 'スマートルーティング',
     feature1Desc: '各タスクに最適なモデル。自動的に選択されるか、ユーザーが固定します。',
@@ -4920,7 +4920,7 @@ export const ja: TranslationDictionary = {
     },
     footer: {
       tagline:
-        '1つのサブスクリプションですべてのフロンティアAIモデルを利用できます。Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grokを1つのアカウントにまとめ、タスクに適したモデルへルーティングします。',
+        'あらゆる AI を、ひとつのワークスペースで。最先端の AI モデルがすべて、見て、聞いて、調べて、つくるひとつのワークスペースに。使った分だけ支払うことも、チームで使うことも、自前のハードウェアで動かすこともできます。',
       enterpriseContact: '組織向け',
       pricingHeading: '価格',
       resourcesHeading: 'リソース',
@@ -4931,6 +4931,7 @@ export const ja: TranslationDictionary = {
       socialX: 'X',
       socialLinkedin: 'LinkedIn',
       socialDiscord: '不和',
+      featuresHeading: '機能',
     },
     notFound: {
       title: 'ページが見つかりません',
@@ -5067,16 +5068,15 @@ export const ja: TranslationDictionary = {
         ctaInstallGuide: 'インストール手順',
       },
       hero: {
-        title: 'すべてのフロンティア AI モデル、1 つのサブスクリプション',
+        title: 'あらゆる AI を、ひとつのワークスペースで',
         subtitle:
-          'ClawAI アカウントを作成すると、単一のチャットから Claude Opus 5、GPT-5、Gemini 3 Pro、Kimi K2、GLM-5.1、Qwen3、DeepSeek V3.2、Grok 4、Amazon Bedrock にアクセスできます。個別のベンダー アカウント、個別の請求書、API キーのやりくりは必要ありません。プランを選択し、ログインして作業を開始します。',
+          '最先端の AI モデルがすべて、見て、聞いて、調べて、つくるひとつのワークスペースに。使った分だけ支払うことも、チームで使うことも、自前のハードウェアで動かすこともできます。',
         ctaOpen: 'Clawを開く',
         ctaLogin: 'ログイン',
         ctaRegister: 'アカウントを作成する',
         ctaHowItWorks: '仕組みを見る',
         ctaGithub: 'GitHub で表示',
-        trustNote:
-          '無料で始めて、必要に応じていつでもアップグレードしてください。有料プランは月額 5 ドルから、いつでもキャンセル可能。',
+        trustNote: '無料で始めて、必要になったらいつでもアップグレード。解約もいつでも可能です。',
         lastReviewed: '最終レビュー日',
       },
       modelRoster: {
@@ -5105,9 +5105,9 @@ export const ja: TranslationDictionary = {
         linkUseCases: 'ClawAI を使って人々が何を構築しているかを見てみましょう',
       },
       enterprise: {
-        eyebrow: '組織向け',
-        title: '独自のネットワーク内に ClawAI が必要ですか?',
-        body: '企業は、ローカル モデルのみを実行する独自のサーバーに ClawAI を展開できるため、プロンプト、ドキュメント、会話がインフラストラクチャから流出することはありません。これは当社がお客様とセットアップしたオーダーメイドの導入です。ご相談いただければ範囲を検討いたします。',
+        eyebrow: 'ローカルファーストでプライベート',
+        title: '自前のハードウェアで動かす',
+        body: 'ClawAI は Apache-2.0 ライセンスのオープンソースで、自社のサーバー上で動作します。Ollama や llama.cpp で提供するローカルモデルと、すべてのリクエストを自分が管理するハードウェア上に留める「ローカルのみ」ルーティングモードを備えています。組織向けには、プライベート導入の範囲を一緒に決めることもできます。',
         point1Title: 'サーバー上で実行',
         point1Body:
           'ファイアウォールの背後にあるデータ センターまたはプライベート クラウドに展開され、チームによって管理されます。',
@@ -5116,7 +5116,7 @@ export const ja: TranslationDictionary = {
           '独自のハードウェアで提供されるオープンウェイト モデル。外部プロバイダーの呼び出しやサードパーティのデータ処理はありません。',
         point3Title: 'コントロールと監査証跡',
         point3Body:
-          'SSO、ロールベースのアクセス、保持ルール、およびすべてのリクエストの完全な監査ログはすべて環境内に保存されます。',
+          'ロールベースのアクセス、保持ルール、何が起きたかの監査ログ。すべてお客様の環境内に保持されます。',
         ctaContact: 'お問い合わせ',
         ctaLearnMore: 'プライベート展開について読む',
       },
@@ -5270,6 +5270,38 @@ export const ja: TranslationDictionary = {
           'アカウントを作成して、1 分以内に最初のメッセージを送信します。無料枠を超えた場合にのみアップグレードしてください。',
         ctaOpen: 'Clawを開く',
         ctaGithub: 'GitHub でソースを表示',
+      },
+      payg: {
+        eyebrow: '従量課金',
+        title: 'モデルが実際に使った分だけ支払う',
+        body: 'クラウドモデルの費用は定額料金に紛れ込ませず、クレジットウォレットから差し引かれます。有料プランには毎月のクレジット付与があり、チャージしたクレジットに有効期限はなく、各リクエストは実行前に残高から確保されます。',
+        point1Title: '必要なときだけチャージ',
+        point1Body:
+          '購入したクレジットに有効期限はなく、ダウングレードや解約後も手元に残ります。チャージは無料プランでも利用できます。',
+        point2Title: '残高を超える支出はなし',
+        point2Body:
+          'モデルが動く前に各リクエストの費用が確保され、残高で賄えないリクエストは最初に断られます。',
+        point3Title: '現地通貨で価格を表示',
+        point3Body:
+          '現地通貨の価格と米ドル金額を並べて確認でき、どの機能にいくら使ったかは台帳で分かります。',
+        ctaPrimary: 'クレジットの仕組み',
+        ctaSecondary: 'プランを見る',
+      },
+      teams: {
+        eyebrow: 'チームと組織',
+        title: 'チームで使い、管理は手元に',
+        body: '部署、企業、研究室のために ClawAI を運用できます。管理者は誰が何をできるかを決め、アカウントとプランをひとつのコンソールで管理し、監査ログで何が起きたかを確認できます。',
+        point1Title: '作り替えられるロール',
+        point1Body:
+          'すべての操作は名前付きの権限で確認され、管理者はロールを作成して各ロールに許す操作を選べます。',
+        point2Title: 'アカウントとプランをひとつのコンソールで',
+        point2Body:
+          '管理コンソールからユーザーの有効化、ロール変更、一時パスワードの設定、各ユーザーの利用状況とプランの確認ができます。',
+        point3Title: '監査ログ',
+        point3Body:
+          'セキュリティに関わる操作は監査ログに記録され、管理者が絞り込んで確認できます。',
+        ctaPrimary: '管理とアクセス制御',
+        ctaSecondary: 'お問い合わせ',
       },
     },
     features: {

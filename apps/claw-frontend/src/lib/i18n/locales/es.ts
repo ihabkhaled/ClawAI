@@ -88,7 +88,7 @@ export const es: TranslationDictionary = {
     passwordPlaceholder: 'Contraseña',
     signingIn: 'Iniciando sesión...',
     loginFailed: 'Error al iniciar sesión. Inténtalo de nuevo.',
-    tagline: 'ClawAI: todos los modelos de IA de frontera, una sola suscripción',
+    tagline: 'ClawAI — Toda la IA, un solo espacio de trabajo',
     authenticating: 'Autenticando...',
     mustChangePasswordTitle: 'Elige una contraseña nueva',
     mustChangePasswordBody:
@@ -134,9 +134,9 @@ export const es: TranslationDictionary = {
     confirmEmailChangeInvalidToken: 'Este enlace de confirmación no es válido o ha caducado.',
     confirmEmailChangeBackToLogin: 'Volver al inicio de sesión',
     loginFailedTitle: 'No pudimos iniciar sesión',
-    brandingHeadline: 'Todos los modelos de IA de frontera, una sola suscripción',
+    brandingHeadline: 'Toda la IA, un solo espacio de trabajo',
     brandingSubheadline:
-      'Acceda a Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek y Grok desde una sola cuenta, con cada mensaje enrutado al modelo que mejor se adapta a él.',
+      'Todos los modelos de IA de frontera en un solo espacio de trabajo que ve, oye, investiga y construye. Pague según su uso, sume a su equipo o ejecútelo en su propio hardware.',
     featuresAriaLabel: 'Destacados de la plataforma',
     feature1Title: 'Enrutamiento inteligente',
     feature1Desc: 'El mejor modelo para cada tarea, elegido automáticamente, o fijado por usted.',
@@ -4965,7 +4965,7 @@ export const es: TranslationDictionary = {
     },
     footer: {
       tagline:
-        'Una suscripción, todos los modelos de IA de frontera. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek y Grok en una sola cuenta, enrutados al que mejor se adapte a la tarea.',
+        'Toda la IA, un solo espacio de trabajo. Todos los modelos de IA de frontera en un solo espacio de trabajo que ve, oye, investiga y construye. Pague según su uso, sume a su equipo o ejecútelo en su propio hardware.',
       enterpriseContact: 'Para empresas',
       pricingHeading: 'Precios',
       resourcesHeading: 'Recursos',
@@ -4976,6 +4976,7 @@ export const es: TranslationDictionary = {
       socialX: 'X',
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
+      featuresHeading: 'Funciones',
     },
     notFound: {
       title: 'Página no encontrada',
@@ -5112,16 +5113,15 @@ export const es: TranslationDictionary = {
         ctaInstallGuide: 'Guía de instalación',
       },
       hero: {
-        title: 'Todos los modelos de IA de frontera, una sola suscripción',
+        title: 'Toda la IA, un solo espacio de trabajo',
         subtitle:
-          'Cree una cuenta de ClawAI y acceda a Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 y Amazon Bedrock desde un solo chat: sin cuentas de proveedor por separado, sin facturas separadas y sin tener que gestionar claves de API. Elija un plan, inicie sesión y empiece a trabajar.',
+          'Todos los modelos de IA de frontera en un solo espacio de trabajo que ve, oye, investiga y construye. Pague según su uso, sume a su equipo o ejecútelo en su propio hardware.',
         ctaOpen: 'Abrir ClawAI',
         ctaLogin: 'Iniciar sesión',
         ctaRegister: 'Cree su cuenta',
         ctaHowItWorks: 'Vea cómo funciona',
         ctaGithub: 'Ver en GitHub',
-        trustNote:
-          'Empiece gratis y actualice cuando necesite más. Planes de pago desde $5 al mes, cancele cuando quiera.',
+        trustNote: 'Empiece gratis y amplíe su plan cuando necesite más. Cancele cuando quiera.',
         lastReviewed: 'Última revisión',
       },
       modelRoster: {
@@ -5150,9 +5150,9 @@ export const es: TranslationDictionary = {
         linkUseCases: 'Vea qué construye la gente con ClawAI',
       },
       enterprise: {
-        eyebrow: 'Para empresas',
-        title: '¿Necesita ClawAI dentro de su propia red?',
-        body: 'Las empresas pueden desplegar ClawAI en sus propios servidores ejecutando únicamente modelos locales, de modo que ningún prompt, documento o conversación salga jamás de su infraestructura. Se trata de un despliegue a medida que configuramos junto con usted: hable con nosotros y lo dimensionaremos.',
+        eyebrow: 'Local primero y privado',
+        title: 'Ejecútelo en su propio hardware',
+        body: 'ClawAI es de código abierto bajo la licencia Apache-2.0 y se ejecuta en sus propios servidores, con modelos locales servidos mediante Ollama o llama.cpp y un modo de enrutamiento Solo local que mantiene cada solicitud en hardware que usted controla. Para organizaciones, podemos dimensionar con usted un despliegue privado.',
         point1Title: 'Se ejecuta en sus servidores',
         point1Body:
           'Desplegado en su centro de datos o nube privada, gestionado por su equipo, detrás de su firewall.',
@@ -5161,7 +5161,7 @@ export const es: TranslationDictionary = {
           'Modelos de pesos abiertos servidos en su propio hardware. Sin llamadas a proveedores externos y sin procesamiento de datos por terceros.',
         point3Title: 'Sus controles, su registro de auditoría',
         point3Body:
-          'SSO, acceso basado en roles, reglas de retención y un registro de auditoría completo de cada solicitud, todo dentro de su propio entorno.',
+          'Acceso basado en roles, reglas de retención y un registro de auditoría de lo ocurrido, todo dentro de su propio entorno.',
         ctaContact: 'Contáctenos',
         ctaLearnMore: 'Lea sobre los despliegues privados',
       },
@@ -5316,6 +5316,38 @@ export const es: TranslationDictionary = {
           'Cree una cuenta y envíe su primer mensaje en menos de un minuto. Actualice el plan solo cuando el cupo gratuito se le quede corto.',
         ctaOpen: 'Abrir ClawAI',
         ctaGithub: 'Ver el código fuente en GitHub',
+      },
+      payg: {
+        eyebrow: 'Pago por uso',
+        title: 'Pague por lo que los modelos usan de verdad',
+        body: 'Los modelos en la nube se miden contra un monedero de crédito en lugar de esconderse dentro de una tarifa plana. Un plan de pago añade una asignación mensual de crédito, las recargas nunca caducan y cada solicitud se reserva contra su saldo antes de ejecutarse.',
+        point1Title: 'Recargue solo cuando lo necesite',
+        point1Body:
+          'El crédito comprado nunca caduca y sigue siendo suyo aunque baje de plan o cancele; las recargas también están disponibles en el plan gratuito.',
+        point2Title: 'Sin gastos excesivos inesperados',
+        point2Body:
+          'El coste de cada solicitud se reserva antes de que el modelo se ejecute, y una solicitud que su saldo no puede cubrir se rechaza de antemano.',
+        point3Title: 'Precios en su moneda',
+        point3Body:
+          'Vea los precios en su moneda local junto al importe en dólares estadounidenses, y un libro de movimientos que muestra qué función gastó cada cantidad.',
+        ctaPrimary: 'Cómo funciona el crédito',
+        ctaSecondary: 'Ver planes',
+      },
+      teams: {
+        eyebrow: 'Equipos y organizaciones',
+        title: 'Sume a su equipo, conserve el control',
+        body: 'Ejecute ClawAI para un departamento, una empresa o un laboratorio. Los administradores deciden quién puede hacer qué, gestionan cuentas y planes desde una sola consola y pueden revisar lo ocurrido en el registro de auditoría.',
+        point1Title: 'Roles que puede redefinir',
+        point1Body:
+          'Cada acción comprueba un permiso con nombre, y los administradores pueden crear roles y elegir qué puede hacer cada uno.',
+        point2Title: 'Cuentas y planes en una sola consola',
+        point2Body:
+          'Active usuarios, cambie roles, asigne contraseñas temporales y vea el uso y el plan de cada persona desde la consola de administración.',
+        point3Title: 'Un registro de auditoría',
+        point3Body:
+          'Las acciones relevantes para la seguridad quedan registradas en un registro de auditoría que los administradores pueden filtrar y revisar.',
+        ctaPrimary: 'Administración y acceso',
+        ctaSecondary: 'Hable con nosotros',
       },
     },
     features: {

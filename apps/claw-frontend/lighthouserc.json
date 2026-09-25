@@ -119,7 +119,18 @@
         "http://localhost:3000/en/features/workspace-connectors",
         "http://localhost:3000/en/features/file-and-document-handling",
         "http://localhost:3000/en/features/observability-and-transparency",
-        "http://localhost:3000/en/features/security-and-data-handling"
+        "http://localhost:3000/en/features/security-and-data-handling",
+        "http://localhost:3000/en/features/multimodal-ai",
+        "http://localhost:3000/en/features/files-from-chat",
+        "http://localhost:3000/en/features/smart-attachments",
+        "http://localhost:3000/en/features/narrated-research-and-web-crawling",
+        "http://localhost:3000/en/features/orchestration-labs",
+        "http://localhost:3000/en/features/conversation-power-tools",
+        "http://localhost:3000/en/features/read-aloud",
+        "http://localhost:3000/en/features/image-generation",
+        "http://localhost:3000/en/features/reliability",
+        "http://localhost:3000/en/features/pay-as-you-go-credit",
+        "http://localhost:3000/en/features/administration-and-access-control"
       ],
       "numberOfRuns": 1,
       "settings": {

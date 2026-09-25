@@ -191,6 +191,46 @@ same capability. The pre-existing 9 sections on `/features`
 "go deeper" section (`FeaturesCapabilityCardsSection`) beneath them, same
 pattern as the `/use-cases` batch above.
 
+**Flagship pages added 2026-09-26** (full-AI-workspace repositioning, slogan
+"Every AI, one workspace") — 11 more capability pages on the same route and
+component: `multimodal-ai`, `files-from-chat`, `smart-attachments`,
+`narrated-research-and-web-crawling`, `orchestration-labs`,
+`conversation-power-tools`, `read-aloud`, `image-generation`, `reliability`,
+`pay-as-you-go-credit`, `administration-and-access-control`. Copy lives in
+`constants/features-flagship-content/<locale>.constants.ts` and is merged into
+`FEATURES_CLUSTER_CONTENT_BY_LOCALE` by `mergeFeaturesClusterDictionary`, so
+the original six pages' files are untouched. The flagship set has its own
+review date (`FEATURES_FLAGSHIP_REVIEW_DATE`, via
+`getFeatureCapabilityReviewDate`). Every claim was audited against shipped
+code first; the audit's "do not claim" list is binding on edits:
+
+- no public status page (none exists — observability stays admin-side);
+- no signed/expiring upload URLs — only generated files expire (1 hour, then a
+  free rebuild);
+- no OCR, captcha solving or scraper sidecars as standard (off by default);
+- the provider breaker covers exhausted-credit accounts only, not outages;
+- no team workspaces, seats, invitations, SSO/SAML or SCIM — the
+  administration page says "not yet" in every locale, and
+  `marketing.home.enterprise.point3Body` no longer mentions SSO;
+- no plan-tier promises for gated features (image generation, read aloud,
+  vision helper, labs, file-generation allowances, video length are DB rows),
+  and no prices or top-up amounts (versioned price rows only);
+- pay-as-you-go credit is off until an operator enables it; gateways are
+  PayPal and Paymob, not Stripe.
+
+"15+ providers & smart routing", Coding Agent and local-first/privacy were
+NOT given new pages: they are already covered by `/model-providers`,
+`/features/model-routing-and-orchestration`, `/coding-agent`,
+`/local-first-ai` and `/security-and-privacy`, and a second page on the same
+topic would be thin duplicate content (rule 38). The homepage gained two
+positioning bands (`HomeValueBandSection` with `MARKETING_HOME_PAYG_BAND` and
+`MARKETING_HOME_TEAMS_BAND`) and the organisations band was reframed as
+local-first; the footer gained a Features column
+(`MARKETING_FOOTER_FEATURE_PATHS`, resolved server-side). Adding the pages
+raised `RSS_GLOBAL_MAX_ITEMS` to 4,000. Guarded by
+`features-flagship-content.test.ts` (discovery, real translations, audited
+omissions) and `repositioning-slogan-keys.test.ts` (slogan keys × 13 locales).
+
 ### F5 — no topical clusters exist
 
 Nothing covers the informational half of the funnel: what model routing _is_,

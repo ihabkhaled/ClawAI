@@ -1,4 +1,7 @@
-import { MARKETING_FOOTER_EXPLORE_PATHS } from '@/constants/marketing-footer.constants';
+import {
+  MARKETING_FOOTER_EXPLORE_PATHS,
+  MARKETING_FOOTER_FEATURE_PATHS,
+} from '@/constants/marketing-footer.constants';
 import type { Locale } from '@/enums/locale.enum';
 import type { MarketingFooterProps } from '@/types/marketing.types';
 
@@ -20,10 +23,18 @@ import { buildComparisonRailItems, getComparisonContent } from './public-compari
  */
 export function buildMarketingFooterData(locale: Locale): MarketingFooterProps {
   const comparisonContent = getComparisonContent(locale);
+  const publishedPages = getPublishedPagesForLocale(locale);
   return {
-    explorePages: getPublishedPagesForLocale(locale)
+    explorePages: publishedPages
       .filter((page) => MARKETING_FOOTER_EXPLORE_PATHS.has(page.canonicalPath))
       .map((page) => ({ slug: page.slug, canonicalPath: page.canonicalPath, title: page.title })),
+    // Ordered by the footer constant, not the registry, and silently dropping
+    // any path that is not PUBLISHED — a footer link is never a 404.
+    featurePages: MARKETING_FOOTER_FEATURE_PATHS.flatMap((path) =>
+      publishedPages
+        .filter((page) => page.canonicalPath === path)
+        .map((page) => ({ slug: page.slug, canonicalPath: page.canonicalPath, title: page.title })),
+    ),
     // Comparison pages get their own column rather than joining Explore. Every
     // one of them then carries a site-wide inbound link — the thing that
     // decides whether a new page is crawled in days or months — without

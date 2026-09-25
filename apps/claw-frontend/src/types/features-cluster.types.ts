@@ -45,6 +45,41 @@ export type FeaturesHubContent = {
   cardSummaries: Readonly<Record<FeatureCapability, string>>;
 };
 
+/** The six capability pages that predate the 2026-09 flagship pages. */
+export type FeatureFoundationCapability =
+  | FeatureCapability.MODEL_ROUTING_AND_ORCHESTRATION
+  | FeatureCapability.MEMORY_AND_CONTEXT
+  | FeatureCapability.WORKSPACE_CONNECTORS
+  | FeatureCapability.FILE_AND_DOCUMENT_HANDLING
+  | FeatureCapability.OBSERVABILITY_AND_TRANSPARENCY
+  | FeatureCapability.SECURITY_AND_DATA_HANDLING;
+
+/** The flagship pages added by the full-AI-workspace repositioning. */
+export type FeatureFlagshipCapability = Exclude<FeatureCapability, FeatureFoundationCapability>;
+
+/**
+ * One locale's copy for the flagship pages. Kept in its own module per locale
+ * (`features-flagship-content/<locale>.constants.ts`) and merged into the
+ * cluster dictionary, so the original six pages' files stay untouched.
+ * `capabilitiesIntro` replaces the hub intro, which used to count six pages.
+ */
+export type FeaturesFlagshipDictionary = {
+  capabilitiesIntro: string;
+  cardSummaries: Readonly<Record<FeatureFlagshipCapability, string>>;
+  capabilities: Readonly<Record<FeatureFlagshipCapability, FeatureCapabilityContent>>;
+};
+
+/** A locale's original six-page dictionary, before the flagship merge. */
+export type FeaturesClusterFoundationDictionary = {
+  labels: FeaturesClusterDictionary['labels'];
+  hub: {
+    capabilitiesHeading: string;
+    capabilitiesIntro: string;
+    cardSummaries: Readonly<Record<FeatureFoundationCapability, string>>;
+  };
+  capabilities: Readonly<Record<FeatureFoundationCapability, FeatureCapabilityContent>>;
+};
+
 export type FeaturesClusterDictionary = {
   labels: {
     onThisPage: string;

@@ -118,7 +118,7 @@ export const MARKETING_USE_CASES_CONTACT_PATH = '/contact';
 // document title and meta description meaningful until that entry is flipped
 // to PUBLISHED, at which point the registry values win automatically.
 export const MARKETING_USE_CASES_PAGE_FALLBACK: MarketingUseCasesPageFallback = {
-  title: 'ClawAI Use Cases — One Subscription, Every Frontier Model',
+  title: 'ClawAI Use Cases — Every AI, One Workspace',
   description:
     'Ten jobs people bring to ClawAI every day — coding, research, writing, data analysis, support, strategy, study, translation, documents and images — each routed to the model that handles it best, on one subscription.',
   canonicalPath: '/use-cases',

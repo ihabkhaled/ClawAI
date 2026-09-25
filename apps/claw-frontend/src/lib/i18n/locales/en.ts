@@ -88,7 +88,7 @@ export const en: TranslationDictionary = {
     passwordPlaceholder: 'Password',
     signingIn: 'Signing in...',
     loginFailed: 'Login failed. Please try again.',
-    tagline: 'ClawAI — every frontier AI model, one subscription',
+    tagline: 'ClawAI — every AI, one workspace',
     authenticating: 'Authenticating...',
     mustChangePasswordTitle: 'Choose a new password',
     mustChangePasswordBody:
@@ -134,9 +134,9 @@ export const en: TranslationDictionary = {
     confirmEmailChangeInvalidToken: 'This confirmation link is invalid or has expired.',
     confirmEmailChangeBackToLogin: 'Back to sign in',
     loginFailedTitle: "We couldn't sign you in",
-    brandingHeadline: 'Every frontier AI model, one subscription',
+    brandingHeadline: 'Every AI, one workspace',
     brandingSubheadline:
-      'Reach Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok from one account, with each message routed to the model that fits it.',
+      'Every frontier AI model in one workspace that sees, hears, researches and builds. Pay as you go, bring your team, or run it on your own hardware.',
     featuresAriaLabel: 'Platform highlights',
     feature1Title: 'Smart routing',
     feature1Desc: 'The best model for each task, chosen automatically — or pinned by you.',
@@ -4881,7 +4881,7 @@ export const en: TranslationDictionary = {
     },
     footer: {
       tagline:
-        'One subscription, every frontier AI model. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok in a single account, routed to whichever one fits the task.',
+        'Every AI, one workspace. Every frontier AI model in one workspace that sees, hears, researches and builds — pay as you go, bring your team, or run it on your own hardware.',
       enterpriseContact: 'For organisations',
       pricingHeading: 'Pricing',
       resourcesHeading: 'Resources',
@@ -4892,6 +4892,7 @@ export const en: TranslationDictionary = {
       socialX: 'X',
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
+      featuresHeading: 'Features',
     },
     notFound: {
       title: 'Page not found',
@@ -5024,16 +5025,15 @@ export const en: TranslationDictionary = {
         ctaInstallGuide: 'Install guide',
       },
       hero: {
-        title: 'Every frontier AI model, one subscription',
+        title: 'Every AI, one workspace',
         subtitle:
-          'Create a ClawAI account and reach Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 and Amazon Bedrock from a single chat — no separate vendor accounts, no separate bills, no juggling API keys. Pick a plan, log in, and start working.',
+          'Every frontier AI model in one workspace that sees, hears, researches and builds. Pay as you go, bring your team, or run it on your own hardware.',
         ctaOpen: 'Open ClawAI',
         ctaLogin: 'Log in',
         ctaRegister: 'Create your account',
         ctaHowItWorks: 'See how it works',
         ctaGithub: 'View on GitHub',
-        trustNote:
-          'Start free and upgrade whenever you need more. Paid plans from $5 a month, cancel any time.',
+        trustNote: 'Start free and upgrade whenever you need more. Cancel any time.',
         lastReviewed: 'Last reviewed',
       },
       modelRoster: {
@@ -5062,9 +5062,9 @@ export const en: TranslationDictionary = {
         linkUseCases: 'See what people build with ClawAI',
       },
       enterprise: {
-        eyebrow: 'For organisations',
-        title: 'Need ClawAI inside your own network?',
-        body: 'Companies can have ClawAI deployed on their own servers running local models only, so no prompt, document or conversation ever leaves their infrastructure. This is a bespoke deployment we set up with you — talk to us and we will scope it.',
+        eyebrow: 'Local-first and private',
+        title: 'Run it on your own hardware',
+        body: 'ClawAI is open source under the Apache-2.0 licence and runs on your own servers, with local models served through Ollama or llama.cpp and a Local-Only routing mode that keeps every request on hardware you control. For organisations, we can scope a private deployment with you.',
         point1Title: 'Runs on your servers',
         point1Body:
           'Deployed into your data centre or private cloud, managed by your team, behind your firewall.',
@@ -5073,7 +5073,7 @@ export const en: TranslationDictionary = {
           'Open-weight models served on your own hardware. No external provider calls and no third-party data processing.',
         point3Title: 'Your controls, your audit trail',
         point3Body:
-          'SSO, role-based access, retention rules and a full audit log of every request, all kept inside your environment.',
+          'Role-based access, retention rules and an audit log of what happened, all kept inside your environment.',
         ctaContact: 'Contact us',
         ctaLearnMore: 'Read about private deployments',
       },
@@ -5226,6 +5226,38 @@ export const en: TranslationDictionary = {
           'Create an account and send your first message in under a minute. Upgrade only when you outgrow the free allowance.',
         ctaOpen: 'Open ClawAI',
         ctaGithub: 'View the source on GitHub',
+      },
+      payg: {
+        eyebrow: 'Pay as you go',
+        title: 'Pay for what the models actually use',
+        body: 'Cloud models are metered against a credit wallet instead of being hidden inside a flat fee. A paid plan adds a monthly credit grant, top-ups never expire, and every request is reserved against your balance before it runs.',
+        point1Title: 'Top up only when you need to',
+        point1Body:
+          'Purchased credit never expires and stays yours through a downgrade or a cancellation — top-ups are open on the free plan too.',
+        point2Title: 'No surprise overspend',
+        point2Body:
+          'The cost of each request is reserved before the model runs, and a request your balance cannot cover is refused up front.',
+        point3Title: 'Prices in your currency',
+        point3Body:
+          'See prices in your local currency with the US-dollar amount alongside, and a ledger that shows which feature spent what.',
+        ctaPrimary: 'How credit works',
+        ctaSecondary: 'See plans',
+      },
+      teams: {
+        eyebrow: 'Teams and organisations',
+        title: 'Bring your team, keep control',
+        body: 'Run ClawAI for a department, a company or a lab. Administrators decide who can do what, manage accounts and plans from one console, and can review what happened in the audit log.',
+        point1Title: 'Roles you can reshape',
+        point1Body:
+          'Every action checks a named permission, and administrators can create roles and choose what each one may do.',
+        point2Title: 'Accounts and plans in one console',
+        point2Body:
+          'Activate users, change roles, set temporary passwords and see each person’s usage and plan from the admin console.',
+        point3Title: 'An audit trail',
+        point3Body:
+          'Security-relevant actions are recorded in an audit log that administrators can filter and review.',
+        ctaPrimary: 'Administration and access',
+        ctaSecondary: 'Talk to us',
       },
     },
     features: {

@@ -11,7 +11,7 @@ import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import type { FeatureCapabilityRouteProps } from '@/types/features-route.types';
 
 /**
- * One route file for all six capability pages (ADR-084), mirroring the
+ * One route file for every capability page (ADR-084), mirroring the
  * `/use-cases/[task]` pattern. An unmatched segment 404s rather than
  * rendering an empty shell.
  */
