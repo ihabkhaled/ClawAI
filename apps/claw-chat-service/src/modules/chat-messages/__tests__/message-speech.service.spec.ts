@@ -778,10 +778,10 @@ describe('SpeechJobManager — rate limits: wait, retry the same provider, slow 
     expect(harness.speech().segments[0]?.provider).toBe('OPENAI');
   });
 
-  it('a hint longer than the 10 s cap is not waited out: straight to the next candidate', async () => {
+  it('a hint longer than the 45 s cap (a spent daily quota) is not waited out: straight to the next candidate', async () => {
     const harness = build({ candidates: [GEMINI_ROW, OPENAI_ROW] });
     harness.providerSynthesize
-      .mockRejectedValueOnce(rateLimited(45_000))
+      .mockRejectedValueOnce(rateLimited(29_808_000))
       .mockResolvedValueOnce(MP3);
     await startAndDrain(harness);
     const providers = harness.reserveCredit.mock.calls.map(

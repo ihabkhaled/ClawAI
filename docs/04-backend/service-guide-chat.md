@@ -856,7 +856,7 @@ errorCode }`. `NONE` = never read, or the stored reading is of other text.
   `RATE_LIMITED` (`SpeechProviderError.rateLimited`): hold **released**
   (`PROVIDER_ERROR`, never charged), then the **same candidate** is retried after
   the provider hint (Gemini `RetryInfo.retryDelay`, OpenAI `Retry-After`) or
-  1.5 s / 3 s / 6 s ±20 % jitter, each wait ≤ 10 s (a longer hint → move on), at
+  1.5 s / 3 s / 6 s ±20 % jitter, each wait ≤ 45 s (a longer hint, e.g. a spent daily quota, → move on), at
   most `SPEECH_RATE_LIMIT_RETRIES` = 3, never when the attempt would no longer fit
   the job window. Each retry is a new requestId / hold (rule 37 item 15). Only
   then the next candidate; a credit refusal still ends everything (item 18). The

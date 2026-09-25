@@ -145,11 +145,15 @@ export const SPEECH_RATE_LIMIT_BASE_BACKOFF_MS = 1_500;
 /** Jitter spreads concurrent retries: the wait is scaled by 1 ± this share. */
 export const SPEECH_RATE_LIMIT_JITTER_RATIO = 0.2;
 /**
- * No single rate-limit wait is longer than this. A provider hint above it
- * cannot be honoured inside a read-aloud job, so the segment moves on to the
- * next candidate instead of retrying early into a certain second 429.
+ * No single rate-limit wait is longer than this. Jobs run in the background
+ * (3-minute budget) while earlier segments already play, so waiting out a
+ * per-minute window (Gemini's hint is typically 10-45 s) beats failing the
+ * segment. A hint above it — e.g. ~29,800 s when a DAILY quota is spent, seen
+ * live 2026-09-25 — cannot be honoured, so the segment moves on to the next
+ * candidate instead of retrying early into a certain second 429. The job
+ * deadline still bounds every wait.
  */
-export const SPEECH_RATE_LIMIT_MAX_WAIT_MS = 10_000;
+export const SPEECH_RATE_LIMIT_MAX_WAIT_MS = 45_000;
 /** A job's provider calls in flight once any of its attempts was rate limited. */
 export const SPEECH_RATE_LIMITED_CONCURRENCY = 1;
 /** HTTP 429 Too Many Requests. */

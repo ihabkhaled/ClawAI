@@ -95,7 +95,8 @@ describe('rateLimitBackoffMs', () => {
     [1, 0, 1_200],
     [1, 0.999_999, 1_800],
     [3, 0.999_999, 7_200],
-    [5, 0.5, 10_000],
+    [5, 0.5, 24_000],
+    [7, 0.5, 45_000],
   ])('retry %d with random %d waits %d ms', (retry, random, expected) => {
     expect(rateLimitBackoffMs(retry, null, random)).toBe(expected);
   });
@@ -106,8 +107,14 @@ describe('rateLimitBackoffMs', () => {
     expect(rateLimitBackoffMs(1, 10_000, 0.5)).toBe(10_000);
   });
 
-  it('a hint above the 10 s cap cannot be honoured: null (move on)', () => {
-    expect(rateLimitBackoffMs(1, 10_001, 0.5)).toBeNull();
-    expect(rateLimitBackoffMs(1, 60_000, 0.5)).toBeNull();
+  it('honours a per-minute hint up to the 45 s cap', () => {
+    expect(rateLimitBackoffMs(1, 29_808, 0.5)).toBe(29_808);
+    expect(rateLimitBackoffMs(1, 45_000, 0.5)).toBe(45_000);
+  });
+
+  it('a hint above the 45 s cap cannot be honoured: null (move on)', () => {
+    expect(rateLimitBackoffMs(1, 45_001, 0.5)).toBeNull();
+    // A spent DAILY quota (seen live 2026-09-25: retryDelay ~29,808 s).
+    expect(rateLimitBackoffMs(1, 29_808_000, 0.5)).toBeNull();
   });
 });
