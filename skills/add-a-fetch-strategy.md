@@ -32,6 +32,14 @@ accepted list in both `scripts/claw.sh` and `resolve_active_profiles` in
 `scripts/deploy-prod.sh` — the 2026-09-25 incident was a profile the deploy
 script did not know.
 
+Firecrawl's database must be named `postgres`: its `010-nuq.sql` init creates
+the `pg_cron` extension, which installs only there. With any other name the
+first init aborts, the data dir is kept, every later start "skips
+initialization", and `claw-firecrawl-api` crash-loops on `42P01 relation
+"nuq.queue_scrape" does not exist` (prod, 2026-09-25). Repair in place:
+`docker exec claw-firecrawl-postgres psql -U firecrawl -d postgres -f
+/docker-entrypoint-initdb.d/010-nuq.sql`.
+
 Turning one off is the reverse: `{"enabled": false}` first, then drop it from
 the profile list and `claw.sh up`.
 

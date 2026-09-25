@@ -906,7 +906,9 @@ services:
       POSTGRES_PORT: '5432'
       POSTGRES_USER: firecrawl
       POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-firecrawl-internal}
-      POSTGRES_DB: firecrawl
+      # pg_cron (used by 010-nuq.sql) installs only into the `postgres` database;
+      # naming it anything else aborted init and left an empty, crash-looping DB.
+      POSTGRES_DB: postgres
       BULL_AUTH_KEY: ${FIRECRAWL_BULL_AUTH_KEY:-}
       NUM_WORKERS_PER_QUEUE: '4'
       CRAWL_CONCURRENT_REQUESTS: '5'
@@ -1000,7 +1002,9 @@ services:
     environment:
       POSTGRES_USER: firecrawl
       POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-firecrawl-internal}
-      POSTGRES_DB: firecrawl
+      # pg_cron (used by 010-nuq.sql) installs only into the `postgres` database;
+      # naming it anything else aborted init and left an empty, crash-looping DB.
+      POSTGRES_DB: postgres
     volumes:
       - firecrawl-postgres-data:/var/lib/postgresql/data
     healthcheck:
