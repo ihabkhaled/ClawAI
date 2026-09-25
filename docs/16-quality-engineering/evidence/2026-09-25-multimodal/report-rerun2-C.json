@@ -1,0 +1,262 @@
+{
+  "startedAt": "2026-09-25T20:04:00.425Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    }
+  },
+  "scenarios": {
+    "6": {
+      "status": "PASS",
+      "precedingTextReply": true,
+      "stages": ["Generating image", "Loading image..."],
+      "completed": true,
+      "renderedAfterRefresh": true,
+      "planNotice": 0,
+      "screenshots": [
+        "screenshots-rerun2/06-image-generation-progress.png",
+        "screenshots-rerun2/06-image-generation-completed.png",
+        "screenshots-rerun2/06-image-generation-after-refresh.png"
+      ]
+    },
+    "C": {
+      "status": "PASS",
+      "rows": [
+        {
+          "size": "360x740",
+          "locale": "en",
+          "atBottom": {
+            "launcherState": "expanded",
+            "overlays": [
+              "launcher[296,356,44x44]",
+              "launcher[292,406,52x44]",
+              "jumpToLatest[291,485,44x44]"
+            ],
+            "textLines": 19,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "scrolled": {
+            "launcherState": "expanded",
+            "overlays": [
+              "launcher[296,356,44x44]",
+              "launcher[292,406,52x44]",
+              "jumpToLatest[291,485,44x44]"
+            ],
+            "textLines": 17,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "screenshots": [
+            "screenshots-rerun2/C-overlap-360x740-en-bottom.png",
+            "screenshots-rerun2/C-overlap-360x740-en-scrolled.png"
+          ],
+          "pass": true
+        },
+        {
+          "size": "390x844",
+          "locale": "en",
+          "atBottom": {
+            "launcherState": "expanded",
+            "overlays": [
+              "launcher[326,460,44x44]",
+              "launcher[322,510,52x44]",
+              "jumpToLatest[321,589,44x44]"
+            ],
+            "textLines": 17,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "scrolled": {
+            "launcherState": "expanded",
+            "overlays": [
+              "launcher[326,460,44x44]",
+              "launcher[322,510,52x44]",
+              "jumpToLatest[321,589,44x44]"
+            ],
+            "textLines": 24,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "screenshots": [
+            "screenshots-rerun2/C-overlap-390x844-en-bottom.png",
+            "screenshots-rerun2/C-overlap-390x844-en-scrolled.png"
+          ],
+          "pass": true
+        },
+        {
+          "size": "390x844",
+          "locale": "ar",
+          "atBottom": {
+            "launcherState": "expanded",
+            "overlays": [
+              "launcher[20,460,44x44]",
+              "launcher[16,510,52x44]",
+              "jumpToLatest[25,589,44x44]"
+            ],
+            "textLines": 18,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "rtl"
+          },
+          "scrolled": {
+            "launcherState": "expanded",
+            "overlays": [
+              "launcher[20,460,44x44]",
+              "launcher[16,510,52x44]",
+              "jumpToLatest[25,589,44x44]"
+            ],
+            "textLines": 26,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "rtl"
+          },
+          "screenshots": [
+            "screenshots-rerun2/C-overlap-390x844-ar-bottom.png",
+            "screenshots-rerun2/C-overlap-390x844-ar-scrolled.png"
+          ],
+          "pass": true
+        }
+      ],
+      "side740": {
+        "found": true,
+        "minus": [676, 178, 44, 44],
+        "toolbar": [606, 144, 54, 245],
+        "overlaps": false,
+        "screenshot": "screenshots-rerun2/C-740x360-minus-vs-toolbar.png"
+      }
+    }
+  },
+  "matrix": [],
+  "rtl": [],
+  "axe": null,
+  "console": [
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2lz80015d5padowjb3ou",
+      "text": "Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template)."
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2lz80015d5padowjb3ou",
+      "text": "pageerror: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuhe2nsy0017d5paw91bqnbr",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    }
+  ],
+  "networkSummary": [
+    "paid GET /api/v1/llamacpp/catalog 502 x5",
+    "paid GET /api/v1/ollama/models 502 x4"
+  ],
+  "consoleSummary": [
+    "paid Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using templa x1",
+    "paid pageerror: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen i x1",
+    "paid Failed to load resource: the server responded with a status of 502 () x9"
+  ],
+  "finishedAt": "2026-09-25T20:04:50.387Z"
+}

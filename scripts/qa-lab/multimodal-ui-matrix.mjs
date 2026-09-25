@@ -504,6 +504,269 @@ try {
       result(10, serious.length === 0 ? 'PASS' : 'FAIL', { axeVersion: axe.version, seriousOrCritical: serious.map((v) => `${v.id}(${v.impact})x${v.count}`), all: axe.violations.map((v) => `${v.id}(${v.impact})x${v.count}`) });
     }
   }
+  // ── A: per-file chips on Compare + a lab page ─────────────────────────────
+  if (want('A')) {
+    const pages = {};
+    for (const [name, route] of [['compare', '/en/chat/compare'], ['consensus', '/en/chat/consensus']]) {
+      await p.setViewportSize({ width: 1440, height: 900 });
+      await p.goto(`${ORIGIN}${route}`, { waitUntil: 'domcontentloaded' });
+      if (name === 'compare') {
+        // The composer (and its file picker) appears only after 2+ models are selected.
+        for (const label of ['Claude Haiku 4.5', 'Gemini 2.5 Flash']) {
+          await p.getByText(label, { exact: true }).first().click({ timeout: 20000 }).catch(() => null);
+          await sleep(400);
+        }
+      }
+      const input = p.locator('input[type="file"]').first();
+      const hasInput = await input.waitFor({ state: 'attached', timeout: 30000 }).then(() => true).catch(() => false);
+      if (!hasInput) {
+        pages[name] = { status: 'NOT RUN', reason: 'no file input on page' };
+        continue;
+      }
+      await sleep(1500);
+      const multiple = await input.evaluate((e) => e.multiple);
+      const timeline = [];
+      let countBadge = false;
+      const shots = [];
+      if (multiple) await input.setInputFiles([PNG, MP4]);
+      else {
+        await input.setInputFiles(PNG);
+        await sleep(300);
+        await p.locator('input[type="file"]').first().setInputFiles(MP4);
+      }
+      const deadline = Date.now() + 120000;
+      let last = '';
+      while (Date.now() < deadline) {
+        const snap = await p.evaluate(() => {
+          const pend = [...document.querySelectorAll('[data-testid="composer-pending-attachment-tile"]')].map((t) => `UPLOADING:${t.getAttribute('title') ?? t.textContent.trim().slice(0, 30)}`);
+          const tiles = [...document.querySelectorAll('[data-testid="composer-attachment-tile"]')].map((t) => {
+            const st = t.querySelector('[data-testid="composer-attachment-status"]')?.textContent.trim();
+            return `${(t.getAttribute('title') ?? '').slice(0, 30)}=${st ? st.split('—')[0].trim() : 'READY'}`;
+          });
+          const chips = [...document.querySelectorAll('[data-testid="composer-attachment-chip"]')].map((c) => `CHIP:${c.dataset.state}`);
+          const badge = /Uploading\s*\(\d+\)/.test(document.body.innerText);
+          return { key: [...pend, ...tiles, ...chips].join(' | '), badge, tiles: tiles.length, pend: pend.length };
+        });
+        countBadge = countBadge || snap.badge;
+        if (snap.key !== last) {
+          timeline.push(snap.key);
+          last = snap.key;
+          if (shots.length < 3) shots.push(await shot(p, `A-${name}-chips-${timeline.length}`));
+        }
+        if (snap.pend === 0 && snap.tiles >= 2 && !/Processing|Uploading/i.test(snap.key)) break;
+        await sleep(250);
+      }
+      shots.push(await shot(p, `A-${name}-chips-final`));
+      const sawProcessing = timeline.some((k) => /Processing/i.test(k));
+      const sawUploading = timeline.some((k) => /UPLOADING/.test(k));
+      const ready = /READY.*READY|=READY/.test(last) && !/Processing|UPLOADING|CHIP/.test(last);
+      pages[name] = { multipleInput: multiple, timeline, countBadgeSeen: countBadge, sawUploading, sawProcessing, ready, screenshots: shots, status: ready && !countBadge && sawProcessing ? 'PASS' : 'FAIL' };
+    }
+    result('A', Object.values(pages).every((x) => x.status === 'PASS') ? 'PASS' : 'FAIL', pages);
+  }
+
+  // ── B: cancellation (read aloud, image generation, video processing) ─────
+  if (want('B')) {
+    const ledger = async () => {
+      const r = await api('GET', '/credit/me/ledger?limit=100', paidTok);
+      return r.json?.entries ?? [];
+    };
+    const newEntries = (before, after) => after.filter((e) => !before.some((b) => b.id === e.id)).map((e) => `${e.kind}/${e.surface ?? '-'}/${e.amountMicroUsd}`);
+    const out = {};
+    // B1 read aloud: pending stop
+    {
+      const t = await thread(paidTok, { routingMode: 'MANUAL_MODEL', preferredProvider: BLIND.provider, preferredModel: BLIND.model });
+      await p.setViewportSize({ width: 1440, height: 900 });
+      await openThread(p, t);
+      const ok = await sendAndWait(p, 'Write about 500 words on the history of lighthouses, in plain paragraphs.', 240000);
+      const avail = await api('GET', '/chat-messages/speech/availability', paidTok);
+      const r = await api('GET', `/chat-messages/thread/${t}?limit=20`, paidTok);
+      const rows = Array.isArray(r.json) ? r.json : (r.json?.data ?? r.json?.items ?? []);
+      const msg = rows.filter((m) => m.role === 'ASSISTANT').pop();
+      const before = await ledger();
+      const reqs = [];
+      const onReq = (q) => { if (/\/speech(\/cancel)?$/.test(q.url().split('?')[0]) && q.method() === 'POST') reqs.push(`${q.method()} ${q.url().split('/api/v1')[1]} @${Date.now()}`); };
+      const resps = [];
+      const onRes = (s) => { if (/\/speech(\/cancel)?$/.test(s.url().split('?')[0]) && s.request().method() === 'POST') resps.push(`${s.status()} ${s.url().split('/api/v1')[1]} @${Date.now()}`); };
+      p.on('request', onReq);
+      p.on('response', onRes);
+      const act = speechActions(p).last();
+      await act.click();
+      await sleep(400);
+      const statusAtStop = await act.getAttribute('data-status');
+      await act.click();
+      const stopShot = await shot(p, 'B1-read-aloud-stop-pending');
+      await sleep(8000);
+      let state = await api('GET', `/chat-messages/${msg?.id}/speech`, paidTok);
+      const s1 = state.json;
+      await sleep(15000);
+      state = await api('GET', `/chat-messages/${msg?.id}/speech`, paidTok);
+      p.off('request', onReq);
+      p.off('response', onRes);
+      const after = await ledger();
+      const segs0 = s1?.segments?.length ?? null;
+      const segs1 = state.json?.segments?.length ?? null;
+      const d = { replyRendered: ok, availability: avail.json, statusAtStop, requests: reqs, responses: resps, stateAfter8s: { status: s1?.status, segments: segs0, errorCode: s1?.errorCode }, stateAfter23s: { status: state.json?.status, segments: segs1, total: state.json?.totalSegments }, ledgerNew: newEntries(before, after), screenshot: stopShot };
+      const cancelledBeforeAnswer = reqs.some((x) => x.includes('/speech/cancel'));
+      const noConsumption = !d.ledgerNew.some((x) => x.startsWith('CONSUMPTION'));
+      if (avail.json?.available === false) d.status = 'NOT RUN';
+      else d.status = cancelledBeforeAnswer && state.json?.status === 'CANCELLED' && segs0 === segs1 && noConsumption ? 'PASS' : 'FAIL';
+      out.readAloud = d;
+    }
+    // B2 image generation cancel
+    {
+      const t = await thread(paidTok, { routingMode: 'AUTO' });
+      await openThread(p, t);
+      const imgsBefore = await api('GET', '/images?limit=20', paidTok);
+      const before = await ledger();
+      await p.locator('textarea').first().fill('Generate an image of a red kite over green hills');
+      await p.locator('button[aria-label="Send message"]').click();
+      const cancel = p.locator('[data-testid="image-generation-cancel"]').first();
+      const seen = await cancel.waitFor({ state: 'visible', timeout: 90000 }).then(() => true).catch(() => false);
+      const d = { cancelButtonSeen: seen };
+      if (seen) {
+        await cancel.click();
+        d.cancelledCard = await p.locator('[data-testid="image-generation-cancelled"]').first().waitFor({ state: 'visible', timeout: 30000 }).then(() => true).catch(() => false);
+        d.cancelledText = d.cancelledCard ? await p.locator('[data-testid="image-generation-cancelled"]').first().innerText() : null;
+        d.screenshot = await shot(p, 'B2-image-generation-cancelled');
+        await sleep(20000);
+        const imgsAfter = await api('GET', '/images?limit=20', paidTok);
+        const rowsB = imgsBefore.json?.data ?? [];
+        const rowsA = imgsAfter.json?.data ?? [];
+        const fresh = rowsA.filter((x) => !rowsB.some((y) => y.id === x.id));
+        d.newGenerations = fresh.map((x) => `${x.status}${x.supersededById || x.retryOfId || x.parentGenerationId ? ' (linked)' : ''}`);
+        const after = await ledger();
+        d.ledgerNew = newEntries(before, after);
+        d.status = d.cancelledCard && fresh.length === 1 && fresh[0].status === 'CANCELLED' && !d.ledgerNew.some((x) => x.startsWith('CONSUMPTION')) ? 'PASS' : 'FAIL';
+      } else {
+        d.screenshot = await shot(p, 'B2-image-generation-no-cancel');
+        d.status = 'FAIL';
+      }
+      out.imageGeneration = d;
+    }
+    // B3 video processing stop
+    {
+      const t = await thread(paidTok, { routingMode: 'MANUAL_MODEL', preferredProvider: BLIND.provider, preferredModel: BLIND.model });
+      await openThread(p, t);
+      const before = await ledger();
+      await p.locator('input[type="file"]').first().setInputFiles(path.join(FIX, 'qa-clip-60s.mp4'));
+      const stop = p.locator('[data-testid="composer-attachment-cancel-processing"]').first();
+      const seen = await stop.waitFor({ state: 'visible', timeout: 90000 }).then(() => true).catch(() => false);
+      const d = { stopButtonSeen: seen };
+      if (seen) {
+        d.stopLabel = await stop.innerText();
+        await stop.click();
+        const deadline = Date.now() + 60000;
+        let st = null;
+        while (Date.now() < deadline) {
+          st = await composerAttachmentState(p);
+          if (/cancel/i.test(st)) break;
+          await sleep(500);
+        }
+        d.chipState = st;
+        d.screenshot = await shot(p, 'B3-video-processing-cancelled');
+        const r = await api('GET', '/files?limit=20', paidTok);
+        const rows = Array.isArray(r.json) ? r.json : (r.json?.data ?? r.json?.items ?? []);
+        const f = rows.filter((x) => x.filename === 'qa-clip-60s.mp4').sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
+        const one = f ? await api('GET', `/files/${f.id}`, paidTok) : null;
+        d.file = one ? { ingestionStatus: one.json?.ingestionStatus, extractionError: one.json?.extractionError } : null;
+        await sleep(10000);
+        const after = await ledger();
+        d.ledgerNew = newEntries(before, after);
+        d.status = /cancel/i.test(st ?? '') && d.file?.ingestionStatus === 'FAILED' && /CANCEL/i.test(d.file?.extractionError ?? '') && !d.ledgerNew.some((x) => x.startsWith('CONSUMPTION')) ? 'PASS' : 'FAIL';
+      } else {
+        d.chipState = await composerAttachmentState(p);
+        d.screenshot = await shot(p, 'B3-video-no-stop-button');
+        d.status = 'FAIL';
+      }
+      out.videoProcessing = d;
+    }
+    const sts = Object.values(out).map((x) => x.status);
+    result('B', sts.every((x) => x === 'PASS') ? 'PASS' : sts.includes('FAIL') ? 'FAIL' : 'PARTIAL', out);
+  }
+
+  // ── C: phone overlap (launcher expanded + jump-to-latest vs transcript text) ─
+  if (want('C')) {
+    const overlap = async () =>
+      p.evaluate(() => {
+        const rects = (el) => (el ? [el.getBoundingClientRect()] : []);
+        const overlays = [
+          ...[...document.querySelectorAll('[data-feedback-launcher]')].flatMap((e) => [...e.querySelectorAll('button')].flatMap(rects).concat(e.matches('button') ? rects(e) : [])).map((r) => ['launcher', r]),
+          ...[...document.querySelectorAll('[data-jump-to-latest]')].flatMap(rects).map((r) => ['jumpToLatest', r]),
+        ].filter(([, r]) => r.width > 0 && r.height > 0);
+        const lines = [];
+        for (const el of document.querySelectorAll('main p, main li')) {
+          if (el.closest('form') || el.closest('[data-feedback-launcher]')) continue;
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          for (const r of range.getClientRects()) if (r.width > 4 && r.height > 4 && r.bottom > 0 && r.top < innerHeight) lines.push(r);
+        }
+        const hits = [];
+        for (const [name, o] of overlays)
+          for (const l of lines) {
+            const ix = Math.min(o.right, l.right) - Math.max(o.left, l.left);
+            const iy = Math.min(o.bottom, l.bottom) - Math.max(o.top, l.top);
+            if (ix > 1 && iy > 1) hits.push(`${name}@[${Math.round(o.left)},${Math.round(o.top)}] x text[${Math.round(l.left)},${Math.round(l.top)},${Math.round(l.width)}]`);
+          }
+        return { launcherState: document.querySelector('[data-feedback-launcher]')?.getAttribute('data-feedback-launcher') ?? 'absent', overlays: overlays.map(([n, r]) => `${n}[${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}x${Math.round(r.height)}]`), textLines: lines.length, hits: hits.slice(0, 6), hitCount: hits.length, dir: document.documentElement.dir };
+      });
+    const expandLauncher = async () => {
+      const collapsed = p.locator('[data-feedback-launcher="collapsed"]');
+      if ((await collapsed.count()) > 0) await collapsed.first().click().catch(() => null);
+      await sleep(600);
+    };
+    const tImgC = tImg;
+    const rows = [];
+    for (const [w, h, locale] of [[360, 740, 'en'], [390, 844, 'en'], [390, 844, 'ar']]) {
+      await p.setViewportSize({ width: w, height: h });
+      if (locale === 'ar') {
+        await openThread(p, tImgC);
+        await p.locator('button[aria-label*="Select language"]').first().click();
+        await p.locator('[role="menuitem"]').filter({ hasText: /^ar/i }).first().click();
+        await p.waitForFunction(() => document.documentElement.dir === 'rtl', null, { timeout: 20000 }).catch(() => null);
+      } else await openThread(p, tImgC);
+      await expandLauncher();
+      await sleep(1500);
+      const atBottom = await overlap();
+      const s1 = await shot(p, `C-overlap-${w}x${h}-${locale}-bottom`);
+      // scroll the transcript up so Jump-to-latest appears
+      await p.evaluate(() => {
+        const sc = [...document.querySelectorAll('main *')].filter((e) => e.scrollHeight > e.clientHeight + 50 && /(auto|scroll)/.test(getComputedStyle(e).overflowY));
+        for (const e of sc) e.scrollTop = Math.max(0, e.scrollHeight / 3);
+      });
+      await sleep(1200);
+      const scrolled = await overlap();
+      const s2 = await shot(p, `C-overlap-${w}x${h}-${locale}-scrolled`);
+      rows.push({ size: `${w}x${h}`, locale, atBottom, scrolled, screenshots: [s1, s2], pass: atBottom.hitCount === 0 && scrolled.hitCount === 0 && atBottom.launcherState === 'expanded' });
+    }
+    if (rows.some((r) => r.locale === 'ar')) await api('PATCH', '/users/me/preferences', paidTok, { languagePreference: 'EN' }).catch(() => null);
+    // 740x360: the "−" collapse handle vs the thread side toolbar
+    await p.setViewportSize({ width: 740, height: 360 });
+    await openThread(p, tImgC);
+    if ((await p.evaluate(() => document.documentElement.dir)) === 'rtl') {
+      await p.setViewportSize({ width: 1440, height: 900 });
+      await p.locator('button[aria-label*="Select language"], header button:has(svg.lucide-languages)').first().click().catch(() => null);
+      await p.locator('[role="menuitem"]').filter({ hasText: /^en/i }).first().click().catch(() => null);
+      await p.waitForFunction(() => document.documentElement.dir !== 'rtl', null, { timeout: 20000 }).catch(() => null);
+      await p.setViewportSize({ width: 740, height: 360 });
+      await openThread(p, tImgC);
+    }
+    await expandLauncher();
+    const side = await p.evaluate(() => {
+      const minus = document.querySelector('[data-feedback-launcher="expanded"] button');
+      const tool = document.querySelector('button[aria-label="Compare Models"]')?.parentElement;
+      const m = minus?.getBoundingClientRect();
+      const t = tool?.getBoundingClientRect();
+      if (!m || !t) return { found: false, minus: Boolean(m), toolbar: Boolean(t) };
+      const ix = Math.min(m.right, t.right) - Math.max(m.left, t.left);
+      const iy = Math.min(m.bottom, t.bottom) - Math.max(m.top, t.top);
+      return { found: true, minus: [m.left, m.top, m.width, m.height].map(Math.round), toolbar: [t.left, t.top, t.width, t.height].map(Math.round), overlaps: ix > 1 && iy > 1 };
+    });
+    const s3 = await shot(p, 'C-740x360-minus-vs-toolbar');
+    const sidePass = side.found ? !side.overlaps : null;
+    result('C', rows.every((r) => r.pass) && sidePass !== false ? 'PASS' : 'FAIL', { rows, side740: { ...side, screenshot: s3 } });
+  }
+
   await paid.ctx.close();
 
   // ── 7: free user ───────────────────────────────────────────────────────────

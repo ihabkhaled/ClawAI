@@ -1,0 +1,112 @@
+{
+  "startedAt": "2026-09-25T20:03:03.976Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    }
+  },
+  "scenarios": {
+    "A": {
+      "status": "PASS",
+      "compare": {
+        "multipleInput": false,
+        "timeline": [
+          "UPLOADING:qa-clip.mp4 | qa-lighthouse-test.png=READY",
+          "qa-lighthouse-test.png=READY | qa-clip.mp4=Processing",
+          "qa-lighthouse-test.png=READY | qa-clip.mp4=READY"
+        ],
+        "countBadgeSeen": false,
+        "sawUploading": true,
+        "sawProcessing": true,
+        "ready": true,
+        "screenshots": [
+          "screenshots-rerun2/A-compare-chips-1.png",
+          "screenshots-rerun2/A-compare-chips-2.png",
+          "screenshots-rerun2/A-compare-chips-3.png",
+          "screenshots-rerun2/A-compare-chips-final.png"
+        ],
+        "status": "PASS"
+      },
+      "consensus": {
+        "multipleInput": false,
+        "timeline": [
+          "UPLOADING:qa-clip.mp4 | qa-lighthouse-test.png=READY",
+          "qa-lighthouse-test.png=READY | qa-clip.mp4=Processing",
+          "qa-lighthouse-test.png=READY | qa-clip.mp4=READY"
+        ],
+        "countBadgeSeen": false,
+        "sawUploading": true,
+        "sawProcessing": true,
+        "ready": true,
+        "screenshots": [
+          "screenshots-rerun2/A-consensus-chips-1.png",
+          "screenshots-rerun2/A-consensus-chips-2.png",
+          "screenshots-rerun2/A-consensus-chips-3.png",
+          "screenshots-rerun2/A-consensus-chips-final.png"
+        ],
+        "status": "PASS"
+      }
+    }
+  },
+  "matrix": [],
+  "rtl": [],
+  "axe": null,
+  "console": [
+    {
+      "who": "paid",
+      "url": "/en/chat/compare",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/compare",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/consensus",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/consensus",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    }
+  ],
+  "networkSummary": [
+    "paid GET /api/v1/llamacpp/catalog 502 x2",
+    "paid GET /api/v1/ollama/models 502 x2"
+  ],
+  "consoleSummary": [
+    "paid Failed to load resource: the server responded with a status of 502 () x4"
+  ],
+  "finishedAt": "2026-09-25T20:03:37.182Z"
+}

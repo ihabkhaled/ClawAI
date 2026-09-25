@@ -111,3 +111,34 @@ Still open (minor):
 The first two are fixed in code on 2026-09-25 (CSS gutter keyed on the
 launcher's expanded state, rule 36 §12; "Jump to latest" icon-only below `sm`).
 Contract-test gated only — this matrix has not been re-run against it.
+
+## Re-run 2: after `d6961639d` (cancellation) + `b520f71ca` (chips everywhere, phone overlap, abortable uploads)
+
+Fresh throwaway accounts. Evidence: `screenshots-rerun2/`.
+
+- `report-rerun2.json`: B, 8, 10, and C's first pass.
+- `report-rerun2-A.json`: A. The first pass could not find Compare's file
+  input, because the composer only appears after 2+ models are selected. The
+  script now selects Claude Haiku 4.5 and Gemini 2.5 Flash first.
+- `report-rerun2-C.json`: C re-measured in English. At 740×360 the first pass
+  was still in Arabic, so the "Compare Models" toolbar selector missed.
+
+| Scenario                                                                                                                                                                                                                                      | Result             | Evidence                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------- |
+| A Compare: PNG + video get their own chips, Uploading → Processing ("Stop processing" shown) → Ready, no "Uploading (N)" count                                                                                                                | PASS               | `A-compare-chips-*.png`             |
+| A Consensus lab: same flow                                                                                                                                                                                                                    | PASS               | `A-consensus-chips-*.png`           |
+| B1 Read aloud, Stop pressed 0.45 s after the POST (202). The UI sent `POST …/speech/cancel` (200). `GET /speech` = CANCELLED, 0 of 10 segments at 8 s and at 23 s. Ledger: 6 TTS RESERVATION, each with a RESERVATION_RELEASE, no CONSUMPTION | PASS               | `B1-read-aloud-stop-pending.png`    |
+| B2 Image generation, Cancel on the card → "Generation cancelled / Retry"; exactly 1 new generation, CANCELLED, no successor after 20 s; ledger IMAGE RESERVATION −245 760 + RELEASE, no CONSUMPTION                                           | PASS               | `B2-image-generation-cancelled.png` |
+| B3 60 s video, "Stop processing" → chip "Cancelled — Processing was stopped…"; file FAILED, `extractionError` "Processing was cancelled."; no ledger rows (no hold existed)                                                                   | PASS               | `B3-video-processing-cancelled.png` |
+| C Phones 360×740, 390×844, 390×844 RTL, launcher expanded: 0 intersections between launcher / Jump-to-latest boxes and transcript text lines (`main p, main li`), at the bottom and scrolled up                                               | PASS               | `C-overlap-*.png`                   |
+| C 740×360: "−" at [676,178,44,44], side toolbar at [606,144,54,245], no overlap                                                                                                                                                               | PASS               | `C-740x360-minus-vs-toolbar.png`    |
+| D Device matrix, 15 viewports: 0 overflow, send + record in viewport                                                                                                                                                                          | PASS 15/15         | `08-matrix-*.png`                   |
+| D axe-core 4.13.0 on the chat page with media                                                                                                                                                                                                 | PASS, 0 violations | `report-rerun2.json#axe`            |
+
+Console / network: only the environment 502s (`/llamacpp/catalog`,
+`/ollama/models`; those services are not running). No TTS 504 this time.
+
+Note: C checks paragraph and list text only. In the first C pass (Arabic,
+740×360; that screenshot was later overwritten by the English re-measure), the
+Jump-to-latest pill sat over the "N steps" count of the "How I worked on this"
+header. Seen by eye, not measured. Cosmetic.
