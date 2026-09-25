@@ -1,0 +1,76 @@
+{
+  "startedAt": "2026-09-25T13:16:37.224Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    }
+  },
+  "scenarios": {
+    "7": {
+      "status": "PASS",
+      "noticeVisible": true,
+      "noticeText": "Unlock Image generation This message needed a feature your current plan does not cover. See plans",
+      "linkVisible": true,
+      "linkHref": "/plan",
+      "imageNoticeShot": "screenshots-rerun/07-free-image-generation-plan-notice.png",
+      "replyRendered": true,
+      "chipTitle": "Per-model delivery summary\nqa-lighthouse-test.png (Skipped (no vision)) — Your plan does not include image descriptions, so only its text (OCR) was sent",
+      "badges": ["attachment-delivery-badge-skipped: 🚫Skipped (no vision) 1"],
+      "readAloudAriaDisabled": "true",
+      "readAloudLabel": "Read aloud is not included in your plan.",
+      "readAloudDimmed": true,
+      "playerOpenedAfterClick": false,
+      "rawKeysOnPage": [],
+      "backendFileDelivery": [
+        {
+          "mode": "OMITTED_NO_VISION",
+          "reason": "file_delivery.reason.helper_vision_plan"
+        }
+      ],
+      "readAloudAvailability": {
+        "http": 200,
+        "body": "{\"available\":false,\"reason\":\"PLAN_DISABLED\"}"
+      },
+      "blindShot": "screenshots-rerun/07-free-no-vision-note-and-dimmed-read-aloud.png"
+    }
+  },
+  "matrix": [],
+  "rtl": [],
+  "axe": null,
+  "console": [
+    {
+      "who": "free",
+      "url": "/en/chat/cmugziu1h0017d8vuud9q8bw0",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "free",
+      "url": "/en/chat/cmugziu1h0017d8vuud9q8bw0",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "free",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "free",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    }
+  ],
+  "networkSummary": [
+    "free GET /api/v1/llamacpp/catalog 502 x1",
+    "free GET /api/v1/ollama/models 502 x1"
+  ],
+  "consoleSummary": [
+    "free Failed to load resource: the server responded with a status of 502 () x2"
+  ],
+  "finishedAt": "2026-09-25T13:17:02.912Z"
+}

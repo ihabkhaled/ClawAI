@@ -77,3 +77,33 @@ Created. Also the single TTS `504` from defect 4. There were no page errors.
 - The saved language preference (`PATCH /users/me/preferences` → 200) did not
   switch an already-open tab, and `/ar/…` URLs stayed `lang=en`. RTL was
   switched through the header language menu instead.
+
+## Re-run after fix commit `e2194bc7b` (file-service, chat-service, frontend rebuilt)
+
+Same script with `QA_MMUI_SHOTS=screenshots-rerun QA_MMUI_REPORT=report-rerun.json`.
+Evidence: `screenshots-rerun/`, `report-rerun.json` (scenarios 1–6 and 8–10),
+`report-rerun-7.json` (scenario 7). In the full run, creating the reused free
+account's thread returned **429**, because earlier runs had used up its
+thread-creation allowance. Scenario 7 was then run once on fresh accounts
+(`QA_FRESH_ACCOUNTS=1`).
+
+| #   | Before                                        | After               | Note                                                                                                                                                                                                                                                                                              |
+| --- | --------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | PASS                                          | PASS                |                                                                                                                                                                                                                                                                                                   |
+| 2   | PASS                                          | PASS                |                                                                                                                                                                                                                                                                                                   |
+| 3   | FAIL — no delivery note                       | **PASS**            | chip "🔎 Described by helper 1", title names the file and GEMINI/gemini-2.5-flash                                                                                                                                                                                                                 |
+| 4   | FAIL — Ready while `[Video file:` placeholder | **PASS**            | Uploading → "Processing — You can send now…" → Ready. At Ready, the backend had the media document                                                                                                                                                                                                |
+| 5   | PASS ×2 / FAIL ×1 (nginx 504 at 60 s)         | **FAIL** (provider) | Gemini TTS `TIMED_OUT` at 40 025 ms (`ttsAttempt` log). chat-service answered **504 itself at ~43 s**, under nginx's 60 s, so the deadline fix works. The UI shows "Could not read this reply aloud. Try again." It passed in run 3 before the fix, so this is Gemini TTS being flaky, not the UI |
+| 6   | PASS                                          | PASS                |                                                                                                                                                                                                                                                                                                   |
+| 7   | FAIL — no no-vision note                      | **PASS**            | "Skipped (no vision)" + "Your plan does not include image descriptions…"; plan notice + `/plan` link; read aloud dimmed                                                                                                                                                                           |
+| 8   | 740×360 FAIL                                  | **PASS 15/15**      | 740×360: bottom nav gone, composer, send and record on screen                                                                                                                                                                                                                                     |
+| 9   | PASS                                          | PASS                | role labels now Arabic ("أنت" / "المساعد")                                                                                                                                                                                                                                                        |
+| 10  | 0 violations                                  | 0 violations        | axe-core 4.13.0                                                                                                                                                                                                                                                                                   |
+| 11  | 502 llamacpp/ollama; 1 TTS 504                | same                | environment (services down) + the provider timeout above                                                                                                                                                                                                                                          |
+
+Still open (minor):
+
+- On phones the floating feedback rail and "Jump to latest" cover the start of
+  assistant text (`screenshots-rerun/09-rtl-ar-mobile-390x844.png`).
+- On 740×360 the rail's "−" sits on the side toolbar.
+- The Next.js dev badge covers the model button. It is dev only.

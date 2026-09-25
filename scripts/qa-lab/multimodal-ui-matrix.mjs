@@ -21,7 +21,8 @@ const require = createRequire(import.meta.url);
 const ORIGIN = process.env.QA_ORIGIN ?? 'https://claw.local';
 const FIX = process.env.QA_MMUI_FIXTURES ?? '.';
 const OUT = process.env.QA_MMUI_OUT ?? 'mmui-evidence';
-const SHOTS = path.join(OUT, 'screenshots');
+const SHOT_DIR = process.env.QA_MMUI_SHOTS ?? 'screenshots';
+const SHOTS = path.join(OUT, SHOT_DIR);
 fs.mkdirSync(SHOTS, { recursive: true });
 const PNG = path.join(FIX, 'qa-lighthouse-test.png');
 const MP4 = path.join(FIX, 'qa-clip.mp4');
@@ -37,7 +38,7 @@ const result = (id, status, detail) => {
 const shot = async (page, name, full = false) => {
   const file = `${name}.png`;
   await page.screenshot({ path: path.join(SHOTS, file), fullPage: full, timeout: 20000 });
-  return `screenshots/${file}`;
+  return `${SHOT_DIR}/${file}`;
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -573,7 +574,7 @@ try {
   }
   report.consoleSummary = [...cseen.entries()].map(([k, c]) => `${k} x${c}`);
   report.finishedAt = new Date().toISOString();
-  fs.writeFileSync(path.join(OUT, ONLY.length ? `report-${ONLY.join('-')}.json` : 'report.json'), JSON.stringify(report, null, 2));
+  fs.writeFileSync(path.join(OUT, process.env.QA_MMUI_REPORT ?? (ONLY.length ? `report-${ONLY.join('-')}.json` : 'report.json')), JSON.stringify(report, null, 2));
   console.log('SUMMARY', Object.entries(report.scenarios).map(([k, v]) => `${k}:${v.status}`).join(' '));
   console.log('NETWORK', report.networkSummary.join('\n'));
   console.log('CONSOLE', report.consoleSummary.join('\n'));
