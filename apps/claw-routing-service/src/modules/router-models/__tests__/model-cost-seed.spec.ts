@@ -228,6 +228,25 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(4);
   });
 
+  // whisper-1 reports no tokens; file-service finalizes a transcription on the
+  // clip's measured seconds. $0.006/min list = 100 micro-USD per second.
+  it('prices whisper-1 per second of audio, with zero token rates', () => {
+    const whisper = MODEL_COST_SEED_ENTRIES.find(
+      (e) => e.provider === 'OPENAI' && e.modelKey === 'whisper-1',
+    );
+    expect(whisper).toMatchObject({
+      audioPerUnitMicroUsd: 100,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+    });
+    expect(whisper?.imagePerUnitMicroUsd ?? null).toBeNull();
+    expect(whisper?.supersedesSeededPrice ?? false).toBe(false);
+  });
+
+  it('is version 5 or later, so installs that ran v4 pick up the whisper-1 price', () => {
+    expect(MODEL_COST_SEED_VERSION).toBeGreaterThanOrEqual(5);
+  });
+
   // Money is integer micro-USD everywhere in this platform. A float here would
   // reach a BigInt column and throw at insert time, on first boot.
   it('holds every rate as a non-negative integer', () => {

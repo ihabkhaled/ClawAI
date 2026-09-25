@@ -144,6 +144,14 @@ paid model, rule 1 applies to it like anything else.
     OpenAI's image API reports no usage, so a zero-token finalize settled every
     OpenAI image at $0 and released the whole hold. Mechanism:
     [`docs/03-architecture/payg-credit.md` § Unit metering](../docs/03-architecture/payg-credit.md#unit-metering--surfaces-that-are-not-priced-by-tokens).
+18. **A credit refusal ends a candidate walk; it is never a reason to try the next
+    provider.** A loop over provider candidates (transcription's modality
+    fall-through, any auto-fallback chain) must treat a 402, a clamped hold, an
+    unreachable meter or an unpriced model as a terminal, recorded result — not
+    as a provider failure. Falling through either gets refused again or, on a
+    provider auth classifies differently, spends credit the user was just told
+    they lack. Reference: file-service `TranscriptionMeterManager` returns
+    `REFUSED` instead of throwing, so `TranscriptionManager` cannot mistake it.
 
 ## Prohibited patterns
 

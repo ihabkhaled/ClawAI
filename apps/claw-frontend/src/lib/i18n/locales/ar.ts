@@ -4471,6 +4471,7 @@ export const ar: TranslationDictionary = {
         CODING_AGENT: 'وكيل برمجي',
         WORKSPACE_ACTION: 'إجراء مساحة عمل',
         ROUTING: 'توجيه',
+        TRANSCRIPTION: 'النسخ الصوتي',
       },
       kind: {
         PLAN_GRANT: 'مخصّص الخطة',

@@ -4488,6 +4488,7 @@ export const th: TranslationDictionary = {
         CODING_AGENT: 'เอเจนต์เขียนโค้ด',
         WORKSPACE_ACTION: 'การทำงานเวิร์กสเปซ',
         ROUTING: 'การกำหนดเส้นทาง',
+        TRANSCRIPTION: 'การถอดเสียง',
       },
       kind: {
         PLAN_GRANT: 'โควตาจากแพ็กเกจ',

@@ -4379,6 +4379,7 @@ export const zh: TranslationDictionary = {
         CODING_AGENT: '编码代理',
         WORKSPACE_ACTION: '工作区操作',
         ROUTING: '路由',
+        TRANSCRIPTION: '语音转写',
       },
       kind: {
         PLAN_GRANT: '套餐额度',

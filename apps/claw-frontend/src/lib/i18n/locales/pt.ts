@@ -4564,6 +4564,7 @@ export const pt: TranslationDictionary = {
         CODING_AGENT: 'Agente de código',
         WORKSPACE_ACTION: 'Ação de workspace',
         ROUTING: 'Roteamento',
+        TRANSCRIPTION: 'Transcrição',
       },
       kind: {
         PLAN_GRANT: 'Franquia do plano',

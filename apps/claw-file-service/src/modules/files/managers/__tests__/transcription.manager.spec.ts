@@ -14,6 +14,8 @@ import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { TranscriptionManager } from '../transcription.manager';
 import { type FilesRepository } from '../../repositories/files.repository';
 import { type TranscriptionCapabilityClient } from '../../clients/transcription-capability.client';
+import { TranscriptionMeterManager } from '../transcription-meter.manager';
+import { PaygMeter } from '@claw/shared-entitlements';
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
 import { transcribeWithGemini } from '../../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../../adapters/openai-transcription.adapter';
@@ -64,6 +66,7 @@ interface Harness {
   filesRepository: { findById: Mock; saveExtractionResult: Mock };
   rabbit: { publish: Mock; publishConfirmed: Mock; subscribe: Mock };
   capability: { findCapableModels: Mock; fetchConnectorConfig: Mock };
+  payg: PaygMeter;
 }
 
 const buildHarness = (file: File | null): Harness => {
@@ -86,12 +89,31 @@ const buildHarness = (file: File | null): Harness => {
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     }),
   };
+  // A REAL PaygMeter whose network methods are stubbed: every provider is
+  // treated as unmetered here (the metering behaviour has its own spec), so
+  // these tests keep proving the transcription flow itself.
+  const payg = new PaygMeter({
+    authServiceUrl: 'http://auth-service:4001',
+    interServiceToken: 'test-inter-service-token-000000000000',
+  });
+  vi.spyOn(payg, 'reserve').mockImplementation((input) =>
+    Promise.resolve({
+      metered: false,
+      maxOutputTokens: input.requestedMaxOutputTokens,
+      clamped: false,
+      reservationId: null,
+      heldMicroUsd: 0,
+      availableAfterMicroUsd: 0,
+      reason: 'NOT_PAYG',
+    }),
+  );
   const manager = new TranscriptionManager(
     filesRepository as unknown as FilesRepository,
     rabbit as unknown as RabbitMQService,
     capability as unknown as TranscriptionCapabilityClient,
+    new TranscriptionMeterManager(payg),
   );
-  return { manager, filesRepository, rabbit, capability };
+  return { manager, filesRepository, rabbit, capability, payg };
 };
 
 const publishedPatterns = (rabbit: Harness['rabbit']): string[] =>
@@ -119,7 +141,7 @@ describe('TranscriptionManager', () => {
   });
 
   it('transcribes a queued job, writes extractedText and publishes COMPLETED', async () => {
-    mockedGemini.mockResolvedValue('Hello, this is the recording.');
+    mockedGemini.mockResolvedValue({ text: 'Hello, this is the recording.' });
     const harness = buildHarness(buildFile());
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
@@ -130,6 +152,7 @@ describe('TranscriptionManager', () => {
       Buffer.from('fake-audio-bytes').toString('base64'),
       'audio/mpeg',
       'gemini-2.5-flash',
+      expect.any(Number),
     );
     expect(harness.filesRepository.saveExtractionResult).toHaveBeenCalledWith('file-1', {
       extractedText: 'Hello, this is the recording.',
@@ -146,7 +169,7 @@ describe('TranscriptionManager', () => {
   });
 
   it('routes OPENAI through the whisper deployment, not the snapshot chat model', async () => {
-    mockedOpenAi.mockResolvedValue('openai transcript');
+    mockedOpenAi.mockResolvedValue({ text: 'openai transcript' });
     const harness = buildHarness(buildFile());
     harness.capability.findCapableModels.mockResolvedValue([
       { provider: 'OPENAI', model: 'gpt-4o-audio' },
@@ -240,7 +263,7 @@ describe('TranscriptionManager', () => {
   });
 
   it('treats an empty provider response as a failure, not a transcript', async () => {
-    mockedGemini.mockResolvedValue('   ');
+    mockedGemini.mockResolvedValue({ text: '   ' });
     const harness = buildHarness(buildFile());
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
@@ -268,7 +291,7 @@ describe('TranscriptionManager', () => {
   });
 
   it('does not treat the audio placeholder as an existing transcript', async () => {
-    mockedGemini.mockResolvedValue('real words');
+    mockedGemini.mockResolvedValue({ text: 'real words' });
     const harness = buildHarness(buildFile({ extractedText: AUDIO_PLACEHOLDER }));
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
@@ -295,7 +318,7 @@ describe('TranscriptionManager', () => {
   });
 
   it('falls back to the stored file when the row has no base64 content', async () => {
-    mockedGemini.mockResolvedValue('from disk');
+    mockedGemini.mockResolvedValue({ text: 'from disk' });
     const harness = buildHarness(buildFile({ content: null }));
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
@@ -306,6 +329,7 @@ describe('TranscriptionManager', () => {
       Buffer.from('on-disk-audio').toString('base64'),
       'audio/mpeg',
       'gemini-2.5-flash',
+      expect.any(Number),
     );
   });
 
@@ -332,7 +356,7 @@ describe('TranscriptionManager', () => {
 
     it('falls through to the next provider when the first rejects the audio modality', async () => {
       mockedGemini.mockRejectedValue(geminiModalityRejection());
-      mockedOpenAi.mockResolvedValue('transcribed by the fallback provider');
+      mockedOpenAi.mockResolvedValue({ text: 'transcribed by the fallback provider' });
       const harness = buildHarness(buildFile());
       harness.capability.findCapableModels.mockResolvedValue([
         { provider: 'GEMINI', model: 'models/antigravity-preview-05-2026' },
@@ -347,6 +371,7 @@ describe('TranscriptionManager', () => {
         expect.any(String),
         'audio/mpeg',
         'models/antigravity-preview-05-2026',
+        expect.any(Number),
       );
       expect(mockedOpenAi).toHaveBeenCalledWith(
         expect.any(String),
@@ -384,7 +409,7 @@ describe('TranscriptionManager', () => {
 
     it('does NOT fall through on an ordinary provider error — only on a modality rejection', async () => {
       mockedGemini.mockRejectedValue(new Error('429 rate limited'));
-      mockedOpenAi.mockResolvedValue('should never be called');
+      mockedOpenAi.mockResolvedValue({ text: 'should never be called' });
       const harness = buildHarness(buildFile());
       harness.capability.findCapableModels.mockResolvedValue([
         { provider: 'GEMINI', model: 'gemini-2.5-flash' },

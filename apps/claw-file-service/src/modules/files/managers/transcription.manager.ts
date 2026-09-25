@@ -11,6 +11,8 @@ import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import { readFile } from '../../../common/utilities';
 import { FilesRepository } from '../repositories/files.repository';
 import { TranscriptionCapabilityClient } from '../clients/transcription-capability.client';
+import { TranscriptionMeterManager } from './transcription-meter.manager';
+import { TranscriptionAttemptStatus, TranscriptionReserveStatus } from '../../../common/enums';
 import { transcribeWithGemini } from '../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
 import {
@@ -22,7 +24,11 @@ import {
   TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
   TRANSCRIPTION_TOO_LARGE_MESSAGE,
 } from '../constants/transcription.constants';
-import { type TranscriptionCapability } from '../types/transcription.types';
+import {
+  type TranscriptionAttemptOutcome,
+  type TranscriptionCapability,
+  type TranscriptionProviderResult,
+} from '../types/transcription.types';
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
 import { isAudioModalityRejection } from '../utilities/transcription-error.utility';
 
@@ -50,6 +56,7 @@ export class TranscriptionManager implements OnModuleInit {
     private readonly filesRepository: FilesRepository,
     private readonly rabbitMQService: RabbitMQService,
     private readonly capabilityClient: TranscriptionCapabilityClient,
+    private readonly meter: TranscriptionMeterManager,
   ) {}
 
   /**
@@ -90,6 +97,8 @@ export class TranscriptionManager implements OnModuleInit {
       return;
     }
 
+    // Precedes metering on purpose: a redelivered job for a file that already
+    // carries a transcript must not take a PAYG hold at all.
     if (this.hasTranscript(file)) {
       this.logger.log(
         `handleJob: fileId=${fileId} already transcribed (${String(file.extractedText?.length ?? 0)} chars) — skipping`,
@@ -124,6 +133,10 @@ export class TranscriptionManager implements OnModuleInit {
    * recording, an empty transcript) stops here and is recorded as a real
    * failure — falling through on those would mean paying a second provider
    * for a request that was never going to succeed.
+   *
+   * A PAYG credit refusal is not a throw at all: `attemptCandidate` returns
+   * `REFUSED` and this loop stops there. Trying the next provider after "you
+   * have no credit" would only be refused again — or, worse, charged.
    */
   private async runTranscription(
     file: File,
@@ -175,7 +188,18 @@ export class TranscriptionManager implements OnModuleInit {
     for (const [index, capability] of candidates.entries()) {
       lastCapability = capability;
       try {
-        await this.attemptCandidate(file, userId, capability, base64, startedAt);
+        const outcome = await this.attemptCandidate(file, userId, capability, base64, startedAt);
+        if (outcome.status === TranscriptionAttemptStatus.REFUSED) {
+          await this.recordFailure(file, outcome.reason);
+          this.publishFailed(
+            file.id,
+            userId,
+            outcome.reasonCode,
+            outcome.reason,
+            capability.provider,
+            this.effectiveModel(capability),
+          );
+        }
         return;
       } catch (error: unknown) {
         const reason = error instanceof Error ? error.message : 'Unknown transcription error';
@@ -207,11 +231,12 @@ export class TranscriptionManager implements OnModuleInit {
   }
 
   /**
-   * One candidate, start to finish. THROWS on any failure — an empty
-   * transcript included — so `runTranscription`'s loop is the only place
-   * that decides whether a failure is recoverable (fall through) or
-   * terminal (record it). Returns normally only after the COMPLETED event
-   * is published, so the caller's `return` on success is safe.
+   * One candidate, start to finish, inside a PAYG hold. THROWS on any
+   * provider failure — an empty transcript included — after releasing the
+   * hold, so `runTranscription`'s loop is the only place that decides whether
+   * a failure is recoverable (fall through) or terminal (record it). Returns
+   * `REFUSED` (no provider call made) when the credit check says no, and
+   * `COMPLETED` only after the transcript is saved and the event published.
    */
   private async attemptCandidate(
     file: File,
@@ -219,26 +244,57 @@ export class TranscriptionManager implements OnModuleInit {
     capability: TranscriptionCapability,
     base64: string,
     startedAt: number,
-  ): Promise<void> {
+  ): Promise<TranscriptionAttemptOutcome> {
     const model = this.effectiveModel(capability);
     const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
     const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
-    // Trimmed HERE as well as in each adapter. Whitespace is what a provider
-    // returns when it heard nothing, and a row holding three spaces would
-    // pass every "has a transcript" check while telling the user nothing.
-    const raw = await this.callProvider(
-      capability.provider,
-      baseUrl,
-      config.apiKey,
-      base64,
-      file.mimeType,
-      model,
-    );
-    const transcript = raw.trim();
 
-    if (transcript.length === 0) {
-      throw new Error('The provider returned an empty transcript.');
+    // Charged to the UPLOADER — the job's userId — per attempt. The requestId
+    // is per provider, so a modality fall-through is a second, separate hold.
+    const reservation = await this.meter.reserve({
+      userId,
+      fileId: file.id,
+      provider: capability.provider,
+      model,
+      sizeBytes: file.sizeBytes,
+    });
+    if (reservation.status === TranscriptionReserveStatus.REFUSED) {
+      // No provider call: a refused hold means nothing was spent.
+      return {
+        status: TranscriptionAttemptStatus.REFUSED,
+        reasonCode: reservation.reasonCode,
+        reason: reservation.reason,
+      };
     }
+    const { meterHold } = reservation;
+
+    let result: TranscriptionProviderResult;
+    let transcript: string;
+    try {
+      result = await this.callProvider(
+        capability.provider,
+        baseUrl,
+        config.apiKey,
+        base64,
+        file.mimeType,
+        model,
+        meterHold.hold.maxOutputTokens,
+      );
+      // Trimmed HERE as well as in each adapter. Whitespace is what a provider
+      // returns when it heard nothing, and a row holding three spaces would
+      // pass every "has a transcript" check while telling the user nothing.
+      transcript = result.text.trim();
+      if (transcript.length === 0) {
+        throw new Error('The provider returned an empty transcript.');
+      }
+    } catch (error: unknown) {
+      // The user got no transcript, so the hold goes back rather than being
+      // settled — a provider error, a timeout and an empty answer alike.
+      await this.meter.release(meterHold, error);
+      throw error;
+    }
+
+    await this.meter.finalize(meterHold, result);
 
     await this.filesRepository.saveExtractionResult(file.id, {
       extractedText: transcript,
@@ -260,6 +316,7 @@ export class TranscriptionManager implements OnModuleInit {
     this.logger.log(
       `attemptCandidate: fileId=${file.id} provider=${capability.provider} model=${model} chars=${String(transcript.length)} durationMs=${String(durationMs)}`,
     );
+    return { status: TranscriptionAttemptStatus.COMPLETED };
   }
 
   private async callProvider(
@@ -269,9 +326,11 @@ export class TranscriptionManager implements OnModuleInit {
     base64: string,
     mimeType: string,
     model: string,
-  ): Promise<string> {
+    maxOutputTokens: number,
+  ): Promise<TranscriptionProviderResult> {
     if (provider === 'GEMINI') {
-      return transcribeWithGemini(baseUrl, apiKey, base64, mimeType, model);
+      // The GRANTED ceiling from the hold, never the requested one (rule 37 item 2).
+      return transcribeWithGemini(baseUrl, apiKey, base64, mimeType, model, maxOutputTokens);
     }
     if (provider === 'OPENAI') {
       return transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model);

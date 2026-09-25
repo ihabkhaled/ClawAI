@@ -4583,6 +4583,7 @@ export const es: TranslationDictionary = {
         CODING_AGENT: 'Agente de código',
         WORKSPACE_ACTION: 'Acción de espacio',
         ROUTING: 'Enrutamiento',
+        TRANSCRIPTION: 'Transcripción',
       },
       kind: {
         PLAN_GRANT: 'Asignación del plan',

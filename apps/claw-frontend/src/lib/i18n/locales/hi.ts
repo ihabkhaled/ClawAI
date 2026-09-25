@@ -4530,6 +4530,7 @@ export const hi: TranslationDictionary = {
         CODING_AGENT: 'कोडिंग एजेंट',
         WORKSPACE_ACTION: 'वर्कस्पेस क्रिया',
         ROUTING: 'रूटिंग',
+        TRANSCRIPTION: 'ट्रांसक्रिप्शन',
       },
       kind: {
         PLAN_GRANT: 'प्लान भत्ता',

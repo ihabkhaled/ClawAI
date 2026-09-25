@@ -1,10 +1,13 @@
 import { Logger } from '@nestjs/common';
-import { declaredHost, httpPost } from '@claw/shared-utilities';
+import { declaredHost, extractGeminiUsage, httpPost } from '@claw/shared-utilities';
 import {
   TRANSCRIPTION_INSTRUCTION,
   TRANSCRIPTION_PROVIDER_TIMEOUT_MS,
 } from '../constants/transcription.constants';
-import { type GeminiGenerateContentResponse } from '../types/transcription.types';
+import {
+  type GeminiGenerateContentResponse,
+  type TranscriptionProviderResult,
+} from '../types/transcription.types';
 import {
   stripGeminiModelsPrefix,
   toGeminiNativeBaseUrl,
@@ -16,9 +19,18 @@ const logger = new Logger('GeminiTranscriptionAdapter');
  * Transcribes audio with Gemini's native `generateContent`, sending the bytes
  * inline.
  *
- * Returns the transcript text; THROWS on a transport or shape failure rather
- * than returning something empty, so the caller records a real reason instead
- * of storing a provider's refusal as though it were the transcript.
+ * Returns the transcript text and the token usage Gemini REPORTED in
+ * `usageMetadata` — the measured quantity the PAYG finalize settles on (rule 37
+ * item 17). `usage` is left undefined when Gemini sent no `usageMetadata`, so
+ * the caller falls back to the reserved estimate rather than to $0.
+ *
+ * `maxOutputTokens` is the GRANTED ceiling from the PAYG hold (rule 37 item 2),
+ * never the one the caller asked for. Gemini 2.5 counts thinking tokens inside
+ * it, which the hold's output estimate already leaves headroom for.
+ *
+ * THROWS on a transport or shape failure rather than returning something
+ * empty, so the caller records a real reason instead of storing a provider's
+ * refusal as though it were the transcript.
  */
 export const transcribeWithGemini = async (
   baseUrl: string,
@@ -26,7 +38,8 @@ export const transcribeWithGemini = async (
   base64: string,
   mimeType: string,
   model: string,
-): Promise<string> => {
+  maxOutputTokens?: number,
+): Promise<TranscriptionProviderResult> => {
   const nativeBase = toGeminiNativeBaseUrl(baseUrl);
   // `model` is the connector catalog's key, which already carries a `models/`
   // prefix — the URL below has its own literal `/models/` segment, so the
@@ -48,6 +61,7 @@ export const transcribeWithGemini = async (
         ],
       },
     ],
+    ...(maxOutputTokens === undefined ? {} : { generationConfig: { maxOutputTokens } }),
   };
 
   const response = await httpPost<GeminiGenerateContentResponse>(
@@ -67,6 +81,23 @@ export const transcribeWithGemini = async (
     .map((part) => part.text ?? '')
     .join('')
     .trim();
-  logger.debug(`transcribeWithGemini: received ${String(transcript.length)} characters`);
-  return transcript;
+  if (response.usageMetadata === undefined) {
+    logger.debug(
+      `transcribeWithGemini: received ${String(transcript.length)} characters, no usageMetadata`,
+    );
+    return { text: transcript };
+  }
+  const reported = extractGeminiUsage(response);
+  logger.debug(
+    `transcribeWithGemini: received ${String(transcript.length)} characters — prompt=${String(reported.promptTokens)} completion=${String(reported.completionTokens)}`,
+  );
+  return {
+    text: transcript,
+    usage: {
+      promptTokens: reported.promptTokens,
+      completionTokens: reported.completionTokens,
+      cachedPromptTokens: reported.cachedPromptTokens,
+      reasoningTokens: reported.reasoningTokens,
+    },
+  };
 };

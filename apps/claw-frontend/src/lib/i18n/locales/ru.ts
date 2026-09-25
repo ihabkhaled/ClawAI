@@ -4564,6 +4564,7 @@ export const ru: TranslationDictionary = {
         CODING_AGENT: 'Агент кода',
         WORKSPACE_ACTION: 'Действие рабочей области',
         ROUTING: 'Маршрутизация',
+        TRANSCRIPTION: 'Транскрипция',
       },
       kind: {
         PLAN_GRANT: 'Лимит тарифа',

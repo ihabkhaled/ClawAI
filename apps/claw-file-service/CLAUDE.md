@@ -282,5 +282,15 @@ Three behaviours worth knowing before changing it:
 - **The publish happens after `saveExtractionResult`, not inside
   `extractText`.** Publishing from inside races the write that follows it — a
   fast transcript would be overwritten by the placeholder that asked for it.
+- **Every paid attempt is PAYG-metered** (`PaygSurface.TRANSCRIPTION`,
+  `TranscriptionMeterManager`, multimodal batch 4). Reserve → call → finalize on
+  MEASURED units (whisper-1: `verbose_json` `duration` seconds; Gemini:
+  `usageMetadata` tokens) → or release on throw / timeout / empty transcript.
+  Charged to the uploader. `requestId` = `transcription:${fileId}:${provider}`.
+  A credit refusal is a RESULT that stops the candidate loop — never fall
+  through to a second paid provider — and is recorded as `INSUFFICIENT_CREDIT`
+  (402 or clamped hold) or `CREDIT_CHECK_UNAVAILABLE` (meter down / model
+  unpriced; fails closed, no provider call). `PaygMeter` comes from the global
+  `EntitlementsModule` in `AppModule`. Never log a balance (rule 37 item 4).
 
 Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md).

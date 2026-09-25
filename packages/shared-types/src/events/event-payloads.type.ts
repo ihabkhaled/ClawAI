@@ -328,7 +328,11 @@ export type FileTranscribeFailureReasonCode =
   | 'FILE_NOT_FOUND'
   | 'AUDIO_UNREADABLE'
   /** Longer than `MAX_TRANSCRIBABLE_AUDIO_BYTES` — a cost ceiling, not a storage one. */
-  | 'AUDIO_TOO_LARGE';
+  | 'AUDIO_TOO_LARGE'
+  /** The uploader's PAYG credit cannot cover the transcription (402, or a clamped hold). */
+  | 'INSUFFICIENT_CREDIT'
+  /** The credit check itself could not run (meter unreachable, model unpriced). Fails closed. */
+  | 'CREDIT_CHECK_UNAVAILABLE';
 
 /** The job. Carries only identifiers — the bytes are read from the row. */
 export interface FileTranscribeRequestedPayload extends BaseEventPayload {

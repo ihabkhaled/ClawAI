@@ -4505,6 +4505,7 @@ export type TranslationDictionary = {
         CODING_AGENT: string;
         WORKSPACE_ACTION: string;
         ROUTING: string;
+        TRANSCRIPTION: string;
       };
       kind: {
         PLAN_GRANT: string;

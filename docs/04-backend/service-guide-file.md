@@ -437,6 +437,48 @@ unchanged once A2's other archive formats reach production.
   (FAILED), a warning tone when only some entries were skipped (e.g. partial
   encryption) but the rest still arrived.
 
+## Audio transcription
+
+An audio upload completes with `extractedText = "[Audio file: …]"`; a
+`file.transcribe_requested` job (published and consumed by this service) runs
+`TranscriptionManager`. Limits, in order: 12 MB (`MAX_TRANSCRIBABLE_AUDIO_BYTES`,
+refused as `AUDIO_TOO_LARGE` before any provider or meter call), then the PAYG
+hold. Candidates come from connector-service (`supportsAudio`), OpenAI always
+through `whisper-1`; only an audio-modality rejection falls through to the next.
+
+### PAYG metering (multimodal batch 4)
+
+Transcription spends real provider money, so every paid attempt runs inside a
+PAYG hold on `PaygSurface.TRANSCRIPTION`, charged to the uploader (the job's
+`userId`). `TranscriptionMeterManager` is the thin wrapper (same shape as
+image-service's `callMeteredCloudProvider`); `PaygMeter` comes from the global
+`EntitlementsModule`.
+
+| Provider           | Priced                                                                 | Reserve                                                                              | Finalize                                                                               |
+| ------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| OpenAI `whisper-1` | per second, `audioPerUnitMicroUsd` = 100 (routing seed v5, $0.006/min) | `audioSeconds` = ceil(bytes / 1,000), bounded 1..7,200; `requestedMaxOutputTokens` 1 | `verbose_json` `duration`, rounded up; reserved seconds if absent                      |
+| Gemini             | per token (existing rows)                                              | `promptTokens` = 32/s × seconds + 128; output = 8/s × seconds + 1,024                | `usageMetadata` (thinking folded into completion); reserved prompt + chars/4 if absent |
+
+- `requestId` = `transcription:${fileId}:${provider}` — one hold per provider
+  attempt; a modality fall-through releases the first and takes a second.
+- Gemini is sent `hold.maxOutputTokens`, the GRANTED ceiling (rule 37 item 2).
+- Release on a provider throw (`PROVIDER_ERROR`), an axios timeout
+  (`TIMEOUT`) or an empty transcript.
+- Refusals are results, not throws, and stop the candidate loop. They are
+  recorded in `extractionError` with a readable message and published as
+  `file.transcribe_failed` with `reasonCode` `INSUFFICIENT_CREDIT` (402, or a
+  clamped hold — released as `CANCELLED`) or `CREDIT_CHECK_UNAVAILABLE` (meter
+  unreachable, `PAYG_PRICING_UNAVAILABLE`, `PAYG_MODEL_UNPRICED`; no provider
+  call).
+- Unmetered holds (exempt provider, admin, kill switch) run the call;
+  finalize/release are no-ops.
+- A file that already carries a transcript is skipped before any reserve.
+- Deploy order: auth-service (shared-types with `TRANSCRIPTION`) and
+  routing-service (seed v5) before file-service, or paid transcription fails
+  closed.
+
+Runbook: [`skills/add-a-voice-note-or-transcription-path.md`](../../skills/add-a-voice-note-or-transcription-path.md).
+
 ## OCR pipeline (Slice D foundation 3)
 
 When `OCR_ENABLED=true`, the file-service runs a tesseract worker pool that extracts text from images and scanned PDFs so non-vision chat lanes can still receive the content. The pipeline activates in two cases:

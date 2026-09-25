@@ -247,17 +247,18 @@ surface without adding a member is what lets spend become anonymous again**, whi
 is why [rule 37](../../rules/37-payg-credit-integrity.md) requires the two to
 change together.
 
-| `PaygSurface`      | Service   | What it covers                                                         | Audit ids   |
-| ------------------ | --------- | ---------------------------------------------------------------------- | ----------- |
-| `CHAT`             | chat      | Ordinary chat, regenerate, edit-resend, streaming                      | U1          |
-| `COMPARE`          | chat      | Compare mode — **one hold per lane**, not one per run                  | —           |
-| `JUDGE`            | chat      | The judge / critic second pass over a compare run                      | —           |
-| `ORCHESTRATION`    | chat      | The nine advanced labs; `workflow` narrows which one                   | —           |
-| `CODING_AGENT`     | chat      | The runtime-v2 agent loop — one row per turn                           | U11         |
-| `IMAGE`            | image     | Image generation, **including each attempt of an auto-fallback chain** | U3, U4      |
-| `FILE_GENERATION`  | chat      | Document/file content generation                                       | —           |
-| `WORKSPACE_ACTION` | workspace | AI actions, multi-model review, chain NL draft, IMPL handoff           | U8–U10, U12 |
-| `ROUTING`          | routing   | The cloud router's own paid calls — **one hold per attempt**           | U5, U6      |
+| `PaygSurface`      | Service   | What it covers                                                                                                     | Audit ids   |
+| ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------ | ----------- |
+| `CHAT`             | chat      | Ordinary chat, regenerate, edit-resend, streaming                                                                  | U1          |
+| `COMPARE`          | chat      | Compare mode — **one hold per lane**, not one per run                                                              | —           |
+| `JUDGE`            | chat      | The judge / critic second pass over a compare run                                                                  | —           |
+| `ORCHESTRATION`    | chat      | The nine advanced labs; `workflow` narrows which one                                                               | —           |
+| `CODING_AGENT`     | chat      | The runtime-v2 agent loop — one row per turn                                                                       | U11         |
+| `IMAGE`            | image     | Image generation, **including each attempt of an auto-fallback chain**                                             | U3, U4      |
+| `FILE_GENERATION`  | chat      | Document/file content generation                                                                                   | —           |
+| `WORKSPACE_ACTION` | workspace | AI actions, multi-model review, chain NL draft, IMPL handoff                                                       | U8–U10, U12 |
+| `ROUTING`          | routing   | The cloud router's own paid calls — **one hold per attempt**                                                       | U5, U6      |
+| `TRANSCRIPTION`    | file      | Speech-to-text of an uploaded audio file / voice note — **one hold per provider attempt**, charged to the uploader | —           |
 
 There is **no `RESEARCH` member**: research-service reaches search SaaS, never a
 paid model, and is metered through `FeatureUsageRecord` (see "Not metered", below).
@@ -270,7 +271,9 @@ and bypassed the chokepoint; it now goes through `callProvider` at
 
 `requestId` must not collide under fan-out. Compare keys per lane; routing keys
 `${traceId}:${entryId}:${attemptNumber}` because a retry inside an entry is a
-second paid call and sharing the key would silently under-charge it. See
+second paid call and sharing the key would silently under-charge it.
+Transcription keys `transcription:${fileId}:${provider}`: stable across a
+redelivered job, distinct per provider so a modality fall-through is its own hold. See
 [`skills/meter-a-paid-provider-call.md`](../../skills/meter-a-paid-provider-call.md).
 
 ### Not metered, and why
@@ -324,14 +327,19 @@ per audio token. whisper-1's $0.006/min is `100` micro-USD per second.
   per-image row is neither refused as "free local" nor used to price an unknown
   chat model's output at $0.
 
-| Surface             | Model rows priced by       | Reserve units                                | Finalize units           |
-| ------------------- | -------------------------- | -------------------------------------------- | ------------------------ |
-| `IMAGE` (OpenAI)    | `imagePerUnitMicroUsd`     | `imageUnits: 1`                              | images returned          |
-| `IMAGE` (Gemini)    | tokens (`usageMetadata`)   | `imageUnits: 1` (no per-image rate → adds 0) | images returned + tokens |
-| Transcription / TTS | per second / per character | batch 4 / batch 8                            | measured length          |
+| Surface                            | Model rows priced by                | Reserve units                                 | Finalize units                        |
+| ---------------------------------- | ----------------------------------- | --------------------------------------------- | ------------------------------------- |
+| `IMAGE` (OpenAI)                   | `imagePerUnitMicroUsd`              | `imageUnits: 1`                               | images returned                       |
+| `IMAGE` (Gemini)                   | tokens (`usageMetadata`)            | `imageUnits: 1` (no per-image rate → adds 0)  | images returned + tokens              |
+| `TRANSCRIPTION` (OpenAI whisper-1) | `audioPerUnitMicroUsd` (100 µUSD/s) | `audioSeconds`: ceil(bytes / 1,000), ≤ 7,200  | `verbose_json` `duration`, rounded up |
+| `TRANSCRIPTION` (Gemini)           | tokens (`usageMetadata`)            | `promptTokens` 32/s + 128; output 8/s + 1,024 | reported tokens                       |
+| TTS                                | per character                       | batch 8                                       | measured length                       |
 
 Prices live only in `ModelCostVersion` rows (seeded list prices in
-`model-cost-seed.constants.ts`, seed v4 for the OpenAI image rows). Runbook for
+`model-cost-seed.constants.ts`, seed v4 for the OpenAI image rows, seed v5 for
+whisper-1). A transcription credit refusal (402, clamped hold, meter down,
+unpriced model) is a recorded RESULT on the file row — `INSUFFICIENT_CREDIT` or
+`CREDIT_CHECK_UNAVAILABLE` — and never falls through to a second paid provider. Runbook for
 a new per-unit surface:
 [`skills/meter-a-paid-provider-call.md`](../../skills/meter-a-paid-provider-call.md#meter-a-per-unit-surface).
 

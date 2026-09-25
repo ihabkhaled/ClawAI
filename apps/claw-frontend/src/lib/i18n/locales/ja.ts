@@ -4545,6 +4545,7 @@ export const ja: TranslationDictionary = {
         CODING_AGENT: 'コーディングエージェント',
         WORKSPACE_ACTION: 'ワークスペース操作',
         ROUTING: 'ルーティング',
+        TRANSCRIPTION: '文字起こし',
       },
       kind: {
         PLAN_GRANT: 'プラン付与',

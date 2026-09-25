@@ -15,7 +15,9 @@ connector gains speech-to-text and should be usable for it.
 upload  →  magic-byte check  →  stored, extractedText = "[Audio file: x.mp3]"
         →  FILE_TRANSCRIBE_REQUESTED  (publishConfirmed)
         →  file-service's own queue, 3 retries then DLQ
-        →  capable connector resolved  →  provider call
+        →  capable connector resolved
+        →  PAYG reserve (surface TRANSCRIPTION, charged to the uploader)
+        →  provider call  →  finalize on MEASURED units  (or release)
         →  saveExtractionResult(transcript)  →  FILE_TRANSCRIBE_COMPLETED
 ```
 
@@ -30,11 +32,22 @@ and runs concurrently with the service's prefetch, rather than blocking the uplo
 ## Adding a provider
 
 1. Write an adapter in `apps/claw-file-service/src/modules/files/adapters/`, a
-   plain exported function `(baseUrl, apiKey, base64, mimeType, model)` →
-   transcript. Match the existing two.
-2. Add the provider to `TRANSCRIPTION_PROVIDER_PRIORITY`. Order is preference,
+   plain exported function `(baseUrl, apiKey, base64, mimeType, model,
+maxOutputTokens?)` → `TranscriptionProviderResult` (`{ text, usage?,
+durationSeconds? }`). Return whatever the provider MEASURES — token usage or
+   clip duration — because that is what PAYG settles on. A token-bounded API
+   must send `maxOutputTokens` (the hold's granted ceiling). Match the existing
+   two.
+2. **Price it** before it can be called: a `ModelCostVersion` seed row in
+   routing-service — `audioPerUnitMicroUsd` (per second) if the provider bills
+   per minute, token rates if it bills per token — and a seed version bump
+   (skill [`meter-a-paid-provider-call.md`](meter-a-paid-provider-call.md),
+   "Meter a per-unit surface"). A per-second provider also goes in
+   `TRANSCRIPTION_PAYG_PER_SECOND_PROVIDERS`. An unpriced model is refused as
+   `CREDIT_CHECK_UNAVAILABLE`, never transcribed for free.
+3. Add the provider to `TRANSCRIPTION_PROVIDER_PRIORITY`. Order is preference,
    first capable wins.
-3. Make sure the connector's adapter reports `supportsAudio` correctly in
+4. Make sure the connector's adapter reports `supportsAudio` correctly in
    **connector-service** — that flag is what the capability client filters on.
    OpenAI's said `false` while routing already listed it as an audio provider;
    the two sources of truth disagreed and the fallback was unreachable.
@@ -63,6 +76,44 @@ and runs concurrently with the service's prefetch, rather than blocking the uplo
   every other attachment ([ADR-095](../docs/13-adr/adr-095-attachment-text-extraction-pipeline.md)):
   handing base64 audio to a text model is how "I can't read the attached file"
   happened the first time.
+
+## Metering — every paid transcription holds credit first (multimodal batch 4)
+
+Transcription is a PAYG surface, `PaygSurface.TRANSCRIPTION`
+(`TranscriptionMeterManager`, same shape as image-service's
+`callMeteredCloudProvider`). Per provider ATTEMPT:
+
+1. **Reserve**, charged to the job's `userId` (the uploader), `requestId`
+   `transcription:${fileId}:${provider}` — stable across a redelivery, distinct
+   per provider, so a modality fall-through is a second, separate hold.
+   - OpenAI `whisper-1` (per second): `audioSeconds` = worst case from bytes at
+     a 1,000 B/s floor (bounded 1..7,200), `requestedMaxOutputTokens` 1.
+   - Gemini (per token): `promptTokens` = 32 tokens/s + 128 instruction,
+     output = 8 tokens/s + 1,024 headroom (thinking counts inside it).
+2. **Call** the provider with `hold.maxOutputTokens` (Gemini only — whisper has
+   no such parameter).
+3. **Finalize on measured units**: whisper's `verbose_json` `duration` rounded
+   up; Gemini's `usageMetadata`. Missing measurement → the reserved figure,
+   never zero.
+4. **Release** on a throw, a timeout (`TIMEOUT`) or an empty transcript.
+
+Refusals are RESULTS, not throws, and they stop the candidate loop — no
+fall-through to a second paid provider:
+
+| Cause                                                                | `reasonCode` on `file.transcribe_failed`                    |
+| -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 402 (balance), or a clamped hold (released, `CANCELLED`)             | `INSUFFICIENT_CREDIT`                                       |
+| Meter unreachable, `PAYG_PRICING_UNAVAILABLE`, `PAYG_MODEL_UNPRICED` | `CREDIT_CHECK_UNAVAILABLE` (fails closed, no provider call) |
+
+An exempt provider / admin / kill switch comes back `metered: false` — the call
+runs and finalize/release are no-ops. Do not special-case it. The "already has a
+transcript" skip runs BEFORE the reserve, so a redelivered job takes no hold.
+Logs carry reservation id, surface and outcome — never a balance (rule 37 item 4).
+
+**Deploy order**: auth-service must know `PaygSurface.TRANSCRIPTION` (rebuilt
+`@claw/shared-types`) and routing must have run seed v5 (whisper-1 price)
+before file-service ships, or every paid transcription fails closed as
+`CREDIT_CHECK_UNAVAILABLE`.
 
 ## The recorder, and why a control is dimmed
 
@@ -132,10 +183,15 @@ Three decisions that will look arbitrary later:
   anywhere in the stack — native video understanding rides on the vision flag,
   which is already how routing treats it.
 
-**The recording length is capped** (`MEDIA_RECORDING_MAX_MS`, 5 minutes). That
-cap is the only thing standing between a voice-note button and a four-hour
-transcription bill, because the server's 50MB limit is measured in bytes and
-four hours of Opus fits inside it comfortably.
+**The recording length is capped** (`MEDIA_RECORDING_MAX_MS`, 5 minutes) — in
+the browser only. The real limits, in order:
+
+| Limit                   | Where                                        | What it bounds                                                                 |
+| ----------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
+| 5-minute recorder cap   | frontend `MEDIA_RECORDING_MAX_MS`            | the voice-note button only; an uploaded file bypasses it                       |
+| 12 MB transcription cap | file-service `MAX_TRANSCRIBABLE_AUDIO_BYTES` | refused as `AUDIO_TOO_LARGE` before any provider or meter call                 |
+| 50 MB upload cap        | file-service `MAX_FILE_SIZE`                 | storage, not cost                                                              |
+| PAYG hold               | `TranscriptionMeterManager`                  | the uploader's credit must cover the worst-case clip, or `INSUFFICIENT_CREDIT` |
 
 **Every exit path releases the tracks.** Stop, cancel, hitting the cap, a
 recorder error, a failed constructor, unmount, and unmount while the permission
@@ -145,10 +201,16 @@ on the tracks.
 
 ## What is NOT solved yet
 
-- **Duration is uncapped.** `MAX_FILE_SIZE` is 50MB, which is roughly four
-  hours of browser-default Opus — and four hours of audio is four hours of
-  transcription billed. The limit that matters for voice is duration, not
-  bytes, and it does not exist yet.
+- **Duration is bounded by bytes and credit, not measured before the call.**
+  An uploaded (not recorded) file skips the 5-minute recorder cap; the 12 MB
+  transcription cap and the PAYG hold are what bound it. The hold sizes the
+  clip from bytes at a 1,000 B/s floor, so it over-holds low-bitrate audio for
+  the seconds the call runs — the finalize gives the difference back.
+- **A redelivered job reuses its `requestId`.** The job never throws (failures
+  are recorded on the row), so redelivery only happens on a crash mid-attempt.
+  auth reuses a hold only while it is still OPEN (`findOpenPaygReservation`);
+  after a release or finalize the same id takes a fresh hold. An orphaned open
+  hold from the crash is reclaimed by the sweeper after `PAYG_RESERVATION_TTL_MS`.
 - **Modality naming disagrees.** connector-service emits the modality string
   `'AUDIO'`; routing-service's `ModalityKind` uses `'AUDIO_INPUT'`. The
   capability client matches what is actually emitted. Reconciling them is a

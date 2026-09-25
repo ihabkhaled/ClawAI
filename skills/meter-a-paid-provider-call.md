@@ -241,6 +241,10 @@ speech-to-text, text-to-speech — tokens are the wrong meter. Rule 37 item 17.
 
 Reference implementation: `apps/claw-image-service/src/modules/image-generation/managers/image-execution.manager.ts`
 (`reserveImageHold` / `finalizeImageHold`, `countReturnedImages`).
+Per-second reference: `apps/claw-file-service/src/modules/files/managers/transcription-meter.manager.ts`
+(whisper-1 `audioSeconds` from `verbose_json` `duration`; Gemini on
+`usageMetadata`; a credit refusal returned as a result so the candidate loop
+stops — rule 37 item 18).
 
 ### 6. Surface the clamp
 

@@ -9,8 +9,13 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// ("$/image / 8192 tokens") to their real per-IMAGE list price, flagged
 /// `supersedesSeededPrice` so an install that already ran v3 gets a NEW version
 /// row for them (the v3 rows are retired, never edited).
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v4';
-export const MODEL_COST_SEED_VERSION = 4;
+///
+/// v5 (2026-09-25): OpenAI `whisper-1` priced per SECOND of input audio
+/// (`audioPerUnitMicroUsd`), so file-service's PAYG-metered transcription
+/// (PaygSurface.TRANSCRIPTION) settles on real money instead of being blocked
+/// as unpriced. A new model, so it FILLS a gap — no `supersedesSeededPrice`.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v5';
+export const MODEL_COST_SEED_VERSION = 5;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -368,6 +373,33 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     costClass: CostClass.PREMIUM,
     imagePerUnitMicroUsd: 167_000,
     supersedesSeededPrice: true,
+  }),
+  // ── OpenAI speech-to-text: PER-SECOND list price (unit metering, seed v5) ─
+  //
+  // Source: OpenAI's public pricing page (platform.openai.com/docs/pricing,
+  // "Transcription and speech generation"): whisper-1 is $0.006 / minute of
+  // input audio, figure supplied by the owner on 2026-09-25 and NOT re-fetched
+  // here. $0.006 / 60 s = $0.0001 / s = 100 micro-USD per second, exactly.
+  //
+  // WHY PER SECOND. `/audio/transcriptions` reports no token usage; with
+  // `response_format: verbose_json` it reports the clip's `duration`, which is
+  // what file-service finalizes on. Token rates are 0 because whisper bills
+  // no tokens — published-and-zero, not unknown; the per-second column carries
+  // the money, and auth's local-fallback check reads it (rule 37 item 17).
+  //
+  // gpt-4o-transcribe / gpt-4o-mini-transcribe are NOT seeded: file-service
+  // only ever calls `whisper-1` (OPENAI_TRANSCRIPTION_MODEL), and those two
+  // bill per TOKEN with audio-token rates this seed has not verified.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'whisper-1',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    audioPerUnitMicroUsd: 100,
   }),
 
   // ── Connector presets batch 2 (ADR-116/117) ─────────────────────────────

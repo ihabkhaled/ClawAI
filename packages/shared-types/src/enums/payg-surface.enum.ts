@@ -28,6 +28,13 @@ export enum PaygSurface {
   WORKSPACE_ACTION = 'WORKSPACE_ACTION',
   /** Router-initiated inference triggered by a message event. */
   ROUTING = 'ROUTING',
+  /**
+   * Speech-to-text of an uploaded audio file or voice note (file-service).
+   * One row per PROVIDER ATTEMPT: a fall-through to a second provider is a
+   * second paid call. Priced per second of input audio on a per-unit row
+   * (`audioPerUnitMicroUsd`, OpenAI whisper-1) or per token (Gemini).
+   */
+  TRANSCRIPTION = 'TRANSCRIPTION',
 }
 
 // Deliberately NOT a member: RESEARCH. Research enrichment reaches search SaaS

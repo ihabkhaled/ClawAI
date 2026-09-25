@@ -12,6 +12,7 @@ import { ChunkedUploadManager } from './managers/chunked-upload.manager';
 import { FileRetentionSweeperManager } from './managers/file-retention-sweeper.manager';
 import { ZipExpansionManager } from './managers/zip-expansion.manager';
 import { TranscriptionManager } from './managers/transcription.manager';
+import { TranscriptionMeterManager } from './managers/transcription-meter.manager';
 import { TranscriptionCapabilityClient } from './clients/transcription-capability.client';
 
 @Module({
@@ -30,6 +31,9 @@ import { TranscriptionCapabilityClient } from './clients/transcription-capabilit
     // file.transcribe_requested in onModuleInit, which is what asserts the
     // queue before FileProcessingManager can publish into it.
     TranscriptionManager,
+    // Multimodal batch 4 - PAYG metering per transcription attempt. PaygMeter
+    // comes from the @Global() EntitlementsModule in AppModule.
+    TranscriptionMeterManager,
     TranscriptionCapabilityClient,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],

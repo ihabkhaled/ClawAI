@@ -4598,6 +4598,7 @@ export const de: TranslationDictionary = {
         CODING_AGENT: 'Coding-Agent',
         WORKSPACE_ACTION: 'Workspace-Aktion',
         ROUTING: 'Routing',
+        TRANSCRIPTION: 'Transkription',
       },
       kind: {
         PLAN_GRANT: 'Tarif-Kontingent',

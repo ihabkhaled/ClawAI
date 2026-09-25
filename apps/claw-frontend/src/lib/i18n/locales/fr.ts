@@ -4604,6 +4604,7 @@ export const fr: TranslationDictionary = {
         CODING_AGENT: 'Agent de code',
         WORKSPACE_ACTION: 'Action d’espace',
         ROUTING: 'Routage',
+        TRANSCRIPTION: 'Transcription',
       },
       kind: {
         PLAN_GRANT: 'Allocation du forfait',

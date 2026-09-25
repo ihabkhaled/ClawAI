@@ -4581,6 +4581,7 @@ export const it: TranslationDictionary = {
         CODING_AGENT: 'Agente di codice',
         WORKSPACE_ACTION: 'Azione workspace',
         ROUTING: 'Routing',
+        TRANSCRIPTION: 'Trascrizione',
       },
       kind: {
         PLAN_GRANT: 'Quota del piano',

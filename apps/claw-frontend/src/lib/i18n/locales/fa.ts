@@ -4529,6 +4529,7 @@ export const fa: TranslationDictionary = {
         CODING_AGENT: 'عامل برنامه‌نویسی',
         WORKSPACE_ACTION: 'اقدام فضای کاری',
         ROUTING: 'مسیریابی',
+        TRANSCRIPTION: 'رونویسی صوتی',
       },
       kind: {
         PLAN_GRANT: 'سهمیهٔ پلن',

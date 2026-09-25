@@ -7648,7 +7648,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 24635,
+          "bytes": 25264,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7794,7 +7794,7 @@
           "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
-          "bytes": 19249,
+          "bytes": 23802,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
         },
         {
@@ -8002,7 +8002,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 16472,
+          "bytes": 16748,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -8108,7 +8108,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5391
+        "value": 5392
       },
       "localeCount": 13,
       "locales": [
@@ -10102,7 +10102,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 38
+        "testFiles": 41
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10884,7 +10884,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1529,
+    "totalTestFiles": 1532,
     "workspaceCount": 25
   }
 }
