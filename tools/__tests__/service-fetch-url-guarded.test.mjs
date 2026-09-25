@@ -110,6 +110,35 @@ const EXEMPT_FILES = new Map([
     // downgrade.
     'uses assertSafeOutboundUrl + post-redirect re-check (stronger, user-supplied URLs)',
   ],
+  [
+    'apps/claw-research-service/src/modules/fetch/utilities/sidecar-client.utility.ts',
+    // ADR-121. POSTs to our own scraping sidecars on the private
+    // `claw-scrapers` network, so the endpoint is a private host ON PURPOSE and
+    // `assertSafeRequestUrl`'s allowlist is the wrong question. It refuses a
+    // cloud-metadata host, sends `redirect: 'error'`, bounds the body, and
+    // `buildSidecarResult` re-checks the page's FINAL url with
+    // `assertSafeOutboundUrl` before anything is used.
+    'internal sidecar endpoint (ADR-121): metadata-host refusal, no redirects, final URL re-checked',
+  ],
+  // ADR-121's escalation chain. Each target URL is user-supplied, so each
+  // adapter uses research's own guard — the same one the crawler above is
+  // exempt for — instead of the shared allowlist guard.
+  [
+    'apps/claw-research-service/src/modules/fetch/adapters/archive-snapshot-fetch.adapter.ts',
+    'ADR-121: target via assertPublicThirdPartyUrl; every hop via followRedirectsSafely (assertSafeOutboundUrl); availability lookup is a fixed host',
+  ],
+  [
+    'apps/claw-research-service/src/modules/fetch/adapters/official-api-fetch.adapter.ts',
+    'ADR-121: every hop via followRedirectsSafely (assertSafeOutboundUrl, private hosts refused)',
+  ],
+  [
+    'apps/claw-research-service/src/modules/fetch/adapters/reader-proxy-fetch.adapter.ts',
+    'ADR-121: target via assertPublicThirdPartyUrl (assertSafeOutboundUrl + signed-in-host and credential-param refusal); redirect: error',
+  ],
+  [
+    'apps/claw-research-service/src/modules/fetch/adapters/robots-txt.adapter.ts',
+    'ADR-121: every hop via followRedirectsSafely (assertSafeOutboundUrl, private hosts refused)',
+  ],
 ]);
 
 /**
