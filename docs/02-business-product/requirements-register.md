@@ -108,7 +108,7 @@ _inferred_ until the owner confirms it.
   metadata.
 - **Status:** done · **Priority:** high (security)
 - **Source:** found by the ADR-126 flagship audit, 2026-09-26.
-- **Current state:** fixed by `fix(agent): check organization membership on every fleet endpoint`. `OrganizationAccessService`
+- **Current state:** fixed in commit `cbe566511`. `OrganizationAccessService`
   (`apps/claw-agent-service/src/modules/fleet/services/organization-access.service.ts`)
   checks the caller's own membership in the service layer. Members may read the
   member list; OWNER/ADMIN may add members, change the policy, set SSO metadata

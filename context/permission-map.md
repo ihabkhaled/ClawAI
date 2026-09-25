@@ -120,7 +120,7 @@ they stay different permissions. Two consequences that are easy to get wrong:
 `agent/organizations/*` in agent-service is gated by **organization membership
 and organization role** (`OWNER`/`ADMIN`/`MEMBER`), not by a catalog
 permission. `OrganizationAccessService` checks it in the service layer
-(REQ-SEC-001, fixed 2026-09-26).
+(REQ-SEC-001, fixed 2026-09-26 in `cbe566511`).
 
 | Action                                         | Who                          |
 | ---------------------------------------------- | ---------------------------- |
