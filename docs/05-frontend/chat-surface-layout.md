@@ -158,6 +158,45 @@ CSS only, no pixel heights: rule 40 §22, pinned by
 serves the main checkout, so the 740×360 browser case must be run again once
 this code is deployed.
 
+### The floating rail's gutter on a phone (2026-09-25)
+
+The device matrix found two collisions with the floating feedback launcher,
+which floats at the inline-end edge just above the composer (rule 36):
+
+- at 390×844 the launcher (− handle + button) and the labelled "Jump to latest"
+  pill sat on the first words of the assistant's reply;
+- at 740×360 (`sm` width, so the action rail is rendered) the launcher's − sat
+  on the action rail.
+
+The fix is CSS only (globals.css, `@layer utilities`), keyed on the launcher's
+own state with `:has()` so no JS mirrors it:
+
+| Width         | While `[data-feedback-launcher="expanded"]` is on the page                                                      |
+| ------------- | --------------------------------------------------------------------------------------------------------------- |
+| `< sm`        | every `.chat-message-row` (VirtualizedMessageItem) gets `padding-inline-end: var(--floating-rail-gutter)`       |
+| `sm` … `< md` | `.chat-thread-body` (the shell's body row) gets the same, so the action rail moves out of the launcher's column |
+| `≥ md`        | nothing — the launcher's desktop offset and the bounded column already clear it                                 |
+
+`--floating-rail-gutter` is the rail's own footprint from the viewport edge
+(`1rem` offset + one 44px target + `0.5rem` air), not another component's
+height. The composer keeps its full width: the launcher's floor already sits
+above it. Collapsed to its edge tab the launcher covers nothing, so the gutter
+goes away. Below `sm`, "Jump to latest" is an icon-only circle (`max-sm:sr-only`
+label, full `aria-label`) at `end-3`, inside the same strip. Logical side only,
+so Arabic and Persian mirror with no `rtl:` twin. Pinned by
+`chat-surface-layout-contract.test.ts`; **not re-run live yet.**
+
+### Attachments on every composer (2026-09-25)
+
+`hooks/chat/use-composer-attachment-surface.ts` is the one per-attachment UI:
+the tray (preview, state line, Stop processing for a video, cancel for a file
+still uploading) and the chip strip (uploads that never got an id — failed, not
+supported). The chat composer, Compare, the in-thread Compare dialog and
+`OrchestrationPageShell` (every lab) all render `ComposerAttachmentTray` +
+`ComposerAttachmentChips` from it. Do not build a second one. The pending tile's
+cancel calls `dismissUpload`, which aborts the upload (`useChunkedUpload`
+`signal`; no further chunk, one `DELETE /files/upload/chunked/:uploadId`).
+
 ## The model picker
 
 `components/chat/model-picker.tsx` is render-only over

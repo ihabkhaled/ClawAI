@@ -620,6 +620,7 @@ export const de: TranslationDictionary = {
       stillUploadingRefusal: 'Warte, bis der Anhang vollständig hochgeladen ist, bevor du sendest.',
       tooMany: 'Du kannst höchstens {max} Dateien pro Nachricht anhängen.',
       remove: '{name} entfernen',
+      cancelUpload: 'Hochladen von {name} abbrechen',
       trayLabel: 'Angehängte Dateien',
       play: 'Abspielen',
       loading: 'Wird geladen…',

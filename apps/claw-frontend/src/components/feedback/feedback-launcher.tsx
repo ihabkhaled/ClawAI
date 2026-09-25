@@ -25,6 +25,7 @@ export function FeedbackLauncher({ onOpen }: FeedbackLauncherProps) {
         variant="unstyled"
         size="unstyled"
         className={FEEDBACK_LAUNCHER_EDGE_TAB_CLASSES}
+        data-feedback-launcher="collapsed"
         aria-label={t('feedback.launcher.showAriaLabel')}
         title={t('feedback.launcher.showAriaLabel')}
         onClick={expand}
@@ -34,7 +35,8 @@ export function FeedbackLauncher({ onOpen }: FeedbackLauncherProps) {
   }
 
   return (
-    <div className={FEEDBACK_LAUNCHER_STACK_CLASSES}>
+    // `expanded` is what the chat transcript's rail gutter keys on (rule 36 §12).
+    <div className={FEEDBACK_LAUNCHER_STACK_CLASSES} data-feedback-launcher="expanded">
       <Button
         type="button"
         variant="ghost"

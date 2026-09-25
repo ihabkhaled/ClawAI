@@ -619,6 +619,7 @@ export const fr: TranslationDictionary = {
         "Attendez la fin du téléchargement de la pièce jointe avant d'envoyer.",
       tooMany: 'Vous pouvez joindre jusqu’à {max} fichiers par message.',
       remove: 'Retirer {name}',
+      cancelUpload: 'Annuler l’envoi de {name}',
       trayLabel: 'Fichiers joints',
       play: 'Lecture',
       loading: 'Chargement…',

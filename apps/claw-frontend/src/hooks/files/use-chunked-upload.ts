@@ -9,7 +9,11 @@ import {
   UPLOAD_PROGRESS_TICK_MS,
 } from '@/constants/chunked-upload.constants';
 import { filesRepository } from '@/repositories/files/files.repository';
-import type { UseChunkedUploadParams, UseChunkedUploadReturn } from '@/types/upload-progress.types';
+import type {
+  ChunkedUploadCallOptions,
+  UseChunkedUploadParams,
+  UseChunkedUploadReturn,
+} from '@/types/upload-progress.types';
 import {
   computeBackoffMs,
   computeChunkCount,
@@ -17,8 +21,10 @@ import {
   computeUploadProgress,
   shouldChunkUpload,
   sleep,
+  throwIfUploadAborted,
 } from '@/utilities/chunked-upload.utility';
 import { readFileAsBase64 } from '@/utilities/file-read.utility';
+import { logger } from '@/utilities/logger.utility';
 
 /**
  * Uploads a `File` through the same secure pipeline every attachment uses,
@@ -31,6 +37,12 @@ import { readFileAsBase64 } from '@/utilities/file-read.utility';
  *
  * A file at or below the threshold still goes through the original single-shot
  * `/files/upload` request — chunking a 50KB image would be pure overhead.
+ *
+ * `options.signal` is the user taking the file back mid-upload (removing its
+ * tile). Every request carries it, the chunk loop and the retry loop check it
+ * before each request, and an aborted chunked upload DELETEs its server
+ * session once (best effort — the server's TTL sweep is the backstop), so the
+ * temp chunks are freed now rather than when the session expires.
  */
 export function useChunkedUpload({
   onProgress,
@@ -58,14 +70,22 @@ export function useChunkedUpload({
   );
 
   const uploadOneChunk = useCallback(
-    async (uploadId: string, index: number, base64: string): Promise<void> => {
+    async (
+      uploadId: string,
+      index: number,
+      base64: string,
+      signal: AbortSignal | undefined,
+    ): Promise<void> => {
       let lastError: unknown;
       for (let attempt = 1; attempt <= CHUNKED_UPLOAD_MAX_RETRIES_PER_CHUNK; attempt += 1) {
+        throwIfUploadAborted(signal);
         try {
-          await filesRepository.uploadChunk(uploadId, index, base64);
+          await filesRepository.uploadChunk(uploadId, index, base64, signal);
           return;
         } catch (attemptError) {
           lastError = attemptError;
+          // An aborted request is not a flaky network: no retry, no backoff.
+          throwIfUploadAborted(signal);
           if (attempt < CHUNKED_UPLOAD_MAX_RETRIES_PER_CHUNK) {
             await sleep(computeBackoffMs(attempt));
           }
@@ -77,70 +97,97 @@ export function useChunkedUpload({
   );
 
   const uploadChunked = useCallback(
-    async (file: File): Promise<string> => {
+    async (file: File, signal: AbortSignal | undefined): Promise<string> => {
       const totalChunks = computeChunkCount(file.size, CHUNKED_UPLOAD_CHUNK_BYTES);
       const key = `${file.name}:${String(file.size)}:${String(file.lastModified)}`;
       const startedAt = Date.now();
+      let uploadId: string | null = null;
 
-      let uploadId: string;
-      let alreadyReceived = new Set<number>();
-      const existing = sessionRef.current;
-      if (existing !== null && existing.key === key) {
-        // Resume: ask the server which chunks already landed rather than
-        // re-sending everything after a dropped connection.
-        const status = await filesRepository.getChunkedUploadStatus(existing.uploadId);
-        uploadId = existing.uploadId;
-        alreadyReceived = new Set(status.receivedChunks);
-      } else {
-        const session = await filesRepository.initChunkedUpload({
-          filename: file.name,
-          mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
-          sizeBytes: file.size,
-          totalChunks,
-        });
-        uploadId = session.uploadId;
-        sessionRef.current = { key, uploadId, totalChunks };
-      }
+      try {
+        let alreadyReceived = new Set<number>();
+        const existing = sessionRef.current;
+        if (existing !== null && existing.key === key) {
+          // Resume: ask the server which chunks already landed rather than
+          // re-sending everything after a dropped connection.
+          uploadId = existing.uploadId;
+          const status = await filesRepository.getChunkedUploadStatus(existing.uploadId);
+          alreadyReceived = new Set(status.receivedChunks);
+        } else {
+          const session = await filesRepository.initChunkedUpload(
+            {
+              filename: file.name,
+              mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
+              sizeBytes: file.size,
+              totalChunks,
+            },
+            signal,
+          );
+          uploadId = session.uploadId;
+          sessionRef.current = { key, uploadId, totalChunks };
+        }
 
-      let bytesUploaded = 0;
-      for (let index = 0; index < totalChunks; index += 1) {
-        const { start, end } = computeChunkRange(index, file.size, CHUNKED_UPLOAD_CHUNK_BYTES);
-        if (alreadyReceived.has(index)) {
+        let bytesUploaded = 0;
+        for (let index = 0; index < totalChunks; index += 1) {
+          throwIfUploadAborted(signal);
+          const { start, end } = computeChunkRange(index, file.size, CHUNKED_UPLOAD_CHUNK_BYTES);
+          if (alreadyReceived.has(index)) {
+            bytesUploaded += end - start;
+            emitProgress(bytesUploaded, file.size, startedAt);
+            continue;
+          }
+          const blob = file.slice(start, end);
+          const base64 = await readFileAsBase64(new File([blob], file.name));
+          // A failure leaves the session on the server (TTL-bound); the next
+          // call for this same File resumes from here instead of restarting.
+          await uploadOneChunk(uploadId, index, base64, signal);
           bytesUploaded += end - start;
           emitProgress(bytesUploaded, file.size, startedAt);
-          continue;
         }
-        const blob = file.slice(start, end);
-        const base64 = await readFileAsBase64(new File([blob], file.name));
-        try {
-          await uploadOneChunk(uploadId, index, base64);
-        } catch (chunkError) {
-          // The session survives on the server (TTL-bound); the next call for
-          // this same File resumes from here instead of restarting.
-          throw chunkError;
-        }
-        bytesUploaded += end - start;
-        emitProgress(bytesUploaded, file.size, startedAt);
-      }
 
-      const uploaded = await filesRepository.completeChunkedUpload(uploadId);
-      sessionRef.current = null;
-      return uploaded.id;
+        // Past this point the file is being stored; an abort no longer applies.
+        throwIfUploadAborted(signal);
+        const uploaded = await filesRepository.completeChunkedUpload(uploadId);
+        sessionRef.current = null;
+        return uploaded.id;
+      } catch (chunkedError) {
+        if (signal?.aborted === true) {
+          if (sessionRef.current?.key === key) {
+            sessionRef.current = null;
+          }
+          if (uploadId !== null) {
+            const abortedId = uploadId;
+            // One DELETE, never retried: the server sweeps expired sessions anyway.
+            filesRepository.abortChunkedUpload(abortedId).catch(() => {
+              logger.warn({
+                component: 'files',
+                action: 'chunked-upload-abort-failed',
+                message: 'Deleting an aborted upload session failed; the server TTL will free it',
+                details: { uploadId: abortedId },
+              });
+            });
+          }
+        }
+        throw chunkedError;
+      }
     },
     [emitProgress, uploadOneChunk],
   );
 
   const uploadSingleShot = useCallback(
-    async (file: File): Promise<string> => {
+    async (file: File, signal: AbortSignal | undefined): Promise<string> => {
       const startedAt = Date.now();
       const content = await readFileAsBase64(file);
-      const uploaded = await filesRepository.uploadFile({
-        filename: file.name,
-        mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
-        sizeBytes: file.size,
-        storagePath: `/uploads/${file.name}`,
-        content,
-      });
+      throwIfUploadAborted(signal);
+      const uploaded = await filesRepository.uploadFile(
+        {
+          filename: file.name,
+          mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
+          sizeBytes: file.size,
+          storagePath: `/uploads/${file.name}`,
+          content,
+        },
+        signal,
+      );
       emitProgress(file.size, file.size, startedAt);
       return uploaded.id;
     },
@@ -148,7 +195,9 @@ export function useChunkedUpload({
   );
 
   const upload = useCallback(
-    async (file: File): Promise<string> => {
+    async (file: File, options?: ChunkedUploadCallOptions): Promise<string> => {
+      const signal = options?.signal;
+      throwIfUploadAborted(signal);
       setIsUploading(true);
       setError(null);
       setProgress(computeUploadProgress({ bytesUploaded: 0, totalBytes: file.size, elapsedMs: 0 }));
@@ -169,12 +218,15 @@ export function useChunkedUpload({
 
       try {
         const fileId = shouldChunkUpload(file.size, CHUNKED_UPLOAD_THRESHOLD_BYTES)
-          ? await uploadChunked(file)
-          : await uploadSingleShot(file);
+          ? await uploadChunked(file, signal)
+          : await uploadSingleShot(file, signal);
         return fileId;
       } catch (uploadError) {
         const normalized = uploadError instanceof Error ? uploadError : new Error('Upload failed');
-        setError(normalized);
+        // Taking a file back is not a failure worth reporting.
+        if (signal?.aborted !== true) {
+          setError(normalized);
+        }
         throw normalized;
       } finally {
         window.clearInterval(tick);

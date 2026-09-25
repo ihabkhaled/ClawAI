@@ -16,3 +16,14 @@ export interface ChunkedUploadStatus {
   receivedChunks: number[];
   complete: boolean;
 }
+
+/**
+ * Answer of `DELETE /files/upload/chunked/:uploadId`. `aborted: false` means
+ * there was nothing to abort — already completed, already aborted, expired, or
+ * not this user's session (indistinguishable on purpose). Never an error, so a
+ * client retrying its abort cannot fail.
+ */
+export interface ChunkedUploadAbortResult {
+  uploadId: string;
+  aborted: boolean;
+}

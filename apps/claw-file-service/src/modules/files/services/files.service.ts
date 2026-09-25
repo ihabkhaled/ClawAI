@@ -38,7 +38,10 @@ import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FileSecurityManager } from '../managers/file-security.manager';
 import { ChunkedUploadManager } from '../managers/chunked-upload.manager';
-import { type ChunkedUploadStatus } from '../types/chunked-upload.types';
+import {
+  type ChunkedUploadAbortResult,
+  type ChunkedUploadStatus,
+} from '../types/chunked-upload.types';
 import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
 import {
@@ -138,6 +141,11 @@ export class FilesService {
 
   getChunkedUploadStatus(userId: string, uploadId: string): ChunkedUploadStatus {
     return this.chunkedUploadManager.getStatus(userId, uploadId);
+  }
+
+  /** Owner-only, idempotent: frees an abandoned session's temp chunks now, not at TTL. */
+  abortChunkedUpload(userId: string, uploadId: string): ChunkedUploadAbortResult {
+    return this.chunkedUploadManager.abort(userId, uploadId);
   }
 
   /**

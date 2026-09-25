@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react';
 
+import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
@@ -152,6 +153,9 @@ export function OrchestrationPageShell({
                   {composer === undefined ? null : (
                     <ComposerAttachmentTray {...composer.attachmentTray} />
                   )}
+                  {composer === undefined ? null : (
+                    <ComposerAttachmentChips {...composer.attachmentChips} />
+                  )}
                   <RichPromptTextarea
                     id="orchestration-prompt"
                     value={prompt}
@@ -207,8 +211,9 @@ export function OrchestrationPageShell({
                 {/* An upload runs in the background after a paste or a drop,
                     and until now the labs said nothing while it did — a large
                     file looked like nothing had happened, so people dropped it
-                    again. The count is a bare number on purpose: it needs no
-                    translation and avoids a 14th copy of the same sentence. */}
+                    again. Each file now has its own tile and state above the
+                    prompt (the same tray + chips as chat), so this line is the
+                    same one-sentence summary the chat composer shows. */}
                 {composer !== undefined && composer.isUploading ? (
                   <p
                     data-testid="orchestration-upload-status"
@@ -216,7 +221,6 @@ export function OrchestrationPageShell({
                     className="text-muted-foreground text-xs"
                   >
                     {t('chat.attachment.uploading')}
-                    {composer.pendingCount > 0 ? ` (${String(composer.pendingCount)})` : ''}
                   </p>
                 ) : null}
 

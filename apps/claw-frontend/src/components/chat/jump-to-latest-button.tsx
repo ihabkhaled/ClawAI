@@ -17,6 +17,12 @@ import type { JumpToLatestButtonProps } from '@/types';
  * Kept intentionally small (size="sm", icon + short label) so it does not
  * obscure the message above it. Positioning is the parent's responsibility:
  * place this inside a `relative` ancestor of the scroll container.
+ *
+ * Below `sm` it is an icon-only circle (the label stays for screen readers
+ * and in `aria-label`): the labelled pill was ~150px wide and covered the
+ * first words of the reply on a phone. The circle sits at the inline-end
+ * edge, inside the strip the transcript rows give up for the floating rail
+ * (rule 36 §12), so it covers no text there.
  */
 export function JumpToLatestButton({
   visible,
@@ -38,10 +44,11 @@ export function JumpToLatestButton({
       size="sm"
       onClick={onClick}
       aria-label={hasUnread ? `${label} (${String(unreadCount)})` : label}
-      className="absolute end-3 bottom-3 z-20 gap-1.5 rounded-full shadow-md"
+      className="absolute end-3 bottom-3 z-20 gap-1.5 rounded-full shadow-md max-sm:px-0"
+      data-jump-to-latest=""
     >
       <ChevronDown className="h-4 w-4" />
-      <span>{label}</span>
+      <span className="max-sm:sr-only">{label}</span>
       {hasUnread ? (
         <span
           aria-hidden="true"

@@ -72,6 +72,12 @@ export type ChunkedUploadStatus = {
   complete: boolean;
 };
 
+/** `DELETE /files/upload/chunked/:uploadId` — `aborted: false` when nothing was left to drop. */
+export type ChunkedUploadAbortResult = {
+  uploadId: string;
+  aborted: boolean;
+};
+
 export type InitChunkedUploadRequest = {
   filename: string;
   mimeType: string;

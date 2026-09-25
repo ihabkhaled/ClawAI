@@ -5,6 +5,18 @@ import {
 } from '@/constants/chunked-upload.constants';
 import type { UploadProgressSnapshot } from '@/types/upload-progress.types';
 
+/**
+ * Stops an upload the user walked away from. Checked before every request and
+ * after every failed attempt, so an aborted upload sends no further chunk and
+ * never sleeps through another backoff. The caller tells an abort from a real
+ * failure by reading its own signal, not by parsing this message.
+ */
+export function throwIfUploadAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted === true) {
+    throw new Error('Upload aborted');
+  }
+}
+
 /** Promise-based delay, for the bounded backoff between chunk retry attempts. */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {

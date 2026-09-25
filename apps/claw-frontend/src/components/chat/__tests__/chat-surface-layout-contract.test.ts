@@ -207,4 +207,38 @@ describe('chat surface layout contract (rules/40)', () => {
 
     expect(read(COMPOSER)).toContain('composer-textarea-short-cap');
   });
+
+  it('keeps the floating rail off the transcript and the action rail below md (rule 36 §12)', () => {
+    // Found live 2026-09-25: at 390x844 the feedback launcher and "Jump to
+    // latest" covered the first words of the reply; at 740x360 the launcher's
+    // − sat on the thread's action rail. The fix is a CSS gutter keyed on the
+    // launcher being expanded — no JS, no pixel height, logical side only.
+    const css = withoutComments(read(GLOBALS_CSS));
+    expect(css).toMatch(/--floating-rail-gutter:\s*calc\(1rem \+ 2\.75rem \+ 0\.5rem\);/);
+    expect(css).toMatch(
+      /@media \(width < 40rem\)\s*\{\s*body:has\(\[data-feedback-launcher='expanded'\]\) \.chat-message-row\s*\{\s*padding-inline-end: var\(--floating-rail-gutter\);/,
+    );
+    expect(css).toMatch(
+      /@media \(40rem <= width < 48rem\)\s*\{\s*body:has\(\[data-feedback-launcher='expanded'\]\) \.chat-thread-body\s*\{\s*padding-inline-end: var\(--floating-rail-gutter\);/,
+    );
+    // Never a physical side: the gutter must mirror in Arabic and Persian.
+    expect(css).not.toMatch(/\.chat-message-row\s*\{\s*padding-right/);
+    expect(css).not.toMatch(/\.chat-thread-body\s*\{\s*padding-right/);
+
+    expect(read(resolve(CHAT_COMPONENTS, 'virtualized-message-item.tsx'))).toContain(
+      'chat-message-row',
+    );
+    expect(read(SHELL)).toContain('chat-thread-row chat-thread-body');
+
+    const launcher = read(resolve(CHAT_COMPONENTS, '../feedback/feedback-launcher.tsx'));
+    expect(launcher).toContain('data-feedback-launcher="expanded"');
+    expect(launcher).toContain('data-feedback-launcher="collapsed"');
+
+    // Icon-only below sm, inline-end, and no pixel offsets.
+    const jump = withoutComments(read(resolve(CHAT_COMPONENTS, 'jump-to-latest-button.tsx')));
+    expect(jump).toContain('max-sm:sr-only');
+    expect(jump).toContain('end-3');
+    expect(jump).not.toMatch(/\b(?:left|right)-/);
+    expect(jump.match(ARBITRARY_HEIGHT) ?? []).toEqual([]);
+  });
 });

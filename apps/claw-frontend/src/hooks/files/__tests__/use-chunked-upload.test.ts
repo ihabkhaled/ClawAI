@@ -21,6 +21,7 @@ vi.mock('@/repositories/files/files.repository', () => ({
     uploadChunk: vi.fn(),
     getChunkedUploadStatus: vi.fn(),
     completeChunkedUpload: vi.fn(),
+    abortChunkedUpload: vi.fn(),
   },
 }));
 
@@ -219,5 +220,101 @@ describe('useChunkedUpload', () => {
       .mocked(filesRepository.uploadChunk)
       .mock.calls.map((call) => call[1]);
     expect(secondPassIndexes).not.toContain(0);
+  });
+  describe('abort (the user takes the file back mid-upload)', () => {
+    it('sends no further chunk, deletes the server session once, and reports no error', async () => {
+      vi.mocked(filesRepository.initChunkedUpload).mockResolvedValue({
+        uploadId: 'up-abort',
+        totalChunks: 3,
+        receivedChunks: [],
+        complete: false,
+      });
+      vi.mocked(filesRepository.abortChunkedUpload).mockResolvedValue({
+        uploadId: 'up-abort',
+        aborted: true,
+      });
+      const controller = new AbortController();
+      // Chunk 0 lands, and the user removes the tile while it is answering.
+      vi.mocked(filesRepository.uploadChunk).mockImplementation(() => {
+        controller.abort();
+        return Promise.resolve({
+          uploadId: 'up-abort',
+          totalChunks: 3,
+          receivedChunks: [0],
+          complete: false,
+        });
+      });
+
+      const { result } = renderHook(() => useChunkedUpload());
+      await act(async () => {
+        await expect(
+          result.current.upload(smallFile(25), { signal: controller.signal }),
+        ).rejects.toThrow('Upload aborted');
+      });
+
+      expect(filesRepository.uploadChunk).toHaveBeenCalledTimes(1);
+      expect(filesRepository.completeChunkedUpload).not.toHaveBeenCalled();
+      expect(filesRepository.abortChunkedUpload).toHaveBeenCalledTimes(1);
+      expect(filesRepository.abortChunkedUpload).toHaveBeenCalledWith('up-abort');
+      expect(result.current.error).toBeNull();
+      expect(result.current.isUploading).toBe(false);
+    });
+
+    it('does not retry or back off a chunk request the abort cancelled', async () => {
+      vi.mocked(filesRepository.initChunkedUpload).mockResolvedValue({
+        uploadId: 'up-abort-2',
+        totalChunks: 1,
+        receivedChunks: [],
+        complete: false,
+      });
+      vi.mocked(filesRepository.abortChunkedUpload).mockResolvedValue({
+        uploadId: 'up-abort-2',
+        aborted: true,
+      });
+      const controller = new AbortController();
+      vi.mocked(filesRepository.uploadChunk).mockImplementation(() => {
+        controller.abort();
+        return Promise.reject(new Error('canceled'));
+      });
+
+      const { result } = renderHook(() => useChunkedUpload());
+      await act(async () => {
+        await expect(
+          result.current.upload(smallFile(8), { signal: controller.signal }),
+        ).rejects.toThrow('Upload aborted');
+      });
+
+      // One attempt, not CHUNKED_UPLOAD_MAX_RETRIES_PER_CHUNK (3).
+      expect(filesRepository.uploadChunk).toHaveBeenCalledTimes(1);
+      expect(filesRepository.abortChunkedUpload).toHaveBeenCalledWith('up-abort-2');
+    });
+
+    it('passes the signal to every request so the one in flight is cancelled too', async () => {
+      vi.mocked(filesRepository.uploadFile).mockResolvedValue({ id: 'file-9' } as never);
+      const controller = new AbortController();
+      const { result } = renderHook(() => useChunkedUpload());
+
+      await act(async () => {
+        await result.current.upload(smallFile(3), { signal: controller.signal });
+      });
+
+      expect(vi.mocked(filesRepository.uploadFile).mock.calls[0]?.[1]).toBe(controller.signal);
+    });
+
+    it('an upload aborted before it starts sends nothing at all', async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const { result } = renderHook(() => useChunkedUpload());
+
+      await act(async () => {
+        await expect(
+          result.current.upload(smallFile(25), { signal: controller.signal }),
+        ).rejects.toThrow('Upload aborted');
+      });
+
+      expect(filesRepository.initChunkedUpload).not.toHaveBeenCalled();
+      expect(filesRepository.uploadFile).not.toHaveBeenCalled();
+      expect(filesRepository.abortChunkedUpload).not.toHaveBeenCalled();
+    });
   });
 });

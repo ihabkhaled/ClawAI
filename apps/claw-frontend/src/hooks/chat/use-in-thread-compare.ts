@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { MAX_PARALLEL_MODELS, MIN_PARALLEL_MODELS } from '@/constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums';
+import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
@@ -42,11 +43,11 @@ export function useInThreadCompare({
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const { ingestFiles, removeAttachment, isUploading, pendingUploads, progress } =
-    useComposerAttachments({
-      selectedFileIds,
-      onChange: setSelectedFileIds,
-    });
+  const attachments = useComposerAttachments({
+    selectedFileIds,
+    onChange: setSelectedFileIds,
+  });
+  const { ingestFiles, isUploading } = attachments;
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -107,6 +108,15 @@ export function useInThreadCompare({
   // Never while a file is still uploading, or it would go out without it.
   const canSend =
     selectedModels.length >= MIN_PARALLEL_MODELS && !mutation.isPending && !isUploading;
+
+  // The same tray + chip strip as the chat composer: per-file state, Stop
+  // processing for a video, cancel for a file still uploading.
+  const { attachmentTray, attachmentChips } = useComposerAttachmentSurface({
+    selectedFileIds,
+    onSelectedFileIdsChange: setSelectedFileIds,
+    attachments,
+    disabled: mutation.isPending,
+  });
 
   const handleCompare = useCallback(
     (promptValue: string) => {
@@ -185,12 +195,7 @@ export function useInThreadCompare({
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
-    attachmentTray: {
-      fileIds: selectedFileIds,
-      pendingUploads,
-      progress,
-      onRemove: removeAttachment,
-      disabled: mutation.isPending,
-    },
+    attachmentTray,
+    attachmentChips,
   };
 }

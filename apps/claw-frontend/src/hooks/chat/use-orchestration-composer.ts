@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
+import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
@@ -38,12 +39,20 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
-  const { ingestFiles, removeAttachment, isUploading, pendingCount, pendingUploads, progress } =
-    useComposerAttachments({
-      selectedFileIds,
-      onChange: setSelectedFileIds,
-      disabled,
-    });
+  const attachments = useComposerAttachments({
+    selectedFileIds,
+    onChange: setSelectedFileIds,
+    disabled,
+  });
+  const { ingestFiles, isUploading, pendingCount, progress } = attachments;
+  // The same tray + chip strip as the chat composer: per-file state, Stop
+  // processing for a video, cancel for a file still uploading.
+  const { attachmentTray, attachmentChips } = useComposerAttachmentSurface({
+    selectedFileIds,
+    onSelectedFileIdsChange: setSelectedFileIds,
+    attachments,
+    disabled,
+  });
 
   // NONE is expressed by omitting the fields, not by sending the string. The
   // backend resolves an absent mode to NONE anyway, and an absent field keeps
@@ -69,13 +78,8 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
     isUploading,
     pendingCount,
     progress,
-    attachmentTray: {
-      fileIds: selectedFileIds,
-      pendingUploads,
-      progress,
-      onRemove: removeAttachment,
-      disabled,
-    },
+    attachmentTray,
+    attachmentChips,
     research,
     setResearch,
     researchProviders: providerQuery.providers,

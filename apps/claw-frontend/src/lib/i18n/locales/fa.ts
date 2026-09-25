@@ -607,6 +607,7 @@ export const fa: TranslationDictionary = {
       stillUploadingRefusal: 'قبل از ارسال، صبر کنید تا بارگذاری پیوست تمام شود.',
       tooMany: 'در هر پیام حداکثر {max} فایل می‌توانید پیوست کنید.',
       remove: 'حذف {name}',
+      cancelUpload: 'لغو بارگذاری {name}',
       trayLabel: 'فایل‌های پیوست‌شده',
       play: 'پخش',
       loading: 'در حال بارگذاری…',

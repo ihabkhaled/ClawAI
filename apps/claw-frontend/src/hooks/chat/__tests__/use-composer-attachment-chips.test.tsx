@@ -18,7 +18,7 @@ vi.mock('@/repositories/files/files.repository', () => ({
 vi.mock('@/hooks/files/use-files', () => ({
   useFiles: () => ({ files: mockFiles() }),
 }));
-vi.mock('@/lib/i18n/use-translation', () => ({
+vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, string | number>) =>
       params === undefined ? key : `${key}:${Object.values(params).join(',')}`,

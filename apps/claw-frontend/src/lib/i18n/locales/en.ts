@@ -605,6 +605,7 @@ export const en: TranslationDictionary = {
       stillUploadingRefusal: 'Wait for the attachment to finish uploading before sending.',
       tooMany: 'You can attach up to {max} files per message.',
       remove: 'Remove {name}',
+      cancelUpload: 'Cancel uploading {name}',
       trayLabel: 'Attached files',
       play: 'Play',
       loading: 'Loading…',

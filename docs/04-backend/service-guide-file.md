@@ -61,16 +61,27 @@ The file service handles file uploads, local storage, content extraction, and ch
 
 ## API Endpoints
 
-| Method | Path                   | Auth   | Description                                                                                    |
-| ------ | ---------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| POST   | /                      | Bearer | Upload file (multipart/form-data)                                                              |
-| GET    | /                      | Bearer | List user's files (paginated) — top-level rows only unless `parentId` is given                 |
-| GET    | /:id                   | Bearer | Get file metadata                                                                              |
-| GET    | /:id/download          | Bearer | Download file content                                                                          |
-| GET    | /:id/chunks            | Bearer | Get file chunks                                                                                |
-| GET    | /:id/archive-entries   | Bearer | Every entry of an uploaded archive, extracted or skipped, with its status                      |
-| DELETE | /:id                   | Bearer | Delete file and chunks                                                                         |
-| POST   | /:id/processing/cancel | Bearer | Cancel a video still processing (owner-only; idempotent) — see Video processing → Cancellation |
+| Method | Path                      | Auth   | Description                                                                                            |
+| ------ | ------------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| POST   | /                         | Bearer | Upload file (multipart/form-data)                                                                      |
+| GET    | /                         | Bearer | List user's files (paginated) — top-level rows only unless `parentId` is given                         |
+| GET    | /:id                      | Bearer | Get file metadata                                                                                      |
+| GET    | /:id/download             | Bearer | Download file content                                                                                  |
+| GET    | /:id/chunks               | Bearer | Get file chunks                                                                                        |
+| GET    | /:id/archive-entries      | Bearer | Every entry of an uploaded archive, extracted or skipped, with its status                              |
+| DELETE | /:id                      | Bearer | Delete file and chunks                                                                                 |
+| POST   | /:id/processing/cancel    | Bearer | Cancel a video still processing (owner-only; idempotent) — see Video processing → Cancellation         |
+| DELETE | /upload/chunked/:uploadId | Bearer | Abort an in-progress chunked upload: drop the session and its temp chunks now (owner-only; idempotent) |
+
+`DELETE /files/upload/chunked/:uploadId` (2026-09-25) answers 200
+`{ uploadId, aborted }`. `aborted: false` for a session that is already
+completed, already aborted, expired, or another user's — the same answer on
+purpose, and a stranger's session is left untouched. `ChunkedUploadManager.abort`
+removes `<FILE_STORAGE_PATH>/.chunk-sessions/<uploadId>/` (the same `cleanup()`
+the completion path and the TTL sweep use); a chunk that arrives afterwards gets
+the ordinary 404. The frontend sends it once when the user removes a file still
+uploading (`useChunkedUpload` `signal`), never retried — the TTL sweep is the
+backstop.
 
 `GET /` answers with `{ data, meta }` as usual; every row also carries
 `childCount` (files extracted from it — above 0 marks an archive) and, when it

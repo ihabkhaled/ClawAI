@@ -156,4 +156,56 @@ describe('ChunkedUploadManager', () => {
 
     expect(() => manager.getStatus('user-1', session.uploadId)).toThrow(/not found/i);
   });
+  describe('abort (DELETE files/upload/chunked/:uploadId)', () => {
+    const openSession = (userId = 'user-1') =>
+      manager.init(userId, {
+        filename: 'clip.webm',
+        mimeType: 'video/webm',
+        sizeBytes: 8,
+        totalChunks: 2,
+      });
+
+    it("frees the owner's temp chunks at once and answers aborted: true", () => {
+      const session = openSession();
+      manager.receiveChunk('user-1', session.uploadId, 0, Buffer.from('AAAA').toString('base64'));
+      const dir = path.join(storageRoot, '.chunk-sessions', session.uploadId);
+      expect(fs.existsSync(dir)).toBe(true);
+
+      expect(manager.abort('user-1', session.uploadId)).toEqual({
+        uploadId: session.uploadId,
+        aborted: true,
+      });
+      expect(fs.existsSync(dir)).toBe(false);
+    });
+
+    it('is idempotent: a second abort answers aborted: false, never throws', () => {
+      const session = openSession();
+      manager.abort('user-1', session.uploadId);
+
+      expect(manager.abort('user-1', session.uploadId)).toEqual({
+        uploadId: session.uploadId,
+        aborted: false,
+      });
+    });
+
+    it("leaves another user's session untouched and answers like a missing one", () => {
+      const session = openSession('user-1');
+      manager.receiveChunk('user-1', session.uploadId, 0, Buffer.from('AAAA').toString('base64'));
+
+      expect(manager.abort('user-2', session.uploadId)).toEqual({
+        uploadId: session.uploadId,
+        aborted: false,
+      });
+      expect(manager.getStatus('user-1', session.uploadId).receivedChunks).toEqual([0]);
+    });
+
+    it('a chunk that arrives after the abort gets the ordinary not-found', () => {
+      const session = openSession();
+      manager.abort('user-1', session.uploadId);
+
+      expect(() =>
+        manager.receiveChunk('user-1', session.uploadId, 1, Buffer.from('BBBB').toString('base64')),
+      ).toThrow(/not found/i);
+    });
+  });
 });

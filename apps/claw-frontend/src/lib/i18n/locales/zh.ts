@@ -582,6 +582,7 @@ export const zh: TranslationDictionary = {
       stillUploadingRefusal: '请等待附件上传完成后再发送。',
       tooMany: '每条消息最多可附加 {max} 个文件。',
       remove: '移除 {name}',
+      cancelUpload: '取消上传 {name}',
       trayLabel: '已附加的文件',
       play: '播放',
       loading: '加载中…',

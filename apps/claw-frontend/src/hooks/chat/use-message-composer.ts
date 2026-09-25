@@ -9,9 +9,8 @@ import {
 } from '@/constants/chat.constants';
 import { MEDIA_QUERY_LG_UP } from '@/constants/media-query.constants';
 import { ComposerControlVariant, PlanFeature } from '@/enums';
-import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
-import { useComposerAttachmentChips } from '@/hooks/chat/use-composer-attachment-chips';
+import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useRegisterComposerDropTarget } from '@/hooks/chat/use-register-composer-drop-target';
@@ -45,36 +44,30 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     threadId: props.threadId ?? NEW_THREAD_DRAFT_KEY,
   });
 
-  const chipState = useComposerAttachmentChips({
+  // The same tray + chip strip every composer surface renders (Compare, the
+  // in-thread Compare dialog and the labs included).
+  const attachmentSource = useMemo(
+    () => ({
+      pendingUploads: state.pendingUploads,
+      progress: state.attachmentUploadProgress,
+      removeAttachment: state.removeAttachment,
+      uploads: state.attachmentUploads,
+      dismissUpload: state.dismissAttachmentUpload,
+    }),
+    [
+      state.attachmentUploadProgress,
+      state.attachmentUploads,
+      state.dismissAttachmentUpload,
+      state.pendingUploads,
+      state.removeAttachment,
+    ],
+  );
+  const { attachmentTray, attachmentChips } = useComposerAttachmentSurface({
     selectedFileIds: state.selectedFileIds,
     onSelectedFileIdsChange: state.setSelectedFileIds,
-    uploads: state.attachmentUploads,
-    onDismissUpload: state.dismissAttachmentUpload,
+    attachments: attachmentSource,
+    disabled: props.isPending,
   });
-  // One list per file. Selected files render as tray tiles (preview + remove)
-  // with the chip's state line; the chip strip keeps only uploads that never
-  // got an id — failed or not supported. In-flight uploads are tray tiles.
-  const attachmentChips = useMemo(
-    () => ({
-      listLabel: chipState.listLabel,
-      onRemove: chipState.onRemove,
-      chips: chipState.chips.filter(
-        (chip) => chip.fileId === null && chip.state !== ComposerAttachmentState.Uploading,
-      ),
-    }),
-    [chipState],
-  );
-  const statusByFileId = useMemo(
-    () =>
-      new Map(
-        chipState.chips.flatMap((chip) =>
-          chip.fileId === null || chip.note === null
-            ? []
-            : [[chip.fileId, `${chip.stateLabel} — ${chip.note}`] as const],
-        ),
-      ),
-    [chipState],
-  );
 
   // A whole-panel drop lands here: the thread panel reads this composer's
   // ingest function from the drop-target store.
@@ -101,15 +94,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     onFormSubmit: state.handleSubmit,
     onIngestFiles: state.ingestFiles,
     attachmentChips,
-    attachmentTray: {
-      fileIds: state.selectedFileIds,
-      pendingUploads: state.pendingUploads,
-      progress: state.attachmentUploadProgress,
-      onRemove: state.removeAttachment,
-      disabled: props.isPending,
-      statusByFileId,
-      processingCancelByFileId: chipState.processingCancelByFileId,
-    },
+    attachmentTray,
     toolbarProps: {
       selectedModel: props.selectedModel,
       onModelChange: props.onModelChange,

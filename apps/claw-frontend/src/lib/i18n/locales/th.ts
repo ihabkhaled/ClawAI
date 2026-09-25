@@ -596,6 +596,7 @@ export const th: TranslationDictionary = {
       stillUploadingRefusal: 'รอให้ไฟล์แนบอัปโหลดเสร็จก่อนส่ง',
       tooMany: 'แนบไฟล์ได้สูงสุด {max} ไฟล์ต่อข้อความ',
       remove: 'ลบ {name}',
+      cancelUpload: 'ยกเลิกการอัปโหลด {name}',
       trayLabel: 'ไฟล์ที่แนบ',
       play: 'เล่น',
       loading: 'กำลังโหลด…',

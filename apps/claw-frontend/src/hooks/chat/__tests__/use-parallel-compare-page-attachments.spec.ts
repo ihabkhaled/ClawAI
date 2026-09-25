@@ -15,6 +15,15 @@ vi.mock('@/repositories/chat/chat.repository', () => ({
   },
 }));
 
+// The attachment tray's status chips (shared with chat) translate through
+// this entry point and read the file list; neither is under test here.
+vi.mock('@/lib/i18n/use-translation', () => ({
+  useTranslation: () => ({ t: (k: string) => k }),
+}));
+vi.mock('@/hooks/files/use-files', () => ({
+  useFiles: () => ({ files: [] }),
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));

@@ -1611,6 +1611,11 @@
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/files/upload/chunked/:uploadId",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/files/upload/chunked/:uploadId/chunks/:index",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
@@ -7709,7 +7714,7 @@
           "file": "rules/35-super-administrator-and-privilege-boundaries.md"
         },
         {
-          "bytes": 7824,
+          "bytes": 8729,
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
@@ -8189,7 +8194,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5456
+        "value": 5457
       },
       "localeCount": 13,
       "locales": [
@@ -10187,7 +10192,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 593
+        "testFiles": 597
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10953,7 +10958,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 697,
+    "endpointCount": 698,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -10965,7 +10970,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1630,
+    "totalTestFiles": 1634,
     "workspaceCount": 25
   }
 }

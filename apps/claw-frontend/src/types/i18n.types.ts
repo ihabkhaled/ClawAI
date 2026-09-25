@@ -558,6 +558,7 @@ export type TranslationDictionary = {
       stillUploadingRefusal: string;
       tooMany: string;
       remove: string;
+      cancelUpload: string;
       trayLabel: string;
       play: string;
       loading: string;

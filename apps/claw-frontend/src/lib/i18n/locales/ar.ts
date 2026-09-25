@@ -599,6 +599,7 @@ export const ar: TranslationDictionary = {
       stillUploadingRefusal: 'انتظر حتى ينتهي رفع المرفق قبل الإرسال.',
       tooMany: 'يمكنك إرفاق {max} ملفات كحدٍّ أقصى في الرسالة الواحدة.',
       remove: 'إزالة {name}',
+      cancelUpload: 'إلغاء رفع {name}',
       trayLabel: 'الملفات المرفقة',
       play: 'تشغيل',
       loading: 'جارٍ التحميل…',

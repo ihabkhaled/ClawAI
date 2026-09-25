@@ -614,6 +614,7 @@ export const ru: TranslationDictionary = {
       stillUploadingRefusal: 'Дождитесь завершения загрузки вложения перед отправкой.',
       tooMany: 'К одному сообщению можно прикрепить не более {max} файлов.',
       remove: 'Удалить {name}',
+      cancelUpload: 'Отменить загрузку {name}',
       trayLabel: 'Прикреплённые файлы',
       play: 'Воспроизвести',
       loading: 'Загрузка…',

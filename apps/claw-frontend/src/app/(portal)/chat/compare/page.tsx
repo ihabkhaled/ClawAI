@@ -4,6 +4,7 @@ import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
@@ -62,6 +63,7 @@ export default function ComparePage() {
     setSelectedFileIds,
     ingestFiles,
     attachmentTray,
+    attachmentChips,
     upgradeFeature,
     clearUpgradeFeature,
   } = useParallelComparePage();
@@ -130,6 +132,7 @@ export default function ComparePage() {
           <Card>
             <CardContent className="pt-4">
               <ComposerAttachmentTray {...attachmentTray} />
+              <ComposerAttachmentChips {...attachmentChips} />
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}

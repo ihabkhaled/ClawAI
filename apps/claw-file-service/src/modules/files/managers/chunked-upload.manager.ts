@@ -10,6 +10,7 @@ import {
   CHUNKED_UPLOAD_SESSION_TTL_MS,
 } from '../constants/chunked-upload.constants';
 import {
+  type ChunkedUploadAbortResult,
   type ChunkedUploadManifest,
   type ChunkedUploadStatus,
 } from '../types/chunked-upload.types';
@@ -196,6 +197,32 @@ export class ChunkedUploadManager {
       );
     }
     return { manifest, buffer };
+  }
+
+  /**
+   * The owner walked away mid-upload (removed the chip, cancelled): drop the
+   * session and every chunk written so far, now instead of at TTL.
+   *
+   * Idempotent and enumeration-safe: a missing, expired, already-completed or
+   * someone else's session all answer `aborted: false`, and a stranger's
+   * session is left untouched. A chunk that lands after this finds no manifest
+   * and gets the ordinary 404.
+   */
+  abort(userId: string, uploadId: string): ChunkedUploadAbortResult {
+    let manifest: ChunkedUploadManifest;
+    try {
+      manifest = this.readManifest(uploadId);
+    } catch {
+      return { uploadId, aborted: false };
+    }
+    if (manifest.userId !== userId) {
+      return { uploadId, aborted: false };
+    }
+    this.cleanup(uploadId);
+    this.logger.log(
+      `abort: dropped upload session ${uploadId} (${String(manifest.receivedChunks.length)}/${String(manifest.totalChunks)} chunks received)`,
+    );
+    return { uploadId, aborted: true };
   }
 
   cleanup(uploadId: string): void {

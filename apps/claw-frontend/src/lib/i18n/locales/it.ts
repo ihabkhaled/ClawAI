@@ -620,6 +620,7 @@ export const it: TranslationDictionary = {
         "Attendi il completamento del caricamento dell'allegato prima di inviare.",
       tooMany: 'Puoi allegare fino a {max} file per messaggio.',
       remove: 'Rimuovi {name}',
+      cancelUpload: 'Annulla il caricamento di {name}',
       trayLabel: 'File allegati',
       play: 'Riproduci',
       loading: 'Caricamento…',

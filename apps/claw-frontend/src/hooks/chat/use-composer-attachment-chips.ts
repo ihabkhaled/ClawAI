@@ -8,7 +8,7 @@ import {
   COMPOSER_ATTACHMENT_LIST_LABEL_KEY,
 } from '@/constants/composer-attachment.constants';
 import { useFiles } from '@/hooks/files/use-files';
-import { useTranslation } from '@/lib/i18n/use-translation';
+import { useTranslation } from '@/lib/i18n';
 import { filesRepository } from '@/repositories/files/files.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type {

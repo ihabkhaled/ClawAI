@@ -7,7 +7,7 @@ import type {
   InitChunkedUploadRequest,
 } from '@/types';
 import type { ArchiveEntryListing, PaginatedFiles } from '@/types/archive.types';
-import type { FileProcessingCancelResult } from '@/types/file.types';
+import type { ChunkedUploadAbortResult, FileProcessingCancelResult } from '@/types/file.types';
 
 export const filesRepository = {
   /** One page of top-level files (or of one archive's files, with `parentId`) and its meta. */
@@ -52,8 +52,8 @@ export const filesRepository = {
     return response.data;
   },
 
-  async uploadFile(data: UploadFileRequest): Promise<UploadedFile> {
-    const response = await apiClient.post<UploadedFile>('/files/upload', data);
+  async uploadFile(data: UploadFileRequest, signal?: AbortSignal): Promise<UploadedFile> {
+    const response = await apiClient.post<UploadedFile>('/files/upload', data, { signal });
     return response.data;
   },
 
@@ -64,8 +64,13 @@ export const filesRepository = {
   // Chunked upload — used by useChunkedUpload for files above
   // CHUNKED_UPLOAD_THRESHOLD_BYTES (recordings, mainly). See
   // ChunkedUploadManager on file-service for the session semantics.
-  async initChunkedUpload(data: InitChunkedUploadRequest): Promise<ChunkedUploadStatus> {
-    const response = await apiClient.post<ChunkedUploadStatus>('/files/upload/chunked/init', data);
+  async initChunkedUpload(
+    data: InitChunkedUploadRequest,
+    signal?: AbortSignal,
+  ): Promise<ChunkedUploadStatus> {
+    const response = await apiClient.post<ChunkedUploadStatus>('/files/upload/chunked/init', data, {
+      signal,
+    });
     return response.data;
   },
 
@@ -73,10 +78,12 @@ export const filesRepository = {
     uploadId: string,
     index: number,
     content: string,
+    signal?: AbortSignal,
   ): Promise<ChunkedUploadStatus> {
     const response = await apiClient.post<ChunkedUploadStatus>(
       `/files/upload/chunked/${uploadId}/chunks/${String(index)}`,
       { content },
+      { signal },
     );
     return response.data;
   },
@@ -91,6 +98,18 @@ export const filesRepository = {
   async completeChunkedUpload(uploadId: string): Promise<UploadedFile> {
     const response = await apiClient.post<UploadedFile>(
       `/files/upload/chunked/${uploadId}/complete`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Drops an in-progress chunked-upload session and its temp chunks on the
+   * server (the user removed the file mid-upload). Owner-only and idempotent:
+   * a session already gone answers `aborted: false`, never an error.
+   */
+  async abortChunkedUpload(uploadId: string): Promise<ChunkedUploadAbortResult> {
+    const response = await apiClient.delete<ChunkedUploadAbortResult>(
+      `/files/upload/chunked/${uploadId}`,
     );
     return response.data;
   },

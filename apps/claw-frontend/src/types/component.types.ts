@@ -91,7 +91,10 @@ import type {
   VisibleProgressStage,
 } from './chat.types';
 import type { CompareJudgeLaneResult } from './compare-judge.types';
-import type { ComposerAttachmentTrayProps } from './composer-attachment.types';
+import type {
+  ComposerAttachmentChipsProps,
+  ComposerAttachmentTrayProps,
+} from './composer-attachment.types';
 import type { ConfluencePageMetadata } from './confluence.types';
 import type { SharedConnectorView } from './connector-grant.types';
 import type {
@@ -2009,6 +2012,8 @@ export type InThreadComparePanelProps = {
   onIngestFiles: (files: FileList | File[]) => void;
   // Tiles above the prompt: what is attached, and what is still uploading.
   attachmentTray: ComposerAttachmentTrayProps;
+  // Failed / not-supported uploads, one chip each — the same strip chat shows.
+  attachmentChips: ComposerAttachmentChipsProps;
   t: TranslateFunction;
 };
 

@@ -540,8 +540,42 @@ export type UseComposerAttachmentsReturn = {
   progress: UploadProgressSnapshot | null;
   /** One entry per ingested file — what the per-attachment chips are built from. */
   uploads: ComposerUploadEntry[];
-  /** Drop a failed / unsupported upload's chip. */
+  /**
+   * Drop an upload's chip / tile. While the file is still uploading this also
+   * ABORTS it: no further chunk is sent and the server session is deleted.
+   */
   dismissUpload: (localId: string) => void;
+};
+
+/**
+ * What `useComposerAttachmentSurface` needs from `useComposerAttachments`.
+ * The whole return value satisfies it; the main composer passes its state's
+ * renamed fields.
+ */
+export type ComposerAttachmentSurfaceSource = {
+  pendingUploads: UseComposerAttachmentsReturn['pendingUploads'];
+  progress: UseComposerAttachmentsReturn['progress'];
+  removeAttachment: UseComposerAttachmentsReturn['removeAttachment'];
+  uploads: UseComposerAttachmentsReturn['uploads'];
+  dismissUpload: UseComposerAttachmentsReturn['dismissUpload'];
+};
+
+export type UseComposerAttachmentSurfaceParams = {
+  selectedFileIds: string[];
+  onSelectedFileIdsChange: (fileIds: string[]) => void;
+  attachments: ComposerAttachmentSurfaceSource;
+  disabled?: boolean;
+};
+
+/**
+ * The per-attachment UI of ONE composer, ready to spread: the tray (preview,
+ * state line, Stop processing, cancel upload) and the chip strip (uploads that
+ * never got an id — failed, not supported). Every composer surface renders
+ * both from this, so chat, Compare, in-thread Compare and the labs cannot drift.
+ */
+export type UseComposerAttachmentSurfaceReturn = {
+  attachmentTray: ComposerAttachmentTrayProps;
+  attachmentChips: ComposerAttachmentChipsProps;
 };
 
 export type UseComposerDropzoneParams = {
@@ -1210,6 +1244,8 @@ export type UseOrchestrationComposerReturn = {
   progress: UploadProgressSnapshot | null;
   /** Tiles above the prompt: what is attached, and what is still uploading. */
   attachmentTray: ComposerAttachmentTrayProps;
+  /** Failed / not-supported uploads, one chip each — the same strip chat shows. */
+  attachmentChips: ComposerAttachmentChipsProps;
   /** Selected research mode + provider, defaulted to AUTO exactly like chat. */
   research: ResearchOptions;
   setResearch: (next: ResearchOptions) => void;

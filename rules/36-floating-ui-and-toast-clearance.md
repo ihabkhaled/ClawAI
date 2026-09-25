@@ -114,6 +114,19 @@ above the page) in the region where toasts stack, and the toast viewport itself.
     toasts off the top of the screen. `FLOATING_CLEARANCE_MAX_RATIO` is half the
     viewport; past that, overlapping is the lesser failure.
 
+12. **Content that shares the rail's column gives up the rail's strip.** The
+    rail floats above the composer, so on a phone it floats over the
+    transcript, and from `sm` to `md` over the thread's action rail (found live
+    at 390×844 and 740×360, 2026-09-25). While the launcher is expanded
+    (`data-feedback-launcher="expanded"`, matched with `body:has(…)` in CSS —
+    no JS mirror), `.chat-message-row` below `sm` and `.chat-thread-body` from
+    `sm` to `md` take `padding-inline-end: var(--floating-rail-gutter)`. The
+    variable is the rail's OWN footprint (offset + 44px target + air), never
+    another element's size, and the side is logical so RTL needs no twin. A
+    floating control added inside the transcript below `sm` (like "Jump to
+    latest", icon-only there) sits in that strip, at `end-*`. Asserted in
+    `components/chat/__tests__/chat-surface-layout-contract.test.ts`.
+
 ## Prohibited patterns
 
 - A band pinned across the top edge with no `data-top-obstacle`.

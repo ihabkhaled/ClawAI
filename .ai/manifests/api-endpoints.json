@@ -1556,6 +1556,11 @@
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/files/upload/chunked/:uploadId",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/files/upload/chunked/:uploadId/chunks/:index",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
@@ -3523,5 +3528,5 @@
     ]
   },
   "generated": true,
-  "total": 697
+  "total": 698
 }

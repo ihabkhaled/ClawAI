@@ -616,6 +616,7 @@ export const es: TranslationDictionary = {
       stillUploadingRefusal: 'Espera a que el archivo adjunto termine de subirse antes de enviar.',
       tooMany: 'Puedes adjuntar hasta {max} archivos por mensaje.',
       remove: 'Quitar {name}',
+      cancelUpload: 'Cancelar la subida de {name}',
       trayLabel: 'Archivos adjuntos',
       play: 'Reproducir',
       loading: 'Cargando…',

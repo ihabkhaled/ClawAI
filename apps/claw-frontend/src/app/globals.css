@@ -306,6 +306,12 @@
     --sidebar-width: 16rem;
     --sidebar-width-expanded: 17.5rem;
     --mobile-bottom-nav-height: 4rem;
+    /* The floating rail's own footprint from the inline-end viewport edge:
+     * its `end-4` offset + one 44px touch target + air. Below `md` the
+     * transcript (or, where the action rail exists, the whole thread row)
+     * gives up this strip while the feedback launcher is expanded — see
+     * `.chat-message-row` / `.chat-thread-body` below and rule 36 §12. */
+    --floating-rail-gutter: calc(1rem + 2.75rem + 0.5rem);
     /* The chat reading column.
      *
      * Wide enough that it never binds on a 1366px laptop — at that width the
@@ -1645,6 +1651,37 @@
     @variant short-viewport {
       max-height: 30dvh;
       overflow-y: auto !important;
+    }
+  }
+
+  /* The floating rail's gutter (2026-09-25, rule 36 §12).
+   *
+   * Below `md` the feedback launcher (and its − handle) floats at the
+   * inline-end edge above the composer, and on a phone it sat on the first
+   * words of the assistant's reply; at 740x360 its − landed on the thread's
+   * action rail. Nothing is measured and no height is involved: while the
+   * launcher is EXPANDED (`data-feedback-launcher="expanded"`, found with
+   * `:has()` so no JS mirrors it), the content that shares its column gives
+   * up the rail's own footprint, `--floating-rail-gutter`, on the inline-end
+   * side — `padding-inline-end`, so it mirrors in Arabic and Persian with no
+   * `rtl:` twin. Collapsed to its edge tab, the launcher covers nothing and
+   * the gutter goes away.
+   *
+   *   - below `sm` (portrait phone, no action rail): each transcript row. The
+   *     composer keeps its full width — the launcher's floor already sits
+   *     above it — and the icon-only "Jump to latest" circle sits in the same
+   *     strip, so it covers no text either;
+   *   - `sm`..`md` (a phone on its side, a small tablet): the thread body row,
+   *     so the action rail moves out of the launcher's column. */
+  @media (width < 40rem) {
+    body:has([data-feedback-launcher='expanded']) .chat-message-row {
+      padding-inline-end: var(--floating-rail-gutter);
+    }
+  }
+
+  @media (40rem <= width < 48rem) {
+    body:has([data-feedback-launcher='expanded']) .chat-thread-body {
+      padding-inline-end: var(--floating-rail-gutter);
     }
   }
 

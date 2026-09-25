@@ -23,7 +23,10 @@ import { type VideoCancelResult } from '../types/video-processing.types';
 import { type UploadFileDto, uploadFileSchema } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto, listFilesQuerySchema } from '../dto/list-files-query.dto';
 import { type FileListRow } from '../types/archive-entries.types';
-import { type ChunkedUploadStatus } from '../types/chunked-upload.types';
+import {
+  type ChunkedUploadAbortResult,
+  type ChunkedUploadStatus,
+} from '../types/chunked-upload.types';
 import {
   type ChunkIndexParamDto,
   chunkIndexParamSchema,
@@ -89,6 +92,18 @@ export class FilesController {
     @Param(new ZodValidationPipe(uploadIdParamSchema)) params: UploadIdParamDto,
   ): Promise<File> {
     return this.filesService.completeChunkedUpload(user.id, params.uploadId);
+  }
+
+  // The client aborts an in-progress chunked upload (the user removed the
+  // file or cancelled). 200 either way — `aborted: false` for a session that
+  // is gone or not this user's — so a repeated abort never errors.
+  @Delete('upload/chunked/:uploadId')
+  @HttpCode(HttpStatus.OK)
+  abortChunkedUpload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param(new ZodValidationPipe(uploadIdParamSchema)) params: UploadIdParamDto,
+  ): ChunkedUploadAbortResult {
+    return this.filesService.abortChunkedUpload(user.id, params.uploadId);
   }
 
   @Get()

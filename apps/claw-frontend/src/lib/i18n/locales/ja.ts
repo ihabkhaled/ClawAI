@@ -612,6 +612,7 @@ export const ja: TranslationDictionary = {
       stillUploadingRefusal: '添付ファイルのアップロードが完了してから送信してください。',
       tooMany: '1 件のメッセージに添付できるファイルは最大 {max} 個です。',
       remove: '{name} を削除',
+      cancelUpload: '{name} のアップロードを中止',
       trayLabel: '添付ファイル',
       play: '再生',
       loading: '読み込み中…',

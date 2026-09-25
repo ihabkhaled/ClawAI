@@ -215,7 +215,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 27,
+      "endpointCount": 28,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",

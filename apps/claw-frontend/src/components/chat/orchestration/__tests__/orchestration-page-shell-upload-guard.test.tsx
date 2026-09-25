@@ -43,6 +43,7 @@ function buildComposer(
     pendingCount: 0,
     progress: null,
     attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
+    attachmentChips: { chips: [], listLabel: 'Attachments', onRemove: vi.fn() },
     research: { mode: ResearchMode.AUTO },
     setResearch: vi.fn(),
     researchProviders: [],

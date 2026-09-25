@@ -64,6 +64,80 @@ describe('useMessageSpeech', () => {
     expect(result.current.isPlayerOpen).toBe(false);
   });
 
+  // Stop pressed before POST /speech answered used to be lost: no job state
+  // yet, so nothing was cancelled and the job ran on with the player closed.
+  describe('stop pressed before the start request has answered', () => {
+    function deferredStart(): (value: unknown) => void {
+      let resolveStart: (value: unknown) => void = () => undefined;
+      mockSynthesize.mockReturnValue(
+        new Promise((resolve) => {
+          resolveStart = resolve;
+        }),
+      );
+      return (value: unknown) => resolveStart(value);
+    }
+
+    it('cancels the job once, as soon as the POST says it is GENERATING', async () => {
+      const resolveStart = deferredStart();
+      const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+      await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(true));
+      expect(mockSynthesize).toHaveBeenCalledTimes(1);
+
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(false));
+      expect(mockCancel).not.toHaveBeenCalled();
+
+      await act(async () => {
+        resolveStart({ ...SPEECH, status: 'GENERATING', totalSegments: 3 });
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(mockCancel).toHaveBeenCalledTimes(1));
+      expect(mockCancel).toHaveBeenCalledWith('msg-1');
+      expect(mockSynthesize).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends no cancel when the POST answers READY (nothing is running)', async () => {
+      const resolveStart = deferredStart();
+      const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+      await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(true));
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(false));
+
+      await act(async () => {
+        resolveStart(SPEECH);
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(result.current.status).toBe(MessageSpeechStatus.IDLE));
+      expect(mockCancel).not.toHaveBeenCalled();
+    });
+
+    it('reopening before the answer takes the stop back', async () => {
+      const resolveStart = deferredStart();
+      const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
+      await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(true));
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(false));
+      act(() => result.current.toggle());
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(true));
+
+      await act(async () => {
+        resolveStart({ ...SPEECH, status: 'GENERATING', totalSegments: 3 });
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(result.current.isPlayerOpen).toBe(true));
+      expect(mockCancel).not.toHaveBeenCalled();
+    });
+  });
+
   it('stop of a READY reading closes the player without a cancel request', async () => {
     const { result } = renderHook(() => useMessageSpeech('msg-1'), { wrapper: makeWrapper() });
     await waitFor(() => expect(mockGetAvailability).toHaveBeenCalled());

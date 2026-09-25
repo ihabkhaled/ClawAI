@@ -2,6 +2,7 @@ import { CheckCircle, Loader2, Play } from 'lucide-react';
 
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
@@ -47,6 +48,7 @@ export function InThreadComparePanel({
   onSelectedFileIdsChange,
   onIngestFiles,
   attachmentTray,
+  attachmentChips,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
   // Recorder gating is model-independent: see useModelMediaCapabilities. The
@@ -147,6 +149,7 @@ export function InThreadComparePanel({
             </div>
 
             <ComposerAttachmentTray {...attachmentTray} />
+            <ComposerAttachmentChips {...attachmentChips} />
             <form
               className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
               onSubmit={(e) => {

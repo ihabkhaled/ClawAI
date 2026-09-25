@@ -127,7 +127,10 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           A plain flex row, so the rail lands on the right in LTR and on the
           left in RTL by document order alone — no `dir` read, no `rtl:` twin of
           a physical utility to keep in step. */}
-      <div className="chat-thread-row mx-auto flex min-h-0 w-full flex-1 items-stretch gap-1.5 sm:gap-2">
+      {/* `chat-thread-body`: from `sm` to `md` the row gives up the floating
+          rail's strip while the feedback launcher is expanded, so the action
+          rail is never under the launcher (globals.css, rule 36 §12). */}
+      <div className="chat-thread-row chat-thread-body mx-auto flex min-h-0 w-full flex-1 items-stretch gap-1.5 sm:gap-2">
         {/* The reading column. Bounded and centred so a line of prose stays
             legible on a 2560px monitor; the bound is wide enough that it never
             binds on a 1366px laptop, so no gutter appears where there is no room

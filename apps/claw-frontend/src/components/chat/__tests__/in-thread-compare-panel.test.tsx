@@ -73,6 +73,7 @@ const baseProps = {
   onSelectedFileIdsChange: vi.fn(),
   onIngestFiles: vi.fn(),
   attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
+  attachmentChips: { chips: [], listLabel: 'Attachments', onRemove: vi.fn() },
   t,
 };
 

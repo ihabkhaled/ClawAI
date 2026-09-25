@@ -107,3 +107,7 @@ Still open (minor):
   assistant text (`screenshots-rerun/09-rtl-ar-mobile-390x844.png`).
 - On 740×360 the rail's "−" sits on the side toolbar.
 - The Next.js dev badge covers the model button. It is dev only.
+
+The first two are fixed in code on 2026-09-25 (CSS gutter keyed on the
+launcher's expanded state, rule 36 §12; "Jump to latest" icon-only below `sm`).
+Contract-test gated only — this matrix has not been re-run against it.

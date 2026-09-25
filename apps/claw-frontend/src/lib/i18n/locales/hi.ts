@@ -608,6 +608,7 @@ export const hi: TranslationDictionary = {
       stillUploadingRefusal: 'भेजने से पहले अटैचमेंट के अपलोड पूरा होने का इंतज़ार करें।',
       tooMany: 'आप एक संदेश में अधिकतम {max} फ़ाइलें संलग्न कर सकते हैं।',
       remove: '{name} हटाएँ',
+      cancelUpload: '{name} का अपलोड रद्द करें',
       trayLabel: 'संलग्न फ़ाइलें',
       play: 'चलाएं',
       loading: 'लोड हो रहा है…',

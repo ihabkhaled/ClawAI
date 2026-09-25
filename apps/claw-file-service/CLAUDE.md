@@ -443,6 +443,14 @@ key absent for every other file). `?includeContent=false` returns `content:
 null` — chat-service's research digest reads the transcript without pulling
 the video bytes.
 
+**Chunked-upload abort (2026-09-25)** — `DELETE /files/upload/chunked/:uploadId`
+(JWT + `FILES_USE`). `ChunkedUploadManager.abort(userId, uploadId)` → 200
+`{ uploadId, aborted }`; missing / expired / completed / someone else's session
+→ `aborted: false`, never an error, and a stranger's session is not touched
+(no enumeration). Frees the session's temp chunk dir via the existing
+`cleanup()`; a late chunk gets the ordinary 404. Tests:
+`chunked-upload.manager.spec.ts` (abort block), `files.controller.spec.ts`.
+
 **Cancellation (pack section 72, 2026-09-25)** — `POST /files/:id/processing/cancel`
 (JWT + `FILES_USE`, owner-only; a stranger's id or a missing id is the SAME
 404). Answers 200 `{ fileId, ingestionStatus, cancelled }`, where

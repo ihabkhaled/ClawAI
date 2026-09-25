@@ -312,8 +312,11 @@ missing-id 404), idempotent, and answering **200** with the state after the call
    locales.
 
 Recording and upload: the recorder's `cancel` already releases every media track
-(`use-media-recorder.test.ts`). The chunked upload has **no abort** on either side
-(no client signal, no server session delete) — recorded as a gap, not built here.
+(`use-media-recorder.test.ts`). ~~The chunked upload has no abort on either side~~ —
+closed 2026-09-25: removing a file still uploading aborts its `AbortController`
+(no further chunk, no retry), and the client sends one owner-only, idempotent
+`DELETE /files/upload/chunked/:uploadId` that frees the temp chunks at once
+(200 `{uploadId, aborted}`; a gone or foreign session is `aborted: false`).
 
 Rejected: an in-process cancel map (prod runs 4 chat replicas; the cancel lands
 on any of them); a COMPLETED-with-note video (models would read the note as the
@@ -321,9 +324,10 @@ document); a 409 for "already finished" (a double click would read as an error);
 untargeted local-runtime interrupts (cross-user impact).
 Known gaps: an image asset stored in file-service just before a cancel wins can
 be left unreferenced; the image SSE `CANCELLED` event reaches only clients on the
-replica that wrote it (others see it through `GET /images/:id`); Stop pressed
-before the read-aloud POST has answered does not cancel (the job keeps running to
-its deadline, its segments replay free).
+replica that wrote it (others see it through `GET /images/:id`). ~~Stop pressed
+before the read-aloud POST has answered does not cancel~~ — closed 2026-09-25:
+the stop is remembered (one flag) and one cancel is sent when the POST answers
+GENERATING.
 
 ## Alternatives rejected
 

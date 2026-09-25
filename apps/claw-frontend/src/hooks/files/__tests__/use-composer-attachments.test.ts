@@ -291,6 +291,64 @@ describe('useComposerAttachments — cap, concurrency and tiles', () => {
     });
   });
 
+  it('dismissing a file still uploading aborts it: no tile, no failed chip, no toast, not attached', async () => {
+    vi.mocked(showToast.apiError).mockClear();
+    let seenSignal: AbortSignal | undefined;
+    mockUpload.mockImplementation(
+      (_file: File, options?: { signal?: AbortSignal }) =>
+        new Promise<string>((_resolve, reject) => {
+          seenSignal = options?.signal;
+          options?.signal?.addEventListener('abort', () => reject(new Error('Upload aborted')));
+        }),
+    );
+    const sink = stateSink([]);
+    const { result } = renderHook(
+      () =>
+        useComposerAttachments({ selectedFileIds: [], onChange: sink.onChange, disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('big.png')]);
+    });
+    const key = result.current.pendingUploads[0]?.key ?? '';
+    expect(key).not.toBe('');
+
+    await act(async () => {
+      result.current.dismissUpload(key);
+      await Promise.resolve();
+    });
+
+    expect(seenSignal?.aborted).toBe(true);
+    expect(result.current.pendingUploads).toEqual([]);
+    expect(result.current.isUploading).toBe(false);
+    await waitFor(() => expect(result.current.uploads).toEqual([]));
+    expect(showToast.apiError).not.toHaveBeenCalled();
+    expect(sink.value()).toEqual([]);
+  });
+
+  it('aborts every upload still in flight when the composer unmounts', () => {
+    const signals: AbortSignal[] = [];
+    mockUpload.mockImplementation((_file: File, options?: { signal?: AbortSignal }) => {
+      if (options?.signal !== undefined) {
+        signals.push(options.signal);
+      }
+      return new Promise<string>(() => undefined);
+    });
+    const { result, unmount } = renderHook(
+      () => useComposerAttachments({ selectedFileIds: [], onChange: vi.fn(), disabled: false }),
+      { wrapper: makeWrapper() },
+    );
+
+    act(() => {
+      result.current.ingestFiles([pngFile('a.png'), pngFile('b.png')]);
+    });
+    unmount();
+
+    expect(signals).toHaveLength(2);
+    expect(signals.every((signal) => signal.aborted)).toBe(true);
+  });
+
   it('removes one attachment and keeps the rest', () => {
     const sink = stateSink(['a', 'b', 'c']);
     const onChange = sink.onChange;

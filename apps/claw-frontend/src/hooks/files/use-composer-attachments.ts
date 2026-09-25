@@ -36,6 +36,11 @@ import { classifyUploadError } from '@/utilities/composer-attachment.utility';
 // No per-file "Attached X" toast: the tray above the textarea shows every
 // attached file, and three success toasts pushed the cap warning out of the
 // toast stack before anyone could read it.
+//
+// Every upload owns an AbortController. Dismissing its entry (the pending
+// tile's cancel, or removing its chip) aborts it: useChunkedUpload sends no
+// further chunk and deletes the server session, and the abort is not reported
+// as a failure. Unmounting the composer aborts whatever is still in flight.
 export function useComposerAttachments({
   selectedFileIds,
   onChange,
@@ -46,18 +51,34 @@ export function useComposerAttachments({
   const [pendingUploads, setPendingUploads] = useState<PendingComposerUpload[]>([]);
   const { upload, progress } = useChunkedUpload();
   const uploads = useComposerUploadEntries();
-  const { begin, settle } = uploads;
+  const { begin, settle, dismiss } = uploads;
   const selectedRef = useRef(selectedFileIds);
   const pendingRef = useRef(0);
+  const controllersRef = useRef(new Map<string, AbortController>());
 
   useEffect(() => {
     selectedRef.current = selectedFileIds;
   }, [selectedFileIds]);
 
+  useEffect(() => {
+    const controllers = controllersRef.current;
+    return () => {
+      for (const controller of controllers.values()) {
+        controller.abort();
+      }
+      controllers.clear();
+    };
+  }, []);
+
   const uploadOne = useCallback(
-    async (file: File, pending: PendingComposerUpload): Promise<void> => {
+    async (file: File, pending: PendingComposerUpload, signal: AbortSignal): Promise<void> => {
       try {
-        const fileId = await upload(file);
+        const fileId = await upload(file, { signal });
+        if (signal.aborted) {
+          // Taken back while the last request was already answering: the
+          // file is stored, but the user said they do not want it attached.
+          return;
+        }
         settle(pending.key, { state: ComposerAttachmentState.Uploaded, fileId });
         void queryClient.invalidateQueries({ queryKey: queryKeys.files.lists() });
         // Dedup so re-pasting the same upload is a no-op.
@@ -73,6 +94,15 @@ export function useComposerAttachments({
           details: { fileId, sizeBytes: file.size },
         });
       } catch (error) {
+        if (signal.aborted) {
+          logger.info({
+            component: 'chat',
+            action: 'composer-attachment-upload-aborted',
+            message: 'Upload taken back by the user before it finished',
+            details: { sizeBytes: file.size },
+          });
+          return;
+        }
         settle(pending.key, {
           state: classifyUploadError(error),
           reason: resolveApiErrorMessage(error, t, t('files.fileUploadFailed')),
@@ -84,6 +114,7 @@ export function useComposerAttachments({
         });
         showToast.apiError(error, t('files.fileUploadFailed'), { translate: t });
       } finally {
+        controllersRef.current.delete(pending.key);
         pendingRef.current = Math.max(0, pendingRef.current - 1);
         setPendingUploads((list) => list.filter((item) => item.key !== pending.key));
       }
@@ -131,12 +162,29 @@ export function useComposerAttachments({
           continue;
         }
         const pending: PendingComposerUpload = { key: localId, ...metadata };
+        const controller = new AbortController();
+        controllersRef.current.set(localId, controller);
         pendingRef.current += 1;
         setPendingUploads((current) => [...current, pending]);
-        void uploadOne(file, pending);
+        void uploadOne(file, pending, controller.signal);
       }
     },
     [begin, disabled, settle, t, uploadOne],
+  );
+
+  // Dismiss = take back. A file still uploading is aborted and its tile goes
+  // at once; a failed / unsupported entry simply leaves the chip strip.
+  const dismissUpload = useCallback(
+    (localId: string): void => {
+      const controller = controllersRef.current.get(localId);
+      if (controller !== undefined) {
+        controller.abort();
+        controllersRef.current.delete(localId);
+        setPendingUploads((list) => list.filter((item) => item.key !== localId));
+      }
+      dismiss(localId);
+    },
+    [dismiss],
   );
 
   const removeAttachment = useCallback(
@@ -154,6 +202,6 @@ export function useComposerAttachments({
     pendingUploads,
     progress,
     uploads: uploads.entries,
-    dismissUpload: uploads.dismiss,
+    dismissUpload,
   };
 }

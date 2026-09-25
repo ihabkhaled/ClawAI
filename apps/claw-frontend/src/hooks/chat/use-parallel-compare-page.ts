@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from '@/constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums';
+import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
@@ -29,11 +30,11 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const { ingestFiles, removeAttachment, isUploading, pendingUploads, progress } =
-    useComposerAttachments({
-      selectedFileIds,
-      onChange: setSelectedFileIds,
-    });
+  const attachments = useComposerAttachments({
+    selectedFileIds,
+    onChange: setSelectedFileIds,
+  });
+  const { ingestFiles, isUploading } = attachments;
   const { send, result, isPending, isError, upgradeFeature, clearUpgradeFeature } =
     useParallelCompare();
 
@@ -63,6 +64,15 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     !isUploading &&
     !isPending &&
     !isPolling;
+
+  // The same tray + chip strip as the chat composer: per-file state, Stop
+  // processing for a video, cancel for a file still uploading.
+  const { attachmentTray, attachmentChips } = useComposerAttachmentSurface({
+    selectedFileIds,
+    onSelectedFileIdsChange: setSelectedFileIds,
+    attachments,
+    disabled: isPending || isPolling,
+  });
 
   const handleToggleModel = useCallback((provider: string, model: string, checked: boolean) => {
     setSelectedModels((prev) => {
@@ -154,13 +164,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
-    attachmentTray: {
-      fileIds: selectedFileIds,
-      pendingUploads,
-      progress,
-      onRemove: removeAttachment,
-      disabled: isPending || isPolling,
-    },
+    attachmentTray,
+    attachmentChips,
     upgradeFeature,
     clearUpgradeFeature,
   };

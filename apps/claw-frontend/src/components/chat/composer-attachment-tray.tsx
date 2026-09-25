@@ -21,6 +21,7 @@ export function ComposerAttachmentTray({
   disabled,
   statusByFileId,
   processingCancelByFileId,
+  onCancelUpload,
 }: ComposerAttachmentTrayProps): React.ReactElement | null {
   const { t } = useTranslation();
 
@@ -46,7 +47,13 @@ export function ComposerAttachmentTray({
         />
       ))}
       {pendingUploads.map((upload) => (
-        <ComposerPendingAttachmentTile key={upload.key} upload={upload} progress={progress} />
+        <ComposerPendingAttachmentTile
+          key={upload.key}
+          upload={upload}
+          progress={progress}
+          onCancel={onCancelUpload}
+          cancelLabel={t('chat.attachment.cancelUpload', { name: upload.filename })}
+        />
       ))}
     </ul>
   );

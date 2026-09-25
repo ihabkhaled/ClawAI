@@ -138,6 +138,8 @@ export type ComposerAttachmentTrayProps = {
   statusByFileId?: ReadonlyMap<string, string>;
   /** The Stop action of each attached video still processing (pack §72). */
   processingCancelByFileId?: ReadonlyMap<string, ComposerProcessingCancel>;
+  /** Takes back a file still uploading: aborts it and drops its tile. */
+  onCancelUpload?: (key: string) => void;
 };
 
 export type ComposerAttachmentTileProps = {
@@ -151,6 +153,9 @@ export type ComposerAttachmentTileProps = {
 export type ComposerPendingAttachmentTileProps = {
   upload: PendingComposerUpload;
   progress: UploadProgressSnapshot | null;
+  /** Absent: no cancel button (a surface that cannot abort). */
+  onCancel?: (key: string) => void;
+  cancelLabel: string;
 };
 
 export type UseComposerAttachmentTileReturn = {

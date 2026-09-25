@@ -50,6 +50,7 @@ function buildComposer(
     pendingCount: 0,
     progress: null,
     attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
+    attachmentChips: { chips: [], listLabel: 'Attachments', onRemove: vi.fn() },
     research: { mode: ResearchMode.AUTO },
     setResearch: vi.fn(),
     researchProviders: [],
@@ -126,12 +127,14 @@ describe('OrchestrationPageShell — upload status', () => {
     expect(screen.queryByTestId('orchestration-upload-status')).not.toBeInTheDocument();
   });
 
-  it('shows the uploading label with the pending count while uploading', () => {
+  // The bare count is gone: each file has its own tile and state in the tray,
+  // exactly as in the chat composer, so the line is the same one sentence.
+  it('shows the uploading label, without a bare count, while uploading', () => {
     renderShell(buildComposer({ isUploading: true, pendingCount: 2 }));
 
     const status = screen.getByTestId('orchestration-upload-status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent('chat.attachment.uploading');
-    expect(status).toHaveTextContent('(2)');
+    expect(status).not.toHaveTextContent('(2)');
   });
 });
