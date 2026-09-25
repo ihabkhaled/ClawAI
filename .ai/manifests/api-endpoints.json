@@ -2421,6 +2421,16 @@
       },
       {
         "method": "GET",
+        "route": "/research/fetch-strategies",
+        "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch-strategy.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/research/fetch-strategies/:kind",
+        "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch-strategy.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/research/fetch/jobs",
         "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
       },
@@ -3463,5 +3473,5 @@
     ]
   },
   "generated": true,
-  "total": 685
+  "total": 687
 }

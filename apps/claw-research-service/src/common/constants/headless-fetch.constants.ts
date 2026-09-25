@@ -5,18 +5,14 @@
  * JavaScript, and only then has a DOM worth reading.
  */
 
-/**
- * Below this many characters of extracted text, `FetchService` treats a
- * plain fetch's result as "probably client-side rendered" and retries with
- * `HeadlessFetchAdapter`. Deliberately a floor on extracted TEXT, not raw
- * HTML size: a large page shell with an empty `<div id="root">` has plenty
- * of bytes and almost no text, which is exactly the case this exists to
- * catch.
- */
-export const HEADLESS_RENDER_MIN_CONTENT_CHARS = 200;
-
-/** Wall-clock budget for one page to finish navigating and go idle. */
+/** Wall-clock budget for one page to finish navigating (the `load` event). */
 export const HEADLESS_RENDER_NAVIGATION_TIMEOUT_MS = 15_000;
+
+/**
+ * After `load`, how long to wait for the network to go idle so late XHR
+ * content lands. Bounded: a page holding a socket open never goes idle.
+ */
+export const HEADLESS_IDLE_WAIT_MS = 5_000;
 
 /**
  * Resource types aborted for every headless request, including the initial

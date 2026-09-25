@@ -264,57 +264,78 @@ before. Fire-and-forget: a publish failure is logged and never affects the
 crawl. chat-service is the only consumer today
 (`ResearchProgressBridgeService`, see its own service guide).
 
-## Headless-browser rendering fallback
+## The fetch path: robots.txt, then the escalation chain (ADR-121)
 
-`FetchService.fetchPage` tries `HttpFetchAdapter` (a plain HTTP GET) first,
-always. When the result is `text/html` and its extracted text is under
-`HEADLESS_RENDER_MIN_CONTENT_CHARS` — the signature of a page whose real
-content only exists after its own JavaScript runs — it retries with
-`HeadlessFetchAdapter` (`modules/fetch/adapters/headless-fetch.adapter.ts`,
-Playwright + a real headless Chromium) and keeps whichever result has more
-extracted text. Gated by `RESEARCH_HEADLESS_RENDER_ENABLED` (default
-`true`, a resource lever, not a safety one — see below). Full design:
-[ADR-094](../13-adr/adr-094-headless-render-fallback-inside-fetchservice.md).
+Every live fetch — a user's URL, a search result, a crawled page — goes
+through `FetchService.fetchPage`, which runs, in order: the operator domain
+allow/blocklist, **robots.txt** (`RobotsPolicyService`), the page cache, and
+`FetchStrategyOrchestratorService.fetchWithEscalation`. Still exactly one fetch
+entry point (rule 41 §12). Full design and per-tool status:
+[ADR-121](../13-adr/adr-121-pluggable-fetch-strategy-layer.md); how to add,
+enable or prove a tier: [skills/add-a-fetch-strategy.md](../../skills/add-a-fetch-strategy.md).
 
-**Still exactly one fetch entry point.** The fallback lives INSIDE
-`FetchService`, never reachable directly — rule 41 item 12's "no second
-fetch path" holds by construction. Extraction reuses the SAME `extractHtml`
-call the plain path uses, so canonical/hreflang/OG/JSON-LD parsing is
-identical regardless of which adapter produced the HTML.
-`FetchResult.renderedWithHeadlessBrowser` is `true` only when a render
-actually happened (never `false` — absent otherwise), and `toolsUsed` gets
-`web_fetch:headless` instead of plain `web_fetch` for that call
-(`pushFetchToolMarker`, shared by every fetch call site in
-`research.manager.ts` and `site-crawl.manager.ts`).
+**robots.txt on every fetch (RFC 9309).** Rules for `ClawAI-ResearchBot` (or
+`*`) decide, with `*`/`$` path patterns (`robotsRuleMatches`). A Disallow is a
+403 `FETCH_ROBOTS_DISALLOWED` before any job row, usage charge or strategy.
+4xx robots.txt = no rules; 5xx/unreachable = origin off limits (archive only).
+A 401/403/503 robots.txt is retried through the TLS-impersonating client so a
+WAF cannot hide the rules. `Crawl-delay` (≤ 10 s) sets the host interval.
 
-**Every in-page request is re-checked against the anti-SSRF guard —
-not just the navigation URL.** A plain HTTP GET never executes remote code,
-so it never issues a subrequest; a rendered page's own JavaScript can, to
-any host it chooses. `HeadlessFetchAdapter` installs a
-`page.route('**/*', …)` handler that runs the SAME `assertSafeOutboundUrl`
-check (shared via `isHostExplicitlyAllowlisted`, extracted from
-`HttpFetchAdapter` for this) against every request the page makes, and
-aborts anything that fails — a page trying to reach
-`169.254.169.254` from inside its own script is blocked exactly like a
-top-level request to it would be. Image/media/font/stylesheet requests are
-aborted unconditionally: scraping needs text, not pixels.
+**The chain** (`FetchStrategyConfig`, DB-level; tiers, lowest first): official
+API (Wikipedia REST, GitHub README, arXiv, Crossref, Hacker News) → plain
+`fetch` → `impit` Chrome TLS/HTTP2 impersonation → Patchright headless
+Chromium → Crawl4AI / FlareSolverr / Firecrawl sidecars (compose profiles,
+seeded disabled) → Jina Reader (public URLs only, one call per 3.5 s) →
+Wayback (content starts "Archived copy, captured <date>", `archivedAt` set).
+`classifyBlockSignal` reads each result; `isStrategyEligible` decides what may
+still run — 401/451 stop, captcha/429/404/dead host go archive-only,
+FlareSolverr only after a JS interstitial, and a short static page is served
+as it is (a "shell" needs script-driven markup). ≤ 6 attempts, ≤ 60 s total,
+one request per host per second. `HostStrategyMemory` puts a host's last
+winning tier first (≤ 7 days; never the reader/archive).
 
-**One shared Chromium, one throwaway context per fetch.** A browser boot
-per request would be unusably slow; one `Browser` instance is launched
-lazily and reused (`onModuleDestroy` closes it), while each call gets its
-own `BrowserContext` so no cookies/storage survive between two different
-fetches. Both `Dockerfile` and `Dockerfile.dev` run
-`npx playwright install --with-deps chromium`; the prod image sets
-`PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` (world-readable) because the
-browser downloads as root during build but launches later as the
-unprivileged `nestjs` user.
+**Every redirect hop is SSRF-checked before it is requested**
+(`followRedirectsSafely`) for plain, impit, official API, archive and robots
+fetches. Patchright: the route guard aborts unsafe in-page requests, and the
+navigation's whole redirect chain is re-checked after load. Sidecars: target
+checked before, final URL after, and they run on the isolated `claw-scrapers`
+network where research-service is the only ClawAI container.
+
+**One extraction for every tier.** `extractPageContent` = `extractHtml`
+(links, canonical/hreflang/OG/JSON-LD, feed autodiscovery) + Readability on
+linkedom + Turndown → the article as Markdown, or the plain text when there is
+no article.
+
+**Headless (ADR-094, now tier 30).** One shared Patchright Chromium, one
+throwaway context per fetch, a desktop Chrome User-Agent (no "HeadlessChrome"),
+image/media/font/stylesheet requests aborted. `RESEARCH_HEADLESS_RENDER_ENABLED`
+stays the operator's hard kill switch for this tier; DB enablement cannot
+override it. `renderedWithHeadlessBrowser: true` (and `toolsUsed`
+`web_fetch:headless`) is set by the headless tier and the sidecars. Dockerfiles
+run `npx patchright install --with-deps chromium` into
+`PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` (world-readable, launched as `nestjs`).
+
+**Machine-readable fetches.** site-crawl reads robots.txt, sitemaps and feeds
+with `FetchPurpose.MACHINE_READABLE` — only the plain and impit tiers may serve
+those.
+
+**Observability.** `fetch.attempt kind= outcome= signal= status=`, one
+`fetch.served kind= tier= host= path=` per page (origin + path, never the
+query), `fetch.failed … trail=[…]`, `fetch.refused reason=robots_disallow`;
+`fetch_jobs.servedBy` / `archivedAt` per job. Admin: `GET/PATCH
+/api/v1/research/fetch-strategies[/:kind]`.
+
+**Sidecars.** `CLAW_SCRAPER_PROFILES=crawl4ai,flaresolverr,firecrawl` (any
+subset, default none) decides which exist (`scripts/claw.sh` → compose
+profiles in `docker-compose.{dev,prod}.services.yml`); then enable the tier
+DB-level. No published ports, no nginx route.
 
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.
 - `claw-health-service` aggregator now checks the research-service `/api/v1/health` endpoint.
 - All 7 Docker compose files (all-in-one dev, all-in-one prod, dev/prod split databases, dev/prod split services) register `pg-research` (port **5452**) and `research-service` (port **4016**).
-- `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1` seed `PG_RESEARCH_*`, `RESEARCH_PORT`, `RESEARCH_DATABASE_URL`, `RESEARCH_SERVICE_URL`, and `RESEARCH_HEADLESS_RENDER_ENABLED`.
+- `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1` seed `PG_RESEARCH_*`, `RESEARCH_PORT`, `RESEARCH_DATABASE_URL`, `RESEARCH_SERVICE_URL`, `RESEARCH_HEADLESS_RENDER_ENABLED`, `CLAW_SCRAPER_PROFILES` and the two `FIRECRAWL_*` secrets (ADR-121).
 - `packages/shared-constants` exports `RESEARCH_SERVICE` and `RESEARCH_SERVICE_PORT`.
 
 ## What's next (phases 2-5)

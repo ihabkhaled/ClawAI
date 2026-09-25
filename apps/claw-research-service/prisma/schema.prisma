@@ -134,6 +134,10 @@ model FetchJob {
   links       String[]       @default([])
   /// Was the response served from the PageCache rather than fetched live?
   cacheHit    Boolean        @default(false)
+  /// Which escalation strategy served a live fetch (ADR-121); null on cache hits and failures.
+  servedBy    FetchStrategyKind?
+  /// Capture time when the content is an archived copy, never set for a live page.
+  archivedAt  DateTime?
   errorMessage String?
   latencyMs   Int?
   startedAt   DateTime       @default(now())
@@ -186,4 +190,51 @@ model ResearchRun {
 
   @@index([userId, startedAt])
   @@map("research_runs")
+}
+
+// ─── Fetch strategies (ADR-121) ───────────────────────────
+
+enum FetchStrategyKind {
+  OFFICIAL_API
+  HTTP_PLAIN
+  HTTP_TLS_IMPERSONATE
+  HEADLESS_BROWSER
+  CRAWL4AI
+  FLARESOLVERR
+  FIRECRAWL
+  READER_PROXY
+  ARCHIVE_SNAPSHOT
+}
+
+/// One row per pluggable fetch strategy. Enablement lives here, not in .env.
+/// In-process strategies seed ENABLED; the three sidecar strategies (Crawl4AI,
+/// FlareSolverr, Firecrawl) seed DISABLED because their containers only exist
+/// when a compose profile is started. `publicConfig` holds non-secret settings
+/// (base URLs). A row an admin has edited is never overwritten by the seeder.
+model FetchStrategyConfig {
+  id           String            @id @default(cuid())
+  kind         FetchStrategyKind @unique
+  enabled      Boolean           @default(false)
+  /// Escalation order: lower runs first. Cheap strategies first.
+  tier         Int
+  publicConfig Json              @default("{}")
+  timeoutMs    Int               @default(15000)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@map("fetch_strategy_configs")
+}
+
+/// Which strategy last worked for a host, so the next fetch starts there
+/// instead of re-walking the chain. Stale rows are ignored (see repository).
+model HostStrategyMemory {
+  host                String            @id
+  preferredKind       FetchStrategyKind
+  successCount        Int               @default(0)
+  consecutiveFailures Int               @default(0)
+  lastBlockSignal     String?
+  updatedAt           DateTime          @updatedAt
+
+  @@index([updatedAt])
+  @@map("host_strategy_memory")
 }

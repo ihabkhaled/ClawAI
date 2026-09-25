@@ -1,8 +1,9 @@
 import { vi, type Mock } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
+import { RobotsOutcome } from '../../enums/robots-outcome.enum';
 import { FetchService } from '../fetch.service';
-import type { HeadlessFetchAdapter } from '../../adapters/headless-fetch.adapter';
-import type { HttpFetchAdapter } from '../../adapters/http-fetch.adapter';
+import type { FetchStrategyOrchestratorService } from '../fetch-strategy-orchestrator.service';
+import type { RobotsPolicyService } from '../robots-policy.service';
 import type { FetchJobRepository } from '../../repositories/fetch-job.repository';
 import type { PageCacheRepository } from '../../repositories/page-cache.repository';
 import type { ResearchUsageService } from '../../../../common/services/research-usage.service';
@@ -13,8 +14,8 @@ vi.mock('../../../../app/config/app.config', () => ({
 
 describe('FetchService usage accounting', () => {
   const appConfigGet = AppConfig.get as Mock;
-  let adapter: { fetchPage: Mock };
-  let headlessAdapter: { fetchPage: Mock };
+  let orchestrator: { fetchWithEscalation: Mock };
+  let robots: { evaluate: Mock };
   let jobs: { create: Mock; update: Mock };
   let cache: { findByKey: Mock; upsert: Mock };
   let usage: { record: Mock };
@@ -25,10 +26,16 @@ describe('FetchService usage accounting', () => {
     appConfigGet.mockReturnValue({
       RESEARCH_DOMAIN_ALLOWLIST: [],
       RESEARCH_DOMAIN_BLOCKLIST: [],
-      RESEARCH_HEADLESS_RENDER_ENABLED: false,
+      RESEARCH_HEADLESS_RENDER_ENABLED: true,
     });
-    adapter = { fetchPage: vi.fn() };
-    headlessAdapter = { fetchPage: vi.fn() };
+    orchestrator = { fetchWithEscalation: vi.fn() };
+    robots = {
+      evaluate: vi.fn(async () => ({
+        outcome: RobotsOutcome.ALLOWED,
+        robotsUrl: 'https://example.com/robots.txt',
+        crawlDelayMs: null,
+      })),
+    };
     jobs = {
       create: vi.fn(async () => ({ id: 'fetch-job-1' })),
       update: vi.fn(async () => ({})),
@@ -36,8 +43,8 @@ describe('FetchService usage accounting', () => {
     cache = { findByKey: vi.fn(async () => null), upsert: vi.fn(async () => ({})) };
     usage = { record: vi.fn(async () => {}) };
     service = new FetchService(
-      adapter as unknown as HttpFetchAdapter,
-      headlessAdapter as unknown as HeadlessFetchAdapter,
+      orchestrator as unknown as FetchStrategyOrchestratorService,
+      robots as unknown as RobotsPolicyService,
       jobs as unknown as FetchJobRepository,
       cache as unknown as PageCacheRepository,
       usage as unknown as ResearchUsageService,
@@ -48,13 +55,29 @@ describe('FetchService usage accounting', () => {
     appConfigGet.mockReturnValue({
       RESEARCH_DOMAIN_ALLOWLIST: [],
       RESEARCH_DOMAIN_BLOCKLIST: ['blocked.example'],
+      RESEARCH_HEADLESS_RENDER_ENABLED: true,
     });
 
     await expect(
       service.fetchPage('user-1', { url: 'https://blocked.example/a' }),
     ).rejects.toBeDefined();
 
-    expect(adapter.fetchPage).not.toHaveBeenCalled();
+    expect(orchestrator.fetchWithEscalation).not.toHaveBeenCalled();
+    expect(usage.record).not.toHaveBeenCalled();
+  });
+
+  it('does not charge a robots.txt refusal', async () => {
+    robots.evaluate.mockResolvedValue({
+      outcome: RobotsOutcome.DISALLOWED,
+      robotsUrl: 'https://example.com/robots.txt',
+      crawlDelayMs: null,
+    });
+
+    await expect(
+      service.fetchPage('user-1', { url: 'https://example.com/a' }),
+    ).rejects.toBeDefined();
+
+    expect(jobs.create).not.toHaveBeenCalled();
     expect(usage.record).not.toHaveBeenCalled();
   });
 
@@ -73,12 +96,12 @@ describe('FetchService usage accounting', () => {
 
     await service.fetchPage('user-1', { url: 'https://example.com/a' });
 
-    expect(adapter.fetchPage).not.toHaveBeenCalled();
+    expect(orchestrator.fetchWithEscalation).not.toHaveBeenCalled();
     expect(usage.record).not.toHaveBeenCalled();
   });
 
-  it('charges a live fetch attempt even when the network request fails', async () => {
-    adapter.fetchPage.mockRejectedValue(new Error('network down'));
+  it('charges a live fetch attempt even when every strategy fails', async () => {
+    orchestrator.fetchWithEscalation.mockRejectedValue(new Error('network down'));
 
     await expect(
       service.fetchPage('user-1', { url: 'https://example.com/a' }),

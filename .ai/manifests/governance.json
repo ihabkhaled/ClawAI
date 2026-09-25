@@ -46,6 +46,7 @@
     "docs/exceptions",
     "docs/features",
     "docs/implementation",
+    "docs/research",
     "docs/security",
     "docs/superpowers",
     "docs/workspace"
@@ -294,7 +295,7 @@
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
-      "bytes": 5004,
+      "bytes": 6450,
       "file": "rules/50-agentic-research-loop-and-narration.md"
     },
     {
@@ -324,7 +325,7 @@
   ],
   "skills": [
     {
-      "bytes": 29953,
+      "bytes": 30232,
       "file": "skills/00-index.md"
     },
     {
@@ -366,6 +367,10 @@
     {
       "bytes": 7410,
       "file": "skills/README.md"
+    },
+    {
+      "bytes": 4663,
+      "file": "skills/add-a-fetch-strategy.md"
     },
     {
       "bytes": 3703,

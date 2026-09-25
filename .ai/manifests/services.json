@@ -410,7 +410,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-research-service",
-      "endpointCount": 17,
+      "endpointCount": 19,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -425,12 +425,14 @@
       "portSource": "shared-constants",
       "prismaModels": [
         "FetchJob",
+        "FetchStrategyConfig",
+        "HostStrategyMemory",
         "PageCache",
         "ResearchRun",
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 33,
+      "testFiles": 52,
       "testRunner": "vitest"
     },
     {

@@ -216,6 +216,8 @@
       "mongooseModels": [],
       "prismaModels": [
         "FetchJob",
+        "FetchStrategyConfig",
+        "HostStrategyMemory",
         "PageCache",
         "ResearchRun",
         "SearchProvider",

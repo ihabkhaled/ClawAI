@@ -5,7 +5,7 @@ import { HeadlessFetchAdapter } from '../headless-fetch.adapter';
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: vi.fn() },
 }));
-vi.mock('playwright', () => ({
+vi.mock('patchright', () => ({
   chromium: { launch: vi.fn() },
 }));
 
@@ -15,7 +15,7 @@ type RouteHandler = (route: {
   continue: () => Promise<void>;
 }) => void;
 
-const { chromium } = await vi.importMock('playwright') as {
+const { chromium } = (await vi.importMock('patchright')) as {
   chromium: { launch: Mock };
 };
 
@@ -41,7 +41,10 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
     appConfigGet.mockReturnValue({ RESEARCH_DOMAIN_ALLOWLIST: [] });
     routeHandler = null;
 
-    gotoMock = vi.fn().mockResolvedValue({ status: () => 200 });
+    gotoMock = vi.fn().mockResolvedValue({
+      status: () => 200,
+      request: () => ({ redirectedFrom: () => null }),
+    });
     urlMock = vi.fn().mockReturnValue('https://example.com/');
     contentMock = vi
       .fn()
@@ -56,6 +59,7 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
       goto: gotoMock,
       url: urlMock,
       content: contentMock,
+      waitForLoadState: vi.fn().mockResolvedValue(undefined),
     };
     closeContextMock = vi.fn().mockResolvedValue(undefined);
     newContextMock = vi.fn().mockResolvedValue({
@@ -63,7 +67,11 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
       close: closeContextMock,
     });
     closeBrowserMock = vi.fn().mockResolvedValue(undefined);
-    chromium.launch.mockResolvedValue({ newContext: newContextMock, close: closeBrowserMock });
+    chromium.launch.mockResolvedValue({
+      newContext: newContextMock,
+      close: closeBrowserMock,
+      version: () => '140.0.0.0',
+    });
     adapter = new HeadlessFetchAdapter();
   });
 
@@ -162,5 +170,23 @@ describe('HeadlessFetchAdapter.fetchPage', () => {
     await expect(adapter.fetchPage({ url: 'https://example.com/' })).rejects.toThrow(
       /private\/loopback/u,
     );
+  });
+
+  it('checks every hop of the navigation redirect chain, not only the ends', async () => {
+    const middleHop = { url: () => 'http://169.254.169.254/latest', redirectedFrom: () => null };
+    gotoMock.mockResolvedValue({
+      status: () => 200,
+      request: () => ({ redirectedFrom: () => middleHop }),
+    });
+
+    await expect(adapter.fetchPage({ url: 'https://example.com/' })).rejects.toThrow();
+  });
+
+  it('presents a desktop Chrome User-Agent, not HeadlessChrome', async () => {
+    await adapter.fetchPage({ url: 'https://example.com/' });
+
+    const [options] = newContextMock.mock.calls[0] as [{ userAgent: string }];
+    expect(options.userAgent).toContain('Chrome/140.0.0.0');
+    expect(options.userAgent).not.toContain('Headless');
   });
 });

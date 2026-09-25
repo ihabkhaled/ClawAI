@@ -35,6 +35,8 @@ export enum ResearchErrorCode {
   FETCH_FAILED = 'FETCH_FAILED',
   FETCH_TIMEOUT = 'FETCH_TIMEOUT',
   FETCH_URL_BLOCKED = 'FETCH_URL_BLOCKED',
+  /** robots.txt disallows this URL for ClawAI-ResearchBot — refused, no strategy ran. */
+  FETCH_ROBOTS_DISALLOWED = 'FETCH_ROBOTS_DISALLOWED',
 
   // Scrape
   SCRAPE_FAILED = 'SCRAPE_FAILED',

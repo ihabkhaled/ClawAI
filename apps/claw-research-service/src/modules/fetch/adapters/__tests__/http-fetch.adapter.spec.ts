@@ -91,4 +91,62 @@ describe('HttpFetchAdapter.fetchPage', () => {
 
     expect(result.metadata).toBeUndefined();
   });
+
+  function redirectTo(location: string): Record<string, unknown> {
+    return {
+      ok: false,
+      status: 302,
+      headers: { get: (name: string) => (name === 'location' ? location : null) },
+      body: null,
+    };
+  }
+
+  it('refuses a redirect to a private host BEFORE requesting it', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(redirectTo('http://169.254.169.254/latest/meta-data'));
+
+    await expect(adapter.fetchPage({ url: 'https://example.com/' })).rejects.toThrow();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('follows a safe redirect hop by hop and reports the final URL', async () => {
+    const html = Buffer.from(
+      '<html><head><title>Moved</title></head><body>moved here</body></html>',
+    );
+    let sent = false;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(redirectTo('/new-home'))
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: { get: (name: string) => (name === 'content-type' ? 'text/html' : null) },
+        body: {
+          getReader: () => ({
+            read: () =>
+              sent
+                ? Promise.resolve({ done: true, value: undefined })
+                : ((sent = true), Promise.resolve({ done: false, value: html })),
+          }),
+        },
+      });
+
+    const result = await adapter.fetchPage({ url: 'https://example.com/old' });
+
+    expect(result.finalUrl).toBe('https://example.com/new-home');
+    expect(result.title).toBe('Moved');
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      'https://example.com/new-home',
+      expect.objectContaining({ redirect: 'manual' }),
+    );
+  });
+
+  it('gives up after too many redirects', async () => {
+    global.fetch = vi.fn().mockResolvedValue(redirectTo('/loop'));
+
+    await expect(adapter.fetchPage({ url: 'https://example.com/loop' })).rejects.toThrow(
+      /Too many redirects/u,
+    );
+  });
 });

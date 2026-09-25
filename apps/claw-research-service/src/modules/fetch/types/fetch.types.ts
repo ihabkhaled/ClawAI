@@ -1,3 +1,4 @@
+import type { FetchStrategyKind } from '../../../generated/prisma';
 import type { HtmlMetadata } from '../../../common/types/html-extract.types';
 
 export type FetchRequest = {
@@ -6,6 +7,12 @@ export type FetchRequest = {
   timeoutMs?: number;
   /** If true, bypass the page cache and force a live fetch. */
   refresh?: boolean;
+  /**
+   * The strategy's `FetchStrategyConfig.publicConfig`, passed per call by the
+   * orchestrator (e.g. a sidecar's base URL). Per call rather than stored on
+   * the adapter, so two concurrent fetches never see each other's config.
+   */
+  strategyConfig?: Record<string, unknown>;
 };
 
 export type FetchResult = {
@@ -47,4 +54,16 @@ export type FetchResult = {
    * hardcoded value read as a measurement.
    */
   renderedWithHeadlessBrowser?: true;
+  /**
+   * Which escalation strategy produced this result (ADR-121). Set by the
+   * orchestrator on every live fetch; absent on cache hits and legacy rows.
+   */
+  servedBy?: FetchStrategyKind;
+  /**
+   * ISO timestamp of the archive capture, set ONLY when the text is an
+   * archived copy (Wayback), never a live fetch. The content itself also
+   * starts with an "Archived copy, captured …" line, so no consumer that
+   * ignores this field can mistake it for the live page.
+   */
+  archivedAt?: string;
 };

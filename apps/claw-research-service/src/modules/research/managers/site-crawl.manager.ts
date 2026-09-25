@@ -18,6 +18,7 @@ import { sha1Short } from '../../../common/utilities/hash.utility';
 import { isPathAllowed, parseRobotsTxt } from '../../../common/utilities/robots-txt.utility';
 import { parseSitemapXml } from '../../../common/utilities/sitemap.utility';
 import { CrawlDiscoveryMethod } from '../../../common/enums/crawl-discovery-method.enum';
+import { FetchPurpose } from '../../fetch/enums/fetch-purpose.enum';
 import { FetchService } from '../../fetch/services/fetch.service';
 import { pushFetchToolMarker, traceEntry } from '../utilities/evidence-builder.utility';
 import { ResearchProgressPublisher } from './research-progress-publisher.service';
@@ -271,9 +272,11 @@ export class SiteCrawlManager {
   ): Promise<RobotsTxtResult> {
     const start = Date.now();
     try {
-      const result = await this.fetchService.fetchPage(userId, {
-        url: `${origin}${CRAWL_ROBOTS_TXT_PATH}`,
-      });
+      const result = await this.fetchService.fetchPage(
+        userId,
+        { url: `${origin}${CRAWL_ROBOTS_TXT_PATH}` },
+        FetchPurpose.MACHINE_READABLE,
+      );
       toolsUsed.push('web_crawl:robots');
       trace.push(
         traceEntry('crawl.robots', 'ok', Date.now() - start, `${origin}${CRAWL_ROBOTS_TXT_PATH}`),
@@ -306,7 +309,11 @@ export class SiteCrawlManager {
     }
     const start = Date.now();
     try {
-      const result = await this.fetchService.fetchPage(userId, { url: feedUrl });
+      const result = await this.fetchService.fetchPage(
+        userId,
+        { url: feedUrl },
+        FetchPurpose.MACHINE_READABLE,
+      );
       const parsed = parseFeedXml(result.rawHtml ?? result.content);
       if (parsed.kind === 'unrecognized') {
         trace.push(
@@ -367,7 +374,11 @@ export class SiteCrawlManager {
     budget.remaining -= 1;
     const start = Date.now();
     try {
-      const result = await this.fetchService.fetchPage(userId, { url: sitemapUrl });
+      const result = await this.fetchService.fetchPage(
+        userId,
+        { url: sitemapUrl },
+        FetchPurpose.MACHINE_READABLE,
+      );
       const parsed = parseSitemapXml(result.rawHtml ?? result.content);
       if (parsed.kind === 'urlset') {
         trace.push(

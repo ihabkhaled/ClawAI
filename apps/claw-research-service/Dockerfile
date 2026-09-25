@@ -53,14 +53,16 @@ COPY --from=builder /app/apps/claw-research-service/prisma.config.ts ./prisma.co
 COPY --from=builder /app/packages /app/packages
 COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh
 RUN chmod +x /app/docker-entrypoint.prod.sh
-# HeadlessFetchAdapter's Chromium (ADR-094). A world-readable, non-/root path
-# because the browser is downloaded here as root but launched later as
-# `nestjs` — Playwright's own default (`~/.cache/ms-playwright`) resolves to
-# `/root/...`, unreadable by any other user. `--with-deps` pulls the Debian
-# system libraries Chromium needs to actually run (libnss3, libatk, fonts,
-# …), not just the browser binary itself.
+# HeadlessFetchAdapter's Chromium, driven by Patchright (ADR-094, ADR-121).
+# A world-readable, non-/root path because the browser is downloaded here as
+# root but launched later as `nestjs` — the default (`~/.cache/ms-playwright`)
+# resolves to `/root/...`, unreadable by any other user. Patchright reads the
+# same PLAYWRIGHT_BROWSERS_PATH variable. `--with-deps` pulls the Debian
+# system libraries Chromium needs to actually run (libnss3, libatk, fonts, …).
+# impit (TLS impersonation) ships a prebuilt glibc binary
+# (impit-linux-x64-gnu) as an optional dependency — no system package needed.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright install --with-deps chromium \
+RUN npx patchright install --with-deps chromium \
   && chmod -R o+rX /ms-playwright
 USER nestjs
 EXPOSE 4016

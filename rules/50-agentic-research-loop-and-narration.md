@@ -21,9 +21,15 @@ the frontend `NarrationLog`.
 2. **Plan gate first.** In `runAutoResearch`, `hasResearchAccess` runs before
    the planner and before any URL shortcut. Crawl and research are both behind
    the plan's research unlock.
-3. **A link the user wrote is opened.** `parseResearchPlan` overrules a planner
-   that says "answer" or "search" when the user wrote a URL. Do not relax this
-   to trust the model.
+3. **A link the user wrote is opened** — unless the site refused it.
+   `parseResearchPlan` overrules a planner that says "answer" or "search" when
+   the user wrote a URL; do not relax this to trust the model. What "opened"
+   means is bounded by research-service's fetch invariants (ADR-121): robots.txt
+   is honoured on every fetch (a Disallow is a 403 `FETCH_ROBOTS_DISALLOWED`,
+   and the failure is narrated as `RESEARCH_FAILED`, never retried another way);
+   401/451 stop the escalation chain; a captcha is never solved; every attempt
+   is bounded (≤6 strategies, ≤60 s) and every redirect hop is SSRF-checked
+   before it is requested. An archived copy is always labelled as one.
 4. **An unusable planner reply returns `null`**, so the next configured model is
    tried. Never default a bad reply to an action — that ends the fallback walk.
 5. **Research never runs inside the POST.** It runs after the response, and
@@ -46,6 +52,12 @@ the frontend `NarrationLog`.
 - Forwarding a user token to research-service from chat.
 - Awaiting the research loop inside `createMessage` before returning.
 - Rendering the live log and the stored log with different components.
+- A second fetch path in research-service, or a strategy that bypasses the
+  robots gate, the escalation policy or `followRedirectsSafely` (ADR-121).
+- Solving a captcha, retrying after 401/451, or using FlareSolverr for anything
+  but a JS interstitial on a robots-allowed URL.
+- Sending a private, token-bearing or signed-in-only URL to a third-party
+  reader or archive.
 
 ## Enforcement
 
@@ -60,4 +72,7 @@ the frontend `NarrationLog`.
 | Unit      | `auto-research-resolution.spec.ts` — plan gate before everything, including a URL                                                                                          |
 | Unit      | `research-progress-bridge.service.spec.ts` — one dedupe key per tick across replicas                                                                                       |
 | Unit      | `research-client.utility.spec.ts` — internal route, service token, no user bearer                                                                                          |
-| Live      | [skills/verify-the-research-loop-live.md](../skills/verify-the-research-loop-live.md)                                                                                      |
+| Unit      | `escalation-policy.utility.spec.ts` — refusals stop, captcha/429/404 go archive-only, FlareSolverr only after a JS challenge                                               |
+| Unit      | `fetch-strategy-orchestrator.service.spec.ts` — attempt ceiling, wall clock, thin fallback, `fetch.served` line has no query string                                       |
+| Unit      | `fetch.service.escalation.spec.ts` + `robots-policy.service.spec.ts` — robots Disallow refuses before any strategy; RFC 9309 wildcards                                     |
+| Live      | [skills/verify-the-research-loop-live.md](../skills/verify-the-research-loop-live.md) · [skills/add-a-fetch-strategy.md](../skills/add-a-fetch-strategy.md) (live tier proof) |

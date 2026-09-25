@@ -26,7 +26,28 @@ Controller → Service → Repository (data access)
 
 - `SearchProvider` — DB-backed provider definition (Tavily, SearXNG, Ollama Web, …).
 - `SearchRun` — one search execution with its normalized results.
-- _(future)_ `FetchJob`, `PageCache`, `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
+- `FetchJob`, `PageCache` — `FetchService`'s job ledger (incl. `servedBy`,
+  `archivedAt`) and 15-minute page cache.
+- `FetchStrategyConfig`, `HostStrategyMemory` — the fetch escalation chain
+  (ADR-121): per-tier enable/tier/timeout/base URL, and per-host "what last
+  worked" memory.
+
+## Fetch invariants (ADR-121 — every fetch, every tier)
+
+- `FetchService.fetchPage` is the only fetch path: domain policy → robots.txt
+  (RFC 9309, a Disallow is a 403 before anything is fetched or billed) → cache
+  → `FetchStrategyOrchestratorService`.
+- Tiers: official API → plain → impit (TLS impersonation) → Patchright →
+  Crawl4AI/FlareSolverr/Firecrawl sidecars (compose profiles via
+  `CLAW_SCRAPER_PROFILES`, DB-disabled by default) → Jina Reader → Wayback.
+- 401/451 stop the chain; captcha/429/404/robots-unreachable → archive only;
+  FlareSolverr only after a JS interstitial. ≤ 6 attempts, ≤ 60 s.
+- Any HTTP an adapter does itself goes through `followRedirectsSafely` (each
+  hop SSRF-checked before it is sent). HTML ends in `extractPageContent`.
+- Third parties (reader, archive) get public, token-free URLs only.
+- Log lines: `fetch.attempt`, `fetch.served`, `fetch.failed`, `fetch.refused`.
+- How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
+- _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 
 ## Key Environment Variables
 
@@ -47,17 +68,19 @@ docker rmi claw-research-service
 
 ## API (Phase 1)
 
-| Method | Path                                         | Notes                       |
-| ------ | -------------------------------------------- | --------------------------- |
-| GET    | `/api/v1/research/search-providers`          | List configured providers   |
-| POST   | `/api/v1/research/search-providers`          | Admin-only. Encrypts secret |
-| GET    | `/api/v1/research/search-providers/:id`      |                             |
-| PATCH  | `/api/v1/research/search-providers/:id`      | Admin-only                  |
-| DELETE | `/api/v1/research/search-providers/:id`      | Admin-only                  |
-| POST   | `/api/v1/research/search-providers/:id/test` | Admin-only. Updates status  |
-| POST   | `/api/v1/research/search`                    | Execute a search run        |
-| GET    | `/api/v1/research/search/runs`               | Current user's runs         |
-| GET    | `/api/v1/research/search/runs/:id`           | Single run                  |
+| Method | Path                                         | Notes                                         |
+| ------ | -------------------------------------------- | --------------------------------------------- |
+| GET    | `/api/v1/research/search-providers`          | List configured providers                     |
+| POST   | `/api/v1/research/search-providers`          | Admin-only. Encrypts secret                   |
+| GET    | `/api/v1/research/search-providers/:id`      |                                               |
+| PATCH  | `/api/v1/research/search-providers/:id`      | Admin-only                                    |
+| DELETE | `/api/v1/research/search-providers/:id`      | Admin-only                                    |
+| POST   | `/api/v1/research/search-providers/:id/test` | Admin-only. Updates status                    |
+| POST   | `/api/v1/research/search`                    | Execute a search run                          |
+| GET    | `/api/v1/research/search/runs`               | Current user's runs                           |
+| GET    | `/api/v1/research/search/runs/:id`           | Single run                                    |
+| GET    | `/api/v1/research/fetch-strategies`          | Admin-only. Escalation-layer status (ADR-121) |
+| PATCH  | `/api/v1/research/fetch-strategies/:kind`    | Admin-only. Enable/tune a strategy            |
 
 Future phases add: `/research/fetch`, `/research/evidence`, `/research/workflows`, `/research/runs` (research run, not just search).
 

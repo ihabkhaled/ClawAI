@@ -4,10 +4,12 @@ const WILDCARD_AGENT = '*';
 
 /**
  * A conservative `robots.txt` parser: the standard directives
- * (User-agent/Allow/Disallow/Crawl-delay/Sitemap), no wildcard (`*`, `$`)
- * matching inside paths beyond simple prefix matching. Good enough to decide
- * "is this path off-limits" and "where are the sitemaps" without pulling in
- * a dependency for a format this small and this line-oriented.
+ * (User-agent/Allow/Disallow/Crawl-delay/Sitemap), with RFC 9309 path
+ * patterns (`robotsRuleMatches`): `*` matches any run of characters and a
+ * trailing `$` anchors the end. Until 2026-09-25 rules matched by plain
+ * prefix only, so `Disallow: *\/share/` never matched and robots.txt failed
+ * OPEN for every wildcard rule; now that the fetch path refuses disallowed
+ * URLs (ADR-121) that gap mattered.
  *
  * Grouping follows the real spec, not a per-line reading of it: consecutive
  * `User-agent:` lines share the rules that follow them, and a `User-agent:`
@@ -106,18 +108,64 @@ export function isPathAllowed(result: RobotsTxtResult, userAgent: string, path: 
   let bestLength = -1;
   let bestIsAllow = true;
   for (const rule of group.disallow) {
-    if (path.startsWith(rule) && rule.length > bestLength) {
+    if (robotsRuleMatches(path, rule) && rule.length > bestLength) {
       bestLength = rule.length;
       bestIsAllow = false;
     }
   }
   for (const rule of group.allow) {
-    if (path.startsWith(rule) && rule.length >= bestLength) {
+    if (robotsRuleMatches(path, rule) && rule.length >= bestLength) {
       bestLength = rule.length;
       bestIsAllow = true;
     }
   }
   return bestLength === -1 || bestIsAllow;
+}
+
+/**
+ * RFC 9309 §2.2.3 path matching: a rule matches from the start of the path;
+ * `*` matches any sequence of characters (including none); a `$` at the very
+ * end means the path must end exactly there. Everything else is literal.
+ */
+export function robotsRuleMatches(path: string, rule: string): boolean {
+  if (rule.length === 0) {
+    return false;
+  }
+  const anchored = rule.endsWith('$');
+  const body = anchored ? rule.slice(0, -1) : rule;
+  if (!body.includes('*')) {
+    return anchored ? path === body : path.startsWith(body);
+  }
+  const pieces = body.split('*');
+  const [first = '', ...rest] = pieces;
+  if (!path.startsWith(first)) {
+    return false;
+  }
+  let cursor = first.length;
+  for (const piece of rest) {
+    const found = path.indexOf(piece, cursor);
+    if (found === -1) {
+      return false;
+    }
+    cursor = found + piece.length;
+  }
+  if (!anchored) {
+    return true;
+  }
+  const last = rest.at(-1) ?? '';
+  return last.length === 0 || path.endsWith(last);
+}
+
+/**
+ * `Crawl-delay` (seconds) of the group that applies to `userAgent`, chosen
+ * the same way `isPathAllowed` chooses it; null when absent.
+ */
+export function crawlDelayFor(result: RobotsTxtResult, userAgent: string): number | null {
+  const agent = userAgent.toLowerCase();
+  const group =
+    result.groups.find((candidate) => candidate.userAgents.includes(agent)) ??
+    result.groups.find((candidate) => candidate.userAgents.includes(WILDCARD_AGENT));
+  return group?.crawlDelaySeconds ?? null;
 }
 
 function applyToCurrentGroups(

@@ -6,8 +6,26 @@ export const FETCH_MAX_CONTENT_LENGTH = 32_000;
 export const FETCH_DEFAULT_TIMEOUT_MS = 10_000;
 /** Cache TTL in milliseconds (15 minutes). */
 export const FETCH_CACHE_TTL_MS = 15 * 60 * 1000;
-/** Max redirects we will follow. */
+/** Max redirects we will follow — each hop is SSRF-checked before it is requested. */
 export const FETCH_MAX_REDIRECTS = 5;
+
+/** Largest JSON reply read from a scraping sidecar (it carries the page's HTML). */
+export const SIDECAR_MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
+
+/** Most links kept on a `FetchResult`. */
+export const FETCH_MAX_LINKS = 100;
+
+/** Content types parsed as HTML (Readability + extractHtml). */
+export const HTML_MIME_TYPES: ReadonlySet<string> = new Set(['text/html', 'application/xhtml+xml']);
+
+/** HTTP statuses that carry a `Location` to follow. */
+export const REDIRECT_STATUS_CODES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
+
+/**
+ * The robots.txt product token. Matched against `User-agent:` groups, and the
+ * first word of the User-Agent header every non-impersonating strategy sends.
+ */
+export const RESEARCH_BOT_USER_AGENT = 'ClawAI-ResearchBot/1.0';
 
 /** Mime types we are willing to parse. */
 export const FETCH_ALLOWED_MIME_TYPES: ReadonlySet<string> = new Set([

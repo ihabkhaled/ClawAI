@@ -19,9 +19,9 @@ npm run dev
 ## Ownership (generated)
 - Port: 4016
 - Database: postgresql
-- Prisma models: FetchJob, PageCache, ResearchRun, SearchProvider, SearchRun
-- API endpoints: 17 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 33 (vitest)
+- Prisma models: FetchJob, FetchStrategyConfig, HostStrategyMemory, PageCache, ResearchRun, SearchProvider, SearchRun
+- API endpoints: 19 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 52 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

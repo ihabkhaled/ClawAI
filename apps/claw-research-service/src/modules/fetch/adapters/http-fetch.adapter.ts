@@ -1,169 +1,63 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
-
 import {
-  FETCH_ALLOWED_MIME_TYPES,
   FETCH_DEFAULT_TIMEOUT_MS,
   FETCH_MAX_BYTES,
-  FETCH_MAX_CONTENT_LENGTH,
   FETCH_MAX_REDIRECTS,
-  RAW_BODY_PRESERVED_MIME_TYPES,
+  RESEARCH_BOT_USER_AGENT,
 } from '../../../common/constants/fetch.constants';
-import { extractHtml } from '../../../common/utilities/html-extract.utility';
-import {
-  assertSafeOutboundUrl,
-  isHostExplicitlyAllowlisted,
-} from '../../../common/utilities/url-safety.utility';
-import type { HtmlMetadata } from '../../../common/types/html-extract.types';
-import type { FetchAdapter } from './fetch-adapter.interface';
+import { FetchStrategyKind } from '../../../generated/prisma';
+import { readLimitedBody, parseMimeType } from '../utilities/limited-body.utility';
+import { buildResultFromRawBody } from '../utilities/raw-body-result.utility';
+import { followRedirectsSafely } from '../utilities/safe-redirect.utility';
+import type { FetchStrategyAdapter } from './fetch-strategy-adapter.interface';
 import type { FetchRequest, FetchResult } from '../types/fetch.types';
 
+/**
+ * Tier 1 of the escalation chain (ADR-121): a plain GET with Node's own
+ * `fetch`, identifying honestly as `ClawAI-ResearchBot`.
+ *
+ * Private hosts are permitted ONLY when the operator named them in
+ * `RESEARCH_DOMAIN_ALLOWLIST` (see the SSRF history in the research service
+ * guide). Redirects are followed by `followRedirectsSafely`, which checks
+ * every hop BEFORE requesting it — `redirect: 'follow'` would have connected
+ * to a `302 → 169.254.169.254` target before anyone could refuse it.
+ */
 @Injectable()
-export class HttpFetchAdapter implements FetchAdapter {
-  private readonly logger = new Logger(HttpFetchAdapter.name);
+export class HttpFetchAdapter implements FetchStrategyAdapter {
+  readonly kind = FetchStrategyKind.HTTP_PLAIN;
 
   async fetchPage(request: FetchRequest): Promise<FetchResult> {
-    const start = Date.now();
-    // Private hosts are permitted ONLY when the operator named them.
-    //
-    // This used to be an unconditional `allowPrivateHosts: true`, reasoned as
-    // "self-hosted deployments may legitimately fetch internal resources". That
-    // was defensible while every URL reaching here came from a search provider.
-    // It stopped being defensible on 2026-09-11, when the platform learned to
-    // open a URL the USER typed: the same code path then accepted
-    // `http://127.0.0.1:4001/…` or a service name on the internal Docker
-    // network, fetched it, and put the body into a model's prompt.
-    //
-    // The allowlist is the right gate because it is deny-by-default and already
-    // exists: an operator who wants the internal wiki read adds that host, and
-    // gets exactly that host rather than the whole private network.
-    const allowedHosts = AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST;
-    const parsed = assertSafeOutboundUrl(request.url, {
-      allowPrivateHosts: isHostExplicitlyAllowlisted(request.url, allowedHosts),
-    });
-    const response = await fetch(parsed.href, {
-      redirect: 'follow',
-      signal: AbortSignal.timeout(request.timeoutMs ?? FETCH_DEFAULT_TIMEOUT_MS),
-      headers: {
-        'User-Agent': 'ClawAI-ResearchBot/1.0',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    const startedAt = Date.now();
+    const timeoutMs = request.timeoutMs ?? FETCH_DEFAULT_TIMEOUT_MS;
+    const signal = AbortSignal.timeout(timeoutMs);
+    const { response, finalUrl } = await followRedirectsSafely(
+      request.url,
+      async (url) => {
+        const hop = await fetch(url, {
+          redirect: 'manual',
+          signal,
+          headers: {
+            'User-Agent': RESEARCH_BOT_USER_AGENT,
+            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+        });
+        return { status: hop.status, location: hop.headers.get('location'), response: hop };
       },
-    });
+      { maxRedirects: FETCH_MAX_REDIRECTS, allowlist: AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST },
+    );
 
-    this.assertRedirectsSafe(response);
-    const mimeType = this.parseMime(response.headers.get('content-type'));
-    this.assertAllowedMime(mimeType);
-
-    const body = await this.readLimitedBody(response);
-    const extracted = this.extract(mimeType, body, response.url);
-    const latencyMs = Date.now() - start;
-
-    return {
+    const mimeType = parseMimeType(response.headers.get('content-type'));
+    const bytes = await readLimitedBody(response.body, FETCH_MAX_BYTES);
+    return buildResultFromRawBody({
       url: request.url,
-      finalUrl: response.url,
+      finalUrl,
       httpStatus: response.status,
       mimeType,
-      title: extracted.title,
-      content: extracted.text.slice(0, FETCH_MAX_CONTENT_LENGTH),
-      links: extracted.links.slice(0, 100),
-      byteSize: body.length,
-      cacheHit: false,
-      latencyMs,
-      rawHtml: RAW_BODY_PRESERVED_MIME_TYPES.has(mimeType ?? '') ? body : undefined,
-      metadata: extracted.metadata,
-    };
-  }
-
-  private assertRedirectsSafe(response: Response): void {
-    const chain = (response as Response & { redirected?: boolean }).redirected ?? false;
-    if (!chain) {
-      return;
-    }
-    // fetch() follows redirects automatically, so the pre-flight check on the
-    // ORIGINAL url proves nothing about where the body came from: a public page
-    // that 302s to 169.254.169.254 passes the first check and fails only here.
-    // The final hostname gets the same treatment as the first, allowlist
-    // included — otherwise a redirect is a way to reach what a direct request
-    // could not.
-    try {
-      assertSafeOutboundUrl(response.url, {
-        allowPrivateHosts: isHostExplicitlyAllowlisted(
-          response.url,
-          AppConfig.get().RESEARCH_DOMAIN_ALLOWLIST,
-        ),
-      });
-    } catch (error) {
-      this.logger.warn(`Fetch redirected to unsafe target ${response.url}`);
-      throw error;
-    }
-  }
-
-  private parseMime(header: string | null): string | null {
-    if (header === null) {
-      return null;
-    }
-    const semi = header.indexOf(';');
-    return (semi >= 0 ? header.slice(0, semi) : header).trim().toLowerCase();
-  }
-
-  private assertAllowedMime(mimeType: string | null): void {
-    if (mimeType === null) {
-      return;
-    }
-    if (!FETCH_ALLOWED_MIME_TYPES.has(mimeType)) {
-      throw new Error(`Unsupported content-type: ${mimeType}`);
-    }
-  }
-
-  private async readLimitedBody(response: Response): Promise<string> {
-    const reader = response.body?.getReader();
-    if (reader === undefined) {
-      return '';
-    }
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) {
-        break;
-      }
-      if (value !== undefined) {
-        total += value.length;
-        if (total > FETCH_MAX_BYTES) {
-          throw new Error(`Response exceeds max size (${String(FETCH_MAX_BYTES)} bytes)`);
-        }
-        chunks.push(value);
-      }
-    }
-    if (FETCH_MAX_REDIRECTS < 0) {
-      // Satisfy unused-var lint while keeping the constant imported for future use.
-      throw new Error('unreachable');
-    }
-    return Buffer.concat(chunks).toString('utf8');
-  }
-
-  private extract(
-    mimeType: string | null,
-    body: string,
-    finalUrl: string,
-  ): {
-    title: string | null;
-    text: string;
-    links: string[];
-    metadata?: HtmlMetadata;
-  } {
-    if (mimeType === 'text/html' || mimeType === 'application/xhtml+xml') {
-      return extractHtml(body, finalUrl);
-    }
-    if (mimeType === 'application/json') {
-      try {
-        const parsed = JSON.parse(body) as unknown;
-        return { title: null, text: JSON.stringify(parsed, null, 2), links: [] };
-      } catch {
-        return { title: null, text: body, links: [] };
-      }
-    }
-    return { title: null, text: body, links: [] };
+      body: bytes.toString('utf8'),
+      byteSize: bytes.length,
+      startedAt,
+    });
   }
 }

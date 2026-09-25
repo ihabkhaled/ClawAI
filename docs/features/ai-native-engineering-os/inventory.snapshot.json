@@ -2476,6 +2476,16 @@
         },
         {
           "method": "GET",
+          "route": "/research/fetch-strategies",
+          "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch-strategy.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/research/fetch-strategies/:kind",
+          "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch-strategy.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/research/fetch/jobs",
           "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
         },
@@ -7378,6 +7388,7 @@
         "docs/exceptions",
         "docs/features",
         "docs/implementation",
+        "docs/research",
         "docs/security",
         "docs/superpowers",
         "docs/workspace"
@@ -7625,7 +7636,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 5004,
+          "bytes": 6450,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -7655,7 +7666,7 @@
       ],
       "skills": [
         {
-          "bytes": 29953,
+          "bytes": 30232,
           "file": "skills/00-index.md"
         },
         {
@@ -7697,6 +7708,10 @@
         {
           "bytes": 7410,
           "file": "skills/README.md"
+        },
+        {
+          "bytes": 4663,
+          "file": "skills/add-a-fetch-strategy.md"
         },
         {
           "bytes": 3703,
@@ -9650,6 +9665,16 @@
           {
             "confidence": "verified",
             "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "FetchStrategyConfig"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "HostStrategyMemory"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
             "value": "PageCache"
           },
           {
@@ -10045,7 +10070,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 33
+        "testFiles": 52
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -10783,7 +10808,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 44,
-    "endpointCount": 685,
+    "endpointCount": 687,
     "envVarCount": 356,
     "eventCount": 181,
     "frontendRouteCount": 155,
@@ -10795,7 +10820,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1510,
+    "totalTestFiles": 1529,
     "workspaceCount": 25
   }
 }
