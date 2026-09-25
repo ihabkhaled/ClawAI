@@ -555,9 +555,10 @@ describe('ConsensusExecutionManager', () => {
   // the spelled-out request.
   describe('an attachment-only send', () => {
     it('synthesises against the attachment request, not an empty prompt', async () => {
-      const bodies: string[] = [];
-      globalThis.fetch = vi.fn(async (_url: unknown, init?: { body?: unknown }) => {
-        bodies.push(String(init?.body ?? ''));
+      // The prompt the synthesis step is handed, captured without touching the
+      // network (the Ollama URL's host allowlist differs between shells).
+      const synthesisPrompts: string[] = [];
+      globalThis.fetch = vi.fn(async () => {
         throw new Error('Ollama unavailable');
       }) as typeof fetch;
       mockContextAssemblyManager.assemble.mockResolvedValue({
@@ -590,14 +591,25 @@ describe('ConsensusExecutionManager', () => {
         mockResearchEnricherManager as never,
         createFakePaygAccessControl() as never,
       );
-
-      await isolated.executeConsensus('user-1', 'thread-1', '', sampleModels, ['f-1']);
-      await vi.waitFor(() => {
-        expect(bodies.length).toBeGreaterThan(0);
+      const synthesize: unknown = Reflect.get(isolated, 'synthesize');
+      if (typeof synthesize !== 'function') {
+        throw new Error('Consensus synthesis step is unavailable');
+      }
+      Reflect.set(isolated, 'synthesize', async (prompt: string, ...rest: unknown[]) => {
+        synthesisPrompts.push(prompt);
+        return Reflect.apply(synthesize, isolated, [prompt, ...rest]);
       });
 
-      expect(bodies[0]).toContain('[Attachment-only message]');
-      expect(bodies[0]).toContain('For a video');
+      await isolated.executeConsensus('user-1', 'thread-1', '', sampleModels, ['f-1']);
+      await vi.waitFor(
+        () => {
+          expect(synthesisPrompts.length).toBeGreaterThan(0);
+        },
+        { timeout: 10_000 },
+      );
+
+      expect(synthesisPrompts[0]).toContain('[Attachment-only message]');
+      expect(synthesisPrompts[0]).toContain('For a video');
       globalThis.fetch = undefined as never;
     });
   });
