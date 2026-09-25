@@ -219,9 +219,23 @@ today, and any future page built as header + transcript + input.
     never left to the server's "Validation failed". See rule 42 (attachment-only
     turns) for what the model is told.
 
+22. **A short viewport keeps the send button on screen.** A phone held
+    sideways (740×360, 844×390) runs out of height, not width. At 740×360 the
+    topbar and bottom nav took 128 px, the attachment tray could take 240 px,
+    and send/record ended at y=373 under the nav (found live 2026-09-25). The
+    `short-viewport:` variant (`max-height: 500px`, globals.css) is the one
+    guard. Under it the bottom nav is not rendered and
+    `--mobile-bottom-nav-height` is `0rem`, so every clearance built on the
+    variable drops with it (the topbar hamburger opens the same drawer). The
+    page padding stays at `p-3`. The tray is one sideways-scrolling row capped
+    in dvh, and the textarea is capped in dvh (`.composer-textarea-short-cap`).
+    CSS only. Pinned by `chat-surface-layout-contract.test.ts`.
+
 ## Prohibited patterns
 
 - A pixel height, or a ratio-of-window height, for a composer or a transcript.
+- A composer row (tray, textarea, toolbar) that can grow past a short
+  viewport with no `short-viewport:` cap.
 - A drag-to-resize affordance that is pointer-only, unpersisted, or has no way
   back to a sane state.
 - A second `scrollHeight` autosize implementation.

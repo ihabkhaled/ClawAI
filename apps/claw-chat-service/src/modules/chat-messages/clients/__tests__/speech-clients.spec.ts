@@ -220,6 +220,7 @@ describe('SpeechFileStoreClient', () => {
         mimeType: 'audio/wav',
         bytes: Buffer.from('RIFF'),
         transcript: 'Hi.',
+        timeoutMs: 7_000,
       }),
     ).resolves.toBe('f1');
     expect(request).toHaveBeenCalledWith(
@@ -233,6 +234,8 @@ describe('SpeechFileStoreClient', () => {
           base64Data: Buffer.from('RIFF').toString('base64'),
           transcript: 'Hi.',
         },
+        // The caller's slice of the request deadline, not a fixed constant.
+        timeoutMs: 7_000,
       }),
     );
   });
@@ -246,8 +249,33 @@ describe('SpeechFileStoreClient', () => {
         mimeType: 'audio/wav',
         bytes: Buffer.from('x'),
         transcript: '',
+        timeoutMs: 10_000,
       }),
     ).rejects.toMatchObject({ status: 502 });
+  });
+
+  // After a PAID synthesis: a store that runs out of time is the service's own
+  // TTS_FAILED 504, and an unreachable file-service its 502, never a raw error.
+  it.each([
+    ['times out', Object.assign(new Error('aborted'), { name: 'AbortError' }), 504],
+    ['is unreachable', new Error('ECONNREFUSED'), 502],
+  ])('a store that %s is a mapped TTS_FAILED', async (_label, failure, status) => {
+    request.mockRejectedValue(failure as never);
+    const error: unknown = await new SpeechFileStoreClient()
+      .store({
+        userId: 'u1',
+        filename: 'x.wav',
+        mimeType: 'audio/wav',
+        bytes: Buffer.from('x'),
+        transcript: '',
+        timeoutMs: 10_000,
+      })
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+    expect(error).toMatchObject({ status });
+    expect(JSON.stringify(error)).toContain('TTS_FAILED');
   });
 
   it('exists: true on 200, false on 404, null when file-service cannot say', async () => {

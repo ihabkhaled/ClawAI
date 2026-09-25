@@ -101,13 +101,18 @@ through it.
 `/ingestion-state` does not always echo the persisted `File.ingestionStatus`
 column. An audio row reaches `COMPLETED` the instant the upload lands — see
 "Audio transcription" below — with `extractedText` still the `[Audio file: …]`
-placeholder; transcription runs later, out of band. `FilesService#effectiveIngestionStatus`
-reports `PROCESSING` (or `FAILED`, once `extractionError` is set) for exactly
+placeholder; transcription runs later, out of band. `resolveEffectiveIngestionStatus`
+(`utilities/effective-ingestion.utility.ts`) reports `PROCESSING` (or `FAILED`, once `extractionError` is set) for exactly
 that row — and, since batch 7, for a video row still carrying `[Video file: …]` —
 WITHOUT touching the persisted column, so chat-service's bounded
 `waitForIngestion` poll actually waits for the transcript instead of seeing
-`COMPLETED` on the first poll and moving on. `getFileContent` and every other
-reader of the real column are unaffected.
+`COMPLETED` on the first poll and moving on. Since 2026-09-25 the owner-facing
+`GET /files` and `GET /files/:id` report the same effective status through the
+same function, so the composer chip shows "processing" until the document lands.
+The owner view alone stops saying `PROCESSING` 30 minutes after the row's last
+write (`OWNER_PLACEHOLDER_PROCESSING_CEILING_MS`), so a lost job cannot keep the
+file list polling forever. `getFileContent` and the `?ingestionStatus=` list
+filter still read the stored column.
 
 ## Upload and Chunking Flow
 

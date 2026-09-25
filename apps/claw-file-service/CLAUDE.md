@@ -351,8 +351,13 @@ publishes `FILE_VIDEO_PROCESS_REQUESTED` (`publishConfirmed`) AFTER that write.
    "Audio could not be transcribed: …"), status and `extractionMetadata.media`
    together.
 
-Until that write `getIngestionState` reports `PROCESSING` (placeholder) or
-`FAILED` (placeholder + `extractionError`). A placeholder older than
+Until that write `getIngestionState`, `GET /files` and `GET /files/:id` report
+`PROCESSING` (placeholder) or `FAILED` (placeholder + `extractionError`). All
+three use one mapping, `resolveEffectiveIngestionStatus` in
+`utilities/effective-ingestion.utility.ts`. Never write a second copy (rule 42
+item 12). The owner-facing pair stops saying `PROCESSING` after
+`OWNER_PLACEHOLDER_PROCESSING_CEILING_MS`, so a lost job cannot keep the file
+list polling forever. A placeholder older than
 `VIDEO_PROCESSING_STALE_MS` is re-queued on poll (legacy rows, lost jobs) —
 never in bulk.
 

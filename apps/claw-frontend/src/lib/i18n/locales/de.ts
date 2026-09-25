@@ -729,6 +729,12 @@ export const de: TranslationDictionary = {
     loadingOlderMessages: 'Ältere Nachrichten werden geladen...',
     loadingThreads: 'Threads werden geladen...',
     manyMemories: '{count} Erinnerungen',
+    messageRole: {
+      system: 'System',
+      user: 'Du',
+      assistant: 'Assistent',
+      tool: 'Werkzeug',
+    },
     modelThinking: 'Modell denkt nach...',
     noMatchingThreads: 'Keine passenden Threads',
     noMessagesYet: 'Noch keine Nachrichten',

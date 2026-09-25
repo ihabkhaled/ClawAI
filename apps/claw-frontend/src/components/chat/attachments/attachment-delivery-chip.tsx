@@ -4,6 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import type { AttachmentDeliveryChipProps } from '@/types';
 import {
   buildFileDeliveryBadges,
+  buildFileDeliveryLine,
   buildFileDeliveryTooltip,
   countFileDeliveriesByMode,
 } from '@/utilities';
@@ -21,6 +22,7 @@ import {
 export function AttachmentDeliveryChip({
   delivery,
   messageId,
+  showDetails = false,
 }: AttachmentDeliveryChipProps): React.ReactElement | null {
   const { t } = useTranslation();
   const resolved = useAttachmentDeliveryChip(delivery, messageId);
@@ -32,7 +34,7 @@ export function AttachmentDeliveryChip({
   const badges = buildFileDeliveryBadges(countFileDeliveriesByMode(resolved), t);
   const tooltip = buildFileDeliveryTooltip(resolved, t);
 
-  return (
+  const strip = (
     <div
       className="flex flex-wrap items-center gap-1.5"
       title={tooltip}
@@ -50,6 +52,24 @@ export function AttachmentDeliveryChip({
           {badge.label} {String(badge.count)}
         </Badge>
       ))}
+    </div>
+  );
+
+  if (!showDetails) {
+    return strip;
+  }
+
+  return (
+    <div className="flex max-w-full min-w-0 flex-col gap-1">
+      {strip}
+      <ul
+        className="text-muted-foreground flex min-w-0 flex-col gap-0.5 text-xs break-words"
+        data-testid="attachment-delivery-details"
+      >
+        {resolved.map((entry) => (
+          <li key={`${entry.fileId}-${entry.mode}`}>{buildFileDeliveryLine(entry, t)}</li>
+        ))}
+      </ul>
     </div>
   );
 }

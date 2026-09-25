@@ -70,7 +70,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
           // size at every breakpoint on purpose: the autosize pass measures
           // line-height once, so a responsive font would leave the row cap
           // computed against the wrong line.
-          className="min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="composer-textarea-short-cap min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
 
         <div className="flex items-center gap-2">

@@ -10,9 +10,11 @@ import {
   GEMINI_TTS_PROMPT_OVERHEAD_TOKENS,
   OPENAI_PER_CHARACTER_TTS_MODELS,
   SPEECH_DEFAULT_TIMEOUT_MS,
+  SPEECH_FILE_STORE_RESERVE_MS,
   SPEECH_FILENAME_PREFIX,
   SPEECH_MAX_TIMEOUT_MS,
   SPEECH_MIME_MP3,
+  SPEECH_MIN_ATTEMPT_MS,
   SPEECH_PROVIDER_BY_NAME,
 } from '../constants/speech.constants';
 import type {
@@ -165,4 +167,29 @@ export function toSpeechResponse(speech: StoredSpeech, cached: boolean): Message
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The timeout one candidate may use: its own, cut to what is left of the
+ * provider window, i.e. the request deadline minus the store reserve
+ * (SPEECH_FILE_STORE_RESERVE_MS). Null when too little is left to start one,
+ * which also means no paid attempt starts that would leave the store no time:
+ * the walk ends with the service's own TTS_FAILED rather than a gateway 504.
+ */
+export function speechAttemptTimeoutMs(
+  candidateTimeoutMs: number,
+  requestDeadlineAt: number,
+  now: number,
+): number | null {
+  const remaining = requestDeadlineAt - SPEECH_FILE_STORE_RESERVE_MS - now;
+  return remaining < SPEECH_MIN_ATTEMPT_MS ? null : Math.min(candidateTimeoutMs, remaining);
+}
+
+/**
+ * The store call's timeout: the reserve, cut to what is left of the request
+ * deadline. Null when nothing is left, and the caller answers TTS_FAILED at once.
+ */
+export function speechStoreTimeoutMs(requestDeadlineAt: number, now: number): number | null {
+  const remaining = requestDeadlineAt - now;
+  return remaining <= 0 ? null : Math.min(SPEECH_FILE_STORE_RESERVE_MS, remaining);
 }

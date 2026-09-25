@@ -690,6 +690,12 @@ export const zh: TranslationDictionary = {
     loadingOlderMessages: '正在加载旧消息...',
     loadingThreads: '正在加载线程...',
     manyMemories: '{count} 条记忆',
+    messageRole: {
+      system: '系统',
+      user: '你',
+      assistant: '助手',
+      tool: '工具',
+    },
     modelThinking: '模型正在思考...',
     noMatchingThreads: '没有匹配的线程',
     noMessagesYet: '还没有消息',

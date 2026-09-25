@@ -21,15 +21,16 @@ import {
   PUBLISHABLE_COPY_MIME_PREFIX,
 } from '../constants/published-copy.constants';
 import { EXTRACTION_REQUIRED_MIME_TYPES } from '../constants/file-processing.constants';
-import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
 import {
   ANTIVIRUS_UNAVAILABLE_ERROR_CODE,
   ANTIVIRUS_UNAVAILABLE_MESSAGE,
 } from '../../../common/constants/clamav.constants';
+import { VIDEO_PROCESSING_STALE_MS } from '../constants/video-processing.constants';
 import {
-  VIDEO_PLACEHOLDER_PREFIX,
-  VIDEO_PROCESSING_STALE_MS,
-} from '../constants/video-processing.constants';
+  isVideoPlaceholderRow,
+  resolveEffectiveIngestionStatus,
+  withOwnerFacingIngestionStatus,
+} from '../utilities/effective-ingestion.utility';
 import { type PublishedCopyResult } from '../types/published-copy.types';
 import { type PaginatedResult } from '../../../common/types';
 import { AppConfig } from '../../../app/config/app.config';
@@ -319,7 +320,13 @@ export class FilesService {
       `getFiles: returned ${String(files.length)} of ${String(total)} files for user ${userId}`,
     );
     return {
-      data: files.map((file) => ({ ...file, childCount: childCounts.get(file.id) ?? 0 })),
+      // Owner-facing: the same effective status the internal readiness check
+      // reports (rule 42 items 12/15), bounded so a lost job never pins the
+      // list's poll open forever.
+      data: files.map((file) => ({
+        ...withOwnerFacingIngestionStatus(file),
+        childCount: childCounts.get(file.id) ?? 0,
+      })),
       meta: {
         total,
         page: query.page,
@@ -337,7 +344,7 @@ export class FilesService {
     }
     this.validateOwnership(file, userId);
     this.logger.debug(`getFile: found file ${id} "${file.filename}" (${file.mimeType})`);
-    return file;
+    return withOwnerFacingIngestionStatus(file);
   }
 
   async getFileContent(
@@ -419,7 +426,7 @@ export class FilesService {
       id: file.id,
       filename: file.filename,
       mimeType: file.mimeType,
-      ingestionStatus: this.effectiveIngestionStatus(file),
+      ingestionStatus: resolveEffectiveIngestionStatus(file),
       extractionError: file.extractionError,
       extractedTextLength: file.extractedText?.length ?? 0,
     };
@@ -434,7 +441,7 @@ export class FilesService {
    */
   private healStalledVideoIfNeeded(file: File): void {
     const stalled =
-      this.isVideoPlaceholder(file) &&
+      isVideoPlaceholderRow(file) &&
       file.ingestionStatus === FileIngestionStatus.COMPLETED &&
       file.extractionError === null &&
       Date.now() - file.updatedAt.getTime() > VIDEO_PROCESSING_STALE_MS;
@@ -448,55 +455,6 @@ export class FilesService {
       const message = error instanceof Error ? error.message : 'unknown error';
       this.logger.error(`healStalledVideoIfNeeded: fileId=${file.id} re-queue failed — ${message}`);
     });
-  }
-
-  private isVideoPlaceholder(file: File): boolean {
-    return (
-      file.mimeType.startsWith('video/') &&
-      (file.extractedText ?? '').startsWith(VIDEO_PLACEHOLDER_PREFIX)
-    );
-  }
-
-  /**
-   * `file.ingestionStatus` alone lies for audio: `TranscriptionManager`
-   * deliberately writes `COMPLETED` the moment the upload lands, with
-   * `extractedText` set to the `[Audio file: …]` placeholder, because the row
-   * is a coherent, downloadable attachment before a single word has been
-   * transcribed (see transcription.constants.ts and the B6b comment on
-   * `TranscriptionManager`). The real transcript arrives later, out of band,
-   * over `FILE_TRANSCRIBE_REQUESTED`.
-   *
-   * chat-service's bounded wait before assembling a turn
-   * (`ContextAssemblyManager#waitForIngestion`) trusts this field to mean
-   * "the text is final". Reported `COMPLETED` verbatim, it stopped waiting
-   * immediately and handed the model the literal placeholder string as if it
-   * were the transcript — the model saw `[Audio file: memo.mp3]` and,
-   * reasonably, answered as though nothing had been attached. Reporting
-   * `PROCESSING` here instead — WITHOUT touching the persisted row — routes a
-   * voice note into the exact same bounded wait every other async-extracted
-   * format already gets, at no cost to what "COMPLETED" means anywhere else
-   * this field is read.
-   *
-   * A row with `extractionError` set has already failed and is not waited on
-   * again — the placeholder plus a reason is what a failed transcription looks
-   * like on disk, and is reported as `FAILED` for exactly this poll.
-   */
-  private effectiveIngestionStatus(file: File): FileIngestionStatus {
-    if (file.ingestionStatus !== FileIngestionStatus.COMPLETED) {
-      return file.ingestionStatus;
-    }
-    // Batch 7 — a video row carries `[Video file: …]` from upload until the
-    // timestamped document lands, exactly like audio, and gets the same answer.
-    const stillPlaceholder =
-      (file.mimeType.startsWith('audio/') &&
-        (file.extractedText ?? '').startsWith(AUDIO_PLACEHOLDER_PREFIX)) ||
-      this.isVideoPlaceholder(file);
-    if (!stillPlaceholder) {
-      return file.ingestionStatus;
-    }
-    return file.extractionError !== null
-      ? FileIngestionStatus.FAILED
-      : FileIngestionStatus.PROCESSING;
   }
 
   async deleteFile(id: string, userId: string): Promise<File> {

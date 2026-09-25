@@ -123,6 +123,41 @@ Sending needs words **or** files (`hasSendableInput`). An attachment-only send
 is stored with empty text and renders as its attachments alone; chat-service
 tells the model to respond to the attachment (rule 42).
 
+### A short viewport: a phone in landscape (2026-09-25)
+
+The live device matrix failed at 740×360. The height chain there was:
+
+| Element                                                                      | Height  |
+| ---------------------------------------------------------------------------- | ------- |
+| Topbar                                                                       | 64 px   |
+| Bottom nav (shell margin)                                                    | 64 px   |
+| `main` padding (`sm:p-6`, since 740 ≥ 640)                                   | 48 px   |
+| Thread header                                                                | ~70 px  |
+| Left for transcript + composer                                               | ~114 px |
+| Composer with one image attached (tray allowed up to `sm:max-h-60` = 240 px) | ~200 px |
+
+`min-h-0` did its job: the transcript went to zero. The composer is
+`shrink-0`, so it overflowed, and send/record ended at y=373 under the nav.
+Width was fine, so a width breakpoint could not fix this. The fix is one
+height guard, `short-viewport:` (`@media (max-height: 500px)`, globals.css).
+500 px is above every phone in landscape and below every tablet, which starts at
+the `nav-rail` variant's 600 px. Under it:
+
+- the bottom nav is not rendered and `--mobile-bottom-nav-height: 0rem`. The
+  shell margin and every floating offset read that variable, so they drop too.
+  The topbar hamburger still opens the same drawer;
+- `main` keeps `p-3`;
+- the attachment tray is one row that scrolls sideways (`flex-nowrap
+overflow-x-auto`), capped at `22dvh`;
+- the textarea is capped at `30dvh` with `.composer-textarea-short-cap`, and
+  scrolls inside past that cap. The class forces `overflow-y: auto`, because
+  the autosize hook sets an inline `hidden` below its own row limit.
+
+CSS only, no pixel heights: rule 40 §22, pinned by
+`chat-surface-layout-contract.test.ts`. **Not re-run live yet.** The dev stack
+serves the main checkout, so the 740×360 browser case must be run again once
+this code is deployed.
+
 ## The model picker
 
 `components/chat/model-picker.tsx` is render-only over

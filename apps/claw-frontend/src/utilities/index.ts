@@ -156,6 +156,7 @@ export {
 } from './compare-judge.utility';
 export {
   buildFileDeliveryBadges,
+  buildFileDeliveryLine,
   countFileDeliveriesByMode,
   getFileDeliveryModeLabel,
   isFileDeliveryMode,

@@ -34,6 +34,7 @@ import {
   isPerCharacterPriced,
   isSpeechTimeout,
   measuredSpeechUsage,
+  speechAttemptTimeoutMs,
   speechReleaseReason,
   speechRequestId,
   toSpeechCandidates,
@@ -84,8 +85,20 @@ export class SpeechSynthesisManager {
   async synthesize(input: SpeechSynthesisInput): Promise<SpeechSynthesisResult> {
     const candidates = await this.candidates();
     const attempts: SpeechAttemptRecord[] = [];
+    // The request's one deadline (set at entry, below nginx's read timeout),
+    // minus the store reserve: the user always gets this service's
+    // TTS_FAILED, never a gateway 504, and a paid attempt never starts
+    // without time left to store its audio.
     for (const [index, candidate] of candidates.entries()) {
-      const result = await this.attempt(input, candidate, index);
+      const timeoutMs = speechAttemptTimeoutMs(candidate.timeoutMs, input.deadlineAt, Date.now());
+      if (timeoutMs === null) {
+        throw new BusinessException(
+          TTS_FAILED_MESSAGE,
+          TTS_FAILED_CODE,
+          HttpStatus.GATEWAY_TIMEOUT,
+        );
+      }
+      const result = await this.attempt(input, { ...candidate, timeoutMs }, index);
       attempts.push(result.record);
       this.logger.log(
         `ttsAttempt ${JSON.stringify({ messageId: input.messageId, ...result.record })}`,

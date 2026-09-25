@@ -1159,6 +1159,26 @@ transcription (ADR-120 addendum).
   deadline (released TIMEOUT, 504) END the walk. None configured → 503
   `TTS_UNAVAILABLE`; all failed → 502 `TTS_FAILED`; nothing speakable / not an
   assistant reply → 422 `TTS_NOTHING_TO_READ`.
+- **One end-to-end deadline** (found live 2026-09-25: a hung Gemini TTS hit its
+  60 s timeout in the same second as nginx, so the browser got a gateway 504).
+  `MessageSpeechService.synthesize` sets `deadlineAt` = entry +
+  `SPEECH_REQUEST_BUDGET_MS` (50 s = nginx's 60 s read timeout − 10 s headroom).
+  The replay check, every provider attempt and the audio store all fit inside
+  it. The store's time is reserved first (`SPEECH_FILE_STORE_RESERVE_MS`, 10 s):
+  provider attempts run in a 40 s window, each candidate's timeout is cut to
+  what is left of it, and no paid attempt starts with under 5 s left. The store
+  gets `min(reserve, time left)`, and none at all is an immediate 504. So the
+  browser always gets this service's `TTS_FAILED` (504 for a deadline, 502
+  otherwise), never nginx's. `speech-gateway-timeout.spec.ts` reads
+  `infra/nginx/*.conf` and fails if the budget stops being below nginx.
+- **What happens to the charge when the store fails.** The provider hold is
+  FINALIZED (CONSUMPTION written) before the audio is stored. If the store then
+  fails or runs out of time, the user gets `TTS_FAILED` and no audio is saved,
+  and `metadata.speech` is not written, so a retry synthesises and charges
+  again. **The first charge stands: there is no refund or reversal path.** The
+  log line `store: file-service timed out|unreachable after a paid synthesis`
+  (or `storeAudio: no time left to store paid audio`) is how to find these.
+  Pinned by `message-speech.service.spec.ts` "a store that fails after a PAID call".
 - **Audio**: Gemini PCM (`audio/L16;rate=24000`) wrapped by `pcm16ToWav` (canonical
   44-byte RIFF header); OpenAI MP3 via `httpPostBinary`. Fixed provider hosts, not
   the connector base URL.

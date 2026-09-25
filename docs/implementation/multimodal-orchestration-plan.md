@@ -123,6 +123,72 @@ matrix once the stack runs this code
 - Image editing: masks, inpainting and OpenAI edits not built.
 - Native audio into chat models: not built.
 
+## Live QA 2026-09-25
+
+The first live run against `https://claw.local` (main checkout at `9448bd178`).
+Evidence: [`docs/16-quality-engineering/evidence/2026-09-25-multimodal/`](../16-quality-engineering/evidence/2026-09-25-multimodal/README.md).
+
+| Lane                                                  | Result                                                                                                                                                              |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API (`curl`, paid + free throwaway users)             | 41/41                                                                                                                                                               |
+| Browser (Playwright, 11 scenarios)                    | voice/video buttons, capability badges, image generation, read-aloud replay, RTL pass; single-chat delivery note, video state and 740×360 fail (below); one TTS 504 |
+| Device matrix (15 viewports, both orientations)       | 14 pass; 740×360 landscape fail                                                                                                                                     |
+| RTL (Arabic at 390×844, 820×1180, 1440×900)           | pass, except English role labels                                                                                                                                    |
+| axe-core 4.13.0 (chat with image, player, attachment) | 0 violations                                                                                                                                                        |
+| Console / network                                     | only `llamacpp/catalog` and `ollama/models` 502 (those containers are down), plus the one TTS 504                                                                   |
+
+### Fixed after the run (not yet re-run live)
+
+1. **No delivery note in single chat.** `metadata.fileDelivery` was right, but
+   `AttachmentDeliveryChip` was mounted only on compare/parallel cards.
+   `message-bubble.tsx` now mounts it with `showDetails`: the mode badges plus one
+   visible line per file (mode, helper, localized reason). No chip when the
+   metadata is absent. Test: `message-bubble-file-delivery.test.tsx` (real en + ar dictionaries).
+2. **Video "Ready" before its job finished.** The internal `getIngestionState`
+   reported `PROCESSING` for a placeholder row, but the owner-facing list and
+   `GET /files/:id` returned the stored `COMPLETED`. One function,
+   `resolveEffectiveIngestionStatus` (`effective-ingestion.utility.ts`), now
+   serves all three. The stored column never changes. The owner view stops
+   saying `PROCESSING` after `OWNER_PLACEHOLDER_PROCESSING_CEILING_MS` (30 min),
+   so a lost job cannot keep the file list polling forever (rule 42 item 10).
+   Tests: `effective-ingestion.utility.spec.ts`, `files.service-extraction.spec.ts`
+   "owner-facing list and detail", frontend `composer-attachment.utility.test.ts`.
+3. **740×360: send/record under the bottom nav.** The topbar and bottom nav took
+   128 of 360 px, and the tray could grow to 240 px. A new `short-viewport:`
+   variant (`max-height: 500px`) hides the bottom nav (the topbar hamburger still
+   opens the drawer) and sets `--mobile-bottom-nav-height` to 0. It also keeps
+   page padding at `p-3`, makes the tray one sideways-scrolling row capped at
+   `22dvh`, and caps the textarea at `30dvh`. CSS only (rule 40 §22). Test:
+   `chat-surface-layout-contract.test.ts`.
+4. **TTS 504.** The TTS provider timeout (60 s) equalled nginx's read timeout
+   for `/api/v1/chat-messages` (the http-level 60 s). The request now has ONE
+   end-to-end deadline, `SPEECH_REQUEST_BUDGET_MS` = nginx − 10 s = 50 s, for the
+   provider walk AND the audio store. 10 s of it is reserved for the store, so no
+   paid attempt starts unless the store still fits after it (provider window
+   40 s, 5 s floor). A store that times out after a paid call is the service's
+   own `TTS_FAILED` 504, not a raw error. The finalized charge stands (no refund
+   path), as the chat-service CLAUDE.md says. Tests: `speech-gateway-timeout.spec.ts`
+   reads `infra/nginx/*.conf` and asserts budget < nginx;
+   `message-speech.service.spec.ts` (spent budget, store slice, store failure after
+   a paid call); `speech-clients.spec.ts` (store timeout → 504, unreachable → 502).
+5. **Role labels in English under Arabic.** `MESSAGE_ROLE_LABELS` became
+   `MESSAGE_ROLE_LABEL_KEYS` (`chat.messageRole.*`) and is resolved with `t()`,
+   with keys in all 13 locales and `i18n.types.ts`.
+
+### Open gaps after this run
+
+- The five fixes above are unit-gated only. The browser lane must be re-run
+  once the stack serves this code (the dev containers compile the main checkout).
+- On phones the floating feedback rail (− / +) and "Jump to latest" cover
+  assistant text (`08-matrix-mobile-390x844-portrait.png`). This was already
+  there before this program and is out of scope here.
+- The file list's `?ingestionStatus=` filter still matches the stored column, so
+  a placeholder video appears under `COMPLETED` while it is shown as `PROCESSING`.
+- A paid synthesis whose store fails is charged with no audio saved. This is
+  documented, not fixed: there is no refund path.
+- A saved language preference does not switch a tab that is already open, and
+  `/ar/…` URLs stayed `lang=en` in the harness (evidence README, "Limits").
+
 ### Production deploy blocker (not this program's code)
 
 Firecrawl's `nuq.*` tables are missing in production, so the research stack

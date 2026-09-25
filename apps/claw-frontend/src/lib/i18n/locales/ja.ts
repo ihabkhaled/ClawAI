@@ -719,6 +719,12 @@ export const ja: TranslationDictionary = {
     loadingOlderMessages: '古いメッセージを読み込んでいます...',
     loadingThreads: 'スレッドを読み込み中...',
     manyMemories: '{count} 思い出',
+    messageRole: {
+      system: 'システム',
+      user: 'あなた',
+      assistant: 'アシスタント',
+      tool: 'ツール',
+    },
     modelThinking: 'モデルは考えています...',
     noMatchingThreads: '一致するスレッドがありません',
     noMessagesYet: 'まだメッセージはありません',

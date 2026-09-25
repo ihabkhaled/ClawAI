@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 200,
+      "testFiles": 201,
       "testRunner": "vitest"
     },
     {
@@ -232,7 +232,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 56,
+      "testFiles": 57,
       "testRunner": "vitest"
     },
     {

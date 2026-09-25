@@ -70,6 +70,33 @@
   }
 }
 
+/* `short-viewport:` — a phone held sideways (740x360, 844x390, 932x430).
+ *
+ * Found live 2026-09-25 at 740x360: topbar 64px + bottom nav 64px left 232px
+ * for the thread header, the transcript AND the composer, and the new
+ * attachment tray could take 240px (`sm:max-h-60`), so the send and record
+ * buttons ended at y=373 under the bottom nav. Height, not width, is what ran
+ * out, so the guard is a height query. Under it:
+ *   - the bottom nav is not rendered and `--mobile-bottom-nav-height` is 0, so
+ *     the shell's clearance and every floating offset built on the variable
+ *     drop with it (the topbar's hamburger still opens the same drawer);
+ *   - the portal's page padding stays at the phone value;
+ *   - the attachment tray is one sideways-scrolling row capped in dvh, and the
+ *     composer textarea is capped in dvh (`.composer-textarea-short-cap`).
+ * No pixel heights and no JS — rule 40 §2/§6. 500px sits above every phone
+ * in landscape and below every tablet (the `nav-rail` variant's 600px). */
+@custom-variant short-viewport {
+  @media (max-height: 500px) {
+    @slot;
+  }
+}
+
+@media (max-height: 500px) {
+  :root {
+    --mobile-bottom-nav-height: 0rem;
+  }
+}
+
 .dark pre code.hljs {
   background: transparent;
 }
@@ -1608,6 +1635,19 @@
    * `(min-width: 768px)` here — the restated copy was one of the places the
    * old split drifted: on a tablet the nav was hidden by `md:hidden` while this
    * rule still reserved 5rem of padding for it. */
+  /* The composer's autosize grows by rows up to COMPOSER_MAX_ROWS; on a short
+   * viewport ten rows would push the send button off screen, so the textarea
+   * is capped in dvh there and scrolls internally past it (rule 40 §3/§6).
+   * `useRichPromptTextarea` sets an inline `overflow-y: hidden` below its own
+   * row ceiling; under this cap the text would be clipped with no way to
+   * scroll to it, hence the one `!important`. */
+  .composer-textarea-short-cap {
+    @variant short-viewport {
+      max-height: 30dvh;
+      overflow-y: auto !important;
+    }
+  }
+
   .safe-bottom-base-nav {
     --safe-bottom-base: calc(var(--mobile-bottom-nav-height, 4rem) + 1rem);
 

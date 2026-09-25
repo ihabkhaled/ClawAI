@@ -706,6 +706,12 @@ export const ar: TranslationDictionary = {
     loadingOlderMessages: 'جاري تحميل الرسائل الأقدم...',
     loadingThreads: 'جاري تحميل المحادثات...',
     manyMemories: '{count} ذاكرة',
+    messageRole: {
+      system: 'النظام',
+      user: 'أنت',
+      assistant: 'المساعد',
+      tool: 'أداة',
+    },
     modelThinking: 'النموذج يفكر...',
     noMatchingThreads: 'لا توجد محادثات مطابقة',
     noMessagesYet: 'لا توجد رسائل بعد',

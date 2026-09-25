@@ -55,7 +55,12 @@ export type ParallelLaneCardProps = {
 // back to the inline `delivery` array passed by the parent. This makes the
 // component back-compatible with every existing call-site that only has the
 // metadata read.
+//
+// `showDetails` (single-chat assistant bubble) also renders one visible line
+// per file — mode label, helper and localized reason — instead of leaving
+// them in the hover-only tooltip. Compact compare/parallel cards omit it.
 export type AttachmentDeliveryChipProps = {
   delivery: FileDeliveryEntry[];
   messageId?: string;
+  showDetails?: boolean;
 };

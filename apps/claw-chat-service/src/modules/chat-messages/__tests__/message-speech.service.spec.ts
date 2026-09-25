@@ -363,6 +363,68 @@ describe('MessageSpeechService.synthesize', () => {
     expect(harness.releaseCredit).toHaveBeenCalledWith(expect.anything(), 'TIMEOUT');
   });
 
+  // Found live 2026-09-25: the provider timeout equalled nginx's read timeout,
+  // so a hung TTS surfaced as a gateway 504. The walk now has one budget
+  // (SPEECH_REQUEST_BUDGET_MS, nginx − 15 s) and never starts a candidate
+  // that could not finish inside it.
+  it('a slow failure that spends the budget ends the walk with its own 504 TTS_FAILED', async () => {
+    let now = 1_000_000;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      const harness = build();
+      harness.providerSynthesize.mockImplementationOnce(async () => {
+        now += 36_000;
+        throw new SpeechProviderError('down', 503, false);
+      });
+
+      await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 504);
+
+      // 50 s request budget − 10 s store reserve = a 40 s provider window; after
+      // 36 s only 4 s remain, under the 5 s floor, so no second PAID attempt starts.
+      expect(harness.providerSynthesize).toHaveBeenCalledTimes(1);
+      expect(harness.providerSynthesize).toHaveBeenCalledWith(
+        expect.objectContaining({ candidate: expect.objectContaining({ timeoutMs: 40_000 }) }),
+      );
+      expect(harness.releaseCredit).toHaveBeenCalledTimes(1);
+      expect(harness.store).not.toHaveBeenCalled();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('gives the store what is left of the ONE request deadline, never more than its reserve', async () => {
+    let now = 1_000_000;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      const harness = build();
+      harness.providerSynthesize.mockImplementationOnce(async () => {
+        now += 38_000;
+        return WAV;
+      });
+
+      await harness.service.synthesize(USER, MESSAGE_ID);
+
+      expect(harness.store).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 10_000 }));
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('a store that fails after a PAID call answers TTS_FAILED; the finalized charge stands', async () => {
+    const harness = build();
+    harness.store.mockRejectedValueOnce(
+      new BusinessException('The voice model could not read this reply.', 'TTS_FAILED', 504),
+    );
+
+    await expectCode(harness.service.synthesize(USER, MESSAGE_ID), 'TTS_FAILED', 504);
+
+    // Documented in chat-service CLAUDE.md: the hold was finalized before the
+    // store, nothing is released or refunded, and no metadata points at audio.
+    expect(harness.finalizeCredit).toHaveBeenCalledTimes(1);
+    expect(harness.releaseCredit).not.toHaveBeenCalled();
+    expect(harness.updateMetadata).not.toHaveBeenCalled();
+  });
+
   it('a 402 from the meter ends the walk: no fall-through, no provider call', async () => {
     const refusal = new BusinessException('no credit', 'PAYG_CREDIT_EXHAUSTED', 402);
     const harness = build({ refuseWith: refusal });

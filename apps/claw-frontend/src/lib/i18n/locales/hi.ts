@@ -717,6 +717,12 @@ export const hi: TranslationDictionary = {
     loadingOlderMessages: 'पुराने संदेश लोड हो रहे हैं...',
     loadingThreads: 'थ्रेड लोड हो रहे हैं...',
     manyMemories: '{count} स्मृतियाँ',
+    messageRole: {
+      system: 'सिस्टम',
+      user: 'आप',
+      assistant: 'सहायक',
+      tool: 'टूल',
+    },
     modelThinking: 'मॉडल सोच रहा है...',
     noMatchingThreads: 'कोई मेल खाने वाला थ्रेड नहीं',
     noMessagesYet: 'अभी तक कोई संदेश नहीं',

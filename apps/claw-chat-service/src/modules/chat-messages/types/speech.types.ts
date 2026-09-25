@@ -65,6 +65,8 @@ export type SpeechSynthesisInput = {
   speakable: SpeakableText;
   /** Increments each time this message is synthesised anew, so a new call never reuses a settled hold. */
   generation: number;
+  /** Epoch ms: the request's end-to-end deadline (SPEECH_REQUEST_BUDGET_MS from entry). */
+  deadlineAt: number;
 };
 
 export type SpeechAttemptRecord = {
@@ -100,6 +102,8 @@ export type StoreSpeechFileInput = {
   mimeType: string;
   bytes: Buffer;
   transcript: string;
+  /** Cut from the request deadline by `speechStoreTimeoutMs`. */
+  timeoutMs: number;
 };
 
 /** `POST /chat-messages/:id/speech` response. */

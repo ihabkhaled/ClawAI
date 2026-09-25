@@ -7,7 +7,10 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { SpeechFileStoreClient } from '../clients/speech-file-store.client';
 import {
   SPEECH_MAX_CHARACTERS,
+  SPEECH_REQUEST_BUDGET_MS,
   TEXT_TO_SPEECH_PLAN_FEATURE,
+  TTS_FAILED_CODE,
+  TTS_FAILED_MESSAGE,
   TTS_NOTHING_TO_READ_CODE,
   TTS_NOTHING_TO_READ_MESSAGE,
 } from '../constants/speech.constants';
@@ -25,6 +28,7 @@ import { prepareSpeakableText } from '../utilities/speakable-text.utility';
 import {
   readStoredSpeech,
   speechFilename,
+  speechStoreTimeoutMs,
   toSpeechResponse,
   withStoredSpeech,
 } from '../utilities/speech.utility';
@@ -68,6 +72,8 @@ export class MessageSpeechService {
   }
 
   async synthesize(userId: string, messageId: string): Promise<MessageSpeechResponse> {
+    // ONE end-to-end deadline: replay check, provider attempts and the store.
+    const deadlineAt = Date.now() + SPEECH_REQUEST_BUDGET_MS;
     const message = await this.loadOwnedReply(userId, messageId);
     await this.accessControl.assertTextToSpeechAccess(userId);
     const speakable = prepareSpeakableText(message.content, SPEECH_MAX_CHARACTERS);
@@ -83,7 +89,7 @@ export class MessageSpeechService {
     if (running !== undefined) {
       return running;
     }
-    const work = this.replayOrSynthesize(userId, message, speakable).finally(() => {
+    const work = this.replayOrSynthesize(userId, message, speakable, deadlineAt).finally(() => {
       this.inFlight.delete(key);
     });
     this.inFlight.set(key, work);
@@ -111,6 +117,7 @@ export class MessageSpeechService {
     userId: string,
     message: SpeechSourceMessage,
     speakable: SpeakableText,
+    deadlineAt: number,
   ): Promise<MessageSpeechResponse> {
     const stored = readStoredSpeech(message.metadata);
     // null = file-service could not say; replay rather than charge twice.
@@ -127,8 +134,16 @@ export class MessageSpeechService {
       messageId: message.id,
       speakable,
       generation,
+      deadlineAt,
     });
-    const speech = await this.storeAudio(userId, message.id, speakable, result, generation);
+    const speech = await this.storeAudio(
+      userId,
+      message.id,
+      speakable,
+      result,
+      generation,
+      deadlineAt,
+    );
     await this.messages.updateMetadata(message.id, withStoredSpeech(message.metadata, speech));
     return toSpeechResponse(speech, false);
   }
@@ -140,14 +155,26 @@ export class MessageSpeechService {
     speakable: SpeakableText,
     result: SpeechSynthesisResult,
     generation: number,
+    deadlineAt: number,
   ): Promise<StoredSpeech> {
     const filename = speechFilename(messageId, result.audio.mimeType);
+    // The provider call is already paid and its hold FINALIZED here. A store
+    // that fails or runs out of time answers TTS_FAILED and saves no audio;
+    // the charge stands (no refund path; chat-service CLAUDE.md, "Read aloud").
+    const timeoutMs = speechStoreTimeoutMs(deadlineAt, Date.now());
+    if (timeoutMs === null) {
+      this.logger.error(
+        `storeAudio: no time left to store paid audio messageId=${messageId} provider=${result.candidate.provider} model=${result.candidate.model}`,
+      );
+      throw new BusinessException(TTS_FAILED_MESSAGE, TTS_FAILED_CODE, HttpStatus.GATEWAY_TIMEOUT);
+    }
     const fileId = await this.files.store({
       userId,
       filename,
       mimeType: result.audio.mimeType,
       bytes: result.audio.bytes,
       transcript: speakable.text,
+      timeoutMs,
     });
     return {
       fileId,

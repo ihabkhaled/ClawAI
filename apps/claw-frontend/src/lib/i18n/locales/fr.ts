@@ -727,6 +727,12 @@ export const fr: TranslationDictionary = {
     loadingOlderMessages: 'Chargement des anciens messages...',
     loadingThreads: 'Chargement des fils...',
     manyMemories: '{count} mémoires',
+    messageRole: {
+      system: 'Système',
+      user: 'Vous',
+      assistant: 'Assistant',
+      tool: 'Outil',
+    },
     modelThinking: 'Le modèle réfléchit...',
     noMatchingThreads: 'Aucun fil correspondant',
     noMessagesYet: 'Aucun message pour le moment',

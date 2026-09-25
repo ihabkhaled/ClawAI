@@ -12,6 +12,7 @@ import { memo } from 'react';
 
 import { AnswerExpandDialog } from '@/components/chat/answer-expand-dialog';
 import { AnswerExportMenu } from '@/components/chat/answer-export-menu';
+import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
 import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
@@ -37,13 +38,18 @@ import { WorkflowBadge } from '@/components/chat/workflow-badge';
 import { CopyButton } from '@/components/common/copy-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MESSAGE_ROLE_LABELS } from '@/constants';
+import { MESSAGE_ROLE_LABEL_KEYS } from '@/constants';
 import { ComponentSize, MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
-import { formatShortDateTime, getJudgeReviewFromMessage, getStoredReasoning } from '@/utilities';
+import {
+  formatShortDateTime,
+  getJudgeReviewFromMessage,
+  getStoredReasoning,
+  resolveFileDelivery,
+} from '@/utilities';
 import { readFileLimit } from '@/utilities/file-limit.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
 import { readPlanFeatureRefusal } from '@/utilities/plan-feature-refusal.utility';
@@ -58,7 +64,7 @@ function MessageBubbleBase({
 }: MessageBubbleProps) {
   const { t } = useTranslation();
   const isUser = message.role === MessageRole.USER;
-  const roleLabel = MESSAGE_ROLE_LABELS[message.role];
+  const roleLabel = t(MESSAGE_ROLE_LABEL_KEYS[message.role]);
   const metadata = message.metadata as Record<string, unknown> | null;
   const routeRoadmap = metadata?.['routeRoadmap'] as
     | {
@@ -109,6 +115,9 @@ function MessageBubbleBase({
   );
   const storedReasoning = getStoredReasoning(message);
   const storedNarration = isUser ? [] : getStoredNarration(message.metadata);
+  // What actually reached the model per attachment (`metadata.fileDelivery`,
+  // written by chat-service on single-chat turns too). Empty = no chip.
+  const fileDelivery = isUser ? [] : resolveFileDelivery(message);
   const judgeReview = getJudgeReviewFromMessage(message);
   const judgeDecision = judgeReview?.judgeDecision ?? null;
   const workflow = typeof metadata?.['workflow'] === 'string' ? metadata['workflow'] : null;
@@ -251,6 +260,10 @@ function MessageBubbleBase({
             />
             <MessageBranchAction threadId={message.threadId} messageId={message.id} />
           </div>
+        ) : null}
+
+        {fileDelivery.length > 0 ? (
+          <AttachmentDeliveryChip delivery={fileDelivery} showDetails />
         ) : null}
 
         {!isUser && toolTranscript !== null ? (

@@ -74,6 +74,28 @@ export function getFileDeliveryReasonLabel(reason: string, t: FileDeliveryTransl
   return t(FILE_DELIVERY_REASON_LABEL_KEYS.get(reason) ?? FILE_DELIVERY_REASON_FALLBACK_KEY);
 }
 
+// One localized line per delivered file: filename, mode label, then the
+// sampled frame times, the helper that described it and the reason, when
+// present. Shared by the chip's hover tooltip and its visible detail list
+// (single chat), so the two never word the same record differently.
+export function buildFileDeliveryLine(entry: FileDeliveryEntry, t: FileDeliveryTranslator): string {
+  const modeLabel = getFileDeliveryModeLabel(entry.mode, t);
+  const reasonSuffix =
+    entry.reason !== undefined && entry.reason.length > 0
+      ? ` — ${getFileDeliveryReasonLabel(entry.reason, t)}`
+      : '';
+  const helperSuffix =
+    entry.helperProvider !== undefined && entry.helperModel !== undefined
+      ? ` — ${entry.helperProvider}/${entry.helperModel}`
+      : '';
+  const frames = entry.frameTimestampsMs ?? [];
+  const framesSuffix =
+    frames.length > 0
+      ? ` — ${t('compare.delivery.videoFramesAt', { times: frames.map(formatMediaClock).join(', ') })}`
+      : '';
+  return `${entry.filename} (${modeLabel})${framesSuffix}${helperSuffix}${reasonSuffix}`;
+}
+
 // Build the multi-line `title` tooltip text for the chip strip: first line is
 // the localised header, subsequent lines list each file with its mode label
 // and optional reason. Returns a single newline-joined string suitable for
@@ -83,24 +105,7 @@ export function buildFileDeliveryTooltip(
   t: FileDeliveryTranslator,
 ): string {
   const header = t('compare.delivery.tooltip');
-  const lines = delivery.map((entry) => {
-    const modeLabel = getFileDeliveryModeLabel(entry.mode, t);
-    const reasonSuffix =
-      entry.reason !== undefined && entry.reason.length > 0
-        ? ` — ${getFileDeliveryReasonLabel(entry.reason, t)}`
-        : '';
-    const helperSuffix =
-      entry.helperProvider !== undefined && entry.helperModel !== undefined
-        ? ` — ${entry.helperProvider}/${entry.helperModel}`
-        : '';
-    const frames = entry.frameTimestampsMs ?? [];
-    const framesSuffix =
-      frames.length > 0
-        ? ` — ${t('compare.delivery.videoFramesAt', { times: frames.map(formatMediaClock).join(', ') })}`
-        : '';
-    return `${entry.filename} (${modeLabel})${framesSuffix}${helperSuffix}${reasonSuffix}`;
-  });
-  return [header, ...lines].join('\n');
+  return [header, ...delivery.map((entry) => buildFileDeliveryLine(entry, t))].join('\n');
 }
 
 // Narrowing helper for polled `ChatMessage.metadata.fileDelivery`. Returns the

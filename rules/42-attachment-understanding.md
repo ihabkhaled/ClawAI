@@ -106,6 +106,16 @@ Full reasoning:
     bounded wait applies to it too; `decodeFileContent` never hands the
     placeholder string to the model as if it were the transcript. See
     [`skills/add-a-voice-note-or-transcription-path.md`](../skills/add-a-voice-note-or-transcription-path.md#solved-a-voice-note-reaching-the-model-as-nothing-2026-09-23).
+    **The owner-facing responses report the same effective status.** The file
+    list and `GET /files/:id` go through the same function as
+    `getIngestionState`: `resolveEffectiveIngestionStatus` in file-service's
+    `effective-ingestion.utility.ts`. A second copy of the mapping is how the
+    composer showed "Ready" for a video whose job was still running (found live
+    2026-09-25). The owner view alone has a ceiling
+    (`OWNER_PLACEHOLDER_PROCESSING_CEILING_MS`, 30 min since the row's last
+    write). Past it, the view reports the stored status again, so a lost job
+    cannot keep the file list polling forever (item 10). The internal check has
+    no ceiling.
 
 13. **A capability check and the alternatives it recommends must read the same
     identifier shape as the payload it validates, or it will reject the exact
@@ -164,8 +174,8 @@ Full reasoning:
     BEFORE any paid step, transcribes the audio track through the metered
     transcription path, and writes the header + `[mm:ss–mm:ss] text` document,
     status and `extractionMetadata.media` in ONE `saveVideoExtractionResult`.
-    Until then `getIngestionState` reports `PROCESSING` exactly as item 12
-    does for audio. A video over the plan limit is `FAILED` with a message
+    Until then `getIngestionState`, the file list and `GET /files/:id` all
+    report `PROCESSING`, exactly as item 12 does for audio. A video over the plan limit is `FAILED` with a message
     naming the limit, never silently truncated; a video with no audio track
     or an untranscribed one says so in the document. ffmpeg runs only through
     `media-process.utility.ts` (argument arrays, no shell, protocol + format
@@ -253,6 +263,7 @@ Full reasoning:
 | 11      | `context-assembly-ingestion-wait.spec.ts` — asserts the deadline holds and that expiry resolves                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 10      | The migration carries no backfill, and says why in its own comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | 12      | `files.service-extraction.spec.ts` "an audio row still carrying the transcription placeholder" — asserts `PROCESSING`/`FAILED` reporting without touching the row; `context-assembly-attachments.spec.ts` "voice notes" — asserts the placeholder never leaks and a real transcript is framed as spoken words                                                                                                                                                                                                                                                                                                                     |
+| 12, 15  | `effective-ingestion.utility.spec.ts` (the one mapping: placeholder → PROCESSING, error → FAILED, finished → COMPLETED, owner ceiling) and `files.service-extraction.spec.ts` "owner-facing list and detail report the effective status": list and detail agree with `getIngestionState` for placeholder video/audio, failed (with its reason) and finished rows, and the row is never written. Found live 2026-09-25.                                                                                                                                                                                                            |
 | 13      | `video-attachment-routing.utility.spec.ts` — accepts the connector catalog's `models/`-prefixed id (bare and prefixed ids of every video-capable model go native); since batch 8 no model is rejected at all, so there is no suggestion text to contradict                                                                                                                                                                                                                                                                                                                                                                        |
 | 13      | `exposure-pair.utility.spec.ts` (connector-service) — `models/validate-exposed` matches a bare id to a `models/`-keyed catalog row and answers in the caller's spelling. Found live 2026-09-25: the VISION_HELPER role (`gemini-2.5-flash`) was refused as unexposed while `models/gemini-2.5-flash` was EXPOSED.                                                                                                                                                                                                                                                                                                                 |
 | 15      | `video-processing.manager.spec.ts` (plan 59/60/61 s, 0, null, auth down; no-audio; refused transcription; idempotent redelivery; temp dir removed; probe failure matrix); `files.service-extraction.spec.ts` "a video row still carrying its placeholder"; `media-args.utility.spec.ts` + `media-process.utility.spec.ts` (whitelists, no shell, SIGKILL, stdout cap)                                                                                                                                                                                                                                                             |

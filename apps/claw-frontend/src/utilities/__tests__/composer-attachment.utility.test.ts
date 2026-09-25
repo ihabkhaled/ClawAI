@@ -54,6 +54,30 @@ describe('resolveComposerAttachmentChips — the chip life cycle', () => {
     );
   });
 
+  // Found live 2026-09-25: a video tile read "Ready" while file-service's job
+  // was still running, because the list returned the persisted COMPLETED.
+  // file-service now lists a placeholder video as PROCESSING (the same
+  // effective status its internal readiness check reports), so the sequence
+  // the chip sees for a video is PROCESSING, PROCESSING, ... then COMPLETED.
+  it('keeps a video Processing across polls until its document lands', () => {
+    const landed = upload({
+      filename: 'qa-clip.mp4',
+      state: ComposerAttachmentState.Uploaded,
+      fileId: 'file-1',
+    });
+    const polls = [
+      FileIngestionStatus.PROCESSING,
+      FileIngestionStatus.PROCESSING,
+      FileIngestionStatus.COMPLETED,
+    ].map((status) => stateOf([landed], [file(status)]));
+
+    expect(polls).toEqual([
+      ComposerAttachmentState.Processing,
+      ComposerAttachmentState.Processing,
+      ComposerAttachmentState.Ready,
+    ]);
+  });
+
   it('a failed ingestion carries the backend detail', () => {
     const chips = resolveComposerAttachmentChips({
       selectedFileIds: ['file-1'],

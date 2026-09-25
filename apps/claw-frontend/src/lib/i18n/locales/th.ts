@@ -705,6 +705,12 @@ export const th: TranslationDictionary = {
     loadingOlderMessages: 'กำลังโหลดข้อความเก่า...',
     loadingThreads: 'กำลังโหลดชุดข้อความ...',
     manyMemories: 'ความทรงจำ {count}',
+    messageRole: {
+      system: 'ระบบ',
+      user: 'คุณ',
+      assistant: 'ผู้ช่วย',
+      tool: 'เครื่องมือ',
+    },
     modelThinking: 'นางแบบกำลังคิด...',
     noMatchingThreads: 'ไม่มีเธรดที่ตรงกัน',
     noMessagesYet: 'ยังไม่มีข้อความ',

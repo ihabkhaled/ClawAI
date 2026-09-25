@@ -1,0 +1,927 @@
+{
+  "startedAt": "2026-09-25T12:01:07.622Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    },
+    "rtlSwitch": {
+      "url": "/ar/chat/cmugwvu14002udboacufvouve",
+      "dir": "rtl",
+      "lang": "ar"
+    }
+  },
+  "scenarios": {
+    "5": {
+      "status": "PASS",
+      "src": "blob:https:/",
+      "srcIsBlob": true,
+      "audioMeta": {
+        "readyState": 4,
+        "duration": 56.570958,
+        "error": null
+      },
+      "playerError": [],
+      "speechRequests": [
+        "POST /api/v1/chat-messages/cmugwubcg002sdboa5hn1j0rm/speech",
+        "POST /api/v1/chat-messages/cmugwubcg002sdboa5hn1j0rm/speech"
+      ],
+      "speechResponses": [
+        {
+          "status": 200,
+          "cached": false,
+          "fileIdTail": "coeqqf"
+        },
+        {
+          "status": 200,
+          "cached": true,
+          "fileIdTail": "coeqqf"
+        }
+      ],
+      "requestsAfterClick1": 1,
+      "requestsAfterClick2": 1,
+      "requestsAfterClick3": 2,
+      "playerClosedOnSecondClick": true,
+      "consoleErrorsDuring": [],
+      "screenshot": "screenshots/05-read-aloud-player-1440.png"
+    },
+    "6": {
+      "status": "PASS",
+      "precedingTextReply": true,
+      "stages": ["Generating image"],
+      "completed": true,
+      "renderedAfterRefresh": true,
+      "planNotice": 0,
+      "screenshots": [
+        "screenshots/06-image-generation-progress.png",
+        "screenshots/06-image-generation-completed.png",
+        "screenshots/06-image-generation-after-refresh.png"
+      ]
+    },
+    "8": {
+      "status": "FAIL",
+      "failing": ["740x360"]
+    },
+    "9": {
+      "status": "PASS",
+      "prep": {
+        "player": {
+          "opened": true,
+          "src": "blob:https://claw.local/710b8a5c-df7c-47b1-9428-d8273a555fcb"
+        },
+        "chipState": "READY (tile, no status line)"
+      },
+      "rows": [
+        {
+          "size": "390x844",
+          "dir": "rtl",
+          "overflowPx": 0,
+          "pass": true
+        },
+        {
+          "size": "820x1180",
+          "dir": "rtl",
+          "overflowPx": 0,
+          "pass": true
+        },
+        {
+          "size": "1440x900",
+          "dir": "rtl",
+          "overflowPx": 0,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "matrix": [
+    {
+      "platform": "mobile",
+      "size": "360x740",
+      "orientation": "portrait",
+      "pass": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 609, 44, 44]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [197, 609, 44, 44]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [25, 469, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [29, 670, 302, 124]
+      },
+      "image": null,
+      "screenshot": "screenshots/08-matrix-mobile-360x740-portrait.png"
+    },
+    {
+      "platform": "mobile",
+      "size": "390x844",
+      "orientation": "portrait",
+      "pass": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [325, 713, 44, 44]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [197, 713, 44, 44]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [25, 573, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [29, 670, 332, 124]
+      },
+      "image": null,
+      "screenshot": "screenshots/08-matrix-mobile-390x844-portrait.png"
+    },
+    {
+      "platform": "mobile",
+      "size": "430x932",
+      "orientation": "portrait",
+      "pass": true,
+      "innerWidth": 430,
+      "scrollWidth": 430,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [365, 801, 44, 44]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [197, 801, 44, 44]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [25, 661, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [29, 649, 372, 124]
+      },
+      "image": null,
+      "screenshot": "screenshots/08-matrix-mobile-430x932-portrait.png"
+    },
+    {
+      "platform": "mobile",
+      "size": "740x360",
+      "orientation": "landscape",
+      "pass": false,
+      "innerWidth": 740,
+      "scrollWidth": 740,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [599, 329, 44, 44]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [215, 329, 44, 44]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [39, 189, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [41, 581, 507, 124]
+      },
+      "image": null,
+      "screenshot": "screenshots/08-matrix-mobile-740x360-landscape.png"
+    },
+    {
+      "platform": "mobile",
+      "size": "844x390",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 844,
+      "scrollWidth": 844,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [723, 317, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [463, 317, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 186, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, 528, 388, 112]
+      },
+      "image": null,
+      "screenshot": "screenshots/08-matrix-mobile-844x390-landscape.png"
+    },
+    {
+      "platform": "mobile",
+      "size": "932x430",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 932,
+      "scrollWidth": 932,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [811, 357, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [463, 357, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 226, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, 528, 462, 112]
+      },
+      "image": null,
+      "screenshot": "screenshots/08-matrix-mobile-932x430-landscape.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "768x1024",
+      "orientation": "portrait",
+      "pass": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [647, 951, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [463, 951, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 820, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -126, 323, 112]
+      },
+      "image": {
+        "imgW": 265,
+        "containerW": 291,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-tablet-768x1024-portrait.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "820x1180",
+      "orientation": "portrait",
+      "pass": true,
+      "innerWidth": 820,
+      "scrollWidth": 820,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [699, 1107, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [463, 1107, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 976, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -45, 367, 112]
+      },
+      "image": {
+        "imgW": 309,
+        "containerW": 335,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-tablet-820x1180-portrait.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "1024x1366",
+      "orientation": "portrait",
+      "pass": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [903, 1293, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [487, 1293, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 1162, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [297, 8, 541, 72]
+      },
+      "image": {
+        "imgW": 483,
+        "containerW": 509,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-tablet-1024x1366-portrait.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "1024x768",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [903, 695, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [487, 695, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 564, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -323, 541, 72]
+      },
+      "image": {
+        "imgW": 483,
+        "containerW": 509,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-tablet-1024x768-landscape.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "1180x820",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 1180,
+      "scrollWidth": 1180,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [1059, 747, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [487, 747, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 616, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -312, 673, 72]
+      },
+      "image": {
+        "imgW": 512,
+        "containerW": 538,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-tablet-1180x820-landscape.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "1366x1024",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 1366,
+      "scrollWidth": 1366,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [1245, 951, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [487, 951, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 820, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -210, 809, 72]
+      },
+      "image": {
+        "imgW": 512,
+        "containerW": 538,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-tablet-1366x1024-landscape.png"
+    },
+    {
+      "platform": "desktop",
+      "size": "1280x800",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [1159, 727, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [487, 727, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 596, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -322, 758, 72]
+      },
+      "image": {
+        "imgW": 512,
+        "containerW": 538,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-desktop-1280x800-landscape.png"
+    },
+    {
+      "platform": "desktop",
+      "size": "1440x900",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [1319, 827, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [487, 827, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [295, 696, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [297, -272, 809, 72]
+      },
+      "image": {
+        "imgW": 512,
+        "containerW": 538,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-desktop-1440x900-landscape.png"
+    },
+    {
+      "platform": "desktop",
+      "size": "1920x1080",
+      "orientation": "landscape",
+      "pass": true,
+      "innerWidth": 1920,
+      "scrollWidth": 1920,
+      "overflowPx": 0,
+      "dir": "ltr",
+      "lang": "en",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [1589, 1007, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [697, 1007, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [505, 876, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [507, -182, 809, 72]
+      },
+      "image": {
+        "imgW": 512,
+        "containerW": 538,
+        "fits": true
+      },
+      "screenshot": "screenshots/08-matrix-desktop-1920x1080-landscape.png"
+    }
+  ],
+  "rtl": [
+    {
+      "platform": "mobile",
+      "size": "390x844",
+      "pass": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "overflowPx": 0,
+      "dir": "rtl",
+      "lang": "ar",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [21, 713, 44, 44]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [149, 713, 44, 44]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [283, 573, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [29, 670, 332, 124]
+      },
+      "image": null,
+      "screenshot": "screenshots/09-rtl-ar-mobile-390x844.png"
+    },
+    {
+      "platform": "tablet",
+      "size": "820x1180",
+      "pass": true,
+      "innerWidth": 820,
+      "scrollWidth": 820,
+      "overflowPx": 0,
+      "dir": "rtl",
+      "lang": "ar",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [85, 1107, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [321, 1107, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [443, 976, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [156, -45, 367, 112]
+      },
+      "image": {
+        "imgW": 309,
+        "containerW": 335,
+        "fits": true
+      },
+      "screenshot": "screenshots/09-rtl-ar-tablet-820x1180.png"
+    },
+    {
+      "platform": "desktop",
+      "size": "1440x900",
+      "pass": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "overflowPx": 0,
+      "dir": "rtl",
+      "lang": "ar",
+      "send": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [85, 827, 36, 36]
+      },
+      "record": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [917, 827, 36, 36]
+      },
+      "chip": {
+        "present": true,
+        "visible": true,
+        "inViewport": true,
+        "rect": [1063, 696, 82, 82]
+      },
+      "player": {
+        "present": true,
+        "visible": true,
+        "inViewport": false,
+        "rect": [428, -272, 715, 72]
+      },
+      "image": {
+        "imgW": 512,
+        "containerW": 538,
+        "fits": true
+      },
+      "screenshot": "screenshots/09-rtl-ar-desktop-1440x900.png"
+    }
+  ],
+  "axe": null,
+  "console": [
+    {
+      "who": "paid",
+      "url": "/en/chat/cmugwto5n002qdboamcb35rhj",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmugwto5n002qdboamcb35rhj",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmugwvu14002udboacufvouve",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    }
+  ],
+  "matrixPrep": {
+    "player": {
+      "opened": true,
+      "src": "blob:https://claw.local/cfcedb1b-db51-4f26-a5f1-b024cba82e88"
+    },
+    "chipState": "READY (tile, no status line)"
+  },
+  "networkSummary": [
+    "paid GET /api/v1/llamacpp/catalog 502 x5",
+    "paid GET /api/v1/ollama/models 502 x4"
+  ],
+  "consoleSummary": [
+    "paid Failed to load resource: the server responded with a status of 502 () x9"
+  ],
+  "finishedAt": "2026-09-25T12:03:48.222Z"
+}

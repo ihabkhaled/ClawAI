@@ -76,6 +76,7 @@ describe('FilesService extraction wiring', () => {
       deleteById: vi.fn(),
       markAsExtractedChild: vi.fn(),
       recordExtractionMetadata: vi.fn(),
+      countChildrenByParent: vi.fn().mockResolvedValue(new Map()),
     };
     processing = {
       processFile: vi.fn().mockResolvedValue(void 0),
@@ -404,6 +405,92 @@ describe('FilesService extraction wiring', () => {
 
         expect(state.ingestionStatus).toBe('COMPLETED');
       });
+    });
+  });
+  // Found live 2026-09-25 (docs/16-quality-engineering/evidence/2026-09-25-multimodal,
+  // defect 2): the internal readiness check reported PROCESSING for a video
+  // still carrying its placeholder, but the OWNER-facing list and detail
+  // returned the persisted COMPLETED — so the composer chip read "Ready"
+  // while the job was still running. Both now report the same effective status.
+  describe('owner-facing list and detail report the effective status (rule 42 items 12/15)', () => {
+    const LIST_QUERY = { page: 1, limit: 20 };
+    const placeholderVideo = (overrides: Partial<File> = {}): File =>
+      buildFile({
+        mimeType: 'video/mp4',
+        filename: 'qa-clip.mp4',
+        ingestionStatus: 'COMPLETED',
+        extractedText: '[Video file: qa-clip.mp4]',
+        extractionError: null,
+        updatedAt: new Date(),
+        ...overrides,
+      });
+    const placeholderAudio = (overrides: Partial<File> = {}): File =>
+      buildFile({
+        mimeType: 'audio/mpeg',
+        filename: 'memo.mp3',
+        ingestionStatus: 'COMPLETED',
+        extractedText: '[Audio file: memo.mp3]',
+        extractionError: null,
+        updatedAt: new Date(),
+        ...overrides,
+      });
+    const listOne = async (row: File) => {
+      filesRepo['findAll']?.mockResolvedValue([row]);
+      filesRepo['countAll']?.mockResolvedValue(1);
+      const page = await service.getFiles(USER_ID, LIST_QUERY);
+      return page.data[0];
+    };
+
+    it.each([
+      ['video', placeholderVideo],
+      ['audio', placeholderAudio],
+    ])('a %s placeholder is PROCESSING in the list and in the detail', async (_kind, make) => {
+      const row = make();
+      expect((await listOne(row))?.ingestionStatus).toBe('PROCESSING');
+
+      filesRepo['findById']?.mockResolvedValue(row);
+      expect((await service.getFile('file-1', USER_ID)).ingestionStatus).toBe('PROCESSING');
+    });
+
+    it.each([
+      ['video', placeholderVideo, 'Video processing could not be queued: channel closed'],
+      ['audio', placeholderAudio, 'Audio transcription failed: provider timed out'],
+    ])('a failed %s is FAILED with its reason', async (_kind, make, reason) => {
+      const row = make({ extractionError: reason });
+      const listed = await listOne(row);
+      expect(listed?.ingestionStatus).toBe('FAILED');
+      expect(listed?.extractionError).toBe(reason);
+
+      filesRepo['findById']?.mockResolvedValue(row);
+      const detail = await service.getFile('file-1', USER_ID);
+      expect(detail.ingestionStatus).toBe('FAILED');
+      expect(detail.extractionError).toBe(reason);
+    });
+
+    it('a finished video is COMPLETED in both', async () => {
+      const row = placeholderVideo({
+        extractedText: 'Video "qa-clip.mp4" — length 00:04, 160×120.\n[00:00–00:04] tone',
+      });
+      expect((await listOne(row))?.ingestionStatus).toBe('COMPLETED');
+      filesRepo['findById']?.mockResolvedValue(row);
+      expect((await service.getFile('file-1', USER_ID)).ingestionStatus).toBe('COMPLETED');
+    });
+
+    it('agrees with getIngestionState for the same row, and never writes the row', async () => {
+      const row = placeholderVideo();
+      filesRepo['findById']?.mockResolvedValue(row);
+      const internal = await service.getIngestionState('file-1', USER_ID);
+      const detail = await service.getFile('file-1', USER_ID);
+
+      expect(detail.ingestionStatus).toBe(internal.ingestionStatus);
+      expect(row.ingestionStatus).toBe('COMPLETED');
+      expect(filesRepo['updateIngestionStatus']).not.toHaveBeenCalled();
+      expect(filesRepo['saveExtractionResult']).not.toHaveBeenCalled();
+    });
+
+    it('stops claiming PROCESSING for a placeholder untouched past the ceiling, so the list poll ends', async () => {
+      const row = placeholderAudio({ updatedAt: new Date(Date.now() - 31 * 60 * 1000) });
+      expect((await listOne(row))?.ingestionStatus).toBe('COMPLETED');
     });
   });
 });

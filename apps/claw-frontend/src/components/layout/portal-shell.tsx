@@ -65,7 +65,7 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto p-3 focus-visible:outline-none sm:p-6"
+          className="short-viewport:p-3 flex-1 overflow-y-auto p-3 focus-visible:outline-none sm:p-6"
         >
           <ErrorBoundary>
             <PortalContent>{children}</PortalContent>

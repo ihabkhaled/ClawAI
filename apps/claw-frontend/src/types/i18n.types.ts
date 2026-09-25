@@ -666,6 +666,12 @@ export type TranslationDictionary = {
     loadingOlderMessages: string;
     loadingThreads: string;
     manyMemories: string;
+    messageRole: {
+      system: string;
+      user: string;
+      assistant: string;
+      tool: string;
+    };
     modelThinking: string;
     noMatchingThreads: string;
     noMessagesYet: string;

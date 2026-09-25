@@ -722,6 +722,12 @@ export const ru: TranslationDictionary = {
     loadingOlderMessages: 'Загрузка старых сообщений...',
     loadingThreads: 'Загрузка тредов...',
     manyMemories: '{count} воспоминаний',
+    messageRole: {
+      system: 'Система',
+      user: 'Вы',
+      assistant: 'Ассистент',
+      tool: 'Инструмент',
+    },
     modelThinking: 'Модель думает...',
     noMatchingThreads: 'Нет подходящих тредов',
     noMessagesYet: 'Сообщений пока нет',

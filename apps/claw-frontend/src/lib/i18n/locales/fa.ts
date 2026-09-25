@@ -715,6 +715,12 @@ export const fa: TranslationDictionary = {
     loadingOlderMessages: 'در حال بارگیری پیام های قدیمی تر...',
     loadingThreads: 'در حال بارگیری موضوعات...',
     manyMemories: 'حافظه های {count}',
+    messageRole: {
+      system: 'سیستم',
+      user: 'شما',
+      assistant: 'دستیار',
+      tool: 'ابزار',
+    },
     modelThinking: 'مدل در حال فکر کردن است ...',
     noMatchingThreads: 'هیچ رشته منطبقی وجود ندارد',
     noMessagesYet: 'هنوز پیامی وجود ندارد',

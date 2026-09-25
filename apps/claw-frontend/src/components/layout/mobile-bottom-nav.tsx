@@ -19,7 +19,9 @@ export function MobileBottomNav(): React.ReactElement {
         // Shown whenever the sidenav is a drawer rather than a rail — see the
         // `nav-rail` variant in globals.css. `md:hidden` used to retire it at
         // 768px, which on a tablet was 768px before the rail actually arrived.
-        'surface-glass safe-bottom nav-rail:hidden fixed inset-x-0 bottom-0 z-50',
+        // `short-viewport:hidden`: a phone in landscape has no height to give
+        // it (globals.css), and the topbar's hamburger opens the same drawer.
+        'surface-glass safe-bottom nav-rail:hidden short-viewport:hidden fixed inset-x-0 bottom-0 z-50',
         'rounded-none border-x-0 border-t border-b-0',
       )}
       style={{ height: 'calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom))' }}

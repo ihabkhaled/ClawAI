@@ -183,4 +183,28 @@ describe('chat surface layout contract (rules/40)', () => {
     // icon-only form was wrong, and that explanation is worth keeping.
     expect(picker).not.toMatch(/className="[^"]*\bsr-only\b/);
   });
+  it('keeps the send button on screen on a short viewport (a phone in landscape)', () => {
+    // Rule 40 §22. Found live 2026-09-25 at 740x360: topbar + bottom nav left
+    // 232px, the attachment tray could take 240px, and send/record ended at
+    // y=373 under the nav. The fix is CSS only, so this reads the CSS.
+    const css = withoutComments(read(GLOBALS_CSS));
+    expect(css).toMatch(/@custom-variant short-viewport\s*\{\s*@media \(max-height: 500px\)/);
+    expect(css).toMatch(
+      /@media \(max-height: 500px\)\s*\{\s*:root\s*\{\s*--mobile-bottom-nav-height: 0rem;/,
+    );
+    expect(css).toMatch(
+      /\.composer-textarea-short-cap\s*\{\s*@variant short-viewport\s*\{\s*max-height: 30dvh;/,
+    );
+
+    const nav = read(resolve(CHAT_COMPONENTS, '../layout/mobile-bottom-nav.tsx'));
+    expect(nav).toContain('short-viewport:hidden');
+
+    const tray = read(resolve(CHAT_COMPONENTS, 'composer-attachment-tray.tsx'));
+    expect(tray).toContain('short-viewport:flex-nowrap');
+    expect(tray).toContain('short-viewport:overflow-x-auto');
+    // Capped in dvh, never pixels (rule 40 §2/§6).
+    expect(tray).toMatch(/short-viewport:max-h-\[\d+dvh\]/);
+
+    expect(read(COMPOSER)).toContain('composer-textarea-short-cap');
+  });
 });

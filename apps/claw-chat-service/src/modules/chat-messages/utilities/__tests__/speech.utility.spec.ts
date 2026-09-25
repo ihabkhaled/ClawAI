@@ -49,8 +49,9 @@ describe('toSpeechCandidates', () => {
       row('OPENAI', 'tts-1', 900_000),
       row('OPENAI', 'tts-1', 0),
     ]);
-    expect(long?.timeoutMs).toBe(120_000);
-    expect(missing?.timeoutMs).toBe(60_000);
+    // Both land on the provider window: nginx 60 s − 10 s headroom − 10 s store reserve.
+    expect(long?.timeoutMs).toBe(40_000);
+    expect(missing?.timeoutMs).toBe(40_000);
   });
 });
 

@@ -10,11 +10,14 @@ export const ROUTING_MODE_LABELS: Record<RoutingMode, string> = {
   [RoutingMode.COST_SAVER]: 'Cost Saver',
 };
 
-export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
-  [MessageRole.SYSTEM]: 'System',
-  [MessageRole.USER]: 'You',
-  [MessageRole.ASSISTANT]: 'Assistant',
-  [MessageRole.TOOL]: 'Tool',
+// i18n key per role, resolved with t() at render. The map is exhaustive over
+// MessageRole, and every key exists in i18n.types.ts (`chat.messageRole.*`) —
+// it used to hold English strings, so "You"/"Assistant" showed under Arabic.
+export const MESSAGE_ROLE_LABEL_KEYS: Readonly<Record<MessageRole, string>> = {
+  [MessageRole.SYSTEM]: 'chat.messageRole.system',
+  [MessageRole.USER]: 'chat.messageRole.user',
+  [MessageRole.ASSISTANT]: 'chat.messageRole.assistant',
+  [MessageRole.TOOL]: 'chat.messageRole.tool',
 };
 
 export const THINKING_INDICATOR_LABEL = 'AI is thinking...';
