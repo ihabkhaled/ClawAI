@@ -188,6 +188,17 @@ not USD. Conversion itself belongs to payment-service's `modules/display-fx`;
 this service owns the preference and nothing more — see ADR-097 and
 `rules/45-display-currency-versus-settlement-currency.md`.
 
+## Read-aloud voice is a PREFERENCE too (2026-09-26)
+
+`User.ttsVoice` (`tts_voice VARCHAR(32)`, nullable; migration
+`20260926100000_add_user_tts_voice`) rides `PATCH /users/me/preferences`
+(`ttsVoice: string | null`, trimmed, validated against `TTS_VOICES_BY_PROVIDER`
+in `@claw/shared-constants`, case-sensitive — "Kore", "alloy"; null = each
+provider's default). Returned on `/auth/me` and `SafeUser`. chat-service reads it
+through `GET /internal/users/:id/speech-preferences` → `{ ttsVoice }`
+(`UsersInternalController`, `@Public()` + `ServiceTokenGuard`, never proxied by
+nginx). Nothing else of the profile leaves on that route.
+
 ## Commands
 
 ```bash

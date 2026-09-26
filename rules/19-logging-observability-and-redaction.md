@@ -39,7 +39,10 @@ All backend `*.service.ts`, `*.manager.ts`, `*.adapter.ts`, `*.utility.ts`,
    (`service` today). Never a user id, an email, a thread id, a token or a
    path that contains one: a metric is kept for 30 days and is readable by
    anyone who can see the dashboard, while a log line is redacted and scoped
-   (ADR-113).
+   (ADR-113). A service's own metric (`MetricsRegistry`, ADR-113 addendum
+   "media metrics") declares every label's allowed values — an enum or a
+   fixed provider list; anything else is recorded as `other`. Never pass an
+   id, a prompt or a free-text model name as a label value.
 9. **A repeated state is not an event.** A check that runs on a timer — a
    health fan-out, a poll, a scrape — logs at `info` when its result
    _changes_ and at `debug` otherwise. Logging every tick put ~11,500
@@ -122,6 +125,9 @@ Background: [ADR-089](../docs/13-adr/adr-089-client-telemetry-batch-endpoint.md)
 - **Unit test** — `apps/claw-health-service/src/modules/health/utilities/__tests__/prometheus-text.utility.spec.ts`
   refuses a metric label that is not on the allowlist, and proves a label value
   cannot inject a second sample line.
+- **Unit test** — `packages/shared-utilities/src/metrics/__tests__/metrics-registry.utility.spec.ts`
+  proves an undeclared value, a missing label and an extra key (a user id)
+  never reach the rendered output.
 - **Unit test** — `apps/claw-frontend/src/utilities/__tests__/logger-transport.utility.test.ts`
   proves the client sends one request for many entries, collapses repeats,
   splits at the ceiling and flushes on `pagehide`.

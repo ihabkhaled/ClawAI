@@ -11,10 +11,13 @@ import {
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import {
   DerivedTranscriptionStatus,
+  MediaJobKind,
   VideoCancelOutcome,
   VideoPlanDecision,
+  VideoProcessingOutcome,
   VideoProcessingStep,
 } from '../../../common/enums';
+import { FileMediaMetricsService } from '../../metrics/services/file-media-metrics.service';
 import { MediaSourceUnreadableError } from '../../../common/errors';
 import { RedisService } from '../../../infrastructure/redis/redis.service';
 import { FilesRepository } from '../repositories/files.repository';
@@ -48,6 +51,7 @@ import {
   describeVideoFailure,
   parseTimestampedTranscript,
 } from '../utilities/video-document.utility';
+import { videoProcessingOutcome } from '../utilities/video-processing-outcome.utility';
 import { VideoMediaManager } from './video-media.manager';
 import { VideoPlanLimitManager } from './video-plan-limit.manager';
 import { TranscriptionManager } from './transcription.manager';
@@ -95,6 +99,7 @@ export class VideoProcessingManager implements OnModuleInit {
     private readonly planLimit: VideoPlanLimitManager,
     private readonly transcription: TranscriptionManager,
     private readonly cancellation: VideoCancellationManager,
+    private readonly metrics: FileMediaMetricsService,
   ) {}
 
   /**
@@ -140,6 +145,7 @@ export class VideoProcessingManager implements OnModuleInit {
       return;
     }
     const { fileId, userId } = parsed.data;
+    this.metrics.recordQueueWait(MediaJobKind.VIDEO, parsed.data.timestamp, Date.now());
     const file = await this.filesRepository.findById(fileId);
     if (file === null) {
       this.logger.warn(`handleJob: fileId=${fileId} no longer exists`);
@@ -193,9 +199,11 @@ export class VideoProcessingManager implements OnModuleInit {
     // One last read right before the write: a cancel that arrived after the
     // final step still wins, and whatever the job found is discarded.
     if (await this.cancellation.checkpoint(watch, VideoProcessingStep.SAVE)) {
+      this.metrics.recordVideoJob(VideoProcessingOutcome.CANCELLED, Date.now() - startedAt);
       await this.saveCancelled(file, analysis, watch);
       return;
     }
+    this.metrics.recordVideoJob(videoProcessingOutcome(analysis), Date.now() - startedAt);
     await (analysis.ok
       ? this.saveSuccess(file, analysis, startedAt)
       : this.saveFailure(file, analysis));

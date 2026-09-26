@@ -86,3 +86,32 @@ the platform is forensic, not operational.
   wiring (9 cases).
 - **Not verified**: anything in production. It has not been deployed since
   2026-09-17 and no deploy is approved.
+
+## Addendum: media metrics are exported by the services themselves (2026-09-26)
+
+The multimodal pack (§67) needs counts no health check can see: transcription
+calls by outcome, video jobs, read-aloud segments, image generations. The
+deferred alternative ("a counter in every service") is now taken, narrowly:
+
+- **Three services, not all.** chat-, file- and image-service serve
+  `GET /api/v1/metrics` from `MetricsRegistry` (`@claw/shared-utilities`,
+  ~150 lines, no `prom-client`: a new dependency in three services for two
+  metric kinds was not worth it). The route is `@Public()` and internal only —
+  nginx has no location for it (a test in `observability-stack.test.mjs`).
+- **The label rule changes shape, not strength.** Health metrics keep the
+  `service`-only allowlist. A media metric declares every label's allowed
+  VALUES; anything else is recorded as `other` and undeclared keys are never
+  read, so an id cannot become a series. Recording never throws (a metric must
+  not fail the request it measures); a bad declaration throws at boot.
+- **chat-service is discovered per replica** (`dns_sd_configs`, type A): each
+  of the 4 production replicas keeps its own counters, and a static target
+  would scrape one at random. PromQL sums across `instance`.
+- **Counters reset on restart** — read them through `rate()`/`increase()`.
+- Rejected: pushing counts to health-service over HTTP (a second hop and a
+  cache for numbers Prometheus can scrape directly), and RabbitMQ events
+  into audit-service (forensic store, no rates).
+
+Operational consequence: a change to `infra/prometheus/prometheus.yml` or the
+new dashboard is a **recreate** of `prometheus` / `grafana`, as before. The new
+`@claw/shared-utilities` export means dev containers need `service:rebuild`
+(baked packages), not a restart. Metric list: `docs/08-runtime-devops/metrics-and-dashboards.md`.

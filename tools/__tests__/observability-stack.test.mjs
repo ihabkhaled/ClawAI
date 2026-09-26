@@ -10,7 +10,10 @@ import { repoPath } from '../lib/repo.mjs';
 // ADR-113. Prometheus is the first container here that is scraped rather than
 // called: it holds operational history, it authenticates nobody, and it is
 // declared in two compose files that drift the moment one is edited alone.
-const COMPOSE = ['docker/docker-compose.dev.services.yml', 'docker/docker-compose.prod.services.yml'];
+const COMPOSE = [
+  'docker/docker-compose.dev.services.yml',
+  'docker/docker-compose.prod.services.yml',
+];
 const METRICS_CONTAINERS = ['prometheus', 'grafana'];
 
 const composeFile = (relative) => parse(fs.readFileSync(repoPath(relative), 'utf8'));
@@ -130,13 +133,19 @@ test('nginx serves /grafana/ only after auth_request', () => {
   assert.match(block, /^\s*auth_request \/_grafana_auth;/mu);
   assert.match(block, /auth_request_set \$grafana_user \$upstream_http_x_grafana_user;/u);
   // A literal upstream makes nginx refuse to start while grafana is down.
-  assert.match(block, /set \$grafana_backend http:\/\/grafana:3000;\s*proxy_pass \$grafana_backend;/u);
+  assert.match(
+    block,
+    /set \$grafana_backend http:\/\/grafana:3000;\s*proxy_pass \$grafana_backend;/u,
+  );
 });
 
 test('nginx always overwrites the identity header Grafana trusts', () => {
   const header = iniValue('auth.proxy', 'header_name');
   assert.equal(header, 'X-WEBAUTH-EMAIL');
-  assert.match(locationBlock('/grafana/'), new RegExp(`proxy_set_header ${header} \\$grafana_user;`, 'u'));
+  assert.match(
+    locationBlock('/grafana/'),
+    new RegExp(`proxy_set_header ${header} \\$grafana_user;`, 'u'),
+  );
 });
 
 test('the auth subrequest is internal, bodiless, GET, and aimed at the verify route', () => {
@@ -153,7 +162,9 @@ test('the verify route is closed to the outside', () => {
 
 test('the cookie path auth-service sets is the path nginx protects', () => {
   const constants = fs.readFileSync(
-    repoPath('apps/claw-auth-service/src/modules/grafana-access/constants/grafana-access.constants.ts'),
+    repoPath(
+      'apps/claw-auth-service/src/modules/grafana-access/constants/grafana-access.constants.ts',
+    ),
     'utf8',
   );
   const cookiePath = /GRAFANA_ACCESS_COOKIE_PATH = '([^']+)'/u.exec(constants)?.[1];
@@ -180,7 +191,11 @@ test('no Grafana password is set anywhere, and its secret key comes from the env
   }
   assert.doesNotMatch(grafanaIni, /^\s*(admin_password|secret_key)\s*=/mu);
   for (const relative of ['.env.example', 'scripts/install.sh', 'scripts/install.ps1']) {
-    assert.match(fs.readFileSync(repoPath(relative), 'utf8'), /GRAFANA_SECRET_KEY=/u, `${relative} lacks GRAFANA_SECRET_KEY`);
+    assert.match(
+      fs.readFileSync(repoPath(relative), 'utf8'),
+      /GRAFANA_SECRET_KEY=/u,
+      `${relative} lacks GRAFANA_SECRET_KEY`,
+    );
   }
 });
 
@@ -196,9 +211,49 @@ test('every provisioned dashboard reads the provisioned datasource', () => {
     const dashboard = JSON.parse(fs.readFileSync(path.join(directory, file), 'utf8'));
     assert.ok(dashboard.uid, `${file} has no stable uid`);
     for (const panel of dashboard.panels ?? []) {
-      assert.equal(panel.datasource?.uid, datasource.uid, `${file} panel "${panel.title}" reads another datasource`);
+      assert.equal(
+        panel.datasource?.uid,
+        datasource.uid,
+        `${file} panel "${panel.title}" reads another datasource`,
+      );
     }
   }
   const home = iniValue('dashboards', 'default_home_dashboard_path');
   assert.ok(files.includes(path.basename(String(home))), 'the home dashboard is not provisioned');
+});
+
+// ADR-113 addendum "media metrics": chat/file/image expose their own registry.
+const MEDIA_SCRAPES = {
+  'claw-chat-media': { host: 'chat-service', port: 4002 },
+  'claw-file-media': { host: 'file-service', port: 4006 },
+  'claw-image-media': { host: 'image-service', port: 4012 },
+};
+
+test('Prometheus scrapes every media metrics endpoint over HTTPS with the stack CA', () => {
+  const config = parse(fs.readFileSync(repoPath('infra/prometheus/prometheus.yml'), 'utf8'));
+  for (const [job, { host, port }] of Object.entries(MEDIA_SCRAPES)) {
+    const scrape = config.scrape_configs.find((entry) => entry.job_name === job);
+    assert.ok(scrape, `${job} is not scraped`);
+    assert.equal(scrape.metrics_path, '/api/v1/metrics');
+    assert.equal(scrape.scheme, 'https');
+    assert.equal(scrape.tls_config.server_name, host);
+    const targets = [
+      ...(scrape.static_configs ?? []).flatMap((entry) => entry.targets),
+      ...(scrape.dns_sd_configs ?? []).flatMap((entry) =>
+        entry.names.map((name) => `${name}:${String(entry.port)}`),
+      ),
+    ];
+    assert.deepEqual(targets, [`${host}:${String(port)}`]);
+  }
+});
+
+test('chat-service is discovered per replica, never scraped at one random replica', () => {
+  const config = parse(fs.readFileSync(repoPath('infra/prometheus/prometheus.yml'), 'utf8'));
+  const chat = config.scrape_configs.find((entry) => entry.job_name === 'claw-chat-media');
+  assert.equal(chat.static_configs, undefined);
+  assert.equal(chat.dns_sd_configs[0].type, 'A');
+});
+
+test('nginx never routes /api/v1/metrics to the outside', () => {
+  assert.doesNotMatch(locations, /location[^{]*\/api\/v1\/metrics/u);
 });

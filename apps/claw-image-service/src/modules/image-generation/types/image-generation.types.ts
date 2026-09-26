@@ -1,3 +1,4 @@
+import type { ImageGenerationMetricOutcome } from '../../../common/enums';
 import {
   type PaygFinalizeCalls,
   type PaygFinalizeUsage,
@@ -311,3 +312,9 @@ export type ImageGenerationEventPayload = {
 };
 
 export const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELLED'] as const;
+
+/** How one attempt of `processJob` ended: its metric outcome, and the AUTO successor when one took over. */
+export type ImageAttemptEnd = {
+  outcome: ImageGenerationMetricOutcome;
+  successorId?: string;
+};

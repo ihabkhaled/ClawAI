@@ -6,6 +6,7 @@ import { PasswordInput } from '@/components/common/password-input';
 import { ChangePasswordCard } from '@/components/settings/change-password-card';
 import { CurrencyPreferenceCard } from '@/components/settings/currency-preference-card';
 import { EmailChangeCard } from '@/components/settings/email-change-card';
+import { TtsVoicePreferenceCard } from '@/components/settings/tts-voice-preference-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -34,6 +35,8 @@ export default function SettingsPage() {
     activeCurrency,
     isCurrencyAutomatic,
     detectedCountry,
+    currentTtsVoice,
+    handleTtsVoiceChange,
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,
@@ -178,6 +181,14 @@ export default function SettingsPage() {
           activeCurrency={activeCurrency}
           isAutomatic={isCurrencyAutomatic}
           detectedCountry={detectedCountry}
+        />
+
+        <Separator />
+
+        <TtsVoicePreferenceCard
+          value={currentTtsVoice}
+          isPending={isPending}
+          onChange={handleTtsVoiceChange}
         />
       </div>
     </div>

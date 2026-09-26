@@ -30,7 +30,7 @@ import {
   SUPER_ADMIN_SELF_LOCKED_MESSAGE,
 } from '../../../common/constants/super-admin.constants';
 import { CurrencyPreferenceMode, type User } from '../../../generated/prisma';
-import { type SafeUser } from '../types/users.types';
+import { type SafeUser, type UserSpeechPreferences } from '../types/users.types';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { resolveSuperAdminMutability } from '../service.utilities/super-admin-mutability.utility';
@@ -352,6 +352,15 @@ export class UsersService {
 
     const updated = await this.usersRepository.updatePreferences(userId, dto);
     return toSafeUser(updated);
+  }
+
+  /** The read-aloud voice for chat-service (service-token route). 404 for an unknown user. */
+  async getSpeechPreferences(userId: string): Promise<UserSpeechPreferences> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new EntityNotFoundException('User', userId);
+    }
+    return { ttsVoice: user.ttsVoice };
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {

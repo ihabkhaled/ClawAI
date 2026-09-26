@@ -55,6 +55,8 @@ export type SpeechTokenUsage = {
 export type SpeechProviderRequest = {
   candidate: SpeechCandidate;
   text: string;
+  /** The exact voice name this provider reads with (the user's, or the provider default). */
+  voice: string;
   apiKey: string;
   maxOutputTokens: number;
   /** The job's cancel signal: aborts the local HTTP request, never the provider's work. */
@@ -78,6 +80,8 @@ export type SpeechSynthesisInput = {
   /** Increments each time this message is synthesised anew, so a new call never reuses a settled hold. */
   generation: number;
   segment: SpeechTextSegment;
+  /** The user's saved voice (null = defaults); each candidate resolves its own. */
+  voice: string | null;
   /** Epoch ms: the job's wall-clock deadline (`SPEECH_JOB_DEADLINE_MS` from `startedAt`). */
   deadlineAt: number;
   /** Told on every RATE_LIMITED attempt, so the job can lower its concurrency. */
@@ -110,6 +114,8 @@ export type StoredSpeechSegment = {
   characters: number;
   provider: string;
   model: string;
+  /** The voice that actually read it (absent on segments stored before the picker). */
+  voice?: string;
 };
 
 /** `metadata.speech` (version 2) on the assistant message — the job's durable state. */
@@ -126,6 +132,12 @@ export type SpeechJobState = {
   /** In index order. */
   segments: StoredSpeechSegment[];
   errorCode: string | null;
+  /**
+   * The user's saved voice the reading was made for (null = provider
+   * defaults; absent on states written before the picker, read as null).
+   * Part of the replay key: another voice is a new reading, never a replay.
+   */
+  voice?: string | null;
 };
 
 export type StoreSpeechFileInput = {
@@ -206,6 +218,23 @@ export type GeminiSpeechErrorBody = {
 export type GeminiSpeechErrorDetail = {
   '@type'?: string;
   retryDelay?: string;
+};
+
+/** auth-service `GET /internal/users/:id/speech-preferences`. */
+export type SpeechPreferencesResponse = {
+  ttsVoice?: string | null;
+};
+
+/** What one read-aloud job reads: the capped text and the user's saved voice (null = defaults). */
+export type SpeechReading = {
+  speakable: SpeakableText;
+  voice: string | null;
+};
+
+/** The saved voice, or `unavailable` when auth-service could not say. */
+export type SpeechVoiceLookup = {
+  voice: string | null;
+  available: boolean;
 };
 
 export type ConnectorKeyResponse = {

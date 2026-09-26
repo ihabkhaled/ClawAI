@@ -29,8 +29,8 @@ health-service  ──checks 17 services──►  /api/v1/metrics  ◄──scr
 | `claw_services_up`            | gauge | —         | How many answered                                                                                                                                                                                                                                                                 |
 | `claw_health_snapshot_age_ms` | gauge | —         | Age of the snapshot this scrape was served from. Near the scrape interval is normal; growing means the exporter is not refreshing                                                                                                                                                 |
 
-**A metric carries `service` and nothing else.** The renderer throws on any
-other label: metrics live for a month and are read by anyone with the
+**A health metric carries `service` and nothing else** (the media metrics
+below bound theirs differently). The renderer throws on any other label: metrics live for a month and are read by anyone with the
 dashboard, so no user id, email, thread id or token may reach them
 ([rules/19](../../rules/19-logging-observability-and-redaction.md)).
 
@@ -92,6 +92,59 @@ over 30 days at a 5-minute step, cached for a minute, turned into per-component
 uptime and incidents. The browser never talks to Prometheus. Details:
 [service-guide-health](../04-backend/service-guide-health.md) § Status page ·
 [runbook-status-page-degraded](../11-runbooks/runbook-status-page-degraded.md).
+
+## Media metrics: each media service exports its own (pack §67, 2026-09-26)
+
+chat-service, file-service and image-service each serve `GET /api/v1/metrics`
+from an in-process registry (`MetricsRegistry` in `@claw/shared-utilities`,
+no library). Internal only: nginx has no `/api/v1/metrics` location, so the
+path falls to the frontend; the route is `@Public()` because Prometheus has no
+JWT. Prometheus scrapes them as `claw-chat-media` (DNS discovery — one target
+per chat replica, 4 in prod), `claw-file-media` and `claw-image-media`.
+Counters reset on a restart; always read them through `rate()` / `increase()`.
+
+**Labels are bounded by construction.** Each label declares its allowed values
+(an enum, or a fixed provider list); any other value is recorded as `other`,
+and keys a metric did not declare are never read. A user id, file id, message
+id, prompt or free-text model name cannot become a series.
+
+| Metric                                                                    | Type                | Labels                                                                                                                                      | Where it is recorded                                                                             |
+| ------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `claw_file_transcription_attempts_total`                                  | counter             | `provider` (gemini, openai), `outcome` (success, empty, refused, rate_limited, failed, cancelled)                                           | `TranscriptionManager.tryCandidate`, per provider call                                           |
+| `claw_file_transcription_job_duration_seconds`                            | histogram           | `source` (upload, video_audio), `status` (completed, refused, failed, cancelled)                                                            | one job, every call and retry                                                                    |
+| `claw_file_video_processing_total` / `_duration_seconds`                  | counter / histogram | `outcome` (completed, no_speech, no_audio, transcription_failed, failed, cancelled)                                                         | `VideoProcessingManager.process`, before the single write                                        |
+| `claw_file_media_queue_wait_seconds`                                      | histogram           | `job` (transcription, video)                                                                                                                | consumer start minus the event's `timestamp`                                                     |
+| `claw_chat_attachment_delivery_total`                                     | counter             | `mode` (every `FileDeliveryMode`)                                                                                                           | `AttachmentDeliveryManager.plan`, per decision; plus one `derived_image_text` per helper upgrade |
+| `claw_chat_vision_helper_calls_total`                                     | counter             | `outcome` (`VisionHelperOutcome`)                                                                                                           | `VisionHelperManager.finish`, per attempt                                                        |
+| `claw_chat_tts_segment_attempts_total`                                    | counter             | `provider` (gemini, openai), `outcome` (`SpeechAttemptOutcome`, incl. rate_limited, refused)                                                | `SpeechSynthesisManager`, per attempt                                                            |
+| `claw_chat_tts_first_segment_seconds`                                     | histogram           | `provider`                                                                                                                                  | job start → segment 1 stored                                                                     |
+| `claw_chat_tts_jobs_total` / `claw_chat_tts_job_duration_seconds`         | counter / histogram | `status` (`SpeechJobStatus`)                                                                                                                | `SpeechJobManager.run`, when the job ends                                                        |
+| `claw_image_generations_total` / `claw_image_generation_duration_seconds` | counter / histogram | `provider` (image_openai, image_gemini, image_grok, image_local, image_local_comfyui), `outcome` (completed, failed, cancelled, superseded) | `ImageGenerationService.processJob`, per attempt                                                 |
+
+`omitted_no_vision` counts the plan's decision for a blind lane BEFORE the
+helper; `derived_image_text` counts the helper's upgrades of it. `superseded`
+is an AUTO image attempt that failed and handed the job to the next provider.
+
+Dashboard: `infra/grafana/dashboards/claw-multimodal.json` ("ClawAI —
+Multimodal"). Useful queries:
+
+```promql
+# Transcription failure share over the last hour, per provider
+sum by (provider) (increase(claw_file_transcription_attempts_total{outcome!="success"}[1h]))
+  / sum by (provider) (increase(claw_file_transcription_attempts_total[1h]))
+
+# Read-aloud time to first audio, p95, all chat replicas
+histogram_quantile(0.95, sum by (le) (rate(claw_chat_tts_first_segment_seconds_bucket[15m])))
+
+# How often a blind lane got no helper description
+sum(increase(claw_chat_attachment_delivery_total{mode="omitted_no_vision"}[1d]))
+  - sum(increase(claw_chat_attachment_delivery_total{mode="derived_image_text"}[1d]))
+
+# Media queue backlog signal
+histogram_quantile(0.95, sum by (le, job) (rate(claw_file_media_queue_wait_seconds_bucket[15m])))
+```
+
+Adding one: [`skills/add-a-service-metric.md`](../../skills/add-a-service-metric.md).
 
 ## Changing the configuration
 

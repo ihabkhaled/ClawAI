@@ -13,6 +13,8 @@ export type UpdatePreferencesRequest = {
   currencyPreferenceMode?: CurrencyPreferenceMode;
   preferredCountryCode?: string | null;
   preferredCurrencyCode?: string | null;
+  // "Read aloud" voice; null = back to each provider's default voice.
+  ttsVoice?: string | null;
 };
 
 export type ChangePasswordRequest = {

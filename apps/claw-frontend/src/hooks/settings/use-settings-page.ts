@@ -9,6 +9,7 @@ import { useDisplayCurrency } from '@/hooks/display-currency/use-display-currenc
 import { useAccountManagement } from '@/hooks/settings/use-account-management';
 import { useChangePasswordForm } from '@/hooks/settings/use-change-password-form';
 import { useEmailChange } from '@/hooks/settings/use-email-change';
+import { useTtsVoicePreference } from '@/hooks/settings/use-tts-voice-preference';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
 import { useLocale } from '@/hooks/use-locale';
 import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
@@ -29,6 +30,7 @@ export function useSettingsPage() {
   const { replaceLocale } = useLocaleNavigation();
   const { theme, setTheme } = useAppTheme();
   const { updatePreferences, isPending: isPreferencesPending } = useUpdatePreferences();
+  const ttsVoice = useTtsVoicePreference(user?.ttsVoice, updatePreferences);
   const {
     currency: activeCurrency,
     context: currencyContext,
@@ -114,6 +116,7 @@ export function useSettingsPage() {
     currentAppearance,
     handleLanguageChange,
     handleAppearanceChange,
+    ...ttsVoice,
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,

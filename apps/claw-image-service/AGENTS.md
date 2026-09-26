@@ -20,8 +20,8 @@ npm run dev
 - Port: 4012
 - Database: postgresql
 - Prisma models: ImageGeneration, ImageGenerationAsset, ImageGenerationEvent
-- API endpoints: 10 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 33 (vitest)
+- API endpoints: 11 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 35 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

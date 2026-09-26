@@ -6,6 +6,7 @@ import { SpeechProviderError } from '../../../../common/errors';
 import { httpPostBinary, httpRequest } from '../../../../common/utilities';
 import { SpeechConnectorClient } from '../speech-connector.client';
 import { SpeechFileStoreClient } from '../speech-file-store.client';
+import { SpeechPreferencesClient } from '../speech-preferences.client';
 import { SpeechProviderClient } from '../speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../tts-voice-candidates.client';
 
@@ -30,6 +31,7 @@ const OPENAI = { provider: SpeechProvider.OPENAI, model: 'tts-1', timeoutMs: 60_
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(AppConfig, 'get').mockReturnValue({
+    AUTH_SERVICE_URL: 'http://auth.test',
     ROUTING_SERVICE_URL: 'http://routing.test',
     CONNECTOR_SERVICE_URL: 'http://connector.test',
     FILE_SERVICE_URL: 'http://file.test',
@@ -65,6 +67,7 @@ describe('SpeechProviderClient', () => {
     const audio = await new SpeechProviderClient().synthesize({
       candidate: GEMINI,
       text: 'Hello.',
+      voice: 'Puck',
       apiKey: 'g-key',
       maxOutputTokens: 777,
     });
@@ -81,7 +84,11 @@ describe('SpeechProviderClient', () => {
     expect(call?.headers).toEqual({ 'x-goog-api-key': 'g-key' });
     expect(call?.body).toMatchObject({
       contents: [{ parts: [{ text: 'Hello.' }] }],
-      generationConfig: { responseModalities: ['AUDIO'], maxOutputTokens: 777 },
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        maxOutputTokens: 777,
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } },
+      },
     });
   });
 
@@ -92,7 +99,13 @@ describe('SpeechProviderClient', () => {
       data: { error: { message: 'x' } },
     } as never);
     const error: unknown = await new SpeechProviderClient()
-      .synthesize({ candidate: GEMINI, text: 'Hi.', apiKey: 'k', maxOutputTokens: 10 })
+      .synthesize({
+        candidate: GEMINI,
+        text: 'Hi.',
+        voice: 'alloy',
+        apiKey: 'k',
+        maxOutputTokens: 10,
+      })
       .catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(SpeechProviderError);
     expect((error as SpeechProviderError).status).toBe(400);
@@ -111,7 +124,13 @@ describe('SpeechProviderClient', () => {
       },
     } as never);
     const error: unknown = await new SpeechProviderClient()
-      .synthesize({ candidate: GEMINI, text: 'Hi.', apiKey: 'k', maxOutputTokens: 10 })
+      .synthesize({
+        candidate: GEMINI,
+        text: 'Hi.',
+        voice: 'alloy',
+        apiKey: 'k',
+        maxOutputTokens: 10,
+      })
       .catch((caught: unknown) => caught);
     expect(error).toMatchObject({ status: 429, rateLimited: true, retryAfterMs: 7_000 });
   });
@@ -119,7 +138,13 @@ describe('SpeechProviderClient', () => {
   it('OpenAI: a 429 rate limit honours Retry-After; an exhausted quota is a plain failure', async () => {
     const call = async (): Promise<unknown> =>
       new SpeechProviderClient()
-        .synthesize({ candidate: OPENAI, text: 'Hi.', apiKey: 'k', maxOutputTokens: 1 })
+        .synthesize({
+          candidate: OPENAI,
+          text: 'Hi.',
+          voice: 'alloy',
+          apiKey: 'k',
+          maxOutputTokens: 1,
+        })
         .catch((caught: unknown) => caught);
     postBinary.mockResolvedValue({
       ok: false,
@@ -141,6 +166,7 @@ describe('SpeechProviderClient', () => {
     const audio = await new SpeechProviderClient().synthesize({
       candidate: OPENAI,
       text: 'Hello.',
+      voice: 'nova',
       apiKey: 'o-key',
       maxOutputTokens: 1,
     });
@@ -149,7 +175,7 @@ describe('SpeechProviderClient', () => {
       expect.objectContaining({
         url: 'https://api.openai.com/v1/audio/speech',
         headers: { Authorization: 'Bearer o-key' },
-        body: { model: 'tts-1', input: 'Hello.', voice: 'alloy', response_format: 'mp3' },
+        body: { model: 'tts-1', input: 'Hello.', voice: 'nova', response_format: 'mp3' },
       }),
     );
   });
@@ -159,7 +185,13 @@ describe('SpeechProviderClient', () => {
     abort.name = 'AbortError';
     postBinary.mockRejectedValue(abort);
     const error: unknown = await new SpeechProviderClient()
-      .synthesize({ candidate: OPENAI, text: 'Hi.', apiKey: 'k', maxOutputTokens: 1 })
+      .synthesize({
+        candidate: OPENAI,
+        text: 'Hi.',
+        voice: 'alloy',
+        apiKey: 'k',
+        maxOutputTokens: 1,
+      })
       .catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(SpeechProviderError);
     expect((error as SpeechProviderError).timedOut).toBe(true);
@@ -171,6 +203,7 @@ describe('SpeechProviderClient', () => {
       new SpeechProviderClient().synthesize({
         candidate: OPENAI,
         text: 'Hi.',
+        voice: 'alloy',
         apiKey: 'k',
         maxOutputTokens: 1,
       }),
@@ -180,6 +213,7 @@ describe('SpeechProviderClient', () => {
       new SpeechProviderClient().synthesize({
         candidate: OPENAI,
         text: 'Hi.',
+        voice: 'alloy',
         apiKey: 'k',
         maxOutputTokens: 1,
       }),
@@ -218,6 +252,52 @@ describe('TtsVoiceCandidatesClient', () => {
     await expect(client.resolve(() => now)).resolves.toEqual(LIST);
     request.mockRejectedValue(new Error('fetch failed'));
     await expect(new TtsVoiceCandidatesClient().resolve()).resolves.toEqual([]);
+  });
+});
+
+describe('SpeechPreferencesClient', () => {
+  it('reads the saved voice from auth-service with the service token', async () => {
+    request.mockResolvedValue({ ok: true, status: 200, data: { ttsVoice: 'Puck' } } as never);
+    await expect(new SpeechPreferencesClient().voiceFor('user 1')).resolves.toEqual({
+      voice: 'Puck',
+      available: true,
+    });
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://auth.test/api/v1/internal/users/user%201/speech-preferences',
+        headers: { Authorization: `Service ${'t'.repeat(40)}` },
+      }),
+    );
+  });
+
+  it('reads no voice, and a voice outside the catalog, as the defaults', async () => {
+    request.mockResolvedValueOnce({ ok: true, status: 200, data: { ttsVoice: null } } as never);
+    await expect(new SpeechPreferencesClient().voiceFor('u')).resolves.toEqual({
+      voice: null,
+      available: true,
+    });
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { ttsVoice: 'Retired' },
+    } as never);
+    await expect(new SpeechPreferencesClient().voiceFor('u')).resolves.toEqual({
+      voice: null,
+      available: true,
+    });
+  });
+
+  it('an error status or an outage is unavailable, never a throw', async () => {
+    request.mockResolvedValueOnce({ ok: false, status: 503, data: {} } as never);
+    await expect(new SpeechPreferencesClient().voiceFor('u')).resolves.toEqual({
+      voice: null,
+      available: false,
+    });
+    request.mockRejectedValueOnce(new Error('fetch failed'));
+    await expect(new SpeechPreferencesClient().voiceFor('u')).resolves.toEqual({
+      voice: null,
+      available: false,
+    });
   });
 });
 

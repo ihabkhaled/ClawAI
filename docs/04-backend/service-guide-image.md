@@ -389,3 +389,9 @@ A user cancel publishes neither (see Cancellation).
 `image.failed` is `ImageFailedPayload` (`@claw/shared-types`): ids, provider,
 model, prompt, error code/message, `timestamp`, and — only when an AUTO
 fallback successor exists — `supersededById` (optional, additive).
+
+## Media metrics (2026-09-26)
+
+`GET /api/v1/metrics` (internal): generation attempts and duration by image
+provider and outcome (completed / failed / cancelled / superseded). List:
+`docs/08-runtime-devops/metrics-and-dashboards.md`.

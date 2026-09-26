@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { TranscriptionManager } from '../transcription.manager';
+import { FileMediaMetricsService } from '../../../metrics/services/file-media-metrics.service';
 import { type FilesRepository } from '../../repositories/files.repository';
 import { type TranscriptionCapabilityClient } from '../../clients/transcription-capability.client';
 import { TranscriptionMeterManager } from '../transcription-meter.manager';
@@ -92,6 +93,7 @@ interface Harness {
   rabbit: { publish: Mock; publishConfirmed: Mock; subscribe: Mock };
   capability: { findCapableModels: Mock; fetchConnectorConfig: Mock };
   payg: PaygMeter;
+  metrics: FileMediaMetricsService;
 }
 
 const buildHarness = (file: File | null): Harness => {
@@ -132,13 +134,15 @@ const buildHarness = (file: File | null): Harness => {
       reason: 'NOT_PAYG',
     }),
   );
+  const metrics = new FileMediaMetricsService();
   const manager = new TranscriptionManager(
     filesRepository as unknown as FilesRepository,
     rabbit as unknown as RabbitMQService,
     capability as unknown as TranscriptionCapabilityClient,
     new TranscriptionMeterManager(payg),
+    metrics,
   );
-  return { manager, filesRepository, rabbit, capability, payg };
+  return { manager, filesRepository, rabbit, capability, payg, metrics };
 };
 
 const publishedPatterns = (rabbit: Harness['rabbit']): string[] =>
@@ -847,5 +851,60 @@ describe('TranscriptionManager', () => {
         expect(outcome).toEqual({ status: 'FAILED', reason: EMPTY_REASON });
       });
     });
+  });
+});
+
+describe('TranscriptionManager metrics (pack §67)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('counts a successful call, the job duration and the queue wait — no ids', async () => {
+    mockedGemini.mockResolvedValue({ text: 'Hello.' });
+    const harness = buildHarness(buildFile());
+    const publishedAt = new Date(Date.now() - 2_000).toISOString();
+
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1', timestamp: publishedAt });
+
+    const text = harness.metrics.render();
+    expect(text).toContain(
+      'claw_file_transcription_attempts_total{provider="gemini",outcome="success"} 1',
+    );
+    expect(text).toContain(
+      'claw_file_transcription_job_duration_seconds_count{source="upload",status="completed"} 1',
+    );
+    expect(text).toContain('claw_file_media_queue_wait_seconds_count{job="transcription"} 1');
+    expect(text).toContain(
+      'claw_file_media_queue_wait_seconds_bucket{job="transcription",le="1"} 0',
+    );
+    expect(text).not.toContain('file-1');
+    expect(text).not.toContain('user-1');
+  });
+
+  it('counts an empty answer as empty, then the retry', async () => {
+    mockedGemini.mockResolvedValueOnce({ text: '  ' }).mockResolvedValueOnce({ text: 'Heard.' });
+    const harness = buildHarness(buildFile());
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+    const text = harness.metrics.render();
+    expect(text).toContain(
+      'claw_file_transcription_attempts_total{provider="gemini",outcome="empty"} 1',
+    );
+    expect(text).toContain(
+      'claw_file_transcription_attempts_total{provider="gemini",outcome="success"} 1',
+    );
+  });
+
+  it('counts a provider error as failed, and a job with no publish time records no queue wait', async () => {
+    mockedGemini.mockRejectedValue(new Error('upstream 500'));
+    const harness = buildHarness(buildFile());
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+    const text = harness.metrics.render();
+    expect(text).toContain(
+      'claw_file_transcription_attempts_total{provider="gemini",outcome="failed"} 1',
+    );
+    expect(text).toContain(
+      'claw_file_transcription_job_duration_seconds_count{source="upload",status="failed"} 1',
+    );
+    expect(text).not.toContain('claw_file_media_queue_wait_seconds_count');
   });
 });

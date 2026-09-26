@@ -16,6 +16,7 @@ export function toSafeUser(user: User): SafeUser {
     currencyPreferenceMode: user.currencyPreferenceMode,
     preferredCountryCode: user.preferredCountryCode,
     preferredCurrencyCode: user.preferredCurrencyCode,
+    ttsVoice: user.ttsVoice,
     activePlanId: user.activePlanId,
     firstName: user.firstName,
     lastName: user.lastName,

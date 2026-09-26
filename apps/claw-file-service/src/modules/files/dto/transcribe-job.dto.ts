@@ -12,6 +12,8 @@ import { z } from 'zod';
 export const transcribeJobSchema = z.object({
   fileId: z.string().min(1),
   userId: z.string().min(1),
+  // The publisher's ISO time (BaseEventPayload), for the queue-wait metric only.
+  timestamp: z.string().max(64).optional(),
 });
 
 export type TranscribeJobDto = z.infer<typeof transcribeJobSchema>;

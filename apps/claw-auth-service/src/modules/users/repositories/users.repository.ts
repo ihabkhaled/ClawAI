@@ -121,6 +121,7 @@ export class UsersRepository {
       currencyPreferenceMode?: CurrencyPreferenceMode;
       preferredCountryCode?: string | null;
       preferredCurrencyCode?: string | null;
+      ttsVoice?: string | null;
     },
   ): Promise<User> {
     return this.prisma.user.update({

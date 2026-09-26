@@ -34,6 +34,7 @@ import {
   fallbackModelTokenBudget,
 } from '../../utilities/assembled-context.utility';
 import { AttachmentDeliveryManager } from '../attachment-delivery.manager';
+import { ChatMediaMetricsService } from '../../../metrics/services/chat-media-metrics.service';
 import { VisionHelperManager } from '../vision-helper.manager';
 
 const { SUPPORTED, UNSUPPORTED, UNKNOWN } = MediaCapabilityState;
@@ -540,5 +541,71 @@ describe('VisionHelperManager', () => {
 
     expect(await helper.upgradeContext(planned, answered('never'))).toBe(planned);
     expect(access.reserveCredit).not.toHaveBeenCalled();
+  });
+});
+
+// Pack §67: the delivery-mode counter and the vision-helper outcome counter
+// increment on their real code paths, and never carry an id.
+describe('media delivery metrics', () => {
+  function metered(
+    metrics: ChatMediaMetricsService,
+    invokeOk: boolean,
+  ): {
+    helper: VisionHelperManager;
+    lanes: AttachmentDeliveryManager;
+    invoke: Mock<VisionHelperInvoker>;
+  } {
+    const access = {
+      reserveCredit: vi.fn(async () => Promise.resolve(hold())),
+      releaseCredit: vi.fn(async () => Promise.resolve()),
+      hasPlanFeatureFor: vi.fn(async () => Promise.resolve(true)),
+    };
+    return {
+      helper: new VisionHelperManager(
+        { resolve: vi.fn(async () => Promise.resolve([GEMINI])) } as never,
+        capabilityClient as never,
+        access as never,
+        metrics,
+      ),
+      lanes: new AttachmentDeliveryManager(capabilityClient as never, undefined, metrics),
+      invoke: invokeOk
+        ? answered('A receipt.')
+        : vi.fn<VisionHelperInvoker>(async () => Promise.reject(new Error('provider down'))),
+    };
+  }
+
+  it('counts every plan decision by mode, and a helper upgrade as DERIVED_IMAGE_TEXT', async () => {
+    const metrics = new ChatMediaMetricsService();
+    const { helper, lanes, invoke } = metered(metrics, true);
+
+    const blind = await lanes.applyToContext(
+      contextWith([image('img-secret')]),
+      'DEEPSEEK',
+      'deepseek-chat',
+    );
+    await helper.upgradeContext(blind, invoke);
+    await lanes.applyToContext(contextWith([image('img-secret')]), 'OPENAI', 'gpt-4o');
+
+    const text = metrics.render();
+    expect(text).toContain('claw_chat_attachment_delivery_total{mode="omitted_no_vision"} 1');
+    expect(text).toContain('claw_chat_attachment_delivery_total{mode="derived_image_text"} 1');
+    expect(text).toContain('claw_chat_attachment_delivery_total{mode="native_image"} 1');
+    expect(text).toContain('claw_chat_vision_helper_calls_total{outcome="succeeded"} 1');
+    expect(text).not.toContain('img-secret');
+    expect(text).not.toContain('user-1');
+  });
+
+  it('counts a failed helper attempt as failed and no upgrade', async () => {
+    const metrics = new ChatMediaMetricsService();
+    const { helper, lanes, invoke } = metered(metrics, false);
+    const blind = await lanes.applyToContext(
+      contextWith([image('img-1')]),
+      'DEEPSEEK',
+      'deepseek-chat',
+    );
+    await helper.upgradeContext(blind, invoke);
+    const text = metrics.render();
+    expect(text).toContain('claw_chat_vision_helper_calls_total{outcome="failed"} 1');
+    expect(text).not.toContain('mode="derived_image_text"');
   });
 });

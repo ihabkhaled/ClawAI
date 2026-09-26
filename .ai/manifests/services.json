@@ -70,7 +70,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 107,
+      "endpointCount": 108,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -111,13 +111,13 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 111,
+      "testFiles": 112,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 55,
+      "endpointCount": 56,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 219,
+      "testFiles": 220,
       "testRunner": "vitest"
     },
     {
@@ -215,7 +215,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 28,
+      "endpointCount": 29,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -232,7 +232,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 63,
+      "testFiles": 66,
       "testRunner": "vitest"
     },
     {
@@ -255,7 +255,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-image-service",
-      "endpointCount": 10,
+      "endpointCount": 11,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 33,
+      "testFiles": 35,
       "testRunner": "vitest"
     },
     {

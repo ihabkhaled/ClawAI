@@ -346,3 +346,8 @@ export {
   FILE_DELIVERY_MODE_LABEL_KEYS,
   FILE_DELIVERY_MODES,
 } from './file-delivery.constants';
+export {
+  TTS_VOICE_DEFAULT_VALUE,
+  TTS_VOICE_GROUPS,
+  TTS_VOICE_SELECT_ID,
+} from './tts-voice.constants';

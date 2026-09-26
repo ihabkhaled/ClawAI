@@ -1,4 +1,9 @@
-import { isValidCountryCode, SUPPORTED_DISPLAY_CURRENCIES } from '@claw/shared-constants';
+import {
+  isSupportedTtsVoice,
+  isValidCountryCode,
+  SUPPORTED_DISPLAY_CURRENCIES,
+  TTS_VOICE_MAX_LENGTH,
+} from '@claw/shared-constants';
 import { z } from 'zod';
 import {
   CurrencyPreferenceMode,
@@ -30,6 +35,15 @@ const countryCodeSchema = z
   .length(2)
   .refine((code) => isValidCountryCode(code), { message: 'Invalid ISO country code' });
 
+// A read-aloud voice: bounded, then checked against the one shared catalog.
+// Case is significant — provider APIs take the exact name ("Kore", "alloy").
+const ttsVoiceSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(TTS_VOICE_MAX_LENGTH)
+  .refine((voice) => isSupportedTtsVoice(voice), { message: 'Unsupported voice' });
+
 export const updatePreferencesSchema = z
   .object({
     languagePreference: z.nativeEnum(UserLanguagePreference).optional(),
@@ -39,6 +53,8 @@ export const updatePreferencesSchema = z
     // from omitting the field and leaving it as it was.
     preferredCountryCode: countryCodeSchema.nullable().optional(),
     preferredCurrencyCode: currencyCodeSchema.nullable().optional(),
+    // null = back to each provider's default voice.
+    ttsVoice: ttsVoiceSchema.nullable().optional(),
   })
   .refine(
     (data) =>
@@ -46,7 +62,8 @@ export const updatePreferencesSchema = z
       data.appearancePreference !== undefined ||
       data.currencyPreferenceMode !== undefined ||
       data.preferredCountryCode !== undefined ||
-      data.preferredCurrencyCode !== undefined,
+      data.preferredCurrencyCode !== undefined ||
+      data.ttsVoice !== undefined,
     { message: 'At least one preference must be provided' },
   )
   .refine(

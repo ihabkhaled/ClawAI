@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 
 import { GEMINI_PROVIDER, VIDEO_MIME_PREFIX } from '../../../common/constants/execution.constants';
+import { ChatMediaMetricsService } from '../../metrics/services/chat-media-metrics.service';
 import { ModelCapabilityClient } from '../clients/model-capability.client';
 import { AccessControlService } from '../services/access-control.service';
 import type {
@@ -42,6 +43,8 @@ export class AttachmentDeliveryManager {
     // Optional so hand-built specs keep their shape. Without it the video plan
     // is unknown, so no video ever rides natively (fails closed, ADR-122).
     @Optional() private readonly accessControl?: AccessControlService,
+    // Optional for the same reason; the global MetricsModule provides it at runtime.
+    @Optional() private readonly metrics?: ChatMediaMetricsService,
   ) {}
 
   /**
@@ -140,6 +143,9 @@ export class AttachmentDeliveryManager {
       nativeAudioTransport: geminiTransport,
       nativeAudioTokenBudget: nativeAudioTokenBudget(context.modelBudget),
     });
+    for (const decision of decisions) {
+      this.metrics?.recordAttachmentDelivery(decision.mode);
+    }
     // Structured, content-free: ids and counts only, never filenames or text.
     this.logger.log(
       `mediaDelivery ${JSON.stringify({

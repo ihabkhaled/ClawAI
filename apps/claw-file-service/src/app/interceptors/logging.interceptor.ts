@@ -10,6 +10,8 @@ import {
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import type { Request, Response } from 'express';
 
+import { isRoutineRoute } from '../../common/utilities/routine-route.utility';
+
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
@@ -54,7 +56,7 @@ export class LoggingInterceptor implements NestInterceptor {
       tap(() => {
         const duration = Date.now() - now;
         const statusCode = response.statusCode;
-        if (url.split('?')[0] === '/api/v1/health' && statusCode < 400) {
+        if (isRoutineRoute(url) && statusCode < 400) {
           return;
         }
         this.logger.log(

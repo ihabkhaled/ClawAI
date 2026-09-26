@@ -97,6 +97,10 @@ model User {
   currencyPreferenceMode CurrencyPreferenceMode @default(AUTO) @map("currency_preference_mode")
   preferredCountryCode   String?                @map("preferred_country_code") @db.VarChar(2)
   preferredCurrencyCode  String?                @map("preferred_currency_code") @db.VarChar(3)
+  // "Read aloud" voice (ADR-120 addendum "voice picker"). A name from
+  // @claw/shared-constants TTS_VOICES_BY_PROVIDER; null = each provider's
+  // default voice. Presentation state, like the display currency.
+  ttsVoice               String?                @map("tts_voice") @db.VarChar(32)
   createdAt            DateTime                 @default(now()) @map("created_at")
   updatedAt            DateTime                 @updatedAt @map("updated_at")
 

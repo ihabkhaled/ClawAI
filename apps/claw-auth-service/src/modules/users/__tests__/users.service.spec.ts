@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { UsersService } from '../services/users.service';
 import { type UsersRepository } from '../repositories/users.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
@@ -37,6 +37,7 @@ const mockUser = {
   currencyPreferenceMode: 'AUTO' as const,
   preferredCountryCode: null,
   preferredCurrencyCode: null,
+  ttsVoice: null as string | null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -564,6 +565,23 @@ describe('UsersService', () => {
       await expect(service.assertSuperAdminActor('admin-1')).rejects.toMatchObject({
         code: 'SUPER_ADMIN_REQUIRED',
       });
+    });
+  });
+
+  describe('getSpeechPreferences', () => {
+    it('returns only the saved voice', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, ttsVoice: 'Puck' });
+      await expect(service.getSpeechPreferences('user-1')).resolves.toEqual({ ttsVoice: 'Puck' });
+    });
+
+    it('returns null when no voice is saved', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      await expect(service.getSpeechPreferences('user-1')).resolves.toEqual({ ttsVoice: null });
+    });
+
+    it('404s for an unknown user', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(service.getSpeechPreferences('nope')).rejects.toThrow(EntityNotFoundException);
     });
   });
 

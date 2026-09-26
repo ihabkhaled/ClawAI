@@ -8,10 +8,8 @@ import {
   GEMINI_TTS_BASE_URL,
   GEMINI_TTS_CHANNELS,
   GEMINI_TTS_RESPONSE_MODALITY,
-  GEMINI_TTS_VOICE,
   OPENAI_SPEECH_URL,
   OPENAI_TTS_RESPONSE_FORMAT,
-  OPENAI_TTS_VOICE,
   SPEECH_MIME_MP3,
   SPEECH_MIME_WAV,
 } from '../constants/speech.constants';
@@ -60,7 +58,7 @@ export class SpeechProviderClient {
         body: {
           model: request.candidate.model,
           input: request.text,
-          voice: OPENAI_TTS_VOICE,
+          voice: request.voice,
           response_format: OPENAI_TTS_RESPONSE_FORMAT,
         },
         timeoutMs: request.candidate.timeoutMs,
@@ -96,7 +94,7 @@ export class SpeechProviderClient {
           generationConfig: {
             responseModalities: [GEMINI_TTS_RESPONSE_MODALITY],
             maxOutputTokens: request.maxOutputTokens,
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: GEMINI_TTS_VOICE } } },
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: request.voice } } },
           },
         },
         timeoutMs: request.candidate.timeoutMs,

@@ -535,3 +535,14 @@ The RabbitMQ `image.failed` event is typed `ImageFailedPayload`
 (`@claw/shared-types`) and now carries `supersededById` when an AUTO fallback
 successor already exists (it is created before the failure is published), plus
 `timestamp`. Optional and additive; no service consumes the event today.
+
+## Media metrics (pack §67, 2026-09-26)
+
+`ImageMediaMetricsService` (global `MetricsModule`, `GET /api/v1/metrics`, public,
+internal only). `ImageGenerationService.processJob` records one sample per ATTEMPT:
+`claw_image_generations_total{provider,outcome}` and
+`claw_image_generation_duration_seconds{provider,outcome}`, outcome
+`ImageGenerationMetricOutcome` — COMPLETED, FAILED, CANCELLED (before the provider,
+or the result discarded after a cancel), SUPERSEDED (an AUTO attempt that failed and
+spawned a successor). Provider label = the image provider list; anything else is
+`other`. The service's metrics param is `@Optional()` so hand-built specs keep their shape.

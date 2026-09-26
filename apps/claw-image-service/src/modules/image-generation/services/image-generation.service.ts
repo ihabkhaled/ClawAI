@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   type ClawRuntimeProgressEvent,
@@ -10,11 +10,13 @@ import { ImageGenerationStatus } from '../../../generated/prisma';
 import { ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { ImageExecutionManager } from '../managers/image-execution.manager';
 import { ImagePlanGateManager } from '../managers/image-plan-gate.manager';
+import { ImageMediaMetricsService } from '../../metrics/services/image-media-metrics.service';
 import { ImageGenerationEventsService } from './image-generation-events.service';
 import {
   type ExecuteImageInput,
   type GenerateImageParams,
   type GenerateImageResult,
+  type ImageAttemptEnd,
   type ImageAttemptOptions,
   type ImageFailureDescription,
   type ImageFallbackChainState,
@@ -33,7 +35,12 @@ import {
 } from '../utilities/image-failure.utility';
 import { toImageProgressSnapshot } from '../utilities/image-progress.utility';
 import { imageFailure } from '../adapter.utilities/provider-error.utility';
-import { ImageCancelOutcome, ImageFailureCode, ImageProviderCancel } from '../../../common/enums';
+import {
+  ImageCancelOutcome,
+  ImageFailureCode,
+  ImageGenerationMetricOutcome,
+  ImageProviderCancel,
+} from '../../../common/enums';
 import { type ImageCancelResult } from '../types/image-cancel.types';
 import { IMAGE_PRE_PROVIDER_STATUSES } from '../constants/image-cancel.constants';
 import { isActiveImageStatus, isImageCancelledError } from '../utilities/image-cancel.utility';
@@ -57,6 +64,8 @@ export class ImageGenerationService {
     private readonly eventsService: ImageGenerationEventsService,
     private readonly rabbitMQ: RabbitMQService,
     private readonly planGate: ImagePlanGateManager,
+    // Optional so hand-built specs keep their shape; the global MetricsModule provides it.
+    @Optional() private readonly metrics?: ImageMediaMetricsService,
   ) {}
 
   /**
@@ -539,6 +548,7 @@ export class ImageGenerationService {
       return undefined;
     }
 
+    const startedAt = Date.now();
     const started =
       (await this.transitionStatus(
         generationId,
@@ -555,16 +565,42 @@ export class ImageGenerationService {
     if (!started) {
       // Cancelled before any provider call: no hold was taken, nothing to undo.
       this.discardCancelled(generation, ImageGenerationStatus.STARTING, false);
+      this.recordAttempt(
+        generation,
+        { outcome: ImageGenerationMetricOutcome.CANCELLED },
+        startedAt,
+      );
       return undefined;
     }
 
+    const end = await this.runAttempt(generationId, generation, options);
+    this.recordAttempt(generation, end, startedAt);
+    return end.successorId;
+  }
+
+  /** The provider call and its persistence, or the failure path; never throws. */
+  private async runAttempt(
+    generationId: string,
+    generation: ImageGenerationRecord,
+    options: ImageAttemptOptions,
+  ): Promise<ImageAttemptEnd> {
     try {
       const reference = options.reference ?? (await this.readStoredReference(generation));
-      await this.executeAndPersistGeneration(generationId, generation, reference);
-      return undefined;
+      return {
+        outcome: await this.executeAndPersistGeneration(generationId, generation, reference),
+      };
     } catch (error: unknown) {
       return this.handleProcessJobFailure(generationId, generation, error, options.spawnSuccessor);
     }
+  }
+
+  /** One attempt, counted by provider and outcome (pack §67). Never an id or a prompt. */
+  private recordAttempt(
+    generation: ImageGenerationRecord,
+    end: ImageAttemptEnd,
+    startedAt: number,
+  ): void {
+    this.metrics?.recordGeneration(generation.provider, end.outcome, Date.now() - startedAt);
   }
 
   /** The stored reference for a retry, or undefined when the job never had one. */
@@ -581,7 +617,7 @@ export class ImageGenerationService {
     generationId: string,
     generation: ImageGenerationRecord,
     reference: ImageReference | undefined,
-  ): Promise<void> {
+  ): Promise<ImageGenerationMetricOutcome> {
     const result = await this.executionManager.execute(
       this.buildExecuteInput(generationId, generation, reference),
     );
@@ -595,7 +631,7 @@ export class ImageGenerationService {
         generationId,
       );
       await this.discardWithRelease(generation, ImageGenerationStatus.FINALIZING, result);
-      return;
+      return ImageGenerationMetricOutcome.CANCELLED;
     }
     // COMPLETED is written BEFORE the hold settles and only if the row is not
     // CANCELLED — so a cancel either wins (asset removed, hold released) or
@@ -613,7 +649,7 @@ export class ImageGenerationService {
         generationId,
       );
       await this.discardWithRelease(generation, ImageGenerationStatus.FINALIZING, result);
-      return;
+      return ImageGenerationMetricOutcome.CANCELLED;
     }
     // Settled only now, on the units measured from the provider response: the
     // user is charged for an image that exists as a file AND an asset row.
@@ -621,6 +657,7 @@ export class ImageGenerationService {
 
     await this.publishCompletionEvents(generationId, generation, completedGen, asset, result);
     this.logger.log(`image_generation.completed id=${generationId}`);
+    return ImageGenerationMetricOutcome.COMPLETED;
   }
 
   private buildExecuteInput(
@@ -826,11 +863,11 @@ export class ImageGenerationService {
     generation: ImageGenerationRecord,
     error: unknown,
     spawnSuccessor?: ImageSuccessorSpawner,
-  ): Promise<string | undefined> {
+  ): Promise<ImageAttemptEnd> {
     if (isImageCancelledError(error)) {
       // execute() already released any hold before throwing.
       this.discardCancelled(generation, ImageGenerationStatus.GENERATING, false);
-      return undefined;
+      return { outcome: ImageGenerationMetricOutcome.CANCELLED };
     }
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     const described = describeImageFailure(error);
@@ -844,7 +881,7 @@ export class ImageGenerationService {
       // the provider-error path already released the hold; no FAILED, no
       // image.failed, no AUTO successor.
       this.discardCancelled(generation, ImageGenerationStatus.GENERATING, false);
-      return undefined;
+      return { outcome: ImageGenerationMetricOutcome.CANCELLED };
     }
     this.logger.error(
       `image_generation.failed id=${generationId} code=${described.errorCode}: ${errorMsg}`,
@@ -858,7 +895,9 @@ export class ImageGenerationService {
 
     const successorId = await this.spawnSafely(spawnSuccessor, failed, described);
     this.publishFailure(generationId, generation, described, errorMsg, successorId);
-    return successorId;
+    return successorId === undefined
+      ? { outcome: ImageGenerationMetricOutcome.FAILED }
+      : { outcome: ImageGenerationMetricOutcome.SUPERSEDED, successorId };
   }
 
   /** A spawn that throws must not swallow the failure it was answering. */

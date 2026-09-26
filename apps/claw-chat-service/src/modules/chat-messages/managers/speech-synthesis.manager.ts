@@ -1,9 +1,11 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { resolveTtsVoice } from '@claw/shared-constants';
 import { PaygSurface } from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 
 import { SpeechAttemptOutcome } from '../../../common/enums';
 import { BusinessException } from '../../../common/errors';
+import { ChatMediaMetricsService } from '../../metrics/services/chat-media-metrics.service';
 import { SpeechConnectorClient } from '../clients/speech-connector.client';
 import { SpeechProviderClient } from '../clients/speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../clients/tts-voice-candidates.client';
@@ -97,6 +99,7 @@ export class SpeechSynthesisManager {
     private readonly connector: SpeechConnectorClient,
     private readonly provider: SpeechProviderClient,
     private readonly accessControl: AccessControlService,
+    private readonly metrics: ChatMediaMetricsService,
   ) {}
 
   /** Admin candidates chat-service can call, in order. */
@@ -170,7 +173,11 @@ export class SpeechSynthesisManager {
           HttpStatus.GATEWAY_TIMEOUT,
         );
       }
-      const result = await this.attempt(input, { ...candidate, timeoutMs }, attempts.length + 1);
+      const result = await this.countedAttempt(
+        input,
+        { ...candidate, timeoutMs },
+        attempts.length + 1,
+      );
       attempts.push(result.record);
       this.logger.log(
         `ttsAttempt ${JSON.stringify({ messageId: input.messageId, segment: input.segment.index + 1, ...result.record })}`,
@@ -235,6 +242,28 @@ export class SpeechSynthesisManager {
     return true;
   }
 
+  /**
+   * One attempt, counted by provider and outcome. A credit refusal throws out
+   * of `reserve` (terminal, rule 37 item 18); it is counted as REFUSED here,
+   * then re-thrown unchanged. A cancel thrown before any hold is not counted.
+   */
+  private async countedAttempt(
+    input: SpeechSynthesisInput,
+    candidate: SpeechCandidate,
+    attemptNumber: number,
+  ): Promise<SpeechAttemptResult> {
+    try {
+      const result = await this.attempt(input, candidate, attemptNumber);
+      this.metrics.recordTtsSegmentAttempt(candidate.provider, result.record.outcome);
+      return result;
+    } catch (error: unknown) {
+      if (!this.isCancelled(input)) {
+        this.metrics.recordTtsSegmentAttempt(candidate.provider, SpeechAttemptOutcome.REFUSED);
+      }
+      throw error;
+    }
+  }
+
   /** Read fresh at every checkpoint: the owner's stop can land during any await. */
   private isCancelled(input: SpeechSynthesisInput): boolean {
     return input.signal?.aborted === true;
@@ -277,6 +306,7 @@ export class SpeechSynthesisManager {
       const audio = await this.provider.synthesize({
         candidate,
         text: input.segment.text,
+        voice: this.voiceFor(candidate, input.voice),
         apiKey,
         maxOutputTokens: held.hold.maxOutputTokens,
         signal: input.signal,
@@ -311,6 +341,15 @@ export class SpeechSynthesisManager {
         : SpeechAttemptOutcome.FAILED;
       return { record: record(outcome, held.requestId) };
     }
+  }
+
+  /**
+   * The voice this candidate reads with: the user's when it is one of this
+   * provider's voices, else this provider's default (a Gemini voice never
+   * reaches OpenAI, and the other way round).
+   */
+  voiceFor(candidate: SpeechCandidate, preferred: string | null): string {
+    return resolveTtsVoice(candidate.provider, preferred) ?? '';
   }
 
   /** The hold for one attempt, or a terminal refusal. Never a silent fall-through. */

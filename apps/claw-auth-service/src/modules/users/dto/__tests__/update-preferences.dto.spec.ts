@@ -102,4 +102,28 @@ describe('updatePreferencesSchema', () => {
 
     expect(result.success).toBe(true);
   });
+  describe('ttsVoice', () => {
+    it.each(['Kore', 'Puck', 'Zubenelgenubi', 'alloy', 'shimmer'])(
+      'accepts the catalog voice %s',
+      (voice) => {
+        const result = updatePreferencesSchema.safeParse({ ttsVoice: voice });
+        expect(result.success).toBe(true);
+      },
+    );
+
+    it('accepts null to go back to the default voices', () => {
+      const result = updatePreferencesSchema.safeParse({ ttsVoice: null });
+      expect(result.success).toBe(true);
+      expect(result.data?.ttsVoice).toBeNull();
+    });
+
+    it.each(['kore', 'Robot', '', 'x'.repeat(200)])('refuses %s', (voice) => {
+      expect(updatePreferencesSchema.safeParse({ ttsVoice: voice }).success).toBe(false);
+    });
+
+    it('trims before checking the catalog', () => {
+      const result = updatePreferencesSchema.safeParse({ ttsVoice: '  nova ' });
+      expect(result.data?.ttsVoice).toBe('nova');
+    });
+  });
 });

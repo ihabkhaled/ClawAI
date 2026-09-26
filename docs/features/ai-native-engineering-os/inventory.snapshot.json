@@ -1017,6 +1017,11 @@
         },
         {
           "method": "GET",
+          "route": "/internal/users/:id/speech-preferences",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users-internal.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/users",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
@@ -1374,6 +1379,11 @@
         },
         {
           "method": "GET",
+          "route": "/metrics",
+          "source": "apps/claw-chat-service/src/modules/metrics/controllers/metrics.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/public/chat-shares/:publicShareId",
           "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/public-chat-shares.controller.ts"
         },
@@ -1714,6 +1724,11 @@
           "method": "POST",
           "route": "/internal/files/upload-internal",
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/metrics",
+          "source": "apps/claw-file-service/src/modules/metrics/controllers/metrics.controller.ts"
         }
       ],
       "claw-health-service": [
@@ -1783,6 +1798,11 @@
           "method": "POST",
           "route": "/internal/images/generate",
           "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/metrics",
+          "source": "apps/claw-image-service/src/modules/metrics/controllers/metrics.controller.ts"
         }
       ],
       "claw-llamacpp-service": [
@@ -7656,7 +7676,7 @@
           "file": "rules/18-error-handling-and-reliability.md"
         },
         {
-          "bytes": 7727,
+          "bytes": 8207,
           "file": "rules/19-logging-observability-and-redaction.md"
         },
         {
@@ -7814,7 +7834,7 @@
       ],
       "skills": [
         {
-          "bytes": 31438,
+          "bytes": 31718,
           "file": "skills/00-index.md"
         },
         {
@@ -7876,6 +7896,10 @@
         {
           "bytes": 4010,
           "file": "skills/add-a-payment-gateway-flow.md"
+        },
+        {
+          "bytes": 2352,
+          "file": "skills/add-a-service-metric.md"
         },
         {
           "bytes": 4875,
@@ -8208,7 +8232,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5490
+        "value": 5497
       },
       "localeCount": 13,
       "locales": [
@@ -10154,7 +10178,7 @@
       },
       "@claw/shared-constants": {
         "runner": "vitest",
-        "testFiles": 3
+        "testFiles": 4
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
@@ -10170,7 +10194,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 44
+        "testFiles": 45
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10182,11 +10206,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 111
+        "testFiles": 112
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 219
+        "testFiles": 220
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10202,11 +10226,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 63
+        "testFiles": 66
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 604
+        "testFiles": 607
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10214,7 +10238,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 33
+        "testFiles": 35
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10972,7 +10996,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 700,
+    "endpointCount": 704,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -10984,7 +11008,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1655,
+    "totalTestFiles": 1667,
     "workspaceCount": 25
   }
 }

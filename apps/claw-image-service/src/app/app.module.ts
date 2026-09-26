@@ -18,6 +18,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { ImageGenerationModule } from '../modules/image-generation/image-generation.module';
 import { HealthModule } from '../modules/health/health.module';
+import { MetricsModule } from '../modules/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -36,10 +37,7 @@ import { HealthModule } from '../modules/health/health.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -77,6 +75,7 @@ import { HealthModule } from '../modules/health/health.module';
     RedisModule,
     ImageGenerationModule,
     HealthModule,
+    MetricsModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

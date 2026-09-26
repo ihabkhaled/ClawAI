@@ -513,3 +513,20 @@ the audio chat-service synthesised for a reply's owner ("Read aloud").
   have. Do not route generated audio through `upload-internal`, which does.
 - Ordinary file ownership: the owner downloads it through `/files/download/:id`;
   retention applies; chat-service re-synthesises (new generation) when it is gone.
+
+## Media metrics (pack §67, 2026-09-26)
+
+`FileMediaMetricsService` (global `MetricsModule`, `GET /api/v1/metrics`, public,
+internal only — nginx has no route; the logging interceptor skips its successes):
+
+- `claw_file_transcription_attempts_total{provider,outcome}` — per provider call in
+  `TranscriptionManager.tryCandidate` (success / empty / refused / rate_limited /
+  failed / cancelled; `TERMINAL`, `MODEL_REJECTED`, `QUOTA_EXHAUSTED`,
+  `INCOMPLETE_RESPONSE` all count as failed).
+- `claw_file_transcription_job_duration_seconds{source,status}` — upload vs video audio.
+- `claw_file_video_processing_total{outcome}` + `_duration_seconds` — recorded in
+  `process()` before the single write (`video-processing-outcome.utility.ts`).
+- `claw_file_media_queue_wait_seconds{job}` — consumer start minus the request event's
+  `timestamp` (now read by both job DTOs, optional).
+
+Labels are enums or `TRANSCRIPTION_PROVIDER_PRIORITY`; anything else is `other`.

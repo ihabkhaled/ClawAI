@@ -580,3 +580,11 @@ job), and for a release run returns only its deploy jobs. The view carries
 line of the triggering commit) for the page to label the run. A failed job
 read of the best candidate returns null (the page says "unreachable") rather
 than quietly showing an older run.
+
+## Read-aloud voice preference (2026-09-26)
+
+- `User.ttsVoice` — nullable, validated against `TTS_VOICES_BY_PROVIDER`
+  (`@claw/shared-constants`), set through `PATCH /users/me/preferences`.
+- `GET /api/v1/internal/users/:id/speech-preferences` (service token) →
+  `{ ttsVoice }`, read by chat-service once per read-aloud POST.
+- Migration `20260926100000_add_user_tts_voice`.

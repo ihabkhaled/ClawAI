@@ -1225,3 +1225,8 @@ export type {
   UseSpeechSegmentBlobsReturn,
   UseMessageSpeechPlayerReturn,
 } from './message-speech.types';
+export type {
+  TtsVoiceGroup,
+  TtsVoicePreferenceCardProps,
+  TtsVoicePreferenceState,
+} from './tts-voice.types';

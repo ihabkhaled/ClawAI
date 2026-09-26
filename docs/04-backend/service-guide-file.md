@@ -718,3 +718,9 @@ the audio chat-service synthesised for a reply's owner ("Read aloud").
   have. Do not route generated audio through `upload-internal`, which does.
 - Ordinary file ownership: the owner downloads it through `/files/download/:id`;
   retention applies; chat-service re-synthesises (new generation) when it is gone.
+
+## Media metrics (2026-09-26)
+
+`GET /api/v1/metrics` (internal): transcription calls by provider and outcome,
+transcription job duration, video job outcome and duration, media queue wait.
+List: `docs/08-runtime-devops/metrics-and-dashboards.md`.

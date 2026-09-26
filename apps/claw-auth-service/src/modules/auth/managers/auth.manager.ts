@@ -169,6 +169,7 @@ export class AuthManager {
       currencyPreferenceMode: user.currencyPreferenceMode,
       preferredCountryCode: user.preferredCountryCode,
       preferredCurrencyCode: user.preferredCurrencyCode,
+      ttsVoice: user.ttsVoice,
       createdAt: user.createdAt,
     };
   }

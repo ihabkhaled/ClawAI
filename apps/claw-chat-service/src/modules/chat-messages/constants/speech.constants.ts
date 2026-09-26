@@ -48,7 +48,6 @@ export const SPEECH_PROVIDER_BY_NAME: Readonly<Record<string, SpeechProvider>> =
   OPENAI: SpeechProvider.OPENAI,
 };
 export const OPENAI_SPEECH_URL = 'https://api.openai.com/v1/audio/speech';
-export const OPENAI_TTS_VOICE = 'alloy';
 export const OPENAI_TTS_RESPONSE_FORMAT = 'mp3';
 /**
  * OpenAI speech models chat-service meters exactly: priced per CHARACTER
@@ -58,7 +57,6 @@ export const OPENAI_TTS_RESPONSE_FORMAT = 'mp3';
 export const OPENAI_PER_CHARACTER_TTS_MODELS: ReadonlySet<string> = new Set(['tts-1', 'tts-1-hd']);
 
 export const GEMINI_TTS_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-export const GEMINI_TTS_VOICE = 'Kore';
 /** Every Gemini speech model id carries this; anything else is a text model. */
 export const GEMINI_TTS_MODEL_MARKER = '-tts';
 export const GEMINI_TTS_RESPONSE_MODALITY = 'AUDIO';
@@ -216,6 +214,16 @@ export const SPEECH_MIN_ATTEMPT_MS = 5_000;
 /** Per-candidate timeout when the admin row has none, and the clamp on one that is longer. */
 export const SPEECH_DEFAULT_TIMEOUT_MS = SPEECH_SEGMENT_MAX_TIMEOUT_MS;
 export const SPEECH_MAX_TIMEOUT_MS = SPEECH_SEGMENT_MAX_TIMEOUT_MS;
+
+// ── Voice picker (ADR-120 addendum "voice picker", 2026-09-26) ─────────────
+/**
+ * The user's saved voice lives on auth-service's `User.ttsVoice`. The voice
+ * catalog and each provider's default are `@claw/shared-constants`
+ * (`TTS_VOICES_BY_PROVIDER`, `resolveTtsVoice`). Read once per POST, never
+ * per poll; an unreachable auth-service keeps the stored reading's voice.
+ */
+export const SPEECH_PREFERENCES_PATH = '/api/v1/internal/users/{USER_ID}/speech-preferences';
+export const SPEECH_PREFERENCES_TIMEOUT_MS = 3_000;
 
 // ── Sibling services ───────────────────────────────────────────────────────
 export const SPEECH_CONNECTOR_CONFIG_PATH = '/api/v1/internal/connectors/config';

@@ -1,15 +1,17 @@
 import { randomUUID } from 'node:crypto';
 
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, Optional } from '@nestjs/common';
 import type { PaygHold } from '@claw/shared-entitlements';
 import { PaygSurface } from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 
+import { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
 import { HelperExecutionKind } from '../../../common/enums/helper-execution-kind.enum';
 import { MediaCapabilityState } from '../../../common/enums/media-capability-state.enum';
 import { VisionHelperOutcome } from '../../../common/enums/vision-helper-outcome.enum';
 import { BusinessException } from '../../../common/errors';
 import { MessageRole } from '../../../generated/prisma';
+import { ChatMediaMetricsService } from '../../metrics/services/chat-media-metrics.service';
 import { ModelCapabilityClient } from '../clients/model-capability.client';
 import { VisionHelperCandidatesClient } from '../clients/vision-helper-candidates.client';
 import { PAYG_WORKFLOW_VISION_HELPER } from '../constants/payg.constants';
@@ -72,6 +74,8 @@ export class VisionHelperManager {
     private readonly candidatesClient: VisionHelperCandidatesClient,
     private readonly capabilities: ModelCapabilityClient,
     private readonly accessControl: AccessControlService,
+    // Optional so hand-built specs keep their shape; the global MetricsModule provides it.
+    @Optional() private readonly metrics?: ChatMediaMetricsService,
   ) {}
 
   /** The lane's context with its blind images described, or unchanged when there is nothing to do. */
@@ -126,16 +130,19 @@ export class VisionHelperManager {
       context,
       results.flatMap((result) => (result.observation === undefined ? [] : [result.observation])),
     );
-    return {
-      ...context,
-      fileContents: fit.fileContents,
-      attachmentDelivery: applyVisionHelperResults(
-        plan,
-        results,
-        blind.slice(VISION_HELPER_MAX_IMAGES_PER_TURN).map((decision) => decision.fileId),
-        fit.derivedImages,
-      ),
-    };
+    const upgraded = applyVisionHelperResults(
+      plan,
+      results,
+      blind.slice(VISION_HELPER_MAX_IMAGES_PER_TURN).map((decision) => decision.fileId),
+      fit.derivedImages,
+    );
+    // The plan counted these as OMITTED_NO_VISION; the upgrade is counted on its own.
+    for (const decision of upgraded.decisions) {
+      if (decision.mode === FileDeliveryMode.DERIVED_IMAGE_TEXT) {
+        this.metrics?.recordAttachmentDelivery(decision.mode);
+      }
+    }
+    return { ...context, fileContents: fit.fileContents, attachmentDelivery: upgraded };
   }
 
   /**
@@ -377,6 +384,7 @@ export class VisionHelperManager {
       ...(input.target.timestampMs === undefined ? {} : { timestampMs: input.target.timestampMs }),
     };
     this.logger.log(`visionHelper ${JSON.stringify(execution)}`);
+    this.metrics?.recordVisionHelper(outcome);
     return text === undefined ? { outcome, execution } : { outcome, text, execution };
   }
 

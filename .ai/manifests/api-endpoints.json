@@ -962,6 +962,11 @@
       },
       {
         "method": "GET",
+        "route": "/internal/users/:id/speech-preferences",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/users",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
@@ -1319,6 +1324,11 @@
       },
       {
         "method": "GET",
+        "route": "/metrics",
+        "source": "apps/claw-chat-service/src/modules/metrics/controllers/metrics.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/public/chat-shares/:publicShareId",
         "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/public-chat-shares.controller.ts"
       },
@@ -1659,6 +1669,11 @@
         "method": "POST",
         "route": "/internal/files/upload-internal",
         "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/metrics",
+        "source": "apps/claw-file-service/src/modules/metrics/controllers/metrics.controller.ts"
       }
     ],
     "claw-health-service": [
@@ -1728,6 +1743,11 @@
         "method": "POST",
         "route": "/internal/images/generate",
         "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/metrics",
+        "source": "apps/claw-image-service/src/modules/metrics/controllers/metrics.controller.ts"
       }
     ],
     "claw-llamacpp-service": [
@@ -3538,5 +3558,5 @@
     ]
   },
   "generated": true,
-  "total": 700
+  "total": 704
 }

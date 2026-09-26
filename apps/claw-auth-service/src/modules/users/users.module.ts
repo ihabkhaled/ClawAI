@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './controllers/users.controller';
+import { UsersInternalController } from './controllers/users-internal.controller';
 import { UsersService } from './services/users.service';
 import { UsersRepository } from './repositories/users.repository';
 import { AuthModule } from '../auth/auth.module';
@@ -13,7 +14,7 @@ import { PlansModule } from '../plans/plans.module';
   // than PlansService because PlansService now depends on UsersService for the
   // super-administrator target check, and the pair would form a cycle.
   imports: [AuthModule, RolesModule, PlansModule],
-  controllers: [UsersController],
+  controllers: [UsersController, UsersInternalController],
   providers: [UsersService, UsersRepository],
   exports: [UsersService],
 })

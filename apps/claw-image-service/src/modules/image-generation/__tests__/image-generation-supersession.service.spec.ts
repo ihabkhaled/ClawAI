@@ -14,6 +14,7 @@ import { ImageGenerationStatus } from '../../../generated/prisma';
 import { IMAGE_SUPERSESSION_MAX_HOPS } from '../constants/image-supersession.constants';
 import { imageFailure } from '../adapter.utilities/provider-error.utility';
 import { ImageGenerationService } from '../services/image-generation.service';
+import { ImageMediaMetricsService } from '../../metrics/services/image-media-metrics.service';
 import type { ImageExecutionManager } from '../managers/image-execution.manager';
 import type { ImageGenerationEventsService } from '../services/image-generation-events.service';
 import type { ImageGenerationRepository } from '../repositories/image-generation.repository';
@@ -45,6 +46,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
   let publish: Mock;
   let busPublish: Mock;
   let service: ImageGenerationService;
+  let metrics: ImageMediaMetricsService;
 
   const attempts = (): ExecuteImageInput[] =>
     execute.mock.calls.map((call) => call[0] as ExecuteImageInput);
@@ -55,6 +57,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
     loadStoredReference = vi.fn();
     publish = vi.fn();
     busPublish = vi.fn().mockResolvedValue(undefined);
+    metrics = new ImageMediaMetricsService();
     service = new ImageGenerationService(
       repo as unknown as ImageGenerationRepository,
       {
@@ -66,6 +69,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
       { publish } as unknown as ImageGenerationEventsService,
       { publish: busPublish } as unknown as RabbitMQService,
       { assertCanGenerate: vi.fn().mockResolvedValue(undefined) } as never,
+      metrics,
     );
   };
 
@@ -84,6 +88,42 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
 
   beforeEach(() => {
     build();
+  });
+
+  describe('metrics (pack §67)', () => {
+    it('counts a failed AUTO attempt that handed off as superseded, and its successor as completed', async () => {
+      execute.mockRejectedValueOnce(new Error('gemini down')).mockResolvedValueOnce(OK);
+      const rootId = await enqueueAuto();
+
+      const text = metrics.render();
+      expect(text).toContain(
+        'claw_image_generations_total{provider="image_gemini",outcome="superseded"} 1',
+      );
+      expect(text).toContain(
+        'claw_image_generations_total{provider="image_openai",outcome="completed"} 1',
+      );
+      expect(text).toContain(
+        'claw_image_generation_duration_seconds_count{provider="image_openai",outcome="completed"} 1',
+      );
+      expect(text).not.toContain(rootId);
+      expect(text).not.toContain(OWNER);
+      expect(text).not.toContain('cute cat');
+    });
+
+    it('counts a failure with no successor as failed', async () => {
+      execute.mockRejectedValue(new Error('down everywhere'));
+      await service.enqueueGeneration({
+        prompt: 'a cute cat',
+        provider: 'IMAGE_GEMINI',
+        model: 'gemini-2.5-flash-image',
+        userId: OWNER,
+        isAutoMode: false,
+      });
+      await flush();
+      expect(metrics.render()).toContain(
+        'claw_image_generations_total{provider="image_gemini",outcome="failed"} 1',
+      );
+    });
   });
 
   describe('auto-fallback', () => {

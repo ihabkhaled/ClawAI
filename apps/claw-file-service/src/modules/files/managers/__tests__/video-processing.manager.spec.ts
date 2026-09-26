@@ -15,6 +15,7 @@ import {
   MediaProcessStatus,
   VideoPlanDecision,
 } from '../../../../common/enums';
+import { FileMediaMetricsService } from '../../../metrics/services/file-media-metrics.service';
 import { VideoProcessingManager } from '../video-processing.manager';
 import { VideoMediaManager } from '../video-media.manager';
 import { VideoCancellationManager } from '../video-cancellation.manager';
@@ -123,6 +124,7 @@ interface Harness {
   plan: { check: Mock };
   transcription: { transcribeDerivedAudio: Mock };
   tempDirs: string[];
+  metrics: FileMediaMetricsService;
 }
 
 const buildHarness = (file: File | null): Harness => {
@@ -178,6 +180,7 @@ const buildHarness = (file: File | null): Harness => {
     redis as never,
     rabbit as never,
   );
+  const metrics = new FileMediaMetricsService();
   const manager = new VideoProcessingManager(
     files as never,
     rabbit as never,
@@ -186,8 +189,20 @@ const buildHarness = (file: File | null): Harness => {
     plan as never,
     transcription as never,
     cancellation,
+    metrics,
   );
-  return { manager, files, rabbit, redis, store, cancellation, plan, transcription, tempDirs };
+  return {
+    manager,
+    files,
+    rabbit,
+    redis,
+    store,
+    cancellation,
+    plan,
+    transcription,
+    tempDirs,
+    metrics,
+  };
 };
 
 const JOB = { fileId: 'video-1', userId: 'uploader-1' };
@@ -820,5 +835,53 @@ describe('VideoProcessingManager', () => {
       expect(harness.files.saveVideoExtractionResult).not.toHaveBeenCalled();
       expect(harness.rabbit.publish).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('VideoProcessingManager metrics (pack §67)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('counts a transcribed video as completed, with its duration and queue wait', async () => {
+    const harness = buildHarness(buildFile());
+    await harness.manager.handleJob({ ...JOB, timestamp: new Date().toISOString() });
+    const text = harness.metrics.render();
+    expect(text).toContain('claw_file_video_processing_total{outcome="completed"} 1');
+    expect(text).toContain(
+      'claw_file_video_processing_duration_seconds_count{outcome="completed"} 1',
+    );
+    expect(text).toContain('claw_file_media_queue_wait_seconds_count{job="video"} 1');
+    expect(text).not.toContain('video-1');
+  });
+
+  it('counts a silent track as no_speech', async () => {
+    const harness = buildHarness(buildFile());
+    mockedVolume.mockResolvedValue(volumedetect('-91.0'));
+    await harness.manager.handleJob(JOB);
+    expect(harness.metrics.render()).toContain(
+      'claw_file_video_processing_total{outcome="no_speech"} 1',
+    );
+  });
+
+  it('counts a video without audio as no_audio', async () => {
+    const harness = buildHarness(buildFile());
+    mockedProbe.mockResolvedValue(exited(probeJson({ audio: false })));
+    await harness.manager.handleJob(JOB);
+    expect(harness.metrics.render()).toContain(
+      'claw_file_video_processing_total{outcome="no_audio"} 1',
+    );
+  });
+
+  it('counts a cancelled job as cancelled', async () => {
+    const harness = buildHarness(buildFile());
+    harness.transcription.transcribeDerivedAudio.mockResolvedValue({
+      status: DerivedTranscriptionStatus.CANCELLED,
+      holdReleased: true,
+    });
+    await harness.manager.handleJob(JOB);
+    expect(harness.metrics.render()).toContain(
+      'claw_file_video_processing_total{outcome="cancelled"} 1',
+    );
   });
 });

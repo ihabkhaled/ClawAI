@@ -33,6 +33,7 @@ import { ProviderBreakerAdminController } from './controllers/provider-breaker-a
 import { SpeechJobLockStore } from './repositories/speech-job-lock.store';
 import { TtsVoiceCandidatesClient } from './clients/tts-voice-candidates.client';
 import { SpeechConnectorClient } from './clients/speech-connector.client';
+import { SpeechPreferencesClient } from './clients/speech-preferences.client';
 import { SpeechProviderClient } from './clients/speech-provider.client';
 import { SpeechFileStoreClient } from './clients/speech-file-store.client';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
@@ -115,6 +116,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     VideoDeliveryManager,
     TtsVoiceCandidatesClient,
     SpeechConnectorClient,
+    SpeechPreferencesClient,
     SpeechProviderClient,
     SpeechFileStoreClient,
     SpeechSynthesisManager,

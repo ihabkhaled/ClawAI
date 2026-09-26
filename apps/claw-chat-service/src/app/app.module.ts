@@ -19,6 +19,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { HealthModule } from '../modules/health/health.module';
+import { MetricsModule } from '../modules/metrics/metrics.module';
 import { ChatThreadsModule } from '../modules/chat-threads/chat-threads.module';
 import { CodingAgentChatsModule } from '../modules/coding-agent-chats/coding-agent-chats.module';
 import { ChatSharesModule } from '../modules/chat-shares/chat-shares.module';
@@ -46,10 +47,7 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -87,6 +85,7 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
     PrismaModule,
     RedisModule,
     HealthModule,
+    MetricsModule,
     ChatThreadsModule,
     CodingAgentChatsModule,
     ChatSharesModule,

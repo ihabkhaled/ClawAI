@@ -6,8 +6,10 @@ import type { SpeechJobState, StoredSpeechSegment } from '../../types/speech.typ
 import {
   finalSpeechStatus,
   isCancellableSpeechJob,
+  isSameSpeechReading,
   isStaleSpeechJob,
   readSpeechJobState,
+  speechStateVoice,
   toSpeechStateResponse,
   withSpeechJobState,
   withStoredSegment,
@@ -45,6 +47,24 @@ describe('readSpeechJobState / withSpeechJobState', () => {
     expect(merged['fileIds']).toEqual(['a']);
     expect(readSpeechJobState(merged)).toEqual(STATE);
     expect(JSON.stringify(merged)).not.toContain('base64');
+  });
+
+  it('round-trips the saved voice and the voice each segment spoke with', () => {
+    const voiced = {
+      ...STATE,
+      voice: 'Puck',
+      segments: STATE.segments.map((segment) => ({ ...segment, voice: 'Puck' })),
+    };
+    expect(readSpeechJobState(withSpeechJobState(null, voiced))).toEqual(voiced);
+  });
+
+  it('the replay key is the text AND the saved voice; no stored voice means the defaults', () => {
+    expect(isSameSpeechReading(STATE, STATE.contentHash, null)).toBe(true);
+    expect(isSameSpeechReading(STATE, STATE.contentHash, 'Puck')).toBe(false);
+    expect(isSameSpeechReading({ ...STATE, voice: 'Puck' }, STATE.contentHash, 'Puck')).toBe(true);
+    expect(isSameSpeechReading({ ...STATE, voice: 'Puck' }, 'other-hash', 'Puck')).toBe(false);
+    expect(isSameSpeechReading(null, STATE.contentHash, null)).toBe(false);
+    expect(speechStateVoice({ ...STATE, voice: null })).toBeNull();
   });
 
   it('reads a version-1 value (one fileId) as a READY one-segment state', () => {

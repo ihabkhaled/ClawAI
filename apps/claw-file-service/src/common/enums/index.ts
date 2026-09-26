@@ -16,3 +16,7 @@ export { ClamScanOutcome } from './clam-scan-outcome.enum';
 export { TranscriptionResponseIssue } from './transcription-response-issue.enum';
 export { VideoProcessingStep } from './video-processing-step.enum';
 export { VideoCancelOutcome } from './video-cancel-outcome.enum';
+export { TranscriptionMetricOutcome } from './transcription-metric-outcome.enum';
+export { TranscriptionMetricSource } from './transcription-metric-source.enum';
+export { VideoProcessingOutcome } from './video-processing-outcome.enum';
+export { MediaJobKind } from './media-job-kind.enum';

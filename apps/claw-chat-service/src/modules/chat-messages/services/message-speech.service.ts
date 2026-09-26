@@ -6,6 +6,7 @@ import { BusinessException, EntityNotFoundException } from '../../../common/erro
 import { MessageRole } from '../../../generated/prisma';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { SpeechFileStoreClient } from '../clients/speech-file-store.client';
+import { SpeechPreferencesClient } from '../clients/speech-preferences.client';
 import {
   SPEECH_MAX_CHARACTERS,
   SPEECH_STATE_VERSION,
@@ -28,12 +29,15 @@ import type {
   SpeakableText,
   SpeechAvailability,
   SpeechJobState,
+  SpeechReading,
   SpeechSourceMessage,
 } from '../types/speech.types';
 import {
   isCancellableSpeechJob,
+  isSameSpeechReading,
   isStaleSpeechJob,
   readSpeechJobState,
+  speechStateVoice,
   toSpeechStateResponse,
   withSpeechJobState,
 } from '../utilities/speech-job-state.utility';
@@ -67,6 +71,7 @@ export class MessageSpeechService {
     private readonly jobs: SpeechJobManager,
     private readonly lock: SpeechJobLockStore,
     private readonly cancels: SpeechJobCancelStore,
+    private readonly preferences: SpeechPreferencesClient,
   ) {}
 
   async getAvailability(userId: string): Promise<SpeechAvailability> {
@@ -136,7 +141,9 @@ export class MessageSpeechService {
     const speakable = this.speakable(message);
     const now = Date.now();
     const stored = readSpeechJobState(message.metadata);
-    const current = stored?.contentHash === speakable.contentHash ? stored : null;
+    // The saved voice is part of the replay key: another voice is a new reading.
+    const voice = await this.preferredVoice(userId, stored, speakable.contentHash);
+    const current = isSameSpeechReading(stored, speakable.contentHash, voice) ? stored : null;
     if (current !== null && (await this.isReplayable(current, userId))) {
       this.logger.log(
         `speech: replay messageId=${messageId} segments=${String(current.segments.length)}`,
@@ -150,7 +157,7 @@ export class MessageSpeechService {
     return this.launch(
       userId,
       messageId,
-      speakable,
+      { speakable, voice },
       now,
       current?.status === SpeechJobStatus.READY,
     );
@@ -160,10 +167,11 @@ export class MessageSpeechService {
   private async launch(
     userId: string,
     messageId: string,
-    speakable: SpeakableText,
+    reading: SpeechReading,
     now: number,
     discardReady: boolean,
   ): Promise<MessageSpeechStartResult> {
+    const { speakable } = reading;
     const lockToken = await this.acquireLock(messageId);
     if (lockToken === null) {
       const running = await this.reload(messageId);
@@ -183,7 +191,7 @@ export class MessageSpeechService {
     }
     let state: SpeechJobState;
     try {
-      state = await this.beginJob(messageId, speakable, now, discardReady);
+      state = await this.beginJob(messageId, reading, now, discardReady);
     } catch (error: unknown) {
       await this.lock.release(messageId, lockToken).catch(() => {});
       throw error;
@@ -212,7 +220,7 @@ export class MessageSpeechService {
    */
   private async beginJob(
     messageId: string,
-    speakable: SpeakableText,
+    { speakable, voice }: SpeechReading,
     now: number,
     discardReady: boolean,
   ): Promise<SpeechJobState> {
@@ -221,7 +229,8 @@ export class MessageSpeechService {
       throw new EntityNotFoundException('ChatMessage', messageId);
     }
     const latest = readSpeechJobState(message.metadata);
-    const sameText = latest?.contentHash === speakable.contentHash;
+    // Same text AND same voice: segments of another voice are never mixed in.
+    const sameText = isSameSpeechReading(latest, speakable.contentHash, voice);
     if (sameText && latest.status === SpeechJobStatus.READY && !discardReady) {
       return latest;
     }
@@ -237,12 +246,31 @@ export class MessageSpeechService {
       truncated: speakable.truncated,
       segments: keep,
       errorCode: null,
+      voice,
     };
     await this.messages.updateMetadata(messageId, withSpeechJobState(message.metadata, state));
     this.logger.log(
       `speech: job started messageId=${messageId} generation=${String(state.generation)} segments=${String(state.totalSegments)} kept=${String(keep.length)} characters=${String(state.characters)}`,
     );
     return state;
+  }
+
+  /**
+   * The user's saved voice. auth-service unreachable → the voice the stored
+   * reading of THIS text was made with (defaults when none): an outage keeps
+   * a free replay a replay, and never starts a second paid reading.
+   */
+  private async preferredVoice(
+    userId: string,
+    stored: SpeechJobState | null,
+    contentHash: string,
+  ): Promise<string | null> {
+    const lookup = await this.preferences.voiceFor(userId);
+    if (lookup.available) {
+      return lookup.voice;
+    }
+    this.logger.warn('speech: voice preference unavailable — keeping the stored reading voice');
+    return stored?.contentHash === contentHash ? speechStateVoice(stored) : null;
   }
 
   /**

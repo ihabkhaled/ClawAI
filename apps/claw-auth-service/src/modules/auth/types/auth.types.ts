@@ -51,5 +51,7 @@ export interface UserProfile {
   currencyPreferenceMode: string;
   preferredCountryCode: string | null;
   preferredCurrencyCode: string | null;
+  // "Read aloud" voice; null = each provider's default.
+  ttsVoice: string | null;
   createdAt: Date;
 }

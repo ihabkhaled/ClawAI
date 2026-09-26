@@ -13,6 +13,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { BillingErrorCode, EventPattern, PaygSurface } from '@claw/shared-types';
 import { TranscriptionManager } from '../transcription.manager';
 import { TranscriptionMeterManager } from '../transcription-meter.manager';
+import { FileMediaMetricsService } from '../../../metrics/services/file-media-metrics.service';
 import { FilesRepository } from '../../repositories/files.repository';
 import { TranscriptionCapabilityClient } from '../../clients/transcription-capability.client';
 import { type File, FileIngestionStatus } from '../../../../generated/prisma';
@@ -116,6 +117,7 @@ const buildHarness = async (
     providers: [
       TranscriptionManager,
       TranscriptionMeterManager,
+      FileMediaMetricsService,
       { provide: FilesRepository, useValue: files },
       { provide: RabbitMQService, useValue: rabbit },
       { provide: TranscriptionCapabilityClient, useValue: capability },

@@ -32,6 +32,8 @@ describe('SettingsPage mobile layout', () => {
       currentAppearance: UserAppearancePreference.SYSTEM,
       handleLanguageChange: vi.fn(),
       handleAppearanceChange: vi.fn(),
+      currentTtsVoice: 'Puck',
+      handleTtsVoiceChange: vi.fn(),
       passwordForm: formState(),
       handlePasswordSubmit: vi.fn(),
       isPasswordPending: false,
@@ -63,5 +65,9 @@ describe('SettingsPage mobile layout', () => {
 
     const systemChoice = screen.getByRole('button', { name: 'settings.appearanceSystem' });
     expect(systemChoice.parentElement).toHaveClass('flex-wrap');
+    // The read-aloud voice card renders the saved voice in a labelled picker.
+    expect(screen.getByRole('combobox', { name: 'settings.ttsVoiceLabel' })).toHaveTextContent(
+      'Puck',
+    );
   });
 });

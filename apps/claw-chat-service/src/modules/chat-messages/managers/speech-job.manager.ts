@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import { SpeechJobStatus } from '../../../common/enums';
 import { BusinessException } from '../../../common/errors';
+import { ChatMediaMetricsService } from '../../metrics/services/chat-media-metrics.service';
 import { SpeechFileStoreClient } from '../clients/speech-file-store.client';
 import {
   SPEECH_JOB_CANCEL_POLL_INTERVAL_MS,
@@ -27,6 +28,7 @@ import type {
 import {
   finalSpeechStatus,
   readSpeechJobState,
+  speechStateVoice,
   withSpeechJobState,
   withStoredSegment,
 } from '../utilities/speech-job-state.utility';
@@ -72,6 +74,7 @@ export class SpeechJobManager {
     private readonly files: SpeechFileStoreClient,
     private readonly lock: SpeechJobLockStore,
     private readonly cancels: SpeechJobCancelStore,
+    private readonly metrics: ChatMediaMetricsService,
   ) {}
 
   async run(input: SpeechJobInput): Promise<void> {
@@ -107,6 +110,8 @@ export class SpeechJobManager {
     } finally {
       watch.stop();
       await this.releaseLock(input);
+      // GENERATING here means the job ended abnormally (the catch above).
+      this.metrics.recordTtsJob(progress.state.status, Date.now() - started);
       this.logger.log(
         `ttsJob messageId=${input.messageId} generation=${String(input.state.generation)} status=${progress.state.status} segments=${String(progress.state.segments.length)}/${String(input.state.totalSegments)} ms=${String(Date.now() - started)}`,
       );
@@ -217,6 +222,7 @@ export class SpeechJobManager {
         contentHash: input.state.contentHash,
         generation: input.state.generation,
         segment,
+        voice: speechStateVoice(input.state),
         deadlineAt,
         onRateLimited: () => this.onRateLimited(input, progress),
         signal: progress.abort.signal,
@@ -237,6 +243,13 @@ export class SpeechJobManager {
       const stored = await this.store(input, segment, result, deadlineAt);
       await this.record(input, progress, stored);
       delivered = true;
+      if (segment.index === 0) {
+        // The first playable audio: what the user waits for after pressing play.
+        this.metrics.recordTtsFirstSegment(
+          result.candidate.provider,
+          Date.now() - Date.parse(input.state.startedAt),
+        );
+      }
     } catch {
       progress.errorCode = TTS_FAILED_CODE;
     }
@@ -321,6 +334,7 @@ export class SpeechJobManager {
       characters: segment.characters,
       provider: result.candidate.provider,
       model: result.candidate.model,
+      voice: this.synthesis.voiceFor(result.candidate, speechStateVoice(input.state)),
     };
   }
 

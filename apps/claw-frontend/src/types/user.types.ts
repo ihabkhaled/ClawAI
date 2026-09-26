@@ -26,6 +26,9 @@ export type User = {
   currencyPreferenceMode?: CurrencyPreferenceMode;
   preferredCountryCode?: string | null;
   preferredCurrencyCode?: string | null;
+  // "Read aloud" voice (null = each provider's default). Optional: an older
+  // auth service omits it.
+  ttsVoice?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -50,4 +53,7 @@ export type UserProfile = {
   currencyPreferenceMode?: CurrencyPreferenceMode;
   preferredCountryCode?: string | null;
   preferredCurrencyCode?: string | null;
+  // "Read aloud" voice (null = each provider's default). Optional: an older
+  // auth service omits it.
+  ttsVoice?: string | null;
 };

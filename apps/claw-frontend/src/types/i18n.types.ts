@@ -1705,6 +1705,13 @@ export type TranslationDictionary = {
     currencyDescription: string;
     currencyAutomaticActive: string;
     currencyManualActive: string;
+    ttsVoice: string;
+    ttsVoiceDescription: string;
+    ttsVoiceLabel: string;
+    ttsVoiceDefault: string;
+    ttsVoiceGroupGemini: string;
+    ttsVoiceGroupOpenAi: string;
+    ttsVoiceFallbackNote: string;
     system: string;
     light: string;
     dark: string;

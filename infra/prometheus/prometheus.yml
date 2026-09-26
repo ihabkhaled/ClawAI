@@ -33,6 +33,44 @@ scrape_configs:
     static_configs:
       - targets: ['health-service:4009']
 
+  # Media metrics (pack §67, ADR-113 addendum "media metrics"): each service
+  # exposes its own process registry at /api/v1/metrics — internal only, nginx
+  # has no route for it. Labels are bounded enums (rules/19).
+  #
+  # chat-service runs CHAT_SERVICE_REPLICAS replicas in production, each with
+  # its own counters, so it is discovered by DNS (Docker returns one A record
+  # per replica) instead of a static target that would hit one at random.
+  # Sum across `instance` in PromQL.
+  - job_name: claw-chat-media
+    metrics_path: /api/v1/metrics
+    scheme: https
+    tls_config:
+      ca_file: /certs/rootCA.pem
+      server_name: chat-service
+    dns_sd_configs:
+      - names: ['chat-service']
+        type: A
+        port: 4002
+        refresh_interval: 30s
+
+  - job_name: claw-file-media
+    metrics_path: /api/v1/metrics
+    scheme: https
+    tls_config:
+      ca_file: /certs/rootCA.pem
+      server_name: file-service
+    static_configs:
+      - targets: ['file-service:4006']
+
+  - job_name: claw-image-media
+    metrics_path: /api/v1/metrics
+    scheme: https
+    tls_config:
+      ca_file: /certs/rootCA.pem
+      server_name: image-service
+    static_configs:
+      - targets: ['image-service:4012']
+
   # Prometheus watching itself. A minute rather than 15 s on purpose: its own
   # ~1,200 series would otherwise dominate the disk this stack spends on
   # metrics, and nothing here needs 15-second resolution of the scraper.

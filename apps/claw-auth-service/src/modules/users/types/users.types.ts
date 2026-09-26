@@ -5,6 +5,14 @@ export interface PasswordPolicyResult {
   errors: string[];
 }
 
+/**
+ * `GET /internal/users/:id/speech-preferences` — what chat-service needs to
+ * read a reply aloud in the user's voice. Nothing else of the profile.
+ */
+export type UserSpeechPreferences = {
+  ttsVoice: string | null;
+};
+
 export interface SafeUser {
   id: string;
   email: string;
@@ -21,6 +29,8 @@ export interface SafeUser {
   currencyPreferenceMode: string;
   preferredCountryCode: string | null;
   preferredCurrencyCode: string | null;
+  // "Read aloud" voice; null = each provider's default.
+  ttsVoice: string | null;
   activePlanId: string | null;
   firstName: string | null;
   lastName: string | null;

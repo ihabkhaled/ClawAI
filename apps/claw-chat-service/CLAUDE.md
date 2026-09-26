@@ -1385,6 +1385,31 @@ errorCode }`. `NONE` = never read, or the stored reading is of other text.
   `speech-job-state.utility.spec.ts`, `speech-gateway-timeout.spec.ts`,
   frontend `message-speech-player.test.tsx`.
 
+### Voice picker (2026-09-26)
+
+- The user's voice is `User.ttsVoice` on **auth-service** (`PATCH /users/me/preferences`,
+  validated against `TTS_VOICES_BY_PROVIDER` in `@claw/shared-constants`; null = defaults).
+- `MessageSpeechService.start` reads it ONCE per POST through `SpeechPreferencesClient`
+  (`GET auth /internal/users/:id/speech-preferences`, service token, 3 s). GET and
+  cancel never look it up. Auth unreachable → the stored reading's voice is kept, so an
+  outage never forces a second paid reading.
+- **The voice is part of the replay key**: `isSameSpeechReading` = same content hash AND
+  same saved voice (`metadata.speech.voice`; absent on old states = null). Another voice
+  starts a new job under a new generation; segments of another voice are never kept.
+- Each candidate resolves its own voice: `resolveTtsVoice(provider, saved)` — the user's
+  voice when it belongs to that provider, else that provider's default (Kore / alloy). A
+  Gemini voice never reaches OpenAI. The voice that actually spoke is on each stored
+  segment (`segments[].voice`).
+
+### Metrics (pack §67)
+
+`ChatMediaMetricsService` (global `MetricsModule`, `GET /api/v1/metrics`, public,
+internal only, `@SkipLogging`): `claw_chat_attachment_delivery_total{mode}`,
+`claw_chat_vision_helper_calls_total{outcome}`, `claw_chat_tts_segment_attempts_total{provider,outcome}`
+(REFUSED counted when `reserve` throws), `claw_chat_tts_first_segment_seconds{provider}`,
+`claw_chat_tts_jobs_total{status}` + `_job_duration_seconds`. One registry per replica;
+Prometheus discovers each replica by DNS. See `docs/08-runtime-devops/metrics-and-dashboards.md`.
+
 ## Reasoning never reaches the answer (rule 56, 2026-09-25)
 
 Prod, OLLAMA / `glm-5.3`, Direct mode: the stored answer was

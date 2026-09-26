@@ -14,11 +14,15 @@ import { TranscriptionCapabilityClient } from '../clients/transcription-capabili
 import { TranscriptionMeterManager } from './transcription-meter.manager';
 import {
   DerivedTranscriptionStatus,
+  MediaJobKind,
   TranscriptionAttemptStatus,
   TranscriptionFailureKind,
+  TranscriptionMetricOutcome,
+  TranscriptionMetricSource,
   TranscriptionReserveStatus,
   TranscriptionResponseIssue,
 } from '../../../common/enums';
+import { FileMediaMetricsService } from '../../metrics/services/file-media-metrics.service';
 import { TranscriptionResponseError } from '../../../common/errors';
 import { transcribeWithGemini } from '../adapters/gemini-transcription.adapter';
 import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
@@ -82,6 +86,7 @@ export class TranscriptionManager implements OnModuleInit {
     private readonly rabbitMQService: RabbitMQService,
     private readonly capabilityClient: TranscriptionCapabilityClient,
     private readonly meter: TranscriptionMeterManager,
+    private readonly metrics: FileMediaMetricsService,
   ) {}
 
   /**
@@ -114,6 +119,7 @@ export class TranscriptionManager implements OnModuleInit {
       return;
     }
     const { fileId, userId } = parsed.data;
+    this.metrics.recordQueueWait(MediaJobKind.TRANSCRIPTION, parsed.data.timestamp, Date.now());
 
     const file = await this.filesRepository.findById(fileId);
     if (file === null) {
@@ -196,6 +202,11 @@ export class TranscriptionManager implements OnModuleInit {
     };
     const outcome = await this.runCandidates(context, candidates);
     if (outcome !== null) {
+      this.metrics.recordTranscriptionJob(
+        TranscriptionMetricSource.UPLOAD,
+        outcome.status,
+        Date.now() - startedAt,
+      );
       await this.applyUploadOutcome(file, userId, outcome, startedAt);
     }
   }
@@ -277,6 +288,7 @@ export class TranscriptionManager implements OnModuleInit {
     if (input.signal?.aborted === true) {
       return { status: DerivedTranscriptionStatus.CANCELLED, holdReleased: false };
     }
+    const startedAt = Date.now();
     let candidates: TranscriptionCapability[];
     try {
       candidates = await this.capabilityClient.findCapableModels();
@@ -304,6 +316,11 @@ export class TranscriptionManager implements OnModuleInit {
         reason: TRANSCRIPTION_NO_CAPABLE_CONNECTOR_MESSAGE,
       };
     }
+    this.metrics.recordTranscriptionJob(
+      TranscriptionMetricSource.VIDEO_AUDIO,
+      outcome.status,
+      Date.now() - startedAt,
+    );
     if (outcome.status === TranscriptionAttemptStatus.CANCELLED) {
       this.logger.warn(
         `transcribeDerivedAudio: fileId=${input.fileId} provider=${outcome.capability.provider} cancelled holdReleased=${String(outcome.holdReleased)}`,
@@ -428,10 +445,15 @@ export class TranscriptionManager implements OnModuleInit {
       walk.providerCalls.set(provider, providerAttempt);
       try {
         const outcome = await this.attemptCandidate(context, capability, providerAttempt);
+        this.metrics.recordTranscriptionAttempt(
+          provider,
+          this.attemptMetricOutcome(outcome.status),
+        );
         return { ...outcome, capability, model };
       } catch (error: unknown) {
         const raw = error instanceof Error ? error.message : 'Unknown transcription error';
         const kind = classifyTranscriptionFailure(error);
+        this.metrics.recordTranscriptionAttempt(provider, this.failureMetricOutcome(kind));
         if (kind === TranscriptionFailureKind.TERMINAL) {
           this.logger.error(
             `runCandidates: fileId=${context.fileId} provider=${provider} model=${model} failed — ${raw}`,
@@ -457,6 +479,29 @@ export class TranscriptionManager implements OnModuleInit {
       }
     }
     return null;
+  }
+
+  /** A call that returned: success, a credit refusal (no provider call) or a cancel. */
+  private attemptMetricOutcome(status: TranscriptionAttemptStatus): TranscriptionMetricOutcome {
+    if (status === TranscriptionAttemptStatus.COMPLETED) {
+      return TranscriptionMetricOutcome.SUCCESS;
+    }
+    if (status === TranscriptionAttemptStatus.REFUSED) {
+      return TranscriptionMetricOutcome.REFUSED;
+    }
+    return status === TranscriptionAttemptStatus.CANCELLED
+      ? TranscriptionMetricOutcome.CANCELLED
+      : TranscriptionMetricOutcome.FAILED;
+  }
+
+  /** A call that threw: an empty answer and a 429 are named, everything else is FAILED. */
+  private failureMetricOutcome(kind: TranscriptionFailureKind): TranscriptionMetricOutcome {
+    if (kind === TranscriptionFailureKind.EMPTY_RESPONSE) {
+      return TranscriptionMetricOutcome.EMPTY;
+    }
+    return kind === TranscriptionFailureKind.RATE_LIMITED
+      ? TranscriptionMetricOutcome.RATE_LIMITED
+      : TranscriptionMetricOutcome.FAILED;
   }
 
   /**

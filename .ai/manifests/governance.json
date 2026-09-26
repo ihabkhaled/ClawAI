@@ -171,7 +171,7 @@
       "file": "rules/18-error-handling-and-reliability.md"
     },
     {
-      "bytes": 7727,
+      "bytes": 8207,
       "file": "rules/19-logging-observability-and-redaction.md"
     },
     {
@@ -329,7 +329,7 @@
   ],
   "skills": [
     {
-      "bytes": 31438,
+      "bytes": 31718,
       "file": "skills/00-index.md"
     },
     {
@@ -391,6 +391,10 @@
     {
       "bytes": 4010,
       "file": "skills/add-a-payment-gateway-flow.md"
+    },
+    {
+      "bytes": 2352,
+      "file": "skills/add-a-service-metric.md"
     },
     {
       "bytes": 4875,

@@ -47,7 +47,23 @@ export function readSpeechJobState(metadata: unknown): SpeechJobState | null {
           ? speech['segments'].flatMap((value: unknown) => toStoredSegment(value))
           : [],
         errorCode: textOf(speech, 'errorCode'),
+        // Absent (defaults) and null read the same through `speechStateVoice`.
+        ...(textOf(speech, 'voice') === null ? {} : { voice: textOf(speech, 'voice') }),
       };
+}
+
+/** The saved voice a reading was made for; a state from before the picker is the defaults (null). */
+export function speechStateVoice(state: SpeechJobState): string | null {
+  return state.voice ?? null;
+}
+
+/** The replay key: the same text AND the same saved voice. */
+export function isSameSpeechReading(
+  state: SpeechJobState | null,
+  contentHash: string,
+  voice: string | null,
+): state is SpeechJobState {
+  return state?.contentHash === contentHash && speechStateVoice(state) === voice;
 }
 
 /** The message's metadata with `speech` replaced; every other key kept. */
@@ -171,6 +187,7 @@ function toStoredSegment(value: unknown): StoredSpeechSegment[] {
   }
   const index = countOf(value, 'index');
   const fileId = textOf(value, 'fileId');
+  const voice = textOf(value, 'voice');
   return index === null || fileId === null
     ? []
     : [
@@ -181,6 +198,7 @@ function toStoredSegment(value: unknown): StoredSpeechSegment[] {
           characters: countOf(value, 'characters') ?? 0,
           provider: textOf(value, 'provider') ?? '',
           model: textOf(value, 'model') ?? '',
+          ...(voice === null ? {} : { voice }),
         },
       ];
 }

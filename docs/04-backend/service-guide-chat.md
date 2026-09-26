@@ -1016,3 +1016,12 @@ trippedAt, probing }] }`; `DELETE …/provider-breakers/:provider` → 200
   page shows the list to admins, joined to their connectors by provider, with
   a Clear button.
 - **Lanes.** Compare and consensus store only our sentence for a failed lane.
+
+## Read-aloud voice and media metrics (2026-09-26)
+
+- Read aloud uses the user's saved voice (auth `User.ttsVoice`) for the provider
+  it belongs to and that provider's default otherwise; the voice is part of the
+  replay key. Details: `apps/claw-chat-service/CLAUDE.md` § Voice picker.
+- `GET /api/v1/metrics` (internal): attachment delivery modes, vision-helper
+  outcomes, read-aloud segments / first audio / job status. List:
+  `docs/08-runtime-devops/metrics-and-dashboards.md`.

@@ -9,6 +9,8 @@ import { z } from 'zod';
 export const videoProcessJobSchema = z.object({
   fileId: z.string().min(1),
   userId: z.string().min(1),
+  // The publisher's ISO time (BaseEventPayload), for the queue-wait metric only.
+  timestamp: z.string().max(64).optional(),
 });
 
 export type VideoProcessJobDto = z.infer<typeof videoProcessJobSchema>;

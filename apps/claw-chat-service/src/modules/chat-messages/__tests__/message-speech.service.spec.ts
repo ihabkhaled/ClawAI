@@ -1,12 +1,14 @@
 import { HttpStatus, Logger } from '@nestjs/common';
 import { type Mock, type MockInstance, vi } from 'vitest';
 import type { PaygHold } from '@claw/shared-entitlements';
+import { resolveTtsVoice } from '@claw/shared-constants';
 import { PaygSurface, SpeechUnavailableReason } from '@claw/shared-types';
 
 import { SpeechJobStatus, SpeechProvider } from '../../../common/enums';
 import { BusinessException, SpeechProviderError } from '../../../common/errors';
 import { MessageRole } from '../../../generated/prisma';
 import { SPEECH_JOB_LOCK_TTL_MS, SPEECH_MAX_CHARACTERS } from '../constants/speech.constants';
+import { ChatMediaMetricsService } from '../../metrics/services/chat-media-metrics.service';
 import { SpeechJobManager } from '../managers/speech-job.manager';
 import { SpeechSynthesisManager } from '../managers/speech-synthesis.manager';
 import { SpeechJobCancelStore } from '../repositories/speech-job-cancel.store';
@@ -75,6 +77,9 @@ type Harness = {
   /** A cancel store as ANOTHER replica would build it, over the same Redis. */
   replicaCancelStore: () => SpeechJobCancelStore;
   setMetadata: (next: Record<string, unknown>) => void;
+  metrics: ChatMediaMetricsService;
+  voiceFor: Mock;
+  setVoice: (voice: string | null) => void;
 };
 
 type FakeRedis = {
@@ -110,6 +115,10 @@ type HarnessOptions = {
   clamped?: boolean;
   keys?: Partial<Record<SpeechProvider, string | null>>;
   configured?: boolean;
+  /** The user's saved read-aloud voice (null = provider defaults). */
+  voice?: string | null;
+  /** auth-service cannot answer the voice lookup. */
+  voiceDown?: boolean;
 };
 
 function hold(requestId: string, clamped: boolean): PaygHold {
@@ -167,11 +176,19 @@ function build(options: HarnessOptions = {}): Harness {
     provider in keys ? (keys[provider] ?? null) : `key-${provider}`,
   );
   const providerSynthesize = vi.fn(async (_request: SpeechProviderRequest) => WAV);
+  const metrics = new ChatMediaMetricsService();
+  let savedVoice = options.voice ?? null;
+  const voiceFor = vi.fn(async () =>
+    options.voiceDown === true
+      ? { voice: null, available: false }
+      : { voice: savedVoice, available: true },
+  );
   const synthesis = new SpeechSynthesisManager(
     { resolve: vi.fn(async () => options.candidates ?? [GEMINI_ROW, OPENAI_ROW]) } as never,
     { resolveApiKey, isConfigured: vi.fn(async () => options.configured ?? true) } as never,
     { synthesize: providerSynthesize } as never,
     accessControl as never,
+    metrics,
   );
   let fileCounter = 0;
   const store = vi.fn(async () => {
@@ -226,6 +243,7 @@ function build(options: HarnessOptions = {}): Harness {
     fileStore as never,
     lock as never,
     replicaCancelStore(),
+    metrics,
   );
   const jobRuns = vi.spyOn(jobs, 'run');
   const service = new MessageSpeechService(
@@ -237,6 +255,7 @@ function build(options: HarnessOptions = {}): Harness {
     jobs,
     lock as never,
     replicaCancelStore(),
+    { voiceFor } as never,
   );
   return {
     service,
@@ -258,6 +277,11 @@ function build(options: HarnessOptions = {}): Harness {
     replicaCancelStore,
     setMetadata: (next: Record<string, unknown>) => {
       metadata = next;
+    },
+    metrics,
+    voiceFor,
+    setVoice: (voice: string | null) => {
+      savedVoice = voice;
     },
   };
 }
@@ -1249,5 +1273,117 @@ describe('MessageSpeechService.cancel — the owner stops a reading', () => {
     await jobsDone(harness);
 
     expect(harness.speech()).toMatchObject({ generation: 7, status: SpeechJobStatus.READY });
+  });
+});
+
+describe('MessageSpeechService — the saved voice (voice picker)', () => {
+  it('every speech provider chat-service can call has a voice catalog and a default', () => {
+    for (const provider of Object.values(SpeechProvider)) {
+      expect(resolveTtsVoice(provider, null)).toEqual(expect.any(String));
+    }
+  });
+
+  it("reads with the user's Gemini voice, and OpenAI's default voice on OpenAI", async () => {
+    const harness = build({ voice: 'Puck' });
+    harness.providerSynthesize.mockImplementation(async (request: SpeechProviderRequest) => {
+      if (request.candidate.provider === SpeechProvider.GEMINI) {
+        throw new SpeechProviderError('rejected', 400, false);
+      }
+      return MP3;
+    });
+    await startAndFinish(harness);
+    const calls = harness.providerSynthesize.mock.calls.map((call: unknown[]) => {
+      const request = call[0] as SpeechProviderRequest;
+      return [request.candidate.provider, request.voice];
+    });
+    expect(calls).toContainEqual([SpeechProvider.GEMINI, 'Puck']);
+    expect(calls).toContainEqual([SpeechProvider.OPENAI, 'alloy']);
+    expect(harness.speech().voice).toBe('Puck');
+    expect(harness.speech().segments[0]?.voice).toBe('alloy');
+  });
+
+  it('no saved voice: each provider reads with its default', async () => {
+    const harness = build();
+    await startAndFinish(harness);
+    const request = harness.providerSynthesize.mock.calls[0]?.[0] as SpeechProviderRequest;
+    expect(request.voice).toBe('Kore');
+    expect(harness.speech().voice).toBeNull();
+  });
+
+  it('the same voice replays for free; another voice is a NEW reading, not a replay', async () => {
+    const harness = build({ voice: 'Puck' });
+    await startAndFinish(harness);
+    const firstGeneration = harness.speech().generation;
+    const reserved = harness.reserveCredit.mock.calls.length;
+
+    const replay = await harness.service.start(USER, MESSAGE_ID);
+    expect(replay.httpStatus).toBe(HttpStatus.OK);
+    expect(harness.reserveCredit.mock.calls.length).toBe(reserved);
+
+    harness.setVoice('Charon');
+    const fresh = await startAndFinish(harness);
+    expect(fresh.httpStatus).toBe(HttpStatus.ACCEPTED);
+    expect(harness.speech().generation).toBe(firstGeneration + 1);
+    expect(harness.speech().voice).toBe('Charon');
+    expect(harness.reserveCredit.mock.calls.length).toBeGreaterThan(reserved);
+    const last = harness.providerSynthesize.mock.calls.at(-1)?.[0] as SpeechProviderRequest;
+    expect(last.voice).toBe('Charon');
+  });
+
+  it('a reading from before the picker (no voice stored) still replays for a user with no voice', async () => {
+    const harness = build({ metadata: { speech: readyState(REPLY, 'file-old') } });
+    const result = await harness.service.start(USER, MESSAGE_ID);
+    expect(result.httpStatus).toBe(HttpStatus.OK);
+    expect(harness.reserveCredit).not.toHaveBeenCalled();
+  });
+
+  it('auth-service down: the stored reading keeps its voice and still replays for free', async () => {
+    const stored = { ...readyState(REPLY, 'file-old'), voice: 'Puck' };
+    const harness = build({ metadata: { speech: stored }, voiceDown: true });
+    const result = await harness.service.start(USER, MESSAGE_ID);
+    expect(result.httpStatus).toBe(HttpStatus.OK);
+    expect(harness.reserveCredit).not.toHaveBeenCalled();
+  });
+
+  it('GET and cancel never look the voice up (the poll stays cheap)', async () => {
+    const harness = build({ voice: 'Puck' });
+    await harness.service.getState(USER, MESSAGE_ID);
+    await harness.service.cancel(USER, MESSAGE_ID);
+    expect(harness.voiceFor).not.toHaveBeenCalled();
+  });
+});
+
+describe('Read-aloud metrics', () => {
+  it('counts segment attempts by provider and outcome, the job status, and time to first segment', async () => {
+    const harness = build();
+    harness.providerSynthesize
+      .mockRejectedValueOnce(new SpeechProviderError('rejected', 400, false))
+      .mockResolvedValue(MP3);
+    await startAndFinish(harness);
+    const text = harness.metrics.render();
+    expect(text).toContain(
+      'claw_chat_tts_segment_attempts_total{provider="gemini",outcome="failed"} 1',
+    );
+    expect(text).toContain(
+      'claw_chat_tts_segment_attempts_total{provider="openai",outcome="succeeded"} 1',
+    );
+    expect(text).toContain('claw_chat_tts_jobs_total{status="ready"} 1');
+    expect(text).toContain('claw_chat_tts_first_segment_seconds_count{provider="openai"} 1');
+    expect(text).toContain('claw_chat_tts_job_duration_seconds_count{status="ready"} 1');
+    expect(text).not.toContain(USER);
+    expect(text).not.toContain(MESSAGE_ID);
+  });
+
+  it('counts a credit refusal as refused and the job as failed', async () => {
+    const harness = build({
+      refuseWith: () =>
+        new BusinessException('no credit', 'PAYG_CREDIT_EXHAUSTED', HttpStatus.PAYMENT_REQUIRED),
+    });
+    await startAndFinish(harness);
+    const text = harness.metrics.render();
+    expect(text).toContain(
+      'claw_chat_tts_segment_attempts_total{provider="gemini",outcome="refused"} 1',
+    );
+    expect(text).toContain('claw_chat_tts_jobs_total{status="failed"} 1');
   });
 });
