@@ -248,6 +248,11 @@ import {
   stripWriterReasoning,
   toFileContentCandidates,
 } from '../utilities/file-writer.utility';
+import {
+  imageMaskRefusalResponse,
+  readImageMaskRefusalCode,
+  readMaskFileId,
+} from '../utilities/image-mask-refusal.utility';
 import type { ChokepointCall, PaygCallOptions } from '../types/payg.types';
 import { IMAGE_GENERATION_PLAN_FEATURE } from '../constants/plan-feature-refusal.constants';
 import {
@@ -5064,6 +5069,7 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     prompt = boundImageGenerationPrompt(prompt);
+    const maskFileId = readMaskFileId(lastUserMsg?.metadata);
 
     this.logger.debug(
       `callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`,
@@ -5082,6 +5088,9 @@ export class ChatExecutionManager implements OnModuleInit {
       referenceImageBase64,
       referenceImageMimeType,
       referenceFileId,
+      // The drawn mask rides only with a reference image: image-service
+      // refuses a mask with nothing to mask (422 IMAGE_MASK_INVALID).
+      ...(referenceFileId === undefined || maskFileId === undefined ? {} : { maskFileId }),
       ...(prompt === originalPrompt
         ? {}
         : { originalPrompt: boundImageGenerationPrompt(originalPrompt) }),
@@ -5106,6 +5115,12 @@ export class ChatExecutionManager implements OnModuleInit {
         startTime,
         usedFallback,
       );
+    }
+    const maskRefusal = readImageMaskRefusalCode(response.status, response.data);
+    if (maskRefusal !== undefined) {
+      // A refused mask is the user's to fix: a translated notice, not a failure.
+      this.logger.warn(`callImageService: mask refused code=${maskRefusal} user=${userId}`);
+      return imageMaskRefusalResponse(maskRefusal, provider, model, startTime, usedFallback);
     }
     if (!response.ok) {
       this.logger.error(

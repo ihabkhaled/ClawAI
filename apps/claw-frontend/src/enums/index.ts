@@ -188,3 +188,7 @@ export { MessageSpeechJobStatus } from './message-speech-job-status.enum';
 export { MessageSpeechPlaybackPhase } from './message-speech-playback-phase.enum';
 export { ModelCapabilityBadge } from './model-capability-badge.enum';
 export { ComposerAttachmentState } from './composer-attachment-state.enum';
+export * from './mask-brush-mode.enum';
+export * from './image-mask-refusal-code.enum';
+export { MaskBrushMode } from './mask-brush-mode.enum';
+export { ImageMaskRefusalCode } from './image-mask-refusal-code.enum';

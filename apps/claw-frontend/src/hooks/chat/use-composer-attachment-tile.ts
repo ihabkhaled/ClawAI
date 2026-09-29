@@ -33,5 +33,9 @@ export function useComposerAttachmentTile(fileId: string): UseComposerAttachment
     label,
     sizeLabel: file === undefined ? null : formatFileSize(file.sizeBytes),
     removeLabel: t('chat.attachment.remove', { name: label }),
+    maskLabel: t('chat.maskEdit.actionFor', { name: label }),
+    maskActionLabel: t('chat.maskEdit.action'),
+    maskedLabel: t('chat.maskEdit.applied'),
+    maskClearLabel: t('chat.maskEdit.remove'),
   };
 }

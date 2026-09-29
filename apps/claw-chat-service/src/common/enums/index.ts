@@ -32,3 +32,4 @@ export { MemoryRecordType } from './memory-record-type.enum';
 export { SpeechProvider } from './speech-provider.enum';
 export { SpeechAttemptOutcome } from './speech-attempt-outcome.enum';
 export { SpeechJobStatus } from './speech-job-status.enum';
+export { ImageMaskRefusalCode } from './image-mask-refusal-code.enum';

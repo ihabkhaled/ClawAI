@@ -18,6 +18,7 @@ import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { FileLimitNotice } from '@/components/chat/file-limit-notice';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
+import { ImageMaskRefusalNotice } from '@/components/chat/image-mask-refusal-notice';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageBranchAction } from '@/components/chat/message-branch-action';
@@ -52,6 +53,7 @@ import {
 } from '@/utilities';
 import { resolveStoredErrorMessage } from '@/utilities/chat-stream-error.utility';
 import { readFileLimit } from '@/utilities/file-limit.utility';
+import { readImageMaskRefusal } from '@/utilities/image-mask-refusal.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
 import { readPlanFeatureRefusal } from '@/utilities/plan-feature-refusal.utility';
 import { describeRoute } from '@/utilities/route-label.utility';
@@ -103,7 +105,8 @@ function MessageBubbleBase({
   const isFileGeneration = metadata?.['type'] === 'file_generation';
   const fileLimit = readFileLimit(metadata);
   const planFeatureRefusal = readPlanFeatureRefusal(metadata);
-  const isNotice = fileLimit !== null || planFeatureRefusal !== null;
+  const imageMaskRefusal = readImageMaskRefusal(metadata);
+  const isNotice = fileLimit !== null || planFeatureRefusal !== null || imageMaskRefusal !== null;
   const fileGenerationId =
     typeof metadata?.['generationId'] === 'string' && isFileGeneration
       ? metadata['generationId']
@@ -235,6 +238,9 @@ function MessageBubbleBase({
           ) : null}
           {!isUser && fileLimit !== null ? (
             <FileLimitNotice used={fileLimit.used} limit={fileLimit.limit} />
+          ) : null}
+          {!isUser && imageMaskRefusal !== null ? (
+            <ImageMaskRefusalNotice code={imageMaskRefusal} />
           ) : null}
           {!isUser && planFeatureRefusal !== null ? (
             <PlanFeatureNotice feature={planFeatureRefusal} />

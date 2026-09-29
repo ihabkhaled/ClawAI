@@ -607,6 +607,35 @@ export const pt: TranslationDictionary = {
     helpful: 'Útil',
     notHelpful: 'Não útil',
     feedbackSaved: 'Feedback salvo',
+    maskEdit: {
+      action: 'Editar com máscara',
+      actionFor: 'Editar com máscara: {name}',
+      title: 'Edição com máscara',
+      description:
+        'Pinte a área que o modelo pode alterar. Tudo o que você deixar sem pintar permanece como está.',
+      canvasLabel: 'Área de pintura da máscara',
+      brushSize: 'Tamanho do pincel',
+      erase: 'Apagar',
+      clear: 'Limpar tudo',
+      apply: 'Aplicar máscara',
+      applying: 'Salvando…',
+      loading: 'Carregando a imagem…',
+      imageFailed: 'Não foi possível carregar a imagem.',
+      saveFailed: 'Não foi possível salvar a máscara. Tente novamente.',
+      empty: 'Pinte pelo menos uma área primeiro.',
+      applied: 'Máscara aplicada',
+      remove: 'Remover máscara',
+      keyboardHint:
+        'Arraste para pintar. Com o teclado: as setas movem o pincel (segure Shift para ir mais rápido), Espaço ou Enter inicia e para a pintura.',
+      paintingOn: 'Pintura ativada',
+      paintingOff: 'Pintura desativada',
+      refusal: {
+        title: 'A edição com máscara não foi aplicada',
+        invalid: 'A máscara não corresponde à imagem. Desenhe-a de novo e envie.',
+        notSupported:
+          'O modelo selecionado não consegue editar apenas uma parte de uma imagem. Escolha um modelo de edição de imagens que aceite máscaras ou envie sem máscara.',
+      },
+    },
     attachFiles: 'Anexar Arquivos',
     attachment: {
       uploading: 'Enviando anexo…',

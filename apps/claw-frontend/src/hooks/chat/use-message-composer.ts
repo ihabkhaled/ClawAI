@@ -69,6 +69,15 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     disabled: props.isPending,
   });
 
+  const trayMaskEdit = useMemo(
+    () => ({
+      maskedFileId: state.maskEdit.mask?.sourceFileId ?? null,
+      onOpen: state.maskEdit.openEditor,
+      onClear: state.maskEdit.clearMask,
+    }),
+    [state.maskEdit.clearMask, state.maskEdit.mask, state.maskEdit.openEditor],
+  );
+
   // A whole-panel drop lands here: the thread panel reads this composer's
   // ingest function from the drop-target store.
   useRegisterComposerDropTarget(state.ingestFiles);
@@ -94,7 +103,12 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     onFormSubmit: state.handleSubmit,
     onIngestFiles: state.ingestFiles,
     attachmentChips,
-    attachmentTray,
+    attachmentTray: { ...attachmentTray, maskEdit: trayMaskEdit },
+    maskEditDialog: {
+      fileId: state.maskEdit.editingFileId,
+      onClose: state.maskEdit.closeEditor,
+      onApplied: state.maskEdit.applyMask,
+    },
     toolbarProps: {
       selectedModel: props.selectedModel,
       onModelChange: props.onModelChange,

@@ -1185,6 +1185,78 @@ describe('ChatExecutionManager', () => {
       visionHop.mockRestore();
     });
 
+    // pack §81: the drawn mask rides the user message's metadata to image-service.
+    describe('drawn mask', () => {
+      const maskedContext = (): AssembledContext => {
+        const base = makeContext('replace the sky');
+        const [message] = base.threadMessages;
+        return {
+          ...base,
+          threadMessages: [
+            { ...message, metadata: { fileIds: ['file-ref'], maskFileId: 'mask-1' } },
+          ],
+          fileContents: [
+            { id: 'file-ref', filename: 'l.png', mimeType: 'image/png', content: 'aGVsbG8=' },
+          ],
+        } as unknown as AssembledContext;
+      };
+
+      it('forwards maskFileId with the reference image', async () => {
+        httpRequest.mockResolvedValueOnce(imageAccepted);
+        const visionHop = vi
+          .spyOn(Object.getPrototypeOf(manager), 'buildImagePromptFromVision')
+          .mockResolvedValue('a sky');
+
+        await manager.callProvider(
+          'IMAGE_OPENAI',
+          'gpt-image-1',
+          maskedContext(),
+          Date.now(),
+          false,
+        );
+
+        const request = httpRequest.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+        expect(request.body).toMatchObject({ referenceFileId: 'file-ref', maskFileId: 'mask-1' });
+        visionHop.mockRestore();
+      });
+
+      it('does not send a mask when there is no reference image', async () => {
+        httpRequest.mockResolvedValueOnce(imageAccepted);
+        const context = { ...maskedContext(), fileContents: [] } as unknown as AssembledContext;
+
+        await manager.callProvider('IMAGE_OPENAI', 'gpt-image-1', context, Date.now(), false);
+
+        const request = httpRequest.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+        expect(request.body).not.toHaveProperty('maskFileId');
+      });
+
+      it.each(['IMAGE_MASK_INVALID', 'IMAGE_MASK_NOT_SUPPORTED'])(
+        'turns a 422 %s into a finished refusal reply, not a thrown failure',
+        async (code) => {
+          httpRequest.mockResolvedValueOnce({
+            ok: false,
+            status: 422,
+            data: { code, message: 'refused', statusCode: 422 },
+          });
+          const visionHop = vi
+            .spyOn(Object.getPrototypeOf(manager), 'buildImagePromptFromVision')
+            .mockResolvedValue('a sky');
+
+          const response = await manager.callProvider(
+            'IMAGE_GEMINI',
+            'gemini-2.5-flash-image',
+            maskedContext(),
+            Date.now(),
+            false,
+          );
+
+          expect(response.imageMaskRefusal).toEqual({ code });
+          expect(response.imageGenerationId).toBeUndefined();
+          visionHop.mockRestore();
+        },
+      );
+    });
+
     // pack §79: the user's instruction leads, verbatim; their words are kept as
     // originalPrompt; a failed rewrite sends the original prompt alone.
     it('keeps the user instruction first and sends originalPrompt with a rewritten prompt', async () => {

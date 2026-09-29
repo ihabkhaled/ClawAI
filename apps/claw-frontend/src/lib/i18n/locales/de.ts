@@ -612,6 +612,35 @@ export const de: TranslationDictionary = {
     helpful: 'Hilfreich',
     notHelpful: 'Nicht hilfreich',
     feedbackSaved: 'Feedback gespeichert',
+    maskEdit: {
+      action: 'Maske bearbeiten',
+      actionFor: 'Maske bearbeiten: {name}',
+      title: 'Maskenbearbeitung',
+      description:
+        'Male den Bereich, den das Modell ändern darf. Alles, was unbemalt bleibt, bleibt unverändert.',
+      canvasLabel: 'Malfläche für die Maske',
+      brushSize: 'Pinselgröße',
+      erase: 'Radieren',
+      clear: 'Alles löschen',
+      apply: 'Maske anwenden',
+      applying: 'Wird gespeichert…',
+      loading: 'Bild wird geladen…',
+      imageFailed: 'Das Bild konnte nicht geladen werden.',
+      saveFailed: 'Die Maske konnte nicht gespeichert werden. Versuche es erneut.',
+      empty: 'Male zuerst mindestens einen Bereich.',
+      applied: 'Maske angewendet',
+      remove: 'Maske entfernen',
+      keyboardHint:
+        'Ziehen zum Malen. Mit der Tastatur: Pfeiltasten bewegen den Pinsel (mit Umschalttaste schneller), Leertaste oder Eingabetaste startet und beendet das Malen.',
+      paintingOn: 'Malen aktiv',
+      paintingOff: 'Malen aus',
+      refusal: {
+        title: 'Die Maskenbearbeitung wurde nicht angewendet',
+        invalid: 'Die Maske passt nicht zum Bild. Zeichne sie neu und sende dann erneut.',
+        notSupported:
+          'Das gewählte Modell kann nicht nur einen Teil eines Bildes bearbeiten. Wähle ein Bildbearbeitungsmodell mit Maskenunterstützung oder sende ohne Maske.',
+      },
+    },
     attachFiles: 'Dateien anhängen',
     attachment: {
       uploading: 'Anhang wird hochgeladen…',

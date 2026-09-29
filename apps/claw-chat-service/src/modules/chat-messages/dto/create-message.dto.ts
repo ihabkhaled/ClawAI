@@ -35,6 +35,12 @@ export const createMessageSchema = z
       .max(255, 'Model display name must be at most 255 characters')
       .optional(),
     ...attachmentFields,
+    // File id of a drawn PNG mask for an image edit; needs an attached image.
+    maskFileId: z
+      .string()
+      .min(1)
+      .max(255, 'Mask file ID must be at most 255 characters')
+      .optional(),
     researchMode: researchModeSchema.optional(),
     researchProviderId: z.string().max(64, 'Research provider id too long').optional(),
   })

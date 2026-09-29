@@ -1087,3 +1087,7 @@ container (Kokoro, model `speaches-ai/Kokoro-82M-v1.0-ONNX`, fixed voice
 `TTS_VOICE` rows when `SpeechConnectorClient.isConfigured(LOCAL)` (a 2 s
 `/health` probe) is true; it goes through `SpeechProviderClient.openAi` with the
 container base URL and is unmetered (`PAYG_EXEMPT_PROVIDERS`).
+
+## Inpainting mask forwarding (2026-09-29)
+
+The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat-service stores it on the user message metadata and forwards it to image-service with the reference image. image-service 422 codes `IMAGE_MASK_INVALID` and `IMAGE_MASK_NOT_SUPPORTED` become a stored assistant refusal message (`metadata.type = image_mask_refusal`) that the frontend renders as a localized notice. Only OpenAI honours masks; Gemini and Stable Diffusion refuse with `IMAGE_MASK_NOT_SUPPORTED`.

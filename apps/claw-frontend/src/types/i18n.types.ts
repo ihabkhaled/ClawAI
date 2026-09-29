@@ -549,6 +549,32 @@ export type TranslationDictionary = {
     helpful: string;
     notHelpful: string;
     feedbackSaved: string;
+    maskEdit: {
+      action: string;
+      actionFor: string;
+      title: string;
+      description: string;
+      canvasLabel: string;
+      brushSize: string;
+      erase: string;
+      clear: string;
+      apply: string;
+      applying: string;
+      loading: string;
+      imageFailed: string;
+      saveFailed: string;
+      empty: string;
+      applied: string;
+      remove: string;
+      keyboardHint: string;
+      paintingOn: string;
+      paintingOff: string;
+      refusal: {
+        title: string;
+        invalid: string;
+        notSupported: string;
+      };
+    };
     attachFiles: string;
     attachment: {
       uploading: string;

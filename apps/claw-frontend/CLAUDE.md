@@ -732,3 +732,7 @@ an archive `ZIP_…:` / `ARCHIVE_…:` prefix → `files.archive.rejected.*`, an
 else → `failureDetail.generic`. A new backend code needs a map entry in
 `constants/extraction-error.constants.ts` plus the key in all 13 locales of
 `media-ui-translations.ts` and `i18n.types.ts`.
+
+## Inpainting mask editor (2026-09-29)
+
+Image tile in the composer tray offers "Mask edit" -> `MaskEditDialog` (canvas, brush size, erase, clear; pointer, touch, keyboard: Space toggles painting, arrows move, Shift x5). `useMaskEditor` paints a layer the size of the SOURCE image; `exportMask` writes the backend convention (painted = alpha 0, unpainted = opaque, threshold 128) via `paintLayerToMaskPixels`. `useMaskEditorDialog` uploads the PNG through `filesRepository.uploadFile`; `useComposerMaskEdit` keeps one mask, moves the source to `fileIds[0]` (the pipeline edits `imageFiles[0]`) and hands `maskFileId` out once on submit (5th `onSend` arg -> `CreateMessageRequest.maskFileId`). A 422 becomes an assistant message with metadata `image_mask_refusal`, rendered by `ImageMaskRefusalNotice`; both codes also map in `api-error-message.utility.ts`. Keys: `chat.maskEdit.*` (13 locales). Only OpenAI honours masks. Not built: action on generated-image cards; not browser-verified.

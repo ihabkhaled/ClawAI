@@ -1,4 +1,5 @@
 import type { PlanFeature } from '@claw/shared-entitlements';
+import type { ImageMaskRefusalCode } from '../../../common/enums';
 import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
@@ -150,6 +151,8 @@ export type LlmResponse = {
    * notice from this, not an error.
    */
   planFeatureRefusal?: PlanFeatureRefusalNotice;
+  /** Set instead of a generation when image-service refused the drawn mask (422). */
+  imageMaskRefusal?: ImageMaskRefusalNotice;
   reRouted?: boolean;
   originalProvider?: string;
   originalModel?: string;
@@ -458,6 +461,8 @@ export type ImageGenerateRequest = {
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
   referenceFileId?: string;
+  /** A PNG alpha mask stored in file-service (pack §81); needs `referenceFileId`. */
+  maskFileId?: string;
   /** The user's words when `prompt` was rewritten for a reference image (debugging). */
   originalPrompt?: string;
 };
@@ -521,3 +526,6 @@ export type FileLimitNotice = { used: number; limit: number; window: string | nu
 
 /** Which plan feature a turn needed and did not have (ADR-122). */
 export type PlanFeatureRefusalNotice = { feature: PlanFeature };
+
+/** Why image-service refused a masked edit (pack §81). */
+export type ImageMaskRefusalNotice = { code: ImageMaskRefusalCode };

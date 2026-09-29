@@ -1481,3 +1481,7 @@ model's private notes run into its reply.
 ## Save to memory / context from chat (owner feature 11, 2026-09-29)
 
 `handleMessageRouted` asks `SaveToContextManager.trySave` first (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.
+
+## Inpainting mask hop (2026-09-29)
+
+`CreateMessageDto.maskFileId` -> user message metadata (`maskFileId`) -> `callImageService` forwards it to image-service when a reference image exists. A 422 `IMAGE_MASK_INVALID` / `IMAGE_MASK_NOT_SUPPORTED` is turned by `image-mask-refusal.utility.ts` into an assistant message with metadata `{type:'image_mask_refusal', maskRefusalCode}` (no retry, no other provider fallback). Only OpenAI supports masks.
