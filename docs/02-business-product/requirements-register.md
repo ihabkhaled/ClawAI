@@ -167,3 +167,15 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
 - **Current state:** ADR-130. Quoting from citations, file previews, research
   reports and generated documents waits for batches M and D.
 - **History:** 2026-09-30 created and delivered (Batch 2).
+
+### REQ-CHAT-004
+
+- **Statement:** A user can answer the same question again with a model of
+  their choice (or AUTO), and can edit a question without deleting the
+  conversation after it.
+- **Status:** done · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch E (owner, 2026-09-29).
+- **Current state:** ADR-131. Regenerate also gained the plan/quota check it
+  was missing. Still open in batch E: send an answer to Repair/Verify/Compare
+  from the message, and "continue" a truncated answer.
+- **History:** 2026-09-30 created and delivered (Batch 4).

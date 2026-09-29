@@ -342,6 +342,10 @@ export type TranslationDictionary = {
       limitReached: string;
       sourceMissing: string;
     };
+    regenerateWith: {
+      trigger: string;
+      auto: string;
+    };
     speech: {
       action: string;
       stop: string;
@@ -374,6 +378,9 @@ export type TranslationDictionary = {
       };
     };
     edit: {
+      inBranch: string;
+      branchHint: string;
+      branchOpened: string;
       action: string;
       title: string;
       warning: string;

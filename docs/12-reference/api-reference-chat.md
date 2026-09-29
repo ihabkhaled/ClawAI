@@ -112,7 +112,9 @@ Copy the thread, up to and including one message, into a new thread (a branch).
 The source is untouched. Counts against the daily chat limit.
 
 **Auth**: Bearer token (must own thread)
-**Request Body**: `{ "fromMessageId": "<message id in this thread>" }`
+**Request Body**: `{ "fromMessageId": "<message id in this thread>", "cut": "INCLUDE" }`
+— `cut` is optional: `INCLUDE` (default) keeps the pivot message, `BEFORE`
+stops just short of it (ADR-131, used by "Edit in a new branch").
 **Response 201**: the new ChatThread, with `branchedFromThreadId`,
 `branchedFromMessageId` and `branchRootThreadId` set (ADR-129)
 **Errors**: `404 ENTITY_NOT_FOUND` (thread or message not found, or message from
@@ -302,7 +304,18 @@ Get a specific message.
 Regenerate an AI response for a message.
 
 **Auth**: Bearer token (must own thread)
-**Response 200**: New ASSISTANT ChatMessage
+**Request Body** (optional, ADR-131):
+
+```json
+{ "routingMode": "MANUAL_MODEL", "provider": "ANTHROPIC", "model": "claude-opus-5" }
+```
+
+`routingMode` is `AUTO` (re-route from scratch) or `MANUAL_MODEL` (needs both
+`provider` and `model`). Omitted: the thread's pinned model, else the mode the
+turn was first routed with (no body at all is the same as `{}`). The same plan
+check as a new message runs first.
+**Response 201**: the message it was called on; the new answer arrives over the stream
+**Errors**: `403`/`429` plan and quota refusals (as for `POST /chat-messages`)
 
 ---
 

@@ -65,6 +65,7 @@ export class ChatThreadsRepository {
     limit: number | null,
     sourceThreadId: string,
     upToCreatedAt: Date,
+    includePivot = true,
   ): Promise<ChatThread | null> {
     return this.prisma.$transaction(async (transaction) => {
       await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`chat:${data.userId}`}, 0))`;
@@ -79,7 +80,10 @@ export class ChatThreadsRepository {
 
       const branch = await transaction.chatThread.create({ data });
       const source = await transaction.chatMessage.findMany({
-        where: { threadId: sourceThreadId, createdAt: { lte: upToCreatedAt } },
+        where: {
+          threadId: sourceThreadId,
+          createdAt: includePivot ? { lte: upToCreatedAt } : { lt: upToCreatedAt },
+        },
         orderBy: { createdAt: 'asc' },
       });
       await transaction.chatMessage.createMany({

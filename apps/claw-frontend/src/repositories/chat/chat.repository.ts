@@ -1,4 +1,4 @@
-import type { MessageFeedback } from '@/enums';
+import { BranchCut, type MessageFeedback } from '@/enums';
 import { apiClient } from '@/services/shared/api-client';
 import type {
   InThreadSearchMatch,
@@ -7,6 +7,7 @@ import type {
   ChatThread,
   ChatMessage,
   ThreadLineage,
+  RegenerateMessageRequest,
   ConsensusRequest,
   ConsensusResponse,
   CreateThreadRequest,
@@ -75,9 +76,14 @@ export const chatRepository = {
    * Non-destructive, unlike editing: the original is left exactly as it was and
    * the branch is explored beside it.
    */
-  async branchThread(threadId: string, fromMessageId: string): Promise<ChatThread> {
+  async branchThread(
+    threadId: string,
+    fromMessageId: string,
+    cut: BranchCut = BranchCut.INCLUDE,
+  ): Promise<ChatThread> {
     const response = await apiClient.post<ChatThread>(`/chat-threads/${threadId}/branch`, {
       fromMessageId,
+      cut,
     });
     return response.data;
   },
@@ -149,8 +155,14 @@ export const chatRepository = {
     return response.data;
   },
 
-  async regenerateMessage(messageId: string): Promise<ChatMessage> {
-    const response = await apiClient.post<ChatMessage>(`/chat-messages/${messageId}/regenerate`);
+  async regenerateMessage(
+    messageId: string,
+    choice: RegenerateMessageRequest = {},
+  ): Promise<ChatMessage> {
+    const response = await apiClient.post<ChatMessage>(
+      `/chat-messages/${messageId}/regenerate`,
+      choice,
+    );
     return response.data;
   },
 

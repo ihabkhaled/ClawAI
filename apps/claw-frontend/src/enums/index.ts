@@ -192,3 +192,4 @@ export * from './mask-brush-mode.enum';
 export * from './image-mask-refusal-code.enum';
 export { MaskBrushMode } from './mask-brush-mode.enum';
 export { ImageMaskRefusalCode } from './image-mask-refusal-code.enum';
+export { BranchCut } from './branch-cut.enum';

@@ -7886,7 +7886,7 @@
           "file": "rules/45-display-currency-versus-settlement-currency.md"
         },
         {
-          "bytes": 2637,
+          "bytes": 3190,
           "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
         },
         {
@@ -8342,7 +8342,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5533
+        "value": 5539
       },
       "localeCount": 13,
       "locales": [
@@ -10320,7 +10320,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 244
+        "testFiles": 246
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10340,7 +10340,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 626
+        "testFiles": 627
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11118,7 +11118,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1740,
+    "totalTestFiles": 1743,
     "workspaceCount": 25
   }
 }

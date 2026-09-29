@@ -484,8 +484,11 @@ Get a single message. Must own the containing thread.
 **Auth Required:** Yes
 
 Regenerate the AI response for a message. Must own the containing thread.
+Optional body `{ routingMode: AUTO | MANUAL_MODEL, provider, model }` picks who
+answers; the same plan/quota check as a send runs first (403/429). Full contract:
+[api-reference-chat.md](api-reference-chat.md#post-chat-messagesidregenerate) (ADR-131).
 
-**Response (200):** Updated ChatMessage object.
+**Response (201):** the message it was called on; the new answer arrives over the stream.
 
 ---
 

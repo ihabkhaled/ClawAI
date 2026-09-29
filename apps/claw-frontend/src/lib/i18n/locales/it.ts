@@ -379,6 +379,10 @@ export const it: TranslationDictionary = {
       sourceMissing:
         'Il messaggio citato non è più in questa conversazione. Rimuovi la citazione e riprova.',
     },
+    regenerateWith: {
+      trigger: 'Riprova con…',
+      auto: 'Lascia scegliere ad AUTO',
+    },
     speech: {
       action: 'Leggi ad alta voce',
       stop: 'Interrompi la lettura ad alta voce',
@@ -414,6 +418,11 @@ export const it: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Modifica in una nuova diramazione',
+      branchHint:
+        'Oppure lascia questa conversazione com’è e fai la domanda modificata in una nuova diramazione: non viene eliminato nulla.',
+      branchOpened:
+        'Aperta una nuova diramazione con la domanda modificata. Premi Invia quando è pronta.',
       action: 'Modifica ed esegui di nuovo',
       title: 'Modifica questo messaggio',
       warning:

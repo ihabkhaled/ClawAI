@@ -283,6 +283,22 @@ text up to 2,000). `resolveQuotes` reads every id under the SAME thread
   (`buildMessageMetadata(dto, run, quotes)`); it replaces the metadata, so
   forgetting them there would erase the quote once research finishes.
 
+## Regenerate: a chosen model, the same plan gate (2026-09-30, ADR-131)
+
+`POST /chat-messages/:id/regenerate` takes an optional
+`{ routingMode: AUTO | MANUAL_MODEL, provider, model }`; empty = the old rule
+(pinned model, else the original mode), decided in `resolveRegenerateRouting`.
+Regenerate AND edit-and-rerun now call `assertCanSendMessage` before
+publishing (the edit before it deletes anything) and put `allowedModels` +
+`modelAccessMode` on the event — both skipped it, so routing saw a
+restricted-to-nothing plan. `message-created-publishers.spec.ts` fails for any
+new publisher without the access mode (Runtime V2 is the allowlisted,
+fail-closed exception). The body is optional: no body = `{}`.
+
+`POST /chat-threads/:id/branch` takes `cut: INCLUDE | BEFORE` (`BranchCut`).
+BEFORE copies strictly older messages; the frontend's "Edit in a new branch"
+uses it and prefills the edited question without sending it.
+
 ## Editing a prompt truncates the thread (2026-08-28)
 
 `POST /chat-messages/:id/edit` rewrites a user prompt and re-runs the thread

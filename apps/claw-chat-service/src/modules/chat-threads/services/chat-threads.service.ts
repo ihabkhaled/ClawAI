@@ -8,6 +8,7 @@ import { type CreateThreadDto } from '../dto/create-thread.dto';
 import { type UpdateThreadDto } from '../dto/update-thread.dto';
 import { type ListThreadsQueryDto } from '../dto/list-threads-query.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { BranchCut } from '../../../common/enums';
 import { type PaginatedResult } from '../../../common/types';
 import {
   type RewindThreadResult,
@@ -18,7 +19,7 @@ import { type ChatThread } from '../../../generated/prisma';
 import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
 import { DailyLimitService } from '../../chat-messages/services/daily-limit.service';
 import { copyThreadSettings } from '../utilities/copy-thread-settings.utility';
-import { branchLineageFor } from '../utilities/branch-lineage.utility';
+import { branchLineageFor, buildThreadLineage } from '../utilities/branch-lineage.utility';
 
 @Injectable()
 export class ChatThreadsService {
@@ -81,7 +82,12 @@ export class ChatThreadsService {
    * is a thread, and exempting it would make branching the way around the
    * limit.
    */
-  async branchThread(userId: string, threadId: string, fromMessageId: string): Promise<ChatThread> {
+  async branchThread(
+    userId: string,
+    threadId: string,
+    fromMessageId: string,
+    cut: BranchCut = BranchCut.INCLUDE,
+  ): Promise<ChatThread> {
     const source = await this.chatThreadsRepository.findById(threadId);
     if (!source) {
       throw new EntityNotFoundException('ChatThread', threadId);
@@ -105,6 +111,7 @@ export class ChatThreadsService {
       resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),
       threadId,
       pivot.createdAt,
+      cut === BranchCut.INCLUDE,
     );
     if (!branch) {
       throw new BusinessException(
@@ -209,16 +216,8 @@ export class ChatThreadsService {
         : this.chatThreadsRepository.findLineageEntry(userId, thread.branchedFromThreadId),
       this.chatThreadsRepository.findDirectBranches(userId, id),
     ]);
-    this.logger.debug(
-      `getLineage: thread=${id} parent=${parent?.id ?? 'none'} branches=${String(branches.length)}`,
-    );
-    return {
-      threadId: id,
-      parent,
-      parentDeleted: thread.branchedFromThreadId !== null && parent === null,
-      forkMessageId: thread.branchedFromMessageId,
-      branches,
-    };
+    this.logger.debug(`getLineage: thread=${id} parent=${parent?.id ?? 'none'}`);
+    return buildThreadLineage(thread, parent, branches);
   }
 
   async updateThread(id: string, userId: string, dto: UpdateThreadDto): Promise<ChatThread> {

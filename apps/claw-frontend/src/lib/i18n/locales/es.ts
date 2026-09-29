@@ -378,6 +378,10 @@ export const es: TranslationDictionary = {
       sourceMissing:
         'El mensaje que citaste ya no está en esta conversación. Quita la cita e inténtalo de nuevo.',
     },
+    regenerateWith: {
+      trigger: 'Reintentar con…',
+      auto: 'Dejar que AUTO elija',
+    },
     speech: {
       action: 'Leer en voz alta',
       stop: 'Dejar de leer en voz alta',
@@ -413,6 +417,11 @@ export const es: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Editar en una rama nueva',
+      branchHint:
+        'O deja esta conversación tal como está y haz la pregunta editada en una rama nueva: no se elimina nada.',
+      branchOpened:
+        'Se abrió una rama nueva con tu pregunta editada. Pulsa Enviar cuando esté lista.',
       action: 'Editar y volver a ejecutar',
       title: 'Editar este mensaje',
       warning:

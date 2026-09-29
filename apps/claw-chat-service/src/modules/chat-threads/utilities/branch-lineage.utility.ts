@@ -1,5 +1,9 @@
 import type { ChatThread } from '../../../generated/prisma';
-import type { CreateThreadData } from '../types/chat-threads.types';
+import type {
+  CreateThreadData,
+  ThreadLineage,
+  ThreadLineageEntry,
+} from '../types/chat-threads.types';
 
 /**
  * The lineage fields a new branch of `source`, cut at `fromMessageId`, carries.
@@ -16,5 +20,24 @@ export function branchLineageFor(
     branchedFromThreadId: source.id,
     branchedFromMessageId: fromMessageId,
     branchRootThreadId: source.branchRootThreadId ?? source.id,
+  };
+}
+
+/**
+ * The lineage view of `thread`. A branch whose source lookup came back empty is
+ * reported as `parentDeleted`, so the UI says "the original is gone" instead of
+ * pretending the thread was never a branch.
+ */
+export function buildThreadLineage(
+  thread: ChatThread,
+  parent: ThreadLineageEntry | null,
+  branches: ThreadLineageEntry[],
+): ThreadLineage {
+  return {
+    threadId: thread.id,
+    parent,
+    parentDeleted: thread.branchedFromThreadId !== null && parent === null,
+    forkMessageId: thread.branchedFromMessageId,
+    branches,
   };
 }

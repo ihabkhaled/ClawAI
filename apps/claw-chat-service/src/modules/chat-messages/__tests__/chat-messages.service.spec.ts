@@ -553,6 +553,78 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    it('re-routes with AUTO when asked, forcing no model even on a pinned thread', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue({
+        ...mockThread,
+        preferredProvider: 'OPENAI',
+        preferredModel: 'gpt-5',
+      });
+
+      await service.regenerateMessage('msg-1', 'user-1', { routingMode: 'AUTO' });
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({
+          routingMode: 'AUTO',
+          forcedProvider: undefined,
+          forcedModel: undefined,
+        }),
+      );
+    });
+
+    it('answers again with a chosen model after the same plan check as a new message', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-1', 'user-1', {
+        routingMode: 'MANUAL_MODEL',
+        provider: 'ANTHROPIC',
+        model: 'claude-opus-5',
+      });
+
+      expect(assertCanSendMessage).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ provider: 'ANTHROPIC', model: 'claude-opus-5' }),
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({
+          routingMode: 'MANUAL_MODEL',
+          forcedProvider: 'ANTHROPIC',
+          forcedModel: 'claude-opus-5',
+        }),
+      );
+    });
+
+    it('refuses a model the plan forbids before publishing anything', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      assertCanSendMessage.mockRejectedValueOnce(new Error('PLAN_MODEL_NOT_ALLOWED'));
+
+      await expect(
+        service.regenerateMessage('msg-1', 'user-1', {
+          routingMode: 'MANUAL_MODEL',
+          provider: 'ANTHROPIC',
+          model: 'claude-opus-5',
+        }),
+      ).rejects.toThrow('PLAN_MODEL_NOT_ALLOWED');
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it("carries the plan's access mode on the event, like a new message does", async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-1', 'user-1');
+
+      const publishCalls = vi.mocked(rabbitMQ.publish)?.mock.calls ?? [];
+      const [, event] =
+        publishCalls.find(([pattern]) => pattern === EventPattern.MESSAGE_CREATED) ?? [];
+      expect(event).toHaveProperty('allowedModels');
+      expect(event).toHaveProperty('modelAccessMode');
+    });
+
     it('gates regeneration when critic review is enabled on the thread', async () => {
       messagesRepo.findById.mockResolvedValue(mockMessage);
       threadsRepo.findById!.mockResolvedValue({
@@ -906,6 +978,39 @@ describe('ChatMessagesService', () => {
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.MESSAGE_CREATED,
         expect.objectContaining({ messageId: 'msg-1', content: 'second draft', regenerate: true }),
+      );
+    });
+
+    it('checks the plan BEFORE rewriting or deleting anything (ADR-131)', async () => {
+      // A refused edit used to be impossible to refuse in time: the thread
+      // below the message was already gone when routing met the restricted plan.
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      assertCanSendMessage.mockRejectedValueOnce(new Error('QUOTA_DAILY_EXCEEDED'));
+
+      await expect(service.editAndRerunMessage('msg-1', 'user-1', 'second draft')).rejects.toThrow(
+        'QUOTA_DAILY_EXCEEDED',
+      );
+      expect(messagesRepo.replaceContent).not.toHaveBeenCalled();
+      expect(messagesRepo.deleteCreatedAfter).not.toHaveBeenCalled();
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it("carries the plan's access mode on the re-run event", async () => {
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      assertCanSendMessage.mockResolvedValueOnce({
+        isAdmin: false,
+        plan: { limits: { messagesPerDay: 12 } },
+        allowedModels: [],
+        modelAccessMode: 'ALLOW_ALL',
+      });
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'second draft');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ modelAccessMode: 'ALLOW_ALL' }),
       );
     });
 

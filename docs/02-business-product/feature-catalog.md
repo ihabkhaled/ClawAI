@@ -24,27 +24,27 @@ Last updated: 2026-04-11
 
 ## 1. Chat & Messaging
 
-| #     | Feature                        | Status | Description                                                                                          |
-| ----- | ------------------------------ | ------ | ---------------------------------------------------------------------------------------------------- |
-| F-001 | Thread Management              | GA     | Create, list, update, delete chat threads with per-thread settings                                   |
-| F-002 | Message Sending                | GA     | Send messages, receive AI responses with full routing pipeline                                       |
-| F-003 | Real-Time SSE Streaming        | GA     | Server-Sent Events for live response delivery                                                        |
-| F-004 | Model Selector                 | GA     | Grouped dropdown: AUTO + provider groups with all synced models                                      |
-| F-005 | File Attachments               | GA     | Attach up to 10 uploaded files per message for AI analysis                                           |
-| F-006 | Context Pack Attachment        | GA     | Attach up to 10 curated knowledge packs per thread                                                   |
-| F-007 | System Prompt                  | GA     | Custom system prompt per thread (max 10,000 chars)                                                   |
-| F-008 | Temperature & Max Tokens       | GA     | Per-thread creativity (0-2) and response length (1-32,000)                                           |
-| F-009 | Regenerate Response            | GA     | Re-execute routing and generation for any assistant message                                          |
-| F-010 | Message Feedback               | GA     | Thumbs up/down on individual AI responses                                                            |
-| F-011 | Routing Transparency           | GA     | Expandable badge showing confidence, reason tags, privacy/cost class                                 |
-| F-012 | Thinking Indicator             | GA     | Visual indicator while polling for AI response (3-min max)                                           |
-| F-013 | Parallel Multi-Model Compare   | GA     | Send one prompt to 2-5 models simultaneously, view side-by-side responses                            |
-| F-014 | Auto Re-Routing on Weak Answer | GA     | Detects weak responses (short, repetitive, refusal) and re-routes to fallback provider automatically |
-| F-015 | Judge-and-Referee Layer        | GA     | Generator-critic-judge pipeline: second model critiques, local judge accepts/revises/escalates       |
-| F-016 | Consensus Response Mode        | GA     | Collects multiple candidate answers and synthesizes a consensus result                               |
-| F-017 | Escalation Chain               | GA     | Starts with lower-cost or faster models, escalates to stronger ones when thresholds are not met      |
-| F-018 | Answer Repair and Verification | GA     | Repair, verify, and best-of-n style quality workflows before final delivery                          |
-| F-019 | Role Packs and Pipelines       | GA     | Multi-role prompt packs and staged response pipelines                                                |
+| #     | Feature                        | Status | Description                                                                                                                    |
+| ----- | ------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| F-001 | Thread Management              | GA     | Create, list, update, delete chat threads with per-thread settings                                                             |
+| F-002 | Message Sending                | GA     | Send messages, receive AI responses with full routing pipeline                                                                 |
+| F-003 | Real-Time SSE Streaming        | GA     | Server-Sent Events for live response delivery                                                                                  |
+| F-004 | Model Selector                 | GA     | Grouped dropdown: AUTO + provider groups with all synced models                                                                |
+| F-005 | File Attachments               | GA     | Attach up to 10 uploaded files per message for AI analysis                                                                     |
+| F-006 | Context Pack Attachment        | GA     | Attach up to 10 curated knowledge packs per thread                                                                             |
+| F-007 | System Prompt                  | GA     | Custom system prompt per thread (max 10,000 chars)                                                                             |
+| F-008 | Temperature & Max Tokens       | GA     | Per-thread creativity (0-2) and response length (1-32,000)                                                                     |
+| F-009 | Regenerate Response            | GA     | Re-execute routing and generation for any assistant message, with the same model, AUTO, or any model the plan allows (ADR-131) |
+| F-010 | Message Feedback               | GA     | Thumbs up/down on individual AI responses                                                                                      |
+| F-011 | Routing Transparency           | GA     | Expandable badge showing confidence, reason tags, privacy/cost class                                                           |
+| F-012 | Thinking Indicator             | GA     | Visual indicator while polling for AI response (3-min max)                                                                     |
+| F-013 | Parallel Multi-Model Compare   | GA     | Send one prompt to 2-5 models simultaneously, view side-by-side responses                                                      |
+| F-014 | Auto Re-Routing on Weak Answer | GA     | Detects weak responses (short, repetitive, refusal) and re-routes to fallback provider automatically                           |
+| F-015 | Judge-and-Referee Layer        | GA     | Generator-critic-judge pipeline: second model critiques, local judge accepts/revises/escalates                                 |
+| F-016 | Consensus Response Mode        | GA     | Collects multiple candidate answers and synthesizes a consensus result                                                         |
+| F-017 | Escalation Chain               | GA     | Starts with lower-cost or faster models, escalates to stronger ones when thresholds are not met                                |
+| F-018 | Answer Repair and Verification | GA     | Repair, verify, and best-of-n style quality workflows before final delivery                                                    |
+| F-019 | Role Packs and Pipelines       | GA     | Multi-role prompt packs and staged response pipelines                                                                          |
 
 ### User Stories
 

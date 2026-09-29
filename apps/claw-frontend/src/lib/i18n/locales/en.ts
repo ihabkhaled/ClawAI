@@ -375,6 +375,10 @@ export const en: TranslationDictionary = {
       sourceMissing:
         'The message you quoted is no longer in this conversation. Remove the quote and try again.',
     },
+    regenerateWith: {
+      trigger: 'Try again with…',
+      auto: 'Let AUTO choose',
+    },
     speech: {
       action: 'Read aloud',
       stop: 'Stop reading aloud',
@@ -407,6 +411,10 @@ export const en: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Edit in a new branch',
+      branchHint:
+        'Or keep this conversation as it is and ask the edited question in a new branch — nothing is deleted.',
+      branchOpened: 'Opened a new branch with your edited question. Press Send when it is ready.',
       action: 'Edit and re-run',
       title: 'Edit this message',
       warning:

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BranchCut } from '../../../common/enums';
 
 /**
  * Where to cut the copy.
@@ -9,6 +10,8 @@ import { z } from 'zod';
  */
 export const branchThreadSchema = z.object({
   fromMessageId: z.string().max(255, 'Message ID must be at most 255 characters'),
+  /** INCLUDE (default) keeps the pivot; BEFORE stops just short of it. */
+  cut: z.nativeEnum(BranchCut).optional(),
 });
 
 export type BranchThreadDto = z.infer<typeof branchThreadSchema>;

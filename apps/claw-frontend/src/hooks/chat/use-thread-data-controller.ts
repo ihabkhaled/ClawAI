@@ -6,6 +6,7 @@ import { useEntitlements } from '@/hooks/plans/use-entitlements';
 import { useQuoteDraftStore } from '@/stores/quote-draft.store';
 import type {
   ModelSelection,
+  RegenerateMessageRequest,
   ResearchOptions,
   UseThreadDataControllerParams,
   UseThreadDataControllerReturn,
@@ -108,14 +109,14 @@ export const useThreadDataController = ({
   );
 
   const handleRegenerate = useCallback(
-    (messageId: string): void => {
+    (messageId: string, choice?: RegenerateMessageRequest): void => {
       logger.info({
         component: 'chat',
         action: 'user-regenerate',
         message: 'User regenerating message',
         details: { threadId, messageId },
       });
-      regenerate(messageId);
+      regenerate(messageId, choice);
     },
     [regenerate, threadId],
   );

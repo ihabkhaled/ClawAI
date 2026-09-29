@@ -31,6 +31,7 @@ import { MessageSpeechPlayer } from '@/components/chat/message-speech-player';
 import { NarrationLog } from '@/components/chat/narration-log';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { PlanFeatureNotice } from '@/components/chat/plan-feature-notice';
+import { RegenerateWithModel } from '@/components/chat/regenerate-with-model';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -273,6 +274,7 @@ function MessageBubbleBase({
             />
             <MessageEditAction
               messageId={message.id}
+              threadId={message.threadId}
               content={message.content}
               onRerunStarted={onRerunStarted}
             />
@@ -387,6 +389,9 @@ function MessageBubbleBase({
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>
+            ) : null}
+            {onRegenerate ? (
+              <RegenerateWithModel onPick={(choice) => onRegenerate(message.id, choice)} />
             ) : null}
             <MessageBranchAction threadId={message.threadId} messageId={message.id} />
             {onFeedback ? (

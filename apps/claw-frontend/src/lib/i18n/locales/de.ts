@@ -382,6 +382,10 @@ export const de: TranslationDictionary = {
       sourceMissing:
         'Die zitierte Nachricht ist nicht mehr in dieser Unterhaltung. Entferne das Zitat und versuche es erneut.',
     },
+    regenerateWith: {
+      trigger: 'Erneut versuchen mit…',
+      auto: 'AUTO wählen lassen',
+    },
     speech: {
       action: 'Vorlesen',
       stop: 'Vorlesen beenden',
@@ -416,6 +420,11 @@ export const de: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'In neuer Verzweigung bearbeiten',
+      branchHint:
+        'Oder behalte diese Unterhaltung, wie sie ist, und stelle die bearbeitete Frage in einer neuen Verzweigung – nichts wird gelöscht.',
+      branchOpened:
+        'Neue Verzweigung mit deiner bearbeiteten Frage geöffnet. Drücke Senden, wenn sie fertig ist.',
       action: 'Bearbeiten und erneut ausführen',
       title: 'Diese Nachricht bearbeiten',
       warning:

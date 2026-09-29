@@ -379,6 +379,10 @@ export const fr: TranslationDictionary = {
       sourceMissing:
         'Le message cité ne fait plus partie de cette conversation. Retirez la citation et réessayez.',
     },
+    regenerateWith: {
+      trigger: 'Réessayer avec…',
+      auto: 'Laisser AUTO choisir',
+    },
     speech: {
       action: 'Lire à voix haute',
       stop: 'Arrêter la lecture à voix haute',
@@ -415,6 +419,11 @@ export const fr: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Modifier dans une nouvelle branche',
+      branchHint:
+        'Ou gardez cette conversation telle quelle et posez la question modifiée dans une nouvelle branche : rien n’est supprimé.',
+      branchOpened:
+        'Une nouvelle branche s’est ouverte avec votre question modifiée. Appuyez sur Envoyer quand elle est prête.',
       action: 'Modifier et relancer',
       title: 'Modifier ce message',
       warning: 'Tout ce qui suit ce message sera supprimé, et la conversation repart d’ici.',

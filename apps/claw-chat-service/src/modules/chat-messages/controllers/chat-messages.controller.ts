@@ -21,6 +21,7 @@ import { type VerifyMessageDto, verifyMessageSchema } from '../dto/verify-messag
 import { type PipelineMessageDto, pipelineMessageSchema } from '../dto/pipeline-message.dto';
 import { type RolePackMessageDto, rolePackMessageSchema } from '../dto/role-pack-message.dto';
 import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
+import { type RegenerateMessageDto, regenerateMessageSchema } from '../dto/regenerate-message.dto';
 import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
 import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
 import { type CursorPaginatedResult } from '../types/chat-messages.types';
@@ -186,8 +187,9 @@ export class ChatMessagesController {
   async regenerate(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(regenerateMessageSchema)) dto: RegenerateMessageDto,
   ): Promise<ChatMessage> {
-    return this.chatMessagesService.regenerateMessage(id, user.id);
+    return this.chatMessagesService.regenerateMessage(id, user.id, dto);
   }
 
   @Post(':id/edit')

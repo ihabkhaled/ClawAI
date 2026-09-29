@@ -104,6 +104,32 @@ describe('ChatThreadsRepository.createBranchWithinDailyLimit', () => {
   });
 });
 
+describe('ChatThreadsRepository branch cut', () => {
+  function findManyWhere(includePivot: boolean): Promise<unknown> {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const transaction = {
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      chatThread: { count: vi.fn(), create: vi.fn().mockResolvedValue({ id: 'b' }) },
+      chatMessage: { findMany, createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    };
+    const prisma = {
+      $transaction: async (run: (tx: typeof transaction) => Promise<unknown>) => run(transaction),
+    } as unknown as PrismaService;
+    const cutoff = new Date('2026-09-01T10:00:00Z');
+    return new ChatThreadsRepository(prisma)
+      .createBranchWithinDailyLimit({ userId: 'u' }, null, 's', cutoff, includePivot)
+      .then(() => findMany.mock.calls[0]?.[0].where.createdAt);
+  }
+
+  it('keeps the pivot by default', async () => {
+    await expect(findManyWhere(true)).resolves.toEqual({ lte: new Date('2026-09-01T10:00:00Z') });
+  });
+
+  it('stops just short of the pivot for an edit-in-a-branch', async () => {
+    await expect(findManyWhere(false)).resolves.toEqual({ lt: new Date('2026-09-01T10:00:00Z') });
+  });
+});
+
 describe('ChatThreadsRepository lineage reads are owner-scoped', () => {
   it('lists direct branches only for the same user', async () => {
     const { repository, threadFindMany } = repositoryWithTransaction([]);

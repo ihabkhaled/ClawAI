@@ -378,6 +378,10 @@ export const ja: TranslationDictionary = {
       sourceMissing:
         '引用したメッセージはこの会話にもうありません。引用を削除してもう一度お試しください。',
     },
+    regenerateWith: {
+      trigger: '別のモデルで再試行…',
+      auto: 'AUTO に任せる',
+    },
     speech: {
       action: '読み上げ',
       stop: '読み上げを停止',
@@ -411,6 +415,10 @@ export const ja: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: '新しい分岐で編集',
+      branchHint:
+        'この会話はそのままにして、編集した質問を新しい分岐で尋ねることもできます。何も削除されません。',
+      branchOpened: '編集した質問で新しい分岐を開きました。準備ができたら送信を押してください。',
       action: '編集して再実行',
       title: 'このメッセージを編集',
       warning: 'このメッセージより後はすべて削除され、会話はここから再実行されます。',

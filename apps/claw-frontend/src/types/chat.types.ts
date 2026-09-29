@@ -179,6 +179,16 @@ export type CreateMessageRequest = {
   quotes?: MessageQuoteRequest[];
 };
 
+/**
+ * How to answer again (Batch 4). Absent = the old behaviour (the thread's pinned
+ * model, else the original mode). AUTO re-routes; MANUAL_MODEL needs both ids.
+ */
+export type RegenerateMessageRequest = {
+  routingMode?: RoutingMode;
+  provider?: string;
+  model?: string;
+};
+
 /** A quote as the send request carries it: the source id and the words. */
 export type MessageQuoteRequest = {
   sourceMessageId: string;

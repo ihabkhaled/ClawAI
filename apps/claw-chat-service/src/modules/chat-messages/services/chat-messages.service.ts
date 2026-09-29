@@ -93,6 +93,8 @@ import {
   type UserMessageMetadata,
 } from '../types/user-message-metadata.types';
 import { type MessageQuoteInput } from '../dto/quote-fields.dto';
+import { type RegenerateMessageDto } from '../dto/regenerate-message.dto';
+import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utility';
 import { type MessageQuote } from '../types/message-quote.types';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
@@ -1001,7 +1003,11 @@ export class ChatMessagesService implements OnModuleInit {
     return pages.length > 0 ? { pages } : undefined;
   }
 
-  async regenerateMessage(id: string, userId: string): Promise<ChatMessage> {
+  async regenerateMessage(
+    id: string,
+    userId: string,
+    dto: RegenerateMessageDto = {},
+  ): Promise<ChatMessage> {
     this.logger.log(`regenerateMessage: starting for message ${id} by user ${userId}`);
     const message = await this.chatMessagesRepository.findById(id);
     if (!message) {
@@ -1021,10 +1027,18 @@ export class ChatMessagesService implements OnModuleInit {
     // it, which used to strand the run with no answer and no error.
     const target = await this.resolveRegenerationTarget(message);
 
-    const regenProvider = thread.preferredProvider ?? undefined;
-    const regenModel = thread.preferredModel ?? undefined;
-    const regenRoutingMode =
-      regenProvider && regenModel ? RoutingMode.MANUAL_MODEL : target.routingMode;
+    const routing = resolveRegenerateRouting(dto, thread, target.routingMode ?? RoutingMode.AUTO);
+    const regenProvider = routing.forcedProvider;
+    const regenModel = routing.forcedModel;
+    const regenRoutingMode = routing.routingMode;
+    // A regeneration is a new provider call: the same plan gate as a new
+    // message — a model the plan forbids, a spent quota — and the same access
+    // list on the event, or routing treats the turn as restricted-to-nothing.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
+      provider: regenProvider,
+      model: regenModel,
+      promptTokens: estimateTokensFromText(target.content),
+    });
 
     this.logger.log(
       `regenerateMessage: publishing message.created for ${target.id} (requested via ${id}) mode=${regenRoutingMode}`,
@@ -1041,6 +1055,8 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: regenRoutingMode,
       forcedProvider: regenProvider,
       forcedModel: regenModel,
+      allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
+      modelAccessMode: entitlements?.modelAccessMode,
       regenerate: true,
       ...modality,
       timestamp: new Date().toISOString(),
@@ -1155,6 +1171,16 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     content: string,
   ): Promise<void> {
+    const forcedProvider = thread.preferredProvider ?? undefined;
+    const forcedModel = thread.preferredModel ?? undefined;
+    // The plan gate runs BEFORE anything is rewritten or deleted (ADR-131):
+    // a user refused for quota or model must not lose the rest of the thread
+    // to an edit that then cannot run.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
+      provider: forcedProvider,
+      model: forcedModel,
+      promptTokens: estimateTokensFromText(content),
+    });
     // Written only when still null, so a second edit keeps the first version.
     await this.chatMessagesRepository.replaceContent(
       message.id,
@@ -1169,8 +1195,6 @@ export class ChatMessagesService implements OnModuleInit {
       `editAndRerunMessage: message=${message.id} thread=${message.threadId} removedBelow=${removed}`,
     );
 
-    const forcedProvider = thread.preferredProvider ?? undefined;
-    const forcedModel = thread.preferredModel ?? undefined;
     const modality = await this.resolveRerunAttachmentModality(userId, message);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -1180,6 +1204,8 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: forcedProvider && forcedModel ? RoutingMode.MANUAL_MODEL : message.routingMode,
       forcedProvider,
       forcedModel,
+      allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
+      modelAccessMode: entitlements?.modelAccessMode,
       // The same flag regeneration uses: routing must not bill this as a new
       // turn against the daily message ceiling, because it is the same turn.
       regenerate: true,

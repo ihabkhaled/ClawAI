@@ -358,6 +358,10 @@ export const zh: TranslationDictionary = {
       limitReached: '每条消息最多可引用 3 段内容。',
       sourceMissing: '你引用的消息已不在此对话中。请移除引用后重试。',
     },
+    regenerateWith: {
+      trigger: '换个模型重试…',
+      auto: '让 AUTO 选择',
+    },
     speech: {
       action: '朗读',
       stop: '停止朗读',
@@ -390,6 +394,9 @@ export const zh: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: '在新分支中编辑',
+      branchHint: '也可以保留当前对话不变，在新分支中提出修改后的问题——不会删除任何内容。',
+      branchOpened: '已用你修改后的问题打开新分支。准备好后点击发送。',
       action: '编辑并重新运行',
       title: '编辑此消息',
       warning: '此消息之后的内容都会被删除，对话将从这里重新运行。',

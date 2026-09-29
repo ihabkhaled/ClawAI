@@ -51,6 +51,7 @@ import type {
   ThreadLineage,
   ComposerQuote,
   QuotableSelection,
+  RegenerateMessageRequest,
   ChatMessage,
   ChatThread,
   CreateMessageRequest,
@@ -255,6 +256,15 @@ export type UseMessageEditReturn = {
   isPending: boolean;
   /** False for an empty or unchanged draft, which the server refuses anyway. */
   canSave: boolean;
+  /** Keeps this conversation and asks the edited question in a new branch. */
+  saveAsBranch: () => void;
+  isBranching: boolean;
+};
+
+export type UseEditInBranchReturn = {
+  /** Branches just before the message and puts `text` in the branch's composer. */
+  editInBranch: (text: string) => void;
+  isPending: boolean;
 };
 
 export type UseJumpToMessageReturn = {
@@ -1158,7 +1168,7 @@ export type UseVirtualizedMessagesControllerParams = {
   isCancellingStream?: boolean;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate: (messageId: string) => void;
+  onRegenerate: (messageId: string, choice?: RegenerateMessageRequest) => void;
   /** Told when an edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
   // i18n surface forwarded into sub-components.

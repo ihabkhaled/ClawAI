@@ -52,7 +52,7 @@ export class ChatThreadsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(branchThreadSchema)) dto: BranchThreadDto,
   ): Promise<ChatThread> {
-    return this.chatThreadsService.branchThread(user.id, id, dto.fromMessageId);
+    return this.chatThreadsService.branchThread(user.id, id, dto.fromMessageId, dto.cut);
   }
 
   @Post(':id/rewind')

@@ -92,6 +92,7 @@ import type {
   ComposerQuote,
   MessageQuote,
   QuotableSelection,
+  RegenerateMessageRequest,
   VisibleProgressStage,
 } from './chat.types';
 import type { CompareJudgeLaneResult } from './compare-judge.types';
@@ -643,7 +644,7 @@ export type MessageBubbleProps = {
   message: ChatMessage;
   routingDecision?: RoutingDecision | null;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate?: (messageId: string) => void;
+  onRegenerate?: (messageId: string, choice?: RegenerateMessageRequest) => void;
   /** Told when an edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
 };
@@ -1262,7 +1263,7 @@ export type VirtualizedMessagesProps = {
 export type VirtualizedMessageItemProps = {
   item: MessageRenderItem;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate?: (messageId: string) => void;
+  onRegenerate?: (messageId: string, choice?: RegenerateMessageRequest) => void;
   /** Told when an edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
   t: TranslateFunction;
@@ -2866,6 +2867,8 @@ export type CodingAgentInstallFigureProps = {
 /** The edit affordance on a user message: the trigger and its dialog. */
 export type MessageEditActionProps = {
   messageId: string;
+  /** The message's thread — an edit can open a branch of it instead. */
+  threadId: string;
   content: string;
   /** Told when the edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
@@ -2903,6 +2906,12 @@ export type SelectionQuoteButtonProps = {
 export type MessageQuotesProps = {
   quotes: readonly MessageQuote[];
   label: string;
+};
+
+/** "Try again with…": a model picker whose pick regenerates the answer. */
+export type RegenerateWithModelProps = {
+  onPick: (choice: RegenerateMessageRequest) => void;
+  disabled?: boolean;
 };
 
 export type MessageBranchActionProps = {

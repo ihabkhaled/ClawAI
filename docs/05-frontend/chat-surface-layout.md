@@ -370,6 +370,15 @@ when branches were cut from this thread a `Branches (n)` menu of links. Data:
 a failed read degrades to no strip, never to a blocked conversation. The thread
 list marks a branch with a `GitBranch` icon (`thread-list-item.tsx`).
 
+## Try again with another model, and edit in a branch (ADR-131)
+
+Beside Regenerate, **Try again with…** is the composer's `ModelPicker`
+(`RegenerateWithModel` → `useRegenerateWithModel`, same groups and badges) with
+an AUTO option; a pick calls `onRegenerate(messageId, choice)`. The edit dialog
+has **Edit in a new branch** (`useEditInBranch`): it branches BEFORE the
+message, writes the edited text into the branch's composer draft and opens the
+branch. It never sends — the person presses Send.
+
 ## Quoting a selection (ADR-130)
 
 Every message bubble carries `data-quote-source-id`. Selecting text inside ONE

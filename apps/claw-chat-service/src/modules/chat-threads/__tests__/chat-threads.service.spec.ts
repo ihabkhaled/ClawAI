@@ -4,7 +4,7 @@ import { ChatThreadsService } from '../services/chat-threads.service';
 import { type ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { type ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
-import { SortOrder } from '../../../common/enums';
+import { BranchCut, SortOrder } from '../../../common/enums';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type DailyLimitService } from '../../chat-messages/services/daily-limit.service';
 
@@ -141,6 +141,7 @@ describe('ChatThreadsService', () => {
         2,
         'thread-1',
         pivot.createdAt,
+        true,
       );
     });
 
@@ -219,6 +220,16 @@ describe('ChatThreadsService', () => {
         branchedFromThreadId: 'thread-1',
         branchRootThreadId: 'thread-0',
       });
+    });
+
+    it('cuts before the pivot when asked, keeping it by default', async () => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+      await service.branchThread('user-1', 'thread-1', 'msg-3', BranchCut.BEFORE);
+
+      expect(threadsRepo.createBranchWithinDailyLimit.mock.calls[0]?.[4]).toBe(true);
+      expect(threadsRepo.createBranchWithinDailyLimit.mock.calls[1]?.[4]).toBe(false);
     });
 
     it('carries the source privacy switches instead of resetting them to defaults', async () => {
