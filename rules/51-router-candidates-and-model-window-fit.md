@@ -138,3 +138,12 @@ model was sent a 16.7k-token prompt.
     the reference; a picked image provider that cannot edit (Grok, ComfyUI) is
     the one exception to item 17. Add every new edit word together with a
     "stays ANALYZE" case in `image-intent.utility.spec.ts`.
+
+## Added 2026-09-29 (live QA — an image model answered a video question)
+
+19. **An image-output model is never a chat candidate.** `selectCloudRouterCandidates`
+    drops every deployment `resolveImageCapabilityProvider` recognises
+    (chatgpt-image-latest, gpt-image-1, gemini-*-image, …); image requests take
+    the image path. Without it the cloud router picked `chatgpt-image-latest`
+    for "what happens at 0:02 in this video?" and no reply ever arrived. Pinned
+    by `cloud-router-candidates.utility.spec.ts`.

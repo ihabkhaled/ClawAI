@@ -1,4 +1,4 @@
-import { modelMatchKey } from '@claw/shared-utilities';
+import { modelMatchKey, resolveImageCapabilityProvider } from '@claw/shared-utilities';
 import { ModalityFit } from '../../../common/enums/modality-fit.enum';
 import { DeploymentActivationState, RouterProvider } from '../../../generated/prisma';
 import { LOCAL_PROVIDER } from '../constants/routing.constants';
@@ -110,7 +110,12 @@ function isFit(deployment: RoutableDeploymentRecord, filter: CloudRouterCandidat
       : filter.exposed.has(key);
   const healthy = filter.connectorHealth[deployment.provider] !== false;
   const allowed = filter.allowed === null || filter.allowed.has(key);
-  return exposedOk && healthy && allowed;
+  // An image-OUTPUT model (chatgpt-image-latest, gpt-image-1, …) cannot answer a
+  // chat turn; image requests take their own path. 2026-09-29: the cloud router
+  // picked chatgpt-image-latest for "what happens at 0:02 in this video?".
+  const chatCapable =
+    resolveImageCapabilityProvider(deployment.provider, deployment.providerModelId) === undefined;
+  return exposedOk && healthy && allowed && chatCapable;
 }
 
 function rank(deployment: RoutableDeploymentRecord): number {
