@@ -16,6 +16,7 @@ import {
   IMAGE_GENERATION_VERBS,
   IMAGE_GENERATION_WORDS,
 } from './image-generation-keywords.constants';
+import { generationRequestText } from '../generation-request/generation-request.utility';
 import { type ImageGenerationSignals } from './image-intent.types';
 import { MultimodalImageIntent } from './multimodal-image-intent.enum';
 
@@ -25,7 +26,10 @@ import { MultimodalImageIntent } from './multimodal-image-intent.enum';
  * that manager now delegates here, so there is one table.
  */
 export function detectImageGenerationSignals(message: string): ImageGenerationSignals {
-  const lower = message.toLowerCase();
+  // Only the part that can be a request: no negated clauses ("do not
+  // generate an image"), no pasted-document body, nothing for a "save this
+  // as memory" command. A pasted context pack generated an image before.
+  const lower = generationRequestText(message).toLowerCase();
   const has = (words: readonly string[]): boolean => words.some((w) => lower.includes(w));
   const hasVerb = has(IMAGE_GENERATION_VERBS);
   const hasWord = has(IMAGE_GENERATION_WORDS);

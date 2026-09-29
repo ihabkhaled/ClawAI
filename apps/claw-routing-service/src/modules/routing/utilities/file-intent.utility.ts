@@ -1,3 +1,4 @@
+import { generationRequestText } from '@claw/shared-utilities';
 import {
   FILE_INTENT_CREATE_VERBS,
   FILE_INTENT_DELIVERY_VERBS,
@@ -30,7 +31,11 @@ import type { FileIntentResult } from '../types/file-intent.types';
  * A format word inside a negation ("not in markdown") never counts.
  */
 export function detectFileIntent(message: string): FileIntentResult {
-  const lower = message.toLowerCase();
+  // Same request filter as image detection: a negated clause ("do not
+  // generate a document"), a pasted document's body and a "save this as
+  // context" command are never a file request (rules/57, ADR-127).
+  const lower = generationRequestText(message).toLowerCase();
+  if (lower.length === 0) return { isFileRequest: false, reason: 'none' };
   const words = tokenize(lower);
   const negated = negatedIndexes(words);
   const indexesOf = (list: readonly string[]): number[] =>
@@ -63,7 +68,9 @@ export function detectFileIntent(message: string): FileIntentResult {
   if (extension) return { isFileRequest: true, reason: 'extension' };
   if (strong && strongWithVerb) return { isFileRequest: true, reason: 'strong_word_with_verb' };
   if (leadingStrong) return { isFileRequest: true, reason: 'leading_strong_word' };
-  return soft && deliver ? { isFileRequest: true, reason: 'soft_word_with_delivery_verb' } : { isFileRequest: false, reason: 'none' };
+  return soft && deliver
+    ? { isFileRequest: true, reason: 'soft_word_with_delivery_verb' }
+    : { isFileRequest: false, reason: 'none' };
 }
 
 /**

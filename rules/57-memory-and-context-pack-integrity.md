@@ -43,6 +43,13 @@ retrieval, internal routes) and `apps/claw-chat-service`
    overlap with the question, in document order, inside the rule-51 share.
 9. **The pack block says it is reference material**, not a request — a pack
    that contains "do not generate an image" must not read as a task.
+10. **Generation intent reads only the request, never the material.** Image
+    (`detectImageGenerationSignals`) and file (`detectFileIntent`) detection
+    both scan `generationRequestText(message)` from `@claw/shared-utilities`:
+    negated clauses removed in the 13 locales, a pasted document reduced to
+    its instruction envelope (first paragraph; last only if it says "above"),
+    and a "save this as memory/context" command yields nothing. Add a new
+    generation keyword table → it must go through this filter too.
 
 ## How to check
 

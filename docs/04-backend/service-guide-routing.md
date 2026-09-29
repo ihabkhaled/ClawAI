@@ -554,3 +554,7 @@ attachments and each candidate's fit; the decision carries
 An attached image plus an edit instruction routes to an edit-capable image
 provider via the shared capability table; see rule 51 item 18 and
 [`apps/claw-routing-service/CLAUDE.md`](../../apps/claw-routing-service/CLAUDE.md).
+
+## Generation intent filter (2026-09-29)
+
+Image and file intent detection run on `generationRequestText()` from `@claw/shared-utilities`: negations in 13 locales, pasted-document envelopes, and save-to-memory commands are excluded before any keyword matches. See rules/57 item 10 and ADR-127.

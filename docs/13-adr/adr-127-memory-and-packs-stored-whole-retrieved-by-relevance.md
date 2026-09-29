@@ -36,3 +36,7 @@ Production reports on claw-ai.co, all reproduced against the code:
   re-save them.
 - CJK text without spaces is tokenised as long runs; relevance there is
   weaker (falls back to document order). Not addressed in this change.
+
+## Addendum — generation intent ignores negations and pasted bodies
+
+Pasting the Myoncare pack (which says "DO NOT generate an image, diagram, document…") generated an image: the keyword scan matched inside the negation and inside the 45K body. `generationRequestText()` (shared-utilities `generation-request/`) now feeds both the image scan and routing's `detectFileIntent`: negated clauses are dropped (13 locales), long or heading-structured messages contribute only their instruction envelope, and a save/remember command (`detectSaveToContextIntent`) is never a generation. Known gap, unchanged: the generation table has phrase-level coverage only for English/Arabic, so bare German/Chinese requests ("Erstelle ein Bild", "生成一张图片") were and remain undetected.

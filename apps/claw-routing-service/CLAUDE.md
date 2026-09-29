@@ -446,3 +446,7 @@ keeps rule 51 item 17. ANALYZE with an image never becomes an image job. The
 keyword tables (`IMAGE_KEYWORDS`, image-detection.constants.ts) moved to
 `@claw/shared-utilities` (`IMAGE_GENERATION_*`); `ImageDetectionManager`
 delegates. Tests: `routing.image-edit.spec.ts`.
+
+## Generation intent reads the request, not the material (2026-09-29, rules/57 item 10)
+
+Both detectors scan `generationRequestText(message)` (`@claw/shared-utilities` `generation-request/`), not the raw message: negated clauses are removed in the 13 locales ("DO NOT generate an image…"), a pasted document (>= 1,500 chars, or >= 2 markdown headings and >= 600 chars) contributes only its first paragraph and a last paragraph that says "above", and a "save this as memory/context" command (`detectSaveToContextIntent`) is never a generation. `detectFileIntent` returns `none` when the filtered text is empty. Tests: `utilities/__tests__/file-intent-pasted-pack.spec.ts` and shared `generation-request/__tests__`.

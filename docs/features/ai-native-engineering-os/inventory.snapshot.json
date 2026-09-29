@@ -7833,7 +7833,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 3238,
+          "bytes": 3764,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -10203,7 +10203,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 47
+        "testFiles": 48
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10271,7 +10271,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 111
+        "testFiles": 112
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -11017,7 +11017,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1682,
+    "totalTestFiles": 1684,
     "workspaceCount": 25
   }
 }
