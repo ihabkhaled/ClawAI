@@ -57,6 +57,7 @@ import {
   type OpenAiChatMessage,
   type OpenAiChatRequest,
   type OpenAiChatResponse,
+  type ResolvedProviderConfig,
   type ThreadSettings,
 } from '../types/execution.types';
 import type {
@@ -126,6 +127,8 @@ import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt
 import { buildReferenceImagePrompt } from '../utilities/image-reference-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
+import { applyAnthropicPromptCache } from '../utilities/anthropic-prompt-cache.utility';
+import { withConnectorGatewayHeaders } from '../utilities/connector-gateway-headers.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
 import {
   hasNativeAudioDelivery,
@@ -1103,7 +1106,7 @@ export class ChatExecutionManager implements OnModuleInit {
         streamContext,
       );
     }
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
     const effectiveModel = model;
     const { url, body, protocol, headers, allowedHosts } = await this.resolveStreamCloudRequest({
       provider,
@@ -1125,7 +1128,7 @@ export class ChatExecutionManager implements OnModuleInit {
         model: effectiveModel,
         url,
         allowedHosts,
-        headers,
+        headers: withConnectorGatewayHeaders(headers, gatewayHeaders),
         body,
         protocol,
         startMs: startTime,
@@ -3202,7 +3205,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
     const config = AppConfig.get();
     this.logger.debug(`callCloudProvider: resolving provider config for ${provider}`);
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
@@ -3237,6 +3240,7 @@ export class ChatExecutionManager implements OnModuleInit {
       requestBody,
       config.OLLAMA_GENERATE_TIMEOUT_MS,
       abortSignal,
+      gatewayHeaders,
     );
     this.logger.debug('callCloudProvider: parsing cloud response');
     const promptText = this.buildPromptTextForEstimate(context);
@@ -3288,6 +3292,7 @@ export class ChatExecutionManager implements OnModuleInit {
     requestBody: CloudProviderRequestBody,
     timeoutMs: number,
     abortSignal?: AbortSignal,
+    gatewayHeaders?: Record<string, string>,
   ): Promise<OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse> {
     const response = await httpRequest<
       OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse
@@ -3295,9 +3300,10 @@ export class ChatExecutionManager implements OnModuleInit {
       url,
       allowedHosts,
       method: 'POST',
-      headers: isNativeGemini
-        ? { 'x-goog-api-key': apiKey }
-        : { Authorization: `Bearer ${apiKey}` },
+      headers: withConnectorGatewayHeaders(
+        isNativeGemini ? { 'x-goog-api-key': apiKey } : { Authorization: `Bearer ${apiKey}` },
+        gatewayHeaders,
+      ),
       body: requestBody,
       timeoutMs,
       signal: abortSignal,
@@ -4088,9 +4094,7 @@ export class ChatExecutionManager implements OnModuleInit {
     return url.length === 0 ? 'Fetching page' : `Fetching ${url.slice(0, 80)}`;
   }
 
-  private async resolveProviderConfig(
-    provider: string,
-  ): Promise<{ baseUrl: string; apiKey: string }> {
+  private async resolveProviderConfig(provider: string): Promise<ResolvedProviderConfig> {
     this.logger.debug(`resolveProviderConfig: fetching connector config for ${provider}`);
     const connectorConfig = await this.fetchConnectorConfig(provider);
     this.logger.debug(`resolveProviderConfig: connector config received for ${provider}`);
@@ -4119,7 +4123,13 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     this.logger.debug(`resolveProviderConfig: resolved baseUrl=${baseUrl} for ${provider}`);
-    return { baseUrl, apiKey: connectorConfig.apiKey };
+    return {
+      baseUrl,
+      apiKey: connectorConfig.apiKey,
+      ...(connectorConfig.gatewayHeaders === undefined
+        ? {}
+        : { gatewayHeaders: connectorConfig.gatewayHeaders }),
+    };
   }
 
   // Translates the admitted Runtime V2 tool catalog for one request shape.
@@ -4515,7 +4525,8 @@ export class ChatExecutionManager implements OnModuleInit {
     if (anthropicSpeed !== undefined) {
       requestBody.speed = anthropicSpeed;
     }
-    return requestBody;
+    // F093: the one insertion point for Anthropic prompt-cache breakpoints.
+    return applyAnthropicPromptCache(requestBody);
   }
 
   private buildAnthropicNativeStreamingBody(

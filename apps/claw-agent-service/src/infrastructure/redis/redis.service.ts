@@ -50,6 +50,14 @@ export class RedisService implements OnModuleDestroy {
     return this.client.llen(key);
   }
 
+  async ltrim(key: string, start: number, stop: number): Promise<void> {
+    await this.client.ltrim(key, start, stop);
+  }
+
+  async lrem(key: string, count: number, value: string): Promise<number> {
+    return this.client.lrem(key, count, value);
+  }
+
   async expire(key: string, ttlSeconds: number): Promise<void> {
     await this.client.expire(key, ttlSeconds);
   }

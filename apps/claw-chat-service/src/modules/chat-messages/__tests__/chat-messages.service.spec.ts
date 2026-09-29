@@ -78,6 +78,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> =>
   deleteById: vi.fn(),
   deleteByThreadId: vi.fn(),
   deleteCreatedAfter: vi.fn().mockResolvedValue(0),
+  deleteAfterMessage: vi.fn().mockResolvedValue(0),
   replaceContent: vi.fn().mockResolvedValue(undefined),
 });
 

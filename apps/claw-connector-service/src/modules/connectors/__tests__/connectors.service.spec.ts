@@ -35,6 +35,7 @@ const mockConnector = {
   region: null,
   workspaceId: null,
   accountId: null,
+  encryptedGatewayHeaders: null as string | null,
   isPayAsYouGo: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -330,6 +331,41 @@ describe('ConnectorsService', () => {
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.CONNECTOR_UPDATED,
         expect.objectContaining({ connectorId: 'conn-1' }),
+      );
+    });
+
+    it('encrypts gateway headers and masks them in the response (F092)', async () => {
+      connectorsRepo.findById.mockResolvedValue(mockConnector);
+      connectorsRepo.update.mockResolvedValue({
+        ...mockConnector,
+        encryptedGatewayHeaders: 'encrypted-api-key',
+      });
+
+      const result = await service.updateConnector('conn-1', {
+        gatewayHeaders: { 'x-portkey-api-key': 'pk-1' },
+      });
+
+      expect(connectorsRepo.update).toHaveBeenCalledWith(
+        'conn-1',
+        expect.objectContaining({ encryptedGatewayHeaders: 'encrypted-api-key' }),
+      );
+      expect(result.encryptedGatewayHeaders).toBe('****');
+    });
+
+    it('clears gateway headers on an empty object and keeps them when omitted', async () => {
+      connectorsRepo.findById.mockResolvedValue(mockConnector);
+      connectorsRepo.update.mockResolvedValue(mockConnector);
+
+      await service.updateConnector('conn-1', { gatewayHeaders: {} });
+      expect(connectorsRepo.update).toHaveBeenLastCalledWith(
+        'conn-1',
+        expect.objectContaining({ encryptedGatewayHeaders: null }),
+      );
+
+      await service.updateConnector('conn-1', { name: 'Renamed' });
+      expect(connectorsRepo.update).toHaveBeenLastCalledWith(
+        'conn-1',
+        expect.objectContaining({ encryptedGatewayHeaders: undefined }),
       );
     });
 

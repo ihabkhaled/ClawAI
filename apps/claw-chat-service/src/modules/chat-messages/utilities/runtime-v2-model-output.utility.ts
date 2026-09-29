@@ -21,6 +21,11 @@ import {
 } from '../constants/runtime-v2-model-output.constants';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import type { RuntimeV2ModelOutput } from '../types/runtime-v2-model-output.types';
+import {
+  deferredCatalogInstruction,
+  deferredMismatch,
+  modelCatalogEntry,
+} from './runtime-v2-deferred-tools.utility';
 
 export {
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
@@ -32,24 +37,20 @@ export {
 export type { RuntimeV2ModelOutput };
 
 export function buildRuntimeV2ModelInstruction(definitions: readonly ToolDefinitionDto[]): string {
-  const catalog = definitions.map((definition) => ({
-    name: definition.name,
-    version: definition.version,
-    description: definition.description,
-    operations: definition.operations,
-    targetIds: definition.targetIds,
-    inputSchema: definition.inputSchema,
-  }));
+  const deferred = deferredCatalogInstruction(definitions);
   return [
     RUNTIME_V2_MODEL_INSTRUCTION,
     'Use only a tool, version, operation, and targetId listed in this admitted catalog:',
-    JSON.stringify(catalog),
+    JSON.stringify(definitions.map(modelCatalogEntry)),
+    ...(deferred === null ? [] : [deferred]),
   ].join('\n');
 }
 
 export function isCapabilityDenial(content: string): boolean {
   const normalized = content.replaceAll(/\s+/gu, ' ').trim();
-  return normalized.length === 0 ? false : RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
+  return normalized.length === 0
+    ? false
+    : RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 /**
@@ -517,6 +518,8 @@ function catalogMismatch(
     const versions = sameName.map((candidate) => candidate.version).join(', ');
     return `"${output.toolName}" has no version "${output.toolVersion}". Use toolVersion ${versions}.`;
   }
+  const deferred = deferredMismatch(definition);
+  if (deferred !== null) return deferred;
   if (!definition.operations.includes(output.operation)) {
     return `"${output.toolName}" has no operation "${output.operation}". Operations: ${definition.operations.join(', ')}.`;
   }

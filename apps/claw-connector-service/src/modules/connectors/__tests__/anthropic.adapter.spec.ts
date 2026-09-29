@@ -101,6 +101,28 @@ describe('AnthropicAdapter', () => {
     });
   });
 
+  // --- LLM gateway (F092) ---
+
+  describe('gateway headers', () => {
+    it('sends gateway headers alongside the Anthropic ones', async () => {
+      mockFetchOk(mockModelsResponse);
+
+      await adapter.syncModels({ ...mockConfig, gatewayHeaders: { 'x-portkey-api-key': 'pk' } });
+
+      expect(lastRequestHeaders()['x-portkey-api-key']).toBe('pk');
+      expect(lastRequestHeaders()['x-api-key']).toBe('sk-ant-test-key');
+    });
+
+    it('cannot replace the connector key through a gateway header', async () => {
+      mockFetchOk(mockModelsResponse);
+
+      await adapter.healthCheck({ ...mockConfig, gatewayHeaders: { 'X-Api-Key': 'spoof' } });
+
+      expect(lastRequestHeaders()).not.toHaveProperty('X-Api-Key');
+      expect(lastRequestHeaders()['x-api-key']).toBe('sk-ant-test-key');
+    });
+  });
+
   // --- workspace scoping ---
 
   describe('anthropic-workspace-id header', () => {

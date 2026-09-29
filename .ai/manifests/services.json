@@ -4,7 +4,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-agent-service",
-      "endpointCount": 87,
+      "endpointCount": 97,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -39,7 +39,7 @@
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 17,
+      "testFiles": 22,
       "testRunner": "vitest"
     },
     {
@@ -117,7 +117,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 56,
+      "endpointCount": 58,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 230,
+      "testFiles": 238,
       "testRunner": "vitest"
     },
     {
@@ -186,7 +186,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 38,
+      "testFiles": 39,
       "testRunner": "vitest"
     },
     {

@@ -6,7 +6,6 @@ import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
 import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
 
-
 // --- Inline HTTPS bootstrap (no-rebuild path; see scripts/_patch-main-ts-inline.cjs) ---
 function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   const certPath = process.env['HTTPS_CERT_PATH'];
@@ -17,7 +16,9 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   try {
     return { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
   } catch (error) {
-    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`);
+    process.stderr.write(
+      `[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`,
+    );
     return undefined;
   }
 }
@@ -25,14 +26,20 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
 async function bootstrap(): Promise<void> {
   const config = AppConfig.validate();
 
-  const app = await NestFactory.create(AppModule, { bufferLogs: true, httpsOptions: resolveHttpsOptions() });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    httpsOptions: resolveHttpsOptions(),
+    // Channel webhooks verify an HMAC over the exact bytes received.
+    rawBody: true,
+  });
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.setGlobalPrefix('api/v1');
 
   const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
-    `https://${clawHost}`,`https://${clawHost}:3000`,
+    `https://${clawHost}`,
+    `https://${clawHost}:3000`,
   ];
 
   app.enableCors({

@@ -9,7 +9,7 @@ import { type UpdateThreadDto } from '../dto/update-thread.dto';
 import { type ListThreadsQueryDto } from '../dto/list-threads-query.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
-import { type ThreadWithMessageCount } from '../types/chat-threads.types';
+import { type RewindThreadResult, type ThreadWithMessageCount } from '../types/chat-threads.types';
 import { type ChatThread } from '../../../generated/prisma';
 import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
 import { DailyLimitService } from '../../chat-messages/services/daily-limit.service';
@@ -117,6 +117,34 @@ export class ChatThreadsService {
     });
 
     return branch;
+  }
+
+  /**
+   * Rewinds a conversation in place: every message after `afterMessageId` is
+   * deleted and the pivot is kept, so the next turn continues from it.
+   *
+   * Branching copies and leaves the original; rewinding is the in-place
+   * counterpart the coding agent's "Rewind to here" needs. Ownership is checked
+   * before anything is touched, and an id from another thread answers 404, the
+   * same as an id that does not exist, so a probe learns nothing.
+   */
+  async rewindThread(
+    userId: string,
+    threadId: string,
+    afterMessageId: string,
+  ): Promise<RewindThreadResult> {
+    await this.getThread(threadId, userId);
+    const removedCount = await this.chatMessagesRepository.deleteAfterMessage(
+      threadId,
+      afterMessageId,
+    );
+    if (removedCount === null) {
+      throw new EntityNotFoundException('ChatMessage', afterMessageId);
+    }
+    this.logger.log(
+      `rewindThread: thread=${threadId} after=${afterMessageId} removed=${String(removedCount)}`,
+    );
+    return { threadId, afterMessageId, removedCount };
   }
 
   async getThreads(

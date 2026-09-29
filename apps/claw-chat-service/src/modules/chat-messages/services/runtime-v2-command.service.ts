@@ -4,6 +4,7 @@ import { EntityNotFoundException } from '../../../common/errors';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { RUNTIME_V2_ACTIVE_TTL_SECONDS } from '../constants/runtime-v2-run.constants';
 import type { RuntimeCancelDto, RuntimeResultDto, RuntimeSteeringDto } from '../dto/runtime-v2.dto';
+import { RuntimeV2ToolCatalogStore } from '../repositories/runtime-v2-tool-catalog.store';
 import { RuntimeV2Store } from '../repositories/runtime-v2.store';
 import type { RuntimeV2BoundInput, RuntimeV2MutationAck } from '../types/runtime-v2-store.types';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
@@ -14,6 +15,7 @@ export class RuntimeV2CommandService {
     private readonly threads: ChatThreadsRepository,
     private readonly store: RuntimeV2Store,
     private readonly loop: RuntimeV2LoopManager,
+    private readonly catalog: RuntimeV2ToolCatalogStore,
   ) {}
 
   async submitResult(
@@ -25,7 +27,8 @@ export class RuntimeV2CommandService {
     const binding = await this.binding(ownerId, threadId, runId, command.generation);
     const acknowledgement = await this.store.submitResult({ ...binding, command });
     if (!acknowledgement.replayed && command.result.continuation.action === 'continue') {
-      await this.loop.continueAfterResult(binding, command);
+      // The next turn sees every deferred tool loaded so far (F028).
+      await this.loop.continueAfterResult(await this.catalog.effectiveBinding(binding), command);
     }
     if (
       !acknowledgement.replayed &&

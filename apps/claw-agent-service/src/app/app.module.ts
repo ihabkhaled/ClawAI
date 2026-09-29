@@ -17,6 +17,7 @@ import { RecipesModule } from '../modules/recipes/recipes.module';
 import { ActivityMemoryModule } from '../modules/activity-memory/activity-memory.module';
 import { FleetModule } from '../modules/fleet/fleet.module';
 import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
+import { ChannelsModule } from '../modules/channels/channels.module';
 
 @Module({
   imports: [
@@ -35,10 +36,7 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -51,6 +49,9 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
             'req.body.userCode',
             'req.body.deviceCode',
             'req.body.secret',
+            // F083 channels — the webhook signature header and the owner's derived secret.
+            'req.headers["x-claw-signature"]',
+            'res.body.secret',
             'res.body.refreshToken',
             'res.body.accessToken',
             'res.body.pairingCode',
@@ -120,6 +121,7 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
     ActivityMemoryModule,
     FleetModule,
     MarketplaceModule,
+    ChannelsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

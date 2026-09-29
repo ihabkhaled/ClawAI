@@ -5,6 +5,7 @@ import { EventPattern, LogLevel, type ModelBehaviorProbeResult } from '@claw/sha
 import { type Connector, type ConnectorModel, ConnectorProvider } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { encrypt } from '../../../common/utilities';
+import { serializeGatewayHeaders } from '../utilities/gateway-headers.utility';
 import { EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { ConnectorsRepository } from '../repositories/connectors.repository';
@@ -85,6 +86,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
     const encryptedConfig = dto.apiKey
       ? encrypt(dto.apiKey, AppConfig.get().ENCRYPTION_KEY)
       : undefined;
+    const encryptedGatewayHeaders = this.encryptGatewayHeaders(dto.gatewayHeaders);
 
     const connector = await this.connectorsRepository.create({
       name: dto.name,
@@ -95,6 +97,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
       region: dto.region,
       workspaceId: dto.workspaceId,
       accountId: dto.accountId,
+      encryptedGatewayHeaders: encryptedGatewayHeaders ?? undefined,
       // The administrator's explicit answer wins; otherwise the provider
       // default decides. Without this, a connector added after the backfill
       // migration would arrive at the column default of `false` and serve paid
@@ -176,6 +179,8 @@ export class ConnectorsService implements OnApplicationBootstrap {
     const encryptedConfig = dto.apiKey
       ? encrypt(dto.apiKey, AppConfig.get().ENCRYPTION_KEY)
       : undefined;
+    // `null` clears (the operator sent `{}`); `undefined` keeps what is stored.
+    const encryptedGatewayHeaders = this.encryptGatewayHeaders(dto.gatewayHeaders);
 
     const updated = await this.connectorsRepository.update(id, {
       name: dto.name,
@@ -188,6 +193,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
       accountId: dto.accountId,
       isEnabled: dto.isEnabled,
       isPayAsYouGo: dto.isPayAsYouGo,
+      encryptedGatewayHeaders,
     });
 
     this.logPaygToggle(connector, updated, dto.isPayAsYouGo);
@@ -474,7 +480,23 @@ export class ConnectorsService implements OnApplicationBootstrap {
     return { valid };
   }
 
-  private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {
-    return connector.encryptedConfig ? { ...connector, encryptedConfig: '****' } : connector;
+  private encryptGatewayHeaders(
+    headers: Record<string, string> | undefined,
+  ): string | null | undefined {
+    const plaintext = serializeGatewayHeaders(headers);
+    return typeof plaintext === 'string'
+      ? encrypt(plaintext, AppConfig.get().ENCRYPTION_KEY)
+      : plaintext;
+  }
+
+  // Gateway header values are credentials too (F092); the ciphertext is masked
+  // the same way so a response never carries either.
+  private maskSecrets<
+    T extends { encryptedConfig?: string | null; encryptedGatewayHeaders?: string | null },
+  >(connector: T): T {
+    const masked = connector.encryptedConfig
+      ? { ...connector, encryptedConfig: '****' }
+      : connector;
+    return masked.encryptedGatewayHeaders ? { ...masked, encryptedGatewayHeaders: '****' } : masked;
   }
 }

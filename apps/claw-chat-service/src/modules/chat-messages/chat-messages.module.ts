@@ -80,6 +80,9 @@ import { RuntimeV2StreamService } from './services/runtime-v2-stream.service';
 import { RuntimeV2CommandController } from './controllers/runtime-v2-command.controller';
 import { RuntimeV2CommandService } from './services/runtime-v2-command.service';
 import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
+import { RuntimeV2ToolCatalogController } from './controllers/runtime-v2-tool-catalog.controller';
+import { RuntimeV2ToolCatalogService } from './services/runtime-v2-tool-catalog.service';
+import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalog.store';
 
 @Module({
   imports: [ContextReceiptsModule],
@@ -91,6 +94,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ProviderBreakerAdminController,
     RuntimeV2RunController,
     RuntimeV2CommandController,
+    RuntimeV2ToolCatalogController,
   ],
   providers: [
     ResearchGateService,
@@ -171,6 +175,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     RuntimeV2StreamService,
     RuntimeV2CommandService,
     RuntimeV2LoopManager,
+    RuntimeV2ToolCatalogStore,
+    RuntimeV2ToolCatalogService,
   ],
   exports: [ChatMessagesService, ChatMessagesRepository, FileDeliveryRecordService],
 })

@@ -173,6 +173,25 @@ Pino log redaction covers: `authorization`, `password`, `refreshToken`,
 response bodies. Every pair/approve, rotation, reuse-detect, and revoke emits
 a RabbitMQ event consumed by audit-service.
 
+## Remote triggers, channels and runners (2026-09-29)
+
+- **Remote trigger:** `POST /agent/scheduled-commands/:id/trigger` fires an owned
+  scheduled command now. `idempotencyKey` is kept in Redis for 24h, so a retry
+  returns the same command instead of running twice. 404 when not owned, 409
+  when the device is offline or the same key is still running.
+- **Channels** (`src/modules/channels/`): an HMAC-verified public webhook (raw
+  body + 5-minute timestamp window, 16 KB cap) drops alerts into a per-user
+  Redis inbox (newest 100, 7-day TTL); the owner reads and acknowledges it. The
+  per-user secret is derived from the encryption key, not stored, so rotating
+  one user's secret means rotating the master key.
+- **Runners** (`agent-runner.controller.ts`): register, list, dispatch to a
+  runner or by label, claim one job at a time; every user endpoint is scoped to
+  the caller's own runners and jobs still pass the command policy check.
+- **Device-to-session bridge fixed (IDOR):** `CompatAgentGuard` used to bind any
+  `sessionId` from the request to the device's user. It now loads the session
+  and answers 403 unless the device's user owns it; a missing session gets the
+  same 403, so ids cannot be probed.
+
 ## References
 
 - `docs/13-adr/adr-015-desktop-agent-auth-model.md` (design)

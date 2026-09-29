@@ -10,7 +10,7 @@ import { AgentCommandRepository } from '../repositories/agent-command.repository
 import { AgentSessionRepository } from '../repositories/agent-session.repository';
 import { ScheduledCommandRepository } from '../repositories/scheduled-command.repository';
 import { CommandRiskService } from '../services/command-risk.service';
-import type { ScheduledCommand } from '../../../generated/prisma';
+import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
 @Injectable()
 export class SchedulerManager {
@@ -41,14 +41,19 @@ export class SchedulerManager {
     }
   }
 
-  private async fireOne(scheduled: ScheduledCommand, now: Date): Promise<void> {
+  /**
+   * Fires one scheduled command now and advances its next run. Public so a
+   * remote trigger (F029) runs exactly the path the timer runs. Null when the
+   * device has no connected session to receive it.
+   */
+  async fireOne(scheduled: ScheduledCommand, now: Date): Promise<TerminalCommand | null> {
     const sessions = await this.sessionRepo.findConnectedForDevice(scheduled.deviceId);
     const session = sessions[0];
     if (session === undefined) {
       this.logger.debug(
         `scheduled ${scheduled.id}: no connected session for device ${scheduled.deviceId}; deferring`,
       );
-      return;
+      return null;
     }
     const assessment = await this.riskService.assess(scheduled.command);
     const expiresAt = new Date(Date.now() + COMMAND_EXPIRY_MS);
@@ -78,5 +83,6 @@ export class SchedulerManager {
     const nextRunAt = new Date(now.getTime() + scheduled.intervalMinutes * 60 * 1000);
     await this.scheduledRepo.markRun(scheduled.id, created.id, nextRunAt);
     this.logger.log(`scheduled ${scheduled.id} fired → command ${created.id} (status=${status})`);
+    return created;
   }
 }

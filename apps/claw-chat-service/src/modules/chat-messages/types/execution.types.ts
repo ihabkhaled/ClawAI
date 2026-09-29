@@ -6,7 +6,11 @@ import type { FileContentCandidate } from './file-writer.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { HelperExecution } from './vision-helper.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
-import type { AnthropicMessage } from './anthropic-message-shape.types';
+import type {
+  AnthropicCacheControl,
+  AnthropicMessage,
+  AnthropicSystemTextBlock,
+} from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
 import type {
   OllamaCloudToolCall,
@@ -416,6 +420,15 @@ export type ConnectorConfigResponse = {
   apiKey: string;
   baseUrl?: string;
   region?: string;
+  // Extra headers for an LLM gateway in front of the provider (F092). Absent
+  // when the connector has none. Values are credentials — never logged.
+  gatewayHeaders?: Record<string, string>;
+};
+
+export type ResolvedProviderConfig = {
+  baseUrl: string;
+  apiKey: string;
+  gatewayHeaders?: Record<string, string>;
 };
 
 export type FallbackAttemptData = {
@@ -488,7 +501,12 @@ export type AnthropicMessagesRequest = {
   model: string;
   messages: AnthropicMessage[];
   stream: boolean;
-  system?: string;
+  // A plain string until prompt caching marks it; block form carries the
+  // system breakpoint (F093, applyAnthropicPromptCache).
+  system?: string | AnthropicSystemTextBlock[];
+  // Automatic (top-level) breakpoint: Anthropic places it on the last cacheable
+  // block and moves it forward as the conversation grows.
+  cache_control?: AnthropicCacheControl;
   temperature?: number;
   // Anthropic REQUIRES max_tokens on every request, and rejects outright when
   // `tools` is present without it. buildAnthropicMessagesRequestBody supplies a

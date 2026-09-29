@@ -1,4 +1,5 @@
 import { RUNTIME_V2_REDIS_PREFIX } from '../constants/runtime-v2.constants';
+import { RUNTIME_V2_LOADED_TOOLS_KEY_SUFFIX } from '../constants/runtime-v2-deferred-tools.constants';
 import type { RuntimeV2KeyFamily } from '../types/runtime-v2-store.types';
 import { runtimeV2Sha256 } from './runtime-v2-identity.utility';
 
@@ -13,6 +14,11 @@ export function runtimeV2KeyFamily(runId: string): RuntimeV2KeyFamily {
     steering: `${base}:steering`,
     steeringData: `${base}:steering-data`,
   };
+}
+
+/** Loaded deferred definitions for one run (F028); same hash slot as its family. */
+export function runtimeV2LoadedToolsKey(runId: string): string {
+  return `${RUNTIME_V2_REDIS_PREFIX}:run:${runId}:${RUNTIME_V2_LOADED_TOOLS_KEY_SUFFIX}`;
 }
 
 export function runtimeV2MessageKey(messageId: string): string {

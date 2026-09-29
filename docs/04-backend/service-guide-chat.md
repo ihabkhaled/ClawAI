@@ -254,6 +254,27 @@ Bearer auth, response parsing through the real dispatch path).
 
 ---
 
+## Anthropic prompt caching and gateway headers (F093 / F092, 2026-09-29)
+
+**Prompt caching.** `buildAnthropicMessagesRequestBody` ends in
+`applyAnthropicPromptCache` (`utilities/anthropic-prompt-cache.utility.ts`): the
+system prompt becomes one text block with `cache_control: ephemeral`, and one
+automatic top-level `cache_control` follows the conversation tail — two of
+Anthropic's four breakpoints. Billing needed no change: `extractAnthropicUsage`
+already reports `cache_read_input_tokens` as `cachedPromptTokens`. Limits, stated
+honestly: this is the ENABLE_ANTHROPIC_NATIVE_PDF body only (the default
+Anthropic path is the OpenAI-shaped body, which carries no breakpoints); that
+body is posted to `${baseUrl}/chat/completions`, so breakpoints only take
+effect where that URL serves the Messages API; and a cache WRITE is still billed
+at the plain input rate (under by the 25% write premium) until
+`cacheWritePerMillionMicroUsd` is wired into the credit calculator.
+
+**Gateway headers.** `resolveProviderConfig` returns the connector's
+`gatewayHeaders`; `withConnectorGatewayHeaders` merges them under the provider
+auth header on the streaming (`runExecutor`) and buffered
+(`postCloudProviderRequest`) cloud paths. The internal-generate and Ollama-cloud
+tool-loop paths do not send them yet.
+
 ## Judge + Critic Pipeline
 
 **This section describes single-answer review (chat, regenerate, consensus,

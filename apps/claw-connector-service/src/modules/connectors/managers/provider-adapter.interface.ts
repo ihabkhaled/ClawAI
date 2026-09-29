@@ -30,6 +30,9 @@ export type ConnectorConfig = {
   // Cloudflare Workers AI puts the account in every URL path. Filled into the
   // preset's `{ACCOUNT_ID}` placeholder; never logged, though it is not secret.
   accountId?: string;
+  // Extra headers for an LLM gateway in front of the provider (F092). Added
+  // under the provider's own headers by withGatewayHeaders; never logged.
+  gatewayHeaders?: Record<string, string>;
 };
 
 export type ProviderCapabilities = {

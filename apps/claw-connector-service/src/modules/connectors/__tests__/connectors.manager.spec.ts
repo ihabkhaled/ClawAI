@@ -96,6 +96,7 @@ const mockConnector = {
   region: null,
   workspaceId: null,
   accountId: null,
+  encryptedGatewayHeaders: null as string | null,
   isPayAsYouGo: false,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -246,6 +247,25 @@ describe('ConnectorsManager', () => {
 
       expect(config.provider).toBe(ConnectorProvider.OPENAI);
       expect(config.apiKey).toBe('sk-test-key');
+    });
+
+    it('decrypts gateway headers into the config (F092)', async () => {
+      const utilities = await import('../../../common/utilities');
+      vi.mocked(utilities.decrypt)
+        .mockReturnValueOnce('sk-test-key')
+        .mockReturnValueOnce('{"x-portkey-api-key":"pk-1"}');
+      const config = manager.getDecryptedConfig({
+        ...mockConnector,
+        encryptedGatewayHeaders: 'cipher',
+      });
+
+      expect(config.gatewayHeaders).toEqual({ 'x-portkey-api-key': 'pk-1' });
+    });
+
+    it('omits gatewayHeaders when the connector has none', () => {
+      const config = manager.getDecryptedConfig(mockConnector);
+
+      expect(config).not.toHaveProperty('gatewayHeaders');
     });
 
     it('should return empty apiKey when no encrypted config', () => {

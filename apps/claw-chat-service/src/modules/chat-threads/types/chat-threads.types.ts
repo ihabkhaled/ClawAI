@@ -57,3 +57,10 @@ export type SeedThreadInput = {
   initialUserMessage: string;
   title?: string;
 };
+
+/** What a rewind answers: the thread, the kept pivot and how much was dropped. */
+export interface RewindThreadResult {
+  threadId: string;
+  afterMessageId: string;
+  removedCount: number;
+}

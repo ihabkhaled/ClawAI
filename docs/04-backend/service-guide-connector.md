@@ -16,20 +16,21 @@ The connector service manages AI provider connections (OpenAI, Anthropic, Gemini
 
 ### Connector
 
-| Column          | Type              | Notes                              |
-| --------------- | ----------------- | ---------------------------------- |
-| id              | String            | CUID primary key                   |
-| name            | String            | User-friendly name                 |
-| provider        | ConnectorProvider | OPENAI, ANTHROPIC, GEMINI, etc.    |
-| status          | ConnectorStatus   | HEALTHY, DEGRADED, DOWN, UNKNOWN   |
-| authType        | ConnectorAuthType | API_KEY, OAUTH2, NONE              |
-| encryptedConfig | String?           | AES-256-GCM encrypted credentials  |
-| isEnabled       | Boolean           | Soft enable/disable                |
-| defaultModelId  | String?           | Default model for this connector   |
-| baseUrl         | String?           | Custom API base URL                |
-| region          | String?           | AWS region (Bedrock only)          |
-| workspaceId     | String?           | Anthropic workspace header         |
-| isPayAsYouGo    | Boolean           | Debits PAYG credit (default false) |
+| Column                  | Type              | Notes                                        |
+| ----------------------- | ----------------- | -------------------------------------------- |
+| id                      | String            | CUID primary key                             |
+| name                    | String            | User-friendly name                           |
+| provider                | ConnectorProvider | OPENAI, ANTHROPIC, GEMINI, etc.              |
+| status                  | ConnectorStatus   | HEALTHY, DEGRADED, DOWN, UNKNOWN             |
+| authType                | ConnectorAuthType | API_KEY, OAUTH2, NONE                        |
+| encryptedConfig         | String?           | AES-256-GCM encrypted credentials            |
+| isEnabled               | Boolean           | Soft enable/disable                          |
+| defaultModelId          | String?           | Default model for this connector             |
+| baseUrl                 | String?           | Custom API base URL                          |
+| region                  | String?           | AWS region (Bedrock only)                    |
+| workspaceId             | String?           | Anthropic workspace header                   |
+| encryptedGatewayHeaders | String?           | Encrypted JSON of LLM-gateway headers (F092) |
+| isPayAsYouGo            | Boolean           | Debits PAYG credit (default false)           |
 
 **`isPayAsYouGo` is the runtime authority for PAYG classification**, not
 `PAYG_DEFAULT_PROVIDERS` in `@claw/shared-constants`. That constant is only the
@@ -161,6 +162,31 @@ API keys and credentials are encrypted at rest using AES-256-GCM:
 2. Each connector config gets a unique IV (initialization vector)
 3. The encrypted blob + IV + auth tag are stored together in `encryptedConfig`
 4. Decryption happens only when the config is needed for an API call
+
+### LLM-gateway headers (F092, 2026-09-29)
+
+A connector can sit behind LiteLLM, Portkey, Helicone, Cloudflare AI Gateway or
+a Bedrock/Vertex proxy: point `baseUrl` at the gateway and send
+`gatewayHeaders` (`{ "x-portkey-api-key": "..." }`) on create/update.
+
+- Validated by `dto/gateway-headers.dto.ts`: at most 10, RFC 9110 token names,
+  no CR/LF/NUL in values, no duplicate names in any case, and never a name the
+  connector owns (`Authorization`, `x-api-key`, `x-goog-api-key`,
+  `anthropic-version`, `anthropic-workspace-id`, `Host`, `Cookie`, transport
+  headers — `constants/gateway-headers.constants.ts`).
+- Stored AES-encrypted in `encrypted_gateway_headers`; masked as `****` in
+  every response; only the COUNT is logged.
+- On update, `{}` clears them and omitting the field keeps them.
+- `withGatewayHeaders` adds them UNDER the provider's own headers (OpenAI,
+  Anthropic and every OpenAI-compatible preset adapter), and
+  `/internal/connectors/config` returns them so chat-service does the same on
+  the buffered and streaming cloud paths.
+- The destination host is still checked per request by `assertSafeRequestUrl`
+  with `declaredHost(baseUrl)`; gateway support adds no SSRF allowance.
+
+Not built: a gateway entity of its own, per-gateway spend limits, group model
+policy, SSO, gateway failover, an admin-UI field (API only today), and the
+extension surface.
 
 ## Model Sync Process
 

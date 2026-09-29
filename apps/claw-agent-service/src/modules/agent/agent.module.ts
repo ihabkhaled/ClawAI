@@ -14,6 +14,7 @@ import { CapabilityCliController } from './controllers/capability-cli.controller
 import { CapabilityStreamController } from './controllers/capability-stream.controller';
 import { AgentTerminalInternalController } from './controllers/agent-terminal-internal.controller';
 import { RuntimeProtocolController } from './controllers/runtime-protocol.controller';
+import { AgentRunnerController } from './controllers/agent-runner.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
 import { AgentRepoService } from './services/agent-repo.service';
@@ -32,8 +33,13 @@ import { CapabilityRiskService } from './services/capability-risk.service';
 import { CapabilityService } from './services/capability.service';
 import { CommandStreamService } from './services/command-stream.service';
 import { ScheduledCommandService } from './services/scheduled-command.service';
+import { RemoteTriggerService } from './services/remote-trigger.service';
+import { RemoteJobRunner, RemoteTriggerIdempotencyStore } from './services/remote-trigger.ports';
+import { SchedulerRemoteJobRunner } from './services/scheduler-remote-job-runner.service';
+import { RemoteTriggerIdempotencyRepository } from './repositories/remote-trigger-idempotency.repository';
 import { AgentTerminalSeedService } from './services/agent-terminal-seed.service';
 import { RuntimeProtocolService } from './services/runtime-protocol.service';
+import { RunnerService } from './services/runner.service';
 import { AgentSessionManager } from './managers/agent-session.manager';
 import { AgentCommandManager } from './managers/agent-command.manager';
 import { PairingCleanupManager } from './managers/pairing-cleanup.manager';
@@ -52,6 +58,7 @@ import { DeviceCodeRequestRepository } from './repositories/device-code-request.
 import { PolicyRepository } from './repositories/policy.repository';
 import { ScheduledCommandRepository } from './repositories/scheduled-command.repository';
 import { CapabilityInvocationRepository } from './repositories/capability-invocation.repository';
+import { RunnerRepository } from './repositories/runner.repository';
 import { AgentKeyGuard } from '../../common/guards/agent-key.guard';
 import { DeviceAccessGuard } from '../../common/guards/device-access.guard';
 import { ScopeGuard } from '../../common/guards/scope.guard';
@@ -73,6 +80,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     CapabilityStreamController,
     AgentTerminalInternalController,
     RuntimeProtocolController,
+    AgentRunnerController,
   ],
   providers: [
     AgentSessionService,
@@ -93,8 +101,12 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     CapabilityService,
     CommandStreamService,
     ScheduledCommandService,
+    RemoteTriggerService,
+    { provide: RemoteJobRunner, useClass: SchedulerRemoteJobRunner },
+    { provide: RemoteTriggerIdempotencyStore, useClass: RemoteTriggerIdempotencyRepository },
     AgentTerminalSeedService,
     RuntimeProtocolService,
+    RunnerService,
     AgentSessionManager,
     AgentCommandManager,
     PairingCleanupManager,
@@ -113,6 +125,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     PolicyRepository,
     ScheduledCommandRepository,
     CapabilityInvocationRepository,
+    RunnerRepository,
     AgentKeyGuard,
     DeviceAccessGuard,
     ScopeGuard,

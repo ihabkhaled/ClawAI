@@ -19,6 +19,7 @@ export interface CreateConnectorData {
   workspaceId?: string;
   accountId?: string;
   isPayAsYouGo?: boolean;
+  encryptedGatewayHeaders?: string;
 }
 
 export interface UpdateConnectorData {
@@ -34,6 +35,8 @@ export interface UpdateConnectorData {
   status?: ConnectorStatus;
   defaultModelId?: string;
   isPayAsYouGo?: boolean;
+  // `null` clears the column (F092).
+  encryptedGatewayHeaders?: string | null;
 }
 
 export interface ConnectorFilters {
@@ -132,6 +135,8 @@ export interface ConnectorConfigResult {
   apiKey: string;
   baseUrl?: string;
   region?: string;
+  // F092: chat-service merges these under its own provider headers.
+  gatewayHeaders?: Record<string, string>;
 }
 
 /** One connector's contribution to the provider-grain PAYG rollup. */

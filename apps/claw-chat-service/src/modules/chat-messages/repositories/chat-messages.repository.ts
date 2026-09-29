@@ -131,6 +131,29 @@ export class ChatMessagesRepository {
   }
 
   /**
+   * Rewinds a thread: drops every message after `messageId`, keeping it.
+   *
+   * The pivot is re-read inside the transaction and matched on both id and
+   * thread, so a message from another conversation cannot be used as the cut
+   * point and a concurrent delete cannot leave a half-applied rewind. Returns
+   * `null` when the pivot is not in this thread, else how many rows were
+   * removed (attachments cascade with their message).
+   */
+  async deleteAfterMessage(threadId: string, messageId: string): Promise<number | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const pivot = await transaction.chatMessage.findFirst({
+        where: { id: messageId, threadId },
+        select: { createdAt: true },
+      });
+      if (!pivot) return null;
+      const result = await transaction.chatMessage.deleteMany({
+        where: { threadId, createdAt: { gt: pivot.createdAt } },
+      });
+      return result.count;
+    });
+  }
+
+  /**
    * Replaces a message's text, keeping the first version.
    *
    * `originalContent` is written only when it is still null, so a second edit

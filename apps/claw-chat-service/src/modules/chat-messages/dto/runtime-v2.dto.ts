@@ -91,6 +91,14 @@ export const toolDefinitionSchema = z
     riskClasses: z.array(z.enum(RUNTIME_V2_RISK_CLASSES)).min(1).max(13),
     targetIds: z.array(z.string().regex(RUNTIME_V2_ID_PATTERN)).min(1).max(32),
     inputSchema: boundedJsonObject(RUNTIME_V2_ARGUMENT_BYTES),
+    // F028 deferred tool: this entry is a stub (name + short description) and
+    // `definitionHash` commits to the full definition the client may load
+    // mid-run. The commitment sits inside the hashed start catalog, so a tool
+    // the client did not declare here can never be admitted later.
+    deferred: z
+      .object({ definitionHash: z.string().regex(RUNTIME_V2_SHA256_PATTERN) })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((definition, context) => {
