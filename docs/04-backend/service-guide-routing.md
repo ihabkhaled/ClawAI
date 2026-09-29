@@ -194,7 +194,11 @@ $0.25) that image-service meters against — one immutable row per priced size,
 never a price constant in image-service. v9 (2026-09-26) added
 `OPENAI:dall-e-3@hd` at $0.080 per 1024x1024 image (HD; the v4 `dall-e-3` row
 stays the $0.040 standard price), which image-service meters an `hd` call
-against. v8 (2026-09-25) priced xAI Grok
+against. v10 (2026-09-29) priced `OPENAI:gpt-4o-transcribe` (100) and
+`OPENAI:gpt-4o-mini-transcribe` (50) micro-USD per second of audio, from
+OpenAI's published $0.006 / $0.003 per-minute estimates
+(https://developers.openai.com/api/docs/pricing); file-service does not call
+them yet. v8 (2026-09-25) priced xAI Grok
 Imagine per image: `GROK:grok-imagine-image` $0.02 and
 `GROK:grok-imagine-image-2.0` $0.08 (top tier; source docs.x.ai/developers/models
 as of 2026-08-07), token rates 0. They fill gaps, but are flagged

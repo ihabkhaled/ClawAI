@@ -41,8 +41,13 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// or no quality stays on the v4 `dall-e-3` row ($0.040). Before v9 an HD image
 /// was charged the standard price. New key — it fills a gap; the v4 row is
 /// untouched.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v9';
-export const MODEL_COST_SEED_VERSION = 9;
+///
+/// v10 (2026-09-29): OpenAI `gpt-4o-transcribe` ($0.006/min) and
+/// `gpt-4o-mini-transcribe` ($0.003/min) priced per SECOND of input audio,
+/// like whisper-1. New keys — they fill gaps. file-service still calls only
+/// whisper-1; the rows exist so the day it can call these they are priced.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v10';
+export const MODEL_COST_SEED_VERSION = 10;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -530,9 +535,7 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
   // no tokens — published-and-zero, not unknown; the per-second column carries
   // the money, and auth's local-fallback check reads it (rule 37 item 17).
   //
-  // gpt-4o-transcribe / gpt-4o-mini-transcribe are NOT seeded: file-service
-  // only ever calls `whisper-1` (OPENAI_TRANSCRIPTION_MODEL), and those two
-  // bill per TOKEN with audio-token rates this seed has not verified.
+  // gpt-4o-transcribe / gpt-4o-mini-transcribe: seeded in v10, below.
   Object.freeze({
     provider: 'OPENAI',
     modelKey: 'whisper-1',
@@ -543,6 +546,42 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.CHEAP,
     audioPerUnitMicroUsd: 100,
+  }),
+  // ── OpenAI gpt-4o transcription models (unit metering, seed v10) ────────
+  //
+  // Source: https://developers.openai.com/api/docs/pricing (redirect target of
+  // platform.openai.com/docs/pricing), "Transcription", fetched 2026-09-29:
+  //   gpt-4o-transcribe       $2.50 in / $10.00 out per 1M tokens, est. $0.006 / minute
+  //   gpt-4o-mini-transcribe  $1.25 in / $5.00  out per 1M tokens, est. $0.003 / minute
+  // $0.006 / 60 s = 100 micro-USD per second; $0.003 / 60 s = 50.
+  //
+  // WHY PER SECOND, token rates 0. file-service's transcription meter settles
+  // on the clip's DURATION (`audioSeconds`), never on tokens; carrying the
+  // token rates too would bill the same clip twice the day usage is forwarded.
+  // The per-minute figure is OpenAI's own published estimate, not a list rate —
+  // verify against an invoice before relying on it for margin. file-service
+  // calls only whisper-1 today (OPENAI_TRANSCRIPTION_MODEL, not data-driven).
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-4o-transcribe',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    audioPerUnitMicroUsd: 100,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-4o-mini-transcribe',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    audioPerUnitMicroUsd: 50,
   }),
   // ── Text-to-speech (unit + token metering, seed v6) ─────────────────────
   //

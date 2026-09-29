@@ -47,7 +47,14 @@ export const SPEECH_PROVIDER_BY_NAME: Readonly<Record<string, SpeechProvider>> =
   GEMINI: SpeechProvider.GEMINI,
   OPENAI: SpeechProvider.OPENAI,
 };
-export const OPENAI_SPEECH_URL = 'https://api.openai.com/v1/audio/speech';
+/**
+ * Default hosts. The connector's configured `baseUrl` wins when set (a proxy,
+ * Azure-style gateway or regional host), exactly as chat completions do.
+ */
+export const OPENAI_SPEECH_DEFAULT_BASE_URL = 'https://api.openai.com/v1';
+export const OPENAI_SPEECH_PATH = '/audio/speech';
+/** Gemini connectors point at the OpenAI-compatible `/openai` path; speech uses the native API above it. */
+export const GEMINI_OPENAI_COMPAT_SUFFIX = '/openai';
 export const OPENAI_TTS_RESPONSE_FORMAT = 'mp3';
 /**
  * OpenAI speech models chat-service meters exactly: priced per CHARACTER

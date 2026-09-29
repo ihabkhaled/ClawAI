@@ -845,6 +845,11 @@ transcription (ADR-120 addenda). **Asynchronous and segmented since
 characters could never finish inside nginx's 60 s (4,000 chars: 0/3, every
 one a 504). Our own overhead was 82–216 ms.
 
+- **Provider host** (2026-09-29): speech calls go to the connector's configured
+  `baseUrl` when set (blank = unset), else the default host — same rule as chat
+  completions. A Gemini base on the OpenAI-compat `…/openai` path is trimmed to
+  the native API (`speechProviderBaseUrl`, `utilities/speech-provider-url.utility.ts`);
+  the SSRF allowlist is declared from that base. `SpeechConnectorClient.resolveCredentials`.
 - **Routes** (`ChatSpeechController`, JWT; Zod params, id `^[A-Za-z0-9_-]{1,64}$`):
   - `GET /chat-messages/speech/availability` → `{ available, reason }` (unchanged).
   - `POST /chat-messages/:id/speech` → **200** `{status: READY, …}` when a stored

@@ -1791,6 +1791,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/images/:generationId/assistant-message",
+          "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/images/:generationId/retry",
           "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
         },
@@ -7824,7 +7829,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 7951,
+          "bytes": 8319,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -10226,7 +10231,7 @@
       },
       "claw-audit-service": {
         "runner": "vitest",
-        "testFiles": 22
+        "testFiles": 23
       },
       "claw-auth-service": {
         "runner": "vitest",
@@ -10234,7 +10239,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 225
+        "testFiles": 227
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10262,7 +10267,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 41
+        "testFiles": 42
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -11020,7 +11025,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 708,
+    "endpointCount": 709,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11032,7 +11037,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1693,
+    "totalTestFiles": 1697,
     "workspaceCount": 25
   }
 }

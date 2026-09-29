@@ -886,7 +886,9 @@
       ]
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-audit-service"
+      ],
       "key": "FILE_VIDEO_PROCESS_COMPLETED",
       "pattern": "file.video_process_completed",
       "producers": [
@@ -894,7 +896,9 @@
       ]
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-audit-service"
+      ],
       "key": "FILE_VIDEO_PROCESS_FAILED",
       "pattern": "file.video_process_failed",
       "producers": [
@@ -902,7 +906,9 @@
       ]
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-audit-service"
+      ],
       "key": "FILE_VIDEO_PROCESS_REQUESTED",
       "pattern": "file.video_process_requested",
       "producers": [

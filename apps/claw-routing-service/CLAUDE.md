@@ -215,6 +215,14 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   HD image was charged the standard price. Fills a gap; no
   `replacesFallbackRate` (the key was never requested before v9). Deploy
   routing BEFORE image-service, or every HD hold is `PAYG_MODEL_UNPRICED`.
+- **gpt-4o transcription** (seed **v10**, `model-cost-list-prices-2026-v10`,
+  2026-09-29): NEW keys `OPENAI:gpt-4o-transcribe` 100 and
+  `OPENAI:gpt-4o-mini-transcribe` 50 micro-USD per SECOND of audio
+  (`audioPerUnitMicroUsd`; OpenAI's published estimate $0.006 / $0.003 per
+  minute, https://developers.openai.com/api/docs/pricing, fetched 2026-09-29),
+  token rates 0 because file-service settles on duration. Fills gaps.
+  file-service still calls only `whisper-1` (`OPENAI_TRANSCRIPTION_MODEL` is a
+  constant, not data-driven) — using these needs a caller change.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
   (never an override, never a synced row) and whose rates differ gets that row

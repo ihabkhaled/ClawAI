@@ -58,6 +58,8 @@ export type SpeechProviderRequest = {
   /** The exact voice name this provider reads with (the user's, or the provider default). */
   voice: string;
   apiKey: string;
+  /** The connector's configured base URL; null/absent → the provider's default host. */
+  baseUrl?: string | null;
   maxOutputTokens: number;
   /** The job's cancel signal: aborts the local HTTP request, never the provider's work. */
   signal?: AbortSignal;
@@ -239,6 +241,13 @@ export type SpeechVoiceLookup = {
 
 export type ConnectorKeyResponse = {
   apiKey?: string | null;
+  baseUrl?: string | null;
+};
+
+/** What a voice call needs from connector-service. `baseUrl` is null when the connector sets none. */
+export type SpeechProviderCredentials = {
+  apiKey: string;
+  baseUrl: string | null;
 };
 
 export type CachedConnectorStatus = {

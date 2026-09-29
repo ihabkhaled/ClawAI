@@ -292,8 +292,8 @@ export class SpeechSynthesisManager {
       outcome,
       latencyMs: Date.now() - started,
     });
-    const apiKey = await this.connector.resolveApiKey(candidate.provider);
-    if (apiKey === null) {
+    const credentials = await this.connector.resolveCredentials(candidate.provider);
+    if (credentials === null) {
       return { record: record(SpeechAttemptOutcome.NOT_CONFIGURED, null) };
     }
     if (this.isCancelled(input)) {
@@ -307,7 +307,8 @@ export class SpeechSynthesisManager {
         candidate,
         text: input.segment.text,
         voice: this.voiceFor(candidate, input.voice),
-        apiKey,
+        apiKey: credentials.apiKey,
+        baseUrl: credentials.baseUrl,
         maxOutputTokens: held.hold.maxOutputTokens,
         signal: input.signal,
       });

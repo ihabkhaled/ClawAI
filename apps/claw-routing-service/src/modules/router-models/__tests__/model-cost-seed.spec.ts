@@ -345,9 +345,26 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(find('dall-e-3')).toMatchObject({ imagePerUnitMicroUsd: 40_000 });
   });
 
-  it('is version 9, so installs that ran v8 pick up the dall-e-3 HD price', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(9);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v9');
+  it('prices gpt-4o(-mini)-transcribe per second of audio (v10), token rates zero', () => {
+    const find = (modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'OPENAI' && e.modelKey === modelKey);
+    expect(find('gpt-4o-transcribe')).toMatchObject({
+      audioPerUnitMicroUsd: 100,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+    });
+    expect(find('gpt-4o-mini-transcribe')).toMatchObject({
+      audioPerUnitMicroUsd: 50,
+      inputPerMillionMicroUsd: 0,
+      outputPerMillionMicroUsd: 0,
+    });
+    expect(find('gpt-4o-transcribe')?.supersedesSeededPrice ?? false).toBe(false);
+    expect(Number.isInteger(find('gpt-4o-mini-transcribe')?.audioPerUnitMicroUsd)).toBe(true);
+  });
+
+  it('is version 10, so installs that ran v9 pick up the transcription prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(10);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v10');
   });
 
   // Money is integer micro-USD everywhere in this platform. A float here would

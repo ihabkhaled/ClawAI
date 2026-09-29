@@ -180,6 +180,40 @@ describe('SpeechProviderClient', () => {
     );
   });
 
+  it('OpenAI: a configured connector base URL wins over the default host', async () => {
+    postBinary.mockResolvedValue({ ok: true, status: 200, body: Buffer.from('ID3mp3') });
+    await new SpeechProviderClient().synthesize({
+      candidate: OPENAI,
+      text: 'Hello.',
+      voice: 'nova',
+      apiKey: 'o-key',
+      baseUrl: 'https://proxy.example.com/openai/v1/',
+      maxOutputTokens: 1,
+    });
+    const call = postBinary.mock.calls[0]?.[0];
+    expect(call?.url).toBe('https://proxy.example.com/openai/v1/audio/speech');
+    expect([...(call?.allowedHosts ?? [])]).toEqual(['proxy.example.com']);
+  });
+
+  it('Gemini: a connector base URL on the /openai compat path speaks the native API above it', async () => {
+    request.mockResolvedValue({ ok: false, status: 500, data: {} } as never);
+    await expect(
+      new SpeechProviderClient().synthesize({
+        candidate: GEMINI,
+        text: 'Hello.',
+        voice: 'Puck',
+        apiKey: 'g-key',
+        baseUrl: 'https://gemini-gw.example.com/v1beta/openai',
+        maxOutputTokens: 10,
+      }),
+    ).rejects.toBeInstanceOf(SpeechProviderError);
+    const call = request.mock.calls[0]?.[0];
+    expect(call?.url).toBe(
+      'https://gemini-gw.example.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+    );
+    expect([...(call?.allowedHosts ?? [])]).toEqual(['gemini-gw.example.com']);
+  });
+
   it('OpenAI: a deadline becomes a timed-out SpeechProviderError', async () => {
     const abort = new Error('aborted');
     abort.name = 'AbortError';
@@ -312,6 +346,34 @@ describe('SpeechConnectorClient', () => {
     await expect(client.resolveApiKey(SpeechProvider.OPENAI)).resolves.toBeNull();
     request.mockRejectedValueOnce(new Error('down'));
     await expect(client.resolveApiKey(SpeechProvider.OPENAI)).resolves.toBeNull();
+  });
+
+  it('returns the configured base URL with the key; a blank base URL is null', async () => {
+    const client = new SpeechConnectorClient();
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { apiKey: 'k1', baseUrl: ' https://proxy.example.com/v1 ' },
+    } as never);
+    await expect(client.resolveCredentials(SpeechProvider.OPENAI)).resolves.toEqual({
+      apiKey: 'k1',
+      baseUrl: 'https://proxy.example.com/v1',
+    });
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { apiKey: 'k1', baseUrl: '  ' },
+    } as never);
+    await expect(client.resolveCredentials(SpeechProvider.OPENAI)).resolves.toEqual({
+      apiKey: 'k1',
+      baseUrl: null,
+    });
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { baseUrl: 'https://x' },
+    } as never);
+    await expect(client.resolveCredentials(SpeechProvider.OPENAI)).resolves.toBeNull();
   });
 
   it('caches only the configured yes/no, never the key, for a minute', async () => {

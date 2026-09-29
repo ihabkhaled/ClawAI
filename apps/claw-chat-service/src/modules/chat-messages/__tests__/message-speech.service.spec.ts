@@ -185,7 +185,14 @@ function build(options: HarnessOptions = {}): Harness {
   );
   const synthesis = new SpeechSynthesisManager(
     { resolve: vi.fn(async () => options.candidates ?? [GEMINI_ROW, OPENAI_ROW]) } as never,
-    { resolveApiKey, isConfigured: vi.fn(async () => options.configured ?? true) } as never,
+    {
+      resolveApiKey,
+      resolveCredentials: vi.fn(async (provider: SpeechProvider) => {
+        const apiKey = await resolveApiKey(provider);
+        return apiKey === null ? null : { apiKey, baseUrl: null };
+      }),
+      isConfigured: vi.fn(async () => options.configured ?? true),
+    } as never,
     { synthesize: providerSynthesize } as never,
     accessControl as never,
     metrics,
