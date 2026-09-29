@@ -21,7 +21,7 @@ export const IT_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'Che cosa fa',
     capabilities: [
       {
-        title: 'Tutti i modelli, un solo abbonamento',
+        title: 'Tutti i modelli, un solo spazio di lavoro',
         body: 'Nove famiglie di modelli di punta e i tuoi modelli locali a pesi aperti, raggiungibili dall’editor senza incollare nessuna chiave API. Il routing avviene sulla piattaforma, così l’editor non tiene mai la credenziale di un fornitore.',
       },
       {

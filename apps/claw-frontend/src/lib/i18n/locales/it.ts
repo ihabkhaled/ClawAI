@@ -5146,7 +5146,7 @@ export const it: TranslationDictionary = {
         modelCount: '{count} modelli disponibili adesso',
         title: 'I modelli che ottieni',
         intro:
-          'Un solo abbonamento copre tutti i provider qui sotto. Cambia modello a metà conversazione, oppure lascia che ClawAI scelga il migliore per ogni messaggio.',
+          'Un solo spazio di lavoro raggiunge tutti i provider qui sotto. Cambia modello a metà conversazione, oppure lascia che ClawAI scelga il migliore per ogni messaggio.',
         footnote:
           'I nuovi modelli di frontiera vengono aggiunti man mano che escono: il tuo piano li include dal primo giorno, conteggiati su un unico plafond.',
         linkFeatures: 'Esplora tutte le funzionalità',
@@ -5301,7 +5301,7 @@ export const it: TranslationDictionary = {
         title: 'A chi è rivolto ClawAI',
         privacyName: 'Chi usa l’IA tutti i giorni',
         privacyDesc:
-          'un solo abbonamento invece di tre o quattro, con il modello più potente sempre a un clic di distanza anziché dietro l’ennesimo paywall.',
+          'un solo spazio di lavoro invece di tre o quattro app di IA, con il modello più potente sempre a un clic di distanza anziché dietro l’ennesimo paywall.',
         devName: 'Sviluppatori che valutano modelli',
         devDesc:
           'invia lo stesso prompt a cinque modelli contemporaneamente e leggi le risposte affiancate prima di sceglierne uno.',
@@ -5310,7 +5310,7 @@ export const it: TranslationDictionary = {
           'lavora su documenti e dataset lunghi con modelli a contesto ampio, poi fai controllare le conclusioni da un secondo modello.',
         teamName: 'Piccoli team',
         teamDesc:
-          'condividete un unico spazio di lavoro, collegate gli issue tracker, le chat e i documenti che già usate e vedete con esattezza dove finisce il plafond.',
+          'usate ClawAI per un piccolo gruppo: un amministratore gestisce account, ruolo e piano di ogni persona e vede l’utilizzo di ciascuno.',
       },
       faq: {
         title: 'Domande frequenti',
@@ -5321,7 +5321,7 @@ export const it: TranslationDictionary = {
         q3: 'Come vengono misurati i limiti d’uso?',
         a3: 'In token normalizzati sul costo. Un modello costoso consuma più plafond di uno economico, così un unico valore giornaliero e mensile resta equo su modelli i cui prezzi differiscono di oltre un ordine di grandezza.',
         q4: 'ClawAI è affiliato a OpenAI, Anthropic, Google o AWS?',
-        a4: 'No. ClawAI è un prodotto indipendente che fornisce accesso ai modelli di quei provider tramite un unico abbonamento. Non è approvato da nessuno di loro né a essi affiliato.',
+        a4: 'No. ClawAI è un prodotto indipendente che ti dà accesso ai modelli di quei provider in un unico spazio di lavoro. Non è approvato da nessuno di loro né a essi affiliato.',
       },
       cta: {
         title: 'Inizia con il piano Free',
@@ -5375,7 +5375,7 @@ export const it: TranslationDictionary = {
       providers: {
         title: 'Tutte le famiglie di modelli di frontiera',
         intro:
-          'Un solo abbonamento le raggiunge tutte. Passa dall’una all’altra all’interno di una singola conversazione: non c’è nulla da installare né alcun account provider da creare.',
+          'Un solo spazio di lavoro le raggiunge tutte. Passa dall’una all’altra all’interno di una singola conversazione: non c’è nulla da installare né alcun account provider da creare.',
         modelsLabel: 'Modelli',
         anthropicDesc:
           'Ragionamento accurato su documenti lunghi, revisione del codice solida e il rispetto delle istruzioni più affidabile dell’intera gamma.',
@@ -5651,7 +5651,7 @@ export const it: TranslationDictionary = {
       models: {
         title: 'I modelli che puoi raggiungere',
         intro:
-          'Un solo abbonamento, tutte le famiglie qui sotto. Puoi passare dall’una all’altra all’interno di una singola conversazione.',
+          'Un solo spazio di lavoro, tutte le famiglie qui sotto. Puoi passare dall’una all’altra all’interno di una singola conversazione.',
         anthropicStrength:
           'Ragionamento accurato, documenti lunghi e la revisione del codice più affidabile della gamma.',
         openaiStrength:
@@ -6064,7 +6064,7 @@ export const it: TranslationDictionary = {
       hero: {
         title: 'Cosa si fa davvero con ClawAI',
         subtitle:
-          'Dieci lavori che capitano tutti i giorni e il modello — o la combinazione di modelli — che li gestisce meglio. Tutto con un solo abbonamento.',
+          'Dieci lavori che capitano tutti i giorni e il modello — o la combinazione di modelli — che li gestisce meglio. Tutto in un solo spazio di lavoro.',
         lastReviewedLabel: 'Ultima revisione',
       },
       grid: {
@@ -6138,7 +6138,7 @@ export const it: TranslationDictionary = {
         imagesCapability: 'Generazione di immagini',
       },
       oneSubscription: {
-        title: 'Perché un abbonamento solo batte averne diversi',
+        title: 'Perché un solo spazio di lavoro batte più app',
         intro:
           'Avere quattro abbonamenti IA non è quattro volte meglio di averne uno. Sono quattro fatture, quattro serie di limiti e una costante, sorda decisione su quale scheda aprire.',
         pointRightModelTitle: 'Il modello giusto, ogni volta',
@@ -6184,7 +6184,7 @@ export const it: TranslationDictionary = {
         description: 'Che cos’è ClawAI e come si comincia.',
         whatIsQ: 'Che cos’è ClawAI?',
         whatIsA:
-          'Un solo abbonamento che raggiunge tutti i modelli IA di frontiera — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok e Amazon Bedrock — attraverso un’unica interfaccia di chat. Instrada ogni messaggio al modello più adatto, ricorda il contesto utile tra una conversazione e l’altra, risponde a domande sui file che carichi e può mettere più modelli sullo stesso problema quando una sola risposta non basta.',
+          'Un solo spazio di lavoro che raggiunge tutti i modelli IA di frontiera — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok e Amazon Bedrock — attraverso un’unica interfaccia di chat. Instrada ogni messaggio al modello più adatto, ricorda il contesto utile tra una conversazione e l’altra, risponde a domande sui file che carichi e può mettere più modelli sullo stesso problema quando una sola risposta non basta.',
         apiKeysQ: 'Mi serve una chiave API di OpenAI o Anthropic?',
         apiKeysA:
           'No. L’accesso ai modelli è incluso nel tuo abbonamento. Non ci sono account provider da creare, chiavi da incollare né fatture separate dei provider.',
@@ -6270,7 +6270,7 @@ export const it: TranslationDictionary = {
           'Sì. Le organizzazioni che non possono inviare dati a un provider di modelli di terze parti possono far installare l’intera piattaforma all’interno della propria rete, con modelli a pesi aperti eseguiti sulle proprie GPU e nessuna chiamata a provider esterni. È un progetto definito su misura, non un piano acquistabile online. Il compromesso è il completo isolamento dei dati in cambio dei modelli di frontiera, che non possono essere eseguiti in locale: contattaci e lo dimensioniamo insieme a voi.',
         teamAccountsQ: 'Supportate i team?',
         teamAccountsA:
-          'Sì. Il piano Team e superiori offrono uno spazio di lavoro condiviso, permessi basati sui ruoli, più connessioni allo spazio di lavoro e Confronto, Judge, Critic e Ricerca senza tetto. Per tutto ciò che va oltre — accesso unico con la vostra directory, regole di conservazione personalizzate, documentazione per gli acquisti — parlateci.',
+          'Sì, come account gestiti da un amministratore. Un amministratore attiva ogni membro, assegna ruoli e piani e vede l’utilizzo di ciascuno nella console di amministrazione. Ogni membro ha il proprio piano e il proprio plafond; il piano Team e superiori tolgono i tetti mensili a Confronto, Judge, Critic e Ricerca. Fatturazione di team condivisa, plafond condivisi e accesso unico non sono disponibili oggi: parlateci di ciò che vi serve.',
       },
       contact: {
         title: 'Hai ancora una domanda?',

@@ -21,7 +21,7 @@ export const DE_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'Was sie kann',
     capabilities: [
       {
-        title: 'Jedes Modell, ein Abonnement',
+        title: 'Jedes Modell, ein Arbeitsbereich',
         body: 'Neun führende Modellfamilien und Ihre lokalen offenen Modelle, aus dem Editor erreichbar, ohne einen API-Schlüssel einzufügen. Das Routing passiert auf der Plattform, der Editor hält also nie Anbieter-Zugangsdaten.',
       },
       {

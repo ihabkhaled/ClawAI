@@ -5052,7 +5052,7 @@ export const en: TranslationDictionary = {
         modelCount: '{count} models available now',
         title: 'The models you get',
         intro:
-          'One subscription covers every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',
+          'One workspace reaches every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',
         footnote:
           'New frontier models are added as they launch — your plan covers them from day one, metered against a single allowance.',
         linkFeatures: 'Explore every feature',
@@ -5206,7 +5206,7 @@ export const en: TranslationDictionary = {
         title: 'Who ClawAI is for',
         privacyName: 'People who use AI every day',
         privacyDesc:
-          'one subscription instead of three or four, with the strongest model always a click away rather than behind another paywall.',
+          'one workspace instead of three or four AI apps, with the strongest model always a click away rather than behind another paywall.',
         devName: 'Developers evaluating models',
         devDesc:
           'send the same prompt to five models at once and read the answers side by side before committing to one.',
@@ -5215,7 +5215,7 @@ export const en: TranslationDictionary = {
           'work through long documents and datasets with large-context models, then have a second model check the conclusions.',
         teamName: 'Small teams',
         teamDesc:
-          'share one workspace, connect the issue trackers, chat and docs you already use, and see exactly where the allowance goes.',
+          'run ClawAI for a small group: an administrator manages each person’s account, role and plan, and can see each person’s usage.',
       },
       faq: {
         title: 'Frequently asked questions',
@@ -5226,7 +5226,7 @@ export const en: TranslationDictionary = {
         q3: 'How are usage limits measured?',
         a3: 'In cost-normalized tokens. An expensive model draws down more of your allowance than a cheap one, so a single daily and monthly figure stays fair across models whose prices differ by more than an order of magnitude.',
         q4: 'Is ClawAI affiliated with OpenAI, Anthropic, Google, or AWS?',
-        a4: 'No. ClawAI is an independent product that provides access to those providers’ models through one subscription. It is not endorsed by or affiliated with any of them.',
+        a4: 'No. ClawAI is an independent product that gives you access to those providers’ models in one workspace. It is not endorsed by or affiliated with any of them.',
       },
       cta: {
         title: 'Start on the free plan',
@@ -5280,7 +5280,7 @@ export const en: TranslationDictionary = {
       providers: {
         title: 'Every frontier model family',
         intro:
-          'One subscription reaches all of these. Switch between them inside a single conversation — there is nothing to install and no provider account to create.',
+          'One workspace reaches all of these. Switch between them inside a single conversation — there is nothing to install and no provider account to create.',
         modelsLabel: 'Models',
         anthropicDesc:
           'Careful reasoning over long documents, strong code review, and the most reliable instruction following in the roster.',
@@ -5553,7 +5553,7 @@ export const en: TranslationDictionary = {
       models: {
         title: 'The models you can reach',
         intro:
-          'One subscription, every family below. You can switch between them inside a single conversation.',
+          'One workspace, every family below. You can switch between them inside a single conversation.',
         anthropicStrength:
           'Careful reasoning, long documents, and the most reliable code review in the roster.',
         openaiStrength: 'Broad general capability with strong tool use and structured output.',
@@ -5960,7 +5960,7 @@ export const en: TranslationDictionary = {
       hero: {
         title: 'What people actually do with ClawAI',
         subtitle:
-          'Ten jobs that come up every day, and the model — or combination of models — that handles each one best. All on one subscription.',
+          'Ten jobs that come up every day, and the model — or combination of models — that handles each one best. All in one workspace.',
         lastReviewedLabel: 'Last reviewed',
       },
       grid: {
@@ -6034,7 +6034,7 @@ export const en: TranslationDictionary = {
         imagesCapability: 'Image generation',
       },
       oneSubscription: {
-        title: 'Why one subscription beats several',
+        title: 'Why one workspace beats several apps',
         intro:
           'Running four AI subscriptions is not four times better than one. It is four bills, four sets of limits, and a constant low-grade decision about which tab to open.',
         pointRightModelTitle: 'The right model, every time',
@@ -6080,7 +6080,7 @@ export const en: TranslationDictionary = {
         description: 'What ClawAI is, and how to begin.',
         whatIsQ: 'What is ClawAI?',
         whatIsA:
-          'A single subscription that reaches every frontier AI model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Amazon Bedrock — through one chat interface. It routes each message to the model best suited to it, remembers useful context between conversations, answers questions about files you upload, and can put several models on the same problem when one answer is not enough.',
+          'One workspace that reaches every frontier AI model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Amazon Bedrock — through one chat interface. It routes each message to the model best suited to it, remembers useful context between conversations, answers questions about files you upload, and can put several models on the same problem when one answer is not enough.',
         apiKeysQ: 'Do I need an API key from OpenAI or Anthropic?',
         apiKeysA:
           'No. Model access is included in your subscription. There are no provider accounts to create, no keys to paste and no separate provider bills.',
@@ -6166,7 +6166,7 @@ export const en: TranslationDictionary = {
           'Yes. Organisations that cannot send data to a third-party model provider can have the whole platform deployed inside their own network, running open-weight models on their own GPUs, with no external provider calls at all. It is a scoped engagement rather than a plan you can buy online. The trade-off is complete data isolation in exchange for the frontier models, which cannot be run on-premise — contact us and we will size it with you.',
         teamAccountsQ: 'Do you support teams?',
         teamAccountsA:
-          'Yes. The Team plan and above give a shared workspace, role-based permissions, more workspace connections and uncapped Compare, Judge, Critic and Research. For anything beyond that — single sign-on against your directory, custom retention rules, procurement paperwork — talk to us.',
+          'Yes, as administrator-managed accounts. An administrator activates each member, assigns roles and plans, and sees each person’s usage in the admin console. Every member has their own plan and allowance; the Team plan and above lift the monthly caps on Compare, Judge, Critic and Research. Shared team billing, pooled allowances and single sign-on are not available today — talk to us about what you need.',
       },
       contact: {
         title: 'Still have a question?',

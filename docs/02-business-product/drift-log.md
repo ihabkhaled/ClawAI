@@ -43,3 +43,28 @@ page the entry names. This log is the history between them.
   [requirements register](requirements-register.md) REQ-POS-001…006,
   root `README.md`, `wiki/`, `CLAUDE.md` and every agent router.
   Frontend marketing copy is changed in a separate, parallel batch.
+
+---
+
+## DRIFT-002 — Team plan and "one subscription" copy brought in line (2026-09-29)
+
+- **Area:** product, business.
+- **Before:** the Team plan's seeded description read "Shared workspaces and a
+  large pooled allowance.", the teams FAQ said Team "gives a shared workspace",
+  and marketing, comparison, SEO and coding-agent copy in all 13 locales still
+  sold "one subscription".
+- **After:** the Team description lists only real entitlements; the teams FAQ
+  describes administrator-managed accounts and says shared billing, pooled
+  allowances and SSO are not available today; every "one subscription" pitch
+  now says "one workspace". Guarded by
+  `apps/claw-frontend/src/lib/i18n/__tests__/one-subscription-wording.test.ts`.
+- **Why:** closes the REQ-POS-005 overclaim and finishes DRIFT-001's frontend
+  batch.
+- **Decided by:** the owner (ADR-126 positioning), 2026-09-29.
+- **Impact:** copy only. No price, quota, ceiling or entitlement changed (rule 28).
+- **Touched:** `plan-catalog.json`, new `plan-team-description.seeder.cjs`,
+  [requirements register](requirements-register.md) REQ-POS-005,
+  [flagship catalog](flagship-features.md),
+  [rollout checklist](../business/rollout-and-notice.md),
+  `apps/claw-auth-service/CLAUDE.md`, 13 locale dictionaries and the per-locale
+  comparison, SEO and coding-agent constants.

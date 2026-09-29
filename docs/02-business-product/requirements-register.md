@@ -85,9 +85,12 @@ _inferred_ until the owner confirms it.
   fleet's, which is API-only.
 - **Until built:** copy says "bring your team" and describes admin-managed users,
   roles, plan grants and usage statistics; it does not promise seats, shared
-  billing or pooling. The Team plan description overclaims and needs the
-  business owner's wording.
-- **History:** 2026-09-26 created.
+  billing or pooling. The Team plan description and the teams FAQ now list
+  only real entitlements (per-user plan and allowance, uncapped Compare, Judge,
+  Critic and Research, 15 workspace connections) and say shared billing,
+  pooled allowances and SSO are not available today.
+- **History:** 2026-09-26 created. 2026-09-29 overclaiming copy removed
+  ([DRIFT-002](drift-log.md)); the capability itself is still missing.
 
 ### REQ-POS-006
 

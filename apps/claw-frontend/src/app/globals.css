@@ -1263,7 +1263,7 @@
    *
    * The coding-agent pages render `<strong>title</strong><span>body</span>`
    * per item. Without a block context on the parts, the two run together —
-   * "Every model, one subscriptionNine frontier families…" — which is what
+   * "Every model, one workspaceNine frontier families…" — which is what
    * shipped until the styles below existed. The term is a block so the body
    * starts on its own line, and the counter is drawn rather than left to the
    * default marker, which the editorial reset removes.

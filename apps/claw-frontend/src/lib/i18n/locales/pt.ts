@@ -5121,7 +5121,7 @@ export const pt: TranslationDictionary = {
         modelCount: '{count} modelos disponíveis agora',
         title: 'Os modelos que você recebe',
         intro:
-          'Uma assinatura cobre todos os provedores abaixo. Troque de modelo no meio da conversa, ou deixe o ClawAI escolher o melhor para cada mensagem.',
+          'Um só espaço de trabalho alcança todos os provedores abaixo. Troque de modelo no meio da conversa, ou deixe o ClawAI escolher o melhor para cada mensagem.',
         footnote:
           'Novos modelos de fronteira são adicionados assim que são lançados — seu plano os cobre desde o primeiro dia, medidos em uma única cota.',
         linkFeatures: 'Explore todos os recursos',
@@ -5276,7 +5276,7 @@ export const pt: TranslationDictionary = {
         title: 'Para quem é o ClawAI',
         privacyName: 'Pessoas que usam IA todos os dias',
         privacyDesc:
-          'uma assinatura em vez de três ou quatro, com o modelo mais forte sempre a um clique de distância, em vez de atrás de outro paywall.',
+          'um só espaço de trabalho em vez de três ou quatro apps de IA, com o modelo mais forte sempre a um clique de distância, em vez de atrás de outro paywall.',
         devName: 'Programadores a avaliar modelos',
         devDesc:
           'envie o mesmo prompt para cinco modelos ao mesmo tempo e leia as respostas lado a lado antes de se decidir por uma.',
@@ -5285,7 +5285,7 @@ export const pt: TranslationDictionary = {
           'trabalhe em documentos extensos e conjuntos de dados com modelos de contexto grande, e depois peça a um segundo modelo que verifique as conclusões.',
         teamName: 'Pequenas equipes',
         teamDesc:
-          'compartilhe um espaço de trabalho, conecte os rastreadores de tarefas, o chat e os documentos que você já usa, e veja exatamente para onde vai sua cota.',
+          'use o ClawAI para um grupo pequeno: um administrador gerencia a conta, a função e o plano de cada pessoa, e vê o uso de cada uma.',
       },
       faq: {
         title: 'Perguntas frequentes',
@@ -5296,7 +5296,7 @@ export const pt: TranslationDictionary = {
         q3: 'Como os limites de uso são medidos?',
         a3: 'Em tokens normalizados por custo. Um modelo caro consome mais da sua cota do que um barato, para que um único número diário e mensal permaneça justo entre modelos cujos preços diferem em mais de uma ordem de grandeza.',
         q4: 'O ClawAI está associado à OpenAI, à Anthropic, à Google ou à AWS?',
-        a4: 'Não. O ClawAI é um produto independente que fornece acesso aos modelos desses provedores por meio de uma única assinatura. Ele não é endossado por nenhum deles nem afiliado a eles.',
+        a4: 'Não. O ClawAI é um produto independente que dá acesso aos modelos desses provedores em um só espaço de trabalho. Ele não é endossado por nenhum deles nem afiliado a eles.',
       },
       cta: {
         title: 'Comece no plano gratuito',
@@ -5350,7 +5350,7 @@ export const pt: TranslationDictionary = {
       providers: {
         title: 'Todas as famílias de modelos de fronteira',
         intro:
-          'Uma assinatura dá acesso a todos eles. Alterne entre eles dentro de uma única conversa — não há nada para instalar e nenhuma conta de provedor para criar.',
+          'Um só espaço de trabalho dá acesso a todos eles. Alterne entre eles dentro de uma única conversa — não há nada para instalar e nenhuma conta de provedor para criar.',
         modelsLabel: 'Modelos',
         anthropicDesc:
           'Raciocínio cuidadoso sobre documentos longos, revisão de código sólida e o cumprimento de instruções mais confiável do catálogo.',
@@ -5625,7 +5625,7 @@ export const pt: TranslationDictionary = {
       models: {
         title: 'Os modelos que você pode acessar',
         intro:
-          'Uma assinatura, todas as famílias abaixo. Você pode alternar entre elas dentro de uma única conversa.',
+          'Um espaço de trabalho, todas as famílias abaixo. Você pode alternar entre elas dentro de uma única conversa.',
         anthropicStrength:
           'Raciocínio cuidadoso, documentos longos, e a revisão de código mais confiável do catálogo.',
         openaiStrength: 'Ampla capacidade geral, com forte uso de ferramentas e saída estruturada.',
@@ -6036,7 +6036,7 @@ export const pt: TranslationDictionary = {
       hero: {
         title: 'O que as pessoas realmente fazem com o ClawAI',
         subtitle:
-          'Dez tarefas que surgem todos os dias, e o modelo — ou combinação de modelos — que lida melhor com cada uma. Tudo em uma única assinatura.',
+          'Dez tarefas que surgem todos os dias, e o modelo — ou combinação de modelos — que lida melhor com cada uma. Tudo em um só espaço de trabalho.',
         lastReviewedLabel: 'Última revisão',
       },
       grid: {
@@ -6110,7 +6110,7 @@ export const pt: TranslationDictionary = {
         imagesCapability: 'Geração de imagens',
       },
       oneSubscription: {
-        title: 'Por que uma assinatura é melhor do que várias',
+        title: 'Por que um espaço de trabalho é melhor do que vários apps',
         intro:
           'Manter quatro assinaturas de IA não é quatro vezes melhor do que uma. São quatro faturas, quatro conjuntos de limites, e uma decisão constante e cansativa sobre qual aba abrir.',
         pointRightModelTitle: 'O modelo certo, toda vez',
@@ -6156,7 +6156,7 @@ export const pt: TranslationDictionary = {
         description: 'O que é o ClawAI, e como começar.',
         whatIsQ: 'O que é o ClawAI?',
         whatIsA:
-          'Uma única assinatura que dá acesso a todos os modelos de IA de fronteira — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok e Amazon Bedrock — em uma única interface de chat. Ele roteia cada mensagem para o modelo mais adequado a ela, lembra contexto útil entre conversas, responde perguntas sobre arquivos que você envia, e pode colocar vários modelos no mesmo problema quando uma única resposta não basta.',
+          'Um só espaço de trabalho que dá acesso a todos os modelos de IA de fronteira — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok e Amazon Bedrock — em uma única interface de chat. Ele roteia cada mensagem para o modelo mais adequado a ela, lembra contexto útil entre conversas, responde perguntas sobre arquivos que você envia, e pode colocar vários modelos no mesmo problema quando uma única resposta não basta.',
         apiKeysQ: 'Preciso de uma chave de API da OpenAI ou da Anthropic?',
         apiKeysA:
           'Não. O acesso aos modelos está incluído na sua assinatura. Não há contas de provedor para criar, chaves para colar nem faturas separadas de provedores.',
@@ -6242,7 +6242,7 @@ export const pt: TranslationDictionary = {
           'Sim. Empresas que não podem enviar dados a um provedor de modelos terceirizado podem ter toda a plataforma implantada dentro da própria rede, executando modelos de peso aberto nas próprias GPUs, sem nenhuma chamada a provedores externos. É um projeto sob medida, não um plano que se compra online. O trade-off é isolamento completo de dados em troca dos modelos de fronteira, que não podem ser executados localmente — fale conosco e faremos o dimensionamento com você.',
         teamAccountsQ: 'Vocês oferecem suporte a equipes?',
         teamAccountsA:
-          'Sim. O plano Team e acima oferecem um espaço de trabalho compartilhado, permissões baseadas em função, mais conexões de espaço de trabalho, e Comparação, Juiz, Crítico e Pesquisa ilimitados. Para qualquer coisa além disso — login único (SSO) integrado ao seu diretório, regras de retenção personalizadas, documentação de compras — fale conosco.',
+          'Sim, como contas gerenciadas por um administrador. O administrador ativa cada membro, atribui funções e planos e vê o uso de cada pessoa no console de administração. Cada membro tem o próprio plano e a própria cota; o plano Team e acima removem os limites mensais de Comparação, Juiz, Crítico e Pesquisa. Cobrança compartilhada de equipe, cotas compartilhadas e login único (SSO) não estão disponíveis hoje — fale conosco sobre o que você precisa.',
       },
       contact: {
         title: 'Ainda tem alguma dúvida?',
