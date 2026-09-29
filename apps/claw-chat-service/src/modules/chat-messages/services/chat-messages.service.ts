@@ -76,7 +76,10 @@ import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
 import { ModelContextWindowClient } from '../clients/model-context-window.client';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
-import { selectImageEditor } from '../utilities/image-editor-selection.utility';
+import {
+  keepsRoutedImageProvider,
+  selectImageEditor,
+} from '../utilities/image-editor-selection.utility';
 import { readMaskFileId } from '../utilities/image-mask-refusal.utility';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ResearchRunResponse } from '../types/research.types';
@@ -2736,9 +2739,10 @@ export class ChatMessagesService implements OnModuleInit {
     messages: ChatMessage[],
     userId: string | undefined,
   ): Promise<MessageRoutedData> {
-    if (payload.selectedProvider.startsWith('IMAGE_') || userId === undefined) return payload;
+    if (userId === undefined) return payload;
     const turn = this.latestAttachmentTurn(messages);
     if (turn === null) return payload;
+    if (keepsRoutedImageProvider(payload.selectedProvider, turn.hasMask)) return payload;
     const mimeTypes = await this.attachmentMimeTypesOf(userId, turn.fileIds);
     const intent = classifyImageIntent(turn.text, hasAttachedImageMime(mimeTypes));
     // A drawn mask needs a provider that can apply one (Gemini/SD cannot).
