@@ -6345,6 +6345,22 @@ export type MediaUiLocaleTranslation = {
     cancelProcessing: string;
     cancelProcessingAria: string;
     cancelling: string;
+    /** Localized detail for a known `extractionError` code (never the backend's English). */
+    failureDetail: {
+      noVideoStream: string;
+      invalidDuration: string;
+      dimensionsTooLarge: string;
+      durationTooLong: string;
+      probeTimeout: string;
+      corruptContainer: string;
+      videoTooLongForPlan: string;
+      videoDisabledForPlan: string;
+      sourceUnreadable: string;
+      toolUnavailable: string;
+      fileNotFound: string;
+      processingError: string;
+      generic: string;
+    };
   };
   deliveryReason: {
     noVision: string;

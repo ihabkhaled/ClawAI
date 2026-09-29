@@ -50,6 +50,8 @@ export type ComposerAttachmentChipDraft = {
   localId: string | null;
   /** Backend or upload detail behind a failure, shown after the reason. */
   detail: string | null;
+  /** i18n key for a failed stored file's detail; wins over `detail` when set. */
+  detailKey: string | null;
   /** A selected VIDEO still processing: its owner may stop the processing. */
   canCancelProcessing: boolean;
 };

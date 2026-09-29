@@ -721,3 +721,14 @@ download fails (404 past retention, 401, network — the old
 error page with 200). Never render an `<img>` for an attachment without an
 `onError` fallback. `useAuthenticatedImage` is still used by
 `image-generation-bubble.tsx` only.
+
+## A failed file's `extractionError` is never shown raw (2026-09-29)
+
+`extractionError` is file-service's English sentence. The composer chip shows
+a localized detail picked by CODE (`extractionErrorDetailKey`,
+`utilities/extraction-error.utility.ts`): the video
+`extractionMetadata.media.failureReason` → `mediaUi.attachmentState.failureDetail.*`,
+an archive `ZIP_…:` / `ARCHIVE_…:` prefix → `files.archive.rejected.*`, anything
+else → `failureDetail.generic`. A new backend code needs a map entry in
+`constants/extraction-error.constants.ts` plus the key in all 13 locales of
+`media-ui-translations.ts` and `i18n.types.ts`.

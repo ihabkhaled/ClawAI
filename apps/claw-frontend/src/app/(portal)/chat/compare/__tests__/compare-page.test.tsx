@@ -133,6 +133,7 @@ describe('ComparePage — per-attachment status (same as chat)', () => {
         fileId: null,
         localId: 'upload-1',
         detail: null,
+        detailKey: null,
         canCancelProcessing: false,
         displayName: 'empty.txt',
         stateLabel: 'Not supported',
