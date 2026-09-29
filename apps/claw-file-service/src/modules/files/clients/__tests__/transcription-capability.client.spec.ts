@@ -4,7 +4,7 @@
 //   - GEMINI is preferred over OPENAI regardless of snapshot order
 //   - a model with no AUDIO modality is not treated as capable
 
-import { beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { httpGet } from '@claw/shared-utilities';
 import { TranscriptionCapabilityClient } from '../transcription-capability.client';
 import { type TranscriptionSnapshotResponse } from '../../types/transcription.types';
@@ -14,9 +14,14 @@ vi.mock('@claw/shared-utilities', () => ({
   declaredHost: vi.fn(() => new Set(['connector-service:4003'])),
 }));
 
+const localConfig = vi.hoisted(() => ({ base: '' }));
+
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
-    get: vi.fn(() => ({ CONNECTOR_SERVICE_URL: 'http://connector-service:4003' })),
+    get: vi.fn(() => ({
+      CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+      LOCAL_SPEECH_BASE_URL: localConfig.base,
+    })),
   },
 }));
 
@@ -181,6 +186,97 @@ describe('TranscriptionCapabilityClient', () => {
       await client.findCapableModels();
 
       expect(mockedHttpGet).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('LOCAL candidate (ADR-128)', () => {
+    beforeEach(() => {
+      localConfig.base = 'http://speech:8000';
+    });
+
+    afterEach(() => {
+      localConfig.base = '';
+    });
+
+    it('appends LOCAL AFTER every cloud candidate when the container is healthy', async () => {
+      mockedHttpGet
+        .mockResolvedValueOnce(
+          snapshot([
+            { provider: 'GEMINI', modelKey: 'gemini-2.5-flash', modalitiesIn: ['AUDIO'] },
+            { provider: 'OPENAI', modelKey: 'gpt-4o-audio', modalitiesIn: ['AUDIO'] },
+          ]),
+        )
+        .mockResolvedValueOnce('OK');
+
+      const all = await client.findCapableModels();
+
+      expect(all.map((c) => c.provider)).toEqual(['GEMINI', 'OPENAI', 'LOCAL']);
+      expect(all[2]).toEqual({ provider: 'LOCAL', model: 'Systran/faster-whisper-small' });
+      expect(mockedHttpGet.mock.calls[1]?.[0]).toBe('http://speech:8000/health');
+    });
+
+    it('is the ONLY candidate when no cloud connector is audio-capable', async () => {
+      mockedHttpGet
+        .mockResolvedValueOnce(
+          snapshot([{ provider: 'GEMINI', modelKey: 'gemini-text', modalitiesIn: ['TEXT'] }]),
+        )
+        .mockResolvedValueOnce('OK');
+
+      await expect(client.findCapableModel()).resolves.toEqual({
+        provider: 'LOCAL',
+        model: 'Systran/faster-whisper-small',
+      });
+    });
+
+    it('is still offered when connector-service is down', async () => {
+      mockedHttpGet
+        .mockRejectedValueOnce(new Error('connect ECONNREFUSED'))
+        .mockResolvedValueOnce('OK');
+
+      await expect(client.findCapableModels()).resolves.toEqual([
+        { provider: 'LOCAL', model: 'Systran/faster-whisper-small' },
+      ]);
+    });
+
+    it('is not offered when the container does not answer its health check', async () => {
+      mockedHttpGet
+        .mockResolvedValueOnce(snapshot([]))
+        .mockRejectedValueOnce(new Error('getaddrinfo ENOTFOUND speech'));
+
+      await expect(client.findCapableModels()).resolves.toEqual([]);
+    });
+
+    it('is off when LOCAL_SPEECH_BASE_URL is blank (no probe at all)', async () => {
+      localConfig.base = '  ';
+      mockedHttpGet.mockResolvedValueOnce(snapshot([]));
+
+      await expect(client.findCapableModels()).resolves.toEqual([]);
+      expect(mockedHttpGet).toHaveBeenCalledTimes(1);
+    });
+
+    it('builds LOCAL config without asking connector-service, with an inert key', async () => {
+      await expect(client.fetchConnectorConfig('LOCAL')).resolves.toEqual({
+        provider: 'LOCAL',
+        apiKey: 'local',
+        baseUrl: 'http://speech:8000/v1',
+      });
+      expect(mockedHttpGet).not.toHaveBeenCalled();
+    });
+
+    it('does not double the /v1 an operator already wrote', async () => {
+      localConfig.base = 'http://proxy/v1/';
+
+      const config = await client.fetchConnectorConfig('LOCAL');
+
+      expect(config.baseUrl).toBe('http://proxy/v1');
+    });
+
+    it('refuses LOCAL config when the base URL is blank', async () => {
+      localConfig.base = '';
+
+      await expect(client.fetchConnectorConfig('LOCAL')).rejects.toThrow(
+        'Local speech is not configured',
+      );
     });
   });
 });

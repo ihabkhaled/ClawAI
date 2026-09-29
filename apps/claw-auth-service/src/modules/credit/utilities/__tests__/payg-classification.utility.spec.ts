@@ -40,9 +40,12 @@ const makeSnapshot = (overrides: Partial<PaygRateSnapshot> = {}): PaygRateSnapsh
 
 describe('PAYG classification', () => {
   describe('exempt providers', () => {
-    it.each(['OLLAMA', 'LLAMACPP', 'ollama', ' llamacpp '])('never meters %s', (provider) => {
-      expect(isExemptProvider(provider)).toBe(true);
-    });
+    it.each(['OLLAMA', 'LLAMACPP', 'LOCAL', 'ollama', ' llamacpp ', 'local'])(
+      'never meters %s',
+      (provider) => {
+        expect(isExemptProvider(provider)).toBe(true);
+      },
+    );
 
     it('does meter a paid cloud provider', () => {
       expect(isExemptProvider('OPENAI')).toBe(false);

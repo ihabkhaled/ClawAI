@@ -94,6 +94,66 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Speech (free local speech-to-text + text-to-speech) — ADR-128
+  # ---------------------------------------------------------------------------
+  # speaches: one CPU container, OpenAI-compatible /v1/audio/transcriptions
+  # (faster-whisper) and /v1/audio/speech (Kokoro). file-service (STT) and
+  # chat-service (read aloud) call it as the LOCAL provider over claw-network:
+  # LOCAL_SPEECH_BASE_URL=http://speech:8000. No published port and no nginx
+  # route: nothing outside the stack talks to it. Unmetered (PAYG-exempt).
+  # The model ids below are pinned in code (LOCAL_TRANSCRIPTION_MODEL in
+  # file-service, LOCAL_TTS_MODEL in chat-service) - change them together.
+  speech:
+    labels:
+      claw.service: speech
+    logging: *claw-logging
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
+    image: ghcr.io/speaches-ai/speaches:0.8.3-cpu
+    container_name: claw-speech
+    restart: unless-stopped
+    volumes:
+      - speech-models-data:/home/ubuntu/.cache/huggingface/hub
+    environment:
+      # Free the model RAM after 5 idle minutes; the next call reloads it.
+      - WHISPER__TTL=300
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        uvicorn --factory speaches.main:create_app &
+        SERVE_PID=$$!
+
+        echo "Waiting for speech server to start..."
+        until python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" > /dev/null 2>&1; do
+          sleep 1
+        done
+        echo "Speech server is ready."
+
+        # speaches does NOT pull models lazily (an uninstalled model is a 404),
+        # so install exactly the two the stack uses. Idempotent: an installed
+        # model answers immediately from the volume.
+        for MODEL in Systran/faster-whisper-small speaches-ai/Kokoro-82M-v1.0-ONNX; do
+          echo "Installing $$MODEL..."
+          python -c "import sys, urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8000/v1/models/' + sys.argv[1], method='POST'), timeout=1800)" "$$MODEL" \
+            && echo "$$MODEL ready." || echo "$$MODEL install failed (will retry on next start)."
+        done
+
+        wait $$SERVE_PID
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/health'')" || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # Stable Diffusion (Local Image Generation)
   # ---------------------------------------------------------------------------
   stable-diffusion:
@@ -183,6 +243,7 @@ services:
 
 volumes:
   ollama-data:
+  speech-models-data:
   sd-models-data:
   comfyui-models-data:
 

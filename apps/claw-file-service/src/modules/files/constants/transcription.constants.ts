@@ -16,6 +16,22 @@
  */
 export const TRANSCRIPTION_PROVIDER_PRIORITY: readonly string[] = ['GEMINI', 'OPENAI'];
 
+/**
+ * The free local speech container (ADR-128). Not a connector row: it never
+ * appears in the models snapshot, so the capability client appends it AFTER
+ * every cloud candidate. Its model is fixed like OpenAI's whisper-1 — the same
+ * `Systran/faster-whisper-small` the compose `speech` service pre-pulls, so the
+ * two must change together. Multilingual on purpose (`.en` variants are not).
+ */
+export const LOCAL_TRANSCRIPTION_PROVIDER = 'LOCAL';
+export const LOCAL_TRANSCRIPTION_MODEL = 'Systran/faster-whisper-small';
+/** speaches ignores auth; the OpenAI adapter still sends a bearer, so send an inert one. */
+export const LOCAL_TRANSCRIPTION_API_KEY = 'local';
+/** The OpenAI-compatible API root under the container's base URL. */
+export const LOCAL_SPEECH_API_PATH = '/v1';
+export const LOCAL_SPEECH_HEALTH_PATH = '/health';
+export const LOCAL_SPEECH_PROBE_TIMEOUT_MS = 2_000;
+
 /** The modality string connector-service puts in `modalitiesIn` for audio. */
 export const TRANSCRIPTION_AUDIO_MODALITY = 'AUDIO';
 
@@ -101,7 +117,7 @@ export const TRANSCRIPTION_MAX_CANDIDATES_PER_PROVIDER = 2;
  * called is fixed (`OPENAI_TRANSCRIPTION_*_MODEL`), so a second row would be the
  * same call twice, and the row's own name says nothing about stability.
  */
-export const TRANSCRIPTION_FIXED_MODEL_PROVIDERS: readonly string[] = ['OPENAI'];
+export const TRANSCRIPTION_FIXED_MODEL_PROVIDERS: readonly string[] = ['OPENAI', 'LOCAL'];
 
 /**
  * Model-key fragments that mark a row as NOT a plain transcription model:

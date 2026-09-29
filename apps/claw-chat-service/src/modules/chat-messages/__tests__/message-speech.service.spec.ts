@@ -105,6 +105,7 @@ function fakeRedis(): FakeRedis {
 
 type HarnessOptions = {
   candidates?: TtsVoiceCandidateWire[];
+  local?: boolean;
   metadata?: Record<string, unknown>;
   content?: string;
   role?: MessageRole;
@@ -191,7 +192,10 @@ function build(options: HarnessOptions = {}): Harness {
         const apiKey = await resolveApiKey(provider);
         return apiKey === null ? null : { apiKey, baseUrl: null };
       }),
-      isConfigured: vi.fn(async () => options.configured ?? true),
+      // LOCAL (ADR-128) is a container, not a connector: off unless a test asks.
+      isConfigured: vi.fn(async (provider: SpeechProvider) =>
+        provider === SpeechProvider.LOCAL ? (options.local ?? false) : (options.configured ?? true),
+      ),
     } as never,
     { synthesize: providerSynthesize } as never,
     accessControl as never,
@@ -743,6 +747,38 @@ describe('SpeechJobManager — per segment: reserve → store → record → fin
     });
   });
 
+  it('LOCAL is the only voice when no cloud voice is configured, with its fixed voice (ADR-128)', async () => {
+    const harness = build({ candidates: [], local: true });
+    harness.providerSynthesize.mockResolvedValue(MP3);
+    await startAndFinish(harness);
+    const requests = harness.providerSynthesize.mock.calls.map(
+      (call: unknown[]) => call[0] as SpeechProviderRequest,
+    );
+    expect(requests.length).toBeGreaterThan(0);
+    for (const request of requests) {
+      expect(request.candidate.provider).toBe(SpeechProvider.LOCAL);
+      expect(request.candidate.model).toBe('speaches-ai/Kokoro-82M-v1.0-ONNX');
+      expect(request.voice).toBe('af_heart');
+    }
+    expect(harness.speech().status).toBe(SpeechJobStatus.READY);
+  });
+
+  it('LOCAL goes AFTER the cloud voices: cloud is tried first, local only on failure', async () => {
+    const harness = build({ candidates: [OPENAI_ROW], local: true });
+    harness.providerSynthesize.mockImplementation(async (request: SpeechProviderRequest) => {
+      if (request.candidate.provider === SpeechProvider.OPENAI) {
+        throw new SpeechProviderError('down', 503, false);
+      }
+      return MP3;
+    });
+    await startAndFinish(harness);
+    const order = harness.providerSynthesize.mock.calls.map(
+      (call: unknown[]) => (call[0] as SpeechProviderRequest).candidate.provider,
+    );
+    expect(order[0]).toBe(SpeechProvider.OPENAI);
+    expect(order).toContain(SpeechProvider.LOCAL);
+  });
+
   it('caps a very long reply at 12,000 characters and says so', async () => {
     const long = 'This is a sentence that goes on. '.repeat(500);
     const harness = build({ content: long, candidates: [OPENAI_ROW] });
@@ -1285,7 +1321,10 @@ describe('MessageSpeechService.cancel — the owner stops a reading', () => {
 
 describe('MessageSpeechService — the saved voice (voice picker)', () => {
   it('every speech provider chat-service can call has a voice catalog and a default', () => {
-    for (const provider of Object.values(SpeechProvider)) {
+    // LOCAL has one fixed voice owned by the manager (LOCAL_TTS_VOICE), not a picker catalog.
+    for (const provider of Object.values(SpeechProvider).filter(
+      (p) => p !== SpeechProvider.LOCAL,
+    )) {
       expect(resolveTtsVoice(provider, null)).toEqual(expect.any(String));
     }
   });

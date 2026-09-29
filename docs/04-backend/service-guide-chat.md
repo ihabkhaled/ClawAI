@@ -1078,3 +1078,12 @@ image-service `POST /api/v1/internal/images/:generationId/assistant-message`
 (fire-and-forget, 5 s timeout, never throws). The thread owner is the owner
 image-service checks against. A failed link leaves the column null; the card
 reads `metadata.generationId` and does not depend on it.
+
+## Local read-aloud voice (ADR-128)
+
+`SpeechProvider.LOCAL` is a read-aloud candidate served by the `speech`
+container (Kokoro, model `speaches-ai/Kokoro-82M-v1.0-ONNX`, fixed voice
+`af_heart`). `SpeechSynthesisManager.candidates()` appends it after the admin
+`TTS_VOICE` rows when `SpeechConnectorClient.isConfigured(LOCAL)` (a 2 s
+`/health` probe) is true; it goes through `SpeechProviderClient.openAi` with the
+container base URL and is unmetered (`PAYG_EXEMPT_PROVIDERS`).

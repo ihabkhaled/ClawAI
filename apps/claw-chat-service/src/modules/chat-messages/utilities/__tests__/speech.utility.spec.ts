@@ -4,6 +4,8 @@ import { SpeechProvider } from '../../../../common/enums';
 import { SpeechProviderError } from '../../../../common/errors';
 import {
   geminiSpeechOutputTokens,
+  isPerCharacterPriced,
+  localSpeechCandidate,
   measuredSpeechUsage,
   segmentTimeoutMs,
   speechFilename,
@@ -167,5 +169,36 @@ describe('speechFilename', () => {
     expect(speechFilename('cm1abc', 'audio/wav', 0)).toBe('reply-cm1abc-1.wav');
     expect(speechFilename('cm1abc', 'audio/mpeg', 2)).toBe('reply-cm1abc-3.mp3');
     expect(speechFilename('../etc/passwd', 'audio/wav', 0)).toBe('reply-etcpasswd-1.wav');
+  });
+});
+
+describe('LOCAL speech candidate (ADR-128)', () => {
+  it('toSpeechCandidates keeps only the pinned Kokoro model for LOCAL', () => {
+    expect(
+      toSpeechCandidates([
+        row('LOCAL', 'speaches-ai/Kokoro-82M-v1.0-ONNX'),
+        row('LOCAL', 'some-other-model'),
+      ]).map((candidate) => [candidate.provider, candidate.model]),
+    ).toEqual([[SpeechProvider.LOCAL, 'speaches-ai/Kokoro-82M-v1.0-ONNX']]);
+  });
+
+  it('localSpeechCandidate is the fixed model, priced per character', () => {
+    const candidate = localSpeechCandidate();
+    expect(candidate).toMatchObject({
+      provider: SpeechProvider.LOCAL,
+      model: 'speaches-ai/Kokoro-82M-v1.0-ONNX',
+    });
+    expect(isPerCharacterPriced(candidate)).toBe(true);
+  });
+
+  it('Gemini is token-priced, not per character', () => {
+    expect(
+      isPerCharacterPriced({
+        provider: SpeechProvider.GEMINI,
+        model: 'gemini-2.5-flash-preview-tts',
+        timeoutMs: 1,
+        maxTokens: 1,
+      }),
+    ).toBe(false);
   });
 });

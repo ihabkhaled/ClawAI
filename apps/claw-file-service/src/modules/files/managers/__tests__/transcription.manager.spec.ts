@@ -266,6 +266,32 @@ describe('TranscriptionManager', () => {
     expect(outcome).toMatchObject({ status: 'TRANSCRIBED', model: 'whisper-1' });
   });
 
+  it('routes LOCAL through the OpenAI adapter on the container, with its own model (ADR-128)', async () => {
+    mockedOpenAi.mockResolvedValue({ text: 'local transcript' });
+    const harness = buildHarness(buildFile());
+    harness.capability.findCapableModels.mockResolvedValue([
+      { provider: 'LOCAL', model: 'Systran/faster-whisper-small' },
+    ]);
+    harness.capability.fetchConnectorConfig.mockResolvedValue({
+      provider: 'LOCAL',
+      apiKey: 'local',
+      baseUrl: 'http://speech:8000/v1',
+    });
+
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+    expect(mockedOpenAi).toHaveBeenCalledWith(
+      'http://speech:8000/v1',
+      'local',
+      expect.any(String),
+      'audio/mpeg',
+      'Systran/faster-whisper-small',
+    );
+    const completed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED);
+    expect(completed.provider).toBe('LOCAL');
+    expect(completed.model).toBe('Systran/faster-whisper-small');
+  });
+
   it('refuses clearly when no capable connector is configured', async () => {
     const harness = buildHarness(buildFile());
     harness.capability.findCapableModels.mockResolvedValue([]);

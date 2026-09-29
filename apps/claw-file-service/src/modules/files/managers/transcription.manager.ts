@@ -29,6 +29,8 @@ import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
 import {
   AUDIO_PLACEHOLDER_PREFIX,
   GEMINI_TRANSCRIPTION_DEFAULT_BASE_URL,
+  LOCAL_TRANSCRIPTION_MODEL,
+  LOCAL_TRANSCRIPTION_PROVIDER,
   MAX_TRANSCRIBABLE_AUDIO_BYTES,
   OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL,
   TRANSCRIPTION_CALLS_PER_CANDIDATE,
@@ -705,8 +707,8 @@ export class TranscriptionManager implements OnModuleInit {
             instruction,
           );
     }
-    if (provider === 'OPENAI') {
-      // whisper-1's verbose_json carries timestamped segments; no instruction needed.
+    if (provider === 'OPENAI' || provider === LOCAL_TRANSCRIPTION_PROVIDER) {
+      // LOCAL is the same OpenAI-compatible endpoint on the free container.
       return signal === undefined
         ? transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model)
         : transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model, signal);
@@ -756,6 +758,9 @@ export class TranscriptionManager implements OnModuleInit {
     capability: TranscriptionCapability,
     context: TranscriptionRequestContext,
   ): string {
+    if (capability.provider === LOCAL_TRANSCRIPTION_PROVIDER) {
+      return LOCAL_TRANSCRIPTION_MODEL;
+    }
     return capability.provider === 'OPENAI'
       ? openAiTranscriptionModel(context.needsSegments === true)
       : capability.model;

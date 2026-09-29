@@ -3998,6 +3998,13 @@
           "docker/docker-compose.dev.ollama.yml",
           "docker/docker-compose.prod.ollama.yml"
         ],
+        "name": "speech"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.ollama.yml",
+          "docker/docker-compose.prod.ollama.yml"
+        ],
         "name": "stable-diffusion"
       },
       {
@@ -4763,6 +4770,11 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "LOCAL_COMPUTE_OWNERSHIP"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "LOCAL_SPEECH_BASE_URL"
       },
       {
         "confidence": "verified",
@@ -7773,7 +7785,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 29042,
+          "bytes": 29218,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7863,7 +7875,7 @@
       ],
       "skills": [
         {
-          "bytes": 31718,
+          "bytes": 31998,
           "file": "skills/00-index.md"
         },
         {
@@ -8217,6 +8229,10 @@
         {
           "bytes": 5122,
           "file": "skills/verify-a-batch-live.md"
+        },
+        {
+          "bytes": 1355,
+          "file": "skills/verify-local-speech-container.md"
         },
         {
           "bytes": 7969,
@@ -10255,7 +10271,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 71
+        "testFiles": 72
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -11024,9 +11040,9 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 51,
+    "dockerServiceCount": 52,
     "endpointCount": 709,
-    "envVarCount": 359,
+    "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
     "localeCount": 13,
@@ -11037,7 +11053,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1701,
+    "totalTestFiles": 1702,
     "workspaceCount": 25
   }
 }
