@@ -26,3 +26,19 @@ export const EXTRACT_TEXT_MAX_PAGE = 10_000;
  * a cost the caller can see.
  */
 export const EXTRACT_TEXT_MAX_PAGE_SPAN = 100;
+
+/**
+ * Non-whitespace characters below which one page counts as having no text layer.
+ *
+ * Scanning is judged per page here, not on the document's total length. The
+ * upload path's rule — whole text under `SCANNED_PDF_CHAR_THRESHOLD` — was
+ * written for whole documents, and a page range is short by nature: measured
+ * live, pages 2-3 of a real text PDF came back with their text AND
+ * `isScanned: true`, because together they were under 100 characters. An agent
+ * told that distrusts text it actually received.
+ *
+ * A page counts as scanned only if it carries almost nothing, and a range only
+ * if every page in it does — so a title page reading "Chapter 1" does not make
+ * a document look scanned.
+ */
+export const EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS = 20;

@@ -59,6 +59,7 @@ import {
 } from '../types/internal-file.types';
 import { ALLOWED_MIME_TYPES, type ExtractedTextResult, MAX_FILE_SIZE } from '../types/files.types';
 import { type ExtractTextDto } from '../dto/extract-text.dto';
+import { EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS } from '../constants/extract-text.constants';
 import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
 import { FileProcessingManager } from '../managers/file-processing.manager';
 import { readVideoMediaSummary } from '../utilities/video-media-summary.utility';
@@ -815,7 +816,14 @@ export class FilesService {
       text: extraction.text,
       pages: extraction.pages.map((page) => ({ number: page.number, text: page.text })),
       totalPages: extraction.totalPages,
-      isScanned: extraction.isScanned,
+      // Per page, not on total length: see EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS.
+      // The utility's own `isScanned` stays as it is, because the upload path
+      // uses it to decide whether to run OCR on a whole document.
+      isScanned:
+        extraction.pages.length > 0 &&
+        extraction.pages.every(
+          (page) => page.text.replaceAll(/\s+/gu, '').length < EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS,
+        ),
     };
   }
 }
