@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { ContextPackItemType } from '../../../generated/prisma';
+import { CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS } from '../../../common/constants/content-limits.constants';
 
 export const addContextPackItemSchema = z.object({
   itemType: z.nativeEnum(ContextPackItemType).optional(),
   // Back-compat for old callers that sent free-text type
   type: z.string().max(50).optional(),
-  content: z.string().max(50000).optional(),
+  content: z.string().max(CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS).optional(),
   fileId: z.string().max(255).optional(),
   url: z.string().url().max(2048).optional(),
   memoryRefId: z.string().max(64).optional(),

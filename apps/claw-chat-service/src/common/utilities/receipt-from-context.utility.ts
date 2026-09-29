@@ -33,8 +33,8 @@ export function receiptFromAssembledContext(
     sourceMessageId: null,
   }));
   const packItems = context.contextPackItems.map((it, index) => ({
-    id: `pack-item-${String(index)}`,
-    contextPackId: 'unknown',
+    id: it.id ?? `pack-item-${String(index)}`,
+    contextPackId: it.packId ?? 'unknown',
     itemType: (it.type ?? 'TEXT') as ContextPackItemType,
     content: it.content,
     score: 0.5,

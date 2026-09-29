@@ -57,7 +57,7 @@ export type AssembledContext = {
   systemPrompt: string | null;
   threadMessages: ChatMessage[];
   memories: MemoryRecordResponse[];
-  contextPackItems: Array<{ content: string | null; type: string }>;
+  contextPackItems: AssembledPackItem[];
   fileContents: FileContentResponse[];
   /**
    * How many files the turn attached. Can exceed `fileContents.length`: a file
@@ -204,6 +204,26 @@ export type MemoryRecordResponse = {
    * treated as not pinned rather than as a reason to drop the memory.
    */
   pinned?: boolean;
+};
+
+/** One context-pack item as it reaches the prompt and the receipt. */
+export type AssembledPackItem = {
+  content: string | null;
+  type: string;
+  /** Present when fetched through memory-service's for-chat endpoint. */
+  id?: string;
+  packId?: string;
+  packName?: string;
+};
+
+/** memory-service `POST /internal/context-packs/for-chat` response. */
+export type ChatPacksResponse = {
+  packs?: Array<{
+    id: string;
+    name: string;
+    autoApplied: boolean;
+    items: Array<{ id: string; itemType: string; content: string }>;
+  }>;
 };
 
 export type ContextPackResponse = {

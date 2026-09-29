@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 221,
+      "testFiles": 223,
       "testRunner": "vitest"
     },
     {
@@ -307,7 +307,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-memory-service",
-      "endpointCount": 46,
+      "endpointCount": 47,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -334,7 +334,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 17,
+      "testFiles": 21,
       "testRunner": "vitest"
     },
     {

@@ -13,8 +13,10 @@ import { ContextPacksRepository } from '../repositories/context-packs.repository
 import { type CreateContextPackDto } from '../dto/create-context-pack.dto';
 import { type UpdateContextPackDto } from '../dto/update-context-pack.dto';
 import { type AddContextPackItemDto } from '../dto/add-context-pack-item.dto';
-import { type ContextPackWithItems } from '../types/context-packs.types';
+import { type ChatPacksBundle, type ContextPackWithItems } from '../types/context-packs.types';
+import { type PacksForChatDto } from '../dto/packs-for-chat.dto';
 import { CONTEXT_PACK_UPDATED_EVENT } from '../constants/context-packs.constants';
+import { CHAT_PACKS_MAX } from '../constants/context-packs-for-chat.constants';
 import { parsePausedUntil } from '../../../common/utilities/date-coerce.utility';
 import { ResourceEntitlementService } from '../../../common/services/resource-entitlement.service';
 
@@ -213,6 +215,37 @@ export class ContextPacksService {
     return this.contextPacksRepository.findById(contextPackId);
   }
 
+  /**
+   * The packs a chat turn uses. Before this, chat fetched only the ids stored
+   * on the thread, so a user's enabled pack reached the model only if it had
+   * been attached to that exact thread — "Why this answer" showed 0 pack items
+   * everywhere else. Owner-scoped in the query; empty items are dropped.
+   */
+  async getPacksForChat(dto: PacksForChatDto): Promise<ChatPacksBundle> {
+    const explicit = new Set(dto.packIds);
+    const packs = await this.contextPacksRepository.findForChat(
+      dto.userId,
+      dto.packIds,
+      dto.threadId,
+      new Date(),
+      CHAT_PACKS_MAX,
+    );
+    const result = packs
+      .map((pack) => ({
+        id: pack.id,
+        name: pack.name,
+        autoApplied: !explicit.has(pack.id),
+        items: pack.items
+          .filter((item) => (item.content ?? '').trim().length > 0)
+          .map((item) => ({ id: item.id, itemType: item.itemType, content: item.content ?? '' })),
+      }))
+      .filter((pack) => pack.items.length > 0);
+    this.logger.debug(
+      `getPacksForChat: userId=${dto.userId} requested=${String(dto.packIds.length)} returned=${String(result.length)}`,
+    );
+    return { packs: result };
+  }
+
   private validateOwnership(pack: ContextPack, userId: string): void {
     if (pack.userId !== userId) {
       throw new BusinessException(
@@ -234,7 +267,6 @@ export class ContextPacksService {
     if (lower.startsWith('url')) return ContextPackItemType.URL;
     if (lower.startsWith('markdown')) return ContextPackItemType.MARKDOWN;
     if (lower.startsWith('snippet') || lower.startsWith('code')) return ContextPackItemType.SNIPPET;
-    if (lower.startsWith('memory')) return ContextPackItemType.MEMORY_REF;
-    return ContextPackItemType.TEXT;
+    return lower.startsWith('memory') ? ContextPackItemType.MEMORY_REF : ContextPackItemType.TEXT;
   }
 }

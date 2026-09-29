@@ -1975,6 +1975,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/context-packs/for-chat",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/embeddings/delete-by-object-id",
         "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
       },
@@ -3558,5 +3563,5 @@
     ]
   },
   "generated": true,
-  "total": 704
+  "total": 705
 }

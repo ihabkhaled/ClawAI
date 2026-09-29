@@ -49,6 +49,10 @@ The retrieval endpoint `POST /internal/memories/retrieve` is the canonical entry
 
 - `MemorySensitivityManager.classify(content)` runs on EVERY new memory before persistence (manual create and auto-extract).
 - Hits for `aws_access_key`, `aws_secret_key`, `private_key_block`, `jwt`, `ssn_us`, `credit_card`, `google_api_key`, `github_token`, `openai_key` → verdict `REDACTED`, content is masked to `XX*****YYYY` before write.
+- Masking is `maskSecrets()` (`common/utilities/mask-secrets.utility.ts`): whole text, length-preserving, only the matched span starred. It NEVER returns a preview — the old `redact()` returned `slice(0, 256)` and that stub was stored as the memory (ADR-127, rules/57). `aws_secret_key` and `credit_card` carry an `accept` check (mixed case + digit; Luhn) because the bare regex matches URL paths and order numbers.
+- Updates re-run the classifier when content changes; retrieval re-masks REDACTED rows and returns them — never `content: null`.
+- Limits: `MEMORY_CONTENT_MAX_CHARS` / `CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS` = 250,000; JSON body limit `MEMORY_SERVICE_BODY_LIMIT` = 4 MB in `main.ts`. Frontend mirrors them in `@/constants`.
+- Chat reads packs ONLY via `POST /internal/context-packs/for-chat` (ServiceTokenGuard; `userId` in every WHERE branch; attached ids + USER-scope + THREAD-scope for the thread).
 - Soft hints (`password`, `salary`, `medical`, …) → verdict `SENSITIVE` with confidence < 1.
 - Auto-approve from the suggestion queue ONLY fires for verdict `NORMAL` AND confidence ≥ `memory_preferences.autoApproveThreshold` (default 0.85).
 

@@ -21,3 +21,9 @@ export const MEMORY_RETRIEVE_TOKEN_BUDGET = 4096;
 
 /** Short: memory is an enhancement, and a slow one costs the whole turn. */
 export const MEMORY_RETRIEVE_TIMEOUT_MS = 5_000;
+
+/** memory-service's owner-scoped pack source for one chat turn (ADR-127). */
+export const CONTEXT_PACKS_FOR_CHAT_PATH = '/api/v1/internal/context-packs/for-chat';
+
+/** Must match memory-service CHAT_PACKS_MAX; the endpoint rejects more. */
+export const CONTEXT_PACKS_FOR_CHAT_MAX = 20;

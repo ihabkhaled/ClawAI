@@ -74,6 +74,7 @@
 | `54-evidence-and-completion-honesty.md`                  | A completion claim needs observable evidence; a lane you could not run is reported as not run; never weaken a check to pass it or claim a test passed without its output — restates rules 44/49's discipline as the report-honesty rule                                    |
 | `55-akinator-station-discipline.md`                      | Ask before assuming, audit claim vs code, declare the knowledge delta by path at plan time, same-batch knowledge, never guess on money/permissions/deletion/security/public contracts — ported from the Akinator method so its discipline applies with no plugin installed |
 | `56-model-reasoning-never-in-the-answer.md`              | Reasoning goes to `LlmResponse.reasoning` (the "Model reasoning" panel), never to `content`: read `thinking`/`reasoning_content` fields, `<think>` blocks and a BARE `</think>` (GLM); a buffered response is split once at the parser                                     |
+| `57-memory-and-context-pack-integrity.md`                | Memories/pack items are stored whole (length-preserving masking, 250K limit, 4 MB body); `type` is updatable; chat gets packs from the owner-scoped `for-chat` route incl. USER-scope packs; large items are fitted by relevance chunks, never head-cut (ADR-127)          |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

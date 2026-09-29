@@ -2,6 +2,11 @@ import { ContextPackItemTypeV2, FileIngestionStatus, MemoryFilterValue, MemoryTy
 
 export const MEMORY_TYPE_OPTIONS = Object.values(MemoryType);
 
+// Must match memory-service content-limits.constants.ts. A large spec pasted
+// as a memory or pack item is chunked at retrieval time, not truncated here.
+export const MEMORY_CONTENT_MAX_CHARS = 250_000;
+export const CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS = 250_000;
+
 // The V2 enum is what the API and the database accept. This listed the V1
 // values until 2026-08-30, so every type the picker offered was rejected by
 // `z.nativeEnum(ContextPackItemType)` in memory-service.

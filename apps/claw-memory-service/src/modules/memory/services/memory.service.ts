@@ -171,8 +171,16 @@ export class MemoryService implements OnModuleInit {
     const memory = await this.memoryRepository.findById(id);
     if (!memory) throw new EntityNotFoundException('MemoryRecord', id);
     this.validateOwnership(memory, userId);
+    // An edit is a write like any other: a secret pasted into an existing
+    // memory is masked exactly as it would be on create.
+    const verdict =
+      dto.content !== undefined && dto.content !== memory.content
+        ? this.sensitivityManager.classify(dto.content)
+        : null;
+    const isRedacted = verdict?.verdict === MemorySensitivity.REDACTED;
     const updated = await this.memoryRepository.update(id, {
-      content: dto.content,
+      type: dto.type,
+      content: isRedacted ? (verdict.redactedPreview ?? dto.content) : dto.content,
       isEnabled: dto.isEnabled,
       scope: dto.scope,
       scopeRef: dto.scopeRef,
@@ -181,7 +189,7 @@ export class MemoryService implements OnModuleInit {
       priority: dto.priority,
       retentionPolicy: dto.retentionPolicy,
       expiresAt: parseOptionalDate(dto.expiresAt),
-      sensitivity: dto.sensitivity,
+      sensitivity: isRedacted ? MemorySensitivity.REDACTED : dto.sensitivity,
       pinned: dto.pinned,
       pausedUntil: parseOptionalDate(dto.pausedUntil),
     });

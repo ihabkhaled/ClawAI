@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { type ContextPack, type ContextPackItem, Prisma } from '../../../generated/prisma';
+import {
+  type ContextPack,
+  type ContextPackItem,
+  ContextPackScope,
+  Prisma,
+} from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   type AddContextPackItemData,
@@ -41,28 +46,26 @@ export class ContextPacksRepository {
   ): Promise<ContextPack | null> {
     return this.prisma.$transaction(async (transaction) => {
       await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`context-pack:${data.userId}`}, 0))`;
-      if (
-        limit !== null &&
+      return limit !== null &&
         (await transaction.contextPack.count({ where: { userId: data.userId } })) >= limit
-      )
-        return null;
-      return transaction.contextPack.create({
-        data: {
-          userId: data.userId,
-          ownerUserId: data.ownerUserId ?? data.userId,
-          name: data.name,
-          description: data.description,
-          scope: data.scope,
-          scopeRef: data.scopeRef,
-          legacyScope: data.legacyScope,
-          tags: data.tags ?? undefined,
-          visibility: data.visibility,
-          color: data.color,
-          icon: data.icon,
-          templateId: data.templateId,
-          pinned: data.pinned,
-        },
-      });
+        ? null
+        : transaction.contextPack.create({
+            data: {
+              userId: data.userId,
+              ownerUserId: data.ownerUserId ?? data.userId,
+              name: data.name,
+              description: data.description,
+              scope: data.scope,
+              scopeRef: data.scopeRef,
+              legacyScope: data.legacyScope,
+              tags: data.tags ?? undefined,
+              visibility: data.visibility,
+              color: data.color,
+              icon: data.icon,
+              templateId: data.templateId,
+              pinned: data.pinned,
+            },
+          });
     });
   }
 
@@ -70,6 +73,39 @@ export class ContextPacksRepository {
     return this.prisma.contextPack.findUnique({
       where: { id },
       include: { items: { orderBy: { sortOrder: 'asc' } } },
+    });
+  }
+
+  /**
+   * Packs one user's chat turn may use: the thread's explicit ids plus every
+   * pack whose scope applies everywhere (USER) or to this thread (THREAD).
+   * `userId` is in the WHERE clause of every branch — an id belonging to
+   * another user never matches, whatever the caller sends.
+   */
+  async findForChat(
+    userId: string,
+    packIds: readonly string[],
+    threadId: string | undefined,
+    now: Date,
+    limit: number,
+  ): Promise<ContextPackWithItems[]> {
+    const applies: Prisma.ContextPackWhereInput[] = [{ scope: ContextPackScope.USER }];
+    if (packIds.length > 0) applies.push({ id: { in: [...packIds] } });
+    if (threadId !== undefined) {
+      applies.push({ scope: ContextPackScope.THREAD, scopeRef: threadId });
+    }
+    return this.prisma.contextPack.findMany({
+      where: {
+        userId,
+        isEnabled: true,
+        OR: [{ pausedUntil: null }, { pausedUntil: { lt: now } }],
+        AND: [{ OR: applies }],
+      },
+      include: {
+        items: { where: { isEnabled: true }, orderBy: [{ pinned: 'desc' }, { sortOrder: 'asc' }] },
+      },
+      orderBy: [{ pinned: 'desc' }, { updatedAt: 'desc' }],
+      take: limit,
     });
   }
 
@@ -118,13 +154,14 @@ export class ContextPacksRepository {
     scopeRef: string,
     limit = 50,
   ): Promise<ContextPack[]> {
-    if (scope === undefined) return [];
-    return this.prisma.contextPack.findMany({
-      where: {
-        attachments: { some: { scope, scopeRef, isActive: true } },
-      },
-      take: limit,
-    });
+    return scope === undefined
+      ? []
+      : this.prisma.contextPack.findMany({
+          where: {
+            attachments: { some: { scope, scopeRef, isActive: true } },
+          },
+          take: limit,
+        });
   }
 
   async addItem(data: AddContextPackItemData): Promise<ContextPackItem> {

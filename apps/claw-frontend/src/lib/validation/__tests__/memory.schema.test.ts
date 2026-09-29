@@ -42,10 +42,13 @@ describe('createMemorySchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects content exceeding 50,000 characters', () => {
+  it('accepts 250,000 characters and rejects one more', () => {
+    expect(
+      createMemorySchema.safeParse({ ...validInput, content: 'x'.repeat(250_000) }).success,
+    ).toBe(true);
     const result = createMemorySchema.safeParse({
       ...validInput,
-      content: 'x'.repeat(50001),
+      content: 'x'.repeat(250_001),
     });
     expect(result.success).toBe(false);
   });
@@ -89,9 +92,16 @@ describe('updateMemorySchema', () => {
 
   it('rejects content above maximum when provided', () => {
     const result = updateMemorySchema.safeParse({
-      content: 'x'.repeat(50001),
+      content: 'x'.repeat(250_001),
     });
     expect(result.success).toBe(false);
+  });
+
+  it('keeps a type change on update instead of stripping it', () => {
+    const result = updateMemorySchema.safeParse({ type: MemoryType.FACT, content: 'x' });
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.type).toBe(MemoryType.FACT);
+    expect(updateMemorySchema.safeParse({ type: 'NOPE' }).success).toBe(false);
   });
 
   it('rejects non-boolean isEnabled', () => {

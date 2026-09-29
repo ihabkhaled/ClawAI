@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MemorySensitivity } from '../../../generated/prisma';
-import {
-  SENSITIVITY_PRE_FILTER_PATTERNS,
-  SENSITIVITY_SOFT_HINTS,
-} from '../../../common/constants/memory-sensitivity.constants';
+import { SENSITIVITY_SOFT_HINTS } from '../../../common/constants/memory-sensitivity.constants';
+import { maskSecrets } from '../../../common/utilities/mask-secrets.utility';
 import {
   SENSITIVITY_CLASSIFIER_MAX_INPUT,
   SENSITIVITY_CLASSIFIER_PROMPT,
@@ -25,20 +23,22 @@ export class MemorySensitivityManager {
 
   classify(content: string): SensitivityVerdict {
     this.logger.debug(`classify: contentLen=${String(content.length)}`);
-    const trimmed = content.slice(0, 8192);
-    for (const { name, pattern } of SENSITIVITY_PRE_FILTER_PATTERNS) {
-      if (pattern.test(trimmed)) {
-        const redacted = this.redact(trimmed, pattern);
-        this.logger.warn(`classify: REDACTED — matched ${name}`);
-        return {
-          verdict: MemorySensitivity.REDACTED,
-          confidence: 1,
-          reason: name,
-          redactedPreview: redacted,
-        };
-      }
+    // The WHOLE content is scanned and masked in place. This used to scan the
+    // first 8K characters and return `slice(0, 256)` of the masked text as the
+    // "preview" — which the create path then stored as the memory, so one
+    // false positive turned a 45K-char spec into a stub ending "...Use".
+    const { masked, matched: matchedNames } = maskSecrets(content);
+    if (matchedNames.length > 0) {
+      this.logger.warn(`classify: REDACTED — matched ${matchedNames.join(',')}`);
+      return {
+        verdict: MemorySensitivity.REDACTED,
+        confidence: 1,
+        reason: matchedNames[0] ?? null,
+        redactedPreview: masked,
+      };
     }
-    const hits = SENSITIVITY_SOFT_HINTS.filter((hint) => trimmed.toLowerCase().includes(hint));
+    const lowered = content.toLowerCase();
+    const hits = SENSITIVITY_SOFT_HINTS.filter((hint) => lowered.includes(hint));
     if (hits.length > 0) {
       this.logger.debug(`classify: SENSITIVE — soft hints=${hits.join(',')}`);
       return {
@@ -120,24 +120,13 @@ export class MemorySensitivityManager {
     if (!validated.success) {
       return fallback;
     }
-    if (validated.data.verdict === 'NORMAL') {
-      return fallback;
-    }
-    return {
-      verdict: validated.data.verdict as MemorySensitivity,
-      confidence: validated.data.confidence,
-      reason: validated.data.reason.length > 0 ? validated.data.reason : 'ollama_classifier',
-      redactedPreview: null,
-    };
-  }
-
-  private redact(content: string, pattern: RegExp): string {
-    const compact = content.replaceAll(pattern, (match) => {
-      if (match.length <= 4) {
-        return '*'.repeat(match.length);
-      }
-      return `${match.slice(0, 2)}${'*'.repeat(Math.max(match.length - 6, 4))}${match.slice(-4)}`;
-    });
-    return compact.slice(0, 256);
+    return validated.data.verdict === 'NORMAL'
+      ? fallback
+      : {
+          verdict: validated.data.verdict as MemorySensitivity,
+          confidence: validated.data.confidence,
+          reason: validated.data.reason.length > 0 ? validated.data.reason : 'ollama_classifier',
+          redactedPreview: null,
+        };
   }
 }

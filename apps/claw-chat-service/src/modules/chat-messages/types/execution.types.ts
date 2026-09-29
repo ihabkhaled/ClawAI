@@ -376,6 +376,13 @@ export type ThreadSettings = {
    * treated as false — never as "probably fine". ADR-087.
    */
   useCrossThreadContext?: boolean | null;
+  /**
+   * The thread's memory and context-pack switches. Absent means ON — both
+   * columns default to true. They were stored and shown in the UI but never
+   * read by generation, so turning them off changed nothing.
+   */
+  useMemory?: boolean | null;
+  useContext?: boolean | null;
   judgeModel?: string | null;
   criticEnabled?: boolean;
   criticModel?: string | null;

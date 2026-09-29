@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { MEMORY_CONTENT_MAX_CHARS } from '@/constants';
 import { MemoryType } from '@/enums';
 
 const memoryTypeValues = Object.values(MemoryType) as [string, ...string[]];
@@ -11,7 +12,7 @@ export const createMemorySchema = z.object({
   content: z
     .string()
     .min(1, 'Content is required')
-    .max(50000, 'Content must be at most 50,000 characters'),
+    .max(MEMORY_CONTENT_MAX_CHARS, 'Content must be at most 250,000 characters'),
   sourceThreadId: z.string().max(255, 'Source thread ID must be at most 255 characters').optional(),
   sourceMessageId: z
     .string()
@@ -20,10 +21,11 @@ export const createMemorySchema = z.object({
 });
 
 export const updateMemorySchema = z.object({
+  type: z.enum(memoryTypeValues).optional(),
   content: z
     .string()
     .min(1, 'Content must be at least 1 character')
-    .max(50000, 'Content must be at most 50,000 characters')
+    .max(MEMORY_CONTENT_MAX_CHARS, 'Content must be at most 250,000 characters')
     .optional(),
   isEnabled: z.boolean().optional(),
 });

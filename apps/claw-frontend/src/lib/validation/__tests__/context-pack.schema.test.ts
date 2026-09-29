@@ -101,10 +101,10 @@ describe('createContextPackItemSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects content exceeding 50000 characters', () => {
+  it('rejects content exceeding 250000 characters', () => {
     const result = createContextPackItemSchema.safeParse({
       ...validInput,
-      content: 'c'.repeat(50_001),
+      content: 'c'.repeat(250_001),
     });
     expect(result.success).toBe(false);
   });

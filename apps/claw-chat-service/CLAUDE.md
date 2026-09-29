@@ -391,6 +391,17 @@ Note that `context-preview.service.ts` retrieves through memory-service's
 real prompt uses here. The preview and the prompt can still disagree; treat the
 preview as indicative, not authoritative.
 
+**2026-09-29 (ADR-127, rules/57):** packs come from memory-service
+`POST /internal/context-packs/for-chat` — attached ids PLUS the user's enabled
+USER-scope packs and THREAD-scope packs for this thread, owner-scoped, service
+token. The thread's `useMemory` / `useContext` switches now gate the fetches
+(they were ignored). Memories and pack items are fitted by
+`fitTextsByRelevance` (markdown chunks ranked against the question, preamble
+always kept) instead of head-truncation, so a fact on page 30 of a 250K pack
+reaches the model. The pack block is headed "not a request to create
+anything" and grouped under `### <pack name>`; receipt pack items carry real
+`id`/`contextPackId`.
+
 ## Thread titles are derived, never generated (2026-08-27)
 
 A thread is named after its opening message the first time an assistant answer

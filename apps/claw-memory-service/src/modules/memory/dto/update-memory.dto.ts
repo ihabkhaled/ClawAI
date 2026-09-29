@@ -1,8 +1,17 @@
 import { z } from 'zod';
-import { MemoryRetention, MemoryScope, MemorySensitivity } from '../../../generated/prisma';
+import {
+  MemoryRetention,
+  MemoryScope,
+  MemorySensitivity,
+  MemoryType,
+} from '../../../generated/prisma';
+import { MEMORY_CONTENT_MAX_CHARS } from '../../../common/constants/content-limits.constants';
 
 export const updateMemorySchema = z.object({
-  content: z.string().min(1).max(50000).optional(),
+  // The edit dialog always sent `type`; the schema did not declare it, so Zod
+  // stripped it and a type change silently never persisted.
+  type: z.nativeEnum(MemoryType).optional(),
+  content: z.string().min(1).max(MEMORY_CONTENT_MAX_CHARS).optional(),
   isEnabled: z.boolean().optional(),
   scope: z.nativeEnum(MemoryScope).optional(),
   scopeRef: z.string().max(255).nullable().optional(),

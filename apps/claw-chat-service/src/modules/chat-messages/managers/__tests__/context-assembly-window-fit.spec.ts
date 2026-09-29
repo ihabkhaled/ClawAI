@@ -59,11 +59,24 @@ function wireOversizedSources(): void {
         },
       });
     }
-    if (url.includes('/internal/context-packs/')) {
+    if (url.includes('/internal/context-packs/for-chat')) {
       return Promise.resolve({
         ok: true,
         status: 200,
-        data: { items: Array.from({ length: 10 }, () => ({ type: 'TEXT', content: BIG })) },
+        data: {
+          packs: [
+            {
+              id: 'pack-1',
+              name: 'Big pack',
+              autoApplied: false,
+              items: Array.from({ length: 10 }, (_, i) => ({
+                id: `i${String(i)}`,
+                itemType: 'TEXT',
+                content: BIG,
+              })),
+            },
+          ],
+        },
       });
     }
     if (url.includes('/ingestion-state')) {
@@ -171,6 +184,7 @@ describe('ContextAssemblyManager fits every source to the model window', () => {
     // Something of every source survives even on the smallest model.
     expect(context.researchEvidence.length).toBeGreaterThan(0);
     expect(context.memories.length).toBeGreaterThan(0);
+    expect(context.contextPackItems.length).toBeGreaterThan(0);
     expect(context.fileContents[0]?.extractedText?.length ?? 0).toBeGreaterThan(0);
   });
 

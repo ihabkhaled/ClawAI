@@ -48,35 +48,33 @@ export class MemoryRepository {
   ): Promise<MemoryRecord | null> {
     return this.prisma.$transaction(async (transaction) => {
       await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`memory:${data.userId}`}, 0))`;
-      if (
-        limit !== null &&
+      return limit !== null &&
         (await transaction.memoryRecord.count({ where: { userId: data.userId } })) >= limit
-      )
-        return null;
-      return transaction.memoryRecord.create({
-        data: {
-          userId: data.userId,
-          type: data.type,
-          content: data.content,
-          sourceThreadId: data.sourceThreadId,
-          sourceMessageId: data.sourceMessageId,
-          scope: data.scope,
-          scopeRef: data.scopeRef,
-          tags: data.tags ?? undefined,
-          category: data.category,
-          priority: data.priority,
-          confidence: data.confidence,
-          source: data.source,
-          sensitivity: data.sensitivity,
-          retentionPolicy: data.retentionPolicy,
-          expiresAt: data.expiresAt,
-          pinned: data.pinned,
-          provenanceJson:
-            data.provenanceJson === undefined
-              ? undefined
-              : (data.provenanceJson as Prisma.InputJsonValue),
-        },
-      });
+        ? null
+        : transaction.memoryRecord.create({
+            data: {
+              userId: data.userId,
+              type: data.type,
+              content: data.content,
+              sourceThreadId: data.sourceThreadId,
+              sourceMessageId: data.sourceMessageId,
+              scope: data.scope,
+              scopeRef: data.scopeRef,
+              tags: data.tags ?? undefined,
+              category: data.category,
+              priority: data.priority,
+              confidence: data.confidence,
+              source: data.source,
+              sensitivity: data.sensitivity,
+              retentionPolicy: data.retentionPolicy,
+              expiresAt: data.expiresAt,
+              pinned: data.pinned,
+              provenanceJson:
+                data.provenanceJson === undefined
+                  ? undefined
+                  : (data.provenanceJson as Prisma.InputJsonValue),
+            },
+          });
     });
   }
 
@@ -95,6 +93,7 @@ export class MemoryRepository {
     return this.prisma.memoryRecord.update({
       where: { id },
       data: {
+        ...(data.type !== undefined ? { type: data.type } : {}),
         ...(data.content !== undefined ? { content: data.content } : {}),
         ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
         ...(data.scope !== undefined ? { scope: data.scope } : {}),
@@ -137,18 +136,17 @@ export class MemoryRepository {
       isEnabled: true,
       type: MemoryType.PREFERENCE,
     };
-    if (actionKindFilter !== undefined && actionKindFilter.length > 0) {
-      return this.prisma.memoryRecord.findMany({
-        where: { ...baseFilter, content: { contains: actionKindFilter, mode: 'insensitive' } },
-        orderBy: { updatedAt: 'desc' },
-        take: limit,
-      });
-    }
-    return this.prisma.memoryRecord.findMany({
-      where: baseFilter,
-      orderBy: { updatedAt: 'desc' },
-      take: limit,
-    });
+    return actionKindFilter !== undefined && actionKindFilter.length > 0
+      ? this.prisma.memoryRecord.findMany({
+          where: { ...baseFilter, content: { contains: actionKindFilter, mode: 'insensitive' } },
+          orderBy: { updatedAt: 'desc' },
+          take: limit,
+        })
+      : this.prisma.memoryRecord.findMany({
+          where: baseFilter,
+          orderBy: { updatedAt: 'desc' },
+          take: limit,
+        });
   }
 
   async existsSimilar(userId: string, type: MemoryType, content: string): Promise<boolean> {

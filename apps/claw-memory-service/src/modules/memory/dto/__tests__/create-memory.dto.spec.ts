@@ -83,19 +83,19 @@ describe('createMemorySchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('should reject content exceeding 50000 characters', () => {
+  it('should reject content exceeding 250000 characters', () => {
     const result = createMemorySchema.safeParse({
       type: MemoryType.FACT,
-      content: 'a'.repeat(50001),
+      content: 'a'.repeat(250_001),
     });
 
     expect(result.success).toBe(false);
   });
 
-  it('should accept content at exactly 50000 characters', () => {
+  it('should accept content at exactly 250000 characters', () => {
     const result = createMemorySchema.safeParse({
       type: MemoryType.FACT,
-      content: 'a'.repeat(50000),
+      content: 'a'.repeat(250_000),
     });
 
     expect(result.success).toBe(true);

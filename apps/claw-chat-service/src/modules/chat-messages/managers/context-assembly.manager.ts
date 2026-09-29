@@ -8,6 +8,8 @@ import {
   MEMORY_FIT_BUDGET_SHARE,
 } from '../constants/evidence-fit.constants';
 import { fitTextsToBudget } from '../utilities/text-budget.utility';
+import { fitTextsByRelevance } from '../utilities/relevant-chunks.utility';
+import { CONTEXT_PACK_BLOCK_HEADER } from '../constants/relevant-chunks.constants';
 import type { FixedContextSources } from '../types/evidence-fit.types';
 import { fitEvidenceToBudget } from '../utilities/evidence-fit.utility';
 import { type RetrievalBundle } from '@claw/shared-types';
@@ -43,7 +45,7 @@ import {
 } from '../types/execution.types';
 import {
   type AssembledContext,
-  type ContextPackResponse,
+  type ChatPacksResponse,
   type FileContentResponse,
   type FileIngestionState,
   type MemoryRecordResponse,
@@ -66,6 +68,8 @@ import { ContextComposerManager } from './context-composer.manager';
 import { CrossThreadRetrievalManager } from './cross-thread-retrieval.manager';
 import { resolveModelTokenBudget } from '../utilities/model-token-budget.utility';
 import {
+  CONTEXT_PACKS_FOR_CHAT_MAX,
+  CONTEXT_PACKS_FOR_CHAT_PATH,
   MEMORY_RETRIEVE_PATH,
   MEMORY_RETRIEVE_TIMEOUT_MS,
   MEMORY_RETRIEVE_TOKEN_BUDGET,
@@ -144,6 +148,8 @@ export class ContextAssemblyManager {
       research,
       lastUserMessage: threadMessages.at(-1),
       threadId: threadMessages.at(-1)?.threadId,
+      useMemory: threadSettings?.useMemory !== false,
+      useContext: threadSettings?.useContext !== false,
       // Retrieval's own budget, not the prompt's. It bounds how much memory
       // memory-service may return; the composer then budgets the whole prompt.
       memoryTokenBudget: MEMORY_RETRIEVE_TOKEN_BUDGET,
@@ -155,7 +161,7 @@ export class ContextAssemblyManager {
     );
     const retrievalMs = Date.now() - retrievalStartedAt;
     this.logAttachmentOnlyTurn(lastUserContent, filteredFileContents, fileIds?.length ?? 0);
-    this.fitFixedContext(fetched, filteredFileContents, threadSettings);
+    this.fitFixedContext(fetched, filteredFileContents, threadSettings, lastUserContent);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const researchEvidence = this.fitResearchEvidence(
       fetched.researchRun,
@@ -370,6 +376,8 @@ ${evidence.snippet}`);
     lastUserMessage: ChatMessage | undefined;
     threadId: string | undefined;
     memoryTokenBudget: number;
+    useMemory: boolean;
+    useContext: boolean;
   }): Promise<{
     memories: AssembledContext['memories'];
     contextPackItems: AssembledContext['contextPackItems'];
@@ -379,7 +387,7 @@ ${evidence.snippet}`);
   }> {
     const [memories, contextPackItems, fileContents, workspaceCitations, researchRun] =
       await Promise.all([
-        args.skipExpensiveContext
+        args.skipExpensiveContext || !args.useMemory
           ? Promise.resolve([])
           : this.fetchMemories(
               args.userId,
@@ -387,9 +395,9 @@ ${evidence.snippet}`);
               args.threadId,
               args.memoryTokenBudget,
             ),
-        args.skipExpensiveContext
+        args.skipExpensiveContext || !args.useContext
           ? Promise.resolve([])
-          : this.fetchContextPackItems(args.contextPackIds ?? []),
+          : this.fetchContextPackItems(args.userId, args.threadId, args.contextPackIds ?? []),
         this.fetchFileContents(args.fileIds ?? [], args.userId),
         args.skipExpensiveContext
           ? Promise.resolve([])
@@ -746,11 +754,20 @@ ${evidence.snippet}`);
 
   private formatContextPackBlock(items: AssembledContext['contextPackItems']): string | null {
     if (items.length === 0) return null;
-    const block = items
-      .map((item) => item.content ?? '')
-      .filter((c) => c.length > 0)
-      .join('\n');
-    return block ? `CONTEXT PACK:\n${block}` : null;
+    // Grouped under each pack's name so the model can say where a fact came
+    // from, and so two packs never read as one run-on document.
+    const sections: string[] = [];
+    let currentPack: string | undefined;
+    for (const item of items) {
+      const content = item.content ?? '';
+      if (content.length === 0) continue;
+      if (item.packName !== undefined && item.packName !== currentPack) {
+        sections.push(`### ${item.packName}`);
+        currentPack = item.packName;
+      }
+      sections.push(content);
+    }
+    return sections.length === 0 ? null : `${CONTEXT_PACK_BLOCK_HEADER}\n${sections.join('\n')}`;
   }
 
   /**
@@ -1139,44 +1156,49 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     }
   }
 
+  /**
+   * The thread's attached packs PLUS every pack the user has switched on for
+   * all chats (scope USER) or for this thread (scope THREAD), in one owner-
+   * scoped call. This used to GET each attached id with no auth and no owner
+   * check, and attached-only meant an enabled pack never reached a thread it
+   * had not been pinned to — "Why this answer" showed 0 pack items. ADR-127.
+   */
   private async fetchContextPackItems(
+    userId: string,
+    threadId: string | undefined,
     packIds: string[],
-  ): Promise<Array<{ content: string | null; type: string }>> {
-    if (packIds.length === 0) {
-      this.logger.debug('fetchContextPackItems: no pack IDs provided — skipping');
-      return [];
-    }
-
-    this.logger.debug(`fetchContextPackItems: fetching items for ${String(packIds.length)} packs`);
+  ): Promise<AssembledContext['contextPackItems']> {
     try {
       const config = AppConfig.get();
-      const results: Array<{ content: string | null; type: string }> = [];
-
-      for (const packId of packIds) {
-        const url = `${config.MEMORY_SERVICE_URL}/api/v1/internal/context-packs/${encodeURIComponent(packId)}/items`;
-
-        this.logger.debug(`fetchContextPackItems: fetching pack ${packId}`);
-        const response = await httpRequest<ContextPackResponse>({
-          url,
-          method: 'GET',
-          timeoutMs: 5_000,
-        });
-
-        if (response.ok && response.data.items) {
-          this.logger.debug(
-            `fetchContextPackItems: pack ${packId} returned ${String(response.data.items.length)} items`,
-          );
-          for (const item of response.data.items) {
-            results.push({ content: item.content, type: item.type });
-          }
-        } else {
-          this.logger.debug(
-            `fetchContextPackItems: pack ${packId} returned no items or failed status=${String(response.status)}`,
-          );
-        }
+      const response = await httpRequest<ChatPacksResponse>({
+        url: `${config.MEMORY_SERVICE_URL}${CONTEXT_PACKS_FOR_CHAT_PATH}`,
+        method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        body: {
+          userId,
+          ...(threadId === undefined ? {} : { threadId }),
+          packIds: packIds.slice(0, CONTEXT_PACKS_FOR_CHAT_MAX),
+        },
+        timeoutMs: MEMORY_RETRIEVE_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        this.logger.warn(
+          `fetchContextPackItems: for-chat failed status=${String(response.status)} — continuing without packs`,
+        );
+        return [];
       }
-
-      this.logger.debug(`fetchContextPackItems: total items collected=${String(results.length)}`);
+      const results = (response.data.packs ?? []).flatMap((pack) =>
+        pack.items.map((item) => ({
+          id: item.id,
+          packId: pack.id,
+          packName: pack.name,
+          type: item.itemType,
+          content: item.content,
+        })),
+      );
+      this.logger.log(
+        `fetchContextPackItems: user=${userId} packs=${String(response.data.packs?.length ?? 0)} items=${String(results.length)} attached=${String(packIds.length)}`,
+      );
       return results;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -1439,6 +1461,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     fetched: FixedContextSources,
     files: FileContentResponse[],
     threadSettings: ThreadSettings | undefined,
+    question: string,
   ): void {
     const windowChars =
       resolveModelTokenBudget({
@@ -1449,17 +1472,22 @@ ${RESEARCH_GROUNDING_REMINDER}`;
         toolOverheadTokens: 0,
       }).availableInputTokens * APPROX_CHARS_PER_TOKEN;
 
-    const memories = fitTextsToBudget(
+    // Memories and packs are fitted by RELEVANCE to the question, not by
+    // keeping each one's first N characters: a fact on page 30 of a pasted
+    // spec was unreachable under head-truncation (ADR-127, rule 51).
+    const memories = fitTextsByRelevance(
       fetched.memories.map((memory) => memory.content),
       Math.floor(windowChars * MEMORY_FIT_BUDGET_SHARE),
+      question,
     );
     fetched.memories = fetched.memories
       .slice(0, memories.texts.length)
       .map((memory, index) => ({ ...memory, content: memories.texts[index] ?? '' }));
 
-    const packs = fitTextsToBudget(
+    const packs = fitTextsByRelevance(
       fetched.contextPackItems.map((item) => item.content ?? ''),
       Math.floor(windowChars * CONTEXT_PACK_FIT_BUDGET_SHARE),
+      question,
     );
     fetched.contextPackItems = fetched.contextPackItems
       .slice(0, packs.texts.length)

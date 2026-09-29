@@ -55,7 +55,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 31295,
+      "bytes": 31625,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -321,6 +321,10 @@
     {
       "bytes": 6404,
       "file": "rules/56-model-reasoning-never-in-the-answer.md"
+    },
+    {
+      "bytes": 3238,
+      "file": "rules/57-memory-and-context-pack-integrity.md"
     },
     {
       "bytes": 6156,

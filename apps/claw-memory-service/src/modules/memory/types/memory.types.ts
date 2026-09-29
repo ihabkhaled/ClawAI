@@ -30,6 +30,7 @@ export interface CreateMemoryData {
 }
 
 export interface UpdateMemoryData {
+  type?: MemoryType;
   content?: string;
   isEnabled?: boolean;
   scope?: MemoryScope;

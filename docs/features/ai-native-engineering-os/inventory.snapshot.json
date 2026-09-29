@@ -2030,6 +2030,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/context-packs/for-chat",
+          "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/embeddings/delete-by-object-id",
           "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
         },
@@ -7560,7 +7565,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 31295,
+          "bytes": 31625,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7826,6 +7831,10 @@
         {
           "bytes": 6404,
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
+        },
+        {
+          "bytes": 3238,
+          "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
           "bytes": 6156,
@@ -10210,7 +10219,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 221
+        "testFiles": 223
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10246,7 +10255,7 @@
       },
       "claw-memory-service": {
         "runner": "vitest",
-        "testFiles": 17
+        "testFiles": 21
       },
       "claw-ollama-service": {
         "runner": "vitest",
@@ -10996,7 +11005,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 704,
+    "endpointCount": 705,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11008,7 +11017,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1676,
+    "totalTestFiles": 1682,
     "workspaceCount": 25
   }
 }

@@ -29,6 +29,7 @@ import { MemoryPreferenceService } from '../../memory-preferences/services/memor
 import { MemoryUsageService } from '../../memory-usage/services/memory-usage.service';
 import { MemoryEmbeddingManager } from '../managers/memory-embedding.manager';
 import { MemoryRepository } from '../repositories/memory.repository';
+import { maskSecrets } from '../../../common/utilities/mask-secrets.utility';
 
 @Injectable()
 export class MemoryRetrievalService {
@@ -188,10 +189,7 @@ export class MemoryRetrievalService {
   }
 
   private scorePackItem(item: ContextPackItem, scoreMap: Map<string, number>): number {
-    if (item.pinned) {
-      return 1;
-    }
-    return scoreMap.get(item.id) ?? 0;
+    return item.pinned ? 1 : (scoreMap.get(item.id) ?? 0);
   }
 
   private estimatePackBudget(items: RetrievalPackItem[]): number {
@@ -280,8 +278,13 @@ export class MemoryRetrievalService {
     score: number,
     reason: RetrievalReason,
   ): RetrievalMemoryItem {
+    // A REDACTED memory used to reach the prompt as `null` — an INSTRUCTION
+    // with an empty body in "Why this answer". Its secrets are masked instead,
+    // on read as well as on write, so the rest of the text stays usable.
     const sanitizedContent =
-      memory.sensitivity === MemorySensitivity.REDACTED ? null : memory.content;
+      memory.sensitivity === MemorySensitivity.REDACTED
+        ? maskSecrets(memory.content).masked
+        : memory.content;
     return {
       id: memory.id,
       type: memory.type as SharedMemoryType,

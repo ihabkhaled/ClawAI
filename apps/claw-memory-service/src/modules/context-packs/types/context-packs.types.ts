@@ -75,3 +75,22 @@ export interface ContextPackFilters {
 export type ContextPackWithItems = ContextPack & {
   items: ContextPackItem[];
 };
+
+/** One pack as chat-service needs it: enabled items only, never another user's. */
+export type ChatPackItem = {
+  id: string;
+  itemType: ContextPackItemType;
+  content: string;
+};
+
+export type ChatPack = {
+  id: string;
+  name: string;
+  /** True when included by scope (USER, or THREAD for this thread), not by id. */
+  autoApplied: boolean;
+  items: ChatPackItem[];
+};
+
+export type ChatPacksBundle = {
+  packs: ChatPack[];
+};

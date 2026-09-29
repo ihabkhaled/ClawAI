@@ -6,13 +6,17 @@ import {
   MemorySource,
   MemoryType,
 } from '../../../generated/prisma';
+import { MEMORY_CONTENT_MAX_CHARS } from '../../../common/constants/content-limits.constants';
 
 export const createMemorySchema = z.object({
   type: z.nativeEnum(MemoryType),
   content: z
     .string()
     .min(1, 'Content is required')
-    .max(50000, 'Content must be at most 50000 characters'),
+    .max(
+      MEMORY_CONTENT_MAX_CHARS,
+      `Content must be at most ${String(MEMORY_CONTENT_MAX_CHARS)} characters`,
+    ),
   sourceThreadId: z.string().max(255).optional(),
   sourceMessageId: z.string().max(255).optional(),
   // V2 additions

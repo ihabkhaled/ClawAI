@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS } from '@/constants';
+
 export const createContextPackSchema = z.object({
   name: z
     .string()
@@ -11,7 +13,10 @@ export const createContextPackSchema = z.object({
 
 export const createContextPackItemSchema = z.object({
   type: z.string().min(1, 'Item type is required').max(50, 'Type must be at most 50 characters'),
-  content: z.string().max(50000, 'Content must be at most 50,000 characters').optional(),
+  content: z
+    .string()
+    .max(CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS, 'Content must be at most 250,000 characters')
+    .optional(),
   fileId: z.string().max(255, 'File ID must be at most 255 characters').optional(),
   sortOrder: z
     .number()
