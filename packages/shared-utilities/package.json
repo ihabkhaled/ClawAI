@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-utilities",
-  "version": "1.148.8",
+  "version": "1.148.9",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,8 +31,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@claw/shared-constants": "1.148.8",
-    "@claw/shared-types": "1.148.8",
+    "@claw/shared-constants": "1.148.9",
+    "@claw/shared-types": "1.148.9",
     "@nestjs/common": "^12.1.0",
     "axios": "^1.20.0",
     "jsonwebtoken": "^9.0.3",
