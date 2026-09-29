@@ -121,3 +121,7 @@ Memory V2, Context V2, and the Memory + Context Integration V2 ship together as 
 - Compose-time preview popover (read endpoint is ready; popover UI deferred).
 - Context-pack version revert + diff modal (table + retention policy land; UI deferred).
 - Import/export NDJSON endpoints (Phase 3 release slice).
+
+> **2026-09-30 (SEC-006):** `useMemory` also governs the WRITE side — a chat with
+> memory off is not a memory source (memory-service skips extraction) and not a
+> cross-thread candidate. See rule 57 §15.

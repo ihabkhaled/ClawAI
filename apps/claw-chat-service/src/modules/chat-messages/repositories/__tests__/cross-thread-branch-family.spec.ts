@@ -66,7 +66,19 @@ describe('CrossThreadRetrievalRepository branch family', () => {
     expect(messageFindMany.mock.calls[0]?.[0].where.thread).toEqual({
       userId: 'user-1',
       isArchived: false,
+      useMemory: true,
+      useCrossThreadContext: true,
       id: { notIn: ['a', 'b'] },
     });
+  });
+
+  it('never reads a chat that turned memory or previous-chats off (SEC-006)', async () => {
+    const { repository, messageFindMany } = repositoryWith({});
+
+    await repository.findCandidateThreads('user-1', [], ['orchid']);
+
+    const thread = messageFindMany.mock.calls[0]?.[0].where.thread;
+    expect(thread.useMemory).toBe(true);
+    expect(thread.useCrossThreadContext).toBe(true);
   });
 });

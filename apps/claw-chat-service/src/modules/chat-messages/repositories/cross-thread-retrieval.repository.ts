@@ -84,7 +84,16 @@ export class CrossThreadRetrievalRepository {
       terms.map(async (term) =>
         this.prisma.chatMessage.findMany({
           where: {
-            thread: { userId, isArchived: false, id: { notIn: [...excludeThreadIds] } },
+            // A chat that turned memory or "use relevant previous chats" off
+            // is not a SOURCE for other chats either (SEC-006) — the switch
+            // used to guard only what the chat itself read.
+            thread: {
+              userId,
+              isArchived: false,
+              useMemory: true,
+              useCrossThreadContext: true,
+              id: { notIn: [...excludeThreadIds] },
+            },
             role: { in: ['USER', 'ASSISTANT'] },
             content: { contains: term, mode: 'insensitive' as const },
           },

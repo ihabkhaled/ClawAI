@@ -53,6 +53,9 @@ The memory service provides long-term memory for conversations. It extracts fact
 
 When the memory service receives a `message.completed` event:
 
+0. Skips the turn entirely when the payload's `useMemory` is `false` (the chat
+   has **Use memory** off — SEC-006; absent means on), then when the user has
+   paused all memory (`memory_preferences.pausedAll`).
 1. Extracts the message content and metadata
 2. Sends the content to the configured extraction model (default: `gemma3:4b`, configurable via `MEMORY_EXTRACTION_MODEL`)
 3. The extraction prompt asks Ollama to identify:

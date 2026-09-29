@@ -97,25 +97,26 @@ Published when the routing engine has determined the optimal provider and model.
 
 Published when an AI response has been generated and stored.
 
-| Field              | Type           | Description                          |
-| ------------------ | -------------- | ------------------------------------ |
-| `messageId`        | UUID           | The assistant message ID             |
-| `threadId`         | UUID           | The thread ID                        |
-| `userId`           | UUID           | The user who initiated the request   |
-| `userContent`      | string         | The original user message            |
-| `assistantContent` | string         | The AI response                      |
-| `provider`         | string         | Actual provider used                 |
-| `model`            | string         | Actual model used                    |
-| `routingMode`      | RoutingMode    | Routing mode that was active         |
-| `inputTokens`      | number         | Tokens in the prompt                 |
-| `outputTokens`     | number         | Tokens in the response               |
-| `latencyMs`        | number         | Total execution time                 |
-| `fallbackUsed`     | boolean        | Whether a fallback provider was used |
-| `fallbackProvider` | string or null | Which fallback was used, if any      |
-| `fallbackModel`    | string or null | Which fallback model, if any         |
+| Field              | Type           | Description                                                                              |
+| ------------------ | -------------- | ---------------------------------------------------------------------------------------- |
+| `messageId`        | UUID           | The assistant message ID                                                                 |
+| `threadId`         | UUID           | The thread ID                                                                            |
+| `userId`           | UUID           | The user who initiated the request                                                       |
+| `userContent`      | string         | The original user message                                                                |
+| `useMemory`        | boolean?       | Thread's memory switch; `false` = memory-service learns nothing from this turn (SEC-006) |
+| `content`          | string         | The AI response                                                                          |
+| `provider`         | string         | Actual provider used                                                                     |
+| `model`            | string         | Actual model used                                                                        |
+| `routingMode`      | RoutingMode    | Routing mode that was active                                                             |
+| `inputTokens`      | number         | Tokens in the prompt                                                                     |
+| `outputTokens`     | number         | Tokens in the response                                                                   |
+| `latencyMs`        | number         | Total execution time                                                                     |
+| `fallbackUsed`     | boolean        | Whether a fallback provider was used                                                     |
+| `fallbackProvider` | string or null | Which fallback was used, if any                                                          |
+| `fallbackModel`    | string or null | Which fallback model, if any                                                             |
 
 **Publisher**: chat-service
-**Consumers**: memory-service, audit-service
+**Consumers**: memory-service, audit-service, routing-service
 
 ---
 

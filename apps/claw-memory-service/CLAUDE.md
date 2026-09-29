@@ -56,6 +56,15 @@ The retrieval endpoint `POST /internal/memories/retrieve` is the canonical entry
 - Soft hints (`password`, `salary`, `medical`, …) → verdict `SENSITIVE` with confidence < 1.
 - Auto-approve from the suggestion queue ONLY fires for verdict `NORMAL` AND confidence ≥ `memory_preferences.autoApproveThreshold` (default 0.85).
 
+## A chat with memory off is not a memory source (SEC-006, 2026-09-30)
+
+`message.completed` carries the thread's `useMemory`. `handleMessageCompleted`
+returns before extraction when it is `false`, and treats an absent field as on
+(an older publisher). Before this, turning memory off in a chat stopped
+memories being injected into it but still extracted — and could auto-approve —
+new memories from it. `pausedAll` (the account-wide switch) is still checked
+after it. Tests: `memory.service.spec.ts` "learning from a completed chat turn".
+
 ## Media-derived text (pack §59)
 
 **Rule (owner decision):** raw voice-note transcripts, `DERIVED IMAGE OBSERVATIONS` blocks

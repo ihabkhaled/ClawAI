@@ -2388,6 +2388,8 @@ export class ChatMessagesService implements OnModuleInit {
       threadId: payload.threadId,
       assistantMessageId: assistantMessage.id,
       userId: thread?.userId,
+      // SEC-006: a chat with memory off is not a memory SOURCE either.
+      useMemory: thread?.useMemory ?? true,
       provider: llmResponse.provider,
       model: llmResponse.model,
       inputTokens: llmResponse.inputTokens,

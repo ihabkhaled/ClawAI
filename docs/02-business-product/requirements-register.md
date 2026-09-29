@@ -144,10 +144,18 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   further memory-dependent features: memory extraction must honour a chat's
   `useMemory=false`, and a chat with `useCrossThreadContext=false` must not be
   retrieved INTO other chats.
-- **Status:** missing · **Priority:** high (privacy)
+- **Status:** done · **Priority:** high (privacy)
 - **Source:** intake audit defects 3–4, 2026-09-29 (_inferred_ — owner to confirm
   the intended semantics of the per-chat switch).
-- **History:** 2026-09-29 created.
+- **Current state:** fixed 2026-09-30 (Batch 3). `message.completed` carries
+  `useMemory`; memory-service skips extraction when it is false. Cross-thread
+  candidates require BOTH switches on. The settings copy in 13 locales now says
+  both directions (and no longer claims cross-thread is off by default, which
+  was untrue). The two-way reading is still _inferred_ — owner to confirm.
+  Open question for the owner: a chat with **Use memory** off but **Use
+  relevant previous chats** on still READS other chats (the reader side checks
+  only the second switch). Should "memory off" mean fully private instead?
+- **History:** 2026-09-29 created; 2026-09-30 delivered.
 
 ### REQ-CHAT-003
 

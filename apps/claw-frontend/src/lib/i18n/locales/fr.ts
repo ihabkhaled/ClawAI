@@ -843,12 +843,13 @@ export const fr: TranslationDictionary = {
     jumpToLatest: 'Aller au plus récent',
     moreActions: 'Plus d’actions',
     useMemoryLabel: 'Utiliser la mémoire dans cette conversation',
-    useMemoryDescription: "Lorsque désactivé, aucune mémoire n'est injectée dans l'invite.",
+    useMemoryDescription:
+      'Lorsque cette option est désactivée, aucune mémoire n’est utilisée dans ce chat et rien de ce qui y est dit n’est enregistré comme mémoire.',
     useContextLabel: 'Utiliser les paquets de contexte dans cette conversation',
     useContextDescription: 'Lorsque désactivé, les paquets attachés sont ignorés.',
     useCrossThreadContextLabel: 'Utiliser les conversations précédentes pertinentes',
     useCrossThreadContextDescription:
-      'Lorsque cette option est activée, ClawAI peut parcourir vos autres conversations à la recherche d’éléments pertinents pour celle-ci. Désactivé par défaut.',
+      'Lorsque cette option est activée, ClawAI peut utiliser vos autres chats qui l’autorisent pour trouver des éléments pertinents pour celui-ci. Lorsqu’elle est désactivée, ce chat ne lit pas vos autres chats et n’est pas lu par eux.',
     workflow: {
       searchFirst: "Recherche d'abord",
       direct: 'Direct',

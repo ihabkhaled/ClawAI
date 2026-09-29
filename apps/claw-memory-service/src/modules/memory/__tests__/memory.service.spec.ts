@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import {
   MemoryAuditAction,
   type MemoryRecord,
@@ -198,6 +198,57 @@ describe('MemoryService (V2)', () => {
       await expect(service.toggleMemory('mem-1', 'attacker')).rejects.toMatchObject({
         code: 'FORBIDDEN_MEMORY_ACCESS',
       });
+    });
+  });
+
+  describe('learning from a completed chat turn (SEC-006)', () => {
+    const completedHandler = async (): Promise<(data: unknown) => Promise<void>> => {
+      await service.onModuleInit();
+      const call = rabbit.subscribe.mock.calls[0];
+      return call?.[1] as (data: unknown) => Promise<void>;
+    };
+    const payload = (overrides: Record<string, unknown>): Record<string, unknown> => ({
+      messageId: 'm-1',
+      threadId: 't-1',
+      userId: 'user-1',
+      content: 'Sure — your deadline is Friday.',
+      userContent: 'Remember my deadline is Friday',
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      (preferenceService.get as unknown as Mock).mockResolvedValue({
+        pausedAll: false,
+        autoApproveThreshold: 0.85,
+      });
+      (extraction.extract as unknown as Mock).mockResolvedValue([]);
+    });
+
+    it('learns nothing from a chat whose memory switch is off', async () => {
+      const handle = await completedHandler();
+
+      await handle(payload({ useMemory: false }));
+
+      expect(extraction.extract).not.toHaveBeenCalled();
+    });
+
+    it('still learns from a chat with memory on', async () => {
+      const handle = await completedHandler();
+
+      await handle(payload({ useMemory: true }));
+
+      expect(extraction.extract).toHaveBeenCalledWith(
+        'Remember my deadline is Friday',
+        'Sure — your deadline is Friday.',
+      );
+    });
+
+    it('treats an event from an older publisher (no switch) as memory on', async () => {
+      const handle = await completedHandler();
+
+      await handle(payload({}));
+
+      expect(extraction.extract).toHaveBeenCalledTimes(1);
     });
   });
 });

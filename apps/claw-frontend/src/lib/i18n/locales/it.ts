@@ -845,12 +845,13 @@ export const it: TranslationDictionary = {
     jumpToLatest: 'Vai al più recente',
     moreActions: 'Altre azioni',
     useMemoryLabel: 'Usa la memoria in questa conversazione',
-    useMemoryDescription: 'Se disattivato, nessuna memoria viene inserita nel prompt.',
+    useMemoryDescription:
+      'Se disattivato, in questa chat non vengono usate memorie e nulla di ciò che viene detto qui viene salvato come memoria.',
     useContextLabel: 'Usa i pacchetti di contesto in questa conversazione',
     useContextDescription: 'Se disattivato, i pacchetti allegati vengono ignorati.',
     useCrossThreadContextLabel: 'Usa le conversazioni precedenti pertinenti',
     useCrossThreadContextDescription:
-      'Se attivo, ClawAI può consultare le tue altre conversazioni per trovare materiale rilevante per questa. Disattivato per impostazione predefinita.',
+      'Se attivo, ClawAI può usare le tue altre chat che lo consentono per trovare materiale rilevante per questa. Se disattivato, questa chat non legge le tue altre chat e non viene letta da esse.',
     workflow: {
       searchFirst: 'Ricerca prima',
       direct: 'Diretto',

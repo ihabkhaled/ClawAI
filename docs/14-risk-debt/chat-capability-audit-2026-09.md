@@ -56,9 +56,10 @@ frontend never sends it.
    _after_ the fork. Fixed in Batch 1 (branch-family exclusion).
 3. **Memory learning ignores the per-chat switch** (X) — `useMemory=false` only
    stops injection; memory-service still extracts from that chat
-   (`claw-memory-service … memory.service.ts handleMessageCompleted`). Open.
+   (`claw-memory-service … memory.service.ts handleMessageCompleted`). **Fixed in Batch 3** (SEC-006).
 4. **Opted-out chats still feed other chats** (X) — `findCandidateThreads` does
-   not exclude threads with `useCrossThreadContext=false`. Open.
+   not exclude threads with `useCrossThreadContext=false`. **Fixed in Batch 3**:
+   memory-off or previous-chats-off threads are never candidates.
 5. **Context-pack scope field is free text** (H) — placeholder suggests values
    the DTO rejects with 400. Open.
 

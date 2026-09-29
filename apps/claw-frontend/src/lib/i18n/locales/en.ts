@@ -828,12 +828,13 @@ export const en: TranslationDictionary = {
     jumpToLatest: 'Jump to latest',
     moreActions: 'More actions',
     useMemoryLabel: 'Use memory in this thread',
-    useMemoryDescription: 'When off, no memories are injected into the prompt.',
+    useMemoryDescription:
+      'When off, memories are not used in this chat, and nothing said here is saved as a memory.',
     useContextLabel: 'Use context packs in this thread',
     useContextDescription: 'When off, attached packs are ignored.',
     useCrossThreadContextLabel: 'Use relevant previous chats',
     useCrossThreadContextDescription:
-      'When on, ClawAI may look through your other conversations for material relevant to this one. Off by default.',
+      'When on, ClawAI may use your other chats that allow it for material relevant to this one. When off, this chat neither reads your other chats nor is read by them.',
     workflow: {
       searchFirst: 'Search-first',
       direct: 'Direct',

@@ -247,6 +247,10 @@ to. Branching needs no warning because nothing is lost.
 - **Privacy switches travel** — `useMemory`, `useContext`,
   `useCrossThreadContext` are copied (`copyThreadSettings`). Defaulting them
   back on silently undid a memory-off choice.
+- **An opted-out chat is not a source** (SEC-006). `findCandidateThreads`
+  requires `useMemory` AND `useCrossThreadContext` on the CANDIDATE thread, and
+  `publishMessageCompleted` sends `useMemory` so memory-service learns nothing
+  from a memory-off chat.
 - **A branch family never feeds itself.** `CrossThreadRetrievalManager`
   excludes the root and every thread sharing it, or a branch could retrieve what
   its source said AFTER the fork. Any new path that creates a thread from

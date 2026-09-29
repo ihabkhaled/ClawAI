@@ -833,12 +833,13 @@ export const ja: TranslationDictionary = {
     jumpToLatest: '最新にジャンプ',
     moreActions: 'その他の操作',
     useMemoryLabel: 'このスレッドのメモリを使用します',
-    useMemoryDescription: 'オフの場合、プロンプトにメモリは挿入されません。',
+    useMemoryDescription:
+      'オフの場合、このチャットではメモリを使わず、ここで話した内容もメモリとして保存されません。',
     useContextLabel: 'このスレッドでコンテキスト パックを使用してください',
     useContextDescription: 'オフの場合、接続されたパックは無視されます。',
     useCrossThreadContextLabel: '関連する過去のチャットを使用する',
     useCrossThreadContextDescription:
-      'オンにすると、ClawAI はこの会話に関連する内容を他の会話から探すことがあります。既定ではオフです。',
+      'オンにすると、ClawAI は許可されている他のチャットから、このチャットに関連する内容を使うことがあります。オフの場合、このチャットは他のチャットを読まず、他のチャットからも読まれません。',
     workflow: {
       searchFirst: '検索優先',
       direct: 'ダイレクト',

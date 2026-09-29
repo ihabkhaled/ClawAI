@@ -652,6 +652,10 @@ hiding the next, all of them a bound, a ranking rule or a weight — never a
 missing embedding. ADR-087 D9–D14 has the full record with the measured
 numbers. What matters for anyone touching it again:
 
+- **An opted-out chat is never a candidate** (SEC-006): `findCandidateThreads`
+  requires `useMemory` AND `useCrossThreadContext` on the candidate thread, so a
+  chat with either switch off is never read FROM; only
+  `useCrossThreadContext=false` also stops it reading other chats.
 - **The current thread's whole branch family is excluded** (ADR-129):
   `excludedThreadIds` reads the root, then every thread sharing it, and passes
   them all as `notIn`. A branch must never retrieve its source's post-fork turns.

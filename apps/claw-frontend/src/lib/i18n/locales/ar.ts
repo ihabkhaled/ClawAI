@@ -819,12 +819,13 @@ export const ar: TranslationDictionary = {
     jumpToLatest: 'الانتقال إلى الأحدث',
     moreActions: 'إجراءات أخرى',
     useMemoryLabel: 'استخدام الذاكرة في هذه المحادثة',
-    useMemoryDescription: 'عند الإيقاف، لن يتم إدخال أي ذكريات في الموجه.',
+    useMemoryDescription:
+      'عند الإيقاف، لا تُستخدم الذكريات في هذه المحادثة، ولا يُحفظ أي شيء قيل هنا كذكرى.',
     useContextLabel: 'استخدام حزم السياق في هذه المحادثة',
     useContextDescription: 'عند الإيقاف، يتم تجاهل الحزم المرفقة.',
     useCrossThreadContextLabel: 'استخدام المحادثات السابقة ذات الصلة',
     useCrossThreadContextDescription:
-      'عند التفعيل، قد يبحث ClawAI في محادثاتك الأخرى عن محتوى ذي صلة بهذه المحادثة. مُعطّل افتراضيًا.',
+      'عند التفعيل، قد يستخدم ClawAI محادثاتك الأخرى التي تسمح بذلك للعثور على محتوى ذي صلة بهذه المحادثة. عند الإيقاف، لا تقرأ هذه المحادثة محادثاتك الأخرى ولا تقرؤها هي.',
     workflow: {
       searchFirst: 'البحث أولاً',
       direct: 'مباشر',

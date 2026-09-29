@@ -346,3 +346,14 @@ Retrieval now excludes the current thread's entire branch family (root plus
 every thread sharing `branchRootThreadId`), not only the current thread — or a
 branch could retrieve what its source said after the fork. See
 [ADR-129](adr-129-branch-lineage-and-family-isolation.md).
+
+## Addendum (2026-09-30): an opted-out chat is not a source either
+
+A thread with `useMemory=false` or `useCrossThreadContext=false` is excluded
+from every OTHER thread's candidate search. Before this the switches only
+controlled what the thread itself read, so a chat the user had opted out could
+still be quoted into another. Decided as the conservative (more private)
+reading of the switches; recorded as _inferred_ in REQ-CHAT-002 until the owner
+confirms. Risk: SEC-006. The settings copy no longer says the switch is off by default (it has been on
+by default since 2026-09-17; D1 above describes the original decision) — do not
+restore that sentence.

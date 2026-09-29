@@ -799,12 +799,12 @@ export const zh: TranslationDictionary = {
     jumpToLatest: '跳转至最新',
     moreActions: '更多操作',
     useMemoryLabel: '在该线程中使用内存',
-    useMemoryDescription: '关闭时，不会将任何记忆注入提示中。',
+    useMemoryDescription: '关闭后，此聊天不使用记忆，在这里说的任何内容也不会被保存为记忆。',
     useContextLabel: '在此线程中使用上下文包',
     useContextDescription: '关闭时，附加的包将被忽略。',
     useCrossThreadContextLabel: '使用相关的历史对话',
     useCrossThreadContextDescription:
-      '开启后，ClawAI 可在你的其他对话中查找与本次对话相关的内容。默认关闭。',
+      '开启后，ClawAI 可以从你允许的其他聊天中查找与本聊天相关的内容。关闭后，此聊天既不读取你的其他聊天，也不会被它们读取。',
     workflow: {
       searchFirst: '搜索优先',
       direct: '直接的',

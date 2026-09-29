@@ -1584,6 +1584,33 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    it('tells memory-service when the chat has memory off, so nothing is learned from it (SEC-006)', async () => {
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue({ ...mockThread, useMemory: false });
+      executionManager.execute!.mockRejectedValue(new Error('boom'));
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        id: 'msg-error-2',
+        role: 'ASSISTANT',
+      });
+
+      await expect(
+        service.handleMessageRouted({
+          messageId: 'msg-1',
+          threadId: 'thread-1',
+          selectedProvider: 'GEMINI',
+          selectedModel: 'gemini-2.5-flash',
+          routingMode: 'AUTO',
+          timestamp: new Date().toISOString(),
+        }),
+      ).rejects.toThrow('boom');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_COMPLETED,
+        expect.objectContaining({ useMemory: false }),
+      );
+    });
+
     // Live UAT (2026-08-16) — the routing decision's confidence/costClass
     // were computed by routing-service but never reached the stored
     // message's routeRoadmap, so the frontend's "Why this model?" panel

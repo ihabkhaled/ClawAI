@@ -127,6 +127,12 @@ export interface MessageRoutedPayload extends BaseEventPayload {
 export interface MessageCompletedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
+  /**
+   * The thread's "use memory" switch at completion time. `false` means the
+   * user turned memory off for this chat, so memory-service must not LEARN
+   * from it either (SEC-006). Absent = an older publisher = treated as true.
+   */
+  useMemory?: boolean;
   assistantMessageId: string;
   provider: string;
   model: string;
