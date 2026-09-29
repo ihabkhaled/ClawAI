@@ -54,10 +54,15 @@ export const CROSS_THREAD_BUDGET_SHARE = 0.15;
 /**
  * Score a thread starts from when it was found by a coined identifier.
  *
- * Above `CROSS_THREAD_THREAD_SCORE_THRESHOLD` on purpose: matching
- * `MERIDIAN-88` is not weak evidence that the thread is about MERIDIAN-88, and
- * making such a thread also clear a relevance bar computed from its title would
- * discard the strongest signal the feature has.
+ * A floor rather than a bar to clear: matching `MERIDIAN-88` is not weak
+ * evidence that the thread is about MERIDIAN-88, and making such a thread also
+ * earn its place from a title score would discard the strongest signal the
+ * feature has.
+ *
+ * It used to read "above `CROSS_THREAD_THREAD_SCORE_THRESHOLD`". That constant
+ * is gone — ADR-087 D11 removed the thread-level bar entirely, because a stage
+ * that has read no messages was deciding which threads the stage that reads
+ * them is allowed to see.
  */
 export const CROSS_THREAD_IDENTIFIER_MATCH_SCORE = 0.35;
 
