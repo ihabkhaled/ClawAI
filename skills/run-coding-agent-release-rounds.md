@@ -138,3 +138,27 @@ Order: bump + changelog PR → `package` + `supply-chain` → `git add -f` asset
 not "the latest run", which can still be the previous failure. The extension
 repo's pre-push hook runs the full gate and outlives a foreground tool timeout;
 push as a background task. `OVSX_PAT` unset means Open VSX is skipped, not failed.
+
+## 7. What 1.81.0 and 1.82.0 added to the landing list
+
+- **Run the whole `npm run check`, not a chosen subset.** 1.82.0 went red in CI
+  on two steps that were skipped locally: `coverage:scope` (every new
+  `src/core/runtime/*` file must be in `vitest.config.ts` `coverage.include`)
+  and `package:audit` (every contributed command id must appear in a file that
+  calls `registerCommand`). `l10n:verify` diffs against git, so it passes only
+  once the regenerated locale files are staged.
+- **A push that hangs with no output is Git Credential Manager** waiting on a
+  hidden sign-in window, not the hook. Push with
+  `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin HEAD:main`.
+  The extension checkout has no `.husky/_`, so no hook runs there at all; the
+  local gates are the only gate before CI.
+- **A backend Prisma migration crashes its dev container** the moment it lands
+  on main: the container compiles main's `src` and the new client queries a
+  column the dev database does not have (`ColumnNotFound`). `docker restart
+<service>` runs the entrypoint's `prisma migrate deploy`; confirm the row in
+  `_prisma_migrations` before running live rounds.
+- **Many agents in one worktree:** give every agent the same shared-file rules
+  (small edits, no reformat, no git), then gate once at the end. Expect three
+  collisions to fix by hand: files pushed over `max-lines`, a shared
+  translation table whose keys and values drift out of step, and duplicate
+  helpers two agents each added.
