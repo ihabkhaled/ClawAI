@@ -334,6 +334,14 @@ export type TranslationDictionary = {
       branches: string;
       branchBadge: string;
     };
+    quote: {
+      action: string;
+      composerHeading: string;
+      remove: string;
+      repliedTo: string;
+      limitReached: string;
+      sourceMissing: string;
+    };
     speech: {
       action: string;
       stop: string;

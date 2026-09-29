@@ -361,6 +361,15 @@ export const ar: TranslationDictionary = {
       branches: 'الفروع ({count})',
       branchBadge: 'فرع',
     },
+    quote: {
+      action: 'اقتباس',
+      composerHeading: 'اقتباسات',
+      remove: 'إزالة الاقتباس',
+      repliedTo: 'ردًا على',
+      limitReached: 'يمكنك اقتباس 3 مقاطع كحد أقصى في كل رسالة.',
+      sourceMissing:
+        'الرسالة التي اقتبست منها لم تعد موجودة في هذه المحادثة. أزل الاقتباس وحاول مرة أخرى.',
+    },
     speech: {
       action: 'القراءة بصوت عالٍ',
       stop: 'إيقاف القراءة بصوت عالٍ',

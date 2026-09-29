@@ -9,6 +9,7 @@ import { ChatThreadHeaderMenu } from '@/components/chat/chat-thread-header-menu'
 import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
+import { SelectionQuoteButton } from '@/components/chat/selection-quote-button';
 import { StreamHealthNotice } from '@/components/chat/stream-health-notice';
 import { ThreadLineageBar } from '@/components/chat/thread-lineage-bar';
 import { ThreadListDrawer } from '@/components/chat/thread-list-drawer';
@@ -163,6 +164,8 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
 
         {props.showInlineActions ? <ChatThreadActionRail {...props.actionRailProps} /> : null}
       </div>
+
+      <SelectionQuoteButton {...props.selectionQuoteProps} />
 
       <ShareChatDialog {...props.shareDialogProps} />
 

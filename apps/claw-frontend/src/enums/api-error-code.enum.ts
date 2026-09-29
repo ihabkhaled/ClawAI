@@ -60,4 +60,5 @@ export enum ApiErrorCode {
   // does not match the image size (422); or the routed model cannot take a mask (422).
   IMAGE_MASK_INVALID = 'IMAGE_MASK_INVALID',
   IMAGE_MASK_NOT_SUPPORTED = 'IMAGE_MASK_NOT_SUPPORTED',
+  QUOTE_SOURCE_NOT_FOUND = 'QUOTE_SOURCE_NOT_FOUND',
 }

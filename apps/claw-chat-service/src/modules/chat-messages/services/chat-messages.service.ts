@@ -92,6 +92,8 @@ import {
   type AttachmentTurn,
   type UserMessageMetadata,
 } from '../types/user-message-metadata.types';
+import { type MessageQuoteInput } from '../dto/quote-fields.dto';
+import { type MessageQuote } from '../types/message-quote.types';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -241,6 +243,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider,
       forcedModel,
     );
+    const quotes = await this.resolveQuotes(dto.threadId, dto.quotes);
     const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
     // Travels with the event so the router can tell an ALLOW_ALL plan, which
     // sends an empty list as a fast path, from a restricted plan whose list is
@@ -259,7 +262,7 @@ export class ChatMessagesService implements OnModuleInit {
         role: 'USER',
         content: dto.content,
         routingMode: effectiveRoutingMode,
-        metadata: this.buildMessageMetadata(dto, null),
+        metadata: this.buildMessageMetadata(dto, null, quotes),
       },
       entitlements === null
         ? null
@@ -320,7 +323,7 @@ export class ChatMessagesService implements OnModuleInit {
           forcedModel,
         );
         if (run !== null) {
-          const metadata = this.buildMessageMetadata(dto, run);
+          const metadata = this.buildMessageMetadata(dto, run, quotes);
           await this.chatMessagesRepository.updateMetadata(
             message.id,
             (metadata ?? {}) as Prisma.InputJsonValue,
@@ -2497,11 +2500,47 @@ export class ChatMessagesService implements OnModuleInit {
     };
   }
 
+  /**
+   * Resolves each quote's source against THIS thread and records its role.
+   * An id from another conversation — or one that no longer exists — is a 404,
+   * never a silent drop: the user asked about that text, and answering as if
+   * they had not would be worse than saying the source is gone.
+   */
+  private async resolveQuotes(
+    threadId: string,
+    quotes: MessageQuoteInput[] | undefined,
+  ): Promise<MessageQuote[] | undefined> {
+    if (quotes === undefined || quotes.length === 0) return undefined;
+    const found = await this.chatMessagesRepository.findQuotableInThread(
+      threadId,
+      quotes.map((quote) => quote.sourceMessageId),
+    );
+    const roles = new Map(found.map((row) => [row.id, row.role]));
+    const missing = quotes.find((quote) => !roles.has(quote.sourceMessageId));
+    if (missing !== undefined) {
+      throw new BusinessException(
+        'The quoted message is no longer in this conversation',
+        'QUOTE_SOURCE_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    this.logger.debug(`resolveQuotes: thread=${threadId} quotes=${String(quotes.length)}`);
+    return quotes.map((quote) => ({
+      sourceMessageId: quote.sourceMessageId,
+      sourceRole: roles.get(quote.sourceMessageId) ?? 'USER',
+      text: quote.text,
+    }));
+  }
+
   private buildMessageMetadata(
     dto: CreateMessageDto,
     researchRun: ResearchRunResponse | null,
+    quotes?: MessageQuote[],
   ): UserMessageMetadata | undefined {
     const metadata: UserMessageMetadata = {};
+    if (quotes !== undefined && quotes.length > 0) {
+      metadata.quotes = quotes;
+    }
     if (typeof dto.clientIntent === 'string' && dto.clientIntent.length > 0) {
       metadata.clientIntent = dto.clientIntent;
     }

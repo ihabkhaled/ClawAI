@@ -30,6 +30,13 @@ export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.ut
 export { memoryCardPreview } from './memory-card.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
 export { buildLineageBarProps, toLineageLink } from './thread-lineage.utility';
+export {
+  clampQuoteText,
+  quoteKey,
+  quotesOfMessage,
+  readQuotableSelection,
+  toQuoteRequest,
+} from './message-quote.utility';
 export { splitHighlightSegments } from './highlight.utility';
 export {
   readPersistedModelViewMode,

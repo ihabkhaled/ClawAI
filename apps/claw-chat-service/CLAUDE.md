@@ -255,6 +255,30 @@ to. Branching needs no warning because nothing is lost.
   that point. An untitled source branches untitled and names itself from its own
   first message — which is that same message.
 
+## Quotes are structured metadata, never content (2026-09-30, ADR-130)
+
+`POST /chat-messages` takes `quotes: [{ sourceMessageId, text }]` (at most 3,
+text up to 2,000). `resolveQuotes` reads every id under the SAME thread
+(`findQuotableInThread`) and refuses a missing one with 404
+`QUOTE_SOURCE_NOT_FOUND` before storing anything. Quotes land in the user row's
+`metadata.quotes` (with the source role); `content` stays what was typed.
+
+- **The three prompt builders call `withQuotedContext`** (chat, Gemini-native,
+  single-string) for every turn in history. A new builder must too.
+- **Anything else that hands the user's request to a model uses
+  `latestUserTurnText`** (judge, critic, image prompt, file prompt, estimate
+  fallback). `quoted-turn-accessor.spec.ts` fails on a raw
+  `lastUserMsg?.content` in a manager. Intent detectors ("continue",
+  "remember this", edit intent) and the memory `userContent` stay on the raw
+  typed text on purpose.
+- **A quote is sendable input**, like a file: `requireContentOrAttachments`
+  accepts an empty `content` when `quotes` is non-empty.
+  `resolveRoutingContent` wraps EVERY quoted turn, so `message.created.content`
+  carries the heading and blockquote whenever quotes exist.
+- **The research re-write of metadata passes the quotes again**
+  (`buildMessageMetadata(dto, run, quotes)`); it replaces the metadata, so
+  forgetting them there would erase the quote once research finishes.
+
 ## Editing a prompt truncates the thread (2026-08-28)
 
 `POST /chat-messages/:id/edit` rewrites a user prompt and re-runs the thread

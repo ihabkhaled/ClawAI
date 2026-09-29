@@ -198,9 +198,16 @@ Send a user message. Triggers routing and AI response.
 {
   "threadId": "clxyz...",
   "content": "Hello, how are you?",
-  "fileIds": ["clfile1...", "clfile2..."]
+  "fileIds": ["clfile1...", "clfile2..."],
+  "quotes": [{ "sourceMessageId": "clmsg-earlier...", "text": "Day 2: Louvre" }]
 }
 ```
+
+`quotes` (optional, ADR-130): up to 3 selections, text 1-2,000 characters, each
+from a USER or ASSISTANT message of **this** thread. A quote alone (empty
+`content`) is a valid turn. Stored on the new message's `metadata.quotes` with
+the source role. **Errors**: `404 QUOTE_SOURCE_NOT_FOUND` when a source is not
+in this thread (deleted, rewound, or another conversation's).
 
 **Response 201**: The created USER message
 

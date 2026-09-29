@@ -49,6 +49,8 @@ import type { ChatLimitNotice } from './chat-limit-notice.types';
 import type {
   InThreadSearchMatch,
   ThreadLineage,
+  ComposerQuote,
+  QuotableSelection,
   ChatMessage,
   ChatThread,
   CreateMessageRequest,
@@ -61,6 +63,7 @@ import type {
 } from './chat.types';
 import type {
   ChatThreadShellProps,
+  ComposerQuoteChipsProps,
   ComposerToolbarProps,
   ModelSelection,
   VirtualizedMessagesProps,
@@ -217,6 +220,18 @@ export type FloatingClearanceConfig = {
 export type UseFloatingObstacleClearanceReturn = {
   /** Force a re-measure — for callers that move a floating element themselves. */
   remeasure: () => void;
+};
+
+export type UseComposerQuotesReturn = {
+  quotes: readonly ComposerQuote[];
+  removeQuote: (key: string) => void;
+};
+
+export type UseSelectionQuoteReturn = {
+  /** The quotable selection right now, or null — the button renders only for this. */
+  selection: QuotableSelection | null;
+  onQuote: () => void;
+  label: string;
 };
 
 export type UseThreadLineageReturn = {
@@ -634,6 +649,8 @@ export type UseMessageComposerStateParams = {
   ) => void;
   isPending: boolean;
   selectedModel: ModelSelection | null;
+  /** Quotes waiting in the composer; they make an empty prompt sendable. */
+  quoteCount?: number;
 };
 
 /**
@@ -647,6 +664,10 @@ export type UseMessageComposerStateParams = {
  */
 export type UseMessageComposerReturn = {
   isPending: boolean;
+  /** Quote chips above the textarea (Batch 2). */
+  quoteChips: ComposerQuoteChipsProps;
+  /** Enter may send an empty prompt when files or quotes carry the turn. */
+  allowEmptySubmit: boolean;
   placeholder: string;
   sendLabel: string;
   /** Non-null only while an attachment upload is in flight. */

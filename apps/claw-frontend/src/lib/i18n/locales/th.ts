@@ -360,6 +360,14 @@ export const th: TranslationDictionary = {
       branches: 'สายที่แยกออก ({count})',
       branchBadge: 'สายที่แยก',
     },
+    quote: {
+      action: 'อ้างอิง',
+      composerHeading: 'ข้อความที่อ้างอิง',
+      remove: 'ลบการอ้างอิง',
+      repliedTo: 'ตอบกลับ',
+      limitReached: 'อ้างอิงได้สูงสุด 3 ส่วนต่อข้อความ',
+      sourceMissing: 'ข้อความที่คุณอ้างอิงไม่อยู่ในบทสนทนานี้แล้ว ลบการอ้างอิงแล้วลองอีกครั้ง',
+    },
     speech: {
       action: 'อ่านออกเสียง',
       stop: 'หยุดอ่านออกเสียง',

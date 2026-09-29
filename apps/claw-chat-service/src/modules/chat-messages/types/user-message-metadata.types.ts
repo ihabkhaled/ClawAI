@@ -1,5 +1,6 @@
 import type { ResearchEvidenceBundle } from './research.types';
 import type { ResearchTranscript } from './research-transcript.types';
+import type { MessageQuote } from './message-quote.types';
 
 /**
  * Shape of the ChatMessage.metadata JSON field for USER-role messages.
@@ -12,6 +13,8 @@ export type UserMessageMetadata = {
   /** File id of the PNG alpha mask drawn for an image edit (transparent = edit here). */
   maskFileId?: string;
   modelDisplayName?: string;
+  /** Selections from earlier messages this turn replies to (Batch 2). */
+  quotes?: MessageQuote[];
   research?: {
     runId: string;
     mode: string;

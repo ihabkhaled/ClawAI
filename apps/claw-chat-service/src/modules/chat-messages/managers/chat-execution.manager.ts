@@ -1,3 +1,4 @@
+import { latestUserTurnText } from '../utilities/quoted-turn.utility';
 import { HttpStatus, Injectable, Logger, type OnModuleInit, Optional } from '@nestjs/common';
 import {
   BillingErrorCode,
@@ -1855,8 +1856,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private extractUserPrompt(context: AssembledContext): string {
-    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    return lastUserMsg?.content ?? '';
+    return latestUserTurnText(context.threadMessages) ?? '';
   }
 
   private isGenerationResponse(response: LlmResponse): boolean {
@@ -5042,9 +5042,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const config = AppConfig.get();
     this.logger.debug('callImageService: extracting last user message for prompt');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    // The user's own words. Kept on the generation row as `originalPrompt`
-    // whenever the prompt sent upstream differs (pack §79).
-    const originalPrompt = lastUserMsg?.content ?? 'generate an image';
+    // The user's own words, plus any quoted text they asked about (ADR-130).
+    // Kept on the generation row as `originalPrompt` whenever the prompt sent
+    // upstream differs (pack §79).
+    const originalPrompt = latestUserTurnText(context.threadMessages) ?? 'generate an image';
     let prompt = originalPrompt;
     this.logger.debug(`callImageService: base prompt length=${String(prompt.length)}`);
 
@@ -5169,8 +5170,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log(
       `callFileGenerationService: starting file generation writer=${fileWriters?.preferred ? `${fileWriters.preferred.provider}/${fileWriters.preferred.model}` : 'list'} localOnly=${String(fileWriters?.localOnly === true)}`,
     );
-    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    const prompt = lastUserMsg?.content ?? 'generate a file';
+    const prompt = latestUserTurnText(context.threadMessages) ?? 'generate a file';
     const format = detectRequestedFileFormat(prompt);
     this.logger.debug(
       `callFileGenerationService: prompt length=${String(prompt.length)} format=${format}`,

@@ -370,6 +370,15 @@ export const ru: TranslationDictionary = {
       branches: 'Ветки ({count})',
       branchBadge: 'Ветка',
     },
+    quote: {
+      action: 'Цитировать',
+      composerHeading: 'Цитаты',
+      remove: 'Удалить цитату',
+      repliedTo: 'В ответ на',
+      limitReached: 'В одном сообщении можно процитировать не более 3 фрагментов.',
+      sourceMissing:
+        'Процитированного сообщения больше нет в этой беседе. Удалите цитату и попробуйте снова.',
+    },
     speech: {
       action: 'Прочитать вслух',
       stop: 'Остановить чтение вслух',

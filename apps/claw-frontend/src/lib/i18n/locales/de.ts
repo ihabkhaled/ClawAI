@@ -373,6 +373,15 @@ export const de: TranslationDictionary = {
       branches: 'Verzweigungen ({count})',
       branchBadge: 'Verzweigung',
     },
+    quote: {
+      action: 'Zitieren',
+      composerHeading: 'Zitate',
+      remove: 'Zitat entfernen',
+      repliedTo: 'Antwort auf',
+      limitReached: 'Pro Nachricht kannst du höchstens 3 Auswahlen zitieren.',
+      sourceMissing:
+        'Die zitierte Nachricht ist nicht mehr in dieser Unterhaltung. Entferne das Zitat und versuche es erneut.',
+    },
     speech: {
       action: 'Vorlesen',
       stop: 'Vorlesen beenden',

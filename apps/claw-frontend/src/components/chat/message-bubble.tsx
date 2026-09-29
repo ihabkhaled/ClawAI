@@ -24,6 +24,7 @@ import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
+import { MessageQuotes } from '@/components/chat/message-quotes';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
 import { MessageSpeechAction } from '@/components/chat/message-speech-action';
 import { MessageSpeechPlayer } from '@/components/chat/message-speech-player';
@@ -49,6 +50,7 @@ import {
   formatShortDateTime,
   getJudgeReviewFromMessage,
   getStoredReasoning,
+  quotesOfMessage,
   resolveFileDelivery,
 } from '@/utilities';
 import { resolveStoredErrorMessage } from '@/utilities/chat-stream-error.utility';
@@ -96,6 +98,7 @@ function MessageBubbleBase({
       ? `Research: ${researchSummary.workflow}${typeof researchSummary.itemCount === 'number' ? ` (${String(researchSummary.itemCount)} items)` : ''}`
       : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
+  const quotes = isUser ? quotesOfMessage(metadata) : [];
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
     ? (metadata['fileIds'] as string[])
     : [];
@@ -204,7 +207,14 @@ function MessageBubbleBase({
           </div>
         ) : null}
 
+        {/* What this turn replies to, above it and outside the coloured
+            bubble so the quoted words keep their contrast. */}
+        <MessageQuotes quotes={quotes} label={t('chat.quote.repliedTo')} />
+
+        {/* data-quote-source-id: a selection inside this element can be quoted
+            into the composer with this message as its source (Batch 2). */}
         <div
+          data-quote-source-id={message.id}
           className={cn(
             'max-w-full min-w-0 overflow-hidden rounded-lg px-4 py-2.5 text-sm transition-colors',
             isUser

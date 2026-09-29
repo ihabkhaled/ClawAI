@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
+import { useQuoteDraftStore } from '@/stores/quote-draft.store';
 import type { CreateMessageRequest, UseSendMessageResult } from '@/types';
 import { insertSentMessageIntoCache, logger, showToast } from '@/utilities';
 import { resolveApiErrorMessage } from '@/utilities/api-error-message.utility';
@@ -50,6 +51,9 @@ export function useSendMessage(
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });
+      // Sent: the quotes are part of the stored turn now. A failed send keeps
+      // them, like the draft, so a retry does not lose what was quoted.
+      useQuoteDraftStore.getState().clearQuotes(threadId);
       onMessageSent?.();
     },
     onError: (error: Error, variables: CreateMessageRequest) => {

@@ -369,6 +369,15 @@ export const es: TranslationDictionary = {
       branches: 'Ramas ({count})',
       branchBadge: 'Rama',
     },
+    quote: {
+      action: 'Citar',
+      composerHeading: 'Citas',
+      remove: 'Quitar cita',
+      repliedTo: 'En respuesta a',
+      limitReached: 'Puedes citar hasta 3 selecciones por mensaje.',
+      sourceMissing:
+        'El mensaje que citaste ya no está en esta conversación. Quita la cita e inténtalo de nuevo.',
+    },
     speech: {
       action: 'Leer en voz alta',
       stop: 'Dejar de leer en voz alta',

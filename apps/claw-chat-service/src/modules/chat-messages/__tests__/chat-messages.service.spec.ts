@@ -67,6 +67,7 @@ const mockMessage = {
 const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> => ({
   create: vi.fn(),
   createUserMessageWithinDailyLimit: vi.fn(),
+  findQuotableInThread: vi.fn().mockResolvedValue([]),
   findById: vi.fn(),
   findByThreadId: vi.fn(),
   searchByThreadId: vi.fn().mockResolvedValue([]),
@@ -326,6 +327,55 @@ describe('ChatMessagesService', () => {
         EventPattern.MESSAGE_CREATED,
         expect.objectContaining({ content: ATTACHMENT_ONLY_ROUTING_HINT }),
       );
+    });
+
+    describe('quotes', () => {
+      const quotes = [{ sourceMessageId: 'msg-src', text: 'the Paris plan' }];
+
+      it('stores each quote with the role of the message it came from', async () => {
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+        messagesRepo.findQuotableInThread.mockResolvedValue([{ id: 'msg-src', role: 'ASSISTANT' }]);
+
+        await service.createMessage(
+          'user-1',
+          { threadId: 'thread-1', content: 'Why?', quotes },
+          '',
+        );
+
+        expect(messagesRepo.findQuotableInThread).toHaveBeenCalledWith('thread-1', ['msg-src']);
+        expect(messagesRepo.createUserMessageWithinDailyLimit).toHaveBeenCalledWith(
+          'user-1',
+          expect.objectContaining({
+            content: 'Why?',
+            metadata: {
+              quotes: [
+                { sourceMessageId: 'msg-src', sourceRole: 'ASSISTANT', text: 'the Paris plan' },
+              ],
+            },
+          }),
+          12,
+        );
+      });
+
+      it('refuses a quote whose source is not in this thread, before storing anything', async () => {
+        // The repository reads under threadId, so a message from another
+        // conversation comes back absent — the same answer as a deleted one.
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+        messagesRepo.findQuotableInThread.mockResolvedValue([]);
+
+        await expect(
+          service.createMessage('user-1', { threadId: 'thread-1', content: 'Why?', quotes }, ''),
+        ).rejects.toMatchObject({ code: 'QUOTE_SOURCE_NOT_FOUND', status: 404 });
+        expect(messagesRepo.createUserMessageWithinDailyLimit).not.toHaveBeenCalled();
+      });
+
+      it('does not look anything up for a turn without quotes', async () => {
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+
+        await service.createMessage('user-1', { threadId: 'thread-1', content: 'Hi' }, '');
+
+        expect(messagesRepo.findQuotableInThread).not.toHaveBeenCalled();
+      });
     });
 
     it('rejects creation when the atomic daily message limit is exhausted', async () => {

@@ -25,6 +25,7 @@ export const useMessageComposerState = ({
   isPending,
   selectedModel,
   threadId,
+  quoteCount = 0,
 }: UseMessageComposerStateParams): UseMessageComposerStateReturn => {
   // Seeded from the saved draft rather than restored in an effect: an effect
   // would render an empty composer first and then fill it, which reads as the
@@ -123,10 +124,11 @@ export const useMessageComposerState = ({
     }
     // Files alone are a message: an empty prompt with a voice note or a PDF
     // attached is sent as-is, and chat-service tells the model to respond to
-    // the attachment itself.
+    // the attachment itself. A quoted selection counts the same way — "explain
+    // this" with nothing typed is a complete question.
     const result = sendMessageSchema.safeParse({
       content: content.trim(),
-      fileCount: selectedFileIds.length,
+      fileCount: selectedFileIds.length + quoteCount,
     });
     if (!result.success) {
       logger.warn({
@@ -179,6 +181,7 @@ export const useMessageComposerState = ({
     threadId,
     isUploadingAttachment,
     consumeMaskFor,
+    quoteCount,
     t,
   ]);
 

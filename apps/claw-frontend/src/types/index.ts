@@ -99,6 +99,11 @@ export type {
   ThreadLineage,
   ThreadLineageEntry,
   ThreadLineageLink,
+  ComposerQuote,
+  MessageQuote,
+  MessageQuoteRequest,
+  QuotableSelection,
+  QuoteDraftStore,
 } from './chat.types';
 export type { UseDailyTokenIndicatorResult } from './daily-token.types';
 export type {
@@ -376,6 +381,9 @@ export type {
   CodingAgentInstallFigureProps,
   MessageBranchActionProps,
   ThreadLineageBarProps,
+  ComposerQuoteChipsProps,
+  SelectionQuoteButtonProps,
+  MessageQuotesProps,
   MessageEditActionProps,
   ComposerDropzoneProps,
   JumpToLatestButtonProps,
@@ -617,6 +625,8 @@ export type {
   UseJumpToMessageReturn,
   UseBranchThreadReturn,
   UseThreadLineageReturn,
+  UseComposerQuotesReturn,
+  UseSelectionQuoteReturn,
   UseMessageEditReturn,
   UseFloatingObstacleClearanceReturn,
   UseExportThreadReturn,

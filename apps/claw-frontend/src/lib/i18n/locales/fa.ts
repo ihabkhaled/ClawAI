@@ -367,6 +367,15 @@ export const fa: TranslationDictionary = {
       branches: 'شاخه‌ها ({count})',
       branchBadge: 'شاخه',
     },
+    quote: {
+      action: 'نقل قول',
+      composerHeading: 'نقل‌قول‌ها',
+      remove: 'حذف نقل قول',
+      repliedTo: 'در پاسخ به',
+      limitReached: 'در هر پیام حداکثر ۳ بخش را می‌توانید نقل قول کنید.',
+      sourceMissing:
+        'پیامی که از آن نقل قول کردید دیگر در این گفت‌وگو نیست. نقل قول را حذف کنید و دوباره تلاش کنید.',
+    },
     speech: {
       action: 'بلندخوانی',
       stop: 'توقف بلندخوانی',

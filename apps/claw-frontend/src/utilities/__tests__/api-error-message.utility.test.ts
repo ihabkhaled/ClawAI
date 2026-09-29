@@ -45,4 +45,16 @@ describe('resolveApiErrorMessage', () => {
 
     expect(message).toBe('translated:files.antivirusUnavailable');
   });
+
+  it('translates a quote whose source left the conversation instead of showing server English', () => {
+    const error = new ApiClientError({
+      message: 'The quoted message is no longer in this conversation',
+      status: 404,
+      code: 'QUOTE_SOURCE_NOT_FOUND',
+    });
+
+    const message = resolveApiErrorMessage(error, (key) => `translated:${key}`, 'fallback');
+
+    expect(message).toBe('translated:chat.quote.sourceMissing');
+  });
 });

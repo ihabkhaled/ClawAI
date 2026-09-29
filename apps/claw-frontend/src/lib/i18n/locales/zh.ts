@@ -350,6 +350,14 @@ export const zh: TranslationDictionary = {
       branches: '分支 ({count})',
       branchBadge: '分支',
     },
+    quote: {
+      action: '引用',
+      composerHeading: '引用内容',
+      remove: '移除引用',
+      repliedTo: '回复',
+      limitReached: '每条消息最多可引用 3 段内容。',
+      sourceMissing: '你引用的消息已不在此对话中。请移除引用后重试。',
+    },
     speech: {
       action: '朗读',
       stop: '停止朗读',

@@ -367,6 +367,15 @@ export const pt: TranslationDictionary = {
       branches: 'Ramificações ({count})',
       branchBadge: 'Ramificação',
     },
+    quote: {
+      action: 'Citar',
+      composerHeading: 'Citações',
+      remove: 'Remover citação',
+      repliedTo: 'Em resposta a',
+      limitReached: 'Pode citar até 3 seleções por mensagem.',
+      sourceMissing:
+        'A mensagem que citou já não está nesta conversa. Remova a citação e tente novamente.',
+    },
     speech: {
       action: 'Ler em voz alta',
       stop: 'Parar a leitura em voz alta',

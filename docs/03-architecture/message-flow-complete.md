@@ -107,9 +107,12 @@ Authorization: Bearer <jwt>
 ### Step 2: Chat Service Stores User Message
 
 1. Zod validates the request body
-2. Creates USER ChatMessage record in `claw_chat`
-3. Creates MessageAttachment records for any fileIds
-4. Publishes `message.created` event to RabbitMQ
+2. Checks every `quotes[].sourceMessageId` belongs to this thread (404
+   `QUOTE_SOURCE_NOT_FOUND` otherwise) and stores the quotes in
+   `metadata.quotes` (ADR-130)
+3. Creates USER ChatMessage record in `claw_chat`
+4. Creates MessageAttachment records for any fileIds
+5. Publishes `message.created` event to RabbitMQ
 
 ### Step 3: Routing Service Determines Provider
 

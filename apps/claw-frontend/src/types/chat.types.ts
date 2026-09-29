@@ -175,6 +175,41 @@ export type CreateMessageRequest = {
   maskFileId?: string;
   researchMode?: ResearchMode;
   researchProviderId?: string;
+  /** Selections from earlier messages this turn replies to (Batch 2). */
+  quotes?: MessageQuoteRequest[];
+};
+
+/** A quote as the send request carries it: the source id and the words. */
+export type MessageQuoteRequest = {
+  sourceMessageId: string;
+  text: string;
+};
+
+/** A quote as stored on a user message's metadata. */
+export type MessageQuote = MessageQuoteRequest & {
+  sourceRole: MessageRole;
+};
+
+/** A quote waiting in the composer; `key` makes the same selection idempotent. */
+export type ComposerQuote = MessageQuoteRequest & {
+  key: string;
+};
+
+/** A selection inside one message that could be quoted, with where to float the button. */
+export type QuotableSelection = {
+  sourceMessageId: string;
+  text: string;
+  top: number;
+  left: number;
+};
+
+/** Per-thread quotes waiting to be sent. Client-only state (rule 03). */
+export type QuoteDraftStore = {
+  byThread: Record<string, ComposerQuote[]>;
+  /** Returns false when the thread already holds the maximum. */
+  addQuote: (threadId: string, quote: MessageQuoteRequest) => boolean;
+  removeQuote: (threadId: string, key: string) => void;
+  clearQuotes: (threadId: string) => void;
 };
 
 export type PinThreadParams = {

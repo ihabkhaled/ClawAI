@@ -24,6 +24,7 @@ import { collectUserMessageHistory } from '@/utilities';
 import { useExportThread } from './use-export-thread';
 import { useInThreadSearch } from './use-in-thread-search';
 import { useJumpToMessage } from './use-jump-to-message';
+import { useSelectionQuote } from './use-selection-quote';
 import { useThreadLineageBar } from './use-thread-lineage-bar';
 
 // Page-bootstrap controller for /chat/[threadId]. The .tsx may call EXACTLY
@@ -80,6 +81,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const exportThread = useExportThread(threadId, title, data.messages);
   const search = useInThreadSearch(threadId);
   const lineageBarProps = useThreadLineageBar(threadId);
+  const selectionQuoteProps = useSelectionQuote(threadId);
   const { jumpToMessage } = useJumpToMessage(data.virtualizedMessagesProps.handleJumpToMessage);
   // What ArrowUp pulls back into an empty composer. Derived from the messages
   // already in cache — no extra query — and memoised so the composer's props
@@ -123,6 +125,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     title,
     thread: data.thread,
     lineageBarProps,
+    selectionQuoteProps,
     connectionHealth: data.connectionHealth,
     onExportThread: exportThread.exportThread,
     canExportThread: exportThread.canExport,

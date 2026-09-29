@@ -7862,7 +7862,7 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 24919,
+          "bytes": 25104,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
@@ -7870,7 +7870,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 36539,
+          "bytes": 36818,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -8342,7 +8342,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5526
+        "value": 5533
       },
       "localeCount": 13,
       "locales": [
@@ -10320,7 +10320,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 240
+        "testFiles": 244
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10340,7 +10340,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 622
+        "testFiles": 626
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11118,7 +11118,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1732,
+    "totalTestFiles": 1740,
     "workspaceCount": 25
   }
 }

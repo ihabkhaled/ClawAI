@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { type MessageFeedback, RoutingMode } from '@/enums';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { useEntitlements } from '@/hooks/plans/use-entitlements';
+import { useQuoteDraftStore } from '@/stores/quote-draft.store';
 import type {
   ModelSelection,
   ResearchOptions,
@@ -10,7 +11,7 @@ import type {
   UseThreadDataControllerReturn,
   UseVirtualizedMessagesControllerParams,
 } from '@/types';
-import { logger } from '@/utilities';
+import { logger, toQuoteRequest } from '@/utilities';
 import {
   resolveChatLimitNotice,
   resolveExhaustedQuotaNotice,
@@ -92,6 +93,7 @@ export const useThreadDataController = ({
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
         ...(fileIds && fileIds.length > 0 && maskFileId !== undefined ? { maskFileId } : {}),
+        ...toQuoteRequest(useQuoteDraftStore.getState().byThread[threadId]),
         ...(research && research.mode !== ResearchMode.NONE
           ? {
               researchMode: research.mode,

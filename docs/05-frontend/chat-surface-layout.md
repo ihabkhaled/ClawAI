@@ -370,6 +370,18 @@ when branches were cut from this thread a `Branches (n)` menu of links. Data:
 a failed read degrades to no strip, never to a blocked conversation. The thread
 list marks a branch with a `GitBranch` icon (`thread-list-item.tsx`).
 
+## Quoting a selection (ADR-130)
+
+Every message bubble carries `data-quote-source-id`. Selecting text inside ONE
+bubble floats a small **Quote** button above the selection
+(`SelectionQuoteButton`, `useSelectionQuote`: `selectionchange` + scroll,
+listeners removed on unmount). A selection across two bubbles is not offered.
+Quotes wait per thread in `quote-draft.store.ts`, render as removable chips
+above the textarea (`ComposerQuoteChips`), make an empty prompt sendable, and
+clear only after a successful send. A sent user turn shows what it replied to
+above the coloured bubble (`MessageQuotes`), outside it so the text keeps
+contrast.
+
 ## Scrolling
 
 Owned by Virtuoso and `hooks/chat/use-virtualized-messages-controller.ts`:

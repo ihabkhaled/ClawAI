@@ -366,6 +366,15 @@ export const en: TranslationDictionary = {
       branches: 'Branches ({count})',
       branchBadge: 'Branch',
     },
+    quote: {
+      action: 'Quote',
+      composerHeading: 'Quoting',
+      remove: 'Remove quote',
+      repliedTo: 'Replying to',
+      limitReached: 'You can quote up to 3 selections per message.',
+      sourceMissing:
+        'The message you quoted is no longer in this conversation. Remove the quote and try again.',
+    },
     speech: {
       action: 'Read aloud',
       stop: 'Stop reading aloud',

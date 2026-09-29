@@ -148,3 +148,14 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
 - **Source:** intake audit defects 3–4, 2026-09-29 (_inferred_ — owner to confirm
   the intended semantics of the per-chat switch).
 - **History:** 2026-09-29 created.
+
+### REQ-CHAT-003
+
+- **Statement:** A user can select text in any earlier message, quote it into
+  the composer (up to 3), and ask about it; the answer knows exactly which text
+  was meant, and the quote stays visible on the sent turn.
+- **Status:** done (messages) · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch B (owner, 2026-09-29).
+- **Current state:** ADR-130. Quoting from citations, file previews, research
+  reports and generated documents waits for batches M and D.
+- **History:** 2026-09-30 created and delivered (Batch 2).

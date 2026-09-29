@@ -365,6 +365,15 @@ export const hi: TranslationDictionary = {
       branches: 'शाखाएँ ({count})',
       branchBadge: 'शाखा',
     },
+    quote: {
+      action: 'उद्धृत करें',
+      composerHeading: 'उद्धरण',
+      remove: 'उद्धरण हटाएँ',
+      repliedTo: 'इसके जवाब में',
+      limitReached: 'हर संदेश में आप अधिकतम 3 चयन उद्धृत कर सकते हैं।',
+      sourceMissing:
+        'जिस संदेश को आपने उद्धृत किया, वह अब इस बातचीत में नहीं है। उद्धरण हटाकर फिर से कोशिश करें।',
+    },
     speech: {
       action: 'पढ़कर सुनाएँ',
       stop: 'पढ़कर सुनाना बंद करें',

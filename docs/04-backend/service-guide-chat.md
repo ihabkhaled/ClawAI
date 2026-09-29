@@ -83,22 +83,22 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 
 ### Messages (`/api/v1/chat-messages`)
 
-| Method | Path              | Description                                   |
-| ------ | ----------------- | --------------------------------------------- |
-| GET    | /thread/:threadId | List messages (paginated)                     |
-| POST   | /                 | Send new message (triggers flow)              |
-| PATCH  | /:id/feedback     | Submit feedback on a message                  |
-| POST   | /:id/regenerate   | Regenerate an assistant response              |
-| POST   | /parallel         | Send prompt to 2-5 models simultaneously      |
-| POST   | /consensus        | Build a consensus answer from multiple models |
-| POST   | /escalation-chain | Escalate to stronger models if needed         |
-| POST   | /repair           | Repair or critique an answer                  |
-| POST   | /decompose        | Decompose a task into structured subtasks     |
-| POST   | /best-of-n        | Generate multiple candidates and choose one   |
-| POST   | /cost-ensemble    | Balance answer quality against spend          |
-| POST   | /verify           | Run verification checks on an answer          |
-| POST   | /role-pack        | Execute multi-role prompt pack workflows      |
-| POST   | /pipeline         | Execute staged prompt pipelines               |
+| Method | Path              | Description                                                   |
+| ------ | ----------------- | ------------------------------------------------------------- |
+| GET    | /thread/:threadId | List messages (paginated)                                     |
+| POST   | /                 | Send new message (triggers flow); optional `quotes` (ADR-130) |
+| PATCH  | /:id/feedback     | Submit feedback on a message                                  |
+| POST   | /:id/regenerate   | Regenerate an assistant response                              |
+| POST   | /parallel         | Send prompt to 2-5 models simultaneously                      |
+| POST   | /consensus        | Build a consensus answer from multiple models                 |
+| POST   | /escalation-chain | Escalate to stronger models if needed                         |
+| POST   | /repair           | Repair or critique an answer                                  |
+| POST   | /decompose        | Decompose a task into structured subtasks                     |
+| POST   | /best-of-n        | Generate multiple candidates and choose one                   |
+| POST   | /cost-ensemble    | Balance answer quality against spend                          |
+| POST   | /verify           | Run verification checks on an answer                          |
+| POST   | /role-pack        | Execute multi-role prompt pack workflows                      |
+| POST   | /pipeline         | Execute staged prompt pipelines                               |
 
 ## Message Flow (End-to-End)
 

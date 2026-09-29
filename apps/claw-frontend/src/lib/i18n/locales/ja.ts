@@ -369,6 +369,15 @@ export const ja: TranslationDictionary = {
       branches: '分岐 ({count})',
       branchBadge: '分岐',
     },
+    quote: {
+      action: '引用',
+      composerHeading: '引用',
+      remove: '引用を削除',
+      repliedTo: '返信先',
+      limitReached: '1 件のメッセージで引用できるのは 3 か所までです。',
+      sourceMissing:
+        '引用したメッセージはこの会話にもうありません。引用を削除してもう一度お試しください。',
+    },
     speech: {
       action: '読み上げ',
       stop: '読み上げを停止',

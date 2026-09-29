@@ -89,6 +89,9 @@ import type {
   StreamUsage,
   UseEditableTitleReturn,
   ThreadLineageLink,
+  ComposerQuote,
+  MessageQuote,
+  QuotableSelection,
   VisibleProgressStage,
 } from './chat.types';
 import type { CompareJudgeLaneResult } from './compare-judge.types';
@@ -2088,6 +2091,8 @@ export type ChatThreadShellProps = {
   threadQualityPanelProps: ThreadQualityPanelProps;
   /** Branch lineage strip: source link and sibling branches. */
   lineageBarProps: ThreadLineageBarProps;
+  /** Floating Quote button over a selection in the transcript (Batch 2). */
+  selectionQuoteProps: SelectionQuoteButtonProps;
   // Virtualized messages.
   virtualizedMessagesProps: VirtualizedMessagesProps;
   // Overflow menu. Holds export / settings / delete, plus the four primary
@@ -2880,6 +2885,24 @@ export type ThreadLineageBarProps = {
   branchedFromLabel: string;
   sourceDeletedLabel: string;
   branchesLabel: string;
+};
+
+export type ComposerQuoteChipsProps = {
+  quotes: readonly ComposerQuote[];
+  onRemove: (key: string) => void;
+  heading: string;
+  removeLabel: string;
+};
+
+export type SelectionQuoteButtonProps = {
+  selection: QuotableSelection | null;
+  onQuote: () => void;
+  label: string;
+};
+
+export type MessageQuotesProps = {
+  quotes: readonly MessageQuote[];
+  label: string;
 };
 
 export type MessageBranchActionProps = {

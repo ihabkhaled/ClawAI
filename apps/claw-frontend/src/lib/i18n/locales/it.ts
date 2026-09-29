@@ -370,6 +370,15 @@ export const it: TranslationDictionary = {
       branches: 'Diramazioni ({count})',
       branchBadge: 'Diramazione',
     },
+    quote: {
+      action: 'Cita',
+      composerHeading: 'Citazioni',
+      remove: 'Rimuovi citazione',
+      repliedTo: 'In risposta a',
+      limitReached: 'Puoi citare fino a 3 selezioni per messaggio.',
+      sourceMissing:
+        'Il messaggio citato non è più in questa conversazione. Rimuovi la citazione e riprova.',
+    },
     speech: {
       action: 'Leggi ad alta voce',
       stop: 'Interrompi la lettura ad alta voce',

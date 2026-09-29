@@ -165,6 +165,10 @@ const mockLineageBarProps = {
   sourceDeletedLabel: 'chat.lineage.sourceDeleted',
   branchesLabel: 'chat.lineage.branches',
 };
+const mockSelectionQuoteProps = { selection: null, onQuote: vi.fn(), label: 'chat.quote.action' };
+vi.mock('@/hooks/chat/use-selection-quote', () => ({
+  useSelectionQuote: () => mockSelectionQuoteProps,
+}));
 vi.mock('@/hooks/chat/use-thread-lineage-bar', () => ({
   useThreadLineageBar: () => mockLineageBarProps,
 }));
@@ -246,6 +250,7 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     const { result } = renderHook(() => useThreadDetailPage());
 
     expect(result.current.shellProps.lineageBarProps).toBe(mockLineageBarProps);
+    expect(result.current.shellProps.selectionQuoteProps).toBe(mockSelectionQuoteProps);
   });
 
   it('falls back to chat.untitled when the thread has no title', async () => {

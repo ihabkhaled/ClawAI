@@ -23,6 +23,7 @@ const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   [ApiErrorCode.ANTIVIRUS_UNAVAILABLE, 'files.antivirusUnavailable'],
   [ApiErrorCode.IMAGE_MASK_INVALID, 'chat.maskEdit.refusal.invalid'],
   [ApiErrorCode.IMAGE_MASK_NOT_SUPPORTED, 'chat.maskEdit.refusal.notSupported'],
+  [ApiErrorCode.QUOTE_SOURCE_NOT_FOUND, 'chat.quote.sourceMissing'],
 ]);
 
 export function resolveApiErrorMessage(

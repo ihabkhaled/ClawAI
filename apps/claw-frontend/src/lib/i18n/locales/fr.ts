@@ -370,6 +370,15 @@ export const fr: TranslationDictionary = {
       branches: 'Branches dérivées ({count})',
       branchBadge: 'Branche dérivée',
     },
+    quote: {
+      action: 'Citer',
+      composerHeading: 'Citations',
+      remove: 'Retirer la citation',
+      repliedTo: 'En réponse à',
+      limitReached: 'Vous pouvez citer jusqu’à 3 sélections par message.',
+      sourceMissing:
+        'Le message cité ne fait plus partie de cette conversation. Retirez la citation et réessayez.',
+    },
     speech: {
       action: 'Lire à voix haute',
       stop: 'Arrêter la lecture à voix haute',
