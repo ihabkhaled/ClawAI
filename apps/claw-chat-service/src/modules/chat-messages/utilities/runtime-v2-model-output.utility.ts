@@ -49,8 +49,7 @@ export function buildRuntimeV2ModelInstruction(definitions: readonly ToolDefinit
 
 export function isCapabilityDenial(content: string): boolean {
   const normalized = content.replaceAll(/\s+/gu, ' ').trim();
-  if (normalized.length === 0) return false;
-  return RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
+  return normalized.length === 0 ? false : RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 /**
@@ -491,14 +490,37 @@ function assertAdmittedTool(
   output: Extract<RuntimeV2ModelOutput, { readonly kind: 'tool' }>,
   definitions: readonly ToolDefinitionDto[],
 ): void {
-  const definition = definitions.find(
-    (candidate) => candidate.name === output.toolName && candidate.version === output.toolVersion,
-  );
-  if (
-    definition === undefined ||
-    !definition.operations.includes(output.operation) ||
-    !definition.targetIds.includes(output.targetId)
-  ) {
-    throw new Error('Model requested a tool outside the admitted tool catalog');
+  const reason = catalogMismatch(output, definitions);
+  if (reason !== null) {
+    // Quoted verbatim into the repair turn, so it must say WHICH check failed
+    // and what would pass. It used to be one sentence for three different
+    // mistakes — unknown tool or version, an operation the tool lacks, a
+    // target it refuses — and a model told only "outside the catalog" could
+    // not tell which it had made. Measured live: kimi-k3's corrected attempt
+    // was our own error sentence, echoed back, and the run failed.
+    throw new Error(`Model requested a tool outside the admitted tool catalog: ${reason}`);
   }
+}
+
+/** What is wrong with a tool request, in terms a model can act on; null if nothing. */
+function catalogMismatch(
+  output: Extract<RuntimeV2ModelOutput, { readonly kind: 'tool' }>,
+  definitions: readonly ToolDefinitionDto[],
+): string | null {
+  const sameName = definitions.filter((candidate) => candidate.name === output.toolName);
+  if (sameName.length === 0) {
+    const names = [...new Set(definitions.map((candidate) => candidate.name))].join(', ');
+    return `there is no tool "${output.toolName}". Tools: ${names}.`;
+  }
+  const definition = sameName.find((candidate) => candidate.version === output.toolVersion);
+  if (definition === undefined) {
+    const versions = sameName.map((candidate) => candidate.version).join(', ');
+    return `"${output.toolName}" has no version "${output.toolVersion}". Use toolVersion ${versions}.`;
+  }
+  if (!definition.operations.includes(output.operation)) {
+    return `"${output.toolName}" has no operation "${output.operation}". Operations: ${definition.operations.join(', ')}.`;
+  }
+  return definition.targetIds.includes(output.targetId)
+    ? null
+    : `"${output.toolName}" does not accept targetId "${output.targetId}". Use targetId ${definition.targetIds.join(', ')}.`;
 }
