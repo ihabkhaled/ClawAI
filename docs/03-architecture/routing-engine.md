@@ -606,6 +606,21 @@ as well as create, so re-seeding backfills already-deployed rows.
 
 Capability routing runs BEFORE category detection in `handleAuto()`. This prevents multimodal messages from matching local categories (e.g., "analyze this video clip" previously matched the "reasoning" category and was routed locally before this fix).
 
+### Attachment modality fit on every AUTO path (rule 51 item 13)
+
+When `message.created` carries attachments (`requiredModalities`), every AUTO
+path ranks by modality fit — not only the cloud router. The cloud router orders
+its candidates DIRECT → TRANSFORMED → DEGRADED before it picks
+(`selectCloudRouterCandidates`). The capability, privacy-local, Ollama-router,
+category and heuristic paths pick first; `RoutingManager.withModalityFit` then
+re-orders `[selected, ...fallbackChain]` with the same `modalityFitOf` tiers
+(`rankDecisionByModalityFit`, stable). A model that cannot see the attachment is
+ranked below capable ones, never removed — chat-service still delivers it a
+transcript / frames / helper-vision text. The decision carries
+`modalityFit:<fit>` and, when the pick changed, `modality_fit_reranked`; the
+routing log names the before and after pick. Turns without attachments are
+untouched and read nothing.
+
 ---
 
 ## Smart Auto Router 2.0 — Complexity Classification

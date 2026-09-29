@@ -529,6 +529,15 @@ attachments and each candidate's fit; the decision carries
 `utilities/attachment-modality.utility.ts`, `constants/modality-fit.constants.ts`,
 `common/enums/modality-fit.enum.ts`. Rule 51 item 13.
 
+**Every AUTO path (2026-09-29).** The capability (keyword), privacy-local,
+Ollama-router, category and heuristic paths now rank too: after the path builds
+its decision, `CloudRouterEligibilityManager.rankDecisionByModalityFit` reads the
+catalog rows and `rankDecisionByModalityFit` (pure, same `modalityFitOf` tiers)
+stable-sorts `[selected, ...fallbackChain]`. A text-only pick moves below a
+capable fallback entry but stays in the chain. Tags: `modalityFit:<fit>` always,
+`modality_fit_reranked` when the pick changed; a log line records before/after.
+Turns without attachments skip it entirely.
+
 ## Assistant model role TTS_VOICE (multimodal batch 9, 2026-09-25)
 
 `AssistantModelRole.TTS_VOICE` names the voice models chat-service uses for

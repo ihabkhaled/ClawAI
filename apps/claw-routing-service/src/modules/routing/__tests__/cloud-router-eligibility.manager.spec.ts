@@ -138,3 +138,53 @@ describe('CloudRouterEligibilityManager.resolveEligibleDeployments', () => {
     expect(result).toEqual([]);
   });
 });
+
+describe('CloudRouterEligibilityManager.rankDecisionByModalityFit', () => {
+  const vision = {
+    ...row('g1', RouterProvider.GEMINI, 'models/gemini-3.6-flash', 'ACTIVE'),
+    modalitiesIn: [ModalityKind.TEXT, ModalityKind.IMAGE_INPUT],
+  };
+  const textOnly = {
+    ...row('l1', RouterProvider.OLLAMA, 'glm-5.2'),
+    modalitiesIn: [ModalityKind.TEXT],
+  };
+  const decision = {
+    selectedProvider: 'local-ollama',
+    selectedModel: 'glm-5.2',
+    routingMode: 'AUTO',
+    confidence: 0.8,
+    reasonTags: ['auto', 'ollama_router'],
+    privacyClass: 'local',
+    costClass: 'free',
+    fallbackChain: [{ provider: 'GEMINI', model: 'models/gemini-3.6-flash' }],
+  } as never;
+  const imageTurn: RoutingContext = {
+    ...baseContext,
+    requiredModalities: [RequiredModality.IMAGE_INPUT],
+    transformableModalities: [RequiredModality.IMAGE_INPUT],
+  };
+
+  it('moves a capable fallback ahead of a local model that cannot see the image, keeping both', async () => {
+    const result = await build(EXPOSED, [vision, textOnly]).rankDecisionByModalityFit(
+      decision,
+      imageTurn,
+    );
+
+    expect(result.selectedProvider).toBe('GEMINI');
+    expect(result.fallbackChain).toEqual([{ provider: 'local-ollama', model: 'glm-5.2' }]);
+    expect(result.reasonTags).toEqual(
+      expect.arrayContaining(['modalityFit:direct', 'modality_fit_reranked']),
+    );
+  });
+
+  it('returns the decision untouched and reads nothing when the turn has no attachments', async () => {
+    const find = vi.fn();
+    const manager = new CloudRouterEligibilityManager(
+      { findRoutableForCloudRouting: find } as never,
+      { exposedChatModels: vi.fn() } as never,
+    );
+
+    expect(await manager.rankDecisionByModalityFit(decision, baseContext)).toBe(decision);
+    expect(find).not.toHaveBeenCalled();
+  });
+});

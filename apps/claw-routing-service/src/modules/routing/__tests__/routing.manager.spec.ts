@@ -25,11 +25,14 @@ const mockPoliciesRepo = (): Partial<Record<keyof RoutingPoliciesRepository, Moc
 // tryCloudRouting behaves in production when no deployment qualifies.
 const mockCloudRouterDeps = (): {
   cloudRouter: { route: Mock };
-  cloudRouterEligibility: { resolveEligibleDeployments: Mock };
+  cloudRouterEligibility: { resolveEligibleDeployments: Mock; rankDecisionByModalityFit: Mock };
   cloudRouterPrompt: { buildPrompt: Mock };
 } => ({
   cloudRouter: { route: vi.fn() },
-  cloudRouterEligibility: { resolveEligibleDeployments: vi.fn().mockResolvedValue([]) },
+  cloudRouterEligibility: {
+    resolveEligibleDeployments: vi.fn().mockResolvedValue([]),
+    rankDecisionByModalityFit: vi.fn((decision: unknown) => Promise.resolve(decision)),
+  },
   cloudRouterPrompt: { buildPrompt: vi.fn().mockReturnValue('cloud router prompt') },
 });
 
@@ -54,7 +57,7 @@ describe('RoutingManager', () => {
     invalidateCache: Mock;
   };
   let cloudRouter: { route: Mock };
-  let cloudRouterEligibility: { resolveEligibleDeployments: Mock };
+  let cloudRouterEligibility: { resolveEligibleDeployments: Mock; rankDecisionByModalityFit: Mock };
   let cloudRouterPrompt: { buildPrompt: Mock };
   let ollamaRouter: { route: Mock };
 
@@ -2200,6 +2203,65 @@ describe('RoutingManager', () => {
       expect(cloudRouter.route).not.toHaveBeenCalled();
       expect(ollamaRouter.route).toHaveBeenCalled();
       expect(result.reasonTags).not.toContain('cloud_router');
+    });
+  });
+  describe('modality fit on non-cloud-router AUTO paths (rule 51 item 13)', () => {
+    const imageTurn: RoutingContext = {
+      ...baseContext,
+      message: 'summarise this for me',
+      userMode: RoutingMode.AUTO,
+      requiredModalities: [RequiredModality.IMAGE_INPUT],
+      transformableModalities: [],
+    };
+
+    it('ranks the heuristic decision by modality fit when the turn has attachments', async () => {
+      cloudRouterEligibility.rankDecisionByModalityFit.mockImplementation(
+        (decision: { reasonTags: string[] }) =>
+          Promise.resolve({
+            ...decision,
+            selectedProvider: 'GEMINI',
+            selectedModel: 'gemini-vision',
+            reasonTags: [...decision.reasonTags, 'modalityFit:direct', 'modality_fit_reranked'],
+          }),
+      );
+
+      const result = await manager.evaluateRoute(imageTurn);
+
+      expect(cloudRouterEligibility.rankDecisionByModalityFit).toHaveBeenCalledTimes(1);
+      expect(result.selectedProvider).toBe('GEMINI');
+      expect(result.reasonTags).toContain('modality_fit_reranked');
+    });
+
+    it('ranks the Ollama-router decision too', async () => {
+      ollamaRouter.route.mockResolvedValue({
+        provider: 'local-ollama',
+        model: 'qwen3:1.7b',
+        confidence: 0.9,
+        reason: 'simple',
+        routerModel: 'qwen3:1.7b',
+      });
+
+      await manager.evaluateRoute(imageTurn);
+
+      const [decision] = cloudRouterEligibility.rankDecisionByModalityFit.mock.calls[0] as [
+        { reasonTags: string[] },
+      ];
+      expect(decision.reasonTags).toContain('ollama_router');
+    });
+
+    it('ranks the keyword capability decision too', async () => {
+      await manager.evaluateRoute({ ...imageTurn, message: 'transcribe this audio' });
+
+      const [decision] = cloudRouterEligibility.rankDecisionByModalityFit.mock.calls[0] as [
+        { reasonTags: string[] },
+      ];
+      expect(decision.reasonTags).toContain('multimodal');
+    });
+
+    it('does not rank (nor read the catalog) when the turn has no attachments', async () => {
+      await manager.evaluateRoute({ ...baseContext, userMode: RoutingMode.AUTO });
+
+      expect(cloudRouterEligibility.rankDecisionByModalityFit).not.toHaveBeenCalled();
     });
   });
 });
