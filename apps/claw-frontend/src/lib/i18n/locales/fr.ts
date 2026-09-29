@@ -364,6 +364,12 @@ export const fr: TranslationDictionary = {
       succeeded: 'Branche créée dans une nouvelle conversation.',
       failed: 'Impossible de créer une branche.',
     },
+    lineage: {
+      branchedFrom: 'Branche de',
+      sourceDeleted: 'Branche d’une conversation supprimée',
+      branches: 'Branches dérivées ({count})',
+      branchBadge: 'Branche dérivée',
+    },
     speech: {
       action: 'Lire à voix haute',
       stop: 'Arrêter la lecture à voix haute',

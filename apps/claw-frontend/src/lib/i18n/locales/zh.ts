@@ -344,6 +344,12 @@ export const zh: TranslationDictionary = {
       succeeded: '已分支为新的对话。',
       failed: '无法分支该对话。',
     },
+    lineage: {
+      branchedFrom: '分支自',
+      sourceDeleted: '分支自一个已删除的对话',
+      branches: '分支 ({count})',
+      branchBadge: '分支',
+    },
     speech: {
       action: '朗读',
       stop: '停止朗读',

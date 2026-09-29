@@ -234,9 +234,23 @@ to. Branching needs no warning because nothing is lost.
   the same code, so callers have one refusal to handle.
 - **The pivot must belong to the thread.** Otherwise one conversation's history
   could be grafted onto another.
-- **Copied messages take fresh ids and timestamps.** Carrying the originals
-  across would make two threads claim the same message, and the context receipts
-  hanging off those ids belong to the original run.
+- **Copied messages take fresh ids, and keep everything else** (2026-09-29,
+  ADR-129): `metadata` (attachment `fileIds`, reasoning, research panels),
+  token/cost/latency, `originalContent`/`editedAt` and the ORIGINAL `createdAt`.
+  Two threads must not claim one message id (receipts hang off it), but the
+  timestamp is load-bearing — messages order by `createdAt` alone, and a bulk
+  insert that let the column default stamped every row identically.
+- **Lineage is recorded** — `branchedFromThreadId`, `branchedFromMessageId`,
+  `branchRootThreadId` (inherited from the source; `branchLineageFor`). Plain
+  ids: deleting the source leaves the branch, and `GET /chat-threads/:id/lineage`
+  reports `parentDeleted`.
+- **Privacy switches travel** — `useMemory`, `useContext`,
+  `useCrossThreadContext` are copied (`copyThreadSettings`). Defaulting them
+  back on silently undid a memory-off choice.
+- **A branch family never feeds itself.** `CrossThreadRetrievalManager`
+  excludes the root and every thread sharing it, or a branch could retrieve what
+  its source said AFTER the fork. Any new path that creates a thread from
+  another thread must set `branchRootThreadId` via `branchLineageFor`.
 - **The branch carries the source title.** It is the same conversation up to
   that point. An untitled source branches untitled and names itself from its own
   first message — which is that same message.

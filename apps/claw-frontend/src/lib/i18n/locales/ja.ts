@@ -363,6 +363,12 @@ export const ja: TranslationDictionary = {
       succeeded: '新しい会話に分岐しました。',
       failed: '会話を分岐できませんでした。',
     },
+    lineage: {
+      branchedFrom: '分岐元',
+      sourceDeleted: '削除された会話から分岐',
+      branches: '分岐 ({count})',
+      branchBadge: '分岐',
+    },
     speech: {
       action: '読み上げ',
       stop: '読み上げを停止',

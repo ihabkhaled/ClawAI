@@ -10,6 +10,7 @@ import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
 import { StreamHealthNotice } from '@/components/chat/stream-health-notice';
+import { ThreadLineageBar } from '@/components/chat/thread-lineage-bar';
 import { ThreadListDrawer } from '@/components/chat/thread-list-drawer';
 import { ThreadQualityPanel } from '@/components/chat/thread-quality-panel';
 import { ThreadSearchPanel } from '@/components/chat/thread-search-panel';
@@ -145,6 +146,8 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
             is dragged over it; the files go to the composer's own upload
             pipeline. */}
         <ChatPanelDropzone className="chat-content-column flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 sm:gap-3">
+          {/* Only for a branch or a thread with branches; null otherwise. */}
+          <ThreadLineageBar {...props.lineageBarProps} />
           <div className="min-h-0 flex-1 overflow-hidden rounded-xl border">
             <ThreadSearchPanel search={props.search} onJumpToMessage={props.onJumpToMessage} />
             <VirtualizedMessages {...props.virtualizedMessagesProps} />

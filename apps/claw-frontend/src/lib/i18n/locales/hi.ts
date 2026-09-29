@@ -359,6 +359,12 @@ export const hi: TranslationDictionary = {
       succeeded: 'नई बातचीत में शाखा बना दी गई।',
       failed: 'बातचीत की शाखा नहीं बनाई जा सकी।',
     },
+    lineage: {
+      branchedFrom: 'मूल बातचीत:',
+      sourceDeleted: 'एक हटाई गई बातचीत से बनी शाखा',
+      branches: 'शाखाएँ ({count})',
+      branchBadge: 'शाखा',
+    },
     speech: {
       action: 'पढ़कर सुनाएँ',
       stop: 'पढ़कर सुनाना बंद करें',

@@ -364,6 +364,12 @@ export const it: TranslationDictionary = {
       succeeded: 'Diramato in una nuova conversazione.',
       failed: 'Impossibile diramare la conversazione.',
     },
+    lineage: {
+      branchedFrom: 'Diramato da',
+      sourceDeleted: 'Diramato da una conversazione eliminata',
+      branches: 'Diramazioni ({count})',
+      branchBadge: 'Diramazione',
+    },
     speech: {
       action: 'Leggi ad alta voce',
       stop: 'Interrompi la lettura ad alta voce',

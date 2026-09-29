@@ -88,6 +88,7 @@ import type {
   StreamStageTimings,
   StreamUsage,
   UseEditableTitleReturn,
+  ThreadLineageLink,
   VisibleProgressStage,
 } from './chat.types';
 import type { CompareJudgeLaneResult } from './compare-judge.types';
@@ -2085,6 +2086,8 @@ export type ChatThreadShellProps = {
   // Thread settings dialog (mounted unconditionally; `open` gates visibility).
   threadSettingsProps: ThreadSettingsProps;
   threadQualityPanelProps: ThreadQualityPanelProps;
+  /** Branch lineage strip: source link and sibling branches. */
+  lineageBarProps: ThreadLineageBarProps;
   // Virtualized messages.
   virtualizedMessagesProps: VirtualizedMessagesProps;
   // Overflow menu. Holds export / settings / delete, plus the four primary
@@ -2864,6 +2867,21 @@ export type MessageEditActionProps = {
 };
 
 /** The branch affordance on a message. */
+/**
+ * The one-line lineage strip above a conversation. `visible` is false for a
+ * thread that is neither a branch nor has branches, so nothing is rendered
+ * and no height is spent (rule 40).
+ */
+export type ThreadLineageBarProps = {
+  visible: boolean;
+  parent: ThreadLineageLink | null;
+  parentDeleted: boolean;
+  branches: ThreadLineageLink[];
+  branchedFromLabel: string;
+  sourceDeletedLabel: string;
+  branchesLabel: string;
+};
+
 export type MessageBranchActionProps = {
   threadId: string;
   messageId: string;

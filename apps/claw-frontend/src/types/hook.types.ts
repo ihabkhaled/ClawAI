@@ -48,6 +48,7 @@ import type {
 import type { ChatLimitNotice } from './chat-limit-notice.types';
 import type {
   InThreadSearchMatch,
+  ThreadLineage,
   ChatMessage,
   ChatThread,
   CreateMessageRequest,
@@ -216,6 +217,11 @@ export type FloatingClearanceConfig = {
 export type UseFloatingObstacleClearanceReturn = {
   /** Force a re-measure — for callers that move a floating element themselves. */
   remeasure: () => void;
+};
+
+export type UseThreadLineageReturn = {
+  lineage: ThreadLineage | null;
+  isLoading: boolean;
 };
 
 export type UseBranchThreadReturn = {

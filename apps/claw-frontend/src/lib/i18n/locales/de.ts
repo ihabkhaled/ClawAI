@@ -367,6 +367,12 @@ export const de: TranslationDictionary = {
       succeeded: 'In eine neue Unterhaltung verzweigt.',
       failed: 'Die Unterhaltung konnte nicht verzweigt werden.',
     },
+    lineage: {
+      branchedFrom: 'Verzweigt aus',
+      sourceDeleted: 'Verzweigt aus einer gelöschten Unterhaltung',
+      branches: 'Verzweigungen ({count})',
+      branchBadge: 'Verzweigung',
+    },
     speech: {
       action: 'Vorlesen',
       stop: 'Vorlesen beenden',

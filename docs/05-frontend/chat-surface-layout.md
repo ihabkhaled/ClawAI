@@ -359,6 +359,17 @@ column. Code blocks, tables and long URLs are handled in
 table wrapper, `break-words` on prose, `max-w-full` on images) — the page body
 itself never scrolls sideways.
 
+## The branch lineage strip (ADR-129)
+
+`ThreadLineageBar` sits at the top of the reading column, above the bordered
+transcript. It renders **`null`** for an ordinary thread — the common case —
+so it spends no height (rule 40 §1). For a branch it shows one line:
+"Branched from <source link>" (or "Branched from a chat that was deleted"), and
+when branches were cut from this thread a `Branches (n)` menu of links. Data:
+`useThreadLineageBar` → `useThreadLineage` → `GET /chat-threads/:id/lineage`;
+a failed read degrades to no strip, never to a blocked conversation. The thread
+list marks a branch with a `GitBranch` icon (`thread-list-item.tsx`).
+
 ## Scrolling
 
 Owned by Virtuoso and `hooks/chat/use-virtualized-messages-controller.ts`:

@@ -44,9 +44,38 @@ export type ChatThread = {
   useContext: boolean;
   /** ADR-087 — "use relevant previous chats". Opt-in; absent means false. */
   useCrossThreadContext?: boolean;
+  /** Branch lineage — set by the server when this thread was branched. */
+  branchedFromThreadId?: string | null;
+  branchedFromMessageId?: string | null;
+  branchRootThreadId?: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
+};
+
+/** One thread as a lineage view names it. */
+export type ThreadLineageEntry = {
+  id: string;
+  title: string | null;
+  createdAt: string;
+  branchedFromMessageId: string | null;
+};
+
+/** `GET /chat-threads/:id/lineage` — where a thread sits in its branch family. */
+export type ThreadLineage = {
+  threadId: string;
+  parent: ThreadLineageEntry | null;
+  /** True when this thread was branched from a chat that has since been deleted. */
+  parentDeleted: boolean;
+  forkMessageId: string | null;
+  branches: ThreadLineageEntry[];
+};
+
+/** A lineage entry resolved for display: label and destination. */
+export type ThreadLineageLink = {
+  id: string;
+  label: string;
+  href: string;
 };
 
 export type ChatMessage = {

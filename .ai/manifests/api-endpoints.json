@@ -1298,6 +1298,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/chat-threads/:id/lineage",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/chat-threads/:id/preview-context",
         "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
@@ -3643,5 +3648,5 @@
     ]
   },
   "generated": true,
-  "total": 721
+  "total": 722
 }

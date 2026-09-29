@@ -339,3 +339,10 @@ guarantees above still hold: reads are limited to the user's own threads, and a
 thread with the setting turned off reads no other thread. The title and D1 describe the
 original decision; this addendum is the current state. Found during the
 [ADR-126](adr-126-every-ai-one-workspace-positioning.md) flagship audit.
+
+## Addendum (2026-09-29): a branch family is excluded as a whole
+
+Retrieval now excludes the current thread's entire branch family (root plus
+every thread sharing `branchRootThreadId`), not only the current thread — or a
+branch could retrieve what its source said after the fork. See
+[ADR-129](adr-129-branch-lineage-and-family-isolation.md).

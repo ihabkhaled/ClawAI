@@ -360,6 +360,12 @@ export const en: TranslationDictionary = {
       succeeded: 'Branched into a new conversation.',
       failed: 'Could not branch the conversation.',
     },
+    lineage: {
+      branchedFrom: 'Branched from',
+      sourceDeleted: 'Branched from a chat that was deleted',
+      branches: 'Branches ({count})',
+      branchBadge: 'Branch',
+    },
     speech: {
       action: 'Read aloud',
       stop: 'Stop reading aloud',

@@ -354,6 +354,12 @@ export const th: TranslationDictionary = {
       succeeded: 'แยกเป็นบทสนทนาใหม่แล้ว',
       failed: 'แยกสายบทสนทนาไม่สำเร็จ',
     },
+    lineage: {
+      branchedFrom: 'แยกสายจาก',
+      sourceDeleted: 'แยกสายจากบทสนทนาที่ถูกลบแล้ว',
+      branches: 'สายที่แยกออก ({count})',
+      branchBadge: 'สายที่แยก',
+    },
     speech: {
       action: 'อ่านออกเสียง',
       stop: 'หยุดอ่านออกเสียง',

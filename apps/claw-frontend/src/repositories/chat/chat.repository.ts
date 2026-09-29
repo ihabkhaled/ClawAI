@@ -6,6 +6,7 @@ import type {
   BestOfNResponse,
   ChatThread,
   ChatMessage,
+  ThreadLineage,
   ConsensusRequest,
   ConsensusResponse,
   CreateThreadRequest,
@@ -78,6 +79,12 @@ export const chatRepository = {
     const response = await apiClient.post<ChatThread>(`/chat-threads/${threadId}/branch`, {
       fromMessageId,
     });
+    return response.data;
+  },
+
+  /** Where this thread sits in its branch family: its source and its branches. */
+  async getThreadLineage(threadId: string): Promise<ThreadLineage> {
+    const response = await apiClient.get<ThreadLineage>(`/chat-threads/${threadId}/lineage`);
     return response.data;
   },
 

@@ -29,6 +29,7 @@ export { formatDuration, formatMediaClock, formatSpeed } from './format-duration
 export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.utility';
 export { memoryCardPreview } from './memory-card.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
+export { buildLineageBarProps, toLineageLink } from './thread-lineage.utility';
 export { splitHighlightSegments } from './highlight.utility';
 export {
   readPersistedModelViewMode,

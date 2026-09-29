@@ -1353,6 +1353,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/chat-threads/:id/lineage",
+          "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/chat-threads/:id/preview-context",
           "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
@@ -8337,7 +8342,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5521
+        "value": 5526
       },
       "localeCount": 13,
       "locales": [
@@ -10315,7 +10320,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 238
+        "testFiles": 240
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10335,7 +10340,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 619
+        "testFiles": 622
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11101,7 +11106,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 721,
+    "endpointCount": 722,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11113,7 +11118,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1727,
+    "totalTestFiles": 1732,
     "workspaceCount": 25
   }
 }

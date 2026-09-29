@@ -18,15 +18,21 @@ function repositoryWith(options: {
   candidates?: CrossThreadCandidate[];
   messages?: CrossThreadMessageRow[];
   throwOnCandidates?: boolean;
+  /** Branch family the current thread belongs to; default: none (a root). */
+  family?: string[];
 }): { repo: CrossThreadRetrievalRepository; calls: RecordedCall[] } {
   const calls: RecordedCall[] = [];
   const repo = {
+    findBranchRoot: async (_userId: string, threadId: string) =>
+      Promise.resolve(options.family?.[0] ?? threadId),
+    findBranchFamilyIds: async (_userId: string, rootThreadId: string) =>
+      Promise.resolve(options.family ?? [rootThreadId]),
     findCandidateThreads: async (
       userId: string,
-      excludeThreadId: string,
+      excludeThreadIds: readonly string[],
       terms: readonly string[],
     ) => {
-      calls.push({ userId, arg: excludeThreadId, terms: [...terms] });
+      calls.push({ userId, arg: [...excludeThreadIds], terms: [...terms] });
       if (options.throwOnCandidates === true) throw new Error('db exploded');
       return Promise.resolve(options.candidates ?? []);
     },
@@ -193,7 +199,23 @@ describe('CrossThreadRetrievalManager', () => {
         intent: 'Continue the ORCHID-731 project we discussed earlier.',
       });
 
-      expect(calls[0]?.arg).toBe('thread-current');
+      expect(calls[0]?.arg).toEqual(['thread-current']);
+    });
+
+    it('excludes the whole branch family, so a branch never reads its source after the fork', async () => {
+      const { repo, calls } = repositoryWith({
+        candidates: [],
+        family: ['thread-root', 'thread-current', 'thread-sibling'],
+      });
+      const manager = new CrossThreadRetrievalManager(repo);
+
+      await manager.retrieve({
+        ...BASE,
+        enabled: true,
+        intent: 'Continue the ORCHID-731 project we discussed earlier.',
+      });
+
+      expect(calls[0]?.arg).toEqual(['thread-current', 'thread-root', 'thread-sibling']);
     });
   });
 

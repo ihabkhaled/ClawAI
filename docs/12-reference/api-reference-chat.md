@@ -106,6 +106,50 @@ Get a specific thread.
 
 ---
 
+### POST /chat-threads/:id/branch
+
+Copy the thread, up to and including one message, into a new thread (a branch).
+The source is untouched. Counts against the daily chat limit.
+
+**Auth**: Bearer token (must own thread)
+**Request Body**: `{ "fromMessageId": "<message id in this thread>" }`
+**Response 201**: the new ChatThread, with `branchedFromThreadId`,
+`branchedFromMessageId` and `branchRootThreadId` set (ADR-129)
+**Errors**: `404 ENTITY_NOT_FOUND` (thread or message not found, or message from
+another thread), `403 FORBIDDEN`, `429 PLAN_DAILY_CHAT_LIMIT_EXCEEDED`
+
+---
+
+### GET /chat-threads/:id/lineage
+
+Where the thread sits in its branch family.
+
+**Auth**: Bearer token (must own thread; every lineage read is scoped to the caller)
+**Response 200**:
+
+```json
+{
+  "threadId": "t-branch",
+  "parent": {
+    "id": "t-src",
+    "title": "Trip plan",
+    "createdAt": "…",
+    "branchedFromMessageId": null
+  },
+  "parentDeleted": false,
+  "forkMessageId": "m-7",
+  "branches": [
+    { "id": "t-b2", "title": "Trip plan", "createdAt": "…", "branchedFromMessageId": "m-3" }
+  ]
+}
+```
+
+`parent` is null for a root thread and for a branch whose source was deleted —
+`parentDeleted` tells them apart. At most 50 direct branches are listed.
+**Errors**: `404 ENTITY_NOT_FOUND`, `403 FORBIDDEN`
+
+---
+
 ### PATCH /chat-threads/:id
 
 Update a thread.

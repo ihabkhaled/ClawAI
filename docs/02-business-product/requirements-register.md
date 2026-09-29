@@ -118,3 +118,33 @@ _inferred_ until the owner confirms it.
   Production had 0 organisations when fixed, so nothing was exploited.
 - **Governing rule:** [rules/16](../../rules/16-authentication-and-authorization.md) (IDOR).
 - **History:** 2026-09-26 created; fixed the same day.
+
+## Chat supremacy program (2026-09-29)
+
+Intake audit: [`chat-capability-audit-2026-09.md`](../14-risk-debt/chat-capability-audit-2026-09.md) ·
+benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-2026-09.md).
+
+### REQ-CHAT-001
+
+- **Statement:** A user can branch a conversation from any message, get back to
+  the source from the branch, and see the branches cut from a conversation. A
+  branch inherits the conversation up to the fork point (text, attachments,
+  settings, privacy switches) and never anything said after it — including via
+  cross-thread retrieval.
+- **Status:** done · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch A (owner, 2026-09-29).
+- **Current state:** ADR-129 — lineage columns, full-field copy, family
+  exclusion, `GET /chat-threads/:id/lineage`, lineage strip + thread-list icon.
+  Merge-back is not built (no product decision on what a merged message is).
+- **History:** 2026-09-29 created and delivered (Batch 1).
+
+### REQ-CHAT-002
+
+- **Statement:** Privacy defects found by the intake audit are fixed before
+  further memory-dependent features: memory extraction must honour a chat's
+  `useMemory=false`, and a chat with `useCrossThreadContext=false` must not be
+  retrieved INTO other chats.
+- **Status:** missing · **Priority:** high (privacy)
+- **Source:** intake audit defects 3–4, 2026-09-29 (_inferred_ — owner to confirm
+  the intended semantics of the per-chat switch).
+- **History:** 2026-09-29 created.

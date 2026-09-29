@@ -363,6 +363,12 @@ export const es: TranslationDictionary = {
       succeeded: 'Ramificado en una conversación nueva.',
       failed: 'No se pudo ramificar la conversación.',
     },
+    lineage: {
+      branchedFrom: 'Ramificado de',
+      sourceDeleted: 'Ramificado de una conversación eliminada',
+      branches: 'Ramas ({count})',
+      branchBadge: 'Rama',
+    },
     speech: {
       action: 'Leer en voz alta',
       stop: 'Dejar de leer en voz alta',

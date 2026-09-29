@@ -23,22 +23,25 @@ this; see [build-system.md § Gotchas](../08-runtime-devops/build-system.md#7-go
 
 ### ChatThread
 
-| Column            | Type        | Notes                                |
-| ----------------- | ----------- | ------------------------------------ |
-| id                | String      | CUID primary key                     |
-| userId            | String      | Owner                                |
-| title             | String?     | Auto-generated or user-set           |
-| routingMode       | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc. |
-| lastProvider      | String?     | Last used provider                   |
-| lastModel         | String?     | Last used model                      |
-| isPinned          | Boolean     | User-pinned thread                   |
-| isArchived        | Boolean     | Soft archive                         |
-| preferredProvider | String?     | Thread-level override                |
-| preferredModel    | String?     | Thread-level override                |
-| contextPackIds    | String[]    | Attached context pack IDs            |
-| systemPrompt      | String?     | Custom system prompt                 |
-| temperature       | Float?      | Default 0.7                          |
-| maxTokens         | Int?        | Token limit override                 |
+| Column                | Type        | Notes                                                                    |
+| --------------------- | ----------- | ------------------------------------------------------------------------ |
+| id                    | String      | CUID primary key                                                         |
+| userId                | String      | Owner                                                                    |
+| title                 | String?     | Auto-generated or user-set                                               |
+| routingMode           | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc.                                     |
+| lastProvider          | String?     | Last used provider                                                       |
+| lastModel             | String?     | Last used model                                                          |
+| isPinned              | Boolean     | User-pinned thread                                                       |
+| isArchived            | Boolean     | Soft archive                                                             |
+| preferredProvider     | String?     | Thread-level override                                                    |
+| preferredModel        | String?     | Thread-level override                                                    |
+| contextPackIds        | String[]    | Attached context pack IDs                                                |
+| systemPrompt          | String?     | Custom system prompt                                                     |
+| temperature           | Float?      | Default 0.7                                                              |
+| maxTokens             | Int?        | Token limit override                                                     |
+| branchedFromThreadId  | String?     | Source thread of a branch (plain id; survives source deletion) — ADR-129 |
+| branchedFromMessageId | String?     | Fork message in the source                                               |
+| branchRootThreadId    | String?     | First ancestor; one indexed read finds the whole branch family           |
 
 ### ChatMessage
 
@@ -68,13 +71,15 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 
 ### Threads (`/api/v1/chat-threads`)
 
-| Method | Path | Description                     |
-| ------ | ---- | ------------------------------- |
-| GET    | /    | List user's threads (paginated) |
-| POST   | /    | Create new thread               |
-| GET    | /:id | Get thread with recent messages |
-| PATCH  | /:id | Update title, settings, etc.    |
-| DELETE | /:id | Delete thread and all messages  |
+| Method | Path         | Description                                                                             |
+| ------ | ------------ | --------------------------------------------------------------------------------------- |
+| GET    | /            | List user's threads (paginated)                                                         |
+| POST   | /            | Create new thread                                                                       |
+| GET    | /:id         | Get thread with recent messages                                                         |
+| POST   | /:id/branch  | Copy the thread up to `fromMessageId` into a new branch (daily chat limit applies)      |
+| GET    | /:id/lineage | `{ threadId, parent, parentDeleted, forkMessageId, branches }` — owner-scoped (ADR-129) |
+| PATCH  | /:id         | Update title, settings, etc.                                                            |
+| DELETE | /:id         | Delete thread and all messages                                                          |
 
 ### Messages (`/api/v1/chat-messages`)
 
@@ -647,6 +652,9 @@ hiding the next, all of them a bound, a ranking rule or a weight — never a
 missing embedding. ADR-087 D9–D14 has the full record with the measured
 numbers. What matters for anyone touching it again:
 
+- **The current thread's whole branch family is excluded** (ADR-129):
+  `excludedThreadIds` reads the root, then every thread sharing it, and passes
+  them all as `notIn`. A branch must never retrieve its source's post-fork turns.
 - **Stage 1 reads, stage 2 ranks.** The candidate query takes one bounded slice
   per term and returns them all. The manager scores and cuts. A repository that
   also ranks decides which threads the scorer may consider, and it decided

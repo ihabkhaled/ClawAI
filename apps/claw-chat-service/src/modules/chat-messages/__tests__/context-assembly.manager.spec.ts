@@ -17,6 +17,7 @@ import { CrossThreadRetrievalManager } from '../managers/cross-thread-retrieval.
  */
 function stubCrossThreadRepository(): ConstructorParameters<typeof CrossThreadRetrievalManager>[0] {
   return {
+    findBranchRoot: async () => Promise.resolve(null),
     findCandidateThreads: async () => Promise.resolve([]),
     findMessagesForThreads: async () => Promise.resolve([]),
   } as unknown as ConstructorParameters<typeof CrossThreadRetrievalManager>[0];

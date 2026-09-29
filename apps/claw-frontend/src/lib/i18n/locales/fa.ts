@@ -361,6 +361,12 @@ export const fa: TranslationDictionary = {
       succeeded: 'به گفت‌وگوی تازه‌ای منشعب شد.',
       failed: 'انشعاب گفت‌وگو ممکن نشد.',
     },
+    lineage: {
+      branchedFrom: 'منشعب از',
+      sourceDeleted: 'منشعب از گفت‌وگویی که حذف شده است',
+      branches: 'شاخه‌ها ({count})',
+      branchBadge: 'شاخه',
+    },
     speech: {
       action: 'بلندخوانی',
       stop: 'توقف بلندخوانی',

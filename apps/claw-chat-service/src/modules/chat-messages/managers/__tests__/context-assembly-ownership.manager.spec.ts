@@ -51,6 +51,7 @@ const userMessage = {
  */
 function stubCrossThreadRepository(): ConstructorParameters<typeof CrossThreadRetrievalManager>[0] {
   return {
+    findBranchRoot: async () => Promise.resolve(null),
     findCandidateThreads: async () => Promise.resolve([]),
     findMessagesForThreads: async () => Promise.resolve([]),
   } as unknown as ConstructorParameters<typeof CrossThreadRetrievalManager>[0];
@@ -81,10 +82,7 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
       if (url.includes('/internal/memories/')) {
         return Promise.resolve({ ok: true, status: 200, data: [] });
       }
-      if (url.includes('/internal/workspace/search')) {
-        return Promise.resolve({ ok: true, status: 200, data: { results: [] } });
-      }
-      return Promise.resolve({ ok: false, status: 404, data: {} });
+      return url.includes('/internal/workspace/search') ? Promise.resolve({ ok: true, status: 200, data: { results: [] } }) : Promise.resolve({ ok: false, status: 404, data: {} });
     });
   });
 

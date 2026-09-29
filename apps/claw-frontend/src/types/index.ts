@@ -96,6 +96,9 @@ export type {
   MessageRenderItem,
   ParallelExpandedMessage,
   ModelRecencyRank,
+  ThreadLineage,
+  ThreadLineageEntry,
+  ThreadLineageLink,
 } from './chat.types';
 export type { UseDailyTokenIndicatorResult } from './daily-token.types';
 export type {
@@ -372,6 +375,7 @@ export type {
   RichPromptTextareaProps,
   CodingAgentInstallFigureProps,
   MessageBranchActionProps,
+  ThreadLineageBarProps,
   MessageEditActionProps,
   ComposerDropzoneProps,
   JumpToLatestButtonProps,
@@ -612,6 +616,7 @@ export type {
   UseFeedbackLauncherCollapseReturn,
   UseJumpToMessageReturn,
   UseBranchThreadReturn,
+  UseThreadLineageReturn,
   UseMessageEditReturn,
   UseFloatingObstacleClearanceReturn,
   UseExportThreadReturn,

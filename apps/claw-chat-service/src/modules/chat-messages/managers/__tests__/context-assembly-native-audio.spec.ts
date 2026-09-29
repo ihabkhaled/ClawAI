@@ -33,6 +33,7 @@ const TRANSCRIPT = 'Please book the table for eight people on Friday.';
 const assembly = new ContextAssemblyManager(
   new ContextComposerManager(),
   new CrossThreadRetrievalManager({
+    findBranchRoot: async () => Promise.resolve(null),
     findCandidateThreads: async () => Promise.resolve([]),
     findMessagesForThreads: async () => Promise.resolve([]),
   } as never),

@@ -364,6 +364,12 @@ export const ru: TranslationDictionary = {
       succeeded: 'Создана новая ветка беседы.',
       failed: 'Не удалось ответвить беседу.',
     },
+    lineage: {
+      branchedFrom: 'Ответвлено от',
+      sourceDeleted: 'Ответвлено от удалённой беседы',
+      branches: 'Ветки ({count})',
+      branchBadge: 'Ветка',
+    },
     speech: {
       action: 'Прочитать вслух',
       stop: 'Остановить чтение вслух',

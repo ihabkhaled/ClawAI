@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, MoreVertical, Pin, PinOff } from 'lucide-react';
+import { Archive, ArchiveRestore, GitBranch, MoreVertical, Pin, PinOff } from 'lucide-react';
 import Link from 'next/link';
 
 import { HighlightedText } from '@/components/common/highlighted-text';
@@ -35,7 +35,7 @@ export function ThreadListItem({
   return (
     <div
       className={cn(
-        'group relative rounded-lg border transition-colors hover:bg-accent',
+        'group hover:bg-accent relative rounded-lg border transition-colors',
         isActive && 'border-primary bg-accent',
         thread.isArchived && 'opacity-60',
       )}
@@ -43,7 +43,14 @@ export function ThreadListItem({
       <Link href={ROUTES.CHAT_THREAD(thread.id)} className="block min-h-11 p-3 pe-14">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
-            {thread.isPinned ? <Pin className="h-3 w-3 shrink-0 text-primary" /> : null}
+            {thread.isPinned ? <Pin className="text-primary h-3 w-3 shrink-0" /> : null}
+            {thread.branchedFromThreadId ? (
+              <GitBranch
+                className="text-muted-foreground h-3 w-3 shrink-0"
+                role="img"
+                aria-label={t('chat.lineage.branchBadge')}
+              />
+            ) : null}
             <span className="truncate text-sm font-medium">
               {searchQuery !== undefined && searchQuery.trim().length > 0 ? (
                 <HighlightedText text={title} query={searchQuery} />
@@ -52,17 +59,21 @@ export function ThreadListItem({
               )}
             </span>
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeDate(thread.updatedAt)}</span>
+          <span className="text-muted-foreground shrink-0 text-xs">
+            {formatRelativeDate(thread.updatedAt)}
+          </span>
         </div>
-        {previewSnippet !== null ? <p className="mt-1 truncate text-xs text-muted-foreground">{previewSnippet}</p> : null}
+        {previewSnippet !== null ? (
+          <p className="text-muted-foreground mt-1 truncate text-xs">{previewSnippet}</p>
+        ) : null}
         <div className="mt-1 flex items-center justify-between gap-2">
           <RoutingBadge mode={thread.routingMode} />
-          <span className="text-xs text-muted-foreground">{messageCount}</span>
+          <span className="text-muted-foreground text-xs">{messageCount}</span>
         </div>
       </Link>
 
       {hasActions ? (
-        <div className="absolute top-1 end-1">
+        <div className="absolute end-1 top-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -76,14 +87,28 @@ export function ThreadListItem({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               {onPin !== undefined ? (
-                <DropdownMenuItem onClick={() => onPin(thread.id, !thread.isPinned)} disabled={isPinPending}>
-                  {thread.isPinned ? <PinOff className="me-2 h-4 w-4" /> : <Pin className="me-2 h-4 w-4" />}
+                <DropdownMenuItem
+                  onClick={() => onPin(thread.id, !thread.isPinned)}
+                  disabled={isPinPending}
+                >
+                  {thread.isPinned ? (
+                    <PinOff className="me-2 h-4 w-4" />
+                  ) : (
+                    <Pin className="me-2 h-4 w-4" />
+                  )}
                   {thread.isPinned ? t('chat.unpinThread') : t('chat.pinThread')}
                 </DropdownMenuItem>
               ) : null}
               {onArchive !== undefined ? (
-                <DropdownMenuItem onClick={() => onArchive(thread.id, !thread.isArchived)} disabled={isArchivePending}>
-                  {thread.isArchived ? <ArchiveRestore className="me-2 h-4 w-4" /> : <Archive className="me-2 h-4 w-4" />}
+                <DropdownMenuItem
+                  onClick={() => onArchive(thread.id, !thread.isArchived)}
+                  disabled={isArchivePending}
+                >
+                  {thread.isArchived ? (
+                    <ArchiveRestore className="me-2 h-4 w-4" />
+                  ) : (
+                    <Archive className="me-2 h-4 w-4" />
+                  )}
                   {thread.isArchived ? t('chat.unarchiveThread') : t('chat.archiveThread')}
                 </DropdownMenuItem>
               ) : null}

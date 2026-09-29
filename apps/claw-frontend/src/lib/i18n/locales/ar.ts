@@ -355,6 +355,12 @@ export const ar: TranslationDictionary = {
       succeeded: 'تم التفريع إلى محادثة جديدة.',
       failed: 'تعذّر تفريع المحادثة.',
     },
+    lineage: {
+      branchedFrom: 'متفرّع من',
+      sourceDeleted: 'متفرّع من محادثة تم حذفها',
+      branches: 'الفروع ({count})',
+      branchBadge: 'فرع',
+    },
     speech: {
       action: 'القراءة بصوت عالٍ',
       stop: 'إيقاف القراءة بصوت عالٍ',

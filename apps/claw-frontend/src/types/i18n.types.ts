@@ -328,6 +328,12 @@ export type TranslationDictionary = {
       succeeded: string;
       failed: string;
     };
+    lineage: {
+      branchedFrom: string;
+      sourceDeleted: string;
+      branches: string;
+      branchBadge: string;
+    };
     speech: {
       action: string;
       stop: string;
