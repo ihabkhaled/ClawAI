@@ -40,6 +40,13 @@ All services that publish or consume events, `@claw/shared-rabbitmq`,
    persist progress between batches, and make replay harmless. Log lock contention,
    skipped work, failures, and any unprocessed remainder without PII or secrets.
    A replica crash or provider outage must leave the next run able to continue.
+10. **Every async job table has restart recovery.** Work that runs fire-and-forget
+    in the accepting process (a status row moved QUEUED → RUNNING in memory) must
+    have a bounded sweep, at boot and on an interval, that ends rows untouched past
+    the slowest deadline plus margin — through ONE conditional write (status still
+    non-terminal, `updatedAt` still old) so a live finish always wins. The sweep
+    releases any credit hold (never finalizes) and emits the same terminal events as
+    the normal failure path. Reference: image-service `ImageStaleJobRecoveryManager`.
 
 ## Prohibited patterns
 

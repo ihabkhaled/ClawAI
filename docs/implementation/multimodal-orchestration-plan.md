@@ -259,6 +259,18 @@ Evidence: [`docs/16-quality-engineering/evidence/2026-09-25-multimodal/`](../16-
   is written; a failed store or asset row releases it (`IMAGE_STORAGE_FAILED`).
 - A saved language preference does not switch a tab that is already open, and
   `/ar/…` URLs stayed `lang=en` in the harness (evidence README, "Limits").
+- ~~An image job in QUEUED/GENERATING when image-service restarts stayed
+  GENERATING forever and kept its PAYG hold open.~~ Fixed 2026-09-29:
+  `ImageStaleJobRecoveryManager` times such rows out at boot and every 60 s
+  (`TIMED_OUT`, `IMAGE_GENERATION_INTERRUPTED`), releases the hold (row now
+  carries `paygReservationId`), emits SSE + `image.failed`. Unit-gated; not yet
+  re-run live.
+- ~~file-service video jobs lost to a restart stayed placeholders (the dead
+  job's Redis lock made the redelivered message skip).~~ Fixed 2026-09-29:
+  `VideoStaleRecoveryManager` (boot + 60 s) clears a dead-owner lock by
+  compare-and-delete and re-queues; FAILED after 3 re-queues. Unit-gated; not
+  re-run live. Transcription jobs self-heal by redelivery (no lock); their
+  unsaved PAYG hold waits for auth-service's sweeper (released, never charged).
 
 ### Production deploy blocker (not this program's code)
 

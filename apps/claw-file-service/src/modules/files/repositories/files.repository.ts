@@ -118,6 +118,42 @@ export class FilesRepository {
     });
   }
 
+  /**
+   * Video rows still awaiting their job (the `isVideoAwaitingProcessing` state)
+   * and untouched since `cutoff` — what the stale-video recovery re-queues.
+   */
+  async findStaleVideoPlaceholders(cutoff: Date, limit: number): Promise<File[]> {
+    return this.prisma.file.findMany({
+      where: {
+        mimeType: { startsWith: 'video/' },
+        ingestionStatus: FileIngestionStatus.COMPLETED,
+        extractionError: null,
+        extractedText: { startsWith: VIDEO_PLACEHOLDER_PREFIX },
+        updatedAt: { lt: cutoff },
+      },
+      take: limit,
+      orderBy: { updatedAt: 'asc' },
+    });
+  }
+
+  /**
+   * Restarts a re-queued placeholder's stale clock, so the next sweep waits a
+   * full window before re-queuing it again. Conditional on the row still
+   * awaiting its job: a job that just landed is never touched.
+   */
+  async touchVideoPlaceholder(id: string): Promise<boolean> {
+    const { count } = await this.prisma.file.updateMany({
+      where: {
+        id,
+        ingestionStatus: FileIngestionStatus.COMPLETED,
+        extractionError: null,
+        extractedText: { startsWith: VIDEO_PLACEHOLDER_PREFIX },
+      },
+      data: { updatedAt: new Date() },
+    });
+    return count === 1;
+  }
+
   async delete(id: string): Promise<File> {
     return this.prisma.file.delete({ where: { id } });
   }

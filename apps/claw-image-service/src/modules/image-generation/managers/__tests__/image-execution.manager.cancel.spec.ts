@@ -134,6 +134,40 @@ describe('ImageExecutionManager — user cancellation', () => {
     expect(h.finalize).not.toHaveBeenCalled();
   });
 
+  it('hands a metered hold id to onHoldReserved so the row can carry it', async () => {
+    const h = harness();
+    const onHoldReserved = vi.fn().mockResolvedValue(undefined);
+
+    await h.manager.execute({ ...input(async () => Promise.resolve(false)), onHoldReserved });
+
+    expect(onHoldReserved).toHaveBeenCalledWith('res-cancel-1');
+  });
+
+  it('a failing onHoldReserved never fails the attempt', async () => {
+    const h = harness();
+    const onHoldReserved = vi.fn().mockRejectedValue(new Error('db down'));
+
+    const result = await h.manager.execute({
+      ...input(async () => Promise.resolve(false)),
+      onHoldReserved,
+    });
+
+    expect(result.settlement?.hold.reservationId).toBe('res-cancel-1');
+    expect(h.release).not.toHaveBeenCalled();
+  });
+
+  it('releaseAbandoned gives the hold back as TIMEOUT, never finalizes', async () => {
+    const h = harness();
+
+    await h.manager.releaseAbandoned('res-dead-1', 'gen-dead');
+
+    expect(h.release).toHaveBeenCalledWith(
+      expect.objectContaining({ metered: true, reservationId: 'res-dead-1' }),
+      'TIMEOUT',
+    );
+    expect(h.finalize).not.toHaveBeenCalled();
+  });
+
   it('not cancelled: stores the image and leaves the hold open for the caller to settle', async () => {
     const h = harness();
 

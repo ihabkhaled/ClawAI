@@ -356,7 +356,11 @@ try {
         consoleErrorsDuring: report.console.slice(consoleBefore),
         screenshot: s1,
       };
-      const pass = d5.srcIsBlob && meta && meta.error === null && meta.readyState >= 1 && afterSecond === afterFirst && d5.consoleErrorsDuring.length === 0;
+      // Closing a still-generating player sends one POST …/speech/cancel by design
+      // (cancellation batch); any other request on close is a regression.
+      const cancelsOnClose = speechReqs.slice(afterFirst, afterSecond).filter((r) => r.endsWith('/speech/cancel')).length;
+      d5.cancelsOnClose = cancelsOnClose;
+      const pass = d5.srcIsBlob && meta && meta.error === null && meta.readyState >= 1 && afterSecond - cancelsOnClose === afterFirst && d5.consoleErrorsDuring.length === 0;
       result(5, pass ? 'PASS' : 'FAIL', d5);
     } else if (want(5)) result(5, 'NOT RUN', { reason: 'no assistant reply in scenario 3 thread' });
   }

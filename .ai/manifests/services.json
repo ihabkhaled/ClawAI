@@ -232,7 +232,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 66,
+      "testFiles": 67,
       "testRunner": "vitest"
     },
     {
@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 40,
+      "testFiles": 41,
       "testRunner": "vitest"
     },
     {

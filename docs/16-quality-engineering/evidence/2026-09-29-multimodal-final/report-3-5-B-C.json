@@ -1,0 +1,163 @@
+{
+  "startedAt": "2026-09-29T11:15:47.018Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    }
+  },
+  "scenarios": {
+    "3": {
+      "status": "PASS",
+      "model": "OLLAMA/gpt-oss:20b",
+      "uploadStates": [
+        "UPLOADING (pending tile)",
+        "STATUS \"Processing — You can send now; it is used once processing ends\"",
+        "READY (tile, no status line)"
+      ],
+      "replyRendered": true,
+      "chipTitle": "Per-model delivery summary\nqa-lighthouse-test.png (Described by helper) — GEMINI/gemini-2.5-flash",
+      "chipAria": "Per-model delivery summary",
+      "badges": ["attachment-delivery-badge-described: 🔎Described by helper 1"],
+      "rawKeysOnPage": [],
+      "backendFileDelivery": [
+        {
+          "mode": "DERIVED_IMAGE_TEXT",
+          "helper": "gemini-2.5-flash"
+        }
+      ],
+      "filesBadge": "Files: 1",
+      "screenshot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/03-helper-vision-delivery-chip-1440.png"
+    },
+    "5": {
+      "status": "PASS",
+      "src": "blob:https:/",
+      "srcIsBlob": true,
+      "audioMeta": {
+        "readyState": 4,
+        "duration": 7.690958,
+        "error": null
+      },
+      "playerError": [],
+      "speechRequests": [
+        "POST /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "POST /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech/cancel",
+        "POST /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech",
+        "GET /api/v1/chat-messages/cmumkzm130003d3oaip0a1zbb/speech"
+      ],
+      "speechResponses": [
+        {
+          "status": 202,
+          "cached": null,
+          "fileIdTail": ""
+        },
+        {
+          "status": 202,
+          "cached": null,
+          "fileIdTail": ""
+        }
+      ],
+      "requestsAfterClick1": 8,
+      "requestsAfterClick2": 9,
+      "requestsAfterClick3": 15,
+      "playerClosedOnSecondClick": true,
+      "consoleErrorsDuring": [],
+      "screenshot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/05-read-aloud-player-1440.png",
+      "cancelsOnClose": 1
+    }
+  },
+  "matrix": [],
+  "rtl": [],
+  "axe": null,
+  "console": [
+    {
+      "who": "paid",
+      "url": "/en/chat/cmumkyuax0001d3oah4nb0hmz",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmumkyuax0001d3oah4nb0hmz",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmumkzwkx0006d3oa2w5bjiig",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmumkzwkx0006d3oa2w5bjiig",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml0zmx000ad3oaxur8tyal",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml0zmx000ad3oaxur8tyal",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    }
+  ],
+  "fatal": "Error: ENOENT: no such file or directory, stat 'C:\\Users\\Ihab\\AppData\\Local\\Temp\\claude\\d--Freelance-Claw\\0cf1507e-4ef9-4f2b-bca6-86b1b3764406\\scratchpad\\mmui-fix\\qa-clip-60s.mp4'\n    at async Object.stat (node:internal/fs/promises:1038:18)\n    at async resolvePathsAndDirectoryForInputFiles (D:\\Freelance\\Claw\\.worktrees\\multimodal-orchestration\\node_modules\\playwright-core\\lib\\coreBundle.js:60728:18)\n    at async convertInputFiles (D:\\Freelance\\Claw\\.worktrees\\multimodal-orchestration\\node_modules\\playwright-core\\lib\\coreBundle.js:60747:42)\n    at async _Frame.setInputFiles (D:\\Freelance\\Claw\\.worktrees\\multimodal-orchestration\\node_modules\\playwright-core\\lib\\coreBundle.js:60598:27)\n    at async _Locator.setInputFiles (D:\\Freelance\\Claw\\.worktrees\\multimodal-orchestration\\node_modules\\pla",
+  "networkSummary": [
+    "paid GET /api/v1/llamacpp/catalog 502 x3",
+    "paid GET /api/v1/ollama/models 502 x3"
+  ],
+  "consoleSummary": [
+    "paid Failed to load resource: the server responded with a status of 502 () x6"
+  ],
+  "finishedAt": "2026-09-29T11:18:05.545Z"
+}

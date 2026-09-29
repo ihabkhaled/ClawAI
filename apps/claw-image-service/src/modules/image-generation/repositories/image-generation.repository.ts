@@ -9,6 +9,8 @@ import {
   type ImageGenerationRecord,
   type ImageReferenceAssetInput,
 } from '../types/image-generation.types';
+import { type ImageStaleJobRecord } from '../types/image-stale-recovery.types';
+import { IMAGE_STALE_JOB_SELECT } from '../constants/image-stale-recovery.constants';
 
 @Injectable()
 export class ImageGenerationRepository {
@@ -129,6 +131,54 @@ export class ImageGenerationRepository {
     const { count } = await this.prisma.imageGeneration.updateMany({
       where: { id, status: { in: [...IMAGE_ACTIVE_STATUSES] } },
       data: { status: ImageGenerationStatus.CANCELLED, completedAt: new Date() },
+    });
+    return count === 0 ? null : this.findById(id);
+  }
+
+  /**
+   * Records the PAYG hold the running attempt just took, so the stale-job
+   * recovery can release it if this process dies before settling. Written only
+   * while the row is still running; a row that already finished keeps its state.
+   */
+  async recordPaygReservation(id: string, reservationId: string): Promise<void> {
+    await this.prisma.imageGeneration.updateMany({
+      where: { id, status: { in: [...IMAGE_ACTIVE_STATUSES] } },
+      data: { paygReservationId: reservationId },
+    });
+  }
+
+  /**
+   * Running rows nobody has written since `cutoff` — the candidates the
+   * stale-job recovery times out. Oldest first, bounded by `limit`.
+   */
+  async findStaleActive(cutoff: Date, limit: number): Promise<ImageStaleJobRecord[]> {
+    return this.prisma.imageGeneration.findMany({
+      where: { status: { in: [...IMAGE_ACTIVE_STATUSES] }, updatedAt: { lt: cutoff } },
+      select: IMAGE_STALE_JOB_SELECT,
+      orderBy: { updatedAt: 'asc' },
+      take: limit,
+    });
+  }
+
+  /**
+   * THE stale-job write: TIMED_OUT only while the row is STILL running and
+   * STILL untouched since `cutoff`. One conditional statement, so a live
+   * completion, failure or cancel that lands first wins and this is a no-op
+   * (null). Returns the timed-out row.
+   */
+  async timeOutIfStale(
+    id: string,
+    cutoff: Date,
+    failure: { errorCode: string; errorMessage: string },
+  ): Promise<ImageGenerationRecord | null> {
+    const { count } = await this.prisma.imageGeneration.updateMany({
+      where: { id, status: { in: [...IMAGE_ACTIVE_STATUSES] }, updatedAt: { lt: cutoff } },
+      data: {
+        status: ImageGenerationStatus.TIMED_OUT,
+        errorCode: failure.errorCode,
+        errorMessage: failure.errorMessage,
+        completedAt: new Date(),
+      },
     });
     return count === 0 ? null : this.findById(id);
   }

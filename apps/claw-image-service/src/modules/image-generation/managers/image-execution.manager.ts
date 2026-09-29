@@ -12,7 +12,11 @@ import {
   IMAGE_STORE_FAILED_LOG_REASON,
   IMAGE_STORE_FAILED_RELEASE_REASON,
 } from '../constants/image-payg.constants';
-import { imageSettlement } from '../utilities/image-settlement.utility';
+import { abandonedHold, imageSettlement } from '../utilities/image-settlement.utility';
+import {
+  IMAGE_STALE_LOG_REASON,
+  IMAGE_STALE_RELEASE_REASON,
+} from '../constants/image-stale-recovery.constants';
 import { meteredImageModelKey } from '../utilities/image-price-key.utility';
 import { providerImageDownloadHosts } from '../utilities/provider-image-download.utility';
 import {
@@ -327,6 +331,7 @@ export class ImageExecutionManager {
       // passes the caller's quality through unchanged for dall-e, so this is it.
       meteredImageModelKey(run.provider, run.model, width, height, run.quality),
     );
+    await this.recordHold(params, hold);
 
     try {
       // `hold.maxOutputTokens` is DELIBERATELY NOT PASSED to either image API.
@@ -347,6 +352,32 @@ export class ImageExecutionManager {
       await this.payg.release(hold, 'PROVIDER_ERROR');
       throw error;
     }
+  }
+
+  /** Hands a metered hold's id to the row (`onHoldReserved`); never fails the attempt. */
+  private async recordHold(params: ExecuteImageInput, hold: PaygHold): Promise<void> {
+    if (!hold.metered || hold.reservationId === null || params.onHoldReserved === undefined) {
+      return;
+    }
+    try {
+      await params.onHoldReserved(hold.reservationId);
+    } catch {
+      this.logger.warn(
+        `recordHold: could not store reservationId=${hold.reservationId} generationId=${params.generationId ?? 'n/a'}`,
+      );
+    }
+  }
+
+  /**
+   * Gives back the hold of an attempt whose process died before settling it
+   * (stale-job recovery). Never finalizes: the user got no image. Idempotent on
+   * the auth side, so a hold already settled or released is a no-op.
+   */
+  async releaseAbandoned(reservationId: string, generationId: string): Promise<void> {
+    await this.payg.release(abandonedHold(reservationId), IMAGE_STALE_RELEASE_REASON);
+    this.logger.log(
+      `imageSettlement reservationId=${reservationId} generationId=${generationId} outcome=RELEASED reason=${IMAGE_STALE_LOG_REASON}`,
+    );
   }
 
   private async dispatchCloudProvider(

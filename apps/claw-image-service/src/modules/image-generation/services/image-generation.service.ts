@@ -758,6 +758,9 @@ export class ImageGenerationService {
       // Read from the DB row, so a cancel taken on any replica is seen here.
       isCancelled: async () =>
         (await this.repository.findStatus(generationId)) === ImageGenerationStatus.CANCELLED,
+      // The row carries the open hold, so a restart mid-call can still release it.
+      onHoldReserved: async (reservationId) =>
+        this.repository.recordPaygReservation(generationId, reservationId),
     };
   }
 

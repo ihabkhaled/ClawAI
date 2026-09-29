@@ -640,6 +640,29 @@ describe('VideoProcessingManager', () => {
       expect(mockedProbe).not.toHaveBeenCalled();
     });
 
+    it('failStalled ends the video FAILED (PROCESSING_ERROR) through the conditional write', async () => {
+      const file = buildFile();
+      const harness = buildHarness(file);
+
+      expect(await harness.manager.failStalled(file, 3)).toBe(true);
+
+      expect(harness.files.saveVideoExtractionResult).toHaveBeenCalledWith(
+        file.id,
+        expect.objectContaining({
+          status: FileIngestionStatus.FAILED,
+          extractedText: null,
+          extractionError: expect.stringContaining('after 3 attempts'),
+        }),
+      );
+      expect(harness.rabbit.publish).toHaveBeenCalledWith(
+        EventPattern.FILE_VIDEO_PROCESS_FAILED,
+        expect.objectContaining({
+          fileId: file.id,
+          reasonCode: VideoProcessingFailureReason.PROCESSING_ERROR,
+        }),
+      );
+    });
+
     it('a concurrent duplicate that finds the lock taken is a no-op', async () => {
       const harness = buildHarness(buildFile());
       harness.redis.setIfAbsent.mockResolvedValue(false);
@@ -653,9 +676,12 @@ describe('VideoProcessingManager', () => {
       await harness.manager.handleJob(JOB);
       expect(harness.redis.setIfAbsent).toHaveBeenCalledWith(
         'file:video-process-lock:video-1',
-        'video-1',
+        expect.any(String),
         900,
       );
+      const [, owner] = harness.redis.setIfAbsent.mock.calls[0] as [string, string, number];
+      expect(harness.manager.ownsLock(owner)).toBe(true);
+      expect(harness.manager.ownsLock('video-1')).toBe(false);
       expect(harness.redis.del).toHaveBeenCalledWith('file:video-process-lock:video-1');
     });
   });

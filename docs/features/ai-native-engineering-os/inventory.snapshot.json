@@ -7683,7 +7683,7 @@
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
-          "bytes": 4343,
+          "bytes": 4927,
           "file": "rules/17-rabbitmq-events-and-jobs.md"
         },
         {
@@ -10245,7 +10245,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 66
+        "testFiles": 67
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -10257,7 +10257,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 40
+        "testFiles": 41
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -11027,7 +11027,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1689,
+    "totalTestFiles": 1691,
     "workspaceCount": 25
   }
 }

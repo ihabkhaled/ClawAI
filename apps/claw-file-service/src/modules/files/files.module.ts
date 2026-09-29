@@ -19,6 +19,7 @@ import { VideoMediaManager } from './managers/video-media.manager';
 import { VideoPlanLimitManager } from './managers/video-plan-limit.manager';
 import { VideoFramesService } from './services/video-frames.service';
 import { VideoCancellationManager } from './managers/video-cancellation.manager';
+import { VideoStaleRecoveryManager } from './managers/video-stale-recovery.manager';
 import { VideoCancellationService } from './services/video-cancellation.service';
 
 @Module({
@@ -51,6 +52,8 @@ import { VideoCancellationService } from './services/video-cancellation.service'
     // Pack section 72 - user cancellation of a processing video (Redis flag,
     // replica-safe; see VideoCancellationManager).
     VideoCancellationManager,
+    // Re-queues video jobs lost to a restart (boot + every 60 s).
+    VideoStaleRecoveryManager,
     VideoCancellationService,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],

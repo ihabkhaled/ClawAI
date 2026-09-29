@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: File, FileChunk
 - API endpoints: 29 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 66 (vitest)
+- Test files: 67 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

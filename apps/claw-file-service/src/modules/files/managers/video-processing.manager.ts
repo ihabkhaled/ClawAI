@@ -1,4 +1,5 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -29,6 +30,7 @@ import {
   VIDEO_FRAME_MIME_TYPE,
   VIDEO_PROCESSING_LOCK_KEY_PREFIX,
   VIDEO_PROCESSING_LOCK_TTL_SECONDS,
+  VIDEO_STALE_GIVE_UP_DETAIL,
   VIDEO_TRANSCRIPTION_INSTRUCTION,
   VIDEO_TRANSCRIPTION_REQUEST_SCOPE,
 } from '../constants/video-processing.constants';
@@ -90,6 +92,9 @@ import { VideoCancellationManager } from './video-cancellation.manager';
 @Injectable()
 export class VideoProcessingManager implements OnModuleInit {
   private readonly logger = new Logger(VideoProcessingManager.name);
+
+  /** Identifies this process's jobs in the per-file lock value. */
+  private readonly ownerToken = randomUUID();
 
   constructor(
     private readonly filesRepository: FilesRepository,
@@ -164,7 +169,11 @@ export class VideoProcessingManager implements OnModuleInit {
       return;
     }
     const lockKey = `${VIDEO_PROCESSING_LOCK_KEY_PREFIX}:${fileId}`;
-    if (!(await this.redis.setIfAbsent(lockKey, fileId, VIDEO_PROCESSING_LOCK_TTL_SECONDS))) {
+    // The value is THIS process's owner token: the stale-video recovery reads
+    // it to tell a live job here from a lock a dead process left behind.
+    if (
+      !(await this.redis.setIfAbsent(lockKey, this.ownerToken, VIDEO_PROCESSING_LOCK_TTL_SECONDS))
+    ) {
       this.logger.log(`handleJob: fileId=${fileId} already being processed — skipping duplicate`);
       return;
     }
@@ -173,6 +182,29 @@ export class VideoProcessingManager implements OnModuleInit {
     } finally {
       await this.redis.del(lockKey);
     }
+  }
+
+  /** Whether `lockValue` was written by a job of THIS process. */
+  ownsLock(lockValue: string): boolean {
+    return lockValue === this.ownerToken;
+  }
+
+  /**
+   * Ends a video whose job kept getting lost (stale-video recovery, attempts
+   * exhausted): FAILED with `PROCESSING_ERROR`, through the same conditional
+   * write and `file.video_process_failed` event as any other failure. No paid
+   * step runs. Returns whether this call wrote the row.
+   */
+  async failStalled(file: File, attempts: number): Promise<boolean> {
+    return this.saveFailure(
+      file,
+      this.failure(
+        VideoProcessingFailureReason.PROCESSING_ERROR,
+        { message: `${VIDEO_STALE_GIVE_UP_DETAIL} after ${String(attempts)} attempts` },
+        null,
+        null,
+      ),
+    );
   }
 
   private async process(file: File): Promise<void> {

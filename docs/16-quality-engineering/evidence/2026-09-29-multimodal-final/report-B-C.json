@@ -1,0 +1,328 @@
+{
+  "startedAt": "2026-09-29T11:18:18.482Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    }
+  },
+  "scenarios": {
+    "B": {
+      "status": "PASS",
+      "readAloud": {
+        "replyRendered": true,
+        "availability": {
+          "available": true,
+          "reason": null
+        },
+        "statusAtStop": "LOADING",
+        "requests": [
+          "POST /chat-messages/cmuml2jgk000kd3oah9ieus18/speech @1790680728934",
+          "POST /chat-messages/cmuml2jgk000kd3oah9ieus18/speech/cancel @1790680729381"
+        ],
+        "responses": [
+          "202 /chat-messages/cmuml2jgk000kd3oah9ieus18/speech @1790680728969",
+          "200 /chat-messages/cmuml2jgk000kd3oah9ieus18/speech/cancel @1790680729401"
+        ],
+        "stateAfter8s": {
+          "status": "CANCELLED",
+          "segments": 0,
+          "errorCode": null
+        },
+        "stateAfter23s": {
+          "status": "CANCELLED",
+          "segments": 0,
+          "total": 8
+        },
+        "ledgerNew": [
+          "RESERVATION_RELEASE/-/22639",
+          "RESERVATION_RELEASE/-/5746",
+          "RESERVATION_RELEASE/-/20954",
+          "RESERVATION/TTS/-22639",
+          "RESERVATION/TTS/-20954",
+          "RESERVATION/TTS/-5746"
+        ],
+        "screenshot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/B1-read-aloud-stop-pending.png",
+        "status": "PASS"
+      },
+      "imageGeneration": {
+        "cancelButtonSeen": true,
+        "cancelledCard": true,
+        "cancelledText": "Generation cancelled\nRetry",
+        "screenshot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/B2-image-generation-cancelled.png",
+        "newGenerations": ["CANCELLED"],
+        "ledgerNew": ["RESERVATION_RELEASE/-/245760", "RESERVATION/IMAGE/-245760"],
+        "status": "PASS"
+      },
+      "videoProcessing": {
+        "stopButtonSeen": true,
+        "stopLabel": "Stop processing",
+        "chipState": "STATUS \"Cancelled — Processing was stopped. You can still send it; the model is told it was not processed\"",
+        "screenshot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/B3-video-processing-cancelled.png",
+        "file": {
+          "ingestionStatus": "FAILED",
+          "extractionError": "Processing was cancelled."
+        },
+        "ledgerNew": ["RESERVATION_RELEASE/-/807", "RESERVATION/TRANSCRIPTION/-807"],
+        "status": "PASS"
+      }
+    },
+    "C": {
+      "status": "PASS",
+      "rows": [
+        {
+          "size": "360x740",
+          "locale": "en",
+          "atBottom": {
+            "launcherState": "expanded",
+            "overlays": ["launcher[296,356,44x44]", "launcher[292,406,52x44]"],
+            "textLines": 1,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "scrolled": {
+            "launcherState": "expanded",
+            "overlays": ["launcher[296,356,44x44]", "launcher[292,406,52x44]"],
+            "textLines": 1,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "screenshots": [
+            "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-overlap-360x740-en-bottom.png",
+            "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-overlap-360x740-en-scrolled.png"
+          ],
+          "pass": true
+        },
+        {
+          "size": "390x844",
+          "locale": "en",
+          "atBottom": {
+            "launcherState": "expanded",
+            "overlays": ["launcher[326,460,44x44]", "launcher[322,510,52x44]"],
+            "textLines": 1,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "scrolled": {
+            "launcherState": "expanded",
+            "overlays": ["launcher[326,460,44x44]", "launcher[322,510,52x44]"],
+            "textLines": 1,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "ltr"
+          },
+          "screenshots": [
+            "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-overlap-390x844-en-bottom.png",
+            "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-overlap-390x844-en-scrolled.png"
+          ],
+          "pass": true
+        },
+        {
+          "size": "390x844",
+          "locale": "ar",
+          "atBottom": {
+            "launcherState": "expanded",
+            "overlays": ["launcher[20,460,44x44]", "launcher[16,510,52x44]"],
+            "textLines": 1,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "rtl"
+          },
+          "scrolled": {
+            "launcherState": "expanded",
+            "overlays": ["launcher[20,460,44x44]", "launcher[16,510,52x44]"],
+            "textLines": 1,
+            "hits": [],
+            "hitCount": 0,
+            "dir": "rtl"
+          },
+          "screenshots": [
+            "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-overlap-390x844-ar-bottom.png",
+            "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-overlap-390x844-ar-scrolled.png"
+          ],
+          "pass": true
+        }
+      ],
+      "side740": {
+        "found": true,
+        "minus": [676, 178, 44, 44],
+        "toolbar": [606, 144, 54, 245],
+        "overlaps": false,
+        "screenshot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/C-740x360-minus-vs-toolbar.png"
+      }
+    }
+  },
+  "matrix": [],
+  "rtl": [],
+  "axe": null,
+  "console": [
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml24b8000id3oaqy54ywtb",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml24b8000id3oaqy54ywtb",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml33ij000md3oa09gjcf2p",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml33ij000md3oa09gjcf2p",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml3qnn000qd3oao0ngropy",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml3qnn000qd3oao0ngropy",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/ar/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "paid",
+      "url": "/en/chat/cmuml249u000hd3oa8my91ozu",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "paid",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    }
+  ],
+  "networkSummary": [
+    "paid GET /api/v1/llamacpp/catalog 502 x7",
+    "paid GET /api/v1/ollama/models 502 x7"
+  ],
+  "consoleSummary": [
+    "paid Failed to load resource: the server responded with a status of 502 () x14"
+  ],
+  "finishedAt": "2026-09-29T11:20:21.605Z"
+}

@@ -234,7 +234,16 @@ export type ExecuteImageInput = {
    * hold is RELEASED (reason CANCELLED), never finalized.
    */
   isCancelled?: ImageCancellationProbe;
+  /**
+   * Called once a METERED hold is taken, with its reservation id, so the row can
+   * carry it for the stale-job recovery. Best-effort: a throw is logged, never
+   * fails the attempt (auth-service's sweeper is the backstop).
+   */
+  onHoldReserved?: ImageHoldReservedCallback;
 };
+
+/** Persists the reservation id of the hold an attempt just took. */
+export type ImageHoldReservedCallback = (reservationId: string) => Promise<void>;
 
 export type ImageProviderResponse = {
   imageUrl?: string;

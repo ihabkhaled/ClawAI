@@ -20,3 +20,4 @@ export { TranscriptionMetricOutcome } from './transcription-metric-outcome.enum'
 export { TranscriptionMetricSource } from './transcription-metric-source.enum';
 export { VideoProcessingOutcome } from './video-processing-outcome.enum';
 export { MediaJobKind } from './media-job-kind.enum';
+export { VideoStaleOutcome } from './video-stale-outcome.enum';

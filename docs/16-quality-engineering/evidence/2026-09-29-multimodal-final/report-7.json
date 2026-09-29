@@ -1,0 +1,87 @@
+{
+  "startedAt": "2026-09-29T11:20:29.455Z",
+  "environment": {
+    "accounts": {
+      "paidPlan": "pro",
+      "paidTopupHttp": 201,
+      "emails": "qa-mmui-* throwaway (passwords never printed)"
+    }
+  },
+  "scenarios": {
+    "7": {
+      "status": "PASS",
+      "noticeVisible": true,
+      "noticeText": "Unlock Image generation This message needed a feature your current plan does not cover. See plans",
+      "linkVisible": true,
+      "linkHref": "/plan",
+      "imageNoticeShot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/07-free-image-generation-plan-notice.png",
+      "replyRendered": true,
+      "chipTitle": "Per-model delivery summary\nqa-lighthouse-test.png (Skipped (no vision)) — Your plan does not include image descriptions, so only its text (OCR) was sent",
+      "badges": ["attachment-delivery-badge-skipped: 🚫Skipped (no vision) 1"],
+      "readAloudAriaDisabled": "true",
+      "readAloudLabel": "Read aloud is not included in your plan.",
+      "readAloudDimmed": true,
+      "playerOpenedAfterClick": false,
+      "rawKeysOnPage": [],
+      "backendFileDelivery": [
+        {
+          "mode": "OMITTED_NO_VISION",
+          "reason": "file_delivery.reason.helper_vision_plan"
+        }
+      ],
+      "readAloudAvailability": {
+        "http": 200,
+        "body": "{\"available\":false,\"reason\":\"PLAN_DISABLED\"}"
+      },
+      "blindShot": "docs/16-quality-engineering/evidence/2026-09-29-multimodal-final/screenshots/07-free-no-vision-note-and-dimmed-read-aloud.png"
+    }
+  },
+  "matrix": [],
+  "rtl": [],
+  "axe": null,
+  "console": [
+    {
+      "who": "free",
+      "url": "/en/chat/cmuml4wf7000ud3oaouyzovgl",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "free",
+      "url": "/en/chat/cmuml4ypj000yd3oa0qktg82e",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    },
+    {
+      "who": "free",
+      "url": "/en/chat/cmuml4ypj000yd3oa0qktg82e",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "network": [
+    {
+      "who": "free",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "free",
+      "method": "GET",
+      "url": "/api/v1/llamacpp/catalog",
+      "status": 502
+    },
+    {
+      "who": "free",
+      "method": "GET",
+      "url": "/api/v1/ollama/models",
+      "status": 502
+    }
+  ],
+  "networkSummary": [
+    "free GET /api/v1/llamacpp/catalog 502 x2",
+    "free GET /api/v1/ollama/models 502 x1"
+  ],
+  "consoleSummary": [
+    "free Failed to load resource: the server responded with a status of 502 () x3"
+  ],
+  "finishedAt": "2026-09-29T11:21:05.450Z"
+}

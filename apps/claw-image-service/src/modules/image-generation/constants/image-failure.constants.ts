@@ -68,6 +68,10 @@ export const IMAGE_FAILURE_MESSAGES: ReadonlyMap<ImageFailureCode, string> = new
     ImageFailureCode.MASK_INVALID,
     'The mask must be a PNG with transparency, the same size as the image, and within the size limit.',
   ],
+  [
+    ImageFailureCode.GENERATION_INTERRUPTED,
+    'The image service restarted before this image was finished. Nothing was charged. Try again.',
+  ],
 ]);
 
 /** The fixed sentence for a code, or the generic fallback for one this map does not carry. */

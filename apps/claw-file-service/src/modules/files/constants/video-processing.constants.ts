@@ -165,6 +165,29 @@ export const VIDEO_PROCESSING_CANCELLED_MESSAGE = 'Processing was cancelled.';
 export const VIDEO_PROCESSING_STALE_MS = 10 * 60 * 1000;
 
 /**
+ * Stale-video recovery (2026-09-29). A job lost to a restart used to wait for
+ * someone to open the file; `VideoStaleRecoveryManager` now re-queues it on
+ * its own — once at boot, then every interval — through the same
+ * `requestVideoProcessing` path the lazy heal uses.
+ *
+ * Boot grace: file-service runs ONE replica in production (fixed
+ * `container_name: claw-file-service`, no `deploy.replicas`), so at boot every
+ * lock held by another owner token belongs to a dead process. If it is ever
+ * scaled, the boot sweep must use `VIDEO_PROCESSING_STALE_MS` instead.
+ */
+export const VIDEO_STALE_BOOT_GRACE_MS = 5_000;
+export const VIDEO_STALE_SWEEP_INTERVAL_MS = 60_000;
+/** Rows handled per sweep; the next tick takes the rest. */
+export const VIDEO_STALE_SWEEP_BATCH_SIZE = 50;
+/** Re-queues per video before it is ended FAILED, so a poisoned video cannot loop forever. */
+export const VIDEO_STALE_MAX_REQUEUES = 3;
+export const VIDEO_STALE_ATTEMPTS_KEY_PREFIX = 'file:video-requeue-attempts';
+/** The attempt counter forgets a video a day after its last re-queue. */
+export const VIDEO_STALE_ATTEMPTS_TTL_SECONDS = 24 * 60 * 60;
+/** Detail inside the `PROCESSING_ERROR` sentence when the recovery gives up. */
+export const VIDEO_STALE_GIVE_UP_DETAIL = 'the job was lost to a service restart';
+
+/**
  * Prefix of the placeholder `FileProcessingManager` writes for a video upload,
  * replaced by the timestamped document when the job lands. chat-service keeps
  * its own copy (`VIDEO_FILE_PLACEHOLDER_PREFIX` in `media-placeholder.constants.ts`,

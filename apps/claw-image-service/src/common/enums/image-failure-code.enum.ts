@@ -29,4 +29,7 @@ export enum ImageFailureCode {
   MASK_NOT_SUPPORTED = 'IMAGE_MASK_NOT_SUPPORTED',
   // The mask is not a PNG with alpha, too large, or not the source's size (422).
   MASK_INVALID = 'IMAGE_MASK_INVALID',
+  // The process running the job died (restart, deploy, crash) before it
+  // finished. Set only by the stale-job recovery, on a TIMED_OUT row.
+  GENERATION_INTERRUPTED = 'IMAGE_GENERATION_INTERRUPTED',
 }

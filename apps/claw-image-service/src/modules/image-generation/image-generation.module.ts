@@ -5,6 +5,7 @@ import { ImageGenerationService } from './services/image-generation.service';
 import { ImageGenerationEventsService } from './services/image-generation-events.service';
 import { ImageExecutionManager } from './managers/image-execution.manager';
 import { ImagePlanGateManager } from './managers/image-plan-gate.manager';
+import { ImageStaleJobRecoveryManager } from './managers/image-stale-job-recovery.manager';
 import { ImageGenerationRepository } from './repositories/image-generation.repository';
 import { ComfyUIProgressAdapter } from '../runtime-progress/adapters/comfyui-progress.adapter';
 import { StableDiffusionWebuiProgressAdapter } from '../runtime-progress/adapters/stable-diffusion-webui-progress.adapter';
@@ -16,6 +17,7 @@ import { StableDiffusionWebuiProgressAdapter } from '../runtime-progress/adapter
     ImageGenerationEventsService,
     ImageExecutionManager,
     ImagePlanGateManager,
+    ImageStaleJobRecoveryManager,
     ImageGenerationRepository,
     ComfyUIProgressAdapter,
     StableDiffusionWebuiProgressAdapter,

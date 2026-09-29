@@ -58,6 +58,11 @@ model ImageGeneration {
   /// retry-alternate. Null on the head of a chain. Follow it (bounded hops,
   /// owner-checked every hop) to find what the user actually got.
   supersededById     String?               @map("superseded_by_id")
+  /// The OPEN PAYG hold of the attempt running on this row (auth-service
+  /// reservation id), written right after reserve. Lets the stale-job recovery
+  /// give the hold back when the process that took it died mid-call. Release is
+  /// idempotent, so a hold already settled or released is a no-op.
+  paygReservationId  String?               @map("payg_reservation_id")
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
 
@@ -67,6 +72,7 @@ model ImageGeneration {
   @@index([userId])
   @@index([threadId])
   @@index([status, createdAt])
+  @@index([status, updatedAt])
   @@index([assistantMessageId])
   @@index([supersededById])
   @@map("image_generations")

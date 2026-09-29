@@ -80,6 +80,23 @@ Image generation microservice for the Claw platform. Orchestrates image generati
 
 Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 
+## Stale-job recovery (2026-09-29)
+
+A job runs fire-and-forget in the process that accepted it, so a restart used to
+leave rows GENERATING forever with the PAYG hold open.
+`ImageStaleJobRecoveryManager` sweeps at boot (grace 5 s — safe ONLY because
+image-service is one replica) and every 60 s (threshold = slowest provider
+deadline + 5 min), batch 100, single-flight, timer cleared on destroy. Each row
+goes through ONE conditional write (`timeOutIfStale`: still active AND still
+untouched) → `TIMED_OUT` / `IMAGE_GENERATION_INTERRUPTED`; only the winner
+releases the hold (`releaseAbandoned`, reason TIMEOUT, never finalize) and emits
+the event row + SSE + `image.failed`. The hold id is stored on the row by
+`onHoldReserved` → `recordPaygReservation`; `paygReservationId` is omitted from
+every read by `PRISMA_GLOBAL_OMIT` (rows go to the browser as-is). A new
+execution path that reserves a hold must keep passing `onHoldReserved`.
+Constants: `constants/image-stale-recovery.constants.ts`. Details:
+[`service-guide-image.md`](../../docs/04-backend/service-guide-image.md#stale-job-recovery-2026-09-29).
+
 ## Cancellation (`POST /images/:id/cancel`, 2026-09-25)
 
 Owner only (`cancelGenerationForUser`, same 404 as a missing id), always 200

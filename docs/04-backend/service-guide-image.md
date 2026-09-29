@@ -40,6 +40,7 @@ The image service orchestrates AI image generation across multiple providers (Op
 | errorMessage       | String?               | Human-readable error                                                                       |
 | latencyMs          | Int?                  | Generation time                                                                            |
 | supersededById     | String? (indexed)     | Row that took this job over (AUTO fallback or retry-alternate); null on a chain head       |
+| paygReservationId  | String?               | Open PAYG hold of the running attempt; omitted from every read except stale recovery       |
 
 `threadId` / `userMessageId` are filled from chat-service's dispatch since
 2026-09-25 (batch 10a); they were always null before. `assistantMessageId`
@@ -83,6 +84,49 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 CANCELLED is reachable from any of QUEUED/STARTING/GENERATING/FINALIZING (user
 cancel) and is absorbing: no later write overwrites it. See
 [Cancellation](#cancellation-post-imagesidcancel-2026-09-25).
+
+TIMED_OUT is written only by the stale-job recovery (below): the process that
+ran the job died.
+
+## Stale-job recovery (2026-09-29)
+
+A generation runs fire-and-forget inside the process that accepted it. Before
+this, `docker restart claw-image-service` left every QUEUED/GENERATING row
+spinning forever (proven live on three rows) and its PAYG hold open until
+auth-service's sweeper reclaimed it (`PAYG_RESERVATION_TTL_MS`, 15 min, plus a
+5 min sweep).
+
+`ImageStaleJobRecoveryManager` (`managers/image-stale-job-recovery.manager.ts`):
+
+- **Boot** (`onApplicationBootstrap`): times out every running row untouched for
+  `IMAGE_BOOT_RECOVERY_GRACE_MS` (5 s). Safe only because image-service runs one
+  replica; if it is ever scaled, the boot sweep must use the full threshold.
+- **Every `IMAGE_STALE_SWEEP_INTERVAL_MS` (60 s)**: rows untouched for
+  `IMAGE_STALE_JOB_THRESHOLD_MS` = slowest provider deadline
+  (`IMAGE_LONGEST_PROVIDER_DEADLINE_MS`, ComfyUI 5 min) + 5 min margin.
+  At most `IMAGE_STALE_SWEEP_BATCH_SIZE` (100) rows per tick, single-flight,
+  never throws, timer `unref`'d and cleared on module destroy. No env var.
+- **One conditional write per row** (`timeOutIfStale`: status still in
+  `IMAGE_ACTIVE_STATUSES` AND `updatedAt` still before the cutoff). A live
+  completion, failure or cancel that lands first wins; the sweep then does
+  nothing for that row. No Redis lock: side effects follow only the winning
+  write, so two sweepers cannot double-release or double-publish.
+- Winner → `TIMED_OUT`, `errorCode = IMAGE_GENERATION_INTERRUPTED`, the hold
+  RELEASED (`releaseAbandoned`, wire reason `TIMEOUT`, never finalized), an
+  `image_generation_events` row, the SSE event and `image.failed`. No AUTO
+  successor is spawned (the chain state died with the process).
+- The hold id reaches the row through `ExecuteImageInput.onHoldReserved` →
+  `recordPaygReservation`, right after `reserve`. `PrismaService` omits
+  `paygReservationId` globally (`PRISMA_GLOBAL_OMIT`) because rows are sent to
+  the browser as-is; only `findStaleActive` selects it.
+
+Log: `imageStaleRecovery generationId=… fromStatus=… outcome=TIMED_OUT holdReleased=…`
+and `imageSettlement reservationId=… outcome=RELEASED reason=PROCESS_DIED`.
+
+Known limits: a row that died in FINALIZING after the image was stored leaves
+that file in file-service (not deleted); a process that died between writing
+COMPLETED and `settle` leaves the hold to auth-service's sweeper (the user got
+the image free, never double-charged).
 
 ## Provider Adapters
 
@@ -379,6 +423,7 @@ under-classifies auth failures).
 | `IMAGE_EDIT_UNAVAILABLE`         | A reference-image job reached a provider that cannot use a reference (Grok, ComfyUI)                                                              | Yes — a reference job's chain only walks edit-capable providers                                                                                                                     |
 | `IMAGE_MASK_NOT_SUPPORTED`       | 422: a mask for a provider without mask support                                                                                                   | **No** (chain-terminal)                                                                                                                                                             |
 | `IMAGE_MASK_INVALID`             | 422: mask not a PNG (magic bytes), no alpha, over 4 MB, or not the source's size                                                                  | **No** (chain-terminal)                                                                                                                                                             |
+| `IMAGE_GENERATION_INTERRUPTED`   | Stale-job recovery: the process running the job died; row is `TIMED_OUT`, hold released                                                           | No successor is spawned; the user retries                                                                                                                                           |
 
 ## Events
 
@@ -388,6 +433,7 @@ under-classifies auth failures).
 | image.failed    | Publish   | none today (no subscriber found 2026-09-25) |
 
 A user cancel publishes neither (see Cancellation).
+The stale-job recovery publishes `image.failed` (code `IMAGE_GENERATION_INTERRUPTED`).
 
 `image.failed` is `ImageFailedPayload` (`@claw/shared-types`): ids, provider,
 model, prompt, error code/message, `timestamp`, and — only when an AUTO

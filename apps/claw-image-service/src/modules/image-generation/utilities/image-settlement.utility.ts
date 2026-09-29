@@ -34,3 +34,20 @@ export function imageSettlement(hold: PaygHold, response: ImageProviderResponse)
       : { providerCostTicks: response.providerCostTicks }),
   };
 }
+
+/**
+ * A hold rebuilt from nothing but its stored reservation id, for releasing the
+ * hold of an attempt whose process died. `release` sends only the id and the
+ * reason; the amounts are auth-service's record, not ours, so they stay zero.
+ */
+export function abandonedHold(reservationId: string): PaygHold {
+  return {
+    metered: true,
+    maxOutputTokens: 0,
+    clamped: false,
+    reservationId,
+    heldMicroUsd: 0,
+    availableAfterMicroUsd: 0,
+    reason: null,
+  };
+}

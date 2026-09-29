@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from './constants/redis.constants';
+import { REDIS_CLIENT, REDIS_COMPARE_AND_DELETE_SCRIPT } from './constants/redis.constants';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -27,6 +27,23 @@ export class RedisService implements OnModuleDestroy {
   async setIfAbsent(key: string, value: string, ttlSeconds: number): Promise<boolean> {
     const result = await this.client.set(key, value, 'EX', ttlSeconds, 'NX');
     return result === 'OK';
+  }
+
+  /**
+   * Compare-and-delete in one Lua call: removes `key` only while it still holds
+   * `expected`, so a lock another job took a moment ago is never deleted.
+   * True when this call deleted it.
+   */
+  async deleteIfValue(key: string, expected: string): Promise<boolean> {
+    const deleted = await this.client.eval(REDIS_COMPARE_AND_DELETE_SCRIPT, 1, key, expected);
+    return deleted === 1;
+  }
+
+  /** INCR with an expiry set on every call; returns the new count. */
+  async incrementWithTtl(key: string, ttlSeconds: number): Promise<number> {
+    const count = await this.client.incr(key);
+    await this.client.expire(key, ttlSeconds);
+    return count;
   }
 
   async del(key: string): Promise<void> {

@@ -633,6 +633,38 @@ chat-service samples frames inside the real duration and tells a plan refusal
 apart. `?includeContent=false` omits the base64 bytes — chat's research digest
 reads a transcript without transferring the video.
 
+### Stale-video recovery (2026-09-29)
+
+A video job holds `file:video-process-lock:<id>` (15 min TTL) and deletes it
+only when it finishes. Before 2026-09-29 a restart mid-job left the lock
+behind: RabbitMQ redelivered the unacked message, the handler found the lock
+taken, skipped and acked — the job was lost, and only a later open of the file
+(`healStalledVideoIfNeeded`, 10 min) re-queued it.
+
+`VideoStaleRecoveryManager` (`managers/video-stale-recovery.manager.ts`) sweeps
+at boot (5 s grace — safe ONLY because file-service is one replica:
+`container_name: claw-file-service`, no `deploy.replicas`) and every 60 s
+(`VIDEO_PROCESSING_STALE_MS`, 10 min). Batch 50, single-flight, never throws,
+timer `unref`'d and cleared on destroy. No env var. Per stale placeholder
+(`findStaleVideoPlaceholders` = the `isVideoAwaitingProcessing` state):
+
+- The lock value is now a per-process owner token (`VideoProcessingManager.ownsLock`).
+  Owned here → a live job → skipped. Any other value → a dead process's lock →
+  `RedisService.deleteIfValue` (Lua compare-and-delete of that exact value;
+  a lock re-taken meanwhile is never deleted).
+- Attempt counter `file:video-requeue-attempts:<id>` (Redis INCR, 24 h TTL).
+  Past `VIDEO_STALE_MAX_REQUEUES` (3) → `failStalled`: FAILED,
+  `PROCESSING_ERROR` ("…the job was lost to a service restart after N
+  attempts"), same conditional write + `file.video_process_failed` as any
+  failure. No paid step.
+- Else `touchVideoPlaceholder` (restarts the 10 min clock, conditional on
+  still awaiting) and `requestVideoProcessing` — the same path the lazy heal
+  uses. A duplicate message is harmless (lock + awaiting-state check).
+
+Log: `videoStaleRecovery fileId=… outcome=REQUEUED|FAILED_EXHAUSTED|SKIPPED_LIVE_LOCK`.
+If file-service is ever scaled, the boot grace must become the full window and
+"foreign owner" no longer means "dead".
+
 ### Cancellation (pack section 72, 2026-09-25)
 
 `POST /files/:id/processing/cancel` (Bearer, `FILES_USE`, owner-only — a
