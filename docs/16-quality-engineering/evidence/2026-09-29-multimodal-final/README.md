@@ -35,3 +35,12 @@ Fixed: `location /api/v1/internal/ { return 404; }` in `infra/nginx/locations.co
 - API lane: **41/41** (`bash qa/test-multimodal.sh`).
 - Browser lane: **13/13 in one run** — `SUMMARY 1:PASS 2:PASS 3:PASS 4:PASS 5:PASS 6:PASS 7:PASS 8:PASS 9:PASS 10:PASS A:PASS B:PASS C:PASS` (`rerun/report.json`, screenshots in `rerun/screenshots/`).
 - The first post-cap run found a real bug (video question routed to `chatgpt-image-latest`, no reply) — fixed in 5e05450ca, rule 51 item 19.
+
+## Deferred-items live run (2026-09-29, `scripts/qa-lab/deferred-live.mjs`)
+
+Connectors toggled via `PATCH /connectors/:id` and restored in `finally`.
+
+- OpenAI STT (Gemini off): `provider=OPENAI model=gpt-4o-mini-transcribe kind=QUOTA_EXHAUSTED` (HTTP 429). Reserve released `reason=PROVIDER_ERROR`; fell through to LOCAL: `metered=false`, `audioSeconds=4`, transcript exact. Metered success path NOT proven live (OpenAI quota).
+- LOCAL STT (Gemini + OpenAI off): `provider=LOCAL model=Systran/faster-whisper-small`, unmetered, 3.7 s, transcript exact. PASS.
+- OpenAI masked edit: chat refused with "model cannot edit only part of an image" (no mask-capable model reachable, OpenAI 429). No image job created. NOT proven live.
+- Video restart recovery: not run live (Gemini spend); unit-gated.
