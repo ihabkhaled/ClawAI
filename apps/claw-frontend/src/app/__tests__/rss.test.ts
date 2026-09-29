@@ -26,10 +26,17 @@ describe('global rss feed', () => {
     delete process.env['VERCEL_ENV'];
   });
 
-  it('is rendered at request time so production runtime configuration controls discovery', async () => {
-    const route = await import('../rss.xml/route');
-    expect(route.dynamic).toBe('force-dynamic');
-  });
+  // First test in the file, so it pays for the COLD import of the route — the
+  // slow one. It timed out at vitest's 5 s default under pre-push load while
+  // its warm-import siblings already carried the longer ceiling.
+  it(
+    'is rendered at request time so production runtime configuration controls discovery',
+    async () => {
+      const route = await import('../rss.xml/route');
+      expect(route.dynamic).toBe('force-dynamic');
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
 
   it(
     'carries every locale, not just the default one',
