@@ -51,6 +51,8 @@ retrieval, internal routes) and `apps/claw-chat-service`
     and a "save this as memory/context" command yields nothing. Add a new
     generation keyword table → it must go through this filter too.
 
+11. **"Save this as memory / add this to my context pack" is a server-side save, not a model turn.** chat-service `SaveToContextManager` recognises the command with `detectSaveToContextIntent` (13 locales; must open the message or be its whole last paragraph), saves via memory-service `POST /internal/memories/save-from-chat` or `/internal/context-packs/save-from-chat` (service token, owner = thread owner, idempotent on the user message id), and stores a localized confirmation with type, size and a `/memory` or `/context` link. Zero tokens, no model call. A bare command saves the previous message; nothing to save → a one-line question.
+
 ## How to check
 
 ```bash

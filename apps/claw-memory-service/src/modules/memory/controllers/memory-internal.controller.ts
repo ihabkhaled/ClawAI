@@ -14,6 +14,12 @@ import { type MemoryRecord, MemoryType } from '../../../generated/prisma';
 import { MemoryRepository } from '../repositories/memory.repository';
 import { MemoryService } from '../services/memory.service';
 import type { UpsertAutomationPreferenceBody } from '../types/automation-preference.types';
+import type { SaveMemoryFromChatResult } from '../types/memory.types';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import {
+  type SaveMemoryFromChatDto,
+  saveMemoryFromChatSchema,
+} from '../dto/save-memory-from-chat.dto';
 
 @UseGuards(ServiceTokenGuard)
 @Controller('internal/memories')
@@ -31,6 +37,16 @@ export class MemoryInternalController {
   ): Promise<MemoryRecord[]> {
     const parsedLimit = Number(limit) || 10;
     return this.memoryService.getMemoriesForContext(userId, parsedLimit);
+  }
+
+  /** "Save this as memory" said in a chat — idempotent on the chat message id. */
+  @Public()
+  @Post('save-from-chat')
+  @HttpCode(HttpStatus.OK)
+  async saveFromChat(
+    @Body(new ZodValidationPipe(saveMemoryFromChatSchema)) body: SaveMemoryFromChatDto,
+  ): Promise<SaveMemoryFromChatResult> {
+    return this.memoryService.saveFromChat(body);
   }
 
   /**

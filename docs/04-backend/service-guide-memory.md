@@ -120,3 +120,8 @@ When the chat service assembles context, it calls the memory service's internal 
 - **Masking:** `maskSecrets()` masks secret-shaped spans in place over the whole text and never shortens it. A REDACTED memory is stored masked and retrieved masked (never `null`).
 - **Updates:** `PATCH /memories/:id` accepts `type`; changed content is re-classified and re-embedded.
 - **Chat delivery:** `POST /api/v1/internal/context-packs/for-chat` (service token) with `{ userId, threadId?, packIds[] }` returns `{ packs: [{ id, name, autoApplied, items: [{ id, itemType, content }] }] }` — attached packs plus enabled, un-paused USER-scope packs and THREAD-scope packs for that thread. Chat-service ranks chunks of large items against the question (rules/57).
+
+### Save from chat (2026-09-29)
+
+- `POST /api/v1/internal/memories/save-from-chat` `{ userId, type, content, sourceThreadId, sourceMessageId }` → `{ memory, created }`. Idempotent: an existing memory with the same `(userId, sourceMessageId)` is returned. Same masking, plan gate and item limit as a manual create.
+- `POST /api/v1/internal/context-packs/save-from-chat` `{ userId, name, content, sourceMessageId }` → `{ created, packId, name }`. Creates a USER-scope pack (on for every chat) with one MARKDOWN item, tagged `chat:<messageId>` as the idempotency key.

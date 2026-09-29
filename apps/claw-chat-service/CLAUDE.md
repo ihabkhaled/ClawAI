@@ -1468,3 +1468,7 @@ model's private notes run into its reply.
 - Tests: `chat-messages.service.spec.ts` (attached-image edit intent),
   `chat-execution.manager.spec.ts` (image-service contract),
   `image-reference-prompt.utility.spec.ts`. Rule 51 item 18.
+
+## Save to memory / context from chat (owner feature 11, 2026-09-29)
+
+`handleMessageRouted` asks `SaveToContextManager.trySave` first (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.

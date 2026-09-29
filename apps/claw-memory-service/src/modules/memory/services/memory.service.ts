@@ -24,7 +24,8 @@ import { type UpdateMemoryDto } from '../dto/update-memory.dto';
 import { type ListMemoriesQueryDto } from '../dto/list-memories-query.dto';
 import { parseOptionalDate } from '../../../common/utilities/date-coerce.utility';
 import { ResourceEntitlementService } from '../../../common/services/resource-entitlement.service';
-import { type CreateMemoryData } from '../types/memory.types';
+import { type CreateMemoryData, type SaveMemoryFromChatResult } from '../types/memory.types';
+import { type SaveMemoryFromChatDto } from '../dto/save-memory-from-chat.dto';
 
 @Injectable()
 export class MemoryService implements OnModuleInit {
@@ -121,6 +122,33 @@ export class MemoryService implements OnModuleInit {
       timestamp: new Date().toISOString(),
     });
     return memory;
+  }
+
+  /**
+   * "Save this as memory" said in a chat (owner feature 11). Keyed on the
+   * user message: a redelivered or retried turn returns the memory it already
+   * made instead of a duplicate. Same masking, plan gate and limit as a
+   * manual create — this is a manual create, just typed in a chat.
+   */
+  async saveFromChat(dto: SaveMemoryFromChatDto): Promise<SaveMemoryFromChatResult> {
+    const existing = await this.memoryRepository.findBySourceMessage(
+      dto.userId,
+      dto.sourceMessageId,
+    );
+    if (existing) {
+      this.logger.log(
+        `saveFromChat: message=${dto.sourceMessageId} already saved — ${existing.id}`,
+      );
+      return { memory: existing, created: false };
+    }
+    const memory = await this.createMemory(dto.userId, {
+      type: dto.type,
+      content: dto.content,
+      sourceThreadId: dto.sourceThreadId,
+      sourceMessageId: dto.sourceMessageId,
+      source: MemorySource.USER_MANUAL,
+    });
+    return { memory, created: true };
   }
 
   async getMemories(

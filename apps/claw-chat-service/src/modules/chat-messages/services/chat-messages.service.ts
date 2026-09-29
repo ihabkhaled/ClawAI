@@ -24,6 +24,16 @@ import {
 } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { AttachmentInfoClient } from '../clients/attachment-info.client';
+import { SaveToContextManager } from '../managers/save-to-context.manager';
+import {
+  detectConfirmationLocale,
+  renderSaveConfirmation,
+} from '../utilities/save-confirmation.utility';
+import {
+  SAVE_TO_CONTEXT_MODEL,
+  SAVE_TO_CONTEXT_PROVIDER,
+} from '../constants/save-to-context.constants';
+import type { SaveToContextOutcome } from '../types/save-to-context.types';
 import { IMAGE_MIME_PREFIX } from '../constants/file-delivery.constants';
 import type { AttachmentModalityFields } from '../types/attachment-modality.types';
 import {
@@ -179,6 +189,9 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional so hand-built specs keep their shape. Without it a turn is
     // routed with no attachment signal — exactly the pre-batch-8 behaviour.
     @Optional() private readonly attachmentInfo?: AttachmentInfoClient,
+    // Optional for the same reason. Absent → "save this as memory" is an
+    // ordinary chat turn, as before owner feature 11.
+    @Optional() private readonly saveToContext?: SaveToContextManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -1201,6 +1214,19 @@ export class ChatMessagesService implements OnModuleInit {
       thread = loadedThread;
       const chronologicalMessages = [...threadMessages].reverse();
       routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
+      // "Save this as memory / add this to my context pack": saved server-side
+      // and confirmed without a model call (owner feature 11, rules/57).
+      if (this.saveToContext !== undefined && thread !== null) {
+        const saved = await this.saveToContext.trySave(
+          thread.userId,
+          payload.threadId,
+          routedMessages,
+        );
+        if (saved !== null) {
+          await this.completeSaveTurn(payload, saved, thread, routedMessages, startedAt);
+          return;
+        }
+      }
       const threadSettings = await this.withModelContextWindow(
         this.extractThreadSettings(thread),
         payload.selectedProvider,
@@ -1232,6 +1258,45 @@ export class ChatMessagesService implements OnModuleInit {
       await this.handleMessageRoutedFailure(error, payload, thread, routedMessages, startedAt);
       throw error;
     }
+  }
+
+  /**
+   * Stores the confirmation of a "save this" turn as the assistant reply and
+   * closes the stream exactly like a model answer. Zero tokens: no model ran,
+   * so nothing is deducted. The published completion carries no user text,
+   * so memory extraction does not re-mine the pasted document.
+   */
+  private async completeSaveTurn(
+    payload: MessageRoutedData,
+    outcome: SaveToContextOutcome,
+    thread: ChatThread,
+    routedMessages: ChatMessage[],
+    startedAt: number,
+  ): Promise<void> {
+    const command = [...routedMessages].reverse().find((message) => message.role === 'USER');
+    const llmResponse: LlmResponse = {
+      content: renderSaveConfirmation(outcome, detectConfirmationLocale(command?.content ?? '')),
+      provider: SAVE_TO_CONTEXT_PROVIDER,
+      model: SAVE_TO_CONTEXT_MODEL,
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs: Math.max(1, Date.now() - startedAt),
+      usedFallback: false,
+    };
+    const assistantMessage = await this.storeAssistantResponse(payload, llmResponse, {
+      memoryCount: 0,
+      fileIds: [],
+    });
+    await this.updateThreadAfterResponse(payload.threadId, llmResponse);
+    this.chatStreamService.emitCompletion(
+      payload.threadId,
+      llmResponse.provider,
+      llmResponse.model,
+    );
+    this.logger.log(
+      `completeSaveTurn: thread=${payload.threadId} outcome=${outcome.kind} message=${assistantMessage.id}`,
+    );
+    this.publishMessageCompleted(payload, assistantMessage, llmResponse, thread, []);
   }
 
   private async handleMessageRoutedFailure(

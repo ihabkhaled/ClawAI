@@ -94,3 +94,9 @@ export type ChatPack = {
 export type ChatPacksBundle = {
   packs: ChatPack[];
 };
+
+export type SavePackFromChatResult = {
+  created: boolean;
+  packId: string;
+  name: string;
+};

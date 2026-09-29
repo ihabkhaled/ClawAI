@@ -78,6 +78,11 @@ export class MemoryRepository {
     });
   }
 
+  /** The memory a given chat message already saved for this user, if any. */
+  async findBySourceMessage(userId: string, sourceMessageId: string): Promise<MemoryRecord | null> {
+    return this.prisma.memoryRecord.findFirst({ where: { userId, sourceMessageId } });
+  }
+
   async findById(id: string): Promise<MemoryRecord | null> {
     return this.prisma.memoryRecord.findUnique({ where: { id } });
   }

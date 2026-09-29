@@ -13,10 +13,19 @@ import { ContextPacksRepository } from '../repositories/context-packs.repository
 import { type CreateContextPackDto } from '../dto/create-context-pack.dto';
 import { type UpdateContextPackDto } from '../dto/update-context-pack.dto';
 import { type AddContextPackItemDto } from '../dto/add-context-pack-item.dto';
-import { type ChatPacksBundle, type ContextPackWithItems } from '../types/context-packs.types';
+import {
+  type ChatPacksBundle,
+  type ContextPackWithItems,
+  type SavePackFromChatResult,
+} from '../types/context-packs.types';
 import { type PacksForChatDto } from '../dto/packs-for-chat.dto';
+import { type SavePackFromChatDto } from '../dto/save-pack-from-chat.dto';
 import { CONTEXT_PACK_UPDATED_EVENT } from '../constants/context-packs.constants';
-import { CHAT_PACKS_MAX } from '../constants/context-packs-for-chat.constants';
+import {
+  CHAT_PACKS_MAX,
+  SAVED_FROM_CHAT_DESCRIPTION,
+  SAVED_FROM_CHAT_TAG_PREFIX,
+} from '../constants/context-packs-for-chat.constants';
 import { parsePausedUntil } from '../../../common/utilities/date-coerce.utility';
 import { ResourceEntitlementService } from '../../../common/services/resource-entitlement.service';
 
@@ -209,6 +218,33 @@ export class ContextPacksService {
       timestamp: new Date().toISOString(),
     });
     return removed;
+  }
+
+  /**
+   * "Add this to my context pack" said in a chat (owner feature 11). Creates
+   * a USER-scope pack — so it applies to every chat at once — holding the
+   * text as one MARKDOWN item. Keyed on the user message via a tag, so a
+   * retried turn finds the pack instead of making a second one.
+   */
+  async saveFromChat(dto: SavePackFromChatDto): Promise<SavePackFromChatResult> {
+    const tag = `${SAVED_FROM_CHAT_TAG_PREFIX}${dto.sourceMessageId}`;
+    const existing = await this.contextPacksRepository.findByUserAndTag(dto.userId, tag);
+    if (existing) {
+      this.logger.log(
+        `saveFromChat: message=${dto.sourceMessageId} already saved — ${existing.id}`,
+      );
+      return { created: false, packId: existing.id, name: existing.name };
+    }
+    const pack = await this.createContextPack(dto.userId, {
+      name: dto.name,
+      description: SAVED_FROM_CHAT_DESCRIPTION,
+      tags: [tag],
+    });
+    await this.addItem(pack.id, dto.userId, {
+      itemType: ContextPackItemType.MARKDOWN,
+      content: dto.content,
+    });
+    return { created: true, packId: pack.id, name: pack.name };
   }
 
   async getContextPackItemsInternal(contextPackId: string): Promise<ContextPackWithItems | null> {

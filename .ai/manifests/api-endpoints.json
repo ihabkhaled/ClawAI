@@ -1980,6 +1980,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/context-packs/save-from-chat",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/embeddings/delete-by-object-id",
         "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
       },
@@ -2017,6 +2022,11 @@
         "method": "POST",
         "route": "/internal/memories/retrieve",
         "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-retrieval.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/memories/save-from-chat",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -3563,5 +3573,5 @@
     ]
   },
   "generated": true,
-  "total": 705
+  "total": 707
 }

@@ -2035,6 +2035,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/context-packs/save-from-chat",
+          "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/embeddings/delete-by-object-id",
           "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
         },
@@ -2072,6 +2077,11 @@
           "method": "POST",
           "route": "/internal/memories/retrieve",
           "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-retrieval.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/memories/save-from-chat",
+          "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -7833,7 +7843,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 3764,
+          "bytes": 4408,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -10219,7 +10229,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 223
+        "testFiles": 225
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10255,7 +10265,7 @@
       },
       "claw-memory-service": {
         "runner": "vitest",
-        "testFiles": 21
+        "testFiles": 22
       },
       "claw-ollama-service": {
         "runner": "vitest",
@@ -11005,7 +11015,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 705,
+    "endpointCount": 707,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11017,7 +11027,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1684,
+    "totalTestFiles": 1687,
     "workspaceCount": 25
   }
 }

@@ -74,3 +74,9 @@ export type ExtractedMemory = {
   confidence?: number;
   reason?: string;
 };
+
+export type SaveMemoryFromChatResult = {
+  memory: MemoryRecord;
+  /** False when this chat message had already saved it (a retry). */
+  created: boolean;
+};

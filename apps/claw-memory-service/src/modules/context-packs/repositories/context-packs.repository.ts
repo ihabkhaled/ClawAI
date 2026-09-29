@@ -69,6 +69,10 @@ export class ContextPacksRepository {
     });
   }
 
+  async findByUserAndTag(userId: string, tag: string): Promise<ContextPack | null> {
+    return this.prisma.contextPack.findFirst({ where: { userId, tags: { has: tag } } });
+  }
+
   async findById(id: string): Promise<ContextPackWithItems | null> {
     return this.prisma.contextPack.findUnique({
       where: { id },

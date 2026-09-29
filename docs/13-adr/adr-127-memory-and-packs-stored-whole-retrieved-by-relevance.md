@@ -40,3 +40,7 @@ Production reports on claw-ai.co, all reproduced against the code:
 ## Addendum — generation intent ignores negations and pasted bodies
 
 Pasting the Myoncare pack (which says "DO NOT generate an image, diagram, document…") generated an image: the keyword scan matched inside the negation and inside the 45K body. `generationRequestText()` (shared-utilities `generation-request/`) now feeds both the image scan and routing's `detectFileIntent`: negated clauses are dropped (13 locales), long or heading-structured messages contribute only their instruction envelope, and a save/remember command (`detectSaveToContextIntent`) is never a generation. Known gap, unchanged: the generation table has phrase-level coverage only for English/Arabic, so bare German/Chinese requests ("Erstelle ein Bild", "生成一张图片") were and remain undetected.
+
+## Addendum — saving from chat
+
+Owner feature 11: "save this as memory / remember this / add this to my context pack" in 13 locales is handled deterministically by chat-service before any model call, through two owner-scoped, idempotent memory-service routes, and answered with a localized confirmation. Deviation from the brief: no model tool-calling path — the deterministic path already covers every model, and a second path would be a second way to save twice. Ambiguity is limited to "nothing to save", which gets one question.

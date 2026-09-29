@@ -1065,6 +1065,80 @@ describe('ChatMessagesService', () => {
     });
   });
 
+  describe('handleMessageRouted — "save this as memory" (owner feature 11)', () => {
+    const payload = {
+      messageId: 'msg-1',
+      threadId: 'thread-1',
+      selectedProvider: 'GEMINI',
+      selectedModel: 'gemini-2.5-flash',
+      routingMode: 'AUTO',
+      timestamp: new Date().toISOString(),
+    };
+
+    beforeEach(() => {
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.create.mockImplementation(async (data: { content: string }) => ({
+        ...mockMessage,
+        id: 'assistant-1',
+        role: 'ASSISTANT' as const,
+        content: data.content,
+      }));
+    });
+
+    it('saves, stores the localized confirmation and never calls a model', async () => {
+      const trySave = vi.fn().mockResolvedValue({
+        kind: 'MEMORY',
+        memoryId: 'mem-1',
+        memoryType: 'FACT',
+        size: 42,
+        preview: 'أعمل في مايونكير',
+        created: true,
+      });
+      Object.assign(service, { saveToContext: { trySave } });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'احفظ هذا في الذاكرة: أعمل في مايونكير' },
+      ]);
+
+      await service.handleMessageRouted(payload);
+
+      expect(trySave).toHaveBeenCalledWith(mockThread.userId, 'thread-1', expect.any(Array));
+      expect(executionManager.execute).not.toHaveBeenCalled();
+      expect(contextAssembly.assemble).not.toHaveBeenCalled();
+      const stored = messagesRepo.create.mock.calls[0]?.[0] as {
+        role: string;
+        content: string;
+        inputTokens: number;
+      };
+      expect(stored.role).toBe('ASSISTANT');
+      expect(stored.content).toContain('تم الحفظ في ذاكرتك');
+      expect(stored.content).toContain('(/memory)');
+      expect(stored.inputTokens).toBe(0);
+      expect(streamService.emitCompletion).toHaveBeenCalledWith(
+        'thread-1',
+        'CLAW',
+        'save-to-context',
+      );
+    });
+
+    it('runs the normal model path when the message is not a save command', async () => {
+      Object.assign(service, { saveToContext: { trySave: vi.fn().mockResolvedValue(null) } });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'What do you remember about me?' },
+      ]);
+      executionManager.execute!.mockResolvedValue({
+        content: 'ok',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      expect(executionManager.execute).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('handleMessageRouted — image-output model redirect', () => {
     it.each([
       ['GEMINI', 'models/gemini-3-pro-image', 'IMAGE_GEMINI'],
