@@ -263,7 +263,7 @@ ${summary}`,
   }
 
   /**
-   * One JSON-only question to the admin's ordered planner models (ADR-133);
+   * One JSON-only question to the admin's ordered planner models (ADR-134);
    * the first reply `parse` accepts wins. Same candidates, same metering
    * policy and same fail-closed walk as the research gate — null when none
    * answers usably, and the caller decides what "no answer" means.

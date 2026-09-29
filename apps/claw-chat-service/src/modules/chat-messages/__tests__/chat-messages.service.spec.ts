@@ -982,7 +982,7 @@ describe('ChatMessagesService', () => {
       );
     });
 
-    it('checks the plan BEFORE rewriting or deleting anything (ADR-131)', async () => {
+    it('checks the plan BEFORE rewriting or deleting anything (ADR-132)', async () => {
       // A refused edit used to be impossible to refuse in time: the thread
       // below the message was already gone when routing met the restricted plan.
       messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
@@ -1295,7 +1295,7 @@ describe('ChatMessagesService', () => {
       expect(executionManager.execute).toHaveBeenCalledTimes(1);
     });
 
-    it('on an AI save turn, tells the model what was saved and stores the card record (ADR-133)', async () => {
+    it('on an AI save turn, tells the model what was saved and stores the card record (ADR-134)', async () => {
       const record = {
         status: 'SAVED',
         memory: {

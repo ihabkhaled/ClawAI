@@ -4166,11 +4166,13 @@ export class ChatExecutionManager implements OnModuleInit {
       return undefined;
     }
     const translated = translateToolCatalog(definitions, dialect);
+    // Over budget is not a reason to fail the turn: the prompt-JSON lane can
+    // still carry every tool, so the run continues there.
     if (translated.byteSize > config.CHAT_TOOL_CATALOG_MAX_BYTES) {
-      throw new BusinessException(
-        `Native tool catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget`,
-        'RUNTIME_TOOL_CATALOG_TOO_LARGE',
+      this.logger.warn(
+        `resolveNativeToolCatalog: catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget — falling back to the prompt-JSON lane`,
       );
+      return undefined;
     }
     return translated;
   }
@@ -5042,7 +5044,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const config = AppConfig.get();
     this.logger.debug('callImageService: extracting last user message for prompt');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    // The user's own words, plus any quoted text they asked about (ADR-130).
+    // The user's own words, plus any quoted text they asked about (ADR-131).
     // Kept on the generation row as `originalPrompt` whenever the prompt sent
     // upstream differs (pack §79).
     const originalPrompt = latestUserTurnText(context.threadMessages) ?? 'generate an image';

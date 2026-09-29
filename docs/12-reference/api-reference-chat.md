@@ -114,9 +114,9 @@ The source is untouched. Counts against the daily chat limit.
 **Auth**: Bearer token (must own thread)
 **Request Body**: `{ "fromMessageId": "<message id in this thread>", "cut": "INCLUDE" }`
 — `cut` is optional: `INCLUDE` (default) keeps the pivot message, `BEFORE`
-stops just short of it (ADR-131, used by "Edit in a new branch").
+stops just short of it (ADR-132, used by "Edit in a new branch").
 **Response 201**: the new ChatThread, with `branchedFromThreadId`,
-`branchedFromMessageId` and `branchRootThreadId` set (ADR-129)
+`branchedFromMessageId` and `branchRootThreadId` set (ADR-130)
 **Errors**: `404 ENTITY_NOT_FOUND` (thread or message not found, or message from
 another thread), `403 FORBIDDEN`, `429 PLAN_DAILY_CHAT_LIMIT_EXCEEDED`
 
@@ -205,7 +205,7 @@ Send a user message. Triggers routing and AI response.
 }
 ```
 
-`quotes` (optional, ADR-130): up to 3 selections, text 1-2,000 characters, each
+`quotes` (optional, ADR-131): up to 3 selections, text 1-2,000 characters, each
 from a USER or ASSISTANT message of **this** thread. A quote alone (empty
 `content`) is a valid turn. Stored on the new message's `metadata.quotes` with
 the source role. **Errors**: `404 QUOTE_SOURCE_NOT_FOUND` when a source is not
@@ -304,7 +304,7 @@ Get a specific message.
 Regenerate an AI response for a message.
 
 **Auth**: Bearer token (must own thread)
-**Request Body** (optional, ADR-131):
+**Request Body** (optional, ADR-132):
 
 ```json
 { "routingMode": "MANUAL_MODEL", "provider": "ANTHROPIC", "model": "claude-opus-5" }
@@ -321,7 +321,7 @@ check as a new message runs first.
 
 ### POST /chat-messages/:id/context-save
 
-Answer the "which pack?" card of an AI chat save (ADR-133).
+Answer the "which pack?" card of an AI chat save (ADR-134).
 
 **Auth**: Bearer token (must own the thread)
 **Request Body**: `{ "packId": "<one of the offered packs>" }` or `{ "newPack": true }`

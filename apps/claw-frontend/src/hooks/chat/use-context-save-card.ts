@@ -8,7 +8,7 @@ import type { ContextSaveChoiceRequest, UseContextSaveCardReturn } from '@/types
 import { invalidateThreadMessages, showToast } from '@/utilities';
 
 /**
- * The "which pack?" answer for one chat save (ADR-133). The server claims the
+ * The "which pack?" answer for one chat save (ADR-134). The server claims the
  * save atomically, so a double click saves once; on success the thread's
  * messages are refetched and the card re-renders as saved from the stored
  * record — the same thing a reload shows.

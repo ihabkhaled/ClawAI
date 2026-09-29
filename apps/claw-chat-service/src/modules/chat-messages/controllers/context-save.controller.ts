@@ -6,7 +6,7 @@ import { type ContextSaveChoiceDto, contextSaveChoiceSchema } from '../dto/conte
 import { ContextSaveChoiceService } from '../services/context-save-choice.service';
 import type { ContextSaveRecord } from '../types/context-save.types';
 
-/** The "which pack?" card's answer (ADR-133). */
+/** The "which pack?" card's answer (ADR-134). */
 @Controller('chat-messages')
 export class ContextSaveController {
   constructor(private readonly contextSaveChoiceService: ContextSaveChoiceService) {}

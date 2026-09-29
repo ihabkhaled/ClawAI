@@ -1,4 +1,4 @@
-/** Why a chat save failed (ADR-133), mirroring chat-service. */
+/** Why a chat save failed (ADR-134), mirroring chat-service. */
 export enum SaveFailureReason {
   PLAN = 'PLAN',
   LIMIT = 'LIMIT',

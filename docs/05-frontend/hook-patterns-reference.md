@@ -99,7 +99,7 @@ Each wraps a single `useMutation` call with `onSuccess` cache invalidation.
 | `useDeleteThread`        | chat       | `threads.lists()`       | Delete a thread                                                                   |
 | `useUpdateThread`        | chat       | `threads.detail(id)`    | Update thread settings                                                            |
 | `useSendMessage`         | chat       | `threads.messages(id)`  | Send a message                                                                    |
-| `useRegenerateMessage`   | chat       | `threads.messages(id)`  | Regenerate; `regenerate(messageId, choice?)` — choice = AUTO or a model (ADR-131) |
+| `useRegenerateMessage`   | chat       | `threads.messages(id)`  | Regenerate; `regenerate(messageId, choice?)` — choice = AUTO or a model (ADR-132) |
 | `useRegenerateWithModel` | chat       | —                       | Props for the "Try again with…" model picker                                      |
 | `useEditInBranch`        | chat       | `threads.all`           | Branch BEFORE a message, prefill the edited text, open it — never sends           |
 | `useMessageFeedback`     | chat       | `threads.messages(id)`  | Submit feedback (up/down)                                                         |

@@ -36,7 +36,7 @@ function MarkdownRendererBase({
   citations = NO_CITATIONS,
 }: MarkdownRendererProps): React.JSX.Element {
   // `[n]` becomes a link only for a number this answer actually stored
-  // (ADR-132). With no citations the plugin list is exactly what it was.
+  // (ADR-133). With no citations the plugin list is exactly what it was.
   const remarkPlugins = useMemo(
     () =>
       citations.length === 0

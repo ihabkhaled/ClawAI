@@ -7,7 +7,7 @@ import { type AddItemFromChatResult, type ChatPackOption } from '../types/contex
 import { ContextPacksService } from './context-packs.service';
 
 /**
- * What a chat needs to save into an EXISTING pack (ADR-133): the list of the
+ * What a chat needs to save into an EXISTING pack (ADR-134): the list of the
  * user's packs to choose from, and adding one item to the chosen one. Kept
  * apart from ContextPacksService, which is already past its size ceiling.
  * Ownership is checked by `addItem` itself, so a chat can never add to a pack

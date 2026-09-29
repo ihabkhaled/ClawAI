@@ -203,7 +203,7 @@ export type MessageCitation = {
   snippet: string;
 };
 
-/** What an answer recorded about a chat save (`metadata.contextSave`, ADR-133). */
+/** What an answer recorded about a chat save (`metadata.contextSave`, ADR-134). */
 export type ContextSaveRecord = {
   status: ContextSaveStatus;
   memory?: { id: string; type: MemoryType; preview: string; link: string };

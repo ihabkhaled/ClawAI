@@ -62,7 +62,7 @@ Complete reference for every controller across all 13 ClawAI services.
 | POST   | `/chat-messages`                  | Bearer | Send message            | `CreateMessageDto`                                                              | `ChatMessage`                        |
 | GET    | `/chat-messages/thread/:threadId` | Bearer | List messages in thread | Query: before (cursor), limit                                                   | `CursorPaginatedResult<ChatMessage>` |
 | GET    | `/chat-messages/:id`              | Bearer | Get message by ID       | None                                                                            | `ChatMessage`                        |
-| POST   | `/chat-messages/:id/regenerate`   | Bearer | Regenerate AI response  | Optional `{routingMode, provider, model}` — see api-reference-chat.md (ADR-131) | `ChatMessage`                        |
+| POST   | `/chat-messages/:id/regenerate`   | Bearer | Regenerate AI response  | Optional `{routingMode, provider, model}` — see api-reference-chat.md (ADR-132) | `ChatMessage`                        |
 | PATCH  | `/chat-messages/:id/feedback`     | Bearer | Set feedback on message | `{ feedback }`                                                                  | `ChatMessage`                        |
 
 ### ChatStreamController — `/api/v1/chat-messages` (SSE)

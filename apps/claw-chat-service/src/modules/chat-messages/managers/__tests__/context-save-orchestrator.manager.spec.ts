@@ -53,7 +53,7 @@ const memoryVerdict: SaveIntentVerdict = {
   contextPack: null,
 };
 
-describe('ContextSaveOrchestratorManager (ADR-133)', () => {
+describe('ContextSaveOrchestratorManager (ADR-134)', () => {
   it('does not ask the planner about an ordinary message', async () => {
     const { manager, askPlanner } = setup({ verdict: memoryVerdict });
 

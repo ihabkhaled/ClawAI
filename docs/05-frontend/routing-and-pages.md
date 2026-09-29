@@ -63,8 +63,8 @@ src/app/
 | `/models/local`             | Local Models     | `useLocalModelsPage`     | Ollama model management, pull, roles                                                              |
 | `/routing`                  | Routing          | `useRoutingPage`         | Routing policies CRUD, recent decisions                                                           |
 | `/routing/replay`           | Replay Lab       | `useReplayLabPage`       | Replay historical routing decisions, compare old vs new                                           |
-| `/memory`                   | Memory           | `useMemoryPage`          | Memory records list, create, edit, toggle; `?memoryId=` opens that memory in the editor (ADR-133) |
-| `/context`                  | Context Packs    | Context pack hooks       | Context packs management, items; `?packId=` opens that pack (ADR-133)                             |
+| `/memory`                   | Memory           | `useMemoryPage`          | Memory records list, create, edit, toggle; `?memoryId=` opens that memory in the editor (ADR-134) |
+| `/context`                  | Context Packs    | Context pack hooks       | Context packs management, items; `?packId=` opens that pack (ADR-134)                             |
 | `/files`                    | Files            | `useFilesPage`           | File upload, list, ingestion status                                                               |
 | `/observability`            | Observability    | Health hooks             | Aggregated health dashboard                                                                       |
 | `/audits`                   | Audits           | `useAuditsPage`          | Audit log viewer with filters                                                                     |

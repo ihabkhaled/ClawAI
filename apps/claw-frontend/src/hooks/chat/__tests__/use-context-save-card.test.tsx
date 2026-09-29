@@ -30,7 +30,7 @@ function wrapper({ children }: { children: ReactNode }): React.ReactElement {
   return createElement(QueryClientProvider, { client }, children);
 }
 
-describe('useContextSaveCard (ADR-133)', () => {
+describe('useContextSaveCard (ADR-134)', () => {
   it('sends the picked pack for this answer', async () => {
     mockChoose.mockResolvedValue({ status: 'SAVED' });
     const { result } = renderHook(() => useContextSaveCard('a-1', 't-1'), { wrapper });
@@ -50,7 +50,7 @@ describe('useContextSaveCard (ADR-133)', () => {
   });
 });
 
-describe('useMemoryDeepLink (ADR-133)', () => {
+describe('useMemoryDeepLink (ADR-134)', () => {
   it('opens the linked memory in the editor once', async () => {
     mockParams = new URLSearchParams('memoryId=mem-1');
     mockGetMemory.mockResolvedValue({ id: 'mem-1' });

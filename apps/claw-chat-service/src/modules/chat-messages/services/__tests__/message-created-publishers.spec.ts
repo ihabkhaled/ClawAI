@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * Rule 46 §1 / ADR-131 enforcement: every chat-service path that publishes
+ * Rule 46 §1 / ADR-132 enforcement: every chat-service path that publishes
  * `message.created` must carry the plan's `modelAccessMode` (and therefore
  * have resolved entitlements, which only `assertCanSendMessage` returns).
  * Routing treats a missing mode as "restricted to nothing", and the paths

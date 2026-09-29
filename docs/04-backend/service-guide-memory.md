@@ -124,7 +124,7 @@ When the chat service assembles context, it calls the memory service's internal 
 - **Updates:** `PATCH /memories/:id` accepts `type`; changed content is re-classified and re-embedded.
 - **Chat delivery:** `POST /api/v1/internal/context-packs/for-chat` (service token) with `{ userId, threadId?, packIds[] }` returns `{ packs: [{ id, name, autoApplied, items: [{ id, itemType, content }] }] }` — attached packs plus enabled, un-paused USER-scope packs and THREAD-scope packs for that thread. Chat-service ranks chunks of large items against the question (rules/57).
 
-### Save from chat (2026-09-29; AI-decided since 2026-09-30, ADR-133)
+### Save from chat (2026-09-29; AI-decided since 2026-09-30, ADR-134)
 
 - `POST /api/v1/internal/context-packs/options-for-chat` `{ userId }` → `[{ id, name, itemCount, updatedAt }]` — the user's packs for the chat's "which pack?" card (newest first, 50 max).
 - `POST /api/v1/internal/context-packs/:id/items/from-chat` `{ userId, content, sourceMessageId }` → `{ packId, itemId, name }` — adds one MARKDOWN item to an EXISTING pack; owner-checked by `addItem` (403 otherwise). Idempotent on the exact text: the same text already in that pack returns the existing item (a regenerated save turn).

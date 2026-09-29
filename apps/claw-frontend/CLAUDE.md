@@ -709,7 +709,7 @@ for quiz answers; it used to reach users as raw tag text. `MarkdownRenderer`
   (share pages) deliberately parses **no** HTML — do not add `rehype-raw` there.
 - `details`/`summary`/`kbd`/`mark` have styled components in
   `markdown-components.tsx` (theme tokens, logical properties for RTL).
-- **Citations (ADR-132, rule 41 §16).** `MarkdownRenderer` takes `citations`;
+- **Citations (ADR-133, rule 41 §16).** `MarkdownRenderer` takes `citations`;
   when non-empty a remark stage (`remarkCitations`, before every rehype plugin)
   rewrites text-node `[n]` into `#cite-n` links. The sanitizer must keep those
   fragment hrefs (`citationIndexFromHref` also accepts `#user-content-cite-n`),
@@ -717,7 +717,7 @@ for quiz answers; it used to reach users as raw tag text. `MarkdownRenderer`
   The memo comparator checks `content` plus citations by index and url — keep
   it, or every answer re-parses on each keystroke.
 
-## The chat's saved card and its deep links (2026-09-30, ADR-133)
+## The chat's saved card and its deep links (2026-09-30, ADR-134)
 
 An answer with `metadata.contextSave` renders `ContextSaveCard`
 (`components/chat/context-save-card.tsx`, one controller hook

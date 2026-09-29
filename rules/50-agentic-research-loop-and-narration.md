@@ -1,7 +1,7 @@
 # Rule 50 — The research loop: plan first, open what the user named, narrate everything
 
 **Applies to**: chat-service's AUTO research path (`ResearchOrchestratorManager`,
-`ResearchGateService.plan`; its candidate walk also serves `askPlanner` for the chat save classifier, ADR-133, so a planner outage downgrades saves to the keyword path too), `NarrationService`, research-service's crawl, and
+`ResearchGateService.plan`; its candidate walk also serves `askPlanner` for the chat save classifier, ADR-134, so a planner outage downgrades saves to the keyword path too), `NarrationService`, research-service's crawl, and
 the frontend `NarrationLog`.
 
 **Related**: [ADR-098](../docs/13-adr/adr-098-auto-research-is-an-ai-driven-narrated-loop.md) ·

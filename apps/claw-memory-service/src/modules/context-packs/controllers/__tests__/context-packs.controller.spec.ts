@@ -115,7 +115,7 @@ describe('ContextPacksInternalController', () => {
     expect(serviceMock.getContextPackItemsInternal).toHaveBeenCalledWith('cp1');
   });
 
-  it('options-for-chat lists the packs of the user in the body (ADR-133)', async () => {
+  it('options-for-chat lists the packs of the user in the body (ADR-134)', async () => {
     chatMock.listOptions.mockResolvedValue([]);
     await controller.optionsForChat({ userId: 'user-1' });
     expect(chatMock.listOptions).toHaveBeenCalledWith('user-1');

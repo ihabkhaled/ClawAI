@@ -290,7 +290,7 @@ Full reasoning:
     content, because routing-service drops an event with empty content and the
     turn would never be answered, and (b) runs no web research: there is no
     text to search for. On `POST /chat-messages` only (the lab schemas take no
-    quotes), a quoted selection also counts as input (ADR-130): an empty
+    quotes), a quoted selection also counts as input (ADR-131): an empty
     `content` with `quotes` is valid, and `resolveRoutingContent` wraps every
     quoted turn with the quote heading and blockquote before publishing.
 

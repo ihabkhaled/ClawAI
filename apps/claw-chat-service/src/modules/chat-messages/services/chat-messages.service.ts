@@ -1179,7 +1179,7 @@ export class ChatMessagesService implements OnModuleInit {
   ): Promise<void> {
     const forcedProvider = thread.preferredProvider ?? undefined;
     const forcedModel = thread.preferredModel ?? undefined;
-    // The plan gate runs BEFORE anything is rewritten or deleted (ADR-131):
+    // The plan gate runs BEFORE anything is rewritten or deleted (ADR-132):
     // a user refused for quota or model must not lose the rest of the thread
     // to an edit that then cannot run.
     const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
@@ -1258,7 +1258,7 @@ export class ChatMessagesService implements OnModuleInit {
       thread = loadedThread;
       const chronologicalMessages = [...threadMessages].reverse();
       routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
-      // "Remember this / add this to my context" (ADR-133): a planner model
+      // "Remember this / add this to my context" (ADR-134): a planner model
       // decides and the saves run before the answer, so the answering model
       // can confirm them. The keyword path, confirmed without a model call,
       // runs only when no planner answers (owner feature 11, rules/57).
@@ -1464,7 +1464,7 @@ export class ChatMessagesService implements OnModuleInit {
       // The sources exactly as the prompt numbered them, so the answer's [n]
       // can be linked — and only linked — through this list. Not when
       // SEARCH_FIRST ran: it adds a SECOND [1]..[k] list to the prompt, so a
-      // stored [n] could name the wrong page (ADR-132).
+      // stored [n] could name the wrong page (ADR-133).
       citations:
         llmResponse.searchFirst?.applied === true
           ? []
@@ -1911,7 +1911,7 @@ export class ChatMessagesService implements OnModuleInit {
       contextSave,
     } = args;
     return {
-      // The saved card renders from this (ADR-133).
+      // The saved card renders from this (ADR-134).
       ...(contextSave === undefined ? {} : { contextSave }),
       ...this.buildContextMetaPart(contextMetadata),
       ...this.buildResearchMetaPart(latestUserMetadata),
@@ -2470,7 +2470,7 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: payload.routingMode as RoutingMode,
       detectedCategory: payload.detectedCategory,
       content: assistantMessage.content,
-      // A save turn (ADR-133) was saved on purpose; letting extraction re-mine
+      // A save turn (ADR-134) was saved on purpose; letting extraction re-mine
       // the same words would file a duplicate suggestion of what was just saved.
       userContent: hasContextSave(assistantMessage) ? undefined : lastUserMsg?.content,
       timestamp: new Date().toISOString(),

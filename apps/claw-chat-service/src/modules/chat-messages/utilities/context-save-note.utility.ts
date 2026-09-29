@@ -3,7 +3,7 @@ import type { AssembledContext } from '../types/context.types';
 
 /**
  * The context the answering model gets on a save turn: the assembled context
- * plus the platform's note about what was saved (ADR-133), appended to the
+ * plus the platform's note about what was saved (ADR-134), appended to the
  * system prompt so every builder carries it.
  */
 export function withContextSaveNote(context: AssembledContext, note: string): AssembledContext {

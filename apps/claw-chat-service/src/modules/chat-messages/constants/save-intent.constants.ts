@@ -2,7 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import type { SaveFailureReason } from '../types/save-to-context.types';
 
 /**
- * AI-decided "save this to memory / a context pack" (ADR-133).
+ * AI-decided "save this to memory / a context pack" (ADR-134).
  *
  * The pre-filter only decides whether the planner is ASKED — it is a recall
  * net, deliberately broad, in the 13 UI languages. The planner model decides
@@ -150,7 +150,7 @@ export const SAVE_INTENT_SYSTEM_PROMPT = [
   '                       "packName": string|null, "newPackName": string|null}}',
 ].join('\n');
 
-/** memory-service routes added for ADR-133 (service token, owner-scoped). */
+/** memory-service routes added for ADR-134 (service token, owner-scoped). */
 export const PACK_OPTIONS_FOR_CHAT_PATH = '/api/v1/internal/context-packs/options-for-chat';
 export const CONTEXT_PACKS_INTERNAL_PATH = '/api/v1/internal/context-packs';
 export const ADD_ITEM_FROM_CHAT_SUFFIX = '/items/from-chat';

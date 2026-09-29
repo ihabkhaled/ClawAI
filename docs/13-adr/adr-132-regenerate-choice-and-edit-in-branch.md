@@ -1,9 +1,9 @@
-# ADR-131 — Regenerate with a chosen model, and edit without losing history
+# ADR-132 — Regenerate with a chosen model, and edit without losing history
 
 ## Status
 
 Accepted — 2026-09-30. Chat-supremacy Batch 4 (pack batch E), after
-[ADR-129](adr-129-branch-lineage-and-family-isolation.md) (branch lineage).
+[ADR-130](adr-130-branch-lineage-and-family-isolation.md) (branch lineage).
 Audit: [chat capability audit](../14-risk-debt/chat-capability-audit-2026-09.md).
 
 ## Context
@@ -49,7 +49,7 @@ Audit: [chat capability audit](../14-risk-debt/chat-capability-audit-2026-09.md)
 
 - **Version arrows on one thread** (ChatGPT/Gemini style). Needs a message-tree
   schema and a variant switcher across every renderer; the branch model already
-  exists (ADR-129) and gives the same "keep both" outcome with a real thread.
+  exists (ADR-130) and gives the same "keep both" outcome with a real thread.
 - **Auto-send the edited question in the branch.** One click would silently
   spend credit; a prefilled composer keeps the cost decision with the person.
 - **A separate "regenerate with" endpoint.** Same resource, same checks — one

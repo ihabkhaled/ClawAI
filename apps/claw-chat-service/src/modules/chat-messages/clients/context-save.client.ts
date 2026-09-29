@@ -25,7 +25,7 @@ import type { ContextSaveCallResult } from '../types/context-save-client.types';
 /**
  * Every memory-service call a chat save makes (service token; memory-service
  * scopes each by `userId` and checks pack ownership). Shared by the AI path
- * (ADR-133) and the keyword fallback, so there is one HTTP client, not two.
+ * (ADR-134) and the keyword fallback, so there is one HTTP client, not two.
  * Never throws: a failure is a typed reason the caller can put in the chat.
  */
 @Injectable()

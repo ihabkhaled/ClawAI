@@ -235,7 +235,7 @@ to. Branching needs no warning because nothing is lost.
 - **The pivot must belong to the thread.** Otherwise one conversation's history
   could be grafted onto another.
 - **Copied messages take fresh ids, and keep everything else** (2026-09-29,
-  ADR-129): `metadata` (attachment `fileIds`, reasoning, research panels),
+  ADR-130): `metadata` (attachment `fileIds`, reasoning, research panels),
   token/cost/latency, `originalContent`/`editedAt` and the ORIGINAL `createdAt`.
   Two threads must not claim one message id (receipts hang off it), but the
   timestamp is load-bearing — messages order by `createdAt` alone, and a bulk
@@ -259,7 +259,7 @@ to. Branching needs no warning because nothing is lost.
   that point. An untitled source branches untitled and names itself from its own
   first message — which is that same message.
 
-## Quotes are structured metadata, never content (2026-09-30, ADR-130)
+## Quotes are structured metadata, never content (2026-09-30, ADR-131)
 
 `POST /chat-messages` takes `quotes: [{ sourceMessageId, text }]` (at most 3,
 text up to 2,000). `resolveQuotes` reads every id under the SAME thread
@@ -283,7 +283,7 @@ text up to 2,000). `resolveQuotes` reads every id under the SAME thread
   (`buildMessageMetadata(dto, run, quotes)`); it replaces the metadata, so
   forgetting them there would erase the quote once research finishes.
 
-## Regenerate: a chosen model, the same plan gate (2026-09-30, ADR-131)
+## Regenerate: a chosen model, the same plan gate (2026-09-30, ADR-132)
 
 `POST /chat-messages/:id/regenerate` takes an optional
 `{ routingMode: AUTO | MANUAL_MODEL, provider, model }`; empty = the old rule
@@ -299,7 +299,7 @@ fail-closed exception). The body is optional: no body = `{}`.
 BEFORE copies strictly older messages; the frontend's "Edit in a new branch"
 uses it and prefills the edited question without sending it.
 
-## Answers store the evidence the model was shown (2026-09-30, ADR-132)
+## Answers store the evidence the model was shown (2026-09-30, ADR-133)
 
 `runLlmAndStore` writes `metadata.citations = toStoredCitations(context.researchEvidence)`
 — `[{ index, title, url, snippet }]`, `index` = the `[n]` `formatResearchBlock`
@@ -1549,7 +1549,7 @@ model's private notes run into its reply.
 
 ## Save to memory / context from chat (owner feature 11, 2026-09-29)
 
-**Since 2026-09-30 (ADR-133) `handleMessageRouted` asks `ContextSaveOrchestratorManager.handle` first**: pre-filter → `ResearchGateService.askPlanner` JSON verdict → `ContextSaveClient` saves (memory, existing/new pack, or both) → `withContextSaveNote` tells the answering model → `metadata.contextSave` on the answer; an unnamed pack with existing packs becomes a NEEDS_PACK_CHOICE card answered by `POST /chat-messages/:id/context-save` (`ContextSaveChoiceService`, atomic `transitionContextSave`). Save turns publish `message.completed` without `userContent`. **The paragraph below is the FALLBACK, used only when no planner answers:** `handleMessageRouted` asks `SaveToContextManager.trySave` (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.
+**Since 2026-09-30 (ADR-134) `handleMessageRouted` asks `ContextSaveOrchestratorManager.handle` first**: pre-filter → `ResearchGateService.askPlanner` JSON verdict → `ContextSaveClient` saves (memory, existing/new pack, or both) → `withContextSaveNote` tells the answering model → `metadata.contextSave` on the answer; an unnamed pack with existing packs becomes a NEEDS_PACK_CHOICE card answered by `POST /chat-messages/:id/context-save` (`ContextSaveChoiceService`, atomic `transitionContextSave`). Save turns publish `message.completed` without `userContent`. **The paragraph below is the FALLBACK, used only when no planner answers:** `handleMessageRouted` asks `SaveToContextManager.trySave` (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.
 
 ## Inpainting mask hop (2026-09-29)
 

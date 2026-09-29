@@ -61,7 +61,7 @@ function setup(options: { record?: unknown; owner?: string; claimed?: boolean; a
   };
 }
 
-describe('ContextSaveChoiceService (ADR-133)', () => {
+describe('ContextSaveChoiceService (ADR-134)', () => {
   it('adds the waiting text to the pack the user picked and marks it saved', async () => {
     const { service, client, updateMetadata } = setup({});
 

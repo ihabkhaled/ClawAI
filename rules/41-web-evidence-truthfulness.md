@@ -227,7 +227,7 @@ from the missing capability statement, and neither knew about the other.**
     fires. See ADR-118's 2026-09-24 update.
 
 16. **A citation links only to the source the model was shown under that
-    number** (ADR-132). The answer stores `metadata.citations` from the same
+    number** (ADR-133). The answer stores `metadata.citations` from the same
     `context.researchEvidence` the research block numbered; the frontend turns
     `[n]` into a link only when a stored entry has `index === n`, and only for
     an http(s) URL. Never link through `researchTranscript` or any list rebuilt

@@ -12,7 +12,7 @@ import { useTranslation } from '@/lib/i18n';
 import type { ContextSaveCardProps } from '@/types';
 
 /**
- * What a "remember this / add this to my context" turn did (ADR-133), under
+ * What a "remember this / add this to my context" turn did (ADR-134), under
  * the answer and persisted with it: the saved memory and pack with links to
  * the exact item, the "which pack?" choice while one is pending, and a plain
  * failure line when a save could not happen. Renders from `metadata`, so a

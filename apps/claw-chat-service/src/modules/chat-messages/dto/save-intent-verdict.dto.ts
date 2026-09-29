@@ -9,7 +9,7 @@ import {
 /**
  * The planner's verdict, validated before anything is saved. A reply that does
  * not match is treated as "no answer" — the next planner is tried, and with
- * none left the deterministic keyword path decides (ADR-133).
+ * none left the deterministic keyword path decides (ADR-134).
  */
 export const saveIntentVerdictSchema = z.object({
   save: z.boolean(),

@@ -53,4 +53,4 @@ Owner feature 11: "save this as memory / remember this / add this to my context 
 
 ## Addendum (2026-09-30): superseded for saving from chat
 
-At the owner's direction, a planner model now decides saves from chat and asks which pack when none was named — see [ADR-133](adr-133-ai-decided-save-to-memory-and-context.md). The deterministic path described in "Addendum — saving from chat" remains as the fallback when no planner answers.
+At the owner's direction, a planner model now decides saves from chat and asks which pack when none was named — see [ADR-134](adr-134-ai-decided-save-to-memory-and-context.md). The deterministic path described in "Addendum — saving from chat" remains as the fallback when no planner answers.

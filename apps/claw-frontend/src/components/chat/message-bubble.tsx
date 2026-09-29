@@ -267,7 +267,7 @@ function MessageBubbleBase({
           {!isUser && !isImageGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
-          {/* What a "remember this / add to context" turn saved (ADR-133). */}
+          {/* What a "remember this / add to context" turn saved (ADR-134). */}
           {contextSave === null ? null : (
             <ContextSaveCard
               messageId={message.id}

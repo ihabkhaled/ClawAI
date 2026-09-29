@@ -359,7 +359,7 @@ column. Code blocks, tables and long URLs are handled in
 table wrapper, `break-words` on prose, `max-w-full` on images) — the page body
 itself never scrolls sideways.
 
-## The branch lineage strip (ADR-129)
+## The branch lineage strip (ADR-130)
 
 `ThreadLineageBar` sits at the top of the reading column, above the bordered
 transcript. It renders **`null`** for an ordinary thread — the common case —
@@ -370,7 +370,7 @@ when branches were cut from this thread a `Branches (n)` menu of links. Data:
 a failed read degrades to no strip, never to a blocked conversation. The thread
 list marks a branch with a `GitBranch` icon (`thread-list-item.tsx`).
 
-## Try again with another model, and edit in a branch (ADR-131)
+## Try again with another model, and edit in a branch (ADR-132)
 
 Beside Regenerate, **Try again with…** is the composer's `ModelPicker`
 (`RegenerateWithModel` → `useRegenerateWithModel`, same groups and badges) with
@@ -379,7 +379,7 @@ has **Edit in a new branch** (`useEditInBranch`): it branches BEFORE the
 message, writes the edited text into the branch's composer draft and opens the
 branch. It never sends — the person presses Send.
 
-## The saved card (ADR-133)
+## The saved card (ADR-134)
 
 An answer with `metadata.contextSave` renders `ContextSaveCard` under its text:
 the saved memory (type badge, preview, **Open memory** → `/memory?memoryId=`,
@@ -390,7 +390,7 @@ card lists the user's packs plus **New pack: <name>**; a click calls
 the thread so the card re-renders as saved from the stored record. Failures
 show the translated reason (`chat.contextSave.reasons.*`).
 
-## Inline citations (ADR-132)
+## Inline citations (ADR-133)
 
 An answer with `metadata.citations` passes them to `MarkdownRenderer`. The
 `remarkCitations` plugin rewrites text-node `[n]` (never in code or links) into
@@ -399,7 +399,7 @@ reads `CitationsContext` and renders `CitationLink` — a superscript chip named
 "title — host" that opens the source in a new tab, or a non-clickable chip when
 the URL is not http(s). Answers without citations render exactly as before.
 
-## Quoting a selection (ADR-130)
+## Quoting a selection (ADR-131)
 
 Every message bubble carries `data-quote-source-id`. Selecting text inside ONE
 bubble floats a small **Quote** button above the selection

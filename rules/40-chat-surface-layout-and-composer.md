@@ -212,7 +212,7 @@ today, and any future page built as header + transcript + input.
 
 21. **Files alone are a message — so are quotes — and the composer's file cap is
     the server's.** A quoted selection makes an empty prompt sendable on the
-    main chat composer (ADR-130): the gate counts `files + quotes`, and
+    main chat composer (ADR-131): the gate counts `files + quotes`, and
     `allowEmptySubmit` follows it. Every send gate is
     `hasSendableInput(content, fileCount, minLength)` —
     Enter and the button alike, and never while an upload is in flight.

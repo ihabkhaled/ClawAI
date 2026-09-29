@@ -345,7 +345,7 @@ original decision; this addendum is the current state. Found during the
 Retrieval now excludes the current thread's entire branch family (root plus
 every thread sharing `branchRootThreadId`), not only the current thread — or a
 branch could retrieve what its source said after the fork. See
-[ADR-129](adr-129-branch-lineage-and-family-isolation.md).
+[ADR-130](adr-130-branch-lineage-and-family-isolation.md).
 
 ## Addendum (2026-09-30): an opted-out chat is not a source either
 

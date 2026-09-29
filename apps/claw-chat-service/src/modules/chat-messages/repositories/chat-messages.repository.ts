@@ -195,7 +195,7 @@ export class ChatMessagesRepository {
   /**
    * Replaces the metadata only while `metadata.contextSave.status` is still
    * `from` — one statement, so two clicks on the "which pack?" card cannot
-   * both claim the save (ADR-133). True when this call won.
+   * both claim the save (ADR-134). True when this call won.
    */
   async transitionContextSave(
     id: string,

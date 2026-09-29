@@ -22,7 +22,7 @@ vi.mock('@/lib/i18n', () => ({
 const render_ = (record: ContextSaveRecord) =>
   render(<ContextSaveCard messageId="a-1" threadId="t-1" record={record} />);
 
-describe('ContextSaveCard (ADR-133)', () => {
+describe('ContextSaveCard (ADR-134)', () => {
   beforeEach(() => {
     choosePack.mockReset();
     chooseNewPack.mockReset();

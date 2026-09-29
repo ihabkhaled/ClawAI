@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-// Rule 41 §16 / ADR-132 contract: the [n] the research block prints and the
+// Rule 41 §16 / ADR-133 contract: the [n] the research block prints and the
 // index toStoredCitations stores are the SAME number for the same source. If
 // either side is renumbered alone, an answer's [3] opens the wrong page.
 import { ContextAssemblyManager } from '../context-assembly.manager';

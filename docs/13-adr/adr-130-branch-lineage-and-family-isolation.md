@@ -1,4 +1,4 @@
-# ADR-129 — Branch lineage, and a branch family never feeds itself
+# ADR-130 — Branch lineage, and a branch family never feeds itself
 
 ## Status
 

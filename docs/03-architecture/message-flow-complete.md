@@ -109,7 +109,7 @@ Authorization: Bearer <jwt>
 1. Zod validates the request body
 2. Checks every `quotes[].sourceMessageId` belongs to this thread (404
    `QUOTE_SOURCE_NOT_FOUND` otherwise) and stores the quotes in
-   `metadata.quotes` (ADR-130)
+   `metadata.quotes` (ADR-131)
 3. Creates USER ChatMessage record in `claw_chat`
 4. Creates MessageAttachment records for any fileIds
 5. Publishes `message.created` event to RabbitMQ

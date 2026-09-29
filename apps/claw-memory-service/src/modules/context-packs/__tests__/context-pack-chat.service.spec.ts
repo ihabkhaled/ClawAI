@@ -30,7 +30,7 @@ function build(options: {
   };
 }
 
-describe('ContextPackChatService (ADR-133)', () => {
+describe('ContextPackChatService (ADR-134)', () => {
   it("lists only the asking user's packs, newest first, bounded", async () => {
     const findMany = vi
       .fn()

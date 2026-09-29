@@ -34,7 +34,7 @@ Last updated: 2026-04-11
 | F-006 | Context Pack Attachment        | GA     | Attach up to 10 curated knowledge packs per thread                                                                             |
 | F-007 | System Prompt                  | GA     | Custom system prompt per thread (max 10,000 chars)                                                                             |
 | F-008 | Temperature & Max Tokens       | GA     | Per-thread creativity (0-2) and response length (1-32,000)                                                                     |
-| F-009 | Regenerate Response            | GA     | Re-execute routing and generation for any assistant message, with the same model, AUTO, or any model the plan allows (ADR-131) |
+| F-009 | Regenerate Response            | GA     | Re-execute routing and generation for any assistant message, with the same model, AUTO, or any model the plan allows (ADR-132) |
 | F-010 | Message Feedback               | GA     | Thumbs up/down on individual AI responses                                                                                      |
 | F-011 | Routing Transparency           | GA     | Expandable badge showing confidence, reason tags, privacy/cost class                                                           |
 | F-012 | Thinking Indicator             | GA     | Visual indicator while polling for AI response (3-min max)                                                                     |

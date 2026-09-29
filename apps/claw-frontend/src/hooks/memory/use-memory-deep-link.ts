@@ -10,7 +10,7 @@ import { queryKeys } from '@/repositories/shared/query-keys';
 import type { MemoryRecord } from '@/types';
 
 /**
- * `/memory?memoryId=…` (the chat's saved card, ADR-133) opens that memory in
+ * `/memory?memoryId=…` (the chat's saved card, ADR-134) opens that memory in
  * the editor — where its type can be changed — once, on arrival. The memory is
  * read by id, so it opens whatever filter the page is on.
  */

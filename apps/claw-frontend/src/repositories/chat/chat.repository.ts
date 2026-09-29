@@ -96,7 +96,7 @@ export const chatRepository = {
     return response.data;
   },
 
-  /** Answers the "which pack?" card of a chat save (ADR-133). */
+  /** Answers the "which pack?" card of a chat save (ADR-134). */
   async chooseContextSavePack(
     messageId: string,
     choice: ContextSaveChoiceRequest,

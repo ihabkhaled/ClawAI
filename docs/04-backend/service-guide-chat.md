@@ -39,7 +39,7 @@ this; see [build-system.md § Gotchas](../08-runtime-devops/build-system.md#7-go
 | systemPrompt          | String?     | Custom system prompt                                                     |
 | temperature           | Float?      | Default 0.7                                                              |
 | maxTokens             | Int?        | Token limit override                                                     |
-| branchedFromThreadId  | String?     | Source thread of a branch (plain id; survives source deletion) — ADR-129 |
+| branchedFromThreadId  | String?     | Source thread of a branch (plain id; survives source deletion) — ADR-130 |
 | branchedFromMessageId | String?     | Fork message in the source                                               |
 | branchRootThreadId    | String?     | First ancestor; one indexed read finds the whole branch family           |
 
@@ -76,8 +76,8 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 | GET    | /            | List user's threads (paginated)                                                                                                   |
 | POST   | /            | Create new thread                                                                                                                 |
 | GET    | /:id         | Get thread with recent messages                                                                                                   |
-| POST   | /:id/branch  | Copy the thread up to `fromMessageId` into a new branch; `cut: INCLUDE` (default) or `BEFORE` (ADR-131); daily chat limit applies |
-| GET    | /:id/lineage | `{ threadId, parent, parentDeleted, forkMessageId, branches }` — owner-scoped (ADR-129)                                           |
+| POST   | /:id/branch  | Copy the thread up to `fromMessageId` into a new branch; `cut: INCLUDE` (default) or `BEFORE` (ADR-132); daily chat limit applies |
+| GET    | /:id/lineage | `{ threadId, parent, parentDeleted, forkMessageId, branches }` — owner-scoped (ADR-130)                                           |
 | PATCH  | /:id         | Update title, settings, etc.                                                                                                      |
 | DELETE | /:id         | Delete thread and all messages                                                                                                    |
 
@@ -86,10 +86,10 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 | Method | Path              | Description                                                                                                          |
 | ------ | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | GET    | /thread/:threadId | List messages (paginated)                                                                                            |
-| POST   | /                 | Send new message (triggers flow); optional `quotes` (ADR-130)                                                        |
+| POST   | /                 | Send new message (triggers flow); optional `quotes` (ADR-131)                                                        |
 | PATCH  | /:id/feedback     | Submit feedback on a message                                                                                         |
-| POST   | /:id/context-save | Answer a save's "which pack?" card: `{packId}` or `{newPack: true}`; owner-only, saves once (ADR-133)                |
-| POST   | /:id/regenerate   | Answer again; optional `{routingMode AUTO/MANUAL_MODEL, provider, model}`; same plan/quota check as a send (ADR-131) |
+| POST   | /:id/context-save | Answer a save's "which pack?" card: `{packId}` or `{newPack: true}`; owner-only, saves once (ADR-134)                |
+| POST   | /:id/regenerate   | Answer again; optional `{routingMode AUTO/MANUAL_MODEL, provider, model}`; same plan/quota check as a send (ADR-132) |
 | POST   | /parallel         | Send prompt to 2-5 models simultaneously                                                                             |
 | POST   | /consensus        | Build a consensus answer from multiple models                                                                        |
 | POST   | /escalation-chain | Escalate to stronger models if needed                                                                                |
@@ -131,7 +131,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
-5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-133): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
+5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
    - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
      no text (every send schema uses `requireContentOrAttachments`). The row is
      stored with empty `content`; `message.created` carries
@@ -154,7 +154,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)
 9. **Fallback chain** -- if primary fails or is weak, tries next candidate in chain
-10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-132), and on a save turn `metadata.contextSave` (the saved card — ADR-133)
+10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-133), and on a save turn `metadata.contextSave` (the saved card — ADR-134)
 11. **SSE emission** -- `emitCompletion()` pushes to connected clients
 12. **Publish `message.completed`** -- memory service extracts facts (unless the chat has memory off, or it was a save turn: no `userContent` then); audit logs usage
 
@@ -657,7 +657,7 @@ numbers. What matters for anyone touching it again:
   requires `useMemory` AND `useCrossThreadContext` on the candidate thread, so a
   chat with either switch off is never read FROM; only
   `useCrossThreadContext=false` also stops it reading other chats.
-- **The current thread's whole branch family is excluded** (ADR-129):
+- **The current thread's whole branch family is excluded** (ADR-130):
   `excludedThreadIds` reads the root, then every thread sharing it, and passes
   them all as `notIn`. A branch must never retrieve its source's post-fork turns.
 - **Stage 1 reads, stage 2 ranks.** The candidate query takes one bounded slice
@@ -1125,3 +1125,19 @@ container base URL and is unmetered (`PAYG_EXEMPT_PROVIDERS`).
 ## Inpainting mask forwarding (2026-09-29)
 
 The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat-service stores it on the user message metadata and forwards it to image-service with the reference image. image-service 422 codes `IMAGE_MASK_INVALID` and `IMAGE_MASK_NOT_SUPPORTED` become a stored assistant refusal message (`metadata.type = image_mask_refusal`) that the frontend renders as a localized notice. Only OpenAI honours masks; Gemini and Stable Diffusion refuse with `IMAGE_MASK_NOT_SUPPORTED`.
+
+## Runtime V2 native tool calling (ADR-129, 2026-09-30)
+
+- Every agent turn now passes its admitted tools as `executionOptions.toolCatalog`
+  (`runtimeV2TurnExecutionOptions`). The provider layer offers them natively or
+  drops them: lane off, provider without native tools, or over
+  `CHAT_TOOL_CATALOG_MAX_BYTES`. That last case falls back to the prompt-JSON
+  lane now instead of throwing.
+- `callWithRepair` prefers `response.toolCalls` over the text
+  (`runtimeV2OutputFromNativeCalls`), under the same schema and admitted-tool
+  checks. `MODEL_TOOL_UNKNOWN` / `MODEL_TOOL_ARGUMENT_INVALID` from the provider
+  layer get the repair turn (`settleNativeTurn`).
+- `normalizeToolCalls` resolves both `workspace.files` and `workspace_files`,
+  reads flattened input and an `operation` inside `arguments`, and defaults a
+  single-target tool's `targetId`. Its errors list the valid choices.
+- To check it live: `docker logs claw-chat-service-1 | grep -E 'attached [0-9]+ native tools|native tool call'`.

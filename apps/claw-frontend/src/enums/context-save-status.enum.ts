@@ -1,4 +1,4 @@
-/** Mirrors chat-service's ContextSaveStatus (ADR-133). */
+/** Mirrors chat-service's ContextSaveStatus (ADR-134). */
 export enum ContextSaveStatus {
   SAVED = 'SAVED',
   NEEDS_PACK_CHOICE = 'NEEDS_PACK_CHOICE',

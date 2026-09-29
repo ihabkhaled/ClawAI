@@ -23,7 +23,7 @@ vi.mock('../use-context-pack-detail', () => ({
   }),
 }));
 
-describe('useContextPage deep link (ADR-133)', () => {
+describe('useContextPage deep link (ADR-134)', () => {
   it("opens the pack named by /context?packId=… — the chat's saved card", () => {
     mockParams = new URLSearchParams('packId=pack-1');
 

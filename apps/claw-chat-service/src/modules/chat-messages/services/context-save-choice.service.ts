@@ -11,7 +11,7 @@ import type { ContextSaveRecord } from '../types/context-save.types';
 import { contextPackDeepLink } from '../utilities/context-save-links.utility';
 
 /**
- * The user's answer on the "which pack?" card (ADR-133): add the waiting text
+ * The user's answer on the "which pack?" card (ADR-134): add the waiting text
  * to the pack they picked, or to a new pack. Owner-checked through the thread;
  * the pack itself is owner-checked again by memory-service. The card's state
  * lives on the answer's `metadata.contextSave`, claimed atomically so a double

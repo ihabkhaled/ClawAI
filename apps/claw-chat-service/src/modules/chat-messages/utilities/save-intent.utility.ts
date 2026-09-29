@@ -12,7 +12,7 @@ import type { ContextSaveRecord } from '../types/context-save.types';
 
 /**
  * Whether the planner should even be asked. A recall net, not a decision: it
- * is broad on purpose and the model decides (ADR-133). The keyword command
+ * is broad on purpose and the model decides (ADR-134). The keyword command
  * detector counts too, so nothing the old path caught is missed.
  */
 export function mightBeSaveRequest(text: string): boolean {

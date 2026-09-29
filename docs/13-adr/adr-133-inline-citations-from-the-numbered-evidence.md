@@ -1,4 +1,4 @@
-# ADR-132 — Inline citations link only through the evidence the model was shown
+# ADR-133 — Inline citations link only through the evidence the model was shown
 
 ## Status
 

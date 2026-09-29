@@ -56,7 +56,7 @@ The retrieval endpoint `POST /internal/memories/retrieve` is the canonical entry
 - Soft hints (`password`, `salary`, `medical`, …) → verdict `SENSITIVE` with confidence < 1.
 - Auto-approve from the suggestion queue ONLY fires for verdict `NORMAL` AND confidence ≥ `memory_preferences.autoApproveThreshold` (default 0.85).
 
-## Chat saves into an existing pack (2026-09-30, ADR-133)
+## Chat saves into an existing pack (2026-09-30, ADR-134)
 
 Two service-token routes for chat-service's AI save path:
 `POST /internal/context-packs/options-for-chat {userId}` → the user's packs

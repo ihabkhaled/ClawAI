@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * ADR-130 enforcement. A manager that hands the user's request to a model
+ * ADR-131 enforcement. A manager that hands the user's request to a model
  * must read it through `latestUserTurnText`, or a quote-only turn ("explain
  * this" with nothing typed) reaches that model as an empty string. The
  * judge, critic, image and file prompts all did exactly that before the

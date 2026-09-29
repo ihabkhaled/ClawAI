@@ -1,9 +1,9 @@
-# ADR-130 — Quotes are structured, provenance-checked, and assembled per request
+# ADR-131 — Quotes are structured, provenance-checked, and assembled per request
 
 ## Status
 
 Accepted — 2026-09-30. Chat-supremacy Batch 2 (pack batch B), after
-[ADR-129](adr-129-branch-lineage-and-family-isolation.md). Audit:
+[ADR-130](adr-130-branch-lineage-and-family-isolation.md). Audit:
 [chat capability audit](../14-risk-debt/chat-capability-audit-2026-09.md).
 
 ## Context
@@ -70,7 +70,7 @@ documented ([benchmark](../02-business-product/chat-competitive-benchmark-2026-0
   and arrive with batches M and D (a `sourceKind` field will be added then).
 - A quoted source that is later edited keeps the quote readable: the words are
   stored with the turn.
-- A branch (ADR-129) copies `metadata.quotes` with the rest of the metadata, so
+- A branch (ADR-130) copies `metadata.quotes` with the rest of the metadata, so
   a branched turn's `sourceMessageId` points into the SOURCE thread. Harmless:
   rendering and prompts use the stored `text`, and nothing re-resolves the id.
 - The one line in `useThreadDataController.handleSend` that attaches the waiting

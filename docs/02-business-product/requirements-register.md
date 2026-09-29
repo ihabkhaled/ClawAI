@@ -133,7 +133,7 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   cross-thread retrieval.
 - **Status:** done · **Priority:** high
 - **Source:** Chat Supremacy prompt pack, Batch A (owner, 2026-09-29).
-- **Current state:** ADR-129 — lineage columns, full-field copy, family
+- **Current state:** ADR-130 — lineage columns, full-field copy, family
   exclusion, `GET /chat-threads/:id/lineage`, lineage strip + thread-list icon.
   Merge-back is not built (no product decision on what a merged message is).
 - **History:** 2026-09-29 created and delivered (Batch 1).
@@ -164,7 +164,7 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   was meant, and the quote stays visible on the sent turn.
 - **Status:** done (messages) · **Priority:** high
 - **Source:** Chat Supremacy prompt pack, Batch B (owner, 2026-09-29).
-- **Current state:** ADR-130. Quoting from citations, file previews, research
+- **Current state:** ADR-131. Quoting from citations, file previews, research
   reports and generated documents waits for batches M and D.
 - **History:** 2026-09-30 created and delivered (Batch 2).
 
@@ -175,7 +175,7 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   conversation after it.
 - **Status:** done · **Priority:** high
 - **Source:** Chat Supremacy prompt pack, Batch E (owner, 2026-09-29).
-- **Current state:** ADR-131. Regenerate also gained the plan/quota check it
+- **Current state:** ADR-132. Regenerate also gained the plan/quota check it
   was missing. Still open in batch E: send an answer to Repair/Verify/Compare
   from the message, and "continue" a truncated answer.
 - **History:** 2026-09-30 created and delivered (Batch 4).
@@ -186,7 +186,7 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   given under that number — and never a source it was not given.
 - **Status:** done (main chat) · **Priority:** high
 - **Source:** Chat Supremacy prompt pack, Batch M (owner, 2026-09-29).
-- **Current state:** ADR-132, rule 41 §16. Compare/lab lanes, file-page
+- **Current state:** ADR-133, rule 41 §16. Compare/lab lanes, file-page
   provenance and a grounded-vs-model-knowledge marker are not built.
 - **History:** 2026-09-30 created and delivered (Batch 5).
 
@@ -199,7 +199,7 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   item, keeps it in the chat history, and the AI confirms it is done.
 - **Status:** done · **Priority:** high
 - **Source:** owner, in chat, 2026-09-30 (with the four design choices recorded
-  in ADR-133).
-- **Current state:** ADR-133. Changing a memory's type happens on the Memory
+  in ADR-134).
+- **Current state:** ADR-134. Changing a memory's type happens on the Memory
   page (the card's link opens the editor), not on the card.
 - **History:** 2026-09-30 created and delivered (Batch 6).
