@@ -5244,7 +5244,7 @@ export const en: TranslationDictionary = {
           'work through long documents and datasets with large-context models, then have a second model check the conclusions.',
         teamName: 'Small teams',
         teamDesc:
-          'share one workspace, connect the issue trackers, chat and docs you already use, and see exactly where the allowance goes.',
+          'run ClawAI for a small group: an administrator manages each person’s account, role and plan, and can see each person’s usage.',
       },
       faq: {
         title: 'Frequently asked questions',
@@ -6195,7 +6195,7 @@ export const en: TranslationDictionary = {
           'Yes. Organisations that cannot send data to a third-party model provider can have the whole platform deployed inside their own network, running open-weight models on their own GPUs, with no external provider calls at all. It is a scoped engagement rather than a plan you can buy online. The trade-off is complete data isolation in exchange for the frontier models, which cannot be run on-premise — contact us and we will size it with you.',
         teamAccountsQ: 'Do you support teams?',
         teamAccountsA:
-          'Yes. The Team plan and above give a shared workspace, role-based permissions, more workspace connections and uncapped Compare, Judge, Critic and Research. For anything beyond that — single sign-on against your directory, custom retention rules, procurement paperwork — talk to us.',
+          'Yes, as administrator-managed accounts. An administrator activates each member, assigns roles and plans, and sees each person’s usage in the admin console. Every member has their own plan and allowance; the Team plan and above lift the monthly caps on Compare, Judge, Critic and Research. Shared team billing, pooled allowances and single sign-on are not available today — talk to us about what you need.',
       },
       contact: {
         title: 'Still have a question?',

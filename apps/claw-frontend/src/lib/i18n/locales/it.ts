@@ -5339,7 +5339,7 @@ export const it: TranslationDictionary = {
           'lavora su documenti e dataset lunghi con modelli a contesto ampio, poi fai controllare le conclusioni da un secondo modello.',
         teamName: 'Piccoli team',
         teamDesc:
-          'condividete un unico spazio di lavoro, collegate gli issue tracker, le chat e i documenti che già usate e vedete con esattezza dove finisce il plafond.',
+          'usate ClawAI per un piccolo gruppo: un amministratore gestisce account, ruolo e piano di ogni persona e vede l’utilizzo di ciascuno.',
       },
       faq: {
         title: 'Domande frequenti',
@@ -6299,7 +6299,7 @@ export const it: TranslationDictionary = {
           'Sì. Le organizzazioni che non possono inviare dati a un provider di modelli di terze parti possono far installare l’intera piattaforma all’interno della propria rete, con modelli a pesi aperti eseguiti sulle proprie GPU e nessuna chiamata a provider esterni. È un progetto definito su misura, non un piano acquistabile online. Il compromesso è il completo isolamento dei dati in cambio dei modelli di frontiera, che non possono essere eseguiti in locale: contattaci e lo dimensioniamo insieme a voi.',
         teamAccountsQ: 'Supportate i team?',
         teamAccountsA:
-          'Sì. Il piano Team e superiori offrono uno spazio di lavoro condiviso, permessi basati sui ruoli, più connessioni allo spazio di lavoro e Confronto, Judge, Critic e Ricerca senza tetto. Per tutto ciò che va oltre — accesso unico con la vostra directory, regole di conservazione personalizzate, documentazione per gli acquisti — parlateci.',
+          'Sì, come account gestiti da un amministratore. Un amministratore attiva ogni membro, assegna ruoli e piani e vede l’utilizzo di ciascuno nella console di amministrazione. Ogni membro ha il proprio piano e il proprio plafond; il piano Team e superiori tolgono i tetti mensili a Confronto, Judge, Critic e Ricerca. Fatturazione di team condivisa, plafond condivisi e accesso unico non sono disponibili oggi: parlateci di ciò che vi serve.',
       },
       contact: {
         title: 'Hai ancora una domanda?',

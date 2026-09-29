@@ -164,7 +164,7 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
       faq: [
         {
           question: 'ClawAI 能使用 Gemini 模型吗？',
-          answer: '可以。Google 是清单中九个模型家族之一，在同一份订阅下的任何对话中都可使用。',
+          answer: '可以。Google 是清单中九个模型家族之一，在同一个工作区中的任何对话中都可使用。',
         },
         {
           question: 'ClawAI 能连接 Google Workspace 吗？',

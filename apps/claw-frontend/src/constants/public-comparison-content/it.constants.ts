@@ -169,7 +169,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'ClawAI può usare i modelli Gemini?',
           answer:
-            'Sì. Google è una delle nove famiglie di modelli del catalogo, disponibile in qualsiasi conversazione con lo stesso abbonamento.',
+            'Sì. Google è una delle nove famiglie di modelli del catalogo, disponibile in qualsiasi conversazione nello stesso spazio di lavoro.',
         },
         {
           question: 'ClawAI si collega a Google Workspace?',

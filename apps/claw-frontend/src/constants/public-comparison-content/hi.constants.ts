@@ -168,7 +168,7 @@ export const HI_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'क्या ClawAI Gemini मॉडल इस्तेमाल कर सकता है?',
           answer:
-            'हाँ। Google सूची के नौ मॉडल परिवारों में से एक है, जो उसी सदस्यता के तहत किसी भी बातचीत में उपलब्ध है।',
+            'हाँ। Google सूची के नौ मॉडल परिवारों में से एक है, जो उसी वर्कस्पेस में किसी भी बातचीत में उपलब्ध है।',
         },
         {
           question: 'क्या ClawAI Google Workspace से जुड़ता है?',

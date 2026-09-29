@@ -5365,7 +5365,7 @@ export const fr: TranslationDictionary = {
           'parcourez de longs documents et jeux de données avec des modèles à grand contexte, puis faites vérifier les conclusions par un second modèle.',
         teamName: 'Petites équipes',
         teamDesc:
-          'partagez un seul espace de travail, connectez les outils de suivi des tickets, la messagerie et les documents que vous utilisez déjà, et voyez exactement où va votre quota.',
+          'utilisez ClawAI pour un petit groupe : un administrateur gère le compte, le rôle et le forfait de chaque personne, et voit la consommation de chacun.',
       },
       faq: {
         title: 'Questions fréquentes',
@@ -6327,7 +6327,7 @@ export const fr: TranslationDictionary = {
           "Oui. Les entreprises qui ne peuvent pas envoyer de données à un fournisseur de modèles tiers peuvent faire déployer toute la plateforme dans leur propre réseau, exécutant des modèles à poids ouverts sur leurs propres GPU, sans aucun appel à un fournisseur externe. C'est un engagement dimensionné sur mesure plutôt qu'un forfait que l'on achète en ligne. Le compromis est une isolation complète des données en échange de l'accès aux modèles de pointe, qui ne peuvent pas être exécutés sur site — contactez-nous et nous le dimensionnerons avec vous.",
         teamAccountsQ: 'Prenez-vous en charge les équipes ?',
         teamAccountsA:
-          "Oui. Le forfait Team et au-dessus offrent un espace de travail partagé, des permissions basées sur les rôles, davantage de connexions d'espace de travail et Comparaison, Juge, Critique et Recherche illimités. Pour tout ce qui va au-delà — authentification unique contre votre annuaire, règles de rétention personnalisées, documents d'approvisionnement — parlez-nous-en.",
+          'Oui, sous forme de comptes gérés par un administrateur. Un administrateur active chaque membre, attribue rôles et forfaits, et voit la consommation de chacun dans la console d’administration. Chaque membre a son propre forfait et son propre quota ; le forfait Team et au-dessus lèvent les plafonds mensuels de Comparaison, Juge, Critique et Recherche. La facturation d’équipe partagée, les quotas mutualisés et l’authentification unique ne sont pas disponibles aujourd’hui — parlez-nous de vos besoins.',
       },
       contact: {
         title: 'Encore une question ?',

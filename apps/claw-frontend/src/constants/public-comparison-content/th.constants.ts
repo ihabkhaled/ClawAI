@@ -167,7 +167,7 @@ export const TH_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'ClawAI ใช้โมเดล Gemini ได้ไหม',
           answer:
-            'ได้ Google เป็นหนึ่งในเก้าตระกูลโมเดลของรายการ ใช้ได้ในทุกบทสนทนาภายใต้การสมัครสมาชิกเดียวกัน',
+            'ได้ Google เป็นหนึ่งในเก้าตระกูลโมเดลของรายการ ใช้ได้ในทุกบทสนทนาในเวิร์กสเปซเดียวกัน',
         },
         {
           question: 'ClawAI เชื่อมต่อกับ Google Workspace หรือไม่',

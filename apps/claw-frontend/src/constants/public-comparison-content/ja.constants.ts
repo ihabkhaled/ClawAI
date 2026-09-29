@@ -169,7 +169,7 @@ export const JA_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'ClawAI で Gemini のモデルを使えますか。',
           answer:
-            'はい。Google はラインナップの 9 モデルファミリーの 1 つで、同じサブスクリプションのままどの会話でも利用できます。',
+            'はい。Google はラインナップの 9 モデルファミリーの 1 つで、同じワークスペースでどの会話でも利用できます。',
         },
         {
           question: 'ClawAI は Google Workspace に接続しますか。',

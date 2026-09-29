@@ -5334,7 +5334,7 @@ export const es: TranslationDictionary = {
           'trabaje con documentos y conjuntos de datos extensos usando modelos de contexto amplio, y luego haga que un segundo modelo revise las conclusiones.',
         teamName: 'Equipos pequeños',
         teamDesc:
-          'comparta un solo espacio de trabajo, conecte los rastreadores de incidencias, el chat y los documentos que ya usa, y vea exactamente en qué se consume el cupo.',
+          'use ClawAI para un grupo pequeño: un administrador gestiona la cuenta, el rol y el plan de cada persona, y puede ver el uso de cada una.',
       },
       faq: {
         title: 'Preguntas frecuentes',
@@ -6293,7 +6293,7 @@ export const es: TranslationDictionary = {
           'Sí. Las organizaciones que no pueden enviar datos a un proveedor de modelos externo pueden desplegar toda la plataforma dentro de su propia red, ejecutando modelos de pesos abiertos en sus propias GPU, sin ninguna llamada a proveedores externos. Se trata de un proyecto delimitado y no de un plan que se compra en línea. La contrapartida es un aislamiento de datos completo a cambio de los modelos de frontera, que no se pueden ejecutar en sus propios servidores: contáctenos y lo dimensionaremos junto con usted.',
         teamAccountsQ: '¿Ofrecen soporte para equipos?',
         teamAccountsA:
-          'Sí. El plan Team y superiores dan un espacio de trabajo compartido, permisos basados en roles, más conexiones de espacio de trabajo, y Comparación, Judge, Critic e Investigación sin límite. Para cualquier cosa más allá de eso —inicio de sesión único frente a su directorio, reglas de retención personalizadas, trámites de adquisición— hable con nosotros.',
+          'Sí, como cuentas gestionadas por un administrador. Un administrador activa a cada miembro, asigna roles y planes, y ve el uso de cada persona en la consola de administración. Cada miembro tiene su propio plan y cupo; el plan Team y superiores eliminan los topes mensuales de Comparación, Judge, Critic e Investigación. La facturación compartida de equipo, los cupos agrupados y el inicio de sesión único no están disponibles hoy: hable con nosotros sobre lo que necesita.',
       },
       contact: {
         title: '¿Sigue teniendo una pregunta?',

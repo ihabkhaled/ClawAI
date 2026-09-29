@@ -5314,7 +5314,7 @@ export const pt: TranslationDictionary = {
           'trabalhe em documentos extensos e conjuntos de dados com modelos de contexto grande, e depois peça a um segundo modelo que verifique as conclusões.',
         teamName: 'Pequenas equipes',
         teamDesc:
-          'compartilhe um espaço de trabalho, conecte os rastreadores de tarefas, o chat e os documentos que você já usa, e veja exatamente para onde vai sua cota.',
+          'use o ClawAI para um grupo pequeno: um administrador gerencia a conta, a função e o plano de cada pessoa, e vê o uso de cada uma.',
       },
       faq: {
         title: 'Perguntas frequentes',
@@ -6271,7 +6271,7 @@ export const pt: TranslationDictionary = {
           'Sim. Empresas que não podem enviar dados a um provedor de modelos terceirizado podem ter toda a plataforma implantada dentro da própria rede, executando modelos de peso aberto nas próprias GPUs, sem nenhuma chamada a provedores externos. É um projeto sob medida, não um plano que se compra online. O trade-off é isolamento completo de dados em troca dos modelos de fronteira, que não podem ser executados localmente — fale conosco e faremos o dimensionamento com você.',
         teamAccountsQ: 'Vocês oferecem suporte a equipes?',
         teamAccountsA:
-          'Sim. O plano Team e acima oferecem um espaço de trabalho compartilhado, permissões baseadas em função, mais conexões de espaço de trabalho, e Comparação, Juiz, Crítico e Pesquisa ilimitados. Para qualquer coisa além disso — login único (SSO) integrado ao seu diretório, regras de retenção personalizadas, documentação de compras — fale conosco.',
+          'Sim, como contas gerenciadas por um administrador. O administrador ativa cada membro, atribui funções e planos e vê o uso de cada pessoa no console de administração. Cada membro tem o próprio plano e a própria cota; o plano Team e acima removem os limites mensais de Comparação, Juiz, Crítico e Pesquisa. Cobrança compartilhada de equipe, cotas compartilhadas e login único (SSO) não estão disponíveis hoje — fale conosco sobre o que você precisa.',
       },
       contact: {
         title: 'Ainda tem alguma dúvida?',

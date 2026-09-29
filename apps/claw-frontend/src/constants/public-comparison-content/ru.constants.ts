@@ -170,7 +170,7 @@ export const RU_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'Может ли ClawAI использовать модели Gemini?',
           answer:
-            'Да. Google — одно из девяти семейств моделей каталога, доступное в любом разговоре по той же подписке.',
+            'Да. Google — одно из девяти семейств моделей каталога, доступное в любом разговоре в том же рабочем пространстве.',
         },
         {
           question: 'Подключается ли ClawAI к Google Workspace?',

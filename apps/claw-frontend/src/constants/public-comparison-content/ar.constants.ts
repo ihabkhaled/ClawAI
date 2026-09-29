@@ -167,7 +167,7 @@ export const AR_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'هل يستطيع ClawAI استخدام نماذج Gemini؟',
           answer:
-            'نعم. Google إحدى عائلات النماذج التسع في التشكيلة، ومتاحة في أي محادثة ضمن الاشتراك نفسه.',
+            'نعم. Google إحدى عائلات النماذج التسع في التشكيلة، ومتاحة في أي محادثة ضمن مساحة العمل نفسها.',
         },
         {
           question: 'هل يتصل ClawAI بـ Google Workspace؟',

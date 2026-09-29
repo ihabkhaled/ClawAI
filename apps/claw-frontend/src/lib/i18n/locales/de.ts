@@ -5357,7 +5357,7 @@ export const de: TranslationDictionary = {
           'arbeiten Sie sich mit Modellen mit großem Kontextfenster durch lange Dokumente und Datensätze, und lassen Sie die Schlussfolgerungen anschließend von einem zweiten Modell prüfen.',
         teamName: 'Kleine Teams',
         teamDesc:
-          'teilen Sie sich einen Workspace, verbinden Sie die Ticketsysteme, den Chat und die Dokumente, die Sie bereits nutzen, und sehen Sie genau, wohin das Kontingent geht.',
+          'betreiben Sie ClawAI für eine kleine Gruppe: Ein Administrator verwaltet Konto, Rolle und Tarif jeder Person und sieht die Nutzung jeder Person.',
       },
       faq: {
         title: 'Häufig gestellte Fragen',
@@ -6320,7 +6320,7 @@ export const de: TranslationDictionary = {
           'Ja. Unternehmen, die keine Daten an einen externen Modellanbieter senden dürfen, können die gesamte Plattform innerhalb ihres eigenen Netzwerks bereitstellen lassen, mit offenen Modellen auf ihrer eigenen GPU-Hardware und ganz ohne externe Anbieteraufrufe. Das ist ein individuell abgestimmtes Projekt und kein online buchbarer Tarif. Der Kompromiss ist vollständige Datenisolation im Austausch gegen die Spitzenmodelle, die sich nicht im eigenen Rechenzentrum betreiben lassen – kontaktieren Sie uns, und wir dimensionieren es gemeinsam mit Ihnen.',
         teamAccountsQ: 'Unterstützen Sie Teams?',
         teamAccountsA:
-          'Ja. Der Team-Tarif und höher bieten einen gemeinsamen Workspace, rollenbasierte Berechtigungen, mehr Workspace-Verbindungen und unbegrenzt Vergleich, Judge, Kritiker und Recherche. Für alles darüber hinaus – Single Sign-on gegen Ihr Verzeichnis, individuelle Aufbewahrungsregeln, Beschaffungsunterlagen – sprechen Sie mit uns.',
+          'Ja, als von Administratoren verwaltete Konten. Ein Administrator aktiviert jedes Mitglied, vergibt Rollen und Tarife und sieht die Nutzung jeder Person in der Admin-Konsole. Jedes Mitglied hat seinen eigenen Tarif und sein eigenes Kontingent; ab dem Team-Tarif entfallen die monatlichen Obergrenzen für Vergleich, Judge, Kritiker und Recherche. Gemeinsame Team-Abrechnung, gebündelte Kontingente und Single Sign-on gibt es heute nicht – sprechen Sie mit uns darüber, was Sie brauchen.',
       },
       contact: {
         title: 'Haben Sie noch eine Frage?',

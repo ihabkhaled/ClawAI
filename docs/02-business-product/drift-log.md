@@ -53,7 +53,10 @@ page the entry names. This log is the history between them.
   and SEO strings in all 13 locales still said "one subscription", and the Team
   plan's seeded description promised "shared workspaces and a large pooled
   allowance" (pooling is not built, REQ-POS-005).
-- **Now:** those strings say "one workspace" (competitor and plan-specific uses of
+- **Now:** the teams FAQ answer and the "teams" persona line no longer promise a
+  shared workspace: they describe administrator-managed accounts and say shared
+  billing, pooled allowances and single sign-on are not available today. Those
+  strings say "one workspace" (competitor and plan-specific uses of
   "subscription" are untouched); the Team description reads "A large monthly
   allowance for heavy daily use." Existing installs are updated by a migration
   guarded on the old text, so an operator's own wording survives.
@@ -65,5 +68,6 @@ page the entry names. This log is the history between them.
   constants (13 locales); `apps/claw-auth-service` plan-catalog seed and
   migration; [REQ-POS-005](requirements-register.md#req-pos-005);
   [flagship catalog](flagship-features.md).
-- **Guarded by:** `repositioning-slogan-keys.test.ts` (English copy) and
-  `plan-catalog-pricing.seeder.spec.ts` (no plan promises pooling).
+- **Guarded by:** `one-subscription-wording.test.ts` (per-locale phrase list and the
+  teams FAQ), `repositioning-slogan-keys.test.ts` and `plan-catalog-pricing.seeder.spec.ts`
+  (no plan promises pooling).

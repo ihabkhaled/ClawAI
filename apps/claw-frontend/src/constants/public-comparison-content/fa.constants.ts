@@ -168,7 +168,7 @@ export const FA_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'آیا ClawAI می‌تواند مدل‌های Gemini را به کار ببرد؟',
           answer:
-            'بله. Google یکی از نُه خانوادهٔ مدل فهرست است و با همان اشتراک در هر گفتگویی در دسترس است.',
+            'بله. Google یکی از نُه خانوادهٔ مدل فهرست است و در همان فضای کاری در هر گفتگویی در دسترس است.',
         },
         {
           question: 'آیا ClawAI به Google Workspace وصل می‌شود؟',
