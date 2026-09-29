@@ -119,3 +119,22 @@ let a green retry erase it.
 Never relax an assertion to make a round pass, and never grade a round by the
 run's own report. The assertion reads the workspace — that is the only thing
 that separates a coding agent from a chat window.
+
+## 6. Landing the release (two gates that failed on 1.80.0)
+
+The extension repo's `Release` workflow runs on every push to main and fails
+fast on two things that CI on the PR does not check:
+
+1. **A new version.** `package.json` (plus `package-lock.json` twice, README and
+   CHANGELOG) must move before the push; `v<version>` already existing fails
+   "Require a new version".
+2. **Committed build assets.** `builds/clawai-coding-agent-<version>.{vsix,cdx.json,spdx.json,provenance.json}`
+   and their `.sha256` files must be in git. `builds/` is gitignored, so use
+   `git add -f`. Generate them with `npm run package` then `npm run supply-chain`
+   (the latter needs a clean tree, so commit the version bump first).
+
+Order: bump + changelog PR → `package` + `supply-chain` → `git add -f` assets PR
+→ merge → read the Release run for that merge commit (`gh run list --commit`),
+not "the latest run", which can still be the previous failure. The extension
+repo's pre-push hook runs the full gate and outlives a foreground tool timeout;
+push as a background task. `OVSX_PAT` unset means Open VSX is skipped, not failed.
