@@ -5191,7 +5191,7 @@ export const de: TranslationDictionary = {
         modelCount: '{count} Modelle derzeit verfügbar',
         title: 'Die Modelle, die Sie erhalten',
         intro:
-          'Ein Abonnement deckt jeden der folgenden Anbieter ab. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',
+          'Ein Arbeitsbereich deckt jeden der folgenden Anbieter ab. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',
         footnote:
           'Neue Spitzenmodelle werden hinzugefügt, sobald sie erscheinen – Ihr Tarif deckt sie vom ersten Tag an ab, verrechnet gegen ein einziges Kontingent.',
         linkFeatures: 'Alle Funktionen entdecken',
@@ -5348,7 +5348,7 @@ export const de: TranslationDictionary = {
         title: 'Für wen ClawAI gedacht ist',
         privacyName: 'Menschen, die KI täglich nutzen',
         privacyDesc:
-          'ein Abonnement statt drei oder vier, mit dem stärksten Modell immer nur einen Klick entfernt statt hinter einer weiteren Bezahlschranke.',
+          'ein Arbeitsbereich statt drei oder vier separater Abonnements, mit dem stärksten Modell immer nur einen Klick entfernt statt hinter einer weiteren Bezahlschranke.',
         devName: 'Entwickler, die Modelle bewerten',
         devDesc:
           'senden Sie denselben Prompt gleichzeitig an fünf Modelle und lesen Sie die Antworten nebeneinander, bevor Sie sich für eine entscheiden.',
@@ -5368,7 +5368,7 @@ export const de: TranslationDictionary = {
         q3: 'Wie werden Nutzungslimits gemessen?',
         a3: 'In kostennormalisierten Token. Ein teures Modell zehrt Ihr Kontingent stärker an als ein günstiges, sodass eine einzige Tages- und Monatskennzahl über Modelle hinweg fair bleibt, deren Preise sich um mehr als eine Größenordnung unterscheiden.',
         q4: 'Ist ClawAI mit OpenAI, Anthropic, Google oder AWS verbunden?',
-        a4: 'Nein. ClawAI ist ein unabhängiges Produkt, das über ein Abonnement Zugang zu den Modellen dieser Anbieter bereitstellt. Es wird von keinem von ihnen unterstützt und steht mit keinem von ihnen in Verbindung.',
+        a4: 'Nein. ClawAI ist ein unabhängiges Produkt, das über einen Arbeitsbereich Zugang zu den Modellen dieser Anbieter bereitstellt. Es wird von keinem von ihnen unterstützt und steht mit keinem von ihnen in Verbindung.',
       },
       cta: {
         title: 'Mit dem kostenlosen Tarif starten',
@@ -5422,7 +5422,7 @@ export const de: TranslationDictionary = {
       providers: {
         title: 'Jede Familie von Spitzenmodellen',
         intro:
-          'Ein Abonnement erreicht sie alle. Wechseln Sie innerhalb einer einzigen Unterhaltung zwischen ihnen – es gibt nichts zu installieren und kein Anbieterkonto zu erstellen.',
+          'Ein Arbeitsbereich erreicht sie alle. Wechseln Sie innerhalb einer einzigen Unterhaltung zwischen ihnen – es gibt nichts zu installieren und kein Anbieterkonto zu erstellen.',
         modelsLabel: 'Modelle',
         anthropicDesc:
           'Sorgfältiges Schlussfolgern über lange Dokumente, starke Code-Reviews und das zuverlässigste Befolgen von Anweisungen im gesamten Angebot.',
@@ -5698,7 +5698,7 @@ export const de: TranslationDictionary = {
       models: {
         title: 'Die Modelle, die Sie erreichen können',
         intro:
-          'Ein Abonnement, jede Familie unten. Sie können innerhalb einer einzigen Unterhaltung zwischen ihnen wechseln.',
+          'Ein Arbeitsbereich, jede Familie unten. Sie können innerhalb einer einzigen Unterhaltung zwischen ihnen wechseln.',
         anthropicStrength:
           'Sorgfältiges Schlussfolgern, lange Dokumente und die zuverlässigsten Code-Reviews im Angebot.',
         openaiStrength:
@@ -6114,7 +6114,7 @@ export const de: TranslationDictionary = {
       hero: {
         title: 'Was Menschen tatsächlich mit ClawAI machen',
         subtitle:
-          'Zehn Aufgaben, die jeden Tag vorkommen, und das Modell – oder die Kombination von Modellen –, das jede davon am besten bewältigt. Alles in einem Abonnement.',
+          'Zehn Aufgaben, die jeden Tag vorkommen, und das Modell – oder die Kombination von Modellen –, das jede davon am besten bewältigt. Alles in einem Arbeitsbereich.',
         lastReviewedLabel: 'Zuletzt geprüft',
       },
       grid: {
@@ -6188,7 +6188,7 @@ export const de: TranslationDictionary = {
         imagesCapability: 'Bilderzeugung',
       },
       oneSubscription: {
-        title: 'Warum ein Abonnement mehrere schlägt',
+        title: 'Warum ein Arbeitsbereich mehrere Abonnements schlägt',
         intro:
           'Vier KI-Abonnements zu betreiben ist nicht viermal besser als eines. Es sind vier Rechnungen, vier Sätze von Limits und eine ständige, niederschwellige Entscheidung, welchen Tab man öffnet.',
         pointRightModelTitle: 'Das richtige Modell, jedes Mal',
@@ -6234,7 +6234,7 @@ export const de: TranslationDictionary = {
         description: 'Was ClawAI ist und wie Sie beginnen.',
         whatIsQ: 'Was ist ClawAI?',
         whatIsA:
-          'Ein einziges Abonnement, das jedes Spitzenmodell der KI erreicht – Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok und Amazon Bedrock – über eine einzige Chat-Oberfläche. Es leitet jede Nachricht an das am besten geeignete Modell, merkt sich nützlichen Kontext zwischen Unterhaltungen, beantwortet Fragen zu Dateien, die Sie hochladen, und kann bei Bedarf mehrere Modelle auf dasselbe Problem ansetzen, wenn eine Antwort nicht ausreicht.',
+          'Ein einziger Arbeitsbereich, der jedes Spitzenmodell der KI erreicht – Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok und Amazon Bedrock – über eine einzige Chat-Oberfläche. Er leitet jede Nachricht an das am besten geeignete Modell, merkt sich nützlichen Kontext zwischen Unterhaltungen, beantwortet Fragen zu Dateien, die Sie hochladen, und kann bei Bedarf mehrere Modelle auf dasselbe Problem ansetzen, wenn eine Antwort nicht ausreicht.',
         apiKeysQ: 'Brauche ich einen API-Schlüssel von OpenAI oder Anthropic?',
         apiKeysA:
           'Nein. Der Zugang zu den Modellen ist in Ihrem Abonnement enthalten. Es gibt keine Anbieterkonten zu erstellen, keine Schlüssel einzufügen und keine separaten Anbieterrechnungen.',

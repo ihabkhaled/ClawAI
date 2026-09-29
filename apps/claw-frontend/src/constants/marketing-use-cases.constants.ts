@@ -85,7 +85,7 @@ export const MARKETING_USE_CASES: ReadonlyArray<MarketingUseCase> = [
   },
 ];
 
-// The argument for one subscription across many models rather than several
+// The argument for one workspace across many models rather than several subscriptions
 // separate vendor plans.
 export const MARKETING_USE_CASE_VALUE_POINTS: ReadonlyArray<MarketingUseCaseValuePoint> = [
   {
@@ -120,6 +120,6 @@ export const MARKETING_USE_CASES_CONTACT_PATH = '/contact';
 export const MARKETING_USE_CASES_PAGE_FALLBACK: MarketingUseCasesPageFallback = {
   title: 'ClawAI Use Cases — Every AI, One Workspace',
   description:
-    'Ten jobs people bring to ClawAI every day — coding, research, writing, data analysis, support, strategy, study, translation, documents and images — each routed to the model that handles it best, on one subscription.',
+    'Ten jobs people bring to ClawAI every day — coding, research, writing, data analysis, support, strategy, study, translation, documents and images — each routed to the model that handles it best, in one workspace.',
   canonicalPath: '/use-cases',
 };

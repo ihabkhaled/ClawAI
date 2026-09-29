@@ -22,7 +22,7 @@ export const ES_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'Qué hace',
     capabilities: [
       {
-        title: 'Todos los modelos, una suscripción',
+        title: 'Todos los modelos, un espacio de trabajo',
         body: 'Nueve familias de modelos punteros y tus modelos locales de pesos abiertos, al alcance desde el editor y sin claves de API que pegar. El enrutado ocurre en la plataforma, así que el editor nunca guarda una credencial de proveedor.',
       },
       {

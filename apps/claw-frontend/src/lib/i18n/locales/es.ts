@@ -5169,7 +5169,7 @@ export const es: TranslationDictionary = {
         modelCount: '{count} modelos disponibles ahora',
         title: 'Los modelos que obtiene',
         intro:
-          'Una sola suscripción cubre todos los proveedores a continuación. Cambie de modelo a mitad de la conversación, o deje que ClawAI elija el mejor para cada mensaje.',
+          'Un solo espacio de trabajo cubre todos los proveedores a continuación. Cambie de modelo a mitad de la conversación, o deje que ClawAI elija el mejor para cada mensaje.',
         footnote:
           'Los nuevos modelos de frontera se añaden a medida que se lanzan: su plan los cubre desde el primer día, medidos frente a un solo cupo.',
         linkFeatures: 'Explore todas las funciones',
@@ -5325,7 +5325,7 @@ export const es: TranslationDictionary = {
         title: 'Para quién es ClawAI',
         privacyName: 'Personas que usan la IA a diario',
         privacyDesc:
-          'una sola suscripción en lugar de tres o cuatro, con el modelo más potente siempre a un clic de distancia en lugar de detrás de otro muro de pago.',
+          'un solo espacio de trabajo en lugar de tres o cuatro suscripciones separadas, con el modelo más potente siempre a un clic de distancia en lugar de detrás de otro muro de pago.',
         devName: 'Desarrolladores que evalúan modelos',
         devDesc:
           'envíe el mismo prompt a cinco modelos a la vez y lea las respuestas una junto a otra antes de decidirse por una.',
@@ -5345,7 +5345,7 @@ export const es: TranslationDictionary = {
         q3: '¿Cómo se miden los límites de uso?',
         a3: 'En tokens normalizados por costo. Un modelo caro consume más de su cupo que uno económico, de modo que una sola cifra diaria y mensual se mantiene justa entre modelos cuyos precios difieren en más de un orden de magnitud.',
         q4: '¿Está ClawAI afiliado a OpenAI, Anthropic, Google o AWS?',
-        a4: 'No. ClawAI es un producto independiente que proporciona acceso a los modelos de esos proveedores mediante una sola suscripción. No cuenta con el respaldo ni está afiliado a ninguno de ellos.',
+        a4: 'No. ClawAI es un producto independiente que proporciona acceso a los modelos de esos proveedores mediante un solo espacio de trabajo. No cuenta con el respaldo ni está afiliado a ninguno de ellos.',
       },
       cta: {
         title: 'Empiece con el plan gratuito',
@@ -5399,7 +5399,7 @@ export const es: TranslationDictionary = {
       providers: {
         title: 'Todas las familias de modelos de frontera',
         intro:
-          'Una sola suscripción da acceso a todos estos. Cambie entre ellos dentro de una misma conversación: no hay nada que instalar ni cuentas de proveedor que crear.',
+          'Un solo espacio de trabajo da acceso a todos estos. Cambie entre ellos dentro de una misma conversación: no hay nada que instalar ni cuentas de proveedor que crear.',
         modelsLabel: 'Modelos',
         anthropicDesc:
           'Razonamiento cuidadoso sobre documentos extensos, revisión de código sólida y el seguimiento de instrucciones más fiable del catálogo.',
@@ -5675,7 +5675,7 @@ export const es: TranslationDictionary = {
       models: {
         title: 'Los modelos a los que puede acceder',
         intro:
-          'Una suscripción, todas las familias a continuación. Puede cambiar entre ellas dentro de una misma conversación.',
+          'Un espacio de trabajo, todas las familias a continuación. Puede cambiar entre ellas dentro de una misma conversación.',
         anthropicStrength:
           'Razonamiento cuidadoso, documentos extensos y la revisión de código más fiable del catálogo.',
         openaiStrength:
@@ -6087,7 +6087,7 @@ export const es: TranslationDictionary = {
       hero: {
         title: 'Qué hace realmente la gente con ClawAI',
         subtitle:
-          'Diez tareas que surgen a diario, y el modelo —o la combinación de modelos— que mejor gestiona cada una. Todo con una sola suscripción.',
+          'Diez tareas que surgen a diario, y el modelo —o la combinación de modelos— que mejor gestiona cada una. Todo en un solo espacio de trabajo.',
         lastReviewedLabel: 'Última revisión',
       },
       grid: {
@@ -6161,7 +6161,7 @@ export const es: TranslationDictionary = {
         imagesCapability: 'Generación de imágenes',
       },
       oneSubscription: {
-        title: 'Por qué una suscripción supera a varias',
+        title: 'Por qué un espacio de trabajo supera a varias suscripciones',
         intro:
           'Tener cuatro suscripciones de IA no es cuatro veces mejor que tener una. Son cuatro facturas, cuatro conjuntos de límites y una decisión constante de bajo nivel sobre qué pestaña abrir.',
         pointRightModelTitle: 'El modelo adecuado, siempre',
@@ -6207,7 +6207,7 @@ export const es: TranslationDictionary = {
         description: 'Qué es ClawAI, y cómo empezar.',
         whatIsQ: '¿Qué es ClawAI?',
         whatIsA:
-          'Una sola suscripción que da acceso a todos los modelos de IA de frontera —Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok y Amazon Bedrock— a través de una sola interfaz de chat. Enruta cada mensaje al modelo que mejor le conviene, recuerda el contexto útil entre conversaciones, responde preguntas sobre los archivos que usted sube, y puede poner a varios modelos a trabajar en el mismo problema cuando una sola respuesta no basta.',
+          'Un solo espacio de trabajo que da acceso a todos los modelos de IA de frontera —Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok y Amazon Bedrock— a través de una sola interfaz de chat. Enruta cada mensaje al modelo que mejor le conviene, recuerda el contexto útil entre conversaciones, responde preguntas sobre los archivos que usted sube, y puede poner a varios modelos a trabajar en el mismo problema cuando una sola respuesta no basta.',
         apiKeysQ: '¿Necesito una clave de API de OpenAI o Anthropic?',
         apiKeysA:
           'No. El acceso a los modelos está incluido en su suscripción. No hay que crear cuentas de proveedor, ni pegar claves, ni pagar facturas de proveedor por separado.',

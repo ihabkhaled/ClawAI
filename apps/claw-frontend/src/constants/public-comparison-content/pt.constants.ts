@@ -25,7 +25,7 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparações',
     intro:
-      'O ClawAI não tenta ser um assistente único melhor. Coloca {cloudProviderCount} provedores em nuvem e modelos locais de pesos abertos sob uma só assinatura e envia cada mensagem para o que melhor serve. Estas páginas põem isso frente aos assistentes que as pessoas já usam, sempre sobre as mesmas oito capacidades.',
+      'O ClawAI não tenta ser um assistente único melhor. Coloca {cloudProviderCount} provedores em nuvem e modelos locais de pesos abertos em um só espaço de trabalho e envia cada mensagem para o que melhor serve. Estas páginas põem isso frente aos assistentes que as pessoas já usam, sempre sobre as mesmas oito capacidades.',
     cardsTitle: 'Escolha um assistente para comparar',
     cardCta: 'Comparar com {rival}',
     coversTitle: 'O que cada comparação cobre',
@@ -64,7 +64,7 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'OpenAI',
       eyebrow: 'ClawAI vs ChatGPT',
       intro:
-        'O ChatGPT é o assistente em que quase toda a gente pensa quando diz «IA»: polido, rápido e apoiado nos modelos de ponta da OpenAI. O ClawAI tem outra forma: uma assinatura que alcança os modelos da OpenAI ao lado de outras oito famílias e envia cada mensagem para a que melhor serve.',
+        'O ChatGPT é o assistente em que quase toda a gente pensa quando diz «IA»: polido, rápido e apoiado nos modelos de ponta da OpenAI. O ClawAI tem outra forma: um espaço de trabalho que alcança os modelos da OpenAI ao lado de outras oito famílias e envia cada mensagem para a que melhor serve.',
       theirStrength:
         'Um único produto extremamente bem feito. Voz, geração de imagens, execução de código e pesquisa profunda vêm integradas e funcionam em conjunto, as apps móveis são excelentes e o modelo por baixo é de ponta, não um compromisso.',
       ourDifference:
@@ -274,7 +274,7 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Moonshot AI',
       eyebrow: 'ClawAI vs Kimi',
       intro:
-        'O Kimi ganhou reputação com contexto muito longo e, mais recentemente, com a publicação de pesos abertos que qualquer pessoa pode descarregar e correr. O ClawAI tem outra forma: uma assinatura que alcança modelos de pesos abertos desta classe ao lado de outras oito famílias e envia cada mensagem para a que melhor serve.',
+        'O Kimi ganhou reputação com contexto muito longo e, mais recentemente, com a publicação de pesos abertos que qualquer pessoa pode descarregar e correr. O ClawAI tem outra forma: um espaço de trabalho que alcança modelos de pesos abertos desta classe ao lado de outras oito famílias e envia cada mensagem para a que melhor serve.',
       theirStrength:
         'Leitura de contexto longo a um preço abaixo da maioria dos modelos de ponta ocidentais, bom comportamento agêntico e de uso de ferramentas, e pesos abertos na linha principal — o mesmo modelo pode ser avaliado no produto alojado e depois corrido no seu próprio hardware.',
       ourDifference:
@@ -316,7 +316,7 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs Qwen',
       intro:
-        'O Qwen é uma das famílias de pesos abertos mais completas que existem: uma escada larga de tamanhos, boa cobertura multilingue e licenciamento permissivo em quase toda a gama. O ClawAI põe modelos dessa classe ao lado de outras oito famílias numa só assinatura.',
+        'O Qwen é uma das famílias de pesos abertos mais completas que existem: uma escada larga de tamanhos, boa cobertura multilingue e licenciamento permissivo em quase toda a gama. O ClawAI põe modelos dessa classe ao lado de outras oito famílias num só espaço de trabalho.',
       theirStrength:
         'Amplitude. Tamanhos que vão dos que correm num portátil aos que precisam de um servidor, variantes de visão e de código, desempenho realmente bom fora do inglês, e licenciamento que torna simples o self-hosting comercial.',
       ourDifference:

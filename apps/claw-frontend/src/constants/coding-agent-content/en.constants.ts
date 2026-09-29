@@ -21,7 +21,7 @@ export const EN_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'What it does',
     capabilities: [
       {
-        title: 'Every model, one subscription',
+        title: 'Every model, one workspace',
         body: 'Nine frontier families and your local open-weight models, reachable from the editor with no API keys to paste. Routing happens on the platform, so the editor never holds a provider credential.',
       },
       {

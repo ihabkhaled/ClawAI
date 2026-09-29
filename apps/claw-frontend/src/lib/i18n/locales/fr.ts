@@ -5199,7 +5199,7 @@ export const fr: TranslationDictionary = {
         modelCount: '{count} modèles disponibles actuellement',
         title: 'Les modèles auxquels vous avez accès',
         intro:
-          'Un seul abonnement couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',
+          'Un seul espace de travail couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',
         footnote:
           "Les nouveaux modèles de pointe sont ajoutés dès leur lancement — votre forfait les couvre dès le premier jour, décomptés d'un quota unique.",
         linkFeatures: 'Explorer toutes les fonctionnalités',
@@ -5356,7 +5356,7 @@ export const fr: TranslationDictionary = {
         title: 'À qui s’adresse ClawAI',
         privacyName: "Les personnes qui utilisent l'IA au quotidien",
         privacyDesc:
-          'un seul abonnement au lieu de trois ou quatre, avec le modèle le plus puissant toujours à portée de clic plutôt que derrière un autre péage.',
+          'un seul espace de travail au lieu de trois ou quatre abonnements distincts, avec le modèle le plus puissant toujours à portée de clic plutôt que derrière un autre péage.',
         devName: 'Développeurs évaluant des modèles',
         devDesc:
           "envoyez le même prompt à cinq modèles à la fois et comparez les réponses côte à côte avant de vous engager sur l'une d'elles.",
@@ -5376,7 +5376,7 @@ export const fr: TranslationDictionary = {
         q3: "Comment les limites d'utilisation sont-elles mesurées ?",
         a3: "En jetons pondérés selon le coût. Un modèle coûteux consomme davantage votre quota qu'un modèle bon marché, si bien qu'un seul chiffre quotidien et mensuel reste équitable entre des modèles dont les prix varient de plus d'un ordre de grandeur.",
         q4: 'ClawAI est-il affilié à OpenAI, Anthropic, Google ou AWS ?',
-        a4: "Non. ClawAI est un produit indépendant qui donne accès aux modèles de ces fournisseurs via un seul abonnement. Il n'est approuvé ni affilié à aucun d'entre eux.",
+        a4: "Non. ClawAI est un produit indépendant qui donne accès aux modèles de ces fournisseurs via un seul espace de travail. Il n'est approuvé ni affilié à aucun d'entre eux.",
       },
       cta: {
         title: 'Commencez avec le forfait gratuit',
@@ -5430,7 +5430,7 @@ export const fr: TranslationDictionary = {
       providers: {
         title: 'Toutes les familles de modèles de pointe',
         intro:
-          "Un seul abonnement donne accès à tous ces modèles. Passez de l'un à l'autre au sein d'une même conversation — rien à installer, aucun compte fournisseur à créer.",
+          "Un seul espace de travail donne accès à tous ces modèles. Passez de l'un à l'autre au sein d'une même conversation — rien à installer, aucun compte fournisseur à créer.",
         modelsLabel: 'Modèles',
         anthropicDesc:
           "Raisonnement minutieux sur des documents longs, révision de code solide, et le suivi d'instructions le plus fiable de la gamme.",
@@ -5707,7 +5707,7 @@ export const fr: TranslationDictionary = {
       models: {
         title: 'Les modèles auxquels vous avez accès',
         intro:
-          "Un seul abonnement, chaque famille ci-dessous. Vous pouvez passer de l'une à l'autre au sein d'une même conversation.",
+          "Un seul espace de travail, chaque famille ci-dessous. Vous pouvez passer de l'une à l'autre au sein d'une même conversation.",
         anthropicStrength:
           'Raisonnement minutieux, documents longs, et la révision de code la plus fiable de la gamme.',
         openaiStrength:
@@ -6121,7 +6121,7 @@ export const fr: TranslationDictionary = {
       hero: {
         title: 'Ce que les gens font réellement avec ClawAI',
         subtitle:
-          'Dix tâches qui reviennent chaque jour, et le modèle — ou la combinaison de modèles — qui les gère le mieux. Le tout sur un seul abonnement.',
+          'Dix tâches qui reviennent chaque jour, et le modèle — ou la combinaison de modèles — qui les gère le mieux. Le tout dans un seul espace de travail.',
         lastReviewedLabel: 'Dernière mise à jour',
       },
       grid: {
@@ -6195,7 +6195,7 @@ export const fr: TranslationDictionary = {
         imagesCapability: "Génération d'images",
       },
       oneSubscription: {
-        title: 'Pourquoi un seul abonnement vaut mieux que plusieurs',
+        title: 'Pourquoi un seul espace de travail vaut mieux que plusieurs abonnements',
         intro:
           "Gérer quatre abonnements IA n'est pas quatre fois meilleur qu'un seul. C'est quatre factures, quatre ensembles de limites, et une décision constante de bas niveau sur quel onglet ouvrir.",
         pointRightModelTitle: 'Le bon modèle, à chaque fois',
@@ -6241,7 +6241,7 @@ export const fr: TranslationDictionary = {
         description: "Ce qu'est ClawAI, et comment commencer.",
         whatIsQ: "Qu'est-ce que ClawAI ?",
         whatIsA:
-          "Un abonnement unique qui donne accès à tous les modèles d'IA de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Amazon Bedrock — via une seule interface de conversation. Il route chaque message vers le modèle le mieux adapté, retient le contexte utile entre les conversations, répond aux questions sur les fichiers que vous téléversez, et peut faire travailler plusieurs modèles sur le même problème lorsqu'une seule réponse ne suffit pas.",
+          "Un espace de travail unique qui donne accès à tous les modèles d'IA de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Amazon Bedrock — via une seule interface de conversation. Il route chaque message vers le modèle le mieux adapté, retient le contexte utile entre les conversations, répond aux questions sur les fichiers que vous téléversez, et peut faire travailler plusieurs modèles sur le même problème lorsqu'une seule réponse ne suffit pas.",
         apiKeysQ: "Ai-je besoin d'une clé API d'OpenAI ou d'Anthropic ?",
         apiKeysA:
           "Non. L'accès aux modèles est inclus dans votre abonnement. Il n'y a aucun compte fournisseur à créer, aucune clé à coller et aucune facture fournisseur séparée.",

@@ -25,7 +25,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Vergleiche',
     intro:
-      'ClawAI will nicht der bessere einzelne Assistent sein. Es stellt {cloudProviderCount} Cloud-Anbieter und lokale Open-Weight-Modelle hinter ein Abonnement und schickt jede Nachricht an das passende Modell. Diese Seiten stellen das den Assistenten gegenüber, die Menschen bereits nutzen — jedes Mal anhand derselben acht Fähigkeiten.',
+      'ClawAI will nicht der bessere einzelne Assistent sein. Es vereint {cloudProviderCount} Cloud-Anbieter und lokale Open-Weight-Modelle in einem Arbeitsbereich und schickt jede Nachricht an das passende Modell. Diese Seiten stellen das den Assistenten gegenüber, die Menschen bereits nutzen — jedes Mal anhand derselben acht Fähigkeiten.',
     cardsTitle: 'Assistenten zum Vergleichen auswählen',
     cardCta: 'Mit {rival} vergleichen',
     coversTitle: 'Was jeder Vergleich abdeckt',
@@ -65,7 +65,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'OpenAI',
       eyebrow: 'ClawAI vs. ChatGPT',
       intro:
-        'ChatGPT ist der Assistent, den die meisten meinen, wenn sie „KI“ sagen: ausgereift, schnell, gestützt auf OpenAIs eigene Spitzenmodelle. ClawAI hat eine andere Form: ein Abonnement, das OpenAIs Modelle neben acht weiteren Familien erreicht und jede Nachricht an die passende schickt.',
+        'ChatGPT ist der Assistent, den die meisten meinen, wenn sie „KI“ sagen: ausgereift, schnell, gestützt auf OpenAIs eigene Spitzenmodelle. ClawAI hat eine andere Form: ein Arbeitsbereich, der OpenAIs Modelle neben acht weiteren Familien erreicht und jede Nachricht an die passende schickt.',
       theirStrength:
         'Ein einzelnes, sehr gut gemachtes Produkt. Sprache, Bilderzeugung, Codeausführung und tiefe Recherche sind eingebaut und greifen ineinander, die mobilen Apps sind hervorragend, und das Modell darunter ist ein Spitzenmodell, kein Kompromiss.',
       ourDifference:
@@ -274,7 +274,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Moonshot AI',
       eyebrow: 'ClawAI vs. Kimi',
       intro:
-        'Kimi hat sich seinen Ruf mit sehr langem Kontext erarbeitet und zuletzt damit, offene Gewichte zu veröffentlichen, die jeder herunterladen und ausführen kann. ClawAI hat eine andere Form: ein Abonnement, das offene Modelle dieser Klasse neben acht weiteren Familien erreicht und jede Nachricht an die passende schickt.',
+        'Kimi hat sich seinen Ruf mit sehr langem Kontext erarbeitet und zuletzt damit, offene Gewichte zu veröffentlichen, die jeder herunterladen und ausführen kann. ClawAI hat eine andere Form: ein Arbeitsbereich, der offene Modelle dieser Klasse neben acht weiteren Familien erreicht und jede Nachricht an die passende schickt.',
       theirStrength:
         'Lesen mit sehr langem Kontext zu einem Preis, der die meisten westlichen Spitzenmodelle unterbietet, starkes Verhalten bei Agenten und Werkzeugnutzung und offene Gewichte für die Flaggschiff-Reihe — dasselbe Modell lässt sich also im gehosteten Produkt bewerten und danach auf eigener Hardware betreiben.',
       ourDifference:
@@ -317,7 +317,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs. Qwen',
       intro:
-        'Qwen ist eine der vollständigsten offenen Modellfamilien überhaupt: eine breite Leiter an Größen, starke Mehrsprachigkeit und eine großzügige Lizenzierung über den größten Teil der Reihe. ClawAI stellt Modelle dieser Klasse neben acht weitere Familien in ein Abonnement.',
+        'Qwen ist eine der vollständigsten offenen Modellfamilien überhaupt: eine breite Leiter an Größen, starke Mehrsprachigkeit und eine großzügige Lizenzierung über den größten Teil der Reihe. ClawAI stellt Modelle dieser Klasse neben acht weitere Familien in einen Arbeitsbereich.',
       theirStrength:
         'Breite. Größen von solchen, die auf einem Laptop laufen, bis zu solchen, die einen Server brauchen, Varianten für Bild und Code, wirklich gute Leistung außerhalb des Englischen und eine Lizenzierung, die kommerzielles Self-Hosting unkompliziert macht.',
       ourDifference:

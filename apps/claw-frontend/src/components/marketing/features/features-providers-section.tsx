@@ -3,7 +3,7 @@
 import { FEATURES_MODEL_FAMILIES } from '@/constants/marketing-features.constants';
 import { useTranslation } from '@/lib/i18n';
 
-// One subscription, every frontier family. Model names are brand literals from
+// One workspace, every frontier family. Model names are brand literals from
 // the constants file; only the positioning blurb is translated.
 export function FeaturesProvidersSection(): React.ReactElement {
   const { t } = useTranslation();

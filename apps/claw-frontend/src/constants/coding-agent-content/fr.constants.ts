@@ -22,7 +22,7 @@ export const FR_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'Ce qu’il fait',
     capabilities: [
       {
-        title: 'Tous les modèles, un seul abonnement',
+        title: 'Tous les modèles, un seul espace de travail',
         body: 'Neuf familles de modèles de premier plan et vos modèles locaux à poids ouverts, accessibles depuis l’éditeur sans aucune clé API à coller. Le routage se fait sur la plateforme : l’éditeur ne détient jamais l’identifiant d’un fournisseur.',
       },
       {

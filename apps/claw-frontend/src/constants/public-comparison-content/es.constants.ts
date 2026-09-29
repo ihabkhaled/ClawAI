@@ -25,7 +25,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparativas',
     intro:
-      'ClawAI no intenta ser un asistente único mejor. Pone {cloudProviderCount} proveedores en la nube y modelos locales de pesos abiertos bajo una sola suscripción y envía cada mensaje al que mejor encaja. Estas páginas lo contrastan con los asistentes que la gente ya usa, siempre sobre las mismas ocho capacidades.',
+      'ClawAI no intenta ser un asistente único mejor. Pone {cloudProviderCount} proveedores en la nube y modelos locales de pesos abiertos en un solo espacio de trabajo y envía cada mensaje al que mejor encaja. Estas páginas lo contrastan con los asistentes que la gente ya usa, siempre sobre las mismas ocho capacidades.',
     cardsTitle: 'Elige un asistente para comparar',
     cardCta: 'Comparar con {rival}',
     coversTitle: 'Qué cubre cada comparativa',
@@ -64,7 +64,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'OpenAI',
       eyebrow: 'ClawAI vs ChatGPT',
       intro:
-        'ChatGPT es el asistente en el que casi todo el mundo piensa al decir «IA»: pulido, rápido y apoyado en los modelos punteros de OpenAI. ClawAI tiene otra forma: una suscripción que alcanza los modelos de OpenAI junto a otras ocho familias y envía cada mensaje al que mejor encaja.',
+        'ChatGPT es el asistente en el que casi todo el mundo piensa al decir «IA»: pulido, rápido y apoyado en los modelos punteros de OpenAI. ClawAI tiene otra forma: un espacio de trabajo que alcanza los modelos de OpenAI junto a otras ocho familias y envía cada mensaje al que mejor encaja.',
       theirStrength:
         'Un único producto extremadamente bien hecho. Voz, generación de imágenes, ejecución de código e investigación profunda vienen integradas y funcionan juntas, las apps móviles son excelentes y el modelo de debajo es puntero, no un compromiso.',
       ourDifference:
@@ -274,7 +274,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Moonshot AI',
       eyebrow: 'ClawAI vs Kimi',
       intro:
-        'Kimi se hizo un nombre con contextos muy largos y, más recientemente, publicando pesos abiertos que cualquiera puede descargar y ejecutar. ClawAI tiene otra forma: una suscripción que alcanza modelos de pesos abiertos de la clase de Kimi junto a otras ocho familias y envía cada mensaje al que mejor encaja.',
+        'Kimi se hizo un nombre con contextos muy largos y, más recientemente, publicando pesos abiertos que cualquiera puede descargar y ejecutar. ClawAI tiene otra forma: un espacio de trabajo que alcanza modelos de pesos abiertos de la clase de Kimi junto a otras ocho familias y envía cada mensaje al que mejor encaja.',
       theirStrength:
         'Lectura de contextos largos a un precio por debajo de la mayoría de los modelos punteros occidentales, buen comportamiento agéntico y con herramientas, y pesos abiertos en su línea principal: el mismo modelo se puede evaluar en el producto alojado y luego ejecutar en tu propio hardware.',
       ourDifference:
@@ -316,7 +316,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs Qwen',
       intro:
-        'Qwen es una de las familias de pesos abiertos más completas que existen: una escalera amplia de tamaños, buena cobertura multilingüe y licencias permisivas en casi todo el catálogo. ClawAI pone modelos de esa clase junto a otras ocho familias bajo una sola suscripción.',
+        'Qwen es una de las familias de pesos abiertos más completas que existen: una escalera amplia de tamaños, buena cobertura multilingüe y licencias permisivas en casi todo el catálogo. ClawAI pone modelos de esa clase junto a otras ocho familias en un solo espacio de trabajo.',
       theirStrength:
         'Amplitud. Tamaños que van desde los que corren en un portátil hasta los que necesitan un servidor, variantes de visión y de código, un rendimiento realmente bueno fuera del inglés y licencias que hacen sencillo el autoalojamiento comercial.',
       ourDifference:
