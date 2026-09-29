@@ -55,6 +55,9 @@ retrieval, internal routes) and `apps/claw-chat-service`
 
 12. **Memories are markdown end to end.** Stored and injected verbatim; the memory card renders them with `MarkdownRenderer` over `memoryCardPreview()` (first 4,000 characters) — never raw text, never a 250K parse per card.
 
+13. **Exact strings are quoted, never translated.** The memory and pack blocks end with `VERBATIM_QUOTE_INSTRUCTION`: an error message, label or code from the material is quoted verbatim in its original language even when the reply is in Arabic (live round R9 translated it). Its tokens are counted in `estimateSystemOverheadTokens` (rule 51).
+14. **An enforced-local domain needs a live local runtime.** `handleAuto` honours medical/legal/privacy → local-ollama only when `isRuntimeHealthy('OLLAMA')`; otherwise it goes cloud router → heuristic best-available cloud, skipping the Ollama router and local category models. Production runs no ollama-service; a pasted healthcare pack used to die with "fetch failed".
+
 ## How to check
 
 ```bash

@@ -554,7 +554,19 @@ export class RoutingManager {
 
   private async handleAuto(context: RoutingContext): Promise<RoutingDecisionResult> {
     this.logger.debug('handleAuto: starting AUTO routing');
-    const localEnforcementDomain = this.detectLocalEnforcementDomain(context.message);
+    const detectedDomain = this.detectLocalEnforcementDomain(context.message);
+    // An enforced-local domain can only be honoured by a local runtime that is
+    // there. Production runs no ollama-service: a healthcare spec pasted in AUTO
+    // was sent to local-ollama and failed with "fetch failed". With no healthy
+    // local runtime the turn is routed like any other AUTO turn (cloud
+    // router → heuristic best available) instead of to a dead endpoint.
+    const localEnforcementDomain =
+      detectedDomain !== null && this.isRuntimeHealthy('OLLAMA', context) ? detectedDomain : null;
+    if (detectedDomain !== null && localEnforcementDomain === null) {
+      this.logger.warn(
+        `handleAuto: ${detectedDomain} prefers local but the Ollama runtime is not healthy — routing to an available cloud model`,
+      );
+    }
 
     this.logSensitiveContentDetections(context.message);
 
@@ -586,6 +598,13 @@ export class RoutingManager {
     const cloudResult = await this.tryCloudRouting(context);
     if (cloudResult) {
       return cloudResult;
+    }
+
+    // Downgraded enforced domain: the local-first steps below (Ollama router,
+    // medical → LOCAL_REASONING category model) would send it straight back to
+    // the runtime we just found missing.
+    if (detectedDomain !== null) {
+      return this.applyHeuristicRules(context, await this.computeHeuristicState(context));
     }
 
     const ollamaResult = await this.tryOllamaAssistedRouting(context);

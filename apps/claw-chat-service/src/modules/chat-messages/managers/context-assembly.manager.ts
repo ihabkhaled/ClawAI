@@ -9,7 +9,11 @@ import {
 } from '../constants/evidence-fit.constants';
 import { fitTextsToBudget } from '../utilities/text-budget.utility';
 import { fitTextsByRelevance } from '../utilities/relevant-chunks.utility';
-import { CONTEXT_PACK_BLOCK_HEADER } from '../constants/relevant-chunks.constants';
+import {
+  CONTEXT_PACK_BLOCK_HEADER,
+  MEMORY_BLOCK_HEADER,
+  VERBATIM_QUOTE_INSTRUCTION,
+} from '../constants/relevant-chunks.constants';
 import type { FixedContextSources } from '../types/evidence-fit.types';
 import { fitEvidenceToBudget } from '../utilities/evidence-fit.utility';
 import { type RetrievalBundle } from '@claw/shared-types';
@@ -289,6 +293,10 @@ export class ContextAssemblyManager {
     let tokens = estimateTokensFromText(parts.systemPrompt ?? '');
     for (const memory of parts.memories) tokens += estimateTokensFromText(memory.content);
     for (const item of parts.contextPackItems) tokens += estimateTokensFromText(item.content ?? '');
+    // Each block also carries its fixed framing (header + verbatim-quote rule).
+    const framing = `${CONTEXT_PACK_BLOCK_HEADER}\n${VERBATIM_QUOTE_INSTRUCTION}\n`;
+    if (parts.memories.length > 0) tokens += estimateTokensFromText(framing);
+    if (parts.contextPackItems.length > 0) tokens += estimateTokensFromText(framing);
     for (const file of parts.fileContents) {
       tokens += estimateTokensFromText(this.decodeFileContent(file));
     }
@@ -767,7 +775,9 @@ ${evidence.snippet}`);
       }
       sections.push(content);
     }
-    return sections.length === 0 ? null : `${CONTEXT_PACK_BLOCK_HEADER}\n${sections.join('\n')}`;
+    return sections.length === 0
+      ? null
+      : `${CONTEXT_PACK_BLOCK_HEADER}\n${sections.join('\n')}\n${VERBATIM_QUOTE_INSTRUCTION}`;
   }
 
   /**
@@ -814,7 +824,7 @@ ${evidence.snippet}`);
   private formatMemoryBlock(memories: AssembledContext['memories']): string | null {
     if (memories.length === 0) return null;
     const block = memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
-    return `USER CONTEXT (memories):\n${block}`;
+    return `${MEMORY_BLOCK_HEADER}\n${block}\n${VERBATIM_QUOTE_INSTRUCTION}`;
   }
 
   buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {

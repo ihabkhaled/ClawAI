@@ -107,6 +107,8 @@ describe('context packs reach chat (owner bugs 4, 5, 6)', () => {
     expect(prompt).toContain('Documentation Date cannot be in the future.');
     expect(prompt).toContain('### Myoncare QA');
     expect(prompt).toContain('it is not a request to create anything');
+    // Arabic question, English error message: quote it, never translate it.
+    expect(prompt).toContain('quote it verbatim in its original language');
 
     const receipt = receiptFromAssembledContext(context, 100);
     expect(receipt.packItems).toHaveLength(1);

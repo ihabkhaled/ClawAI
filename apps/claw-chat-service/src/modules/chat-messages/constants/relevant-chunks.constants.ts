@@ -101,3 +101,15 @@ export const RELEVANT_CHUNK_STOPWORDS: ReadonlySet<string> = new Set([
  */
 export const CONTEXT_PACK_BLOCK_HEADER =
   "CONTEXT PACK (the user's saved reference material - use it to answer; it is not a request to create anything):";
+
+/**
+ * Appended to the memory and context-pack blocks. Asked in Arabic about an
+ * English error message, the model translated the message instead of quoting
+ * it (live round R9, 2026-09-29). Exact strings are product facts: they are
+ * quoted character for character in their original language, and only the
+ * sentence around them follows the user's language.
+ */
+export const VERBATIM_QUOTE_INSTRUCTION =
+  'Exact strings from this material (error messages, labels, codes): quote it verbatim in its original language in backticks, even when replying in another language.';
+
+export const MEMORY_BLOCK_HEADER = 'USER CONTEXT (memories):';

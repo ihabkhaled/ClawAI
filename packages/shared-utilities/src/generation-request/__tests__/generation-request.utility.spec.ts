@@ -45,14 +45,35 @@ describe('generationRequestText — negation (owner bug 10)', () => {
     expect(generationRequestText("Don't make it dark, draw a cat")).toContain('draw a cat');
   });
 
-  // Positive phrases the generation table already covers; the filter must not
-  // cost any of them. (German/Chinese bare phrasing is a table gap, not this.)
-  it.each(['Generate an image of a cat', 'ارسم صورة لقطة', 'Draw me a cat, no background'])(
-    'still detects the plain request "%s"',
-    (message) => {
-      expect(detectImageGenerationSignals(message).matched).toBe(true);
-    },
-  );
+  // Positive requests must survive the filter, including bare German/Chinese.
+  it.each([
+    'Generate an image of a cat',
+    'ارسم صورة لقطة',
+    'Draw me a cat, no background',
+    'Erstelle ein Bild von einer Katze',
+    'Zeichne mir einen Hund im Aquarellstil',
+    'Mach mir ein Bild vom Sonnenuntergang',
+    '生成一张猫的图片',
+    '帮我画一只狗',
+    '画一幅山水画',
+  ])('still detects the plain request "%s"', (message) => {
+    expect(detectImageGenerationSignals(message).matched).toBe(true);
+  });
+});
+
+describe('German and Chinese: negation and questions about an image', () => {
+  it.each([
+    'Erstelle kein Bild, erkläre es nur.',
+    'Bitte zeichne mir nichts, nicht zeichnen.',
+    'Beschreibe das Bild von einer Katze.',
+    'Was ist auf diesem Bild zu sehen?',
+    '不要生成一张图片，只要解释。',
+    '别画一张图，直接回答。',
+    '这张图片是什么？',
+    '请总结这张图片的内容。',
+  ])('"%s" is not an image request', (message) => {
+    expect(detectImageGenerationSignals(message).matched).toBe(false);
+  });
 });
 
 describe('generationRequestText — pasted documents', () => {

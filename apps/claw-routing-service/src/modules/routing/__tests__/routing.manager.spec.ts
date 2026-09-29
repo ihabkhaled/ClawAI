@@ -1379,6 +1379,25 @@ describe('RoutingManager', () => {
     });
   });
 
+  describe('privacy-enforced routing with no reachable local runtime (prod has no ollama-service)', () => {
+    it.each([
+      ['Ollama runtime reported down', { OLLAMA: false }],
+      ['Ollama runtime absent from the health map', {}],
+    ])('%s → a cloud model, never local-ollama', async (_label, runtimeHealth) => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        runtimeHealth,
+        message: 'review the clinical trial data for the new medication dosage',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(result.selectedProvider).not.toBe('local-ollama');
+      expect(result.selectedProvider).not.toBe('UNAVAILABLE');
+      expect(result.reasonTags).not.toContain('privacy_enforced');
+      expect(result.fallbackChain.some((f) => f.provider !== 'local-ollama')).toBe(true);
+    });
+  });
+
   describe('privacy-enforced routing in AUTO mode', () => {
     it('should force local when privacy-sensitive content detected', async () => {
       const context: RoutingContext = {

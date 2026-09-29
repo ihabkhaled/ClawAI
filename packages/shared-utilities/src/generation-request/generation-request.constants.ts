@@ -61,6 +61,7 @@ export const NEGATION_WORDS: ReadonlySet<string> = new Set([
   'nie',
   'niemals',
   'ohne',
+  'nichts',
   // es
   'nunca',
   'sin',

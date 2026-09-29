@@ -44,3 +44,9 @@ Pasting the Myoncare pack (which says "DO NOT generate an image, diagram, docume
 ## Addendum — saving from chat
 
 Owner feature 11: "save this as memory / remember this / add this to my context pack" in 13 locales is handled deterministically by chat-service before any model call, through two owner-scoped, idempotent memory-service routes, and answered with a localized confirmation. Deviation from the brief: no model tool-calling path — the deterministic path already covers every model, and a second path would be a second way to save twice. Ambiguity is limited to "nothing to save", which gets one question.
+
+## Addendum — follow-ups from the live rounds
+
+- AUTO downgrades an enforced-local domain to cloud when no Ollama runtime is healthy (owner decision: availability over locality when no local runtime exists). Where Ollama is healthy, enforcement is unchanged.
+- Memory/pack blocks instruct verbatim quoting of exact strings in their original language.
+- German and Chinese bare generation phrases added; the earlier "known gap" is closed.
