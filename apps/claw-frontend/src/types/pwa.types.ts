@@ -8,3 +8,8 @@ export interface PwaInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<PwaInstallPromptChoice>;
 }
+
+/** Body of `GET /api/version`. */
+export interface DeployedVersionResponse {
+  version: string;
+}

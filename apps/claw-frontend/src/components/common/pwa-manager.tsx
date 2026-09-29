@@ -9,21 +9,18 @@ import {
   PWA_CACHE_PREFIX,
   PWA_INSTALL_DISMISSED_KEY,
   PWA_UPDATE_CHECK_INTERVAL_MS,
-  PWA_UPDATE_SEEN_KEY,
 } from '@/constants/pwa.constants';
 import { useTranslation } from '@/lib/i18n';
+import { appVersionRepository } from '@/repositories/app-version/app-version.repository';
 import type { PwaInstallPromptEvent } from '@/types/pwa.types';
-import {
-  isUpdateAlreadySeen,
-  serviceWorkerUrl,
-  serviceWorkerVersion,
-  shouldRegisterServiceWorker,
-} from '@/utilities/service-worker.utility';
+import { isNewerVersion } from '@/utilities/app-version.utility';
+import { serviceWorkerUrl, shouldRegisterServiceWorker } from '@/utilities/service-worker.utility';
 
 export function PwaManager(): React.ReactElement | null {
   const { t } = useTranslation();
   const [isOffline, setIsOffline] = React.useState(false);
-  const [waitingWorker, setWaitingWorker] = React.useState<ServiceWorker | null>(null);
+  const [updateAvailable, setUpdateAvailable] = React.useState(false);
+  const registrationRef = React.useRef<ServiceWorkerRegistration | null>(null);
   const [installPrompt, setInstallPrompt] = React.useState<PwaInstallPromptEvent | null>(null);
   const [isMinimized, setIsMinimized] = React.useState(false);
   const [installDismissed, setInstallDismissed] = React.useState(true); // Default to dismissed until checked.
@@ -59,98 +56,54 @@ export function PwaManager(): React.ReactElement | null {
       });
     }
 
-    let checkTimer: ReturnType<typeof setInterval> | undefined;
-    let onVisible: (() => void) | undefined;
-
     if ('serviceWorker' in navigator && shouldRegisterServiceWorker(process.env.NODE_ENV)) {
-      // An update the person has already been shown and reloaded past is not
-      // news. Only a different version re-opens the question.
-      const offerUpdate = (worker: ServiceWorker): void => {
-        const seen = localStorage.getItem(PWA_UPDATE_SEEN_KEY);
-        if (isUpdateAlreadySeen(serviceWorkerVersion(worker.scriptURL), seen)) {
-          return;
-        }
-        setWaitingWorker(worker);
-      };
-
       void navigator.serviceWorker
         .register(serviceWorkerUrl(APP_VERSION))
         .then((registration) => {
-          if (registration.waiting) {
-            offerUpdate(registration.waiting);
-          }
-          registration.addEventListener('updatefound', () => {
-            const worker = registration.installing;
-            if (!worker) {
-              return;
-            }
-            worker.addEventListener('statechange', () => {
-              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                offerUpdate(worker);
-              }
-            });
-          });
-
-          // The browser only re-checks the worker script on navigation, so a
-          // tab left open never learned that a release had happened — the
-          // banner appeared on the NEXT reload, which is the moment it is
-          // least useful. Ask periodically instead, and only while the tab is
-          // in front of someone.
-          const check = (): void => {
-            if (document.visibilityState !== 'visible') {
-              return;
-            }
-            void registration.update().catch(() => undefined);
-          };
-          check();
-          checkTimer = setInterval(check, PWA_UPDATE_CHECK_INTERVAL_MS);
-          onVisible = check;
-          document.addEventListener('visibilitychange', check);
+          registrationRef.current = registration;
         })
         .catch(() => undefined);
     }
+
+    // The banner means exactly one thing: the server now runs a later release
+    // than the one this page was built as. The waiting service worker cannot
+    // answer that — `sw.js` is byte-identical across releases, so an open tab
+    // never saw a new one, and a freshly reloaded page (already current)
+    // installs one and looked out of date. Ask the server instead; a page that
+    // is already on the deployed version, or newer, never shows it.
+    let cancelled = false;
+    const check = (): void => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+      void appVersionRepository.deployed().then((deployed) => {
+        if (!cancelled && deployed !== null) {
+          setUpdateAvailable(isNewerVersion(deployed, APP_VERSION));
+        }
+      });
+    };
+    check();
+    const checkTimer = setInterval(check, PWA_UPDATE_CHECK_INTERVAL_MS);
+    document.addEventListener('visibilitychange', check);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
-      if (checkTimer !== undefined) {
-        clearInterval(checkTimer);
-      }
-      if (onVisible !== undefined) {
-        document.removeEventListener('visibilitychange', onVisible);
-      }
+      cancelled = true;
+      clearInterval(checkTimer);
+      document.removeEventListener('visibilitychange', check);
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!waitingWorker || !('serviceWorker' in navigator)) {
-      return;
-    }
-    const handleControllerChange = (): void => window.location.reload();
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, {
-      once: true,
-    });
-    return () =>
-      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
-  }, [waitingWorker]);
-
-  // Shown means asked. A reload past the banner is the person declining it,
-  // and the answer has to outlive the page for that to mean anything.
-  React.useEffect(() => {
-    if (!waitingWorker) {
-      return;
-    }
-    const version = serviceWorkerVersion(waitingWorker.scriptURL);
-    if (version !== null) {
-      localStorage.setItem(PWA_UPDATE_SEEN_KEY, version);
-    }
-  }, [waitingWorker]);
-
+  // Take the new release now: hand control to a worker that is already
+  // waiting, then reload. The navigation is network-first, so the reload gets
+  // the new build whether or not a worker was waiting, and the new page reads
+  // equal to the deployed version, so the banner is gone.
   const applyUpdate = (): void => {
-    // The update is being taken, so nothing is outstanding to remember.
-    localStorage.removeItem(PWA_UPDATE_SEEN_KEY);
-    waitingWorker?.postMessage({ type: 'SKIP_WAITING' });
+    setUpdateAvailable(false);
+    registrationRef.current?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    window.location.reload();
   };
 
   const install = async (): Promise<void> => {
@@ -167,7 +120,7 @@ export function PwaManager(): React.ReactElement | null {
     setInstallDismissed(true);
   };
 
-  if (!isOffline && !waitingWorker && (!installPrompt || installDismissed)) {
+  if (!isOffline && !updateAvailable && (!installPrompt || installDismissed)) {
     return null;
   }
 
@@ -206,7 +159,7 @@ export function PwaManager(): React.ReactElement | null {
           </p>
         </div>
       ) : null}
-      {waitingWorker ? (
+      {updateAvailable ? (
         <div className="flex items-center gap-3">
           <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
             <RefreshCw className="h-[18px] w-[18px]" aria-hidden="true" />
