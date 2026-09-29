@@ -31,6 +31,14 @@ export { memoryCardPreview } from './memory-card.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
 export { buildLineageBarProps, toLineageLink } from './thread-lineage.utility';
 export {
+  citationHost,
+  citationHref,
+  citationIndexFromHref,
+  citationsOfMessage,
+  safeCitationUrl,
+  sameCitations,
+} from './message-citation.utility';
+export {
   clampQuoteText,
   quoteKey,
   quotesOfMessage,

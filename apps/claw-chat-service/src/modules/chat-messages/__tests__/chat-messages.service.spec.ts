@@ -1293,6 +1293,93 @@ describe('ChatMessagesService', () => {
 
       expect(executionManager.execute).toHaveBeenCalledTimes(1);
     });
+
+    it('stores the sources exactly as the prompt numbered them, for inline [n] links', async () => {
+      Object.assign(service, { saveToContext: { trySave: vi.fn().mockResolvedValue(null) } });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'What changed in the Paris metro this year?' },
+      ]);
+      contextAssembly.assemble!.mockResolvedValueOnce({
+        systemPrompt: null,
+        threadMessages: [],
+        memories: [],
+        contextPackItems: [],
+        fileContents: [],
+        workspaceCitations: [],
+        tokenBudget: 4096,
+        researchEvidence: [
+          {
+            id: 'e1',
+            title: 'RATP news',
+            url: 'https://ratp.example/news',
+            snippet: 'Line 14',
+            source: 'web',
+            providerKind: null,
+            publishedAt: null,
+            confidence: 0.9,
+          },
+        ],
+      });
+      executionManager.execute!.mockResolvedValue({
+        content: 'Line 14 was extended [1].',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const stored = messagesRepo.create.mock.calls.at(-1)?.[0] as {
+        metadata: Record<string, unknown>;
+      };
+      expect(stored.metadata['citations']).toEqual([
+        { index: 1, title: 'RATP news', url: 'https://ratp.example/news', snippet: 'Line 14' },
+      ]);
+    });
+
+    it('stores no citations when SEARCH_FIRST added its own numbered list to the prompt', async () => {
+      Object.assign(service, { saveToContext: { trySave: vi.fn().mockResolvedValue(null) } });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'What changed in the Paris metro this year?' },
+      ]);
+      contextAssembly.assemble!.mockResolvedValueOnce({
+        systemPrompt: null,
+        threadMessages: [],
+        memories: [],
+        contextPackItems: [],
+        fileContents: [],
+        workspaceCitations: [],
+        tokenBudget: 4096,
+        researchEvidence: [
+          {
+            id: 'e1',
+            title: 'RATP news',
+            url: 'https://ratp.example/news',
+            snippet: 'Line 14',
+            source: 'web',
+            providerKind: null,
+            publishedAt: null,
+            confidence: 0.9,
+          },
+        ],
+      });
+      executionManager.execute!.mockResolvedValue({
+        content: 'Line 14 was extended [1].',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+        searchFirst: { applied: true, resultCount: 3, runId: 'r1', warning: null },
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const stored = messagesRepo.create.mock.calls.at(-1)?.[0] as {
+        metadata: Record<string, unknown>;
+      };
+      expect(stored.metadata).not.toHaveProperty('citations');
+    });
   });
 
   describe('handleMessageRouted — image-output model redirect', () => {

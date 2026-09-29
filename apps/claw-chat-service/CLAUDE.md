@@ -299,6 +299,17 @@ fail-closed exception). The body is optional: no body = `{}`.
 BEFORE copies strictly older messages; the frontend's "Edit in a new branch"
 uses it and prefills the edited question without sending it.
 
+## Answers store the evidence the model was shown (2026-09-30, ADR-132)
+
+`runLlmAndStore` writes `metadata.citations = toStoredCitations(context.researchEvidence)`
+— `[{ index, title, url, snippet }]`, `index` = the `[n]` `formatResearchBlock`
+printed. The frontend links an answer's `[n]` ONLY through this list (rule 41
+§16). Change the block's numbering and `toStoredCitations` together
+(`context-assembly-citation-numbering.spec.ts` fails otherwise). When
+SEARCH_FIRST applied, NO citations are stored — its search list is a second
+`[1]..[k]` in the prompt. Lanes, labs, the Runtime V2 continuation and
+save-to-context turns store none yet.
+
 ## Editing a prompt truncates the thread (2026-08-28)
 
 `POST /chat-messages/:id/edit` rewrites a user prompt and re-runs the thread

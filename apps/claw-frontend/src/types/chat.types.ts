@@ -189,6 +189,17 @@ export type RegenerateMessageRequest = {
   model?: string;
 };
 
+/**
+ * One source an answer was written from, as chat-service stored it
+ * (`metadata.citations`): `index` is the `[n]` the model was shown.
+ */
+export type MessageCitation = {
+  index: number;
+  title: string | null;
+  url: string;
+  snippet: string;
+};
+
 /** A quote as the send request carries it: the source id and the words. */
 export type MessageQuoteRequest = {
   sourceMessageId: string;

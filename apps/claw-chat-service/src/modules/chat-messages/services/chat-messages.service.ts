@@ -96,6 +96,8 @@ import { type MessageQuoteInput } from '../dto/quote-fields.dto';
 import { type RegenerateMessageDto } from '../dto/regenerate-message.dto';
 import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utility';
 import { type MessageQuote } from '../types/message-quote.types';
+import { type StoredContextMetadata } from '../types/message-citation.types';
+import { toStoredCitations } from '../utilities/stored-citations.utility';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -1435,6 +1437,14 @@ export class ChatMessagesService implements OnModuleInit {
     const contextMetadata = {
       memoryCount: this.contextAssemblyManager.injectedMemories(context).length,
       fileIds: fileIds ?? [],
+      // The sources exactly as the prompt numbered them, so the answer's [n]
+      // can be linked — and only linked — through this list. Not when
+      // SEARCH_FIRST ran: it adds a SECOND [1]..[k] list to the prompt, so a
+      // stored [n] could name the wrong page (ADR-132).
+      citations:
+        llmResponse.searchFirst?.applied === true
+          ? []
+          : toStoredCitations(context.researchEvidence),
     };
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
@@ -1691,7 +1701,7 @@ export class ChatMessagesService implements OnModuleInit {
   private async storeAssistantResponse(
     payload: MessageRoutedData,
     llmResponse: LlmResponse,
-    contextMetadata?: { memoryCount: number; fileIds: string[] },
+    contextMetadata?: StoredContextMetadata,
     latestUserMetadata?: Record<string, unknown> | null,
   ): Promise<ChatMessage> {
     const hasVisibleContent = llmResponse.content.trim().length > 0;
@@ -1856,7 +1866,7 @@ export class ChatMessagesService implements OnModuleInit {
   private buildAssistantMetadata(args: {
     payload: MessageRoutedData;
     llmResponse: LlmResponse;
-    contextMetadata?: { memoryCount: number; fileIds: string[] };
+    contextMetadata?: StoredContextMetadata;
     latestUserMetadata?: Record<string, unknown> | null;
     hasVisibleContent: boolean;
     routeRoadmap: RouteRoadmap;
@@ -2107,11 +2117,15 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private buildContextMetaPart(
-    contextMetadata: { memoryCount: number; fileIds: string[] } | undefined,
+    contextMetadata: StoredContextMetadata | undefined,
   ): Record<string, unknown> {
-    return !contextMetadata
-      ? {}
-      : { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
+    if (!contextMetadata) return {};
+    const citations = contextMetadata.citations ?? [];
+    return {
+      memoryCount: contextMetadata.memoryCount,
+      fileIds: contextMetadata.fileIds,
+      ...(citations.length > 0 ? { citations } : {}),
+    };
   }
 
   private buildResearchMetaPart(

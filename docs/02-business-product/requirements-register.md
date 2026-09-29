@@ -179,3 +179,13 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   was missing. Still open in batch E: send an answer to Repair/Verify/Compare
   from the message, and "continue" a truncated answer.
 - **History:** 2026-09-30 created and delivered (Batch 4).
+
+### REQ-CHAT-005
+
+- **Statement:** An answer's inline `[n]` opens the exact source the model was
+  given under that number — and never a source it was not given.
+- **Status:** done (main chat) · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch M (owner, 2026-09-29).
+- **Current state:** ADR-132, rule 41 §16. Compare/lab lanes, file-page
+  provenance and a grounded-vs-model-knowledge marker are not built.
+- **History:** 2026-09-30 created and delivered (Batch 5).

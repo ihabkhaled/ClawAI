@@ -379,6 +379,15 @@ has **Edit in a new branch** (`useEditInBranch`): it branches BEFORE the
 message, writes the edited text into the branch's composer draft and opens the
 branch. It never sends — the person presses Send.
 
+## Inline citations (ADR-132)
+
+An answer with `metadata.citations` passes them to `MarkdownRenderer`. The
+`remarkCitations` plugin rewrites text-node `[n]` (never in code or links) into
+a `#cite-n` link only when a stored entry has that index; the markdown `Anchor`
+reads `CitationsContext` and renders `CitationLink` — a superscript chip named
+"title — host" that opens the source in a new tab, or a non-clickable chip when
+the URL is not http(s). Answers without citations render exactly as before.
+
 ## Quoting a selection (ADR-130)
 
 Every message bubble carries `data-quote-source-id`. Selecting text inside ONE

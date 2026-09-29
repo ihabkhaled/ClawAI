@@ -100,6 +100,7 @@ export type {
   ThreadLineageEntry,
   ThreadLineageLink,
   ComposerQuote,
+  MessageCitation,
   MessageQuote,
   RegenerateMessageRequest,
   MessageQuoteRequest,

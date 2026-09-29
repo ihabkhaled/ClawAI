@@ -116,6 +116,7 @@ import { Settings, Trash2, ArrowLeft } from 'lucide-react';
 
 **Purpose**: Let the in-chat renderer (`lib/markdown/markdown-renderer.tsx`) turn model-written HTML such as `<details><summary>` quiz answers into real elements instead of raw tag text.
 **Gotcha**: `rehype-sanitize` runs over the WHOLE tree, so its schema (`constants/markdown-sanitize.constants.ts`) must allow every tag markdown/GFM emits as well as the raw-HTML allowlist. Plugin order is fixed: raw → sanitize → highlight (highlight after sanitize, or every `hljs-*` class is stripped). Only `user-content-` ids survive, and clobbering is off, so GFM footnotes keep working and raw ids cannot clobber window globals. Public share pages (`PublicMarkdownRenderer`) parse no HTML at all, on purpose.
+**Citations (ADR-132)**: when an answer carries `metadata.citations`, a remark stage (`remarkCitations`) runs before this rehype chain and writes `#cite-n` fragment links; the sanitize schema must keep fragment hrefs for inline citations to work.
 
 ---
 

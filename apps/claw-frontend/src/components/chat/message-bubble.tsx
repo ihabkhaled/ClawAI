@@ -50,6 +50,7 @@ import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } fro
 import {
   formatShortDateTime,
   getJudgeReviewFromMessage,
+  citationsOfMessage,
   getStoredReasoning,
   quotesOfMessage,
   resolveFileDelivery,
@@ -100,6 +101,7 @@ function MessageBubbleBase({
       : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
   const quotes = isUser ? quotesOfMessage(metadata) : [];
+  const citations = isUser ? undefined : citationsOfMessage(metadata);
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
     ? (metadata['fileIds'] as string[])
     : [];
@@ -118,7 +120,10 @@ function MessageBubbleBase({
   const hasVisibleAssistantContent = message.content.trim().length > 0;
   const storedErrorText = resolveStoredErrorMessage(metadata, t);
   const assistantContent = hasVisibleAssistantContent ? (
-    <MarkdownRenderer content={storedErrorText ?? message.content} />
+    <MarkdownRenderer
+      content={storedErrorText ?? message.content}
+      citations={storedErrorText === null ? citations : undefined}
+    />
   ) : (
     <p className="text-muted-foreground whitespace-pre-wrap">{t('chat.noVisibleAnswer')}</p>
   );
