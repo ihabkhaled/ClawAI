@@ -737,9 +737,15 @@ this file" means, and is not something a person asked for by opening a file.
 - **Pages come back with their own numbers**, and a page the parser returned
   nothing for is absent rather than empty — so a caller can tell a blank page
   from one that was not parsed.
-- **`isScanned` is reported**, because a scanned page carries no text however
-  many times it is parsed. An agent that receives `""` cannot tell that from a
-  blank page and will try again.
+- **`isScanned` is reported, and judged per page.** A scanned page carries no
+  text however often it is parsed, and an agent handed `""` cannot tell that
+  from a blank page. It is _not_ the utility's whole-document rule (text under
+  `SCANNED_PDF_CHAR_THRESHOLD`), which the upload path still uses to decide on
+  OCR: a page range is short by nature, and the live lane caught pages 2-3 of a
+  real text PDF returning their text _and_ `isScanned: true`. Here a range is
+  scanned only if every page in it carries fewer than
+  `EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS` non-whitespace characters, and a range
+  past the end — no pages at all — is not scanned.
 - **PDF only**, and it says so by name. Returning empty text for a format it
   cannot read would be indistinguishable from an empty document.
 - **Smaller payload cap than upload** (~15MB against 50MB): an upload is

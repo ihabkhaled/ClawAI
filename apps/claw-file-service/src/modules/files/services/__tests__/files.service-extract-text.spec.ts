@@ -68,15 +68,65 @@ describe('FilesService.extractText', () => {
 
   it('reports a scanned document rather than calling it empty', async () => {
     // An agent that reads "" cannot tell a blank page from a page whose text
-    // is a picture, and will keep asking.
+    // is a picture, and will keep asking. A scanned PDF still has pages; they
+    // simply carry no text layer.
     parse.mockResolvedValue({
       text: '',
       isScanned: true,
-      pages: [],
-      totalPages: 3,
+      pages: [
+        { number: 1, text: '' },
+        { number: 2, text: '  \n ' },
+      ],
+      totalPages: 2,
     });
 
     expect((await service().extractText(request())).isScanned).toBe(true);
+  });
+
+  it('does not call a short range of a real text PDF scanned', async () => {
+    // Measured live: pages 2-3 of a text PDF came back with their text AND
+    // isScanned true, because the utility's rule is "whole text under 100
+    // characters", written for whole documents on upload. A range is short by
+    // nature. Scanning is judged per page here instead.
+    parse.mockResolvedValue({
+      text: 'PAGE-TWO bravo\n\nPAGE-THREE charlie',
+      isScanned: true,
+      pages: [
+        { number: 2, text: 'PAGE-TWO bravo and more words' },
+        { number: 3, text: 'PAGE-THREE charlie and more words' },
+      ],
+      totalPages: 3,
+    });
+
+    const result = await service().extractText(request({ pages: { from: 2, to: 3 } }));
+
+    expect(result.isScanned).toBe(false);
+  });
+
+  it('does not call a document scanned because one page is a picture', async () => {
+    // A cover page that is an image is common; the rest of the document is
+    // still readable text.
+    parse.mockResolvedValue({
+      text: 'body text of page two',
+      isScanned: false,
+      pages: [
+        { number: 1, text: '' },
+        { number: 2, text: 'body text of page two, which is ordinary prose' },
+      ],
+      totalPages: 2,
+    });
+
+    expect((await service().extractText(request())).isScanned).toBe(false);
+  });
+
+  it('calls nothing scanned when the range returned no pages at all', async () => {
+    // A range past the last page. There is nothing to judge, and "scanned"
+    // would send the agent looking for OCR it does not need.
+    parse.mockResolvedValue({ text: '', isScanned: true, pages: [], totalPages: 3 });
+
+    const result = await service().extractText(request({ pages: { from: 9, to: 10 } }));
+
+    expect(result.isScanned).toBe(false);
   });
 
   it('refuses a format it cannot read, by name', async () => {
