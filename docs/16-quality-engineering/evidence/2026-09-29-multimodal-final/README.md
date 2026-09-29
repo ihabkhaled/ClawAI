@@ -49,3 +49,10 @@ Connectors toggled via `PATCH /connectors/:id` and restored in `finally`.
 
 - OpenAI STT now succeeds: `provider=OPENAI model=gpt-4o-mini-transcribe`, metered=true, FINALIZED.
 - BUG found by that run: `audioSeconds=168` for a 3.5 s clip. `probeAudioSeconds` used the video-only ffprobe `-format_whitelist`, which rejects wav/mp3/ogg (`exit=1 bytes=5`), so the byte estimate was billed (~48x too much). Fixed with `AUDIO_PROBE_FORMAT_WHITELIST` (video demuxers + wav,mp3,ogg,flac,aac,aiff,amr; still no hls/concat). Lesson: a unit-mocked probe cannot catch a real-binary whitelist; only the live run did.
+
+## Deploy + re-run (2026-09-29, evening)
+
+- OpenAI STT: `finalize ... audioSeconds=4`, gpt-4o-mini-transcribe, 3.8 s. Local STT: `LOCAL`, unmetered, audioSeconds=4.
+- Masked edit: first re-run still 422 (routing had already chosen `IMAGE_GEMINI`, and `detectImageFromAttachment` returned early on any `IMAGE_` provider). Fixed by `keepsRoutedImageProvider`; second run COMPLETED on `IMAGE_OPENAI`.
+- Video restart recovery: pid 402 held the job, `docker restart`, pid 408 logged `videoStaleRecovery ... outcome=REQUEUED`, then `videoProcessed ... audioStatus=TRANSCRIBED segments=12`.
+- Lesson: a fix that is unit-tested on the function is not proven until the live path shows the branch ran; the first mask fix was correct but unreachable.

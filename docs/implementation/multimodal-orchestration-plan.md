@@ -118,7 +118,7 @@ latency: [2026-09-25 evidence](../16-quality-engineering/evidence/2026-09-25-mul
   `grok-imagine-image` $0.02 and `grok-imagine-image-2.0` $0.08 per image
   (unknown Grok image model → the 2.0 row); xAI `cost_in_usd_ticks` is logged
   next to our charge for reconciliation. Deploy routing before image-service.
-- OpenAI live verification (2026-09-29): billing is active; STT ran live and metered (see the STT row). Masked edit found a routing bug (a mask turn was sent to Gemini and refused with 422); fixed in 2b3fb057c via `selectImageEditor(hasMask)`. **Pending deploy:** the dev stack compiles the main checkout, which was occupied by another session's branch, so the live re-runs of STT (expect 4 s) and masked edit, and video restart recovery, wait for a deploy.
+- OpenAI live verification (2026-09-29), all PASS after deploy: OpenAI STT metered `audioSeconds=4` (was 168); masked edit COMPLETED on `IMAGE_OPENAI` (two routing bugs found and fixed live: 2b3fb057c, 916970f05 — a routed `IMAGE_GEMINI` skipped the mask-aware editor choice); video restart recovery (`scripts/qa-lab/video-restart-live.mjs`): file-service killed mid-job, the boot sweep logged `outcome=REQUEUED`, the new process finished `videoProcessed` with a Gemini transcript and skipped the redelivered duplicate.
 - ~~AUTO (8): modality-fit ranking only on the cloud-router path.~~ Closed 2026-09-29 (every AUTO path; rule 51 item 13).
 - ~~TTS (9): connector base URL not used for speech.~~ Closed 2026-09-29. ~~No voice picker~~ —
   closed 2026-09-26 (per-user `ttsVoice`, see Finalization). (Fixed
