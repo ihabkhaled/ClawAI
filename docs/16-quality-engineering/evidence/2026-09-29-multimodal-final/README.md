@@ -29,3 +29,9 @@ the owner to raise the cap at https://ai.studio/spend, then re-run.
 The recurring `frames route via nginx → 000` was nginx 499: unmatched
 `/api/v1/internal/*` fell through to the Next.js dev 404 page (326 KB, > 60 s cold).
 Fixed: `location /api/v1/internal/ { return 404; }` in `infra/nginx/locations.conf`.
+
+## Final run (main at 5e05450ca, after the Gemini cap was lifted)
+
+- API lane: **41/41** (`bash qa/test-multimodal.sh`).
+- Browser lane: **13/13 in one run** — `SUMMARY 1:PASS 2:PASS 3:PASS 4:PASS 5:PASS 6:PASS 7:PASS 8:PASS 9:PASS 10:PASS A:PASS B:PASS C:PASS` (`rerun/report.json`, screenshots in `rerun/screenshots/`).
+- The first post-cap run found a real bug (video question routed to `chatgpt-image-latest`, no reply) — fixed in 5e05450ca, rule 51 item 19.
