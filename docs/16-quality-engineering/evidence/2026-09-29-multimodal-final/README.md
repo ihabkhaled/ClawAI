@@ -18,3 +18,14 @@ Browser-lane rerun causes: first full run hit chat-service crash-looping after a
 needed baked shared-package symbols (`service:rebuild chat-service routing-service` fixed it);
 scenario 5's assertion predated the cancel-on-close request and was corrected in the script.
 Not run: OpenAI live (owner: no credit); local STT/TTS (no path); llamacpp/Ollama runtimes stopped (502 on their catalog).
+
+## Re-run after batches A/B/C (e18a6d72f), 12:50 UTC
+
+API lane 31/7/1 — every Gemini-backed check failed with Google's **"Your project has
+exceeded its monthly spending cap"** (image `IMAGE_PROVIDER_QUOTA_EXCEEDED`, helper
+vision, TTS 429 → RATE_LIMITED backoff, transcription "busy"); OpenAI has no credit.
+Our handling was correct in each case (right codes, holds released, no charge). Needs
+the owner to raise the cap at https://ai.studio/spend, then re-run.
+The recurring `frames route via nginx → 000` was nginx 499: unmatched
+`/api/v1/internal/*` fell through to the Next.js dev 404 page (326 KB, > 60 s cold).
+Fixed: `location /api/v1/internal/ { return 404; }` in `infra/nginx/locations.conf`.
