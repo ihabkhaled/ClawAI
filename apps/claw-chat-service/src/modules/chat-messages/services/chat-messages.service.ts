@@ -4,7 +4,6 @@ import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import {
   classifyImageIntent,
   hasAttachedImageMime,
-  imageEditProviders,
   MultimodalImageIntent,
   resolveImageCapabilityProvider,
 } from '@claw/shared-utilities';
@@ -77,6 +76,8 @@ import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
 import { ModelContextWindowClient } from '../clients/model-context-window.client';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
+import { selectImageEditor } from '../utilities/image-editor-selection.utility';
+import { readMaskFileId } from '../utilities/image-mask-refusal.utility';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ResearchRunResponse } from '../types/research.types';
 import type { CrawlRetrievalContext, CrawlRetrievalPage } from '../types/crawl-retrieval.types';
@@ -2740,7 +2741,8 @@ export class ChatMessagesService implements OnModuleInit {
     if (turn === null) return payload;
     const mimeTypes = await this.attachmentMimeTypesOf(userId, turn.fileIds);
     const intent = classifyImageIntent(turn.text, hasAttachedImageMime(mimeTypes));
-    const editor = imageEditProviders()[0];
+    // A drawn mask needs a provider that can apply one (Gemini/SD cannot).
+    const editor = selectImageEditor(turn.hasMask);
     if (intent !== MultimodalImageIntent.EDIT || editor === undefined) return payload;
     this.logger.log(
       `Image edit of an attachment: ${String(turn.fileIds.length)} files → ${editor.provider}/${editor.editModel}`,
@@ -2755,7 +2757,11 @@ export class ChatMessagesService implements OnModuleInit {
     const fileIds = Array.isArray(meta?.fileIds) ? meta.fileIds : [];
     return lastUser === undefined || fileIds.length === 0
       ? null
-      : { text: meta?.clientIntent ?? lastUser.content, fileIds };
+      : {
+          text: meta?.clientIntent ?? lastUser.content,
+          fileIds,
+          hasMask: readMaskFileId(meta) !== undefined,
+        };
   }
 
   /** The attachments' mime types; an outage reads as "no image" (never an image job by guess). */

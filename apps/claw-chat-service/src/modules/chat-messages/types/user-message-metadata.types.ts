@@ -27,4 +27,5 @@ export type UserMessageMetadata = {
 export type AttachmentTurn = {
   text: string;
   fileIds: string[];
+  hasMask: boolean;
 };
