@@ -31,7 +31,6 @@ import {
   GEMINI_TRANSCRIPTION_DEFAULT_BASE_URL,
   MAX_TRANSCRIBABLE_AUDIO_BYTES,
   OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL,
-  OPENAI_TRANSCRIPTION_MODEL,
   TRANSCRIPTION_CALLS_PER_CANDIDATE,
   TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE,
   TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR,
@@ -60,6 +59,8 @@ import {
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
 import { classifyTranscriptionFailure } from '../utilities/transcription-error.utility';
 import { waitForTranscriptionBackoff } from '../utilities/transcription-backoff.utility';
+import { openAiTranscriptionModel } from '../utilities/transcription-model.utility';
+import { probeAudioSeconds } from '../utilities/audio-duration.utility';
 
 /**
  * B6b — turns an uploaded audio file into a transcript, out of band.
@@ -193,12 +194,19 @@ export class TranscriptionManager implements OnModuleInit {
       return;
     }
 
+    // gpt-4o-*-transcribe reports no duration, so the billed seconds are
+    // measured here. undefined (probe failed / no OpenAI candidate) keeps the
+    // byte-derived estimate: the hold is never sized to zero.
+    const audioSeconds = candidates.some((candidate) => candidate.provider === 'OPENAI')
+      ? await probeAudioSeconds(base64)
+      : undefined;
     const context: TranscriptionRequestContext = {
       fileId: file.id,
       userId,
       base64,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
+      ...(audioSeconds === undefined ? {} : { audioSeconds }),
     };
     const outcome = await this.runCandidates(context, candidates);
     if (outcome !== null) {
@@ -307,6 +315,7 @@ export class TranscriptionManager implements OnModuleInit {
         requestScope: input.requestScope,
         instruction: input.instruction,
         signal: input.signal,
+        needsSegments: true,
       },
       candidates,
     );
@@ -399,7 +408,7 @@ export class TranscriptionManager implements OnModuleInit {
           status: TranscriptionAttemptStatus.CANCELLED,
           holdReleased: false,
           capability: walk.last,
-          model: this.effectiveModel(walk.last),
+          model: this.effectiveModel(walk.last, context),
         };
       }
       if (walk.blockedProviders.has(capability.provider)) {
@@ -414,7 +423,7 @@ export class TranscriptionManager implements OnModuleInit {
       status: TranscriptionAttemptStatus.FAILED,
       reason: this.exhaustedReason(walk.seen),
       capability: walk.last,
-      model: this.effectiveModel(walk.last),
+      model: this.effectiveModel(walk.last, context),
     };
   }
 
@@ -431,7 +440,7 @@ export class TranscriptionManager implements OnModuleInit {
     walk: TranscriptionWalkState,
   ): Promise<TranscriptionRunOutcome | null> {
     const { provider } = capability;
-    const model = this.effectiveModel(capability);
+    const model = this.effectiveModel(capability, context);
     for (let call = 0; call < TRANSCRIPTION_CALLS_PER_CANDIDATE; call += 1) {
       if (walk.calls >= TRANSCRIPTION_MAX_PROVIDER_CALLS) {
         this.logger.warn(
@@ -583,7 +592,7 @@ export class TranscriptionManager implements OnModuleInit {
     capability: TranscriptionCapability,
     providerAttempt: number,
   ): Promise<TranscriptionAttemptOutcome> {
-    const model = this.effectiveModel(capability);
+    const model = this.effectiveModel(capability, context);
     if (this.isCancelled(context)) {
       // Cancelled before the hold: nothing reserved, nothing called.
       return { status: TranscriptionAttemptStatus.CANCELLED, holdReleased: false };
@@ -697,7 +706,7 @@ export class TranscriptionManager implements OnModuleInit {
           );
     }
     if (provider === 'OPENAI') {
-      // verbose_json already carries timestamped segments; no instruction needed.
+      // whisper-1's verbose_json carries timestamped segments; no instruction needed.
       return signal === undefined
         ? transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model)
         : transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model, signal);
@@ -740,10 +749,16 @@ export class TranscriptionManager implements OnModuleInit {
   /**
    * OpenAI's snapshot rows are chat deployments, so the routed modelKey names
    * something that cannot transcribe. The lookup proves OpenAI is configured;
-   * the transcription endpoint's own model is named by constant.
+   * the transcription endpoint's own model is named by constant (whisper-1 where
+   * segments are needed, gpt-4o-mini-transcribe otherwise).
    */
-  private effectiveModel(capability: TranscriptionCapability): string {
-    return capability.provider === 'OPENAI' ? OPENAI_TRANSCRIPTION_MODEL : capability.model;
+  private effectiveModel(
+    capability: TranscriptionCapability,
+    context: TranscriptionRequestContext,
+  ): string {
+    return capability.provider === 'OPENAI'
+      ? openAiTranscriptionModel(context.needsSegments === true)
+      : capability.model;
   }
 
   /**

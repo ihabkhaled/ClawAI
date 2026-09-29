@@ -47,4 +47,39 @@ describe('transcribeWithOpenAi', () => {
 
     expect(result).toEqual({ text: 'hi', durationSeconds: undefined });
   });
+
+  it('asks gpt-4o-mini-transcribe for json (verbose_json is rejected) and returns no duration', async () => {
+    httpPost.mockResolvedValue({ text: ' plain words ' });
+
+    const result = await transcribeWithOpenAi(
+      'https://api.openai.com/v1',
+      'k',
+      'YmFzZTY0',
+      'audio/mpeg',
+      'gpt-4o-mini-transcribe',
+    );
+
+    expect(result).toEqual({ text: 'plain words', durationSeconds: undefined });
+    const [, form] = httpPost.mock.calls[0] as [string, FormData, unknown, unknown];
+    expect(form.get('response_format')).toBe('json');
+    expect(form.get('model')).toBe('gpt-4o-mini-transcribe');
+  });
+
+  it('turns whisper-1 segments into whole-ms lines', async () => {
+    httpPost.mockResolvedValue({
+      text: 'a b',
+      duration: 3,
+      segments: [{ start: 0, end: 1.5, text: ' a ' }],
+    });
+
+    const result = await transcribeWithOpenAi(
+      'https://api.openai.com/v1',
+      'k',
+      'YmFzZTY0',
+      'audio/webm',
+      'whisper-1',
+    );
+
+    expect(result.segments).toEqual([{ startMs: 0, endMs: 1500, text: 'a' }]);
+  });
 });

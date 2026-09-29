@@ -24,6 +24,7 @@ import {
   TRANSCRIPTION_CREDIT_CHECK_UNAVAILABLE_MESSAGE,
   TRANSCRIPTION_INSUFFICIENT_CREDIT_MESSAGE,
 } from '../../constants/transcription-payg.constants';
+import { probeAudioSeconds } from '../../utilities/audio-duration.utility';
 import { TRANSCRIPTION_PROVIDER_FAILED_MESSAGE } from '../../constants/transcription.constants';
 
 vi.mock('../../adapters/gemini-transcription.adapter', () => ({
@@ -33,6 +34,11 @@ vi.mock('../../adapters/openai-transcription.adapter', () => ({
   transcribeWithOpenAi: vi.fn(),
 }));
 
+vi.mock('../../utilities/audio-duration.utility', () => ({
+  probeAudioSeconds: vi.fn(),
+}));
+
+const mockedProbe = vi.mocked(probeAudioSeconds);
 const mockedGemini = vi.mocked(transcribeWithGemini);
 const mockedOpenAi = vi.mocked(transcribeWithOpenAi);
 
@@ -182,7 +188,7 @@ describe('TranscriptionManager — PAYG metering', () => {
       userId: 'uploader-1',
       requestId: 'transcription:file-1:OPENAI',
       provider: 'OPENAI',
-      model: 'whisper-1',
+      model: 'gpt-4o-mini-transcribe',
       surface: PaygSurface.TRANSCRIPTION,
       promptTokens: 0,
       requestedMaxOutputTokens: 1,
@@ -210,6 +216,20 @@ describe('TranscriptionManager — PAYG metering', () => {
     await h.manager.handleJob({ fileId: 'file-1', userId: 'uploader-1' });
 
     expect(h.wire()[1]?.body).toMatchObject({ audioSeconds: RESERVED_SECONDS });
+  });
+
+  it('OpenAI gpt-4o-mini-transcribe: holds and settles on the locally probed seconds (no duration returned)', async () => {
+    mockedProbe.mockResolvedValueOnce(7);
+    mockedOpenAi.mockResolvedValue({ text: 'hello there' });
+    const h = await buildHarness(buildFile(), [OPENAI], () =>
+      Promise.resolve(jsonResponse(200, heldReply(1))),
+    );
+
+    await h.manager.handleJob({ fileId: 'file-1', userId: 'uploader-1' });
+
+    const [reserve, finalize] = h.wire();
+    expect(reserve?.body).toMatchObject({ model: 'gpt-4o-mini-transcribe', audioSeconds: 7 });
+    expect(finalize?.body).toMatchObject({ audioSeconds: 7 });
   });
 
   it('Gemini: sends the GRANTED ceiling and finalizes on usageMetadata tokens', async () => {

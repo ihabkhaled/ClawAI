@@ -311,7 +311,12 @@ Three behaviours worth knowing before changing it:
   fast transcript would be overwritten by the placeholder that asked for it.
 - **Every paid attempt is PAYG-metered** (`PaygSurface.TRANSCRIPTION`,
   `TranscriptionMeterManager`, multimodal batch 4). Reserve → call → finalize on
-  MEASURED units (whisper-1: `verbose_json` `duration` seconds; Gemini:
+  MEASURED units (OpenAI: plain audio uses `gpt-4o-mini-transcribe` — `json`
+  only, no `duration` — so `probeAudioSeconds` (ffprobe, temp dir removed in
+  `finally`) measures the seconds BEFORE the reserve and hold + settle use them;
+  a failed probe keeps the byte estimate, never $0. A video's derived audio
+  stays on `whisper-1` `verbose_json` for its segments/`duration`. Model choice
+  is the constant map in `transcription.constants.ts`, not an env var. Gemini:
   `usageMetadata` tokens) → or release on throw / timeout / empty transcript.
   Charged to the uploader. `requestId` = `transcription:${fileId}:${provider}`.
   A credit refusal is a RESULT that stops the candidate loop — never fall

@@ -489,8 +489,15 @@ An audio upload completes with `extractedText = "[Audio file: …]"`; a
 `file.transcribe_requested` job (published and consumed by this service) runs
 `TranscriptionManager`. Limits, in order: 12 MB (`MAX_TRANSCRIBABLE_AUDIO_BYTES`,
 refused as `AUDIO_TOO_LARGE` before any provider or meter call), then the PAYG
-hold. Candidates come from connector-service (`supportsAudio`), OpenAI always
-through `whisper-1`.
+hold. Candidates come from connector-service (`supportsAudio`). OpenAI never
+uses the routed chat model: plain audio goes to `gpt-4o-mini-transcribe`
+(`response_format=json`, 50 micro-USD per audio second), a video's derived audio
+to `whisper-1` (`verbose_json`, needs the segments). The gpt-4o models return no
+`duration`, so before the reserve `probeAudioSeconds` (ffprobe on a temp copy,
+dir removed in `finally`) measures the length; the hold and the finalize both use
+those whole seconds. A failed probe falls back to the byte-derived estimate,
+never zero. The choice is a constant map (`transcription.constants.ts`), not an
+env var.
 
 ### Candidate walk (rule 42 item 20, 2026-09-25)
 
