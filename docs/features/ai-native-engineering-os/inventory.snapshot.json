@@ -1627,6 +1627,11 @@
         },
         {
           "method": "POST",
+          "route": "/files/extract-text",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/files/upload",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
         },
@@ -10245,7 +10250,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 67
+        "testFiles": 69
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -11015,7 +11020,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 51,
-    "endpointCount": 707,
+    "endpointCount": 708,
     "envVarCount": 359,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11027,7 +11032,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1691,
+    "totalTestFiles": 1693,
     "workspaceCount": 25
   }
 }
