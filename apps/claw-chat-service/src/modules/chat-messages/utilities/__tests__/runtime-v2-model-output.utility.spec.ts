@@ -587,3 +587,54 @@ describe('isUnfulfilledIntent verbs seen in the confirmation round', () => {
     expect(isUnfulfilledIntent('I compiled the findings into ClawAI_Full_context.md.')).toBe(false);
   });
 });
+
+/**
+ * The catalog error is quoted verbatim into the repair turn, so it is the only
+ * thing a model learns about what it did wrong. It used to be one sentence for
+ * four different mistakes, and live, kimi-k3's corrected attempt was that
+ * sentence echoed back. Each mistake now names itself and what would pass.
+ */
+describe('parseRuntimeV2ModelOutput — a catalog miss says what would pass', () => {
+  const request = (overrides: Record<string, unknown>): string =>
+    JSON.stringify({
+      kind: 'tool',
+      toolName: 'workspace.files',
+      toolVersion: '2.0.0',
+      operation: 'read',
+      arguments: {},
+      targetId: 'target:workspace',
+      ...overrides,
+    });
+
+  it('names the tools that exist when the name is unknown', () => {
+    expect(() =>
+      parseRuntimeV2ModelOutput(request({ toolName: 'workspace.file' }), definitions),
+    ).toThrow('there is no tool "workspace.file". Tools: workspace.files.');
+  });
+
+  it('names the version to use when only the version is wrong', () => {
+    expect(() => parseRuntimeV2ModelOutput(request({ toolVersion: '1.0.0' }), definitions)).toThrow(
+      '"workspace.files" has no version "1.0.0". Use toolVersion 2.0.0.',
+    );
+  });
+
+  it("names the tool's operations when the operation is wrong", () => {
+    expect(() => parseRuntimeV2ModelOutput(request({ operation: 'write' }), definitions)).toThrow(
+      '"workspace.files" has no operation "write". Operations: list, read, search.',
+    );
+  });
+
+  it('names the accepted target when the target is wrong', () => {
+    expect(() =>
+      parseRuntimeV2ModelOutput(request({ targetId: 'target:prod' }), definitions),
+    ).toThrow(
+      '"workspace.files" does not accept targetId "target:prod". Use targetId target:workspace.',
+    );
+  });
+
+  it('keeps the old prefix, so nothing reading it changes', () => {
+    expect(() => parseRuntimeV2ModelOutput(request({ operation: 'write' }), definitions)).toThrow(
+      'Model requested a tool outside the admitted tool catalog: ',
+    );
+  });
+});
