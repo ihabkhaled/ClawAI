@@ -29,6 +29,10 @@ import type {
   ComposerAttachmentTrayProps,
   PendingComposerUpload,
 } from '@/types/composer-attachment.types';
+import type {
+  MaskEditDialogProps,
+  UseComposerMaskEditReturn,
+} from '@/types/image-mask-editor.types';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
 import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
@@ -619,6 +623,8 @@ export type UseMessageComposerStateParams = {
     modelSelection?: ModelSelection,
     fileIds?: string[],
     research?: ResearchOptions,
+    /** File id of a drawn inpainting mask; only ever set with fileIds[0] as its source. */
+    maskFileId?: string,
   ) => void;
   isPending: boolean;
   selectedModel: ModelSelection | null;
@@ -657,6 +663,8 @@ export type UseMessageComposerReturn = {
   toolbarProps: ComposerToolbarProps;
   /** One chip per attachment: uploading → processing → ready, or failed. */
   attachmentChips: ComposerAttachmentChipsProps;
+  /** The inpainting dialog: open while an attached image is being masked. */
+  maskEditDialog: MaskEditDialogProps;
 };
 
 export type UseMessageComposerStateReturn = {
@@ -682,6 +690,8 @@ export type UseMessageComposerStateReturn = {
   dismissAttachmentUpload: (localId: string) => void;
   pendingUploads: PendingComposerUpload[];
   removeAttachment: (fileId: string) => void;
+  /** Inpainting: the open editor, the drawn mask, and its one-shot hand-out on send. */
+  maskEdit: UseComposerMaskEditReturn;
 };
 
 // Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.
@@ -763,6 +773,7 @@ export type UseThreadDataControllerReturn = {
     modelSelection?: ModelSelection,
     fileIds?: string[],
     research?: ResearchOptions,
+    maskFileId?: string,
   ) => void;
   handleDelete: () => void;
   handleFeedback: (messageId: string, feedback: MessageFeedback | null) => void;

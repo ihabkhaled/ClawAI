@@ -133,6 +133,7 @@ import { THREAD_TITLE_SCAN_LIMIT } from '../../chat-threads/constants/thread-tit
 import { deriveThreadTitle } from '../../chat-threads/utilities/derive-thread-title.utility';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
+import { IMAGE_MASK_REFUSAL_METADATA_TYPE } from '../constants/image-mask-refusal.constants';
 import {
   HELPER_VISION_PLAN_FEATURE,
   PLAN_FEATURE_REFUSAL_METADATA_TYPE,
@@ -2104,6 +2105,13 @@ export class ChatMessagesService implements OnModuleInit {
         planFeature: llmResponse.planFeatureRefusal.feature,
       };
     }
+    if (llmResponse.imageMaskRefusal) {
+      // image-service refused the drawn mask (422); the chat renders a translated notice.
+      return {
+        type: IMAGE_MASK_REFUSAL_METADATA_TYPE,
+        maskRefusalCode: llmResponse.imageMaskRefusal.code,
+      };
+    }
     return llmResponse.fileLimit ? { type: 'file_limit', fileLimit: llmResponse.fileLimit } : {};
   }
 
@@ -2495,6 +2503,9 @@ export class ChatMessagesService implements OnModuleInit {
     }
     if (dto.fileIds && dto.fileIds.length > 0) {
       metadata.fileIds = dto.fileIds;
+    }
+    if (dto.maskFileId !== undefined && dto.fileIds !== undefined && dto.fileIds.length > 0) {
+      metadata.maskFileId = dto.maskFileId;
     }
     if (typeof dto.modelDisplayName === 'string' && dto.modelDisplayName.length > 0) {
       metadata.modelDisplayName = dto.modelDisplayName;

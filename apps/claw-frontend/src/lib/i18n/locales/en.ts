@@ -597,6 +597,35 @@ export const en: TranslationDictionary = {
     helpful: 'Helpful',
     notHelpful: 'Not helpful',
     feedbackSaved: 'Feedback saved',
+    maskEdit: {
+      action: 'Mask edit',
+      actionFor: 'Mask edit: {name}',
+      title: 'Mask edit',
+      description:
+        'Paint the area the model may change. Everything you leave unpainted stays as it is.',
+      canvasLabel: 'Mask painting area',
+      brushSize: 'Brush size',
+      erase: 'Erase',
+      clear: 'Clear',
+      apply: 'Apply mask',
+      applying: 'Saving…',
+      loading: 'Loading the image…',
+      imageFailed: 'The image could not be loaded.',
+      saveFailed: 'The mask could not be saved. Try again.',
+      empty: 'Paint at least one area first.',
+      applied: 'Mask applied',
+      remove: 'Remove mask',
+      keyboardHint:
+        'Drag to paint. With the keyboard: arrow keys move the brush (hold Shift to move faster), Space or Enter starts and stops painting.',
+      paintingOn: 'Painting on',
+      paintingOff: 'Painting off',
+      refusal: {
+        title: 'The masked edit was not applied',
+        invalid: 'The mask does not match the image. Draw it again, then send.',
+        notSupported:
+          'The selected model cannot edit part of an image. Pick an image editing model that supports masks, or send without a mask.',
+      },
+    },
     attachFiles: 'Attach Files',
     attachment: {
       uploading: 'Uploading attachment…',

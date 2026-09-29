@@ -611,6 +611,35 @@ export const it: TranslationDictionary = {
     helpful: 'Utile',
     notHelpful: 'Non utile',
     feedbackSaved: 'Feedback salvato',
+    maskEdit: {
+      action: 'Modifica con maschera',
+      actionFor: 'Modifica con maschera: {name}',
+      title: 'Modifica con maschera',
+      description:
+        "Dipingi l'area che il modello può cambiare. Tutto ciò che lasci non dipinto resta com'è.",
+      canvasLabel: 'Area di disegno della maschera',
+      brushSize: 'Dimensione del pennello',
+      erase: 'Gomma',
+      clear: 'Cancella tutto',
+      apply: 'Applica maschera',
+      applying: 'Salvataggio…',
+      loading: "Caricamento dell'immagine…",
+      imageFailed: "Impossibile caricare l'immagine.",
+      saveFailed: 'Impossibile salvare la maschera. Riprova.',
+      empty: 'Dipingi prima almeno un’area.',
+      applied: 'Maschera applicata',
+      remove: 'Rimuovi maschera',
+      keyboardHint:
+        'Trascina per dipingere. Con la tastiera: le frecce spostano il pennello (con Maiusc più veloce), Spazio o Invio avvia e ferma la pittura.',
+      paintingOn: 'Pittura attiva',
+      paintingOff: 'Pittura disattivata',
+      refusal: {
+        title: 'La modifica con maschera non è stata applicata',
+        invalid: "La maschera non corrisponde all'immagine. Ridisegnala, poi invia.",
+        notSupported:
+          "Il modello selezionato non può modificare solo una parte di un'immagine. Scegli un modello di modifica immagini che supporti le maschere, oppure invia senza maschera.",
+      },
+    },
     attachFiles: 'Allega file',
     attachment: {
       uploading: 'Caricamento allegato…',

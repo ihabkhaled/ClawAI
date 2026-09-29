@@ -1078,3 +1078,7 @@ image-service `POST /api/v1/internal/images/:generationId/assistant-message`
 (fire-and-forget, 5 s timeout, never throws). The thread owner is the owner
 image-service checks against. A failed link leaves the column null; the card
 reads `metadata.generationId` and does not depend on it.
+
+## Inpainting mask forwarding (2026-09-29)
+
+The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat-service stores it on the user message metadata and forwards it to image-service with the reference image. image-service 422 codes `IMAGE_MASK_INVALID` and `IMAGE_MASK_NOT_SUPPORTED` become a stored assistant refusal message (`metadata.type = image_mask_refusal`) that the frontend renders as a localized notice. Only OpenAI honours masks; Gemini and Stable Diffusion refuse with `IMAGE_MASK_NOT_SUPPORTED`.

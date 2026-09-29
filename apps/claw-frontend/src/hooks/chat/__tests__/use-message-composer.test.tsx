@@ -58,6 +58,14 @@ const composerStateMock = {
   ingestFiles: vi.fn(),
   isUploadingAttachment: false,
   attachmentUploadProgress: null,
+  maskEdit: {
+    mask: null,
+    editingFileId: null,
+    openEditor: vi.fn(),
+    closeEditor: vi.fn(),
+    applyMask: vi.fn(),
+    clearMask: vi.fn(),
+  },
 };
 vi.mock('@/hooks/chat/use-message-composer-state', () => ({
   useMessageComposerState: (): typeof composerStateMock => composerStateMock,

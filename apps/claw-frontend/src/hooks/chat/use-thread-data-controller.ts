@@ -63,6 +63,7 @@ export const useThreadDataController = ({
       modelSelection?: ModelSelection,
       fileIds?: string[],
       research?: ResearchOptions,
+      maskFileId?: string,
     ): void => {
       logger.info({
         component: 'chat',
@@ -74,6 +75,7 @@ export const useThreadDataController = ({
           hasModel: !!modelSelection,
           fileCount: fileIds?.length ?? 0,
           researchMode: research?.mode ?? 'OFF',
+          hasMask: maskFileId !== undefined,
         },
       });
       detail.startWaitingForResponse();
@@ -89,6 +91,7 @@ export const useThreadDataController = ({
             }
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+        ...(fileIds && fileIds.length > 0 && maskFileId !== undefined ? { maskFileId } : {}),
         ...(research && research.mode !== ResearchMode.NONE
           ? {
               researchMode: research.mode,

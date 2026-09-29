@@ -4,6 +4,7 @@ import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-c
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { ComposerToolbar } from '@/components/chat/composer-toolbar';
+import { MaskEditDialog } from '@/components/chat/mask-edit-dialog';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { UploadProgressIndicator } from '@/components/files/upload-progress-indicator';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
           </div>
         ) : null}
       </form>
+      <MaskEditDialog {...composer.maskEditDialog} />
     </ComposerDropzone>
   );
 }

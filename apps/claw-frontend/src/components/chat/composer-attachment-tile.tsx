@@ -1,4 +1,4 @@
-import { CircleStop, X } from 'lucide-react';
+import { CircleStop, Paintbrush, X } from 'lucide-react';
 
 import { AttachmentMediaPreview } from '@/components/chat/attachment-media-preview';
 import { AttachmentPlaceholder } from '@/components/chat/attachment-placeholder';
@@ -21,6 +21,7 @@ export function ComposerAttachmentTile({
   disabled,
   status,
   processingCancel,
+  maskEdit,
 }: ComposerAttachmentTileProps): React.ReactElement {
   const tile = useComposerAttachmentTile(fileId);
 
@@ -76,6 +77,36 @@ export function ComposerAttachmentTile({
           <CircleStop className="h-3 w-3" aria-hidden="true" />
           {processingCancel.label}
         </Button>
+      )}
+      {maskEdit === undefined || !tile.showImage ? null : (
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => maskEdit.onOpen(fileId)}
+            disabled={disabled}
+            aria-label={maskEdit.maskedFileId === fileId ? undefined : tile.maskLabel}
+            className="touch:min-h-11 gap-1 text-xs"
+            data-testid="composer-attachment-mask-edit"
+          >
+            <Paintbrush className="h-3 w-3" aria-hidden="true" />
+            {maskEdit.maskedFileId === fileId ? tile.maskedLabel : tile.maskActionLabel}
+          </Button>
+          {maskEdit.maskedFileId === fileId ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={maskEdit.onClear}
+              disabled={disabled}
+              className="touch:min-h-11 text-xs"
+              data-testid="composer-attachment-mask-clear"
+            >
+              {tile.maskClearLabel}
+            </Button>
+          ) : null}
+        </div>
       )}
       <Button
         type="button"

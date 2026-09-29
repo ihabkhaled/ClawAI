@@ -994,6 +994,8 @@ export type MessageComposerProps = {
     modelSelection?: ModelSelection,
     fileIds?: string[],
     research?: ResearchOptions,
+    /** File id of a drawn inpainting mask; only ever set with fileIds[0] as its source. */
+    maskFileId?: string,
   ) => void;
   isPending: boolean;
   selectedModel: ModelSelection | null;

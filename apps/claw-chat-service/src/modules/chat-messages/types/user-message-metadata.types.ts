@@ -9,6 +9,8 @@ import type { ResearchTranscript } from './research-transcript.types';
 export type UserMessageMetadata = {
   clientIntent?: string;
   fileIds?: string[];
+  /** File id of the PNG alpha mask drawn for an image edit (transparent = edit here). */
+  maskFileId?: string;
   modelDisplayName?: string;
   research?: {
     runId: string;

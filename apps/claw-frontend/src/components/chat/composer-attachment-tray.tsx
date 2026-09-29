@@ -22,6 +22,7 @@ export function ComposerAttachmentTray({
   statusByFileId,
   processingCancelByFileId,
   onCancelUpload,
+  maskEdit,
 }: ComposerAttachmentTrayProps): React.ReactElement | null {
   const { t } = useTranslation();
 
@@ -44,6 +45,7 @@ export function ComposerAttachmentTray({
           disabled={disabled}
           status={statusByFileId?.get(fileId)}
           processingCancel={processingCancelByFileId?.get(fileId)}
+          maskEdit={maskEdit}
         />
       ))}
       {pendingUploads.map((upload) => (

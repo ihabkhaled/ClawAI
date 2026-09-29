@@ -2,6 +2,29 @@ import { createMessageSchema } from '../create-message.dto';
 import { RoutingMode } from '../../../../generated/prisma';
 
 describe('createMessageSchema', () => {
+  it('accepts a maskFileId next to an attached image', () => {
+    const result = createMessageSchema.safeParse({
+      threadId: 'thread-1',
+      content: 'replace the sky',
+      fileIds: ['file-1'],
+      maskFileId: 'mask-1',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.maskFileId).toBe('mask-1');
+    }
+  });
+
+  it('rejects an empty or oversized maskFileId', () => {
+    const base = { threadId: 'thread-1', content: 'x', fileIds: ['file-1'] };
+
+    expect(createMessageSchema.safeParse({ ...base, maskFileId: '' }).success).toBe(false);
+    expect(createMessageSchema.safeParse({ ...base, maskFileId: 'm'.repeat(256) }).success).toBe(
+      false,
+    );
+  });
+
   it('should validate a correct message payload', () => {
     const result = createMessageSchema.safeParse({
       threadId: 'thread-abc-123',

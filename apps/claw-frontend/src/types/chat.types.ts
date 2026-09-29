@@ -142,6 +142,8 @@ export type CreateMessageRequest = {
   model?: string;
   modelDisplayName?: string;
   fileIds?: string[];
+  /** A drawn inpainting mask (PNG file id); only meaningful with fileIds[0] as the source image. */
+  maskFileId?: string;
   researchMode?: ResearchMode;
   researchProviderId?: string;
 };

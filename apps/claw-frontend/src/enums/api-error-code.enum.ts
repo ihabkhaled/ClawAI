@@ -56,4 +56,8 @@ export enum ApiErrorCode {
   // usually because it is restarting. The upload failed closed; retrying in a
   // minute works. 503, never a verdict on the file.
   ANTIVIRUS_UNAVAILABLE = 'ANTIVIRUS_UNAVAILABLE',
+  // image-service: a drawn inpainting mask is not a valid PNG, has no alpha, or
+  // does not match the image size (422); or the routed model cannot take a mask (422).
+  IMAGE_MASK_INVALID = 'IMAGE_MASK_INVALID',
+  IMAGE_MASK_NOT_SUPPORTED = 'IMAGE_MASK_NOT_SUPPORTED',
 }

@@ -610,6 +610,35 @@ export const fr: TranslationDictionary = {
     helpful: 'Utile',
     notHelpful: 'Pas utile',
     feedbackSaved: 'Retour enregistré',
+    maskEdit: {
+      action: 'Modifier avec un masque',
+      actionFor: 'Modifier avec un masque : {name}',
+      title: 'Modification avec un masque',
+      description:
+        'Peignez la zone que le modèle peut modifier. Tout ce que vous laissez non peint reste tel quel.',
+      canvasLabel: 'Zone de peinture du masque',
+      brushSize: 'Taille du pinceau',
+      erase: 'Gomme',
+      clear: 'Tout effacer',
+      apply: 'Appliquer le masque',
+      applying: 'Enregistrement…',
+      loading: "Chargement de l'image…",
+      imageFailed: "L'image n'a pas pu être chargée.",
+      saveFailed: "Le masque n'a pas pu être enregistré. Réessayez.",
+      empty: "Peignez d'abord au moins une zone.",
+      applied: 'Masque appliqué',
+      remove: 'Retirer le masque',
+      keyboardHint:
+        'Faites glisser pour peindre. Au clavier : les flèches déplacent le pinceau (Maj pour aller plus vite), Espace ou Entrée démarre et arrête la peinture.',
+      paintingOn: 'Peinture activée',
+      paintingOff: 'Peinture désactivée',
+      refusal: {
+        title: "La modification avec masque n'a pas été appliquée",
+        invalid: "Le masque ne correspond pas à l'image. Dessinez-le à nouveau, puis envoyez.",
+        notSupported:
+          "Le modèle sélectionné ne peut pas modifier une partie d'une image. Choisissez un modèle d'édition d'images compatible avec les masques, ou envoyez sans masque.",
+      },
+    },
     attachFiles: 'Joindre des fichiers',
     attachment: {
       uploading: 'Téléversement de la pièce jointe…',
