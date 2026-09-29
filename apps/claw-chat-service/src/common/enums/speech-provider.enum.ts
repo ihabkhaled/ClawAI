@@ -6,4 +6,6 @@
 export enum SpeechProvider {
   GEMINI = 'GEMINI',
   OPENAI = 'OPENAI',
+  /** The free local container (speaches, ADR-128): not a connector, never metered. */
+  LOCAL = 'LOCAL',
 }

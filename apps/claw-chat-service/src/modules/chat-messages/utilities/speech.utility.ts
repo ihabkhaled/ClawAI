@@ -7,6 +7,7 @@ import {
   GEMINI_TTS_MODEL_MARKER,
   GEMINI_TTS_OUTPUT_TOKENS_PER_CHARACTER,
   GEMINI_TTS_PROMPT_OVERHEAD_TOKENS,
+  LOCAL_TTS_MODEL,
   OPENAI_PER_CHARACTER_TTS_MODELS,
   SPEECH_DEFAULT_TIMEOUT_MS,
   SPEECH_FILE_STORE_RESERVE_MS,
@@ -20,6 +21,7 @@ import {
   SPEECH_SEGMENT_MAX_TIMEOUT_MS,
   SPEECH_SEGMENT_TIMEOUT_PER_CHARACTER_MS,
   SPEECH_SETTLEMENT_RESERVE_MS,
+  SPEECH_UNIT_PRICED_OUTPUT_TOKENS,
 } from '../constants/speech.constants';
 import type {
   SpeechCandidate,
@@ -51,6 +53,9 @@ export function toSpeechCandidates(wire: readonly TtsVoiceCandidateWire[]): Spee
 }
 
 export function isSupportedSpeechModel(provider: SpeechProvider, model: string): boolean {
+  if (provider === SpeechProvider.LOCAL) {
+    return model === LOCAL_TTS_MODEL;
+  }
   return provider === SpeechProvider.OPENAI
     ? OPENAI_PER_CHARACTER_TTS_MODELS.has(model)
     : model.toLowerCase().includes(GEMINI_TTS_MODEL_MARKER);
@@ -60,9 +65,15 @@ function speechProviderOf(value: string): SpeechProvider | null {
   return recordGet(SPEECH_PROVIDER_BY_NAME, value.toUpperCase()) ?? null;
 }
 
-/** OpenAI tts-1 / tts-1-hd bill characters (`ttsPerCharacterMicroUsd`); Gemini bills tokens. */
+/**
+ * OpenAI tts-1 / tts-1-hd bill characters (`ttsPerCharacterMicroUsd`); Gemini
+ * bills tokens. LOCAL reports characters too (no tokens exist), and is exempt
+ * on the auth side, so the hold it takes is `metered: false`.
+ */
 export function isPerCharacterPriced(candidate: SpeechCandidate): boolean {
-  return candidate.provider === SpeechProvider.OPENAI;
+  return (
+    candidate.provider === SpeechProvider.OPENAI || candidate.provider === SpeechProvider.LOCAL
+  );
 }
 
 /**
@@ -182,4 +193,14 @@ export function speechAttemptTimeoutMs(
 export function speechStoreTimeoutMs(requestDeadlineAt: number, now: number): number | null {
   const remaining = requestDeadlineAt - SPEECH_SETTLEMENT_RESERVE_MS - now;
   return remaining <= 0 ? null : Math.min(SPEECH_FILE_STORE_RESERVE_MS, remaining);
+}
+
+/** The one candidate the local container offers: fixed model, default timeout, no token cap. */
+export function localSpeechCandidate(): SpeechCandidate {
+  return {
+    provider: SpeechProvider.LOCAL,
+    model: LOCAL_TTS_MODEL,
+    timeoutMs: SPEECH_DEFAULT_TIMEOUT_MS,
+    maxTokens: SPEECH_UNIT_PRICED_OUTPUT_TOKENS,
+  };
 }

@@ -2,6 +2,8 @@ import { SpeechProvider } from '../../../common/enums';
 import {
   GEMINI_OPENAI_COMPAT_SUFFIX,
   GEMINI_TTS_BASE_URL,
+  LOCAL_SPEECH_API_PATH,
+  LOCAL_SPEECH_HEALTH_PATH,
   OPENAI_SPEECH_DEFAULT_BASE_URL,
   OPENAI_SPEECH_PATH,
 } from '../constants/speech.constants';
@@ -26,6 +28,10 @@ export function speechProviderBaseUrl(
   connectorBaseUrl: string | null | undefined,
 ): string {
   const configured = trimTrailingSlashes(connectorBaseUrl?.trim() ?? '');
+  if (provider === SpeechProvider.LOCAL) {
+    // No public default: an unset local base is a caller bug, not a host to guess.
+    return configured;
+  }
   if (provider === SpeechProvider.OPENAI) {
     return configured.length > 0 ? configured : OPENAI_SPEECH_DEFAULT_BASE_URL;
   }
@@ -45,4 +51,21 @@ export function openAiSpeechUrl(base: string): string {
 /** Gemini native `generateContent` for one model under the resolved base. */
 export function geminiSpeechUrl(base: string, model: string): string {
   return `${base}/models/${encodeURIComponent(model)}:generateContent`;
+}
+
+/** The local container's `/v1` API root from its configured server URL, or null when blank. */
+export function localSpeechApiBase(configured: string): string | null {
+  const base = trimTrailingSlashes(configured.trim());
+  if (base.length === 0) {
+    return null;
+  }
+  return base.endsWith(LOCAL_SPEECH_API_PATH) ? base : `${base}${LOCAL_SPEECH_API_PATH}`;
+}
+
+/** The container's health URL: the server root, never under `/v1`. */
+export function localSpeechHealthUrl(apiBase: string): string {
+  const root = apiBase.endsWith(LOCAL_SPEECH_API_PATH)
+    ? apiBase.slice(0, -LOCAL_SPEECH_API_PATH.length)
+    : apiBase;
+  return `${root}${LOCAL_SPEECH_HEALTH_PATH}`;
 }

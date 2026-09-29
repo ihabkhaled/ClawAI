@@ -1,6 +1,8 @@
 import { SpeechProvider } from '../../../../common/enums';
 import {
   geminiSpeechUrl,
+  localSpeechApiBase,
+  localSpeechHealthUrl,
   openAiSpeechUrl,
   speechProviderBaseUrl,
 } from '../speech-provider-url.utility';
@@ -39,5 +41,26 @@ describe('speech URLs', () => {
     expect(geminiSpeechUrl('https://b/v1beta', 'gemini tts')).toBe(
       'https://b/v1beta/models/gemini%20tts:generateContent',
     );
+  });
+});
+
+describe('LOCAL speech container URLs (ADR-128)', () => {
+  it('speechProviderBaseUrl passes the LOCAL base through and never guesses a public host', () => {
+    expect(speechProviderBaseUrl(SpeechProvider.LOCAL, 'http://speech:8000/v1')).toBe(
+      'http://speech:8000/v1',
+    );
+    expect(speechProviderBaseUrl(SpeechProvider.LOCAL, null)).toBe('');
+  });
+
+  it('localSpeechApiBase appends /v1 once and is null when blank', () => {
+    expect(localSpeechApiBase('http://speech:8000')).toBe('http://speech:8000/v1');
+    expect(localSpeechApiBase(' http://speech:8000// ')).toBe('http://speech:8000/v1');
+    expect(localSpeechApiBase('http://proxy/v1')).toBe('http://proxy/v1');
+    expect(localSpeechApiBase('   ')).toBeNull();
+  });
+
+  it('localSpeechHealthUrl sits at the server root, not under /v1', () => {
+    expect(localSpeechHealthUrl('http://speech:8000/v1')).toBe('http://speech:8000/health');
+    expect(localSpeechHealthUrl('http://speech:8000')).toBe('http://speech:8000/health');
   });
 });

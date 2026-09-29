@@ -29,6 +29,8 @@ import { transcribeWithOpenAi } from '../adapters/openai-transcription.adapter';
 import {
   AUDIO_PLACEHOLDER_PREFIX,
   GEMINI_TRANSCRIPTION_DEFAULT_BASE_URL,
+  LOCAL_TRANSCRIPTION_MODEL,
+  LOCAL_TRANSCRIPTION_PROVIDER,
   MAX_TRANSCRIBABLE_AUDIO_BYTES,
   OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL,
   OPENAI_TRANSCRIPTION_MODEL,
@@ -696,7 +698,8 @@ export class TranscriptionManager implements OnModuleInit {
             instruction,
           );
     }
-    if (provider === 'OPENAI') {
+    if (provider === 'OPENAI' || provider === LOCAL_TRANSCRIPTION_PROVIDER) {
+      // LOCAL is the same OpenAI-compatible endpoint on the free container.
       // verbose_json already carries timestamped segments; no instruction needed.
       return signal === undefined
         ? transcribeWithOpenAi(baseUrl, apiKey, base64, mimeType, model)
@@ -743,6 +746,9 @@ export class TranscriptionManager implements OnModuleInit {
    * the transcription endpoint's own model is named by constant.
    */
   private effectiveModel(capability: TranscriptionCapability): string {
+    if (capability.provider === LOCAL_TRANSCRIPTION_PROVIDER) {
+      return LOCAL_TRANSCRIPTION_MODEL;
+    }
     return capability.provider === 'OPENAI' ? OPENAI_TRANSCRIPTION_MODEL : capability.model;
   }
 

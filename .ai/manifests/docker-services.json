@@ -360,6 +360,13 @@
         "docker/docker-compose.dev.ollama.yml",
         "docker/docker-compose.prod.ollama.yml"
       ],
+      "name": "speech"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.ollama.yml",
+        "docker/docker-compose.prod.ollama.yml"
+      ],
       "name": "stable-diffusion"
     },
     {

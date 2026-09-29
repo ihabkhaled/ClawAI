@@ -65,7 +65,10 @@ export const TRANSCRIPTION_CREDIT_CHECK_UNAVAILABLE_MESSAGE =
  * the finalize carries the measured seconds. Every other provider is
  * token-priced (Gemini) and settles on reported tokens.
  */
-export const TRANSCRIPTION_PAYG_PER_SECOND_PROVIDERS: readonly string[] = Object.freeze(['OPENAI']);
+export const TRANSCRIPTION_PAYG_PER_SECOND_PROVIDERS: readonly string[] = Object.freeze([
+  'OPENAI',
+  'LOCAL',
+]);
 
 /** Axios error codes that mean the provider call timed out, not failed. */
 export const TRANSCRIPTION_PAYG_TIMEOUT_ERROR_CODES: readonly string[] = Object.freeze([

@@ -1,13 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { declaredHost } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { SpeechProvider } from '../../../common/enums';
 import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
+  LOCAL_SPEECH_PROBE_TIMEOUT_MS,
+  LOCAL_TTS_API_KEY,
   SPEECH_CONNECTOR_CONFIG_PATH,
   SPEECH_CONNECTOR_STATUS_TTL_MS,
   SPEECH_CONNECTOR_TIMEOUT_MS,
 } from '../constants/speech.constants';
-import type { SpeechProvider } from '../../../common/enums';
+import { localSpeechApiBase, localSpeechHealthUrl } from '../utilities/speech-provider-url.utility';
 import type {
   CachedConnectorStatus,
   ConnectorKeyResponse,
@@ -28,6 +32,11 @@ export class SpeechConnectorClient {
 
   /** The key and the connector's configured base URL (null when blank), or null when unusable. */
   async resolveCredentials(provider: SpeechProvider): Promise<SpeechProviderCredentials | null> {
+    if (provider === SpeechProvider.LOCAL) {
+      // Not a connector: no key exists, the base URL is deployment config (ADR-128).
+      const apiBase = localSpeechApiBase(AppConfig.get().LOCAL_SPEECH_BASE_URL);
+      return apiBase === null ? null : { apiKey: LOCAL_TTS_API_KEY, baseUrl: apiBase };
+    }
     try {
       const response = await httpRequest<ConnectorKeyResponse>({
         url: `${AppConfig.get().CONNECTOR_SERVICE_URL}${SPEECH_CONNECTOR_CONFIG_PATH}?provider=${encodeURIComponent(provider)}`,
@@ -61,8 +70,30 @@ export class SpeechConnectorClient {
     if (hit !== undefined && hit.expiresAt > now()) {
       return hit.configured;
     }
-    const configured = (await this.resolveApiKey(provider)) !== null;
+    const configured =
+      provider === SpeechProvider.LOCAL
+        ? await this.isLocalHealthy()
+        : (await this.resolveApiKey(provider)) !== null;
     this.status.set(provider, { configured, expiresAt: now() + SPEECH_CONNECTOR_STATUS_TTL_MS });
     return configured;
+  }
+
+  /** The local container answers its health check. Never throws; unreachable means "not there". */
+  private async isLocalHealthy(): Promise<boolean> {
+    const apiBase = localSpeechApiBase(AppConfig.get().LOCAL_SPEECH_BASE_URL);
+    if (apiBase === null) {
+      return false;
+    }
+    try {
+      const response = await httpRequest<unknown>({
+        url: localSpeechHealthUrl(apiBase),
+        method: 'GET',
+        timeoutMs: LOCAL_SPEECH_PROBE_TIMEOUT_MS,
+        allowedHosts: declaredHost(apiBase),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 }

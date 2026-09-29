@@ -792,3 +792,13 @@ the audio chat-service synthesised for a reply's owner ("Read aloud").
 `GET /api/v1/metrics` (internal): transcription calls by provider and outcome,
 transcription job duration, video job outcome and duration, media queue wait.
 List: `docs/08-runtime-devops/metrics-and-dashboards.md`.
+
+## Local speech (ADR-128)
+
+`LOCAL` is a transcription candidate served by the `speech` container
+(`LOCAL_SPEECH_BASE_URL`, default `http://speech:8000`, blank = off). It reuses
+`transcribeWithOpenAi` with model `Systran/faster-whisper-small`, is appended
+**after** every cloud candidate (and is the only one when no cloud connector is
+audio-capable or connector-service is down), and is offered only while
+`GET /health` answers. No connector, no key; `fetchConnectorConfig('LOCAL')`
+builds the config locally. Unmetered: `LOCAL` is in `PAYG_EXEMPT_PROVIDERS`.

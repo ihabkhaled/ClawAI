@@ -243,7 +243,7 @@
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
-      "bytes": 29042,
+      "bytes": 29218,
       "file": "rules/37-payg-credit-integrity.md"
     },
     {
@@ -333,7 +333,7 @@
   ],
   "skills": [
     {
-      "bytes": 31718,
+      "bytes": 31998,
       "file": "skills/00-index.md"
     },
     {
@@ -687,6 +687,10 @@
     {
       "bytes": 5122,
       "file": "skills/verify-a-batch-live.md"
+    },
+    {
+      "bytes": 1355,
+      "file": "skills/verify-local-speech-container.md"
     },
     {
       "bytes": 7969,

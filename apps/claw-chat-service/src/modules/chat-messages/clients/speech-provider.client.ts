@@ -48,14 +48,17 @@ import { pcm16ToWav, pcmSampleRate } from '../utilities/wav-audio.utility';
 @Injectable()
 export class SpeechProviderClient {
   async synthesize(request: SpeechProviderRequest): Promise<SynthesizedAudio> {
-    return request.candidate.provider === SpeechProvider.OPENAI
-      ? this.openAi(request)
-      : this.gemini(request);
+    return request.candidate.provider === SpeechProvider.GEMINI
+      ? this.gemini(request)
+      : this.openAi(request);
   }
 
-  /** OpenAI `/audio/speech`: MP3 bytes, no usage (settled on characters sent). */
+  /**
+   * OpenAI `/audio/speech`: MP3 bytes, no usage (settled on characters sent).
+   * The LOCAL container speaks the same API, so it takes this path with its own base.
+   */
   private async openAi(request: SpeechProviderRequest): Promise<SynthesizedAudio> {
-    const base = speechProviderBaseUrl(SpeechProvider.OPENAI, request.baseUrl);
+    const base = speechProviderBaseUrl(request.candidate.provider, request.baseUrl);
     const response = await this.guard(() =>
       httpPostBinary({
         url: openAiSpeechUrl(base),

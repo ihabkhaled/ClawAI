@@ -46,6 +46,7 @@ export const SPEECH_CONTENT_HASH_LENGTH = 16;
 export const SPEECH_PROVIDER_BY_NAME: Readonly<Record<string, SpeechProvider>> = {
   GEMINI: SpeechProvider.GEMINI,
   OPENAI: SpeechProvider.OPENAI,
+  LOCAL: SpeechProvider.LOCAL,
 };
 /**
  * Default hosts. The connector's configured `baseUrl` wins when set (a proxy,
@@ -62,6 +63,19 @@ export const OPENAI_TTS_RESPONSE_FORMAT = 'mp3';
  * response never reports, so it is skipped rather than settled on a guess.
  */
 export const OPENAI_PER_CHARACTER_TTS_MODELS: ReadonlySet<string> = new Set(['tts-1', 'tts-1-hd']);
+
+/**
+ * The free local voice (ADR-128). Kokoro-82M via the `speech` compose service,
+ * which pre-pulls exactly this model id — the two change together. The voice is
+ * fixed: the picker's voices belong to Gemini/OpenAI and mean nothing to Kokoro.
+ * Appended AFTER the admin's TTS_VOICE rows, only while the container is healthy.
+ */
+export const LOCAL_TTS_MODEL = 'speaches-ai/Kokoro-82M-v1.0-ONNX';
+export const LOCAL_TTS_VOICE = 'af_heart';
+export const LOCAL_TTS_API_KEY = 'local';
+export const LOCAL_SPEECH_API_PATH = '/v1';
+export const LOCAL_SPEECH_HEALTH_PATH = '/health';
+export const LOCAL_SPEECH_PROBE_TIMEOUT_MS = 2_000;
 
 export const GEMINI_TTS_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 /** Every Gemini speech model id carries this; anything else is a text model. */

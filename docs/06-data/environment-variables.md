@@ -278,6 +278,7 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 | Variable                     | Required | Default                    | Description                                                                                                  |
 | ---------------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                                                     |
+| `LOCAL_SPEECH_BASE_URL`      | No       | `http://speech:8000`       | Free local speech container (ADR-128), used by file-service (STT) and chat-service (read aloud). Blank = off |
 | `OLLAMA_ROUTER_MODEL`        | No       | `deepseek-v4-pro`          | Model that PLANS the route (never answers the user). Cloud, not local — routing quality caps answer quality. |
 | `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                                                          |
 | `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                                                        |
