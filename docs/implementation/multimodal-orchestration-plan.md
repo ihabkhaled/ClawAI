@@ -72,36 +72,33 @@ Each batch ships its own knowledge delta (rule 33) and scoped gates (rule 34).
 - Pack §101 names `qa/test-multimodal.sh`; created in batch 11.
 - Live QA: dev containers compile the **main checkout's** `src`, so worktree code runs live only after it reaches `main` and the main checkout is updated. The main checkout carries unrelated uncommitted WIP, which is not touched.
 
-## Completion status (pack §147, 2026-09-25)
+## Completion status (final live run 2026-09-29)
 
-**Live lanes: all NOT RUN.** The dev stack compiles the **main checkout's** `src`
-(bind mount + `tsgo --watch`), and the main checkout is being edited by another
-session and is 34+ commits behind this branch, so the running containers do not
-serve this program's code. Every "code" status below is backed by scoped unit
-gates per batch, not by a live run. The live evidence comes from
-[`qa/test-multimodal.sh`](../../qa/test-multimodal.sh) and the capability
-matrix once the stack runs this code
-([skills/verify-multimodal-routing-live.md](../../skills/verify-multimodal-routing-live.md)).
+Live against `https://claw.local` with the main checkout at `4151eee2c`+ and
+`c0ba75260`: API lane 41/41, browser lane 13/13 — [evidence](../16-quality-engineering/evidence/2026-09-29-multimodal-final/README.md). Earlier runs and
+latency: [2026-09-25 evidence](../16-quality-engineering/evidence/2026-09-25-multimodal/README.md).
 
-| Capability          | Code status | Live    | Evidence / what is missing                                                                                                               |
-| ------------------- | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Image analysis      | IMPLEMENTED | NOT RUN | Per-model vision (2b); blind lanes get helper vision (5, paid) or OCR + honest note (free, ADR-122).                                     |
-| Image generation    | IMPLEMENTED | NOT RUN | Chat → image-service, plan gate (6), OpenAI per-image price (3), supersession/progress (10a). `assistantMessageId` stays null.           |
-| Image editing       | PARTIAL     | NOT RUN | Reference-image generation only (Gemini, SD img2img, reference reuse on retry). No masks, no inpainting, no OpenAI edits endpoint.       |
-| Audio transcription | IMPLEMENTED | NOT RUN | Voice notes + video audio track, metered on `PaygSurface.TRANSCRIPTION` (4). Local STT has no path; gpt-4o-(mini-)transcribe not seeded. |
-| Native audio        | IMPLEMENTED | NOT RUN | `NATIVE_AUDIO` (2026-09-26): Gemini lanes with catalog audio SUPPORTED get the audio + transcript; every other lane the transcript.      |
-| TTS                 | IMPLEMENTED | NOT RUN | `TTS_VOICE` role, `PaygSurface.TTS`, replay free, player UI (9), per-user voice picker. A failed store releases the hold.                |
-| Video upload        | IMPLEMENTED | NOT RUN | Allowlist, magic bytes, chunked upload, recorder (pre-existing); plan `maxVideoSeconds` enforced (7).                                    |
-| Video analysis      | IMPLEMENTED | NOT RUN | ffmpeg probe, thumbnail, audio-track transcript with `[mm:ss]` lines (7); question-biased frames (8).                                    |
-| Native video        | IMPLEMENTED | NOT RUN | `VIDEO_INPUT` models (snapshot) when processed, ≤ 60 min and ≤ plan limit (8); static Gemini set only as UNKNOWN fallback.               |
-| Video fallback      | IMPLEMENTED | NOT RUN | Frames + transcript → helper-described frames → transcript + note; `STILL_PROCESSING` / `FAILED_PROCESSING` honest modes (8).            |
-| AUTO routing        | PARTIAL     | NOT RUN | `message.created` carries modalities; only the cloud-router AUTO path ranks by modality fit (8). Research digest empty while processing. |
-| Compare             | IMPLEMENTED | NOT RUN | Per-lane media resolution and per-window budget (2b, 8). Same per-attachment tray + chips as chat (`useComposerAttachmentSurface`).      |
-| Judge               | IMPLEMENTED | NOT RUN | Judge/critic resolve delivery against their own model; judge rebuild keeps the video document (2b, 8).                                   |
-| PAYG                | IMPLEMENTED | NOT RUN | IMAGE per-image, TRANSCRIPTION, VISION_HELPER, TTS surfaces, unit metering (3). ffmpeg CPU unmetered; frame image tokens estimated.      |
-| Local models        | PARTIAL     | NOT RUN | Local vision heuristic (gemma3 / qwen-vl / llama4 / mistral-small), local-only helper on LOCAL_ONLY/PRIVACY_FIRST. No local STT or TTS.  |
-| Responsive UX       | IMPLEMENTED | NOT RUN | 10a/10b components; the device matrix (≥ 3 widths per platform, both orientations, RTL) was not captured.                                |
-| Accessibility       | IMPLEMENTED | NOT RUN | `aria-live` status lines, sr-only capability badges, localized titles (10a/10b); no axe / Lighthouse pass on these surfaces.             |
+| Capability          | Code status | Live          | Evidence                                                                                                                                                                                 |
+| ------------------- | ----------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Image analysis      | IMPLEMENTED | PASS          | API lane (paid DERIVED_IMAGE_TEXT, free OCR note); browser 3 (helper-vision chip); F3 "what is in this image?" → no image job, correct answer.                                           |
+| Image generation    | IMPLEMENTED | PASS          | API lane (paid job, free plan notice); browser 6 (render after refresh) + 7 (free upsell); Grok $0.02 charge proven 2026-09-25.                                                          |
+| Image editing       | IMPLEMENTED | PASS (Gemini) | F3: EDIT intent → Gemini edit COMPLETED, `originalPrompt` kept. OpenAI `/images/edits` + masks unit-gated only (owner: no OpenAI credit). No inpainting UI.                              |
+| Audio transcription | IMPLEMENTED | PASS          | API lane voice note; latency-after STT 5 s → 2.2 s, 120 s → 4.0 s. Local STT: no path (deferred).                                                                                        |
+| Native audio        | IMPLEMENTED | PASS          | API lane Gemini NATIVE_AUDIO delivery.                                                                                                                                                   |
+| TTS                 | IMPLEMENTED | PASS          | API lane read-aloud + free replay; browser 5 (player) + B (cancel on stop). First audio 3.7–6.4 s.                                                                                       |
+| Video upload        | IMPLEMENTED | PASS          | API lane (accept, renamed text rejected 422); browser 4 (upload states).                                                                                                                 |
+| Video analysis      | IMPLEMENTED | PASS          | API lane `[mm:ss]` transcript, FILE_VIDEO_PROCESS completed; 60 s clip 3.6 s.                                                                                                            |
+| Native video        | IMPLEMENTED | PASS          | API lane `VIDEO_FRAMES_AND_TRANSCRIPT` / native per lane.                                                                                                                                |
+| Video fallback      | IMPLEMENTED | PASS          | Frames + transcript to blind lanes (API lane); frames route unreachable via nginx (404).                                                                                                 |
+| AUTO routing        | IMPLEMENTED | PASS          | Modality fit re-ranks every AUTO path (capability, privacy-local, Ollama router, category, heuristic) — 2026-09-29; `AttachmentInfoClient` provider registered (was silently undefined). |
+| Compare             | IMPLEMENTED | PASS          | Browser A (per-file chips on Compare + lab page).                                                                                                                                        |
+| Judge               | IMPLEMENTED | UNIT ONLY     | No dedicated live scenario.                                                                                                                                                              |
+| PAYG                | IMPLEMENTED | PASS          | Ledger rows per surface (IMAGE, TRANSCRIPTION, TTS, VISION_HELPER); holds released on failure, cancel and restart.                                                                       |
+| Local models        | PARTIAL     | NOT RUN       | llamacpp / Ollama runtimes stopped on the dev stack (502 on their catalog). No local STT/TTS.                                                                                            |
+| Responsive UX       | IMPLEMENTED | PASS          | Browser 8: 15 viewports, both orientations, overflow 0; C: phone overlap 0 hits.                                                                                                         |
+| Accessibility       | IMPLEMENTED | PASS          | Browser 9 RTL (3 widths) + 10 axe 4.13.0: 0 serious/critical.                                                                                                                            |
+| Restart recovery    | IMPLEMENTED | PASS          | `docker restart claw-image-service` mid-GENERATING → TIMED_OUT in 8 s, hold released (c0ba75260). Video: unit-gated.                                                                     |
+| Metrics             | IMPLEMENTED | PASS          | Prometheus targets claw-chat/file/image-media up; 150 media series.                                                                                                                      |
 
 ### Open gaps collected across batches
 
@@ -109,8 +106,8 @@ matrix once the stack runs this code
   seed v7/v8 must land before image-service meters on sized `gpt-image-1@…` and
   Grok per-image keys); dev
   containers need `service:rebuild` (shared packages, file-service `ffmpeg`), not a restart.
-- Transcription (4): local STT has no path; gpt-4o-(mini-)transcribe unseeded.
-- Video (7/8): no audit-service consumer for the `file.video_process_*` events.
+- Transcription (4): local STT has no path. gpt-4o-(mini-)transcribe priced in routing seed v10 (100 / 50 µUSD per audio second, 2026-09-29) but file-service still calls only whisper-1 (duration metering needed).
+- ~~Video (7/8): no audit-service consumer for the `file.video_process_*` events.~~ Closed 2026-09-29: `VideoProcessConsumer` (no filename/transcript in rows).
   ~~ffmpeg CPU not PAYG-metered; frame image tokens estimated~~ — decided
   2026-09-26 (Finalization): not billed / billed on measured usage.
   ~~Research digest empty for a video still processing at send~~ — closed
@@ -123,25 +120,25 @@ matrix once the stack runs this code
   next to our charge for reconciliation. Deploy routing before image-service.
 - OpenAI live verification: **deferred — owner, no OpenAI credit** on the dev
   key. Not a failure; gpt-image-1 / whisper-1 / tts-1 stay unit-gated only.
-- AUTO (8): modality-fit ranking only on the cloud-router path.
-- TTS (9): connector base URL not used for speech. ~~No voice picker~~ —
+- ~~AUTO (8): modality-fit ranking only on the cloud-router path.~~ Closed 2026-09-29 (every AUTO path; rule 51 item 13).
+- ~~TTS (9): connector base URL not used for speech.~~ Closed 2026-09-29. ~~No voice picker~~ —
   closed 2026-09-26 (per-user `ttsVoice`, see Finalization). (Fixed
   2026-09-25: a paid synthesis whose store fails now RELEASES its hold.)
-- Image card (10a): `assistantMessageId` null; bare-base64 references without a
-  file id not stored; `ImageGenerationProgressPanel` / ComfyUI timeline not
+- Image card (10a): ~~`assistantMessageId` null; bare-base64 references without a
+  file id not stored~~ closed 2026-09-29 (internal link route, owner-checked; bytes stored via file-service); `ImageGenerationProgressPanel` / ComfyUI timeline not
   rendered on the chat card. ~~Runtime cancel not wired~~ — wired (Cancellation).
 - Cancellation (§72): ~~an image asset stored just before a winning cancel can
   be left unreferenced~~ — closed 2026-09-26 (`discardStoredImage`; a failed
   delete is logged, not retried). ~~Chunked upload has no abort~~ and ~~Stop before the
   read-aloud POST answers does not cancel~~ — closed 2026-09-25 (see the table
   below).
-- Frontend (10b): `extractionError` detail is backend English; a video processed
+- Frontend (10b): ~~`extractionError` detail is backend English~~ (closed 2026-09-29: localized by code, 13 locales); a video processed
   after render shows its thumbnail only after the file-meta cache refreshes.
   ~~Chips only on the main composer~~ — closed 2026-09-25.
 - Phones: ~~the floating feedback rail and "Jump to latest" cover assistant text;
   at 740×360 the rail's − sits on the action rail~~ — closed 2026-09-25 in CSS
   (rule 36 §12). Unit/contract-gated only; the device matrix is not re-run.
-- Image editing: masks, inpainting and OpenAI edits not built.
+- ~~Image editing: masks, inpainting and OpenAI edits not built.~~ F3 (2026-09-29): masks (API) + OpenAI edits built; inpainting UI still not built.
 - ~~Native audio into chat models: not built.~~ — closed 2026-09-26.
 
 ## Cancellation (pack §72, 2026-09-25)
