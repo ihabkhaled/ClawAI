@@ -207,10 +207,12 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → "save this as memory" is an
     // ordinary chat turn, as before owner feature 11.
     @Optional() private readonly saveToContext?: SaveToContextManager,
-    @Optional() private readonly contextSaveOrchestrator?: ContextSaveOrchestratorManager,
     // Optional for the same reason. Absent → the image row's
     // `assistantMessageId` stays null, as before batch 10a closed.
     @Optional() private readonly imageGenerationLink?: ImageGenerationLinkClient,
+    // LAST on purpose: specs build this service positionally, and a new
+    // optional dependency in the middle shifts every argument after it.
+    @Optional() private readonly contextSaveOrchestrator?: ContextSaveOrchestratorManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
