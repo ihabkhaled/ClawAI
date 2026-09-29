@@ -27,7 +27,9 @@ const buildServiceMock = (): {
   retryWithAlternateModel: Mock;
   retryWithAlternateModelForUser: Mock;
   cancelGenerationForUser: Mock;
+  linkAssistantMessage: Mock;
 } => ({
+  linkAssistantMessage: vi.fn(),
   enqueueGeneration: vi.fn(),
   getById: vi.fn(),
   getByIdForUser: vi.fn(),
@@ -217,6 +219,16 @@ describe('InternalImageController', () => {
   it('the whole internal controller is guarded by ServiceTokenGuard', () => {
     const guards: unknown = Reflect.getMetadata(GUARDS_METADATA, InternalImageController);
     expect(guards).toEqual([ServiceTokenGuard]);
+  });
+
+  it('assistant-message link forwards id, owner and message id', async () => {
+    serviceMock.linkAssistantMessage.mockResolvedValue(1);
+    const result = await controller.linkAssistantMessage('g1', {
+      userId: 'u1',
+      assistantMessageId: 'm1',
+    });
+    expect(serviceMock.linkAssistantMessage).toHaveBeenCalledWith('g1', 'u1', 'm1');
+    expect(result).toEqual({ linked: 1 });
   });
 
   it('getGeneration forwards id', async () => {

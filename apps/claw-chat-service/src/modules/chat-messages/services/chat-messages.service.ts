@@ -24,6 +24,7 @@ import {
 } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { AttachmentInfoClient } from '../clients/attachment-info.client';
+import { ImageGenerationLinkClient } from '../clients/image-generation-link.client';
 import { SaveToContextManager } from '../managers/save-to-context.manager';
 import {
   detectConfirmationLocale,
@@ -192,6 +193,9 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → "save this as memory" is an
     // ordinary chat turn, as before owner feature 11.
     @Optional() private readonly saveToContext?: SaveToContextManager,
+    // Optional for the same reason. Absent → the image row's
+    // `assistantMessageId` stays null, as before batch 10a closed.
+    @Optional() private readonly imageGenerationLink?: ImageGenerationLinkClient,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -1680,7 +1684,7 @@ export class ChatMessagesService implements OnModuleInit {
     if (narration.length > 0) {
       metadata['narration'] = narration;
     }
-    return this.chatMessagesRepository.create({
+    const stored = await this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',
       content: storedContent,
@@ -1694,6 +1698,37 @@ export class ChatMessagesService implements OnModuleInit {
       usedFallback: llmResponse.usedFallback,
       metadata: metadata as Prisma.InputJsonValue,
     });
+    if (llmResponse.imageGenerationId) {
+      void this.linkImageGeneration(llmResponse.imageGenerationId, payload.threadId, stored.id);
+    }
+    return stored;
+  }
+
+  /**
+   * Fills the image row's `assistantMessageId` with the message that shows its
+   * card (batch 10a). The generation was dispatched before this message
+   * existed, so it is linked now. Fire-and-forget; the thread's owner is the
+   * owner image-service checks against. Never throws.
+   */
+  private async linkImageGeneration(
+    generationId: string,
+    threadId: string,
+    assistantMessageId: string,
+  ): Promise<void> {
+    if (this.imageGenerationLink === undefined) return;
+    try {
+      const thread = await this.chatThreadsRepository.findById(threadId);
+      if (thread === null) return;
+      await this.imageGenerationLink.linkAssistantMessage(
+        generationId,
+        thread.userId,
+        assistantMessageId,
+      );
+    } catch (error: unknown) {
+      this.logger.warn(
+        `linkImageGeneration: generation=${generationId} not linked — ${error instanceof Error ? error.message : 'error'}`,
+      );
+    }
   }
 
   private buildRouteRoadmap(

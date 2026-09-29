@@ -183,8 +183,12 @@ with `Authorization: buildInterServiceAuthHeader()` and an
   base64 so image-service can re-read the same image on a retry (it stores the
   id, never the bytes).
 - `assistantMessageId` is **not** sent: the assistant message is stored from
-  this call's answer, so it has no id yet. The link runs the other way
-  (`metadata.generationId` on the assistant message).
+  this call's answer, so it has no id yet. Once `storeAssistantResponse` has
+  stored it, `ImageGenerationLinkClient` (fire-and-forget, 5 s,
+  never throws) posts `{ userId: thread owner, assistantMessageId }` to
+  image-service `POST /api/v1/internal/images/:generationId/assistant-message`.
+  The card still reads `metadata.generationId`; the link only fills the image
+  row's column (owner-checked, first link wins, successors included).
 
 The contract is asserted on both sides: chat's
 `chat-execution.manager.spec.ts` ("image-service generate contract") and

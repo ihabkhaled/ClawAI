@@ -1,4 +1,15 @@
-import { Body, Controller, Get, MessageEvent, Param, Post, Sse, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  MessageEvent,
+  Param,
+  Post,
+  Sse,
+  UseGuards,
+} from '@nestjs/common';
 import { type Observable } from 'rxjs';
 import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
@@ -8,6 +19,8 @@ import { ImageGenerationEventsService } from '../services/image-generation-event
 import {
   type GenerateImageDto,
   generateImageSchema,
+  type LinkAssistantMessageDto,
+  linkAssistantMessageSchema,
   type RetryAlternateImageDto,
   retryAlternateImageSchema,
 } from '../dto/generate-image.dto';
@@ -40,6 +53,21 @@ export class InternalImageController {
   @Get(':generationId')
   async getGeneration(@Param('generationId') generationId: string): Promise<unknown> {
     return this.imageService.getById(generationId);
+  }
+
+  @Public()
+  @Post(':generationId/assistant-message')
+  @HttpCode(HttpStatus.OK)
+  async linkAssistantMessage(
+    @Param('generationId') generationId: string,
+    @Body(new ZodValidationPipe(linkAssistantMessageSchema)) body: LinkAssistantMessageDto,
+  ): Promise<{ linked: number }> {
+    const linked = await this.imageService.linkAssistantMessage(
+      generationId,
+      body.userId,
+      body.assistantMessageId,
+    );
+    return { linked };
   }
 
   @Public()

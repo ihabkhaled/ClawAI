@@ -255,6 +255,15 @@ describe('ImageGenerationRepository', () => {
       });
     });
 
+    it('setAssistantMessageIfUnset writes only the owner row whose link is unset', async () => {
+      const count = await repository.setAssistantMessageIfUnset('g1', 'u1', 'm1');
+      expect(prismaMock.imageGeneration.updateMany).toHaveBeenCalledWith({
+        where: { id: 'g1', userId: 'u1', assistantMessageId: null },
+        data: { assistantMessageId: 'm1' },
+      });
+      expect(count).toBe(1);
+    });
+
     it('createReferenceAsset stores the file-service id, never bytes', async () => {
       await repository.createReferenceAsset({
         generationId: 'g1',

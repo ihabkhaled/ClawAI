@@ -444,7 +444,8 @@ export type CreateAssistantMessageData = {
  * asked for it; `referenceFileId` names the upload the reference bytes came
  * from, so image-service can re-read it on a retry. The assistant message does
  * not exist yet at dispatch (it is stored from this call's answer), so
- * `assistantMessageId` is never sent from here.
+ * `assistantMessageId` is not sent here — `ImageGenerationLinkClient` links it
+ * once the message is stored.
  */
 export type ImageGenerateRequest = {
   prompt: string;

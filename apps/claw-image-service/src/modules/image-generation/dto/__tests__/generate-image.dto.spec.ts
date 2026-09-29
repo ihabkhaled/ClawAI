@@ -1,4 +1,4 @@
-import { generateImageSchema } from '../generate-image.dto';
+import { generateImageSchema, linkAssistantMessageSchema } from '../generate-image.dto';
 import { IMAGE_REFERENCE_FILE_ID_MAX_LENGTH } from '../../constants/image-reference.constants';
 
 /**
@@ -50,5 +50,21 @@ describe('generateImageSchema (chat → image contract)', () => {
     const result = generateImageSchema.safeParse({ ...CHAT_BODY, [field]: value });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual([field]);
+  });
+});
+
+describe('linkAssistantMessageSchema', () => {
+  it('accepts the owner and the assistant message id chat sends', () => {
+    expect(
+      linkAssistantMessageSchema.safeParse({ userId: 'u1', assistantMessageId: 'm1' }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    [{ userId: '', assistantMessageId: 'm1' }],
+    [{ userId: 'u1' }],
+    [{ userId: 'u1', assistantMessageId: 'x'.repeat(101) }],
+  ])('refuses %o', (body) => {
+    expect(linkAssistantMessageSchema.safeParse(body).success).toBe(false);
   });
 });

@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 225,
+      "testFiles": 226,
       "testRunner": "vitest"
     },
     {
@@ -255,7 +255,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-image-service",
-      "endpointCount": 11,
+      "endpointCount": 12,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -273,7 +273,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 41,
+      "testFiles": 42,
       "testRunner": "vitest"
     },
     {

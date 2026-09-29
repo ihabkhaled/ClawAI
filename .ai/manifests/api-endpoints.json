@@ -1736,6 +1736,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/images/:generationId/assistant-message",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/images/:generationId/retry",
         "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
       },
@@ -3578,5 +3583,5 @@
     ]
   },
   "generated": true,
-  "total": 708
+  "total": 709
 }

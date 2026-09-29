@@ -235,6 +235,22 @@ export class ImageGenerationRepository {
     });
   }
 
+  /**
+   * Sets `assistantMessageId` on the owner's row only while it is unset, so a
+   * late or repeated link can never overwrite the first one. Returns 0 or 1.
+   */
+  async setAssistantMessageIfUnset(
+    id: string,
+    userId: string,
+    assistantMessageId: string,
+  ): Promise<number> {
+    const result = await this.prisma.imageGeneration.updateMany({
+      where: { id, userId, assistantMessageId: null },
+      data: { assistantMessageId },
+    });
+    return result.count;
+  }
+
   async findReferenceAsset(generationId: string): Promise<ImageGenerationAssetRecord | null> {
     return this.prisma.imageGenerationAsset.findFirst({
       where: { generationId, role: ImageAssetRole.REFERENCE },

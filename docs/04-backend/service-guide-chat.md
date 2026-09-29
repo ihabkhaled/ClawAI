@@ -1064,3 +1064,12 @@ Edit intent is the shared `classifyImageIntent` (rule 51 item 18); the
 reference prompt keeps the user's instruction first and verbatim and sends
 `originalPrompt` to image-service (pack §79). Details in
 [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).
+
+## Image card assistant-message link (2026-09-29)
+
+After `storeAssistantResponse` stores an image turn's assistant message,
+`ImageGenerationLinkClient` posts `{ userId, assistantMessageId }` to
+image-service `POST /api/v1/internal/images/:generationId/assistant-message`
+(fire-and-forget, 5 s timeout, never throws). The thread owner is the owner
+image-service checks against. A failed link leaves the column null; the card
+reads `metadata.generationId` and does not depend on it.

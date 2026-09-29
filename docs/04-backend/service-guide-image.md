@@ -44,9 +44,16 @@ The image service orchestrates AI image generation across multiple providers (Op
 
 `threadId` / `userMessageId` are filled from chat-service's dispatch since
 2026-09-25 (batch 10a); they were always null before. `assistantMessageId`
-stays null from chat: the assistant message is stored from the generate call's
-own answer, so its id does not exist at dispatch (the assistant message's
-`metadata.generationId` links the other way).
+is filled since 2026-09-29: the assistant message is stored from the generate
+call's own answer, so chat links it afterwards through
+`POST /internal/images/:generationId/assistant-message` (service token, body
+`{ userId, assistantMessageId }`, answer `{ linked }`). Owner-checked on every
+row, written only while unset, and applied to AUTO-fallback successors too.
+
+A bare-base64 reference (no `referenceFileId`) is stored as the owner's file
+via file-service `store-image` — type from magic bytes, 25 MB cap — and kept as
+a REFERENCE asset, so retries and retry-alternate re-read it. A reference that
+fails those checks is used for that send only.
 
 ### ImageGenerationAsset
 

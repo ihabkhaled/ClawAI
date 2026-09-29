@@ -37,6 +37,7 @@ import { SpeechConnectorClient } from './clients/speech-connector.client';
 import { SpeechPreferencesClient } from './clients/speech-preferences.client';
 import { SpeechProviderClient } from './clients/speech-provider.client';
 import { SpeechFileStoreClient } from './clients/speech-file-store.client';
+import { ImageGenerationLinkClient } from './clients/image-generation-link.client';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
@@ -121,6 +122,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     SpeechPreferencesClient,
     SpeechProviderClient,
     SpeechFileStoreClient,
+    ImageGenerationLinkClient,
     SpeechSynthesisManager,
     SpeechJobManager,
     SpeechJobLockStore,

@@ -43,6 +43,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
   let repo: InMemoryImageRepo;
   let execute: Mock;
   let loadStoredReference: Mock;
+  let storeReferenceImage: Mock;
   let publish: Mock;
   let busPublish: Mock;
   let service: ImageGenerationService;
@@ -55,6 +56,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
     repo = buildInMemoryImageRepo(seed);
     execute = vi.fn();
     loadStoredReference = vi.fn();
+    storeReferenceImage = vi.fn().mockResolvedValue('file-bare');
     publish = vi.fn();
     busPublish = vi.fn().mockResolvedValue(undefined);
     metrics = new ImageMediaMetricsService();
@@ -63,6 +65,7 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
       {
         execute,
         loadStoredReference,
+        storeReferenceImage,
         settle: vi.fn().mockResolvedValue(undefined),
         releaseUnpersisted: vi.fn().mockResolvedValue(undefined),
       } as unknown as ImageExecutionManager,
@@ -442,13 +445,92 @@ describe('ImageGenerationService — supersession, reference reuse and progress'
       expect(repo.rows.get(record.id)?.errorCode).toBe('IMAGE_REFERENCE_UNAVAILABLE');
     });
 
-    it('stores nothing for bare base64 with no file id', async () => {
+    it('stores nothing for bare base64 that is not an image by its magic bytes', async () => {
       execute.mockResolvedValue(OK);
 
       await enqueueAuto({ referenceImageBase64: 'aGVsbG8=', referenceImageMimeType: 'image/png' });
 
+      expect(storeReferenceImage).not.toHaveBeenCalled();
       expect(repo.createReferenceAsset).not.toHaveBeenCalled();
       expect(attempts()[0]).toMatchObject({ referenceImageBase64: 'aGVsbG8=' });
+    });
+
+    // PNG signature + a few bytes; declared as JPEG to prove the SNIFFED type wins.
+    const BARE_PNG = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52,
+    ]).toString('base64');
+
+    it('stores bare base64 as the owner file (sniffed type) and re-reads it on retry', async () => {
+      execute.mockRejectedValueOnce(new Error('down'));
+      const record = await service.enqueueGeneration({
+        prompt: 'make it blue',
+        provider: 'IMAGE_GEMINI',
+        model: 'gemini-2.5-flash-image',
+        userId: OWNER,
+        referenceImageBase64: BARE_PNG,
+        referenceImageMimeType: 'image/jpeg',
+      });
+      await flush();
+
+      expect(storeReferenceImage).toHaveBeenCalledWith(
+        OWNER,
+        `image-reference-${record.id}.png`,
+        'image/png',
+        BARE_PNG,
+      );
+      expect(repo.createReferenceAsset).toHaveBeenCalledWith({
+        generationId: record.id,
+        fileId: 'file-bare',
+        mimeType: 'image/png',
+      });
+
+      loadStoredReference.mockResolvedValue({ base64: BARE_PNG, mimeType: 'image/png' });
+      execute.mockResolvedValue(OK);
+      await service.retryGenerationForUser(record.id, OWNER);
+      await flush();
+
+      expect(loadStoredReference).toHaveBeenCalledWith('file-bare', OWNER);
+      expect(attempts()[1]).toMatchObject({ referenceImageBase64: BARE_PNG });
+    });
+
+    it('still sends a bare reference when file-service refuses to store it', async () => {
+      storeReferenceImage.mockRejectedValue(new Error('file-service down'));
+      execute.mockResolvedValue(OK);
+
+      const rootId = await enqueueAuto({ referenceImageBase64: BARE_PNG });
+
+      expect(repo.createReferenceAsset).not.toHaveBeenCalled();
+      expect(attempts()[0]).toMatchObject({ referenceImageBase64: BARE_PNG });
+      expect(repo.rows.get(rootId)?.status).toBe(ImageGenerationStatus.COMPLETED);
+    });
+  });
+
+  describe('assistant message link (10a)', () => {
+    it('links the owner row and the successors an AUTO fallback spawned', async () => {
+      execute.mockRejectedValueOnce(new Error('down')).mockResolvedValueOnce(OK);
+      const rootId = await enqueueAuto();
+      const successorId = repo.rows.get(rootId)?.supersededById ?? '';
+
+      const linked = await service.linkAssistantMessage(rootId, OWNER, 'msg-a');
+
+      expect(linked).toBe(2);
+      expect(repo.rows.get(rootId)?.assistantMessageId).toBe('msg-a');
+      expect(repo.rows.get(successorId)?.assistantMessageId).toBe('msg-a');
+    });
+
+    it('never overwrites a link that is already set', async () => {
+      await service.linkAssistantMessage('img-1', OWNER, 'msg-a');
+
+      const linked = await service.linkAssistantMessage('img-1', OWNER, 'msg-b');
+
+      expect(linked).toBe(0);
+      expect(repo.rows.get('img-1')?.assistantMessageId).toBe('msg-a');
+    });
+
+    it('links nothing on a foreign or missing generation', async () => {
+      expect(await service.linkAssistantMessage('img-1', STRANGER, 'msg-x')).toBe(0);
+      expect(await service.linkAssistantMessage('nope', OWNER, 'msg-x')).toBe(0);
+      expect(repo.rows.get('img-1')?.assistantMessageId).toBeNull();
     });
   });
 
