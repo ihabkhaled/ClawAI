@@ -548,3 +548,9 @@ attachments and each candidate's fit; the decision carries
 - **Endpoints**: unchanged — `GET/PUT /routing/assistant-models/TTS_VOICE`
   (admin) and `GET /internal/assistant-models/TTS_VOICE/candidates`.
 - Metering happens in chat-service (`PaygSurface.TTS`), not here.
+
+## Image edit intent (2026-09-26)
+
+An attached image plus an edit instruction routes to an edit-capable image
+provider via the shared capability table; see rule 51 item 18 and
+[`apps/claw-routing-service/CLAUDE.md`](../../apps/claw-routing-service/CLAUDE.md).

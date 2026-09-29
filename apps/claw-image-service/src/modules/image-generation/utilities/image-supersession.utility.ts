@@ -34,6 +34,7 @@ export function successorDataFrom(
     userMessageId: source.userMessageId ?? undefined,
     assistantMessageId: source.assistantMessageId ?? undefined,
     prompt: source.prompt,
+    originalPrompt: source.originalPrompt ?? undefined,
     provider: target.provider,
     model: target.model,
     width: source.width,

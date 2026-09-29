@@ -57,6 +57,7 @@ const record = (overrides: Partial<ImageGenerationRecord> = {}): ImageGeneration
   userMessageId: null,
   assistantMessageId: null,
   prompt: 'a lighthouse at dusk',
+  originalPrompt: null,
   revisedPrompt: null,
   provider: 'IMAGE_OPENAI',
   model: 'gpt-image-1',

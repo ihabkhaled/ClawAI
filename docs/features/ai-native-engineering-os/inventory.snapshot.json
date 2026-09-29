@@ -7804,7 +7804,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 7081,
+          "bytes": 7951,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -10194,7 +10194,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 45
+        "testFiles": 47
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10210,7 +10210,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 220
+        "testFiles": 221
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10238,7 +10238,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 35
+        "testFiles": 40
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -10262,7 +10262,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 110
+        "testFiles": 111
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -11008,7 +11008,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1667,
+    "totalTestFiles": 1676,
     "workspaceCount": 25
   }
 }

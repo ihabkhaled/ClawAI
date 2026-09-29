@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: ImageGeneration, ImageGenerationAsset, ImageGenerationEvent
 - API endpoints: 11 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 35 (vitest)
+- Test files: 40 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

@@ -14,6 +14,7 @@ const mockRecord = {
   userMessageId: null,
   assistantMessageId: null,
   prompt: 'a cute cat',
+  originalPrompt: null,
   revisedPrompt: null,
   provider: 'IMAGE_GEMINI',
   model: 'gemini-2.5-flash-image',

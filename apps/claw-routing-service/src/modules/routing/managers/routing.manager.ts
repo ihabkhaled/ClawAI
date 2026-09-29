@@ -2,8 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
 import {
+  classifyImageIntent,
+  hasAttachedImageMime,
+  imageEditModelFor,
+  imageEditProviders,
   inferImageCapabilityProvider,
+  MultimodalImageIntent,
   resolveImageCapabilityProvider,
+  supportsImageEdit,
 } from '@claw/shared-utilities';
 import { RouterProvider, RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
@@ -253,7 +259,11 @@ export class RoutingManager {
     context: RoutingContext,
     localOnly: boolean,
   ): RoutingDecisionResult | null {
-    if (this.imageDetection.detect(context.message).matched) {
+    const intent = this.imageIntentOf(context);
+    if (intent === MultimodalImageIntent.EDIT) {
+      return this.buildImageEditDecision(context, localOnly);
+    }
+    if (intent === MultimodalImageIntent.GENERATE) {
       if (context.forcedModel && context.userMode === RoutingMode.MANUAL_MODEL) {
         this.logger.log(
           `detectExplicitModeArtifact: picked chat model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel} cannot generate images → best available image provider`,
@@ -390,9 +400,10 @@ export class RoutingManager {
       );
       return this.handleAuto(context);
     }
-    const { provider, model } = primary;
+    const editPick = this.editCapablePick(primary, context);
+    const { provider, model } = editPick;
     this.logger.debug(`handleManualModel: forced provider=${provider} model=${model}`);
-    const fallback = this.buildFallbackChain(primary, context);
+    const fallback = this.buildFallbackChain(editPick, context);
     this.logger.debug(`handleManualModel: fallback chain length=${String(fallback.length)}`);
 
     return {
@@ -763,7 +774,7 @@ export class RoutingManager {
     this.logger.log(
       `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
     );
-    if (this.shouldRejectRouterSelection(context.message, ollamaDecision)) {
+    if (this.shouldRejectRouterSelection(context, ollamaDecision)) {
       this.logger.warn(
         `handleAuto: rejecting semantically invalid Ollama route ${ollamaDecision.provider}/${ollamaDecision.model} for message="${context.message.slice(0, 80)}"`,
       );
@@ -995,12 +1006,82 @@ export class RoutingManager {
   }
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
-    const detection = this.imageDetection.detect(context.message);
-    if (!detection.matched) {
+    const intent = this.imageIntentOf(context);
+    if (intent === MultimodalImageIntent.EDIT) {
+      this.logger.log('detectImageRequest: image EDIT of the attached image');
+      return this.buildImageEditDecision(context, false);
+    }
+    if (intent !== MultimodalImageIntent.GENERATE) {
       return null;
     }
     this.logger.log('detectImageRequest: image generation request detected via keyword heuristic');
     return this.buildImageDecisionForBestProvider(context);
+  }
+
+  /**
+   * GENERATE / EDIT / ANALYZE / NONE for this turn (`@claw/shared-utilities`
+   * `classifyImageIntent`). An edit needs an attached image (rule 51 item 18);
+   * without one the answer is the generation detector's, as before. With one,
+   * an ANALYZE question never becomes an image job.
+   */
+  private imageIntentOf(context: RoutingContext): MultimodalImageIntent {
+    if (!hasAttachedImageMime(context.attachmentMimeTypes)) {
+      return this.imageDetection.detect(context.message).matched
+        ? MultimodalImageIntent.GENERATE
+        : MultimodalImageIntent.NONE;
+    }
+    return classifyImageIntent(context.message, true);
+  }
+
+  /**
+   * An EDIT of the attached image: the first HEALTHY provider that really uses
+   * a reference (capability table, not provider-name ifs). None healthy → the
+   * first edit provider anyway, so image-service answers the honest
+   * IMAGE_EDIT_UNAVAILABLE rather than a chat model pretending to edit.
+   */
+  private buildImageEditDecision(
+    context: RoutingContext,
+    localOnly: boolean,
+  ): RoutingDecisionResult {
+    const editors = imageEditProviders().filter(
+      (entry) => !localOnly || entry.provider === IMAGE_PROVIDER_LOCAL,
+    );
+    const healthy = editors.find((entry) => this.isImageProviderHealthy(entry.provider, context));
+    const chosen = healthy ?? editors[0];
+    const provider = chosen?.provider ?? IMAGE_PROVIDER_LOCAL;
+    const model = chosen?.editModel ?? IMAGE_MODEL_SD_LOCAL;
+    this.logger.log(
+      `buildImageEditDecision: edit → ${provider}/${model} healthy=${String(healthy !== undefined)}`,
+    );
+    const decision = this.buildImageDecision(provider, model, context);
+    return {
+      ...decision,
+      reasonTags: ['auto', 'image_edit', 'reference_image'],
+      privacyClass: localOnly ? 'local' : decision.privacyClass,
+      fallbackChain: decision.fallbackChain.filter(
+        (entry) =>
+          supportsImageEdit(entry.provider) &&
+          (!localOnly || entry.provider === IMAGE_PROVIDER_LOCAL),
+      ),
+    };
+  }
+
+  /**
+   * A picked image model keeps its provider for an edit when that provider can
+   * edit (rule 51 item 17); dall-e-3 moves to the provider's edit model. A
+   * picked provider that cannot use a reference (Grok, ComfyUI) would silently
+   * draw an unrelated picture, so the edit goes to a provider that can.
+   */
+  private editCapablePick(primary: FallbackEntry, context: RoutingContext): FallbackEntry {
+    if (!primary.provider.startsWith('IMAGE_')) return primary;
+    if (this.imageIntentOf(context) !== MultimodalImageIntent.EDIT) return primary;
+    const model = imageEditModelFor(primary.provider, primary.model);
+    if (model !== undefined) return { provider: primary.provider, model };
+    const edit = this.buildImageEditDecision(context, false);
+    this.logger.log(
+      `editCapablePick: ${primary.provider}/${primary.model} cannot edit an image → ${edit.selectedProvider}/${edit.selectedModel}`,
+    );
+    return { provider: edit.selectedProvider, model: edit.selectedModel };
   }
 
   private buildImageDecisionForBestProvider(context: RoutingContext): RoutingDecisionResult {
@@ -1826,7 +1907,11 @@ export class RoutingManager {
     return topPolicy.routingMode;
   }
 
-  private shouldRejectRouterSelection(message: string, decision: RouterDecisionSnapshot): boolean {
+  private shouldRejectRouterSelection(
+    context: RoutingContext,
+    decision: RouterDecisionSnapshot,
+  ): boolean {
+    const { message } = context;
     if (decision.provider === FILE_GENERATION_PROVIDER) {
       return this.detectFileGenerationRequest({ message } as RoutingContext) === null;
     }
@@ -1835,6 +1920,7 @@ export class RoutingManager {
       return (
         this.detectImageRequest({
           message,
+          attachmentMimeTypes: context.attachmentMimeTypes,
           connectorHealth: { GEMINI: true, OPENAI: true },
           runtimeHealth: { OLLAMA: true },
         } as RoutingContext) === null
@@ -1854,6 +1940,7 @@ export class RoutingManager {
         return (
           this.detectImageRequest({
             message,
+            attachmentMimeTypes: context.attachmentMimeTypes,
             connectorHealth: { GEMINI: true, OPENAI: true },
             runtimeHealth: { OLLAMA: true },
           } as RoutingContext) === null

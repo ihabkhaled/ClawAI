@@ -16,6 +16,7 @@ const failedRecord = {
   userMessageId: null,
   assistantMessageId: null,
   prompt: 'a lighthouse at dusk',
+  originalPrompt: null,
   revisedPrompt: null,
   provider: 'IMAGE_GEMINI',
   model: 'gemini-2.5-flash-image',

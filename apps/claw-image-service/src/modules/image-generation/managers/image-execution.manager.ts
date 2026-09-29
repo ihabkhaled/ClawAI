@@ -34,6 +34,9 @@ import {
 } from '../constants/image-reference.constants';
 import { SD_DEFAULT_STEPS } from '../constants/stable-diffusion.constants';
 import { generateWithOpenAI } from '../adapters/openai-image.adapter';
+import { editWithOpenAI } from '../adapters/openai-image-edit.adapter';
+import { OPENAI_DEFAULT_BASE_URL } from '../constants/image-edit.constants';
+import { assertImageEditSupported, imageExecutionModel } from '../utilities/image-edit.utility';
 import { generateWithGemini } from '../adapters/gemini-image.adapter';
 import { generateWithStableDiffusion } from '../adapters/stable-diffusion.adapter';
 import { generateWithXai } from '../adapters/xai-image.adapter';
@@ -248,6 +251,9 @@ export class ImageExecutionManager {
 
   private async callProvider(params: ExecuteImageInput): Promise<ImageProviderOutcome> {
     this.logger.debug(`callProvider: dispatching to ${params.provider}/${params.model}`);
+    // Before any hold or provider call: an edit on a provider that cannot use
+    // the attached image, or a mask it cannot apply, is refused here.
+    assertImageEditSupported(params);
     const { provider, model, prompt, width, height } = params;
     const w = width ?? 1024;
     const h = height ?? 1024;
@@ -311,12 +317,15 @@ export class ImageExecutionManager {
   ): Promise<ImageProviderOutcome> {
     this.logger.debug(`callMeteredCloudProvider: fetching config for ${connectorProvider}`);
     const config = await this.fetchConnectorConfig(connectorProvider);
+    // An edit on dall-e-3 runs (and is metered) on gpt-image-1; an edit is
+    // priced exactly like a generation of that model and size.
+    const run = { ...params, model: imageExecutionModel(params) };
     const hold = await this.reserveImageHold(
-      params,
+      run,
       connectorProvider,
       // dall-e-3 is metered by the quality it is sent at; `resolveOpenAiImageQuality`
       // passes the caller's quality through unchanged for dall-e, so this is it.
-      meteredImageModelKey(params.provider, params.model, width, height, params.quality),
+      meteredImageModelKey(run.provider, run.model, width, height, run.quality),
     );
 
     try {
@@ -326,7 +335,7 @@ export class ImageExecutionManager {
       // modality ignores one. There is no request parameter for the affordability
       // clamp (D6) to land in, so for this surface the clamp only sizes the hold
       // — it cannot physically bound the answer the way it does for text.
-      const response = await this.dispatchCloudProvider(params, config, width, height);
+      const response = await this.dispatchCloudProvider(run, config, width, height);
       this.logger.debug(
         `callMeteredCloudProvider: provider=${connectorProvider} returned — hold stays open until the image is persisted`,
       );
@@ -355,10 +364,25 @@ export class ImageExecutionManager {
         params.model,
       );
     }
+    if (params.provider === IMAGE_PROVIDER_OPENAI && params.referenceImageBase64 !== undefined) {
+      this.logger.debug('dispatchCloudProvider: routing to OpenAI image edit');
+      return editWithOpenAI({
+        baseUrl: config.baseUrl ?? OPENAI_DEFAULT_BASE_URL,
+        apiKey: config.apiKey,
+        prompt: params.prompt,
+        model: params.model,
+        width,
+        height,
+        quality: resolveOpenAiImageQuality(params.model, params.quality),
+        imageBase64: params.referenceImageBase64,
+        imageMimeType: params.referenceImageMimeType,
+        maskBase64: params.maskImageBase64,
+      });
+    }
     if (params.provider === IMAGE_PROVIDER_OPENAI) {
       this.logger.debug('dispatchCloudProvider: routing to OpenAI image generation');
       return generateWithOpenAI(
-        config.baseUrl ?? 'https://api.openai.com/v1',
+        config.baseUrl ?? OPENAI_DEFAULT_BASE_URL,
         config.apiKey,
         params.prompt,
         params.model,

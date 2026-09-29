@@ -6,3 +6,12 @@ export {
   inferImageCapabilityProvider,
   resolveImageCapabilityProvider,
 } from './image-output-model.utility';
+export type { ImageEditCapability } from './image-edit-capability.types';
+export { IMAGE_EDIT_CAPABILITIES } from './image-edit-capability.constants';
+export {
+  imageEditCapabilityOf,
+  imageEditModelFor,
+  imageEditProviders,
+  supportsImageEdit,
+  supportsImageMask,
+} from './image-edit-capability.utility';

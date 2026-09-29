@@ -1,7 +1,13 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
-import { resolveImageCapabilityProvider } from '@claw/shared-utilities';
+import {
+  classifyImageIntent,
+  hasAttachedImageMime,
+  imageEditProviders,
+  MultimodalImageIntent,
+  resolveImageCapabilityProvider,
+} from '@claw/shared-utilities';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -33,7 +39,6 @@ import { classifyResearchWorkflow, recordGet, runResearch } from '../../../commo
 import {
   FILE_FOLLOW_UP_PREFIXES,
   IMAGE_FOLLOW_UP_PREFIXES,
-  IMAGE_INTENT_PHRASES,
   SHORT_FOLLOW_UP_EXACT_MATCHES,
   SHORT_FOLLOW_UP_MAX_LENGTH,
 } from '../constants/follow-up-detection.constants';
@@ -68,7 +73,10 @@ import {
   type ResearchTranscript,
   type ResearchTranscriptSource,
 } from '../types/research-transcript.types';
-import { type UserMessageMetadata } from '../types/user-message-metadata.types';
+import {
+  type AttachmentTurn,
+  type UserMessageMetadata,
+} from '../types/user-message-metadata.types';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -1200,7 +1208,7 @@ export class ChatMessagesService implements OnModuleInit {
       );
       const fileIds = this.extractFileIdsFromMessages(routedMessages);
       const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
-      const effectivePayload = this.applyFollowUpOverrides(payload, thread, routedMessages);
+      const effectivePayload = await this.applyFollowUpOverrides(payload, thread, routedMessages);
       const context = await this.contextAssemblyManager.assemble(
         thread?.userId ?? 'system',
         routedMessages,
@@ -1271,11 +1279,11 @@ export class ChatMessagesService implements OnModuleInit {
     );
   }
 
-  private applyFollowUpOverrides(
+  private async applyFollowUpOverrides(
     payload: MessageRoutedData,
     thread: ChatThread | null,
     chronologicalMessages: ChatMessage[],
-  ): MessageRoutedData {
+  ): Promise<MessageRoutedData> {
     let effectivePayload = this.detectImageOutputModel(payload);
     effectivePayload = this.detectImageFollowUp(effectivePayload, thread, chronologicalMessages);
     effectivePayload = this.detectFileGenerationFollowUp(
@@ -1283,7 +1291,11 @@ export class ChatMessagesService implements OnModuleInit {
       thread,
       chronologicalMessages,
     );
-    effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
+    effectivePayload = await this.detectImageFromAttachment(
+      effectivePayload,
+      chronologicalMessages,
+      thread?.userId,
+    );
     if (thread?.judgeEnabled) {
       effectivePayload = {
         ...effectivePayload,
@@ -2595,25 +2607,48 @@ export class ChatMessagesService implements OnModuleInit {
     return rerouteFileFollowUp(payload);
   }
 
-  private detectImageFromAttachment(
+  /**
+   * Safety net for an EDIT of an attached image that routing did not already
+   * send to an image provider (pack §10/§88). The decision is the shared
+   * deterministic `classifyImageIntent` over the attachments' REAL mime types
+   * — "remove the background" / "make it blue" with an image is EDIT, "what is
+   * this?" stays vision Q&A, and a PDF never becomes an image job. The target
+   * is the first edit-capable provider in the shared capability table, never
+   * a hard-coded name. Replaces the old `IMAGE_INTENT_PHRASES` substring list
+   * (which also fired on "make this shorter" with a PDF attached).
+   */
+  private async detectImageFromAttachment(
     payload: MessageRoutedData,
     messages: ChatMessage[],
-  ): MessageRoutedData {
-    if (payload.selectedProvider.startsWith('IMAGE_')) return payload;
-    const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
-    if (!lastUser) return payload;
-    const meta = lastUser.metadata as UserMessageMetadata | null;
-    const fileIds = Array.isArray(meta?.fileIds) ? meta.fileIds : [];
-    if (fileIds.length === 0) return payload;
-    const lower = (meta?.clientIntent ?? lastUser.content).toLowerCase();
-    if (!IMAGE_INTENT_PHRASES.some((p) => lower.includes(p))) return payload;
+    userId: string | undefined,
+  ): Promise<MessageRoutedData> {
+    if (payload.selectedProvider.startsWith('IMAGE_') || userId === undefined) return payload;
+    const turn = this.latestAttachmentTurn(messages);
+    if (turn === null) return payload;
+    const mimeTypes = await this.attachmentMimeTypesOf(userId, turn.fileIds);
+    const intent = classifyImageIntent(turn.text, hasAttachedImageMime(mimeTypes));
+    const editor = imageEditProviders()[0];
+    if (intent !== MultimodalImageIntent.EDIT || editor === undefined) return payload;
     this.logger.log(
-      `Image-from-attachment detected: "${lower.slice(0, 50)}" with ${String(fileIds.length)} files → overriding to IMAGE_GEMINI`,
+      `Image edit of an attachment: ${String(turn.fileIds.length)} files → ${editor.provider}/${editor.editModel}`,
     );
-    return {
-      ...payload,
-      selectedProvider: 'IMAGE_GEMINI',
-      selectedModel: 'gemini-2.5-flash-image',
-    };
+    return { ...payload, selectedProvider: editor.provider, selectedModel: editor.editModel };
+  }
+
+  /** The latest user turn's text and attachments, or null when it has none. */
+  private latestAttachmentTurn(messages: ChatMessage[]): AttachmentTurn | null {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
+    const meta = lastUser?.metadata as UserMessageMetadata | null | undefined;
+    const fileIds = Array.isArray(meta?.fileIds) ? meta.fileIds : [];
+    return lastUser === undefined || fileIds.length === 0
+      ? null
+      : { text: meta?.clientIntent ?? lastUser.content, fileIds };
+  }
+
+  /** The attachments' mime types; an outage reads as "no image" (never an image job by guess). */
+  private async attachmentMimeTypesOf(userId: string, fileIds: string[]): Promise<string[]> {
+    return this.attachmentInfo === undefined
+      ? []
+      : this.attachmentInfo.mimeTypes(fileIds, userId).catch(() => []);
   }
 }

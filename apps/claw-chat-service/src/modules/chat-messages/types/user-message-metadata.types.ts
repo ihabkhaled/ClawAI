@@ -21,3 +21,8 @@ export type UserMessageMetadata = {
   // transcript is the flat source list with per-run latency + warnings.
   researchTranscript?: ResearchTranscript;
 };
+/** The latest user turn's text and attached file ids (image edit-intent check). */
+export type AttachmentTurn = {
+  text: string;
+  fileIds: string[];
+};

@@ -1026,6 +1026,45 @@ describe('ChatMessagesService', () => {
     });
   });
 
+  // pack §10/§88: an attached-image EDIT the router left on a chat model goes
+  // to the first edit-capable image provider; a question or a PDF stays chat.
+  describe('handleMessageRouted — attached-image edit intent', () => {
+    const route = async (content: string, mimeTypes: string[]): Promise<unknown> => {
+      const attachmentInfo = { mimeTypes: vi.fn().mockResolvedValue(mimeTypes), textOnly: vi.fn() };
+      Object.assign(service, { attachmentInfo });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content, metadata: { fileIds: ['file-1'] } },
+      ]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockResolvedValue({
+        content: 'ok',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+      messagesRepo.create.mockResolvedValue({ ...mockMessage, role: 'ASSISTANT' as const });
+      await service.handleMessageRouted({
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      });
+      return executionManager.execute!.mock.calls[0]?.[0];
+    };
+
+    it.each([
+      ['remove the background', ['image/png'], 'IMAGE_GEMINI'],
+      ['احذف الخلفية', ['image/jpeg'], 'IMAGE_GEMINI'],
+      ['what is this?', ['image/png'], 'GEMINI'],
+      ['make this shorter', ['application/pdf'], 'GEMINI'],
+    ])('"%s" with %j → %s', async (content, mimeTypes, expected) => {
+      expect(await route(content, mimeTypes)).toMatchObject({ selectedProvider: expected });
+    });
+  });
+
   describe('handleMessageRouted — image-output model redirect', () => {
     it.each([
       ['GEMINI', 'models/gemini-3-pro-image', 'IMAGE_GEMINI'],

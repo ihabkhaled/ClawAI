@@ -6,7 +6,7 @@ import {
   type ImageFailedPayload,
 } from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { ImageGenerationStatus } from '../../../generated/prisma';
+import { ImageAssetRole, ImageGenerationStatus } from '../../../generated/prisma';
 import { ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { ImageExecutionManager } from '../managers/image-execution.manager';
 import { ImagePlanGateManager } from '../managers/image-plan-gate.manager';
@@ -47,6 +47,8 @@ import { isActiveImageStatus, isImageCancelledError } from '../utilities/image-c
 import { successorDataFrom, toLatestSummary } from '../utilities/image-supersession.utility';
 import { type ListImagesQueryDto } from '../dto/generate-image.dto';
 import { BusinessException } from '../../../common/errors';
+import { supportsImageEdit, supportsImageMask } from '@claw/shared-utilities';
+import { assertValidImageMask, imageEditRefusal } from '../utilities/image-mask.utility';
 import { IMAGE_FALLBACK_CHAIN, IMAGE_LOCAL_PROVIDERS } from '../../../common/constants';
 import {
   IMAGE_AUTO_FALLBACK_MAX_ATTEMPTS,
@@ -75,12 +77,15 @@ export class ImageGenerationService {
    */
   async enqueueGeneration(params: GenerateImageParams): Promise<ImageGenerationRecord> {
     await this.planGate.assertCanGenerate(params.userId);
+    // A mask is checked BEFORE a row exists: a refused mask leaves nothing behind.
+    const mask = await this.prepareMask(params);
     const record = await this.repository.create({
       userId: params.userId,
       threadId: params.threadId,
       userMessageId: params.userMessageId,
       assistantMessageId: params.assistantMessageId,
       prompt: params.prompt,
+      originalPrompt: params.originalPrompt,
       provider: params.provider,
       model: params.model,
       width: params.width,
@@ -89,6 +94,7 @@ export class ImageGenerationService {
       style: params.style,
     });
     const reference = await this.storeReference(record.id, params);
+    await this.storeMask(record.id, params, mask);
 
     await this.repository.createEvent({
       generationId: record.id,
@@ -108,7 +114,7 @@ export class ImageGenerationService {
     );
 
     // Fire-and-forget: process the job asynchronously
-    void this.processJobWithFallback(record.id, params.isAutoMode ?? false, reference);
+    void this.processJobWithFallback(record.id, params.isAutoMode ?? false, reference, mask);
 
     return record;
   }
@@ -382,6 +388,43 @@ export class ImageGenerationService {
     return { base64: params.referenceImageBase64, mimeType: params.referenceImageMimeType };
   }
 
+  /**
+   * Loads and validates a mask (pack §81, API only). Both files are read
+   * through file-service's owner-checked content route, so a mask or source
+   * the user does not own fails. 422 when there is no reference to mask, the
+   * provider cannot apply a mask, or the mask is not a same-size alpha PNG.
+   */
+  private async prepareMask(params: GenerateImageParams): Promise<ImageReference | undefined> {
+    if (params.maskFileId === undefined) return undefined;
+    if (params.referenceFileId === undefined) {
+      throw imageEditRefusal(ImageFailureCode.MASK_INVALID, 'a mask needs an attached image');
+    }
+    if (!supportsImageMask(params.provider)) {
+      throw imageEditRefusal(ImageFailureCode.MASK_NOT_SUPPORTED, params.provider);
+    }
+    const [mask, source] = await Promise.all([
+      this.executionManager.loadStoredReference(params.maskFileId, params.userId),
+      this.executionManager.loadStoredReference(params.referenceFileId, params.userId),
+    ]);
+    assertValidImageMask(mask, source);
+    return mask;
+  }
+
+  /** Keeps the mask's file id (role MASK) so a retry or successor applies the same mask. */
+  private async storeMask(
+    generationId: string,
+    params: GenerateImageParams,
+    mask: ImageReference | undefined,
+  ): Promise<void> {
+    if (mask === undefined || params.maskFileId === undefined) return;
+    await this.repository.createReferenceAsset({
+      generationId,
+      fileId: params.maskFileId,
+      mimeType: mask.mimeType ?? 'image/png',
+      role: ImageAssetRole.MASK,
+    });
+  }
+
   private resolveAlternateModel(
     record: ImageGenerationRecord,
     provider?: string,
@@ -460,14 +503,20 @@ export class ImageGenerationService {
     generationId: string,
     isAutoMode: boolean,
     reference: ImageReference | undefined,
+    mask?: ImageReference,
   ): Promise<void> {
-    const chain: ImageFallbackChainState = { attempts: 0, paidBlocked: false };
+    const chain: ImageFallbackChainState = {
+      attempts: 0,
+      paidBlocked: false,
+      requiresEdit: reference !== undefined,
+      requiresMask: mask !== undefined,
+    };
     const spawnSuccessor: ImageSuccessorSpawner | undefined = isAutoMode
       ? async (failed, described) => this.spawnFallback(failed, described, chain)
       : undefined;
     let nextId: string | undefined = generationId;
     for (let hop = 0; nextId !== undefined && hop <= IMAGE_AUTO_FALLBACK_MAX_ATTEMPTS; hop++) {
-      nextId = await this.processJob(nextId, { reference, spawnSuccessor });
+      nextId = await this.processJob(nextId, { reference, mask, spawnSuccessor });
     }
   }
 
@@ -497,7 +546,7 @@ export class ImageGenerationService {
     const failedKey = `${failed.provider}/${failed.model}`;
     const next =
       chain.attempts < IMAGE_AUTO_FALLBACK_MAX_ATTEMPTS
-        ? this.findNextFallback(failedKey, chain.paidBlocked)
+        ? this.findNextFallback(failedKey, chain)
         : undefined;
     if (!next) {
       this.logger.warn('All auto-fallback attempts exhausted');
@@ -520,15 +569,22 @@ export class ImageGenerationService {
     return successor.id;
   }
 
+  /**
+   * The next rung of the chain this job may use: local only after a credit
+   * refusal; for an edit only providers that use the reference (a text-only
+   * rung would ignore the user's image); for a masked edit only mask-capable.
+   */
   private findNextFallback(
     currentKey: string,
-    localOnly: boolean,
+    chain: ImageFallbackChainState,
   ): { provider: string; model: string } | undefined {
     const idx = IMAGE_FALLBACK_CHAIN.findIndex((c) => `${c.provider}/${c.model}` === currentKey);
-    const remaining = IMAGE_FALLBACK_CHAIN.slice(idx + 1);
-    return !localOnly
-      ? remaining[0]
-      : remaining.find((c) => IMAGE_LOCAL_PROVIDERS.includes(c.provider));
+    return IMAGE_FALLBACK_CHAIN.slice(idx + 1).find(
+      (c) =>
+        (!chain.paidBlocked || IMAGE_LOCAL_PROVIDERS.includes(c.provider)) &&
+        (!chain.requiresEdit || supportsImageEdit(c.provider)) &&
+        (!chain.requiresMask || supportsImageMask(c.provider)),
+    );
   }
 
   /**
@@ -586,8 +642,10 @@ export class ImageGenerationService {
   ): Promise<ImageAttemptEnd> {
     try {
       const reference = options.reference ?? (await this.readStoredReference(generation));
+      // A mask only ever exists beside a reference.
+      const mask = options.mask ?? (reference ? await this.readStoredMask(generation) : undefined);
       return {
-        outcome: await this.executeAndPersistGeneration(generationId, generation, reference),
+        outcome: await this.executeAndPersistGeneration(generationId, generation, reference, mask),
       };
     } catch (error: unknown) {
       return this.handleProcessJobFailure(generationId, generation, error, options.spawnSuccessor);
@@ -613,14 +671,26 @@ export class ImageGenerationService {
       : undefined;
   }
 
+  /** The stored mask for a retry, or undefined when the job never had one. */
+  private async readStoredMask(
+    generation: ImageGenerationRecord,
+  ): Promise<ImageReference | undefined> {
+    const asset = await this.repository.findMaskAsset(generation.id);
+    return asset
+      ? this.executionManager.loadStoredReference(asset.storageKey, generation.userId)
+      : undefined;
+  }
+
   private async executeAndPersistGeneration(
     generationId: string,
     generation: ImageGenerationRecord,
     reference: ImageReference | undefined,
+    mask?: ImageReference,
   ): Promise<ImageGenerationMetricOutcome> {
-    const result = await this.executionManager.execute(
-      this.buildExecuteInput(generationId, generation, reference),
-    );
+    const result = await this.executionManager.execute({
+      ...this.buildExecuteInput(generationId, generation, reference),
+      maskImageBase64: mask?.base64,
+    });
 
     const asset = await this.persistAsset(generationId, generation, result);
     if (asset === null) {

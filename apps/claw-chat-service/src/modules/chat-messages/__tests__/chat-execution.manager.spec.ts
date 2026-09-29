@@ -1184,6 +1184,65 @@ describe('ChatExecutionManager', () => {
       });
       visionHop.mockRestore();
     });
+
+    // pack §79: the user's instruction leads, verbatim; their words are kept as
+    // originalPrompt; a failed rewrite sends the original prompt alone.
+    it('keeps the user instruction first and sends originalPrompt with a rewritten prompt', async () => {
+      httpRequest.mockResolvedValueOnce(imageAccepted);
+      const visionHop = vi
+        .spyOn(Object.getPrototypeOf(manager), 'buildImagePromptFromVision')
+        .mockResolvedValue('A red lighthouse on a rocky shore at dusk.');
+      const context = {
+        ...makeContext('remove the background'),
+        fileContents: [
+          { id: 'file-ref', filename: 'l.png', mimeType: 'image/png', content: 'aGVsbG8=' },
+        ],
+      };
+
+      await manager.callProvider(
+        'IMAGE_GEMINI',
+        'gemini-2.5-flash-image',
+        context,
+        Date.now(),
+        false,
+      );
+
+      const body = (httpRequest.mock.calls[0]?.[0] as { body: Record<string, unknown> }).body;
+      expect(body['originalPrompt']).toBe('remove the background');
+      const prompt = String(body['prompt']);
+      expect(prompt.indexOf('remove the background')).toBeLessThan(
+        prompt.indexOf('A red lighthouse'),
+      );
+      expect(prompt).not.toContain('closely matches');
+      visionHop.mockRestore();
+    });
+
+    it('sends the original prompt unchanged, without originalPrompt, when the rewrite fails', async () => {
+      httpRequest.mockResolvedValueOnce(imageAccepted);
+      const visionHop = vi
+        .spyOn(Object.getPrototypeOf(manager), 'buildImagePromptFromVision')
+        // The vision hop returns the user's text unchanged when it fails.
+        .mockResolvedValue('make it blue');
+      const context = {
+        ...makeContext('make it blue'),
+        fileContents: [
+          { id: 'file-ref', filename: 'l.png', mimeType: 'image/png', content: 'aGVsbG8=' },
+        ],
+      };
+
+      await manager.callProvider(
+        'IMAGE_GEMINI',
+        'gemini-2.5-flash-image',
+        context,
+        Date.now(),
+        false,
+      );
+
+      const body = (httpRequest.mock.calls[0]?.[0] as { body: Record<string, unknown> }).body;
+      expect(body['prompt']).toBe('make it blue');
+      expect(body).not.toHaveProperty('originalPrompt');
+      visionHop.mockRestore();
+    });
   });
 
   // ADR-122: image generation / edit is a paid feature. A free plan's image

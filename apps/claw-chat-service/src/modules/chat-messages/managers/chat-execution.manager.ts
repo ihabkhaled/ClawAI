@@ -123,6 +123,7 @@ import {
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { splitOllamaMessageReasoning } from '../utilities/buffered-reasoning.utility';
 import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
+import { buildReferenceImagePrompt } from '../utilities/image-reference-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
@@ -5025,7 +5026,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const config = AppConfig.get();
     this.logger.debug('callImageService: extracting last user message for prompt');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    let prompt = lastUserMsg?.content ?? 'generate an image';
+    // The user's own words. Kept on the generation row as `originalPrompt`
+    // whenever the prompt sent upstream differs (pack §79).
+    const originalPrompt = lastUserMsg?.content ?? 'generate an image';
+    let prompt = originalPrompt;
     this.logger.debug(`callImageService: base prompt length=${String(prompt.length)}`);
 
     // If image files are attached:
@@ -5040,7 +5044,9 @@ export class ChatExecutionManager implements OnModuleInit {
       this.logger.log(
         `callImageService: ${String(imageFiles.length)} image files attached — building vision prompt`,
       );
-      prompt = await this.buildImagePromptFromVision(prompt, context);
+      const description = await this.buildImagePromptFromVision(originalPrompt, context);
+      // User's instruction first and verbatim; a failed rewrite sends it alone.
+      prompt = buildReferenceImagePrompt(originalPrompt, description);
       this.logger.debug(`callImageService: vision prompt built — length=${String(prompt.length)}`);
       const firstImage = imageFiles[0];
       if (firstImage?.content) {
@@ -5052,8 +5058,6 @@ export class ChatExecutionManager implements OnModuleInit {
         this.logger.debug(
           `callImageService: reference image attached — mimeType=${firstImage.mimeType} base64Len=${String(firstImage.content.length)}`,
         );
-        // Prepend reference instruction so the image generator knows to match the attached image
-        prompt = `REFERENCE IMAGE ATTACHED — Generate an image that closely matches the visual style, composition, colors, and subject matter of the provided reference image. Use the following detailed description as guidance:\n\n${prompt}`;
       }
     } else {
       this.logger.debug('callImageService: no image files attached — using text prompt only');
@@ -5078,6 +5082,9 @@ export class ChatExecutionManager implements OnModuleInit {
       referenceImageBase64,
       referenceImageMimeType,
       referenceFileId,
+      ...(prompt === originalPrompt
+        ? {}
+        : { originalPrompt: boundImageGenerationPrompt(originalPrompt) }),
     };
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,

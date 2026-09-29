@@ -24,6 +24,8 @@ enum ImageGenerationStatus {
 enum ImageAssetRole {
   OUTPUT
   REFERENCE
+  /// PNG alpha mask limiting where an edit applies (OpenAI edits only).
+  MASK
 }
 
 model ImageGeneration {
@@ -32,7 +34,13 @@ model ImageGeneration {
   threadId           String?               @map("thread_id")
   userMessageId      String?               @map("user_message_id")
   assistantMessageId String?               @map("assistant_message_id")
+  /// The prompt actually sent to the provider (the EFFECTIVE prompt). For a
+  /// reference-image job chat-service may rewrite the user's words with a
+  /// vision description; the user's own words are kept in originalPrompt.
   prompt             String
+  /// The user's own words when `prompt` was rewritten (reference image), else
+  /// null (prompt IS the user's words). Debugging only; never sent upstream.
+  originalPrompt     String?               @map("original_prompt")
   revisedPrompt      String?               @map("revised_prompt")
   provider           String
   model              String

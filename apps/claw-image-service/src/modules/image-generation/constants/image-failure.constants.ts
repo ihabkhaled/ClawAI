@@ -56,6 +56,18 @@ export const IMAGE_FAILURE_MESSAGES: ReadonlyMap<ImageFailureCode, string> = new
     ImageFailureCode.REFERENCE_UNAVAILABLE,
     'The attached reference image could not be read any more, so the edit was not retried. Attach the image again and resend.',
   ],
+  [
+    ImageFailureCode.EDIT_UNAVAILABLE,
+    'No image-editing model is available for the attached image. An administrator needs to enable Gemini, OpenAI or local Stable Diffusion.',
+  ],
+  [
+    ImageFailureCode.MASK_NOT_SUPPORTED,
+    'This image model cannot apply a mask. Use an OpenAI image model, or send the edit without a mask.',
+  ],
+  [
+    ImageFailureCode.MASK_INVALID,
+    'The mask must be a PNG with transparency, the same size as the image, and within the size limit.',
+  ],
 ]);
 
 /** The fixed sentence for a code, or the generic fallback for one this map does not carry. */
@@ -78,6 +90,10 @@ export const IMAGE_CHAIN_TERMINAL_FAILURE_CODES: readonly string[] = [
   ImageFailureCode.STORAGE_FAILED,
   // Every provider would be sent the same missing reference.
   ImageFailureCode.REFERENCE_UNAVAILABLE,
+  // The chain only walks edit-capable providers for a reference job, so an
+  // unusable mask would be refused by every one of them.
+  ImageFailureCode.MASK_INVALID,
+  ImageFailureCode.MASK_NOT_SUPPORTED,
 ];
 
 /** Lower-cased fragments that mark a provider refusal as a content-policy block. */

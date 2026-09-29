@@ -15,7 +15,7 @@ describe('ImageGenerationRepository', () => {
       updateMany: Mock;
     };
     imageGenerationEvent: { create: Mock };
-    imageGenerationAsset: { create: Mock; findFirst: Mock; deleteMany: Mock };
+    imageGenerationAsset: { create: Mock; findFirst: Mock; findMany: Mock; deleteMany: Mock };
     $transaction: Mock;
   };
 
@@ -32,6 +32,7 @@ describe('ImageGenerationRepository', () => {
       imageGenerationEvent: { create: vi.fn().mockResolvedValue({ id: 'e1' }) },
       imageGenerationAsset: {
         create: vi.fn().mockResolvedValue({ id: 'a1' }),
+        findMany: vi.fn().mockResolvedValue([]),
         findFirst: vi.fn().mockResolvedValue(null),
         deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
@@ -197,27 +198,60 @@ describe('ImageGenerationRepository', () => {
       expect(prismaMock.imageGenerationAsset.create).not.toHaveBeenCalled();
     });
 
-    it('createSuccessor carries the stored reference image across to the successor', async () => {
+    it('createSuccessor carries the stored reference AND mask across to the successor', async () => {
       prismaMock.imageGeneration.create.mockResolvedValue({ id: 'g2', status: 'QUEUED' });
-      prismaMock.imageGenerationAsset.findFirst.mockResolvedValue({
-        storageKey: 'file-ref',
-        url: '/api/v1/files/download/file-ref',
-        downloadUrl: '/api/v1/files/download/file-ref',
-        mimeType: 'image/jpeg',
-      });
+      prismaMock.imageGenerationAsset.findMany.mockResolvedValue([
+        {
+          role: 'REFERENCE',
+          storageKey: 'file-ref',
+          url: '/api/v1/files/download/file-ref',
+          downloadUrl: '/api/v1/files/download/file-ref',
+          mimeType: 'image/jpeg',
+        },
+        {
+          role: 'MASK',
+          storageKey: 'file-mask',
+          url: '/api/v1/files/download/file-mask',
+          downloadUrl: '/api/v1/files/download/file-mask',
+          mimeType: 'image/png',
+        },
+      ]);
 
       await repository.createSuccessor('g1', data);
 
-      expect(prismaMock.imageGenerationAsset.findFirst).toHaveBeenCalledWith({
-        where: { generationId: 'g1', role: 'REFERENCE' },
+      expect(prismaMock.imageGenerationAsset.findMany).toHaveBeenCalledWith({
+        where: { generationId: 'g1', role: { in: ['REFERENCE', 'MASK'] } },
       });
       expect(prismaMock.imageGenerationAsset.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           generationId: 'g2',
           role: 'REFERENCE',
           storageKey: 'file-ref',
-          mimeType: 'image/jpeg',
         }),
+      });
+      expect(prismaMock.imageGenerationAsset.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          generationId: 'g2',
+          role: 'MASK',
+          storageKey: 'file-mask',
+        }),
+      });
+    });
+
+    it('createReferenceAsset stores a MASK role when asked', async () => {
+      await repository.createReferenceAsset({
+        generationId: 'g1',
+        fileId: 'm1',
+        mimeType: 'image/png',
+        role: 'MASK',
+      });
+      expect(prismaMock.imageGenerationAsset.create.mock.calls[0]?.[0].data.role).toBe('MASK');
+    });
+
+    it('findMaskAsset reads only the MASK row', async () => {
+      await repository.findMaskAsset('g1');
+      expect(prismaMock.imageGenerationAsset.findFirst).toHaveBeenCalledWith({
+        where: { generationId: 'g1', role: 'MASK' },
       });
     });
 

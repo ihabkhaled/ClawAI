@@ -17,6 +17,7 @@ export const baseRecord = (
   userMessageId: null,
   assistantMessageId: null,
   prompt: 'a cute cat',
+  originalPrompt: null,
   revisedPrompt: null,
   provider: 'IMAGE_GEMINI',
   model: 'gemini-2.5-flash-image',
@@ -58,6 +59,7 @@ export type InMemoryImageRepo = {
   createAsset: Mock;
   createReferenceAsset: Mock;
   findReferenceAsset: Mock;
+  findMaskAsset: Mock;
   findByUserId: Mock;
   countByUserId: Mock;
 };
@@ -91,6 +93,7 @@ export const buildInMemoryImageRepo = (
 ): InMemoryImageRepo => {
   const rows = new Map<string, ImageGenerationRecord>();
   const references = new Map<string, ImageGenerationAssetRecord>();
+  const masks = new Map<string, ImageGenerationAssetRecord>();
   rows.set(seed.id, seed);
   let nextId = 2;
   const insert = (data: CreateImageGenerationData): ImageGenerationRecord => {
@@ -104,6 +107,7 @@ export const buildInMemoryImageRepo = (
       provider: data.provider,
       model: data.model,
       prompt: data.prompt,
+      originalPrompt: data.originalPrompt ?? null,
     });
     rows.set(id, row);
     return row;
@@ -173,11 +177,14 @@ export const buildInMemoryImageRepo = (
     }),
     createReferenceAsset: vi.fn((input: ImageReferenceAssetInput) => {
       const asset = referenceAsset(input.generationId, input.fileId, input.mimeType);
-      references.set(input.generationId, asset);
+      (input.role === ImageAssetRole.MASK ? masks : references).set(input.generationId, asset);
       return Promise.resolve(asset);
     }),
     findReferenceAsset: vi.fn((generationId: string) =>
       Promise.resolve(references.get(generationId) ?? null),
+    ),
+    findMaskAsset: vi.fn((generationId: string) =>
+      Promise.resolve(masks.get(generationId) ?? null),
     ),
     findByUserId: vi.fn().mockResolvedValue([]),
     countByUserId: vi.fn().mockResolvedValue(0),

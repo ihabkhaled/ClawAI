@@ -1438,3 +1438,22 @@ model's private notes run into its reply.
   a reasoning-field delta decides; `splitBufferedReasoning` is that class with
   an unbounded hold. Past the hold, `resplitLeakedReasoning` keeps the STORED
   answer clean. Never add a second splitter (rule 56 §5–7).
+
+## Attached-image edit intent and the reference prompt (pack §10/§79, 2026-09-26)
+
+- `detectImageFromAttachment` (safety net after routing) uses the shared
+  `classifyImageIntent` over the attachments' REAL mime types
+  (`attachmentInfo.mimeTypes`; an outage reads as "no image"). EDIT goes to the
+  first row of `imageEditProviders()` (capability table), never a hard-coded
+  provider. `IMAGE_INTENT_PHRASES` is gone: it also fired on "make this
+  shorter" with a PDF. `applyFollowUpOverrides` is async for this lookup.
+- `callImageService`: `buildReferenceImagePrompt(original, visionDescription)`
+  puts the user's instruction first and verbatim, the `VISION_PROMPT_MODEL`
+  description after it as context. A failed or empty rewrite sends the
+  original prompt alone. When the prompt differs, the body carries
+  `originalPrompt` (stored on image-service's row). The old "closely matches the
+  reference" header, which turned "remove the background" into "redraw this",
+  is removed.
+- Tests: `chat-messages.service.spec.ts` (attached-image edit intent),
+  `chat-execution.manager.spec.ts` (image-service contract),
+  `image-reference-prompt.utility.spec.ts`. Rule 51 item 18.

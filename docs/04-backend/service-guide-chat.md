@@ -1025,3 +1025,10 @@ trippedAt, probing }] }`; `DELETE …/provider-breakers/:provider` → 200
 - `GET /api/v1/metrics` (internal): attachment delivery modes, vision-helper
   outcomes, read-aloud segments / first audio / job status. List:
   `docs/08-runtime-devops/metrics-and-dashboards.md`.
+
+## Attached-image edits (2026-09-26)
+
+Edit intent is the shared `classifyImageIntent` (rule 51 item 18); the
+reference prompt keeps the user's instruction first and verbatim and sends
+`originalPrompt` to image-service (pack §79). Details in
+[`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).

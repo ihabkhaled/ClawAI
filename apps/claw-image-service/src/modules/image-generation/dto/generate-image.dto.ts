@@ -29,6 +29,10 @@ export const generateImageSchema = z.object({
   referenceImageBase64: z.string().max(IMAGE_REFERENCE_MAX_BASE64_LENGTH).optional(),
   referenceImageMimeType: z.string().max(50).optional(),
   referenceFileId: z.string().min(1).max(IMAGE_REFERENCE_FILE_ID_MAX_LENGTH).optional(),
+  // The user's words before a reference-image rewrite (pack §79); debugging only.
+  originalPrompt: z.string().min(1).max(4000).optional(),
+  // A PNG alpha mask stored in file-service (pack §81). Needs a reference image.
+  maskFileId: z.string().min(1).max(IMAGE_REFERENCE_FILE_ID_MAX_LENGTH).optional(),
 });
 
 export type GenerateImageDto = z.infer<typeof generateImageSchema>;

@@ -430,3 +430,19 @@ chat model.
 - **Endpoints**: unchanged — `GET/PUT /routing/assistant-models/TTS_VOICE`
   (admin) and `GET /internal/assistant-models/TTS_VOICE/candidates`.
 - Metering happens in chat-service (`PaygSurface.TTS`), not here.
+
+## Image edit intent (rule 51 item 18, 2026-09-26)
+
+`imageIntentOf(context)` = `classifyImageIntent` (`@claw/shared-utilities`)
+when `attachmentMimeTypes` holds an image, else the generation detector.
+EDIT goes to `buildImageEditDecision`: the first HEALTHY provider in
+`imageEditProviders()` (reason tags `image_edit`, `reference_image`; fallback
+chain filtered to edit-capable; LOCAL_ONLY / PRIVACY_FIRST use SD only). None
+healthy: the first edit provider anyway, so image-service answers
+`IMAGE_EDIT_UNAVAILABLE` honestly. MANUAL_MODEL: `editCapablePick` keeps an
+edit-capable picked image model (dall-e-3 becomes gpt-image-1) and moves a
+pick that cannot edit (Grok, ComfyUI), only for an EDIT; plain generation
+keeps rule 51 item 17. ANALYZE with an image never becomes an image job. The
+keyword tables (`IMAGE_KEYWORDS`, image-detection.constants.ts) moved to
+`@claw/shared-utilities` (`IMAGE_GENERATION_*`); `ImageDetectionManager`
+delegates. Tests: `routing.image-edit.spec.ts`.

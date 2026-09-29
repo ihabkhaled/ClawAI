@@ -16,7 +16,10 @@ export type ImageGenerationRecord = {
   threadId: string | null;
   userMessageId: string | null;
   assistantMessageId: string | null;
+  /** The prompt sent to the provider (effective). */
   prompt: string;
+  /** The user's own words when `prompt` was rewritten for a reference image, else null. */
+  originalPrompt: string | null;
   revisedPrompt: string | null;
   provider: string;
   model: string;
@@ -66,6 +69,7 @@ export type CreateImageGenerationData = {
   userMessageId?: string;
   assistantMessageId?: string;
   prompt: string;
+  originalPrompt?: string;
   provider: string;
   model: string;
   width?: number;
@@ -79,6 +83,8 @@ export type ImageReferenceAssetInput = {
   generationId: string;
   fileId: string;
   mimeType: string;
+  /** REFERENCE (default) or MASK. */
+  role?: ImageAssetRole;
 };
 
 /** The slice of file-service's `GET /internal/files/:id/content` a retry reads. */
@@ -107,6 +113,8 @@ export type ImageSuccessorSpawner = (
 export type ImageAttemptOptions = {
   /** In-memory reference from the send; absent on a retry, which reads the stored one. */
   reference?: ImageReference;
+  /** Validated mask from the send; absent on a retry, which reads the stored one. */
+  mask?: ImageReference;
   /** AUTO only: creates and links the next attempt when this one fails. */
   spawnSuccessor?: ImageSuccessorSpawner;
 };
@@ -115,6 +123,10 @@ export type ImageAttemptOptions = {
 export type ImageFallbackChainState = {
   attempts: number;
   paidBlocked: boolean;
+  /** A reference-image job: only edit-capable providers may take it over. */
+  requiresEdit: boolean;
+  /** A masked edit: only mask-capable providers may take it over. */
+  requiresMask: boolean;
 };
 
 /**
@@ -166,6 +178,17 @@ export type GenerateImageParams = {
    * file-service) instead of silently generating without it.
    */
   referenceFileId?: string;
+  /**
+   * The user's own words when chat-service rewrote `prompt` for a reference
+   * image (pack §79). Stored on the row for debugging; never sent upstream.
+   */
+  originalPrompt?: string;
+  /**
+   * file-service id of a PNG alpha mask (pack §81, API only). Owner-checked,
+   * validated against the reference, and refused (422) for a provider that
+   * cannot apply a mask.
+   */
+  maskFileId?: string;
 };
 
 /**
@@ -201,6 +224,8 @@ export type ExecuteImageInput = {
   style?: string;
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
+  /** Validated PNG alpha mask; only a mask-capable provider (OpenAI edits) receives it. */
+  maskImageBase64?: string;
   /** Receives local-runtime progress (ComfyUI, SD WebUI) while the call runs. */
   onProgress?: ImageProgressCallback;
   /**

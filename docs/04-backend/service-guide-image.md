@@ -376,6 +376,9 @@ under-classifies auth failures).
 | `IMAGE_CONNECTOR_NOT_CONFIGURED` | No connector row for the chat provider this capability borrows from                                                                               | Yes (a different capability may have its connector configured)                                                                                                                      |
 | `IMAGE_STORAGE_FAILED`           | The provider produced the image but `POST /internal/files/store-image` on file-service failed                                                     | **No** — `isChainTerminalFailureCode` stops `spawnFallback`; storage is shared by every provider, so paying another provider for an image just to lose it the same way wastes money |
 | `IMAGE_REFERENCE_UNAVAILABLE`    | A retry's stored reference could not be read back from file-service (deleted, not the owner's, service down, empty, too large)                    | **No** — every provider would be sent the same missing reference                                                                                                                    |
+| `IMAGE_EDIT_UNAVAILABLE`         | A reference-image job reached a provider that cannot use a reference (Grok, ComfyUI)                                                              | Yes — a reference job's chain only walks edit-capable providers                                                                                                                     |
+| `IMAGE_MASK_NOT_SUPPORTED`       | 422: a mask for a provider without mask support                                                                                                   | **No** (chain-terminal)                                                                                                                                                             |
+| `IMAGE_MASK_INVALID`             | 422: mask not a PNG (magic bytes), no alpha, over 4 MB, or not the source's size                                                                  | **No** (chain-terminal)                                                                                                                                                             |
 
 ## Events
 
@@ -395,3 +398,64 @@ fallback successor exists — `supersededById` (optional, additive).
 `GET /api/v1/metrics` (internal): generation attempts and duration by image
 provider and outcome (completed / failed / cancelled / superseded). List:
 `docs/08-runtime-devops/metrics-and-dashboards.md`.
+
+## Image edits, masks and the original prompt (pack §10/§79/§81, 2026-09-26)
+
+**Intent.** An attached image + "remove the background" / "make it blue" /
+"add a hat" is an EDIT; "what is this?" stays vision Q&A; "draw a cat" with no
+image is GENERATE. The decision is `classifyImageIntent(message,
+hasAttachedImage)` in `@claw/shared-utilities` (image-intent/, deterministic, no
+LLM), used by routing (AUTO, explicit modes, manual pick) and chat-service's
+safety net. An EDIT runs through the ordinary generation path with the
+attachment as the REFERENCE asset.
+
+**Capability table, not provider ifs.** `IMAGE_EDIT_CAPABILITIES`
+(`@claw/shared-utilities`, image-output-model/):
+
+| Provider              | Uses reference             | Mask | Edit model                          |
+| --------------------- | -------------------------- | ---- | ----------------------------------- |
+| `IMAGE_GEMINI`        | yes (inline, live)         | no   | picked / gemini-2.5-flash-image     |
+| `IMAGE_OPENAI`        | yes (`POST /images/edits`) | yes  | gpt-image* (dall-e-3 → gpt-image-1) |
+| `IMAGE_LOCAL` (SD)    | yes (img2img)              | no   | sdxl-turbo                          |
+| `IMAGE_GROK`, ComfyUI | no                         | no   | —                                   |
+
+- `ImageExecutionManager.callProvider` runs `assertImageEditSupported` FIRST
+  (before any hold): a reference on a non-editing provider →
+  `IMAGE_EDIT_UNAVAILABLE` ("No image-editing model is available…"); a mask on a
+  provider without masks → 422 `IMAGE_MASK_NOT_SUPPORTED`.
+- The AUTO fallback chain of a reference job walks only edit-capable providers
+  (masked: mask-capable only). ComfyUI/Grok would silently draw an unrelated
+  picture.
+- **OpenAI edits** (`adapters/openai-image-edit.adapter.ts`, form built in
+  `adapter.utilities/openai-image-edit-form.utility.ts`): multipart `image[]` +
+  prompt, `n=1`, size, `quality` pinned `high` (same as generations), optional
+  `mask` PNG. Native `FormData`/`Blob` through the shared SSRF-guarded
+  `httpPost`; no new package. **Metered exactly like a generation**: one image
+  on the sized `gpt-image-1@<w>x<h>` row (`imageExecutionModel` moves a dall-e-3
+  edit to gpt-image-1 before the reserve). OpenAI also bills edit INPUT image
+  tokens; the routing seed has no input-image rate, so that cost is not passed
+  on (documented gap). **Live verification deferred**: the dev OpenAI key has
+  no credit (owner). Unit and contract tests only.
+- **Masks** (API only, no drawing UI): `maskFileId` on
+  `POST /internal/images/generate`. Checked BEFORE the row exists
+  (`prepareMask`): needs `referenceFileId`; provider must support masks (422
+  `IMAGE_MASK_NOT_SUPPORTED`); mask and source are both read through
+  file-service's owner-checked content route (a stranger's file →
+  `IMAGE_REFERENCE_UNAVAILABLE`); `assertValidImageMask` checks PNG by magic
+  bytes, an alpha colour type, at most `IMAGE_MASK_MAX_BYTES` (4 MB) and the
+  SAME pixel size as the source (PNG/JPEG headers), else 422
+  `IMAGE_MASK_INVALID`. Stored as an `ImageGenerationAsset` with role `MASK`;
+  `createSuccessor` copies REFERENCE and MASK together.
+- **Original prompt (pack §79).** `image_generations.original_prompt`
+  (migration `20260929100000_add_image_edit_mask_and_original_prompt`, which
+  also adds the `MASK` enum value) keeps the user's words when chat-service
+  rewrote the prompt; `prompt` is the EFFECTIVE prompt sent upstream. Null
+  means not rewritten. Chat builds the rewrite with `buildReferenceImagePrompt`:
+  the user's instruction first and verbatim, the vision description after it
+  as context; a failed rewrite sends the original prompt alone.
+- Tests: `image-mask.utility.spec.ts`, `image-edit.utility.spec.ts`,
+  `openai-image-edit.adapter.spec.ts`, `image-execution.manager.edit.spec.ts`,
+  `image-generation-edit.service.spec.ts`, repository spec (MASK copy).
+- Gap: the three new failure codes render the stored English sentence; the
+  frontend has no per-code image translation table yet (same as every other
+  `ImageFailureCode`).

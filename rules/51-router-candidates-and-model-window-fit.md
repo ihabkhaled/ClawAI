@@ -119,3 +119,17 @@ model was sent a 16.7k-token prompt.
     best image provider. Recognise image-output models with
     `@claw/shared-utilities` `resolveImageCapabilityProvider` only; routing and
     chat must never keep separate tables.
+
+## Added 2026-09-26 (pack §10/§81/§88 — image edit intent)
+
+18. **Edit intent needs an attached image.** "remove the background" / "make
+    it blue" / "add a hat" is an EDIT only with an image attached (routing reads
+    `attachmentMimeTypes`); "what is this?" with an image stays vision Q&A;
+    without an image the generation detector decides. One deterministic
+    classifier, `@claw/shared-utilities` `classifyImageIntent`: routing and
+    chat-service never keep their own phrase lists (chat's
+    `IMAGE_INTENT_PHRASES` and routing's keyword tables were folded into it).
+    An edit goes only to a provider whose `IMAGE_EDIT_CAPABILITIES` row uses
+    the reference; a picked image provider that cannot edit (Grok, ComfyUI) is
+    the one exception to item 17. Add every new edit word together with a
+    "stays ANALYZE" case in `image-intent.utility.spec.ts`.

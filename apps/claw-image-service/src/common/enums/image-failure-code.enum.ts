@@ -22,4 +22,11 @@ export enum ImageFailureCode {
   // A retry whose stored reference image could not be read back (deleted,
   // file-service down). Generating without it would silently drop the edit.
   REFERENCE_UNAVAILABLE = 'IMAGE_REFERENCE_UNAVAILABLE',
+  // An attached image to edit, but the provider cannot use a reference image
+  // (Grok, ComfyUI). Generating anyway would ignore the user's picture.
+  EDIT_UNAVAILABLE = 'IMAGE_EDIT_UNAVAILABLE',
+  // A mask was sent for a provider that cannot apply one (422, pack §81).
+  MASK_NOT_SUPPORTED = 'IMAGE_MASK_NOT_SUPPORTED',
+  // The mask is not a PNG with alpha, too large, or not the source's size (422).
+  MASK_INVALID = 'IMAGE_MASK_INVALID',
 }

@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "vitest",
-      "testFiles": 45
+      "testFiles": 47
     },
     "claw-agent-service": {
       "runner": "vitest",
@@ -38,7 +38,7 @@
     },
     "claw-chat-service": {
       "runner": "vitest",
-      "testFiles": 220
+      "testFiles": 221
     },
     "claw-client-logs-service": {
       "runner": "vitest",
@@ -66,7 +66,7 @@
     },
     "claw-image-service": {
       "runner": "vitest",
-      "testFiles": 35
+      "testFiles": 40
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 110
+      "testFiles": 111
     },
     "claw-server-logs-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1667
+  "total": 1676
 }

@@ -450,6 +450,8 @@ export type ImageGenerateRequest = {
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
   referenceFileId?: string;
+  /** The user's words when `prompt` was rewritten for a reference image (debugging). */
+  originalPrompt?: string;
 };
 
 export type ImageGenerateResponse = {

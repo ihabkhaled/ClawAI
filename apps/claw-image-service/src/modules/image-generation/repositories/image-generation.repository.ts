@@ -43,18 +43,23 @@ export class ImageGenerationRepository {
         where: { id: predecessorId },
         data: { supersededById: successor.id },
       });
-      const reference = await tx.imageGenerationAsset.findFirst({
-        where: { generationId: predecessorId, role: ImageAssetRole.REFERENCE },
+      // The reference AND its mask travel together: an edit retried without
+      // its mask would change pixels the user had protected.
+      const inputs = await tx.imageGenerationAsset.findMany({
+        where: {
+          generationId: predecessorId,
+          role: { in: [ImageAssetRole.REFERENCE, ImageAssetRole.MASK] },
+        },
       });
-      if (reference) {
+      for (const input of inputs) {
         await tx.imageGenerationAsset.create({
           data: {
             generationId: successor.id,
-            role: ImageAssetRole.REFERENCE,
-            storageKey: reference.storageKey,
-            url: reference.url,
-            downloadUrl: reference.downloadUrl,
-            mimeType: reference.mimeType,
+            role: input.role,
+            storageKey: input.storageKey,
+            url: input.url,
+            downloadUrl: input.downloadUrl,
+            mimeType: input.mimeType,
           },
         });
       }
@@ -171,7 +176,7 @@ export class ImageGenerationRepository {
     return this.prisma.imageGenerationAsset.create({
       data: {
         generationId: input.generationId,
-        role: ImageAssetRole.REFERENCE,
+        role: input.role ?? ImageAssetRole.REFERENCE,
         storageKey: input.fileId,
         url,
         downloadUrl: url,
@@ -183,6 +188,12 @@ export class ImageGenerationRepository {
   async findReferenceAsset(generationId: string): Promise<ImageGenerationAssetRecord | null> {
     return this.prisma.imageGenerationAsset.findFirst({
       where: { generationId, role: ImageAssetRole.REFERENCE },
+    });
+  }
+
+  async findMaskAsset(generationId: string): Promise<ImageGenerationAssetRecord | null> {
+    return this.prisma.imageGenerationAsset.findFirst({
+      where: { generationId, role: ImageAssetRole.MASK },
     });
   }
 
@@ -204,6 +215,7 @@ export class ImageGenerationRepository {
       userMessageId: data.userMessageId,
       assistantMessageId: data.assistantMessageId,
       prompt: data.prompt,
+      originalPrompt: data.originalPrompt,
       provider: data.provider,
       model: data.model,
       width: data.width ?? 1024,
