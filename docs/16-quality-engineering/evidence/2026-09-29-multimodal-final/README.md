@@ -44,3 +44,8 @@ Connectors toggled via `PATCH /connectors/:id` and restored in `finally`.
 - LOCAL STT (Gemini + OpenAI off): `provider=LOCAL model=Systran/faster-whisper-small`, unmetered, 3.7 s, transcript exact. PASS.
 - OpenAI masked edit: chat refused with "model cannot edit only part of an image" (no mask-capable model reachable, OpenAI 429). No image job created. NOT proven live.
 - Video restart recovery: not run live (Gemini spend); unit-gated.
+
+### Retry after OpenAI credit (2026-09-29, 3:11 PM)
+
+- OpenAI STT now succeeds: `provider=OPENAI model=gpt-4o-mini-transcribe`, metered=true, FINALIZED.
+- BUG found by that run: `audioSeconds=168` for a 3.5 s clip. `probeAudioSeconds` used the video-only ffprobe `-format_whitelist`, which rejects wav/mp3/ogg (`exit=1 bytes=5`), so the byte estimate was billed (~48x too much). Fixed with `AUDIO_PROBE_FORMAT_WHITELIST` (video demuxers + wav,mp3,ogg,flac,aac,aiff,amr; still no hls/concat). Lesson: a unit-mocked probe cannot catch a real-binary whitelist; only the live run did.

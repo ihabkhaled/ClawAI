@@ -34,10 +34,11 @@ const logger = new Logger('MediaToolAdapter');
 export const probeMediaFile = async (
   inputPath: string,
   signal?: AbortSignal,
+  formatWhitelist?: string,
 ): Promise<MediaProcessResult> => {
   const result = await runMediaProcess({
     command: FFPROBE_BINARY,
-    args: buildProbeArgs(inputPath),
+    args: buildProbeArgs(inputPath, formatWhitelist),
     timeoutMs: MEDIA_PROBE_TIMEOUT_MS,
     maxStdoutBytes: MEDIA_STDOUT_MAX_BYTES,
     maxStderrBytes: MEDIA_STDERR_MAX_BYTES,

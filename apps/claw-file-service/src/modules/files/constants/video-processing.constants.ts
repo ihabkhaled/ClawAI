@@ -28,6 +28,12 @@ export const MEDIA_PROTOCOL_WHITELIST = 'file,pipe';
 export const MEDIA_FORMAT_WHITELIST =
   'mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,avi,mpeg,mpegts,mpegvideo';
 
+/**
+ * The duration probe of a plain audio upload: the video demuxers plus the audio
+ * containers. Still no hls / concat, so the polyglot guard above holds.
+ */
+export const AUDIO_PROBE_FORMAT_WHITELIST = `${MEDIA_FORMAT_WHITELIST},wav,mp3,ogg,flac,aac,aiff,amr`;
+
 /** ffprobe reads headers only; a container that needs longer is hostile or broken. */
 export const MEDIA_PROBE_TIMEOUT_MS = 15_000;
 /** Decoding a 30-minute track to 16 kHz mono is seconds of CPU; this is the ceiling. */

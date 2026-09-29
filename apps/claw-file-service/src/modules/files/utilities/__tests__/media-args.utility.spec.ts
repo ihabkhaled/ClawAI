@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  AUDIO_PROBE_FORMAT_WHITELIST,
   MEDIA_DERIVED_AUDIO_FORMAT_WHITELIST,
   MEDIA_FORMAT_WHITELIST,
   MEDIA_PROTOCOL_WHITELIST,
@@ -140,5 +141,25 @@ describe('formatSeekSeconds', () => {
       formatSeekSeconds(VIDEO_MAX_DURATION_MS),
     );
     expect(formatSeekSeconds(1.9)).toBe('0.001');
+  });
+});
+
+// 2026-09-29 live: the video-only whitelist made ffprobe reject every wav/mp3,
+// so plain-audio duration fell back to the byte estimate (168 s for a 3.5 s clip).
+describe('audio probe format whitelist', () => {
+  it('lets audio containers through, still no playlist or concat demuxer', () => {
+    const formats = AUDIO_PROBE_FORMAT_WHITELIST.split(',');
+
+    expect(formats).toEqual(expect.arrayContaining(['wav', 'mp3', 'ogg', 'flac']));
+    expect(formats).not.toContain('hls');
+    expect(formats).not.toContain('concat');
+  });
+
+  it('threads the chosen whitelist into the probe args, defaulting to the video one', () => {
+    const audio = buildProbeArgs('/tmp/a', AUDIO_PROBE_FORMAT_WHITELIST);
+    const video = buildProbeArgs('/tmp/a');
+
+    expect(audio[audio.indexOf('-format_whitelist') + 1]).toBe(AUDIO_PROBE_FORMAT_WHITELIST);
+    expect(video[video.indexOf('-format_whitelist') + 1]).toBe(MEDIA_FORMAT_WHITELIST);
   });
 });

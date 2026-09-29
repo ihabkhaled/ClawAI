@@ -1,3 +1,4 @@
+import { AUDIO_PROBE_FORMAT_WHITELIST } from '../../constants/video-processing.constants';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MediaProcessStatus } from '../../../../common/enums';
 import { type MediaProcessResult } from '../../types/video-processing.types';
@@ -58,7 +59,11 @@ describe('probeAudioSeconds', () => {
     probeMediaFile.mockResolvedValue(probeResult({ streams: [], format: { duration: '41.2' } }));
 
     await expect(probeAudioSeconds('YXVkaW8=')).resolves.toBe(42);
-    expect(probeMediaFile).toHaveBeenCalledWith('/tmp/claw-x/audio-probe');
+    expect(probeMediaFile).toHaveBeenCalledWith(
+      '/tmp/claw-x/audio-probe',
+      undefined,
+      AUDIO_PROBE_FORMAT_WHITELIST,
+    );
     expect(removeMediaTempDir).toHaveBeenCalledWith('/tmp/claw-x');
   });
 

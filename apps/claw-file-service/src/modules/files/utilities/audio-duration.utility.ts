@@ -7,6 +7,7 @@ import {
 } from '../../../common/utilities/media-process.utility';
 import { probeMediaFile } from '../adapters/media-tool.adapter';
 import { AUDIO_PROBE_TEMP_NAME } from '../constants/transcription.constants';
+import { AUDIO_PROBE_FORMAT_WHITELIST } from '../constants/video-processing.constants';
 import { type MediaProcessResult } from '../types/video-processing.types';
 import { parseProbeOutput } from './video-probe.utility';
 
@@ -41,7 +42,9 @@ export async function probeAudioSeconds(base64: string): Promise<number | undefi
       AUDIO_PROBE_TEMP_NAME,
       Buffer.from(base64, 'base64'),
     );
-    return audioSecondsFromProbe(await probeMediaFile(inputPath));
+    return audioSecondsFromProbe(
+      await probeMediaFile(inputPath, undefined, AUDIO_PROBE_FORMAT_WHITELIST),
+    );
   } catch (error: unknown) {
     logger.warn(
       `probeAudioSeconds: probe failed — ${error instanceof Error ? error.message : 'unknown error'}`,
