@@ -26,7 +26,7 @@
     "@types/amqplib": "^0.10.8",
     "babel-plugin-transform-import-meta": "^3.0.0",
     "eslint": "^10.10.0",
-    "eslint-plugin-unicorn": "75.0.0",
+    "eslint-plugin-unicorn": "76.0.0",
     "tsc-alias": "^1.9.5",
     "typescript": "6.0.3",
     "unplugin-swc": "^2.0.0",
