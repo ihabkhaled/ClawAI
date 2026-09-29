@@ -467,3 +467,61 @@ describe('resolveToolChoicePayload', () => {
     );
   });
 });
+
+describe('normalizeToolCalls tolerant shapes', () => {
+  const { lookup } = translateToolCatalog([filesDefinition()], ProviderToolDialect.OLLAMA);
+  const ollamaCall = (name: string, args: Record<string, unknown>): unknown[] => [
+    { function: { name, arguments: args } },
+  ];
+
+  it('accepts the Runtime tool name the system prompt uses', () => {
+    const [call] = normalizeToolCalls(
+      ollamaCall('workspace.files', {
+        operation: 'read',
+        targetId: 'target:workspace',
+        arguments: { path: 'a.ts' },
+      }),
+      ProviderToolDialect.OLLAMA,
+      lookup,
+    );
+    expect(call).toMatchObject({ nativeName: 'workspace_files', toolName: 'workspace.files' });
+  });
+
+  it('reads flattened input fields and defaults the only target', () => {
+    const [call] = normalizeToolCalls(
+      ollamaCall('workspace_files', { operation: 'read', path: 'a.ts' }),
+      ProviderToolDialect.OLLAMA,
+      lookup,
+    );
+    expect(call).toMatchObject({
+      operation: 'read',
+      targetId: 'target:workspace',
+      arguments: { path: 'a.ts' },
+    });
+  });
+
+  it('lifts an operation the model put inside the arguments', () => {
+    const [call] = normalizeToolCalls(
+      ollamaCall('workspace_files', { arguments: { operation: 'list', path: 'src' } }),
+      ProviderToolDialect.OLLAMA,
+      lookup,
+    );
+    expect(call).toMatchObject({ operation: 'list', arguments: { path: 'src' } });
+  });
+
+  it('names the tools it knows when the model invents one', () => {
+    expect(() =>
+      normalizeToolCalls(ollamaCall('workspace.shell', {}), ProviderToolDialect.OLLAMA, lookup),
+    ).toThrow(/unknown tool "workspace\.shell"\. Call one of: workspace_files/u);
+  });
+
+  it('lists the operations when the one requested is not admitted', () => {
+    expect(() =>
+      normalizeToolCalls(
+        ollamaCall('workspace_files', { operation: 'explode' }),
+        ProviderToolDialect.OLLAMA,
+        lookup,
+      ),
+    ).toThrow(/Use operation stat, list/u);
+  });
+});

@@ -487,7 +487,7 @@ function withoutNestedTarget(argumentsValue: Record<string, unknown>): Record<st
   return Object.fromEntries(Object.entries(argumentsValue).filter(([key]) => key !== 'targetId'));
 }
 
-function assertAdmittedTool(
+export function assertAdmittedTool(
   output: Extract<RuntimeV2ModelOutput, { readonly kind: 'tool' }>,
   definitions: readonly ToolDefinitionDto[],
 ): void {

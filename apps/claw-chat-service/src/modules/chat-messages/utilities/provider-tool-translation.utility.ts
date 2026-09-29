@@ -222,10 +222,9 @@ export function buildAnthropicToolTurnMessages(
 }
 
 export function truncateToolResultContent(content: string): string {
-  if (content.length <= TOOL_RESULT_CONTENT_MAX_CHARS) {
-    return content;
-  }
-  return content.slice(0, TOOL_RESULT_CONTENT_MAX_CHARS) + TOOL_RESULT_TRUNCATION_MARKER;
+  return content.length <= TOOL_RESULT_CONTENT_MAX_CHARS
+    ? content
+    : content.slice(0, TOOL_RESULT_CONTENT_MAX_CHARS) + TOOL_RESULT_TRUNCATION_MARKER;
 }
 
 // ── internals ───────────────────────────────────────────────────────────────
@@ -281,14 +280,13 @@ function extractRawCall(
   }
   const record = entry as Record<string, unknown>;
   if (dialect === ProviderToolDialect.ANTHROPIC) {
-    if (record['type'] !== ANTHROPIC_TOOL_USE_BLOCK_TYPE) {
-      return undefined;
-    }
-    return {
-      callId: readString(record['id']) ?? synthesizeCallId(index),
-      nativeName: readString(record['name']) ?? '',
-      payload: record['input'],
-    };
+    return record['type'] !== ANTHROPIC_TOOL_USE_BLOCK_TYPE
+      ? undefined
+      : {
+          callId: readString(record['id']) ?? synthesizeCallId(index),
+          nativeName: readString(record['name']) ?? '',
+          payload: record['input'],
+        };
   }
   const fn = record['function'];
   if (typeof fn !== 'object' || fn === null) {
@@ -309,25 +307,18 @@ function normalizeSingleCall(
   extracted: { callId: string; nativeName: string; payload: unknown },
   lookup: ToolNameLookup,
 ): NormalizedToolCall {
-  const entry = lookup.get(extracted.nativeName);
-  if (!entry) {
-    throw new BusinessException(
-      `Model requested unknown tool "${extracted.nativeName}"`,
-      'MODEL_TOOL_UNKNOWN',
-    );
-  }
+  const entry = resolveLookupEntry(extracted.nativeName, lookup);
   const payload = parseArgumentPayload(extracted.payload, entry.toolName);
-  const operation = readString(payload[TOOL_OPERATION_PROPERTY]);
-  const targetId = readString(payload[TOOL_TARGET_ID_PROPERTY]);
+  const { operation, targetId, args } = readCallShape(payload, entry);
   if (operation === undefined || !entry.operations.includes(operation)) {
     throw new BusinessException(
-      `Model requested unknown operation "${String(operation)}" on tool "${entry.toolName}"`,
+      `Model requested unknown operation "${String(operation)}" on tool "${entry.toolName}". Use operation ${entry.operations.join(', ')}.`,
       'MODEL_TOOL_ARGUMENT_INVALID',
     );
   }
   if (targetId === undefined || !entry.targetIds.includes(targetId)) {
     throw new BusinessException(
-      `Model requested unknown target "${String(targetId)}" on tool "${entry.toolName}"`,
+      `Model requested unknown target "${String(targetId)}" on tool "${entry.toolName}". Use targetId ${entry.targetIds.join(', ')}.`,
       'MODEL_TOOL_ARGUMENT_INVALID',
     );
   }
@@ -338,7 +329,48 @@ function normalizeSingleCall(
     toolVersion: entry.toolVersion,
     operation,
     targetId,
-    arguments: readRecord(payload[TOOL_ARGUMENTS_PROPERTY]) ?? {},
+    arguments: args,
+  };
+}
+
+// The system prompt names tools by their Runtime name ("workspace.files") while
+// the native spec carries the sanitized one ("workspace_files"), and models use
+// either. Both resolve to the same admitted entry; nothing else does.
+function resolveLookupEntry(nativeName: string, lookup: ToolNameLookup): ToolNameLookupEntry {
+  const entry = lookup.get(nativeName) ?? lookup.get(sanitizeNativeToolName(nativeName));
+  if (entry !== undefined) return entry;
+  const known = [...lookup.values()].map((candidate) => candidate.nativeName).join(', ');
+  throw new BusinessException(
+    `Model requested unknown tool "${nativeName}". Call one of: ${known}.`,
+    'MODEL_TOOL_UNKNOWN',
+  );
+}
+
+// Models flatten the call as often as they nest it: the input fields at the top
+// level beside `operation`, or `operation` inside `arguments`. Both are read
+// back into the one shape; the admitted-catalog check that follows is what
+// decides whether the result is allowed.
+function readCallShape(
+  payload: Record<string, unknown>,
+  entry: ToolNameLookupEntry,
+): { operation: string | undefined; targetId: string | undefined; args: Record<string, unknown> } {
+  const {
+    [TOOL_OPERATION_PROPERTY]: outerOperation,
+    [TOOL_TARGET_ID_PROPERTY]: outerTarget,
+    [TOOL_ARGUMENTS_PROPERTY]: nested,
+    ...loose
+  } = payload;
+  const args = readRecord(nested) ?? loose;
+  const { [TOOL_OPERATION_PROPERTY]: innerOperation, ...rest } = args;
+  const operation = readString(outerOperation) ?? readString(innerOperation);
+  const onlyTarget = entry.targetIds.length === 1 ? entry.targetIds[0] : undefined;
+  return {
+    operation,
+    targetId: readString(outerTarget) ?? onlyTarget,
+    args:
+      readString(outerOperation) === undefined && readString(innerOperation) !== undefined
+        ? rest
+        : args,
   };
 }
 
@@ -383,10 +415,9 @@ function readString(value: unknown): string | undefined {
 }
 
 function readRecord(value: unknown): Record<string, unknown> | undefined {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
+  return typeof value !== 'object' || value === null || Array.isArray(value)
+    ? undefined
+    : (value as Record<string, unknown>);
 }
 
 function synthesizeCallId(index: number): string {

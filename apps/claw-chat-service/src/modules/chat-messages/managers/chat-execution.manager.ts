@@ -4166,11 +4166,13 @@ export class ChatExecutionManager implements OnModuleInit {
       return undefined;
     }
     const translated = translateToolCatalog(definitions, dialect);
+    // Over budget is not a reason to fail the turn: the prompt-JSON lane can
+    // still carry every tool, so the run continues there.
     if (translated.byteSize > config.CHAT_TOOL_CATALOG_MAX_BYTES) {
-      throw new BusinessException(
-        `Native tool catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget`,
-        'RUNTIME_TOOL_CATALOG_TOO_LARGE',
+      this.logger.warn(
+        `resolveNativeToolCatalog: catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget — falling back to the prompt-JSON lane`,
       );
+      return undefined;
     }
     return translated;
   }

@@ -1112,3 +1112,19 @@ container base URL and is unmetered (`PAYG_EXEMPT_PROVIDERS`).
 ## Inpainting mask forwarding (2026-09-29)
 
 The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat-service stores it on the user message metadata and forwards it to image-service with the reference image. image-service 422 codes `IMAGE_MASK_INVALID` and `IMAGE_MASK_NOT_SUPPORTED` become a stored assistant refusal message (`metadata.type = image_mask_refusal`) that the frontend renders as a localized notice. Only OpenAI honours masks; Gemini and Stable Diffusion refuse with `IMAGE_MASK_NOT_SUPPORTED`.
+
+## Runtime V2 native tool calling (ADR-129, 2026-09-30)
+
+- Every agent turn now passes its admitted tools as `executionOptions.toolCatalog`
+  (`runtimeV2TurnExecutionOptions`). The provider layer offers them natively or
+  drops them: lane off, provider without native tools, or over
+  `CHAT_TOOL_CATALOG_MAX_BYTES`. That last case falls back to the prompt-JSON
+  lane now instead of throwing.
+- `callWithRepair` prefers `response.toolCalls` over the text
+  (`runtimeV2OutputFromNativeCalls`), under the same schema and admitted-tool
+  checks. `MODEL_TOOL_UNKNOWN` / `MODEL_TOOL_ARGUMENT_INVALID` from the provider
+  layer get the repair turn (`settleNativeTurn`).
+- `normalizeToolCalls` resolves both `workspace.files` and `workspace_files`,
+  reads flattened input and an `operation` inside `arguments`, and defaults a
+  single-target tool's `targetId`. Its errors list the valid choices.
+- To check it live: `docker logs claw-chat-service-1 | grep -E 'attached [0-9]+ native tools|native tool call'`.

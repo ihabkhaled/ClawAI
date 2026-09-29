@@ -367,22 +367,24 @@ describe('ChatExecutionManager — native tool transport', () => {
       expect(requestBodyOf<OllamaChatRequest>()).not.toHaveProperty('tool_choice');
     });
 
-    it('rejects a catalog larger than the configured byte budget', async () => {
+    it('falls back to the prompt-JSON lane when the catalog is over the byte budget', async () => {
       AppConfig.get.mockReturnValue({ ...DEFAULT_APP_CONFIG, CHAT_TOOL_CATALOG_MAX_BYTES: 10 });
       mockOpenAi({ role: 'assistant', content: 'done' });
 
-      await expect(
-        manager.callProvider(
-          'OPENAI',
-          'gpt-4o-mini',
-          makeContext('read main.ts'),
-          Date.now(),
-          false,
-          undefined,
-          'AUTO',
-          withTools(),
-        ),
-      ).rejects.toThrow(/byte budget/u);
+      const result = await manager.callProvider(
+        'OPENAI',
+        'gpt-4o-mini',
+        makeContext('read main.ts'),
+        Date.now(),
+        false,
+        undefined,
+        'AUTO',
+        withTools(),
+      );
+
+      const body = httpRequest.mock.calls[1]?.[0].body as { tools?: unknown };
+      expect(body.tools).toBeUndefined();
+      expect(result.content).toBe('done');
     });
   });
 

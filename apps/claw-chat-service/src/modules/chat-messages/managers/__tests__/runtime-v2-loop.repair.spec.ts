@@ -1,4 +1,5 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
+import { BusinessException } from '../../../../common/errors';
 import { RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE } from '../../constants/runtime-v2-failure.constants';
 import {
   RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS,
@@ -187,5 +188,85 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
 
     expect(callProvider).toHaveBeenCalledTimes(1);
     expect(result.output).toEqual({ kind: 'final', content: 'The workspace has 7 files.' });
+  });
+
+  function nativeCall(toolName: string, operation = 'list'): Record<string, unknown> {
+    return {
+      callId: 'call-1',
+      nativeName: toolName.replace('.', '_'),
+      toolName,
+      toolVersion: '2.0.0',
+      operation,
+      targetId: 'target:workspace',
+      arguments: { rootKey: 'workspace-1', path: '' },
+    };
+  }
+
+  it('offers the admitted tools to the provider on every turn', async () => {
+    const callProvider = vi.fn().mockResolvedValueOnce({ content: toolJson('workspace.files') });
+
+    await repair(callProvider);
+
+    expect(callProvider.mock.calls[0]?.[7]).toMatchObject({ toolCatalog: [definition] });
+  });
+
+  it('takes a native tool call even when the turn has no text to parse', async () => {
+    const callProvider = vi
+      .fn()
+      .mockResolvedValueOnce({ content: '', toolCalls: [nativeCall('workspace.files')] });
+
+    const result = await repair(callProvider);
+
+    expect(callProvider).toHaveBeenCalledTimes(1);
+    expect(result.output).toMatchObject({ kind: 'tool', toolName: 'workspace.files' });
+  });
+
+  it('prefers the native call over prose written beside it', async () => {
+    const callProvider = vi.fn().mockResolvedValueOnce({
+      content: 'Let me look at the files first.',
+      toolCalls: [nativeCall('workspace.files')],
+    });
+
+    const result = await repair(callProvider);
+
+    expect(result.output).toMatchObject({ kind: 'tool', operation: 'list' });
+  });
+
+  it('repairs a native call the provider layer could not map, instead of ending the run', async () => {
+    const callProvider = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new BusinessException(
+          'Model requested unknown tool "workspace.file"',
+          'MODEL_TOOL_UNKNOWN',
+        ),
+      )
+      .mockResolvedValueOnce({ content: '', toolCalls: [nativeCall('workspace.files')] });
+
+    const result = await repair(callProvider);
+
+    expect(callProvider).toHaveBeenCalledTimes(2);
+    expect(result.output).toMatchObject({ kind: 'tool', toolName: 'workspace.files' });
+  });
+
+  it('still ends the run on a provider failure that is not a tool-call mistake', async () => {
+    const callProvider = vi
+      .fn()
+      .mockRejectedValueOnce(new BusinessException('quota exhausted', 'QUOTA_EXCEEDED'));
+
+    await expect(repair(callProvider)).rejects.toThrow(/quota exhausted/u);
+    expect(callProvider).toHaveBeenCalledTimes(1);
+  });
+
+  it('repairs a native call for an operation the catalog does not admit', async () => {
+    const callProvider = vi
+      .fn()
+      .mockResolvedValueOnce({ content: '', toolCalls: [nativeCall('workspace.files', 'delete')] })
+      .mockResolvedValueOnce({ content: '', toolCalls: [nativeCall('workspace.files')] });
+
+    const result = await repair(callProvider);
+
+    expect(callProvider).toHaveBeenCalledTimes(2);
+    expect(result.output).toMatchObject({ kind: 'tool', operation: 'list' });
   });
 });
