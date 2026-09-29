@@ -25,12 +25,12 @@
     "@swc/core": "^1.16.2",
     "@types/express": "^5.0.6",
     "babel-plugin-transform-import-meta": "^3.0.0",
-    "eslint": "^10.10.0",
+    "eslint": "^10.11.0",
     "eslint-plugin-unicorn": "75.0.0",
     "tsc-alias": "^1.9.5",
     "typescript": "6.0.3",
     "unplugin-swc": "^1.6.0",
-    "vitest": "5.0.1"
+    "vitest": "5.0.2"
   },
   "type": "module"
 }
