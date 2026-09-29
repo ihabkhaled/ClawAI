@@ -38,7 +38,7 @@
     },
     "claw-chat-service": {
       "runner": "vitest",
-      "testFiles": 248
+      "testFiles": 251
     },
     "claw-client-logs-service": {
       "runner": "vitest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 628
+      "testFiles": 631
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -74,7 +74,7 @@
     },
     "claw-memory-service": {
       "runner": "vitest",
-      "testFiles": 22
+      "testFiles": 23
     },
     "claw-ollama-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1746
+  "total": 1753
 }

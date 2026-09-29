@@ -189,3 +189,17 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
 - **Current state:** ADR-132, rule 41 §16. Compare/lab lanes, file-page
   provenance and a grounded-vs-model-knowledge marker are not built.
 - **History:** 2026-09-30 created and delivered (Batch 5).
+
+### REQ-CHAT-006
+
+- **Statement:** When the user asks, in their own words, to remember something
+  or add it to their context, a model decides memory, context pack or both,
+  saves the right text with the right memory type, asks which pack when the user
+  has packs and did not name one, shows a saved card with links to the exact
+  item, keeps it in the chat history, and the AI confirms it is done.
+- **Status:** done · **Priority:** high
+- **Source:** owner, in chat, 2026-09-30 (with the four design choices recorded
+  in ADR-133).
+- **Current state:** ADR-133. Changing a memory's type happens on the Memory
+  page (the card's link opens the editor), not on the card.
+- **History:** 2026-09-30 created and delivered (Batch 6).

@@ -102,7 +102,7 @@ Published when an AI response has been generated and stored.
 | `messageId`        | UUID           | The assistant message ID                                                                 |
 | `threadId`         | UUID           | The thread ID                                                                            |
 | `userId`           | UUID           | The user who initiated the request                                                       |
-| `userContent`      | string         | The original user message                                                                |
+| `userContent`      | string?        | The original user message; absent on save turns (ADR-133)                                |
 | `useMemory`        | boolean?       | Thread's memory switch; `false` = memory-service learns nothing from this turn (SEC-006) |
 | `content`          | string         | The AI response                                                                          |
 | `provider`         | string         | Actual provider used                                                                     |

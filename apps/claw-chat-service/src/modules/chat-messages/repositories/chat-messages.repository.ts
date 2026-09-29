@@ -192,6 +192,23 @@ export class ChatMessagesRepository {
     });
   }
 
+  /**
+   * Replaces the metadata only while `metadata.contextSave.status` is still
+   * `from` — one statement, so two clicks on the "which pack?" card cannot
+   * both claim the save (ADR-133). True when this call won.
+   */
+  async transitionContextSave(
+    id: string,
+    from: string,
+    metadata: Prisma.InputJsonValue,
+  ): Promise<boolean> {
+    const result = await this.prisma.chatMessage.updateMany({
+      where: { id, metadata: { path: ['contextSave', 'status'], equals: from } },
+      data: { metadata },
+    });
+    return result.count === 1;
+  }
+
   async updateMetadata(id: string, metadata: Prisma.InputJsonValue): Promise<void> {
     await this.prisma.chatMessage.update({ where: { id }, data: { metadata } });
   }

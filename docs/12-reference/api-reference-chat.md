@@ -319,6 +319,20 @@ check as a new message runs first.
 
 ---
 
+### POST /chat-messages/:id/context-save
+
+Answer the "which pack?" card of an AI chat save (ADR-133).
+
+**Auth**: Bearer token (must own the thread)
+**Request Body**: `{ "packId": "<one of the offered packs>" }` or `{ "newPack": true }`
+**Response 200**: the updated `contextSave` record — `{ status: "SAVED", pack: { id, name, created, link }, memory? }`
+**Errors**: `404` (no such message, or not yours), `409 CONTEXT_SAVE_NOT_PENDING`
+(already saved, or a second click lost the claim), `400 CONTEXT_SAVE_UNKNOWN_PACK`,
+`403 PLAN_FEATURE_DISABLED`, `429 PLAN_CONTEXT_PACK_LIMIT_EXCEEDED`,
+`503 CONTEXT_SAVE_UNAVAILABLE` — on a failure the card returns to "choose".
+
+---
+
 ### PATCH /chat-messages/:id/feedback
 
 Set feedback on a message (thumbs up/down).

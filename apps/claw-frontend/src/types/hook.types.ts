@@ -223,6 +223,12 @@ export type UseFloatingObstacleClearanceReturn = {
   remeasure: () => void;
 };
 
+export type UseContextSaveCardReturn = {
+  choosePack: (packId: string) => void;
+  chooseNewPack: () => void;
+  isPending: boolean;
+};
+
 export type UseComposerQuotesReturn = {
   quotes: readonly ComposerQuote[];
   removeQuote: (key: string) => void;

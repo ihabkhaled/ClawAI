@@ -100,3 +100,17 @@ export type SavePackFromChatResult = {
   packId: string;
   name: string;
 };
+
+/** One pack a chat can offer as "add it here" — enough to label a button. */
+export type ChatPackOption = {
+  id: string;
+  name: string;
+  itemCount: number;
+  updatedAt: Date;
+};
+
+export type AddItemFromChatResult = {
+  packId: string;
+  itemId: string;
+  name: string;
+};

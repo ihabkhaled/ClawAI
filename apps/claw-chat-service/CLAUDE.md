@@ -308,7 +308,7 @@ printed. The frontend links an answer's `[n]` ONLY through this list (rule 41
 (`context-assembly-citation-numbering.spec.ts` fails otherwise). When
 SEARCH_FIRST applied, NO citations are stored — its search list is a second
 `[1]..[k]` in the prompt. Lanes, labs, the Runtime V2 continuation and
-save-to-context turns store none yet.
+keyword-fallback save turns store none yet (AI save turns go through `runLlmAndStore` and do).
 
 ## Editing a prompt truncates the thread (2026-08-28)
 
@@ -1549,7 +1549,7 @@ model's private notes run into its reply.
 
 ## Save to memory / context from chat (owner feature 11, 2026-09-29)
 
-`handleMessageRouted` asks `SaveToContextManager.trySave` first (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.
+**Since 2026-09-30 (ADR-133) `handleMessageRouted` asks `ContextSaveOrchestratorManager.handle` first**: pre-filter → `ResearchGateService.askPlanner` JSON verdict → `ContextSaveClient` saves (memory, existing/new pack, or both) → `withContextSaveNote` tells the answering model → `metadata.contextSave` on the answer; an unnamed pack with existing packs becomes a NEEDS_PACK_CHOICE card answered by `POST /chat-messages/:id/context-save` (`ContextSaveChoiceService`, atomic `transitionContextSave`). Save turns publish `message.completed` without `userContent`. **The paragraph below is the FALLBACK, used only when no planner answers:** `handleMessageRouted` asks `SaveToContextManager.trySave` (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.
 
 ## Inpainting mask hop (2026-09-29)
 

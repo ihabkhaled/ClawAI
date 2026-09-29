@@ -346,6 +346,27 @@ export type TranslationDictionary = {
       trigger: string;
       auto: string;
     };
+    contextSave: {
+      title: string;
+      savedMemory: string;
+      createdPack: string;
+      addedToPack: string;
+      openMemory: string;
+      openPack: string;
+      choosePack: string;
+      newPack: string;
+      saving: string;
+      packSaved: string;
+      failedTitle: string;
+      memoryFailed: string;
+      packFailed: string;
+      notPending: string;
+      reasons: {
+        PLAN: string;
+        LIMIT: string;
+        UNAVAILABLE: string;
+      };
+    };
     speech: {
       action: string;
       stop: string;

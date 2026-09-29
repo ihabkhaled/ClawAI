@@ -14,6 +14,7 @@ import { useCreateMemory } from './use-create-memory';
 import { useDeleteMemory } from './use-delete-memory';
 import { useMemories } from './use-memories';
 import { useMemoryAuditAll } from './use-memory-audit';
+import { useMemoryDeepLink } from './use-memory-deep-link';
 import { useMemoryPreferences } from './use-memory-preferences';
 import { useMemorySuggestions } from './use-memory-suggestions';
 import { useRejectMemorySuggestion } from './use-reject-memory-suggestion';
@@ -72,6 +73,7 @@ export function useMemoryPage() {
     setEditingMemory(memory);
     setIsFormOpen(true);
   }, []);
+  useMemoryDeepLink(handleOpenEdit);
 
   const handleFormSubmit = useCallback(
     (data: CreateMemoryRequest) => {

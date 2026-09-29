@@ -379,6 +379,17 @@ has **Edit in a new branch** (`useEditInBranch`): it branches BEFORE the
 message, writes the edited text into the branch's composer draft and opens the
 branch. It never sends — the person presses Send.
 
+## The saved card (ADR-133)
+
+An answer with `metadata.contextSave` renders `ContextSaveCard` under its text:
+the saved memory (type badge, preview, **Open memory** → `/memory?memoryId=`,
+which opens it in the editor) and/or the pack (**Open pack** →
+`/context?packId=`, which opens that pack). While a pack choice is pending the
+card lists the user's packs plus **New pack: <name>**; a click calls
+`useContextSaveCard` → `POST /chat-messages/:id/context-save`, then refetches
+the thread so the card re-renders as saved from the stored record. Failures
+show the translated reason (`chat.contextSave.reasons.*`).
+
 ## Inline citations (ADR-132)
 
 An answer with `metadata.citations` passes them to `MarkdownRenderer`. The

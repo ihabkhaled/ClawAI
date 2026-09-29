@@ -90,6 +90,7 @@ import type {
   UseEditableTitleReturn,
   ThreadLineageLink,
   ComposerQuote,
+  ContextSaveRecord,
   MessageQuote,
   QuotableSelection,
   RegenerateMessageRequest,
@@ -2912,6 +2913,12 @@ export type MessageQuotesProps = {
 export type RegenerateWithModelProps = {
   onPick: (choice: RegenerateMessageRequest) => void;
   disabled?: boolean;
+};
+
+export type ContextSaveCardProps = {
+  messageId: string;
+  threadId: string;
+  record: ContextSaveRecord;
 };
 
 export type MessageBranchActionProps = {

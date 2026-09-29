@@ -262,6 +262,29 @@ ${summary}`,
     return { needsSearch: false, query: null, narration: '', thinking: '' };
   }
 
+  /**
+   * One JSON-only question to the admin's ordered planner models (ADR-133);
+   * the first reply `parse` accepts wins. Same candidates, same metering
+   * policy and same fail-closed walk as the research gate — null when none
+   * answers usably, and the caller decides what "no answer" means.
+   */
+  async askPlanner<T>(
+    prompt: string,
+    minOutputTokens: number,
+    parse: (raw: string) => T | null,
+  ): Promise<T | null> {
+    for (const candidate of await this.resolveCandidates()) {
+      const raw = await this.generate(candidate, prompt, minOutputTokens);
+      const parsed = raw === null ? null : parse(raw);
+      if (parsed !== null) {
+        this.logger.debug(`askPlanner: answered by ${candidate.modelAlias}`);
+        return parsed;
+      }
+    }
+    this.logger.warn('askPlanner: no planner model gave a usable answer');
+    return null;
+  }
+
   /** Null means "this model did not answer", so the caller tries the next. */
   private async ask(
     candidate: ResearchGateCandidate,

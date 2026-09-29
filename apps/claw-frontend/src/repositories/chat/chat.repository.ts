@@ -8,6 +8,8 @@ import type {
   ChatMessage,
   ThreadLineage,
   RegenerateMessageRequest,
+  ContextSaveChoiceRequest,
+  ContextSaveRecord,
   ConsensusRequest,
   ConsensusResponse,
   CreateThreadRequest,
@@ -91,6 +93,18 @@ export const chatRepository = {
   /** Where this thread sits in its branch family: its source and its branches. */
   async getThreadLineage(threadId: string): Promise<ThreadLineage> {
     const response = await apiClient.get<ThreadLineage>(`/chat-threads/${threadId}/lineage`);
+    return response.data;
+  },
+
+  /** Answers the "which pack?" card of a chat save (ADR-133). */
+  async chooseContextSavePack(
+    messageId: string,
+    choice: ContextSaveChoiceRequest,
+  ): Promise<ContextSaveRecord> {
+    const response = await apiClient.post<ContextSaveRecord>(
+      `/chat-messages/${messageId}/context-save`,
+      choice,
+    );
     return response.data;
   },
 

@@ -34,3 +34,5 @@ export { SpeechProvider } from './speech-provider.enum';
 export { SpeechAttemptOutcome } from './speech-attempt-outcome.enum';
 export { SpeechJobStatus } from './speech-job-status.enum';
 export { ImageMaskRefusalCode } from './image-mask-refusal-code.enum';
+export { ContextSaveStatus } from './context-save-status.enum';
+export { SaveContentSource } from './save-content-source.enum';

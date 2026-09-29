@@ -12,6 +12,9 @@ import type {
   StreamEventType,
   VisibleProgressActorType,
   VisibleProgressStageStatus,
+  ContextSaveStatus,
+  MemoryType,
+  SaveFailureReason,
 } from '@/enums';
 import type { ModelRecencyTier } from '@/enums/model-recency-tier.enum';
 import type { ResearchMode } from '@/enums/research-mode.enum';
@@ -199,6 +202,22 @@ export type MessageCitation = {
   url: string;
   snippet: string;
 };
+
+/** What an answer recorded about a chat save (`metadata.contextSave`, ADR-133). */
+export type ContextSaveRecord = {
+  status: ContextSaveStatus;
+  memory?: { id: string; type: MemoryType; preview: string; link: string };
+  memoryFailure?: SaveFailureReason;
+  pack?: { id: string; name: string; created: boolean; link: string };
+  packFailure?: SaveFailureReason;
+  pending?: {
+    suggestedName: string;
+    options: { id: string; name: string }[];
+  };
+};
+
+/** The "which pack?" answer: one offered pack, or a new one. */
+export type ContextSaveChoiceRequest = { packId: string } | { newPack: true };
 
 /** A quote as the send request carries it: the source id and the words. */
 export type MessageQuoteRequest = {

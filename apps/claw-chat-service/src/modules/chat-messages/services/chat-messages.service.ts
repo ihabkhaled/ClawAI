@@ -98,6 +98,9 @@ import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utilit
 import { type MessageQuote } from '../types/message-quote.types';
 import { type StoredContextMetadata } from '../types/message-citation.types';
 import { toStoredCitations } from '../utilities/stored-citations.utility';
+import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
+import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
+import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -204,6 +207,7 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → "save this as memory" is an
     // ordinary chat turn, as before owner feature 11.
     @Optional() private readonly saveToContext?: SaveToContextManager,
+    @Optional() private readonly contextSaveOrchestrator?: ContextSaveOrchestratorManager,
     // Optional for the same reason. Absent → the image row's
     // `assistantMessageId` stays null, as before batch 10a closed.
     @Optional() private readonly imageGenerationLink?: ImageGenerationLinkClient,
@@ -1254,18 +1258,23 @@ export class ChatMessagesService implements OnModuleInit {
       thread = loadedThread;
       const chronologicalMessages = [...threadMessages].reverse();
       routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
-      // "Save this as memory / add this to my context pack": saved server-side
-      // and confirmed without a model call (owner feature 11, rules/57).
-      if (this.saveToContext !== undefined && thread !== null) {
-        const saved = await this.saveToContext.trySave(
-          thread.userId,
-          payload.threadId,
+      // "Remember this / add this to my context" (ADR-133): a planner model
+      // decides and the saves run before the answer, so the answering model
+      // can confirm them. The keyword path, confirmed without a model call,
+      // runs only when no planner answers (owner feature 11, rules/57).
+      const contextSave =
+        thread === null
+          ? null
+          : await this.resolveContextSave(thread.userId, payload.threadId, routedMessages);
+      if (contextSave?.kind === 'LEGACY' && thread !== null) {
+        await this.completeSaveTurn(
+          payload,
+          contextSave.outcome,
+          thread,
           routedMessages,
+          startedAt,
         );
-        if (saved !== null) {
-          await this.completeSaveTurn(payload, saved, thread, routedMessages, startedAt);
-          return;
-        }
+        return;
       }
       const threadSettings = await this.withModelContextWindow(
         this.extractThreadSettings(thread),
@@ -1287,12 +1296,13 @@ export class ChatMessagesService implements OnModuleInit {
       await this.runLlmAndStore(
         effectivePayload,
         payload,
-        context,
+        contextSave?.kind === 'AI' ? withContextSaveNote(context, contextSave.modelNote) : context,
         threadSettings,
         fileIds,
         thread,
         routedMessages,
         latestUserMetadata,
+        contextSave?.kind === 'AI' ? contextSave.record : undefined,
       );
     } catch (error: unknown) {
       await this.handleMessageRoutedFailure(error, payload, thread, routedMessages, startedAt);
@@ -1306,6 +1316,19 @@ export class ChatMessagesService implements OnModuleInit {
    * so nothing is deducted. The published completion carries no user text,
    * so memory extraction does not re-mine the pasted document.
    */
+  /** The AI save path when wired, else the keyword path; null = not a save turn. */
+  private async resolveContextSave(
+    userId: string,
+    threadId: string,
+    messages: ChatMessage[],
+  ): Promise<ContextSaveDecision | null> {
+    if (this.contextSaveOrchestrator !== undefined) {
+      return this.contextSaveOrchestrator.handle(userId, threadId, messages);
+    }
+    const outcome = await this.saveToContext?.trySave(userId, threadId, messages);
+    return outcome === undefined || outcome === null ? null : { kind: 'LEGACY', outcome };
+  }
+
   private async completeSaveTurn(
     payload: MessageRoutedData,
     outcome: SaveToContextOutcome,
@@ -1421,6 +1444,7 @@ export class ChatMessagesService implements OnModuleInit {
     thread: ChatThread | null,
     chronologicalMessages: ChatMessage[],
     latestUserMetadata: Record<string, unknown> | null,
+    contextSave?: ContextSaveRecord,
   ): Promise<void> {
     this.logger.debug(
       `runLlmAndStore: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
@@ -1451,6 +1475,7 @@ export class ChatMessagesService implements OnModuleInit {
       llmResponse,
       contextMetadata,
       latestUserMetadata,
+      contextSave,
     );
     // Integration V2 — persist the "why was this used?" receipt asynchronously.
     void this.contextReceiptService
@@ -1703,6 +1728,7 @@ export class ChatMessagesService implements OnModuleInit {
     llmResponse: LlmResponse,
     contextMetadata?: StoredContextMetadata,
     latestUserMetadata?: Record<string, unknown> | null,
+    contextSave?: ContextSaveRecord,
   ): Promise<ChatMessage> {
     const hasVisibleContent = llmResponse.content.trim().length > 0;
     const storedContent = hasVisibleContent
@@ -1719,6 +1745,7 @@ export class ChatMessagesService implements OnModuleInit {
       hasVisibleContent,
       routeRoadmap,
       progressSummary,
+      contextSave,
     });
     // The turn's narrated work log becomes part of the answer, so "crawling ...
     // 14 pages read ... back to the AI" is still there after a refresh. Stored
@@ -1871,6 +1898,7 @@ export class ChatMessagesService implements OnModuleInit {
     hasVisibleContent: boolean;
     routeRoadmap: RouteRoadmap;
     progressSummary: StoredProgressSummaryStep[];
+    contextSave?: ContextSaveRecord;
   }): Record<string, unknown> {
     const {
       payload,
@@ -1880,8 +1908,11 @@ export class ChatMessagesService implements OnModuleInit {
       hasVisibleContent,
       routeRoadmap,
       progressSummary,
+      contextSave,
     } = args;
     return {
+      // The saved card renders from this (ADR-133).
+      ...(contextSave === undefined ? {} : { contextSave }),
       ...this.buildContextMetaPart(contextMetadata),
       ...this.buildResearchMetaPart(latestUserMetadata),
       ...this.buildResearchTranscriptMetaPart(latestUserMetadata),
@@ -2439,7 +2470,9 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: payload.routingMode as RoutingMode,
       detectedCategory: payload.detectedCategory,
       content: assistantMessage.content,
-      userContent: lastUserMsg?.content,
+      // A save turn (ADR-133) was saved on purpose; letting extraction re-mine
+      // the same words would file a duplicate suggestion of what was just saved.
+      userContent: hasContextSave(assistantMessage) ? undefined : lastUserMsg?.content,
       timestamp: new Date().toISOString(),
       executionSuccess: outcomeOverrides?.executionSuccess ?? true,
       finalStatus: outcomeOverrides?.finalStatus ?? 'completed',

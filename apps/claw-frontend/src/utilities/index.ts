@@ -30,6 +30,7 @@ export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.ut
 export { memoryCardPreview } from './memory-card.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
 export { buildLineageBarProps, toLineageLink } from './thread-lineage.utility';
+export { contextSaveOfMessage } from './context-save.utility';
 export {
   citationHost,
   citationHref,

@@ -44,33 +44,33 @@ src/app/
 
 ### Authentication
 
-| Route    | Page    | Controller Hook | Purpose                       | Auth Required |
-| -------- | ------- | --------------- | ----------------------------- | ------------- |
-| `/`      | Root    | None            | Redirects to /dashboard or /login | No        |
-| `/login` | Login   | `useLogin`      | Email/password authentication | No            |
+| Route    | Page  | Controller Hook | Purpose                           | Auth Required |
+| -------- | ----- | --------------- | --------------------------------- | ------------- |
+| `/`      | Root  | None            | Redirects to /dashboard or /login | No            |
+| `/login` | Login | `useLogin`      | Email/password authentication     | No            |
 
 ### Portal (Authenticated)
 
-| Route                        | Page             | Controller Hook          | Purpose                                     |
-| ---------------------------- | ---------------- | ------------------------ | ------------------------------------------- |
-| `/dashboard`                 | Dashboard        | `useDashboardPage`       | Overview stats, recent activity, health     |
-| `/chat`                      | Chat             | `useChatPage`            | Thread list, create new thread, pin/archive |
-| `/chat/[threadId]`           | Chat Thread      | `useThreadDetailPage`    | Conversation, composer, model selector      |
-| `/chat/compare`              | Parallel Compare | `useParallelComparePage` | Multi-model side-by-side response comparison |
-| `/connectors`                | Connectors       | `useConnectorsPage`      | Cloud provider connector list               |
-| `/connectors/[connectorId]`  | Connector Detail | `useConnectorDetailPage` | Config, models, health events, sync runs    |
-| `/models`                    | Models           | `useAllModels`           | All available models across connectors      |
-| `/models/local`              | Local Models     | `useLocalModelsPage`     | Ollama model management, pull, roles        |
-| `/routing`                   | Routing          | `useRoutingPage`         | Routing policies CRUD, recent decisions     |
-| `/routing/replay`            | Replay Lab       | `useReplayLabPage`       | Replay historical routing decisions, compare old vs new |
-| `/memory`                    | Memory           | `useMemoryPage`          | Memory records list, create, edit, toggle   |
-| `/context`                   | Context Packs    | Context pack hooks       | Context packs management, items             |
-| `/files`                     | Files            | `useFilesPage`           | File upload, list, ingestion status         |
-| `/observability`             | Observability    | Health hooks             | Aggregated health dashboard                 |
-| `/audits`                    | Audits           | `useAuditsPage`          | Audit log viewer with filters               |
-| `/logs`                      | Logs             | `useLogsPage`            | Client and server log viewer                |
-| `/admin`                     | Admin            | `useAdminPage`           | User management (ADMIN role only)           |
-| `/settings`                  | Settings         | `useSettingsPage`        | Preferences, password, appearance, language |
+| Route                       | Page             | Controller Hook          | Purpose                                                                                           |
+| --------------------------- | ---------------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| `/dashboard`                | Dashboard        | `useDashboardPage`       | Overview stats, recent activity, health                                                           |
+| `/chat`                     | Chat             | `useChatPage`            | Thread list, create new thread, pin/archive                                                       |
+| `/chat/[threadId]`          | Chat Thread      | `useThreadDetailPage`    | Conversation, composer, model selector                                                            |
+| `/chat/compare`             | Parallel Compare | `useParallelComparePage` | Multi-model side-by-side response comparison                                                      |
+| `/connectors`               | Connectors       | `useConnectorsPage`      | Cloud provider connector list                                                                     |
+| `/connectors/[connectorId]` | Connector Detail | `useConnectorDetailPage` | Config, models, health events, sync runs                                                          |
+| `/models`                   | Models           | `useAllModels`           | All available models across connectors                                                            |
+| `/models/local`             | Local Models     | `useLocalModelsPage`     | Ollama model management, pull, roles                                                              |
+| `/routing`                  | Routing          | `useRoutingPage`         | Routing policies CRUD, recent decisions                                                           |
+| `/routing/replay`           | Replay Lab       | `useReplayLabPage`       | Replay historical routing decisions, compare old vs new                                           |
+| `/memory`                   | Memory           | `useMemoryPage`          | Memory records list, create, edit, toggle; `?memoryId=` opens that memory in the editor (ADR-133) |
+| `/context`                  | Context Packs    | Context pack hooks       | Context packs management, items; `?packId=` opens that pack (ADR-133)                             |
+| `/files`                    | Files            | `useFilesPage`           | File upload, list, ingestion status                                                               |
+| `/observability`            | Observability    | Health hooks             | Aggregated health dashboard                                                                       |
+| `/audits`                   | Audits           | `useAuditsPage`          | Audit log viewer with filters                                                                     |
+| `/logs`                     | Logs             | `useLogsPage`            | Client and server log viewer                                                                      |
+| `/admin`                    | Admin            | `useAdminPage`           | User management (ADMIN role only)                                                                 |
+| `/settings`                 | Settings         | `useSettingsPage`        | Preferences, password, appearance, language                                                       |
 
 ---
 
@@ -256,9 +256,9 @@ Static route. The `useParallelComparePage` controller hook manages:
 
 Some pages require specific user roles:
 
-| Page   | Required Role | Behavior if Unauthorized         |
-| ------ | ------------- | -------------------------------- |
-| Admin  | ADMIN         | Shows access denied message      |
+| Page   | Required Role | Behavior if Unauthorized              |
+| ------ | ------------- | ------------------------------------- |
+| Admin  | ADMIN         | Shows access denied message           |
 | Others | Any role      | Accessible to all authenticated users |
 
 The sidebar conditionally shows navigation items based on the user's role, and the page itself checks the role in its controller hook.

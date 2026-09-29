@@ -56,6 +56,19 @@ The retrieval endpoint `POST /internal/memories/retrieve` is the canonical entry
 - Soft hints (`password`, `salary`, `medical`, …) → verdict `SENSITIVE` with confidence < 1.
 - Auto-approve from the suggestion queue ONLY fires for verdict `NORMAL` AND confidence ≥ `memory_preferences.autoApproveThreshold` (default 0.85).
 
+## Chat saves into an existing pack (2026-09-30, ADR-133)
+
+Two service-token routes for chat-service's AI save path:
+`POST /internal/context-packs/options-for-chat {userId}` → the user's packs
+`[{id, name, itemCount, updatedAt}]`, newest first, 50 max; and
+`POST /internal/context-packs/:id/items/from-chat {userId, content, sourceMessageId}`
+→ adds one MARKDOWN item through `ContextPacksService.addItem`, which checks
+ownership (someone else's pack → 403, never created instead). Both live in
+`ContextPackChatService` (the pack service is past its size ceiling).
+`from-chat` is idempotent: the same text already in that pack returns the
+existing item (a regenerated save turn saves again) — looked up only for the
+pack's owner.
+
 ## A chat with memory off is not a memory source (SEC-006, 2026-09-30)
 
 `message.completed` carries the thread's `useMemory`. `handleMessageCompleted`

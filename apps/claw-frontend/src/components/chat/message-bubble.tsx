@@ -14,6 +14,7 @@ import { AnswerExpandDialog } from '@/components/chat/answer-expand-dialog';
 import { AnswerExportMenu } from '@/components/chat/answer-export-menu';
 import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
+import { ContextSaveCard } from '@/components/chat/context-save-card';
 import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { FileLimitNotice } from '@/components/chat/file-limit-notice';
@@ -51,6 +52,7 @@ import {
   formatShortDateTime,
   getJudgeReviewFromMessage,
   citationsOfMessage,
+  contextSaveOfMessage,
   getStoredReasoning,
   quotesOfMessage,
   resolveFileDelivery,
@@ -102,6 +104,7 @@ function MessageBubbleBase({
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
   const quotes = isUser ? quotesOfMessage(metadata) : [];
   const citations = isUser ? undefined : citationsOfMessage(metadata);
+  const contextSave = isUser ? null : contextSaveOfMessage(metadata);
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
     ? (metadata['fileIds'] as string[])
     : [];
@@ -264,6 +267,14 @@ function MessageBubbleBase({
           {!isUser && !isImageGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
+          {/* What a "remember this / add to context" turn saved (ADR-133). */}
+          {contextSave === null ? null : (
+            <ContextSaveCard
+              messageId={message.id}
+              threadId={message.threadId}
+              record={contextSave}
+            />
+          )}
           {/* Below the answer, not above it: the reasoning is how the reply was
               reached, and a reader wants the reply first. */}
           {storedReasoning === null ? null : <MessageReasoningPanel reasoning={storedReasoning} />}

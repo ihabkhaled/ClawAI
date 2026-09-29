@@ -68,6 +68,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> =>
   create: vi.fn(),
   createUserMessageWithinDailyLimit: vi.fn(),
   findQuotableInThread: vi.fn().mockResolvedValue([]),
+  transitionContextSave: vi.fn().mockResolvedValue(true),
   findById: vi.fn(),
   findByThreadId: vi.fn(),
   searchByThreadId: vi.fn().mockResolvedValue([]),
@@ -1292,6 +1293,80 @@ describe('ChatMessagesService', () => {
       await service.handleMessageRouted(payload);
 
       expect(executionManager.execute).toHaveBeenCalledTimes(1);
+    });
+
+    it('on an AI save turn, tells the model what was saved and stores the card record (ADR-133)', async () => {
+      const record = {
+        status: 'SAVED',
+        memory: {
+          id: 'mem-1',
+          type: 'FACT',
+          preview: 'Works nights.',
+          link: '/memory?memoryId=mem-1',
+        },
+      };
+      Object.assign(service, {
+        contextSaveOrchestrator: {
+          handle: vi
+            .fn()
+            .mockResolvedValue({ kind: 'AI', record, modelNote: 'PLATFORM ACTION saved' }),
+        },
+      });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'Remember that I work nights' },
+      ]);
+      executionManager.execute!.mockResolvedValue({
+        content: 'Done — saved to your memory.',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const [, context] = executionManager.execute!.mock.calls[0] ?? [];
+      expect((context as { systemPrompt: string }).systemPrompt).toContain('PLATFORM ACTION saved');
+      const stored = messagesRepo.create.mock.calls.at(-1)?.[0] as {
+        metadata: Record<string, unknown>;
+      };
+      expect(stored.metadata['contextSave']).toEqual(record);
+    });
+
+    it('does not hand a save turn to memory extraction again (no duplicate suggestion)', async () => {
+      Object.assign(service, {
+        contextSaveOrchestrator: {
+          handle: vi.fn().mockResolvedValue({
+            kind: 'AI',
+            record: { status: 'SAVED' },
+            modelNote: 'PLATFORM ACTION saved',
+          }),
+        },
+      });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'Remember that I work nights' },
+      ]);
+      messagesRepo.create.mockImplementation(async (data: Record<string, unknown>) => ({
+        ...mockMessage,
+        id: 'a-1',
+        role: 'ASSISTANT',
+        metadata: data['metadata'],
+      }));
+      executionManager.execute!.mockResolvedValue({
+        content: 'Saved.',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const [, completed] =
+        (vi.mocked(rabbitMQ.publish)?.mock.calls ?? []).find(
+          ([pattern]) => pattern === EventPattern.MESSAGE_COMPLETED,
+        ) ?? [];
+      expect(completed).toMatchObject({ userContent: undefined });
     });
 
     it('stores the sources exactly as the prompt numbered them, for inline [n] links', async () => {

@@ -14,6 +14,10 @@ import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { SaveToContextManager } from './managers/save-to-context.manager';
+import { ContextSaveOrchestratorManager } from './managers/context-save-orchestrator.manager';
+import { ContextSaveClient } from './clients/context-save.client';
+import { ContextSaveChoiceService } from './services/context-save-choice.service';
+import { ContextSaveController } from './controllers/context-save.controller';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
 import { ModelOutputLimitClient } from './clients/model-output-limit.client';
@@ -87,6 +91,7 @@ import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalo
 @Module({
   imports: [ContextReceiptsModule],
   controllers: [
+    ContextSaveController,
     ChatMessagesController,
     ChatStreamController,
     ChatInternalController,
@@ -109,6 +114,9 @@ import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalo
     ConsensusExecutionManager,
     ContextAssemblyManager,
     SaveToContextManager,
+    ContextSaveClient,
+    ContextSaveOrchestratorManager,
+    ContextSaveChoiceService,
     // Registered because ChatContextGatewayManager injects it. Everywhere
     // else in this service it is built with `new` — its cache is static, so an
     // instance carries no state — and it had therefore never needed to be a

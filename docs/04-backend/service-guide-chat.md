@@ -88,6 +88,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 | GET    | /thread/:threadId | List messages (paginated)                                                                                            |
 | POST   | /                 | Send new message (triggers flow); optional `quotes` (ADR-130)                                                        |
 | PATCH  | /:id/feedback     | Submit feedback on a message                                                                                         |
+| POST   | /:id/context-save | Answer a save's "which pack?" card: `{packId}` or `{newPack: true}`; owner-only, saves once (ADR-133)                |
 | POST   | /:id/regenerate   | Answer again; optional `{routingMode AUTO/MANUAL_MODEL, provider, model}`; same plan/quota check as a send (ADR-131) |
 | POST   | /parallel         | Send prompt to 2-5 models simultaneously                                                                             |
 | POST   | /consensus        | Build a consensus answer from multiple models                                                                        |
@@ -130,7 +131,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
-5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
+5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-133): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
    - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
      no text (every send schema uses `requireContentOrAttachments`). The row is
      stored with empty `content`; `message.created` carries
@@ -153,9 +154,9 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)
 9. **Fallback chain** -- if primary fails or is weak, tries next candidate in chain
-10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, and `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-132)
+10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-132), and on a save turn `metadata.contextSave` (the saved card — ADR-133)
 11. **SSE emission** -- `emitCompletion()` pushes to connected clients
-12. **Publish `message.completed`** -- memory service extracts facts; audit logs usage
+12. **Publish `message.completed`** -- memory service extracts facts (unless the chat has memory off, or it was a save turn: no `userContent` then); audit logs usage
 
 ## SSE Streaming
 
