@@ -7,6 +7,9 @@ export const MEMORY_TYPE_OPTIONS = Object.values(MemoryType);
 export const MEMORY_CONTENT_MAX_CHARS = 250_000;
 export const CONTEXT_PACK_ITEM_CONTENT_MAX_CHARS = 250_000;
 
+/** A memory card renders at most this much markdown; the rest is in the editor. */
+export const MEMORY_CARD_PREVIEW_MAX_CHARS = 4_000;
+
 // The V2 enum is what the API and the database accept. This listed the V1
 // values until 2026-08-30, so every type the picker offered was rejected by
 // `z.nativeEnum(ContextPackItemType)` in memory-service.

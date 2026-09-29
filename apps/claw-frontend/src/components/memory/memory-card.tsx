@@ -12,9 +12,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { MEMORY_TYPE_LABELS, MEMORY_TYPE_COLORS, ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
+import { MarkdownRenderer } from '@/lib/markdown/markdown-renderer';
 import { cn } from '@/lib/utils';
 import type { MemoryCardProps } from '@/types';
-import { formatShortDateTime } from '@/utilities';
+import { formatShortDateTime, memoryCardPreview } from '@/utilities';
 
 export function MemoryCard({
   memory,
@@ -39,7 +40,7 @@ export function MemoryCard({
           {memory.sourceThreadId ? (
             <a
               href={ROUTES.CHAT_THREAD(memory.sourceThreadId)}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
             >
               <ExternalLink className="h-3 w-3" />
               {t('memory.source')}
@@ -76,8 +77,13 @@ export function MemoryCard({
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm leading-relaxed">{memory.content}</p>
-        <p className="mt-3 text-xs text-muted-foreground">
+        <div
+          className="max-h-72 overflow-y-auto text-sm leading-relaxed"
+          data-testid="memory-card-content"
+        >
+          <MarkdownRenderer content={memoryCardPreview(memory.content)} />
+        </div>
+        <p className="text-muted-foreground mt-3 text-xs">
           {t('connectors.updatedAt', { date: formatShortDateTime(memory.updatedAt) })}
         </p>
       </CardContent>

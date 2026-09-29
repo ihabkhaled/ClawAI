@@ -27,6 +27,7 @@ export { formatBytes } from './format-bytes.utility';
 export { getLevelBadgeClass, formatLogLatency } from './log-stats.utility';
 export { formatDuration, formatMediaClock, formatSpeed } from './format-duration.utility';
 export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.utility';
+export { memoryCardPreview } from './memory-card.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
 export { splitHighlightSegments } from './highlight.utility';
 export {
