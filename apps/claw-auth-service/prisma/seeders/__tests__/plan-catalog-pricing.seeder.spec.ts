@@ -1,4 +1,4 @@
-const { computeDiscountedIntervalMinor } = require('../plan-catalog.seeder.cjs');
+const { computeDiscountedIntervalMinor, PLAN_CATALOG } = require('../plan-catalog.seeder.cjs');
 
 describe('computeDiscountedIntervalMinor', () => {
   it('applies a 10% discount over three months', () => {
@@ -20,5 +20,17 @@ describe('computeDiscountedIntervalMinor', () => {
 
   it('never returns a float', () => {
     expect(Number.isInteger(computeDiscountedIntervalMinor(1333, 6))).toBe(true);
+  });
+});
+
+describe('plan descriptions', () => {
+  // Pooled billing across team members is not built (REQ-POS-005); the Team
+  // description must not promise it.
+  it('does not promise pooling or shared billing on any plan', () => {
+    for (const plan of PLAN_CATALOG) {
+      expect(String(plan.description ?? '').toLowerCase(), plan.slug).not.toMatch(
+        /pooled|shared billing|shared workspaces/,
+      );
+    }
   });
 });

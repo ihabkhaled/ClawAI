@@ -5199,7 +5199,7 @@ export const fr: TranslationDictionary = {
         modelCount: '{count} modèles disponibles actuellement',
         title: 'Les modèles auxquels vous avez accès',
         intro:
-          'Un seul abonnement couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',
+          'Un seul espace de travail couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',
         footnote:
           "Les nouveaux modèles de pointe sont ajoutés dès leur lancement — votre forfait les couvre dès le premier jour, décomptés d'un quota unique.",
         linkFeatures: 'Explorer toutes les fonctionnalités',
@@ -5356,7 +5356,7 @@ export const fr: TranslationDictionary = {
         title: 'À qui s’adresse ClawAI',
         privacyName: "Les personnes qui utilisent l'IA au quotidien",
         privacyDesc:
-          'un seul abonnement au lieu de trois ou quatre, avec le modèle le plus puissant toujours à portée de clic plutôt que derrière un autre péage.',
+          'un seul espace de travail au lieu de trois ou quatre abonnements distincts, avec le modèle le plus puissant toujours à portée de clic plutôt que derrière un autre péage.',
         devName: 'Développeurs évaluant des modèles',
         devDesc:
           "envoyez le même prompt à cinq modèles à la fois et comparez les réponses côte à côte avant de vous engager sur l'une d'elles.",
@@ -5365,7 +5365,7 @@ export const fr: TranslationDictionary = {
           'parcourez de longs documents et jeux de données avec des modèles à grand contexte, puis faites vérifier les conclusions par un second modèle.',
         teamName: 'Petites équipes',
         teamDesc:
-          'partagez un seul espace de travail, connectez les outils de suivi des tickets, la messagerie et les documents que vous utilisez déjà, et voyez exactement où va votre quota.',
+          'utilisez ClawAI pour un petit groupe : un administrateur gère le compte, le rôle et le forfait de chaque personne, et voit la consommation de chacun.',
       },
       faq: {
         title: 'Questions fréquentes',
@@ -5376,7 +5376,7 @@ export const fr: TranslationDictionary = {
         q3: "Comment les limites d'utilisation sont-elles mesurées ?",
         a3: "En jetons pondérés selon le coût. Un modèle coûteux consomme davantage votre quota qu'un modèle bon marché, si bien qu'un seul chiffre quotidien et mensuel reste équitable entre des modèles dont les prix varient de plus d'un ordre de grandeur.",
         q4: 'ClawAI est-il affilié à OpenAI, Anthropic, Google ou AWS ?',
-        a4: "Non. ClawAI est un produit indépendant qui donne accès aux modèles de ces fournisseurs via un seul abonnement. Il n'est approuvé ni affilié à aucun d'entre eux.",
+        a4: "Non. ClawAI est un produit indépendant qui donne accès aux modèles de ces fournisseurs via un seul espace de travail. Il n'est approuvé ni affilié à aucun d'entre eux.",
       },
       cta: {
         title: 'Commencez avec le forfait gratuit',
@@ -5430,7 +5430,7 @@ export const fr: TranslationDictionary = {
       providers: {
         title: 'Toutes les familles de modèles de pointe',
         intro:
-          "Un seul abonnement donne accès à tous ces modèles. Passez de l'un à l'autre au sein d'une même conversation — rien à installer, aucun compte fournisseur à créer.",
+          "Un seul espace de travail donne accès à tous ces modèles. Passez de l'un à l'autre au sein d'une même conversation — rien à installer, aucun compte fournisseur à créer.",
         modelsLabel: 'Modèles',
         anthropicDesc:
           "Raisonnement minutieux sur des documents longs, révision de code solide, et le suivi d'instructions le plus fiable de la gamme.",
@@ -5707,7 +5707,7 @@ export const fr: TranslationDictionary = {
       models: {
         title: 'Les modèles auxquels vous avez accès',
         intro:
-          "Un seul abonnement, chaque famille ci-dessous. Vous pouvez passer de l'une à l'autre au sein d'une même conversation.",
+          "Un seul espace de travail, chaque famille ci-dessous. Vous pouvez passer de l'une à l'autre au sein d'une même conversation.",
         anthropicStrength:
           'Raisonnement minutieux, documents longs, et la révision de code la plus fiable de la gamme.',
         openaiStrength:
@@ -6121,7 +6121,7 @@ export const fr: TranslationDictionary = {
       hero: {
         title: 'Ce que les gens font réellement avec ClawAI',
         subtitle:
-          'Dix tâches qui reviennent chaque jour, et le modèle — ou la combinaison de modèles — qui les gère le mieux. Le tout sur un seul abonnement.',
+          'Dix tâches qui reviennent chaque jour, et le modèle — ou la combinaison de modèles — qui les gère le mieux. Le tout dans un seul espace de travail.',
         lastReviewedLabel: 'Dernière mise à jour',
       },
       grid: {
@@ -6195,7 +6195,7 @@ export const fr: TranslationDictionary = {
         imagesCapability: "Génération d'images",
       },
       oneSubscription: {
-        title: 'Pourquoi un seul abonnement vaut mieux que plusieurs',
+        title: 'Pourquoi un seul espace de travail vaut mieux que plusieurs abonnements',
         intro:
           "Gérer quatre abonnements IA n'est pas quatre fois meilleur qu'un seul. C'est quatre factures, quatre ensembles de limites, et une décision constante de bas niveau sur quel onglet ouvrir.",
         pointRightModelTitle: 'Le bon modèle, à chaque fois',
@@ -6241,7 +6241,7 @@ export const fr: TranslationDictionary = {
         description: "Ce qu'est ClawAI, et comment commencer.",
         whatIsQ: "Qu'est-ce que ClawAI ?",
         whatIsA:
-          "Un abonnement unique qui donne accès à tous les modèles d'IA de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Amazon Bedrock — via une seule interface de conversation. Il route chaque message vers le modèle le mieux adapté, retient le contexte utile entre les conversations, répond aux questions sur les fichiers que vous téléversez, et peut faire travailler plusieurs modèles sur le même problème lorsqu'une seule réponse ne suffit pas.",
+          "Un espace de travail unique qui donne accès à tous les modèles d'IA de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Amazon Bedrock — via une seule interface de conversation. Il route chaque message vers le modèle le mieux adapté, retient le contexte utile entre les conversations, répond aux questions sur les fichiers que vous téléversez, et peut faire travailler plusieurs modèles sur le même problème lorsqu'une seule réponse ne suffit pas.",
         apiKeysQ: "Ai-je besoin d'une clé API d'OpenAI ou d'Anthropic ?",
         apiKeysA:
           "Non. L'accès aux modèles est inclus dans votre abonnement. Il n'y a aucun compte fournisseur à créer, aucune clé à coller et aucune facture fournisseur séparée.",
@@ -6327,7 +6327,7 @@ export const fr: TranslationDictionary = {
           "Oui. Les entreprises qui ne peuvent pas envoyer de données à un fournisseur de modèles tiers peuvent faire déployer toute la plateforme dans leur propre réseau, exécutant des modèles à poids ouverts sur leurs propres GPU, sans aucun appel à un fournisseur externe. C'est un engagement dimensionné sur mesure plutôt qu'un forfait que l'on achète en ligne. Le compromis est une isolation complète des données en échange de l'accès aux modèles de pointe, qui ne peuvent pas être exécutés sur site — contactez-nous et nous le dimensionnerons avec vous.",
         teamAccountsQ: 'Prenez-vous en charge les équipes ?',
         teamAccountsA:
-          "Oui. Le forfait Team et au-dessus offrent un espace de travail partagé, des permissions basées sur les rôles, davantage de connexions d'espace de travail et Comparaison, Juge, Critique et Recherche illimités. Pour tout ce qui va au-delà — authentification unique contre votre annuaire, règles de rétention personnalisées, documents d'approvisionnement — parlez-nous-en.",
+          'Oui, sous forme de comptes gérés par un administrateur. Un administrateur active chaque membre, attribue rôles et forfaits, et voit la consommation de chacun dans la console d’administration. Chaque membre a son propre forfait et son propre quota ; le forfait Team et au-dessus lèvent les plafonds mensuels de Comparaison, Juge, Critique et Recherche. La facturation d’équipe partagée, les quotas mutualisés et l’authentification unique ne sont pas disponibles aujourd’hui — parlez-nous de vos besoins.',
       },
       contact: {
         title: 'Encore une question ?',

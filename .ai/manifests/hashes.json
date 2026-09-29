@@ -18,7 +18,7 @@
     ".ai/manifests/rabbitmq-events.json": "15fd1759",
     ".ai/manifests/repository.json": "047d93d0",
     ".ai/manifests/services.json": "2ff91fa6",
-    ".ai/manifests/tests.json": "35559383",
+    ".ai/manifests/tests.json": "b495dc0f",
     ".ai/manifests/workspace-dependency-graph.json": "8592594d",
     ".ai/manifests/workspaces.json": "19f83de0",
     ".ai/packs/README.md": "2e64753b",

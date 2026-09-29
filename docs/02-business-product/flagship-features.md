@@ -232,5 +232,8 @@ Decision: [ADR-076](../13-adr/adr-076-chat-stream-durability.md).
 - [ADR-087](../13-adr/adr-087-cross-thread-retrieval.md) says cross-thread context
   is off by default; it has been on by default since migration
   `20260917000000_cross_thread_context_on_by_default`.
-- The Team plan's seeded description ("Shared workspaces and a large pooled
-  allowance") promises pooling that does not exist — REQ-POS-005.
+- ~~The Team plan's seeded description ("Shared workspaces and a large pooled
+  allowance") promised pooling that does not exist~~ — fixed 2026-09-29
+  (migration `20260929100000_team_plan_description_drops_pooling_claim`, seed text
+  now "A large monthly allowance for heavy daily use."); the feature itself is
+  still REQ-POS-005.

@@ -19,7 +19,7 @@ export const ZH_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: '它能做什么',
     capabilities: [
       {
-        title: '一份订阅，所有模型',
+        title: '一个工作区，所有模型',
         body: '九大前沿模型家族，加上你本地的开源权重模型，都能从编辑器里直接使用，无需粘贴任何 API 密钥。路由在平台上完成，编辑器因此从不持有供应商凭据。',
       },
       {

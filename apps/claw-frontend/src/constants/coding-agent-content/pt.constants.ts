@@ -21,7 +21,7 @@ export const PT_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'O que faz',
     capabilities: [
       {
-        title: 'Todos os modelos, uma assinatura',
+        title: 'Todos os modelos, um espaço de trabalho',
         body: 'Nove famílias de modelos de ponta e os seus modelos locais de pesos abertos, ao alcance do editor sem nenhuma chave de API para colar. O roteamento acontece na plataforma, por isso o editor nunca guarda uma credencial de fornecedor.',
       },
       {

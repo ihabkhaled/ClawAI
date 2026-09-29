@@ -4932,7 +4932,7 @@ export const zh: TranslationDictionary = {
         modelCount: '当前可用 {count} 个模型',
         title: '您获得的模型',
         intro:
-          '一份订阅涵盖以下所有提供商。在对话中切换模型，或者让 ClawAI 为每条消息选择最好的模型。',
+          '一个工作区涵盖以下所有提供商。在对话中切换模型，或者让 ClawAI 为每条消息选择最好的模型。',
         footnote:
           '新的前沿模型在推出时就会被添加——您的计划从第一天起就涵盖它们，并根据单一限额进行计量。',
         linkFeatures: '探索每一个功能',
@@ -5068,13 +5068,13 @@ export const zh: TranslationDictionary = {
         title: 'ClawAI 适合谁',
         privacyName: '每天使用人工智能的人',
         privacyDesc:
-          '一次订阅而不是三四个，只需点击一下即可获得最强大的模型，而不是在另一个付费专区后面。',
+          '一个工作区而不是三四个独立订阅，只需点击一下即可获得最强大的模型，而不是在另一个付费专区后面。',
         devName: '开发人员评估模型',
         devDesc: '一次向五个模型发送相同的提示，并在提交一个模型之前并排阅读答案。',
         selfHostName: '研究人员和分析师',
         selfHostDesc: '使用大上下文模型处理长文档和数据集，然后让第二个模型检查结论。',
         teamName: '小团队',
-        teamDesc: '共享一个工作区，连接问题跟踪器，聊天和您已经使用的文档，并准确查看津贴的去向。',
+        teamDesc: '为小团队运行 ClawAI：管理员管理每个人的账户、角色和方案，并能查看每个人的用量。',
       },
       faq: {
         title: '常见问题',
@@ -5085,7 +5085,7 @@ export const zh: TranslationDictionary = {
         q3: '使用限制是如何衡量的？',
         a3: '在成本标准化代币中。昂贵的型号比便宜的型号会消耗更多的津贴，因此每日和每月的数字对于价格相差超过一个数量级的型号来说是公平的。',
         q4: 'ClawAI 是否隶属于 OpenAI、Anthropic、Google 或 AWS？',
-        a4: '不会。ClawAI 是一款独立产品，通过一次订阅即可访问这些提供商的模型。它没有得到他们任何人的认可或附属。',
+        a4: '不会。ClawAI 是一款独立产品，通过一个工作区即可访问这些提供商的模型。它没有得到他们任何人的认可或附属。',
       },
       cta: {
         title: '开始免费计划',
@@ -5132,7 +5132,7 @@ export const zh: TranslationDictionary = {
       providers: {
         title: '每一个前沿模范家庭',
         intro:
-          '一次订阅即可实现所有这些。在单个对话中在它们之间切换 - 无需安装任何内容，也无需创建提供商帐户。',
+          '一个工作区即可触达所有这些。在单个对话中在它们之间切换 - 无需安装任何内容，也无需创建提供商帐户。',
         modelsLabel: '型号',
         anthropicDesc: '对长文档的仔细推理、严格的代码审查以及名册中最可靠的说明。',
         openaiDesc: '广泛的通用功能，具有出色的工具使用和可靠的结构化输出。',
@@ -5370,7 +5370,7 @@ export const zh: TranslationDictionary = {
       },
       models: {
         title: '您可以接触到的模特',
-        intro: '一份订阅，下面每个家庭。您可以在单个对话中在它们之间切换。',
+        intro: '一个工作区，下面每个家族。您可以在单个对话中在它们之间切换。',
         anthropicStrength: '仔细的推理、冗长的文档以及名册中最可靠的代码审查。',
         openaiStrength: '广泛的通用能力，具有强大的工具使用和结构化输出。',
         geminiStrength: '巨大的上下文窗口、快速响应以及原生图像、音频和视频输入。',
@@ -5707,7 +5707,7 @@ export const zh: TranslationDictionary = {
       hero: {
         title: '人们实际上用 ClawAI 做什么',
         subtitle:
-          '每天都会出现十种工作，以及最能处理每一项工作的模型（或模型组合）。全部集中在一份订阅上。',
+          '每天都会出现十种工作，以及最能处理每一项工作的模型（或模型组合）。全部集中在一个工作区里。',
         lastReviewedLabel: '最后评论',
       },
       grid: {
@@ -5776,7 +5776,7 @@ export const zh: TranslationDictionary = {
         imagesCapability: '图像生成',
       },
       oneSubscription: {
-        title: '为什么一次订阅胜过多次订阅',
+        title: '为什么一个工作区胜过多份订阅',
         intro:
           '运行四个 AI 订阅并不比一个好四倍。这是四项法案、四组限制，以及关于打开哪个选项卡的持续低级决定。',
         pointRightModelTitle: '每次都有正确的型号',
@@ -5821,7 +5821,7 @@ export const zh: TranslationDictionary = {
         description: 'ClawAI 是什么以及如何开始。',
         whatIsQ: 'ClawAI是什么？',
         whatIsA:
-          '单一订阅可通过一个聊天界面覆盖所有前沿 AI 模型（Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok 和 Amazon Bedrock）。它将每条消息路由到最适合它的模型，记住对话之间的有用上下文，回答有关您上传的文件的问题，并且在一个答案不够时可以针对同一问题放置多个模型。',
+          '单一工作区可通过一个聊天界面覆盖所有前沿 AI 模型（Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok 和 Amazon Bedrock）。它将每条消息路由到最适合它的模型，记住对话之间的有用上下文，回答有关您上传的文件的问题，并且在一个答案不够时可以针对同一问题放置多个模型。',
         apiKeysQ: '我需要 OpenAI 或 Anthropic 的 API 密钥吗？',
         apiKeysA:
           '不需要。模型访问权限包含在您的订阅中。无需创建提供商帐户，无需粘贴密钥，也无需单独的提供商账单。',
@@ -5907,7 +5907,7 @@ export const zh: TranslationDictionary = {
           '是的。无法将数据发送到第三方模型提供商的组织可以将整个平台部署在自己的网络内，在自己的 GPU 上运行开放权重模型，根本不需要外部提供商调用。这是一个有范围的参与，而不是一个可以在线购买的计划。权衡是完全的数据隔离，以换取无法在本地运行的前沿模型 - 请联系我们，我们将与您一起确定规模。',
         teamAccountsQ: '你支持团队吗？',
         teamAccountsA:
-          '是的。团队计划及以上计划提供共享工作空间、基于角色的权限、更多工作空间连接以及无上限的比较、判断、批评和研究。对于除此之外的任何事情（针对您的目录的单点登录、自定义保留规则、采购文书工作），请与我们联系。',
+          '支持，以管理员管理账户的方式。管理员激活每位成员、分配角色和方案，并在管理控制台查看每个人的用量。每位成员都有自己的方案和额度；Team 方案及以上取消比较、评审、批评和研究的每月上限。团队共享计费、共享额度和单点登录目前尚未提供——欢迎告诉我们你的需求。',
       },
       contact: {
         title: '还有问题吗？',

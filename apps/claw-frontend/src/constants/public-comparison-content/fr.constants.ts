@@ -25,7 +25,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparatifs',
     intro:
-      'ClawAI ne cherche pas à être un meilleur assistant unique. Il réunit {cloudProviderCount} fournisseurs cloud et des modèles à poids ouverts en local sous un seul abonnement, et envoie chaque message à celui qui convient. Ces pages le confrontent aux assistants déjà utilisés, sur les mêmes huit capacités à chaque fois.',
+      'ClawAI ne cherche pas à être un meilleur assistant unique. Il réunit {cloudProviderCount} fournisseurs cloud et des modèles à poids ouverts en local dans un seul espace de travail, et envoie chaque message à celui qui convient. Ces pages le confrontent aux assistants déjà utilisés, sur les mêmes huit capacités à chaque fois.',
     cardsTitle: 'Choisissez un assistant à comparer',
     cardCta: 'Comparer avec {rival}',
     coversTitle: 'Ce que couvre chaque comparatif',
@@ -65,7 +65,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'OpenAI',
       eyebrow: 'ClawAI vs ChatGPT',
       intro:
-        'ChatGPT est l’assistant auquel la plupart des gens pensent quand ils disent « IA » : soigné, rapide, adossé aux modèles de pointe d’OpenAI. ClawAI a une autre forme : un seul abonnement qui atteint les modèles d’OpenAI aux côtés de huit autres familles, et envoie chaque message à celui qui convient.',
+        'ChatGPT est l’assistant auquel la plupart des gens pensent quand ils disent « IA » : soigné, rapide, adossé aux modèles de pointe d’OpenAI. ClawAI a une autre forme : un seul espace de travail qui atteint les modèles d’OpenAI aux côtés de huit autres familles, et envoie chaque message à celui qui convient.',
       theirStrength:
         'Un produit unique, extrêmement bien fait. La voix, la génération d’images, l’exécution de code et la recherche approfondie sont intégrées et fonctionnent ensemble, les applications mobiles sont excellentes, et le modèle sous-jacent est un modèle de pointe, pas un compromis.',
       ourDifference:
@@ -172,7 +172,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'ClawAI peut-il utiliser les modèles Gemini ?',
           answer:
-            'Oui. Google est l’une des neuf familles de modèles du catalogue, disponible dans n’importe quelle conversation sous le même abonnement.',
+            'Oui. Google est l’une des neuf familles de modèles du catalogue, disponible dans n’importe quelle conversation dans le même espace de travail.',
         },
         {
           question: 'ClawAI se connecte-t-il à Google Workspace ?',
@@ -277,7 +277,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Moonshot AI',
       eyebrow: 'ClawAI vs Kimi',
       intro:
-        'Kimi s’est fait un nom sur des contextes très longs et, plus récemment, sur la publication de poids ouverts que chacun peut télécharger et exécuter. ClawAI a une autre forme : un seul abonnement qui atteint des modèles à poids ouverts de la classe de Kimi aux côtés de huit autres familles, et envoie chaque message à celui qui convient.',
+        'Kimi s’est fait un nom sur des contextes très longs et, plus récemment, sur la publication de poids ouverts que chacun peut télécharger et exécuter. ClawAI a une autre forme : un seul espace de travail qui atteint des modèles à poids ouverts de la classe de Kimi aux côtés de huit autres familles, et envoie chaque message à celui qui convient.',
       theirStrength:
         'La lecture de très longs contextes à un prix inférieur à celui de la plupart des modèles de pointe occidentaux, un bon comportement agentique et d’usage d’outils, et des poids ouverts pour la gamme phare — le même modèle peut donc être évalué dans le produit hébergé, puis exécuté sur votre propre matériel.',
       ourDifference:
@@ -320,7 +320,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs Qwen',
       intro:
-        'Qwen est l’une des familles à poids ouverts les plus complètes disponibles : une large échelle de tailles, une bonne couverture multilingue et des licences permissives sur la majeure partie de la gamme. ClawAI place des modèles de cette classe aux côtés de huit autres familles sous un seul abonnement.',
+        'Qwen est l’une des familles à poids ouverts les plus complètes disponibles : une large échelle de tailles, une bonne couverture multilingue et des licences permissives sur la majeure partie de la gamme. ClawAI place des modèles de cette classe aux côtés de huit autres familles dans un seul espace de travail.',
       theirStrength:
         'L’étendue. Des tailles qui vont de ce qui tourne sur un portable à ce qui exige un serveur, des variantes vision et code, de vraies bonnes performances hors de l’anglais, et des licences qui rendent l’auto-hébergement commercial simple.',
       ourDifference:

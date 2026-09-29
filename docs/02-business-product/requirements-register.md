@@ -85,9 +85,10 @@ _inferred_ until the owner confirms it.
   fleet's, which is API-only.
 - **Until built:** copy says "bring your team" and describes admin-managed users,
   roles, plan grants and usage statistics; it does not promise seats, shared
-  billing or pooling. The Team plan description overclaims and needs the
-  business owner's wording.
-- **History:** 2026-09-26 created.
+  billing or pooling. The Team plan description no longer overclaims
+  (2026-09-29, text only: "A large monthly allowance for heavy daily use.").
+- **History:** 2026-09-26 created; 2026-09-29 Team plan description corrected (owner
+  approved a text-only change).
 
 ### REQ-POS-006
 

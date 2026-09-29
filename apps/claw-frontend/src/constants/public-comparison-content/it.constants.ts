@@ -25,7 +25,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Confronti',
     intro:
-      'ClawAI non punta a essere un assistente singolo migliore. Mette {cloudProviderCount} provider cloud e modelli open-weight in locale sotto un solo abbonamento e manda ogni messaggio a quello adatto. Queste pagine lo mettono a confronto con gli assistenti che si usano già, sempre sulle stesse otto capacità.',
+      'ClawAI non punta a essere un assistente singolo migliore. Mette {cloudProviderCount} provider cloud e modelli open-weight in locale in un solo spazio di lavoro e manda ogni messaggio a quello adatto. Queste pagine lo mettono a confronto con gli assistenti che si usano già, sempre sulle stesse otto capacità.',
     cardsTitle: 'Scegli un assistente da confrontare',
     cardCta: 'Confronta con {rival}',
     coversTitle: 'Cosa copre ogni confronto',
@@ -62,7 +62,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'OpenAI',
       eyebrow: 'ClawAI vs ChatGPT',
       intro:
-        'ChatGPT è l’assistente a cui quasi tutti pensano quando dicono «IA»: curato, veloce, sostenuto dai modelli di punta di OpenAI. ClawAI ha un’altra forma: un abbonamento che raggiunge i modelli di OpenAI insieme ad altre otto famiglie e manda ogni messaggio a quella adatta.',
+        'ChatGPT è l’assistente a cui quasi tutti pensano quando dicono «IA»: curato, veloce, sostenuto dai modelli di punta di OpenAI. ClawAI ha un’altra forma: uno spazio di lavoro che raggiunge i modelli di OpenAI insieme ad altre otto famiglie e manda ogni messaggio a quella adatta.',
       theirStrength:
         'Un prodotto unico, fatto molto bene. Voce, generazione di immagini, esecuzione di codice e ricerca approfondita sono integrate e funzionano insieme, le app mobili sono ottime e il modello sottostante è di punta, non un compromesso.',
       ourDifference:
@@ -169,7 +169,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'ClawAI può usare i modelli Gemini?',
           answer:
-            'Sì. Google è una delle nove famiglie di modelli del catalogo, disponibile in qualsiasi conversazione con lo stesso abbonamento.',
+            'Sì. Google è una delle nove famiglie di modelli del catalogo, disponibile in qualsiasi conversazione nello stesso spazio di lavoro.',
         },
         {
           question: 'ClawAI si collega a Google Workspace?',
@@ -271,7 +271,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Moonshot AI',
       eyebrow: 'ClawAI vs Kimi',
       intro:
-        'Kimi si è fatta una reputazione sul contesto molto lungo e, più di recente, sulla pubblicazione di pesi aperti che chiunque può scaricare ed eseguire. ClawAI ha un’altra forma: un abbonamento che raggiunge modelli a pesi aperti di quella classe insieme ad altre otto famiglie e manda ogni messaggio a quella adatta.',
+        'Kimi si è fatta una reputazione sul contesto molto lungo e, più di recente, sulla pubblicazione di pesi aperti che chiunque può scaricare ed eseguire. ClawAI ha un’altra forma: uno spazio di lavoro che raggiunge modelli a pesi aperti di quella classe insieme ad altre otto famiglie e manda ogni messaggio a quella adatta.',
       theirStrength:
         'Lettura di contesti lunghi a un prezzo inferiore a quello di quasi tutti i modelli di punta occidentali, un buon comportamento agentico e nell’uso degli strumenti, e pesi aperti per la linea di punta: lo stesso modello si può valutare nel prodotto ospitato e poi eseguire sul proprio hardware.',
       ourDifference:
@@ -313,7 +313,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs Qwen',
       intro:
-        'Qwen è una delle famiglie a pesi aperti più complete disponibili: una scala ampia di dimensioni, una buona copertura multilingue e licenze permissive su gran parte della gamma. ClawAI mette modelli di quella classe accanto ad altre otto famiglie con un solo abbonamento.',
+        'Qwen è una delle famiglie a pesi aperti più complete disponibili: una scala ampia di dimensioni, una buona copertura multilingue e licenze permissive su gran parte della gamma. ClawAI mette modelli di quella classe accanto ad altre otto famiglie in un solo spazio di lavoro.',
       theirStrength:
         'L’ampiezza. Dimensioni che vanno da quelle che girano su un portatile a quelle che richiedono un server, varianti per visione e codice, prestazioni davvero buone fuori dall’inglese e licenze che rendono semplice il self-hosting commerciale.',
       ourDifference:

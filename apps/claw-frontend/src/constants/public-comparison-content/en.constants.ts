@@ -25,7 +25,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparisons',
     intro:
-      'ClawAI is not trying to be a better single assistant. It puts {cloudProviderCount} cloud providers and local open-weight models behind one subscription and sends each message to the one suited to it. These pages set that against the assistants people already use, on the same eight capabilities every time.',
+      'ClawAI is not trying to be a better single assistant. It puts {cloudProviderCount} cloud providers and local open-weight models in one workspace and sends each message to the one suited to it. These pages set that against the assistants people already use, on the same eight capabilities every time.',
     cardsTitle: 'Pick an assistant to compare',
     cardCta: 'Compare with {rival}',
     coversTitle: 'What every comparison covers',
@@ -64,7 +64,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'OpenAI',
       eyebrow: 'ClawAI vs ChatGPT',
       intro:
-        'ChatGPT is the assistant most people mean when they say “AI” — polished, fast, and backed by OpenAI’s own frontier models. ClawAI is a different shape: one subscription that reaches OpenAI’s models alongside eight other families, and sends each message to whichever suits it.',
+        'ChatGPT is the assistant most people mean when they say “AI” — polished, fast, and backed by OpenAI’s own frontier models. ClawAI is a different shape: one workspace that reaches OpenAI’s models alongside eight other families, and sends each message to whichever suits it.',
       theirStrength:
         'A single, extremely well-made product. Voice, image generation, code execution and deep research are built in and work together, the mobile apps are excellent, and the model underneath is a frontier model rather than a compromise.',
       ourDifference:
@@ -171,7 +171,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: 'Can ClawAI use Gemini models?',
           answer:
-            'Yes. Google is one of the nine model families in the roster, available in any conversation under the same subscription.',
+            'Yes. Google is one of the nine model families in the roster, available in any conversation in the same workspace.',
         },
         {
           question: 'Does ClawAI connect to Google Workspace?',
@@ -273,7 +273,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Moonshot AI',
       eyebrow: 'ClawAI vs Kimi',
       intro:
-        'Kimi built its reputation on very long context and, more recently, on releasing open weights that anyone can download and run. ClawAI is a different shape: one subscription that reaches Kimi-class open-weight models alongside eight other families, and sends each message to whichever suits it.',
+        'Kimi built its reputation on very long context and, more recently, on releasing open weights that anyone can download and run. ClawAI is a different shape: one workspace that reaches Kimi-class open-weight models alongside eight other families, and sends each message to whichever suits it.',
       theirStrength:
         'Long-context reading at a price that undercuts most Western frontier models, strong agentic and tool-use behaviour, and open weights for the flagship line — so the same model can be evaluated in the hosted product and then run on your own hardware.',
       ourDifference:
@@ -315,7 +315,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs Qwen',
       intro:
-        'Qwen is one of the most complete open-weight families available: a wide ladder of sizes, strong multilingual coverage, and permissive licensing on most of the range. ClawAI puts models of that class next to eight other families under one subscription.',
+        'Qwen is one of the most complete open-weight families available: a wide ladder of sizes, strong multilingual coverage, and permissive licensing on most of the range. ClawAI puts models of that class next to eight other families in one workspace.',
       theirStrength:
         'Breadth. Sizes from ones that run on a laptop to ones that need a server, vision and coding variants, genuinely good performance outside English, and licensing that makes commercial self-hosting straightforward.',
       ourDifference:

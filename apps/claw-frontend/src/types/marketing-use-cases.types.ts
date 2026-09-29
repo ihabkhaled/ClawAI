@@ -19,7 +19,7 @@ export type MarketingUseCase = {
   capabilityKey: string;
 };
 
-/// A single argument for why one subscription across many models beats
+/// A single argument for why one workspace across many models beats
 /// paying several vendors separately.
 export type MarketingUseCaseValuePoint = {
   titleKey: string;

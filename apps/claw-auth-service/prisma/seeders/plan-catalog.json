@@ -431,7 +431,7 @@
     {
       "slug": "team",
       "name": "Team",
-      "description": "Shared workspaces and a large pooled allowance.",
+      "description": "A large monthly allowance for heavy daily use.",
       "displayOrder": 4,
       "isDefault": false,
       "isTrial": false,
