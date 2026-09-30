@@ -240,3 +240,8 @@ a RabbitMQ event consumed by audit-service.
 - **Internal usage scope:** `GET /api/v1/internal/agent/organizations/:id/usage-scope`
   (service token) returns member ids to auth-service after an owner/admin
   check. `INTER_SERVICE_AUTH_TOKEN` unset refuses every call.
+- **Process KILL policy:** `deny-process-kill-other-uid` denies a kill only when
+  the target's `uidMatchesCurrentUser` is explicitly `false`, or is missing with
+  no ownership evidence. A target with `managedByAgent: true` or a `jobId`
+  (shell-launched jobs) is owned by the caller and is not denied by that rule.
+  Matcher: `common/utilities/policy-target-matcher.utility.ts`.

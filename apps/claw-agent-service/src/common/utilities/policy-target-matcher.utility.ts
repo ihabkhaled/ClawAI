@@ -77,17 +77,28 @@ function matchesProcess(matcher: Record<string, unknown>, input: RiskAssessmentI
       readString(input.targetDescriptor, 'binaryName') ??
       readString(input.targetDescriptor, 'binary') ??
       readString(input.targetDescriptor, 'command');
-    if (binary === undefined) {
-      return false;
-    }
-    return safeRegexTest(String(matcher['binaryNameRegex']), binary);
+    return binary === undefined ? false : safeRegexTest(String(matcher['binaryNameRegex']), binary);
   }
   if (matcher['managedByAgent'] === true) {
     return Boolean(input.targetDescriptor['managedByAgent']);
   }
   if (matcher['uidMatchesCurrentUser'] === true) {
-    // The CLI provides this boolean at proposal time; default false
-    return input.targetDescriptor['uidMatchesCurrentUser'] !== true;
+    // The CLI provides this boolean at proposal time. An explicit false is
+    // always foreign. A missing flag is foreign too, unless the target is one
+    // the agent itself launched (managedByAgent) or a registered shell job
+    // (jobId): those have a known owner, so a job's owner must be able to
+    // stop it rather than hit a rule meant for other users' processes.
+    const uid = input.targetDescriptor['uidMatchesCurrentUser'];
+    if (uid === true) {
+      return false;
+    }
+    if (uid === false) {
+      return true;
+    }
+    const ownedJob =
+      input.targetDescriptor['managedByAgent'] === true ||
+      typeof input.targetDescriptor['jobId'] === 'string';
+    return !ownedJob;
   }
   return matchesGeneric(matcher, input);
 }
@@ -105,24 +116,15 @@ function matchesBrowser(matcher: Record<string, unknown>, input: RiskAssessmentI
   if (allowGlobs !== undefined && !globMatchesAny(allowGlobs, url)) {
     return false;
   }
-  if (matcher['urlPathRegex'] !== undefined) {
-    return safeRegexTest(String(matcher['urlPathRegex']), url);
-  }
-  return matchesGeneric(matcher, input);
+  return matcher['urlPathRegex'] !== undefined ? safeRegexTest(String(matcher['urlPathRegex']), url) : matchesGeneric(matcher, input);
 }
 
 function matchesScreen(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['activeAppDenyRegex'] !== undefined) {
     const app = readString(input.targetDescriptor, 'activeApp');
-    if (app === undefined) {
-      return false;
-    }
-    return safeRegexTest(String(matcher['activeAppDenyRegex']), app);
+    return app === undefined ? false : safeRegexTest(String(matcher['activeAppDenyRegex']), app);
   }
-  if (matcher['payloadHasRegion'] === true) {
-    return input.payload['regionDimensions'] !== undefined;
-  }
-  return matchesGeneric(matcher, input);
+  return matcher['payloadHasRegion'] === true ? input.payload['regionDimensions'] !== undefined : matchesGeneric(matcher, input);
 }
 
 function matchesClipboard(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
@@ -173,10 +175,7 @@ function matchesGeneric(matcher: Record<string, unknown>, input: RiskAssessmentI
   }
   if (matcher['recipientDomainRegex'] !== undefined) {
     const domain = readString(input.payload, 'recipientDomain');
-    if (domain === undefined) {
-      return false;
-    }
-    return safeRegexTest(String(matcher['recipientDomainRegex']), domain);
+    return domain === undefined ? false : safeRegexTest(String(matcher['recipientDomainRegex']), domain);
   }
   // No matcher keys — treat as catch-all match
   return Object.keys(matcher).length === 0;
