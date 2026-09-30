@@ -1278,3 +1278,18 @@ export type {
   UseVideoGenerationBubbleStateParams,
   UseVideoGenerationBubbleStateReturn,
 } from './hook.types';
+export type {
+  CreatePromptTemplateInput,
+  ListPromptTemplatesParams,
+  PromptLibraryButtonProps,
+  PromptLibraryDialogProps,
+  PromptTemplate,
+  PromptTemplateFillFormProps,
+  PromptTemplateFilters,
+  PromptTemplateFormProps,
+  PromptTemplateFormValues,
+  PromptTemplateListProps,
+  PromptTemplatePage,
+  UpdatePromptTemplateInput,
+  UpdatePromptTemplateVariables,
+} from './prompt-library.types';

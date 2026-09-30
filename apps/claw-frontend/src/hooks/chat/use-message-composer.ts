@@ -19,6 +19,7 @@ import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import type { MessageComposerProps, UseMessageComposerReturn } from '@/types';
 import { hasSendableInput } from '@/utilities/composer-send.utility';
+import { appendToDraft } from '@/utilities/prompt-template.utility';
 
 /**
  * The one controller hook behind MessageComposer.
@@ -147,6 +148,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
       threadId: props.threadId ?? null,
       draft: state.content,
       showCredit: isWideViewport,
+      onInsertPrompt: (text: string) => state.setContent(appendToDraft(state.content, text)),
     },
   };
 }

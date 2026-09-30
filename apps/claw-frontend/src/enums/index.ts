@@ -196,3 +196,4 @@ export { BranchCut } from './branch-cut.enum';
 export { ContextSaveStatus } from './context-save-status.enum';
 export { SaveFailureReason } from './save-failure-reason.enum';
 export { VideoGenerationStatus } from './video-generation-status.enum';
+export { PromptLibraryView } from './prompt-library.enum';

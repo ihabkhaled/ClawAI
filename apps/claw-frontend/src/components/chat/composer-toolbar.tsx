@@ -2,6 +2,7 @@ import { CreditIndicator } from '@/components/chat/credit-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { PreviewContextButton } from '@/components/chat/preview-context-button';
+import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import type { ComposerToolbarProps } from '@/types';
@@ -52,6 +53,7 @@ export function ComposerToolbar({
   threadId,
   draft,
   showCredit,
+  onInsertPrompt,
 }: ComposerToolbarProps): React.ReactElement {
   return (
     <div className="scroll-fade-inline-end flex min-w-0 flex-1 scrollbar-none items-center gap-1.5 overflow-x-auto py-0.5 sm:gap-2">
@@ -85,6 +87,7 @@ export function ComposerToolbar({
           disabled={disabled}
         />
       ) : null}
+      <PromptLibraryButton onInsert={onInsertPrompt} disabled={disabled} />
       {threadId !== null ? (
         <div className="shrink-0">
           <PreviewContextButton threadId={threadId} draft={draft} />

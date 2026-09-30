@@ -931,6 +931,8 @@ export type ComposerToolbarProps = {
   draft: string;
   /** The wallet badge is desktop-only — it is the least urgent thing in the row. */
   showCredit: boolean;
+  /** Puts text from the prompt library into the draft. */
+  onInsertPrompt: (text: string) => void;
 };
 
 /**

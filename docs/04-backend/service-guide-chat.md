@@ -1180,3 +1180,4 @@ A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI
   (`[a-z][a-z0-9_]{0,31}`, at most 20 distinct) or 400 `PROMPT_TEMPLATE_INVALID`.
 - Identity only from `@CurrentUser`; every repository read and write filters by `userId`,
   so a foreign template is a 404. Titles and bodies are never logged.
+- UI: the composer dialog is described in [`chat-surface-layout.md`](../05-frontend/chat-surface-layout.md).

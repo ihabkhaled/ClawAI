@@ -493,6 +493,11 @@ export const queryKeys = {
     all: ['chatShares'] as const,
     detail: (threadId: string) => ['chatShares', 'detail', threadId] as const,
   },
+  promptTemplates: {
+    all: ['promptTemplates'] as const,
+    list: (filters: { q: string; tag: string | null; favoriteOnly: boolean }) =>
+      ['promptTemplates', 'list', filters] as const,
+  },
   runtimeProgress: {
     all: ['runtimeProgress'] as const,
     probes: () => [...queryKeys.runtimeProgress.all, 'probe'] as const,

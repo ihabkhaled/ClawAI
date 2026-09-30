@@ -175,3 +175,12 @@ export const ESTIMATED_COST_PER_OUTPUT_TOKEN: Record<string, number> = {
   ollama: 0,
   grok: 0.000015,
 };
+
+/** Templates fetched per page in the composer's prompt library. */
+export const PROMPT_LIBRARY_PAGE_SIZE = 20;
+
+/** Matches the backend `MAX_TAGS_PER_TEMPLATE` / `MAX_TAG_LENGTH` (ADR-138). */
+export const PROMPT_LIBRARY_MAX_TAGS = 10;
+export const PROMPT_LIBRARY_MAX_TAG_LENGTH = 32;
+export const PROMPT_LIBRARY_MAX_TITLE_LENGTH = 120;
+export const PROMPT_LIBRARY_MAX_BODY_LENGTH = 20000;

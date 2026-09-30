@@ -484,6 +484,22 @@ image-generation bubble, which already have their own card.
   inside that window is ignored, so wait for the menu to close before reopening
   it.
 
+## Prompt library (composer)
+
+A "Prompt library" button sits in `ComposerToolbar` and opens a dialog over the
+chat-service prompt templates ([ADR-138](../13-adr/adr-138-prompt-library.md)).
+
+- Files: `components/chat/prompt-library/*` (pure render), `hooks/prompt-library/*`
+  (controller, list query, mutations, form state), `repositories/prompt-templates/`,
+  `utilities/prompt-template.utility.ts` (`fillTemplate`, `parsePromptTags`, `appendToDraft`).
+- The list is fetched only while the dialog is open. Every mutation invalidates the
+  `queryKeys.promptTemplates.all` prefix, because the list key embeds the filters.
+- Choosing a template with no variables inserts its body at once. One with
+  `{{name}}` variables opens a fill step first; blank values keep Insert disabled.
+  Both paths append to the draft on a new line and call `POST :id/use` (best effort).
+- Delete confirms inside the row; no second dialog is stacked.
+- Strings: `promptLibrary.*` in all 13 locales.
+
 ## See also
 
 - [`skills/verify-responsive-layout-in-browser.md`](../../skills/verify-responsive-layout-in-browser.md) — how to check the above in a real browser
