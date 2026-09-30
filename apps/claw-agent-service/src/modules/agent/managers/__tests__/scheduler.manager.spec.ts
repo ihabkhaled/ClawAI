@@ -63,6 +63,26 @@ describe('SchedulerManager.fireOne', () => {
     );
   });
 
+  it('advances a cron PROMPT routine to its next UTC slot, not by the placeholder interval', async () => {
+    const { manager, scheduledRepo } = setup({ id: 'job-2' });
+    await manager.fireOne(routine({ cron: '30 9 * * *', intervalMinutes: 5 }), now);
+    expect(scheduledRepo.markRun).toHaveBeenCalledWith(
+      'routine-1',
+      'job-2',
+      new Date('2026-10-01T09:30:00.000Z'),
+    );
+  });
+
+  it('falls back to the interval when a stored cron no longer yields a date', async () => {
+    const { manager, scheduledRepo } = setup({ id: 'job-3' });
+    await manager.fireOne(routine({ cron: '0 0 31 2 *', intervalMinutes: 60 }), now);
+    expect(scheduledRepo.markRun).toHaveBeenCalledWith(
+      'routine-1',
+      'job-3',
+      new Date('2026-09-30T11:00:00.000Z'),
+    );
+  });
+
   it('defers a PROMPT routine when no runner is live, without advancing it', async () => {
     const { manager, scheduledRepo } = setup(null);
     expect(await manager.fireOne(routine({}), now)).toBeNull();

@@ -11,6 +11,7 @@ import { AgentSessionRepository } from '../repositories/agent-session.repository
 import { ScheduledCommandRepository } from '../repositories/scheduled-command.repository';
 import { CommandRiskService } from '../services/command-risk.service';
 import { RunnerService } from '../services/runner.service';
+import { nextRunForStoredCron } from '../../../common/utilities/cron-expression.utility';
 import { ScheduledCommandKind } from '../../../common/enums/scheduled-command-kind.enum';
 import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
@@ -97,6 +98,19 @@ export class SchedulerManager {
     return created;
   }
 
+  /**
+   * A cron routine's next slot after now (UTC); anything else, or a stored
+   * expression that no longer yields a date, keeps the fixed interval so the
+   * routine cannot become due on every tick.
+   */
+  private nextRunFor(scheduled: ScheduledCommand, now: Date): Date {
+    const next =
+      typeof scheduled.cron === 'string'
+        ? nextRunForStoredCron(scheduled.cron, now.getTime())
+        : undefined;
+    return new Date(next ?? now.getTime() + scheduled.intervalMinutes * 60 * 1000);
+  }
+
   private async firePrompt(
     scheduled: ScheduledCommand,
     now: Date,
@@ -106,7 +120,7 @@ export class SchedulerManager {
       this.logger.debug(`scheduled ${scheduled.id}: no live runner matches its labels; deferring`);
       return null;
     }
-    const nextRunAt = new Date(now.getTime() + scheduled.intervalMinutes * 60 * 1000);
+    const nextRunAt = this.nextRunFor(scheduled, now);
     await this.scheduledRepo.markRun(scheduled.id, created.id, nextRunAt);
     this.logger.log(`prompt routine ${scheduled.id} fired → runner job ${created.id}`);
     return created;

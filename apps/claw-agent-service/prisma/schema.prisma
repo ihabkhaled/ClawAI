@@ -426,6 +426,9 @@ model ScheduledCommand {
   runnerLabels  String[]               @default([])
   workingDir    String?
   intervalMinutes Int
+  /// F099: five-field cron read in UTC (PROMPT routines). When set it decides
+  /// `nextRunAt` and `intervalMinutes` is an unused placeholder.
+  cron          String?
   status        ScheduledCommandStatus @default(ENABLED)
   lastRunAt     DateTime?
   lastCommandId String?

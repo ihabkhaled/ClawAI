@@ -27,6 +27,7 @@ function scheduled(userId: string): ScheduledCommand {
     runnerLabels: [],
     workingDir: null,
     intervalMinutes: 60,
+    cron: null,
     status: ScheduledCommandStatus.ENABLED,
     lastRunAt: null,
     lastCommandId: null,

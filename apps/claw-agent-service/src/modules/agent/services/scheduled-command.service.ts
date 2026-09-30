@@ -4,12 +4,18 @@ import { DeviceStatus } from '../../../common/enums/device-status.enum';
 import { ScheduledCommandStatus } from '../../../common/enums/scheduled-command-status.enum';
 import { DeviceRepository } from '../repositories/device.repository';
 import { ScheduledCommandRepository } from '../repositories/scheduled-command.repository';
+import { CRON_ROUTINE_INTERVAL_PLACEHOLDER_MINUTES } from '../../../common/constants/cron.constants';
+import {
+  nextCronRun,
+  validateCronForRoutine,
+} from '../../../common/utilities/cron-expression.utility';
 import { ScheduledCommandKind } from '../../../common/enums/scheduled-command-kind.enum';
 import type {
   CreateCommandRoutineDto,
   CreatePromptRoutineDto,
   CreateScheduledCommandDto,
 } from '../dto/create-scheduled-command.dto';
+import type { PromptRoutineSchedule } from '../../../common/types/cron.types';
 import type { ScheduledCommand } from '../../../generated/prisma';
 
 @Injectable()
@@ -68,9 +74,31 @@ export class ScheduledCommandService {
       model: dto.model ?? null,
       repoRef: dto.repoRef ?? null,
       runnerLabels: [...new Set(dto.runnerLabels)],
-      intervalMinutes: dto.intervalMinutes,
-      nextRunAt: this.firstRun(dto.intervalMinutes),
+      ...this.promptSchedule(dto),
     });
+  }
+
+  /** A cron routine stores its normalised expression; an interval routine leaves `cron` null. */
+  private promptSchedule(dto: CreatePromptRoutineDto): PromptRoutineSchedule {
+    if (dto.cron === undefined) {
+      const minutes = dto.intervalMinutes ?? CRON_ROUTINE_INTERVAL_PLACEHOLDER_MINUTES;
+      return { cron: null, intervalMinutes: minutes, nextRunAt: this.firstRun(minutes) };
+    }
+    const now = Date.now();
+    const checked = validateCronForRoutine(dto.cron, now);
+    const next = checked.valid ? nextCronRun(checked.fields, now) : undefined;
+    if (!checked.valid || next === undefined) {
+      throw new BusinessException(
+        'agent.scheduled_command.cron_invalid',
+        'scheduled_command_cron_invalid',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return {
+      cron: checked.expression,
+      intervalMinutes: CRON_ROUTINE_INTERVAL_PLACEHOLDER_MINUTES,
+      nextRunAt: new Date(next),
+    };
   }
 
   private firstRun(intervalMinutes: number): Date {

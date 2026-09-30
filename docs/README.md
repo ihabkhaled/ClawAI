@@ -99,23 +99,24 @@
 
 ### Layer G: Reference
 
-| Document                                                                 | Purpose                                                                                                    |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| [API Reference](12-reference/api-reference.md)                           | Every endpoint: method, path, schema, errors                                                               |
-| [Chat API Reference](12-reference/api-reference-chat.md)                 | Chat routes including orchestration modes                                                                  |
-| [Workspace API Reference](12-reference/api-reference-workspace.md)       | Workspace routes and examples                                                                              |
-| [Agent API Reference](12-reference/api-reference-agent.md)               | Agent routes and approval flow                                                                             |
-| [Health API Reference](12-reference/api-reference-health.md)             | Aggregated and per-service health                                                                          |
-| [Error Catalog](12-reference/error-catalog.md)                           | Error codes with retry guidance                                                                            |
-| [ADR Index](13-adr/adr-index.md)                                         | Architecture decisions with rationale                                                                      |
-| [Technical Debt](14-risk-debt/technical-debt.md)                         | Debt items with severity and prioritization                                                                |
-| [Risk Register](14-risk-debt/risk-register.md)                           | Risks with scores and mitigations                                                                          |
-| [Chat Pipeline Audit](14-risk-debt/chat-pipeline-audit-2026-09.md)       | Root-cause map for the chat reliability programme                                                          |
-| [Chat Pipeline Baseline](14-risk-debt/chat-pipeline-baseline-2026-09.md) | Measured idle traffic and payloads it is judged against                                                    |
-| [Chat Capability Audit](14-risk-debt/chat-capability-audit-2026-09.md)   | Claim-vs-code verdict per chat capability (A–X) for the chat-supremacy program; each batch updates its row |
-| [Chat Pipeline SLOs](14-risk-debt/chat-pipeline-slos-2026-09.md)         | Objectives derived from those measurements, with the test or check that guards each one                    |
-| [AI Context Pack](15-ai-context/ai-context-pack.md)                      | Optimized for AI coding agents                                                                             |
-| [Codebase Navigation](15-ai-context/codebase-navigation.md)              | Where to find everything                                                                                   |
+| Document                                                                                 | Purpose                                                                                                                                             |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [API Reference](12-reference/api-reference.md)                                           | Every endpoint: method, path, schema, errors                                                                                                        |
+| [Chat API Reference](12-reference/api-reference-chat.md)                                 | Chat routes including orchestration modes                                                                                                           |
+| [Workspace API Reference](12-reference/api-reference-workspace.md)                       | Workspace routes and examples                                                                                                                       |
+| [Agent API Reference](12-reference/api-reference-agent.md)                               | Agent routes and approval flow                                                                                                                      |
+| [Health API Reference](12-reference/api-reference-health.md)                             | Aggregated and per-service health                                                                                                                   |
+| [Error Catalog](12-reference/error-catalog.md)                                           | Error codes with retry guidance                                                                                                                     |
+| [ADR Index](13-adr/adr-index.md)                                                         | Architecture decisions with rationale                                                                                                               |
+| [Technical Debt](14-risk-debt/technical-debt.md)                                         | Debt items with severity and prioritization                                                                                                         |
+| [Risk Register](14-risk-debt/risk-register.md)                                           | Risks with scores and mitigations                                                                                                                   |
+| [Chat Pipeline Audit](14-risk-debt/chat-pipeline-audit-2026-09.md)                       | Root-cause map for the chat reliability programme                                                                                                   |
+| [Chat Pipeline Baseline](14-risk-debt/chat-pipeline-baseline-2026-09.md)                 | Measured idle traffic and payloads it is judged against                                                                                             |
+| [Coding Agent Backend Decisions](14-risk-debt/coding-agent-backend-decisions-2026-10.md) | Parity items that need a product, money or security decision (F093, F095, F097, F098, F099 rest, F100, F101, F108), with a recommended default each |
+| [Chat Capability Audit](14-risk-debt/chat-capability-audit-2026-09.md)                   | Claim-vs-code verdict per chat capability (A–X) for the chat-supremacy program; each batch updates its row                                          |
+| [Chat Pipeline SLOs](14-risk-debt/chat-pipeline-slos-2026-09.md)                         | Objectives derived from those measurements, with the test or check that guards each one                                                             |
+| [AI Context Pack](15-ai-context/ai-context-pack.md)                                      | Optimized for AI coding agents                                                                                                                      |
+| [Codebase Navigation](15-ai-context/codebase-navigation.md)                              | Where to find everything                                                                                                                            |
 
 ---
 

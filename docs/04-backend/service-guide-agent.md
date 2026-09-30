@@ -173,6 +173,18 @@ Pino log redaction covers: `authorization`, `password`, `refreshToken`,
 response bodies. Every pair/approve, rotation, reuse-detect, and revoke emits
 a RabbitMQ event consumed by audit-service.
 
+## Cron for prompt routines (F099, 2026-10-01)
+
+`POST agent/scheduled-commands` with `kind: "PROMPT"` takes `cron` (five fields,
+read in **UTC**, at most every 5 minutes, same grammar as the client) instead of
+`intervalMinutes`; exactly one of the two. The normalised expression is stored in
+`scheduled_commands.cron` (migration `20261001100000_add_prompt_routine_cron`, NULL
+for every existing row) and decides `nextRunAt` at creation and after each fire;
+`intervalMinutes` holds the 5-minute floor as an unused placeholder. A stored
+expression that no longer yields a date falls back to the interval. Time zones,
+repository-event triggers and secrets isolation are open: see
+`docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`.
+
 ## Remote triggers, channels and runners (2026-09-29)
 
 - **Remote trigger:** `POST /agent/scheduled-commands/:id/trigger` fires an owned

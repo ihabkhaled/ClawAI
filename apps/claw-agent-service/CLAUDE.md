@@ -132,3 +132,7 @@ Remaining for next sessions:
 ## Organization policy: plugin marketplaces (F081, 2026-10-01)
 
 `policy/effective` now carries `allowedPluginMarketplaces` (NULL column = omitted = no opinion, `[]` = none allowed). Cross-organization merge is an intersection of listing organizations only. Guide: `docs/04-backend/service-guide-agent.md` (Organization guardrails).
+
+## Prompt routine cron (F099, 2026-10-01)
+
+PROMPT routines accept `cron` (UTC, five fields, at most every 5 minutes) XOR `intervalMinutes`. Parser: `src/common/utilities/cron-expression.utility.ts`; scheduler advances via `SchedulerManager.nextRunFor`. Guide: `docs/04-backend/service-guide-agent.md`.

@@ -53,6 +53,54 @@ describe('ScheduledCommandService.create', () => {
     expect(data['device']).toBeUndefined();
   });
 
+  it('creates a cron PROMPT routine: stores the expression, next run from it', async () => {
+    const { service, repo } = setup();
+    const dto = createScheduledCommandSchema.parse({
+      kind: 'PROMPT',
+      name: 'Morning',
+      prompt: 'Triage',
+      cron: '  30   9 * * * ',
+    });
+    await service.create('user-1', dto);
+    const data = repo.create.mock.calls[0]?.[0] as {
+      cron: string;
+      nextRunAt: Date;
+      intervalMinutes: number;
+    };
+    expect(data.cron).toBe('30 9 * * *');
+    expect(data.intervalMinutes).toBe(5);
+    expect(data.nextRunAt.getUTCMinutes()).toBe(30);
+    expect(data.nextRunAt.getUTCHours()).toBe(9);
+    expect(data.nextRunAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('keeps an interval PROMPT routine cron-free', async () => {
+    const { service, repo } = setup();
+    await service.create(
+      'user-1',
+      createScheduledCommandSchema.parse({
+        kind: 'PROMPT',
+        name: 'n',
+        prompt: 'p',
+        intervalMinutes: 15,
+      }),
+    );
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ cron: null, intervalMinutes: 15 }),
+    );
+  });
+
+  it('refuses a PROMPT routine with both or neither of interval and cron, or a bad cron', () => {
+    const parse = (extra: object): boolean =>
+      createScheduledCommandSchema.safeParse({ kind: 'PROMPT', name: 'n', prompt: 'p', ...extra })
+        .success;
+    expect(parse({})).toBe(false);
+    expect(parse({ intervalMinutes: 10, cron: '0 * * * *' })).toBe(false);
+    expect(parse({ cron: '* * * * *' })).toBe(false);
+    expect(parse({ cron: 'nonsense' })).toBe(false);
+    expect(parse({ cron: '0 * * * *' })).toBe(true);
+  });
+
   it('still creates a COMMAND routine when an older client omits kind', async () => {
     const { service, repo, devices } = setup();
     const dto = createScheduledCommandSchema.parse({
