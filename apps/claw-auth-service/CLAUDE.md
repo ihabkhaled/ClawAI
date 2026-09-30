@@ -357,23 +357,16 @@ flow is broken, but because the price rows simply do not exist yet. It is
 registered in `seed.cjs` immediately after `planCatalogSeeder`, since it
 depends on the plans (and their active monthly prices) already existing.
 
-## Term prices are derived from the monthly price and per-plan discounts (2026-09-30, ADR-135)
+## Team plan description is rewritten by its own seeder (2026-09-29)
 
-QUARTERLY, SEMIANNUAL and YEARLY `PlanPriceVersion` amounts are no longer typed.
-`plans.{quarterly,semiannual,yearly}_discount_bps` (defaults 1000 / 1500 / 2000,
-CHECK 0-9000) plus the active MONTHLY price determine them:
-`round(monthly x months x (10000 - bps) / 10000)` (`computeIntervalPriceMinor`,
-`plan-interval-price.utility.ts`; the seeder `.cjs` mirrors it and a spec asserts
-they agree). `PlanIntervalPricingService` mints the derived versions in ONE
-transaction through `PlanBillingRepository.publishPriceSet` when a MONTHLY price is
-published (`POST /admin/plans/:id/price-versions`) or the discounts change
-(`PUT /admin/plans/:id/interval-discounts`, `GET .../interval-pricing`). A
-hand-typed longer-term publish is refused (`PLAN_INTERVAL_PRICE_DERIVED`); a plan
-with no monthly price cannot take discounts (`PLAN_HAS_NO_MONTHLY_PRICE`); a Free
-plan never gains paid terms. Existing installs are re-priced once by
-`plan-interval-discounts.seeder.cjs` (registered after both earlier pricing
-seeders; retire-and-mint, subscriptions keep their version). Do not add a second
-writer of longer-term versions.
+The seeded Team description promised pooled team billing and a shared account,
+neither of which exists (REQ-POS-005). `plan-catalog.json` carries the accurate
+text for fresh installs; `plan-team-description.seeder.cjs` (v1) rewrites
+existing rows. It writes **only** `description`, keyed on the old text, so an
+administrator's own wording survives and a rerun is a no-op. Same reason as the
+seeders above: `plan-catalog`'s else branch never writes `description`, and the
+catalog checksum payload does not include it. Prices, quotas and feature rules
+are untouched.
 
 ## A trial is superseded, not merely expired (2026-09-06)
 

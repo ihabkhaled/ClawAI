@@ -115,8 +115,9 @@ Before stage 4, and again before stage 5:
 - [ ] Every plan's seeded description still matches what the plan actually gives
       (Free's copy — _"Try every frontier model with a small daily allowance"_ —
       was the reason Free kept $0.30 rather than dropping to $0)
-- [ ] "Pooled allowance" in Team/Scale copy is reviewed against the fact that
-      wallets are **per-user** today (open question Q7)
+- [x] "Pooled allowance" in Team/Scale copy is reviewed against the fact that
+      wallets are **per-user** today (open question Q7) — Team's description
+      rewritten 2026-09-29 (DRIFT-002); Scale's never claimed pooling
 - [ ] Changelog entry describing the visible balance and the raised allowances
 - [ ] Support has the runbook, the ledger queries, and the adjustment bounds
 - [ ] Support knows the difference between a subscription refund and a credit

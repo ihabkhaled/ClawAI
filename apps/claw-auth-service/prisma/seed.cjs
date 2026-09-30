@@ -18,6 +18,7 @@ const { runVersionedSeeder } = require('./seed-runner.cjs');
 const { reconcileExistingSuperAdmin } = require('./seed-super-admin.cjs');
 const planCatalogSeeder = require('./seeders/plan-catalog.seeder.cjs');
 const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder.cjs');
+const planTeamDescriptionSeeder = require('./seeders/plan-team-description.seeder.cjs');
 const creditPackagesSeeder = require('./seeders/credit-packages.seeder.cjs');
 const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder.cjs');
 const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder.cjs');
@@ -390,6 +391,10 @@ async function seed() {
   //     the new allowances to ZERO rows. This one targets the OLD value per
   //     column, so an administrator's tuned figure is preserved.
   await runVersionedSeeder(prisma, planPaygAllowanceSeeder);
+
+  // 3c-2. Team plan description on EXISTING installs: text only, keyed on the
+  //     old wording so an administrator's own text survives (REQ-POS-005).
+  await runVersionedSeeder(prisma, planTeamDescriptionSeeder);
 
   // 3d. The five purchasable top-up packages and their first immutable price
   //     versions. Skips any package that already has an ACTIVE version, so an
