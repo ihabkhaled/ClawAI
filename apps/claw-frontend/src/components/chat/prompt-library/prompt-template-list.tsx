@@ -20,7 +20,7 @@ export function PromptTemplateList(props: PromptTemplateListProps): React.ReactE
       <div className="flex flex-wrap items-center gap-2">
         <Input
           type="search"
-          className="min-w-0 flex-1"
+          className="w-full sm:w-auto sm:min-w-0 sm:flex-1"
           value={filters.q}
           placeholder={t('promptLibrary.searchPlaceholder')}
           aria-label={t('promptLibrary.searchLabel')}

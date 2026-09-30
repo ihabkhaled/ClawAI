@@ -767,3 +767,7 @@ A message whose `metadata.type === 'video_generation'` renders `VideoGenerationB
 polls, no SSE. The clip is fetched with the session token (`use-authenticated-video`).
 Model detection (`constants/video.constants.ts`) mirrors the regexes in
 `@claw/shared-utilities/video-generation`, which is not browser-safe: change both together.
+
+## Prompt library (ADR-138)
+
+Composer button `PromptLibraryButton` opens `PromptLibraryDialog` (`components/chat/prompt-library/`): list, create/edit form, fill-variables step. State lives in `usePromptLibraryController`; data via `hooks/prompt-library/` against `/chat-prompt-templates` (cursor pages, 200 templates per user -> 409 `PROMPT_LIBRARY_FULL`). Keys: `promptLibrary.*` in all 13 locales. Live-checked 375/667/768/1280 (+ landscape), `ar` RTL, fr/ja/de: no overflow, no untranslated strings. The search input must stay `w-full` below `sm:` or it collapses to ~40px beside the two buttons.
