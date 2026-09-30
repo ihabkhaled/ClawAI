@@ -4887,7 +4887,7 @@ export const th: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (ทดสอบ – เร็ว ๆ นี้)',
+      paymobCard: 'Paymob (บัตร)',
       unavailable: 'เกตเวย์การชำระเงินไม่พร้อมใช้งาน',
     },
     proration: {

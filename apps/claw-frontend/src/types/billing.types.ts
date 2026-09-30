@@ -166,7 +166,6 @@ export type PaymentMethodView = {
 export type CheckoutGatewayView = {
   gateway: BillingGateway;
   mode: string;
-  testingSoon: boolean;
   publicIdentifier: string | null;
   // The currency this gateway settles in, straight from the server, or null
   // when it settles in the plan's own currency. Never derived here: a UI that

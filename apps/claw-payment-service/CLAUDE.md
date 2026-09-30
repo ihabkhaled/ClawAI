@@ -180,6 +180,20 @@ it into the enum-typed `AdminUserSubscriptionStatistics`. That is a runtime
 check, not a cast: an unrecognised status fails there rather than reaching an
 admin screen typed as something it is not.
 
+## Checkout lists every enabled gateway; Paymob is not hidden (2026-09-30)
+
+`GatewayConfigService.listCheckout` used to stamp `testingSoon: gateway === PAYMOB`,
+which the frontend then filtered out, so Paymob could never be used however the admin
+configured it. The field is deleted from `CheckoutGatewayView`; enablement is the
+admin `isEnabled` flag, nothing static. The list checks ONLY that flag: the seed sets
+it only for a complete five-field set, but an admin can enable a partial one, which is
+then offered and fails at charge time (`PAYMENT_METHOD_UNAVAILABLE`), so complete the
+fields first. A fresh production install seeds Paymob's mode as `LIVE` (a label only;
+`gateway-config-bootstrap.service.spec.ts`). Do not reintroduce a per-gateway constant
+that hides a gateway from checkout: `gateway-config.service.spec.ts` asserts the
+`testingSoon` key is gone. Runbook:
+`docs/11-runbooks/billing-operations.md`, "Paymob (2026-09-30)".
+
 ## Commands
 
 ```bash

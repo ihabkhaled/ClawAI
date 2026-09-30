@@ -44,7 +44,10 @@ export class GatewayConfigBootstrapService implements OnModuleInit {
         ),
         this.configuration(
           BillingGateway.PAYMOB,
-          GatewayMode.TESTING,
+          // Paymob's endpoints are the same in both modes (the keys decide), so the
+          // mode is a label. A production install is LIVE from the first boot
+          // rather than carrying a "testing" label into real charges.
+          config.NODE_ENV === 'production' ? GatewayMode.LIVE : GatewayMode.TESTING,
           [
             [GatewayCredentialField.SECRET_KEY, config.PAYMOB_SECRET_KEY],
             [GatewayCredentialField.PUBLIC_KEY, config.PAYMOB_PUBLIC_KEY],

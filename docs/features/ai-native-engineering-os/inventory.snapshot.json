@@ -10465,7 +10465,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 55
+        "testFiles": 56
       },
       "claw-routing-service": {
         "runner": "vitest",

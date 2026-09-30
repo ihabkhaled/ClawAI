@@ -45,7 +45,6 @@ export class GatewayConfigService {
     return (await this.repository.findEnabled()).map((record) => ({
       gateway: record.gateway as BillingGateway,
       mode: record.mode as GatewayMode,
-      testingSoon: record.gateway === BillingGateway.PAYMOB,
       publicIdentifier: this.decryptPublicIdentifier(record),
       // From the same resolver the charge path uses, so the currency checkout
       // PROMISES and the currency it CHARGES can never drift apart.

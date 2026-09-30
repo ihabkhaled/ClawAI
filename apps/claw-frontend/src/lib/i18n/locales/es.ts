@@ -4996,7 +4996,7 @@ export const es: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Pruebas – próximamente)',
+      paymobCard: 'Paymob (tarjeta)',
       unavailable: 'Las pasarelas de pago no están disponibles',
     },
     proration: {
