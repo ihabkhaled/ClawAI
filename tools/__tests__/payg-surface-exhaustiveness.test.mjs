@@ -33,6 +33,7 @@ const PRODUCERS = [
   'apps/claw-chat-service/src/modules/chat-messages/services/access-control.service.ts',
   'apps/claw-file-service/src/modules/files/managers/transcription-meter.manager.ts',
   'apps/claw-image-service/src/modules/image-generation/managers/image-execution.manager.ts',
+  'apps/claw-image-service/src/modules/video-generation/managers/video-execution.manager.ts',
   'apps/claw-routing-service/src/modules/routing/managers/router-inference-coordinator.manager.ts',
   'apps/claw-workspace-service/src/modules/ai-actions/managers/ai-action-execution.manager.ts',
 ];
