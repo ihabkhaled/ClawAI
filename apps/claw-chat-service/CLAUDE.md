@@ -1630,3 +1630,5 @@ request-scoped boolean; no global state.
 chat. OpenAI has no video provider (Sora shut down).
 
 - **Prompt library (ADR-138):** `modules/prompt-library`, `chat-prompt-templates` routes; per-user saved prompts with `{{variables}}`, 200 cap, owner-scoped in the repository (foreign id = 404), titles/bodies never logged.
+
+- **Thread memory flags reach every assembler (2026-10-01):** `ChatContextGatewayManager.extractThreadSettings` must pass `useMemory` and `useContext` (as the classic path does at `chat-messages.service`). `ContextAssemblyManager` reads them with `!== false`, so a missing field means ON. It once dropped them, so Runtime V2 runs and every lab mode injected account memories into a `useMemory:false` thread. `runtimeThreadSettings` carries them too. Not live-verified until deployed.

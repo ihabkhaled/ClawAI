@@ -24,6 +24,13 @@ describe('runtimeThreadSettings', () => {
     );
   });
 
+  it('carries useMemory and useContext so a memory-off thread stays memory-off', () => {
+    const off = runtimeThreadSettings({ useMemory: false, useContext: false });
+    expect(off.useMemory).toBe(false);
+    expect(off.useContext).toBe(false);
+    expect(runtimeThreadSettings({ useMemory: true }).useMemory).toBe(true);
+  });
+
   it('reserves an answer-sized output budget, not the context budget', () => {
     // maxTokens is the ANSWER length and feeds reservedOutputTokens alone
     // (ADR-086). Passing the 96,000-token context budget reserved the

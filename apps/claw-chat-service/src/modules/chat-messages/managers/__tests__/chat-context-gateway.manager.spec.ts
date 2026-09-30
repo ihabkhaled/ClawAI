@@ -122,6 +122,25 @@ describe('ChatContextGatewayManager', () => {
     });
   });
 
+  it('passes useMemory and useContext through, so a memory-off thread stays memory-off', async () => {
+    // Runtime V2 and every lab mode build through this gateway. Dropping the two
+    // flags made the assembler's `!== false` test read them as true, so a thread
+    // with memory off still had the account's memories injected.
+    const off = harness({
+      messages: [message('m1', 'USER')],
+      thread: { useMemory: false, useContext: false },
+    });
+    await off.manager.build({ userId: 'user-1', threadId: 'thread-1', surface: ChatSurface.AGENT });
+    expect(off.calls[0]?.threadSettings).toMatchObject({ useMemory: false, useContext: false });
+
+    const on = harness({
+      messages: [message('m1', 'USER')],
+      thread: { useMemory: true, useContext: true },
+    });
+    await on.manager.build({ userId: 'user-1', threadId: 'thread-1', surface: ChatSurface.AGENT });
+    expect(on.calls[0]?.threadSettings).toMatchObject({ useMemory: true, useContext: true });
+  });
+
   it('resolves the real context window when a model is named', async () => {
     // Skipping this budgets a 200k model as if it were the conservative
     // default and throws away history there was room for.

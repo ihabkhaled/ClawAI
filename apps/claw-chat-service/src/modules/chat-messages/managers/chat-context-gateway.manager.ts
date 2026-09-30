@@ -155,6 +155,10 @@ export class ChatContextGatewayManager {
           maxTokens: thread.maxTokens,
           judgeModel: thread.judgeModel,
           useCrossThreadContext: thread.useCrossThreadContext,
+          // Same flags the classic chat path passes (chat-messages.service).
+          // Omitted, the assembler's `!== false` reads them as on.
+          useMemory: thread.useMemory,
+          useContext: thread.useContext,
           criticEnabled: thread.criticEnabled,
           criticModel: thread.criticModel,
           qualityThreshold: thread.qualityThreshold,

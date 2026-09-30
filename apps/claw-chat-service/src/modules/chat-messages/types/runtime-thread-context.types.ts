@@ -9,6 +9,8 @@ export interface RuntimeThreadContext {
   readonly contextPackIds?: string[] | null;
   readonly useCrossThreadContext?: boolean | null;
   readonly systemPrompt?: string | null;
+  readonly useMemory?: boolean | null;
+  readonly useContext?: boolean | null;
 }
 
 /**

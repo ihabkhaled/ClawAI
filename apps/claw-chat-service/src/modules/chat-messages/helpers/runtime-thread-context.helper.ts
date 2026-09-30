@@ -46,6 +46,8 @@ export function runtimeThreadSettings(thread: RuntimeThreadContext | null): Thre
       ? {}
       : {
           useCrossThreadContext: thread.useCrossThreadContext,
+          useMemory: thread.useMemory,
+          useContext: thread.useContext,
           ...(thread.systemPrompt === null || thread.systemPrompt === undefined
             ? {}
             : { systemPrompt: thread.systemPrompt }),
