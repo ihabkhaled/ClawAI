@@ -1563,6 +1563,15 @@ model's private notes run into its reply.
   `chat-execution.manager.spec.ts` (image-service contract),
   `image-reference-prompt.utility.spec.ts`. Rule 51 item 18.
 
+## An explicit fetch command runs even with research off (2026-09-30)
+
+"crawl <url>" / "curl <url>" with the research toggle off answered "I have no fetched
+evidence" without a page ever being opened. `resolveExplicitFetchMode` (common/utilities)
+now turns a message that OPENS with a fetch verb plus a URL into a `SEARCH_FETCH` run
+(`classifyResearchWorkflow` upgrades "crawl" to `SITE_CRAWL`), gated by
+`hasResearchAccess`. `createMessage` no longer returns early for such a message. A
+question about curl or a link inside a question does not trigger it (rule 41 item 3).
+
 ## Save to memory / context from chat (owner feature 11, 2026-09-29)
 
 **Since 2026-09-30 (ADR-134) `handleMessageRouted` asks `ContextSaveOrchestratorManager.handle` first**: pre-filter → `ResearchGateService.askPlanner` JSON verdict → `ContextSaveClient` saves (memory, existing/new pack, or both) → `withContextSaveNote` tells the answering model (system prompt + `saveTurnNote`, repeated after the final user turn by `userTurnText`; `threadMessages` untouched so routing/search read the user's words) → `metadata.contextSave` on the answer; an unnamed pack with existing packs becomes a NEEDS_PACK_CHOICE card answered by `POST /chat-messages/:id/context-save` (`ContextSaveChoiceService`, atomic `transitionContextSave`). Save turns publish `message.completed` without `userContent`. **The paragraph below is the FALLBACK, used only when no planner answers:** `handleMessageRouted` asks `SaveToContextManager.trySave` (optional injection). A match saves through memory-service's `save-from-chat` routes and `completeSaveTurn` stores the confirmation (`SAVE_CONFIRMATIONS`, 13 locales, locale from the command's script/words) as the assistant reply with provider `CLAW` / model `save-to-context`, 0 tokens, then `emitCompletion`. The published completion carries no user text so memory extraction does not re-mine the pasted document. No tool-calling: deterministic on every model. rules/57 item 11.

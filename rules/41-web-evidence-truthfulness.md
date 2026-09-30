@@ -40,6 +40,15 @@ from the missing capability statement, and neither knew about the other.**
    produces a **warning naming the URL and saying it was not opened** — not a
    silent fetch, and not silence.
 
+   **Exception: a command is a choice (2026-09-30).** With research off, a message
+   that OPENS with a fetch verb and contains a URL ("crawl <url>", "curl <url>",
+   "please fetch <url>", a pasted `% curl <url>` line) is the user choosing to run
+   that fetch, so it runs (`resolveExplicitFetchMode`; "crawl" becomes a
+   `SITE_CRAWL`). A question about curl ("give me a curl command for <url>") or a
+   link inside a question does NOT, and a plan without the research unlock is still
+   kept off the web (`hasResearchAccess`). Covered by
+   `auto-research-resolution.spec.ts` and `explicit-fetch-intent.utility.spec.ts`.
+
 4. **Every failure becomes a warning, never silence.** A research run that
    failed cleanly used to produce zero evidence AND zero warnings. Downstream,
    the model is told browsing happened only when one of those is non-empty — so

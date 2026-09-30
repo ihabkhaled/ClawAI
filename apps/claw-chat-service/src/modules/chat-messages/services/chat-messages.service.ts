@@ -45,7 +45,12 @@ import { NarrationKind } from '../../../common/enums/narration-kind.enum';
 import { NarrationService } from './narration.service';
 import { ResearchOrchestratorManager } from '../managers/research-orchestrator.manager';
 import { AppConfig } from '../../../app/config/app.config';
-import { classifyResearchWorkflow, recordGet, runResearch } from '../../../common/utilities';
+import {
+  classifyResearchWorkflow,
+  recordGet,
+  resolveExplicitFetchMode,
+  runResearch,
+} from '../../../common/utilities';
 import {
   FILE_FOLLOW_UP_PREFIXES,
   IMAGE_FOLLOW_UP_PREFIXES,
@@ -315,7 +320,10 @@ export class ChatMessagesService implements OnModuleInit {
         modality,
       );
 
-    if (dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE) {
+    // A message that COMMANDS a page to be read ("crawl <url>") still goes through
+    // the research path with research off; `runResearchForIntent` re-checks the plan.
+    const researchOff = dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE;
+    if (researchOff && resolveExplicitFetchMode(dto.content) === null) {
       publish();
       return message;
     }
@@ -529,7 +537,16 @@ export class ChatMessagesService implements OnModuleInit {
     },
   ): Promise<ResearchRunResponse | null> {
     if (options.mode === undefined || options.mode === ResearchMode.NONE) {
-      return null;
+      // Research is off, but the user COMMANDED a page to be read ("crawl <url>",
+      // "curl <url>"). Do what was asked, unless the plan has no research unlock.
+      const commanded = resolveExplicitFetchMode(intent);
+      if (commanded === null || !(await this.accessControlService.hasResearchAccess(userId))) {
+        return null;
+      }
+      return this.runResearchForIntent(userId, userToken, threadId, intent, {
+        ...options,
+        mode: commanded,
+      });
     }
     if (options.mode === ResearchMode.AUTO) {
       return this.runAutoResearch(userId, userToken, threadId, intent, options);

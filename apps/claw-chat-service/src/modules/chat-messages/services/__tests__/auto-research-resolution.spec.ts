@@ -92,4 +92,35 @@ describe('ChatMessagesService research modes', () => {
     expect(orchestratorRun).not.toHaveBeenCalled();
     expect(mockedRunResearch).not.toHaveBeenCalled();
   });
+
+  describe('an explicit fetch command with research off', () => {
+    const url = 'https://abbott-de.myoncare.care/wearables/oauth/app-return?wearable=abbott';
+
+    it('crawls when the message is "crawl <url>", as a crawl not a search', async () => {
+      await expect(run(`crawl ${url}`, ResearchMode.NONE)).resolves.toBe(RUN);
+      expect(mockedRunResearch).toHaveBeenCalledWith(
+        'http://research.test',
+        expect.objectContaining({ workflow: 'SITE_CRAWL', intent: `crawl ${url}` }),
+      );
+    });
+
+    it('fetches for "curl <url>" and for an unset mode', async () => {
+      await expect(
+        service.runResearchForIntent('user-1', 'token', 'thread-1', `curl ${url}`, {}),
+      ).resolves.toBe(RUN);
+      expect(mockedRunResearch).toHaveBeenCalledTimes(1);
+    });
+
+    it('still keeps a plan without research off the web', async () => {
+      hasResearchAccess.mockResolvedValue(false);
+      await expect(run(`crawl ${url}`, ResearchMode.NONE)).resolves.toBeNull();
+      expect(mockedRunResearch).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for a question about curl, or a link inside a question', async () => {
+      await expect(run(`give me a curl command for ${url}`, ResearchMode.NONE)).resolves.toBeNull();
+      await expect(run(`what is at ${url}?`, ResearchMode.NONE)).resolves.toBeNull();
+      expect(mockedRunResearch).not.toHaveBeenCalled();
+    });
+  });
 });
