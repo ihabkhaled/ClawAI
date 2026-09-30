@@ -147,6 +147,8 @@ push as a background task. `OVSX_PAT` unset means Open VSX is skipped, not faile
   and `package:audit` (every contributed command id must appear in a file that
   calls `registerCommand`). `l10n:verify` diffs against git, so it passes only
   once the regenerated locale files are staged.
+  `coverage:scope` reads `git ls-files`, so it passes on an unstaged new
+  `src/core/runtime/*` file and fails in CI (1.83.0). Run it after `git add`.
 - **A push that hangs with no output is Git Credential Manager** waiting on a
   hidden sign-in window, not the hook. Push with
   `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin HEAD:main`.
