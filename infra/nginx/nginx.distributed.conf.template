@@ -469,6 +469,12 @@ http {
             proxy_cache off;
         }
 
+        # --- Video generation (image-service, ADR-137) ---
+        location /api/v1/videos {
+            set $backend https://$origin_image;
+            proxy_pass $backend;
+        }
+
         # --- File Generation Service ---
         location /api/v1/file-generations {
             set $backend https://$origin_file_generation;

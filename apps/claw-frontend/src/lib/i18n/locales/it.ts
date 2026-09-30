@@ -809,6 +809,14 @@ export const it: TranslationDictionary = {
     judge: 'Giudice',
     live: 'In diretta',
     loadingImage: 'Caricamento immagine...',
+    videoCancelling: 'Annullamento…',
+    videoCancelAria: 'Annulla la generazione del video',
+    videoGenerationFailedRetry: 'Generazione del video non riuscita. Riprovare?',
+    loadingVideo: 'Caricamento video...',
+    videoTakesMinutes:
+      'Un video può richiedere alcuni minuti. Puoi continuare a chattare durante l’elaborazione.',
+    videoLoadFailed: 'Impossibile caricare il video',
+    videoLoadFailedHint: 'Ricarica la pagina per riprovare.',
     imageStage: {
       queued: "In coda per l'immagine",
       connecting: 'Connessione al motore di immagini',

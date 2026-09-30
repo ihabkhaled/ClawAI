@@ -10,11 +10,13 @@ List the current user's image generations.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `status` (enum) — QUEUED, STARTING, GENERATING, FINALIZING, COMPLETED, FAILED, TIMED_OUT, CANCELLED
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -51,6 +53,7 @@ List the current user's image generations.
 ```
 
 **curl**:
+
 ```bash
 curl http://localhost:4000/api/v1/images \
   -H "Authorization: Bearer $TOKEN"
@@ -74,6 +77,7 @@ Retry a failed image generation with the same provider/model.
 
 **Auth**: Bearer token (must own generation)
 **Response 200**:
+
 ```json
 {
   "generationId": "climg...",
@@ -89,6 +93,7 @@ Retry with a different provider or model.
 
 **Auth**: Bearer token (must own generation)
 **Request Body** (optional):
+
 ```json
 {
   "provider": "gemini",
@@ -97,6 +102,7 @@ Retry with a different provider or model.
 ```
 
 **Response 200**:
+
 ```json
 {
   "generationId": "climg_new...",
@@ -114,6 +120,7 @@ Stream real-time generation events.
 
 **Auth**: Public (generation ID required)
 **Response**: SSE event stream
+
 ```
 data: {"status":"STARTING","generationId":"climg..."}
 data: {"status":"GENERATING","generationId":"climg...","progress":50}
@@ -122,6 +129,7 @@ data: {"status":"COMPLETED","generationId":"climg...","assets":[...]}
 ```
 
 Error event:
+
 ```
 data: {"status":"FAILED","generationId":"climg...","error":"Provider returned 429"}
 ```
@@ -136,6 +144,7 @@ Enqueue a new image generation. Used by chat-service when it detects an image ge
 
 **Auth**: Public (internal)
 **Request Body**:
+
 ```json
 {
   "userId": "cluser...",
@@ -153,6 +162,7 @@ Enqueue a new image generation. Used by chat-service when it detects an image ge
 ```
 
 **Response 201**:
+
 ```json
 {
   "generationId": "climg...",
@@ -163,15 +173,19 @@ Enqueue a new image generation. Used by chat-service when it detects an image ge
 ```
 
 ### GET /internal/images/:generationId
+
 Get generation status. Used by chat-service for polling.
 
 ### POST /internal/images/:generationId/retry
+
 Retry generation.
 
 ### POST /internal/images/:generationId/retry-alternate
+
 Retry with alternate model.
 
 ### GET /internal/images/:generationId/events (SSE)
+
 Stream events.
 
 ---
@@ -187,9 +201,18 @@ QUEUED -> STARTING -> GENERATING -> FINALIZING -> COMPLETED
 
 ## Supported Providers
 
-| Provider | Models | Notes |
-|----------|--------|-------|
-| OpenAI | dall-e-3, dall-e-2 | Cloud, requires OPENAI connector |
-| Gemini | gemini-2.0-flash (imagen) | Cloud, requires GEMINI connector |
-| ComfyUI | FLUX.2, FLUX.1, SD 3.5, SDXL-Lightning | Local, requires ComfyUI runtime |
-| Stable Diffusion | SD models | Local, requires SD WebUI |
+| Provider         | Models                                 | Notes                            |
+| ---------------- | -------------------------------------- | -------------------------------- |
+| OpenAI           | dall-e-3, dall-e-2                     | Cloud, requires OPENAI connector |
+| Gemini           | gemini-2.0-flash (imagen)              | Cloud, requires GEMINI connector |
+| ComfyUI          | FLUX.2, FLUX.1, SD 3.5, SDXL-Lightning | Local, requires ComfyUI runtime  |
+| Stable Diffusion | SD models                              | Local, requires SD WebUI         |
+
+## Video: GET /videos/:id, POST /videos/:id/retry, POST /videos/:id/cancel
+
+Auth: bearer JWT, owner only (another user's id answers 404). Status is one of `QUEUED`,
+`STARTING`, `GENERATING`, `COMPLETED`, `FAILED`, `TIMED_OUT`, `CANCELLED`. A completed
+response carries `asset: {id, url, downloadUrl, mimeType, sizeBytes}`; a failed one carries a
+fixed `errorCode` and sentence, never provider text. Retry and cancel are only valid while the
+state allows it. Clips are text-to-video, 4 to 8 seconds, 16:9 or 9:16, 720p. Design:
+[ADR-137](../13-adr/adr-137-video-generation.md).

@@ -808,6 +808,14 @@ export const de: TranslationDictionary = {
     judge: 'Bewerter',
     live: 'Live',
     loadingImage: 'Bild wird geladen...',
+    videoCancelling: 'Wird abgebrochen…',
+    videoCancelAria: 'Videogenerierung abbrechen',
+    videoGenerationFailedRetry: 'Videogenerierung fehlgeschlagen. Erneut versuchen?',
+    loadingVideo: 'Video wird geladen...',
+    videoTakesMinutes:
+      'Ein Video kann einige Minuten dauern. Sie können weiter chatten, während es erstellt wird.',
+    videoLoadFailed: 'Das Video konnte nicht geladen werden',
+    videoLoadFailedHint: 'Laden Sie die Seite neu, um es erneut zu versuchen.',
     imageStage: {
       queued: 'Wartet in der Bild-Warteschlange',
       connecting: 'Verbindung zur Bild-Laufzeit wird hergestellt',

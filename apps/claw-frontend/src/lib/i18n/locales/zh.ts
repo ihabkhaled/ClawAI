@@ -761,6 +761,13 @@ export const zh: TranslationDictionary = {
     judge: '法官',
     live: '居住',
     loadingImage: '加载图片...',
+    videoCancelling: '正在取消…',
+    videoCancelAria: '取消视频生成',
+    videoGenerationFailedRetry: '视频生成失败。重试？',
+    loadingVideo: '正在加载视频...',
+    videoTakesMinutes: '视频可能需要几分钟。生成期间您可以继续聊天。',
+    videoLoadFailed: '无法加载视频',
+    videoLoadFailedHint: '请刷新页面后重试。',
     imageStage: {
       queued: '图像排队中',
       connecting: '正在连接图像运行时',

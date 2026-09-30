@@ -374,9 +374,9 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
   it('prices video models per second, with no token rate, and never seeds Sora', () => {
     const byModel = new Map(MODEL_COST_SEED_ENTRIES.map((e) => [`${e.provider}:${e.modelKey}`, e]));
     const expected: Array<[string, number]> = [
-      ['GEMINI:models/veo-3.1-lite-generate-preview', 50_000],
-      ['GEMINI:models/veo-3.1-fast-generate-preview', 100_000],
-      ['GEMINI:models/veo-3.1-generate-preview', 400_000],
+      ['GEMINI:veo-3.1-lite-generate-preview', 50_000],
+      ['GEMINI:veo-3.1-fast-generate-preview', 100_000],
+      ['GEMINI:veo-3.1-generate-preview', 400_000],
       ['GROK:grok-imagine-video', 50_000],
       ['GROK:grok-imagine-video-1.5', 80_000],
     ];

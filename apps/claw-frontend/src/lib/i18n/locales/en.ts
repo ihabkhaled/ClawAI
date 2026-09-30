@@ -791,6 +791,13 @@ export const en: TranslationDictionary = {
     judge: 'Judge',
     live: 'Live',
     loadingImage: 'Loading image...',
+    videoCancelling: 'Cancelling…',
+    videoCancelAria: 'Cancel video generation',
+    videoGenerationFailedRetry: 'Video generation failed. Retry?',
+    loadingVideo: 'Loading video...',
+    videoTakesMinutes: 'Video can take a few minutes. You can keep chatting while it renders.',
+    videoLoadFailed: 'Could not load the video',
+    videoLoadFailedHint: 'Reload the page to try again.',
     imageStage: {
       queued: 'Waiting in the image queue',
       connecting: 'Connecting to the image runtime',

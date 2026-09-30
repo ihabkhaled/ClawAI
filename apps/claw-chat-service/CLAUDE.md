@@ -1618,3 +1618,13 @@ request-scoped boolean; no global state.
   the run TTL); a message stored by a loop still mid-provider-call after a
   cancel; a paused run that is never resumed; a Redis outage at purge time
   (logged, content kept).
+
+## Video generation (ADR-137)
+
+`VIDEO_GEMINI` / `VIDEO_GROK` are generation providers, treated like `IMAGE_*` everywhere
+(`isGenerationProvider`: no streaming, no fast path, no token metadata).
+`VideoGenerationManager` plans the prompt (`video-prompt.utility.ts`, planner via
+`ResearchGateService.askPlanner`) and calls image-service. `applyFollowUpOverrides` adds
+`detectVideoOutputModel` (a picked veo/grok-video model) and `detectVideoRequest` (AUTO plus
+`classifyVideoIntent` from `@claw/shared-utilities`). Video models are never redirected to
+chat. OpenAI has no video provider (Sora shut down).

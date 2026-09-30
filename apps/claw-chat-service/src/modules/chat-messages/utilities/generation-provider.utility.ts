@@ -1,4 +1,8 @@
-import { FILE_GENERATION_PROVIDER, IMAGE_PROVIDER_PREFIX } from '../../../common/constants';
+import {
+  FILE_GENERATION_PROVIDER,
+  IMAGE_PROVIDER_PREFIX,
+  VIDEO_PROVIDER_PREFIX,
+} from '../../../common/constants';
 
 /**
  * True for a provider that generates an artefact rather than a chat completion.
@@ -14,5 +18,9 @@ import { FILE_GENERATION_PROVIDER, IMAGE_PROVIDER_PREFIX } from '../../../common
  * available" regardless of how the connectors were configured.
  */
 export function isGenerationProvider(provider: string): boolean {
-  return provider.startsWith(IMAGE_PROVIDER_PREFIX) || provider === FILE_GENERATION_PROVIDER;
+  return (
+    provider.startsWith(IMAGE_PROVIDER_PREFIX) ||
+    provider.startsWith(VIDEO_PROVIDER_PREFIX) ||
+    provider === FILE_GENERATION_PROVIDER
+  );
 }

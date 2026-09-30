@@ -134,7 +134,9 @@
       "prismaModels": [
         "ImageGeneration",
         "ImageGenerationAsset",
-        "ImageGenerationEvent"
+        "ImageGenerationEvent",
+        "VideoGeneration",
+        "VideoGenerationAsset"
       ],
       "service": "claw-image-service"
     },

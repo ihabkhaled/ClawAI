@@ -26,6 +26,11 @@ export const VIDEO_MIME_PREFIX = 'video/';
 
 export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
+// Video generation providers (VIDEO_GEMINI, VIDEO_GROK), dispatched to image-service's
+// video module. Like IMAGE_*, they are not chat providers: no streaming, no exposure
+// check, and image-service does its own PAYG metering (ADR-137).
+export const VIDEO_PROVIDER_PREFIX = 'VIDEO_';
+
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
 
 /**

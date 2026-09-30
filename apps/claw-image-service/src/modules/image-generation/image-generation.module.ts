@@ -22,6 +22,6 @@ import { StableDiffusionWebuiProgressAdapter } from '../runtime-progress/adapter
     ComfyUIProgressAdapter,
     StableDiffusionWebuiProgressAdapter,
   ],
-  exports: [ImageGenerationService],
+  exports: [ImageGenerationService, ImagePlanGateManager],
 })
 export class ImageGenerationModule {}

@@ -1159,3 +1159,9 @@ The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat
   reads flattened input and an `operation` inside `arguments`, and defaults a
   single-target tool's `targetId`. Its errors list the valid choices.
 - To check it live: `docker logs claw-chat-service-1 | grep -E 'attached [0-9]+ native tools|native tool call'`.
+
+## Video generation (ADR-137)
+
+A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI` /
+`VIDEO_GROK`, planned by the same gate as images and run by image-service. See
+[ADR-137](../13-adr/adr-137-video-generation.md).

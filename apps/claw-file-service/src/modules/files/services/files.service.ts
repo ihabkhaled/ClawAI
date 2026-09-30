@@ -20,6 +20,7 @@ import {
 } from '@claw/shared-types';
 import { type File, type FileChunk, FileIngestionStatus } from '../../../generated/prisma';
 import { type StoreGeneratedAudioDto } from '../dto/store-generated-audio.dto';
+import { type StoreGeneratedVideoDto } from '../dto/store-generated-video.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { resolveUploadMimeType } from '../../../common/utilities/archive-format.utility';
@@ -690,6 +691,34 @@ export class FilesService {
     });
     this.logger.log(
       `storeGeneratedAudio: stored ${file.id} (${data.mimeType}, ${String(buffer.length)} bytes)`,
+    );
+    return { fileId: file.id };
+  }
+
+  /**
+   * ADR-137 — a clip image-service generated for its owner. Stored COMPLETED with
+   * no extraction job (there is nothing to index), through the same size and
+   * security checks as an upload. Downloads follow ordinary file ownership.
+   */
+  async storeGeneratedVideo(data: StoreGeneratedVideoDto): Promise<{ fileId: string }> {
+    const buffer = Buffer.from(data.base64Data, 'base64');
+    this.validateFileSize(buffer.length);
+    await this.runSecurityChecks(data.filename, data.mimeType, buffer);
+    const safeName = this.fileSecurityManager.getSanitizedFilename(data.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, buffer);
+    const file = await this.filesRepository.create({
+      userId: data.userId,
+      filename: safeName,
+      mimeType: data.mimeType,
+      sizeBytes: buffer.length,
+      storagePath,
+      content: data.base64Data,
+      retentionExpiresAt: this.computeRetentionExpiry(),
+      ingestionStatus: FileIngestionStatus.COMPLETED,
+      extractedText: null,
+    });
+    this.logger.log(
+      `storeGeneratedVideo: stored ${file.id} (${data.mimeType}, ${String(buffer.length)} bytes)`,
     );
     return { fileId: file.id };
   }

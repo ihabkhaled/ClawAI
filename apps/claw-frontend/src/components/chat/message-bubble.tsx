@@ -37,6 +37,7 @@ import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { ThreadContextInspector } from '@/components/chat/thread-context-inspector';
+import { VideoGenerationBubble } from '@/components/chat/video-generation-bubble';
 import { WhyThisModelPanel } from '@/components/chat/why-this-model-panel';
 import { WorkflowBadge } from '@/components/chat/workflow-badge';
 import { CopyButton } from '@/components/common/copy-button';
@@ -111,6 +112,11 @@ function MessageBubbleBase({
   const isImageGeneration = metadata?.['type'] === 'image_generation';
   const imageGenerationId =
     typeof metadata?.['generationId'] === 'string' ? metadata['generationId'] : undefined;
+  const isVideoGeneration = metadata?.['type'] === 'video_generation';
+  const videoGenerationId =
+    typeof metadata?.['generationId'] === 'string' && isVideoGeneration
+      ? metadata['generationId']
+      : undefined;
   const isFileGeneration = metadata?.['type'] === 'file_generation';
   const fileLimit = readFileLimit(metadata);
   const planFeatureRefusal = readPlanFeatureRefusal(metadata);
@@ -248,6 +254,9 @@ function MessageBubbleBase({
               isAutoMode={message.routingMode === RoutingMode.AUTO}
             />
           ) : null}
+          {!isUser && isVideoGeneration && videoGenerationId ? (
+            <VideoGenerationBubble generationId={videoGenerationId} prompt={message.content} />
+          ) : null}
           {!isUser && isFileGeneration && fileGenerationId ? (
             <FileGenerationBubble
               generationId={fileGenerationId}
@@ -264,7 +273,7 @@ function MessageBubbleBase({
           {!isUser && planFeatureRefusal !== null ? (
             <PlanFeatureNotice feature={planFeatureRefusal} />
           ) : null}
-          {!isUser && !isImageGeneration && !isFileGeneration && !isNotice
+          {!isUser && !isImageGeneration && !isVideoGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
           {/* What a "remember this / add to context" turn saved (ADR-134). */}
@@ -388,7 +397,11 @@ function MessageBubbleBase({
                 className="text-muted-foreground h-7 w-7"
               />
             ) : null}
-            {hasVisibleAssistantContent && !isFileGeneration && !isImageGeneration && !isNotice ? (
+            {hasVisibleAssistantContent &&
+            !isFileGeneration &&
+            !isImageGeneration &&
+            !isVideoGeneration &&
+            !isNotice ? (
               <>
                 <AnswerExpandDialog content={message.content} t={t} />
                 <AnswerExportMenu content={message.content} t={t} />
@@ -450,6 +463,7 @@ function MessageBubbleBase({
         hasVisibleAssistantContent &&
         !isFileGeneration &&
         !isImageGeneration &&
+        !isVideoGeneration &&
         !isNotice ? (
           <MessageSpeechPlayer messageId={message.id} />
         ) : null}

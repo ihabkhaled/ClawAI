@@ -290,3 +290,11 @@ export {
 export { invalidateThreadMessages } from './invalidate-thread-messages.utility';
 export { insertSentMessageIntoCache } from './insert-sent-message-into-cache.utility';
 export { mergeLatestMessagesPageIntoCache } from './merge-latest-messages-page-into-cache.utility';
+export {
+  getVideoStatusLabelKey,
+  isTerminalVideoStatus,
+  isInProgressVideoStatus,
+  getSupersedingVideoGenerationId,
+  toLatestVideoGeneration,
+  isVideoOutputModel,
+} from './video-generation.utility';

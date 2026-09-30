@@ -1258,3 +1258,23 @@ export type {
   TtsVoicePreferenceCardProps,
   TtsVoicePreferenceState,
 } from './tts-voice.types';
+export type {
+  VideoGeneration,
+  VideoGenerationAsset,
+  VideoGenerationCancelResult,
+  VideoGenerationFollowState,
+  VideoGenerationRetryResult,
+  VideoGenerationRow,
+} from './video-generation.types';
+export type {
+  VideoCancelledStateProps,
+  VideoCompletedStateProps,
+  VideoErrorStateProps,
+  VideoGenerationBubbleProps,
+  VideoLoadingStateProps,
+} from './component.types';
+export type {
+  UseAuthenticatedVideoReturn,
+  UseVideoGenerationBubbleStateParams,
+  UseVideoGenerationBubbleStateReturn,
+} from './hook.types';

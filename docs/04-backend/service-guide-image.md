@@ -512,3 +512,9 @@ attachment as the REFERENCE asset.
 - Gap: the three new failure codes render the stored English sentence; the
   frontend has no per-code image translation table yet (same as every other
   `ImageFailureCode`).
+
+## Video generation (ADR-137)
+
+The image service also generates video. See [ADR-137](../13-adr/adr-137-video-generation.md)
+for the design and `apps/claw-image-service/CLAUDE.md` for the invariants. Tables:
+`video_generations`, `video_generation_assets` (migration `20260930140000_add_video_generations`).

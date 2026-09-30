@@ -141,7 +141,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 271,
+      "testFiles": 274,
       "testRunner": "vitest"
     },
     {
@@ -216,7 +216,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 34,
+      "endpointCount": 35,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -234,7 +234,7 @@
         "FileChunk",
         "PublishedArtifact"
       ],
-      "testFiles": 78,
+      "testFiles": 79,
       "testRunner": "vitest"
     },
     {
@@ -257,7 +257,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-image-service",
-      "endpointCount": 12,
+      "endpointCount": 18,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -273,9 +273,11 @@
       "prismaModels": [
         "ImageGeneration",
         "ImageGenerationAsset",
-        "ImageGenerationEvent"
+        "ImageGenerationEvent",
+        "VideoGeneration",
+        "VideoGenerationAsset"
       ],
-      "testFiles": 42,
+      "testFiles": 47,
       "testRunner": "vitest"
     },
     {

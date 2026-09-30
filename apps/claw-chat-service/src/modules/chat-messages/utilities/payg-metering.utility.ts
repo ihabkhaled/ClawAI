@@ -6,6 +6,7 @@ import { PaygSurface, type TokenLedgerContext } from '@claw/shared-types';
 import {
   FILE_GENERATION_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
+  VIDEO_PROVIDER_PREFIX,
 } from '../../../common/constants/execution.constants';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { PAYG_PROVIDER_ALIASES, PAYG_SURFACE_BY_TOKEN_CONTEXT } from '../constants/payg.constants';
@@ -35,7 +36,11 @@ export function normalizePaygProvider(provider: string): string {
  * provider through the ordinary chokepoint.
  */
 export function isPaygDelegatedProvider(provider: string): boolean {
-  return provider === FILE_GENERATION_PROVIDER || provider.startsWith(IMAGE_PROVIDER_PREFIX);
+  return (
+    provider === FILE_GENERATION_PROVIDER ||
+    provider.startsWith(IMAGE_PROVIDER_PREFIX) ||
+    provider.startsWith(VIDEO_PROVIDER_PREFIX)
+  );
 }
 
 /** The surface a call belongs to, from the ledger context it already carries. */

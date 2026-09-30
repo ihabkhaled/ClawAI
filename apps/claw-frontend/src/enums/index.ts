@@ -195,3 +195,4 @@ export { ImageMaskRefusalCode } from './image-mask-refusal-code.enum';
 export { BranchCut } from './branch-cut.enum';
 export { ContextSaveStatus } from './context-save-status.enum';
 export { SaveFailureReason } from './save-failure-reason.enum';
+export { VideoGenerationStatus } from './video-generation-status.enum';

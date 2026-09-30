@@ -795,6 +795,13 @@ export const ja: TranslationDictionary = {
     judge: '裁判官',
     live: 'ライブ',
     loadingImage: '画像を読み込み中...',
+    videoCancelling: 'キャンセル中…',
+    videoCancelAria: '動画の生成をキャンセル',
+    videoGenerationFailedRetry: '動画の生成に失敗しました。再試行しますか？',
+    loadingVideo: '動画を読み込み中...',
+    videoTakesMinutes: '動画の生成には数分かかることがあります。生成中もチャットを続けられます。',
+    videoLoadFailed: '動画を読み込めませんでした',
+    videoLoadFailedHint: 'ページを再読み込みしてもう一度お試しください。',
     imageStage: {
       queued: '画像キューで待機中',
       connecting: '画像ランタイムに接続中',

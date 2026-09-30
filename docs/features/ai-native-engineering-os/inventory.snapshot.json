@@ -1857,6 +1857,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/files/store-generated-video",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/files/store-image",
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
         },
@@ -1951,8 +1956,38 @@
         },
         {
           "method": "GET",
+          "route": "/internal/videos/:generationId",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/videos/:generationId/assistant-message",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/videos/generate",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/metrics",
           "source": "apps/claw-image-service/src/modules/metrics/controllers/metrics.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/videos/:id",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/videos/:id/cancel",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/videos/:id/retry",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
         }
       ],
       "claw-llamacpp-service": [
@@ -8427,7 +8462,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5572
+        "value": 5579
       },
       "localeCount": 13,
       "locales": [
@@ -8826,6 +8861,12 @@
         "location": "/api/v1/users",
         "port": 4001,
         "service": "auth-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/videos",
+        "port": 4012,
+        "service": "image-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -9781,6 +9822,16 @@
             "confidence": "verified",
             "source": "apps/claw-image-service/prisma/schema.prisma",
             "value": "ImageGenerationEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-image-service/prisma/schema.prisma",
+            "value": "VideoGeneration"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-image-service/prisma/schema.prisma",
+            "value": "VideoGenerationAsset"
           }
         ],
         "provider": {
@@ -10411,7 +10462,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 48
+        "testFiles": 49
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10427,7 +10478,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 271
+        "testFiles": 274
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10443,11 +10494,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 78
+        "testFiles": 79
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 634
+        "testFiles": 642
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10455,7 +10506,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 42
+        "testFiles": 47
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -11213,19 +11264,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 739,
+    "endpointCount": 746,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
     "localeCount": 13,
-    "nginxRouteCount": 64,
+    "nginxRouteCount": 65,
     "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1803,
+    "totalTestFiles": 1821,
     "workspaceCount": 25
   }
 }

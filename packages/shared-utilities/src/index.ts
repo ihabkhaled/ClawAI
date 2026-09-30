@@ -20,5 +20,6 @@ export * from './client-http-error';
 export * from './content-disposition';
 export * from './image-output-model';
 export * from './image-intent';
+export * from './video-generation';
 export * from './generation-request';
 export * from './metrics';

@@ -39,6 +39,7 @@ import {
   OLLAMA_CONNECTOR_PROVIDER,
   OLLAMA_PROVIDER,
   PROVIDER_BASE_URLS,
+  VIDEO_PROVIDER_PREFIX,
 } from '../../../common/constants';
 import {
   type AnthropicMessagesRequest,
@@ -263,6 +264,8 @@ import {
   imagePlanRefusalResponse,
   isPlanFeatureDisabledResponse,
 } from '../utilities/plan-feature-refusal.utility';
+import { isGenerationProvider } from '../utilities/generation-provider.utility';
+import { VideoGenerationManager } from './video-generation.manager';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -308,6 +311,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it the account-exhaustion breaker
     // is per replica, in memory (the pre-addendum behaviour).
     @Optional() private readonly sharedProviderBreaker?: ProviderCircuitBreakerManager,
+    // Optional for the same reason. Without it a VIDEO_* provider falls through to
+    // the chat path (ADR-137).
+    @Optional() private readonly videoGeneration?: VideoGenerationManager,
   ) {}
 
   private get providerBreaker(): ProviderCircuitBreakerManager {
@@ -833,7 +839,7 @@ export class ChatExecutionManager implements OnModuleInit {
     if (this.providerStreamExecutor === undefined || this.streamCancellation === undefined) {
       return false;
     }
-    if (provider === FILE_GENERATION_PROVIDER || provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+    if (isGenerationProvider(provider)) {
       return false;
     }
     return true;
@@ -1863,7 +1869,11 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private isGenerationResponse(response: LlmResponse): boolean {
-    return response.imageGenerationId !== undefined || response.fileGenerationId !== undefined;
+    return (
+      response.imageGenerationId !== undefined ||
+      response.videoGenerationId !== undefined ||
+      response.fileGenerationId !== undefined
+    );
   }
 
   /**
@@ -1951,7 +1961,10 @@ export class ChatExecutionManager implements OnModuleInit {
     if (payload.selectedProvider === FILE_GENERATION_PROVIDER) {
       return false;
     }
-    if (payload.selectedProvider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+    if (
+      payload.selectedProvider.startsWith(IMAGE_PROVIDER_PREFIX) ||
+      payload.selectedProvider.startsWith(VIDEO_PROVIDER_PREFIX)
+    ) {
       return false;
     }
 
@@ -2394,11 +2407,7 @@ export class ChatExecutionManager implements OnModuleInit {
     model: string,
     executionOptions: ExecutionOptions | undefined,
   ): Promise<AssembledContext> {
-    if (
-      this.attachmentDelivery === undefined ||
-      provider === FILE_GENERATION_PROVIDER ||
-      provider.startsWith(IMAGE_PROVIDER_PREFIX)
-    ) {
+    if (this.attachmentDelivery === undefined || isGenerationProvider(provider)) {
       return context;
     }
     // A turn carrying a native tool catalog is built as the OpenAI-compatible
@@ -2673,7 +2682,7 @@ export class ChatExecutionManager implements OnModuleInit {
     //
     // These surfaces are gated by their own service plus the PAYG reservation,
     // which is where a model that ClawAI does not offer is actually stopped.
-    if (provider === FILE_GENERATION_PROVIDER || provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+    if (isGenerationProvider(provider)) {
       return;
     }
     const startedAt = Date.now();
@@ -2726,6 +2735,18 @@ export class ChatExecutionManager implements OnModuleInit {
         threadSettings,
         executionOptions?.fileWriters,
       );
+    }
+    if (provider.startsWith(VIDEO_PROVIDER_PREFIX) && this.videoGeneration !== undefined) {
+      this.logger.debug('callProvider: routing to video generation');
+      return this.videoGeneration.generate({
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        userId: context.userId,
+        isAutoMode: routingMode === 'AUTO',
+      });
     }
     if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
       this.logger.debug('callProvider: routing to image service');

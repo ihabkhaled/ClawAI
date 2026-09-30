@@ -30,6 +30,10 @@ import {
   type StoreGeneratedAudioDto,
   storeGeneratedAudioSchema,
 } from '../dto/store-generated-audio.dto';
+import {
+  type StoreGeneratedVideoDto,
+  storeGeneratedVideoSchema,
+} from '../dto/store-generated-video.dto';
 import { type VideoFrame } from '../types/video-processing.types';
 import type {
   CreateInternalFileBody,
@@ -132,6 +136,21 @@ export class FilesInternalController {
     @Body(new ZodValidationPipe(storeGeneratedAudioSchema)) body: StoreGeneratedAudioDto,
   ): Promise<{ fileId: string }> {
     return this.filesService.storeGeneratedAudio(body);
+  }
+
+  /**
+   * ADR-137 — a clip image-service generated for its owner (Veo, Grok Imagine
+   * Video). Stored COMPLETED with no extraction job; the owner is named in the
+   * body and downloads follow file ownership.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post('store-generated-video')
+  @HttpCode(HttpStatus.CREATED)
+  async storeGeneratedVideo(
+    @Body(new ZodValidationPipe(storeGeneratedVideoSchema)) body: StoreGeneratedVideoDto,
+  ): Promise<{ fileId: string }> {
+    return this.filesService.storeGeneratedVideo(body);
   }
 
   /**

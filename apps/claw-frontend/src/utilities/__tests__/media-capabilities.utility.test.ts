@@ -37,6 +37,33 @@ describe('getConnectorModelCapabilityBadges', () => {
   });
 });
 
+describe('getConnectorModelCapabilityBadges — video output', () => {
+  it.each([
+    [ConnectorProvider.GEMINI, 'models/veo-3.1-generate-preview'],
+    [ConnectorProvider.GROK, 'grok-imagine-video'],
+  ])('badges %s / %s as a video-output model', (provider, modelKey) => {
+    expect(
+      getConnectorModelCapabilityBadges({
+        supportsVision: false,
+        supportsAudio: false,
+        provider,
+        modelKey,
+      }),
+    ).toEqual([ModelCapabilityBadge.VideoOutput]);
+  });
+
+  it('gives an ordinary chat model of the same provider no video badge', () => {
+    expect(
+      getConnectorModelCapabilityBadges({
+        supportsVision: true,
+        supportsAudio: false,
+        provider: ConnectorProvider.GEMINI,
+        modelKey: 'gemini-2.5-pro',
+      }),
+    ).toEqual([ModelCapabilityBadge.Vision]);
+  });
+});
+
 describe('resolveMediaCapabilities', () => {
   const textOnly = { supportsAudio: false } as const;
 

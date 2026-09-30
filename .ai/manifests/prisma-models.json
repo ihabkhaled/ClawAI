@@ -82,7 +82,9 @@
     "claw-image-service": [
       "ImageGeneration",
       "ImageGenerationAsset",
-      "ImageGenerationEvent"
+      "ImageGenerationEvent",
+      "VideoGeneration",
+      "VideoGenerationAsset"
     ],
     "claw-llamacpp-service": [
       "BinaryRelease",

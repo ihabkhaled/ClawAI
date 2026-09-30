@@ -803,6 +803,14 @@ export const pt: TranslationDictionary = {
     judge: 'Juiz',
     live: 'Ao vivo',
     loadingImage: 'Carregando imagem...',
+    videoCancelling: 'Cancelando…',
+    videoCancelAria: 'Cancelar a geração do vídeo',
+    videoGenerationFailedRetry: 'A geração do vídeo falhou. Tentar novamente?',
+    loadingVideo: 'Carregando vídeo...',
+    videoTakesMinutes:
+      'Um vídeo pode levar alguns minutos. Você pode continuar conversando enquanto ele é gerado.',
+    videoLoadFailed: 'Não foi possível carregar o vídeo',
+    videoLoadFailedHint: 'Recarregue a página para tentar novamente.',
     imageStage: {
       queued: 'Na fila de imagens',
       connecting: 'Conectando ao motor de imagens',

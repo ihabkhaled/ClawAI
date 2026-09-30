@@ -792,6 +792,14 @@ export const fa: TranslationDictionary = {
     judge: 'قاضی',
     live: 'زندگی کنید',
     loadingImage: 'در حال بارگیری تصویر...',
+    videoCancelling: 'در حال لغو…',
+    videoCancelAria: 'لغو ساخت ویدیو',
+    videoGenerationFailedRetry: 'ساخت ویدیو ناموفق بود. دوباره تلاش شود؟',
+    loadingVideo: 'در حال بارگیری ویدیو...',
+    videoTakesMinutes:
+      'ساخت ویدیو ممکن است چند دقیقه طول بکشد. می‌توانید در همین حال گفتگو را ادامه دهید.',
+    videoLoadFailed: 'بارگیری ویدیو ممکن نشد',
+    videoLoadFailedHint: 'برای تلاش دوباره صفحه را بازآوری کنید.',
     imageStage: {
       queued: 'در صف تولید تصویر',
       connecting: 'در حال اتصال به موتور تصویر',

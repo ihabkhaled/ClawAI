@@ -572,3 +572,10 @@ internal only — nginx has no route; the logging interceptor skips its successe
   `timestamp` (now read by both job DTOs, optional).
 
 Labels are enums or `TRANSCRIPTION_PROVIDER_PRIORITY`; anything else is `other`.
+
+## Generated video (ADR-137)
+
+`POST /internal/files/store-generated-video` stores a clip image-service produced
+(`FilesService.storeGeneratedVideo`, cap in `generated-video.constants.ts`). Same ownership
+and service-auth rules as the generated-image route; the file is the user's, source
+`GENERATED`.

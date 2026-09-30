@@ -17,6 +17,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { ImageGenerationModule } from '../modules/image-generation/image-generation.module';
+import { VideoGenerationModule } from '../modules/video-generation/video-generation.module';
 import { HealthModule } from '../modules/health/health.module';
 import { MetricsModule } from '../modules/metrics/metrics.module';
 
@@ -74,6 +75,7 @@ import { MetricsModule } from '../modules/metrics/metrics.module';
     PrismaModule,
     RedisModule,
     ImageGenerationModule,
+    VideoGenerationModule,
     HealthModule,
     MetricsModule,
     ThrottlerModule.forRoot([

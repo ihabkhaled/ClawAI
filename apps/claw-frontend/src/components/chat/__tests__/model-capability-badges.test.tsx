@@ -34,4 +34,12 @@ describe('ModelCapabilityBadges', () => {
     const { container } = render(<ModelCapabilityBadges capabilities={[]} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('renders a distinct, labelled Video output glyph', () => {
+    render(<ModelCapabilityBadges capabilities={[ModelCapabilityBadge.VideoOutput]} />);
+
+    const badge = screen.getByTestId('model-capability-badge-VIDEO_OUTPUT');
+    expect(badge).toHaveAttribute('title', 'mediaUi.capability.videoOutput');
+    expect(badge).toHaveTextContent('mediaUi.capability.videoOutput');
+  });
 });

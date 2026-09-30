@@ -781,6 +781,13 @@ export const ar: TranslationDictionary = {
     judge: 'مُقيِّم',
     live: 'مباشر',
     loadingImage: 'جاري تحميل الصورة...',
+    videoCancelling: 'جارٍ الإلغاء…',
+    videoCancelAria: 'إلغاء إنشاء الفيديو',
+    videoGenerationFailedRetry: 'فشل إنشاء الفيديو. إعادة المحاولة؟',
+    loadingVideo: 'جاري تحميل الفيديو...',
+    videoTakesMinutes: 'قد يستغرق الفيديو بضع دقائق. يمكنك متابعة المحادثة أثناء إنشائه.',
+    videoLoadFailed: 'تعذّر تحميل الفيديو',
+    videoLoadFailedHint: 'أعد تحميل الصفحة للمحاولة مرة أخرى.',
     imageStage: {
       queued: 'في انتظار دور الصورة',
       connecting: 'جارٍ الاتصال بمحرك الصور',

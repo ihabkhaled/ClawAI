@@ -638,3 +638,22 @@ attachment as the REFERENCE asset.
 - Gap: the three new failure codes render the stored English sentence; the
   frontend has no per-code image translation table yet (same as every other
   `ImageFailureCode`).
+
+## Video generation (ADR-137, 2026-09-30)
+
+`src/modules/video-generation/` is the video twin of image generation: Veo through Gemini's
+`predictLongRunning`, Grok Imagine Video through xAI's `/videos/generations`. It is a long
+async job, not a request: start, poll (8 s, 12 min ceiling), download (max 40 MB), store via
+file-service `store-generated-video`.
+
+- Routes: `GET /videos/:id`, `POST /videos/:id/retry`, `POST /videos/:id/cancel` (nginx
+  `/api/v1/videos`); internal `POST /internal/videos/generate`, `GET`, `POST assistant-message`.
+- Money: `PaygSurface.VIDEO`, `videoSeconds` × `videoPerUnitMicroUsd`. The price key is the
+  BARE model id (`videoPriceKey`), never `models/...`. Hold before the call; settle only after
+  the asset row exists; release on every other exit (`VideoExecutionManager`,
+  `VideoStaleJobRecoveryManager`).
+- Provider clients live in `adapters/`, are assembled in
+  `constants/video-provider-clients.constants.ts` (lint forbids exported objects in adapters).
+- Failure sentences are fixed (`video-failure.constants.ts`); provider text is never shown.
+- The plan gate is `ImagePlanGateManager`, reused (exported by `ImageGenerationModule`).
+- Sora/OpenAI is not supported: the API was shut down 2026-09-24.

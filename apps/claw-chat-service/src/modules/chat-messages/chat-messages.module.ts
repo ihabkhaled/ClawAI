@@ -42,6 +42,7 @@ import { SpeechPreferencesClient } from './clients/speech-preferences.client';
 import { SpeechProviderClient } from './clients/speech-provider.client';
 import { SpeechFileStoreClient } from './clients/speech-file-store.client';
 import { ImageGenerationLinkClient } from './clients/image-generation-link.client';
+import { VideoGenerationManager } from './managers/video-generation.manager';
 import { AttachmentInfoClient } from './clients/attachment-info.client';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
@@ -143,6 +144,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     SpeechProviderClient,
     SpeechFileStoreClient,
     ImageGenerationLinkClient,
+    VideoGenerationManager,
     SpeechSynthesisManager,
     SpeechJobManager,
     SpeechJobLockStore,

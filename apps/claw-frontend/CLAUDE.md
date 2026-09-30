@@ -757,3 +757,13 @@ else → `failureDetail.generic`. A new backend code needs a map entry in
 ## Inpainting mask editor (2026-09-29)
 
 Image tile in the composer tray offers "Mask edit" -> `MaskEditDialog` (canvas, brush size, erase, clear; pointer, touch, keyboard: Space toggles painting, arrows move, Shift x5). `useMaskEditor` paints a layer the size of the SOURCE image; `exportMask` writes the backend convention (painted = alpha 0, unpainted = opaque, threshold 128) via `paintLayerToMaskPixels`. `useMaskEditorDialog` uploads the PNG through `filesRepository.uploadFile`; `useComposerMaskEdit` keeps one mask, moves the source to `fileIds[0]` (the pipeline edits `imageFiles[0]`) and hands `maskFileId` out once on submit (5th `onSend` arg -> `CreateMessageRequest.maskFileId`). A 422 becomes an assistant message with metadata `image_mask_refusal`, rendered by `ImageMaskRefusalNotice`; both codes also map in `api-error-message.utility.ts`. Keys: `chat.maskEdit.*` (13 locales). Only OpenAI honours masks. Not built: action on generated-image cards; not browser-verified.
+
+## Video generation bubble (ADR-137)
+
+A message whose `metadata.type === 'video_generation'` renders `VideoGenerationBubble`
+(`components/chat/video-generation-bubble.tsx`, states: loading, completed, error, cancelled).
+`repositories/video-generation/` calls `GET /videos/:id`, `POST /videos/:id/retry` and
+`POST /videos/:id/cancel`; `use-video-generation-listener` polls every 4 s, capped at 225
+polls, no SSE. The clip is fetched with the session token (`use-authenticated-video`).
+Model detection (`constants/video.constants.ts`) mirrors the regexes in
+`@claw/shared-utilities/video-generation`, which is not browser-safe: change both together.

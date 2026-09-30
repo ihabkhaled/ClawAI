@@ -1,6 +1,6 @@
 # ADR-137: Video generation is its own metered surface, priced per second
 
-- **Status:** Accepted (in progress: batch 1 of 4, metering)
+- **Status:** Accepted (built and unit-tested; live rounds per model recorded below)
 - **Date:** 2026-09-30
 - **Deciders:** Product owner (request), engineering
 - **Related:** rule [37](../../rules/37-payg-credit-integrity.md) item 17,
@@ -36,7 +36,7 @@ prompting like images, and 5 to 10 test rounds per model.
    seeded: its API no longer exists. Unpriced means blocked (rule 37 item 5).
 3. **The ledger says "Video"** (`billing.credit.surface.VIDEO`, 13 locales).
 
-## Later batches (recorded here so the decision stays in one place)
+## Batches 2 to 4 (shipped with batch 1)
 
 2. image-service `video-generation` module (Veo and xAI adapters, polling job, PAYG hold,
    storage through a new file-service `store-generated-video`), nginx `/api/v1/videos`.
@@ -45,6 +45,29 @@ prompting like images, and 5 to 10 test rounds per model.
    research, honest failure messages.
 4. frontend: video bubble (progress, `<video>`, download, retry), model picker group.
    Live rounds per model follow.
+
+## How it works (as built)
+
+- **Job model.** image-service owns `VideoGeneration` / `VideoGenerationAsset`. A job is
+  QUEUED, STARTING, GENERATING, then COMPLETED, FAILED, TIMED_OUT or CANCELLED. The provider
+  call is asynchronous: start returns an operation id, a poll loop (8 s) waits at most 12
+  minutes, the clip (max 40 MB) is downloaded and stored by file-service
+  (`store-generated-video`). A sweep times out rows stale for 17 minutes.
+- **Money.** The hold is reserved before the provider is called, sized on the seconds. It is
+  settled only after the asset row is written, and released on failure, cancel, a storage
+  failure or a stale sweep. Settlement bills the clip length the provider reports, never more
+  than was held.
+- **Fallback.** AUTO tries Gemini `veo-3.1-fast-generate-preview`, then Grok
+  `grok-imagine-video`. A credit refusal or a storage failure ends the chain: another
+  provider cannot fix either.
+- **Chat.** A picked veo/grok-video model, or an AUTO message `classifyVideoIntent` accepts,
+  becomes a `VIDEO_GEMINI` / `VIDEO_GROK` candidate. The planner writes the shot prompt from
+  the user's words, the conversation and any research (the same plan gate as images).
+  The message carries `{type: 'video_generation', generationId}`; the frontend polls
+  `GET /videos/:id` every 4 s.
+- **Not built.** Image-to-video (a message like "animate this image" is NOT routed to video,
+  because the API path does not send the image), 1080p/4K, clips over 8 seconds, OpenAI
+  (Sora is gone).
 
 ## Consequences
 

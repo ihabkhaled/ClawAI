@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Eye, Film, ImageIcon, Mic } from 'lucide-react';
+import { Clapperboard, Eye, Film, ImageIcon, Mic } from 'lucide-react';
 
 import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 
@@ -12,6 +12,7 @@ export const MODEL_CAPABILITY_BADGE_LABEL_KEYS: Readonly<Record<ModelCapabilityB
   [ModelCapabilityBadge.AudioInput]: 'mediaUi.capability.audioInput',
   [ModelCapabilityBadge.VideoInput]: 'mediaUi.capability.videoInput',
   [ModelCapabilityBadge.ImageOutput]: 'mediaUi.capability.imageOutput',
+  [ModelCapabilityBadge.VideoOutput]: 'mediaUi.capability.videoOutput',
 };
 
 /** A distinct glyph per badge, so the row is never read by colour alone. */
@@ -20,6 +21,7 @@ export const MODEL_CAPABILITY_BADGE_ICONS: Readonly<Record<ModelCapabilityBadge,
   [ModelCapabilityBadge.AudioInput]: Mic,
   [ModelCapabilityBadge.VideoInput]: Film,
   [ModelCapabilityBadge.ImageOutput]: ImageIcon,
+  [ModelCapabilityBadge.VideoOutput]: Clapperboard,
 };
 
 export const MODEL_CAPABILITY_BADGE_LIST_LABEL_KEY = 'mediaUi.capability.listLabel';

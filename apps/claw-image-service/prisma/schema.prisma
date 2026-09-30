@@ -109,3 +109,82 @@ model ImageGenerationEvent {
   @@index([generationId, createdAt])
   @@map("image_generation_events")
 }
+
+// ─── Video generation (ADR-137) ──────────────────────────────────────────────
+
+enum VideoGenerationStatus {
+  QUEUED
+  STARTING
+  GENERATING
+  FINALIZING
+  COMPLETED
+  FAILED
+  TIMED_OUT
+  CANCELLED
+}
+
+enum VideoAssetRole {
+  OUTPUT
+  /// The user's attached image the clip was asked to animate.
+  REFERENCE
+}
+
+model VideoGeneration {
+  id                  String                @id @default(cuid())
+  userId              String                @map("user_id")
+  threadId            String?               @map("thread_id")
+  userMessageId       String?               @map("user_message_id")
+  assistantMessageId  String?               @map("assistant_message_id")
+  /// The prompt actually sent to the provider (planner-written for a chat turn).
+  prompt              String
+  /// The user's own words when `prompt` was rewritten, else null.
+  originalPrompt      String?               @map("original_prompt")
+  provider            String
+  model               String
+  durationSeconds     Int                   @default(4) @map("duration_seconds")
+  aspectRatio         String                @default("16:9") @map("aspect_ratio")
+  /// AUTO picked the provider, so a failure may fall through to the next one.
+  isAutoMode          Boolean               @default(false) @map("is_auto_mode")
+  status              VideoGenerationStatus @default(QUEUED)
+  errorCode           String?               @map("error_code")
+  errorMessage        String?               @map("error_message")
+  /// The provider's long-running operation / request id, kept for support.
+  providerOperationId String?               @map("provider_operation_id")
+  startedAt           DateTime?             @map("started_at")
+  completedAt         DateTime?             @map("completed_at")
+  latencyMs           Int?                  @map("latency_ms")
+  /// The row that took this job over (an AUTO fallback attempt or a retry).
+  supersededById      String?               @map("superseded_by_id")
+  /// The OPEN PAYG hold of the attempt running on this row (auth reservation id).
+  paygReservationId   String?               @map("payg_reservation_id")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+
+  assets VideoGenerationAsset[]
+
+  @@index([userId])
+  @@index([threadId])
+  @@index([status, createdAt])
+  @@index([status, updatedAt])
+  @@index([assistantMessageId])
+  @@index([supersededById])
+  @@map("video_generations")
+}
+
+model VideoGenerationAsset {
+  id              String         @id @default(cuid())
+  generationId    String         @map("generation_id")
+  storageKey      String         @map("storage_key")
+  url             String
+  downloadUrl     String         @map("download_url")
+  mimeType        String         @map("mime_type")
+  sizeBytes       Int?           @map("size_bytes")
+  durationSeconds Int?           @map("duration_seconds")
+  role            VideoAssetRole @default(OUTPUT)
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  generation VideoGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId])
+  @@map("video_generation_assets")
+}

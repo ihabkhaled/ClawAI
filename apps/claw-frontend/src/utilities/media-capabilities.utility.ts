@@ -1,6 +1,7 @@
 import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 import type { ConnectorModel } from '@/types/connector.types';
 import type { ModelMediaCapabilities } from '@/types/media-recording.types';
+import { isVideoOutputModel } from '@/utilities/video-generation.utility';
 
 /**
  * Can the composer record a voice note / a video note right now?
@@ -33,7 +34,8 @@ export function resolveMediaCapabilities(
  * Only a flag that is literally `true` on THIS row earns a badge.
  */
 export function getConnectorModelCapabilityBadges(
-  row: Pick<ConnectorModel, 'supportsVision' | 'supportsAudio' | 'supportsVideoInput'>,
+  row: Pick<ConnectorModel, 'supportsVision' | 'supportsAudio' | 'supportsVideoInput'> &
+    Partial<Pick<ConnectorModel, 'provider' | 'modelKey'>>,
 ): ModelCapabilityBadge[] {
   const badges: ModelCapabilityBadge[] = [];
   if (row.supportsVision === true) {
@@ -44,6 +46,15 @@ export function getConnectorModelCapabilityBadges(
   }
   if (row.supportsVideoInput === true) {
     badges.push(ModelCapabilityBadge.VideoInput);
+  }
+  // Video-OUTPUT models (Veo, Grok Imagine Video) are ordinary CHAT rows in the
+  // catalog with no flag of their own, so they are recognised by model id.
+  if (
+    row.provider !== undefined &&
+    row.modelKey !== undefined &&
+    isVideoOutputModel(row.provider, row.modelKey)
+  ) {
+    badges.push(ModelCapabilityBadge.VideoOutput);
   }
   return badges;
 }

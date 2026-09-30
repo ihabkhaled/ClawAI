@@ -801,6 +801,14 @@ export const ru: TranslationDictionary = {
     judge: 'Арбитр',
     live: 'В эфире',
     loadingImage: 'Загрузка изображения...',
+    videoCancelling: 'Отмена…',
+    videoCancelAria: 'Отменить создание видео',
+    videoGenerationFailedRetry: 'Не удалось создать видео. Повторить?',
+    loadingVideo: 'Загрузка видео...',
+    videoTakesMinutes:
+      'Создание видео может занять несколько минут. Можно продолжать общение, пока оно создаётся.',
+    videoLoadFailed: 'Не удалось загрузить видео',
+    videoLoadFailedHint: 'Перезагрузите страницу и попробуйте снова.',
     imageStage: {
       queued: 'В очереди на генерацию изображения',
       connecting: 'Подключение к движку изображений',

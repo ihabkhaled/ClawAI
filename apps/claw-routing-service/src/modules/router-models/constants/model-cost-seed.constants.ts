@@ -605,7 +605,7 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
   // model with no row here cannot be reserved and so cannot be generated.
   Object.freeze({
     provider: 'GEMINI',
-    modelKey: 'models/veo-3.1-lite-generate-preview',
+    modelKey: 'veo-3.1-lite-generate-preview',
     inputPerMillionMicroUsd: 0,
     cachedInputPerMillionMicroUsd: null,
     outputPerMillionMicroUsd: 0,
@@ -616,7 +616,7 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
   }),
   Object.freeze({
     provider: 'GEMINI',
-    modelKey: 'models/veo-3.1-fast-generate-preview',
+    modelKey: 'veo-3.1-fast-generate-preview',
     inputPerMillionMicroUsd: 0,
     cachedInputPerMillionMicroUsd: null,
     outputPerMillionMicroUsd: 0,
@@ -627,7 +627,7 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
   }),
   Object.freeze({
     provider: 'GEMINI',
-    modelKey: 'models/veo-3.1-generate-preview',
+    modelKey: 'veo-3.1-generate-preview',
     inputPerMillionMicroUsd: 0,
     cachedInputPerMillionMicroUsd: null,
     outputPerMillionMicroUsd: 0,

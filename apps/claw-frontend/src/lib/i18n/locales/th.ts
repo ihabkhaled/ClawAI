@@ -778,6 +778,13 @@ export const th: TranslationDictionary = {
     judge: 'ผู้พิพากษา',
     live: 'สด',
     loadingImage: 'กำลังโหลดภาพ...',
+    videoCancelling: 'กำลังยกเลิก…',
+    videoCancelAria: 'ยกเลิกการสร้างวิดีโอ',
+    videoGenerationFailedRetry: 'สร้างวิดีโอไม่สำเร็จ ลองอีกครั้งไหม?',
+    loadingVideo: 'กำลังโหลดวิดีโอ...',
+    videoTakesMinutes: 'วิดีโออาจใช้เวลาสองสามนาที คุณแชทต่อได้ระหว่างที่กำลังสร้าง',
+    videoLoadFailed: 'ไม่สามารถโหลดวิดีโอได้',
+    videoLoadFailedHint: 'โหลดหน้าใหม่แล้วลองอีกครั้ง',
     imageStage: {
       queued: 'รอคิวสร้างภาพ',
       connecting: 'กำลังเชื่อมต่อกับรันไทม์ภาพ',

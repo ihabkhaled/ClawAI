@@ -344,6 +344,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/videos",
+      "port": 4012,
+      "service": "image-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/workspace",
       "port": 4014,
       "service": "workspace-service",

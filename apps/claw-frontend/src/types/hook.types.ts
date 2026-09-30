@@ -87,6 +87,7 @@ import type {
   SanitizedResearchProvider,
 } from './research.types';
 import type { UploadProgressSnapshot } from './upload-progress.types';
+import type { VideoGeneration } from './video-generation.types';
 import type {
   WorkspaceConnector,
   WorkspaceHealthEvent,
@@ -1313,4 +1314,27 @@ export type UseOrchestrationComposerReturn = {
   researchPayload: OrchestrationResearchPayload;
   /** Called after a successful send; a lab run is one question. */
   clear: () => void;
+};
+
+export type UseVideoGenerationBubbleStateParams = {
+  generationId: string;
+};
+
+export type UseVideoGenerationBubbleStateReturn = {
+  /** The row the card is showing: the chain head after an AUTO fallback. */
+  activeGenId: string;
+  generation: VideoGeneration | null;
+  handleRetry: () => void;
+  /** The shown row is still in progress, so Cancel is offered. */
+  canCancel: boolean;
+  /** A cancel request is in flight (the button is disabled meanwhile). */
+  isCancelling: boolean;
+  handleCancel: () => void;
+};
+
+export type UseAuthenticatedVideoReturn = {
+  /** Object URL of the fetched clip, or null until it arrives. */
+  blobUrl: string | null;
+  /** The clip could not be fetched. */
+  failed: boolean;
 };

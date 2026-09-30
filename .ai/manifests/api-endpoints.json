@@ -1802,6 +1802,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/files/store-generated-video",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/files/store-image",
         "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
       },
@@ -1896,8 +1901,38 @@
       },
       {
         "method": "GET",
+        "route": "/internal/videos/:generationId",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/videos/:generationId/assistant-message",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/videos/generate",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/metrics",
         "source": "apps/claw-image-service/src/modules/metrics/controllers/metrics.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/videos/:id",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/videos/:id/cancel",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/videos/:id/retry",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
       }
     ],
     "claw-llamacpp-service": [
@@ -3733,5 +3768,5 @@
     ]
   },
   "generated": true,
-  "total": 739
+  "total": 746
 }

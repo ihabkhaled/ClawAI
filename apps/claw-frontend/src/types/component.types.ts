@@ -2992,3 +2992,43 @@ export type ChangePasswordCardProps = {
   isPending: boolean;
   t: TranslateFunction;
 };
+
+export type VideoGenerationBubbleProps = {
+  generationId: string;
+  prompt: string;
+};
+
+export type VideoLoadingStateProps = {
+  /** Live stage line (from the status), announced politely to screen readers. */
+  stageText: string;
+  prompt: string;
+  provider?: string;
+  model?: string;
+  /** "Video can take a few minutes" reassurance. */
+  note?: string;
+  /** Present while the owner may cancel: renders the Cancel button. */
+  onCancel?: () => void;
+  cancelLabel?: string;
+  cancelAriaLabel?: string;
+  isCancelling?: boolean;
+};
+
+export type VideoCompletedStateProps = {
+  blobUrl: string;
+  prompt: string;
+};
+
+export type VideoErrorStateProps = {
+  status: string;
+  error?: string | null;
+  provider?: string;
+  model?: string;
+  /** Absent when retrying cannot help (the clip exists but could not be loaded). */
+  onRetry?: () => void;
+};
+
+export type VideoCancelledStateProps = {
+  label: string;
+  retryLabel: string;
+  onRetry: () => void;
+};

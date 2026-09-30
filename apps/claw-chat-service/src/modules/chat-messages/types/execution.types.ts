@@ -150,6 +150,8 @@ export type LlmResponse = {
    */
   reasoning?: string;
   imageGenerationId?: string;
+  /** The image-service video generation this turn dispatched (ADR-137). */
+  videoGenerationId?: string;
   fileGenerationId?: string;
   /** Set instead of a file when the plan's AI-file allowance is used (ADR-110). */
   fileLimit?: FileLimitNotice;

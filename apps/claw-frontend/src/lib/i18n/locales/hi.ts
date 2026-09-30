@@ -794,6 +794,13 @@ export const hi: TranslationDictionary = {
     judge: 'निर्णायक',
     live: 'लाइव',
     loadingImage: 'छवि लोड हो रही है...',
+    videoCancelling: 'रद्द किया जा रहा है…',
+    videoCancelAria: 'वीडियो बनाना रद्द करें',
+    videoGenerationFailedRetry: 'वीडियो बनाना विफल रहा। फिर कोशिश करें?',
+    loadingVideo: 'वीडियो लोड हो रहा है...',
+    videoTakesMinutes: 'वीडियो बनने में कुछ मिनट लग सकते हैं। बनते समय आप चैट जारी रख सकते हैं।',
+    videoLoadFailed: 'वीडियो लोड नहीं हो सका',
+    videoLoadFailedHint: 'फिर से कोशिश करने के लिए पेज रीलोड करें।',
     imageStage: {
       queued: 'छवि कतार में प्रतीक्षा',
       connecting: 'छवि रनटाइम से जुड़ रहे हैं',

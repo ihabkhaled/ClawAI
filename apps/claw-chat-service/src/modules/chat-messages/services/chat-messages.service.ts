@@ -3,9 +3,13 @@ import { HttpStatus, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import {
   classifyImageIntent,
+  classifyVideoIntent,
   hasAttachedImageMime,
   MultimodalImageIntent,
   resolveImageCapabilityProvider,
+  resolveVideoCapabilityProvider,
+  VIDEO_AUTO_MODEL_BY_PROVIDER,
+  VIDEO_AUTO_PROVIDER_ORDER,
 } from '@claw/shared-utilities';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import {
@@ -78,7 +82,7 @@ import { routerTraceEmittedSchema } from '../dto/router-trace.dto';
 import { RouterTraceStreamService } from './router-trace-stream.service';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
 import { ZeroRetentionService } from './zero-retention.service';
-import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
+import { THREAD_HISTORY_FETCH_LIMIT, VIDEO_PROVIDER_PREFIX } from '../../../common/constants';
 import { ModelContextWindowClient } from '../clients/model-context-window.client';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
@@ -1455,6 +1459,8 @@ export class ChatMessagesService implements OnModuleInit {
     chronologicalMessages: ChatMessage[],
   ): Promise<MessageRoutedData> {
     let effectivePayload = this.detectImageOutputModel(payload);
+    effectivePayload = this.detectVideoOutputModel(effectivePayload);
+    effectivePayload = this.detectVideoRequest(effectivePayload, chronologicalMessages);
     effectivePayload = this.detectImageFollowUp(effectivePayload, thread, chronologicalMessages);
     effectivePayload = this.detectFileGenerationFollowUp(
       effectivePayload,
@@ -2178,7 +2184,9 @@ export class ChatMessagesService implements OnModuleInit {
   // the FE can show whether counts were native or estimated and which context
   // produced them, surviving a page refresh.
   private buildTokenUsageMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
-    return llmResponse.imageGenerationId || llmResponse.fileGenerationId
+    return llmResponse.imageGenerationId ||
+      llmResponse.videoGenerationId ||
+      llmResponse.fileGenerationId
       ? {}
       : {
           tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.CHAT,
@@ -2233,6 +2241,9 @@ export class ChatMessagesService implements OnModuleInit {
   private buildGenerationMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
     if (llmResponse.imageGenerationId) {
       return { type: 'image_generation', generationId: llmResponse.imageGenerationId };
+    }
+    if (llmResponse.videoGenerationId) {
+      return { type: 'video_generation', generationId: llmResponse.videoGenerationId };
     }
     if (llmResponse.fileGenerationId) {
       return { type: 'file_generation', generationId: llmResponse.fileGenerationId };
@@ -2897,6 +2908,52 @@ export class ChatMessagesService implements OnModuleInit {
       `Image-output model detected: ${payload.selectedProvider}/${payload.selectedModel} → ${target}`,
     );
     return { ...payload, selectedProvider: target };
+  }
+
+  /**
+   * A manually picked Veo or Grok Imagine Video model is a video-OUTPUT model that
+   * the catalog lists as an ordinary CHAT model, so a pick reached `/chat/completions`:
+   * Gemini answered 404 and xAI 400 (ADR-137). Redirect it to its `VIDEO_*` provider.
+   */
+  private detectVideoOutputModel(payload: MessageRoutedData): MessageRoutedData {
+    const target = resolveVideoCapabilityProvider(payload.selectedProvider, payload.selectedModel);
+    if (target === undefined) {
+      return payload;
+    }
+    this.logger.log(
+      `Video-output model detected: ${payload.selectedProvider}/${payload.selectedModel} → ${target}`,
+    );
+    return { ...payload, selectedProvider: target };
+  }
+
+  /**
+   * "Can you generate a video about ..." in AUTO mode goes to video generation. Only
+   * AUTO: a user who picked a chat model asked THAT model, and a message that merely
+   * talks about video (a call, an editor, "summarise this video") never matches the
+   * classifier. The cheapest capable provider leads and a failure falls through to
+   * the next inside image-service.
+   */
+  private detectVideoRequest(
+    payload: MessageRoutedData,
+    messages: ChatMessage[],
+  ): MessageRoutedData {
+    if (
+      payload.routingMode !== 'AUTO' ||
+      payload.selectedProvider.startsWith(VIDEO_PROVIDER_PREFIX)
+    ) {
+      return payload;
+    }
+    const text = this.extractLatestUserText(messages);
+    if (text === null || !classifyVideoIntent(text)) {
+      return payload;
+    }
+    const provider = VIDEO_AUTO_PROVIDER_ORDER.at(0);
+    const model = provider === undefined ? undefined : VIDEO_AUTO_MODEL_BY_PROVIDER.get(provider);
+    if (provider === undefined || model === undefined) {
+      return payload;
+    }
+    this.logger.log(`Video request detected in AUTO → ${provider}/${model}`);
+    return { ...payload, selectedProvider: provider, selectedModel: model };
   }
 
   private detectFileGenerationFollowUp(

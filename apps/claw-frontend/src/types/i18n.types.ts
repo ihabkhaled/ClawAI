@@ -733,6 +733,13 @@ export type TranslationDictionary = {
     judge: string;
     live: string;
     loadingImage: string;
+    videoCancelling: string;
+    videoCancelAria: string;
+    videoGenerationFailedRetry: string;
+    loadingVideo: string;
+    videoTakesMinutes: string;
+    videoLoadFailed: string;
+    videoLoadFailedHint: string;
     /** Live runtime stage on a chat image card (ComfyUI / SD WebUI). */
     imageStage: {
       queued: string;
@@ -6409,6 +6416,7 @@ export type MediaUiLocaleTranslation = {
     audioInput: string;
     videoInput: string;
     imageOutput: string;
+    videoOutput: string;
   };
   attachmentState: {
     listLabel: string;
@@ -6467,6 +6475,17 @@ export type MediaUiLocaleTranslation = {
     unknown: string;
   };
   imageStatus: {
+    queued: string;
+    starting: string;
+    generating: string;
+    finalizing: string;
+    completed: string;
+    failed: string;
+    timedOut: string;
+    cancelled: string;
+    preparing: string;
+  };
+  videoStatus: {
     queued: string;
     starting: string;
     generating: string;
