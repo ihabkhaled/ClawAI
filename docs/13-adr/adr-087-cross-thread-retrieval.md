@@ -353,7 +353,7 @@ A thread with `useMemory=false` or `useCrossThreadContext=false` is excluded
 from every OTHER thread's candidate search. Before this the switches only
 controlled what the thread itself read, so a chat the user had opted out could
 still be quoted into another. Decided as the conservative (more private)
-reading of the switches; recorded as _inferred_ in REQ-CHAT-002 until the owner
-confirms. Risk: SEC-006. The settings copy no longer says the switch is off by default (it has been on
+reading of the switches; confirmed by the owner 2026-09-30 (REQ-CHAT-002); "Use memory" off does not
+stop a chat reading other chats. Risk: SEC-006. The settings copy no longer says the switch is off by default (it has been on
 by default since 2026-09-17; D1 above describes the original decision) — do not
 restore that sentence.
