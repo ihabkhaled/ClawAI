@@ -20,6 +20,12 @@ vi.mock('@/lib/models/public-models-api', () => ({
   fetchPublicModelCatalog: () => Promise.resolve(catalogResult.value),
 }));
 
+// The roster is a client component that reads its strings through the locale
+// context; this server-component test renders it with no provider around it.
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
+}));
+
 vi.mock('next/headers', () => ({
   headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': 'en' }),
 }));
@@ -40,11 +46,26 @@ describe('PublicLaunchPage', () => {
   // Replaces a test that asserted a seven-name hardcoded list. That list
   // included DeepSeek, xAI Grok and llama.cpp, which have no connected models
   // here — the page promised three vendors a visitor could not reach.
-  it('names the provider families the live catalog reports', async () => {
+  it('shows the live roster: each provider the catalog reports, with its real models', async () => {
+    const model = (modelKey: string, displayName: string): unknown => ({
+      modelKey,
+      displayName,
+    });
     catalogResult.value = {
       providers: [
-        { provider: 'OPENAI', displayName: 'OpenAI', modelCount: 2, models: [] },
-        { provider: 'ANTHROPIC', displayName: 'Anthropic', modelCount: 1, models: [] },
+        {
+          provider: 'OPENAI',
+          displayName: 'OpenAI',
+          modelCount: 2,
+          models: [model('gpt-5', 'GPT 5'), model('gpt-5-mini', 'GPT 5 Mini')],
+        },
+        {
+          provider: 'ANTHROPIC',
+          displayName: 'Anthropic',
+          modelCount: 1,
+          models: [model('claude-x', 'Claude X')],
+        },
+        { provider: 'DEEPSEEK', displayName: 'DeepSeek', modelCount: 0, models: [] },
       ],
       totalModelCount: 3,
       providerCount: 2,
@@ -55,7 +76,10 @@ describe('PublicLaunchPage', () => {
 
     expect(screen.getByText('OpenAI')).toBeInTheDocument();
     expect(screen.getByText('Anthropic')).toBeInTheDocument();
-    // Not connected here, so it must not be named.
+    expect(screen.getByText('GPT 5')).toBeInTheDocument();
+    expect(screen.getByText('Claude X')).toBeInTheDocument();
+    // A provider with no synced model, or one not connected here, must not be named.
+    expect(screen.queryByText('DeepSeek')).not.toBeInTheDocument();
     expect(screen.queryByText('xAI Grok')).not.toBeInTheDocument();
     expect(screen.getByText(/exact catalog depends/i)).toBeInTheDocument();
   });

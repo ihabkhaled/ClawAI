@@ -15,7 +15,6 @@ const mockGatewayList: CheckoutGatewayView[] = [
     gateway: BillingGateway.PAYPAL,
     mode: 'sandbox',
     publicIdentifier: 'paypal-client-test',
-    testingSoon: false,
   },
 ];
 

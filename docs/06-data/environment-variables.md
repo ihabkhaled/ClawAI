@@ -387,8 +387,8 @@ rejected.
 | `PAYPAL_ENV`                                                     | No                 | `sandbox`              | `sandbox` or `live`; configured production requires `live`     |
 | `NEXT_PUBLIC_PAYPAL_CLIENT_ID`                                   | To render PayPal   | —                      | Public browser client identifier                               |
 | `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`   | To enable Paymob   | —                      | Complete Paymob secret/public/HMAC set                         |
+| `PAYMOB_API_KEY`                                                 | To enable Paymob   | —                      | Required: exchanged for the auth token every Paymob call uses  |
 | `PAYMOB_CARD_INTEGRATION_ID`                                     | To enable Paymob   | —                      | Paymob hosted-card integration                                 |
-| `PAYMOB_API_KEY`                                                 | No                 | —                      | Legacy Paymob auth-token API key                               |
 | `PAYMOB_CURRENCY`, `NEXT_PUBLIC_PAYMOB_PUBLIC_KEY`               | No / render Paymob | `EGP` / —              | Settlement currency and safe browser key                       |
 | `EXCHANGE_RATE_API_BASE_URL`, `EXCHANGE_RATE_CACHE_TTL_MS`       | No                 | provider / `3600000`   | FX source and cache lifetime                                   |
 | `USD_TO_EGP_FALLBACK_RATE`                                       | No                 | `0`                    | Non-zero emergency fallback; zero fails closed                 |

@@ -78,7 +78,6 @@ function baseHook(overrides: Partial<UseBillingPageReturn> = {}): UseBillingPage
           gateway: BillingGateway.PAYPAL,
           mode: 'sandbox',
           publicIdentifier: 'client-id',
-          testingSoon: false,
         },
       ],
       isLoading: false,

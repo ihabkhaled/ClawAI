@@ -119,7 +119,6 @@ describe('GatewayConfigService', () => {
       {
         gateway: BillingGateway.PAYPAL,
         mode: GatewayMode.SANDBOX,
-        testingSoon: false,
         publicIdentifier: 'public-client-id',
         // null means "settles in the plan's own currency" — PayPal charges the
         // canonical USD price however the visitor's prices are displayed.
@@ -127,6 +126,47 @@ describe('GatewayConfigService', () => {
       },
     ]);
     expect(JSON.stringify(result)).not.toContain('secret');
+  });
+});
+
+describe('GatewayConfigService Paymob checkout', () => {
+  beforeEach(() => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      PAYMENT_TOKEN_ENCRYPTION_KEY: KEY,
+      PAYMENT_TOKEN_KEY_VERSION: 1,
+    } as ReturnType<typeof AppConfig.get>);
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('lists an enabled Paymob like any other gateway: no static "testing soon" block', async () => {
+    const repository = { findEnabled: vi.fn() };
+    repository.findEnabled.mockResolvedValue([
+      {
+        id: 'gateway-2',
+        gateway: BillingGateway.PAYMOB,
+        isEnabled: true,
+        mode: GatewayMode.LIVE,
+        encryptedCredentials: {
+          publicKey: encrypt(BillingGateway.PAYMOB, 'publicKey', 'egy_pk_live_public'),
+          secretKey: encrypt(BillingGateway.PAYMOB, 'secretKey', 'egy_sk_live_secret'),
+        },
+        options: {},
+        encryptionKeyVersion: 1,
+        createdAt: new Date('2026-09-30T00:00:00.000Z'),
+        updatedAt: new Date('2026-09-30T00:00:00.000Z'),
+      },
+    ]);
+
+    const [entry] = await new GatewayConfigService(repository as never).listCheckout();
+
+    expect(entry).toMatchObject({
+      gateway: BillingGateway.PAYMOB,
+      mode: GatewayMode.LIVE,
+      publicIdentifier: 'egy_pk_live_public',
+    });
+    expect(Object.keys(entry ?? {})).not.toContain('testingSoon');
+    expect(JSON.stringify(entry)).not.toContain('egy_sk_live_secret');
   });
 });
 

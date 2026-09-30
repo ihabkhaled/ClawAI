@@ -4868,7 +4868,7 @@ export const ar: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (تجريبي – قريبًا)',
+      paymobCard: 'Paymob (بطاقة)',
       unavailable: 'بوابات الدفع غير متاحة',
     },
     proration: {

@@ -5014,7 +5014,7 @@ export const de: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Test – demnächst)',
+      paymobCard: 'Paymob (Karte)',
       unavailable: 'Zahlungsanbieter sind nicht verfügbar',
     },
     proration: {
