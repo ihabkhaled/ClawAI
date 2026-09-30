@@ -1,6 +1,7 @@
 import { Info } from 'lucide-react';
 
 import { PasswordInput } from '@/components/common/password-input';
+import { ConnectorGatewayHeadersField } from '@/components/connectors/connector-gateway-headers-field';
 import { ConnectorPresetLinks } from '@/components/connectors/connector-preset-links';
 import { ConnectorProviderCombobox } from '@/components/connectors/connector-provider-combobox';
 import { FieldHint } from '@/components/connectors/field-hint';
@@ -40,6 +41,7 @@ export function ConnectorFormFields({
   defaultBaseUrl,
   selectedPreset,
   resolvedBaseUrlPreview,
+  gatewayHeaders,
 }: ConnectorFormFieldsProps): React.ReactElement {
   const { t } = useTranslation();
   return (
@@ -199,6 +201,12 @@ export function ConnectorFormFields({
           ) : null}
         </div>
       ) : null}
+
+      <ConnectorGatewayHeadersField
+        isEditing={isEditing}
+        gatewayHeaders={gatewayHeaders}
+        error={fieldErrors.gatewayHeaders}
+      />
 
       {!isEditing ? (
         <div className="bg-muted/50 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs">

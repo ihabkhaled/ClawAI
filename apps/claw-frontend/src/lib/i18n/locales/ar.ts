@@ -1032,6 +1032,17 @@ export const ar: TranslationDictionary = {
     regionPlaceholder: 'مثال: us-east-1',
     workspaceIdPlaceholder: 'مثال: wrkspc_01AbCd...',
     saveFirstThenTest: 'احفظ الموصّل أولًا ثم اختبره',
+    gatewayHeaders: 'ترويسات البوابة (اختياري)',
+    gatewayHeadersHelp:
+      'ترويسات إضافية لبوابة نماذج لغوية أمام المزوّد (LiteLLM وPortkey وHelicone). تُخزَّن القيم مشفّرة ولا تُعرض مرة أخرى، ولا تحل محل مفتاح API أبدًا.',
+    gatewayHeadersEditHelp: 'تُحفظ الترويسات المخزّنة ما لم تضف ترويسات جديدة، فتحل محلها جميعًا.',
+    gatewayHeaderName: 'اسم الترويسة',
+    gatewayHeaderValue: 'قيمة الترويسة',
+    addGatewayHeader: 'إضافة ترويسة',
+    removeGatewayHeader: 'إزالة الترويسة',
+    clearGatewayHeaders: 'حذف ترويسات البوابة المخزّنة',
+    gatewayHeadersInvalid:
+      'تحتاج كل ترويسة إلى اسم صالح وغير محجوز وفريد وقيمة في سطر واحد (10 ترويسات كحد أقصى).',
     selectProvider: 'اختر مزوّدًا',
     groupConnected: 'مزوّدون متصلون',
     groupLowCost: 'استدلال سريع ومنخفض التكلفة',

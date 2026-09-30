@@ -95,6 +95,10 @@ export type MessageRoutedData = {
   // F6 (ADR-119) — on a FILE_GENERATION decision made in MANUAL_MODEL, the
   // model the user picked; it writes the file's content first.
   fileWriter?: FileContentCandidate;
+  // F055 — never on the wire. Set by chat-service itself when the turn's
+  // request carried `X-Claw-Zero-Retention: 1`, so the completion event goes
+  // out without content and the turn is redacted once it ends.
+  zeroRetention?: boolean;
 };
 
 export type LlmResponse = {

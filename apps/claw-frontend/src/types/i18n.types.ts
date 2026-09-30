@@ -1002,6 +1002,15 @@ export type TranslationDictionary = {
     regionPlaceholder: string;
     workspaceIdPlaceholder: string;
     saveFirstThenTest: string;
+    gatewayHeaders: string;
+    gatewayHeadersHelp: string;
+    gatewayHeadersEditHelp: string;
+    gatewayHeaderName: string;
+    gatewayHeaderValue: string;
+    addGatewayHeader: string;
+    removeGatewayHeader: string;
+    clearGatewayHeaders: string;
+    gatewayHeadersInvalid: string;
     selectProvider: string;
     groupConnected: string;
     groupLowCost: string;

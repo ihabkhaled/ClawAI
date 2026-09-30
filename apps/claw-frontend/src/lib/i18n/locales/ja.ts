@@ -1048,6 +1048,18 @@ export const ja: TranslationDictionary = {
     regionPlaceholder: '例: us-east-1',
     workspaceIdPlaceholder: '例: wrkspc_01AbCd...',
     saveFirstThenTest: 'まずコネクタを保存してからテストしてください',
+    gatewayHeaders: 'ゲートウェイヘッダー（任意）',
+    gatewayHeadersHelp:
+      'プロバイダーの前段にある LLM ゲートウェイ（LiteLLM、Portkey、Helicone）用の追加ヘッダーです。値は暗号化して保存され、再表示されません。API キーを置き換えることはありません。',
+    gatewayHeadersEditHelp:
+      '新しいヘッダーを追加しない限り、保存済みのヘッダーは保持されます。追加するとすべて置き換えられます。',
+    gatewayHeaderName: 'ヘッダー名',
+    gatewayHeaderValue: 'ヘッダー値',
+    addGatewayHeader: 'ヘッダーを追加',
+    removeGatewayHeader: 'ヘッダーを削除',
+    clearGatewayHeaders: '保存済みのゲートウェイヘッダーを削除',
+    gatewayHeadersInvalid:
+      '各ヘッダーには、有効で予約されていない一意の名前と 1 行の値が必要です（最大 10 個）。',
     selectProvider: 'プロバイダーを選択してください',
     groupConnected: '接続済みプロバイダー',
     groupLowCost: '低コストで高速な推論',

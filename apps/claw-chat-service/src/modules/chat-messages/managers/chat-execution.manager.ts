@@ -797,7 +797,9 @@ export class ChatExecutionManager implements OnModuleInit {
         'INTERNAL_ERROR',
       );
     }
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(candidate.provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(
+      candidate.provider,
+    );
     const initialBody = this.buildOllamaChatRequestBody(
       candidate.model,
       context,
@@ -814,6 +816,7 @@ export class ChatExecutionManager implements OnModuleInit {
       initialBody,
       baseUrl,
       apiKey,
+      gatewayHeaders,
       startTime,
       usedFallback,
       context,
@@ -2804,7 +2807,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }): Promise<InternalGenerateResponse> {
     const { provider, model, systemPrompt, userPrompt, maxTokens } = args;
     const config = AppConfig.get();
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
     // Cloud Ollama (and any other provider routed through the OLLAMA
     // connector) speaks the *native* Ollama chat API at `/api/chat`, not
@@ -2861,6 +2864,7 @@ export class ChatExecutionManager implements OnModuleInit {
       // Connector baseUrl, declared from the base rather than from `url`.
       allowedHosts: declaredHost(baseUrl),
       apiKey,
+      gatewayHeaders,
       body,
       provider,
       model,
@@ -2894,6 +2898,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     body: OpenAiChatRequest | OllamaChatRequest;
     provider: string;
     model: string;
@@ -2908,7 +2913,10 @@ export class ChatExecutionManager implements OnModuleInit {
         url: args.url,
         allowedHosts: args.allowedHosts,
         method: 'POST',
-        headers: { Authorization: `Bearer ${args.apiKey}` },
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${args.apiKey}` },
+          args.gatewayHeaders,
+        ),
         body: args.body,
         timeoutMs: args.timeoutMs,
       });
@@ -3392,6 +3400,7 @@ export class ChatExecutionManager implements OnModuleInit {
     initialBody: OllamaChatRequest;
     baseUrl: string;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     startTime: number;
     usedFallback: boolean;
     context: AssembledContext;
@@ -3412,6 +3421,7 @@ export class ChatExecutionManager implements OnModuleInit {
       url,
       allowedHosts,
       apiKey,
+      gatewayHeaders: args.gatewayHeaders,
       baseUrl,
       provider,
       model,
@@ -3438,6 +3448,7 @@ export class ChatExecutionManager implements OnModuleInit {
         url,
         allowedHosts,
         apiKey,
+        gatewayHeaders: args.gatewayHeaders,
         initialBody,
         messages: loopResult.messages,
         provider,
@@ -3482,6 +3493,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     baseUrl: string;
     provider: string;
     model: string;
@@ -3517,6 +3529,7 @@ export class ChatExecutionManager implements OnModuleInit {
         url: args.url,
         allowedHosts: args.allowedHosts,
         apiKey: args.apiKey,
+        gatewayHeaders: args.gatewayHeaders,
         initialBody: args.initialBody,
         messages,
         provider: args.provider,
@@ -3565,6 +3578,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     initialBody: OllamaChatRequest;
     messages: OllamaChatMessage[];
     provider: string;
@@ -3609,7 +3623,10 @@ export class ChatExecutionManager implements OnModuleInit {
         url,
         allowedHosts: args.allowedHosts,
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${apiKey}` },
+          args.gatewayHeaders,
+        ),
         body,
         timeoutMs,
       });
@@ -3680,6 +3697,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     initialBody: OllamaChatRequest;
     messages: OllamaChatMessage[];
     provider: string;
@@ -3707,7 +3725,10 @@ export class ChatExecutionManager implements OnModuleInit {
         url,
         allowedHosts: args.allowedHosts,
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${apiKey}` },
+          args.gatewayHeaders,
+        ),
         body,
         timeoutMs,
       });

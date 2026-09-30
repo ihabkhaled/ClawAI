@@ -32,6 +32,7 @@ import {
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { SetFeedbackDto, setFeedbackSchema } from '../dto/set-feedback.dto';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
+import { ZeroRetentionRequested } from '../../../app/decorators/zero-retention.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
 import { type ConsensusResponse } from '../types/consensus.types';
 import { type EscalationChainResponse } from '../types/escalation-chain.types';
@@ -57,8 +58,9 @@ export class ChatMessagesController {
     @CurrentUser() user: AuthenticatedUser,
     @Req() req: Request,
     @Body(new ZodValidationPipe(createMessageSchema)) dto: CreateMessageDto,
+    @ZeroRetentionRequested() zeroRetention: boolean,
   ): Promise<ChatMessage> {
-    return this.chatMessagesService.createMessage(user.id, dto, extractBearer(req));
+    return this.chatMessagesService.createMessage(user.id, dto, extractBearer(req), zeroRetention);
   }
 
   @Post('parallel')

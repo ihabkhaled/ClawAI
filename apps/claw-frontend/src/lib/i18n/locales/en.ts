@@ -1042,6 +1042,18 @@ export const en: TranslationDictionary = {
     regionPlaceholder: 'e.g., us-east-1',
     workspaceIdPlaceholder: 'e.g., wrkspc_01AbCd...',
     saveFirstThenTest: 'Save the connector first, then test',
+    gatewayHeaders: 'Gateway headers (optional)',
+    gatewayHeadersHelp:
+      'Extra headers for an LLM gateway in front of the provider (LiteLLM, Portkey, Helicone). Values are stored encrypted and never shown again. They never replace the API key.',
+    gatewayHeadersEditHelp:
+      'Stored headers are kept unless you add new ones, which replace them all.',
+    gatewayHeaderName: 'Header name',
+    gatewayHeaderValue: 'Header value',
+    addGatewayHeader: 'Add header',
+    removeGatewayHeader: 'Remove header',
+    clearGatewayHeaders: 'Remove the stored gateway headers',
+    gatewayHeadersInvalid:
+      'Each header needs a valid, unreserved, unique name and a one-line value (at most 10 headers).',
     selectProvider: 'Select a provider',
     groupConnected: 'Connected providers',
     groupLowCost: 'Low-cost and fast inference',

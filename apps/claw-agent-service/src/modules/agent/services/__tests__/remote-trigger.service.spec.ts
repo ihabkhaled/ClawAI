@@ -5,8 +5,10 @@ import { REMOTE_TRIGGER_PENDING_MARKER } from '../../constants/remote-trigger.co
 import {
   RiskLabel,
   type ScheduledCommand,
+  ScheduledCommandKind,
   ScheduledCommandStatus,
   type TerminalCommand,
+  TerminalCommandKind,
   TerminalCommandStatus,
 } from '../../../../generated/prisma';
 
@@ -18,7 +20,11 @@ function scheduled(userId: string): ScheduledCommand {
     userId,
     deviceId: 'device-1',
     name: 'nightly tests',
+    kind: ScheduledCommandKind.COMMAND,
     command: 'npm test',
+    model: null,
+    repoRef: null,
+    runnerLabels: [],
     workingDir: null,
     intervalMinutes: 60,
     status: ScheduledCommandStatus.ENABLED,
@@ -37,6 +43,9 @@ function command(id: string): TerminalCommand {
     userId: 'user-1',
     command: 'npm test',
     workingDir: null,
+    kind: TerminalCommandKind.SHELL,
+    model: null,
+    repoRef: null,
     status: TerminalCommandStatus.PENDING_APPROVAL,
     riskScore: 0,
     riskLabel: RiskLabel.LOW,

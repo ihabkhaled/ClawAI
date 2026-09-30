@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type ChatThread, Prisma, ThreadOrigin } from '../../../generated/prisma';
+import { type ChatThread, Prisma } from '../../../generated/prisma';
+import { threadOriginCondition } from '../utilities/thread-origin.utility';
 import { type SortOrder } from '../../../common/enums';
 import {
   THREAD_LINEAGE_BRANCH_LIMIT,
@@ -170,7 +171,8 @@ export class ChatThreadsRepository {
       // Always narrowed to one origin. Leaving it off would list every
       // conversation the user has, which is how the coding agent's runs ended
       // up in the web chat list in the first place.
-      origin: filters.origin ?? ThreadOrigin.WEB,
+      // CODING_AGENT admits the CLI's threads too (F094): one shared history.
+      origin: threadOriginCondition(filters.origin),
     };
 
     if (filters.isPinned !== undefined) {

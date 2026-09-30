@@ -78,6 +78,9 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
 import { ContextReceiptsModule } from '../context-receipts/context-receipts.module';
 import { RuntimeV2RunController } from './controllers/runtime-v2-run.controller';
 import { RuntimeV2Store } from './repositories/runtime-v2.store';
+import { ZeroRetentionMarkerStore } from './repositories/zero-retention-marker.store';
+import { ZeroRetentionRepository } from './repositories/zero-retention.repository';
+import { ZeroRetentionService } from './services/zero-retention.service';
 import { RuntimeV2AccessService } from './services/runtime-v2-access.service';
 import { RuntimeV2RunService } from './services/runtime-v2-run.service';
 import { RuntimeV2StreamService } from './services/runtime-v2-stream.service';
@@ -87,6 +90,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
 import { RuntimeV2ToolCatalogController } from './controllers/runtime-v2-tool-catalog.controller';
 import { RuntimeV2ToolCatalogService } from './services/runtime-v2-tool-catalog.service';
 import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalog.store';
+import { RuntimeV2ThreadActivityController } from './controllers/runtime-v2-thread-activity.controller';
+import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-activity.service';
 
 @Module({
   imports: [ContextReceiptsModule],
@@ -100,6 +105,7 @@ import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalo
     RuntimeV2RunController,
     RuntimeV2CommandController,
     RuntimeV2ToolCatalogController,
+    RuntimeV2ThreadActivityController,
   ],
   providers: [
     ResearchGateService,
@@ -178,6 +184,9 @@ import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalo
     FileDeliveryRecordService,
     ChatThreadsRepository,
     RuntimeV2Store,
+    ZeroRetentionMarkerStore,
+    ZeroRetentionRepository,
+    ZeroRetentionService,
     RuntimeV2AccessService,
     RuntimeV2RunService,
     RuntimeV2StreamService,
@@ -185,6 +194,7 @@ import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalo
     RuntimeV2LoopManager,
     RuntimeV2ToolCatalogStore,
     RuntimeV2ToolCatalogService,
+    RuntimeV2ThreadActivityService,
   ],
   exports: [ChatMessagesService, ChatMessagesRepository, FileDeliveryRecordService],
 })

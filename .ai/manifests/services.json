@@ -4,7 +4,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-agent-service",
-      "endpointCount": 97,
+      "endpointCount": 102,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -36,10 +36,11 @@
         "RecipeRun",
         "RecipeRunStep",
         "RefreshToken",
+        "RunnerCredential",
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 22,
+      "testFiles": 34,
       "testRunner": "vitest"
     },
     {
@@ -70,7 +71,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 108,
+      "endpointCount": 110,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -111,13 +112,13 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 112,
+      "testFiles": 116,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 60,
+      "endpointCount": 61,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -140,7 +141,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 252,
+      "testFiles": 268,
       "testRunner": "vitest"
     },
     {
@@ -215,7 +216,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-file-service",
-      "endpointCount": 30,
+      "endpointCount": 34,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -230,9 +231,10 @@
       "portSource": "shared-constants",
       "prismaModels": [
         "File",
-        "FileChunk"
+        "FileChunk",
+        "PublishedArtifact"
       ],
-      "testFiles": 72,
+      "testFiles": 78,
       "testRunner": "vitest"
     },
     {

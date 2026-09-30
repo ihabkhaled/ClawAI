@@ -25,7 +25,9 @@ export class OrganizationPolicyService {
    */
   async effectiveForUser(userId: string): Promise<EffectivePolicy> {
     const policies = await this.repo.listPoliciesForUser(userId);
-    return policies.length === 0 ? UNCONSTRAINED_POLICY : intersectPolicies(policies.map(toEffectivePolicy));
+    return policies.length === 0
+      ? UNCONSTRAINED_POLICY
+      : intersectPolicies(policies.map(toEffectivePolicy));
   }
 
   async forOrganization(organizationId: string, userId: string): Promise<EffectivePolicy> {
@@ -53,6 +55,9 @@ export class OrganizationPolicyService {
       requireApproval: [...dto.requireApproval],
       maximumRetentionDays: dto.maximumRetentionDays,
       minimumPermissionMode: dto.minimumPermissionMode,
+      rules: dto.rules,
+      trust: dto.trust,
+      mcpServers: dto.mcpServers,
     });
     return toEffectivePolicy(saved);
   }

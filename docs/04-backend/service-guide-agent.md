@@ -187,6 +187,30 @@ a RabbitMQ event consumed by audit-service.
 - **Runners** (`agent-runner.controller.ts`): register, list, dispatch to a
   runner or by label, claim one job at a time; every user endpoint is scoped to
   the caller's own runners and jobs still pass the command policy check.
+- **Runner identity (F100, 2026-09-30):** registration returns a `runnerToken`
+  (`clwr_` + 256 random bits) shown once; only its SHA-256 lives in
+  `runner_credentials`. The session key is minted but never returned for a
+  runner. `POST agent/runners/heartbeat`, `/claim` and
+  `/jobs/:commandId/complete` accept ONLY that token (`RunnerTokenGuard`); a
+  user JWT, device token or session key is 401. Owners rotate
+  (`POST :id/credential/rotate`, old token dies immediately) and revoke
+  (`DELETE :id`, token revoked + session DISCONNECTED); another user's runner
+  is 404. Heartbeat expiry: a runner whose last heartbeat is older than
+  `RUNNER_HEARTBEAT_TTL_SECONDS` (120 s) is not listed, gets no job and
+  claims nothing; its next heartbeat revives it. Completing a job not
+  addressed to the calling runner is 403.
+- **Prompt routines (F099, 2026-09-30):** `POST agent/scheduled-commands` with
+  `kind: PROMPT` (`prompt`, optional `model` as `PROVIDER/model`, optional
+  `repoRef` = workspace folder name, `runnerLabels`) needs no device
+  (`deviceId` is nullable). When due, `SchedulerManager` hands it to
+  `RunnerService.dispatchPrompt`, which queues an APPROVED `TerminalCommand`
+  with `kind: PROMPT` on the owner's live runner carrying every label; none
+  live = deferred to the next tick. The portal does not approve prompts: the
+  runner runs it through the headless SDK and approves each tool call under
+  the `approvalPolicy` it registered with (`ASK`, or
+  `AUTO_APPROVE_READ_ONLY` = reads only; writes/commands always ask).
+  Omitting `kind` keeps the old COMMAND behaviour. Migration
+  `20260930130000_add_prompt_routines_and_runner_credentials`.
 - **Device-to-session bridge fixed (IDOR):** `CompatAgentGuard` used to bind any
   `sessionId` from the request to the device's user. It now loads the session
   and answers 403 unless the device's user owns it; a missing session gets the
@@ -197,3 +221,22 @@ a RabbitMQ event consumed by audit-service.
 - `docs/13-adr/adr-015-desktop-agent-auth-model.md` (design)
 - `.claude/Integrations/04_desktop_agent__A_auth_replatform__0[1-4]*.md`
 - `qa/test-agent-phase-a.sh`
+
+## Organization guardrails, prompt routines, runner tokens (2026-09-30)
+
+- **Policy guardrails:** `OrganizationPolicy` stores `rules`, `trust` and
+  `mcpServers` as JSON (migration `20260930120000_add_organization_policy_guardrails`).
+  OWNER/ADMIN write through `PUT :id/policy`; members read, and non-members get 404.
+  Effective policy merges across organizations: rules concatenated, trust
+  grouped per org, MCP denies unioned, and allows intersected. A malformed
+  block denies all.
+- **Prompt routines:** a scheduled command can be `PROMPT` (prompt, optional
+  `PROVIDER/model`, repo, runner labels). It is dispatched to the owner's
+  online runner with matching labels, and waits a tick if none is online.
+- **Runner tokens:** registration issues a `clwr_` token, shown once, stored as
+  SHA-256, rotatable and revocable. Heartbeat, claim and complete require it. A
+  runner only reports its own jobs, and gets no jobs 120 s after its last
+  heartbeat (migration `20260930130000_add_prompt_routines_and_runner_credentials`).
+- **Internal usage scope:** `GET /api/v1/internal/agent/organizations/:id/usage-scope`
+  (service token) returns member ids to auth-service after an owner/admin
+  check. `INTER_SERVICE_AUTH_TOKEN` unset refuses every call.

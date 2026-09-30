@@ -571,7 +571,11 @@ the web app, authenticated as the same user. Until `ThreadOrigin` existed, that
 meant every agent run appeared in the user's chat list beside conversations
 they had held themselves, and nothing in the data said which was which.
 
-`ChatThread.origin` is `WEB` or `CODING_AGENT`, defaulting to `WEB`. Three
+`ChatThread.origin` is `WEB`, `CODING_AGENT` (VS Code) or `CODING_AGENT_CLI`
+(the headless CLI, F094), defaulting to `WEB`. The two agent values are one
+family: listing `CODING_AGENT` returns both, and the agent transcript endpoint
+admits both (`isCodingAgentOrigin`), so a terminal run is resumable in the
+editor while each surface can still label where a thread began. Three
 things follow, and the first is the one that surprises people:
 
 - **`listThreadsQuerySchema` defaults `origin` to `WEB`, not to "any".** A list
@@ -703,6 +707,20 @@ needed changing." — has content after the claim and is left alone. Only a bare
 assertion is hollow. The false-positive cases in
 `utilities/__tests__/hollow-completion.utility.spec.ts` are the important half
 of that suite: this predicate decides whether to spend another provider call.
+
+## Is a run still going on this thread? (F095)
+
+`GET /chat-threads/:id/active-run` returns `{ active, runId?, startedAt? }` and
+nothing else. A run is bound to the USER message that started it
+(`metadata.runtimeV2.{runId, generation}`), so the newest user message names
+the only run that can still be live; the store's `READ_BINDING` and a
+`READ_EVENTS` from past the journal's end give its terminal flag without
+returning events or refreshing any TTL. Missing thread and another owner's
+thread are the same 404. An expired run (`RUNTIME_RUN_NOT_FOUND`) is
+`active: false`; `RUNTIME_STATE_UNAVAILABLE` stays a 503, because a client that
+read an outage as "not running" would post on top of a live run. The coding
+agent's resume command calls this and falls back to its old transcript guess
+only on a 404 from a backend that predates the route.
 
 ## Attachments on an agent run
 

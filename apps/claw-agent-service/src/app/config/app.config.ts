@@ -21,6 +21,10 @@ const appConfigSchema = z.object({
   AGENT_DEVICE_CODE_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   AGENT_REFRESH_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(15),
   NEXT_PUBLIC_APP_URL: z.string().url().default('https://claw.local'),
+  // Shared secret sibling services present on /internal routes. Optional so a
+  // deployment without it still boots; ServiceTokenGuard then refuses every
+  // internal call rather than admitting any.
+  INTER_SERVICE_AUTH_TOKEN: z.string().min(32).optional(),
 });
 
 export type AgentAppConfig = z.infer<typeof appConfigSchema>;

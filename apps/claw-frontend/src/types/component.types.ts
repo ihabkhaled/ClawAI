@@ -106,6 +106,7 @@ import type { SharedConnectorView } from './connector-grant.types';
 import type {
   Connector,
   ConnectorFormFieldErrors,
+  ConnectorGatewayHeadersState,
   ConnectorModel,
   CreateConnectorRequest,
 } from './connector.types';
@@ -1443,6 +1444,13 @@ export type ConnectorFormFieldsProps = {
   defaultBaseUrl: string | null;
   selectedPreset: ConnectorPreset | undefined;
   resolvedBaseUrlPreview: string | null;
+  gatewayHeaders: ConnectorGatewayHeadersState;
+};
+
+export type ConnectorGatewayHeadersFieldProps = {
+  isEditing: boolean;
+  gatewayHeaders: ConnectorGatewayHeadersState;
+  error: string[] | undefined;
 };
 
 export type ModelTableProps = {

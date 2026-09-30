@@ -72,6 +72,10 @@ import {
   RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
 } from '../constants/runtime-v2-transcript.constants';
 import type { RuntimeThreadContext } from '../types/runtime-thread-context.types';
+import {
+  runtimeV2ContinuationFileIds,
+  runtimeV2ResultFilesNote,
+} from '../utilities/runtime-v2-result-files.utility';
 
 @Injectable()
 export class RuntimeV2LoopManager {
@@ -257,6 +261,10 @@ export class RuntimeV2LoopManager {
       model: binding.model,
       maxOutputTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
       routingMode: RoutingMode.MANUAL_MODEL,
+      // F030: images the tool returned ride the ordinary attachment path. The
+      // tool-result message is the last user-role turn, so a seeing lane gets
+      // the bytes on it and a blind lane gets the honest no-vision note.
+      ...runtimeV2ContinuationFileIds(history, command.result.fileIds),
     });
     const resultDocument = JSON.stringify({
       status: command.result.status,
@@ -270,6 +278,7 @@ export class RuntimeV2LoopManager {
         context.systemPrompt,
         buildRuntimeV2ModelInstruction(binding.toolDefinitions),
         `The trusted executor returned this redacted tool result: ${resultDocument}`,
+        runtimeV2ResultFilesNote(command.result.fileIds),
       ]
         .filter((value): value is string => value !== null)
         .join('\n\n'),
@@ -370,6 +379,7 @@ export class RuntimeV2LoopManager {
           generation: binding.generation,
           invocationId: command.result.invocationId,
           kind: 'tool-result',
+          ...(command.result.fileIds === undefined ? {} : { fileIds: command.result.fileIds }),
         },
       },
     });

@@ -55,6 +55,7 @@ export function ConnectorForm({
     defaultBaseUrl,
     selectedPreset,
     resolvedBaseUrlPreview,
+    gatewayHeaders,
     handleSubmit,
     handleOpenChange,
   } = useConnectorFormState({ open, connector, onSubmit, onOpenChange });
@@ -88,6 +89,7 @@ export function ConnectorForm({
       defaultBaseUrl={defaultBaseUrl}
       selectedPreset={selectedPreset}
       resolvedBaseUrlPreview={resolvedBaseUrlPreview}
+      gatewayHeaders={gatewayHeaders}
     />
   );
 

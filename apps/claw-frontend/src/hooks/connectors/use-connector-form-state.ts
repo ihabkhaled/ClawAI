@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 
 import { PROVIDER_DEFAULT_BASE_URLS } from '@/constants';
 import { ConnectorAuthType, type ConnectorProvider } from '@/enums';
+import { useConnectorGatewayHeaders } from '@/hooks/connectors/use-connector-gateway-headers';
 import { createConnectorSchema } from '@/lib/validation/connector.schema';
 import type {
   ConnectorFormFieldErrors,
@@ -17,6 +18,7 @@ import type {
   CreateConnectorRequest,
 } from '@/types';
 import { toFrontendConnectorAuthType } from '@/utilities';
+import { gatewayHeaderRowsToRecord } from '@/utilities/connector-gateway-headers.utility';
 
 export function useConnectorFormState({
   open,
@@ -35,6 +37,8 @@ export function useConnectorFormState({
   const [workspaceId, setWorkspaceId] = useState(connector?.workspaceId ?? '');
   const [accountId, setAccountId] = useState('');
   const [fieldErrors, setFieldErrors] = useState<ConnectorFormFieldErrors>({});
+  const gatewayHeaders = useConnectorGatewayHeaders();
+  const resetGatewayHeaders = gatewayHeaders.reset;
 
   const isEditing = !!connector;
 
@@ -49,8 +53,9 @@ export function useConnectorFormState({
       setWorkspaceId(connector?.workspaceId ?? '');
       setAccountId('');
       setFieldErrors({});
+      resetGatewayHeaders();
     }
-  }, [open, connector]);
+  }, [open, connector, resetGatewayHeaders]);
 
   const handleOpenChange = (nextOpen: boolean): void => {
     if (!nextOpen) {
@@ -96,6 +101,17 @@ export function useConnectorFormState({
     }
     if (accountId) {
       formData.accountId = accountId;
+    }
+    const headerRows = gatewayHeaderRowsToRecord(gatewayHeaders.rows);
+    if (!headerRows.ok) {
+      setFieldErrors({ gatewayHeaders: ['invalid'] });
+      return;
+    }
+    if (Object.keys(headerRows.headers).length > 0) {
+      formData.gatewayHeaders = headerRows.headers;
+    } else if (isEditing && gatewayHeaders.clearStored) {
+      // `{}` is the documented clear; omitting the field keeps what is stored.
+      formData.gatewayHeaders = {};
     }
 
     const result = createConnectorSchema.safeParse(formData);
@@ -145,6 +161,14 @@ export function useConnectorFormState({
     defaultBaseUrl,
     selectedPreset,
     resolvedBaseUrlPreview,
+    gatewayHeaders: {
+      rows: gatewayHeaders.rows,
+      addRow: gatewayHeaders.addRow,
+      updateRow: gatewayHeaders.updateRow,
+      removeRow: gatewayHeaders.removeRow,
+      clearStored: gatewayHeaders.clearStored,
+      setClearStored: gatewayHeaders.setClearStored,
+    },
     handleSubmit,
     handleOpenChange,
   };

@@ -21,6 +21,10 @@ const appConfigSchema = z.object({
   // Image-only, created with the local-ai compose profile. Empty string turns
   // the LOCAL transcription candidate off; the default is the compose service.
   LOCAL_SPEECH_BASE_URL: z.string().default('http://speech:8000'),
+  // F025 — canonical origin for published-artifact URLs. Already in the root
+  // .env (chat-service builds share URLs from it) and loaded via env_file.
+  // Read from configuration, NEVER from a request Host header.
+  PUBLIC_SITE_URL: z.string().min(1).default('https://claw.local'),
   FILES_PORT: z.string().default('4006'),
   FILE_STORAGE_PATH: z.string().default('/data/uploads'),
   CLAMAV_HOST: z.string().default('clamav'),

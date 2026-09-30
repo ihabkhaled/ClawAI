@@ -809,3 +809,41 @@ List: `docs/08-runtime-devops/metrics-and-dashboards.md`.
 audio-capable or connector-service is down), and is offered only while
 `GET /health` answers. No connector, no key; `fetchConnectorConfig('LOCAL')`
 builds the config locally. Unmetered: `LOCAL` is in `PAYG_EXEMPT_PROVIDERS`.
+
+## Published artifacts (F025, 2026-09-30)
+
+The backend half of the coding agent's "publish a file as a hosted page"
+(`apps/claw-coding-agent/src/backend/artifact-client.ts`). Module:
+`src/modules/artifacts/`. Table: `published_artifacts` (migration
+`20260930120000_add_published_artifacts`). It lives here, not in chat-service,
+because it is stored file content and needs no chat data.
+
+| Route                                    | Auth                      | Result                                                                               |
+| ---------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `POST /api/v1/artifacts`                 | JWT + `FILES_USE`, 20/min | 201 `{ id, publicId, url, title, filename, mimeType, sizeBytes, sha256, createdAt }` |
+| `GET /api/v1/artifacts?page&limit`       | JWT + `FILES_USE`         | caller's artifacts, `PaginatedResult`, never content                                 |
+| `DELETE /api/v1/artifacts/:id`           | JWT + `FILES_USE`         | 204; another user's id is 404                                                        |
+| `GET /api/v1/public/artifacts/:publicId` | public                    | raw text                                                                             |
+
+Body: `{ filename, mimeType, content, sha256, title? }`, strict. `mimeType` is
+one of the extension's six text types. Refusals, all decided before any write,
+and **never 404/405/501** — the extension reads those as "route missing":
+
+- `X-Claw-Zero-Retention` present and not `0`/`false` → 409 `ARTIFACT_ZERO_RETENTION`
+- content over 1 MiB of UTF-8 bytes → 413 `ARTIFACT_TOO_LARGE`
+- a NUL byte → 422 `ARTIFACT_NOT_TEXT`
+- sha256 not matching the content → 400 `ARTIFACT_HASH_MISMATCH`
+- a credential shape (`artifact-secret-patterns.constants.ts`, kept in step by
+  hand with chat-service's share scan) → 422 `ARTIFACT_CONTAINS_SECRET`; the
+  match is never logged
+
+The public id is 24 CSPRNG bytes, base64url (32 chars); the URL is built from
+`PUBLIC_SITE_URL`, never from the request Host. The public read is **always
+`text/plain; charset=utf-8`** whatever the declared type, with
+`Content-Security-Policy: default-src 'none'; sandbox; frame-ancestors 'none'`,
+`nosniff`, `X-Frame-Options: DENY`, `no-store`, `noindex`. An HTML or SVG
+artifact shows its source and never runs. Rendered markdown is not offered
+yet; it needs a sanitising renderer, not a content-type change.
+
+nginx: `/api/v1/artifacts` (8m body) and `/api/v1/public/artifacts` (GET/HEAD
+only, uncached) in `infra/nginx/locations.conf` and the distributed template.

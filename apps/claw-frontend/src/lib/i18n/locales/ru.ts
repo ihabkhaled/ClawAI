@@ -1056,6 +1056,18 @@ export const ru: TranslationDictionary = {
     regionPlaceholder: 'например, us-east-1',
     workspaceIdPlaceholder: 'например, wrkspc_01AbCd...',
     saveFirstThenTest: 'Сначала сохраните коннектор, затем протестируйте',
+    gatewayHeaders: 'Заголовки шлюза (необязательно)',
+    gatewayHeadersHelp:
+      'Дополнительные заголовки для LLM-шлюза перед провайдером (LiteLLM, Portkey, Helicone). Значения хранятся в зашифрованном виде и больше не показываются. Они никогда не заменяют API-ключ.',
+    gatewayHeadersEditHelp:
+      'Сохранённые заголовки остаются, если вы не добавите новые — тогда они заменят все.',
+    gatewayHeaderName: 'Имя заголовка',
+    gatewayHeaderValue: 'Значение заголовка',
+    addGatewayHeader: 'Добавить заголовок',
+    removeGatewayHeader: 'Удалить заголовок',
+    clearGatewayHeaders: 'Удалить сохранённые заголовки шлюза',
+    gatewayHeadersInvalid:
+      'Каждому заголовку нужно допустимое, незарезервированное, уникальное имя и однострочное значение (не более 10 заголовков).',
     selectProvider: 'Выберите провайдера',
     groupConnected: 'Подключённые провайдеры',
     groupLowCost: 'Недорогой и быстрый инференс',

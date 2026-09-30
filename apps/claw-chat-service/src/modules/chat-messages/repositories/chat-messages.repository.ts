@@ -106,6 +106,17 @@ export class ChatMessagesRepository {
     });
   }
 
+  /** The newest message of one role on a thread, or null when there is none. */
+  async findLatestByThreadIdAndRole(
+    threadId: string,
+    role: MessageRole,
+  ): Promise<ChatMessage | null> {
+    return this.prisma.chatMessage.findFirst({
+      where: { threadId, role },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async updateFeedback(id: string, feedback: string | null): Promise<ChatMessage> {
     return this.prisma.chatMessage.update({
       where: { id },

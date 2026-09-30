@@ -1063,6 +1063,18 @@ export const it: TranslationDictionary = {
     regionPlaceholder: 'es., us-east-1',
     workspaceIdPlaceholder: 'es., wrkspc_01AbCd...',
     saveFirstThenTest: 'Salva prima il connettore, poi testalo',
+    gatewayHeaders: 'Header del gateway (facoltativo)',
+    gatewayHeadersHelp:
+      'Header aggiuntivi per un gateway LLM davanti al provider (LiteLLM, Portkey, Helicone). I valori sono salvati cifrati e non vengono più mostrati. Non sostituiscono mai la chiave API.',
+    gatewayHeadersEditHelp:
+      'Gli header salvati restano, a meno che tu non ne aggiunga di nuovi, che li sostituiscono tutti.',
+    gatewayHeaderName: "Nome dell'header",
+    gatewayHeaderValue: "Valore dell'header",
+    addGatewayHeader: 'Aggiungi header',
+    removeGatewayHeader: 'Rimuovi header',
+    clearGatewayHeaders: 'Elimina gli header del gateway salvati',
+    gatewayHeadersInvalid:
+      'Ogni header richiede un nome valido, non riservato e univoco e un valore su una sola riga (massimo 10 header).',
     selectProvider: 'Seleziona un provider',
     groupConnected: 'Provider connessi',
     groupLowCost: 'Inferenza rapida ed economica',

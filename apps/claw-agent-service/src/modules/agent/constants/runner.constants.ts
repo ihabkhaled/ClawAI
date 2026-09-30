@@ -1,3 +1,4 @@
+import { SESSION_HEARTBEAT_TIMEOUT_SECONDS } from '../../../common/constants/agent.constants';
 import type { Prisma } from '../../../generated/prisma';
 
 /**
@@ -28,3 +29,25 @@ export const RUNNER_SELECT = {
   lastHeartbeatAt: true,
   metadata: true,
 } satisfies Prisma.AgentSessionSelect;
+
+/**
+ * F100: a runner whose last heartbeat is older than this receives no new job,
+ * even before the session sweeper marks it EXPIRED.
+ */
+export const RUNNER_HEARTBEAT_TTL_SECONDS = SESSION_HEARTBEAT_TIMEOUT_SECONDS;
+
+/** F100 runner credential: a recognisable prefix, 256 random bits. */
+export const RUNNER_TOKEN_PREFIX = 'clwr_';
+export const RUNNER_TOKEN_BYTES = 32;
+
+/** Characters after the prefix kept in clear so an owner can tell tokens apart. */
+export const RUNNER_TOKEN_VISIBLE_CHARS = 6;
+
+/** Recorded on a PROMPT job: the portal never approves a prompt's tool calls. */
+export const PROMPT_JOB_APPROVAL_NOTE =
+  'Prompt routine: each tool call is approved on the runner under its local policy.';
+
+/** F099 prompt routine limits, checked again by the runner. */
+export const PROMPT_ROUTINE_MAX_CHARS = 8000;
+export const PROMPT_ROUTINE_MODEL_MAX = 128;
+export const PROMPT_ROUTINE_REPO_REF_MAX = 200;

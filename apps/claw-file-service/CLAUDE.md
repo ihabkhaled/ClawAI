@@ -20,6 +20,9 @@ This is the File microservice for the Claw platform. It owns file upload, storag
 
 - `files`
 - `file_chunks`
+- `published_artifacts` — coding-agent published pages (F025). Public read is always
+  text/plain + CSP sandbox; never return 404/405/501 for a publish refusal (the
+  extension reads those as "route missing"). See `docs/04-backend/service-guide-file.md`.
 
 ## The one thing that surprises everyone here
 

@@ -21,6 +21,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { FilesModule } from '../modules/files/files.module';
 import { HealthModule } from '../modules/health/health.module';
 import { MetricsModule } from '../modules/metrics/metrics.module';
+import { ArtifactsModule } from '../modules/artifacts/artifacts.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { MetricsModule } from '../modules/metrics/metrics.module';
     FilesModule,
     HealthModule,
     MetricsModule,
+    ArtifactsModule,
     EntitlementsModule.forRoot({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
       interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,

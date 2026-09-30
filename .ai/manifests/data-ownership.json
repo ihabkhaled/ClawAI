@@ -23,6 +23,7 @@
         "RecipeRun",
         "RecipeRunStep",
         "RefreshToken",
+        "RunnerCredential",
         "ScheduledCommand",
         "TerminalCommand"
       ],
@@ -122,7 +123,8 @@
       "mongooseModels": [],
       "prismaModels": [
         "File",
-        "FileChunk"
+        "FileChunk",
+        "PublishedArtifact"
       ],
       "service": "claw-file-service"
     },

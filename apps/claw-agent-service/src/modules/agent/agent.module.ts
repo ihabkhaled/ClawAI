@@ -40,6 +40,7 @@ import { RemoteTriggerIdempotencyRepository } from './repositories/remote-trigge
 import { AgentTerminalSeedService } from './services/agent-terminal-seed.service';
 import { RuntimeProtocolService } from './services/runtime-protocol.service';
 import { RunnerService } from './services/runner.service';
+import { RunnerCredentialService } from './services/runner-credential.service';
 import { AgentSessionManager } from './managers/agent-session.manager';
 import { AgentCommandManager } from './managers/agent-command.manager';
 import { PairingCleanupManager } from './managers/pairing-cleanup.manager';
@@ -59,10 +60,12 @@ import { PolicyRepository } from './repositories/policy.repository';
 import { ScheduledCommandRepository } from './repositories/scheduled-command.repository';
 import { CapabilityInvocationRepository } from './repositories/capability-invocation.repository';
 import { RunnerRepository } from './repositories/runner.repository';
+import { RunnerCredentialRepository } from './repositories/runner-credential.repository';
 import { AgentKeyGuard } from '../../common/guards/agent-key.guard';
 import { DeviceAccessGuard } from '../../common/guards/device-access.guard';
 import { ScopeGuard } from '../../common/guards/scope.guard';
 import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
+import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
 
 @Module({
   imports: [PrismaModule, RedisModule],
@@ -107,6 +110,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     AgentTerminalSeedService,
     RuntimeProtocolService,
     RunnerService,
+    RunnerCredentialService,
     AgentSessionManager,
     AgentCommandManager,
     PairingCleanupManager,
@@ -126,10 +130,12 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     ScheduledCommandRepository,
     CapabilityInvocationRepository,
     RunnerRepository,
+    RunnerCredentialRepository,
     AgentKeyGuard,
     DeviceAccessGuard,
     ScopeGuard,
     CompatAgentGuard,
+    RunnerTokenGuard,
   ],
   exports: [CapabilityApprovalManager],
 })

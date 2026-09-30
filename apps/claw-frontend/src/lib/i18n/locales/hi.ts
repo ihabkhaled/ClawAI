@@ -1047,6 +1047,18 @@ export const hi: TranslationDictionary = {
     regionPlaceholder: 'उदा., us-east-1',
     workspaceIdPlaceholder: 'उदा., wrkspc_01AbCd...',
     saveFirstThenTest: 'पहले कनेक्टर सहेजें, फिर परीक्षण करें',
+    gatewayHeaders: 'गेटवे हेडर (वैकल्पिक)',
+    gatewayHeadersHelp:
+      'प्रदाता के आगे LLM गेटवे (LiteLLM, Portkey, Helicone) के लिए अतिरिक्त हेडर। मान एन्क्रिप्ट करके सहेजे जाते हैं और फिर कभी नहीं दिखाए जाते। ये कभी API कुंजी की जगह नहीं लेते।',
+    gatewayHeadersEditHelp:
+      'सहेजे गए हेडर बने रहते हैं, जब तक आप नए न जोड़ें — नए सभी की जगह ले लेते हैं।',
+    gatewayHeaderName: 'हेडर का नाम',
+    gatewayHeaderValue: 'हेडर का मान',
+    addGatewayHeader: 'हेडर जोड़ें',
+    removeGatewayHeader: 'हेडर हटाएँ',
+    clearGatewayHeaders: 'सहेजे गए गेटवे हेडर हटाएँ',
+    gatewayHeadersInvalid:
+      'हर हेडर के लिए मान्य, अनारक्षित, अद्वितीय नाम और एक पंक्ति का मान चाहिए (अधिकतम 10 हेडर)।',
     selectProvider: 'एक प्रदाता चुनें',
     groupConnected: 'जुड़े हुए प्रदाता',
     groupLowCost: 'कम लागत और तेज़ अनुमान',

@@ -392,6 +392,16 @@
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/agent/runners/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/:id/credential/rotate",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/agent/runners/:id/jobs",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
@@ -403,7 +413,17 @@
       },
       {
         "method": "POST",
+        "route": "/agent/runners/heartbeat",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/agent/runners/jobs",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/jobs/:commandId/complete",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
       },
       {
@@ -480,6 +500,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-agent-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/agent/organizations/:id/usage-scope",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet-internal.controller.ts"
       },
       {
         "method": "POST",
@@ -832,8 +857,18 @@
       },
       {
         "method": "GET",
+        "route": "/auth/me/organizations/:organizationId/usage",
+        "source": "apps/claw-auth-service/src/modules/usage-attribution/controllers/me-usage-attribution.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/auth/me/usage",
         "source": "apps/claw-auth-service/src/modules/entitlements/controllers/me-entitlements.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/auth/me/usage/breakdown",
+        "source": "apps/claw-auth-service/src/modules/usage-attribution/controllers/me-usage-attribution.controller.ts"
       },
       {
         "method": "POST",
@@ -1298,6 +1333,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/chat-threads/:id/active-run",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-thread-activity.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/chat-threads/:id/branch",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
@@ -1602,6 +1642,21 @@
     "claw-file-service": [
       {
         "method": "GET",
+        "route": "/artifacts",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/artifacts",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/artifacts/:id",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/files",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
@@ -1749,6 +1804,11 @@
         "method": "GET",
         "route": "/metrics",
         "source": "apps/claw-file-service/src/modules/metrics/controllers/metrics.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/public/artifacts/:publicId",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/public-artifacts.controller.ts"
       }
     ],
     "claw-health-service": [
@@ -3663,5 +3723,5 @@
     ]
   },
   "generated": true,
-  "total": 725
+  "total": 737
 }

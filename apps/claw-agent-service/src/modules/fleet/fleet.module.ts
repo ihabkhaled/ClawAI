@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
 import { FleetController } from './controllers/fleet.controller';
+import { FleetInternalController } from './controllers/fleet-internal.controller';
 import { SamlController } from './controllers/saml.controller';
 import { OrganizationRepository } from './repositories/organization.repository';
 import { OrganizationAccessService } from './services/organization-access.service';
 import { OrganizationMembershipService } from './services/organization-membership.service';
 import { OrganizationPolicyService } from './services/organization-policy.service';
+import { OrganizationUsageScopeService } from './services/organization-usage-scope.service';
 import { SamlService } from './services/saml.service';
 
 /**
@@ -24,12 +26,13 @@ import { SamlService } from './services/saml.service';
  */
 @Module({
   imports: [PrismaModule],
-  controllers: [FleetController, SamlController],
+  controllers: [FleetController, FleetInternalController, SamlController],
   providers: [
     OrganizationRepository,
     OrganizationAccessService,
     OrganizationMembershipService,
     OrganizationPolicyService,
+    OrganizationUsageScopeService,
     SamlService,
   ],
   exports: [OrganizationRepository, OrganizationPolicyService, SamlService],

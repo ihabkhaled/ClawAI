@@ -447,6 +447,16 @@
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/agent/runners/:id",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/runners/:id/credential/rotate",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/agent/runners/:id/jobs",
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
@@ -458,7 +468,17 @@
         },
         {
           "method": "POST",
+          "route": "/agent/runners/heartbeat",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/agent/runners/jobs",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/runners/jobs/:commandId/complete",
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
         },
         {
@@ -535,6 +555,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-agent-service/src/modules/health/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/agent/organizations/:id/usage-scope",
+          "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet-internal.controller.ts"
         },
         {
           "method": "POST",
@@ -887,8 +912,18 @@
         },
         {
           "method": "GET",
+          "route": "/auth/me/organizations/:organizationId/usage",
+          "source": "apps/claw-auth-service/src/modules/usage-attribution/controllers/me-usage-attribution.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/auth/me/usage",
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/me-entitlements.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/auth/me/usage/breakdown",
+          "source": "apps/claw-auth-service/src/modules/usage-attribution/controllers/me-usage-attribution.controller.ts"
         },
         {
           "method": "POST",
@@ -1353,6 +1388,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/chat-threads/:id/active-run",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-thread-activity.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/chat-threads/:id/branch",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
@@ -1657,6 +1697,21 @@
       "claw-file-service": [
         {
           "method": "GET",
+          "route": "/artifacts",
+          "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/artifacts",
+          "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/artifacts/:id",
+          "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/files",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
         },
@@ -1804,6 +1859,11 @@
           "method": "GET",
           "route": "/metrics",
           "source": "apps/claw-file-service/src/modules/metrics/controllers/metrics.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/public/artifacts/:publicId",
+          "source": "apps/claw-file-service/src/modules/artifacts/controllers/public-artifacts.controller.ts"
         }
       ],
       "claw-health-service": [
@@ -8357,7 +8417,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5558
+        "value": 5567
       },
       "localeCount": 13,
       "locales": [
@@ -8444,6 +8504,12 @@
         "location": "/api/v1/agent",
         "port": 4015,
         "service": "agent-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/artifacts",
+        "port": 4006,
+        "service": "file-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -8690,6 +8756,12 @@
         "location": "/api/v1/payments/webhooks",
         "port": 4018,
         "service": "payment-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/public/artifacts",
+        "port": 4006,
+        "service": "file-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -9394,6 +9466,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-agent-service/prisma/schema.prisma",
+            "value": "RunnerCredential"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-agent-service/prisma/schema.prisma",
             "value": "ScheduledCommand"
           },
           {
@@ -9665,6 +9742,11 @@
             "confidence": "verified",
             "source": "apps/claw-file-service/prisma/schema.prisma",
             "value": "FileChunk"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-file-service/prisma/schema.prisma",
+            "value": "PublishedArtifact"
           }
         ],
         "provider": {
@@ -10323,7 +10405,7 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 22
+        "testFiles": 34
       },
       "claw-audit-service": {
         "runner": "vitest",
@@ -10331,11 +10413,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 112
+        "testFiles": 116
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 252
+        "testFiles": 268
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10351,11 +10433,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 72
+        "testFiles": 78
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 631
+        "testFiles": 634
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11121,19 +11203,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 725,
+    "endpointCount": 737,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
     "localeCount": 13,
-    "nginxRouteCount": 62,
+    "nginxRouteCount": 64,
     "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1754,
+    "totalTestFiles": 1795,
     "workspaceCount": 25
   }
 }

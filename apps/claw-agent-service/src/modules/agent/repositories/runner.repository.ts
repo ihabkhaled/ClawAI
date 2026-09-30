@@ -16,11 +16,13 @@ import type { RunnerRow } from '../types/runner.types';
 export class RunnerRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listConnected(userId: string): Promise<RunnerRow[]> {
+  /** Connected runners whose last heartbeat is at or after `freshSince`. */
+  async listConnected(userId: string, freshSince: Date): Promise<RunnerRow[]> {
     return this.prisma.agentSession.findMany({
       where: {
         userId,
         status: AgentSessionStatus.CONNECTED,
+        lastHeartbeatAt: { gte: freshSince },
         metadata: { path: ['kind'], equals: RUNNER_METADATA_KIND },
       },
       orderBy: { lastHeartbeatAt: 'desc' },
@@ -33,6 +35,36 @@ export class RunnerRepository {
     return this.prisma.agentSession.findFirst({
       where: { id, userId, metadata: { path: ['kind'], equals: RUNNER_METADATA_KIND } },
       select: RUNNER_SELECT,
+    });
+  }
+
+  async findById(id: string): Promise<RunnerRow | null> {
+    return this.prisma.agentSession.findFirst({
+      where: { id, metadata: { path: ['kind'], equals: RUNNER_METADATA_KIND } },
+      select: RUNNER_SELECT,
+    });
+  }
+
+  /** A heartbeat revives an EXPIRED runner; a DISCONNECTED (revoked) one stays down. */
+  async touchHeartbeat(id: string): Promise<number> {
+    const result = await this.prisma.agentSession.updateMany({
+      where: {
+        id,
+        status: { in: [AgentSessionStatus.CONNECTED, AgentSessionStatus.EXPIRED] },
+      },
+      data: {
+        status: AgentSessionStatus.CONNECTED,
+        lastHeartbeatAt: new Date(),
+        disconnectedAt: null,
+      },
+    });
+    return result.count;
+  }
+
+  async disconnect(id: string): Promise<void> {
+    await this.prisma.agentSession.update({
+      where: { id },
+      data: { status: AgentSessionStatus.DISCONNECTED, disconnectedAt: new Date() },
     });
   }
 }

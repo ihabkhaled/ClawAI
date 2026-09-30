@@ -1044,6 +1044,18 @@ export const fa: TranslationDictionary = {
     regionPlaceholder: 'به عنوان مثال، us-east-1',
     workspaceIdPlaceholder: 'به عنوان مثال، wrkspc_01AbCd...',
     saveFirstThenTest: 'ابتدا کانکتور را ذخیره کنید سپس تست کنید',
+    gatewayHeaders: 'هدرهای درگاه (اختیاری)',
+    gatewayHeadersHelp:
+      'هدرهای اضافی برای یک درگاه LLM جلوی ارائه‌دهنده (LiteLLM، Portkey، Helicone). مقادیر رمزگذاری‌شده ذخیره می‌شوند و دیگر نمایش داده نمی‌شوند. هرگز جایگزین کلید API نمی‌شوند.',
+    gatewayHeadersEditHelp:
+      'هدرهای ذخیره‌شده حفظ می‌شوند مگر اینکه هدر جدید اضافه کنید که جایگزین همه آن‌ها می‌شود.',
+    gatewayHeaderName: 'نام هدر',
+    gatewayHeaderValue: 'مقدار هدر',
+    addGatewayHeader: 'افزودن هدر',
+    removeGatewayHeader: 'حذف هدر',
+    clearGatewayHeaders: 'حذف هدرهای ذخیره‌شده درگاه',
+    gatewayHeadersInvalid:
+      'هر هدر به نامی معتبر، غیررزرو و یکتا و مقداری تک‌خطی نیاز دارد (حداکثر ۱۰ هدر).',
     selectProvider: 'ارائه دهنده ای را انتخاب کنید',
     groupConnected: 'ارائه‌دهندگان متصل',
     groupLowCost: 'استنتاج کم‌هزینه و سریع',

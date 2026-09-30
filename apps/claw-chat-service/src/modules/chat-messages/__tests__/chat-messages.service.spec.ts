@@ -66,6 +66,7 @@ const mockMessage = {
 
 const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> => ({
   create: vi.fn(),
+  findLatestByThreadIdAndRole: vi.fn(),
   createUserMessageWithinDailyLimit: vi.fn(),
   findQuotableInThread: vi.fn().mockResolvedValue([]),
   transitionContextSave: vi.fn().mockResolvedValue(true),

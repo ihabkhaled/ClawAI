@@ -72,6 +72,7 @@ import { RolePackManager } from '../managers/role-pack.manager';
 import { routerTraceEmittedSchema } from '../dto/router-trace.dto';
 import { RouterTraceStreamService } from './router-trace-stream.service';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
+import { ZeroRetentionService } from './zero-retention.service';
 import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
 import { ModelContextWindowClient } from '../clients/model-context-window.client';
 import { ChatStreamService } from './chat-stream.service';
@@ -210,9 +211,12 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → the image row's
     // `assistantMessageId` stays null, as before batch 10a closed.
     @Optional() private readonly imageGenerationLink?: ImageGenerationLinkClient,
-    // LAST on purpose: specs build this service positionally, and a new
+    // Before zeroRetention, which was added after it: specs build this service positionally, and a new
     // optional dependency in the middle shifts every argument after it.
     @Optional() private readonly contextSaveOrchestrator?: ContextSaveOrchestratorManager,
+    // Optional for the same reason. Absent → `X-Claw-Zero-Retention` is
+    // ignored and every turn is kept, as before F055.
+    @Optional() private readonly zeroRetention?: ZeroRetentionService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -230,6 +234,7 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     dto: CreateMessageDto,
     userToken: string,
+    zeroRetention?: boolean,
   ): Promise<ChatMessage> {
     this.logger.log(`createMessage: starting for user ${userId} in thread ${dto.threadId}`);
     const thread = await this.getThreadForMessage(dto.threadId, userId);
@@ -287,6 +292,9 @@ export class ChatMessagesService implements OnModuleInit {
     }
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
+    // Marked before the turn is published, so the consumer that answers it
+    // always sees the mark (F055).
+    await this.markZeroRetentionTurn(zeroRetention, dto.threadId, message.id);
     this.logMessageCreated(userId, dto.threadId, message.id);
     // What the attachments need a model to read, so AUTO ranks by modality
     // fit (multimodal batch 8). Bounded; no attachments → no fields.
@@ -1577,7 +1585,7 @@ export class ChatMessagesService implements OnModuleInit {
     });
     try {
       if (await this.runtimeV2LoopManager.tryHandleRouted(parsed)) return;
-      await this.handleMessageRouted(parsed);
+      await this.handleChatTurn(parsed);
     } catch (error: unknown) {
       const errorMsg = redactProviderText(error instanceof Error ? error.message : 'Unknown error');
       this.logger.error(
@@ -1592,6 +1600,28 @@ export class ChatMessagesService implements OnModuleInit {
         threadId: parsed.threadId,
         errorMessage: errorMsg,
       });
+    }
+  }
+
+  private async markZeroRetentionTurn(
+    requested: boolean | undefined,
+    threadId: string,
+    messageId: string,
+  ): Promise<void> {
+    if (requested !== true || this.zeroRetention === undefined) return;
+    await this.zeroRetention.markChatTurn(threadId, messageId);
+  }
+
+  /**
+   * Answers an ordinary chat turn, and purges it once it has ended — answered
+   * or failed — when its request asked for zero data retention (F055).
+   */
+  private async handleChatTurn(parsed: MessageRoutedData): Promise<void> {
+    const zeroRetention = (await this.zeroRetention?.isChatTurnMarked(parsed.messageId)) === true;
+    try {
+      await this.handleMessageRouted(zeroRetention ? { ...parsed, zeroRetention } : parsed);
+    } finally {
+      if (zeroRetention) await this.zeroRetention?.purgeChatTurn(parsed.threadId, parsed.messageId);
     }
   }
 
@@ -2471,10 +2501,7 @@ export class ChatMessagesService implements OnModuleInit {
       usedFallback: llmResponse.usedFallback,
       routingMode: payload.routingMode as RoutingMode,
       detectedCategory: payload.detectedCategory,
-      content: assistantMessage.content,
-      // A save turn (ADR-134) was saved on purpose; letting extraction re-mine
-      // the same words would file a duplicate suggestion of what was just saved.
-      userContent: hasContextSave(assistantMessage) ? undefined : lastUserMsg?.content,
+      ...this.buildPublishContentPart(payload, assistantMessage, lastUserMsg),
       timestamp: new Date().toISOString(),
       executionSuccess: outcomeOverrides?.executionSuccess ?? true,
       finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
@@ -2497,6 +2524,26 @@ export class ChatMessagesService implements OnModuleInit {
     // repair, verify, best-of-n, cost-ensemble, role-pack, pipeline, decompose)
     // consumes the user's daily quota — not only normal chat. This method only
     // publishes the MESSAGE_COMPLETED event for the audit ledger + memory.
+  }
+
+  /**
+   * The turn's text, or none of it under zero retention (F055): memory-service
+   * extracts — and keeps — memories from these two fields, and skips a
+   * completion without them. Every usage field is published either way.
+   */
+  private buildPublishContentPart(
+    payload: MessageRoutedData,
+    assistantMessage: ChatMessage,
+    lastUserMessage: ChatMessage | undefined,
+  ): Record<string, unknown> {
+    return payload.zeroRetention === true
+      ? { zeroRetention: true }
+      : {
+          content: assistantMessage.content,
+          // A save turn (ADR-134) was saved on purpose; letting extraction re-mine
+          // the same words would file a duplicate suggestion of what was just saved.
+          userContent: hasContextSave(assistantMessage) ? undefined : lastUserMessage?.content,
+        };
   }
 
   private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {

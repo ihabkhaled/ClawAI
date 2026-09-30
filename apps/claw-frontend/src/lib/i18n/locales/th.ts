@@ -1029,6 +1029,18 @@ export const th: TranslationDictionary = {
     regionPlaceholder: 'เช่น us-east-1',
     workspaceIdPlaceholder: 'เช่น wrkspc_01AbCd...',
     saveFirstThenTest: 'บันทึกตัวเชื่อมต่อก่อน จากนั้นจึงทดสอบ',
+    gatewayHeaders: 'เฮดเดอร์เกตเวย์ (ไม่บังคับ)',
+    gatewayHeadersHelp:
+      'เฮดเดอร์เพิ่มเติมสำหรับเกตเวย์ LLM ที่อยู่หน้าผู้ให้บริการ (LiteLLM, Portkey, Helicone) ค่าจะถูกเข้ารหัสเก็บไว้และไม่แสดงอีก และจะไม่แทนที่คีย์ API',
+    gatewayHeadersEditHelp:
+      'เฮดเดอร์ที่บันทึกไว้จะคงอยู่ เว้นแต่คุณเพิ่มเฮดเดอร์ใหม่ซึ่งจะแทนที่ทั้งหมด',
+    gatewayHeaderName: 'ชื่อเฮดเดอร์',
+    gatewayHeaderValue: 'ค่าเฮดเดอร์',
+    addGatewayHeader: 'เพิ่มเฮดเดอร์',
+    removeGatewayHeader: 'ลบเฮดเดอร์',
+    clearGatewayHeaders: 'ลบเฮดเดอร์เกตเวย์ที่บันทึกไว้',
+    gatewayHeadersInvalid:
+      'แต่ละเฮดเดอร์ต้องมีชื่อที่ถูกต้อง ไม่สงวนไว้ และไม่ซ้ำกัน พร้อมค่าบรรทัดเดียว (สูงสุด 10 เฮดเดอร์)',
     selectProvider: 'เลือกผู้ให้บริการ',
     groupConnected: 'ผู้ให้บริการที่เชื่อมต่อแล้ว',
     groupLowCost: 'การอนุมานที่รวดเร็วและต้นทุนต่ำ',

@@ -50,6 +50,11 @@ export type CreateConnectorRequest = {
   region?: string;
   workspaceId?: string;
   accountId?: string;
+  /**
+   * LLM-gateway headers (F092). Write-only: omitted keeps what is stored, `{}`
+   * clears it, a non-empty record replaces it.
+   */
+  gatewayHeaders?: Record<string, string>;
 };
 
 export type UpdateConnectorRequest = Partial<CreateConnectorRequest> & {
@@ -85,6 +90,32 @@ export type ConnectorFormFieldErrors = {
   region?: string[];
   workspaceId?: string[];
   accountId?: string[];
+  gatewayHeaders?: string[];
+};
+
+/** One editable row in the connector gateway-headers editor (F092). */
+export type GatewayHeaderRow = {
+  id: string;
+  name: string;
+  value: string;
+};
+
+/** The editor rows converted to a request field, or refused as invalid. */
+export type GatewayHeaderRowsResult = { ok: true; headers: Record<string, string> } | { ok: false };
+
+/** State and actions the gateway-headers editor renders from. */
+export type ConnectorGatewayHeadersState = {
+  rows: GatewayHeaderRow[];
+  addRow: () => void;
+  updateRow: (id: string, patch: Partial<Omit<GatewayHeaderRow, 'id'>>) => void;
+  removeRow: (id: string) => void;
+  clearStored: boolean;
+  setClearStored: (value: boolean) => void;
+};
+
+/** The gateway-headers hook: the editor state plus a reset for form reopen. */
+export type ConnectorGatewayHeadersHookReturn = ConnectorGatewayHeadersState & {
+  reset: () => void;
 };
 
 export type UpdateConnectorParams = {
@@ -125,6 +156,7 @@ export type ConnectorFormStateReturn = {
   selectedPreset: ConnectorPreset | undefined;
   /** The base URL with `{ACCOUNT_ID}` resolved, once the id is valid hex. */
   resolvedBaseUrlPreview: string | null;
+  gatewayHeaders: ConnectorGatewayHeadersState;
   handleSubmit: (e: React.FormEvent) => void;
   handleOpenChange: (nextOpen: boolean) => void;
 };

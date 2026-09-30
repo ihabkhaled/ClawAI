@@ -869,6 +869,22 @@ Reads for the agent's conversations live in `modules/coding-agent-chats`, which
 is read-only by construction — no create, update or delete exists to be called.
 Full rationale: `docs/04-backend/service-guide-chat.md`.
 
+`CODING_AGENT_CLI` (F094, migration `20260930120000_thread_origin_coding_agent_cli`)
+is the headless CLI. It is part of the coding-agent FAMILY: a list filtered by
+`CODING_AGENT` resolves to `{ in: [CODING_AGENT, CODING_AGENT_CLI] }`
+(`threadOriginCondition`), and every "is this an agent thread?" check uses
+`isCodingAgentOrigin`, never `=== CODING_AGENT`. Both live in
+`chat-threads/utilities/thread-origin.utility.ts`. A new check that compares to
+`CODING_AGENT` alone silently hides every CLI thread.
+
+`GET /chat-threads/:id/active-run` (F095) answers `{ active, runId?, startedAt? }`
+from the Runtime V2 run store: newest USER message → `metadata.runtimeV2` →
+`resolveBinding` → `readEvents` past the end for the terminal flag. Owner-scoped
+(404 otherwise), no content, never refreshes a TTL; an expired run is
+`active: false`, a store outage is a 503, not "inactive". It lives in
+`chat-messages` (`RuntimeV2ThreadActivityController`) because the threads module
+must not depend on Runtime V2.
+
 ## What a coding-agent run is allowed to know
 
 Runtime V2 runs assemble their context through the same `ContextAssemblyManager`
@@ -1554,3 +1570,32 @@ model's private notes run into its reply.
 ## Inpainting mask hop (2026-09-29)
 
 `CreateMessageDto.maskFileId` -> user message metadata (`maskFileId`) -> `callImageService` forwards it to image-service when a reference image exists. A 422 `IMAGE_MASK_INVALID` / `IMAGE_MASK_NOT_SUPPORTED` is turned by `image-mask-refusal.utility.ts` into an assistant message with metadata `{type:'image_mask_refusal', maskRefusalCode}` (no retry, no other provider fallback). Only OpenAI supports masks.
+
+## Zero data retention — `X-Claw-Zero-Retention: 1` (F055, 2026-09-30)
+
+The coding agent sends this header on every request while the user has zero
+data retention on. Two entry points honour it: `POST /chat-messages` and
+`POST /chat-messages/runtime/runs`. `@ZeroRetentionRequested()`
+(`src/app/decorators/zero-retention.decorator.ts`) hands the controller a
+request-scoped boolean; no global state.
+
+- **Mark, then purge at the end — never mid-turn.** The service writes a Redis
+  marker (`ZeroRetentionMarkerStore`, 24 h TTL) before the turn is published.
+  A chat turn is purged in `handleChatTurn` after it is answered or fails; a
+  Runtime V2 run is purged by `RuntimeV2Store.onTerminal` on `completed`,
+  `failed` or `cancelled`. **`paused` keeps everything** — it resumes from its
+  transcript, and the loop re-reads the transcript between tool calls.
+- **Redact, don't delete.** `ZeroRetentionRepository.redactTurn` sets
+  `content` to `[not retained: zero data retention]`, `originalContent` to
+  null, and keeps only id/error keys in metadata plus `zeroRetention: true`.
+  Token/provider/latency columns stay; billing never reads these rows (usage
+  is recorded at the `callProvider` chokepoint), so no balance moves.
+- **`message.completed` goes out without `content`/`userContent`** under zero
+  retention, so memory-service extracts nothing. Usage fields are unchanged.
+- **Fails closed at the start:** a marker that cannot be written refuses the
+  request with `ZERO_RETENTION_UNAVAILABLE` (503).
+- **Not covered yet:** compare/orchestration routes; the auto-derived thread
+  title of an untitled thread; the Runtime V2 Redis journal (text lives until
+  the run TTL); a message stored by a loop still mid-provider-call after a
+  cancel; a paused run that is never resumed; a Redis outage at purge time
+  (logged, content kept).

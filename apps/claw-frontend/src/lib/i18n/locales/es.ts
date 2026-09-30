@@ -1056,6 +1056,18 @@ export const es: TranslationDictionary = {
     regionPlaceholder: 'p. ej., us-east-1',
     workspaceIdPlaceholder: 'p. ej., wrkspc_01AbCd...',
     saveFirstThenTest: 'Guarda el conector primero, luego pruébalo',
+    gatewayHeaders: 'Cabeceras de gateway (opcional)',
+    gatewayHeadersHelp:
+      'Cabeceras extra para un gateway de LLM delante del proveedor (LiteLLM, Portkey, Helicone). Los valores se guardan cifrados y no se vuelven a mostrar. Nunca sustituyen la clave de API.',
+    gatewayHeadersEditHelp:
+      'Las cabeceras guardadas se conservan salvo que añadas nuevas, que las sustituyen todas.',
+    gatewayHeaderName: 'Nombre de la cabecera',
+    gatewayHeaderValue: 'Valor de la cabecera',
+    addGatewayHeader: 'Añadir cabecera',
+    removeGatewayHeader: 'Quitar cabecera',
+    clearGatewayHeaders: 'Eliminar las cabeceras de gateway guardadas',
+    gatewayHeadersInvalid:
+      'Cada cabecera necesita un nombre válido, no reservado y único, y un valor de una sola línea (máximo 10 cabeceras).',
     selectProvider: 'Selecciona un proveedor',
     groupConnected: 'Proveedores conectados',
     groupLowCost: 'Inferencia rápida y de bajo costo',

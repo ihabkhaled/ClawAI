@@ -1062,6 +1062,18 @@ export const fr: TranslationDictionary = {
     regionPlaceholder: 'ex. us-east-1',
     workspaceIdPlaceholder: 'ex. wrkspc_01AbCd...',
     saveFirstThenTest: "Enregistrez d'abord le connecteur, puis testez",
+    gatewayHeaders: 'En-têtes de passerelle (facultatif)',
+    gatewayHeadersHelp:
+      'En-têtes supplémentaires pour une passerelle LLM placée devant le fournisseur (LiteLLM, Portkey, Helicone). Les valeurs sont stockées chiffrées et ne sont plus jamais affichées. Elles ne remplacent jamais la clé API.',
+    gatewayHeadersEditHelp:
+      'Les en-têtes enregistrés sont conservés, sauf si vous en ajoutez de nouveaux, qui les remplacent tous.',
+    gatewayHeaderName: "Nom de l'en-tête",
+    gatewayHeaderValue: "Valeur de l'en-tête",
+    addGatewayHeader: 'Ajouter un en-tête',
+    removeGatewayHeader: "Retirer l'en-tête",
+    clearGatewayHeaders: 'Supprimer les en-têtes de passerelle enregistrés',
+    gatewayHeadersInvalid:
+      'Chaque en-tête doit avoir un nom valide, non réservé et unique, et une valeur sur une seule ligne (10 en-têtes au maximum).',
     selectProvider: 'Sélectionnez un fournisseur',
     groupConnected: 'Fournisseurs connectés',
     groupLowCost: 'Inférence rapide et économique',
