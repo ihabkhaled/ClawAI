@@ -54,10 +54,11 @@ describe('plan-team-description seeder', () => {
     expect(seeder.NEXT_DESCRIPTION).not.toMatch(/pool|shared|seat|team billing/i);
   });
 
-  it('leaves the Team plan prices and quotas unchanged', () => {
+  it('leaves the Team plan limits unchanged', () => {
     const team = teamDefinition();
     expect(team.monthlyMinor).toBe(5000);
-    expect(team.yearlyMinor).toBe(50000);
+    // 5000 x 12 x 80% (ADR-135); the plan's own limits are what this test pins.
+    expect(team.yearlyMinor).toBe(48000);
     expect(team.dailyTokens).toBe(1250000);
     expect(team.weeklyTokens).toBe(5000000);
     expect(team.monthlyTokens).toBe(12500000);

@@ -85,24 +85,24 @@ describe('plan catalog', () => {
 
   it.each([
     ['free', 0, null],
-    ['starter', 500, 5_000],
-    ['plus', 1_000, 10_000],
-    ['pro', 2_000, 20_000],
-    ['team', 5_000, 50_000],
-    ['scale', 10_000, 100_000],
-    ['unlimited', 20_000, 200_000],
+    ['starter', 500, 4_800],
+    ['plus', 1_000, 9_600],
+    ['pro', 2_000, 19_200],
+    ['team', 5_000, 48_000],
+    ['scale', 10_000, 96_000],
+    ['unlimited', 20_000, 192_000],
   ])('prices %s at %d/%s minor units', (slug, monthly, yearly) => {
     const plan = bySlug(slug as string);
     expect(plan.monthlyMinor).toBe(monthly);
     expect(plan.yearlyMinor).toBe(yearly);
   });
 
-  it('gives roughly two months free on every yearly price', () => {
+  it('prices every yearly plan at twelve months less the 20% default discount (ADR-135)', () => {
     for (const plan of catalog) {
       if (plan.yearlyMinor === null || plan.monthlyMinor === 0) {
         continue;
       }
-      expect(plan.yearlyMinor).toBe(plan.monthlyMinor * 10);
+      expect(plan.yearlyMinor).toBe((plan.monthlyMinor * 12 * 80) / 100);
     }
   });
 
