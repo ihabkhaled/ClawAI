@@ -101,7 +101,31 @@ a fallback.
   controller spec; frontend `context-save-card.test.tsx`,
   `use-context-save-card.test.tsx`, `use-context-page-deep-link.test.ts`.
 
+## Addendum — the note rides on the final user turn (2026-09-30)
+
+**Before.** The note lived only in the system prompt. Live QA-41 on the dev
+stack: at NEEDS_PACK_CHOICE, gpt-3.5-turbo answered "Okay, I've added … to
+your context" although nothing was saved, and a SAVED memory reply omitted the
+deep link (the card had it).
+
+**Change.** `withContextSaveNote` also sets `AssembledContext.saveTurnNote`;
+`ContextAssemblyManager.userTurnText` appends it after the final user turn
+(`CONTEXT_SAVE_TURN_MARKER`) on every builder — chat, Gemini-native and
+single-string — the same repetition pattern as the research reminder (rule 41).
+The pending line now says "NOTHING has been saved to a context pack yet … Do
+NOT say it was added or saved", and the closing line says "Include EVERY link".
+
+**Why not rewrite `threadMessages`.** The latest user text also drives the fast
+path, search-first, the quota estimate and the quality check. The note is
+prompt-only, so those still read the user's own words; the stored row never
+changes.
+
+**Verify.** `context-assembly-save-turn-note.spec.ts`,
+`save-intent.utility.spec.ts`. A model can still disobey; the card stays the
+source of truth.
+
 ## What would make this stale
 
-A second prompt path for save turns that skips `withContextSaveNote` (the model
-would deny having saved), or a pack-save route that stops checking ownership.
+A second prompt path for save turns that skips `withContextSaveNote`, or a
+prompt builder that stops calling `userTurnText` for the final user turn (the
+model would deny having saved, or claim a pending pack save happened), or a pack-save route that stops checking ownership.
