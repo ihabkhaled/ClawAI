@@ -66,8 +66,10 @@ admin, and applied everywhere a price is shown or charged.
   [margin-model.md](../business/margin-model.md); the margin floor that should cap
   the admin discount is still unassigned there.
 - Existing invoices and subscriptions are untouched (append-only).
-- `plan-catalog.json` still carries the old `yearlyMinor`; a fresh install seeds
-  it and the new seeder corrects it on the same boot.
+- `plan-catalog.json` `yearlyMinor` now holds the 20% figures (owner asked, 2026-09-30),
+  so a fresh install seeds them directly. On an install that already ran plan-catalog,
+  its payload checksum changes, which logs one "already applied with a DIFFERENT
+  checksum" warning per boot (harmless: the seeder is not re-run).
 - The seeder replaces ANY differing longer-term price, including one an operator
   set by hand. That is the intended policy (the owner wants the discount formula
   everywhere); the billing-operations runbook has a pre-deploy query to preview
