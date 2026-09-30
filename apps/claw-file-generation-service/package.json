@@ -1,6 +1,6 @@
 {
   "name": "claw-file-generation-service",
-  "version": "1.156.1",
+  "version": "1.157.0",
   "private": true,
   "description": "Claw File Generation Service - format conversion and file export",
   "license": "UNLICENSED",
