@@ -1,11 +1,76 @@
 import { UNCONSTRAINED_POLICY } from '../../constants/organization-policy.constants';
-import { intersectPolicies } from '../policy-intersection.utility';
+import { intersectPolicies, toEffectivePolicy } from '../policy-intersection.utility';
 
+import { extensionTransportSchema } from '../../__fixtures__/extension-organization-policy.contract';
 import type { EffectivePolicy } from '../../types/organization-policy.types';
 
 function policy(overrides: Partial<EffectivePolicy> = {}): EffectivePolicy {
   return { ...UNCONSTRAINED_POLICY, ...overrides };
 }
+
+describe('intersectPolicies: plugin marketplaces (F081)', () => {
+  it('stays absent when no organization set a list', () => {
+    expect('allowedPluginMarketplaces' in intersectPolicies([policy(), policy()])).toBe(false);
+  });
+
+  it('applies a single list as written, including "none allowed"', () => {
+    expect(
+      intersectPolicies([policy(), policy({ allowedPluginMarketplaces: ['a'] })])
+        .allowedPluginMarketplaces,
+    ).toEqual(['a']);
+    expect(
+      intersectPolicies([policy({ allowedPluginMarketplaces: [] })]).allowedPluginMarketplaces,
+    ).toEqual([]);
+  });
+
+  it('keeps only the sources every listing organization names', () => {
+    expect(
+      intersectPolicies([
+        policy({ allowedPluginMarketplaces: ['a', 'b'] }),
+        policy({ allowedPluginMarketplaces: ['b', 'c'] }),
+      ]).allowedPluginMarketplaces,
+    ).toEqual(['b']);
+  });
+});
+
+describe('toEffectivePolicy: plugin marketplaces (F081)', () => {
+  const row = {
+    allowedTools: [],
+    allowedModels: [],
+    maximumRisk: 'R4',
+    deniedEffects: [],
+    requireApproval: [],
+    maximumRetentionDays: 3650,
+    minimumPermissionMode: null,
+    rules: [],
+    trust: { repositories: [], domains: [], commands: [] },
+    mcpServers: { allow: [], deny: [] },
+  };
+
+  it('omits the field for a NULL column (no opinion)', () => {
+    expect('allowedPluginMarketplaces' in toEffectivePolicy(row)).toBe(false);
+    expect(
+      'allowedPluginMarketplaces' in toEffectivePolicy({ ...row, allowedPluginMarketplaces: null }),
+    ).toBe(false);
+  });
+
+  it('is accepted by the extension transport schema (strict)', () => {
+    const effective = toEffectivePolicy({ ...row, allowedPluginMarketplaces: ['a'] });
+
+    expect(extensionTransportSchema.safeParse(effective).success).toBe(true);
+  });
+
+  it('emits a stored list, and [] for one that no longer parses (fail closed)', () => {
+    expect(
+      toEffectivePolicy({ ...row, allowedPluginMarketplaces: ['https://m.example'] })
+        .allowedPluginMarketplaces,
+    ).toEqual(['https://m.example']);
+    expect(
+      toEffectivePolicy({ ...row, allowedPluginMarketplaces: { bad: true } })
+        .allowedPluginMarketplaces,
+    ).toEqual([]);
+  });
+});
 
 describe('intersectPolicies', () => {
   it('leaves a user in no organization unconstrained', () => {

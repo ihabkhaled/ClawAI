@@ -128,3 +128,7 @@ Remaining for next sessions:
 2. Stream 13 — recipe runner orchestration manager.
 3. Streams 20–24 capability providers (browser/screen/clipboard/application/audio).
 4. Stream 30 Tauri shell; 31–32 UX; 40–42 fleet/intelligence/marketplace; 50 QA harness; 60 runbooks.
+
+## Organization policy: plugin marketplaces (F081, 2026-10-01)
+
+`policy/effective` now carries `allowedPluginMarketplaces` (NULL column = omitted = no opinion, `[]` = none allowed). Cross-organization merge is an intersection of listing organizations only. Guide: `docs/04-backend/service-guide-agent.md` (Organization guardrails).

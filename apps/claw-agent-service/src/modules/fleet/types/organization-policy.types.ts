@@ -34,6 +34,12 @@ export interface EffectivePolicy {
   readonly trust: EffectiveTrustGroups;
   /** F054: deny is the union; allow is the common patterns (or deny-all when none). */
   readonly mcpServers: McpServerPolicy;
+  /**
+   * F081: marketplaces members may install plugins from. Absent means no
+   * organization set a list; `[]` means none is allowed. Across organizations
+   * only the sources every listing organization names survive.
+   */
+  readonly allowedPluginMarketplaces?: readonly string[];
 }
 
 /** The row fields `toEffectivePolicy` reads; the JSON columns arrive unparsed. */
@@ -48,6 +54,7 @@ export interface StoredOrganizationPolicy {
   rules: unknown;
   trust: unknown;
   mcpServers: unknown;
+  allowedPluginMarketplaces?: unknown;
 }
 
 /** One stored policy's JSON columns, parsed. */

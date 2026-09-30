@@ -25,6 +25,8 @@ export const extensionTransportSchema = z
     mcpServers: z.unknown().optional(),
     rules: z.unknown().optional(),
     trust: z.unknown().optional(),
+    allowedPluginMarketplaces: z.unknown().optional(),
+    trustedPluginPublishers: z.unknown().optional(),
   })
   .strict();
 

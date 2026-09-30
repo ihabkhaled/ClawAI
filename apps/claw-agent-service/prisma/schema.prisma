@@ -694,6 +694,9 @@ model OrganizationPolicy {
   trust      Json @default("{\"repositories\":[],\"domains\":[],\"commands\":[]}")
   /// F054 MCP server patterns: { allow, deny }; deny wins, empty allow admits every server.
   mcpServers Json @default("{\"allow\":[],\"deny\":[]}")
+  /// F081: the only plugin marketplaces members may install from. NULL means the
+  /// organization has no opinion; `[]` means none is allowed (the client's reading).
+  allowedPluginMarketplaces Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

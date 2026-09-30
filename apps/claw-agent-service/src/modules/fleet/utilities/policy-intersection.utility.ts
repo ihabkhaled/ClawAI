@@ -56,6 +56,38 @@ function strictestMode(left: string | null, right: string | null): string | null
 }
 
 /**
+ * Marketplace allowlists: no opinion (undefined) constrains nothing, so only
+ * organizations that set a list narrow. Two lists keep the sources both name;
+ * `[]` ("none allowed") therefore stays `[]`.
+ */
+function intersectMarketplaces(
+  left: readonly string[] | undefined,
+  right: readonly string[] | undefined,
+): readonly string[] | undefined {
+  if (left === undefined) return right;
+  if (right === undefined) return left;
+  const rightSet = new Set(right);
+  return left.filter((entry) => rightSet.has(entry));
+}
+
+/**
+ * The stored column as a list. A block that is not a string array still meant
+ * "restrict", so it reads as none allowed rather than as no opinion.
+ */
+function readMarketplaces(stored: unknown): readonly string[] | undefined {
+  if (stored === undefined || stored === null) return undefined;
+  return Array.isArray(stored) && stored.every((entry) => typeof entry === 'string')
+    ? (stored as string[])
+    : [];
+}
+
+function withMarketplaces(list: readonly string[] | undefined): {
+  allowedPluginMarketplaces?: readonly string[];
+} {
+  return list === undefined ? {} : { allowedPluginMarketplaces: list };
+}
+
+/**
  * Combines every organization the user belongs to into one policy.
  *
  * Always the stricter of each pair. A user in a permissive organization and a
@@ -82,6 +114,12 @@ export function intersectPolicies(policies: readonly EffectivePolicy[]): Effecti
       rules: mergeRules(accumulated.rules, policy.rules),
       trust: mergeTrust(accumulated.trust, policy.trust),
       mcpServers: mergeMcpServers(accumulated.mcpServers, policy.mcpServers),
+      ...withMarketplaces(
+        intersectMarketplaces(
+          accumulated.allowedPluginMarketplaces,
+          policy.allowedPluginMarketplaces,
+        ),
+      ),
     }),
     UNCONSTRAINED_POLICY,
   );
@@ -109,5 +147,6 @@ export function toEffectivePolicy(policy: StoredOrganizationPolicy): EffectivePo
     rules: guardrails.rules,
     trust: guardrails.trust,
     mcpServers: guardrails.mcpServers,
+    ...withMarketplaces(readMarketplaces(policy.allowedPluginMarketplaces)),
   };
 }

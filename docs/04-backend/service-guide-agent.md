@@ -230,6 +230,13 @@ a RabbitMQ event consumed by audit-service.
   Effective policy merges across organizations: rules concatenated, trust
   grouped per org, MCP denies unioned, and allows intersected. A malformed
   block denies all.
+- **F081 plugin marketplaces (2026-10-01):** `OrganizationPolicy.allowedPluginMarketplaces`
+  (nullable JSON, migration `20261001090000_add_org_policy_plugin_marketplaces`) is
+  served in `policy/effective`. NULL means no opinion and the field is omitted;
+  `[]` means none is allowed (the client's reading); an unreadable value reads as
+  `[]`. Across organizations only sources every listing organization names
+  survive (exact strings; the client normalises). `PUT :id/policy` takes it as
+  `allowedPluginMarketplaces` (null or absent clears it).
 - **Prompt routines:** a scheduled command can be `PROMPT` (prompt, optional
   `PROVIDER/model`, repo, runner labels). It is dispatched to the owner's
   online runner with matching labels, and waits a tick if none is online.

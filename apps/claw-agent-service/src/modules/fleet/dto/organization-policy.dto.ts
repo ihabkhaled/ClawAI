@@ -60,6 +60,12 @@ export const updateOrganizationPolicySchema = z
     trust: organizationTrustListsSchema.default({ repositories: [], domains: [], commands: [] }),
     /** F054 MCP server allow/deny patterns; deny wins. */
     mcpServers: mcpServerPolicySchema.default({ allow: [], deny: [] }),
+    /** F081 plugin marketplace allowlist; null (or absent) means no opinion, `[]` allows none. */
+    allowedPluginMarketplaces: z
+      .array(z.string().min(1).max(2_048))
+      .max(100)
+      .nullable()
+      .default(null),
   })
   .strict();
 

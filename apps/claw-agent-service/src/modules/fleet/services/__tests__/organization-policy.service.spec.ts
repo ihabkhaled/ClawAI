@@ -5,7 +5,7 @@ import { OrganizationAccessService } from '../organization-access.service';
 import { OrganizationPolicyService } from '../organization-policy.service';
 import { UNCONSTRAINED_POLICY } from '../../constants/organization-policy.constants';
 
-import { OrganizationRole } from '../../../../generated/prisma';
+import { OrganizationRole, Prisma } from '../../../../generated/prisma';
 import type { OrganizationRepository } from '../../repositories/organization.repository';
 
 function repository(overrides: Partial<OrganizationRepository> = {}): OrganizationRepository {
@@ -39,6 +39,7 @@ const noGuardrails = {
   rules: [],
   trust: { repositories: [], domains: [], commands: [] },
   mcpServers: { allow: [], deny: [] },
+  allowedPluginMarketplaces: null,
 };
 
 describe('OrganizationPolicyService', () => {
@@ -143,6 +144,34 @@ describe('OrganizationPolicyService', () => {
         'org-1',
         expect.objectContaining({ maximumRisk: 'R2' }),
       );
+    });
+
+    it('stores the plugin marketplace list, and clears it to NULL (no opinion) when null', async () => {
+      const upsertPolicy = vi.fn().mockResolvedValue(storedPolicy);
+      const service = policyService(repository({ upsertPolicy }));
+      const base = {
+        allowedTools: [],
+        allowedModels: [],
+        maximumRisk: 'R4' as const,
+        deniedEffects: [],
+        requireApproval: [],
+        maximumRetentionDays: 30,
+        minimumPermissionMode: null,
+        ...noGuardrails,
+      };
+
+      await service.update('org-1', 'user-1', {
+        ...base,
+        allowedPluginMarketplaces: ['https://m.example'],
+      });
+      await service.update('org-1', 'user-1', base);
+
+      expect(upsertPolicy.mock.calls[0]?.[1]).toMatchObject({
+        allowedPluginMarketplaces: ['https://m.example'],
+      });
+      expect(upsertPolicy.mock.calls[1]?.[1]).toMatchObject({
+        allowedPluginMarketplaces: Prisma.DbNull,
+      });
     });
 
     // Writing a policy is administrative; reading it is not.

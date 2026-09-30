@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { Prisma } from '../../../generated/prisma';
+
 import { UNCONSTRAINED_POLICY } from '../constants/organization-policy.constants';
 import { OrganizationRepository } from '../repositories/organization.repository';
 import { OrganizationAccessService } from './organization-access.service';
@@ -58,6 +60,7 @@ export class OrganizationPolicyService {
       rules: dto.rules,
       trust: dto.trust,
       mcpServers: dto.mcpServers,
+      allowedPluginMarketplaces: dto.allowedPluginMarketplaces ?? Prisma.DbNull,
     });
     return toEffectivePolicy(saved);
   }
