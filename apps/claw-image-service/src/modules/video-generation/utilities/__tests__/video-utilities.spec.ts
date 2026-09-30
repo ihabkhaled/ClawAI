@@ -89,6 +89,28 @@ describe('failure vocabulary', () => {
     expect(videoFailureCodeOf(new BusinessException('m', 'CUSTOM'))).toBe('CUSTOM');
   });
 
+  it('reads an out-of-credit 403 as quota, not as a bad key', () => {
+    const error = toVideoProviderException(
+      {
+        response: {
+          status: 403,
+          data: {
+            code: 'permission-denied',
+            error:
+              'Your team has either used all available credits or reached its monthly spending limit.',
+          },
+        },
+      },
+      'xAI',
+    );
+
+    expect(error.code).toBe(VideoFailureCode.PROVIDER_QUOTA_EXCEEDED);
+    expect(
+      toVideoProviderException({ response: { status: 403, data: { error: 'forbidden' } } }, 'xAI')
+        .code,
+    ).toBe(VideoFailureCode.PROVIDER_AUTH_FAILED);
+  });
+
   it('classifies transport errors as unavailable and a policy block as content rejected', () => {
     expect(toVideoProviderException({ code: 'ETIMEDOUT' }, 'x')).toMatchObject({
       code: VideoFailureCode.PROVIDER_UNAVAILABLE,

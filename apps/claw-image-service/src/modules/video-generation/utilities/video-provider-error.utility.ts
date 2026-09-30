@@ -15,6 +15,7 @@ import {
   VIDEO_AUTH_FAILURE_MARKERS,
   VIDEO_CONTENT_POLICY_MARKERS,
   VIDEO_MODEL_MISSING_MARKERS,
+  VIDEO_QUOTA_MARKERS,
   videoFailureMessage,
 } from '../constants/video-failure.constants';
 
@@ -33,6 +34,9 @@ function classifyVideoFailure(error: unknown, detail: string): VideoFailureCode 
     return code !== undefined && IMAGE_TRANSPORT_ERROR_CODES.includes(code)
       ? VideoFailureCode.PROVIDER_UNAVAILABLE
       : VideoFailureCode.PROVIDER_FAILURE;
+  }
+  if (includesAny(detail, VIDEO_QUOTA_MARKERS)) {
+    return VideoFailureCode.PROVIDER_QUOTA_EXCEEDED;
   }
   if (
     IMAGE_AUTH_FAILURE_STATUSES.includes(status) ||

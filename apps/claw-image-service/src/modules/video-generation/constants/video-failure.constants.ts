@@ -92,3 +92,14 @@ export const VIDEO_AUTH_FAILURE_MARKERS: readonly string[] = [
   'invalid api key',
   'incorrect api key',
 ];
+
+/**
+ * Lower-cased fragments of an out-of-credit refusal. xAI answers it with a 403
+ * (`permission-denied`), which looks exactly like a bad key and is not one.
+ */
+export const VIDEO_QUOTA_MARKERS: readonly string[] = [
+  'used all available credits',
+  'spending limit',
+  'insufficient credit',
+  'exceeded your current quota',
+];
