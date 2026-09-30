@@ -357,6 +357,17 @@ flow is broken, but because the price rows simply do not exist yet. It is
 registered in `seed.cjs` immediately after `planCatalogSeeder`, since it
 depends on the plans (and their active monthly prices) already existing.
 
+## Team plan description is rewritten by its own seeder (2026-09-29)
+
+The seeded Team description promised pooled team billing and a shared account,
+neither of which exists (REQ-POS-005). `plan-catalog.json` carries the accurate
+text for fresh installs; `plan-team-description.seeder.cjs` (v1) rewrites
+existing rows. It writes **only** `description`, keyed on the old text, so an
+administrator's own wording survives and a rerun is a no-op. Same reason as the
+seeders above: `plan-catalog`'s else branch never writes `description`, and the
+catalog checksum payload does not include it. Prices, quotas and feature rules
+are untouched.
+
 ## A trial is superseded, not merely expired (2026-09-06)
 
 `PlanTrialRedemption` is written once per user (`userId` unique) and

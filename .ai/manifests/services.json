@@ -112,7 +112,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 116,
+      "testFiles": 117,
       "testRunner": "vitest"
     },
     {
