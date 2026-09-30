@@ -23,6 +23,7 @@ const creditPackagesSeeder = require('./seeders/credit-packages.seeder.cjs');
 const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder.cjs');
 const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder.cjs');
 const planQuarterlySemiannualPricingSeeder = require('./seeders/plan-quarterly-semiannual-pricing.seeder.cjs');
+const planIntervalDiscountsSeeder = require('./seeders/plan-interval-discounts.seeder.cjs');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);
@@ -376,6 +377,12 @@ async function seed() {
   //     and on each plan's active MONTHLY price. See the seeder file for why
   //     this could not be a plan-catalog version bump instead.
   await runVersionedSeeder(prisma, planQuarterlySemiannualPricingSeeder);
+
+  // 3b-3. Term discounts: 10% quarterly / 15% semiannual / 20% yearly, derived
+  //     from each plan's live MONTHLY price. Re-mints the longer-term versions
+  //     the two seeders above created at their old figures (append-only: the old
+  //     version is retired, never edited). MUST run after both of them.
+  await runVersionedSeeder(prisma, planIntervalDiscountsSeeder);
 
   // 3c. PAYG credit allowances on EXISTING installs. Deliberately a separate
   //     seeder rather than a plan-catalog version bump: on an install where

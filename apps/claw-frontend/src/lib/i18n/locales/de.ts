@@ -4300,6 +4300,14 @@ export const de: TranslationDictionary = {
     },
   },
   adminPlans: {
+    intervalDiscounts: {
+      title: 'Laufzeitrabatte',
+      description:
+        'Die Preise für vierteljährliche, halbjährliche und jährliche Zahlung werden aus dem Monatspreis abzüglich dieser Rabatte berechnet. Nach dem Speichern gelten die neuen Preise sofort für neue Bestellungen; bestehende Abonnenten behalten den Preis, zu dem sie gekauft haben.',
+      fieldLabel: 'Rabatt {interval} (%)',
+      invalid: 'Geben Sie einen Prozentwert von 0 bis 90 mit höchstens zwei Nachkommastellen ein.',
+      saved: 'Rabatte gespeichert. Die neuen Preise sind live.',
+    },
     title: 'Tarife',
     description: 'Abonnement-Tarife, Kontingente, Funktionsfreigaben und Modellzugriff festlegen.',
     addPlan: 'Neuer Tarif',
@@ -5126,7 +5134,6 @@ export const de: TranslationDictionary = {
         'Kostenlos starten. Upgraden, wenn Sie mehr brauchen. Jeder kostenpflichtige Tarif erreicht dieselben Modelle – der Unterschied liegt darin, wie viel Sie nutzen können.',
       monthly: 'Monatlich',
       yearly: 'Jährlich',
-      yearlyBadge: 'Zwei Monate gratis',
       perMonth: '/Monat',
       perYear: '/Jahr',
       cadence: {
@@ -5135,7 +5142,7 @@ export const de: TranslationDictionary = {
         SEMIANNUAL: '/6 Monate',
         YEARLY: '/Jahr',
       },
-      discountBadge: '10% Rabatt',
+      savePercent: '{percent} % sparen',
       mostPopular: 'Am beliebtesten',
       dailyTokens: 'Tägliches Kontingent',
       monthlyTokens: 'Monatliches Kontingent',
@@ -5262,7 +5269,6 @@ export const de: TranslationDictionary = {
         toggleLabel: 'Abrechnungszeitraum',
         toggleMonthly: 'Monatlich',
         toggleYearly: 'Jährlich',
-        yearlyNote: 'Zahlen Sie jährlich und erhalten Sie {months} Monate gratis.',
         linkFaq: 'Fragen zur Abrechnung? Lesen Sie die FAQ',
         linkUseCases: 'Sehen Sie, was Menschen mit ClawAI umsetzen',
       },
@@ -5713,7 +5719,7 @@ export const de: TranslationDictionary = {
           'eine E-Mail-Adresse und ein Passwort. Der kostenlose Tarif startet sofort, ohne dass eine Karte erforderlich ist.',
         step2Title: 'Tarif wählen',
         step2Desc:
-          'kostenlos zum Einstieg; kostenpflichtige Tarife ab 5 $ im Monat erhöhen Ihr Kontingent und schalten die größeren Modelle sowie die Mehrmodell-Modi frei.',
+          'kostenlos zum Einstieg; kostenpflichtige Tarife erhöhen Ihr Kontingent und schalten die größeren Modelle sowie die Mehrmodell-Modi frei.',
         step3Title: 'Unterhaltung beginnen',
         step3Desc:
           'eine Nachricht eingeben, optional Dateien anhängen und entweder ein Modell wählen oder es auf Auto belassen.',
@@ -5740,17 +5746,17 @@ export const de: TranslationDictionary = {
           'Eine E-Mail-Adresse und ein Passwort reichen aus. Es gibt kein Anbieterkonto zu erstellen, keinen API-Schlüssel einzufügen und nichts zu installieren – ClawAI pflegt die Anbieterbeziehungen in Ihrem Namen.',
         plansHeading: 'Die Tarife',
         plansBody:
-          'Sieben Stufen, von kostenlos bis Unlimited für 200 $ im Monat. Jeder kostenpflichtige Tarif erreicht jedes Modell; was sich ändert, ist, wie viel Sie nutzen können und welche Mehrmodell-Modi freigeschaltet sind.',
+          'Sieben Stufen, von kostenlos bis Unlimited. Jeder kostenpflichtige Tarif erreicht jedes Modell; was sich ändert, ist, wie viel Sie nutzen können und welche Mehrmodell-Modi freigeschaltet sind.',
         bullet1:
-          'Free — 0 $. Ein kleines tägliches Kontingent, Modelle der Einstiegsstufe und je ein Testlauf für Vergleich, Judge und Recherche.',
+          'Free. Ein kleines tägliches Kontingent, Modelle der Einstiegsstufe und je ein Testlauf für Vergleich, Judge und Recherche.',
         bullet2:
-          'Starter 5 $, Plus 10 $, Pro 20 $ im Monat. Steigende Kontingente, mit Premium-Modellen und größeren Vergleichs- und Judge-Kontingenten, je höher Sie gehen.',
+          'Starter, Plus und Pro. Steigende Kontingente, mit Premium-Modellen und größeren Vergleichs- und Judge-Kontingenten, je höher Sie gehen.',
         bullet3:
-          'Team 50 $, Scale 100 $ im Monat. Unbegrenzt Vergleich, Judge, Kritiker und Recherche, plus deutlich mehr Workspace-Verbindungen.',
+          'Team und Scale. Unbegrenzt Vergleich, Judge, Kritiker und Recherche, plus deutlich mehr Workspace-Verbindungen.',
         bullet4:
-          'Unlimited 200 $ im Monat. Unbegrenzte Unterhaltungen und Nachrichten, mit einer Fair-Use-Grenze bei Premium-Modellen, vor deren Erreichen Sie gewarnt werden.',
+          'Unlimited. Unbegrenzte Unterhaltungen und Nachrichten, mit einer Fair-Use-Grenze bei Premium-Modellen, vor deren Erreichen Sie gewarnt werden.',
         upgradeNote:
-          'Zahlen Sie jährlich, zahlen Sie nur für zehn statt zwölf Monate. Sie können den Tarif jederzeit wechseln oder kündigen – ein Upgrade gilt sofort, ein Downgrade zu Beginn Ihres nächsten Abrechnungszeitraums.',
+          'Wer für eine längere Laufzeit zahlt, zahlt weniger pro Monat; die Ersparnis wird bei jedem Tarif angezeigt. Sie können den Tarif jederzeit wechseln oder kündigen – ein Upgrade gilt sofort, ein Downgrade zu Beginn Ihres nächsten Abrechnungszeitraums.',
         ctaRegister: 'Konto erstellen',
       },
       models: {
@@ -6301,17 +6307,17 @@ export const de: TranslationDictionary = {
           'Erstellen Sie ein Konto mit einer E-Mail-Adresse und einem Passwort, und Sie sind sofort im kostenlosen Tarif. Senden Sie eine Nachricht. Wenn Sie kein Modell wählen, wählt ClawAI eines für Sie.',
         freeTierQ: 'Gibt es einen kostenlosen Tarif?',
         freeTierA:
-          'Ja — 0 $, keine Karte erforderlich. Er enthält ein kleines tägliches Kontingent, Zugang zu Modellen der Einstiegsstufe und je einen Testlauf für Vergleich, Judge und Recherche, damit Sie sehen können, was die kostenpflichtigen Modi tun, bevor Sie dafür bezahlen.',
+          'Ja — keine Karte erforderlich. Er enthält ein kleines tägliches Kontingent, Zugang zu Modellen der Einstiegsstufe und je einen Testlauf für Vergleich, Judge und Recherche, damit Sie sehen können, was die kostenpflichtigen Modi tun, bevor Sie dafür bezahlen.',
       },
       plansBilling: {
         title: 'Tarife und Abrechnung',
         description: 'Was die Stufen kosten und wie die Abrechnung funktioniert.',
         plansQ: 'Welche Tarife gibt es?',
         plansA:
-          'Sieben: Free für 0 $, Starter 5 $, Plus 10 $, Pro 20 $, Team 50 $, Scale 100 $ und Unlimited 200 $ pro Monat. Jeder kostenpflichtige Tarif erreicht jedes Modell – der Unterschied liegt in Ihrem Kontingent, Ihren täglichen Nachrichtenlimits und wie viele Vergleichs-, Judge- und Recherche-Läufe Sie erhalten.',
+          'Sieben: Free, Starter, Plus, Pro, Team, Scale und Unlimited. Jeder kostenpflichtige Tarif erreicht jedes Modell – der Unterschied liegt in Ihrem Kontingent, Ihren täglichen Nachrichtenlimits und wie viele Vergleichs-, Judge- und Recherche-Läufe Sie erhalten.',
         paymentQ: 'Wie bezahle ich?',
         paymentA:
-          'Per Karte, monatlich oder jährlich. Zahlen Sie jährlich, werden Sie für zehn statt zwölf Monate belastet, sodass zwei Monate gratis sind.',
+          'Per Karte, monatlich oder jährlich. Zahlen Sie für eine längere Laufzeit – drei, sechs oder zwölf Monate –, zahlen Sie pro Monat weniger; die Ersparnis wird bei jedem Tarif angezeigt.',
         changePlanQ: 'Kann ich den Tarif später wechseln?',
         changePlanA:
           'Ja, jederzeit. Ein Upgrade gibt Ihnen das höhere Kontingent sofort; ein Downgrade tritt zu Beginn Ihres nächsten Abrechnungszeitraums in Kraft, sodass Sie behalten, wofür Sie bereits bezahlt haben.',
@@ -6492,7 +6498,7 @@ export const de: TranslationDictionary = {
           'Zwei unterschiedliche Produkte für zwei unterschiedliche Probleme. Die meisten Unternehmen sollten mit der gehosteten App beginnen und nur wechseln, wenn eine Anforderung dies erzwingt.',
         hostedBadge: 'Selbstbedienung',
         hostedTitle: 'ClawAI gehostet',
-        hostedSubtitle: 'Online anmelden, ab 5 $ im Monat.',
+        hostedSubtitle: 'Online anmelden.',
         hostedPoint1:
           'Jedes Spitzenmodell in der Cloud – Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok und Bedrock.',
         hostedPoint2:

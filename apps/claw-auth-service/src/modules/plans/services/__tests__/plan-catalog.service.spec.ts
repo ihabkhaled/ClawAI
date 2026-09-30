@@ -1,6 +1,7 @@
 import { type Mocked, vi } from 'vitest';
 import { BillingIntervalKind, PlanFeatureKey } from '../../../../generated/prisma';
 import { PlanCatalogService } from '../plan-catalog.service';
+import { PlanIntervalPricingService } from '../plan-interval-pricing.service';
 import type { PlanBillingRepository } from '../../repositories/plan-billing.repository';
 import type { PlansRepository } from '../../repositories/plans.repository';
 
@@ -46,6 +47,9 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     allowImageGeneration: true,
     allowHelperVision: true,
     allowTextToSpeech: true,
+    quarterlyDiscountBps: 1000,
+    semiannualDiscountBps: 1500,
+    yearlyDiscountBps: 2000,
     ...overrides,
   };
 }
@@ -79,6 +83,7 @@ describe('PlanCatalogService', () => {
       | 'findPriceById'
       | 'listPricesForPlan'
       | 'publishNewPrice'
+      | 'publishPriceSet'
     >
   >;
   let service: PlanCatalogService;
@@ -92,10 +97,15 @@ describe('PlanCatalogService', () => {
       findPriceById: vi.fn(),
       listPricesForPlan: vi.fn(),
       publishNewPrice: vi.fn(),
+      publishPriceSet: vi.fn(),
     } as never;
     service = new PlanCatalogService(
       plans as unknown as PlansRepository,
       billing as unknown as PlanBillingRepository,
+      new PlanIntervalPricingService(
+        plans as unknown as PlansRepository,
+        billing as unknown as PlanBillingRepository,
+      ),
     );
   });
 
@@ -246,26 +256,53 @@ describe('PlanCatalogService', () => {
       expect(prices.map((price) => price.id)).toEqual(['price-current', 'price-retired']);
     });
 
-    it('mints a new version through the atomic repository operation', async () => {
+    it('mints the monthly version and the derived terms in one repository call', async () => {
       plans.findById.mockResolvedValue(makePlan() as never);
-      billing.publishNewPrice.mockResolvedValue(makePrice({ id: 'price-v4', version: 4 }) as never);
+      billing.publishPriceSet.mockResolvedValue([
+        makePrice({ id: 'price-v4', version: 4 }),
+      ] as never);
 
       const price = await service.publishPrice({
         planId: 'plan-pro',
         billingInterval: BillingIntervalKind.MONTHLY,
         currency: 'USD',
-        amountMinor: 2499,
+        amountMinor: 1200,
         createdByUserId: 'admin-1',
       });
 
-      expect(billing.publishNewPrice).toHaveBeenCalledWith({
+      // $12.00 a month: 10% off 3 months, 15% off 6, 20% off 12.
+      expect(billing.publishPriceSet).toHaveBeenCalledWith({
         planId: 'plan-pro',
-        billingInterval: BillingIntervalKind.MONTHLY,
-        currency: 'USD',
-        amountMinor: 2499,
+        entries: [
+          { billingInterval: 'MONTHLY', currency: 'USD', amountMinor: 1200, force: true },
+          { billingInterval: 'QUARTERLY', currency: 'USD', amountMinor: 3240, force: false },
+          { billingInterval: 'SEMIANNUAL', currency: 'USD', amountMinor: 6120, force: false },
+          { billingInterval: 'YEARLY', currency: 'USD', amountMinor: 11520, force: false },
+        ],
+        legacyDisplay: { priceMonthly: 12, priceYearly: 115.2 },
         createdByUserId: 'admin-1',
       });
+      expect(billing.publishNewPrice).not.toHaveBeenCalled();
       expect(price.version).toBe(4);
+    });
+
+    it.each([
+      BillingIntervalKind.QUARTERLY,
+      BillingIntervalKind.SEMIANNUAL,
+      BillingIntervalKind.YEARLY,
+    ])('refuses a hand-typed %s price: it is derived', async (billingInterval) => {
+      plans.findById.mockResolvedValue(makePlan() as never);
+
+      await expect(
+        service.publishPrice({
+          planId: 'plan-pro',
+          billingInterval,
+          currency: 'USD',
+          amountMinor: 999_999,
+          createdByUserId: 'admin-1',
+        }),
+      ).rejects.toMatchObject({ code: 'PLAN_INTERVAL_PRICE_DERIVED' });
+      expect(billing.publishPriceSet).not.toHaveBeenCalled();
     });
 
     it('rejects price publication for an unknown plan', async () => {
@@ -280,7 +317,7 @@ describe('PlanCatalogService', () => {
           createdByUserId: 'admin-1',
         }),
       ).rejects.toMatchObject({ code: 'ENTITY_NOT_FOUND' });
-      expect(billing.publishNewPrice).not.toHaveBeenCalled();
+      expect(billing.publishPriceSet).not.toHaveBeenCalled();
     });
   });
 });

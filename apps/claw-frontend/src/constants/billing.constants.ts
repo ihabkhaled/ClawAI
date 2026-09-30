@@ -4,6 +4,7 @@ import {
   SubscriptionStatus,
   UsageTone,
 } from '@/enums/billing.enum';
+import type { IntervalDiscountField, IntervalDiscountInputs } from '@/types/admin-plan-price.types';
 
 // The plan catalog only changes when an administrator publishes a new price
 // version, so it is cached generously instead of refetched on every mount.
@@ -54,6 +55,30 @@ export const BILLING_INTERVAL_ORDER: BillingInterval[] = [
   BillingInterval.SEMIANNUAL,
   BillingInterval.YEARLY,
 ];
+
+/** The admin's three term-discount fields, in the order they render. */
+export const ADMIN_INTERVAL_DISCOUNT_FIELDS: ReadonlyArray<{
+  field: IntervalDiscountField;
+  interval: BillingInterval;
+}> = [
+  { field: 'quarterly', interval: BillingInterval.QUARTERLY },
+  { field: 'semiannual', interval: BillingInterval.SEMIANNUAL },
+  { field: 'yearly', interval: BillingInterval.YEARLY },
+];
+
+export const EMPTY_INTERVAL_DISCOUNT_INPUTS: IntervalDiscountInputs = {
+  quarterly: '',
+  semiannual: '',
+  yearly: '',
+};
+
+/** Months of service one charge buys, per billing interval. */
+export const BILLING_INTERVAL_MONTHS: Record<BillingInterval, number> = {
+  [BillingInterval.MONTHLY]: 1,
+  [BillingInterval.QUARTERLY]: 3,
+  [BillingInterval.SEMIANNUAL]: 6,
+  [BillingInterval.YEARLY]: 12,
+};
 
 /** Lowercase URL query values PlanTierCard's checkout link uses, and
  * readCheckoutInterval parses back. Keep both in sync. */

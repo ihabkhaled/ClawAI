@@ -59,7 +59,7 @@ hand the cheapest plan an unbounded allowance.
 > Two statements in this section were also REVERSED by ADR-078 and are corrected
 > in place below rather than left to mislead.
 
-Yearly is exactly ten months of the monthly rate (two months free).
+Longer terms are `monthly x months x (1 - discount)`: 10% quarterly, 15% semiannual, 20% yearly by default, editable per plan ([ADR-135](../13-adr/adr-135-term-discounts-derive-price-versions.md)).
 
 **The cost ceiling is now the user-visible PAYG connector-credit allowance.**
 This reverses the previous rule that it was "an internal profitability control

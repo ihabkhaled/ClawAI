@@ -122,7 +122,30 @@ Never edit a price. Publish a new version:
 
 ```
 POST /api/v1/admin/plans/:planId/price-versions
-{ billingInterval, amountMinor, currency }
+{ billingInterval: "MONTHLY", amountMinor, currency }
+```
+
+Only the MONTHLY price is published by hand. QUARTERLY, SEMIANNUAL and YEARLY are
+derived from it and the plan's discounts (10% / 15% / 20% by default) and minted in
+the same transaction; a hand-typed one is refused (`PLAN_INTERVAL_PRICE_DERIVED`).
+To change a discount: `PUT /api/v1/admin/plans/:planId/interval-discounts`
+`{ quarterlyDiscountBps, semiannualDiscountBps, yearlyDiscountBps }` (0-9000;
+2000 = 20%). See [ADR-135](../13-adr/adr-135-term-discounts-derive-price-versions.md).
+
+Before deploying the `plan-interval-discounts` seeder to an install, preview what
+it will change (it replaces any active longer-term price that differs from the
+formula, including one set by hand):
+
+```sql
+SELECT p.slug, m.amount_minor AS monthly, q.billing_interval, q.amount_minor AS current,
+       round(m.amount_minor * (CASE q.billing_interval WHEN 'QUARTERLY' THEN 3 WHEN 'SEMIANNUAL' THEN 6 ELSE 12 END)
+             * (10000 - CASE q.billing_interval WHEN 'QUARTERLY' THEN p.quarterly_discount_bps
+                                                WHEN 'SEMIANNUAL' THEN p.semiannual_discount_bps
+                                                ELSE p.yearly_discount_bps END) / 10000.0) AS new
+FROM plans p
+JOIN plan_price_versions m ON m.plan_id = p.id AND m.billing_interval = 'MONTHLY' AND m.is_active
+JOIN plan_price_versions q ON q.plan_id = p.id AND q.billing_interval <> 'MONTHLY' AND q.is_active
+ORDER BY p.slug, q.billing_interval;
 ```
 
 This retires the current version and inserts the next in one transaction.

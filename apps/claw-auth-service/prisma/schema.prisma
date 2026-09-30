@@ -188,6 +188,15 @@ model Plan {
   // access to paid models is a separate product decision, not a side effect of
   // a percentage.
   paygCreditPercentBps               Int                 @default(3000) @map("payg_credit_percent_bps")
+  // Discount off the plain monthly rate for a longer term, in basis points
+  // (2000 = 20%). QUARTERLY / SEMIANNUAL / YEARLY PlanPriceVersion amounts are
+  // DERIVED from the active MONTHLY price and these three numbers
+  // (`monthly x months x (10000 - bps) / 10000`, rounded once), and re-minted as
+  // new immutable versions whenever either input changes. Defaults: 10% / 15% /
+  // 20%. 0 means "no discount", never "unlimited".
+  quarterlyDiscountBps               Int                 @default(1000) @map("quarterly_discount_bps")
+  semiannualDiscountBps              Int                 @default(1500) @map("semiannual_discount_bps")
+  yearlyDiscountBps                  Int                 @default(2000) @map("yearly_discount_bps")
   // NULL = unlimited, 0 = disabled. The three are never interchangeable.
   maxConcurrentRequests              Int?                @map("max_concurrent_requests")
   maxChatsPerDay                     Int?                @map("max_chats_per_day")

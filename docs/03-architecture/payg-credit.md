@@ -418,8 +418,8 @@ repricing carries the allowance with it and there is no second number to drift
 (ADR-078, amended).
 
 Read from the ACTIVE immutable `PlanPriceVersion`, always the MONTHLY one — a
-yearly subscriber pays ten months for twelve, and a discount on the subscription
-is not meant to be a discount on the allowance.
+longer-term subscriber pays a discounted total (20% off for a year by default), and a
+discount on the subscription is not meant to be a discount on the allowance.
 
 A plan with no active monthly price, or a price of zero, grants nothing. Thirty
 percent of nothing is nothing; Free therefore carries no connector credit and

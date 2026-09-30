@@ -75,14 +75,15 @@ evidence that counts is a server-side capture read or a verified webhook.
 
 ### Administrative billing abuse
 
-| Attack                                      | Control                                                                                               |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Reach billing controls through a copied URL | Auth-service and payment-service enforce `ADMIN_PLANS_MANAGE`; hidden navigation is not authorization |
-| Rewrite an old price                        | Append-only `PlanPriceVersion`; database and service contracts reject mutation                        |
-| Infer or corrupt margin with float math     | Revenue and provider cost aggregate in integer microUSD; mixed currencies are rejected                |
-| Read another service's billing database     | Dashboard uses signed, bounded internal projections; no cross-database query                          |
-| Run reconciliation on every replica         | Redis owner-token lock plus bounded, idempotent, resumable work                                       |
-| Delete a lock acquired by another owner     | Atomic Lua compare-and-delete; token is never logged or shown in a runbook                            |
+| Attack                                      | Control                                                                                                                                                                 |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reach billing controls through a copied URL | Auth-service and payment-service enforce `ADMIN_PLANS_MANAGE`; hidden navigation is not authorization                                                                   |
+| Rewrite an old price                        | Append-only `PlanPriceVersion`; database and service contracts reject mutation                                                                                          |
+| Mistyped or malicious term discount         | Bounded 0-9000 bps by a DB CHECK and the DTO; needs `ADMIN_PLANS_MANAGE`; only NEW checkouts see it (existing subscriptions keep their version, history is append-only) |
+| Infer or corrupt margin with float math     | Revenue and provider cost aggregate in integer microUSD; mixed currencies are rejected                                                                                  |
+| Read another service's billing database     | Dashboard uses signed, bounded internal projections; no cross-database query                                                                                            |
+| Run reconciliation on every replica         | Redis owner-token lock plus bounded, idempotent, resumable work                                                                                                         |
+| Delete a lock acquired by another owner     | Atomic Lua compare-and-delete; token is never logged or shown in a runbook                                                                                              |
 
 ### Quota and cost abuse
 
@@ -155,13 +156,13 @@ Honest list of what is _not_ fully mitigated today:
 
 ## 5. Incident playbook
 
-| Symptom                          | First action                                                                                                      |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Webhook signature failures spike | Confirm the webhook id/HMAC secret matches the gateway; **do not** relax verification                             |
-| Entitlement drift                | Follow `docs/11-runbooks/runbook-billing-reconciliation.md`; replay is idempotent                                 |
-| Suspected token compromise       | Rotate `PAYMENT_TOKEN_ENCRYPTION_KEY`, bump the key version, revoke tokens at the gateway                         |
-| Duplicate charges reported       | Check `PaymentTransaction` by idempotency key before refunding — a duplicate _record_ is not a duplicate _charge_ |
-| A plan is mispriced              | Publish a **new** price version; never edit the old one, or historical invoices stop reconciling                  |
+| Symptom                          | First action                                                                                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Webhook signature failures spike | Confirm the webhook id/HMAC secret matches the gateway; **do not** relax verification                                                                                                         |
+| Entitlement drift                | Follow `docs/11-runbooks/runbook-billing-reconciliation.md`; replay is idempotent                                                                                                             |
+| Suspected token compromise       | Rotate `PAYMENT_TOKEN_ENCRYPTION_KEY`, bump the key version, revoke tokens at the gateway                                                                                                     |
+| Duplicate charges reported       | Check `PaymentTransaction` by idempotency key before refunding — a duplicate _record_ is not a duplicate _charge_                                                                             |
+| A plan is mispriced              | Publish a **new** MONTHLY price version, or change the term discounts (`PUT .../interval-discounts`); longer terms re-derive. Never edit the old row, or historical invoices stop reconciling |
 
 The ciphertext records `PAYMENT_TOKEN_KEY_VERSION`, but the running service
 holds one active key. Re-encrypt or revoke vaulted rows under an approved

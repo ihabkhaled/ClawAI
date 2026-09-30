@@ -12,6 +12,7 @@ import { BillingInterval } from '@/enums/billing.enum';
 import { useLocalizedMoney } from '@/hooks/display-currency/use-localized-money';
 import type { BillingPlanCardProps } from '@/types/billing-component.types';
 import {
+  computeIntervalDiscountPercent,
   computeYearlySavingMinor,
   findPlanPrice,
   formatQuotaLimit,
@@ -49,10 +50,8 @@ export function BillingPlanCard({
     'USD',
     DisplayRoundingPolicy.PRECISE_USAGE,
   );
-  const showsDiscountBadge =
-    (interval === BillingInterval.QUARTERLY || interval === BillingInterval.SEMIANNUAL) &&
-    price !== null &&
-    price.amountMinor > 0;
+  const discountPercent = computeIntervalDiscountPercent(plan, interval);
+  const showsDiscountBadge = discountPercent > 0 && price !== null && price.amountMinor > 0;
   const isNoCostPlan =
     plan.prices.length > 0 && plan.prices.every((planPrice) => planPrice.amountMinor === 0);
 
@@ -123,7 +122,9 @@ export function BillingPlanCard({
         ) : null}
 
         {showsDiscountBadge ? (
-          <p className="text-primary text-xs font-medium">{t('marketing.pricing.discountBadge')}</p>
+          <p className="text-primary text-xs font-medium">
+            {t('marketing.pricing.savePercent', { percent: discountPercent })}
+          </p>
         ) : null}
 
         <ul className="grid grid-cols-1 gap-1 text-sm">

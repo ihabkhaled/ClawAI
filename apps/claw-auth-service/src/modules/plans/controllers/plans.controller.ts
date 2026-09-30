@@ -17,6 +17,12 @@ import {
 } from '../dto/plan-misc.dto';
 import { type PublishPlanPriceDto, publishPlanPriceSchema } from '../dto/plan-price.dto';
 import { PlanCatalogService } from '../services/plan-catalog.service';
+import { PlanIntervalPricingService } from '../services/plan-interval-pricing.service';
+import {
+  type SetPlanIntervalDiscountsDto,
+  setPlanIntervalDiscountsSchema,
+} from '../dto/plan-interval-discounts.dto';
+import { type PlanIntervalPricingView } from '../types/plan-interval-pricing.types';
 import { type PlanRetirementResult, type PlanView } from '../types/plans.types';
 import { type RetirePlanDto, retirePlanSchema } from '../dto/plan-retirement.dto';
 import { type PlanPriceVersionView } from '../types/plan-catalog.types';
@@ -27,6 +33,7 @@ export class PlansController {
   constructor(
     private readonly plansService: PlansService,
     private readonly planCatalog: PlanCatalogService,
+    private readonly intervalPricing: PlanIntervalPricingService,
   ) {}
 
   @Get()
@@ -107,6 +114,20 @@ export class PlansController {
       amountMinor: dto.amountMinor,
       createdByUserId: admin.id,
     });
+  }
+
+  @Get(':id/interval-pricing')
+  async getIntervalPricing(@Param('id') id: string): Promise<PlanIntervalPricingView> {
+    return this.intervalPricing.view(id);
+  }
+
+  @Put(':id/interval-discounts')
+  async setIntervalDiscounts(
+    @Param('id') id: string,
+    @CurrentUser() admin: AuthenticatedUser,
+    @Body(new ZodValidationPipe(setPlanIntervalDiscountsSchema)) dto: SetPlanIntervalDiscountsDto,
+  ): Promise<PlanIntervalPricingView> {
+    return this.intervalPricing.setDiscounts(id, dto, admin.id);
   }
 
   @Post('reorder')

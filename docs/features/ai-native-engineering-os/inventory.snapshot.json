@@ -762,6 +762,16 @@
         },
         {
           "method": "PUT",
+          "route": "/admin/plans/:id/interval-discounts",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/plans/:id/interval-pricing",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
+          "method": "PUT",
           "route": "/admin/plans/:id/model-access",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
@@ -7889,7 +7899,7 @@
           "file": "rules/27-engineering-mindsets.md"
         },
         {
-          "bytes": 6984,
+          "bytes": 8092,
           "file": "rules/28-billing-integrity-and-api-contracts.md"
         },
         {
@@ -8417,7 +8427,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5567
+        "value": 5571
       },
       "localeCount": 13,
       "locales": [
@@ -10413,7 +10423,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 117
+        "testFiles": 120
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11203,7 +11213,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 737,
+    "endpointCount": 739,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11215,7 +11225,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1798,
+    "totalTestFiles": 1801,
     "workspaceCount": 25
   }
 }

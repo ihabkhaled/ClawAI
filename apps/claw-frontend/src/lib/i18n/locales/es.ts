@@ -4288,6 +4288,14 @@ export const es: TranslationDictionary = {
     },
   },
   adminPlans: {
+    intervalDiscounts: {
+      title: 'Descuentos por periodo',
+      description:
+        'Los precios trimestral, semestral y anual se calculan a partir del precio mensual menos estos descuentos. Al guardar, los nuevos pagos se cobran con el precio nuevo de inmediato; los suscriptores actuales conservan el precio al que compraron.',
+      fieldLabel: 'Descuento {interval} (%)',
+      invalid: 'Introduzca un porcentaje de 0 a 90, con un máximo de dos decimales.',
+      saved: 'Descuentos guardados. Los nuevos precios ya están activos.',
+    },
     title: 'Planes',
     description: 'Define planes de suscripción, cuotas, controles de funciones y acceso a modelos.',
     addPlan: 'Nuevo plan',
@@ -5108,7 +5116,6 @@ export const es: TranslationDictionary = {
         'Empiece gratis. Actualice cuando necesite más. Todos los planes de pago acceden a los mismos modelos: la diferencia está en cuánto puede usar.',
       monthly: 'Mensual',
       yearly: 'Anual',
-      yearlyBadge: 'Dos meses gratis',
       perMonth: '/mes',
       perYear: '/año',
       cadence: {
@@ -5117,7 +5124,7 @@ export const es: TranslationDictionary = {
         SEMIANNUAL: '/6 meses',
         YEARLY: '/año',
       },
-      discountBadge: '10% de descuento',
+      savePercent: 'Ahorra un {percent}%',
       mostPopular: 'Más popular',
       dailyTokens: 'Cupo diario',
       monthlyTokens: 'Cupo mensual',
@@ -5240,7 +5247,6 @@ export const es: TranslationDictionary = {
         toggleLabel: 'Periodo de facturación',
         toggleMonthly: 'Mensual',
         toggleYearly: 'Anual',
-        yearlyNote: 'Pague anualmente y obtenga {months} meses gratis.',
         linkFaq: '¿Preguntas sobre facturación? Lea las preguntas frecuentes',
         linkUseCases: 'Vea qué construye la gente con ClawAI',
       },
@@ -5690,7 +5696,7 @@ export const es: TranslationDictionary = {
           'una dirección de correo electrónico y una contraseña. El plan gratuito empieza de inmediato, sin necesidad de tarjeta.',
         step2Title: 'Elija un plan',
         step2Desc:
-          'gratis para empezar; los planes de pago desde $5 al mes aumentan su cupo y desbloquean los modelos más grandes y los modos multimodelo.',
+          'gratis para empezar; los planes de pago aumentan su cupo y desbloquean los modelos más grandes y los modos multimodelo.',
         step3Title: 'Inicie una conversación',
         step3Desc:
           'escriba un mensaje, adjunte archivos de forma opcional, y elija un modelo o déjelo en Auto.',
@@ -5717,17 +5723,17 @@ export const es: TranslationDictionary = {
           'Basta con una dirección de correo electrónico y una contraseña. No hay que crear ninguna cuenta de proveedor, ni pegar ninguna clave de API, ni instalar nada: ClawAI mantiene las relaciones con los proveedores en su nombre.',
         plansHeading: 'Los planes',
         plansBody:
-          'Siete niveles, desde gratis hasta Unlimited a $200 al mes. Todos los planes de pago acceden a todos los modelos; lo que cambia es cuánto puede usar y qué modos multimodelo se desbloquean.',
+          'Siete niveles, desde gratis hasta Unlimited. Todos los planes de pago acceden a todos los modelos; lo que cambia es cuánto puede usar y qué modos multimodelo se desbloquean.',
         bullet1:
-          'Free: $0. Un pequeño cupo diario, modelos de nivel básico, y una ejecución de prueba de Comparación, Judge e Investigación.',
+          'Free. Un pequeño cupo diario, modelos de nivel básico, y una ejecución de prueba de Comparación, Judge e Investigación.',
         bullet2:
-          'Starter $5, Plus $10, Pro $20 al mes. Cupos crecientes, con modelos premium y cuotas de Comparación y Judge más amplias a medida que sube de nivel.',
+          'Starter, Plus y Pro. Cupos crecientes, con modelos premium y cuotas de Comparación y Judge más amplias a medida que sube de nivel.',
         bullet3:
-          'Team $50, Scale $100 al mes. Comparación, Judge, Critic e Investigación ilimitados, además de muchas más conexiones de espacio de trabajo.',
+          'Team y Scale. Comparación, Judge, Critic e Investigación ilimitados, además de muchas más conexiones de espacio de trabajo.',
         bullet4:
-          'Unlimited $200 al mes. Conversaciones y mensajes ilimitados, con un límite de uso justo en los modelos premium sobre el que se le advierte antes de alcanzarlo.',
+          'Unlimited. Conversaciones y mensajes ilimitados, con un límite de uso justo en los modelos premium sobre el que se le advierte antes de alcanzarlo.',
         upgradeNote:
-          'Pague anualmente y pagará diez meses en lugar de doce. Puede cambiar de plan o cancelar en cualquier momento: una mejora de plan se aplica de inmediato, y una reducción de plan al inicio de su próximo periodo de facturación.',
+          'Si paga por un periodo más largo, el precio mensual baja; el ahorro se muestra en cada plan. Puede cambiar de plan o cancelar en cualquier momento: una mejora de plan se aplica de inmediato, y una reducción de plan al inicio de su próximo periodo de facturación.',
         ctaRegister: 'Cree su cuenta',
       },
       models: {
@@ -6274,17 +6280,17 @@ export const es: TranslationDictionary = {
           'Cree una cuenta con una dirección de correo electrónico y una contraseña, y estará en el plan gratuito de inmediato. Envíe un mensaje. Si no elige un modelo, ClawAI elige uno por usted.',
         freeTierQ: '¿Hay un plan gratuito?',
         freeTierA:
-          'Sí: $0, sin necesidad de tarjeta. Incluye un pequeño cupo diario, acceso a modelos de nivel básico, y una ejecución de prueba de Comparación, Judge e Investigación para que vea qué hacen los modos de pago antes de pagar por ellos.',
+          'Sí: no se necesita tarjeta. Incluye un pequeño cupo diario, acceso a modelos de nivel básico, y una ejecución de prueba de Comparación, Judge e Investigación para que vea qué hacen los modos de pago antes de pagar por ellos.',
       },
       plansBilling: {
         title: 'Planes y facturación',
         description: 'Qué cuestan los niveles, y cómo funciona la facturación.',
         plansQ: '¿Qué planes hay disponibles?',
         plansA:
-          'Siete: Free a $0, Starter $5, Plus $10, Pro $20, Team $50, Scale $100 y Unlimited $200 al mes. Todos los planes de pago acceden a todos los modelos: lo que cambia es su cupo, sus límites diarios de mensajes, y cuántas ejecuciones de Comparación, Judge e Investigación recibe.',
+          'Siete: Free, Starter, Plus, Pro, Team, Scale y Unlimited. Todos los planes de pago acceden a todos los modelos: lo que cambia es su cupo, sus límites diarios de mensajes, y cuántas ejecuciones de Comparación, Judge e Investigación recibe.',
         paymentQ: '¿Cómo pago?',
         paymentA:
-          'Con tarjeta, de forma mensual o anual. Pague anualmente y se le cobrarán diez meses en lugar de doce, de modo que dos meses son gratis.',
+          'Con tarjeta, de forma mensual o anual. Si paga por un periodo más largo (tres, seis o doce meses), paga menos al mes; el ahorro se muestra en cada plan.',
         changePlanQ: '¿Puedo cambiar de plan más adelante?',
         changePlanA:
           'Sí, en cualquier momento. Una mejora de plan le da el cupo más alto de inmediato; una reducción de plan entra en vigor al inicio de su próximo periodo de facturación, de modo que conserva lo que ya pagó.',
@@ -6465,7 +6471,7 @@ export const es: TranslationDictionary = {
           'Dos productos distintos para dos problemas distintos. La mayoría de las organizaciones deberían empezar con la aplicación alojada y pasarse solo si un requisito lo obliga.',
         hostedBadge: 'Autoservicio',
         hostedTitle: 'ClawAI alojado',
-        hostedSubtitle: 'Regístrese en línea, desde $5 al mes.',
+        hostedSubtitle: 'Regístrese en línea.',
         hostedPoint1:
           'Todos los modelos de frontera en la nube: Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok y Bedrock.',
         hostedPoint2: 'Funcionando en minutos. Nada que instalar y ningún hardware que comprar.',

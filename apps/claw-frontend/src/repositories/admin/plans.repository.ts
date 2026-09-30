@@ -9,8 +9,10 @@ import type {
   UpdatePlanRequest,
 } from '@/types';
 import type {
+  AdminPlanIntervalPricing,
   AdminPlanPriceVersion,
   PublishAdminPlanPriceRequest,
+  SetAdminPlanIntervalDiscountsRequest,
 } from '@/types/admin-plan-price.types';
 
 const PLANS_BASE = '/admin/plans';
@@ -116,6 +118,24 @@ export const plansRepository = {
   async listPriceVersions(id: string): Promise<AdminPlanPriceVersion[]> {
     const response = await apiClient.get<AdminPlanPriceVersion[]>(
       `${PLANS_BASE}/${encodeURIComponent(id)}/price-versions`,
+    );
+    return response.data;
+  },
+
+  async getIntervalPricing(id: string): Promise<AdminPlanIntervalPricing> {
+    const response = await apiClient.get<AdminPlanIntervalPricing>(
+      `${PLANS_BASE}/${encodeURIComponent(id)}/interval-pricing`,
+    );
+    return response.data;
+  },
+
+  async setIntervalDiscounts(
+    id: string,
+    payload: SetAdminPlanIntervalDiscountsRequest,
+  ): Promise<AdminPlanIntervalPricing> {
+    const response = await apiClient.put<AdminPlanIntervalPricing>(
+      `${PLANS_BASE}/${encodeURIComponent(id)}/interval-discounts`,
+      payload,
     );
     return response.data;
   },

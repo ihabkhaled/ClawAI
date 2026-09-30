@@ -4086,6 +4086,14 @@ export const zh: TranslationDictionary = {
     },
   },
   adminPlans: {
+    intervalDiscounts: {
+      title: '期限折扣',
+      description:
+        '季度、半年和年度价格按月度价格减去这些折扣计算。保存后，新的结账立即按新价格计费；现有订阅者保留其购买时的价格。',
+      fieldLabel: '{interval}折扣 (%)',
+      invalid: '请输入 0 到 90 之间的百分比，最多两位小数。',
+      saved: '折扣已保存。新价格已生效。',
+    },
     title: '计划',
     description: '定义订阅计划、配额、功能门限和模型访问权限。',
     addPlan: '新计划',
@@ -4870,7 +4878,6 @@ export const zh: TranslationDictionary = {
         '开始免费。当您需要更多时升级。每个付费计划都具有相同的模型 - 区别在于您可以使用多少。',
       monthly: '每月',
       yearly: '每年',
-      yearlyBadge: '免费两个月',
       perMonth: '/月',
       perYear: '/年',
       cadence: {
@@ -4879,7 +4886,7 @@ export const zh: TranslationDictionary = {
         SEMIANNUAL: '/6个月',
         YEARLY: '/年',
       },
-      discountBadge: '9 折',
+      savePercent: '立省 {percent}%',
       mostPopular: '最受欢迎',
       dailyTokens: '每日津贴',
       monthlyTokens: '每月津贴',
@@ -4996,7 +5003,6 @@ export const zh: TranslationDictionary = {
         toggleLabel: '计费周期',
         toggleMonthly: '每月',
         toggleYearly: '每年',
-        yearlyNote: '按年付费即可免费获得 {months} 个月。',
         linkFaq: '计费问题？阅读常见问题解答',
         linkUseCases: '看看人们用 ClawAI 构建了什么',
       },
@@ -5387,7 +5393,7 @@ export const zh: TranslationDictionary = {
         step1Title: '创建一个帐户',
         step1Desc: '电子邮件地址和密码。免费计划立即开始，无需银行卡。',
         step2Title: '选择一个计划',
-        step2Desc: '自由开始；每月 5 美元起的付费计划可提高您的津贴并解锁更大的型号和多型号模式。',
+        step2Desc: '自由开始；付费计划可提高您的津贴并解锁更大的型号和多型号模式。',
         step3Title: '开始对话',
         step3Desc: '输入消息，可选择附加文件，然后选择型号或将其保留为“自动”。',
         step4Title: 'ClawAI 选型',
@@ -5408,16 +5414,15 @@ export const zh: TranslationDictionary = {
           '只需一个电子邮件地址和密码即可。无需创建提供商帐户，无需粘贴 API 密钥，也无需安装任何内容 — ClawAI 代表您保存提供商关系。',
         plansHeading: '计划',
         plansBody:
-          '七个级别，从免费到无限制，每月 200 美元。每个付费计划都适用于每个型号；变化的是您可以使用多少以及解锁了哪些多模型模式。',
-        bullet1: '免费 — 0 美元。每日少量津贴、入门级模型以及“比较”、“判断”和“研究”各一次试运行。',
+          '七个级别，从免费到无限制。每个付费计划都适用于每个型号；变化的是您可以使用多少以及解锁了哪些多模型模式。',
+        bullet1: '免费。每日少量津贴、入门级模型以及“比较”、“判断”和“研究”各一次试运行。',
         bullet2:
-          '入门版每月 5 美元，Plus 10 美元，专业版每月 20 美元。津贴不断增加，随着您的升级，高级型号和更大的比较和判断配额。',
-        bullet3:
-          '团队每月 50 美元，规模每月 100 美元。无限的比较、判断、批评和研究，以及更多的工作空间连接。',
+          '入门版、Plus 和专业版。津贴不断增加，随着您的升级，高级型号和更大的比较和判断配额。',
+        bullet3: '团队版和规模版。无限的比较、判断、批评和研究，以及更多的工作空间连接。',
         bullet4:
-          '每月200美元无限制。无限的对话和消息，在高级型号上有合理使用界限，在您达到该界限之前我们会向您发出警告。',
+          '无限版。无限的对话和消息，在高级型号上有合理使用界限，在您达到该界限之前我们会向您发出警告。',
         upgradeNote:
-          '按年支付，您支付十个月而不是十二个月。您可以随时更改计划或取消——升级立即生效，降级则在下一个计费周期开始时生效。',
+          '按更长的期限付费，每月价格更低，节省的金额会显示在每个计划上。您可以随时更改计划或取消——升级立即生效，降级则在下一个计费周期开始时生效。',
         ctaRegister: '创建您的帐户',
       },
       models: {
@@ -5882,17 +5887,17 @@ export const zh: TranslationDictionary = {
           '使用电子邮件地址和密码创建一个帐户，您即可立即使用免费计划。发送消息。如果您不选择型号，ClawAI 会为您挑选一款。',
         freeTierQ: '有免费计划吗？',
         freeTierA:
-          '是的 — 0 美元，无需刷卡。它包括少量的每日津贴、入门级模型的访问权限以及“比较”、“判断”和“研究”各一次的试运行，以便您可以在付费之前了解付费模式的功能。',
+          '是的 — 无需刷卡。它包括少量的每日津贴、入门级模型的访问权限以及“比较”、“判断”和“研究”各一次的试运行，以便您可以在付费之前了解付费模式的功能。',
       },
       plansBilling: {
         title: '计划和计费',
         description: '各层级的成本是多少，以及计费方式如何。',
         plansQ: '有哪些计划可供选择？',
         plansA:
-          '七：免费 0 美元，入门版 5 美元，Plus 10 美元，专业版 20 美元，团队 50 美元，规模版 100 美元，无限版每月 200 美元。每个付费计划都适用于每个模型 - 不同的是您的津贴、您的每日消息限制以及您获得的比较、判断和研究运行次数。',
+          '七个计划：免费、入门版、Plus、专业版、团队版、规模版和无限版。每个付费计划都适用于每个模型 - 不同的是您的津贴、您的每日消息限制以及您获得的比较、判断和研究运行次数。',
         paymentQ: '我该如何付款？',
         paymentA:
-          '通过卡、按月或按年。按年付费，您需要支付十个月而不是十二个月的费用，因此两个月是免费的。',
+          '通过卡、按月或按年。选择更长的付费期限（三个月、六个月或十二个月），每月费用更低；节省的金额会显示在每个计划上。',
         changePlanQ: '我可以稍后更改计划吗？',
         changePlanA:
           '是的，任何时候。升级后，您将立即获得更高的津贴；降级将在下一个计费周期开始时生效，因此您可以保留已支付的费用。',
@@ -6052,7 +6057,7 @@ export const zh: TranslationDictionary = {
           '两种不同的产品解决两个不同的问题。大多数组织应该从托管应用程序开始，并且仅在需求强制时才进行迁移。',
         hostedBadge: '自助服务',
         hostedTitle: 'ClawAI 托管',
-        hostedSubtitle: '在线注册，每月 5 美元起。',
+        hostedSubtitle: '在线注册。',
         hostedPoint1:
           '每个前沿云模型 - Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok 和 Bedrock。',
         hostedPoint2: '几分钟内即可运行。无需安装，无需购买硬件。',

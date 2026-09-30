@@ -10,8 +10,11 @@ import type { BillingPlan, CurrentSubscription, UsageWindow } from '@/types/bill
 import {
   computeUsageRatio,
   computeUsageWindowPercent,
+  bpsToPercentInput,
+  computeIntervalDiscountPercent,
   computeYearlySavingMinor,
   findPlanPrice,
+  parseDiscountPercentToBps,
   formatMinorAmount,
   parseMajorAmountToMinor,
   formatQuotaLimit,
@@ -320,5 +323,94 @@ describe('isCurrentPlan / isSubscriptionEntitling', () => {
     expect(isSubscriptionEntitling({ ...subscription, status: SubscriptionStatus.SUSPENDED })).toBe(
       false,
     );
+  });
+});
+
+describe('computeIntervalDiscountPercent', () => {
+  const priced = (
+    entries: Array<[BillingInterval, number, string?]>,
+  ): Parameters<typeof computeIntervalDiscountPercent>[0] => ({
+    prices: entries.map(([billingInterval, amountMinor, currency = 'USD']) => ({
+      billingInterval,
+      amountMinor,
+      currency,
+    })),
+  });
+
+  it('reads 10 / 15 / 20 percent off the stored prices', () => {
+    const plan = priced([
+      [BillingInterval.MONTHLY, 1200],
+      [BillingInterval.QUARTERLY, 3240],
+      [BillingInterval.SEMIANNUAL, 6120],
+      [BillingInterval.YEARLY, 11520],
+    ]);
+
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.QUARTERLY)).toBe(10);
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.SEMIANNUAL)).toBe(15);
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.YEARLY)).toBe(20);
+  });
+
+  it('follows an admin-changed price instead of a constant', () => {
+    const plan = priced([
+      [BillingInterval.MONTHLY, 1000],
+      [BillingInterval.YEARLY, 9000],
+    ]);
+
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.YEARLY)).toBe(25);
+  });
+
+  it('rounds down so a half-percent discount never overstates', () => {
+    // 12.5% off: 12 x 1000 x 0.875 = 10500.
+    const plan = priced([
+      [BillingInterval.MONTHLY, 1000],
+      [BillingInterval.YEARLY, 10500],
+    ]);
+
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.YEARLY)).toBe(12);
+  });
+
+  it('is 0 for MONTHLY, a missing price, another currency, a free plan or no saving', () => {
+    const plan = priced([
+      [BillingInterval.MONTHLY, 1000],
+      [BillingInterval.QUARTERLY, 3000, 'EUR'],
+      [BillingInterval.YEARLY, 12000],
+    ]);
+
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.MONTHLY)).toBe(0);
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.SEMIANNUAL)).toBe(0);
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.QUARTERLY)).toBe(0);
+    expect(computeIntervalDiscountPercent(plan, BillingInterval.YEARLY)).toBe(0);
+    expect(
+      computeIntervalDiscountPercent(
+        priced([
+          [BillingInterval.MONTHLY, 0],
+          [BillingInterval.YEARLY, 0],
+        ]),
+        BillingInterval.YEARLY,
+      ),
+    ).toBe(0);
+  });
+});
+
+describe('discount percent input', () => {
+  it.each([
+    ['20', 2000],
+    ['12.5', 1250],
+    ['0', 0],
+    ['90', 9000],
+    [' 15 ', 1500],
+    ['0.01', 1],
+  ])('parses %j to %d basis points', (input, bps) => {
+    expect(parseDiscountPercentToBps(input)).toBe(bps);
+  });
+
+  it.each(['', 'abc', '91', '90.01', '-1', '12.345', '1e2'])('rejects %j', (input) => {
+    expect(parseDiscountPercentToBps(input)).toBeNull();
+  });
+
+  it('round-trips basis points to the text an admin edits', () => {
+    expect(bpsToPercentInput(2000)).toBe('20');
+    expect(bpsToPercentInput(1250)).toBe('12.5');
+    expect(parseDiscountPercentToBps(bpsToPercentInput(1250))).toBe(1250);
   });
 });

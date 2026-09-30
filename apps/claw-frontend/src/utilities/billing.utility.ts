@@ -1,10 +1,18 @@
-import { BILLING_GATEWAY_ORDER, USAGE_WARNING_THRESHOLD } from '@/constants/billing.constants';
+import {
+  BILLING_GATEWAY_ORDER,
+  BILLING_INTERVAL_MONTHS,
+  USAGE_WARNING_THRESHOLD,
+} from '@/constants/billing.constants';
 import {
   type BillingGateway,
   BillingInterval,
   SubscriptionStatus,
   UsageTone,
 } from '@/enums/billing.enum';
+import type {
+  AdminPlanIntervalDiscounts,
+  IntervalDiscountInputs,
+} from '@/types/admin-plan-price.types';
 import type {
   BillingPlan,
   ChargeNotice,
@@ -176,6 +184,83 @@ export function isCurrentPlan(
   subscription: CurrentSubscription | null,
 ): boolean {
   return subscription !== null && subscription.planId === plan.id;
+}
+
+/** The three fields a plan price needs for a discount to be read off it. */
+export type IntervalPricedPlan = {
+  prices: readonly { billingInterval: BillingInterval; amountMinor: number; currency: string }[];
+};
+
+/**
+ * The discount a longer term gives versus paying monthly, as a whole percent.
+ *
+ * READ from the two stored prices, never hard-coded: an admin can change a
+ * plan's discounts, and a badge that said "20% off" while the price said 15%
+ * would be a lie on a pricing page. Integer arithmetic, rounded DOWN to a whole
+ * percent so a badge never overstates (12.5% off reads "Save 12%"). Returns 0
+ * for MONTHLY, when either price is missing or in another currency, and when
+ * the longer term is not actually cheaper, so nothing ever advertises a
+ * negative or invented discount.
+ */
+export function computeIntervalDiscountPercent(
+  plan: IntervalPricedPlan,
+  interval: BillingInterval,
+): number {
+  if (interval === BillingInterval.MONTHLY) {
+    return 0;
+  }
+  const monthly = plan.prices.find((price) => price.billingInterval === BillingInterval.MONTHLY);
+  const term = plan.prices.find((price) => price.billingInterval === interval);
+  if (
+    monthly === undefined ||
+    term === undefined ||
+    monthly.currency !== term.currency ||
+    monthly.amountMinor <= 0
+  ) {
+    return 0;
+  }
+  const plain = monthly.amountMinor * BILLING_INTERVAL_MONTHS[interval];
+  return Math.max(Math.floor(((plain - term.amountMinor) * 100) / plain), 0);
+}
+
+/** The largest term discount an admin may set, in basis points (90%). Mirrors auth-service. */
+const MAX_DISCOUNT_BPS = 9000;
+
+function isDigits(text: string): boolean {
+  return text.length > 0 && [...text].every((char) => char >= '0' && char <= '9');
+}
+
+/**
+ * A typed percent ("20", "12.5") as integer basis points, or null when it is
+ * blank, not a number, negative, has more than two decimals, or is above 90%.
+ * Rounded once; never a float sent.
+ */
+export function parseDiscountPercentToBps(input: string): number | null {
+  const [whole = '', fraction, ...rest] = input.trim().split('.');
+  const wellFormed =
+    rest.length === 0 &&
+    isDigits(whole) &&
+    whole.length <= 3 &&
+    (fraction === undefined || (isDigits(fraction) && fraction.length <= 2));
+  if (!wellFormed) {
+    return null;
+  }
+  const bps = Math.round(Number(`${whole}.${fraction ?? '0'}`) * 100);
+  return bps <= MAX_DISCOUNT_BPS ? bps : null;
+}
+
+/** Basis points as the text an admin edits: 2000 -> "20", 1250 -> "12.5". */
+export function bpsToPercentInput(bps: number): string {
+  return String(bps / 100);
+}
+
+/** A plan's stored discounts as the three text fields the admin edits. */
+export function discountsToInputs(discounts: AdminPlanIntervalDiscounts): IntervalDiscountInputs {
+  return {
+    quarterly: bpsToPercentInput(discounts.quarterlyDiscountBps),
+    semiannual: bpsToPercentInput(discounts.semiannualDiscountBps),
+    yearly: bpsToPercentInput(discounts.yearlyDiscountBps),
+  };
 }
 
 /**

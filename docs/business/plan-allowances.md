@@ -38,7 +38,7 @@ credit `GRANT`. It is **not** three numbers.
 | **Scale**     |      $100 |            **$25.00** |          25% | $2.50 | $10.00 |          20 |
 | **Unlimited** |      $200 |            **$50.00** |          25% | $5.00 | $20.00 |          30 |
 
-Yearly is ten months of the monthly rate (two months free). The allowance does not
+Longer terms are discounted (10% quarterly, 15% semiannual, 20% yearly by default; an admin can change them per plan — [ADR-135](../13-adr/adr-135-term-discounts-derive-price-versions.md)). The allowance does not
 change with the billing interval — it is granted per **period**, monthly either way.
 
 ### The same table in storage units
@@ -215,25 +215,31 @@ months), and each has its own immutable `PlanPriceVersion` row — there is no
 discount computed at the moment of payment is a number that can be raced,
 mis-rounded, or disagree between the price shown and the price charged.
 
-The formula, computed **once**, at seed/backfill time, from each plan's own
-monthly price:
+The formula, computed **when the monthly price or a discount changes** (never at
+checkout), from each plan's own monthly price and its three discounts
+([ADR-135](../13-adr/adr-135-term-discounts-derive-price-versions.md)):
 
-- **`QUARTERLY`** = `round(monthlyMinor × 3 × 0.9)` — 10% off three months.
-- **`SEMIANNUAL`** = `round(monthlyMinor × 6 × 0.9)` — 10% off six months.
-- **`YEARLY`** = the plan's existing seeded `yearlyMinor` (ten months of the
-  monthly rate, i.e. ~16.7% off — unchanged by this feature).
-- **`MONTHLY`** = `monthlyMinor`, no discount.
+`amount = round(monthlyMinor x months x (10000 - discountBps) / 10000)`
 
-`round()` is a single `Math.round`, at the one minor-unit boundary the value
-will ever cross — never truncated, never re-derived from a float at render
-time. `computeDiscountedIntervalMinor` (`plan-catalog.seeder.cjs`) is the one
-place this formula is implemented; every seeder that needs a QUARTERLY or
-SEMIANNUAL price imports it rather than re-deriving the 0.9 factor.
+| Interval     | Months | Default discount | Column                                 |
+| ------------ | ------ | ---------------- | -------------------------------------- |
+| `QUARTERLY`  | 3      | 10%              | `plans.quarterly_discount_bps` = 1000  |
+| `SEMIANNUAL` | 6      | 15%              | `plans.semiannual_discount_bps` = 1500 |
+| `YEARLY`     | 12     | 20%              | `plans.yearly_discount_bps` = 2000     |
+| `MONTHLY`    | 1      | none             | —                                      |
 
-**Why 3- and 6-month get a flat 10% while 12-month keeps its own, larger
-discount:** the yearly figure predates this feature and is a distinct pricing
-decision (two months free, not a percentage) — this change added the two
-missing terms in between without touching the one that already existed.
+Yearly at 20% is exactly `monthly x 12 x 80 / 100` (Plus at $10 a month is $96.00
+a year). `round()` is a single `Math.round` at the one minor-unit boundary —
+never truncated, never re-derived from a float at render time. An admin sets
+the monthly price (`POST /admin/plans/:id/price-versions`, MONTHLY only) and the
+discounts (`PUT /admin/plans/:id/interval-discounts`); the service mints the
+derived versions in one transaction. Publishing a longer-term price by hand is
+refused with `PLAN_INTERVAL_PRICE_DERIVED`.
+
+**History.** Before 2026-09-30 quarterly and semiannual were a flat 10% and yearly
+was a seeded ten-months-for-twelve figure (~16.7%). The `plan-interval-discounts`
+seeder (v1) re-priced every existing plan once, retiring the old versions;
+existing subscriptions keep the version they bought.
 
 ### Deploy order matters on an existing install
 
@@ -248,7 +254,9 @@ existing install's checkout page can show the 4-way term selector with two of
 its four options priced as "unavailable" forever — the frontend has nothing
 wrong with it; the price rows simply do not exist. That seeder must run before
 any deploy that expects all four checkout terms to actually be purchasable on
-an install that predates this feature.
+an install that predates this feature. `plan-interval-discounts` then runs after
+it and re-derives all three longer terms from each plan's live monthly price, so
+an install that skipped a step still ends on the 10 / 15 / 20% figures.
 
 ---
 
@@ -256,12 +264,13 @@ an install that predates this feature.
 
 **These figures need a named business owner and do not have one.**
 
-| Figure                         | Status                                                                                                                                                            |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 25–30% of revenue as allowance | **Unsigned.** Chosen during planning as a defensible band, not derived from measured usage. See [margin-model.md](margin-model.md).                               |
-| Free at $0.30                  | **Unsigned**, but low-risk: it is the current live figure, unchanged.                                                                                             |
-| The daily/weekly split         | **Unsigned.** Derived to satisfy the widening invariant, not from a pacing study.                                                                                 |
-| Lowering any of these later    | **Needs notice.** See [rollout-and-notice.md](rollout-and-notice.md) — the allowance is now customer-visible, so it is a commitment rather than an internal knob. |
+| Figure                         | Status                                                                                                                                                                             |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 25–30% of revenue as allowance | **Unsigned.** Chosen during planning as a defensible band, not derived from measured usage. See [margin-model.md](margin-model.md).                                                |
+| Free at $0.30                  | **Unsigned**, but low-risk: it is the current live figure, unchanged.                                                                                                              |
+| The daily/weekly split         | **Unsigned.** Derived to satisfy the widening invariant, not from a pacing study.                                                                                                  |
+| 10% / 15% / 20% term discounts | **Owner direction 2026-09-30** (product owner; the individual's name is not recorded in the repository). Not derived from a margin floor — see [margin-model.md](margin-model.md). |
+| Lowering any of these later    | **Needs notice.** See [rollout-and-notice.md](rollout-and-notice.md) — the allowance is now customer-visible, so it is a commitment rather than an internal knob.                  |
 
 The right evidence is one full billing period of `credit_ledger_entries` data:
 median and p95 monthly spend per plan, and the fraction of users who hit each wall.

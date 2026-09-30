@@ -4209,6 +4209,13 @@ export type TranslationDictionary = {
     };
   };
   adminPlans: {
+    intervalDiscounts: {
+      title: string;
+      description: string;
+      fieldLabel: string;
+      invalid: string;
+      saved: string;
+    };
     title: string;
     description: string;
     addPlan: string;
@@ -4990,7 +4997,6 @@ export type TranslationDictionary = {
       sectionSubtitle: string;
       monthly: string;
       yearly: string;
-      yearlyBadge: string;
       perMonth: string;
       perYear: string;
       cadence: {
@@ -4999,7 +5005,7 @@ export type TranslationDictionary = {
         SEMIANNUAL: string;
         YEARLY: string;
       };
-      discountBadge: string;
+      savePercent: string;
       mostPopular: string;
       dailyTokens: string;
       monthlyTokens: string;
@@ -5110,7 +5116,6 @@ export type TranslationDictionary = {
         toggleLabel: string;
         toggleMonthly: string;
         toggleYearly: string;
-        yearlyNote: string;
         linkFaq: string;
         linkUseCases: string;
       };

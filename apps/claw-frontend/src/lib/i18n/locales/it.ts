@@ -4281,6 +4281,14 @@ export const it: TranslationDictionary = {
     },
   },
   adminPlans: {
+    intervalDiscounts: {
+      title: 'Sconti per durata',
+      description:
+        'I prezzi trimestrale, semestrale e annuale sono calcolati dal prezzo mensile meno questi sconti. Salvando, i nuovi pagamenti usano subito i nuovi prezzi; gli abbonati attuali mantengono il prezzo a cui hanno acquistato.',
+      fieldLabel: 'Sconto {interval} (%)',
+      invalid: 'Inserisci una percentuale da 0 a 90, con al massimo due decimali.',
+      saved: 'Sconti salvati. I nuovi prezzi sono attivi.',
+    },
     title: 'Piani',
     description:
       'Definisci piani di abbonamento, quote, controlli delle funzionalità e accesso ai modelli.',
@@ -5112,7 +5120,6 @@ export const it: TranslationDictionary = {
         'Inizia gratis. Passa a un piano superiore quando ti serve di più. Ogni piano a pagamento raggiunge gli stessi modelli: cambia solo quanto puoi usarli.',
       monthly: 'Mensile',
       yearly: 'Annuale',
-      yearlyBadge: 'Due mesi gratis',
       perMonth: '/mese',
       perYear: '/anno',
       cadence: {
@@ -5121,7 +5128,7 @@ export const it: TranslationDictionary = {
         SEMIANNUAL: '/6 mesi',
         YEARLY: '/anno',
       },
-      discountBadge: 'Sconto 10%',
+      savePercent: 'Risparmia il {percent}%',
       mostPopular: 'Il più scelto',
       dailyTokens: 'Plafond giornaliero',
       monthlyTokens: 'Plafond mensile',
@@ -5246,7 +5253,6 @@ export const it: TranslationDictionary = {
         toggleLabel: 'Periodo di fatturazione',
         toggleMonthly: 'Mensile',
         toggleYearly: 'Annuale',
-        yearlyNote: 'Paga con cadenza annuale e ottieni {months} mesi gratis.',
         linkFaq: 'Domande sulla fatturazione? Leggi le FAQ',
         linkUseCases: 'Guarda cosa realizzano gli altri con ClawAI',
       },
@@ -5695,7 +5701,7 @@ export const it: TranslationDictionary = {
           'un indirizzo email e una password. Il piano Free parte subito, senza carta di credito.',
         step2Title: 'Scegli un piano',
         step2Desc:
-          'gratis per iniziare; i piani a pagamento da $5 al mese aumentano il plafond e sbloccano i modelli più grandi e le modalità multi-modello.',
+          'gratis per iniziare; i piani a pagamento aumentano il plafond e sbloccano i modelli più grandi e le modalità multi-modello.',
         step3Title: 'Avvia una conversazione',
         step3Desc:
           'scrivi un messaggio, allega facoltativamente dei file e scegli un modello oppure lascia tutto su Auto.',
@@ -5722,17 +5728,17 @@ export const it: TranslationDictionary = {
           'Bastano un indirizzo email e una password. Non c’è alcun account provider da creare, nessuna chiave API da incollare e nulla da installare: è ClawAI a tenere i rapporti con i provider per tuo conto.',
         plansHeading: 'I piani',
         plansBody:
-          'Sette livelli, dal piano gratuito a Unlimited a $200 al mese. Ogni piano a pagamento raggiunge tutti i modelli; ciò che cambia è quanto puoi usarli e quali modalità multi-modello sono sbloccate.',
+          'Sette livelli, dal piano gratuito a Unlimited. Ogni piano a pagamento raggiunge tutti i modelli; ciò che cambia è quanto puoi usarli e quali modalità multi-modello sono sbloccate.',
         bullet1:
-          'Free — $0. Un piccolo plafond giornaliero, i modelli di fascia base e una prova a testa di Confronto, Judge e Ricerca.',
+          'Free. Un piccolo plafond giornaliero, i modelli di fascia base e una prova a testa di Confronto, Judge e Ricerca.',
         bullet2:
-          'Starter $5, Plus $10, Pro $20 al mese. Plafond crescenti, con i modelli premium e quote di Confronto e Judge più ampie man mano che sali.',
+          'Starter, Plus e Pro. Plafond crescenti, con i modelli premium e quote di Confronto e Judge più ampie man mano che sali.',
         bullet3:
-          'Team $50, Scale $100 al mese. Confronto, Judge, Critic e Ricerca illimitati, più molte altre connessioni allo spazio di lavoro.',
+          'Team e Scale. Confronto, Judge, Critic e Ricerca illimitati, più molte altre connessioni allo spazio di lavoro.',
         bullet4:
-          'Unlimited $200 al mese. Conversazioni e messaggi illimitati, con una soglia di uso corretto sui modelli premium di cui vieni avvisato prima di raggiungerla.',
+          'Unlimited. Conversazioni e messaggi illimitati, con una soglia di uso corretto sui modelli premium di cui vieni avvisato prima di raggiungerla.',
         upgradeNote:
-          'Pagando con cadenza annuale paghi dieci mesi invece di dodici. Puoi cambiare piano o disdire quando vuoi: un passaggio a un piano superiore è immediato, uno a un piano inferiore parte all’inizio del ciclo di fatturazione successivo.',
+          'Se paghi per una durata più lunga, il prezzo al mese scende; il risparmio è indicato su ogni piano. Puoi cambiare piano o disdire quando vuoi: un passaggio a un piano superiore è immediato, uno a un piano inferiore parte all’inizio del ciclo di fatturazione successivo.',
         ctaRegister: 'Crea il tuo account',
       },
       models: {
@@ -6280,17 +6286,17 @@ export const it: TranslationDictionary = {
           'Crea un account con un indirizzo email e una password e sei subito sul piano Free. Invia un messaggio. Se non scegli un modello, ClawAI ne sceglie uno per te.',
         freeTierQ: 'Esiste un piano gratuito?',
         freeTierA:
-          'Sì — $0, senza carta di credito. Include un piccolo plafond giornaliero, l’accesso ai modelli di fascia base e una prova a testa di Confronto, Judge e Ricerca, così puoi vedere cosa fanno le modalità a pagamento prima di pagarle.',
+          'Sì — senza carta di credito. Include un piccolo plafond giornaliero, l’accesso ai modelli di fascia base e una prova a testa di Confronto, Judge e Ricerca, così puoi vedere cosa fanno le modalità a pagamento prima di pagarle.',
       },
       plansBilling: {
         title: 'Piani e fatturazione',
         description: 'Quanto costano i livelli e come funziona la fatturazione.',
         plansQ: 'Quali piani sono disponibili?',
         plansA:
-          'Sette: Free a $0, Starter $5, Plus $10, Pro $20, Team $50, Scale $100 e Unlimited $200 al mese. Ogni piano a pagamento raggiunge tutti i modelli: cambiano il plafond, i limiti giornalieri di messaggi e quante esecuzioni di Confronto, Judge e Ricerca ottieni.',
+          'Sette: Free, Starter, Plus, Pro, Team, Scale e Unlimited. Ogni piano a pagamento raggiunge tutti i modelli: cambiano il plafond, i limiti giornalieri di messaggi e quante esecuzioni di Confronto, Judge e Ricerca ottieni.',
         paymentQ: 'Come si paga?',
         paymentA:
-          'Con carta, con cadenza mensile o annuale. Pagando annualmente ti vengono addebitati dieci mesi invece di dodici, quindi due mesi sono gratis.',
+          'Con carta, con cadenza mensile o annuale. Se paghi per una durata più lunga (tre, sei o dodici mesi), paghi meno al mese; il risparmio è indicato su ogni piano.',
         changePlanQ: 'Posso cambiare piano in seguito?',
         changePlanA:
           'Sì, in qualsiasi momento. Il passaggio a un piano superiore ti dà subito il plafond più alto; quello a un piano inferiore ha effetto all’inizio del ciclo di fatturazione successivo, così mantieni ciò che hai già pagato.',
@@ -6471,7 +6477,7 @@ export const it: TranslationDictionary = {
           'Due prodotti diversi per due problemi diversi. La maggior parte delle organizzazioni dovrebbe partire dall’app in hosting e cambiare solo se un requisito lo impone.',
         hostedBadge: 'Self-service',
         hostedTitle: 'ClawAI in hosting',
-        hostedSubtitle: 'Registrazione online, da $5 al mese.',
+        hostedSubtitle: 'Registrazione online.',
         hostedPoint1:
           'Tutti i modelli cloud di frontiera — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok e Bedrock.',
         hostedPoint2:

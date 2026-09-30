@@ -4303,6 +4303,14 @@ export const fr: TranslationDictionary = {
     },
   },
   adminPlans: {
+    intervalDiscounts: {
+      title: 'Remises par durée',
+      description:
+        "Les prix trimestriel, semestriel et annuel sont calculés à partir du prix mensuel moins ces remises. L'enregistrement applique aussitôt les nouveaux prix aux nouveaux paiements ; les abonnés actuels conservent le prix auquel ils ont souscrit.",
+      fieldLabel: 'Remise {interval} (%)',
+      invalid: 'Saisissez un pourcentage de 0 à 90, avec au plus deux décimales.',
+      saved: 'Remises enregistrées. Les nouveaux prix sont en ligne.',
+    },
     title: 'Forfaits',
     description:
       'Définissez les forfaits d’abonnement, les quotas, les options et l’accès aux modèles.',
@@ -5134,7 +5142,6 @@ export const fr: TranslationDictionary = {
         'Commencez gratuitement. Passez à un forfait supérieur quand vous avez besoin de plus. Chaque forfait payant donne accès aux mêmes modèles — la différence porte sur la quantité que vous pouvez utiliser.',
       monthly: 'Mensuel',
       yearly: 'Annuel',
-      yearlyBadge: 'Deux mois offerts',
       perMonth: '/mois',
       perYear: '/an',
       cadence: {
@@ -5143,7 +5150,7 @@ export const fr: TranslationDictionary = {
         SEMIANNUAL: '/6 mois',
         YEARLY: '/an',
       },
-      discountBadge: '10 % de réduction',
+      savePercent: 'Économisez {percent} %',
       mostPopular: 'Le plus populaire',
       dailyTokens: 'Quota quotidien',
       monthlyTokens: 'Quota mensuel',
@@ -5270,7 +5277,6 @@ export const fr: TranslationDictionary = {
         toggleLabel: 'Période de facturation',
         toggleMonthly: 'Mensuel',
         toggleYearly: 'Annuel',
-        yearlyNote: 'Payez annuellement et profitez de {months} mois offerts.',
         linkFaq: 'Des questions sur la facturation ? Consultez la FAQ',
         linkUseCases: 'Découvrir ce que les gens créent avec ClawAI',
       },
@@ -5722,7 +5728,7 @@ export const fr: TranslationDictionary = {
           'une adresse e-mail et un mot de passe. Le forfait gratuit démarre immédiatement, sans carte requise.',
         step2Title: 'Choisir un forfait',
         step2Desc:
-          'gratuit pour commencer ; les forfaits payants à partir de 5 $ par mois augmentent votre quota et débloquent les modèles plus puissants ainsi que les modes multi-modèles.',
+          'gratuit pour commencer ; les forfaits payants augmentent votre quota et débloquent les modèles plus puissants ainsi que les modes multi-modèles.',
         step3Title: 'Démarrer une conversation',
         step3Desc:
           'saisissez un message, joignez éventuellement des fichiers, et choisissez un modèle ou laissez le mode Auto.',
@@ -5749,17 +5755,17 @@ export const fr: TranslationDictionary = {
           "Une adresse e-mail et un mot de passe suffisent. Il n'y a aucun compte fournisseur à créer, aucune clé API à coller et rien à installer — ClawAI gère les relations avec les fournisseurs en votre nom.",
         plansHeading: 'Les forfaits',
         plansBody:
-          "Sept niveaux, du gratuit à Unlimited à 200 $ par mois. Chaque forfait payant donne accès à tous les modèles ; ce qui change, c'est la quantité que vous pouvez utiliser et quels modes multi-modèles sont débloqués.",
+          "Sept niveaux, du gratuit à Unlimited. Chaque forfait payant donne accès à tous les modèles ; ce qui change, c'est la quantité que vous pouvez utiliser et quels modes multi-modèles sont débloqués.",
         bullet1:
-          "Free — 0 $. Un petit quota quotidien, des modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche.",
+          "Free. Un petit quota quotidien, des modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche.",
         bullet2:
-          'Starter 5 $, Plus 10 $, Pro 20 $ par mois. Des quotas croissants, avec des modèles premium et des quotas Comparaison et Juge plus élevés à mesure que vous montez en gamme.',
+          'Starter, Plus et Pro. Des quotas croissants, avec des modèles premium et des quotas Comparaison et Juge plus élevés à mesure que vous montez en gamme.',
         bullet3:
-          "Team 50 $, Scale 100 $ par mois. Comparaison, Juge, Critique et Recherche illimités, ainsi que bien plus de connexions d'espace de travail.",
+          "Team et Scale. Comparaison, Juge, Critique et Recherche illimités, ainsi que bien plus de connexions d'espace de travail.",
         bullet4:
-          "Unlimited 200 $ par mois. Conversations et messages illimités, avec une limite d'utilisation raisonnable sur les modèles premium dont vous êtes averti avant de l'atteindre.",
+          "Unlimited. Conversations et messages illimités, avec une limite d'utilisation raisonnable sur les modèles premium dont vous êtes averti avant de l'atteindre.",
         upgradeNote:
-          "Payez annuellement et vous ne payez que dix mois au lieu de douze. Vous pouvez changer de forfait ou annuler à tout moment — une mise à niveau s'applique immédiatement, une rétrogradation au début de votre prochaine période de facturation.",
+          "Payez pour une durée plus longue et le prix mensuel baisse ; l'économie est indiquée sur chaque forfait. Vous pouvez changer de forfait ou annuler à tout moment — une mise à niveau s'applique immédiatement, une rétrogradation au début de votre prochaine période de facturation.",
         ctaRegister: 'Créez votre compte',
       },
       models: {
@@ -6308,17 +6314,17 @@ export const fr: TranslationDictionary = {
           'Créez un compte avec une adresse e-mail et un mot de passe et vous êtes immédiatement sur le forfait gratuit. Envoyez un message. Si vous ne choisissez pas de modèle, ClawAI en choisit un pour vous.',
         freeTierQ: 'Y a-t-il un forfait gratuit ?',
         freeTierA:
-          "Oui — 0 $, aucune carte requise. Il inclut un petit quota quotidien, l'accès aux modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche afin que vous puissiez voir ce que font les modes payants avant de les payer.",
+          "Oui — aucune carte requise. Il inclut un petit quota quotidien, l'accès aux modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche afin que vous puissiez voir ce que font les modes payants avant de les payer.",
       },
       plansBilling: {
         title: 'Forfaits et facturation',
         description: 'Ce que coûtent les niveaux, et comment fonctionne la facturation.',
         plansQ: 'Quels forfaits sont disponibles ?',
         plansA:
-          "Sept : Free à 0 $, Starter 5 $, Plus 10 $, Pro 20 $, Team 50 $, Scale 100 $ et Unlimited 200 $ par mois. Chaque forfait payant donne accès à tous les modèles — ce qui diffère, c'est votre quota, vos limites de messages quotidiennes, et le nombre d'exécutions Comparaison, Juge et Recherche dont vous disposez.",
+          "Sept : Free, Starter, Plus, Pro, Team, Scale et Unlimited. Chaque forfait payant donne accès à tous les modèles — ce qui diffère, c'est votre quota, vos limites de messages quotidiennes, et le nombre d'exécutions Comparaison, Juge et Recherche dont vous disposez.",
         paymentQ: 'Comment puis-je payer ?',
         paymentA:
-          "Par carte, mensuellement ou annuellement. Payez annuellement et vous n'êtes facturé que pour dix mois au lieu de douze, soit deux mois offerts.",
+          "Par carte, mensuellement ou annuellement. Payez pour une durée plus longue — trois, six ou douze mois — et vous payez moins par mois ; l'économie est indiquée sur chaque forfait.",
         changePlanQ: 'Puis-je changer de forfait plus tard ?',
         changePlanA:
           'Oui, à tout moment. Une mise à niveau vous donne immédiatement le quota supérieur ; une rétrogradation prend effet au début de votre prochaine période de facturation, afin que vous conserviez ce que vous avez déjà payé.',
@@ -6499,7 +6505,7 @@ export const fr: TranslationDictionary = {
           "Deux produits différents pour deux problèmes différents. La plupart des entreprises devraient commencer par l'application hébergée et ne changer que si une exigence l'impose.",
         hostedBadge: 'Libre-service',
         hostedTitle: 'ClawAI hébergé',
-        hostedSubtitle: 'Inscrivez-vous en ligne, à partir de 5 $ par mois.',
+        hostedSubtitle: 'Inscrivez-vous en ligne.',
         hostedPoint1:
           'Tous les modèles cloud de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Bedrock.',
         hostedPoint2:

@@ -1,7 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
-import { EntityNotFoundException } from '../../../common/errors';
-import { type BillingIntervalKind } from '../../../generated/prisma';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { BillingIntervalKind } from '../../../generated/prisma';
+import { PLAN_INTERVAL_PRICE_DERIVED } from '../constants/plan-interval-pricing.constants';
+import { PlanIntervalPricingService } from './plan-interval-pricing.service';
 import { PlanBillingRepository } from '../repositories/plan-billing.repository';
 import { PlansRepository } from '../repositories/plans.repository';
 import {
@@ -30,6 +32,7 @@ export class PlanCatalogService {
   constructor(
     private readonly plans: PlansRepository,
     private readonly billing: PlanBillingRepository,
+    private readonly intervalPricing: PlanIntervalPricingService,
   ) {}
 
   async listCatalog(): Promise<PlanCatalogEntry[]> {
@@ -100,11 +103,27 @@ export class PlanCatalogService {
     createdByUserId: string;
   }): Promise<PlanPriceVersionView> {
     await this.requirePlan(input.planId);
-    const price = await this.billing.publishNewPrice(input);
+    // Quarterly, semiannual and yearly are DERIVED from the monthly price and
+    // the plan's discounts. A hand-typed one is exactly how a yearly price ended
+    // up above twelve monthly payments, so it is refused: change the monthly
+    // price or the discounts instead.
+    if (input.billingInterval !== BillingIntervalKind.MONTHLY) {
+      throw new BusinessException(
+        'Longer-term prices follow the monthly price and the plan discounts; change those instead',
+        PLAN_INTERVAL_PRICE_DERIVED,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const price = await this.intervalPricing.publishMonthly({
+      planId: input.planId,
+      currency: input.currency,
+      amountMinor: input.amountMinor,
+      createdByUserId: input.createdByUserId,
+    });
     this.logger.log(
       `publishPrice: plan=${input.planId} interval=${input.billingInterval} version=${String(price.version)}`,
     );
-    return toPriceVersionView(price);
+    return price;
   }
 
   async listFeatureRules(planId: string): Promise<PlanFeatureRuleView[]> {

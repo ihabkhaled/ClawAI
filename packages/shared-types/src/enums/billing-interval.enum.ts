@@ -1,7 +1,7 @@
-// Recurring billing cadence. QUARTERLY and SEMIANNUAL carry a 10% discount off
-// the monthly rate; YEARLY is priced at ~10 months of the monthly rate (two
-// months free). Every interval is stored as its own PlanPriceVersion row,
-// never derived at request time.
+// Recurring billing cadence. QUARTERLY, SEMIANNUAL and YEARLY are priced from
+// the monthly rate less a per-plan discount (10% / 15% / 20% by default, ADR-135).
+// Every interval is stored as its own PlanPriceVersion row, minted when the
+// monthly price or a discount changes — never derived at request time.
 export enum BillingInterval {
   MONTHLY = 'MONTHLY',
   QUARTERLY = 'QUARTERLY',

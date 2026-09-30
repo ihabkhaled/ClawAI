@@ -64,10 +64,9 @@ export class CreditGrantService {
     if (needsRoll) {
       return CreditGrantService.toBalances(await this.roll(wallet, periodKey, now));
     }
-    if (await this.isDowngraded(wallet)) {
-      return CreditGrantService.toBalances(await this.roll(wallet, periodKey, now));
-    }
-    return CreditGrantService.toBalances(wallet);
+    return (await this.isDowngraded(wallet))
+      ? CreditGrantService.toBalances(await this.roll(wallet, periodKey, now))
+      : CreditGrantService.toBalances(wallet);
   }
 
   /**
@@ -116,7 +115,7 @@ export class CreditGrantService {
    * column.
    *
    * The monthly price is the basis even for a yearly subscriber. Their yearly
-   * rate is ten months of it (two months free), so this grants them the same
+   * rate is the monthly one less the plan's yearly discount, so this grants them the same
    * credit per month as a monthly subscriber on the same plan rather than
    * penalising them for paying up front — a discount on the subscription is not
    * meant to be a discount on the allowance.

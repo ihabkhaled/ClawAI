@@ -196,7 +196,8 @@ describe('BillingPlanCard', () => {
       />,
     );
 
-    expect(screen.getByText('marketing.pricing.discountBadge')).toBeInTheDocument();
+    // 1350 against three months at 500 (1500) is exactly 10% off.
+    expect(screen.getByText('marketing.pricing.savePercent:{"percent":10}')).toBeInTheDocument();
     expect(screen.queryByText(/billing\.plans\.yearlySaving/)).not.toBeInTheDocument();
   });
 
@@ -224,7 +225,8 @@ describe('BillingPlanCard', () => {
       />,
     );
 
-    expect(screen.getByText('marketing.pricing.discountBadge')).toBeInTheDocument();
+    // 2700 against six months at 500 (3000) is 10% off.
+    expect(screen.getByText('marketing.pricing.savePercent:{"percent":10}')).toBeInTheDocument();
   });
 
   it('does not show the discount badge for MONTHLY', () => {
@@ -239,7 +241,7 @@ describe('BillingPlanCard', () => {
       />,
     );
 
-    expect(screen.queryByText('marketing.pricing.discountBadge')).not.toBeInTheDocument();
+    expect(screen.queryByText(/marketing\.pricing\.savePercent/)).not.toBeInTheDocument();
   });
 });
 

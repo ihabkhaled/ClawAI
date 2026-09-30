@@ -7,11 +7,11 @@ import { PlanFeatureGates } from '@/components/account/plan-feature-gates';
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { CHECKOUT_URL_INTERVAL_PARAM } from '@/constants/billing.constants';
-import { BillingInterval } from '@/enums/billing.enum';
 import { useLocalizedMoney } from '@/hooks/display-currency/use-localized-money';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
+import { computeIntervalDiscountPercent } from '@/utilities/billing.utility';
 import { formatCreditRatePercent, microUsdToMinor } from '@/utilities/credit.utility';
 import {
   formatPlanQuota,
@@ -46,8 +46,7 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
   const unlimited = t('billing.quota.unlimited');
   const checkoutRoute = `${ROUTES.BILLING_CHECKOUT}?plan=${encodeURIComponent(plan.slug)}&interval=${CHECKOUT_URL_INTERVAL_PARAM[interval]}`;
   const returnRoute = isFree ? ROUTES.CHAT : checkoutRoute;
-  const showsDiscount =
-    interval === BillingInterval.QUARTERLY || interval === BillingInterval.SEMIANNUAL;
+  const discountPercent = computeIntervalDiscountPercent(plan, interval);
 
   return (
     <article
@@ -90,9 +89,9 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
           {t('marketing.currency.convertedFrom').replace('{amount}', localizedPrice.canonicalText)}
         </p>
       ) : null}
-      {showsDiscount && price !== null && !isFree ? (
+      {discountPercent > 0 && price !== null && !isFree ? (
         <p className="text-primary mt-1 text-xs font-medium">
-          {t('marketing.pricing.discountBadge')}
+          {t('marketing.pricing.savePercent', { percent: discountPercent })}
         </p>
       ) : null}
 

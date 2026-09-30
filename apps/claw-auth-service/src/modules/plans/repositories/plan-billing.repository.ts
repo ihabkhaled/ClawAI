@@ -6,6 +6,7 @@ import {
   type PlanFeatureRule,
   type PlanPriceVersion,
 } from '../../../generated/prisma';
+import { type PriceSetParams } from '../types/plan-interval-pricing.types';
 
 @Injectable()
 export class PlanBillingRepository {
@@ -70,6 +71,55 @@ export class PlanBillingRepository {
           createdByUserId: params.createdByUserId,
         },
       });
+    });
+  }
+
+  // One transaction for a whole price change: optionally the plan's discounts,
+  // then each entry's retire-and-mint. A derived interval whose active amount
+  // and currency already match is left alone (`force` false), so re-running a
+  // sync never floods the history with identical versions.
+  async publishPriceSet(params: PriceSetParams): Promise<PlanPriceVersion[]> {
+    return this.prisma.$transaction(async (tx) => {
+      if (params.discounts !== undefined || params.legacyDisplay !== undefined) {
+        await tx.plan.update({
+          where: { id: params.planId },
+          data: { ...params.discounts, ...params.legacyDisplay },
+        });
+      }
+      const minted: PlanPriceVersion[] = [];
+      for (const entry of params.entries) {
+        const activeKey = `${params.planId}:${entry.billingInterval}`;
+        const previous = await tx.planPriceVersion.findUnique({ where: { activeKey } });
+        if (
+          !entry.force &&
+          previous !== null &&
+          previous.amountMinor === entry.amountMinor &&
+          previous.currency === entry.currency
+        ) {
+          continue;
+        }
+        if (previous !== null) {
+          await tx.planPriceVersion.update({
+            where: { id: previous.id },
+            data: { isActive: false, activeKey: null, retiredAt: new Date() },
+          });
+        }
+        minted.push(
+          await tx.planPriceVersion.create({
+            data: {
+              planId: params.planId,
+              billingInterval: entry.billingInterval,
+              currency: entry.currency,
+              amountMinor: entry.amountMinor,
+              version: (previous?.version ?? 0) + 1,
+              isActive: true,
+              activeKey,
+              createdByUserId: params.createdByUserId,
+            },
+          }),
+        );
+      }
+      return minted;
     });
   }
 
