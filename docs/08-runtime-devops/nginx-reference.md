@@ -354,3 +354,12 @@ will not appear by reloading.
 > After `nginx -s reload`, old workers keep accepting connections until they
 > drain. A check fired immediately afterwards can still be answered by the old
 > config; retry for a second or two before concluding a change did not apply.
+
+## X-Content-Type-Options (single header)
+
+`nginx.conf` and `nginx.distributed.conf.template` run `proxy_hide_header
+X-Content-Type-Options;` before adding `nosniff`, so the copy services set
+themselves (helmet, download and stream controllers, kept for direct access)
+does not double up. A location with its own `add_header` stops inheriting the
+outer ones, so each such block re-adds `nosniff`. Guarded by
+`tools/__tests__/nginx-nosniff-single.test.mjs`.
