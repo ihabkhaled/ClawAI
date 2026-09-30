@@ -46,8 +46,12 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// `gpt-4o-mini-transcribe` ($0.003/min) priced per SECOND of input audio,
 /// like whisper-1. New keys — they fill gaps. file-service still calls only
 /// whisper-1; the rows exist so the day it can call these they are priced.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v10';
-export const MODEL_COST_SEED_VERSION = 10;
+///
+/// v11 (2026-09-30): video generation priced per SECOND (`videoPerUnitMicroUsd`):
+/// Veo 3.1 Lite/Fast/Standard and grok-imagine-video(-1.5). New keys — they fill
+/// gaps. OpenAI Sora is not seeded (API shut down 2026-09-24).
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v11';
+export const MODEL_COST_SEED_VERSION = 11;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -582,6 +586,77 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.CHEAP,
     audioPerUnitMicroUsd: 50,
+  }),
+  // ── Video generation (per-SECOND unit metering, seed v11) ────────────────
+  //
+  // Sources, fetched 2026-09-30:
+  //   Veo:  https://ai.google.dev/gemini-api/docs/pricing — "Veo 3.1" $0.40/s
+  //         (720p/1080p), "Veo 3.1 Fast" $0.10/s at 720p, "Veo 3.1 Lite" $0.05/s at
+  //         720p, all with audio. 1080p and 4K cost more; image-service generates at
+  //         720p only, so 720p is the price that applies.
+  //   xAI:  https://docs.x.ai/docs/models — grok-imagine-video $0.050/s,
+  //         grok-imagine-video-1.5 $0.080/s (no resolution tiers stated).
+  //   OpenAI Sora is NOT seeded: OpenAI shut the Sora 2 models and the Videos API
+  //   down on 2026-09-24 with no replacement (developers.openai.com model pages).
+  //
+  // Per SECOND, token rates 0: image-service reserves and settles on the clip
+  // length (`videoSeconds`), never on tokens, so carrying token rates as well would
+  // bill the same clip twice. Unpriced means blocked (rule 37 item 5): a video
+  // model with no row here cannot be reserved and so cannot be generated.
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'models/veo-3.1-lite-generate-preview',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    videoPerUnitMicroUsd: 50000,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'models/veo-3.1-fast-generate-preview',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    videoPerUnitMicroUsd: 100000,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'models/veo-3.1-generate-preview',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    videoPerUnitMicroUsd: 400000,
+  }),
+  Object.freeze({
+    provider: 'GROK',
+    modelKey: 'grok-imagine-video',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    videoPerUnitMicroUsd: 50000,
+  }),
+  Object.freeze({
+    provider: 'GROK',
+    modelKey: 'grok-imagine-video-1.5',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    videoPerUnitMicroUsd: 80000,
   }),
   // ── Text-to-speech (unit + token metering, seed v6) ─────────────────────
   //

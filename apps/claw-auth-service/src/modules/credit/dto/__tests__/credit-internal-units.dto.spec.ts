@@ -4,6 +4,7 @@ import {
   CREDIT_AUDIO_SECONDS_MAX,
   CREDIT_IMAGE_UNITS_MAX,
   CREDIT_TTS_CHARACTERS_MAX,
+  CREDIT_VIDEO_SECONDS_MAX,
 } from '../../constants/credit.constants';
 import { finalizeCreditSchema, reserveCreditSchema } from '../credit-internal.dto';
 
@@ -31,6 +32,7 @@ const UNIT_FIELDS = [
   ['imageUnits', CREDIT_IMAGE_UNITS_MAX],
   ['audioSeconds', CREDIT_AUDIO_SECONDS_MAX],
   ['ttsCharacters', CREDIT_TTS_CHARACTERS_MAX],
+  ['videoSeconds', CREDIT_VIDEO_SECONDS_MAX],
 ] as const;
 
 describe('credit internal DTOs — unit counts', () => {
@@ -39,6 +41,7 @@ describe('credit internal DTOs — unit counts', () => {
       imageUnits: 0,
       audioSeconds: 0,
       ttsCharacters: 0,
+      videoSeconds: 0,
     });
     expect(finalizeCreditSchema.parse(FINALIZE_BASE)).toMatchObject({
       toolCalls: 0,
@@ -46,6 +49,7 @@ describe('credit internal DTOs — unit counts', () => {
       imageUnits: 0,
       audioSeconds: 0,
       ttsCharacters: 0,
+      videoSeconds: 0,
     });
   });
 

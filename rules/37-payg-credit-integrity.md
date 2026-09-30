@@ -141,9 +141,10 @@ paid model, rule 1 applies to it like anything else.
 
 17. **A non-token surface finalizes on measured units, never on zero tokens.** An
     image, transcription or speech call reserves its **expected** `imageUnits` /
-    `audioSeconds` / `ttsCharacters` and finalizes on the **measured** ones, and its
+    `audioSeconds` / `ttsCharacters` / `videoSeconds` and finalizes on the **measured** ones, and its
     model row carries the matching per-unit rate (`imagePerUnitMicroUsd`,
-    `audioPerUnitMicroUsd` = per second of input audio, `ttsPerCharacterMicroUsd`).
+    `audioPerUnitMicroUsd` = per second of input audio, `ttsPerCharacterMicroUsd`,
+    `videoPerUnitMicroUsd` = per second of generated video, ADR-137).
     OpenAI's image API reports no usage, so a zero-token finalize settled every
     OpenAI image at $0 and released the whole hold. A model whose response
     reports neither usage nor a unit the row prices (OpenAI `gpt-4o-mini-tts`)

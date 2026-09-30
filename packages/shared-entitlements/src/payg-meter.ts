@@ -64,7 +64,9 @@ function isWireUnmetered(value: unknown): value is WireUnmetered {
 }
 
 function readErrorCode(payload: unknown): BillingErrorCode {
-  return isRecord(payload) && typeof payload['errorCode'] === 'string' ? (payload['errorCode'] as BillingErrorCode) : BillingErrorCode.PAYG_CREDIT_EXHAUSTED;
+  return isRecord(payload) && typeof payload['errorCode'] === 'string'
+    ? (payload['errorCode'] as BillingErrorCode)
+    : BillingErrorCode.PAYG_CREDIT_EXHAUSTED;
 }
 
 function readNumber(payload: unknown, key: string): number {
@@ -258,10 +260,12 @@ export class PaygMeter {
     const imageUnits = Math.floor(units.imageUnits ?? 0);
     const audioSeconds = Math.floor(units.audioSeconds ?? 0);
     const ttsCharacters = Math.floor(units.ttsCharacters ?? 0);
+    const videoSeconds = Math.floor(units.videoSeconds ?? 0);
     return {
       ...(imageUnits > 0 ? { imageUnits } : {}),
       ...(audioSeconds > 0 ? { audioSeconds } : {}),
       ...(ttsCharacters > 0 ? { ttsCharacters } : {}),
+      ...(videoSeconds > 0 ? { videoSeconds } : {}),
     };
   }
 
@@ -269,7 +273,9 @@ export class PaygMeter {
     return reason === 'NOT_PAYG' ||
       reason === 'METERING_DISABLED' ||
       reason === 'ADMIN_BYPASS' ||
-      reason === 'METER_UNAVAILABLE_EXEMPT' ? reason : 'NOT_PAYG';
+      reason === 'METER_UNAVAILABLE_EXEMPT'
+      ? reason
+      : 'NOT_PAYG';
   }
 
   private static unmeteredHold(maxOutputTokens: number, reason: PaygHold['reason']): PaygHold {
@@ -322,7 +328,7 @@ export class PaygMeter {
       if (!response.ok) {
         throw new Error(`PAYG meter request failed: ${path} → ${String(response.status)}`);
       }
-      return response.status === 204 ? undefined : (await response.json());
+      return response.status === 204 ? undefined : await response.json();
     } finally {
       clearTimeout(timer);
     }

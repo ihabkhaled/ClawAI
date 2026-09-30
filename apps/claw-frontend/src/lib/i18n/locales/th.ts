@@ -4664,6 +4664,7 @@ export const th: TranslationDictionary = {
         JUDGE: 'ประเมิน',
         ORCHESTRATION: 'ออร์เคสเตรชัน',
         IMAGE: 'รูปภาพ',
+        VIDEO: 'วิดีโอ',
         FILE_GENERATION: 'สร้างไฟล์',
         CODING_AGENT: 'เอเจนต์เขียนโค้ด',
         WORKSPACE_ACTION: 'การทำงานเวิร์กสเปซ',

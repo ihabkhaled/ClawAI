@@ -190,7 +190,8 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
       const perUnit =
         (entry.imagePerUnitMicroUsd ?? 0) > 0 ||
         (entry.audioPerUnitMicroUsd ?? 0) > 0 ||
-        (entry.ttsPerCharacterMicroUsd ?? 0) > 0;
+        (entry.ttsPerCharacterMicroUsd ?? 0) > 0 ||
+        (entry.videoPerUnitMicroUsd ?? 0) > 0;
       if (perUnit) {
         expect(entry.inputPerMillionMicroUsd).toBeGreaterThanOrEqual(0);
         expect(entry.outputPerMillionMicroUsd).toBe(0);
@@ -362,9 +363,31 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(Number.isInteger(find('gpt-4o-mini-transcribe')?.audioPerUnitMicroUsd)).toBe(true);
   });
 
-  it('is version 10, so installs that ran v9 pick up the transcription prices', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(10);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v10');
+  it('is version 11, so installs that ran v10 pick up the video prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(11);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v11');
+  });
+
+  // Video is billed per SECOND of clip (ADR-137). Figures are the providers' own
+  // pages, fetched 2026-09-30. OpenAI Sora is absent on purpose: the API was shut
+  // down on 2026-09-24, so a price row would invite a call that can only fail.
+  it('prices video models per second, with no token rate, and never seeds Sora', () => {
+    const byModel = new Map(MODEL_COST_SEED_ENTRIES.map((e) => [`${e.provider}:${e.modelKey}`, e]));
+    const expected: Array<[string, number]> = [
+      ['GEMINI:models/veo-3.1-lite-generate-preview', 50_000],
+      ['GEMINI:models/veo-3.1-fast-generate-preview', 100_000],
+      ['GEMINI:models/veo-3.1-generate-preview', 400_000],
+      ['GROK:grok-imagine-video', 50_000],
+      ['GROK:grok-imagine-video-1.5', 80_000],
+    ];
+    for (const [key, perSecond] of expected) {
+      expect(byModel.get(key)).toMatchObject({
+        videoPerUnitMicroUsd: perSecond,
+        inputPerMillionMicroUsd: 0,
+        outputPerMillionMicroUsd: 0,
+      });
+    }
+    expect([...byModel.keys()].some((key) => /sora/i.test(key))).toBe(false);
   });
 
   // Money is integer micro-USD everywhere in this platform. A float here would
@@ -380,6 +403,7 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
         entry.imagePerUnitMicroUsd ?? null,
         entry.audioPerUnitMicroUsd ?? null,
         entry.ttsPerCharacterMicroUsd ?? null,
+        entry.videoPerUnitMicroUsd ?? null,
       ]) {
         if (rate === null) {
           continue;

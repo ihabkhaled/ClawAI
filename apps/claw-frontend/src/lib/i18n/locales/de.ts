@@ -4782,6 +4782,7 @@ export const de: TranslationDictionary = {
         JUDGE: 'Bewertung',
         ORCHESTRATION: 'Orchestrierung',
         IMAGE: 'Bild',
+        VIDEO: 'Video',
         FILE_GENERATION: 'Dateigenerierung',
         CODING_AGENT: 'Coding-Agent',
         WORKSPACE_ACTION: 'Workspace-Aktion',

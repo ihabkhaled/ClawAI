@@ -4648,6 +4648,7 @@ export const ar: TranslationDictionary = {
         JUDGE: 'تحكيم',
         ORCHESTRATION: 'تنسيق',
         IMAGE: 'صورة',
+        VIDEO: 'فيديو',
         FILE_GENERATION: 'توليد ملف',
         CODING_AGENT: 'وكيل برمجي',
         WORKSPACE_ACTION: 'إجراء مساحة عمل',

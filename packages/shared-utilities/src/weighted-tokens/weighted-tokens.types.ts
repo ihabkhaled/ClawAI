@@ -5,6 +5,7 @@
  * - `imageUnits`    × `imagePerUnitMicroUsd`    — one generated image
  * - `audioSeconds`  × `audioPerUnitMicroUsd`    — one SECOND of input audio
  * - `ttsCharacters` × `ttsPerCharacterMicroUsd` — one character synthesised
+ * - `videoSeconds`  × `videoPerUnitMicroUsd`    — one SECOND of generated video
  *
  * Counted by the ORCHESTRATOR, never read off the provider: an image, speech or
  * transcription endpoint typically reports no token usage at all, so these are
@@ -14,6 +15,7 @@ export type BillableUnitCounts = {
   imageUnits?: number;
   audioSeconds?: number;
   ttsCharacters?: number;
+  videoSeconds?: number;
 };
 
 /**

@@ -224,6 +224,7 @@ describe('toRawTokenBreakdown', () => {
       imageUnits: 0,
       audioSeconds: 0,
       ttsCharacters: 0,
+      videoSeconds: 0,
     });
     // The four token fields still add up to what the provider reported.
     expect(raw.inputTokens + raw.cachedInputTokens).toBe(1000);

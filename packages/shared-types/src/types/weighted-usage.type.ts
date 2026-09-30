@@ -24,6 +24,9 @@ export type RawTokenBreakdown = {
   // Characters a text-to-speech call synthesised, priced at
   // `ttsPerCharacterMicroUsd`. Optional for the same reason; absent means zero.
   ttsCharacters?: number;
+  // Seconds of VIDEO a generation produced, priced at `videoPerUnitMicroUsd`
+  // (a per-SECOND rate). Optional for the same reason; absent means zero.
+  videoSeconds?: number;
 };
 
 // Versioned per-million pricing for one model, in integer micro-USD.

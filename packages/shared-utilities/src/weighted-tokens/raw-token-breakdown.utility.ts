@@ -41,6 +41,7 @@ export function toRawTokenBreakdown(
     imageUnits: Math.max(0, calls.imageUnits ?? 0),
     audioSeconds: Math.max(0, calls.audioSeconds ?? 0),
     ttsCharacters: Math.max(0, calls.ttsCharacters ?? 0),
+    videoSeconds: Math.max(0, calls.videoSeconds ?? 0),
   };
 }
 
@@ -63,5 +64,6 @@ export function emptyTokenBreakdown(): RawTokenBreakdown {
     imageUnits: 0,
     audioSeconds: 0,
     ttsCharacters: 0,
+    videoSeconds: 0,
   };
 }

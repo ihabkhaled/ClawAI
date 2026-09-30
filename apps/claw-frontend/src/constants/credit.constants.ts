@@ -90,6 +90,7 @@ export const PAYG_SURFACE_LABEL_KEYS: Record<PaygSurface, string> = {
   [PaygSurface.JUDGE]: 'billing.credit.surface.JUDGE',
   [PaygSurface.ORCHESTRATION]: 'billing.credit.surface.ORCHESTRATION',
   [PaygSurface.IMAGE]: 'billing.credit.surface.IMAGE',
+  [PaygSurface.VIDEO]: 'billing.credit.surface.VIDEO',
   [PaygSurface.FILE_GENERATION]: 'billing.credit.surface.FILE_GENERATION',
   [PaygSurface.CODING_AGENT]: 'billing.credit.surface.CODING_AGENT',
   [PaygSurface.WORKSPACE_ACTION]: 'billing.credit.surface.WORKSPACE_ACTION',

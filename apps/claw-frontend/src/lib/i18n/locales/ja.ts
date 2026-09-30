@@ -4726,6 +4726,7 @@ export const ja: TranslationDictionary = {
         JUDGE: '評価',
         ORCHESTRATION: 'オーケストレーション',
         IMAGE: '画像',
+        VIDEO: '動画',
         FILE_GENERATION: 'ファイル生成',
         CODING_AGENT: 'コーディングエージェント',
         WORKSPACE_ACTION: 'ワークスペース操作',

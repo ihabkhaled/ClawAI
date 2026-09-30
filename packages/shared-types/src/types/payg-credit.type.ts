@@ -116,6 +116,7 @@ export type PaygReservationOutcome =
  * | `imageUnits`    | `imagePerUnitMicroUsd`    | one generated image          |
  * | `audioSeconds`  | `audioPerUnitMicroUsd`    | one SECOND of input audio    |
  * | `ttsCharacters` | `ttsPerCharacterMicroUsd` | one character synthesised    |
+ * | `videoSeconds`  | `videoPerUnitMicroUsd`    | one SECOND of video produced |
  *
  * At reserve these are the EXPECTED units (the hold is sized on them); at
  * finalize they are the MEASURED units (what was actually produced). A
@@ -126,6 +127,7 @@ export type PaygUnitCounts = {
   imageUnits?: number;
   audioSeconds?: number;
   ttsCharacters?: number;
+  videoSeconds?: number;
 };
 
 /**

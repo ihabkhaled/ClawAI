@@ -4549,6 +4549,7 @@ export const zh: TranslationDictionary = {
         JUDGE: '评审',
         ORCHESTRATION: '编排',
         IMAGE: '图像',
+        VIDEO: '视频',
         FILE_GENERATION: '文件生成',
         CODING_AGENT: '编码代理',
         WORKSPACE_ACTION: '工作区操作',

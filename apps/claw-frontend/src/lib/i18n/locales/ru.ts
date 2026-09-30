@@ -4746,6 +4746,7 @@ export const ru: TranslationDictionary = {
         JUDGE: 'Оценка',
         ORCHESTRATION: 'Оркестрация',
         IMAGE: 'Изображение',
+        VIDEO: 'Видео',
         FILE_GENERATION: 'Генерация файла',
         CODING_AGENT: 'Агент кода',
         WORKSPACE_ACTION: 'Действие рабочей области',

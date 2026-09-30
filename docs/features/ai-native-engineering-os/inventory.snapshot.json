@@ -7935,7 +7935,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 29218,
+          "bytes": 29304,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -8427,7 +8427,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5571
+        "value": 5572
       },
       "localeCount": 13,
       "locales": [

@@ -4710,6 +4710,7 @@ export const fa: TranslationDictionary = {
         JUDGE: 'داوری',
         ORCHESTRATION: 'هماهنگ‌سازی',
         IMAGE: 'تصویر',
+        VIDEO: 'ویدیو',
         FILE_GENERATION: 'تولید فایل',
         CODING_AGENT: 'عامل برنامه‌نویسی',
         WORKSPACE_ACTION: 'اقدام فضای کاری',

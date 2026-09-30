@@ -4712,6 +4712,7 @@ export const hi: TranslationDictionary = {
         JUDGE: 'मूल्यांकन',
         ORCHESTRATION: 'ऑर्केस्ट्रेशन',
         IMAGE: 'छवि',
+        VIDEO: 'वीडियो',
         FILE_GENERATION: 'फ़ाइल जनरेशन',
         CODING_AGENT: 'कोडिंग एजेंट',
         WORKSPACE_ACTION: 'वर्कस्पेस क्रिया',

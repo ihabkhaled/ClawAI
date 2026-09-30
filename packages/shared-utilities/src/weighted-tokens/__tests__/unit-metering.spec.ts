@@ -42,6 +42,66 @@ function rates(overrides: Partial<ModelCostRates> = {}): ModelCostRates {
   };
 }
 
+describe('unit metering — video seconds (ADR-137)', () => {
+  // Veo 3.1 Fast at 720p is $0.10 per second of generated video.
+  const veoFast = rates({
+    imagePerUnitMicroUsd: null,
+    audioPerUnitMicroUsd: null,
+    ttsPerCharacterMicroUsd: null,
+    videoPerUnitMicroUsd: 100_000,
+  });
+
+  it('charges a clip per SECOND produced', () => {
+    const cost = calculateCostMicroUsd({ ...emptyTokenBreakdown(), videoSeconds: 8 }, veoFast);
+    // An 8-second Veo 3.1 Fast clip is $0.80.
+    expect(cost).toBe(800_000);
+  });
+
+  it('counts as fixed cost before the call, so the hold is sized on it', () => {
+    expect(calculateUnitCostMicroUsd({ videoSeconds: 4 }, veoFast)).toBe(400_000);
+  });
+
+  it('marks a video-priced row as per-unit priced, so it is not refused as unpriced', () => {
+    expect(isPerUnitPriced(veoFast)).toBe(true);
+    expect(hasUsablePricing(veoFast)).toBe(true);
+  });
+
+  it('prices a clip at zero when the video rate is not published, and never negative', () => {
+    const cost = calculateCostMicroUsd(
+      { ...emptyTokenBreakdown(), videoSeconds: 8 },
+      rates({ videoPerUnitMicroUsd: null }),
+    );
+    expect(cost).toBe(0);
+    expect(
+      toRawTokenBreakdown(
+        {
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          cachedPromptTokens: 0,
+          reasoningTokens: 0,
+          estimated: false,
+          source: TokenUsageSource.NATIVE,
+        },
+        { videoSeconds: -5 },
+      ).videoSeconds,
+    ).toBe(0);
+  });
+
+  it('refuses a clip the balance cannot pay for, before any provider call', () => {
+    const result = clampOutputTokensToBalance({
+      promptTokens: 0,
+      cachedPromptTokens: 0,
+      requestedMaxOutputTokens: 1,
+      minViableOutputTokens: 1,
+      balanceMicroUsd: 500_000,
+      rates: veoFast,
+      videoSeconds: 8,
+    });
+    expect(result.status).toBe('PROMPT_UNAFFORDABLE');
+  });
+});
+
 describe('unit metering — calculateCostMicroUsd', () => {
   it('sums images, audio seconds and tts characters at their own rates', () => {
     const cost = calculateCostMicroUsd(

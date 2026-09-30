@@ -60,6 +60,8 @@ export const CREDIT_CALL_COUNT_MAX = 1_000;
 // accepts, and 100k characters is roughly 25 minutes of speech.
 export const CREDIT_IMAGE_UNITS_MAX = 10;
 export const CREDIT_AUDIO_SECONDS_MAX = 7_200;
+/** One generated clip is seconds, not minutes; a bound keeps the hold arithmetic honest. */
+export const CREDIT_VIDEO_SECONDS_MAX = 300;
 export const CREDIT_TTS_CHARACTERS_MAX = 100_000;
 export const CREDIT_PACKAGE_ID_MAX_LENGTH = 64;
 export const CREDIT_EVENT_ID_MAX_LENGTH = 200;

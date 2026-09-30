@@ -38,6 +38,8 @@ export interface ModelCostSeedEntry {
   imagePerUnitMicroUsd?: number | null;
   audioPerUnitMicroUsd?: number | null;
   ttsPerCharacterMicroUsd?: number | null;
+  /** Per SECOND of generated video (ADR-137). */
+  videoPerUnitMicroUsd?: number | null;
   /**
    * Set when this entry CORRECTS a price an earlier seed version already wrote.
    *

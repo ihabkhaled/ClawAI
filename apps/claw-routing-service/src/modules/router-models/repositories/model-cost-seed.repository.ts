@@ -193,7 +193,7 @@ export class ModelCostSeedRepository {
       reasoningPerMillionMicroUsd: toBigInt(entry.reasoningPerMillionMicroUsd),
       imagePerUnitMicroUsd: toBigInt(entry.imagePerUnitMicroUsd ?? null),
       audioPerUnitMicroUsd: toBigInt(entry.audioPerUnitMicroUsd ?? null),
-      videoPerUnitMicroUsd: null,
+      videoPerUnitMicroUsd: toBigInt(entry.videoPerUnitMicroUsd ?? null),
       toolCallPerUnitMicroUsd: null,
       searchCallPerUnitMicroUsd: null,
       ttsPerCharacterMicroUsd: toBigInt(entry.ttsPerCharacterMicroUsd ?? null),

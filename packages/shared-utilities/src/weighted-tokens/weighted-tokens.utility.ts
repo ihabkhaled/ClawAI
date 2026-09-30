@@ -83,7 +83,8 @@ function unitCostMicroUsd(units: BillableUnitCounts, rates: ModelCostRates): big
   return (
     costForCalls(units.imageUnits ?? 0, rates.imagePerUnitMicroUsd) +
     costForCalls(units.audioSeconds ?? 0, rates.audioPerUnitMicroUsd) +
-    costForCalls(units.ttsCharacters ?? 0, rates.ttsPerCharacterMicroUsd)
+    costForCalls(units.ttsCharacters ?? 0, rates.ttsPerCharacterMicroUsd) +
+    costForCalls(units.videoSeconds ?? 0, rates.videoPerUnitMicroUsd)
   );
 }
 
@@ -183,5 +184,6 @@ export function isPerUnitPriced(rates: ModelCostRates): boolean {
     rates.imagePerUnitMicroUsd,
     rates.audioPerUnitMicroUsd,
     rates.ttsPerCharacterMicroUsd,
+    rates.videoPerUnitMicroUsd,
   ].some((rate) => rate !== null && rate > 0);
 }

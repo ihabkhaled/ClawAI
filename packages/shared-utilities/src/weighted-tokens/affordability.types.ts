@@ -34,6 +34,7 @@ export type AffordabilityInput = {
   imageUnits?: number;
   audioSeconds?: number;
   ttsCharacters?: number;
+  videoSeconds?: number;
 };
 
 /**

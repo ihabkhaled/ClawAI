@@ -24,6 +24,7 @@ export function toCreditReserveInput(dto: ReserveCreditDto): CreditReserveInput 
     imageUnits: dto.imageUnits,
     audioSeconds: dto.audioSeconds,
     ttsCharacters: dto.ttsCharacters,
+    videoSeconds: dto.videoSeconds,
   };
 }
 
@@ -46,5 +47,6 @@ export function toCreditFinalizeInput(dto: FinalizeCreditDto): CreditFinalizeInp
     imageUnits: dto.imageUnits,
     audioSeconds: dto.audioSeconds,
     ttsCharacters: dto.ttsCharacters,
+    videoSeconds: dto.videoSeconds,
   };
 }

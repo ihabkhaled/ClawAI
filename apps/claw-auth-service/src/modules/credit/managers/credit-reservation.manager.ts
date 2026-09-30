@@ -155,6 +155,7 @@ export class CreditReservationManager {
         imageUnits: input.imageUnits,
         audioSeconds: input.audioSeconds,
         ttsCharacters: input.ttsCharacters,
+        videoSeconds: input.videoSeconds,
       },
     );
     const actualMicroUsd = await this.priceUsage(record, breakdown);
@@ -246,7 +247,9 @@ export class CreditReservationManager {
       return { isPayg: false, reason: 'ADMIN_BYPASS' };
     }
     const policy = await this.policy.getPolicy();
-    return !isMeteredProvider(provider, policy, ConnectorPolicyClient.defaultForProvider(provider)) ? { isPayg: false, reason: 'NOT_PAYG' } : { isPayg: true, rate: await this.requireRate(provider, model) };
+    return !isMeteredProvider(provider, policy, ConnectorPolicyClient.defaultForProvider(provider))
+      ? { isPayg: false, reason: 'NOT_PAYG' }
+      : { isPayg: true, rate: await this.requireRate(provider, model) };
   }
 
   /**
@@ -292,6 +295,7 @@ export class CreditReservationManager {
       imageUnits: input.imageUnits,
       audioSeconds: input.audioSeconds,
       ttsCharacters: input.ttsCharacters,
+      videoSeconds: input.videoSeconds,
     });
     if (clamp.status === 'PROMPT_UNAFFORDABLE') {
       // An empty wallet is EXHAUSTED, not "too expensive". Both refuse, but

@@ -13,6 +13,7 @@ import {
   CREDIT_TOKEN_COUNT_MAX,
   CREDIT_TTS_CHARACTERS_MAX,
   CREDIT_USER_ID_MAX_LENGTH,
+  CREDIT_VIDEO_SECONDS_MAX,
   CREDIT_WORKFLOW_MAX_LENGTH,
 } from '../constants/credit.constants';
 import { CREDIT_RELEASE_REASONS } from '../constants/credit-release-reason.constants';
@@ -28,6 +29,7 @@ const unitCountFields = {
   imageUnits: z.number().int().min(0).max(CREDIT_IMAGE_UNITS_MAX).default(0),
   audioSeconds: z.number().int().min(0).max(CREDIT_AUDIO_SECONDS_MAX).default(0),
   ttsCharacters: z.number().int().min(0).max(CREDIT_TTS_CHARACTERS_MAX).default(0),
+  videoSeconds: z.number().int().min(0).max(CREDIT_VIDEO_SECONDS_MAX).default(0),
 };
 
 export const reserveCreditSchema = z.object({

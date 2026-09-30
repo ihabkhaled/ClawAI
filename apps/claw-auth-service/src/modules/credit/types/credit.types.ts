@@ -47,6 +47,7 @@ export type CreditReserveInput = {
   imageUnits?: number;
   audioSeconds?: number;
   ttsCharacters?: number;
+  videoSeconds?: number;
 };
 
 export type CreditFinalizeInput = {
@@ -61,6 +62,7 @@ export type CreditFinalizeInput = {
   imageUnits?: number;
   audioSeconds?: number;
   ttsCharacters?: number;
+  videoSeconds?: number;
 };
 
 /**

@@ -4768,6 +4768,7 @@ export const es: TranslationDictionary = {
         JUDGE: 'Evaluación',
         ORCHESTRATION: 'Orquestación',
         IMAGE: 'Imagen',
+        VIDEO: 'Vídeo',
         FILE_GENERATION: 'Generación de archivos',
         CODING_AGENT: 'Agente de código',
         WORKSPACE_ACTION: 'Acción de espacio',

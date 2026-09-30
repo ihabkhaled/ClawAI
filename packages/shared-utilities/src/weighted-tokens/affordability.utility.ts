@@ -55,7 +55,9 @@ export function affordableOutputTokens(remainingMicroUsd: number, rates: ModelCo
   if (outputRate <= 0) {
     return Number.MAX_SAFE_INTEGER;
   }
-  return remainingMicroUsd <= 0 ? 0 : Math.floor((remainingMicroUsd * TOKENS_PER_PRICING_UNIT) / outputRate);
+  return remainingMicroUsd <= 0
+    ? 0
+    : Math.floor((remainingMicroUsd * TOKENS_PER_PRICING_UNIT) / outputRate);
 }
 
 /**
@@ -89,6 +91,7 @@ export function clampOutputTokensToBalance(input: AffordabilityInput): Affordabi
         imageUnits: input.imageUnits,
         audioSeconds: input.audioSeconds,
         ttsCharacters: input.ttsCharacters,
+        videoSeconds: input.videoSeconds,
       },
       input.rates,
     );

@@ -4669,6 +4669,7 @@ export type TranslationDictionary = {
         JUDGE: string;
         ORCHESTRATION: string;
         IMAGE: string;
+        VIDEO: string;
         FILE_GENERATION: string;
         CODING_AGENT: string;
         WORKSPACE_ACTION: string;

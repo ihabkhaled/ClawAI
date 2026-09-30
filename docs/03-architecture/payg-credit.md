@@ -261,6 +261,7 @@ change together.
 | `TRANSCRIPTION`    | file      | Speech-to-text of an uploaded audio file / voice note — **one hold per provider attempt**, charged to the uploader | —           |
 | `VISION_HELPER`    | chat      | Helper vision for a lane that cannot see — **one hold per image per turn** (lanes + judge share it)                | —           |
 | `TTS`              | chat      | "Read aloud" of an assistant reply — **one hold per provider attempt**; a replay of stored audio is free           | —           |
+| `VIDEO`            | image     | Text/image-to-video generation — **one hold per provider attempt**, priced per SECOND of clip (ADR-137)            | —           |
 
 There is **no `RESEARCH` member**: research-service reaches search SaaS, never a
 paid model, and is metered through `FeatureUsageRecord` (see "Not metered", below).
@@ -309,6 +310,7 @@ counts (`PaygUnitCounts` in `@claw/shared-types`):
 | `imageUnits`    | `imagePerUnitMicroUsd`                | one generated image                       | ≤ 10      |
 | `audioSeconds`  | `audioPerUnitMicroUsd`                | one **second** of INPUT audio (STT)       | ≤ 7,200   |
 | `ttsCharacters` | `ttsPerCharacterMicroUsd`             | one character of synthesised speech (TTS) | ≤ 100,000 |
+| `videoSeconds`  | `videoPerUnitMicroUsd`                | one **second** of generated video         | ≤ 300     |
 
 `audioPerUnitMicroUsd` is **per second of input audio** — not per minute and not
 per audio token. whisper-1's $0.006/min is `100` micro-USD per second.

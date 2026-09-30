@@ -36,6 +36,13 @@ export enum PaygSurface {
    */
   TRANSCRIPTION = 'TRANSCRIPTION',
   /**
+   * Text-to-video and image-to-video generation (image-service video module,
+   * ADR-137). One row per PROVIDER ATTEMPT, priced per SECOND of video produced
+   * (`videoPerUnitMicroUsd`): a clip is billed for the seconds the provider made,
+   * never for tokens.
+   */
+  VIDEO = 'VIDEO',
+  /**
    * The helper vision model that describes an attached image for a chat lane
    * whose model cannot see (chat-service, ADR-120 batch 5). One row per
    * (turn, image, candidate attempt): compare lanes and the judge in the same

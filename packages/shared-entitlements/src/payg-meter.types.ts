@@ -9,7 +9,7 @@ import type { PaygSurface, PaygUnitCounts } from '@claw/shared-types';
  * fanning out to five lanes needs five ids, and a tool loop needs one per turn,
  * or N paid turns get billed as one.
  *
- * The optional unit counts (`imageUnits`, `audioSeconds`, `ttsCharacters`) are
+ * The optional unit counts (`imageUnits`, `audioSeconds`, `ttsCharacters`, `videoSeconds`) are
  * the EXPECTED quantities of a non-token call — one per requested image, the
  * clip length of a transcription, the text length of a speech request. auth
  * sizes the hold on them, so a surface priced per unit reserves real money

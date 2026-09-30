@@ -90,7 +90,7 @@ describe('PaygMeter unit metering', () => {
     await meter().finalize(
       METERED_HOLD,
       { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
-      { imageUnits: 1, audioSeconds: 61.9, ttsCharacters: 1200 },
+      { imageUnits: 1, audioSeconds: 61.9, ttsCharacters: 1200, videoSeconds: 7.9 },
     );
 
     expect(sentBody(stub)).toMatchObject({
@@ -98,6 +98,7 @@ describe('PaygMeter unit metering', () => {
       imageUnits: 1,
       audioSeconds: 61,
       ttsCharacters: 1200,
+      videoSeconds: 7,
     });
   });
 
@@ -121,13 +122,14 @@ describe('PaygMeter unit metering', () => {
     await meter().finalize(
       METERED_HOLD,
       { promptTokens: 0, completionTokens: 0, cachedPromptTokens: 0, reasoningTokens: 0 },
-      { imageUnits: 0, audioSeconds: -5, ttsCharacters: 0.4 },
+      { imageUnits: 0, audioSeconds: -5, ttsCharacters: 0.4, videoSeconds: 0.2 },
     );
 
     const body = sentBody(stub);
     expect(body).not.toHaveProperty('imageUnits');
     expect(body).not.toHaveProperty('audioSeconds');
     expect(body).not.toHaveProperty('ttsCharacters');
+    expect(body).not.toHaveProperty('videoSeconds');
   });
 
   it('does not call auth to finalize an unmetered hold, units or not', async () => {
