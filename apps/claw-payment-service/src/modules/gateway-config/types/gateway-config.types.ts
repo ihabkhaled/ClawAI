@@ -36,7 +36,6 @@ export type GatewayAdminView = {
 export type CheckoutGatewayView = {
   gateway: BillingGateway;
   mode: GatewayMode;
-  testingSoon: boolean;
   publicIdentifier: string | null;
   // The currency this gateway actually settles in, or null when it settles in
   // the plan's own currency.

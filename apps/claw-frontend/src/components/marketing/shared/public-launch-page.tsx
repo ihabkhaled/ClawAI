@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import Link from 'next/link';
 
 import { MarketingAdUnit } from '@/components/adsense/marketing-ad-unit';
+import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
 import { EvidenceNote } from '@/components/marketing/shared/evidence-note';
@@ -21,45 +22,36 @@ import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PublicLaunchPageProps } from '@/types/public-launch-content.types';
+import type { PublicCatalogProvider } from '@/types/public-models.types';
 import { isAdEligiblePath, getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale, localisePath } from '@/utilities/locale.utility';
-import { selectAvailableProviderNames } from '@/utilities/public-models.utility';
+import { selectAvailableProviders } from '@/utilities/public-models.utility';
 import { buildPublicPageJsonLd, serializeJsonLd } from '@/utilities/structured-data.utility';
 
 /**
- * The provider families this deployment can actually route to.
+ * The models this deployment can actually serve, read from the live connector
+ * catalog and rendered with the SAME section the home page uses, so the two can
+ * never disagree about what a visitor gets.
  *
  * It listed seven hardcoded names — including DeepSeek, xAI Grok and llama.cpp,
- * which have no connected models here — so /supported-models promised three
- * vendors a visitor could not reach. The names now come from the live catalog,
- * which means the page shrinks or grows honestly as connectors are configured.
+ * which have no connected models here — and then a bare list of provider names.
+ * The roster shows each provider's real model count and a sample of real names,
+ * and the page shrinks or grows honestly as connectors are configured.
  */
-function ProviderCatalog({
-  heading,
+function AvailableModels({
   note,
   providers,
 }: {
-  heading: string;
   note: string;
-  providers: readonly string[];
+  providers: readonly PublicCatalogProvider[];
 }): React.ReactElement {
   return (
-    <section
-      aria-labelledby="implemented-provider-families"
-      className="border-border border-y py-10"
-    >
-      <h2 id="implemented-provider-families" className="sr-only">
-        {heading}
-      </h2>
-      <ul className="bg-border grid grid-cols-1 gap-px border sm:grid-cols-2 lg:grid-cols-3">
-        {providers.map((provider) => (
-          <li key={provider} className="bg-card text-foreground px-5 py-6 text-lg font-semibold">
-            {provider}
-          </li>
-        ))}
-      </ul>
-      <p className="text-muted-foreground mt-5 max-w-4xl text-sm leading-7">{note}</p>
-    </section>
+    <div className="border-border border-y">
+      <ModelRosterSection providers={providers} />
+      <p className="text-muted-foreground mx-auto max-w-4xl px-4 pb-10 text-sm leading-7 sm:px-6 lg:px-8">
+        {note}
+      </p>
+    </div>
   );
 }
 
@@ -75,9 +67,9 @@ export async function PublicLaunchPage({
   // Only this one page names providers, so only this one page pays for the
   // fetch. An unavailable catalog yields an empty list, and the section below
   // renders nothing rather than a roster nobody verified.
-  const providerNames =
+  const providers =
     slug === PublicLaunchPageSlug.SUPPORTED_MODELS
-      ? selectAvailableProviderNames(await fetchPublicModelCatalog())
+      ? selectAvailableProviders(await fetchPublicModelCatalog())
       : [];
   const title =
     registryEntry === undefined || registryEntry.title === '' ? page.eyebrow : registryEntry.title;
@@ -141,12 +133,8 @@ export async function PublicLaunchPage({
             </section>
           ))}
 
-          {slug === PublicLaunchPageSlug.SUPPORTED_MODELS && providerNames.length > 0 ? (
-            <ProviderCatalog
-              heading={page.sections[0]?.title ?? page.eyebrow}
-              note={labels.providerAvailabilityNote}
-              providers={providerNames}
-            />
+          {slug === PublicLaunchPageSlug.SUPPORTED_MODELS && providers.length > 0 ? (
+            <AvailableModels note={labels.providerAvailabilityNote} providers={providers} />
           ) : null}
           {showRoutingRail ? (
             <RoutingRail

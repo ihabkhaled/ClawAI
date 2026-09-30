@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ModelProviderPage } from '@/enums/model-provider-page.enum';
 import type { PublicCatalogModel, PublicModelCatalog } from '@/types/public-models.types';
 import {
-  selectAvailableProviderNames,
+  selectAvailableProviders,
   selectModelsForProviderPage,
 } from '@/utilities/public-models.utility';
 
@@ -92,17 +92,19 @@ describe('selectModelsForProviderPage', () => {
   });
 });
 
-describe('selectAvailableProviderNames', () => {
-  it('names only providers that actually have models', () => {
+describe('selectAvailableProviders', () => {
+  it('keeps only providers that actually have models', () => {
     const live = catalog([
       { provider: 'OPENAI', displayName: 'OpenAI', models: [model('GPT 5')] },
       { provider: 'DEEPSEEK', displayName: 'DeepSeek', models: [] },
     ]);
 
-    expect(selectAvailableProviderNames(live)).toEqual(['OpenAI']);
+    expect(selectAvailableProviders(live).map((provider) => provider.displayName)).toEqual([
+      'OpenAI',
+    ]);
   });
 
   it('returns nothing when the catalog is unavailable', () => {
-    expect(selectAvailableProviderNames(null)).toEqual([]);
+    expect(selectAvailableProviders(null)).toEqual([]);
   });
 });

@@ -100,6 +100,21 @@ models where the product served 170, and to Claude Opus 4 where the deployment
 ran Opus 5. See §3 for what replaced it and why the boundary objection is
 answered rather than ignored.
 
+**Update (2026-09-30).** `/supported-models` now renders the SAME live roster the home
+page uses (`ModelRosterSection`: each provider with a real model count and a sample of
+real model names, plus a dialog with the full list), read from the connector catalog
+and empty when the catalog is unavailable. It is the public "models available" page
+and is in the sitemap (`/sitemaps/en/pages-1.xml` lists `/en/supported-models`,
+checked live 2026-09-30; the registry marks it `FeedEligibility.PUBLISHABLE` and
+`AdEligibility.INELIGIBLE`, so the roster changes no ad eligibility). The private
+`/models` dashboard stays authenticated. No new route was added: every home section
+already has its own indexed page (`/pricing`, `/supported-models`, `/how-it-works`,
+`/features`, `/coding-agent`, `/features/pay-as-you-go-credit`,
+`/features/administration-and-access-control`, `/local-first-ai`), and repeating a
+section's copy on a second URL is the thin, duplicated content the AdSense
+eligibility work guards against
+([adsense-eligibility.md](../03-architecture/adsense-eligibility.md)).
+
 **Batch 3 deviation, discovered at build time:** this document names the
 cluster `/models`. That path is already taken — `src/app/(portal)/models/**`
 is a private, authenticated route (the model catalog/discovery dashboard

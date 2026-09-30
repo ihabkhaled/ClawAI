@@ -4935,7 +4935,7 @@ export const fa: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (آزمایشی – به‌زودی)',
+      paymobCard: 'Paymob (کارت)',
       unavailable: 'درگاه‌های پرداخت در دسترس نیستند',
     },
     proration: {
